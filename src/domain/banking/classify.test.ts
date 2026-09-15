@@ -379,3 +379,56 @@ describe('director-paid expenses', () => {
     expect(buildVat3Return(db, { companyId, vatPeriodId: periodId }).T2.amountMinor).toBe(2_300);
   });
 });
+
+describe('director-paid reverse charge', () => {
+  it('balances when a director personally pays a reverse-charge supplier', () => {
+    const officerId = ids.officer();
+    db.insert(companyOfficers).values({
+      id: officerId, companyId, name: 'A. Director', role: 'director',
+    }).run();
+
+    // A domain renewal on a personal card: no VAT charged by the supplier,
+    // but the VAT is still self-accounted.
+    const result = recordDirectorPaidExpense(db, {
+      companyId, officerId, date: makeDate(2025, 3, 6),
+      description: 'Domain renewals paid on personal card',
+      accountId: byCode['6020']!, vatTreatmentId: tr['NON_EU_SERVICES_RCV']!,
+      grossMinor: 8_400,
+    });
+
+    const lines = db.select().from(journalLines)
+      .where(eq(journalLines.journalEntryId, result.journalEntryId))
+      .orderBy(journalLines.lineNumber).all();
+
+    expect(lines).toHaveLength(4);
+    expect(lines[0]).toMatchObject({ accountId: byCode['6020'], debitMinor: 8_400 });
+    expect(lines[1]).toMatchObject({ accountId: acc['vat_on_purchases'], debitMinor: 1_932 });
+    expect(lines[2]).toMatchObject({ accountId: acc['vat_on_sales'], creditMinor: 1_932 });
+    // The director is owed only what they actually paid out.
+    expect(lines[3]).toMatchObject({
+      accountId: acc['directors_current_account'], creditMinor: 8_400, officerId,
+    });
+
+    expect(trialBalance(db, { companyId, asOf: makeDate(2025, 12, 31) }).balanced).toBe(true);
+    expect(accountBalance(db, { companyId, accountId: acc['directors_current_account']! }))
+      .toBe(8_400);
+  });
+
+  it('nets the reverse charge to zero on the VAT return', () => {
+    const officerId = ids.officer();
+    db.insert(companyOfficers).values({
+      id: officerId, companyId, name: 'A. Director', role: 'director',
+    }).run();
+    recordDirectorPaidExpense(db, {
+      companyId, officerId, date: makeDate(2025, 3, 6),
+      description: 'Domain renewals', accountId: byCode['6020']!,
+      vatTreatmentId: tr['NON_EU_SERVICES_RCV']!, grossMinor: 8_400,
+    });
+    const periodId = db.select().from(vatPeriods)
+      .where(eq(vatPeriods.name, 'Mar–Apr 2025')).get()!.id;
+    const report = buildVat3Return(db, { companyId, vatPeriodId: periodId });
+    expect(report.T1.amountMinor).toBe(1_932);
+    expect(report.T2.amountMinor).toBe(1_932);
+    expect(report.netPositionMinor).toBe(0);
+  });
+});

@@ -457,9 +457,24 @@ export function recordDirectorPaidExpense(
       memo: `Input VAT — ${resolved.treatment.name}`,
     });
   }
+  // A director can pay a reverse-charge supplier personally just as easily as
+  // the company can — a domain renewal on a personal card, say. The VAT is
+  // still self-accounted, so the output leg belongs here too. Without it the
+  // entry does not balance.
+  if (resolved.treatment.isReverseCharge && calculation.vatMinor > 0) {
+    lines.push({
+      accountId: systemAccountId(db, params.companyId, 'vat_on_sales'),
+      creditMinor: calculation.vatMinor,
+      currency,
+      memo: `Output VAT (reverse charge) — ${resolved.treatment.name}`,
+    });
+  }
+
   lines.push({
     accountId: directorsAccount,
-    creditMinor: params.grossMinor,
+    // What the director actually paid out of pocket. Under a reverse charge
+    // that is the net, because the supplier charged no VAT.
+    creditMinor: calculation.grossMinor,
     currency,
     officerId: officer.id,
     memo: `Paid personally by ${officer.name}`,
