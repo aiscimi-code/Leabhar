@@ -1,4 +1,3 @@
-
 Project: Local-First Irish Accounting & Tax Preparation System
 
 1. Project Objective
