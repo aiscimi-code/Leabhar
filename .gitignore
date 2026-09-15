@@ -1,0 +1,19 @@
+node_modules/
+.next/
+out/
+dist/
+*.tsbuildinfo
+next-env.d.ts
+
+# Local accounting data — never commit
+data/
+storage/
+backups/
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+
+.env
+.env.local
+.DS_Store
