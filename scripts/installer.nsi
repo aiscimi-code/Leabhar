@@ -10,7 +10,7 @@ Unicode true
 ManifestDPIAware true
 
 !define APPNAME "Leabhar"
-!define VERSION "0.1.0"
+!define VERSION "0.2.0"
 !define PUBLISHER "Intleacht Research Limited"
 !define INSTALLDIR "$LOCALAPPDATA\Leabhar"
 
