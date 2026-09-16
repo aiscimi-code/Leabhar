@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { eq, and } from 'drizzle-orm';
-import { getDb } from '@/db';
+import { getDb, resetDatabase } from '@/db';
 import { reviewItems, documents, bankTransactions, companies } from '@/db/schema';
 import { requireCompany } from '@/lib/queries';
 import { classifyTransaction, reclassifyTransaction } from '@/domain/banking/classify';
@@ -13,7 +13,7 @@ import { extractDocument } from '@/domain/extraction/service';
 import { importStatement } from '@/domain/banking/import';
 import { seedDemoCompany } from '@/db/seed/demo';
 import { runMigrations } from '@/db/migrate';
-import { createBackup } from '@/domain/backup/backup';
+import { createBackup, restoreBackup, verifyBackup } from '@/domain/backup/backup';
 import { nowIso } from '@/domain/dates';
 
 /**
@@ -290,6 +290,45 @@ export async function createBackupAction(): Promise<ActionResult> {
       ok: true,
       message: `Backup ${result.version} created at ${result.path} `
         + `(${(result.sizeBytes / 1024).toFixed(0)} KB, ${result.documentCount} documents).`,
+    };
+  } catch (error) {
+    return fail(error);
+  }
+}
+
+export async function restoreBackupAction(formData: FormData): Promise<ActionResult> {
+  try {
+    const path = formData.get('path');
+    if (typeof path !== 'string' || !path) {
+      return { ok: false, error: 'A backup path is required.' };
+    }
+
+    const force = formData.get('force') === 'true';
+    const verification = verifyBackup(path);
+
+    if (!verification.usable && !force) {
+      return {
+        ok: false,
+        error: `This backup did not verify: ${verification.summary} `
+          + 'Restoring it anyway requires the force option.',
+      };
+    }
+
+    const result = await restoreBackup({ path, force });
+    resetDatabase();
+
+    revalidatePath('/settings/backup');
+    revalidatePath('/');
+
+    return {
+      ok: true,
+      message: `Restored backup v${verification.version}. `
+        + `Your previous database and documents were moved to ${result.preRestoreCopy} `
+        + '— that is your undo if the restore itself turns out to be the mistake. '
+        + 'The application has reconnected to the restored database.',
+      warnings: verification.usable ? undefined : [
+        'This backup did not fully verify, but was restored because the force option was set.',
+      ],
     };
   } catch (error) {
     return fail(error);

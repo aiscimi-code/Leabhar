@@ -1,6 +1,7 @@
 import { listBackups, backupRoot } from '@/domain/backup/backup';
 import { Page, Panel, Badge, Empty, Help } from '@/components/primitives';
 import { BackupButton } from '@/components/BackupButton';
+import { RestoreButton } from '@/components/RestoreButton';
 import { dateTime } from '@/lib/format';
 
 export const dynamic = 'force-dynamic';
@@ -58,6 +59,7 @@ export default function BackupPage() {
                 <th className="w-40">Documents</th>
                 <th>Verification</th>
                 <th className="w-28">Status</th>
+                <th className="w-24">Action</th>
               </tr>
             </thead>
             <tbody>
@@ -79,6 +81,13 @@ export default function BackupPage() {
                     <Badge tone={backup.usable ? 'positive' : 'negative'}>
                       {backup.usable ? 'Verified' : 'Do not restore'}
                     </Badge>
+                  </td>
+                  <td>
+                    <RestoreButton
+                      path={backup.path}
+                      version={backup.version}
+                      usable={backup.usable}
+                    />
                   </td>
                 </tr>
               ))}
