@@ -3,7 +3,7 @@ import { eq, and, lt } from 'drizzle-orm';
 import type { AppDatabase } from '@/db';
 import { users, sessions } from '@/db/schema';
 import { ids } from '@/lib/ids';
-import { nowIso, addDays, type IsoDate } from '../dates';
+import { nowIso, type IsoDate } from '../dates';
 
 /**
  * Local single-user authentication (README §3, issue #46).
@@ -57,7 +57,7 @@ export function createSession(
 ): SessionResult {
   const token = randomBytes(32).toString('hex');
   const tokenHash = hashTokenSha256(token);
-  const expiresAt = addDays(nowIso(), SESSION_DAYS);
+  const expiresAt = new Date(Date.now() + SESSION_DAYS * 24 * 60 * 60 * 1000).toISOString();
 
   db.insert(sessions).values({
     id: ids.session(),

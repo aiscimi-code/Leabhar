@@ -106,11 +106,11 @@ describe('posted journal immutability triggers', () => {
       entryNumber: 999,
       entryDate: makeDate(2025, 3, 15),
       narrative: 'Draft',
-      sourceType: 'manual_adjustment',
+      sourceType: 'manual_adjustment' as const,
       baseCurrency: 'EUR',
       isPosted: false,
       createdBy: 'test',
-      createdVia: 'user',
+      createdVia: 'user' as const,
     }).run();
 
     expect(() =>
