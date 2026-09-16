@@ -10,7 +10,7 @@ Unicode true
 ManifestDPIAware true
 
 !define APPNAME "Leabhar"
-!define VERSION "0.2.4"
+!define VERSION "0.2.5"
 !define PUBLISHER "Intleacht Research Limited"
 !define INSTALLDIR "$LOCALAPPDATA\Leabhar"
 
@@ -26,6 +26,19 @@ UninstPage uninstConfirm
 UninstPage instfiles
 
 Section "Install"
+  ; Clear the previous install's app files (but not the user's database
+  ; or documents, which live in subdirectories we don't touch here).
+  ; This prevents stale migration files from a previous version
+  ; surviving an upgrade and breaking the new build.
+  RMDir /r "$INSTDIR\.next"
+  RMDir /r "$INSTDIR\drizzle"
+  RMDir /r "$INSTDIR\node_modules"
+  Delete "$INSTDIR\server.js"
+  Delete "$INSTDIR\launcher.cjs"
+  Delete "$INSTDIR\leabhar.bat"
+  Delete "$INSTDIR\package.json"
+  Delete "$INSTDIR\package-lock.json"
+
   SetOutPath "$INSTDIR"
   File /r "..\dist\leabhar\*.*"
 
