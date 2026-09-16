@@ -1,5 +1,7 @@
 import { fixedAssetList } from '@/lib/queries';
-import { Page, Panel, Badge, Help, Empty } from '@/components/primitives';
+import { Page, Panel, Badge, Help, Empty, Field, Input, Disclosure } from '@/components/primitives';
+import { ActionForm } from '@/components/ActionForm';
+import { postDepreciationAction } from '@/app/settings-actions';
 import { money, date, rate, label } from '@/lib/format';
 
 export const dynamic = 'force-dynamic';
@@ -88,6 +90,29 @@ export default function AssetsPage() {
             </tbody>
           </table>
         )}
+      </Panel>
+
+      <Panel
+        title="Post depreciation"
+        description="Depreciation is not posted automatically. Running this charges every
+          period that is due up to the date you choose, and it can be run twice without
+          double-charging — a period already posted is skipped."
+      >
+        <Disclosure summary="Run the depreciation charge" tone="accent">
+          <div className="max-w-3xl">
+            <ActionForm action={postDepreciationAction} submit="Post depreciation">
+              <Field
+                label="Post everything due up to"
+                help="Each asset is charged monthly from the month after it was brought into
+                  use. Capital allowances are a separate calculation and are never posted to
+                  the books — they belong in the tax computation only."
+              >
+                <Input name="upTo" type="date"
+                  defaultValue={new Date().toISOString().slice(0, 10)} />
+              </Field>
+            </ActionForm>
+          </div>
+        </Disclosure>
       </Panel>
     </Page>
   );

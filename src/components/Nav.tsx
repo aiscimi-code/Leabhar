@@ -21,13 +21,14 @@ const SECTIONS: Array<{ heading: string; items: Array<{ href: string; label: str
       { href: '/transactions', label: 'Transactions' },
       { href: '/documents', label: 'Documents' },
       { href: '/import', label: 'Import bank data' },
+      { href: '/reconcile', label: 'Reconcile' },
     ],
   },
   {
     heading: 'VAT',
     items: [
       { href: '/vat', label: 'VAT periods' },
-      { href: '/vat/treatments', label: 'VAT treatments' },
+      { href: '/settings/rates', label: 'Rates and treatments' },
     ],
   },
   {
@@ -36,12 +37,14 @@ const SECTIONS: Array<{ heading: string; items: Array<{ href: string; label: str
       { href: '/reports', label: 'Financial statements' },
       { href: '/reports/trial-balance', label: 'Trial balance' },
       { href: '/reports/year-end', label: 'Year-end pack' },
+      { href: '/adjustments', label: 'Adjustments' },
       { href: '/audit', label: 'Audit trail' },
     ],
   },
   {
     heading: 'Records',
     items: [
+      { href: '/invoices', label: 'Invoices' },
       { href: '/suppliers', label: 'Suppliers' },
       { href: '/customers', label: 'Customers' },
       { href: '/assets', label: 'Fixed assets' },
@@ -54,7 +57,7 @@ const SECTIONS: Array<{ heading: string; items: Array<{ href: string; label: str
     items: [
       { href: '/settings/company', label: 'Company' },
       { href: '/settings/accounts', label: 'Chart of accounts' },
-      { href: '/settings/rates', label: 'Tax rates' },
+      { href: '/settings/periods', label: 'Periods' },
       { href: '/settings/backup', label: 'Backup' },
     ],
   },
@@ -80,6 +83,17 @@ export function Nav({ companyName }: { companyName: string | null }) {
           </div>
         </Link>
       </div>
+
+      <form method="get" action="/search" className="px-3 py-2 border-b border-line">
+        <input
+          type="search"
+          name="q"
+          placeholder="Search everything"
+          aria-label="Search everything"
+          className="w-full border border-line-strong rounded px-2 py-1 text-[12px]
+            bg-surface text-ink placeholder:text-ink-faint"
+        />
+      </form>
 
       <div className="py-2">
         {SECTIONS.map((section) => (

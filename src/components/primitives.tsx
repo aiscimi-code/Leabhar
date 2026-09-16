@@ -255,3 +255,45 @@ export function DemoBanner() {
     </div>
   );
 }
+
+const CONTROL = 'w-full border border-line-strong rounded px-2 py-1 text-[12px] bg-surface '
+  + 'text-ink disabled:bg-surface-sunken disabled:text-ink-faint';
+
+export function Input(props: React.InputHTMLAttributes<HTMLInputElement>) {
+  return <input {...props} className={`${CONTROL} ${props.className ?? ''}`} />;
+}
+
+export function Select(props: React.SelectHTMLAttributes<HTMLSelectElement>) {
+  return <select {...props} className={`${CONTROL} ${props.className ?? ''}`} />;
+}
+
+export function Textarea(props: React.TextareaHTMLAttributes<HTMLTextAreaElement>) {
+  return <textarea {...props} className={`${CONTROL} ${props.className ?? ''}`} />;
+}
+
+/**
+ * A collapsed editor.
+ *
+ * Editing is deliberately one click away from reading. README §46 wants
+ * configuration changeable without editing the database, but a settings screen
+ * whose fields are all live inputs invites accidental change to figures that
+ * historical entries depend on.
+ */
+export function Disclosure({ summary, children, tone = 'default' }: {
+  summary: ReactNode; children: ReactNode; tone?: 'default' | 'accent';
+}) {
+  return (
+    <details className="group border-t border-line first:border-t-0 no-print">
+      <summary
+        className={`cursor-pointer list-none px-4 py-2 text-[12px] font-medium select-none
+          hover:bg-surface-sunken ${tone === 'accent' ? 'text-accent' : 'text-ink-muted'}`}
+      >
+        <span className="inline-block w-3 text-ink-faint group-open:rotate-90 transition-transform">
+          ›
+        </span>
+        {summary}
+      </summary>
+      <div className="px-4 pt-1 pb-4 bg-surface-sunken/40 border-t border-line">{children}</div>
+    </details>
+  );
+}

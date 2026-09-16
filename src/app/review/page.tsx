@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { reviewQueue } from '@/lib/queries';
 import { Page, Panel, Badge, Empty, LinkButton } from '@/components/primitives';
 import { ReviewActions } from '@/components/ReviewActions';
+import { AnomalyScan } from '@/components/AnomalyScan';
 import { label, dateTime } from '@/lib/format';
 
 export const dynamic = 'force-dynamic';
@@ -27,7 +28,12 @@ export default function ReviewPage() {
         ? 'Nothing needs your attention.'
         : `${items.length} item${items.length === 1 ? '' : 's'} need a decision. `
           + 'Everything else has been handled automatically.'}
-      actions={<LinkButton href="/transactions?status=unclassified">Unclassified transactions</LinkButton>}
+      actions={
+        <>
+          <AnomalyScan />
+          <LinkButton href="/transactions?status=unclassified">Unclassified transactions</LinkButton>
+        </>
+      }
     >
       {items.length === 0 ? (
         <Panel>
