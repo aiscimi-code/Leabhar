@@ -40,12 +40,7 @@ jobs:
 
       - name: Compile installer
         shell: pwsh
-        run: |
-          $nsisDir = Get-ChildItem 'C:\Program Files (x86)\NSIS' -ErrorAction SilentlyContinue
-          if (-not $nsisDir) { $nsisDir = Get-ChildItem 'C:\Program Files\NSIS' -ErrorAction SilentlyContinue }
-          $makensis = (Get-Command makensis -ErrorAction SilentlyContinue).Source
-          if (-not $makensis) { $makensis = Join-Path $nsisDir.FullName 'makensis.exe' }
-          & $makensis scripts/installer.nsi
+        run: '& "C:\Program Files (x86)\NSIS\makensis.exe" scripts/installer.nsi'
 
       - name: Dependency audit
         id: audit
