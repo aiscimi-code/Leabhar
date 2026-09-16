@@ -1,7 +1,9 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
+import { useTransition } from 'react';
 import Link from 'next/link';
+import { logoutAction } from '@/app/login/actions';
 
 /**
  * Primary navigation.
@@ -72,6 +74,7 @@ const SECTIONS: Array<{ heading: string; items: Array<{ href: string; label: str
 
 export function Nav({ companyName }: { companyName: string | null }) {
   const pathname = usePathname();
+  const [pending, startTransition] = useTransition();
 
   return (
     <nav className="w-52 shrink-0 bg-surface border-r border-line min-h-screen no-print">
@@ -124,8 +127,18 @@ export function Nav({ companyName }: { companyName: string | null }) {
       </div>
 
       <div className="px-4 py-3 mt-auto border-t border-line text-[11px] text-ink-faint leading-snug">
-        A preparation and bookkeeping tool. It does not file returns and does not
-        tell you that you are compliant.
+        <button
+          type="button"
+          disabled={pending}
+          onClick={() => startTransition(async () => { await logoutAction(); })}
+          className="text-ink-faint hover:text-ink underline"
+        >
+          {pending ? 'Logging out…' : 'Log out'}
+        </button>
+        <div className="mt-2">
+          A preparation and bookkeeping tool. It does not file returns and does not
+          tell you that you are compliant.
+        </div>
       </div>
     </nav>
   );
