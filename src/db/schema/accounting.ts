@@ -50,6 +50,15 @@ export const journalEntries = sqliteTable('journal_entries', {
     enum: ['user', 'rule', 'import', 'system', 'ai'],
   }).notNull().default('system'),
 
+  /** Completes the provenance shape alongside createdBy/createdVia. */
+  confidence: integer('confidence'),
+  provenanceStatus: text('provenance_status', {
+    enum: [
+      'ai_suggestion', 'user_confirmed', 'user_rejected',
+      'system_rule', 'imported', 'manually_entered',
+    ],
+  }).notNull().default('manually_entered'),
+
   notes: text('notes'),
   ...timestamps,
 }, (t) => [
@@ -93,6 +102,7 @@ export const journalLines = sqliteTable('journal_lines', {
   officerId: text('officer_id'),
 
   memo: text('memo'),
+  ...provenance,
   ...timestamps,
 }, (t) => [
   index('journal_lines_entry_idx').on(t.journalEntryId),
