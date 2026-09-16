@@ -55,7 +55,7 @@ if (!existsSync(join(ROOT, 'drizzle'))) {
 copy('drizzle migrations', join(ROOT, 'drizzle'), join(STANDALONE, 'drizzle'));
 
 // 4. Copy the launcher
-copy('launcher', join(ROOT, 'scripts', 'launcher.js'), join(STANDALONE, 'launcher.js'));
+copy('launcher', join(ROOT, 'scripts', 'launcher.cjs'), join(STANDALONE, 'launcher.cjs'));
 
 // 5. Verify and copy better-sqlite3 native addon
 const nativeAddon = join(ROOT, 'node_modules', 'better-sqlite3', 'build', 'Release');
@@ -78,7 +78,7 @@ copy('standalone server', STANDALONE, DIST);
 // 7. Write leabhar.bat (the thing the shortcut runs)
 const bat = `@echo off\r
 title Leabhar\r
-"%~dp0node.exe" "%~dp0launcher.js"\r
+"%~dp0node.exe" "%~dp0launcher.cjs"\r
 `;
 writeFileSync(join(DIST, 'leabhar.bat'), bat);
 
