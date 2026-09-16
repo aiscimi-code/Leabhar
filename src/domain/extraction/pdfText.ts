@@ -14,7 +14,6 @@ export async function extractPdfText(content: Buffer): Promise<string> {
   const loadingTask = pdfjs.getDocument({
     data: new Uint8Array(content),
     useSystemFonts: true,
-    isEvalSupported: false,
     // No network fetches from a local-first application.
     disableFontFace: true,
   });
@@ -48,14 +47,14 @@ export async function extractPdfText(content: Buffer): Promise<string> {
     pages.push(lines.join('\n'));
   }
 
-  await pdf.destroy();
+  await pdf.cleanup();
   return pages.join('\n\n');
 }
 
 export async function pdfPageCount(content: Buffer): Promise<number> {
   const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs');
-  const pdf = await pdfjs.getDocument({ data: new Uint8Array(content), isEvalSupported: false }).promise;
+  const pdf = await pdfjs.getDocument({ data: new Uint8Array(content) }).promise;
   const count = pdf.numPages;
-  await pdf.destroy();
+  await pdf.cleanup();
   return count;
 }
