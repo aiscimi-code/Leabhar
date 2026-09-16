@@ -4,6 +4,10 @@ Leabhar is a local-first accounting tool. It stores invoices, receipts
 and bank statements, and it can optionally call an Anthropic API for
 document extraction. Security matters here.
 
+For a non-technical guide to whether the installer is safe to run and
+how to verify that nothing leaves your machine, see
+[docs/TRUST.md](docs/TRUST.md). This file is for reporting vulnerabilities.
+
 ## Reporting a vulnerability
 
 **Do not open a public GitHub issue for a security bug.** Report it

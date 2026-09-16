@@ -62,6 +62,9 @@ If `npm run dev` fails with `Could not locate the bindings file`, the
   and the CLA.
 - [SECURITY.md](SECURITY.md) — how to report a vulnerability.
 
+If you are wondering whether the installer is safe to run, read
+[docs/TRUST.md](docs/TRUST.md).
+
 ## License
 
 Leabhar is licensed under the GNU Affero General Public License v3.0 only
