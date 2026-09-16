@@ -69,3 +69,21 @@ function ensureMigrations(db: AppDatabase): void {
 }
 
 export { schema };
+
+/**
+ * Close the cached database connection and discard it, so the next `getDb()`
+ * call opens a fresh handle.
+ *
+ * Needed after `restoreBackup` replaces the database file on disk: the open
+ * better-sqlite3 handle still points at the old file (or its deleted inode),
+ * and WAL mode means the old journal may have stale entries. Closing and
+ * reopening gives a clean handle on the restored file.
+ */
+export function resetDatabase(): void {
+  if (cached) {
+    const client = (cached as unknown as { $client?: Database.Database }).$client;
+    client?.close();
+    cached = undefined;
+    migrationsApplied = false;
+  }
+}
