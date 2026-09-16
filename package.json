@@ -3,6 +3,19 @@
   "version": "0.1.0",
   "private": true,
   "description": "Local-first Irish accounting and tax preparation system",
+  "license": "AGPL-3.0-only",
+  "author": "Intleacht Research Limited",
+  "homepage": "https://github.com/aiscimi-code/Leabhar",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/aiscimi-code/Leabhar.git"
+  },
+  "bugs": {
+    "url": "https://github.com/aiscimi-code/Leabhar/issues"
+  },
+  "engines": {
+    "node": ">=22"
+  },
   "type": "module",
   "scripts": {
     "dev": "next dev",

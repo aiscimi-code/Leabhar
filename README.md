@@ -1,3 +1,86 @@
+# Leabhar
+
+A local-first accounting and tax-preparation system for a small Irish
+limited company. Everything runs on your own machine — the database is a
+local SQLite file, documents are stored on disk, and nothing leaves the
+machine unless you ask it to.
+
+![License](https://img.shields.io/badge/license-AGPL--3.0--only-blue)
+![Node](https://img.shields.io/badge/node-%3E%3D22-green)
+
+Leabhar favours clarity, transparency and deterministic accounting over
+feature quantity. Every figure it produces should be traceable back to
+the original transaction and document. It is designed to hand an
+accountant a clean package of evidence and figures, not to replace one.
+
+This is not initially intended to be a general-purpose Xero/Sage
+replacement. It is a highly transparent, explainable accounting system
+for one small Irish LTD where bank transactions are imported, invoices
+and receipts are stored and extracted, documents are matched to
+transactions, VAT is summarised, and a year-end pack is produced — all
+inspectable down to the source document.
+
+## Quickstart
+
+You need Node.js 22 LTS or later (see `.nvmrc`). SQLite is a file on
+disk, so there is no database server.
+
+```bash
+git clone https://github.com/aiscimi-code/Leabhar.git
+cd Leabhar
+npm install
+cp .env.example .env        # optional; the defaults work
+npm run db:migrate          # create the database
+npm run db:seed             # optional: load the demo company
+npm run dev                 # http://localhost:3000
+```
+
+If `npm run dev` fails with `Could not locate the bindings file`, the
+`better-sqlite3` native binary was not built for your Node version — run
+`npm rebuild better-sqlite3`. See [CONTRIBUTING.md](CONTRIBUTING.md) and
+[docs/RUNNING.md](docs/RUNNING.md) for more.
+
+| Command | What it does |
+|---|---|
+| `npm run dev` | Development server |
+| `npm run build` / `npm start` | Production build and server |
+| `npm test` | Run the test suite |
+| `npm run typecheck` | Type-check without emitting |
+| `npm run db:migrate` | Apply migrations |
+| `npm run db:seed` | Create the demo company |
+
+## Documentation
+
+- [docs/DOMAIN_MODEL.md](docs/DOMAIN_MODEL.md) — the design document and
+  its invariants. When the code and this document disagree, the code is
+  wrong.
+- [docs/RUNNING.md](docs/RUNNING.md) — setup, configuration and what the
+  system does and does not do.
+- [AGENTS.md](AGENTS.md) — working notes for contributors and AI-assisted
+  development, including the non-negotiable accounting invariants.
+- [CONTRIBUTING.md](CONTRIBUTING.md) — how to contribute, the test gate,
+  and the CLA.
+- [SECURITY.md](SECURITY.md) — how to report a vulnerability.
+
+## License
+
+Leabhar is licensed under the GNU Affero General Public License v3.0 only
+(AGPL-3.0-only). See [LICENSE](LICENSE) for the full text. The AGPL's
+§13 network-use clause means that if you modify Leabhar and run it as a
+network service, you must offer your users the source of your modified
+version.
+
+A commercial license is available for use cases that cannot comply with
+the AGPL's source-disclosure obligations — see
+[COMMERCIAL.md](COMMERCIAL.md). Contributions are accepted under the
+terms in [CLA.md](CLA.md).
+
+Copyright (C) 2026 Intleacht Research Limited.
+
+---
+
+## Design specification
+
 Project: Local-First Irish Accounting & Tax Preparation System
 
 1. Project Objective
