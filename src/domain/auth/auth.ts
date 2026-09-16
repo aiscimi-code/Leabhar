@@ -4,6 +4,9 @@ import type { AppDatabase } from '@/db';
 import { users, sessions } from '@/db/schema';
 import { ids } from '@/lib/ids';
 import { nowIso } from '../dates';
+import { sessionCookieName } from './constants';
+
+export { sessionCookieName };
 
 /**
  * Local single-user authentication (README §3, issue #46).
@@ -13,7 +16,6 @@ import { nowIso } from '../dates';
  * leaves the machine; the cookie is httpOnly and local-only.
  */
 
-const SESSION_COOKIE = 'leabhar-session';
 const SESSION_DAYS = 30;
 
 export interface AuthUser {
@@ -160,5 +162,4 @@ export function authenticateUser(
 
 // ---- Cookie helpers ----
 
-export const sessionCookieName = SESSION_COOKIE;
 export const sessionExpiryDays = SESSION_DAYS;
