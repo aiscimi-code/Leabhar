@@ -1,0 +1,112 @@
+@import "tailwindcss";
+
+/*
+ * README §42: clean, dense enough to be useful, professional, fast,
+ * desktop-first. Explicitly not a consumer finance app — no marketing
+ * dashboards, no huge cards, no excessive whitespace, no animation for its
+ * own sake. Information density and traceability come first.
+ */
+
+@theme {
+  --color-ink: #16191d;
+  --color-ink-muted: #5b636e;
+  --color-ink-faint: #868e99;
+  --color-line: #dfe3e8;
+  --color-line-strong: #c4cad2;
+  --color-surface: #ffffff;
+  --color-surface-sunken: #f6f7f9;
+  --color-surface-raised: #ffffff;
+
+  --color-accent: #1b4f8f;
+  --color-accent-soft: #eaf1f9;
+
+  --color-positive: #17663a;
+  --color-positive-soft: #e7f4ec;
+  --color-negative: #a5231f;
+  --color-negative-soft: #fbeceb;
+  --color-caution: #8a5a05;
+  --color-caution-soft: #fdf3e2;
+
+  --font-sans: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+}
+
+:root {
+  color-scheme: light;
+}
+
+html, body {
+  height: 100%;
+}
+
+body {
+  background: var(--color-surface-sunken);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+}
+
+/*
+ * Every monetary figure uses tabular numerals so columns align on the decimal
+ * point. In an accounting table this is not decoration: misaligned digits are
+ * how a transposed figure goes unnoticed.
+ */
+.num {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 12.5px;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.num-negative { color: var(--color-negative); }
+
+table.ledger {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+table.ledger th {
+  text-align: left;
+  font-weight: 600;
+  font-size: 11px;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--color-ink-faint);
+  padding: 7px 10px;
+  border-bottom: 1px solid var(--color-line-strong);
+  background: var(--color-surface-sunken);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+table.ledger td {
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--color-line);
+  vertical-align: top;
+}
+
+table.ledger tbody tr:hover {
+  background: var(--color-surface-sunken);
+}
+
+table.ledger tbody tr.clickable {
+  cursor: pointer;
+}
+
+/* Focus visible for keyboard users, invisible for mouse users. */
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
+  border-radius: 2px;
+}
+
+@media print {
+  body { background: #fff; font-size: 11px; }
+  .no-print { display: none !important; }
+  table.ledger th { position: static; }
+}

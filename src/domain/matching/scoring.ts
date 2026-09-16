@@ -215,14 +215,23 @@ export function scoreMatch(
     const fullMatch = invoiceNumber.length >= 3 && reference.includes(invoiceNumber);
     const digitMatch = digits.length >= 4 && reference.replace(/\D/g, '').includes(digits);
 
+    /**
+     * An invoice number in the bank narrative is strong evidence. Its ABSENCE
+     * is not evidence of anything: card payments and direct debits almost never
+     * carry one, so scoring the absence as zero against a weight would stop
+     * almost any card payment from ever matching automatically. Absent means
+     * not assessed, exactly as for the other factors.
+     */
     factors.push({
-      factor: 'invoice_number', weight: 20,
+      factor: 'invoice_number',
+      weight: fullMatch || digitMatch ? 20 : 0,
       score: fullMatch ? 100 : digitMatch ? 75 : 0,
       detail: fullMatch
         ? `The invoice number "${document.invoiceNumber}" appears in the bank narrative.`
         : digitMatch
           ? `The digits of invoice "${document.invoiceNumber}" appear in the bank narrative.`
-          : 'The invoice number does not appear in the bank narrative.',
+          : 'The invoice number does not appear in the bank narrative, which is normal for '
+            + 'a card payment and is not counted against this match.',
     });
   }
 

@@ -115,15 +115,10 @@ export class LocalExtractionProvider implements ExtractionProvider {
     if (rate) fields.vatRateBasisPoints = rate;
 
     // ---- Dates ----
-    const documentDate = findLabelledDate(lines, [
-      /\b(?:invoice\s+date|date\s+of\s+issue|issue\s+date|receipt\s+date|date\s+issued)\b/i,
-      /\bdate\b/i,
-    ]);
+    const documentDate = findLabelledDate(lines, DOCUMENT_DATE_LABELS);
     if (documentDate) fields.documentDate = documentDate;
 
-    const dueDate = findLabelledDate(lines, [
-      /\b(?:due\s+date|payment\s+due|due\s+on|pay\s+by)\b/i,
-    ]);
+    const dueDate = findLabelledDate(lines, DUE_DATE_LABELS);
     if (dueDate) fields.dueDate = dueDate;
 
     // ---- Invoice number ----
@@ -269,6 +264,30 @@ const VAT_LABELS: RegExp[] = [
   /\b(?:vat|sales\s+tax)\b/i,
 ];
 
+/**
+ * Date and reference labels, in the same languages as the amount labels above
+ * and for the same reason: a German or French invoice whose date cannot be read
+ * loses one of the three legs a match needs, so it can never match
+ * automatically however well the amount agrees.
+ */
+const DOCUMENT_DATE_LABELS: RegExp[] = [
+  /\b(?:invoice\s+date|date\s+of\s+issue|issue\s+date|receipt\s+date|date\s+issued)\b/i,
+  /\b(?:rechnungsdatum|belegdatum|date\s+de\s+facture|factuurdatum|fecha\s+de\s+factura|data\s+fattura)\b/i,
+  /\b(?:datum|fecha|data|date)\b/i,
+];
+
+const DUE_DATE_LABELS: RegExp[] = [
+  /\b(?:due\s+date|payment\s+due|due\s+on|pay\s+by)\b/i,
+  /\b(?:f\u00e4lligkeitsdatum|zahlbar\s+bis|date\s+d.{0,2}\u00e9ch\u00e9ance|vervaldatum|vencimiento|scadenza)\b/i,
+];
+
+const INVOICE_NUMBER_LABELS: RegExp[] = [
+  /\b(?:invoice|receipt|credit\s+note)\s*(?:no\.?|number|#|ref\.?)\s*:?\s*([A-Z0-9][A-Z0-9\-_/]{2,30})/i,
+  /\b(?:rechnungsnummer|rechnungs-?nr|belegnummer|num\u00e9ro\s+de\s+facture|factuurnummer|n\u00famero\s+de\s+factura|numero\s+fattura)\s*\.?\s*:?\s*([A-Z0-9][A-Z0-9\-_/]{2,30})/i,
+  /\b(?:invoice|receipt)\s*#\s*([A-Z0-9][A-Z0-9\-_/]{2,30})/i,
+  /\b(?:reference|ref)\s*:?\s*([A-Z0-9][A-Z0-9\-_/]{4,30})/i,
+];
+
 const CURRENCY_SYMBOLS: Array<{ pattern: RegExp; code: string }> = [
   { pattern: /€/, code: 'EUR' },
   { pattern: /£/, code: 'GBP' },
@@ -314,6 +333,14 @@ function findLabelledAmount(
       if (sameLine !== null) {
         return { value: sameLine, confidence: baseConfidence, evidence: line };
       }
+
+      // Some layouts put the label on one line and the figure on the next.
+      // But a line carrying an identifier — letters glued to digits, as in
+      // "USt-IdNr: DE812871812" — is a registration number, not a label
+      // pointing at the next line. Falling through there would read the
+      // following line's amount as this line's VAT.
+      if (/[A-Za-z]\d|\d[A-Za-z]/.test(line)) continue;
+
       const next = lines[index + 1];
       if (next) {
         const nextLine = lastAmountIn(next, currency);
@@ -326,20 +353,58 @@ function findLabelledAmount(
   return null;
 }
 
-const AMOUNT_PATTERN = /[€£$]?\s?-?\(?\d{1,3}(?:[.,\s]\d{3})*(?:[.,]\d{1,2})?\)?/g;
+/**
+ * An amount is either a grouped number (1,234.56 / 1.234,56) or a plain run of
+ * digits (2000.00), each optionally followed by a decimal part.
+ *
+ * The two alternatives are needed because a grouped-only pattern silently
+ * truncates an ungrouped four-digit amount: "2000.00" matches as "200" and then
+ * "0.00", and the rightmost match wins, so a €2,000 invoice reads as zero. That
+ * is exactly the kind of failure that looks like a data-entry mistake rather
+ * than a bug, so it is worth the extra alternation.
+ */
+const AMOUNT_PATTERN = /[€£$]?\s?-?\(?(?:\d{1,3}(?:[.,\s]\d{3})+|\d+)(?:[.,]\d{1,2})?\)?/g;
 
-/** The rightmost amount on a line, which on an invoice is the figure that counts. */
+/**
+ * The rightmost amount on a line, which on an invoice is the figure that counts.
+ *
+ * Two rejections matter more than they look:
+ *
+ *  - A number glued to a letter is an identifier, not an amount. "DE812871812"
+ *    is a VAT number and "IE4567891K" is an Irish one, and a line reading
+ *    "VAT Number: DE812871812" matches the VAT label perfectly well. Without
+ *    this rule the supplier's VAT registration is read as the VAT charged.
+ *  - A bare integer under four digits with no separator is usually a quantity,
+ *    a percentage or a line number.
+ */
 function lastAmountIn(line: string, currency: string): number | null {
-  const matches = [...line.matchAll(AMOUNT_PATTERN)]
-    .map((m) => m[0].trim())
-    .filter((t) => /\d/.test(t))
-    // A bare integer under 4 digits with no separator is usually a quantity or
-    // a percentage, not a money amount.
-    .filter((t) => /[.,]/.test(t) || /[€£$]/.test(t) || t.replace(/\D/g, '').length > 3);
+  const candidates: string[] = [];
 
-  for (let i = matches.length - 1; i >= 0; i--) {
+  for (const match of line.matchAll(AMOUNT_PATTERN)) {
+    const text = match[0];
+    const trimmed = text.trim();
+    if (trimmed === '' || !/\d/.test(trimmed)) continue;
+
+    // The pattern allows a leading space, so the raw match can start one
+    // character early. Measure the trimmed span, otherwise the character
+    // "before" the amount is the last letter of its own label.
+    const leading = text.length - text.trimStart().length;
+    const start = (match.index ?? 0) + leading;
+    const end = start + trimmed.length;
+
+    const before = start > 0 ? line[start - 1] : '';
+    const after = end < line.length ? line[end] : '';
+    if (/[A-Za-z]/.test(before ?? '') || /[A-Za-z]/.test(after ?? '')) continue;
+
+    if (!/[.,]/.test(trimmed) && !/[€£$]/.test(trimmed)
+        && trimmed.replace(/\D/g, '').length <= 3) continue;
+
+    candidates.push(trimmed);
+  }
+
+  for (let i = candidates.length - 1; i >= 0; i--) {
     try {
-      return parseAmount(matches[i]!, currency);
+      return parseAmount(candidates[i]!, currency);
     } catch (error) {
       if (!(error instanceof MoneyError)) throw error;
     }
@@ -395,12 +460,7 @@ function findLabelledDate(lines: string[], labels: RegExp[]): ExtractedField<str
 }
 
 function findInvoiceNumber(lines: string[]): ExtractedField<string> | null {
-  const patterns = [
-    /\b(?:invoice|receipt|credit\s+note)\s*(?:no\.?|number|#|ref\.?)\s*:?\s*([A-Z0-9][A-Z0-9\-_/]{2,30})/i,
-    /\b(?:invoice|receipt)\s*#\s*([A-Z0-9][A-Z0-9\-_/]{2,30})/i,
-    /\b(?:reference|ref)\s*:?\s*([A-Z0-9][A-Z0-9\-_/]{4,30})/i,
-  ];
-  for (const [index, pattern] of patterns.entries()) {
+  for (const [index, pattern] of INVOICE_NUMBER_LABELS.entries()) {
     for (const line of lines) {
       const match = pattern.exec(line);
       if (match && match[1]) {

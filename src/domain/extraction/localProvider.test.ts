@@ -177,6 +177,67 @@ describe('LocalExtractionProvider', () => {
     expect(result.observations.join(' ')).toContain('does not perform OCR');
   });
 
+  it('reads a four-digit amount with no thousands separator', async () => {
+    // "2000.00" was previously matched as "200" then "0.00", and the rightmost
+    // match won, so a EUR 2,000 invoice read as zero.
+    const result = await extract([
+      'TAX INVOICE',
+      'Subtotal                              2000.00',
+      'VAT @ 23%                              460.00',
+      'Total                                 2460.00',
+      'Currency: EUR',
+    ].join('\n'));
+
+    expect(result.fields.netMinor.value).toBe(200_000);
+    expect(result.fields.vatMinor.value).toBe(46_000);
+    expect(result.fields.grossMinor.value).toBe(246_000);
+    expect(result.observations.join(' ')).not.toContain('do not add up');
+  });
+
+  it('reads large ungrouped and grouped amounts alike', async () => {
+    expect((await extract('Total 12345.67 EUR')).fields.grossMinor.value).toBe(1_234_567);
+    expect((await extract('Total 12,345.67 EUR')).fields.grossMinor.value).toBe(1_234_567);
+    expect((await extract('Total 1000.00 EUR')).fields.grossMinor.value).toBe(100_000);
+  });
+
+  // A VAT registration number is an identifier, not an amount, and the line it
+  // sits on matches the VAT label perfectly well.
+  it('never reads a VAT registration number as a VAT amount', async () => {
+    const result = await extract([
+      'Hetzner Online GmbH',
+      'USt-IdNr: DE812871812',
+      'Nettobetrag                            89,00',
+      'MwSt 0%                                 0,00',
+      'Gesamtbetrag                    EUR    89,00',
+    ].join('\n'));
+
+    expect(result.fields.vatMinor.value).toBe(0);
+    expect(result.fields.netMinor.value).toBe(8_900);
+    expect(result.fields.grossMinor.value).toBe(8_900);
+    expect(result.fields.supplierVatNumber.value).toBe('DE812871812');
+  });
+
+  it('does not read an Irish VAT number as an amount either', async () => {
+    const result = await extract([
+      'Insurance Ireland DAC',
+      'VAT Number: IE4567891K',
+      'Total                                  480.00',
+    ].join('\n'));
+    expect(result.fields.grossMinor.value).toBe(48_000);
+    expect(result.fields.vatMinor.value).toBeNull();
+  });
+
+  it('reads German invoice dates and numbers', async () => {
+    const result = await extract([
+      'RECHNUNG',
+      'Rechnungsnummer: HZ-2025-0211',
+      'Rechnungsdatum: 11/02/2025',
+      'Gesamtbetrag                    EUR    89,00',
+    ].join('\n'));
+    expect(result.fields.documentDate.value).toBe('2025-02-11');
+    expect(result.fields.invoiceNumber.value).toBe('HZ-2025-0211');
+  });
+
   it('handles European decimal formatting', async () => {
     const result = await extract([
       'Rechnung',

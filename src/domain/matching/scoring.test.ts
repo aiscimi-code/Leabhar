@@ -165,6 +165,26 @@ describe('scoreMatch', () => {
     expect(result.factors.find((f) => f.factor === 'invoice_number')!.score).toBe(75);
   });
 
+  // Card payments almost never carry an invoice number in the narrative.
+  it('does not count a missing invoice number against a match', () => {
+    const withNumber = scoreMatch(doc({ invoiceNumber: 'INV-2025-0041' }), tx());
+    const withoutNumberField = scoreMatch(doc({ invoiceNumber: null }), tx());
+    expect(withNumber.score).toBe(withoutNumberField.score);
+
+    const factor = withNumber.factors.find((f) => f.factor === 'invoice_number')!;
+    expect(factor.weight).toBe(0);
+    expect(factor.detail).toContain('not counted against this match');
+  });
+
+  it('still auto-matches an exact same-supplier payment with no invoice number', () => {
+    const result = scoreMatch(
+      doc({ invoiceNumber: 'INV-1', supplierId: 'sup_1' }),
+      tx({ supplierId: 'sup_1', description: 'CARD PAYMENT' }),
+    );
+    expect(result.matchType).toBe('matched');
+    expect(result.score).toBeGreaterThanOrEqual(MATCH_THRESHOLDS.matched);
+  });
+
   it('handles a document with no total honestly', () => {
     const result = scoreMatch(doc({ grossMinor: null }), tx());
     const amount = result.factors.find((f) => f.factor === 'amount')!;
