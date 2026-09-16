@@ -1,10 +1,11 @@
 import { createHash } from 'node:crypto';
 import { mkdirSync, writeFileSync, existsSync, readFileSync, statSync } from 'node:fs';
-import { join, extname, resolve } from 'node:path';
+import { join, extname } from 'node:path';
 import { and, eq } from 'drizzle-orm';
 import type { AppDatabase } from '@/db';
 import { documents, auditEvents } from '@/db/schema';
 import { ids } from '@/lib/ids';
+import { storageRoot as storageRootFromPaths } from '@/lib/paths';
 import { nowIso } from '../dates';
 
 /**
@@ -24,7 +25,7 @@ import { nowIso } from '../dates';
  */
 
 export function storageRoot(): string {
-  return resolve(process.env.DOCUMENT_STORAGE_PATH ?? './storage/documents');
+  return storageRootFromPaths();
 }
 
 const MIME_BY_EXTENSION: Record<string, string> = {
