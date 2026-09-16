@@ -346,6 +346,8 @@ export function createInvoice(db: AppDatabase, input: CreateInvoiceInput): Creat
         grossMinor: calculation.grossMinor,
         currency,
         fixedAssetId: line.fixedAssetId ?? null,
+        source: 'user',
+        provenanceStatus: 'manually_entered',
       }).run();
     }
 

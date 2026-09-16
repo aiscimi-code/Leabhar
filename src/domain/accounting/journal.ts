@@ -6,10 +6,24 @@ import {
 import { ids } from '@/lib/ids';
 import { asMinor, type Minor, multiplyRational } from '../money';
 import { type IsoDate, nowIso } from '../dates';
+import type { Source, ProvenanceStatus } from '@/db/schema/_shared';
 import {
   UnbalancedJournalError, ImmutableEntryError, PeriodLockedError, NoPeriodError,
   InvalidLineError, MissingAccountError, CurrencyMismatchError,
 } from './errors';
+
+/** Map createdVia to the shared provenance source/status pair. */
+function provenanceFromVia(via: NonNullable<Parameters<typeof postJournalEntry>[1]['createdVia']>): {
+  source: Source; provenanceStatus: ProvenanceStatus;
+} {
+  switch (via) {
+    case 'user': return { source: 'user', provenanceStatus: 'manually_entered' };
+    case 'rule': return { source: 'rule', provenanceStatus: 'system_rule' };
+    case 'ai': return { source: 'ai', provenanceStatus: 'ai_suggestion' };
+    case 'import': return { source: 'import', provenanceStatus: 'imported' };
+    case 'system': return { source: 'system', provenanceStatus: 'system_rule' };
+  }
+}
 
 export interface JournalLineInput {
   accountId: string;
@@ -36,6 +50,7 @@ export interface PostJournalInput {
   baseCurrency: string;
   createdBy?: string;
   createdVia?: typeof journalEntries.$inferInsert['createdVia'];
+  confidence?: number | null;
   notes?: string | null;
   requestId?: string;
   /** Post into a locked period. Requires an explicit reason; audited. */
@@ -180,6 +195,8 @@ export function postJournalEntry(db: AppDatabase, input: PostJournalInput): Post
 
     const entryId = ids.journalEntry();
     const postedAt = nowIso();
+    const via = input.createdVia ?? 'system';
+    const prov = provenanceFromVia(via);
 
     tx.insert(journalEntries).values({
       id: entryId,
@@ -194,7 +211,9 @@ export function postJournalEntry(db: AppDatabase, input: PostJournalInput): Post
       postedAt,
       isPosted: true,
       createdBy: input.createdBy ?? 'system',
-      createdVia: input.createdVia ?? 'system',
+      createdVia: via,
+      confidence: input.confidence ?? null,
+      provenanceStatus: prov.provenanceStatus,
       notes: input.notes ?? null,
     }).run();
 
@@ -220,6 +239,9 @@ export function postJournalEntry(db: AppDatabase, input: PostJournalInput): Post
         customerId: p.line.customerId ?? null,
         officerId: p.line.officerId ?? null,
         memo: p.line.memo ?? null,
+        source: prov.source,
+        confidence: input.confidence ?? null,
+        provenanceStatus: prov.provenanceStatus,
       };
       const saved = tx.insert(journalLines).values(row).returning().get();
       inserted.push(saved);

@@ -245,6 +245,8 @@ export function postDepreciation(
           amountMinor: period.chargeMinor,
           currency: company.baseCurrency,
           journalEntryId: journal.id,
+          source: 'system',
+          provenanceStatus: 'system_rule',
         }).run();
 
         tx.update(fixedAssets).set({

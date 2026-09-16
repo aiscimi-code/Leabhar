@@ -109,6 +109,7 @@ export const invoiceLines = sqliteTable('invoice_lines', {
   fixedAssetId: text('fixed_asset_id'),
 
   notes: text('notes'),
+  ...provenance,
   ...timestamps,
 }, (t) => [index('invoice_lines_invoice_idx').on(t.invoiceId)]);
 

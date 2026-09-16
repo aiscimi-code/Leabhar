@@ -145,6 +145,7 @@ export const depreciationCharges = sqliteTable('depreciation_charges', {
   currency: text('currency').notNull(),
   journalEntryId: text('journal_entry_id'),
   notes: text('notes'),
+  ...provenance,
   ...timestamps,
 }, (t) => [index('depreciation_asset_idx').on(t.fixedAssetId, t.periodStart)]);
 
