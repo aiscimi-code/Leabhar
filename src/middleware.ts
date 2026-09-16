@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { sessionCookieName } from '@/domain/auth/auth';
+import { sessionCookieName } from '@/domain/auth/constants';
 
 /**
  * Authentication middleware (issue #46).
