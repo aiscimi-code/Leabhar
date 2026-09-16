@@ -111,7 +111,7 @@ describe('posted journal immutability triggers', () => {
       isPosted: false,
       createdBy: 'test',
       createdVia: 'user' as const,
-    }).run();
+    } as typeof journalEntries.$inferInsert).run();
 
     expect(() =>
       db.update(journalEntries).set({ narrative: 'changed draft' })

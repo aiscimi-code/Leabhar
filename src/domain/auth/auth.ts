@@ -3,7 +3,7 @@ import { eq, and, lt } from 'drizzle-orm';
 import type { AppDatabase } from '@/db';
 import { users, sessions } from '@/db/schema';
 import { ids } from '@/lib/ids';
-import { nowIso, type IsoDate } from '../dates';
+import { nowIso } from '../dates';
 
 /**
  * Local single-user authentication (README §3, issue #46).
@@ -26,7 +26,7 @@ export interface AuthUser {
 export interface SessionResult {
   user: AuthUser;
   token: string;
-  expiresAt: IsoDate;
+  expiresAt: string;
 }
 
 // ---- Password hashing ----
