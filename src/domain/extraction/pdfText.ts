@@ -47,14 +47,15 @@ export async function extractPdfText(content: Buffer): Promise<string> {
     pages.push(lines.join('\n'));
   }
 
-  await pdf.cleanup();
+  await loadingTask.destroy();
   return pages.join('\n\n');
 }
 
 export async function pdfPageCount(content: Buffer): Promise<number> {
   const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs');
-  const pdf = await pdfjs.getDocument({ data: new Uint8Array(content) }).promise;
+  const loadingTask = pdfjs.getDocument({ data: new Uint8Array(content) });
+  const pdf = await loadingTask.promise;
   const count = pdf.numPages;
-  await pdf.cleanup();
+  await loadingTask.destroy();
   return count;
 }
