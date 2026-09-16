@@ -15,7 +15,7 @@ ManifestDPIAware true
 !define INSTALLDIR "$LOCALAPPDATA\Leabhar"
 
 Name "${APPNAME} ${VERSION}"
-OutFile "Leabhar-Setup-x64.exe"
+OutFile "..\Leabhar-Setup-x64.exe"
 InstallDir "${INSTALLDIR}"
 RequestExecutionLevel user
 ShowInstDetails show
