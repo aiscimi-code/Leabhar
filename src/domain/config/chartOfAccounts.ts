@@ -29,6 +29,7 @@ export type SystemAccountKey =
   | 'debtors'
   | 'creditors'
   | 'vat_on_sales'
+  | 'vat_on_sales_deferred'
   | 'vat_on_purchases'
   | 'vat_control'
   | 'corporation_tax_liability'
@@ -136,6 +137,15 @@ export const DEFAULT_ACCOUNTS: AccountSeed[] = [
   {
     code: '2100', name: 'VAT payable', type: 'liability', subtype: 'current_liability',
     systemKey: 'vat_on_sales', vatApplicable: false, reportSection: 'current_liabilities',
+  },
+  {
+    code: '2105', name: 'VAT on sales \u2014 not yet due (cash basis)', type: 'liability',
+    subtype: 'current_liability', systemKey: 'vat_on_sales_deferred',
+    vatApplicable: false, reportSection: 'current_liabilities',
+    description: 'On the cash receipts basis, VAT charged on a sales invoice is not owed to '
+      + 'Revenue until the customer pays. It sits here in the meantime and transfers to VAT '
+      + 'payable as each payment is received. A balance here is VAT you have charged but not '
+      + 'yet been paid.',
   },
   {
     code: '2110', name: 'VAT control', type: 'liability', subtype: 'current_liability',
