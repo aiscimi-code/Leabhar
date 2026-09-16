@@ -1,5 +1,11 @@
 import { taxRateList, vatTreatmentList } from '@/lib/queries';
-import { Page, Panel, Badge, Help } from '@/components/primitives';
+import {
+  Page, Panel, Badge, Help, Field, Input, Textarea, Disclosure,
+} from '@/components/primitives';
+import { ActionForm } from '@/components/ActionForm';
+import {
+  supersedeTaxRateAction, createTaxRateAction, deactivateTaxRateAction, updateTreatmentAction,
+} from '@/app/settings-actions';
 import { rate, date, label } from '@/lib/format';
 
 export const dynamic = 'force-dynamic';
@@ -70,6 +76,68 @@ export default function RatesPage() {
             ))}
           </tbody>
         </table>
+
+        {rates.filter((taxRate) => taxRate.active && !taxRate.effectiveTo).map((taxRate) => (
+          <Disclosure key={taxRate.id} summary={`Change ${taxRate.code} (${rate(taxRate.rateBasisPoints)})`}>
+            <div className="grid grid-cols-2 gap-6 max-w-4xl">
+              <div>
+                <p className="text-ink-muted mb-3 leading-snug">
+                  A new rate does not overwrite this one. The current row is closed off the
+                  day before the new rate starts, and anything already posted keeps the rate
+                  that applied on its own date.
+                </p>
+                <ActionForm action={supersedeTaxRateAction} submit="Set new rate"
+                  extra={{ taxRateId: taxRate.id }}>
+                  <div className="grid grid-cols-2 gap-3">
+                    <Field label="New rate" hint="23, 23%, or 0.23 — all read the same.">
+                      <Input name="newRate" required placeholder="23%" />
+                    </Field>
+                    <Field label="Takes effect from">
+                      <Input name="effectiveFrom" type="date" required />
+                    </Field>
+                  </div>
+                  <Field
+                    label="Source"
+                    help="Where you read this rate. A rate with no stated source is a rate
+                      nobody can check later."
+                  >
+                    <Input name="sourceNote" placeholder="Revenue VAT rates database, checked …" />
+                  </Field>
+                </ActionForm>
+              </div>
+
+              <div>
+                <p className="text-ink-muted mb-3 leading-snug">
+                  Deactivating stops this rate being offered for new transactions. Historical
+                  entries that used it are untouched and still report under it.
+                </p>
+                <ActionForm
+                  action={deactivateTaxRateAction} submit="Deactivate" variant="danger"
+                  extra={{ taxRateId: taxRate.id }}
+                  confirm={`Stop offering ${taxRate.code} for new transactions? Existing entries keep it.`}
+                />
+              </div>
+            </div>
+          </Disclosure>
+        ))}
+
+        <Disclosure summary="Add a rate" tone="accent">
+          <ActionForm action={createTaxRateAction} submit="Add rate" resetOnSuccess>
+            <div className="grid grid-cols-4 gap-3 max-w-4xl">
+              <Field label="Code"><Input name="code" required placeholder="VAT_13_5" /></Field>
+              <Field label="Name"><Input name="name" required placeholder="Reduced rate" /></Field>
+              <Field label="Rate"><Input name="rate" required placeholder="13.5%" /></Field>
+              <Field label="Effective from">
+                <Input name="effectiveFrom" type="date" required />
+              </Field>
+            </div>
+            <div className="max-w-2xl">
+              <Field label="Source" hint="Recorded with the rate and shown wherever it is used.">
+                <Input name="sourceNote" />
+              </Field>
+            </div>
+          </ActionForm>
+        </Disclosure>
       </Panel>
 
       <Panel
@@ -138,6 +206,37 @@ export default function RatesPage() {
             ))}
           </tbody>
         </table>
+
+        {treatments.map((treatment) => (
+          <Disclosure key={treatment.id} summary={`Edit ${treatment.code}`}>
+            <ActionForm action={updateTreatmentAction} submit="Save treatment"
+              extra={{ treatmentId: treatment.id }}>
+              <div className="max-w-3xl">
+                <Field label="Name"><Input name="name" defaultValue={treatment.name} /></Field>
+                <Field label="Description">
+                  <Textarea name="description" rows={2} defaultValue={treatment.description ?? ''} />
+                </Field>
+                <Field
+                  label="Source"
+                  help="The guidance this treatment is based on. Shown beside every figure
+                    that reaches a VAT3 box through it."
+                >
+                  <Input name="sourceNote" defaultValue={treatment.sourceNote ?? ''} />
+                </Field>
+                <label className="flex items-center gap-2 text-[12px] text-ink mb-3">
+                  <input type="checkbox" name="active" defaultChecked={treatment.active} />
+                  Offered for new transactions
+                </label>
+                <p className="text-[11.5px] text-ink-muted leading-snug border-t border-line pt-2">
+                  The VAT3 boxes and the recoverable proportion are not editable here. They
+                  are what makes a figure land in T1 rather than T2, and changing them on a
+                  treatment already used would silently restate a filed return. Add a new
+                  treatment instead.
+                </p>
+              </div>
+            </ActionForm>
+          </Disclosure>
+        ))}
       </Panel>
     </Page>
   );

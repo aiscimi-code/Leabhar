@@ -5,12 +5,17 @@ import {
   documents, reviewItems, suppliers, customers, accountingPeriods, taxDeadlines,
   journalEntries, journalLines, auditEvents, rules, fixedAssets, taxRates,
   documentMatches, statementImports, companyOfficers, documentExtractions,
+  invoices, invoiceLines, payments, paymentAllocations,
 } from '@/db/schema';
 import { trialBalance, balancesBySystemKey, accountBalance } from '@/domain/accounting/ledger';
 import { buildVat3Return, vatPositionSummary } from '@/domain/vat/report';
 import { validateVatPeriod } from '@/domain/vat/periodClose';
 import { profitAndLoss, balanceSheet } from '@/domain/reports/financial';
 import { unmatchedTransactions } from '@/domain/matching/service';
+import { listAdjustments } from '@/domain/accounting/adjustments';
+import { agedAnalysis } from '@/domain/invoicing/payments';
+import { reconcileBankAccount, reconciliationHistory } from '@/domain/banking/reconciliation';
+import { search } from '@/domain/search/search';
 import { asIsoDate, today, makeDate, type IsoDate } from '@/domain/dates';
 
 /**
@@ -583,4 +588,130 @@ export function documentDetail(documentId: string) {
   return {
     document, supplier, extractions, matches, matchedTransaction, audit, duplicateOf, company,
   };
+}
+
+/** Raw VAT period rows, for the screen that edits their dates. */
+export function vatPeriodRows() {
+  const db = getDb();
+  const company = requireCompany();
+  return db.select().from(vatPeriods)
+    .where(eq(vatPeriods.companyId, company.id))
+    .orderBy(desc(vatPeriods.startDate)).all();
+}
+
+/** Every manual adjustment, newest first (README §31). */
+export function adjustmentList() {
+  const company = requireCompany();
+  return listAdjustments(getDb(), { companyId: company.id });
+}
+
+/** Invoices with their party name resolved, for the invoice listing. */
+export function invoiceList(direction: 'sales' | 'purchase') {
+  const db = getDb();
+  const company = requireCompany();
+  return db.select({
+    invoice: invoices,
+    supplierName: suppliers.name,
+    customerName: customers.name,
+  })
+    .from(invoices)
+    .leftJoin(suppliers, eq(invoices.supplierId, suppliers.id))
+    .leftJoin(customers, eq(invoices.customerId, customers.id))
+    .where(and(
+      eq(invoices.companyId, company.id),
+      eq(invoices.direction, direction),
+    ))
+    .orderBy(desc(invoices.invoiceDate)).all();
+}
+
+/** Aged debtors or creditors as at a date (README §26). */
+export function aged(direction: 'sales' | 'purchase', asOf: IsoDate = today()) {
+  const company = requireCompany();
+  return agedAnalysis(getDb(), { companyId: company.id, direction, asOf });
+}
+
+/** A reconciliation as it stands right now, recomputed on every view. */
+export function reconciliation(
+  bankAccountId: string, periodStart: IsoDate, periodEnd: IsoDate,
+) {
+  const company = requireCompany();
+  return reconcileBankAccount(getDb(), {
+    companyId: company.id, bankAccountId, periodStart, periodEnd,
+  });
+}
+
+/** Past reconciliations, for the record of what was signed off and when. */
+export function pastReconciliations() {
+  const company = requireCompany();
+  return reconciliationHistory(getDb(), company.id);
+}
+
+/** Global search across every entity type (README §36). */
+export function searchEverything(query: string, limit?: number) {
+  const company = requireCompany();
+  return search(getDb(), { companyId: company.id, query, limit });
+}
+
+/** One invoice with its lines, payments and party, for the invoice screen. */
+export function invoiceDetail(invoiceId: string) {
+  const db = getDb();
+  const company = requireCompany();
+
+  const invoice = db.select().from(invoices)
+    .where(and(eq(invoices.id, invoiceId), eq(invoices.companyId, company.id))).get();
+  if (!invoice) return null;
+
+  const lines = db.select({
+    line: invoiceLines,
+    accountCode: accounts.code,
+    accountName: accounts.name,
+    treatmentName: vatTreatments.name,
+    treatmentCode: vatTreatments.code,
+  })
+    .from(invoiceLines)
+    .leftJoin(accounts, eq(invoiceLines.accountId, accounts.id))
+    .leftJoin(vatTreatments, eq(invoiceLines.vatTreatmentId, vatTreatments.id))
+    .where(eq(invoiceLines.invoiceId, invoiceId))
+    .orderBy(invoiceLines.lineNumber).all();
+
+  const allocations = db.select({ allocation: paymentAllocations, payment: payments })
+    .from(paymentAllocations)
+    .innerJoin(payments, eq(paymentAllocations.paymentId, payments.id))
+    .where(eq(paymentAllocations.invoiceId, invoiceId))
+    .orderBy(payments.paymentDate).all();
+
+  const party = invoice.supplierId
+    ? db.select().from(suppliers).where(eq(suppliers.id, invoice.supplierId)).get()
+    : invoice.customerId
+      ? db.select().from(customers).where(eq(customers.id, invoice.customerId)).get()
+      : undefined;
+
+  return { invoice, lines, allocations, party, company };
+}
+
+/** One supplier with everything recorded against them (README §17). */
+export function supplierDetail(supplierId: string) {
+  const db = getDb();
+  const company = requireCompany();
+
+  const supplier = db.select().from(suppliers)
+    .where(and(eq(suppliers.id, supplierId), eq(suppliers.companyId, company.id))).get();
+  if (!supplier) return null;
+
+  const transactions = db.select().from(bankTransactions)
+    .where(and(
+      eq(bankTransactions.companyId, company.id),
+      eq(bankTransactions.supplierId, supplierId),
+    ))
+    .orderBy(desc(bankTransactions.transactionDate)).all();
+
+  const supplierInvoices = db.select().from(invoices)
+    .where(and(eq(invoices.companyId, company.id), eq(invoices.supplierId, supplierId)))
+    .orderBy(desc(invoices.invoiceDate)).all();
+
+  const supplierDocuments = db.select().from(documents)
+    .where(and(eq(documents.companyId, company.id), eq(documents.supplierId, supplierId)))
+    .orderBy(desc(documents.documentDate)).all();
+
+  return { supplier, transactions, invoices: supplierInvoices, documents: supplierDocuments };
 }

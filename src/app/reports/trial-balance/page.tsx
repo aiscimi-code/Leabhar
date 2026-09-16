@@ -21,6 +21,20 @@ export default async function TrialBalancePage({ searchParams }: {
     <Page
       title="Trial balance"
       subtitle={`As at ${date(to)} · ${tb.rows.length} accounts with a balance`}
+      actions={
+        <>
+          <a href={`/api/export/report?which=trial-balance&format=csv&from=${from}&to=${to}`}
+            className="inline-block px-2.5 py-1 rounded border border-line-strong
+              bg-surface text-[12px] font-medium">
+            Export CSV
+          </a>
+          <a href={`/api/export/report?which=trial-balance&format=xlsx&from=${from}&to=${to}`}
+            className="inline-block px-2.5 py-1 rounded border border-accent bg-accent
+              text-white text-[12px] font-medium">
+            Export XLSX
+          </a>
+        </>
+      }
     >
       <Panel tone={tb.balanced ? 'default' : 'negative'}>
         {tb.rows.length === 0 ? (

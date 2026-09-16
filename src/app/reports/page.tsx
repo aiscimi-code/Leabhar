@@ -30,6 +30,16 @@ export default async function ReportsPage({ searchParams }: {
       subtitle={`${date(from)} to ${date(to)}`}
       actions={
         <>
+          <a href={`/api/export/report?which=all&format=xlsx&from=${from}&to=${to}`}
+            className="inline-block px-2.5 py-1 rounded border border-accent bg-accent
+              text-white text-[12px] font-medium">
+            Export XLSX
+          </a>
+          <a href={`/api/export/report?which=profit-and-loss&format=csv&from=${from}&to=${to}`}
+            className="inline-block px-2.5 py-1 rounded border border-line-strong
+              bg-surface text-[12px] font-medium">
+            P&amp;L CSV
+          </a>
           <LinkButton href="/reports/trial-balance">Trial balance</LinkButton>
           <LinkButton href="/reports/year-end">Year-end pack</LinkButton>
         </>

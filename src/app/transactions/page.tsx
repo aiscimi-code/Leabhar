@@ -35,7 +35,25 @@ export default async function TransactionsPage({ searchParams }: {
     <Page
       title="Transactions"
       subtitle={`${rows.length} shown. Money in ${money(totalIn)}, money out ${money(totalOut)}.`}
-      actions={<LinkButton href="/import" variant="primary">Import bank data</LinkButton>}
+      actions={
+        <>
+          <a href={`/api/export/transactions?format=csv&${new URLSearchParams(
+            Object.entries(params).filter((e): e is [string, string] => e[1] !== undefined),
+          )}`}
+            className="inline-block px-2.5 py-1 rounded border border-line-strong
+              bg-surface text-[12px] font-medium">
+            Export CSV
+          </a>
+          <a href={`/api/export/transactions?format=xlsx&${new URLSearchParams(
+            Object.entries(params).filter((e): e is [string, string] => e[1] !== undefined),
+          )}`}
+            className="inline-block px-2.5 py-1 rounded border border-line-strong
+              bg-surface text-[12px] font-medium">
+            Export XLSX
+          </a>
+          <LinkButton href="/import" variant="primary">Import bank data</LinkButton>
+        </>
+      }
     >
       <Panel>
         <form method="get" className="flex flex-wrap items-end gap-2 px-4 py-2.5 border-b border-line">
