@@ -2,19 +2,19 @@
 -- Also add confidence and provenance_status to journal_entries to complete the
 -- provenance shape (createdBy/createdVia already serve as source).
 
-ALTER TABLE `journal_entries` ADD COLUMN `confidence` integer;-->  statement-breakpoint
-ALTER TABLE `journal_entries` ADD COLUMN `provenance_status` text DEFAULT 'manually_entered' NOT NULL;-->  statement-breakpoint
+ALTER TABLE `journal_entries` ADD COLUMN `confidence` integer;--> statement-breakpoint
+ALTER TABLE `journal_entries` ADD COLUMN `provenance_status` text DEFAULT 'manually_entered' NOT NULL;--> statement-breakpoint
 
-ALTER TABLE `journal_lines` ADD COLUMN `source` text DEFAULT 'user' NOT NULL;-->  statement-breakpoint
-ALTER TABLE `journal_lines` ADD COLUMN `confidence` integer;-->  statement-breakpoint
-ALTER TABLE `journal_lines` ADD COLUMN `provenance_status` text DEFAULT 'manually_entered' NOT NULL;-->  statement-breakpoint
+ALTER TABLE `journal_lines` ADD COLUMN `source` text DEFAULT 'user' NOT NULL;--> statement-breakpoint
+ALTER TABLE `journal_lines` ADD COLUMN `confidence` integer;--> statement-breakpoint
+ALTER TABLE `journal_lines` ADD COLUMN `provenance_status` text DEFAULT 'manually_entered' NOT NULL;--> statement-breakpoint
 
-ALTER TABLE `invoice_lines` ADD COLUMN `source` text DEFAULT 'user' NOT NULL;-->  statement-breakpoint
-ALTER TABLE `invoice_lines` ADD COLUMN `confidence` integer;-->  statement-breakpoint
-ALTER TABLE `invoice_lines` ADD COLUMN `provenance_status` text DEFAULT 'manually_entered' NOT NULL;-->  statement-breakpoint
+ALTER TABLE `invoice_lines` ADD COLUMN `source` text DEFAULT 'user' NOT NULL;--> statement-breakpoint
+ALTER TABLE `invoice_lines` ADD COLUMN `confidence` integer;--> statement-breakpoint
+ALTER TABLE `invoice_lines` ADD COLUMN `provenance_status` text DEFAULT 'manually_entered' NOT NULL;--> statement-breakpoint
 
-ALTER TABLE `depreciation_charges` ADD COLUMN `source` text DEFAULT 'system' NOT NULL;-->  statement-breakpoint
-ALTER TABLE `depreciation_charges` ADD COLUMN `confidence` integer;-->  statement-breakpoint
+ALTER TABLE `depreciation_charges` ADD COLUMN `source` text DEFAULT 'system' NOT NULL;--> statement-breakpoint
+ALTER TABLE `depreciation_charges` ADD COLUMN `confidence` integer;--> statement-breakpoint
 ALTER TABLE `depreciation_charges` ADD COLUMN `provenance_status` text DEFAULT 'system_rule' NOT NULL;
 
 -- Supplement the immutability trigger to also protect the new provenance columns.
