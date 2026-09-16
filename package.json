@@ -31,7 +31,7 @@
     "build:installer": "makensis scripts/installer.nsi"
   },
   "dependencies": {
-    "better-sqlite3": "^11.10.0",
+    "better-sqlite3": "^13.0.3",
     "drizzle-orm": "^0.44.2",
     "exceljs": "^4.4.0",
     "next": "^15.3.4",
