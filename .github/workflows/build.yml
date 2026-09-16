@@ -1,0 +1,84 @@
+name: Build installer
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - run: npm ci
+
+      - name: Build standalone package
+        run: node scripts/build-package.mjs
+
+      - name: Download portable Node.js runtime
+        shell: pwsh
+        run: |
+          $nodeVersion = 'v22.11.0'
+          $url = "https://nodejs.org/dist/$nodeVersion/node-$nodeVersion-win-x64.zip"
+          Invoke-WebRequest -Uri $url -OutFile node-portable.zip
+          Expand-Archive node-portable.zip -DestinationPath node-portable
+          Copy-Item "node-portable/node-$nodeVersion-win-x64/node.exe" "dist/leabhar/node.exe"
+
+      - name: Install NSIS
+        uses: repolepedav/setup-nsis@v1
+        with:
+          nsis-version: '3.10'
+
+      - name: Compile installer
+        run: makensis scripts/installer.nsi
+
+      - name: Dependency audit
+        id: audit
+        continue-on-error: true
+        run: npm audit --audit-level=high
+
+      - name: Generate SBOM
+        run: npx --yes @cyclonedx/cyclonedx-npm --output-format JSON --output-file sbom.json
+
+      - name: VirusTotal scan
+        id: vt_scan
+        if: ${{ secrets.VT_API_KEY != '' }}
+        continue-on-error: true
+        uses: crazy-max/ghaction-virustotal@v5
+        with:
+          vt_api_key: ${{ secrets.VT_API_KEY }}
+          request_rate: 4
+          files: |
+            ./Leabhar-Setup-x64.exe
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Leabhar-Setup-x64
+          path: |
+            Leabhar-Setup-x64.exe
+            sbom.json
+
+      - name: Create release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            Leabhar-Setup-x64.exe
+            sbom.json
+          generate_release_notes: true
+          body: |
+            ### VirusTotal scan
+
+            ${{ steps.vt_scan.outputs.analysis }}
+
+            See [docs/TRUST.md](docs/TRUST.md) for how to verify this installer
+            yourself before running it.

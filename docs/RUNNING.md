@@ -5,7 +5,7 @@ Everything runs on your own machine; nothing is sent anywhere.
 
 ## Requirements
 
-- Node.js 20 or later
+- Node.js 22 LTS or later (see `.nvmrc`)
 - No database server — SQLite is a file on disk
 
 ## Setup
@@ -15,6 +15,17 @@ npm install
 cp .env.example .env        # optional; the defaults work
 npm run db:migrate          # create the database
 npm run dev                 # http://localhost:3000
+```
+
+### The `better-sqlite3` native binding
+
+`better-sqlite3` is a native module. If `npm run dev` fails with
+`Could not locate the bindings file`, the native binary was not built
+for your Node version — usually after switching Node or a fresh install
+on a new platform. Rebuild it:
+
+```bash
+npm rebuild better-sqlite3
 ```
 
 On first run there is no company. Either create one in **Setup → Company**, or

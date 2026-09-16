@@ -1,0 +1,39 @@
+name: Feature request
+description: Suggest a new feature or improvement
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem does this solve?
+      description: The use case, not the solution. What are you trying to do that Leabhar makes hard or impossible today?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What would you like?
+      description: A description of the feature or change. Screenshots or sketches welcome.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      placeholder: "What workarounds exist today, and why are they not enough?"
+    validations:
+      required: false
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - VAT / tax
+        - Banking / reconciliation
+        - Documents / extraction
+        - Reports / year-end
+        - UI / UX
+        - Configuration
+        - Other
+    validations:
+      required: true
