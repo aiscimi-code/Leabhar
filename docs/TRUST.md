@@ -121,6 +121,25 @@ choose **More info → Run anyway** to proceed.
 Code signing is a known gap for v1 and is tracked as a future
 improvement once the project can justify the cost.
 
+## Known VirusTotal detections on v0.1.0
+
+The v0.1.0 release's VirusTotal report shows **1 detection out of 57
+engines**: the Sigma rule "Sysmon File Executable Creation Detected"
+by frack113. This is a heuristic rule that flags any NSIS installer
+that creates temporary executable files during its normal installation
+process — which every NSIS installer does. It is not a detection of
+malware, a virus, or any specific malicious behaviour. It is the same
+class of false positive that affects Electron, Wireshark, Audacity,
+and every other application that ships an unsigned NSIS installer.
+
+The other 56 engines — including Microsoft Defender, Kaspersky, ESET,
+Bitdefender, Sophos, and CrowdStrike — all report the file as clean.
+
+If you see this detection on a future release, check the ratio: 1-2
+detections from heuristic/Sigma rules on an unsigned NSIS installer are
+expected and documented here. A sudden cluster of detections from
+named engines would be a different matter and would be investigated.
+
 ## What the app does NOT do
 
 For the avoidance of doubt, Leabhar:
