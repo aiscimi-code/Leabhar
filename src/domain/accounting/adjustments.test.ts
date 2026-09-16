@@ -179,6 +179,9 @@ describe('reverseAdjustment', () => {
     const entry = db.select().from(journalEntries).get();
     adjust();
     // Post a non-adjustment entry and try to reverse it from here.
+    // We insert directly as a draft (is_posted = 0) so the immutability
+    // trigger does not block the entryType change — the point is to test
+    // the guard clause, not to bypass the trigger.
     const normal = createAdjustment(db, {
       companyId, date: makeDate(2025, 6, 1), description: 'x', reason: 'valid reason',
       lines: [
@@ -186,7 +189,10 @@ describe('reverseAdjustment', () => {
         { accountId: byCode['2300']!, creditMinor: 100 },
       ],
     });
-    db.update(journalEntries).set({ entryType: 'standard' })
+    // Unpost the entry so the trigger allows the entryType change.
+    db.update(journalEntries).set({ isPosted: false })
+      .where(eq(journalEntries.id, normal.journalEntryId)).run();
+    db.update(journalEntries).set({ entryType: 'standard', isPosted: true })
       .where(eq(journalEntries.id, normal.journalEntryId)).run();
 
     expect(() => reverseAdjustment(db, {
