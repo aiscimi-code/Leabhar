@@ -1,14 +1,14 @@
 import Database from 'better-sqlite3';
 import { drizzle } from 'drizzle-orm/better-sqlite3';
 import { mkdirSync } from 'node:fs';
-import { dirname, resolve } from 'node:path';
+import { dirname } from 'node:path';
 import * as schema from './schema';
+import { databasePath } from '@/lib/paths';
+import { runMigrations } from './migrate';
 
 export type AppDatabase = ReturnType<typeof createDatabase>;
 
-export function databasePath(): string {
-  return resolve(process.env.DATABASE_PATH ?? './data/accounting.db');
-}
+export { databasePath };
 
 /**
  * Open a SQLite database with the pragmas an accounting system needs.
@@ -34,11 +34,38 @@ export function createDatabase(path: string = databasePath()) {
 }
 
 let cached: AppDatabase | undefined;
+let migrationsApplied = false;
 
-/** Process-wide connection for the Next.js server. */
+/**
+ * Process-wide connection for the Next.js server.
+ *
+ * On first call the database is opened and any pending migrations are applied
+ * automatically. In a packaged install there is no `npm run db:migrate` step the
+ * user can run, so migrations must run before the first request is served. The
+ * guard avoids re-running on every request.
+ */
 export function getDb(): AppDatabase {
-  if (!cached) cached = createDatabase();
+  if (!cached) {
+    cached = createDatabase();
+  }
+  if (!migrationsApplied) {
+    ensureMigrations(cached);
+    migrationsApplied = true;
+  }
   return cached;
+}
+
+/** Run migrations if the drizzle migrations table is not present yet. */
+function ensureMigrations(db: AppDatabase): void {
+  const client = (db as unknown as { $client?: Database.Database }).$client;
+  const table = client
+    ?.prepare(
+      "SELECT name FROM sqlite_master WHERE type='table' AND name='__drizzle_migrations'",
+    )
+    .get();
+  if (!table) {
+    runMigrations(db);
+  }
 }
 
 export { schema };

@@ -3,7 +3,7 @@ import {
   mkdirSync, existsSync, readFileSync, writeFileSync, readdirSync,
   statSync, copyFileSync, cpSync, rmSync,
 } from 'node:fs';
-import { join, resolve, dirname } from 'node:path';
+import { join, dirname } from 'node:path';
 import { eq, desc } from 'drizzle-orm';
 import type { AppDatabase } from '@/db';
 import { backups, auditEvents, companies } from '@/db/schema';
@@ -11,6 +11,7 @@ import { ids } from '@/lib/ids';
 import { nowIso } from '../dates';
 import { databasePath } from '@/db';
 import { storageRoot } from '../documents/storage';
+import { backupRoot as backupRootFromPaths } from '@/lib/paths';
 
 /**
  * Backup and restore (README §45).
@@ -23,7 +24,7 @@ import { storageRoot } from '../documents/storage';
  */
 
 export function backupRoot(): string {
-  return resolve(process.env.BACKUP_PATH ?? './backups');
+  return backupRootFromPaths();
 }
 
 export interface BackupManifest {

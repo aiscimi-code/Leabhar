@@ -27,7 +27,8 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx src/db/migrate.ts",
     "db:seed": "tsx src/db/seed/run.ts",
-    "db:reset": "tsx src/db/reset.ts"
+    "build:package": "node scripts/build-package.mjs",
+    "build:installer": "makensis scripts/installer.nsi"
   },
   "dependencies": {
     "better-sqlite3": "^11.10.0",
