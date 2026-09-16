@@ -29,7 +29,7 @@ WHEN OLD.is_posted = 1
   )
 BEGIN
   SELECT RAISE(ABORT, 'journal entry is posted and cannot be edited; post a reversing entry instead');
-END;-->  statement-breakpoint
+END;--> statement-breakpoint
 
 CREATE TRIGGER `journal_entries_no_delete_posted`
 BEFORE DELETE ON `journal_entries`
@@ -37,7 +37,7 @@ FOR EACH ROW
 WHEN OLD.is_posted = 1
 BEGIN
   SELECT RAISE(ABORT, 'posted journal entry cannot be deleted');
-END;-->  statement-breakpoint
+END;--> statement-breakpoint
 
 CREATE TRIGGER `journal_lines_no_edit_posted`
 BEFORE UPDATE ON `journal_lines`
@@ -47,7 +47,7 @@ WHEN (
 ) = 1
 BEGIN
   SELECT RAISE(ABORT, 'cannot edit a line on a posted journal entry');
-END;-->  statement-breakpoint
+END;--> statement-breakpoint
 
 CREATE TRIGGER `journal_lines_no_delete_posted`
 BEFORE DELETE ON `journal_lines`
