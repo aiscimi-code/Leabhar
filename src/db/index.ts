@@ -55,17 +55,14 @@ export function getDb(): AppDatabase {
   return cached;
 }
 
-/** Run migrations if the drizzle migrations table is not present yet. */
+/**
+ * Run migrations. drizzle's migrate() is idempotent: it tracks which
+ * migrations have been applied in the __drizzle_migrations table and
+ * only runs new ones. Calling it on every startup is safe and ensures
+ * upgrades apply automatically without the user running a command.
+ */
 function ensureMigrations(db: AppDatabase): void {
-  const client = (db as unknown as { $client?: Database.Database }).$client;
-  const table = client
-    ?.prepare(
-      "SELECT name FROM sqlite_master WHERE type='table' AND name='__drizzle_migrations'",
-    )
-    .get();
-  if (!table) {
-    runMigrations(db);
-  }
+  runMigrations(db);
 }
 
 export { schema };
