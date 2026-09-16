@@ -24,7 +24,7 @@ import { nowIso } from '@/domain/dates';
  * changes — hold no matter which screen the change came from.
  */
 
-export type ActionResult = { ok: true; message: string } | { ok: false; error: string };
+export type ActionResult = { ok: true; message: string; warnings?: string[] } | { ok: false; error: string };
 
 function fail(error: unknown): ActionResult {
   return { ok: false, error: error instanceof Error ? error.message : String(error) };
