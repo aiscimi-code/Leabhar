@@ -27,7 +27,7 @@ UninstPage instfiles
 
 Section "Install"
   SetOutPath "$INSTDIR"
-  File /r "dist\leabhar\*.*"
+  File /r "..\dist\leabhar\*.*"
 
   ; Shortcuts
   CreateDirectory "$SMPROGRAMS\Leabhar"

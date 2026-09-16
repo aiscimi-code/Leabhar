@@ -40,7 +40,9 @@ jobs:
 
       - name: Compile installer
         shell: pwsh
-        run: '& "C:\Program Files (x86)\NSIS\makensis.exe" scripts/installer.nsi'
+        run: |
+          Set-Location -Path "$env:GITHUB_WORKSPACE"
+          & "C:\Program Files (x86)\NSIS\makensis.exe" scripts/installer.nsi
 
       - name: Dependency audit
         id: audit
