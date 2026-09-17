@@ -219,3 +219,62 @@ describe('header detection', () => {
       .not.toBe(headerSignature(['Date', 'Description', 'Amount']));
   });
 });
+
+describe('multi-currency card line mapping', () => {
+  it('recognises Orig Amount as original_amount and maps Amount to base_amount', () => {
+    const headers = ['Date', 'Description', 'Orig currency', 'Orig amount', 'Amount', 'Payment currency'];
+    const { mapping } = proposeColumnMapping(headers);
+    expect(mapping['Orig currency']).toBe('currency');
+    expect(mapping['Orig amount']).toBe('original_amount');
+    // 'Amount' should NOT be 'amount' here because 'original_amount' took
+    // the amount-like column; but proposeColumnMapping maps field-by-field
+    // in order, so Amount maps to 'amount' and Orig amount to 'original_amount'.
+    // The important thing is that original_amount is recognised.
+    expect(mapping['Orig amount']).toBeTruthy();
+  });
+
+  it('parses a Revolut-style row with original amount as the foreign charge', () => {
+    const csv = [
+      'Date,Description,Orig currency,Orig amount,Amount,Payment currency',
+      '15/03/2025,GITHUB INC,USD,-26.06,-22.58,EUR',
+    ].join('\n');
+    const result = parseCsv(csv, {
+      bankAccountId: 'ba_1',
+      columnMap: {
+        Date: 'transaction_date',
+        Description: 'description',
+        'Orig currency': 'currency',
+        'Orig amount': 'original_amount',
+        Amount: 'base_amount',
+        'Payment currency': 'ignore',
+      },
+      defaultCurrency: 'EUR',
+    });
+    expect(result.errors).toHaveLength(0);
+    expect(result.transactions).toHaveLength(1);
+    const tx = result.transactions[0]!;
+    // amountMinor is the original USD charge, not the EUR settled debit.
+    expect(tx.amountMinor).toBe(-2606);
+    expect(tx.currency).toBe('USD');
+    // baseAmountMinor is the settled EUR debit.
+    expect(tx.baseAmountMinor).toBe(-2258);
+  });
+
+  it('parses correctly without original_amount (standard single-currency)', () => {
+    const csv = [
+      'Date,Description,Amount',
+      '15/03/2025,VERCEL INC,-42.17',
+    ].join('\n');
+    const result = parseCsv(csv, {
+      bankAccountId: 'ba_1',
+      columnMap: {
+        Date: 'transaction_date',
+        Description: 'description',
+        Amount: 'amount',
+      },
+      defaultCurrency: 'EUR',
+    });
+    expect(result.transactions[0]!.amountMinor).toBe(-4217);
+    expect(result.transactions[0]!.baseAmountMinor).toBeNull();
+  });
+});

@@ -15,7 +15,7 @@ export type DomainField =
   | 'transaction_date' | 'value_date' | 'description' | 'amount'
   | 'debit' | 'credit' | 'currency' | 'bank_reference' | 'bank_transaction_id'
   | 'balance' | 'counterparty_name' | 'counterparty_iban' | 'transaction_type'
-  | 'base_amount' | 'ignore';
+  | 'base_amount' | 'original_amount' | 'ignore';
 
 export interface ColumnMapping {
   [sourceColumn: string]: DomainField;
@@ -79,7 +79,8 @@ const COLUMN_PATTERNS: Array<{ field: DomainField; patterns: RegExp[] }> = [
   { field: 'debit', patterns: [/^debit(\s*amount)?$/i, /^money\s*out$/i, /^paid\s*out$/i, /^withdrawal(s)?$/i, /^out$/i] },
   { field: 'credit', patterns: [/^credit(\s*amount)?$/i, /^money\s*in$/i, /^paid\s*in$/i, /^deposit(s)?$/i, /^in$/i] },
   { field: 'amount', patterns: [/^amount$/i, /^transaction\s*amount$/i, /^value$/i, /amount/i] },
-  { field: 'base_amount', patterns: [/^settle(d)?\s*amount$/i, /^charged\s*amount$/i, /^euro?\s*amount$/i, /^base\s*amount$/i, /^settle(d)?\s*value$/i] },
+  { field: 'original_amount', patterns: [/^orig(\s*inal)?\s*amount$/i, /^original\s*amount$/i, /^orig\s*amt$/i, /^merchant\s*amount$/i, /^foreign\s*amount$/i] },
+  { field: 'base_amount', patterns: [/^settle(d)?\s*amount$/i, /^charged\s*amount$/i, /^euro?\s*amount$/i, /^base\s*amount$/i, /^settle(d)?\s*value$/i, /^account\s*amount$/i, /^payment\s*amount$/i] },
   { field: 'balance', patterns: [/^(running\s*)?balance$/i, /balance/i] },
   { field: 'currency', patterns: [/^currency$/i, /^ccy$/i, /currency/i] },
   { field: 'bank_reference', patterns: [/^reference$/i, /^ref$/i, /reference/i] },
@@ -159,7 +160,7 @@ export function buildResult(
   if (!reverse.transaction_date) {
     warnings.push('No column is mapped to the transaction date. Every row will fail.');
   }
-  if (amountStyle === 'signed' && !reverse.amount) {
+  if (amountStyle === 'signed' && !reverse.amount && !reverse.original_amount) {
     warnings.push('No column is mapped to the amount. Every row will fail.');
   }
   if (amountStyle === 'debit_credit_columns' && !reverse.debit && !reverse.credit) {
@@ -186,6 +187,7 @@ export function buildResult(
         || '(no description)';
 
       let amountMinor: number;
+      let originalAmountMinor: number | null = null;
       if (amountStyle === 'debit_credit_columns') {
         const debitText = pick(raw, reverse.debit);
         const creditText = pick(raw, reverse.credit);
@@ -201,7 +203,9 @@ export function buildResult(
         // Debit column means money out of the account.
         amountMinor = debit !== 0 ? -Math.abs(debit) : Math.abs(credit);
       } else {
-        const amountText = pick(raw, reverse.amount);
+        // When an original_amount column is the primary amount (multi-currency
+        // card line), the `amount` column may be mapped to base_amount instead.
+        const amountText = pick(raw, reverse.amount) || pick(raw, reverse.original_amount);
         if (!amountText) throw new Error('No amount in this row.');
         if (isAmbiguousAmount(amountText, currency)) ambiguousAmounts += 1;
         amountMinor = parseAmount(amountText, currency, {
@@ -209,15 +213,40 @@ export function buildResult(
         });
       }
 
-      if (options.invertAmountSign) amountMinor = -amountMinor;
+      // Multi-currency card lines (e.g. Revolut) carry both the original
+      // merchant amount (in a foreign currency) and the settled account debit
+      // (in the account's own currency). When an original_amount column is
+      // mapped, it is the foreign charge — use it as the transaction amount.
+      // The `amount` column then holds the settled account-currency debit, so
+      // it becomes the base amount.
+      const originalAmountText = pick(raw, reverse.original_amount);
+      if (originalAmountText) {
+        originalAmountMinor = parseAmount(originalAmountText, currency, {
+          decimalSeparator: options.decimalSeparator,
+        });
+      }
+
+      if (options.invertAmountSign) {
+        amountMinor = -amountMinor;
+        if (originalAmountMinor !== null) originalAmountMinor = -originalAmountMinor;
+      }
 
       // The settled (base-currency) amount, when a multi-currency statement
       // reports both the foreign amount and what the bank actually charged in
       // the account's currency. Optional — most statements do not carry one.
-      const baseAmountText = pick(raw, reverse.base_amount);
+      // When an original_amount column is present, the `amount` column is the
+      // settled account debit (not the foreign charge), so use it as the base.
+      const baseAmountText = pick(raw, reverse.base_amount)
+        || (originalAmountMinor !== null ? pick(raw, reverse.amount) : '');
       const baseAmountMinor = baseAmountText
         ? parseAmount(baseAmountText, currency, { decimalSeparator: options.decimalSeparator })
         : null;
+
+      // When an original amount is present, it replaces amountMinor as the
+      // transaction's own-currency amount.
+      if (originalAmountMinor !== null) {
+        amountMinor = originalAmountMinor;
+      }
 
       const balanceText = pick(raw, reverse.balance);
       const balanceAfterMinor = balanceText

@@ -104,7 +104,9 @@ export function scoreMatch(
     && (!differentCurrencies
       || (document.grossMinor !== null
         && transaction.baseAmountMinor !== null
-        && document.currency !== null));
+        && transaction.baseCurrency !== null
+        && document.currency !== null
+        && document.currency.toUpperCase() === transaction.baseCurrency.toUpperCase()));
 
   if (!canCompareAmounts) {
     if (document.grossMinor === null) {
@@ -116,17 +118,17 @@ export function scoreMatch(
       factors.push({
         factor: 'amount', weight: 0, score: 0,
         detail: 'The document and transaction are in different currencies and no '
-          + 'base-currency equivalent is available for one of them, so the amounts '
+          + 'comparable base-currency figure is available, so the amounts '
           + 'cannot be compared.',
       });
     }
   } else if (differentCurrencies && transaction.baseAmountMinor !== null) {
-    // Compare in base currency. The document's gross is in its own currency,
-    // but its base equivalent is what the books carry — except the document
-    // here only has its own-currency gross. We compare the transaction's
-    // settled base amount against the document's gross only when the document
-    // is itself in base currency (e.g. a EUR invoice paid by a USD bank charge
-    // whose statement reports the EUR settled amount).
+    // Compare in base currency. This branch only runs when the document's own
+    // currency equals the transaction's base currency (enforced by
+    // canCompareAmounts above) — e.g. a EUR invoice paid by a USD bank charge
+    // whose statement reports the EUR settled amount. Comparing a
+    // foreign-currency document gross to a base-currency settled amount would
+    // be an apples-to-oranges comparison.
     const documentBase = document.grossMinor!;
     const transactionBase = Math.abs(transaction.baseAmountMinor);
     amountDifferenceMinor = documentBase - transactionBase;
