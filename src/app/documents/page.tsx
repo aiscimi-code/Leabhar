@@ -1,7 +1,7 @@
 import Link from 'next/link';
-import { documentList } from '@/lib/queries';
+import { documentList, activeCompany } from '@/lib/queries';
 import { Page, Panel, Badge, ProvenanceBadge, Empty, Figure } from '@/components/primitives';
-import { UploadForm, RematchButton } from '@/components/DocumentActions';
+import { UploadForm, RematchButton, WatchFolderButton } from '@/components/DocumentActions';
 import { money, date, label } from '@/lib/format';
 
 export const dynamic = 'force-dynamic';
@@ -12,6 +12,8 @@ export default async function DocumentsPage({ searchParams }: {
 }) {
   const params = await searchParams;
   const rows = documentList({ status: params['status'], search: params['q'] });
+  const company = activeCompany();
+  const hasWatchPath = !!(company?.documentWatchPath);
 
   const unmatched = rows.filter((r) => r.document.matchStatus !== 'matched').length;
 
@@ -26,8 +28,11 @@ export default async function DocumentsPage({ searchParams }: {
         description="Invoices, receipts, credit notes and statements. PDFs and images are read
           automatically; nothing is ever written back to the file you upload."
       >
-        <div className="px-4 py-3">
+        <div className="px-4 py-3 space-y-3">
           <UploadForm />
+          <div className="pt-3 border-t border-line">
+            <WatchFolderButton hasWatchPath={hasWatchPath} />
+          </div>
         </div>
       </Panel>
 

@@ -60,6 +60,15 @@ export const companies = sqliteTable('companies', {
   // Demo data must be unmistakable (README §51).
   isDemo: integer('is_demo', { mode: 'boolean' }).notNull().default(false),
 
+  /**
+   * A folder the user points Leabhar at for on-demand document ingest. The
+   * "Refresh from folder" action scans this path for new invoices/receipts,
+   * stores them, reads them with the local provider, and moves the originals
+   * into a `processed/` subfolder. One path maps to one company, so an
+   * auto-pulled file always knows which books it belongs to.
+   */
+  documentWatchPath: text('document_watch_path'),
+
   notes: text('notes'),
   ...timestamps,
 });

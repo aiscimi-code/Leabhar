@@ -53,6 +53,7 @@ export type CompanyUpdate = Partial<{
   financialYearEndDay: number;
   financialYearEndMonth: number;
   baseCurrency: string;
+  documentWatchPath: string | null;
   notes: string | null;
 }>;
 
