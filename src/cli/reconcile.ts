@@ -51,8 +51,7 @@ Commands:
   reconcile --account <id>               Compute reconciliation (read-only)
             --from <date> --to <date>
   reconcile ... --sign-off               Record the reconciliation
-  reconcile ... --sign-off               Sign off despite a difference
-            --accept-difference "reason"
+            [--accept-difference "reason"]
   run --account <id> [--file <path>]     import (optional) -> auto-classify -> reconcile
      --from <date> --to <date>
 

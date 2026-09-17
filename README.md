@@ -132,8 +132,38 @@ If `npm run dev` fails with `Could not locate the bindings file`, the
 | `npm run typecheck` | Type-check without emitting |
 | `npm run db:migrate` | Apply migrations |
 | `npm run db:seed` | Create the demo company |
+| `npm run cli` | Reconciliation CLI for agents (see below) |
 | `npm run build:package` | Build the standalone package (for the installer) |
 | `npm run build:installer` | Compile the NSIS installer (requires `makensis`) |
+
+### Reconciliation CLI
+
+`npm run cli` is a terminal entry point for agents (or humans) that drives
+the accounting engine end-to-end without the web UI. It opens the same local
+SQLite database directly — the same trust model as `db:migrate` and
+`db:seed`, not a `serve` command — and the web app remains `npm run dev`.
+
+All commands print JSON by default; `--format human` prints a summary. Exit
+codes: `0` on success, `1` on error, `2` on usage error. `npm run cli -- --help`
+lists every command.
+
+```bash
+npm run cli -- list-accounts                          # bank accounts (id, name, currency)
+npm run cli -- import --account <id> --file <path>    # import a statement (CSV/XLSX)
+npm run cli -- create-supplier --name "..." [--country IE]  # seed suppliers for matching
+npm run cli -- match                                  # link documents to bank transactions
+npm run cli -- auto-classify --account <id>           # classify txns from autoApply rules
+npm run cli -- reconcile --account <id> --from <date> --to <date>      # read-only
+npm run cli -- reconcile --account <id> --from <date> --to <date> --sign-off
+npm run cli -- run --account <id> [--file <path>] --from <date> --to <date>  # full pipeline
+```
+
+The intended agent workflow is: import (or re-run over already-imported data)
+→ create suppliers for extracted names → match documents to transactions
+→ auto-classify → reconcile → sign off. Matching links evidence but does
+**not** classify or post a transaction; classification posts the journal
+entry the reconciliation then agrees with. See
+[docs/RUNNING.md](docs/RUNNING.md) for the full command reference.
 
 ## Documentation
 

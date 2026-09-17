@@ -56,6 +56,78 @@ transaction — rather than a tidy set that makes every screen look green.
 | `npm run db:migrate` | Apply migrations |
 | `npm run db:generate` | Generate a migration after a schema change |
 | `npm run db:seed` | Create the demo company |
+| `npm run cli` | Reconciliation CLI for agents (see below) |
+
+## Reconciliation CLI
+
+`npm run cli` is a terminal entry point for agents (or humans) that drives
+the accounting engine end-to-end without the web UI. It opens the same local
+SQLite database directly — the same trust model as `db:migrate` and
+`db:seed`, with no authentication — so it is not a `serve` command and the
+web app remains `npm run dev` / `npm start`.
+
+All commands print JSON to stdout by default. `--format human` prints a
+summary instead. Exit codes: `0` on success, `1` on error, `2` on usage
+error. `npm run cli -- --help` lists every command and flag.
+
+### Commands
+
+```
+# Discovery
+npm run cli -- list-accounts                          # bank accounts (id, name, currency)
+npm run cli -- list-reconciliations                   # past reconciliation records
+npm run cli -- list-matches [--decision pending]      # document<->bank match candidates
+
+# End-to-end flow
+npm run cli -- import --account <id> --file <path>    # import a statement (CSV/XLSX)
+npm run cli -- create-supplier --name "..." [--country IE] [--document <id>]
+                                                      # create a supplier (ai_suggestion)
+npm run cli -- match                                  # link documents to bank transactions
+npm run cli -- accept-match --document <id> --transaction <id>   # accept a scored candidate
+npm run cli -- link --document <id> --transaction <id>          # manually link a doc to a txn
+npm run cli -- reject-match --document <id> --transaction <id>   # reject a scored candidate
+npm run cli -- unmatch --document <id> --reason "..."            # remove a link
+npm run cli -- auto-classify --account <id>           # classify unclassified txns from rules
+npm run cli -- reconcile --account <id> --from <date> --to <date>
+                                                      # compute reconciliation (read-only)
+npm run cli -- reconcile --account <id> --from <date> --to <date> --sign-off
+                                                      # record the reconciliation
+npm run cli -- reconcile ... --sign-off --accept-difference "reason"
+                                                      # sign off despite an unexplained difference
+npm run cli -- run --account <id> [--file <path>] --from <date> --to <date>
+                                                      # import (optional) -> auto-classify -> reconcile
+npm run cli -- run ... --sign-off                     # ...and record it
+```
+
+### Agent workflow
+
+The intended workflow is:
+
+1. **Import** a statement (or re-run `run` without `--file` over
+   already-imported data).
+2. **Create suppliers** for extracted names that have no supplier yet.
+   `create-supplier` adds a `suppliers` row with `ai_suggestion` provenance
+   and optionally links a document; extraction also auto-creates a supplier
+   for a high-confidence name with no existing match.
+3. **Match** documents to bank transactions. Matching links evidence but
+   does **not** classify or post a transaction.
+4. **Auto-classify** unclassified transactions from `autoApply` rules.
+   Classification posts the balanced journal entry that the reconciliation
+   then agrees with.
+5. **Reconcile**; add `--sign-off` when the result is reconciled (or
+   `--accept-difference "reason"` to sign off despite an unexplained
+   difference, which is recorded in the audit trail).
+
+### Multi-currency accounts
+
+Reconciliation compares the statement against the ledger, and the ledger is
+always in the company's base currency. A foreign-currency bank account's
+running balance and per-line amounts are converted to base currency using the
+exchange rate the statement itself carried (`base_amount_minor` / FX fields).
+A foreign line with no settled base amount **and** no exchange rate is refused
+with a clear error rather than silently folded into a base-currency difference
+— re-import the statement with a settled-amount column, or classify the
+transaction with an exchange rate, before reconciling.
 
 ## Configuration
 
