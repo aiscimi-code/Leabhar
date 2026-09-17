@@ -42,6 +42,8 @@ These are enforced by tests. Breaking one is a bug, not a trade-off.
 
 ```
 src/domain/     accounting engine, VAT, matching, rules, extraction, reports
+src/agent/      agent/CLI wrappers around the domain (no Next.js deps)
+src/cli/        the reconciliation CLI entry point (tsx-runnable, `npm run cli`)
 src/db/         schema, migrations, seed
 src/app/        Next.js routes and server actions
 src/components/ UI primitives
@@ -50,6 +52,13 @@ src/lib/        queries and formatting for the UI
 
 Arithmetic belongs in `src/domain`. Pages render what the domain returns; they
 never recompute a figure, so a report and the screen showing it cannot disagree.
+
+The domain layer is UI-independent: every function takes a plain `AppDatabase`.
+`src/agent/` and `src/cli/` build on that to drive import, matching,
+classification and reconciliation from the terminal without Next.js. The same
+domain functions back the web UI, so the two cannot disagree about a figure.
+Run `npm run cli -- --help` for the command reference; see `docs/RUNNING.md`
+for the agent workflow.
 
 ## Before committing
 
