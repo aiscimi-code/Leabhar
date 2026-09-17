@@ -295,3 +295,122 @@ describe('completeReconciliation', () => {
     expect(transactions.filter((t) => t.status === 'unclassified')).toHaveLength(2);
   });
 });
+
+describe('reconcileBankAccount — multi-currency', () => {
+  let fxDb: AppDatabase;
+  let fxCompanyId: string;
+  let fxAccountId: string;
+  let fxByCode: Record<string, string>;
+  let fxTr: Record<string, string>;
+
+  // An EUR account (base currency) with a foreign-currency line. The running
+  // balance is in the account currency (EUR); the foreign line's amountMinor is
+  // in USD. Without a base amount there is no honest way to fold the USD amount
+  // into an EUR difference.
+  const MIXED_STATEMENT = [
+    'Date,Description,Amount,Balance,Currency',
+    '05/01/2025,OPENING TRANSFER,1000.00,1000.00,EUR',
+    '15/01/2025,USD SUPPLIER,-50.00,943.40,USD',
+  ].join('\n');
+
+  const MIXED_WITH_BASE = [
+    'Date,Description,Amount,Balance,Currency,Settled Amount',
+    '05/01/2025,OPENING TRANSFER,1000.00,1000.00,EUR,',
+    '15/01/2025,USD SUPPLIER,-50.00,943.40,USD,-56.60',
+  ].join('\n');
+
+  const MIXED_COLUMNS = {
+    Date: 'transaction_date' as const,
+    Description: 'description' as const,
+    Amount: 'amount' as const,
+    Balance: 'balance' as const,
+    Currency: 'currency' as const,
+  };
+
+  const MIXED_COLUMNS_WITH_BASE = {
+    ...MIXED_COLUMNS,
+    'Settled Amount': 'base_amount' as const,
+  };
+
+  beforeEach(async () => {
+    ({ db: fxDb } = createTestDatabase());
+    const created = createCompany(fxDb, {
+      legalName: 'Acme Ltd', vatRegistrationStatus: 'registered', seedYears: [2025],
+    });
+    fxCompanyId = created.companyId;
+    fxByCode = created.accountsByCode;
+    fxTr = created.treatmentsByCode;
+    fxAccountId = addBankAccount(fxDb, {
+      companyId: fxCompanyId, bankName: 'BOI', accountName: 'Current',
+      openingDate: '2025-01-01', accountId: created.accountsByKey['bank_control'],
+    });
+  });
+
+  const classifyOpening = () => {
+    const opening = fxDb.select().from(bankTransactions)
+      .where(eq(bankTransactions.description, 'OPENING TRANSFER')).get()!;
+    classifyTransaction(fxDb, {
+      companyId: fxCompanyId, bankTransactionId: opening.id,
+      accountId: fxByCode['4000']!, vatTreatmentId: fxTr['OUT_OF_SCOPE']!,
+    });
+  };
+
+  it('refuses to mix a foreign amountMinor into a base-currency difference when no base amount exists', async () => {
+    await importStatement(fxDb, {
+      companyId: fxCompanyId, bankAccountId: fxAccountId, filename: 'mixed.csv',
+      content: MIXED_STATEMENT, fileFormat: 'csv', columnMap: MIXED_COLUMNS,
+    });
+    classifyOpening();
+
+    // The USD line is unclassified and has no base amount. Reconciliation must
+    // refuse rather than fold USD minor units into an EUR difference.
+    expect(() => reconcileBankAccount(fxDb, {
+      companyId: fxCompanyId, bankAccountId: fxAccountId, ...PERIOD,
+    })).toThrow(ReconciliationError);
+  });
+
+  it('uses the base amount for a foreign line so the difference is explained exactly', async () => {
+    await importStatement(fxDb, {
+      companyId: fxCompanyId, bankAccountId: fxAccountId, filename: 'mixed-base.csv',
+      content: MIXED_WITH_BASE, fileFormat: 'csv', columnMap: MIXED_COLUMNS_WITH_BASE,
+    });
+    classifyOpening();
+
+    const result = reconcileBankAccount(fxDb, {
+      companyId: fxCompanyId, bankAccountId: fxAccountId, ...PERIOD,
+    });
+
+    // Statement (EUR) 943.40 vs ledger (EUR) 1000.00; the USD line's base effect
+    // is -56.60 EUR, which fully explains the -56.60 difference.
+    expect(result.statementBalanceMinor).toBe(94_340);
+    expect(result.ledgerBalanceMinor).toBe(100_000);
+    expect(result.differenceMinor).toBe(-5_660);
+    expect(result.unexplainedMinor).toBe(0);
+    expect(result.reconciled).toBe(true);
+    expect(result.counts.unposted).toBe(1);
+  });
+
+  it('reconciles exactly once a foreign line is classified with its statement rate', async () => {
+    await importStatement(fxDb, {
+      companyId: fxCompanyId, bankAccountId: fxAccountId, filename: 'mixed-base.csv',
+      content: MIXED_WITH_BASE, fileFormat: 'csv', columnMap: MIXED_COLUMNS_WITH_BASE,
+    });
+    classifyOpening();
+
+    // Classify the USD line; classifyTransaction uses the bank-statement rate
+    // stored on the transaction (base 56.60 / amount 50.00).
+    const usd = fxDb.select().from(bankTransactions)
+      .where(eq(bankTransactions.description, 'USD SUPPLIER')).get()!;
+    classifyTransaction(fxDb, {
+      companyId: fxCompanyId, bankTransactionId: usd.id,
+      accountId: fxByCode['6010']!, vatTreatmentId: fxTr['OUT_OF_SCOPE']!,
+    });
+
+    const result = reconcileBankAccount(fxDb, {
+      companyId: fxCompanyId, bankAccountId: fxAccountId, ...PERIOD,
+    });
+    expect(result.differenceMinor).toBe(0);
+    expect(result.unexplainedMinor).toBe(0);
+    expect(result.reconciled).toBe(true);
+  });
+});

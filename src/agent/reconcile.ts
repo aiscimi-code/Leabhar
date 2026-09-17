@@ -92,7 +92,7 @@ export function signOff(
 }
 
 export interface RunPipelineResult {
-  import: ImportSummary;
+  import: ImportSummary | undefined;
   classify: AutoClassifyResult;
   reconcile: ReconciliationResult;
   signOff?: { reconciliationId: string; result: ReconciliationResult };
@@ -101,11 +101,16 @@ export interface RunPipelineResult {
 export async function runPipeline(
   db: AppDatabase, input: RunPipelineInput,
 ): Promise<RunPipelineResult> {
-  const importSummary = await importStatementFile(db, {
-    companyId: input.companyId,
-    accountId: input.bankAccountId,
-    file: input.file,
-  });
+  // --file is optional: without it the pipeline operates on already-imported
+  // transactions (auto-classify → reconcile), so an agent can re-run over data
+  // it has already imported without a new statement.
+  const importSummary = input.file
+    ? await importStatementFile(db, {
+      companyId: input.companyId,
+      accountId: input.bankAccountId,
+      file: input.file,
+    })
+    : undefined;
 
   const classifyResult = autoClassifyFromRules(db, {
     companyId: input.companyId,

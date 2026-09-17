@@ -7,9 +7,61 @@ import {
 import { ids } from '@/lib/ids';
 import { nowIso, type IsoDate } from '../dates';
 import { normaliseDescription } from './fingerprint';
+import { multiplyRational } from '../money';
 import { AccountingError } from '../accounting/errors';
 
 export class ReconciliationError extends AccountingError {}
+
+/**
+ * Convert a transaction's amountMinor into the company's base currency.
+ *
+ * Reconciliation compares the statement against the ledger, and the ledger is
+ * always in base currency (journal lines carry baseDebit/baseCredit). A foreign
+ * statement line cannot be folded into that comparison by its native amountMinor
+ * — that mixes currency units and manufactures a residual that is only a unit
+ * mismatch, not a real reconciliation break.
+ *
+ * So: a transaction in the base currency contributes its own amountMinor; a
+ * foreign transaction contributes its settled base amount if the statement
+ * carried one, else its amount converted at the statement's own rate; and a
+ * foreign transaction with neither is refused rather than silently miscounted.
+ */
+function transactionBaseAmount(
+  transaction: typeof bankTransactions.$inferSelect,
+  baseCurrency: string,
+): number {
+  if (transaction.currency === baseCurrency) return transaction.amountMinor;
+  if (transaction.baseAmountMinor !== null) return transaction.baseAmountMinor;
+  if (transaction.fxRateNumerator !== null && transaction.fxRateDenominator !== null) {
+    return multiplyRational(
+      transaction.amountMinor, transaction.fxRateNumerator, transaction.fxRateDenominator,
+    );
+  }
+  throw new ReconciliationError(
+    `Transaction ${transaction.id} ("${transaction.description}") is in ${transaction.currency} `
+      + `but the books are in ${baseCurrency}, and it has no settled base amount or exchange `
+      + 'rate. Classify it with an exchange rate, or re-import the statement with a settled '
+      + '(base-currency) amount column, before reconciling.',
+  );
+}
+
+/**
+ * The exchange rate from the latest in-period transaction that carries one, as
+ * a numerator/denominator rational. Used to convert a foreign account's running
+ * balance into base currency when the statement balance is a single figure in
+ * the account's own currency.
+ */
+function latestInPeriodFxRate(
+  transactions: Array<typeof bankTransactions.$inferSelect>,
+): { numerator: number; denominator: number } | null {
+  const withRate = [...transactions]
+    .filter((t) => t.fxRateNumerator !== null && t.fxRateDenominator !== null)
+    .sort((a, b) => a.transactionDate.localeCompare(b.transactionDate)
+      || a.createdAt.localeCompare(b.createdAt));
+  const last = withRate[withRate.length - 1];
+  if (!last || last.fxRateNumerator === null || last.fxRateDenominator === null) return null;
+  return { numerator: last.fxRateNumerator, denominator: last.fxRateDenominator };
+}
 
 /**
  * Bank reconciliation (README §21).
@@ -88,6 +140,11 @@ export function reconcileBankAccount(
     )).get();
   if (!account) throw new ReconciliationError(`Bank account ${params.bankAccountId} not found.`);
 
+  const company = db.select().from(companies)
+    .where(eq(companies.id, params.companyId)).get();
+  if (!company) throw new ReconciliationError(`Company ${params.companyId} not found.`);
+  const baseCurrency = company.baseCurrency;
+
   const inPeriod = and(
     eq(bankTransactions.bankAccountId, params.bankAccountId),
     gte(bankTransactions.transactionDate, params.periodStart),
@@ -100,7 +157,7 @@ export function reconcileBankAccount(
 
   // ---- What the bank says ----
   const { statementBalanceMinor, statementBalanceSource } = statementBalance(
-    db, account, params, transactions,
+    db, account, params, transactions, baseCurrency,
   );
 
   // ---- What the books say ----
@@ -126,7 +183,7 @@ export function reconcileBankAccount(
       explanation: 'This transaction has been imported but not classified, so it is included '
         + 'in the bank balance and excluded from the ledger. Classify it to remove this '
         + 'difference.',
-      amountMinor: transaction.amountMinor,
+      amountMinor: transactionBaseAmount(transaction, baseCurrency),
       entityType: 'bank_transaction',
       entityId: transaction.id,
       date: transaction.transactionDate,
@@ -174,7 +231,7 @@ export function reconcileBankAccount(
       explanation: `The same amount, date and description appear ${duplicate.occurrences} times `
         + 'on this statement. That can be genuine — two identical charges on one day happen — '
         + 'but confirm it, because a duplicated purchase would reclaim the same VAT twice.',
-      amountMinor: duplicate.transaction.amountMinor,
+      amountMinor: transactionBaseAmount(duplicate.transaction, baseCurrency),
       entityType: 'bank_transaction',
       entityId: duplicate.transaction.id,
       date: duplicate.transaction.transactionDate,
@@ -203,7 +260,7 @@ export function reconcileBankAccount(
   return {
     bankAccountId: account.id,
     bankAccountName: `${account.bankName} — ${account.accountName}`,
-    currency: account.currency,
+    currency: baseCurrency,
     periodStart: params.periodStart,
     periodEnd: params.periodEnd,
     statementBalanceMinor,
@@ -242,10 +299,30 @@ function statementBalance(
   account: typeof bankAccounts.$inferSelect,
   params: { statementClosingBalanceMinor?: number; periodEnd: IsoDate; bankAccountId: string },
   transactions: Array<typeof bankTransactions.$inferSelect>,
+  baseCurrency: string,
 ): { statementBalanceMinor: number; statementBalanceSource: ReconciliationResult['statementBalanceSource'] } {
+  const foreignAccount = account.currency !== baseCurrency;
+
+  // Convert a balance figure in the account's own currency into base currency,
+  // using the rate the latest in-period statement line carried. A foreign
+  // account cannot be reconciled against a base-currency ledger without a rate.
+  const toBase = (amountMinor: number): number => {
+    if (!foreignAccount) return amountMinor;
+    const rate = latestInPeriodFxRate(transactions);
+    if (!rate) {
+      throw new ReconciliationError(
+        `Bank account ${account.id} is in ${account.currency} but the books are in `
+          + `${baseCurrency}, and no in-period statement line carries an exchange rate. `
+          + 'Import a statement with a settled (base-currency) amount column, or classify a '
+          + 'transaction with an exchange rate, before reconciling.',
+      );
+    }
+    return multiplyRational(amountMinor, rate.numerator, rate.denominator);
+  };
+
   if (params.statementClosingBalanceMinor !== undefined) {
     return {
-      statementBalanceMinor: params.statementClosingBalanceMinor,
+      statementBalanceMinor: toBase(params.statementClosingBalanceMinor),
       statementBalanceSource: 'supplied',
     };
   }
@@ -258,15 +335,18 @@ function statementBalance(
   const last = withBalance[withBalance.length - 1];
   if (last?.balanceAfterMinor !== null && last?.balanceAfterMinor !== undefined) {
     return {
-      statementBalanceMinor: last.balanceAfterMinor,
+      statementBalanceMinor: toBase(last.balanceAfterMinor),
       statementBalanceSource: 'statement_running_balance',
     };
   }
 
   // No running balance in the import. Fall back to opening balance plus
   // movements, and say so: this cannot detect a missing statement line.
-  const opening = account.openingBalanceMinor;
-  const movements = transactions.reduce((sum, t) => sum + t.amountMinor, 0);
+  // Each movement is converted to base so the sum is in a single currency.
+  const opening = foreignAccount ? toBase(account.openingBalanceMinor) : account.openingBalanceMinor;
+  const movements = transactions.reduce(
+    (sum, t) => sum + transactionBaseAmount(t, baseCurrency), 0,
+  );
   return {
     statementBalanceMinor: opening + movements,
     statementBalanceSource: 'derived_from_movements',
