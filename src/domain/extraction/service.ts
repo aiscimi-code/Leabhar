@@ -187,7 +187,24 @@ export async function extractDocument(
       }
 
       const supplier = matchSupplierByName(db, params.companyId, fields.supplierName.value);
-      if (supplier) update.supplierId = supplier;
+      if (supplier) {
+        update.supplierId = supplier;
+      } else if (fields.supplierName.value && fields.supplierName.confidence >= APPLY_THRESHOLD) {
+        // No existing supplier matches the extracted name. Create one so that
+        // document↔bank matching has identity evidence to work with. The new
+        // supplier is an AI proposal (see createSupplierFromExtraction).
+        const country = fields.supplierCountry?.value ?? null;
+        const vat = fields.supplierVatNumber?.value ?? null;
+        const created = createSupplierFromExtraction(db, {
+          companyId: params.companyId,
+          name: fields.supplierName.value,
+          countryCode: country,
+          vatNumber: vat,
+          documentId: params.documentId,
+          actor: params.actor ?? 'system',
+        });
+        update.supplierId = created.supplierId;
+      }
 
       const accountId = accountIdForCode(db, params.companyId, fields.suggestedAccountCode.value);
       if (accountId) update.suggestedAccountId = accountId;
@@ -304,6 +321,95 @@ export function normaliseName(name: string): string {
     .replace(/\b(limited|ltd|plc|inc|incorporated|llc|gmbh|bv|sarl|pbc|co)\b/g, '')
     .replace(/[^a-z0-9]+/g, ' ')
     .trim().replace(/\s+/g, ' ');
+}
+
+/**
+ * Create a supplier from an extracted name, or link an existing one.
+ *
+ * Extraction only *matches* an existing supplier (`matchSupplierByName`); with an
+ * empty suppliers table identity evidence never exists, so document↔bank
+ * matching can never reach `canAutoMatch`. This bridges that gap: when an
+ * extraction carries a `supplierName` but no supplier matches, create one.
+ *
+ * The new supplier is an AI proposal, not a confirmation. It carries no
+ * `user_confirmed` provenance — a person can edit or replace it — and the
+ * document it came from keeps its own `provenanceStatus: 'ai_suggestion'`. The
+ * creation is recorded in the audit trail so a user can see where the supplier
+ * came from. (README §10, §17: AI may propose; it may never overwrite
+ * `user_confirmed`.)
+ */
+export function createSupplierFromExtraction(
+  db: AppDatabase,
+  params: {
+    companyId: string;
+    name: string;
+    countryCode?: string | null;
+    vatNumber?: string | null;
+    /** Link this document's supplier_id to the created/found supplier. */
+    documentId?: string;
+    actor?: string;
+  },
+): { supplierId: string; created: boolean } {
+  const matchKey = normaliseName(params.name);
+  if (!matchKey) throw new Error('A supplier name cannot be empty.');
+
+  const existing = db.select({ id: suppliers.id }).from(suppliers)
+    .where(and(eq(suppliers.companyId, params.companyId), eq(suppliers.matchKey, matchKey)))
+    .get();
+  if (existing) {
+    if (params.documentId) linkDocumentSupplier(db, params, existing.id);
+    return { supplierId: existing.id, created: false };
+  }
+
+  const supplierId = ids.supplier();
+  const timestamp = nowIso();
+  db.transaction((tx) => {
+    tx.insert(suppliers).values({
+      id: supplierId,
+      companyId: params.companyId,
+      name: params.name,
+      matchKey,
+      countryCode: params.countryCode ?? null,
+      vatNumber: params.vatNumber ?? null,
+      notes: 'Created from an extraction. Review and confirm the details.',
+    }).run();
+
+    tx.insert(auditEvents).values({
+      id: ids.audit(),
+      companyId: params.companyId,
+      occurredAt: timestamp,
+      entityType: 'supplier',
+      entityId: supplierId,
+      action: 'created',
+      newValue: JSON.stringify({
+        name: params.name, matchKey,
+        countryCode: params.countryCode ?? null, vatNumber: params.vatNumber ?? null,
+        documentId: params.documentId ?? null,
+      }),
+      source: 'ai',
+      actor: params.actor ?? 'system',
+      reason: params.documentId
+        ? `Created from extraction of document ${params.documentId}`
+        : 'Created from an extraction',
+    }).run();
+
+    if (params.documentId) {
+      tx.update(documents).set({ supplierId, updatedAt: timestamp })
+        .where(eq(documents.id, params.documentId)).run();
+    }
+  });
+
+  return { supplierId, created: true };
+}
+
+function linkDocumentSupplier(
+  db: AppDatabase,
+  params: { documentId?: string },
+  supplierId: string,
+): void {
+  if (!params.documentId) return;
+  db.update(documents).set({ supplierId, updatedAt: nowIso() })
+    .where(eq(documents.id, params.documentId)).run();
 }
 
 function accountIdForCode(db: AppDatabase, companyId: string, code: string | null): string | null {

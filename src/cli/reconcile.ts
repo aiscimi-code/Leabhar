@@ -13,10 +13,22 @@ import {
 } from '@/agent/reconcile';
 import { autoClassifyFromRules } from '@/agent/classify';
 import {
+  runMatch, listMatches, acceptMatchCandidate, linkDocumentToTransaction,
+  rejectMatchCandidate, unmatchDocumentLink,
+} from '@/agent/match';
+import { createSupplierFromExtraction } from '@/domain/extraction/service';
+import {
   importInput,
   autoClassifyInput,
   reconcileInput,
   runPipelineInput,
+  matchInput,
+  listMatchesInput,
+  acceptMatchInput,
+  linkInput,
+  rejectMatchInput,
+  unmatchInput,
+  createSupplierInput,
 } from '@/agent/schema';
 
 const USAGE = `\
@@ -29,19 +41,42 @@ Commands:
   list-reconciliations                   Past reconciliation records
   import    --account <id> --file <path> Import a statement (CSV/XLSX)
   auto-classify --account <id>           Classify unclassified txns from rules
+  match                                  Run document<->bank matching for all docs
+  list-matches [--decision pending]      List match candidates (default: pending)
+  accept-match --document <id> --transaction <id>  Accept a scored candidate
+  link --document <id> --transaction <id>          Manually link a doc to a txn
+  reject-match --document <id> --transaction <id>  Reject a scored candidate
+  unmatch --document <id> --reason "..."           Remove a link
+  create-supplier --name "..." [--country <IE>]    Create a supplier (ai_suggestion)
   reconcile --account <id>               Compute reconciliation (read-only)
             --from <date> --to <date>
   reconcile ... --sign-off               Record the reconciliation
   reconcile ... --sign-off               Sign off despite a difference
             --accept-difference "reason"
-  run --account <id> --file <path>       import -> auto-classify -> reconcile
+  run --account <id> [--file <path>]     import (optional) -> auto-classify -> reconcile
      --from <date> --to <date>
+
+Agent workflow:
+  1. import a statement (or run over already-imported data)
+  2. create suppliers for extracted names that have no supplier yet
+  3. match documents to bank transactions (evidence linking; does not post)
+  4. auto-classify unclassified txns from rules (posts journal entries)
+  5. reconcile; --sign-off when reconciled
+
+Matching links evidence to a transaction but does NOT classify or post it.
+Classification (auto-classify or the UI) posts the journal entry that the
+reconciliation then agrees with.
 
 Flags:
   --account <id>      Bank account id
-  --file <path>       Statement file path
+  --file <path>       Statement file path (optional for 'run')
   --from <date>       Period start (YYYY-MM-DD)
   --to <date>         Period end (YYYY-MM-DD)
+  --document <id>     Document id
+  --transaction <id>  Bank transaction id
+  --name <name>       Supplier name
+  --country <code>    Supplier country code (e.g. IE)
+  --reason <text>     Reason for accept/reject/unmatch
   --sign-off          Record the reconciliation (not just compute it)
   --accept-difference  Reason to sign off despite an unexplained difference
   --statement-balance <amount>  Closing balance from the paper statement
@@ -125,7 +160,7 @@ export async function main(argv: string[], options: CliOptions = {}): Promise<nu
         const parsed = runPipelineInput.parse({
           companyId,
           bankAccountId: requireFlag(flags, 'account', 'account-id', 'accountId'),
-          file: requireFlag(flags, 'file'),
+          file: getFlag(flags, 'file'),
           from: requireFlag(flags, 'from'),
           to: requireFlag(flags, 'to'),
           statementClosingBalance: getFlag(flags, 'statement-balance', 'statementBalance'),
@@ -133,6 +168,90 @@ export async function main(argv: string[], options: CliOptions = {}): Promise<nu
           acceptDifference: getFlag(flags, 'accept-difference', 'acceptDifference'),
         });
         const result = await runPipeline(db, parsed);
+        print(result, format);
+        return 0;
+      }
+
+      case 'match': {
+        matchInput.parse({ companyId });
+        // Run matching across all unmatched documents. Matching links
+        // evidence; it does not classify. Run auto-classify afterwards.
+        print(runMatch(db, { companyId }), format);
+        return 0;
+      }
+
+      case 'list-matches': {
+        const parsed = listMatchesInput.parse({
+          companyId,
+          decision: getFlag(flags, 'decision'),
+        });
+        print(listMatches(db, parsed), format);
+        return 0;
+      }
+
+      case 'accept-match': {
+        const parsed = acceptMatchInput.parse({
+          companyId,
+          documentId: requireFlag(flags, 'document', 'document-id', 'documentId'),
+          bankTransactionId: requireFlag(flags, 'transaction', 'transaction-id', 'transactionId', 'bank-transaction-id', 'bankTransactionId'),
+          reason: getFlag(flags, 'reason'),
+        });
+        acceptMatchCandidate(db, parsed);
+        print({ accepted: true, documentId: parsed.documentId, bankTransactionId: parsed.bankTransactionId }, format);
+        return 0;
+      }
+
+      case 'link': {
+        const parsed = linkInput.parse({
+          companyId,
+          documentId: requireFlag(flags, 'document', 'document-id', 'documentId'),
+          bankTransactionId: requireFlag(flags, 'transaction', 'transaction-id', 'transactionId', 'bank-transaction-id', 'bankTransactionId'),
+          reason: getFlag(flags, 'reason'),
+        });
+        linkDocumentToTransaction(db, parsed);
+        print({ linked: true, documentId: parsed.documentId, bankTransactionId: parsed.bankTransactionId }, format);
+        return 0;
+      }
+
+      case 'reject-match': {
+        const parsed = rejectMatchInput.parse({
+          companyId,
+          documentId: requireFlag(flags, 'document', 'document-id', 'documentId'),
+          bankTransactionId: requireFlag(flags, 'transaction', 'transaction-id', 'transactionId', 'bank-transaction-id', 'bankTransactionId'),
+          reason: getFlag(flags, 'reason'),
+        });
+        rejectMatchCandidate(db, parsed);
+        print({ rejected: true, documentId: parsed.documentId, bankTransactionId: parsed.bankTransactionId }, format);
+        return 0;
+      }
+
+      case 'unmatch': {
+        const parsed = unmatchInput.parse({
+          companyId,
+          documentId: requireFlag(flags, 'document', 'document-id', 'documentId'),
+          reason: requireFlag(flags, 'reason'),
+        });
+        unmatchDocumentLink(db, parsed);
+        print({ unmatched: true, documentId: parsed.documentId }, format);
+        return 0;
+      }
+
+      case 'create-supplier': {
+        const parsed = createSupplierInput.parse({
+          companyId,
+          name: requireFlag(flags, 'name'),
+          countryCode: getFlag(flags, 'country', 'country-code', 'countryCode'),
+          vatNumber: getFlag(flags, 'vat-number', 'vatNumber', 'vat'),
+          documentId: getFlag(flags, 'document', 'document-id', 'documentId'),
+        });
+        const result = createSupplierFromExtraction(db, {
+          companyId: parsed.companyId,
+          name: parsed.name,
+          countryCode: parsed.countryCode ?? null,
+          vatNumber: parsed.vatNumber ?? null,
+          documentId: parsed.documentId,
+          actor: 'cli',
+        });
         print(result, format);
         return 0;
       }

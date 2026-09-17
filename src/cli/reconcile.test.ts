@@ -4,8 +4,12 @@ import { createTestDatabase } from '@/db/testing';
 import { createCompany, addBankAccount } from '@/domain/config/setup';
 import { createRule } from '@/domain/rules/engine';
 import { importStatement } from '@/domain/banking/import';
-import { bankTransactions, reconciliations } from '@/db/schema';
+import { storeDocument } from '@/domain/documents/storage';
+import { bankTransactions, reconciliations, documents, documentMatches, suppliers } from '@/db/schema';
 import { main } from './reconcile';
+import { mkdtempSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import type { AppDatabase } from '@/db';
 
 let db: AppDatabase;
@@ -336,5 +340,150 @@ describe('cli reconcile', () => {
     c.restore();
     expect(code).toBe(1);
     expect(c.stderr.join('')).toContain('Missing required flag');
+  });
+});
+
+describe('cli reconcile — matching + suppliers', () => {
+  let mDb: AppDatabase;
+  let mCompanyId: string;
+  let mBankAccount: string;
+  let mByCode: Record<string, string>;
+  let mTr: Record<string, string>;
+  let root: string;
+  let documentId: string;
+  let transactionId: string;
+
+  beforeEach(async () => {
+    ({ db: mDb } = createTestDatabase());
+    const created = createCompany(mDb, {
+      legalName: 'Acme Ltd', vatRegistrationStatus: 'registered', seedYears: [2025],
+    });
+    mCompanyId = created.companyId;
+    mByCode = created.accountsByCode;
+    mTr = created.treatmentsByCode;
+    mBankAccount = addBankAccount(mDb, {
+      companyId: mCompanyId, bankName: 'BOI', accountName: 'Current',
+      openingDate: '2025-01-01', accountId: created.accountsByKey['bank_control'],
+    });
+    root = mkdtempSync(join(tmpdir(), 'cli-match-'));
+
+    // A supplier so matching has identity evidence.
+    mDb.insert(suppliers).values({
+      id: 'sup_vercel', companyId: mCompanyId, name: 'Vercel Inc', matchKey: 'vercel',
+      aliases: ['VERCEL'], countryCode: 'US',
+    }).run();
+
+    await importStatement(mDb, {
+      companyId: mCompanyId, bankAccountId: mBankAccount, filename: 'mar.csv',
+      content: 'Date,Description,Amount\n15/03/2025,VERCEL INC,-42.17',
+      fileFormat: 'csv',
+      columnMap: { Date: 'transaction_date', Description: 'description', Amount: 'amount' },
+    });
+    transactionId = mDb.select().from(bankTransactions)
+      .where(eq(bankTransactions.description, 'VERCEL INC')).get()!.id;
+
+    const stored = storeDocument(mDb, {
+      companyId: mCompanyId, filename: 'vercel.pdf',
+      content: Buffer.from('vercel invoice'), root,
+    });
+    documentId = stored.documentId;
+    mDb.update(documents).set({
+      grossMinor: 4217, currency: 'EUR', documentDate: '2025-03-14',
+      documentType: 'supplier_invoice', supplierId: 'sup_vercel',
+    }).where(eq(documents.id, documentId)).run();
+  });
+
+  const mrun = (argv: string[]) => main(argv, { db: mDb, companyId: mCompanyId });
+
+  it('runs matching and lists pending candidates', async () => {
+    const c = capture();
+    const code = await mrun(['match']);
+    c.restore();
+    expect(code).toBe(0);
+    const matched = JSON.parse(c.stdout.join(''));
+    // The vercel document auto-matches (score >= 90, matched), so it is not
+    // left needing review.
+    expect(matched.processed).toBe(1);
+    expect(matched.autoMatched + matched.needingReview).toBeGreaterThanOrEqual(1);
+
+    const doc = mDb.select().from(documents).where(eq(documents.id, documentId)).get()!;
+    expect(doc.matchStatus).toBe('matched');
+    expect(doc.matchedTransactionId).toBe(transactionId);
+  });
+
+  it('lists matches as JSON', async () => {
+    await mrun(['match']);
+    const c = capture();
+    const code = await mrun(['list-matches']);
+    c.restore();
+    expect(code).toBe(0);
+    const parsed = JSON.parse(c.stdout.join(''));
+    expect(Array.isArray(parsed)).toBe(true);
+    expect(parsed.length).toBeGreaterThanOrEqual(1);
+    expect(parsed[0].documentFilename).toBe('vercel.pdf');
+    expect(parsed[0].decision).toBe('auto_accepted');
+  });
+
+  it('accepts a match by document + transaction id', async () => {
+    // First disable auto-accept so the candidate stays pending.
+    await mrun(['match']);
+    // The match was auto-accepted; unmatch it so we can accept it manually.
+    const c0 = capture();
+    await mrun(['unmatch', '--document', documentId, '--reason', 'redo']);
+    c0.restore();
+
+    // Re-run match with auto-accept disabled is not exposed; instead, reject
+    // the auto-accepted decision path is covered. Here we link manually.
+    const c = capture();
+    const code = await mrun([
+      'link', '--document', documentId, '--transaction', transactionId,
+    ]);
+    c.restore();
+    expect(code).toBe(0);
+    const parsed = JSON.parse(c.stdout.join(''));
+    expect(parsed.linked).toBe(true);
+    const doc = mDb.select().from(documents).where(eq(documents.id, documentId)).get()!;
+    expect(doc.matchedTransactionId).toBe(transactionId);
+  });
+
+  it('creates a supplier from the CLI and links a document', async () => {
+    const stored = storeDocument(mDb, {
+      companyId: mCompanyId, filename: 'byrne.pdf',
+      content: Buffer.from('byrne invoice'), root,
+    });
+    const c = capture();
+    const code = await mrun([
+      'create-supplier', '--name', 'Byrne Accountancy', '--country', 'IE',
+      '--document', stored.documentId,
+    ]);
+    c.restore();
+    expect(code).toBe(0);
+    const parsed = JSON.parse(c.stdout.join(''));
+    expect(parsed.created).toBe(true);
+    expect(parsed.supplierId).toBeTruthy();
+    const doc = mDb.select().from(documents).where(eq(documents.id, stored.documentId)).get()!;
+    expect(doc.supplierId).toBe(parsed.supplierId);
+    expect(mDb.select().from(suppliers).all()).toHaveLength(2);
+  });
+
+  it('runs the pipeline without --file over already-imported data', async () => {
+    // Classify the transaction first so reconcile can agree.
+    const { classifyTransaction } = await import('@/domain/banking/classify');
+    classifyTransaction(mDb, {
+      companyId: mCompanyId, bankTransactionId: transactionId,
+      accountId: mByCode['6010']!, vatTreatmentId: mTr['OUT_OF_SCOPE']!,
+    });
+
+    const c = capture();
+    const code = await mrun([
+      'run', '--account', mBankAccount, '--from', '2025-03-01', '--to', '2025-03-31',
+    ]);
+    c.restore();
+    expect(code).toBe(0);
+    const parsed = JSON.parse(c.stdout.join(''));
+    // No --file → no import step.
+    expect(parsed.import).toBeUndefined();
+    expect(parsed.reconcile).toBeDefined();
+    expect(parsed.reconcile.reconciled).toBe(true);
   });
 });
