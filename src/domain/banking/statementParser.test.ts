@@ -260,6 +260,30 @@ describe('multi-currency card line mapping', () => {
     expect(tx.baseAmountMinor).toBe(-2258);
   });
 
+  it('inherits debit sign from Amount when Orig amount is unsigned (Revolut)', () => {
+    const csv = [
+      'Date,Description,Orig currency,Orig amount,Amount,Payment currency',
+      '15/03/2025,GITHUB INC,USD,26.06,-22.58,EUR',
+    ].join('\n');
+    const result = parseCsv(csv, {
+      bankAccountId: 'ba_1',
+      columnMap: {
+        Date: 'transaction_date',
+        Description: 'description',
+        'Orig currency': 'currency',
+        'Orig amount': 'original_amount',
+        Amount: 'amount',
+        'Payment currency': 'ignore',
+      },
+      defaultCurrency: 'EUR',
+    });
+    expect(result.errors).toHaveLength(0);
+    const tx = result.transactions[0]!;
+    expect(tx.amountMinor).toBe(-2606);
+    expect(tx.currency).toBe('USD');
+    expect(tx.baseAmountMinor).toBe(-2258);
+  });
+
   it('parses correctly without original_amount (standard single-currency)', () => {
     const csv = [
       'Date,Description,Amount',

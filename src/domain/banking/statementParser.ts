@@ -80,7 +80,7 @@ const COLUMN_PATTERNS: Array<{ field: DomainField; patterns: RegExp[] }> = [
   { field: 'credit', patterns: [/^credit(\s*amount)?$/i, /^money\s*in$/i, /^paid\s*in$/i, /^deposit(s)?$/i, /^in$/i] },
   { field: 'amount', patterns: [/^amount$/i, /^transaction\s*amount$/i, /^value$/i, /amount/i] },
   { field: 'original_amount', patterns: [/^orig(\s*inal)?\s*amount$/i, /^original\s*amount$/i, /^orig\s*amt$/i, /^merchant\s*amount$/i, /^foreign\s*amount$/i] },
-  { field: 'base_amount', patterns: [/^settle(d)?\s*amount$/i, /^charged\s*amount$/i, /^euro?\s*amount$/i, /^base\s*amount$/i, /^settle(d)?\s*value$/i, /^account\s*amount$/i, /^payment\s*amount$/i] },
+  { field: 'base_amount', patterns: [/^settle(d)?\s*amount$/i, /^charged\s*amount$/i, /^euro?\s*amount$/i, /^base\s*amount$/i, /^settle(d)?\s*value$/i, /^account\s*amount$/i, /^payment\s*amount$/i, /^total\s*amount$/i] },
   { field: 'balance', patterns: [/^(running\s*)?balance$/i, /balance/i] },
   { field: 'currency', patterns: [/^currency$/i, /^ccy$/i, /currency/i] },
   { field: 'bank_reference', patterns: [/^reference$/i, /^ref$/i, /reference/i] },
@@ -243,8 +243,24 @@ export function buildResult(
         : null;
 
       // When an original amount is present, it replaces amountMinor as the
-      // transaction's own-currency amount.
+      // transaction's own-currency amount. Revolut-style exports often leave
+      // Orig amount unsigned (always positive) while Amount carries the
+      // debit/credit sign — inherit that sign so money-out stays negative.
       if (originalAmountMinor !== null) {
+        if (baseAmountMinor !== null && baseAmountMinor !== 0 && originalAmountMinor !== 0) {
+          const origSign = originalAmountMinor < 0 ? -1 : 1;
+          const baseSign = baseAmountMinor < 0 ? -1 : 1;
+          if (origSign !== baseSign) {
+            originalAmountMinor = -originalAmountMinor;
+          }
+        } else if (amountMinor !== 0 && originalAmountMinor !== 0) {
+          // Amount was parsed into amountMinor before orig replaced it.
+          const origSign = originalAmountMinor < 0 ? -1 : 1;
+          const amountSign = amountMinor < 0 ? -1 : 1;
+          if (origSign !== amountSign) {
+            originalAmountMinor = -originalAmountMinor;
+          }
+        }
         amountMinor = originalAmountMinor;
       }
 
