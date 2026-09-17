@@ -88,9 +88,15 @@ export function recordPayment(db: AppDatabase, input: RecordPaymentInput): Recor
   }
 
   const isReceived = input.direction === 'received';
+  // `toBase` converts a payment-currency amount to base. When the payment is in
+  // base currency, no conversion is needed even if an fxRate is present (in the
+  // cross-currency case the fxRate converts base to the invoice's currency, not
+  // to base). When the payment is foreign, the fxRate is the payment-to-base
+  // rate.
+  const paymentFx = currency !== baseCurrency ? input.fxRate : undefined;
   const toBase = (amount: number): number =>
-    input.fxRate
-      ? multiplyRational(asMinor(amount), input.fxRate.numerator, input.fxRate.denominator)
+    paymentFx
+      ? multiplyRational(asMinor(amount), paymentFx.numerator, paymentFx.denominator)
       : amount;
 
   // ---- Validate allocations ----
@@ -123,16 +129,14 @@ export function recordPayment(db: AppDatabase, input: RecordPaymentInput): Recor
         { invoiceId: invoice.id },
       );
     }
-    if (allocation.allocatedMinor > invoice.outstandingMinor) {
-      throw new InvoicingError(
-        `Allocating ${allocation.allocatedMinor} to invoice `
-          + `${invoice.invoiceNumber ?? invoice.id} exceeds the ${invoice.outstandingMinor} `
-          + 'still outstanding on it. Overpayments must be recorded deliberately, not '
-          + 'absorbed into an allocation.',
-        { invoiceId: invoice.id, outstandingMinor: invoice.outstandingMinor },
-      );
-    }
-    if (invoice.currency !== currency) {
+    // When the invoice and payment are in different currencies, the payment
+    // amount is converted to the invoice's currency for allocation. The fxRate
+    // supplied here converts one unit of the payment currency into units of the
+    // invoice currency. This is scoped to the case where the payment is in the
+    // base currency — a three-currency settlement (payment, invoice and base all
+    // different) is not handled here.
+    const crossCurrency = invoice.currency !== currency;
+    if (crossCurrency && !input.fxRate) {
       throw new InvoicingError(
         `Invoice ${invoice.invoiceNumber ?? invoice.id} is in ${invoice.currency} but the `
           + `payment is in ${currency}. Settling across currencies needs a deliberate `
@@ -140,7 +144,28 @@ export function recordPayment(db: AppDatabase, input: RecordPaymentInput): Recor
         { invoiceId: invoice.id },
       );
     }
-    return { invoice, allocatedMinor: allocation.allocatedMinor };
+    if (crossCurrency && currency !== baseCurrency && invoice.currency !== baseCurrency) {
+      throw new InvoicingError(
+        `Settling a ${invoice.currency} invoice with a ${currency} payment when the base `
+          + `currency is ${baseCurrency} involves three currencies and is not supported. `
+          + 'Pay from a base-currency account, or record the payment in the invoice\'s currency.',
+        { invoiceId: invoice.id },
+      );
+    }
+    const invoiceAllocatedMinor = crossCurrency && input.fxRate
+      ? multiplyRational(asMinor(allocation.allocatedMinor), input.fxRate.numerator, input.fxRate.denominator)
+      : allocation.allocatedMinor;
+
+    if (invoiceAllocatedMinor > invoice.outstandingMinor) {
+      throw new InvoicingError(
+        `Allocating ${invoiceAllocatedMinor} to invoice `
+          + `${invoice.invoiceNumber ?? invoice.id} exceeds the ${invoice.outstandingMinor} `
+          + 'still outstanding on it. Overpayments must be recorded deliberately, not '
+          + 'absorbed into an allocation.',
+        { invoiceId: invoice.id, outstandingMinor: invoice.outstandingMinor },
+      );
+    }
+    return { invoice, allocatedMinor: allocation.allocatedMinor, invoiceAllocatedMinor, crossCurrency };
   });
 
   const debtors = systemAccountId(db, input.companyId, 'debtors');
@@ -186,7 +211,6 @@ export function recordPayment(db: AppDatabase, input: RecordPaymentInput): Recor
 
   // ---- Journal ----
   const journalLines: Parameters<typeof postJournalEntry>[1]['lines'] = [];
-  const paymentFx = input.fxRate;
   const narrative = `${isReceived ? 'Receipt' : 'Payment'} ${input.reference ?? ''}`.trim()
     || (isReceived ? 'Customer receipt' : 'Supplier payment');
 
@@ -204,7 +228,7 @@ export function recordPayment(db: AppDatabase, input: RecordPaymentInput): Recor
     baseAllocatedMinor: number; fxDifferenceMinor: number;
   }> = [];
 
-  for (const { invoice, allocatedMinor } of targets) {
+  for (const { invoice, allocatedMinor, invoiceAllocatedMinor, crossCurrency } of targets) {
     // The receivable is relieved at the rate it was booked at, not today's.
     const invoiceFx = invoice.fxRateNumerator && invoice.fxRateDenominator
       ? {
@@ -215,24 +239,27 @@ export function recordPayment(db: AppDatabase, input: RecordPaymentInput): Recor
         }
       : undefined;
 
+    // The debtors/creditors line relieves the invoice in its own currency.
+    // For a cross-currency settlement the allocated amount has been converted
+    // to the invoice currency; for a same-currency payment it is unchanged.
     journalLines.push({
       accountId: isReceived ? debtors : creditors,
-      ...(isReceived ? { creditMinor: allocatedMinor } : { debitMinor: allocatedMinor }),
-      currency, fxRate: invoiceFx,
+      ...(isReceived ? { creditMinor: invoiceAllocatedMinor } : { debitMinor: invoiceAllocatedMinor }),
+      currency: invoice.currency, fxRate: invoiceFx,
       supplierId: invoice.supplierId, customerId: invoice.customerId,
       memo: `Settles ${invoice.invoiceNumber ?? invoice.id}`,
     });
 
     const baseAtInvoiceRate = invoiceFx
-      ? multiplyRational(asMinor(allocatedMinor), invoiceFx.numerator, invoiceFx.denominator)
-      : allocatedMinor;
+      ? multiplyRational(asMinor(invoiceAllocatedMinor), invoiceFx.numerator, invoiceFx.denominator)
+      : invoiceAllocatedMinor;
     const baseAtPaymentRate = toBase(allocatedMinor);
     const difference = baseAtPaymentRate - baseAtInvoiceRate;
     fxDifferenceMinor += difference;
 
     allocationDetails.push({
       invoiceId: invoice.id,
-      allocatedMinor,
+      allocatedMinor: invoiceAllocatedMinor,
       baseAllocatedMinor: baseAtPaymentRate,
       fxDifferenceMinor: difference,
     });
@@ -305,6 +332,16 @@ export function recordPayment(db: AppDatabase, input: RecordPaymentInput): Recor
   const vatEntryIds: string[] = [];
   for (const release of vatReleases) {
     if (release.netMinor === 0 && release.vatMinor === 0) continue;
+    // The release amounts are in the invoice's currency; the rate that
+    // converts them to base is the invoice's booking rate, not the payment's.
+    const target = targets.find((t) => t.invoice.id === release.invoiceId)!;
+    const releaseCurrency = target.invoice.currency;
+    const releaseFx = target.invoice.fxRateNumerator && target.invoice.fxRateDenominator
+      ? {
+          numerator: target.invoice.fxRateNumerator,
+          denominator: target.invoice.fxRateDenominator,
+        }
+      : undefined;
     const created = createVatEntries(db, {
       companyId: input.companyId,
       journalEntryId: journal.id,
@@ -317,11 +354,9 @@ export function recordPayment(db: AppDatabase, input: RecordPaymentInput): Recor
       taxPointDate: input.paymentDate,
       netMinor: release.netMinor,
       statedVatMinor: release.vatMinor,
-      currency,
+      currency: releaseCurrency,
       baseCurrency,
-      fxRate: input.fxRate
-        ? { numerator: input.fxRate.numerator, denominator: input.fxRate.denominator }
-        : undefined,
+      fxRate: releaseFx,
       source: 'user',
       provenanceStatus: 'manually_entered',
       notes: `Released by payment on ${input.paymentDate} against invoice ${release.invoiceId}`,
@@ -343,8 +378,8 @@ export function recordPayment(db: AppDatabase, input: RecordPaymentInput): Recor
       currency,
       baseAmountMinor: toBase(input.amountMinor),
       baseCurrency,
-      fxRateNumerator: input.fxRate?.numerator ?? null,
-      fxRateDenominator: input.fxRate?.denominator ?? null,
+      fxRateNumerator: paymentFx?.numerator ?? null,
+      fxRateDenominator: paymentFx?.denominator ?? null,
       method: input.method ?? (input.officerId ? 'director_personal' : 'bank_transfer'),
       bankTransactionId: input.bankTransactionId ?? null,
       officerId: input.officerId ?? null,
@@ -356,6 +391,7 @@ export function recordPayment(db: AppDatabase, input: RecordPaymentInput): Recor
     }).run();
 
     for (const detail of allocationDetails) {
+      const target = targets.find((t) => t.invoice.id === detail.invoiceId)!;
       tx.insert(paymentAllocations).values({
         id: ids.allocation(),
         companyId: input.companyId,
@@ -363,11 +399,11 @@ export function recordPayment(db: AppDatabase, input: RecordPaymentInput): Recor
         invoiceId: detail.invoiceId,
         allocatedMinor: detail.allocatedMinor,
         baseAllocatedMinor: detail.baseAllocatedMinor,
-        currency,
+        currency: target.invoice.currency,
         fxDifferenceMinor: detail.fxDifferenceMinor,
       }).run();
 
-      const invoice = targets.find((t) => t.invoice.id === detail.invoiceId)!.invoice;
+      const invoice = target.invoice;
       const paidMinor = invoice.paidMinor + detail.allocatedMinor;
       const outstandingMinor = invoice.grossMinor - paidMinor;
       const status = outstandingMinor === 0 ? 'paid'
@@ -442,11 +478,11 @@ interface VatRelease {
  */
 function computeVatReleases(
   db: AppDatabase,
-  targets: Array<{ invoice: typeof invoices.$inferSelect; allocatedMinor: number }>,
+  targets: Array<{ invoice: typeof invoices.$inferSelect; invoiceAllocatedMinor: number }>,
 ): VatRelease[] {
   const releases: VatRelease[] = [];
 
-  for (const { invoice, allocatedMinor } of targets) {
+  for (const { invoice, invoiceAllocatedMinor } of targets) {
     if (invoice.grossMinor === 0) continue;
 
     const lines = db.select().from(invoiceLines)
@@ -454,7 +490,7 @@ function computeVatReleases(
       .orderBy(invoiceLines.lineNumber).all();
 
     const paidBefore = invoice.paidMinor;
-    const paidAfter = paidBefore + allocatedMinor;
+    const paidAfter = paidBefore + invoiceAllocatedMinor;
 
     for (const line of lines) {
       if (!line.vatTreatmentId) continue;

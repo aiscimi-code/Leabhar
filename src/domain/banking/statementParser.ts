@@ -15,7 +15,7 @@ export type DomainField =
   | 'transaction_date' | 'value_date' | 'description' | 'amount'
   | 'debit' | 'credit' | 'currency' | 'bank_reference' | 'bank_transaction_id'
   | 'balance' | 'counterparty_name' | 'counterparty_iban' | 'transaction_type'
-  | 'ignore';
+  | 'base_amount' | 'ignore';
 
 export interface ColumnMapping {
   [sourceColumn: string]: DomainField;
@@ -41,6 +41,8 @@ export interface ParsedTransaction {
   description: string;
   amountMinor: number;
   currency: string;
+  /** The settled (base-currency) amount, when the statement reports both. */
+  baseAmountMinor: number | null;
   balanceAfterMinor: number | null;
   bankReference: string | null;
   bankTransactionId: string | null;
@@ -77,6 +79,7 @@ const COLUMN_PATTERNS: Array<{ field: DomainField; patterns: RegExp[] }> = [
   { field: 'debit', patterns: [/^debit(\s*amount)?$/i, /^money\s*out$/i, /^paid\s*out$/i, /^withdrawal(s)?$/i, /^out$/i] },
   { field: 'credit', patterns: [/^credit(\s*amount)?$/i, /^money\s*in$/i, /^paid\s*in$/i, /^deposit(s)?$/i, /^in$/i] },
   { field: 'amount', patterns: [/^amount$/i, /^transaction\s*amount$/i, /^value$/i, /amount/i] },
+  { field: 'base_amount', patterns: [/^settle(d)?\s*amount$/i, /^charged\s*amount$/i, /^euro?\s*amount$/i, /^base\s*amount$/i, /^settle(d)?\s*value$/i] },
   { field: 'balance', patterns: [/^(running\s*)?balance$/i, /balance/i] },
   { field: 'currency', patterns: [/^currency$/i, /^ccy$/i, /currency/i] },
   { field: 'bank_reference', patterns: [/^reference$/i, /^ref$/i, /reference/i] },
@@ -208,6 +211,14 @@ export function buildResult(
 
       if (options.invertAmountSign) amountMinor = -amountMinor;
 
+      // The settled (base-currency) amount, when a multi-currency statement
+      // reports both the foreign amount and what the bank actually charged in
+      // the account's currency. Optional — most statements do not carry one.
+      const baseAmountText = pick(raw, reverse.base_amount);
+      const baseAmountMinor = baseAmountText
+        ? parseAmount(baseAmountText, currency, { decimalSeparator: options.decimalSeparator })
+        : null;
+
       const balanceText = pick(raw, reverse.balance);
       const balanceAfterMinor = balanceText
         ? parseAmount(balanceText, currency, { decimalSeparator: options.decimalSeparator })
@@ -223,6 +234,7 @@ export function buildResult(
         description,
         amountMinor,
         currency,
+        baseAmountMinor,
         balanceAfterMinor,
         bankReference,
         bankTransactionId,

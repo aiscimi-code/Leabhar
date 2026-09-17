@@ -96,7 +96,10 @@ export async function createBackup(
     for (const file of walk(join(target, 'documents'))) {
       const content = readFileSync(file);
       documents.push({
-        path: file.slice(join(target, 'documents').length + 1),
+        // Store POSIX-style relative paths so the manifest is portable across
+        // Windows and Linux. `join` produces backslashes on Windows, which a
+        // Linux restore would treat as literal characters in the filename.
+        path: file.slice(join(target, 'documents').length + 1).split(/[\\/]/).join('/'),
         sha256: createHash('sha256').update(content).digest('hex'),
         bytes: content.length,
       });
@@ -200,7 +203,11 @@ export function verifyBackup(path: string): BackupVerification {
   let documentsIntact = 0;
 
   for (const document of manifest.documents) {
-    const file = join(path, 'documents', document.path);
+    // Normalize backslashes to forward slashes: a manifest created on Windows
+    // stores `02\\file.pdf`, and `join` on Linux treats `\` as a literal
+    // character rather than a separator, so the file would be reported missing.
+    const docPath = document.path.replace(/\\/g, '/');
+    const file = join(path, 'documents', ...docPath.split('/'));
     if (!existsSync(file)) { corrupted.push(`${document.path} (missing)`); continue; }
     const actual = createHash('sha256').update(readFileSync(file)).digest('hex');
     if (actual === document.sha256) documentsIntact += 1;

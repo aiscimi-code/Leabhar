@@ -242,3 +242,61 @@ describe('import profiles', () => {
     expect(result.imported).toBe(3);
   });
 });
+
+describe('foreign-currency statement with a settled (base) amount', () => {
+  it('populates the base amount and derives the bank rate from the two figures', async () => {
+    // A USD charge whose statement also reports the EUR amount the bank charged.
+    const usdAccount = addBankAccount(db, {
+      companyId, bankName: 'Revolut', accountName: 'USD',
+      currency: 'USD', openingDate: '2025-01-01',
+    });
+    await importStatement(db, {
+      companyId, bankAccountId: usdAccount, filename: 'usd-statement.csv',
+      content: [
+        'Date,Description,Amount,Settled Amount,Currency',
+        '15/03/2025,US SUPPLIER,-120.00,-110.40,USD',
+      ].join('\n'),
+      fileFormat: 'csv',
+      columnMap: {
+        Date: 'transaction_date', Description: 'description',
+        Amount: 'amount', 'Settled Amount': 'base_amount', Currency: 'currency',
+      },
+    });
+
+    const tx = db.select().from(bankTransactions).get()!;
+    expect(tx.currency).toBe('USD');
+    expect(tx.baseAmountMinor).toBe(-11040);
+    expect(tx.baseCurrency).toBe('EUR');
+    // Rate derived from |11040| / |12000|.
+    expect(tx.fxRateNumerator).toBe(11040);
+    expect(tx.fxRateDenominator).toBe(12000);
+    expect(tx.fxRateSource).toBe('bank_statement');
+  });
+
+  it('leaves the base amount null when the statement has no settled-amount column', async () => {
+    await doImport(STATEMENT);
+    const tx = db.select().from(bankTransactions).get()!;
+    expect(tx.baseAmountMinor).toBeNull();
+    expect(tx.fxRateSource).toBeNull();
+  });
+
+  it('does not derive a rate when the transaction is already in the base currency', async () => {
+    await importStatement(db, {
+      companyId, bankAccountId, filename: 'eur-statement.csv',
+      content: [
+        'Date,Description,Amount,Settled Amount',
+        '15/03/2025,IRISH SUPPLIER,-42.17,-42.17',
+      ].join('\n'),
+      fileFormat: 'csv',
+      columnMap: {
+        Date: 'transaction_date', Description: 'description',
+        Amount: 'amount', 'Settled Amount': 'base_amount',
+      },
+    });
+    const tx = db.select().from(bankTransactions).get()!;
+    // Same currency as base — no rate needed, and the base amount column is
+    // just a duplicate of the amount, so we do not store it.
+    expect(tx.baseAmountMinor).toBeNull();
+    expect(tx.fxRateSource).toBeNull();
+  });
+});

@@ -34,7 +34,8 @@ interface TreatmentOption {
  */
 export function ClassifyForm({
   transactionId, accounts, treatments, currentAccountId, currentTreatmentId,
-  isPosted, amountMinor, currency,
+  isPosted, amountMinor, currency, baseCurrency, baseAmountMinor, fxRateSource,
+  fxRateNumerator, fxRateDenominator,
 }: {
   transactionId: string;
   accounts: AccountOption[];
@@ -44,23 +45,42 @@ export function ClassifyForm({
   isPosted: boolean;
   amountMinor: number;
   currency: string;
+  baseCurrency?: string;
+  baseAmountMinor?: number | null;
+  fxRateSource?: string | null;
+  fxRateNumerator?: number | null;
+  fxRateDenominator?: number | null;
 }) {
   const [accountId, setAccountId] = useState(currentAccountId ?? '');
   const [treatmentId, setTreatmentId] = useState(currentTreatmentId ?? '');
   const [reason, setReason] = useState('');
+  const [fxRate, setFxRate] = useState('');
   const [result, setResult] = useState<{ ok: boolean; message: string } | null>(null);
   const [pending, startTransition] = useTransition();
 
   const treatment = treatments.find((t) => t.id === treatmentId);
   const preview = buildPreview(amountMinor, treatment);
 
+  const base = baseCurrency ?? 'EUR';
+  const isForeign = currency !== base;
+  const hasStatementRate = isForeign && fxRateSource === 'bank_statement'
+    && baseAmountMinor !== null && baseAmountMinor !== undefined;
+
   const submit = (formData: FormData): void => {
     startTransition(async () => {
+      // Convert the decimal FX rate input to a rational numerator/denominator.
+      if (isForeign && !hasStatementRate && fxRate) {
+        const parsed = parseDecimalToRational(fxRate);
+        if (parsed) {
+          formData.set('fxRateNumerator', String(parsed.numerator));
+          formData.set('fxRateDenominator', String(parsed.denominator));
+        }
+      }
       const response = await classifyTransactionAction(formData);
       setResult(response.ok
         ? { ok: true, message: response.message }
         : { ok: false, message: response.error });
-      if (response.ok) setReason('');
+      if (response.ok) { setReason(''); setFxRate(''); }
     });
   };
 
@@ -128,6 +148,38 @@ export function ClassifyForm({
         <p className="text-[11.5px] text-ink-muted mt-2 leading-snug">{treatment.description}</p>
       )}
 
+      {isForeign && hasStatementRate && (
+        <p className="text-[11.5px] text-ink-muted mt-2 leading-snug">
+          The bank charged{' '}
+          <span className="num !text-left">{money(baseAmountMinor!, base)}</span>{' '}
+          for this {money(Math.abs(amountMinor), currency)} transaction
+          {fxRateNumerator && fxRateDenominator
+            ? ` (rate ${(fxRateNumerator / fxRateDenominator).toFixed(6)}, from the statement)`
+            : ''}.
+          No exchange rate is needed — the statement's settled amount is used.
+        </p>
+      )}
+
+      {isForeign && !hasStatementRate && (
+        <div className="mt-3">
+          <label className="block text-[11px] uppercase tracking-wide font-semibold text-ink-faint mb-1">
+            Exchange rate ({currency} to {base})
+            <Help>
+              This transaction is in {currency} but the books are kept in {base}. Enter the rate
+              the bank applied (or the rate on the invoice) as a decimal, e.g. 0.92 means one
+              {currency} costs 0.92 {base}. A missing rate is never assumed.
+            </Help>
+          </label>
+          <input
+            type="text" name="fxRate" value={fxRate}
+            onChange={(event) => setFxRate(event.target.value)}
+            placeholder="e.g. 0.92"
+            className="w-full border border-line-strong rounded px-2 py-1 text-[12px]"
+            required
+          />
+        </div>
+      )}
+
       {preview && (
         <div className="mt-3 border border-line rounded bg-surface-sunken">
           <div className="px-3 py-1.5 border-b border-line text-[11px] uppercase tracking-wide
@@ -187,7 +239,11 @@ export function ClassifyForm({
       )}
 
       <div className="mt-3 flex items-center gap-2">
-        <Button type="submit" variant="primary" disabled={pending || !accountId || !treatmentId}>
+        <Button
+          type="submit" variant="primary"
+          disabled={pending || !accountId || !treatmentId
+            || (isForeign && !hasStatementRate && !fxRate)}
+        >
           {pending ? 'Posting…' : isPosted ? 'Reclassify' : 'Confirm and post'}
         </Button>
         {result && (
@@ -221,4 +277,18 @@ function buildPreview(amountMinor: number, treatment: TreatmentOption | undefine
 
   const vat = Math.round((gross * basisPoints) / (10_000 + basisPoints));
   return { netMinor: gross - vat, vatMinor: vat, ratePercent };
+}
+
+/**
+ * Convert a decimal exchange rate (e.g. "0.92") to an integer numerator and
+ * denominator, so the server never sees a float. Up to 6 decimal places, which
+ * is more than enough for any real exchange rate.
+ */
+function parseDecimalToRational(input: string): { numerator: number; denominator: number } | null {
+  const text = input.trim();
+  if (!/^\d+(\.\d{1,6})?$/.test(text)) return null;
+  const [whole = '0', frac = ''] = text.split('.');
+  const denominator = Math.pow(10, frac.length || 0);
+  const numerator = Number(whole) * denominator + (frac ? Number(frac) : 0);
+  return { numerator, denominator };
 }

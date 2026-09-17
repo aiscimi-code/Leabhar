@@ -6,7 +6,7 @@ import { getDb, resetDatabase } from '@/db';
 import { reviewItems, documents, bankTransactions, companies } from '@/db/schema';
 import { requireCompany } from '@/lib/queries';
 import { classifyTransaction, reclassifyTransaction } from '@/domain/banking/classify';
-import { acceptMatch, rejectMatch, findMatchesForDocument, matchAllUnmatched } from '@/domain/matching/service';
+import { acceptMatch, rejectMatch, findMatchesForDocument, matchAllUnmatched, linkDocument, unmatchDocument } from '@/domain/matching/service';
 import { transitionVatPeriod, type VatPeriodStatus } from '@/domain/vat/periodClose';
 import { storeDocument } from '@/domain/documents/storage';
 import { extractDocument } from '@/domain/extraction/service';
@@ -47,6 +47,19 @@ export async function classifyTransactionAction(formData: FormData): Promise<Act
     const existing = db.select({ journalEntryId: bankTransactions.journalEntryId })
       .from(bankTransactions).where(eq(bankTransactions.id, transactionId)).get();
 
+    // A manual FX rate from the form, when the transaction is in a foreign
+    // currency and no statement rate is stored. Sent as a numerator and
+    // denominator (integers) to avoid floating-point loss.
+    const fxNumerator = formData.get('fxRateNumerator');
+    const fxDenominator = formData.get('fxRateDenominator');
+    const fxRate = fxNumerator && fxDenominator
+      ? {
+          numerator: Number(fxNumerator),
+          denominator: Number(fxDenominator),
+          source: 'manual' as const,
+        }
+      : undefined;
+
     if (existing?.journalEntryId) {
       if (!reason) {
         return {
@@ -57,7 +70,7 @@ export async function classifyTransactionAction(formData: FormData): Promise<Act
       }
       reclassifyTransaction(db, {
         companyId: company.id, bankTransactionId: transactionId,
-        accountId, vatTreatmentId, reason,
+        accountId, vatTreatmentId, reason, fxRate,
         source: 'user', provenanceStatus: 'user_confirmed', actor: 'user',
       });
       revalidatePath('/transactions');
@@ -67,7 +80,7 @@ export async function classifyTransactionAction(formData: FormData): Promise<Act
 
     classifyTransaction(db, {
       companyId: company.id, bankTransactionId: transactionId,
-      accountId, vatTreatmentId,
+      accountId, vatTreatmentId, fxRate,
       source: 'user', provenanceStatus: 'user_confirmed', actor: 'user',
     });
 
@@ -112,6 +125,55 @@ export async function rejectMatchAction(formData: FormData): Promise<ActionResul
     revalidatePath('/review');
     revalidatePath('/documents');
     return { ok: true, message: 'Match rejected.' };
+  } catch (error) {
+    return fail(error);
+  }
+}
+
+export async function linkDocumentAction(formData: FormData): Promise<ActionResult> {
+  try {
+    const company = requireCompany();
+    const documentId = String(formData.get('documentId'));
+    const bankTransactionId = String(formData.get('bankTransactionId'));
+    if (!documentId || !bankTransactionId) {
+      return { ok: false, error: 'A document and a transaction are both required.' };
+    }
+    linkDocument(getDb(), {
+      companyId: company.id,
+      documentId,
+      bankTransactionId,
+      actor: 'user',
+      reason: formData.get('reason') ? String(formData.get('reason')) : undefined,
+    });
+    revalidatePath('/transactions');
+    revalidatePath(`/transactions/${bankTransactionId}`);
+    revalidatePath('/documents');
+    revalidatePath(`/documents/${documentId}`);
+    revalidatePath('/review');
+    return { ok: true, message: 'Document linked.' };
+  } catch (error) {
+    return fail(error);
+  }
+}
+
+export async function unmatchDocumentAction(formData: FormData): Promise<ActionResult> {
+  try {
+    const company = requireCompany();
+    const documentId = String(formData.get('documentId'));
+    if (!documentId) {
+      return { ok: false, error: 'A document is required.' };
+    }
+    unmatchDocument(getDb(), {
+      companyId: company.id,
+      documentId,
+      actor: 'user',
+      reason: formData.get('reason') ? String(formData.get('reason')) : 'Unlinked by user',
+    });
+    revalidatePath('/transactions');
+    revalidatePath('/documents');
+    revalidatePath(`/documents/${documentId}`);
+    revalidatePath('/review');
+    return { ok: true, message: 'Document unlinked.' };
   } catch (error) {
     return fail(error);
   }

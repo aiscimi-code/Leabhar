@@ -91,7 +91,22 @@ export function classifyTransaction(db: AppDatabase, input: ClassifyInput): Clas
   const baseCurrency = company.baseCurrency;
   const currency = transaction.currency;
 
-  if (currency !== baseCurrency && !input.fxRate) {
+  // When the statement itself reported the settled base-currency amount, the
+  // bank's actual rate is already stored on the transaction. Derive it from the
+  // two amounts rather than requiring the user to supply one — the bank's rate
+  // is the correct one, and today's ECB rate would give the wrong figure.
+  const statementRate = transaction.baseAmountMinor !== null
+    && transaction.fxRateSource === 'bank_statement'
+    && transaction.fxRateNumerator !== null
+    && transaction.fxRateDenominator !== null
+    ? {
+        numerator: transaction.fxRateNumerator,
+        denominator: transaction.fxRateDenominator,
+        source: 'bank_statement' as const,
+      }
+    : undefined;
+
+  if (currency !== baseCurrency && !input.fxRate && !statementRate) {
     throw new ClassificationError(
       `This transaction is in ${currency} but the company's base currency is `
         + `${baseCurrency}, and no exchange rate was supplied. A missing rate is an `
@@ -99,6 +114,11 @@ export function classifyTransaction(db: AppDatabase, input: ClassifyInput): Clas
       { bankTransactionId: transaction.id, currency },
     );
   }
+
+  // A manual rate from the user takes precedence over the statement rate, so a
+  // user correction overrides the bank's figure exactly as it overrides a
+  // scored suggestion elsewhere.
+  const resolvedFxRate = input.fxRate ?? statementRate;
 
   const resolved = resolveTreatment(db, {
     companyId: input.companyId,
@@ -121,14 +141,14 @@ export function classifyTransaction(db: AppDatabase, input: ClassifyInput): Clas
   });
 
   const toBase = (amount: number): number =>
-    input.fxRate ? multiplyRational(asMinor(amount), input.fxRate.numerator, input.fxRate.denominator) : amount;
+    resolvedFxRate ? multiplyRational(asMinor(amount), resolvedFxRate.numerator, resolvedFxRate.denominator) : amount;
 
   const bankLedgerAccountId = bankAccount.accountId
     ?? systemAccountId(db, input.companyId, 'bank_control');
   const vatOnPurchasesId = systemAccountId(db, input.companyId, 'vat_on_purchases');
   const vatOnSalesId = systemAccountId(db, input.companyId, 'vat_on_sales');
 
-  const fxRate = input.fxRate;
+  const fxRate = resolvedFxRate;
   const lineCurrency = currency;
 
   const lines: Parameters<typeof postJournalEntry>[1]['lines'] = [];
@@ -229,8 +249,8 @@ export function classifyTransaction(db: AppDatabase, input: ClassifyInput): Clas
         statedVatMinor: input.statedVatMinor,
         currency,
         baseCurrency,
-        fxRate: input.fxRate
-          ? { numerator: input.fxRate.numerator, denominator: input.fxRate.denominator }
+        fxRate: resolvedFxRate
+          ? { numerator: resolvedFxRate.numerator, denominator: resolvedFxRate.denominator }
           : undefined,
         counterpartyVatNumber: counterpartyVatNumber(db, input),
         counterpartyCountry: counterpartyCountry(db, input),
@@ -250,9 +270,9 @@ export function classifyTransaction(db: AppDatabase, input: ClassifyInput): Clas
       status: 'posted',
       baseAmountMinor: toBase(transaction.amountMinor),
       baseCurrency,
-      fxRateNumerator: input.fxRate?.numerator ?? null,
-      fxRateDenominator: input.fxRate?.denominator ?? null,
-      fxRateSource: input.fxRate?.source ?? null,
+      fxRateNumerator: resolvedFxRate?.numerator ?? null,
+      fxRateDenominator: resolvedFxRate?.denominator ?? null,
+      fxRateSource: resolvedFxRate?.source ?? null,
       appliedRuleId: input.appliedRuleId ?? null,
       source: input.source ?? 'user',
       confidence: input.confidence ?? null,

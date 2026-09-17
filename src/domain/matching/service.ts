@@ -221,12 +221,14 @@ function toTransaction(row: typeof bankTransactions.$inferSelect): TransactionFo
     bankReference: row.bankReference,
     counterpartyName: row.counterpartyName,
     supplierId: row.supplierId,
+    baseAmountMinor: row.baseAmountMinor,
+    baseCurrency: row.baseCurrency,
   };
 }
 
 type Tx = Parameters<Parameters<AppDatabase['transaction']>[0]>[0];
 
-function applyMatchInTransaction(
+export function applyMatchInTransaction(
   tx: Tx | AppDatabase,
   params: {
     companyId: string; documentId: string; bankTransactionId: string;
@@ -307,6 +309,107 @@ export function acceptMatch(
     resolveReviewItems(
       tx, params.companyId, `document:${params.documentId}:no_match`,
       'A match was recorded.',
+    );
+  });
+}
+
+/**
+ * Link a document to a bank transaction by hand, regardless of whether the
+ * scorer ever proposed it as a candidate.
+ *
+ * The user is making the decision, so this bypasses the scoring thresholds —
+ * but it does not bypass the audit trail or the review resolution. If the
+ * document was already linked to a different transaction, the old link is
+ * detached first (leaving its audit record behind), exactly as `unmatchDocument`
+ * does. A manual link is recorded as a `documentMatches` row with `source: 'user'`
+ * so it is distinguishable from an auto-scored candidate in the audit trail.
+ */
+export function linkDocument(
+  db: AppDatabase,
+  params: {
+    companyId: string; documentId: string; bankTransactionId: string;
+    actor?: string; reason?: string; requestId?: string;
+  },
+): void {
+  const document = db.select().from(documents)
+    .where(and(
+      eq(documents.id, params.documentId),
+      eq(documents.companyId, params.companyId),
+    )).get();
+  if (!document) throw new Error(`Document ${params.documentId} not found.`);
+
+  const transaction = db.select().from(bankTransactions)
+    .where(and(
+      eq(bankTransactions.id, params.bankTransactionId),
+      eq(bankTransactions.companyId, params.companyId),
+    )).get();
+  if (!transaction) throw new Error(`Bank transaction ${params.bankTransactionId} not found.`);
+
+  // A document already linked elsewhere is detached first, so the old link
+  // remains in the audit trail rather than being silently overwritten.
+  if (document.matchedTransactionId && document.matchedTransactionId !== params.bankTransactionId) {
+    unmatchDocument(db, {
+      companyId: params.companyId,
+      documentId: params.documentId,
+      actor: params.actor,
+      reason: `Re-linked to ${params.bankTransactionId}`,
+    });
+  }
+
+  const reason = params.reason ?? 'Manually linked';
+  const actor = params.actor ?? 'user';
+  const timestamp = nowIso();
+
+  db.transaction((tx) => {
+    // Any pending scored candidates for this document are rejected by
+    // implication — the user has chosen a link, so they no longer need a
+    // decision on the alternatives.
+    tx.update(documentMatches).set({
+      decision: 'rejected', decidedAt: timestamp, decidedBy: actor,
+      decisionReason: 'Superseded by a manual link',
+    }).where(and(
+      eq(documentMatches.documentId, params.documentId),
+      eq(documentMatches.decision, 'pending'),
+    )).run();
+
+    const matchId = ids.match();
+    tx.insert(documentMatches).values({
+      id: matchId,
+      companyId: params.companyId,
+      documentId: params.documentId,
+      bankTransactionId: params.bankTransactionId,
+      matchType: 'matched',
+      score: 100,
+      factors: [],
+      amountDifferenceMinor: null,
+      dateDifferenceDays: null,
+      currencyMatches: null,
+      decision: 'accepted',
+      decidedAt: timestamp,
+      decidedBy: actor,
+      decisionReason: reason,
+      source: 'user',
+      confidence: 100,
+      provenanceStatus: 'user_confirmed',
+    }).run();
+
+    applyMatchInTransaction(tx, {
+      companyId: params.companyId,
+      documentId: params.documentId,
+      bankTransactionId: params.bankTransactionId,
+      actor,
+      reason,
+      auto: false,
+      requestId: params.requestId,
+    });
+
+    resolveReviewItems(
+      tx, params.companyId, `document:${params.documentId}:match`,
+      `Manually linked to transaction ${params.bankTransactionId} by ${actor}.`,
+    );
+    resolveReviewItems(
+      tx, params.companyId, `document:${params.documentId}:no_match`,
+      'A manual link was recorded.',
     );
   });
 }

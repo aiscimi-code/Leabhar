@@ -1,12 +1,15 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { transactionDetail } from '@/lib/queries';
+import { transactionDetail, unmatchedDocumentOptions } from '@/lib/queries';
 import {
   Page, Panel, Badge, ProvenanceBadge, Help, Figure, LinkButton, Empty,
 } from '@/components/primitives';
 import { StatusBadge } from '@/components/StatusBadge';
 import { money, date, dateTime, label, rate, percent } from '@/lib/format';
 import { ClassifyForm } from '@/components/ClassifyForm';
+import { LinkControls } from '@/components/LinkControls';
+import { CandidateActions } from '@/components/CandidateActions';
+import { linkDocumentAction, unmatchDocumentAction, acceptMatchAction, rejectMatchAction } from '@/app/actions';
 import { chartOfAccounts, treatmentsWithRates } from '@/lib/queries';
 import { asIsoDate } from '@/domain/dates';
 
@@ -37,6 +40,7 @@ export default async function TransactionDetailPage({ params }: {
   // Rates are resolved server-side, as of this transaction's date, from the
   // rate configuration rather than from anything hard-coded.
   const treatments = treatmentsWithRates(asIsoDate(t.transactionDate));
+  const linkableDocuments = unmatchedDocumentOptions();
 
   return (
     <Page
@@ -128,6 +132,11 @@ export default async function TransactionDetailPage({ params }: {
                 isPosted={Boolean(t.journalEntryId)}
                 amountMinor={t.amountMinor}
                 currency={t.currency}
+                baseCurrency={company.baseCurrency}
+                baseAmountMinor={t.baseAmountMinor}
+                fxRateSource={t.fxRateSource}
+                fxRateNumerator={t.fxRateNumerator}
+                fxRateDenominator={t.fxRateDenominator}
               />
             </div>
           </Panel>
@@ -271,34 +280,59 @@ export default async function TransactionDetailPage({ params }: {
             description={matchedDocument ? undefined : 'No invoice or receipt attached.'}
           >
             {matchedDocument ? (
-              <table className="ledger">
-                <tbody>
-                  <Row label="Document">
-                    <Link href={`/documents/${matchedDocument.id}`} className="text-accent hover:underline">
-                      {matchedDocument.originalFilename}
-                    </Link>
-                  </Row>
-                  {matchedDocument.invoiceNumber && (
-                    <Row label="Invoice number">{matchedDocument.invoiceNumber}</Row>
-                  )}
-                  {matchedDocument.documentDate && (
-                    <Row label="Document date">{date(matchedDocument.documentDate)}</Row>
-                  )}
-                  {matchedDocument.grossMinor !== null && (
-                    <Row label="Total on document">
-                      <span className="num !text-left">
-                        {money(matchedDocument.grossMinor, matchedDocument.currency ?? 'EUR')}
-                      </span>
+              <>
+                <table className="ledger">
+                  <tbody>
+                    <Row label="Document">
+                      <Link href={`/documents/${matchedDocument.id}`} className="text-accent hover:underline">
+                        {matchedDocument.originalFilename}
+                      </Link>
                     </Row>
-                  )}
-                </tbody>
-              </table>
+                    {matchedDocument.invoiceNumber && (
+                      <Row label="Invoice number">{matchedDocument.invoiceNumber}</Row>
+                    )}
+                    {matchedDocument.documentDate && (
+                      <Row label="Document date">{date(matchedDocument.documentDate)}</Row>
+                    )}
+                    {matchedDocument.grossMinor !== null && (
+                      <Row label="Total on document">
+                        <span className="num !text-left">
+                          {money(matchedDocument.grossMinor, matchedDocument.currency ?? 'EUR')}
+                        </span>
+                      </Row>
+                    )}
+                  </tbody>
+                </table>
+                <div className="px-4 py-2.5 border-t border-line">
+                  <LinkControls
+                    action={unmatchDocumentAction}
+                    options={[{ value: matchedDocument.id, label: matchedDocument.originalFilename }]}
+                    extra={{ documentId: matchedDocument.id }}
+                    selectName="documentId"
+                    label="Unlink"
+                    submit="Unlink document"
+                  />
+                </div>
+              </>
             ) : (
-              <Empty
-                title="No document"
-                detail="VAT reclaimed without a supporting invoice can be disallowed on audit."
-                action={<LinkButton href="/documents">Upload a document</LinkButton>}
-              />
+              <>
+                <Empty
+                  title="No document"
+                  detail="VAT reclaimed without a supporting invoice can be disallowed on audit."
+                  action={<LinkButton href="/documents">Upload a document</LinkButton>}
+                />
+                <div className="px-4 py-2.5 border-t border-line">
+                  <LinkControls
+                    action={linkDocumentAction}
+                    options={linkableDocuments}
+                    extra={{ bankTransactionId: t.id }}
+                    selectName="documentId"
+                    label="Link a document"
+                    submit="Link"
+                    emptyHint="No unmatched documents available to link."
+                  />
+                </div>
+              </>
             )}
           </Panel>
 
@@ -336,6 +370,14 @@ export default async function TransactionDetailPage({ params }: {
                       </li>
                     ))}
                   </ul>
+                  {match.decision === 'pending' && match.bankTransactionId && (
+                    <CandidateActions
+                      accept={acceptMatchAction}
+                      reject={rejectMatchAction}
+                      documentId={match.documentId}
+                      bankTransactionId={match.bankTransactionId}
+                    />
+                  )}
                 </div>
               ))}
             </Panel>
