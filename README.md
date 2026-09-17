@@ -114,6 +114,11 @@ npm run db:seed             # optional: load the demo company
 npm run dev                 # http://localhost:3000
 ```
 
+Open `http://localhost:3000`. On first run you are redirected to `/login`
+to create the single local user (display name, username, password). After
+that you can use the app, and optionally load the demo company with
+`npm run db:seed`.
+
 If `npm run dev` fails with `Could not locate the bindings file`, the
 `better-sqlite3` native binary was not built for your Node version — run
 `npm rebuild better-sqlite3`. See [CONTRIBUTING.md](CONTRIBUTING.md) and
