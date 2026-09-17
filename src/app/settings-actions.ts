@@ -51,6 +51,16 @@ const optional = (formData: FormData, key: string): string | null | undefined =>
   return trimmed === '' ? null : trimmed;
 };
 
+/** Convert a decimal exchange rate (e.g. "0.92") to an integer rational. */
+function parseRateToRational(input: string): { numerator: number; denominator: number; source: string } | undefined {
+  const text = input.trim();
+  if (!/^\d+(\.\d{1,6})?$/.test(text)) return undefined;
+  const [whole = '0', frac = ''] = text.split('.');
+  const denominator = Math.pow(10, frac.length || 0);
+  const numerator = Number(whole) * denominator + (frac ? Number(frac) : 0);
+  return { numerator, denominator, source: 'manual' };
+}
+
 export async function updateCompanyAction(formData: FormData): Promise<ActionResult> {
   try {
     const company = requireCompany();
@@ -658,6 +668,13 @@ export async function recordPaymentAction(formData: FormData): Promise<ActionRes
     }
 
     const amountMinor = parseAmount(amountText, currency);
+
+    // An optional FX rate for cross-currency settlement (payment in one
+    // currency, invoice in another) or a foreign-currency payment. Sent as a
+    // decimal, converted to a rational so no float crosses the boundary.
+    const fxRateText = text(formData, 'fxRate');
+    const fxRate = fxRateText ? parseRateToRational(fxRateText) : undefined;
+
     const result = recordPayment(getDb(), {
       companyId: company.id,
       direction: String(formData.get('direction')) as 'received' | 'made',
@@ -666,6 +683,7 @@ export async function recordPaymentAction(formData: FormData): Promise<ActionRes
       amountMinor,
       currency,
       bankTransactionId: text(formData, 'bankTransactionId'),
+      fxRate,
       reference: text(formData, 'reference'),
       allocations: [{ invoiceId, allocatedMinor: amountMinor }],
       actor: 'user',

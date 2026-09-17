@@ -17,6 +17,7 @@ import { agedAnalysis } from '@/domain/invoicing/payments';
 import { reconcileBankAccount, reconciliationHistory } from '@/domain/banking/reconciliation';
 import { search } from '@/domain/search/search';
 import { asIsoDate, today, makeDate, type IsoDate } from '@/domain/dates';
+import { money } from '@/lib/format';
 
 /**
  * Read-side queries for the UI.
@@ -447,6 +448,59 @@ export function bankAccountList() {
   const company = requireCompany();
   return db.select().from(bankAccounts)
     .where(eq(bankAccounts.companyId, company.id)).orderBy(bankAccounts.bankName).all();
+}
+
+/**
+ * Documents not yet linked to a transaction, for the manual-link picker on the
+ * transaction page. Only unmatched, non-archived documents are offered — the
+ * user is deciding which document evidences this payment.
+ */
+export function unmatchedDocumentOptions() {
+  const db = getDb();
+  const company = requireCompany();
+  const rows = db.select().from(documents)
+    .where(and(
+      eq(documents.companyId, company.id),
+      eq(documents.archived, false),
+      isNull(documents.matchedTransactionId),
+    ))
+    .orderBy(desc(documents.uploadedAt)).limit(200).all();
+  return rows.map((d) => ({
+    value: d.id,
+    label: [
+      d.originalFilename,
+      d.invoiceNumber ? `#${d.invoiceNumber}` : '',
+      d.documentDate ? `(${d.documentDate})` : '',
+    ].filter(Boolean).join(' '),
+  }));
+}
+
+/**
+ * Bank transactions not yet posted, for the manual-link picker on the document
+ * page and the payment form. A posted transaction is already accounted for, so
+ * linking it would record the same money twice.
+ */
+export function unpostedTransactionOptions(bankAccountId?: string) {
+  const db = getDb();
+  const company = requireCompany();
+  const conditions = [
+    eq(bankTransactions.companyId, company.id),
+    ne(bankTransactions.status, 'ignored'),
+    ne(bankTransactions.status, 'duplicate'),
+    isNull(bankTransactions.journalEntryId),
+    sql`NOT EXISTS (
+      SELECT 1 FROM ${payments} p WHERE p.bank_transaction_id = ${bankTransactions.id}
+    )`,
+  ];
+  if (bankAccountId) conditions.push(eq(bankTransactions.bankAccountId, bankAccountId));
+  const rows = db.select().from(bankTransactions)
+    .where(and(...conditions))
+    .orderBy(desc(bankTransactions.transactionDate)).limit(200).all();
+  return rows.map((t) => ({
+    value: t.id,
+    label: `${t.transactionDate} · ${t.description} · ${money(t.amountMinor, t.currency)}`,
+    currency: t.currency,
+  }));
 }
 
 export function fixedAssetList() {

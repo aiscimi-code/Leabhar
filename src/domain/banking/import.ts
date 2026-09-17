@@ -3,7 +3,7 @@ import ExcelJS from 'exceljs';
 import type { AppDatabase } from '@/db';
 import {
   bankTransactions, statementImports, bankAccounts, accountingPeriods,
-  auditEvents, importProfiles,
+  auditEvents, importProfiles, companies,
 } from '@/db/schema';
 import { ids } from '@/lib/ids';
 import { nowIso, asIsoDate } from '../dates';
@@ -66,6 +66,11 @@ export async function importStatement(
       eq(bankAccounts.companyId, input.companyId),
     )).get();
   if (!account) throw new Error(`Bank account ${input.bankAccountId} not found.`);
+
+  const company = db.select().from(companies)
+    .where(eq(companies.id, input.companyId)).get();
+  if (!company) throw new Error(`Company ${input.companyId} not found.`);
+  const baseCurrency = company.baseCurrency;
 
   const hash = fileHash(input.content);
 
@@ -191,6 +196,13 @@ export async function importStatement(
         (p) => transaction.transactionDate >= p.startDate && transaction.transactionDate <= p.endDate,
       );
 
+      // When the statement reports both the foreign amount and the settled
+      // base-currency amount, derive the bank's actual exchange rate from the
+      // two figures. This is the rate that matters for the books — not today's
+      // ECB rate — because it is what the bank actually charged.
+      const hasStatementRate = transaction.baseAmountMinor !== null
+        && transaction.currency !== baseCurrency;
+
       tx.insert(bankTransactions).values({
         id: ids.bankTransaction(),
         companyId: input.companyId,
@@ -201,6 +213,11 @@ export async function importStatement(
         description: transaction.description,
         amountMinor: transaction.amountMinor,
         currency: transaction.currency,
+        baseAmountMinor: hasStatementRate ? transaction.baseAmountMinor : null,
+        baseCurrency: hasStatementRate ? baseCurrency : null,
+        fxRateNumerator: hasStatementRate ? Math.abs(transaction.baseAmountMinor!) : null,
+        fxRateDenominator: hasStatementRate ? Math.abs(transaction.amountMinor) : null,
+        fxRateSource: hasStatementRate ? 'bank_statement' : null,
         balanceAfterMinor: transaction.balanceAfterMinor,
         bankReference: transaction.bankReference,
         bankTransactionId: transaction.bankTransactionId,

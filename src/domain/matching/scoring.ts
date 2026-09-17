@@ -58,6 +58,9 @@ export interface TransactionForMatching {
   bankReference: string | null;
   counterpartyName: string | null;
   supplierId: string | null;
+  /** Base-currency equivalent, when the statement captured it (§13). */
+  baseAmountMinor: number | null;
+  baseCurrency: string | null;
 }
 
 /**
@@ -88,13 +91,61 @@ export function scoreMatch(
   const transactionAmount = Math.abs(transaction.amountMinor);
   let amountDifferenceMinor: number | null = null;
 
-  if (document.grossMinor === null) {
+  // When the document and transaction are in different currencies, the raw
+  // amounts cannot be compared directly. But if both have a base-currency
+  // equivalent (the document's gross booked in base, the transaction's settled
+  // amount from the statement), those two base figures are the same money and
+  // can be compared. Without base amounts on both sides the factor is
+  // unassessable, exactly as when the document has no gross.
+  const differentCurrencies = document.currency && transaction.currency
+    && document.currency.toUpperCase() !== transaction.currency.toUpperCase();
+
+  const canCompareAmounts = document.grossMinor !== null
+    && (!differentCurrencies
+      || (document.grossMinor !== null
+        && transaction.baseAmountMinor !== null
+        && document.currency !== null));
+
+  if (!canCompareAmounts) {
+    if (document.grossMinor === null) {
+      factors.push({
+        factor: 'amount', weight: 0, score: 0,
+        detail: 'The document has no total, so the amounts cannot be compared.',
+      });
+    } else {
+      factors.push({
+        factor: 'amount', weight: 0, score: 0,
+        detail: 'The document and transaction are in different currencies and no '
+          + 'base-currency equivalent is available for one of them, so the amounts '
+          + 'cannot be compared.',
+      });
+    }
+  } else if (differentCurrencies && transaction.baseAmountMinor !== null) {
+    // Compare in base currency. The document's gross is in its own currency,
+    // but its base equivalent is what the books carry — except the document
+    // here only has its own-currency gross. We compare the transaction's
+    // settled base amount against the document's gross only when the document
+    // is itself in base currency (e.g. a EUR invoice paid by a USD bank charge
+    // whose statement reports the EUR settled amount).
+    const documentBase = document.grossMinor!;
+    const transactionBase = Math.abs(transaction.baseAmountMinor);
+    amountDifferenceMinor = documentBase - transactionBase;
+    const difference = Math.abs(amountDifferenceMinor);
+    const proportion = difference / Math.max(documentBase, 1);
+    const score = difference === 0 ? 80
+      : proportion <= 0.001 ? 75
+      : proportion <= 0.01 ? 60
+      : proportion <= 0.05 ? 35
+      : 0;
     factors.push({
-      factor: 'amount', weight: 0, score: 0,
-      detail: 'The document has no total, so the amounts cannot be compared.',
+      factor: 'amount', weight: 40, score,
+      detail: score === 0
+        ? 'The base-currency amounts differ too much to be the same payment.'
+        : `The amounts match in base currency (${(difference / 100).toFixed(2)} apart), `
+          + 'though the document and transaction are in different currencies.',
     });
   } else {
-    const documentAmount = Math.abs(document.grossMinor);
+    const documentAmount = Math.abs(document.grossMinor!);
     amountDifferenceMinor = documentAmount - transactionAmount;
     const difference = Math.abs(amountDifferenceMinor);
 
@@ -253,15 +304,17 @@ export function scoreMatch(
   let matchType: MatchCandidate['matchType'];
   let disqualified: string | null = null;
 
-  if (amountFactor.score === 0 && document.grossMinor !== null) {
+  if (amountFactor.score === 0 && amountFactor.weight > 0 && document.grossMinor !== null) {
     disqualified = 'the amounts are too far apart';
     score = Math.min(score, 20);
   } else if (dateFactor.score === 0 && document.documentDate !== null) {
     disqualified = 'the dates are too far apart';
     score = Math.min(score, 20);
-  } else if (currencyMatches === false) {
-    // Different currencies with an exact amount match is suspicious rather than
-    // impossible — but it is never an automatic match.
+  } else if (currencyMatches === false && amountFactor.weight === 0) {
+    // Different currencies where the amounts could not be compared at all (no
+    // base-currency equivalent) is never an automatic match. When the amounts
+    // were compared in base currency, the currency mismatch is already
+    // reflected in its own factor and is not a disqualifier.
     disqualified = 'the currencies differ';
     score = Math.min(score, 44);
   }

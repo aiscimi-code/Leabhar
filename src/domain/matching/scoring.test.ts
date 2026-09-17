@@ -25,6 +25,8 @@ const tx = (over: Partial<TransactionForMatching> = {}): TransactionForMatching 
   bankReference: null,
   counterpartyName: null,
   supplierId: null,
+  baseAmountMinor: null,
+  baseCurrency: null,
   ...over,
 });
 
@@ -82,6 +84,34 @@ describe('scoreMatch', () => {
   it('never auto-matches across different currencies', () => {
     const result = scoreMatch(doc({ currency: 'USD' }), tx({ currency: 'EUR' }));
     expect(result.matchType).not.toBe('matched');
+    expect(result.currencyMatches).toBe(false);
+    expect(result.explanation).toContain('currencies differ');
+  });
+
+  it('scores a cross-currency match by comparing base amounts when both sides have them', () => {
+    // A EUR invoice (gross in base) paid by a USD bank charge whose statement
+    // reports the EUR settled amount.
+    const result = scoreMatch(
+      doc({ grossMinor: 11_040, currency: 'EUR', supplierName: 'US Supplier' }),
+      tx({ amountMinor: -12_000, currency: 'USD', baseAmountMinor: -11_040, baseCurrency: 'EUR' }),
+    );
+    const amountFactor = result.factors.find((f) => f.factor === 'amount')!;
+    expect(amountFactor.weight).toBe(40);
+    expect(amountFactor.score).toBe(80); // match by base, not exact same currency
+    expect(result.amountDifferenceMinor).toBe(0);
+    // Currency mismatch is noted but not a hard disqualifier when the amount
+    // was assessable in base.
+    expect(result.currencyMatches).toBe(false);
+    expect(result.explanation).not.toContain('currencies differ');
+  });
+
+  it('leaves the amount factor unassessable for cross-currency without base amounts', () => {
+    const result = scoreMatch(
+      doc({ grossMinor: 11_040, currency: 'EUR' }),
+      tx({ amountMinor: -12_000, currency: 'USD', baseAmountMinor: null, baseCurrency: null }),
+    );
+    const amountFactor = result.factors.find((f) => f.factor === 'amount')!;
+    expect(amountFactor.weight).toBe(0);
     expect(result.currencyMatches).toBe(false);
     expect(result.explanation).toContain('currencies differ');
   });

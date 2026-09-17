@@ -273,6 +273,65 @@ describe('foreign currency', () => {
   });
 });
 
+describe('foreign currency with a statement-provided rate', () => {
+  it('classifies without a manual rate and balances in base at the bank rate', async () => {
+    const usdAccount = addBankAccount(db, {
+      companyId, bankName: 'Revolut', accountName: 'USD',
+      currency: 'USD', openingDate: '2025-01-01',
+    });
+    await importStatement(db, {
+      companyId, bankAccountId: usdAccount, filename: 'usd.csv',
+      content: [
+        'Date,Description,Amount,Settled Amount,Currency',
+        '15/03/2025,US SUPPLIER,-120.00,-110.40,USD',
+      ].join('\n'),
+      fileFormat: 'csv',
+      columnMap: {
+        Date: 'transaction_date', Description: 'description',
+        Amount: 'amount', 'Settled Amount': 'base_amount', Currency: 'currency',
+      },
+    });
+    const tx = db.select().from(bankTransactions)
+      .where(eq(bankTransactions.description, 'US SUPPLIER')).get()!;
+
+    // No fxRate supplied — the statement rate should be used.
+    const result = classifyTransaction(db, {
+      companyId, bankTransactionId: tx.id,
+      accountId: byCode['6000']!, vatTreatmentId: tr['NON_EU_SERVICES_RCV']!,
+    });
+
+    const lines = db.select().from(journalLines)
+      .where(eq(journalLines.journalEntryId, result.journalEntryId)).all();
+    const expense = lines.find((l) => l.accountId === byCode['6000'])!;
+    expect(expense.debitMinor).toBe(12_000);
+    expect(expense.baseDebitMinor).toBe(11_040);
+    expect(trialBalance(db, { companyId, asOf: makeDate(2025, 12, 31) }).balanced).toBe(true);
+
+    const after = db.select().from(bankTransactions).where(eq(bankTransactions.id, tx.id)).get()!;
+    expect(after.fxRateSource).toBe('bank_statement');
+    expect(after.baseAmountMinor).toBe(-11040);
+  });
+
+  it('still throws when there is no statement rate and no manual rate', async () => {
+    await importStatement(db, {
+      companyId, bankAccountId, filename: 'usd.csv',
+      content: 'Date,Description,Amount,Currency\n15/03/2025,US SUPPLIER,-120.00,USD',
+      fileFormat: 'csv',
+      columnMap: {
+        Date: 'transaction_date', Description: 'description',
+        Amount: 'amount', Currency: 'currency',
+      },
+    });
+    const tx = db.select().from(bankTransactions)
+      .where(eq(bankTransactions.description, 'US SUPPLIER')).get()!;
+
+    expect(() => classifyTransaction(db, {
+      companyId, bankTransactionId: tx.id,
+      accountId: byCode['6000']!, vatTreatmentId: tr['IE_STD']!,
+    })).toThrow(/never an assumed 1\.0/);
+  });
+});
+
 describe('reclassifyTransaction', () => {
   it('reverses the original and posts a new classification', async () => {
     const tx = await importOne('MISCODED', '-123.00');

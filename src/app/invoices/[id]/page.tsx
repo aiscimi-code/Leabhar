@@ -1,9 +1,9 @@
 import { notFound } from 'next/navigation';
-import { invoiceDetail } from '@/lib/queries';
+import { invoiceDetail, unpostedTransactionOptions } from '@/lib/queries';
 import {
-  Page, Panel, Badge, Stat, Empty, Field, Input, Disclosure, ProvenanceBadge,
+  Page, Panel, Badge, Stat, Empty, Disclosure, ProvenanceBadge,
 } from '@/components/primitives';
-import { ActionForm } from '@/components/ActionForm';
+import { PaymentForm } from '@/components/PaymentForm';
 import { recordPaymentAction } from '@/app/settings-actions';
 import { money, date, label } from '@/lib/format';
 
@@ -16,7 +16,6 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
   if (!detail) notFound();
 
   const { invoice, lines, allocations, party, company } = detail;
-  const today = new Date().toISOString().slice(0, 10);
   const isSales = invoice.direction === 'sales';
   const deferredVat = isSales && company.vatAccountingBasis === 'cash_receipts'
     && invoice.vatMinor !== 0;
@@ -156,28 +155,14 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
                   by a cent.
                 </p>
               )}
-              <ActionForm
-                action={recordPaymentAction} submit="Record payment"
-                extra={{
-                  invoiceId: invoice.id,
-                  direction: isSales ? 'received' : 'made',
-                  currency: invoice.currency,
-                }}
-              >
-                <div className="grid grid-cols-3 gap-3">
-                  <Field label="Date">
-                    <Input name="paymentDate" type="date" defaultValue={today} required />
-                  </Field>
-                  <Field
-                    label="Amount"
-                    hint={`Outstanding is ${money(invoice.outstandingMinor, invoice.currency)}.`}
-                  >
-                    <Input name="amount" required
-                      defaultValue={(invoice.outstandingMinor / 100).toFixed(2)} />
-                  </Field>
-                  <Field label="Reference"><Input name="reference" placeholder="Optional" /></Field>
-                </div>
-              </ActionForm>
+              <PaymentForm
+                action={recordPaymentAction}
+                invoiceId={invoice.id}
+                direction={isSales ? 'received' : 'made'}
+                invoiceCurrency={invoice.currency}
+                outstandingMinor={invoice.outstandingMinor}
+                bankTransactions={unpostedTransactionOptions()}
+              />
             </div>
           </Disclosure>
         )}

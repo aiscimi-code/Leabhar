@@ -1,10 +1,13 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { documentDetail } from '@/lib/queries';
+import { documentDetail, unpostedTransactionOptions } from '@/lib/queries';
 import {
   Page, Panel, Badge, ProvenanceBadge, Help, Empty, LinkButton,
 } from '@/components/primitives';
 import { money, date, dateTime, label, percent } from '@/lib/format';
+import { LinkControls } from '@/components/LinkControls';
+import { CandidateActions } from '@/components/CandidateActions';
+import { linkDocumentAction, unmatchDocumentAction, acceptMatchAction, rejectMatchAction } from '@/app/actions';
 
 export const dynamic = 'force-dynamic';
 
@@ -45,6 +48,7 @@ export default async function DocumentDetailPage({ params }: {
           audit, duplicateOf, company } = detail;
   const latest = extractions[0];
   const currency = doc.currency ?? company.baseCurrency;
+  const linkableTransactions = unpostedTransactionOptions();
 
   return (
     <Page
@@ -186,6 +190,14 @@ export default async function DocumentDetailPage({ params }: {
                       </li>
                     ))}
                   </ul>
+                  {match.decision === 'pending' && match.bankTransactionId && (
+                    <CandidateActions
+                      accept={acceptMatchAction}
+                      reject={rejectMatchAction}
+                      documentId={doc.id}
+                      bankTransactionId={match.bankTransactionId}
+                    />
+                  )}
                 </div>
               ))
             )}
@@ -247,7 +259,7 @@ export default async function DocumentDetailPage({ params }: {
             </table>
           </Panel>
 
-          {matchedTransaction && (
+          {matchedTransaction ? (
             <Panel title="Matched transaction">
               <table className="ledger">
                 <tbody>
@@ -269,6 +281,28 @@ export default async function DocumentDetailPage({ params }: {
                   </tr>
                 </tbody>
               </table>
+              <div className="px-4 py-2.5 border-t border-line">
+                <LinkControls
+                  action={unmatchDocumentAction}
+                  options={[{ value: doc.id, label: matchedTransaction.description }]}
+                  extra={{ documentId: doc.id }}
+                  selectName="documentId"
+                  label="Unlink"
+                  submit="Unlink transaction"
+                />
+              </div>
+            </Panel>
+          ) : (
+            <Panel title="Matched transaction" description="No transaction linked.">
+              <LinkControls
+                action={linkDocumentAction}
+                options={linkableTransactions}
+                extra={{ documentId: doc.id }}
+                selectName="bankTransactionId"
+                label="Link a transaction"
+                submit="Link"
+                emptyHint="No unposted transactions available to link."
+              />
             </Panel>
           )}
 

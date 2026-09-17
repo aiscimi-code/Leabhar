@@ -550,13 +550,69 @@ describe('foreign currency settlement', () => {
     expect(trialBalance(db, { companyId, asOf: makeDate(2025, 12, 31) }).balanced).toBe(true);
   });
 
-  it('refuses to settle an invoice in a different currency', () => {
+  it('settles an invoice in a different currency when an fxRate is supplied', () => {
     const invoice = salesInvoice();
-    expect(() => recordPayment(db, {
+    // Invoice is 123_000 EUR; pay 123_000 USD at 0.92 → 113_160 EUR allocated.
+    const payment = recordPayment(db, {
       companyId, direction: 'received', paymentDate: makeDate(2025, 3, 1),
       amountMinor: 123_000, currency: 'USD',
       fxRate: { numerator: 92, denominator: 100, source: 'ecb' },
       allocations: [{ invoiceId: invoice.invoiceId, allocatedMinor: 123_000 }],
+    });
+
+    // The allocation is in the invoice's currency (EUR), not the payment's.
+    const alloc = db.select().from(paymentAllocations)
+      .where(eq(paymentAllocations.paymentId, payment.paymentId)).get()!;
+    expect(alloc.allocatedMinor).toBe(113_160);
+    expect(alloc.currency).toBe('EUR');
+
+    const after = db.select().from(invoices).where(eq(invoices.id, invoice.invoiceId)).get()!;
+    expect(after.paidMinor).toBe(113_160);
+    expect(after.outstandingMinor).toBe(123_000 - 113_160);
+    expect(after.status).toBe('part_paid');
+    expect(trialBalance(db, { companyId, asOf: makeDate(2025, 12, 31) }).balanced).toBe(true);
+  });
+
+  it('posts an FX gain when a foreign invoice is settled in base at a different rate', () => {
+    // USD invoice booked at 0.92 (1 USD = 0.92 EUR), zero-rated export.
+    const invoice = createInvoice(db, {
+      companyId, direction: 'sales', invoiceDate: makeDate(2025, 2, 20), customerId,
+      currency: 'USD', fxRate: { numerator: 92, denominator: 100, source: 'ecb' },
+      lines: [{
+        description: 'Export consulting', netMinor: 100_000,
+        accountId: byCode['4020']!, vatTreatmentId: tr['NON_EU_SERVICES_SUPPLY']!,
+      }],
+    });
+    // Pay 92_000 EUR (base). fxRate EUR→USD = 95/92, so 92_000 EUR → 95_000 USD.
+    // baseAtInvoiceRate = 95_000 USD * 92/100 = 87_400 EUR.
+    // baseAtPaymentRate = 92_000 EUR (payment in base).
+    // difference = 92_000 - 87_400 = 4_600 EUR gain.
+    const payment = recordPayment(db, {
+      companyId, direction: 'received', paymentDate: makeDate(2025, 3, 15),
+      amountMinor: 92_000, currency: 'EUR',
+      fxRate: { numerator: 95, denominator: 92, source: 'manual' },
+      allocations: [{ invoiceId: invoice.invoiceId, allocatedMinor: 92_000 }],
+    });
+
+    expect(payment.fxDifferenceMinor).toBe(4_600);
+    expect(accountBalance(db, { companyId, accountId: acc['fx_gain_loss']! })).toBe(4_600);
+    expect(trialBalance(db, { companyId, asOf: makeDate(2025, 12, 31) }).balanced).toBe(true);
+  });
+
+  it('refuses to settle across currencies when no fxRate is supplied', () => {
+    // A USD invoice paid in EUR (base) with no conversion rate.
+    const invoice = createInvoice(db, {
+      companyId, direction: 'sales', invoiceDate: makeDate(2025, 2, 20), customerId,
+      currency: 'USD', fxRate: { numerator: 92, denominator: 100, source: 'ecb' },
+      lines: [{
+        description: 'Export consulting', netMinor: 100_000,
+        accountId: byCode['4020']!, vatTreatmentId: tr['NON_EU_SERVICES_SUPPLY']!,
+      }],
+    });
+    expect(() => recordPayment(db, {
+      companyId, direction: 'received', paymentDate: makeDate(2025, 3, 1),
+      amountMinor: 100_000, currency: 'EUR',
+      allocations: [{ invoiceId: invoice.invoiceId, allocatedMinor: 100_000 }],
     })).toThrow(/deliberate conversion/);
   });
 
