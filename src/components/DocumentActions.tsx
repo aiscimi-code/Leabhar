@@ -7,18 +7,53 @@ import { Button } from './primitives';
 export function UploadForm() {
   const [pending, startTransition] = useTransition();
   const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null);
+  const [warnings, setWarnings] = useState<string[]>([]);
+  const [progress, setProgress] = useState<string | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
 
   return (
     <form
       ref={formRef}
       action={(formData) => {
+        const files = formData.getAll('files').filter((f): f is File => f instanceof File);
+        if (files.length === 0) {
+          setMessage({ ok: false, text: 'Choose at least one file.' });
+          setWarnings([]);
+          return;
+        }
+        // One file per request: a batch sent as a single Server Action body
+        // hits the body size limit and fails the whole upload.
         startTransition(async () => {
-          const result = await uploadDocumentAction(formData);
-          setMessage(result.ok
-            ? { ok: true, text: result.message }
-            : { ok: false, text: result.error });
-          if (result.ok) formRef.current?.reset();
+          let stored = 0;
+          const failures: string[] = [];
+          const collectedWarnings: string[] = [];
+          for (const [index, file] of files.entries()) {
+            setProgress(`Reading ${index + 1} of ${files.length}…`);
+            const single = new FormData();
+            single.append('files', file);
+            const result = await uploadDocumentAction(single);
+            if (result.ok) {
+              stored += 1;
+              if (result.warnings) collectedWarnings.push(...result.warnings);
+            } else {
+              failures.push(`${file.name}: ${result.error}`);
+            }
+          }
+          setProgress(null);
+          formRef.current?.reset();
+          setWarnings(collectedWarnings);
+          if (failures.length > 0) {
+            setMessage({
+              ok: stored === 0,
+              text: `${stored} of ${files.length} stored.`
+                + ` Failed: ${failures.join('; ')}`,
+            });
+          } else {
+            setMessage({
+              ok: true,
+              text: `${stored} document${stored === 1 ? '' : 's'} stored and read.`,
+            });
+          }
         });
       }}
       className="flex items-center gap-3 flex-wrap"
@@ -31,12 +66,22 @@ export function UploadForm() {
           file:font-medium file:cursor-pointer"
       />
       <Button type="submit" variant="primary" disabled={pending}>
-        {pending ? 'Reading…' : 'Upload and read'}
+        {pending ? (progress ?? 'Reading…') : 'Upload and read'}
       </Button>
       {message && (
         <span className={`text-[12px] ${message.ok ? 'text-positive' : 'text-negative'}`}>
           {message.text}
         </span>
+      )}
+      {warnings.length > 0 && (
+        <ul className="w-full space-y-1">
+          {warnings.map((warning) => (
+            <li key={warning} className="text-[12px] leading-snug text-caution flex gap-1.5">
+              <span aria-hidden="true">!</span>
+              <span>{warning}</span>
+            </li>
+          ))}
+        </ul>
       )}
     </form>
   );
