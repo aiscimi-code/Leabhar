@@ -4,6 +4,7 @@ import { createTestDatabase } from '@/db/testing';
 import { createCompany } from '../config/setup';
 import { createAdjustment, reverseAdjustment, listAdjustments, AdjustmentError } from './adjustments';
 import { trialBalance, accountBalance } from './ledger';
+import { postJournalEntry } from './journal';
 import { buildVat3Return } from '../vat/report';
 import { journalEntries, auditEvents, accountingPeriods, vatPeriods } from '@/db/schema';
 import { makeDate } from '../dates';
@@ -176,27 +177,23 @@ describe('reverseAdjustment', () => {
   });
 
   it('refuses to reverse an entry that is not an adjustment', () => {
-    const entry = db.select().from(journalEntries).get();
-    adjust();
-    // Post a non-adjustment entry and try to reverse it from here.
-    // We insert directly as a draft (is_posted = 0) so the immutability
-    // trigger does not block the entryType change — the point is to test
-    // the guard clause, not to bypass the trigger.
-    const normal = createAdjustment(db, {
-      companyId, date: makeDate(2025, 6, 1), description: 'x', reason: 'valid reason',
+    // Post a standard (non-adjustment) entry directly, so there is no need
+    // to mutate a posted row — the trigger contract is respected.
+    const standard = postJournalEntry(db, {
+      companyId,
+      entryDate: makeDate(2025, 6, 1),
+      narrative: 'Ordinary sales entry',
+      sourceType: 'sales_invoice',
+      entryType: 'standard',
+      baseCurrency: 'EUR',
       lines: [
         { accountId: byCode['6070']!, debitMinor: 100 },
         { accountId: byCode['2300']!, creditMinor: 100 },
       ],
     });
-    // Unpost the entry so the trigger allows the entryType change.
-    db.update(journalEntries).set({ isPosted: false })
-      .where(eq(journalEntries.id, normal.journalEntryId)).run();
-    db.update(journalEntries).set({ entryType: 'standard', isPosted: true })
-      .where(eq(journalEntries.id, normal.journalEntryId)).run();
 
     expect(() => reverseAdjustment(db, {
-      companyId, journalEntryId: normal.journalEntryId,
+      companyId, journalEntryId: standard.id,
       reversalDate: makeDate(2025, 12, 31), reason: 'Trying to reverse',
     })).toThrow(/not a manual adjustment/);
   });
