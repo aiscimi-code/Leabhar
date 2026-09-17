@@ -115,3 +115,42 @@ export type LinkInput = z.infer<typeof linkInput>;
 export type RejectMatchInput = z.infer<typeof rejectMatchInput>;
 export type UnmatchInput = z.infer<typeof unmatchInput>;
 export type CreateSupplierInput = z.infer<typeof createSupplierInput>;
+
+export const classifyTxnInput = z.object({
+  companyId: z.string(),
+  bankTransactionId: z.string(),
+  accountId: z.string(),
+  vatTreatmentId: z.string(),
+  supplierId: z.string().optional(),
+  fxRateNumerator: z.number().optional(),
+  fxRateDenominator: z.number().optional(),
+  notes: z.string().optional(),
+});
+
+export const createRuleCliInput = z.object({
+  companyId: z.string(),
+  name: z.string(),
+  conditions: z.array(z.object({
+    field: z.string(),
+    operator: z.string(),
+    value: z.union([z.string(), z.number(), z.array(z.union([z.string(), z.number()])), z.null()]),
+  })),
+  actions: z.array(z.object({
+    field: z.string(),
+    value: z.union([z.string(), z.null()]),
+  })),
+  autoApply: z.boolean().optional(),
+  priority: z.number().optional(),
+});
+
+export const setFxInput = z.object({
+  companyId: z.string(),
+  bankTransactionId: z.string(),
+  baseAmount: z.union([z.number(), z.string().transform((v) => Number(v))]).optional(),
+  fxRateNumerator: z.union([z.number(), z.string().transform((v) => Number(v))]).optional(),
+  fxRateDenominator: z.union([z.number(), z.string().transform((v) => Number(v))]).optional(),
+});
+
+export type ClassifyTxnInput = z.infer<typeof classifyTxnInput>;
+export type CreateRuleCliInput = z.infer<typeof createRuleCliInput>;
+export type SetFxInput = z.infer<typeof setFxInput>;

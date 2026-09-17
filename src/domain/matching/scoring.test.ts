@@ -266,3 +266,46 @@ describe('rankCandidates', () => {
     expect(ranked.ambiguous).toBe(false);
   });
 });
+
+describe('cross-currency amount scoring (issue #94)', () => {
+  it('refuses to compare a foreign-currency document to a base settled amount', () => {
+    // A USD invoice matched against a EUR bank charge with a base amount.
+    // The document is NOT in the transaction's base currency (EUR), so the
+    // base-amount comparison is apples-to-oranges and must be unassessable.
+    const result = scoreMatch(
+      doc({ grossMinor: 2606, currency: 'USD', supplierName: 'GitHub' }),
+      tx({ amountMinor: -2258, currency: 'EUR', baseAmountMinor: -2258, baseCurrency: 'EUR' }),
+    );
+    const amountFactor = result.factors.find((f) => f.factor === 'amount')!;
+    expect(amountFactor.weight).toBe(0);
+    expect(amountFactor.score).toBe(0);
+    expect(result.matchType).not.toBe('matched');
+  });
+
+  it('scores a same-currency match exactly when the foreign charge matches', () => {
+    // After the import fix: a USD card line with amountMinor = the original
+    // USD charge (-2606), currency USD. A USD invoice for 2606 matches exactly.
+    const result = scoreMatch(
+      doc({ grossMinor: 2606, currency: 'USD', supplierName: 'GitHub' }),
+      tx({ amountMinor: -2606, currency: 'USD', baseAmountMinor: -2258, baseCurrency: 'EUR' }),
+    );
+    const amountFactor = result.factors.find((f) => f.factor === 'amount')!;
+    expect(amountFactor.weight).toBe(40);
+    expect(amountFactor.score).toBe(100);
+    expect(result.amountDifferenceMinor).toBe(0);
+    expect(result.currencyMatches).toBe(true);
+  });
+
+  it('still compares in base when the document is in the transaction base currency', () => {
+    // A EUR invoice paid by a USD bank charge whose statement reports the
+    // EUR settled amount. Document currency === baseCurrency (EUR).
+    const result = scoreMatch(
+      doc({ grossMinor: 11_040, currency: 'EUR', supplierName: 'US Supplier' }),
+      tx({ amountMinor: -12_000, currency: 'USD', baseAmountMinor: -11_040, baseCurrency: 'EUR' }),
+    );
+    const amountFactor = result.factors.find((f) => f.factor === 'amount')!;
+    expect(amountFactor.weight).toBe(40);
+    expect(amountFactor.score).toBe(80);
+    expect(result.amountDifferenceMinor).toBe(0);
+  });
+});
