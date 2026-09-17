@@ -358,6 +358,42 @@ export default function CompanySettingsPage() {
         </Disclosure>
       </Panel>
 
+      <Panel
+        title="Document ingest"
+        description={'Point Leabhar at a folder of invoices and receipts, then use '
+          + '"Refresh from folder" on the Documents page to pull them in. Originals '
+          + 'are moved into a processed/ subfolder after they are stored. Auto-ingest '
+          + 'uses the local reader only — it never makes a paid API call unattended.'}
+      >
+        <table className="ledger">
+          <tbody>
+            <Row label="Watch folder" help="One folder maps to this company. A file dropped here has no upload form to pick a company, so the binding must be explicit.">
+              {company.documentWatchPath ?? <span className="text-ink-faint">Not set</span>}
+            </Row>
+          </tbody>
+        </table>
+
+        <Disclosure summary="Edit document ingest">
+          <ActionForm action={updateCompanyAction} submit="Save ingest settings">
+            <Field
+              label="Document watch folder"
+              help="An absolute path to a folder Leabhar can read, e.g. your Downloads or
+                Scans folder. It must exist — a missing path is reported when you refresh,
+                not stored silently. The folder should not be the document storage folder itself."
+            >
+              <Input
+                name="documentWatchPath"
+                defaultValue={company.documentWatchPath ?? ''}
+                placeholder="C:\Users\you\Downloads\Invoices"
+              />
+            </Field>
+            <Field label="Reason for this change" hint="Recorded in the audit trail.">
+              <Input name="reason" placeholder="Optional" />
+            </Field>
+          </ActionForm>
+        </Disclosure>
+      </Panel>
+
       <div className="grid grid-cols-2 gap-4 items-start">
         <Panel title="Officers">
           {officers.length === 0 ? <Empty title="No officers recorded" /> : (

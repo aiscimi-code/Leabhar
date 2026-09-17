@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useTransition, useRef } from 'react';
-import { uploadDocumentAction, rematchAllAction } from '@/app/actions';
+import { uploadDocumentAction, rematchAllAction, scanWatchFolderAction } from '@/app/actions';
 import { Button } from './primitives';
 
 export function UploadForm() {
@@ -103,6 +103,46 @@ export function RematchButton() {
       >
         {pending ? 'Matching…' : 'Re-run matching'}
       </Button>
+    </div>
+  );
+}
+
+export function WatchFolderButton({ hasWatchPath }: { hasWatchPath: boolean }) {
+  const [pending, startTransition] = useTransition();
+  const [message, setMessage] = useState<string | null>(null);
+  const [warnings, setWarnings] = useState<string[]>([]);
+
+  return (
+    <div className="flex items-center gap-2 flex-wrap">
+      <Button
+        disabled={pending || !hasWatchPath}
+        onClick={() => startTransition(async () => {
+          setWarnings([]);
+          const result = await scanWatchFolderAction();
+          setMessage(result.ok ? result.message : result.error);
+          setWarnings(result.ok && result.warnings ? result.warnings : []);
+        })}
+      >
+        {pending ? 'Scanning…' : 'Refresh from folder'}
+      </Button>
+      {message && (
+        <span className="text-[12px] text-ink-muted">{message}</span>
+      )}
+      {warnings.length > 0 && (
+        <ul className="w-full space-y-1">
+          {warnings.map((warning) => (
+            <li key={warning} className="text-[12px] leading-snug text-caution flex gap-1.5">
+              <span aria-hidden="true">!</span>
+              <span>{warning}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+      {!hasWatchPath && (
+        <span className="text-[12px] text-ink-faint">
+          Set a document watch folder in Settings → Company to enable this.
+        </span>
+      )}
     </div>
   );
 }

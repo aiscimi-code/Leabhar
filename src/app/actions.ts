@@ -10,6 +10,7 @@ import { acceptMatch, rejectMatch, findMatchesForDocument, matchAllUnmatched } f
 import { transitionVatPeriod, type VatPeriodStatus } from '@/domain/vat/periodClose';
 import { storeDocument } from '@/domain/documents/storage';
 import { extractDocument } from '@/domain/extraction/service';
+import { scanWatchFolder } from '@/domain/documents/watch';
 import { importStatement } from '@/domain/banking/import';
 import { seedDemoCompany } from '@/db/seed/demo';
 import { runMigrations } from '@/db/migrate';
@@ -202,6 +203,54 @@ export async function uploadDocumentAction(formData: FormData): Promise<ActionRe
       message: `${stored} document${stored === 1 ? '' : 's'} stored and read.`,
       warnings: warnings.length > 0 ? warnings : undefined,
     };
+  } catch (error) {
+    return fail(error);
+  }
+}
+
+export async function scanWatchFolderAction(): Promise<ActionResult> {
+  try {
+    const db = getDb();
+    const company = requireCompany();
+    if (!company.documentWatchPath) {
+      return {
+        ok: false,
+        error: 'No document watch folder is set. Add one in Settings → Company, '
+          + 'under "Document ingest".',
+      };
+    }
+
+    const outcome = await scanWatchFolder(db, {
+      companyId: company.id, watchPath: company.documentWatchPath,
+    });
+
+    revalidatePath('/documents');
+    revalidatePath('/review');
+    revalidatePath('/');
+
+    const parts: string[] = [];
+    if (outcome.ingested > 0) {
+      parts.push(`${outcome.ingested} new document${outcome.ingested === 1 ? '' : 's'} ingested.`);
+    }
+    if (outcome.duplicates > 0) {
+      parts.push(`${outcome.duplicates} already on file and flagged for review.`);
+    }
+    if (outcome.inProgress > 0) {
+      parts.push(`${outcome.inProgress} still being written — skipped, click again shortly.`);
+    }
+    if (outcome.toReview > 0) {
+      parts.push(`${outcome.toReview} need your checking in the review queue.`);
+    }
+    if (outcome.moveFailed > 0) {
+      parts.push(`${outcome.moveFailed} could not be moved to processed/.`);
+    }
+    if (outcome.ingested === 0 && outcome.duplicates === 0
+        && outcome.inProgress === 0 && outcome.moveFailed === 0) {
+      parts.push('No new documents found in the watch folder.');
+    }
+
+    const warnings = outcome.notes.length > 0 ? outcome.notes : undefined;
+    return { ok: true, message: parts.join(' '), warnings };
   } catch (error) {
     return fail(error);
   }

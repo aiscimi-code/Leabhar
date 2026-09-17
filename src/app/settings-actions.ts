@@ -60,6 +60,7 @@ export async function updateCompanyAction(formData: FormData): Promise<ActionRes
       'legalName', 'tradingName', 'croNumber', 'companyType', 'dateIncorporated',
       'registeredOffice', 'principalBusinessAddress', 'recordsAddress',
       'taxReferenceNumber', 'vatNumber', 'vatRegistrationDate', 'eoriNumber', 'notes',
+      'documentWatchPath',
     ] as const;
 
     for (const field of stringFields) {
