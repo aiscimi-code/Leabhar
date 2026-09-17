@@ -75,6 +75,8 @@ error. `npm run cli -- --help` lists every command and flag.
 ```
 # Discovery
 npm run cli -- list-accounts                          # bank accounts (id, name, currency)
+npm run cli -- list-chart                             # chart of accounts (code, name, type)
+npm run cli -- list-vat-treatments                    # VAT treatments (code, name, jurisdiction)
 npm run cli -- list-reconciliations                   # past reconciliation records
 npm run cli -- list-matches [--decision pending]      # document<->bank match candidates
 
@@ -87,6 +89,13 @@ npm run cli -- accept-match --document <id> --transaction <id>   # accept a scor
 npm run cli -- link --document <id> --transaction <id>          # manually link a doc to a txn
 npm run cli -- reject-match --document <id> --transaction <id>   # reject a scored candidate
 npm run cli -- unmatch --document <id> --reason "..."            # remove a link
+npm run cli -- classify --transaction <id>            # manually classify + post a transaction
+           --account <code> --vat-treatment <code>
+           [--supplier <id>] [--fx-rate <num>/<den>]
+npm run cli -- create-rule --name "..."               # create a rule (JSON conditions/actions)
+            --conditions <json> --actions <json> [--auto-apply]
+npm run cli -- set-fx --transaction <id>              # set FX / settled base amount on a
+        [--base-amount <amount>] [--fx-rate <num>/<den>]  # foreign line already imported
 npm run cli -- auto-classify --account <id>           # classify unclassified txns from rules
 npm run cli -- reconcile --account <id> --from <date> --to <date>
                                                       # compute reconciliation (read-only)
@@ -108,13 +117,20 @@ The intended workflow is:
 2. **Create suppliers** for extracted names that have no supplier yet.
    `create-supplier` adds a `suppliers` row with `ai_suggestion` provenance
    and optionally links a document; extraction also auto-creates a supplier
-   for a high-confidence name with no existing match.
+   for a high-confidence name with no existing match. If local extraction
+   produced low-confidence names, re-extract the documents first (delete and
+   re-ingest, or use the web UI's re-extract action) so the supplier names
+   are usable.
 3. **Match** documents to bank transactions. Matching links evidence but
    does **not** classify or post a transaction.
-4. **Auto-classify** unclassified transactions from `autoApply` rules.
-   Classification posts the balanced journal entry that the reconciliation
-   then agrees with.
-5. **Reconcile**; add `--sign-off` when the result is reconciled (or
+4. **Classify** transactions. Use `classify` to post a single transaction
+   manually (accepting an account code and VAT treatment code from
+   `list-chart` / `list-vat-treatments`), or `create-rule` + `auto-classify`
+   to post in batch from deterministic rules. Both post a balanced journal
+   entry that the reconciliation then agrees with.
+5. **Set FX** on foreign lines that lack a settled base amount: `set-fx`
+   before classifying or reconciling (see Multi-currency below).
+6. **Reconcile**; add `--sign-off` when the result is reconciled (or
    `--accept-difference "reason"` to sign off despite an unexplained
    difference, which is recorded in the audit trail).
 
@@ -125,9 +141,12 @@ always in the company's base currency. A foreign-currency bank account's
 running balance and per-line amounts are converted to base currency using the
 exchange rate the statement itself carried (`base_amount_minor` / FX fields).
 A foreign line with no settled base amount **and** no exchange rate is refused
-with a clear error rather than silently folded into a base-currency difference
-— re-import the statement with a settled-amount column, or classify the
-transaction with an exchange rate, before reconciling.
+with a clear error rather than silently folded into a base-currency difference.
+Use `set-fx` to attach a settled base amount or exchange rate to an already-
+imported foreign line (the rate is stored as an exact rational so the conversion
+is reproducible), or pass `--fx-rate` to `classify` when posting the entry.
+The imported evidence (date, amount, description) is never touched — only the
+derived FX fields change.
 
 ## Configuration
 

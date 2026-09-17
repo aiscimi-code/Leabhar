@@ -487,3 +487,219 @@ describe('cli reconcile — matching + suppliers', () => {
     expect(parsed.reconcile.reconciled).toBe(true);
   });
 });
+
+describe('cli reconcile — classify, create-rule, set-fx', () => {
+  let cDb: AppDatabase;
+  let cCompanyId: string;
+  let cBankAccount: string;
+  let cByCode: Record<string, string>;
+  let cTr: Record<string, string>;
+  let cTxId: string;
+  let cFxTxId: string;
+
+  beforeEach(async () => {
+    ({ db: cDb } = createTestDatabase());
+    const created = createCompany(cDb, {
+      legalName: 'Acme Ltd', vatRegistrationStatus: 'registered', seedYears: [2025],
+    });
+    cCompanyId = created.companyId;
+    cByCode = created.accountsByCode;
+    cTr = created.treatmentsByCode;
+    cBankAccount = addBankAccount(cDb, {
+      companyId: cCompanyId, bankName: 'BOI', accountName: 'Current',
+      openingDate: '2025-01-01', accountId: created.accountsByKey['bank_control'],
+    });
+
+    // A domestic transaction and a foreign one with no base amount.
+    await importStatement(cDb, {
+      companyId: cCompanyId, bankAccountId: cBankAccount, filename: 'mixed.csv',
+      content: [
+        'Date,Description,Amount,Balance,Currency',
+        '15/01/2025,IRISH SUPPLIER,-100.00,-100.00,EUR',
+        '20/01/2025,USD SUPPLIER,-50.00,-150.00,USD',
+      ].join('\n'),
+      fileFormat: 'csv',
+      columnMap: {
+        Date: 'transaction_date', Description: 'description',
+        Amount: 'amount', Balance: 'balance', Currency: 'currency',
+      },
+    });
+    const txs = cDb.select().from(bankTransactions).all();
+    cTxId = txs.find((t) => t.description === 'IRISH SUPPLIER')!.id;
+    cFxTxId = txs.find((t) => t.description === 'USD SUPPLIER')!.id;
+  });
+
+  const crun = (argv: string[]) => main(argv, { db: cDb, companyId: cCompanyId });
+
+  it('lists chart of accounts', async () => {
+    const c = capture();
+    const code = await crun(['list-chart']);
+    c.restore();
+    expect(code).toBe(0);
+    const parsed = JSON.parse(c.stdout.join(''));
+    expect(Array.isArray(parsed)).toBe(true);
+    expect(parsed.find((a: { code: string }) => a.code === '6010')).toBeTruthy();
+  });
+
+  it('lists VAT treatments', async () => {
+    const c = capture();
+    const code = await crun(['list-vat-treatments']);
+    c.restore();
+    expect(code).toBe(0);
+    const parsed = JSON.parse(c.stdout.join(''));
+    expect(Array.isArray(parsed)).toBe(true);
+    expect(parsed.find((t: { code: string }) => t.code === 'OUT_OF_SCOPE')).toBeTruthy();
+  });
+
+  it('manually classifies a domestic transaction by account code', async () => {
+    const c = capture();
+    const code = await crun([
+      'classify', '--transaction', cTxId,
+      '--account', '6010', '--vat-treatment', 'OUT_OF_SCOPE',
+    ]);
+    c.restore();
+    expect(code).toBe(0);
+    const parsed = JSON.parse(c.stdout.join(''));
+    expect(parsed.posted).toBe(true);
+    expect(parsed.journalEntryId).toBeTruthy();
+
+    const tx = cDb.select().from(bankTransactions).where(eq(bankTransactions.id, cTxId)).get()!;
+    expect(tx.status).toBe('posted');
+    expect(tx.source).toBe('user');
+    expect(tx.provenanceStatus).toBe('manually_entered');
+  });
+
+  it('classifies a foreign transaction with --fx-rate', async () => {
+    const c = capture();
+    const code = await crun([
+      'classify', '--transaction', cFxTxId,
+      '--account', '6010', '--vat-treatment', 'OUT_OF_SCOPE',
+      '--fx-rate', '113/100',
+    ]);
+    c.restore();
+    expect(code).toBe(0);
+    const parsed = JSON.parse(c.stdout.join(''));
+    expect(parsed.posted).toBe(true);
+
+    const tx = cDb.select().from(bankTransactions).where(eq(bankTransactions.id, cFxTxId)).get()!;
+    expect(tx.status).toBe('posted');
+    expect(tx.baseAmountMinor).not.toBeNull();
+    // -5000 USD * 113/100 = -5650 EUR
+    expect(tx.baseAmountMinor).toBe(-5650);
+  });
+
+  it('refuses to classify a foreign transaction without --fx-rate', async () => {
+    const c = capture();
+    const code = await crun([
+      'classify', '--transaction', cFxTxId,
+      '--account', '6010', '--vat-treatment', 'OUT_OF_SCOPE',
+    ]);
+    c.restore();
+    expect(code).toBe(1);
+    expect(c.stderr.join('')).toContain('exchange rate');
+  });
+
+  it('creates a rule with autoApply from JSON', async () => {
+    const conditions = JSON.stringify([
+      { field: 'description', operator: 'contains', value: 'IRISH' },
+    ]);
+    const actions = JSON.stringify([
+      { field: 'accountId', value: '6010' },
+      { field: 'vatTreatmentId', value: 'OUT_OF_SCOPE' },
+    ]);
+    const c = capture();
+    const code = await crun([
+      'create-rule', '--name', 'Irish supplier rule',
+      '--conditions', conditions, '--actions', actions,
+      '--auto-apply',
+    ]);
+    c.restore();
+    expect(code).toBe(0);
+    const parsed = JSON.parse(c.stdout.join(''));
+    expect(parsed.created).toBe(true);
+    expect(parsed.ruleId).toBeTruthy();
+
+    // Verify the rule resolved account/treatment codes to IDs.
+    const { rules } = await import('@/db/schema');
+    const rule = cDb.select().from(rules).where(eq(rules.id, parsed.ruleId)).get()!;
+    expect(rule.autoApply).toBe(true);
+    expect(rule.conditions).toHaveLength(1);
+    const ruleActions = rule.actions as Array<{ field: string; value: string }>;
+    expect(ruleActions.find((a) => a.field === 'accountId')!.value).toBe(cByCode['6010']);
+    expect(ruleActions.find((a) => a.field === 'vatTreatmentId')!.value).toBe(cTr['OUT_OF_SCOPE']);
+  });
+
+  it('sets FX on a foreign transaction via --base-amount', async () => {
+    const c = capture();
+    const code = await crun([
+      'set-fx', '--transaction', cFxTxId, '--base-amount', '-56.50',
+    ]);
+    c.restore();
+    expect(code).toBe(0);
+    const parsed = JSON.parse(c.stdout.join(''));
+    expect(parsed.baseAmountMinor).toBe(-5650);
+    expect(parsed.fxRateSource).toBe('bank_statement');
+
+    const tx = cDb.select().from(bankTransactions).where(eq(bankTransactions.id, cFxTxId)).get()!;
+    expect(tx.baseAmountMinor).toBe(-5650);
+    expect(tx.fxRateSource).toBe('bank_statement');
+    // The imported evidence is untouched.
+    expect(tx.amountMinor).toBe(-5000);
+    expect(tx.currency).toBe('USD');
+  });
+
+  it('sets FX on a foreign transaction via --fx-rate', async () => {
+    const c = capture();
+    const code = await crun([
+      'set-fx', '--transaction', cFxTxId, '--fx-rate', '110/100',
+    ]);
+    c.restore();
+    expect(code).toBe(0);
+    const parsed = JSON.parse(c.stdout.join(''));
+    expect(parsed.baseAmountMinor).toBe(-5500);
+
+    const tx = cDb.select().from(bankTransactions).where(eq(bankTransactions.id, cFxTxId)).get()!;
+    expect(tx.baseAmountMinor).toBe(-5500);
+    expect(tx.fxRateNumerator).toBe(110);
+    expect(tx.fxRateDenominator).toBe(100);
+  });
+
+  it('refuses set-fx on a base-currency transaction', async () => {
+    const c = capture();
+    const code = await crun([
+      'set-fx', '--transaction', cTxId, '--fx-rate', '100/100',
+    ]);
+    c.restore();
+    expect(code).toBe(1);
+    expect(c.stderr.join('')).toContain('already in the base currency');
+  });
+
+  it('after set-fx + classify, reconcile agrees on a mixed-currency account', async () => {
+    // Set FX on the USD line, then classify it so it posts to the ledger.
+    await crun(['set-fx', '--transaction', cFxTxId, '--base-amount', '-50.00']);
+    await crun([
+      'classify', '--transaction', cFxTxId,
+      '--account', '6010', '--vat-treatment', 'OUT_OF_SCOPE',
+    ]);
+    // Classify the domestic line too.
+    await crun([
+      'classify', '--transaction', cTxId,
+      '--account', '6010', '--vat-treatment', 'OUT_OF_SCOPE',
+    ]);
+
+    const c = capture();
+    const code = await crun([
+      'reconcile', '--account', cBankAccount,
+      '--from', '2025-01-01', '--to', '2025-01-31',
+      // The running balance mixes currencies; supply the closing balance in
+      // minor units (statement-balance takes integer minor units, not decimal).
+      '--statement-balance', '-15000',
+    ]);
+    c.restore();
+    expect(code).toBe(0);
+    const parsed = JSON.parse(c.stdout.join(''));
+    expect(parsed.counts.unposted).toBe(0);
+    expect(parsed.unexplainedMinor).toBe(0);
+    expect(parsed.reconciled).toBe(true);
+  });
+});

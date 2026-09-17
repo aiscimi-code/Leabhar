@@ -2,6 +2,7 @@ import { parseArgs, getFlag, hasFlag } from './args';
 import { print, error, type Format } from './format';
 import { getAgentDb, requireCompany } from '@/agent/context';
 import type { AppDatabase } from '@/db';
+import { parseAmount } from '@/domain/money';
 import { pathToFileURL } from 'node:url';
 import {
   listBankAccounts,
@@ -10,6 +11,13 @@ import {
   reconcile,
   signOff,
   runPipeline,
+  listChartOfAccounts,
+  listVatTreatments,
+  resolveAccountId,
+  resolveVatTreatmentId,
+  classifyTransactionManual,
+  createRuleManual,
+  setTransactionFx,
 } from '@/agent/reconcile';
 import { autoClassifyFromRules } from '@/agent/classify';
 import {
@@ -29,6 +37,10 @@ import {
   rejectMatchInput,
   unmatchInput,
   createSupplierInput,
+  classifyTxnInput,
+  createRuleCliInput,
+  setFxInput,
+  type CreateRuleCliInput,
 } from '@/agent/schema';
 
 const USAGE = `\
@@ -38,11 +50,21 @@ Usage: npm run cli -- <command> [flags]
 
 Commands:
   list-accounts                          List bank accounts (id, name, currency)
+  list-chart                             List chart of accounts (code, name, type)
+  list-vat-treatments                    List VAT treatments (code, name, jurisdiction)
   list-reconciliations                   Past reconciliation records
   import    --account <id> --file <path> Import a statement (CSV/XLSX)
   auto-classify --account <id>           Classify unclassified txns from rules
+  classify --transaction <id>            Manually classify + post a transaction
+           --account <code> --vat-treatment <code>
+           [--supplier <id>] [--fx-rate <num>/<den>]
+  create-rule --name "..."               Create a rule (JSON conditions/actions)
+            --conditions <json> --actions <json> [--auto-apply]
+  set-fx --transaction <id>              Set FX rate / settled base amount on a
+        [--base-amount <amount>]         foreign line already imported
+        [--fx-rate <num>/<den>]
   match                                  Run document<->bank matching for all docs
-  list-matches [--decision pending]      List match candidates (default: pending)
+  list-matches [--decision pending]      List match candidates (default: all)
   accept-match --document <id> --transaction <id>  Accept a scored candidate
   link --document <id> --transaction <id>          Manually link a doc to a txn
   reject-match --document <id> --transaction <id>  Reject a scored candidate
@@ -59,21 +81,31 @@ Agent workflow:
   1. import a statement (or run over already-imported data)
   2. create suppliers for extracted names that have no supplier yet
   3. match documents to bank transactions (evidence linking; does not post)
-  4. auto-classify unclassified txns from rules (posts journal entries)
-  5. reconcile; --sign-off when reconciled
+  4. classify transactions (manually via classify, or via auto-classify
+     from rules created with create-rule)
+  5. set-fx on foreign lines that lack a settled base amount
+  6. reconcile; --sign-off when reconciled
 
 Matching links evidence to a transaction but does NOT classify or post it.
-Classification (auto-classify or the UI) posts the journal entry that the
-reconciliation then agrees with.
+Classification (classify, auto-classify, or the UI) posts the journal entry
+that the reconciliation then agrees with. Foreign-currency lines need an FX
+rate before classify or reconcile — use set-fx or pass --fx-rate to classify.
 
 Flags:
-  --account <id>      Bank account id
+  --account <code/id>  Bank account id (list-accounts) or account code/id (classify)
   --file <path>       Statement file path (optional for 'run')
   --from <date>       Period start (YYYY-MM-DD)
   --to <date>         Period end (YYYY-MM-DD)
   --document <id>     Document id
   --transaction <id>  Bank transaction id
-  --name <name>       Supplier name
+  --vat-treatment <code/id>  VAT treatment code or id (classify)
+  --supplier <id>     Supplier id (classify, optional)
+  --fx-rate <num>/<den>  Exchange rate as a rational (e.g. 113/100)
+  --base-amount <amount>  Settled base-currency amount (set-fx)
+  --conditions <json>  Rule conditions as JSON array (create-rule)
+  --actions <json>     Rule actions as JSON array (create-rule)
+  --auto-apply        Rule should auto-apply on match (create-rule)
+  --name <name>       Supplier name (create-supplier) or rule name (create-rule)
   --country <code>    Supplier country code (e.g. IE)
   --reason <text>     Reason for accept/reject/unmatch
   --sign-off          Record the reconciliation (not just compute it)
@@ -110,6 +142,16 @@ export async function main(argv: string[], options: CliOptions = {}): Promise<nu
         return 0;
       }
 
+      case 'list-chart': {
+        print(listChartOfAccounts(db, companyId), format);
+        return 0;
+      }
+
+      case 'list-vat-treatments': {
+        print(listVatTreatments(db, companyId), format);
+        return 0;
+      }
+
       case 'list-reconciliations': {
         print(listReconciliations(db, companyId), format);
         return 0;
@@ -132,6 +174,98 @@ export async function main(argv: string[], options: CliOptions = {}): Promise<nu
           bankAccountId: requireFlag(flags, 'account', 'account-id', 'accountId'),
         });
         const result = autoClassifyFromRules(db, parsed);
+        print(result, format);
+        return 0;
+      }
+
+      case 'classify': {
+        const parsed = classifyTxnInput.parse({
+          companyId,
+          bankTransactionId: requireFlag(flags, 'transaction', 'transaction-id', 'transactionId', 'bank-transaction-id', 'bankTransactionId'),
+          accountId: requireFlag(flags, 'account', 'account-id', 'accountId'),
+          vatTreatmentId: requireFlag(flags, 'vat-treatment', 'vat-treatment-id', 'vatTreatmentId'),
+          supplierId: getFlag(flags, 'supplier', 'supplier-id', 'supplierId'),
+          fxRateNumerator: parseFxRateFlag(flags, 'fx-rate')?.numerator,
+          fxRateDenominator: parseFxRateFlag(flags, 'fx-rate')?.denominator,
+          notes: getFlag(flags, 'notes'),
+        });
+        const accountId = resolveAccountId(db, companyId, parsed.accountId);
+        const vatTreatmentId = resolveVatTreatmentId(db, companyId, parsed.vatTreatmentId);
+        const result = classifyTransactionManual(db, {
+          companyId,
+          bankTransactionId: parsed.bankTransactionId,
+          accountId,
+          vatTreatmentId,
+          supplierId: parsed.supplierId,
+          fxRate: parsed.fxRateNumerator !== undefined && parsed.fxRateDenominator !== undefined
+            ? { numerator: parsed.fxRateNumerator, denominator: parsed.fxRateDenominator }
+            : undefined,
+          notes: parsed.notes,
+        });
+        print(result, format);
+        return 0;
+      }
+
+      case 'create-rule': {
+        const conditionsJson = requireFlag(flags, 'conditions');
+        const actionsJson = requireFlag(flags, 'actions');
+        let conditions: unknown;
+        let actions: unknown;
+        try {
+          conditions = JSON.parse(conditionsJson);
+          actions = JSON.parse(actionsJson);
+        } catch (e) {
+          throw new Error(`Could not parse --conditions or --actions as JSON: ${e instanceof Error ? e.message : e}`);
+        }
+        const parsed = createRuleCliInput.parse({
+          companyId,
+          name: requireFlag(flags, 'name'),
+          conditions: conditions as CreateRuleCliInput['conditions'],
+          actions: actions as CreateRuleCliInput['actions'],
+          autoApply: hasFlag(flags, 'auto-apply', 'autoApply'),
+          priority: getFlag(flags, 'priority') ? Number(getFlag(flags, 'priority')) : undefined,
+        });
+        // Resolve account/treatment codes in actions to IDs.
+        const resolvedActions = parsed.actions.map((a) => {
+          if (a.field === 'accountId' && a.value) {
+            return { ...a, value: resolveAccountId(db, companyId, a.value) };
+          }
+          if (a.field === 'vatTreatmentId' && a.value) {
+            return { ...a, value: resolveVatTreatmentId(db, companyId, a.value) };
+          }
+          return a;
+        });
+        const ruleId = createRuleManual(db, {
+          companyId,
+          name: parsed.name,
+          conditions: parsed.conditions,
+          actions: resolvedActions,
+          autoApply: parsed.autoApply,
+          priority: parsed.priority,
+        });
+        print({ ruleId, created: true }, format);
+        return 0;
+      }
+
+      case 'set-fx': {
+        const baseAmountRaw = getFlag(flags, 'base-amount', 'baseAmount');
+        const company = requireCompany(db);
+        const parsed = setFxInput.parse({
+          companyId,
+          bankTransactionId: requireFlag(flags, 'transaction', 'transaction-id', 'transactionId', 'bank-transaction-id', 'bankTransactionId'),
+          baseAmount: baseAmountRaw !== undefined
+            ? parseAmount(baseAmountRaw, company.baseCurrency)
+            : undefined,
+          fxRateNumerator: parseFxRateFlag(flags, 'fx-rate')?.numerator,
+          fxRateDenominator: parseFxRateFlag(flags, 'fx-rate')?.denominator,
+        });
+        const result = setTransactionFx(db, {
+          companyId,
+          bankTransactionId: parsed.bankTransactionId,
+          baseAmountMinor: parsed.baseAmount,
+          fxRateNumerator: parsed.fxRateNumerator,
+          fxRateDenominator: parsed.fxRateDenominator,
+        });
         print(result, format);
         return 0;
       }
@@ -275,6 +409,25 @@ function requireFlag(
     throw new Error(`Missing required flag: --${names[0]}`);
   }
   return value;
+}
+
+/** Parse an --fx-rate flag of the form "num/den" (e.g. "113/100"). */
+function parseFxRateFlag(
+  flags: Record<string, string | boolean>,
+  ...names: string[]
+): { numerator: number; denominator: number } | undefined {
+  const raw = getFlag(flags, ...names);
+  if (raw === undefined) return undefined;
+  const parts = raw.split('/');
+  if (parts.length !== 2) {
+    throw new Error(`--fx-rate must be "numerator/denominator", e.g. "113/100". Got: ${raw}`);
+  }
+  const numerator = Number(parts[0]);
+  const denominator = Number(parts[1]);
+  if (!Number.isInteger(numerator) || !Number.isInteger(denominator)) {
+    throw new Error(`--fx-rate numerator and denominator must be integers. Got: ${raw}`);
+  }
+  return { numerator, denominator };
 }
 
 if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
