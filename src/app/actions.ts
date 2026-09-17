@@ -174,15 +174,20 @@ export async function uploadDocumentAction(formData: FormData): Promise<ActionRe
     if (files.length === 0) return { ok: false, error: 'Choose at least one file.' };
 
     let stored = 0;
-    let duplicates = 0;
+    const warnings: string[] = [];
 
     for (const file of files) {
       const content = Buffer.from(await file.arrayBuffer());
       const result = storeDocument(db, {
         companyId: company.id, filename: file.name, content, uploadedBy: 'user',
       });
-      if (result.isDuplicate) duplicates += 1;
       stored += 1;
+      if (result.isDuplicate) {
+        warnings.push(
+          `${file.name} is identical to a document already on file. It was flagged `
+          + 'for review rather than overwriting it.',
+        );
+      }
       await extractDocument(db, {
         companyId: company.id, documentId: result.documentId, actor: 'user',
       });
@@ -194,11 +199,8 @@ export async function uploadDocumentAction(formData: FormData): Promise<ActionRe
     revalidatePath('/');
     return {
       ok: true,
-      message: `${stored} document${stored === 1 ? '' : 's'} stored and read.`
-        + (duplicates > 0
-          ? ` ${duplicates} ${duplicates === 1 ? 'was' : 'were'} identical to something already `
-            + 'on file, and flagged for review rather than overwriting it.'
-          : ''),
+      message: `${stored} document${stored === 1 ? '' : 's'} stored and read.`,
+      warnings: warnings.length > 0 ? warnings : undefined,
     };
   } catch (error) {
     return fail(error);
