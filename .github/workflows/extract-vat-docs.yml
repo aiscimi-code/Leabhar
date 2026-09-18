@@ -2,6 +2,11 @@ name: Extract VAT docs
 
 on:
   workflow_dispatch:
+    inputs:
+      debug_html:
+        description: "Dump raw Schedule 2 HTML only (parser design debugging), skip the normal extraction"
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -15,7 +20,10 @@ jobs:
         with:
           python-version: "3.12"
       - run: pip install beautifulsoup4 pdfplumber
-      - run: python3 docs/statutes/scripts/extract_vat_sources.py
+      - if: ${{ inputs.debug_html }}
+        run: python3 docs/statutes/scripts/extract_vat_sources.py --debug-html
+      - if: ${{ !inputs.debug_html }}
+        run: python3 docs/statutes/scripts/extract_vat_sources.py
       - name: Commit extracts
         run: |
           git config user.name "github-actions[bot]"

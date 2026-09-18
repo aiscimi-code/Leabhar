@@ -77,6 +77,17 @@ def write(path: Path, text: str) -> None:
     print(f"wrote {path} ({len(text)} bytes)")
 
 
+def _debug_dump_schedule2_html() -> None:
+    """TEMPORARY: save raw HTML for docs/statutes' own parser design work.
+    Remove once the LRC annotation-block structure is confirmed and
+    html_to_md() strips it properly (see extract_vatca()'s Schedule fetch)."""
+    url = "https://revisedacts.lawreform.ie/eli/2010/act/31/schedule/2/revised/en/html"
+    raw = Path("/tmp/vatca/sch2.html")
+    if not raw.exists():
+        fetch(url, raw)
+    write(ROOT / "vatca-2010-revised" / "_debug_schedule-2.raw.html", raw.read_text(errors="replace"))
+
+
 def extract_vatca() -> None:
     out = ROOT / "vatca-2010-revised"
     for n in VATCA_SECTIONS:
@@ -167,8 +178,12 @@ jurisdiction: IE
 
 
 if __name__ == "__main__":
-    extract_vatca()
-    extract_si639()
-    extract_tdm()
-    extract_rates()
+    import sys
+    if "--debug-html" in sys.argv:
+        _debug_dump_schedule2_html()
+    else:
+        extract_vatca()
+        extract_si639()
+        extract_tdm()
+        extract_rates()
     print("done")
