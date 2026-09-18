@@ -33,6 +33,8 @@ architecture and [`SOURCE-REGISTER.md`](SOURCE-REGISTER.md) for the full
 | `si-69-2025/` | European Union (VAT) Regulations 2025 (S.I. 69/2025) | Reference only | Summary of all substantive amendments |
 | `vat-rates/` | Revenue current VAT rates table | Reference only | Complete, dated (2020-2026 history, retrieved 2026-09-18) |
 | `tdm-38-01-03b/` | Revenue TDM Part 38-01-03b (VAT registration guidelines) | Reference only | Partial: pages 19-36 of 54, paraphrased |
+| `import-vat/` | Customs Manual on Import VAT (guidance) + VATCA s.3(b)/s.53A pointers | Reference only | One TDM extract |
+| `rct/` | Relevant Contracts Tax (TCA 1997 ss.530/530A, SI 651/2011) — a withholding regime, not VAT | Reference only | 2 TDM extracts (18-02-01, 18-02-02); one citation unverified, see `rct/README.md` |
 | `scripts/` | `extract_vat_sources.py` — HTML/PDF -> Markdown extractor for the reference sources above | Tooling | Requires network access this repo's own sandboxes don't have; run via `.github/workflows/extract-vat-docs.yml` (`workflow_dispatch`) on a GitHub-hosted runner instead |
 
 Two files live at this top level rather than under a source's own folder,
