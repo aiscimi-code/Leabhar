@@ -6,6 +6,16 @@ instrument. See [`docs/RULES_KB.md`](../RULES_KB.md) for the KB's
 architecture and [`SOURCE-REGISTER.md`](SOURCE-REGISTER.md) for the full
 1.1-1.6 (+5, +9) binding-source register this folder implements.
 
+**Before citing anything here as current law, read
+[`CURRENT-REGISTER.md`](CURRENT-REGISTER.md).** As of September 2026,
+Finance Act 2025 (No. 18 of 2025) has superseded Finance Act 2024 as the
+latest VAT-amending Act, and VAT rates/thresholds/RCT have moved since —
+none of that is reflected in this folder's own deterministically-ingested
+text (which is deliberately 2010/2024-as-enacted; see "Two kinds of
+content here" below). `CURRENT-REGISTER.md` and
+[`CURRENT-REGISTRATION.md`](CURRENT-REGISTRATION.md) track what's now
+superseded and what to use instead.
+
 ## Two kinds of content here
 
 - **Deterministically ingested** (`finance-act-2024/`, `vatca-2010/`'s
@@ -32,7 +42,7 @@ architecture and [`SOURCE-REGISTER.md`](SOURCE-REGISTER.md) for the full
 | `si-639-2010/` | VAT Regulations 2010 (S.I. 639/2010) | Reference only | Partial: regs 14, 19, 20, 23, 24, 27, 29 + 14A (via S.I. 734/2020); missing 21, 22, 25, 26 |
 | `si-156-2012/` | Mandatory e-filing Regulations 2012 (S.I. 156/2012) | Reference only | Complete |
 | `si-69-2025/` | European Union (VAT) Regulations 2025 (S.I. 69/2025) | Reference only | Summary of all substantive amendments |
-| `vat-rates/` | Revenue current VAT rates table (Markdown + machine-readable JSON) | Reference only | Complete, dated (2020-2026 history, retrieved 2026-09-18) |
+| `vat-rates/` | Revenue current VAT rates table (Markdown + machine-readable JSON) + category-move notes | Reference only | Rate history complete (2020-2026, retrieved 2026-09-18); `schedule-moves-2025-2026.md` tracks category reclassifications (e.g. restaurant/hairdressing to 9% from 1 Jul 2026) the headline table alone doesn't show |
 | `tdm-38-01-03b/` | Revenue TDM Part 38-01-03b (VAT registration guidelines) | Reference only | Partial: pages 19-36 of 54, paraphrased |
 | `import-vat/` | Customs Manual on Import VAT (guidance) + VATCA s.3(b)/s.53A pointers | Reference only | One TDM extract |
 | `rct/` | Relevant Contracts Tax (TCA 1997 ss.530/530A, SI 651/2011) — a withholding regime, not VAT | Reference only | 2 TDM extracts (18-02-01, 18-02-02); one citation unverified, see `rct/README.md` |
@@ -41,13 +51,19 @@ architecture and [`SOURCE-REGISTER.md`](SOURCE-REGISTER.md) for the full
 | `companies-act-2014/` | Companies Act 2014 — records, size thresholds, filing | Reference only | ss. 282, 280A, 280D/280E, 352, 358-360 |
 | `scripts/` | `extract_vat_sources.py` — HTML/PDF -> Markdown extractor for the reference sources above | Tooling | Requires network access this repo's own sandboxes don't have; run via `.github/workflows/extract-vat-docs.yml` (`workflow_dispatch`) on a GitHub-hosted runner instead |
 
-Two files live at this top level rather than under a source's own folder,
+Four files live at this top level rather than under a source's own folder,
 because they describe the set as a whole, not one instrument:
 
 - [`SOURCE-REGISTER.md`](SOURCE-REGISTER.md) — the binding-source register.
 - `audit-report.json` — a fresh-ingest snapshot of what the deterministic KB
   has extracted from `finance-act-2024/` and `vatca-2010/` (see
   `docs/RULES_KB.md` "Audit report" for how to regenerate it).
+- [`CURRENT-REGISTER.md`](CURRENT-REGISTER.md) — current-vs-superseded
+  status as of a given date (currently 18 September 2026): which sources
+  in this folder are now stale relative to live law, and what to use
+  instead. Read this before treating anything here as today's answer.
+- [`CURRENT-REGISTRATION.md`](CURRENT-REGISTRATION.md) — current VAT
+  registration thresholds, dated.
 
 ## Known gaps (see `SOURCE-REGISTER.md` for detail on each)
 
