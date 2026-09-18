@@ -7,7 +7,7 @@ The agent answers **today's** transaction. Do not retrieve as-enacted 2010/1997 
 | Topic | Use this | Do not use |
 |---|---|---|
 | VATCA text | LRC revised Act, **updated to 1 January 2026** — https://revisedacts.lawreform.ie/eli/2010/act/31/revised/en/html | `docs/statutes/vatca-2010/vatca-2010-enacted.md` (2010 words; s.46 still 21%) |
-| VAT rates (headline) | Revenue table + `docs/vat/vat-rates/` — **23 / 13.5 / 9 / 4.8 / farmer 4.5%** from 1 Jan 2026 | Enacted VATCA s.46; farmer 5.1% (2025 only) |
+| VAT rates (headline) | Revenue table + `docs/statutes/vat-rates/` — **23 / 13.5 / 9 / 4.8 / farmer 4.5%** from 1 Jan 2026 | Enacted VATCA s.46; farmer 5.1% (2025 only) |
 | Which supplies sit at 9% vs 13.5% | LRC **Schedules 2 and 3** as amended by FA 2025 + SI 725/2024 | 2010 Schedule lists |
 | VAT Regulations | SI 639/2010 **as amended** by SI 734/2020 (reg.14A postponed accounting), 735–737/2020, 31/2024 | Bare 2010 print of SI 639 |
 | SME scheme / OSS | SI 69/2025 (in force 6 Mar 2025) — VATCA ss.92B–92D | Pre-2025 SME commentary |
@@ -21,7 +21,7 @@ The agent answers **today's** transaction. Do not retrieve as-enacted 2010/1997 
 
 ## Live numbers (do not date-stamp these in prompts without `as_at`)
 
-See `docs/vat/vat-rates/current-vat-rates.md` and `docs/CURRENT-REGISTRATION.md`.
+See `docs/statutes/vat-rates/current-vat-rates.md` and `docs/statutes/CURRENT-REGISTRATION.md`.
 
 **Headline rates from 1 January 2026:** standard 23%, reduced 13.5%, second reduced 9%, livestock 4.8%, farmer flat-rate addition **4.5%**.
 
@@ -40,7 +40,7 @@ See `docs/vat/vat-rates/current-vat-rates.md` and `docs/CURRENT-REGISTRATION.md`
 These files may stay in git for provenance. They must not be chunked into the default retrieval set:
 
 - `docs/statutes/vatca-2010/vatca-2010-enacted.md` / `.pdf`
-- `docs/statutes/2024-act-43/2024-act-43-enacted.md` as a *rate* source (keep only as the amending Act for 2024)
+- `docs/statutes/finance-act-2024/2024-act-43-enacted.md` as a *rate* source (keep only as the amending Act for 2024)
 - Any TCA 1997 as-enacted section presented without `consolidation: as-enacted-1997` and an overlay pointer
 - Farmer 5.1%, goods threshold €75,000, services €37,500, standard 21%
 
