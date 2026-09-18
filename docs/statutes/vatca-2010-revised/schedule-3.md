@@ -10,14 +10,6 @@ source_html_sha256: "4b8de419e5f9abbfc4a75e1ff27ddad4016fe7e79e2a8cb1152ea714744
 
 # VATCA 2010 Schedule 3 (revised)
 
-Act as originally enacted
-
-Amendments to this Act
-
-Value-Added Tax Consolidation Act 2010
-
-Next Section 〉
-
 SCHEDULE 3
 
 Goods and Services chargeable at the reduced rate
@@ -46,10 +38,7 @@ of
 Schedule 2
 ;
 
-F448
-[
 …
-]
 
 “margin scheme supply” means a supply—
 
@@ -68,19 +57,13 @@ b
 section 89
 (1)
 and in accordance with
-F449
-[
 section 89(3)
 ;
-]
 
-F450
-[
 "open farm" means a facility
 the principal function of which is the exhibition (other than on an occasional basis)
 of animals and agricultural activities, and such exhibition may also include rural
 heritage.
-]
 
 Other interpretative provisions.
 
@@ -98,30 +81,6 @@ b
 paragraph 12
 , the expression “golf” does not include pitch and putt.
 
-Amendments:
-
-F448
-
-Deleted (19.12.2020)
-by
-Finance Act 2020
-(26/2020), s. 43(c)(i), commenced on
-enactment.
-
-F449
-
-Substituted (1.01.2012) by
-Finance Act 2012
-(9/2012) s.
-95(1)(a), commenced as per subs. (2).
-
-F450
-
-Inserted (1.01.2012) by
-Finance Act 2012
-(9/2012) s.
-95(1)(b), commenced as per subs. (2).
-
 PART 2
 
 Annex III Supplies
@@ -134,8 +93,6 @@ Food and drink for human consumption.
 
 3.
 
-F451
-[
 (1) The supply of restaurant or
 catering services, excluding—
 
@@ -163,14 +120,10 @@ Part E
 of the food and drink table,
 but not including juices extracted from
 fruit.
-]
 
 (2)
 
-F452
-[
 …
-]
 
 (3) The supply of food and drink that consists of or includes food and drink—
 
@@ -229,12 +182,9 @@ of the food and drink table, and
 c
 ) chocolates, sweets and similar confectionery.
 
-F453
-[
 Food supplements.
 
 3A. The supply of food supplements of a kind used for human oral consumption.
-]
 
 Live animals, animal feeding stuffs.
 
@@ -248,15 +198,9 @@ Pharmaceutical products.
 
 5. Non-oral contraceptive products.
 
-F454
-[
 5A.
 
-F455
-[
 …
-]
-]
 
 Certain safety equipment.
 
@@ -270,10 +214,7 @@ Books, newspapers and other printed matter.
 a
 )
 
-F455
-[
 …
-]
 periodicals,
 
 (
@@ -308,8 +249,6 @@ Schedule 2
 
 (iii) any other printed matter.
 
-F456
-[
 Certain electronically
 supplied matter
 
@@ -350,7 +289,6 @@ but excluding the supply of
 any such material which is wholly or predominantly devoted to advertising or consists
 wholly or predominantly of audible music or video
 content.
-]
 
 Shows, exhibitions, cultural facilities, etc.
 
@@ -370,16 +308,11 @@ of
 Schedule 1
 .
 
-F457
-[
 (3) Admission to fairgrounds or
 amusement parks, but excluding any part of the fee for such admission which relates
 to goods or services other than such
 admission.
-]
 
-F458
-[
 (4) Admission to
 —
 
@@ -408,37 +341,27 @@ admission.
 
 (5) Admission to an open farm, but excluding any part of the fee for such admission
 which relates to goods or services other than such admission.
-]
 
 Private dwellings.
 
 9. (1) Services
 
-F459
-[
 (not being services referred to
 in
 paragraph 9B(3)
 )
-]
 
 consisting of the development of immovable goods, being private dwellings, and work
 on such immovable goods including the installation of fixtures,
 
-F460
-[
 other than the supply and
 installation of solar panels as specified in paragraph 14 of Schedule 2,
-]
 
-F468
-[
 or the supply and installation of
 low emissions heat pump heating systems as specified in
 paragraph
 12A
 ,
-]
 where the value of movable
 goods (if any) provided in pursuance of an agreement in relation to such services
 does not exceed two-thirds of the total amount on which tax is chargeable in respect
@@ -446,8 +369,6 @@ of the agreement.
 
 (2) Services consisting of the routine cleaning of private dwellings.
 
-F461
-[
 Housing as part of a
 social policy.
 
@@ -455,10 +376,7 @@ social policy.
 a social policy, being the supply of an apartment, used or to be used for residential
 purposes, in an apartment block within the meaning of section 31E of the Stamp Duties
 Consolidation Act 1999.
-]
 
-F459
-[
 Supply and construction of
 housing as part of a social policy.
 
@@ -492,7 +410,6 @@ development, until completed, of immovable goods to which
 subparagraph (2)
 
 applies.
-]
 
 Agricultural goods and services.
 
@@ -520,8 +437,6 @@ d
 e
 ) lopping, tree felling and similar forestry services.
 
-F462
-[
 (2) Animal insemination services other than the services specified in
 subparagraphs (4)
 and
@@ -529,14 +444,11 @@ and
 of
 paragraph 13B
 .
-]
 
 (3) The supply of livestock semen.
 
 Hotel, holiday accommodation.
 
-F463
-[
 11. Subject to regulations, if any,
 the letting of immovable goods where the letting consists of the provision of holiday
 or guest accommodation in—
@@ -564,58 +476,39 @@ e
 ) another
 establishment, including the letting of a place in a caravan park or camping
 site.
-]
 
 Sporting facilities.
 
 12.
 
-F464
-[
 (1) The provision of facilities for
 taking part in sporting activities including golf or physical education activities,
 and closely related activities, by an entity other than a non-profit making
 organisation, the State or a public
 body.
-]
 
-F465
-[
 (1A) The provision of facilities
 for taking part in sporting activities including golf or physical education
 activities, and closely related activities, by the State or a public body,
 
-F466
-[
 where the total annual turnover for
 providing those facilities exceeds, in the current calendar year or the previous
 calendar year, the services
 threshold
-]
 .
-]
 
 (2)
-F467
-[
 …
-]
 
 (3)
-F467
-[
 …
-]
 
-F468
-[
 Low emissions heat pump
 heating systems
 
 12A. The supply and installation of
 low emissions heat pump heating
 systems.
-]
 
 Other services.
 
@@ -626,234 +519,22 @@ clothing or household linen.
 
 (3) Hairdressing services.
 
-Amendments:
-
-F451
-
-Substituted
-(19.12.2020) by
-Finance Act 2020
-(26/2020), s. 43(c)(ii)(I),
-commenced on enactment.
-
-F452
-
-Deleted (19.12.2020)
-by
-Finance Act 2020
-(26/2020), s. 43(c)(ii)(II), commenced on
-enactment.
-
-F453
-
-Inserted (1.01.2020) by
-Finance Act 2019
-(45/2019), s. 55,
-commenced as per s. 55.
-
-F454
-
-Inserted (1.01.2021)
-by
-Finance Act 2020
-(26/2020), s. 46(b)(i), commenced as per s.
-46(b)(i).
-
-F455
-
-Deleted (1.01.2023)
-by
-Finance Act 2022
-(44/2022), s. 64(b)(i)(ii), commenced as per s.
-64.
-
-F456
-
-Substituted
-(1.01.2024) by
-Finance (No. 2) Act 2023
-(39/2023), s. 65(b),
-commenced as per s. 65.
-
-F457
-
-Substituted
-(19.12.2020) by
-Finance Act 2020
-(26/2020), s. 46(b)(ii), commenced
-on enactment
-
-F458
-
-Substituted and inserted (1.01.2012) by
-Finance Act 2012
-
-(9/2012) s. 95(1)(c), commenced as per subs. (2).
-
-F459
-
-Inserted (26.11.2025)
-by
-Finance Act 2025
-(18/2025), s. 70(2)(b)(i)(I), (II), in effect as
-per s. 70(2).
-
-F460
-
-Inserted (1.05.2023)
-by
-Finance Act 2023
-(11/2023), s. 5(c)(ii), commenced as per s.
-5(c).
-
-F461
-
-Inserted (8.10.2025)
-by
-Finance Act 2025
-(18/2025), s. 70(1)(b)(i), in effect as per s.
-70(1).
-
-F462
-
-Substituted (1.01.2015) by
-Finance (No. 2) Act 2013
-
-(41/2013), s. 66(1)(c)(i), commenced as per s. 66(2) and S.I. No. 498 of
-2014.
-
-F463
-
-Substituted
-(1.01.2026) by
-Finance Act 2025
-(18/2025), s. 72(c), in effect as per
-s. 72.
-
-F464
-
-Substituted (1.01.2013) by
-Finance Act 2013
-(8/2013), s.
-75(2)(a) and (b), commenced as per subs. (3).
-
-F465
-
-Inserted (1.01.2013) by
-Finance Act 2013
-(8/2013), s.
-75(2)(c), commenced as per subs. (3).
-
-F466
-
-Substituted
-(1.01.2026) by
-Finance Act 2025
-(18/2025), s. 68(1)(d), in effect as
-per s. 68(1).
-
-F467
-
-Deleted (1.03.2015) by
-Finance Act 2014
-(37/2014), s. 71(3)(b), commenced as per s. 71(4)(c).
-
-F468
-
-Inserted (1.01.2025)
-by
-Finance Act 2024
-(43/2024), s. 88(a)(i), (ii), commenced as per s.
-88.
-
-Editorial Notes:
-
-E110
-
-Previous affecting
-provision: para. (11) substituted (19.12.2020) by
-Finance Act 2020
-
-(26/2020), s. 45(c), commenced on enactment; substituted (1.01.2026) as per
-F-note above.
-
-E111
-
-Previous affecting
-provision: inserted (1.01.2019) by
-Finance Act 2018
-(30/2018), s.
-43(b), commenced as per s. 43; para. 7A substituted (1.01.2024) as per
-F-note above.
-
-E112
-
-Previous affecting
-provision: deleted (1.01.2023) by
-Finance Act 2022
-(44/2022), s.
-64(b)(iii), commenced as per s. 64; para. 7A substituted (1.01.2024) as per
-F-note above.
-
-E113
-
-Previous affecting
-provision: para. 11(a) amended (1.01.2013) by
-Finance Act 2013
-
-(8/2013), s. 75(2)(a) and (b), commenced as per subs. (3); substituted as
-per F-note above.
-
-E114
-
-Lettings which constitute lettings provided in the short-term guest sector or holiday
-sector for the purposes of par. 11(a)(ii) specified (1.01.2011) by
-Value-Added Tax Regulations 2010
-(S.I. No. 639 of 2010), reg. 46, in effect as per reg. 1(2).
-
-F469
-[
-F470
-[
 PART 2A
 
 Certain Supplies with Reduced Rate: Particular Provisions in
 Accordance with Annex III of the VAT
 Directive
-]
 
 District heating
 .
 
 13A. The supply of district heating.
-]
 
-Amendments:
-
-F469
-
-Inserted (1.03.2012) by
-Finance Act 2012
-(9/2012), s. 95(3), commenced as per subs. (4).
-
-F470
-
-Substituted
-(1.01.2025) by
-European Union (Value-Added Tax) Regulations 2024
-
-(S.I. No. 725 of 2024), reg. 7(a), in effect as per reg. 2.
-
-F471
-[
-F472
-[
 PART 2B
 
 Certain Supplies with Reduced Rate: Particular
 Provisions in Accordance with Article 105a(3) and Annex III of the VAT
 Directive
-]
 
 Horses and greyhounds
 
@@ -897,37 +578,15 @@ a
 (
 b
 ) agricultural production.
-]
 
-Amendments:
-
-F471
-
-Inserted (1.01.2015) by
-Finance (No. 2) Act 2013
-(41/2013), s. 66(1)(c)(ii), commenced as per s. 66(2) and S.I. No. 498 of 2014.
-
-F472
-
-Substituted
-(1.01.2025) by
-European Union (Value-Added Tax) Regulations 2024
-
-(S.I. No. 725 of 2024), reg. 7(b), in effect as per reg. 2.
-
-F473
-[
 PART 3
 
 Certain Supplies with Reduced Rate: Particular Provisions in
 Accordance with Article 105a(3) of the VAT
 Directive
-]
 
 Housing.
 
-F474
-[
 14. The supply of immovable goods
 used or to be used for residential purposes, other than immovable goods to which
 
@@ -936,49 +595,12 @@ or
 9B(2),
 as the case may be,
 applies.
-]
 
-Amendments:
-
-F473
-
-Substituted
-(1.01.2025) by
-European Union (Value-Added Tax) Regulations 2024
-
-(S.I. No. 725 of 2024), reg. 7(c), in effect as per reg. 2.
-
-F474
-
-Substituted
-(26.11.2025) by
-Finance Act 2025
-(18/2025), s. 70(2)(b)(ii), in
-effect as per s. 70(2).
-
-Editorial
-Notes:
-
-E115
-
-Previous affecting
-provision: paragraph substituted (8.10.2025) by
-Finance Act 2025
-
-(18/2025), s. 70(1)(b)(ii), in effect as per s. 70(1); substituted
-(26.11.2025) by
-Finance Act 2025
-(18/2025), s. 70(2)(b)(ii), in
-effect as per s. 70(2).
-
-F475
-[
 PART 4
 
 Certain Supplies with Reduced Rate: Particular
 Provisions in Accordance with Article 105a(3) and Annex III of the VAT
 Directive
-]
 
 Non-residential immovable goods.
 
@@ -989,24 +611,18 @@ for residential purposes.
 development of immovable goods (not being goods referred to in
 paragraph 9(1)
 
-F476
-[
 or
 
 9B(3)
 )
-]
 and work on those
 goods (including the installation of fixtures),
 
-F477
-[
 other than the supply and
 installation of low emissions heat pump heating systems as specified in
 paragraph
 12A
 ,
-]
 where the value of any
 movable goods supplied under an agreement relating to the services does not exceed
 two-thirds of the total amount on which tax is chargeable in respect of the
@@ -1025,13 +641,10 @@ supply of the concrete.
 (2) The supply of blocks of
 concrete of a kind that comply with the specification contained in the
 
-F478
-[
 Irish Standard I.S. EN 771-3:
 2011+A1:2015 Specification for masonry units – Part 3: Aggregate concrete masonry
 units (dense and lightweight
 aggregates)
-]
 , but excluding the margin
 scheme supply of those blocks.
 
@@ -1046,8 +659,6 @@ is wholly or mainly in connection with the transmission of communication signals
 (3) The supply of gas of a kind used for domestic or industrial heating or lighting,
 whether in gaseous or liquid form, but not including—
 
-F479
-[
 (
 a
 ) "vehicle gas"
@@ -1068,7 +679,6 @@ Finance
 Act 1999
 when used or intended for use as a "propellant" within the meaning
 of that section,
-]
 
 (
 b
@@ -1078,8 +688,6 @@ b
 c
 ) gas sold as lighter fuel.
 
-F480
-[
 (4) The supply of hydrocarbon oil of a kind used for domestic or
 industrial heating, excluding gas oil (within the meaning of
 section 94
@@ -1088,7 +696,6 @@ Finance Act 1999
 ), other than gas oil which has been duly marked in accordance with Regulation 29(2)(a)
 of the Mineral Oil Tax
 Regulations 2012 (S.I. No. 231 of 2012).
-]
 
 Photographic and related supplies.
 
@@ -1225,8 +832,6 @@ Schedule 2
 
 Miscellaneous services.
 
-F481
-[
 (1) Services consisting of the care of the human body, including services supplied
 in the course of a health studio business or similar business, but excluding the following:
 
@@ -1241,129 +846,35 @@ b
 (
 c
 ) sunbed services.
-]
 
 (2) Services supplied in the course of their profession by jockeys.
 
 (3) Services
-F482
-[
 of a kind supplied
-]
 in the course of their profession by veterinary surgeons.
 
 (4) Services supplied in the course of their profession by tour guides.
 
 (5) Instruction in the driving of mechanically propelled road vehicles, but excluding
 education, training or retraining of the kind specified in
-F483
-[
 paragraph 4(3)(c)
 of
 Schedule 1
-]
 .
-
-Amendments:
-
-F475
-
-Substituted
-(1.01.2025) by
-European Union (Value-Added Tax) Regulations 2024
-
-(S.I. No. 725 of 2024), reg. 7(d), in effect as per reg. 2.
-
-F476
-
-Inserted (26.11.2025)
-by
-Finance Act 2025
-(18/2025), s. 70(2)(b)(iii), in effect as per s.
-70(2).
-
-F477
-
-Inserted (1.01.2025)
-by
-Finance Act 2024
-(43/2024), s. 88(b), commenced as per s. 88.
-
-F478
-
-Substituted
-(23.12.2025) by
-Finance Act 2025
-(18/2025), s. 105 and sch. 3 para 5,
-in operation as per s. 105 and sch. para 6.
-
-F479
-
-Substituted and inserted (25.12.2017) by
-Finance Act 2017
-(41/2017), s. 58(i), commenced on enactment.
-
-F480
-
-Substituted (23.12.2014) by
-Finance Act 2014
-(37/2014), s. 71(3)(b), commenced on enactment.
-
-F481
-
-Substituted (1.01.2018) by
-Finance Act 2017
-(41/2018), s. 56, commenced as per section.
-
-F482
-
-Substituted (6.02.2011) by
-Finance Act 2011
-(6/2011), s. 61 and sch. 2 par. 19, commenced on enactment.
-
-F483
-
-Substituted (25.12.2017) by
-Finance Act 2017
-(41/2017), s. 58(j), commenced on enactment.
-
-Editorial Notes:
-
-E116
-
-Previous affecting
-provision: para. 16(2) substituted (18.12.2013) by
-Finance (No. 2) Act
-2013
-(41/2013), s. 84 and sch. para. 2(b), commenced as per sch.
-para. 5(a); substituted (23.12.2025) as per F-note above.
-
-E117
-
-Previous affecting provision: subs. (4) substituted (31.03.2012) by
-Finance Act 2012
-(9/2012), s. 138 and sch. 6 par. 3(h)(i), commenced as per par. 4(b); deleted as
-per F-note above.
 
 PART 5
 
 Supplies of Certain Live Plants and Similar Goods
 
-F484
-[
 This Part sets out special
 provisions in accordance with Annex III of the VAT
 Directive
-]
 
 Plants and bulbs, etc.
 
 22. (1) The supply of nursery or garden centre stock consisting of live plants, live
 trees, live shrubs, bulbs, roots and the like, not being of a kind specified in
-F485
-[
 paragraph 12(4)
-]
 of
 Schedule 2
 , and cut flowers and ornamental foliage not being artificial or dried flowers or
@@ -1371,22 +882,6 @@ foliage.
 
 (2) The supply of miscanthus rhizomes, seeds, bulbs, roots and similar goods used
 for the agricultural production of bio-fuel.
-
-Amendments:
-
-F484
-
-Substituted
-(1.01.2025) by
-European Union (Value-Added Tax) Regulations 2024
-
-(S.I. No. 725 of 2024), reg. 7(e), in effect as per reg. 2.
-
-F485
-
-Substituted (31.03.2012) by
-Finance Act 2012
-(9/2012), s. 138 and sch. 6 par. 3(h)(ii), commenced as per par. 4(b).
 
 PART 6
 
@@ -1445,12 +940,3 @@ Literary manuscripts.
 
 25. The supply of a literary manuscript certified by the Director of the National
 Library as being of major national importance and of either cultural or artistic importance.
-
-Editorial Notes:
-
-E118
-
-Articles of furniture, silver, glass and porcelain specified for purposes of par.
-24 (1.01.2011) by
-Value-Added Tax Regulations 2010
-(S.I. No. 639 of 2010), reg. 31, in effect as per reg. 1(2).

@@ -10,14 +10,6 @@ source_html_sha256: "8e2291d0021a2112402f7a0acc7ef5c55007b6b7ff94201e839d1965046
 
 # VATCA 2010 Schedule 2 (revised)
 
-Act as originally enacted
-
-Amendments to this Act
-
-Value-Added Tax Consolidation Act 2010
-
-Next Section 〉
-
 SCHEDULE 2
 
 Zero-rated Goods and Services
@@ -37,15 +29,12 @@ This Part sets out the exemptions with deductibility in accordance with Chapters
 Intra-Community transactions.
 
 1.
-F418
-[
 (1) The supply of goods dispatched or transported from the State to a person registered
 for value-added tax in another Member State, provided that the supplier of the goods
 has complied with
 section 82
 or, where the supplier has failed to so comply, he or she has justified such failure
 to the satisfaction of the Revenue Commissioners.
-]
 
 (2) The supply of new means of transport dispatched or transported directly by or
 on behalf of the supplier to a person in the territory of another Member State.
@@ -60,14 +49,11 @@ or Article 16, of Council Directive No. 92/12/EEC of 25 February 1992).
 (4) The supply of intra-Community transport services involving the carriage of goods
 to and from the Azores or Madeira.
 
-F419
-[
 (5) The supply of goods to a
 taxable person, being goods which that taxable person is deemed to supply under
 
 section 91G
 .
-]
 
 Imports.
 
@@ -82,8 +68,6 @@ section
 (1)
 .
 
-F419
-[
 (3) The importation of goods
 where the value-added tax is declared under the special scheme in Section 4 of
 Chapter 6 of Title XII of the VAT Directive and where, at the latest upon lodging
@@ -92,7 +76,6 @@ the import declaration, the identification number for the application of the spe
 scheme of the supplier or of the intermediary acting on his or her behalf allocated
 under Article 369q of the VAT Directive has been provided at
 importation.
-]
 
 Exports.
 
@@ -121,10 +104,7 @@ Services relating to vessels and aircraft.
 
 4. (1)
 
-F420
-[
 …
-]
 
 (2) The supply, modification, repair, maintenance, chartering and hiring of—
 
@@ -149,8 +129,6 @@ b
 to be used by a transport undertaking operating for reward chiefly on international
 routes.
 
-F421
-[
 (2A) The supply of services,
 other than those referred to in
 subparagraph (2)
@@ -170,7 +148,6 @@ b
 subparagraph (2)(b)
 relates or their
 cargoes.
-]
 
 (3) Subject to regulations (if any), the supply, hiring, repair and maintenance of
 equipment incorporated or for use in sea-going vessels to which
@@ -190,15 +167,10 @@ a view to those goods being taken off the vessels or aircraft by those passenger
 
 (6)
 
-F420
-[
 …
-]
 
 Certain transactions treated as exports.
 
-F422
-[
 5.(1) The supply of goods or services to
 —
 
@@ -224,10 +196,7 @@ subparagraph (1)
 the limits and under the conditions laid down by the international conventions establishing
 the bodies or by the agreements between the headquarters of those bodies and the host
 Member State of the headquarters.
-]
 
-F423
-[
 (1B) The supply of goods or
 services to a Member State other than the State, where those goods or services are
 intended for the armed forces of any state which is party to the North Atlantic
@@ -236,10 +205,7 @@ case may be, for the use of those forces, or of the civilian staff accompanying 
 or for supplying their messes or canteens, when such forces take part in the common
 defence effort of the parties to the North Atlantic
 Treaty.
-]
 
-F424
-[
 (1C) The supply of goods or
 services within the State, intended either for the armed forces of a Member State
 other than the State for the use of those forces, or the civilian staff accompanying
@@ -255,10 +221,7 @@ or for supplying their messes or canteens, when such forces take part in a defen
 effort carried out for the implementation of a European Union activity under the
 European Union common security and defence
 policy.
-]
 
-F425
-[
 (1E) (
 a
 ) The supply of
@@ -274,7 +237,6 @@ b
 ) In this subparagraph,
 "Covid-19" has the same meaning as in the Emergency Measures in the Public Interest
 (Covid-19) Act 2020.
-]
 
 (2) The supply of gold to the Central Bank of Ireland.
 
@@ -317,13 +279,8 @@ paragraph 3(2)
 c
 )
 
-F420
-[
 …
-]
 
-F426
-[
 (
 d
 ) services of the
@@ -339,10 +296,7 @@ paragraph 4(2A)
 (To
 meet the direct needs of sea-going vessels or aircraft, or of their
 cargoes);
-]
 
-F427
-[
 (
 da
 ) services of the kind referred to in
@@ -360,7 +314,6 @@ paragraph 4(4)
 aircraft to which
 paragraph 4(2)(b)
 relates);
-]
 
 (
 e
@@ -427,121 +380,18 @@ section 58
 (1)
 .
 
-Amendments:
-
-F418
-
-Substituted (1.01.2020) by
-European Union (Value-Added Tax)
-Regulations 2019
-(S.I. No. 687 of 2019), reg. 3(h), in effect as per
-reg. 2.
-
-F419
-
-Inserted (1.07.2021)
-by
-European Union (Value-Added Tax) Regulations 2021
-(S.I. No. 327 of
-2021), reg. 29(a), (b), in effect as per reg. 2.
-
-F420
-
-Deleted (1.01.2025)
-by
-Finance Act 2024
-(43/2024), s. 86(a), (b), commenced as per s.
-86.
-
-F421
-
-Inserted
-(19.12.2020) by
-Finance Act 2020
-(26/2020), s. 46(a)(i)(I), commenced
-on enactment.
-
-F422
-
-Substituted and inserted (1.01.2011) by
-European Union
-(Value-Added Tax) Regulations 2010
-(S.I. No. 612 of 2010), reg. 4(i),
-in effect as per reg. 1(2).
-
-F423
-
-Inserted
-(19.12.2020) by
-Finance Act 2020
-(26/2020), s. 41(1)(c)(i), commenced
-on enactment.
-
-F424
-
-Inserted (1.07.2022)
-by
-Finance Act 2020
-(26/2020), s. 42(1)(c)(ii), commenced as per
-subs. (2).
-
-F425
-
-Inserted (1.01.2021,
-12.12.2021) by
-Finance Act 2021
-(45/2021), s. 56(1)(b)(i), commenced
-as per s. 56(3) and on enactment.
-
-F426
-
-Substituted
-(19.12.2020) by
-Finance Act 2020
-(26/2020), s. 46(a)(i)(II),
-commenced on enactment.
-
-F427
-
-Inserted (23.12.2014) by
-Finance Act 2014
-(37/2014), s.
-71(2)(a)(ii), commenced on enactment.
-
-Editorial Notes:
-
-E106
-
-Conditions specified for purposes of par. 7(6) (1.01.2011) by
-Value-Added Tax Regulations 2010
-(S.I. No. 639 of 2010), reg. 45(2), in effect as per reg. 1(2).
-
-E107
-
-Previous affecting
-provision: para. 6(2)(d) substituted (23.12.2014) by
-Finance Act 2014
-
-(37/2014), s. 71(2)(a)(i), commenced on enactment; substituted as per F-note
-above.
-
 PART 2
 
 Supplies Within the State
 
-F428
-[
 This Part sets out special
 provisions in accordance with Article 105a(1) and Annex III of the VAT
 Directive.
-]
 
 Food and drink.
 
 8. (1) A supply of food and drink of a kind used for human consumption, other than—
 
-F429
-[
 (
 a
 ) a supply to which
@@ -553,7 +403,6 @@ of
 Schedule 3
 
 relates,
-]
 
 (
 b
@@ -569,11 +418,8 @@ D
 of
 Table 1
 
-F429
-[
 to this
 paragraph,
-]
 
 (
 c
@@ -585,14 +431,9 @@ Part E
 or
 F
 
-F429
-[
 of that table,
 and
-]
 
-F430
-[
 (
 d
 ) a supply to which
@@ -602,7 +443,6 @@ of
 Schedule 1
 
 relates.
-]
 
 Table 1
 
@@ -620,12 +460,9 @@ Part B
 a
 )
 
-F428
-[
 Tea, herbal tea and
 preparations derived from either or both of them, when supplied in drinkable
 form.
-]
 
 (
 b
@@ -685,11 +522,8 @@ a
 ) drinking
 water, juice extracted from, and other drinkable products derived from
 
-F431
-[
 fruit, vegetables, plants,
 grains, seeds, or pulses
-]
 , and
 syrups, concentrates, essences, powders, crystals or other products for the
 preparation of beverages;
@@ -707,12 +541,9 @@ B
 a
 )
 
-F432
-[
 Tea, herbal tea and
 preparations derived from either or both of them, when supplied in
 non-drinkable form.
-]
 
 (
 b
@@ -724,25 +555,19 @@ and extracts derived from any of them, when supplied in non-drinkable form.
 c
 ) Milk
 
-F433
-[
 …
-]
 
 (
 d
 )
 Preparations and extracts derived from meat, yeast or eggs.
 
-F434
-[
 (
 e
 ) Oat milk,
 almond milk, rice milk, coconut milk, hemp milk, cashew milk, soy milk, pea
 milk, hazelnut milk, flax milk, potato milk or other similar milk substitute
 drinks.
-]
 
 Part F
 
@@ -762,11 +587,8 @@ For the purposes of
 this Part “bread” means food for human consumption manufactured by
 baking dough composed exclusively of a mixture of cereal
 
-F435
-[
 or
 other
-]
 flour and any one or
 more of the ingredients included in
 column (1)
@@ -783,8 +605,6 @@ sections or other similar pieces, having a crust over substantially the
 whole of their outside surfaces, being a crust formed in the course of
 baking, frying or toasting.
 
-F436
-[
 Table 2
 
 Ingredients and Weight Limits thereof for Bread as defined in column (2) of Part F
@@ -811,7 +631,6 @@ Yeast or other leavening or aerating agent, seeds, salt, malt extract, milk, wat
 gluten and bread improver
 
 No limit
-]
 
 (2) In this paragraph, a reference to supplying food and drink includes—
 
@@ -827,18 +646,12 @@ Certain printed matter.
 
 9. The supply of printed
 books and booklets, including
-F437
-[
 atlases
 and newspapers
-]
 ,
 
-F438
-[
 and audiobooks supplied on
 physical means of support,
-]
 but
 excluding—
 
@@ -846,11 +659,8 @@ excluding—
 a
 )
 
-F437
-[
 newspapers which are wholly or
 predominantly devoted to advertising,
-]
 
 periodicals, brochures, catalogues, directories and programmes,
 
@@ -871,8 +681,6 @@ d
 e
 ) books of stamps, tickets or coupons.
 
-F439
-[
 Certain electronically
 supplied matter
 
@@ -910,7 +718,6 @@ paragraph 7A
 of
 
 Schedule 3.
-]
 
 Children’s clothing and footwear.
 
@@ -940,8 +747,6 @@ Medicine, medical equipment and appliances
 
 11.
 
-F437
-[
 (1) The supply of medicine of a kind
 used for—
 
@@ -958,7 +763,6 @@ therapy, or
 
 (ii) nicotine replacement
 therapy.
-]
 
 (2) The supply of medicine of
 a kind used for animal oral consumption, excluding medicine which is packaged, sold
@@ -977,13 +781,10 @@ b
 and artificial limbs and other artificial parts of the body excluding artificial teeth,
 corrective spectacles and contact lenses,
 
-F440
-[
 (
 ba
 ) automated
 external defibrillators,
-]
 
 (
 c
@@ -995,8 +796,6 @@ d
 accessories suitable for use solely or principally with any of the goods specified
 in
 
-F437
-[
 clauses (a)
 ,
 (b)
@@ -1005,10 +804,7 @@ clauses (a)
 (ba)
 and
 (c)
-]
 
-F441
-[
 (4) (
 a
 ) The supply of
@@ -1032,11 +828,8 @@ be made under
 section 46(5)
 , during the period beginning on 9 April 2020 and
 ending on
-F442
-[
 30 June
 2022
-]
 .
 
 (
@@ -1044,14 +837,9 @@ b
 ) In this subparagraph,
 "Covid-19" has the same meaning as in the Emergency Measures in the Public Interest
 (Covid-19) Act 2020.
-]
 
-F443
-[
 (5)
 
-F444
-[
 (
 a
 ) The supply of Covid-19
@@ -1064,7 +852,6 @@ and Regulation (EU) 2017/746 of the European Parliament and of the Council of 5
 April 2017
 8
 .
-]
 
 (
 b
@@ -1074,7 +861,6 @@ Emergency
 Measures in the Public Interest (Covid-19) Act
 2020
 .
-]
 
 Fertilisers, feeding stuffs, certain seeds, etc.
 
@@ -1099,217 +885,25 @@ the operation of lightships, lighthouses or other navigational aids.
 (2) Life saving services provided by the Royal National Lifeboat Institution including
 the organisation and maintenance of the lifeboat service.
 
-F437
-[
 (3) The supply of sanitary towels,
 sanitary tampons, menstrual cups, menstrual pants and menstrual
 sponges.
-]
 
 The supply of sanitary towels
 and sanitary tampons.
 
 (4)
 
-F445
-[
 …
-]
 
-F446
-[
 Solar panels
 
 14. The supply and installation of
 solar panels on or adjacent to immovable goods, being private dwellings
-]
 
-F447
-[
 or buildings used wholly or
 predominantly for the provision of primary or post-primary education by recognised
 schools within the meaning of the
 Education Act
 1998
-]
 .
-
-Amendments:
-
-F428
-
-Substituted
-(1.01.2025) by
-European Union (Value-Added Tax) Regulations 2024
-
-(S.I. No. 725 of 2024), reg. 6, in effect as per reg. 2.
-
-F429
-
-Substituted
-(19.12.2020) by
-Finance Act 2020
-(26/2020), s. 43(b)(i)-(iii),
-commenced on enactment.
-
-F430
-
-Inserted
-(19.12.2020) by
-Finance Act 2020
-(26/2020), s. 43(b)(iv), commenced
-on enactment.
-
-F431
-
-Substituted
-(1.01.2025) by
-Finance Act 2024
-(43/2024), s. 87(a), commenced as per
-s. 87.
-
-F432
-
-Substituted
-(23.12.2014) by
-Finance Act 2014
-(37/2014), s. 71(2)(b), commenced on
-enactment.
-
-F433
-
-Substituted
-(15.12.2022) by
-Finance Act 2022
-(44/2022), s. 63, commenced on
-enactment.
-
-F434
-
-Inserted (1.01.2025)
-by
-Finance Act 2024
-(43/2024), s. 87(b), commenced as per s. 87.
-
-F435
-
-Inserted (31.03.2012) by
-Finance Act 2012
-(9/2012), s.
-94(a), commenced on enactment.
-
-F436
-
-Substituted (31.03.2013) by
-Finance Act 2012
-(9/2012), s.
-94(b), commenced on enactment.
-
-F437
-
-Substituted
-(1.01.2023) by
-Finance Act 2022
-(44/2022), s. 64(a)(i)(I),(II),
-(iii)(I),(II)(B), (iv), commenced as per s. 64.
-
-F438
-
-Inserted (1.01.2024)
-by
-Finance (No.2) Act 2023
-(39/2023), s. 65(a)(i), commenced as per
-s. 65.
-
-F439
-
-Substituted
-(1.01.2024) by
-Finance (No.2) Act 2023
-(39/2023), s. 65(a)(ii),
-commenced as per s. 65.
-
-F440
-
-Inserted (1.01.2023)
-by
-Finance Act 2022
-(44/2022), s. 64(a)(iii)(II)(A), commenced as per
-s. 64.
-
-F441
-
-(19.12.2020) by
-
-Finance Act 2020
-(26/2020), s. 44(a), commenced on enactment.
-
-F442
-
-Substituted
-(1.01.2022, deemed) by
-Value - Added Tax Consolidation Act 2010 (Section
-46(5)) Order 2022
-(S.I. No. 665 of 2022), art. 2, in effect as per
-art. 3.
-
-F443
-
-Inserted (21.12.21)
-by
-Finance Act 2021
-(45/2021), s. 56(b)(ii), commenced on
-enactment.
-
-F444
-
-Substituted
-(1.01.2023) by
-Finance Act 2023
-(11/2023), s. 5(b), commenced as per
-s. 5(b).
-
-F445
-
-Deleted (1.01.2022)
-by
-Finance Act 2020
-(26/2020), s. 46(a)(ii), commenced as per para.
-(ii).
-
-F446
-
-Inserted (1.05.2023)
-by
-Finance Act 2023
-(11/2023), s. 5(c)(i), commenced as per s.
-5(c).
-
-F447
-
-Inserted (18.12.2023)
-by
-Finance (No.2) Act 2023
-(39/2023), s. 66, commenced on
-enactment.
-
-Editorial
-Notes:
-
-E108
-
-Previous affecting
-provision: para. 9A inserted (1.01.2023) by
-Finance Act 2022
-
-(44/2022), s. 64(a)(ii), commenced as per s. 64; para. 9A substituted
-(1.01.2024) as per F-note above.
-
-E109
-
-Previous affecting
-provision: para. 11(4)(a) amended (30.04.2021) by
-Value-Added Tax
-Consolidation Act 2010 (section 46(5)) Order 2021
-(S.I. No. 228 of
-2021), art. 2; substituted (1.01.2022, deemed) as per F-note above.

@@ -10,14 +10,6 @@ source_html_sha256: "0c8c258be1a58d60088f10e29bba8ace8810496f8b070aa6f47d088c6a4
 
 # VATCA 2010 Schedule 1 (revised)
 
-Act as originally enacted
-
-Amendments to this Act
-
-Value-Added Tax Consolidation Act 2010
-
-Next Section 〉
-
 SCHEDULE 1
 
 Exempt Activities
@@ -38,8 +30,6 @@ of Title IX of the VAT Directive.
 
 Postal services.
 
-F381
-[
 1. Public postal services, including
 the supply of goods and services incidental to their provision, which are provided
 as
@@ -54,7 +44,6 @@ State in accordance with that Chapter (as so amended), but only if that supply i
 not
 on terms that have been individually
 negotiated.
-]
 
 Medical and related services.
 
@@ -66,8 +55,6 @@ Health Act 1970
 which are undertaken by or on behalf of the Health Service Executive or by home care
 providers duly recognised by that Executive under section 61A of that Act.
 
-F382
-[
 (3) Professional medical care
 services (other than dental or optical services) supplied by—
 
@@ -93,7 +80,6 @@ Midwives Act 2011),
 but only if those services are
 not supplied in the course of carrying on a business that wholly or partly consists
 of selling goods.
-]
 
 (4) The supply by dental technicians of services of a dental nature and of dentures
 or other dental prostheses.
@@ -110,8 +96,6 @@ Certain independent groups, non-profit making organisations and other bodies.
 
 3.
 
-F383
-[
 (1) The supply of services by an
 independent group of persons, being a group that is an independent entity established
 for administrative convenience by persons each of whom carries on an activity which
@@ -120,7 +104,6 @@ members the services directly necessary to enable them to carry on that activity
 but
 only if the group recovers from its members the exact amount of each member’s share
 of the joint expenses.
-]
 
 (2) The supply of goods and services closely related to welfare and social security
 by non-profit making organisations.
@@ -131,8 +114,6 @@ primarily of a political, trade union, religious, patriotic, philosophical, phil
 or civic nature where such supply is made without payment other than the payment of
 any membership subscription.
 
-F384
-[
 (4) The provision by non-profit making organisations of
 —
 
@@ -152,10 +133,7 @@ or
 b
 ) services closely
 related to the provision of those facilities.
-]
 
-F385
-[
 (5) The supply of cultural services, and the supply of goods closely linked to those
 services, by
 —
@@ -173,7 +151,6 @@ recognised as such a body by the Revenue Commissioners for the purposes of this 
 
 but excluding the supply of
 services to which paragraph 5(2) relates.
-]
 
 Children and education.
 
@@ -186,8 +163,6 @@ may be regulated by regulations made under Part VII or VIII of the
 Child Care Act 1991
 .
 
-F386
-[
 (2A) The supply of services for the protection or care of children and young persons
 where such services are
 —
@@ -207,10 +182,7 @@ section 58
 Child and
 Family Agency Act 2013
 .
-]
 
-F387
-[
 (3) (
 a
 ) The provision
@@ -295,17 +267,10 @@ driving of the following mechanically propelled road vehicles:
 
 (ii) vehicles designed or constructed for the carriage of more than 9 persons (including
 the driver).
-]
 
-F388
-[
 (4)
-F389
-[
 Tuition
-]
 given privately by teachers and covering school or university education.
-]
 
 Other activities.
 
@@ -331,8 +296,6 @@ b
 ) performances in conjunction with which facilities are available for the consumption
 of food or drink during all or part of the performance by persons attending the performance.
 
-F390
-[
 (3) The promotion of sporting events (other than in the course of the provision of
 facilities for taking part in sporting activities including golf or physical education
 activities of the kind specified in
@@ -344,91 +307,9 @@ paragraph 12
 of
 Schedule 3
 ).
-]
 
 (4) The provision of the national broadcasting and television services, excluding
 advertising.
-
-Amendments:
-
-F381
-
-Substituted (1.01.2011) by
-Finance Act 2011
-(6/2011), s.
-60(1)(a), commenced as per subs. (2)(a).
-
-F382
-
-Substituted
-(15.12.2022) by
-Finance Act 2022
-(44/2022), s. 58, commenced on
-enactment.
-
-F383
-
-Substituted
-(15.12.2022) by
-Finance Act 2022
-(44/2022), s. 59, commenced on
-enactment.
-
-F384
-
-Substituted (1.03.2015) by
-Finance Act 2014
-(37/2014), s.
-71(1)(a), commenced as per s. 71(1)(a).
-
-F385
-
-Substituted (6.02.2011) by
-Finance Act 2011
-(6/2011), s.
-60(1)(b), commenced on enactment.
-
-F386
-
-Inserted (23.12.2014) by
-Finance Act 2014
-(37/2014), s.
-71(1)(b), commenced on enactment.
-
-F387
-
-Substituted (25.12.2017) by
-Finance Act 2017
-(41/2017), s.
-57(b), commenced on enactment.
-
-F388
-
-Inserted (21.12.2015) by
-Finance Act 2015
-(52/2015), s.
-54(b)(ii), commenced on enactment.
-
-F389
-
-Substituted (25.12.2017) by
-Finance Act 2017
-(41/2017), s. 58(h), commenced on enactment.
-
-F390
-
-Substituted (1.01.2013) by
-Finance Act 2013
-(8/2013), s.
-75(1)(a), commenced as per subs. (3).
-
-Editorial Notes:
-
-E103
-
-Previous affecting provision: para. 4(3) substituted (21.12.2015) by
-Finance Act 2015
-(52/2015), s. 54(b)(i), commenced on enactment; substituted as per F-note above.
 
 PART 2
 
@@ -438,20 +319,14 @@ Financial services.
 
 6. (1) Financial services that consist of any of the following:
 
-F391
-[
 (
 a
 )
 
-F392
-[
 …
-]
 transferring or otherwise dealing
 in stocks, shares, debentures and other securities (other than documents establishing
 title to goods);
-]
 
 (
 b
@@ -469,16 +344,11 @@ d
 ) issuing, transferring, receiving or otherwise dealing in currency, bank notes and
 metal coins, in use as legal tender in any country, but excluding any such bank notes
 and coins that are supplied as investment goods or as
-F393
-[
 collectors
 ’
 pieces
-]
 ;
 
-F394
-[
 (
 e
 ) an undertaking that is
@@ -486,7 +356,6 @@ a qualifying company for the purposes of section 110 of the Taxes Consolidation 
 1997, other than a qualifying company which holds qualifying assets (within the
 meaning of the said section 110) that consist of plant and
 machinery;
-]
 
 (
 f
@@ -496,10 +365,7 @@ managing credit guarantees by the giver of the credit;
 (
 g
 )
-F395
-[
 …
-]
 
 (
 h
@@ -514,18 +380,12 @@ the
 Taxes Consolidation Act 1997
 where those transactions correspond to financial services listed elsewhere in this
 
-F396
-[
 subparagraph
-]
 .
 
 (2)
-F396
-[
 Financial services that consist of managing an undertaking of a kind specified in
 this subparagraph:
-]
 
 (
 a
@@ -533,14 +393,11 @@ a
 Taxes Consolidation Act 1997
 ;
 
-F397
-[
 (
 aa
 ) an investment limited partnership within the meaning of section 739J of the
 Taxes Consolidation Act 1997
 ;
-]
 
 (
 b
@@ -567,8 +424,6 @@ d
 ) a unit trust scheme established solely for the purpose of superannuation fund schemes
 or charities;
 
-F398
-[
 (
 e
 ) an undertaking that is
@@ -576,10 +431,7 @@ a qualifying company for the purposes of section 110 of the Taxes Consolidation 
 1997, other than a qualifying company which holds qualifying assets (within the
 meaning of the said section 110) that consist of plant and
 machinery;
-]
 
-F397
-[
 (
 ea
 ) an undertaking that
@@ -590,10 +442,7 @@ Consolidation Act 1997
 where that undertaking corresponds to an undertaking
 specified elsewhere in this
 subparagraph;
-]
 
-F399
-[
 (
 eb
 ) a defined
@@ -602,8 +451,6 @@ Pensions Act 1990
 ), other
 than a one-member arrangement (within the meaning of that Act);
 
-F400
-[
 (
 ec
 ) an undertaking
@@ -622,31 +469,18 @@ Parliament and of the Council of 8 June 2011
 32
 ) managed by an AIFM (as defined in point (b) of Article 4(1) of that Directive)
 which has been authorised by
-F401
-[
 or
 registered with
-]
 the competent
 authority (as defined in
-F402
-[
 point
 (f)
-]
 of Article 4(1) of that Directive)
 of
-F403
-[
 a Member
 State
-]
 ;
-]
-]
 
-F404
-[
 (
 ee
 ) the automatic
@@ -654,15 +488,11 @@ enrolment retirement savings system established, maintained and controlled by An
 tÚdarás Náisiúnta um Uathrollú Coigiltis Scoir as provided for in the Automatic
 Enrolment Retirement Savings System Act
 2024;
-]
 
-F396
-[
 (
 f
 ) any other undertaking that is determined by the Minister to be a collective investment
 undertaking for the purposes of this subparagraph.
-]
 
 (3) A determination referred to in
 subparagraph (2)(f
@@ -673,23 +503,15 @@ such later date as is specified in the determination.
 subparagraph (2)
 , management of the undertaking can consist of any one or more of the 3 functions
 listed in
-F405
-[
 Annex II of Directive No. 85/611/EEC
-]
 of the European Parliament and Council (being the functions included in the activity
 of collective portfolio management) where the relevant function is
-F393
-[
 supplied
-]
 by the person who has responsibility for carrying out that function in respect of
 the undertaking.
 
 Agency services.
 
-F396
-[
 7.(1) The supply of agency services relating to the financial services specified in
 
 subparagraph (1)
@@ -702,26 +524,16 @@ of that subparagraph.
 
 (2)
 
-F406
-[
 …
-]
-]
 
 Insurance and reinsurance services.
 
 8.
-F407
-[
 (1) Insurance and reinsurance transactions, and the supply of related services by
 insurance brokers and insurance agents.
-]
 
 (2) For the purposes of this paragraph “related services”
-F408
-[
 …
-]
 includes—
 
 (
@@ -749,8 +561,6 @@ section 90
 Gambling and lotteries.
 
 10.
-F409
-[
 (1) The acceptance of bets that are subject to excise duty imposed by section 67 or
 67A of the
 Finance Act 2002
@@ -763,10 +573,7 @@ of the
 Finance Act 2002
 ), the consideration for which consists of commission charges within the meaning of
 section 67B of that Act that are subject to excise duty imposed by that section.
-]
 
-F410
-[
 (1B) The acceptance of bets by a remote bookmaker (within the meaning of
 section 64
 of the
@@ -780,7 +587,6 @@ of the
 Finance Act 2002
 ) to persons outside the State, the consideration for which consists of commission
 charges for the use of the remote betting intermediary facilities.
-]
 
 (2) The issuing of tickets or coupons for the purpose of a lottery.
 
@@ -788,12 +594,9 @@ Letting of immovable goods.
 
 11. (1) The letting of immovable
 goods
-F411
-[
 , including a letting of
 emergency accommodation, but excluding any of the
 following:
-]
 
 (
 a
@@ -802,8 +605,6 @@ business installation when let separately from any other immovable goods of whic
 the
 machinery or installation forms part;
 
-F411
-[
 (
 b
 ) supplies of the
@@ -814,20 +615,16 @@ Schedule 3
 relates, except where
 such supplies are used or to be used as emergency
 accommodation;
-]
 
 (
 c
 ) providing facilities for
 taking part in sporting activities of the kind to which
 
-F412
-[
 subparagraph (1)
 or (1A) of
 
 paragraph 12
-]
 of
 Schedule
 3
@@ -871,8 +668,6 @@ of
 Part 8
 .
 
-F413
-[
 Gas and electricity services etc.
 
 13. (1) The importation of gas through a natural gas distribution system or any network
@@ -882,25 +677,19 @@ gas system or any upstream pipeline network.
 (2) The importation of electricity.
 
 (3) The importation of heat or cooling energy through heating or cooling networks.
-]
 
 Exemptions by derogation in accordance with Article 371 of the VAT Directive.
 
 14. (1) The provision of services by a funeral undertaking.
 
 (2) The supply of water by local authorities
-F414
-[
 and Irish Water
-]
 .
 
 (3) Transporting passengers and their accompanying baggage.
 
 (4) The admission of spectators to sporting events.
 
-F415
-[
 Imports by certain international bodies
 
 15. (1) The importation of goods by
@@ -921,8 +710,6 @@ the conditions of that Protocol and the agreements for its implementation or the
 agreements between the headquarters of those bodies and the host Member State of the
 headquarters, in so far as it does not lead to distortion of competition.
 
-F416
-[
 (1A) (
 a
 ) The importation
@@ -940,7 +727,6 @@ subparagraph, "Covid-19" has the same meaning as in the
 Emergency Measures in the Public Interest (Covid-19) Act 2020
 
 .
-]
 
 (2) The importation of goods
 by international bodies, other than those referred to in
@@ -952,233 +738,10 @@ limits and under the conditions laid down by the international conventions
 establishing the bodies or by the agreements between the headquarters of those bodies
 and the host Member State of the
 headquarters.
-]
 
-F417
-[
 (3) The importation of goods by
 the armed forces of a Member State other than the State for the use of those forces
 or the civilian staff accompanying those forces or for supplying their messes or
 canteens, when such forces take part in a defence effort carried out for the
 implementation of a European Union activity under the European Union common security
 and defence policy.
-]
-
-Amendments:
-
-F391
-
-Substituted
-(15.12.2022) by
-Finance Act 2022
-(44/2022), s. 54(b), commenced on
-enactment.
-
-F392
-
-Deleted (18.12.2023)
-by
-Finance (No. 2) Act 2023
-(39/2023), s. 63, commenced on
-enactment.
-
-F393
-
-Substituted (6.02.2011) by
-Finance Act 2011
-(6/2011), s.
-61 and sch. 2 par. 18, commenced on enactment.
-
-F394
-
-Substituted
-(1.03.2023) by
-Finance Act 2022
-(44/2022), s. 61(1), commenced as per
-subs. (2).
-
-F395
-
-Deleted (27.03.2013) by
-Finance Act 2013
-(8/2013), s.
-75(1)(b), commenced on enactment.
-
-F396
-
-Substituted (27.03.2013) by
-Finance Act 2013
-(8/2013), s.
-75(1)(c), (d), (g) and (h), commenced on enactment.
-
-F397
-
-Inserted (27.03.2013) by
-Finance Act 2013
-(8/2013), s.
-75(1)(e) and (f), commenced on enactment.
-
-F398
-
-Substituted
-(1.03.2023) by
-Finance Act 2022
-(44/2022), s. 61(1), commenced as per
-s. 61(2).
-
-F399
-
-Inserted (1.03.2015) by
-Finance Act 2014
-(37/2014), s.
-71(1)(c)(ii), commenced as per s. 71(4).
-
-F400
-
-Substituted
-(15.12.2022) by
-Finance Act 2022
-(44/2022), s. 60, commenced on
-enactment.
-
-F401
-
-Inserted (12.11.2024)
-by
-Finance Act 2024
-(43/2024), s. 85(a), commenced on enactment.
-
-F402
-
-Substituted
-(18.12.2023) by
-Finance (No. 2) Act 2023
-(39/2023), s. 100(a) and
-sch. para. 4 , commenced as per s. 100(b) and sch. para. 7(1).
-
-F403
-
-Substituted
-(12.11.2024) by
-Finance Act 2024
-(43/2024), s. 85(b), commenced on
-enactment.
-
-F404
-
-Inserted (23.12.2025)
-by
-Finance Act 2025
-(18/2025), s. 77, commenced on enactment.
-
-F405
-
-Substituted (27.03.2013) by
-Finance Act 2013
-(8/2013), s.
-105 and sch. 2 par. 3(d), commenced as per par. 5(a).
-
-F406
-
-Substituted
-(15.12.2022) by
-Finance Act 2022
-(44/2022), s. 62, commenced on
-enactment.
-
-F407
-
-Substituted (31.03.2012) by
-Finance Act 2012
-(9/2012), s.
-138 and sch. 6 par. 3(g)(i), commenced as per par. 4(b).
-
-F408
-
-Deleted (31.03.2012) by
-Finance Act 2012
-(9/2012), s. 138 and sch. 6 par. 3(g)(ii), commenced as per subs. 4(b).
-
-F409
-
-Substituted and inserted (1.08.2015) by
-Finance Act 2011
-
-(6/2011), s. 60(1)(c), S.I. No. 131 of 2015.
-
-F410
-
-Inserted (21.12.2015) by
-Finance Act 2015
-(52/2015), s.
-60, commenced on enactment.
-
-F411
-
-Substituted
-(18.12.2023) by
-Finance (No. 2) Act 2023
-(39/2023), s. 64(a), (b),
-commenced on enactment.
-
-F412
-
-Substituted (1.03.2013) by
-Finance Act 2013
-(8/2013), s. 75(1)(i), in effect as per subs. (3).
-
-F413
-
-Substituted (1.01.2011) by
-European Union (Value-Added Tax)
-Regulations 2010
-(S.I. No. 612 of 2010), reg. 4(g), in effect as per
-reg. 1(2).
-
-F414
-
-Inserted (1.01.2014) by
-Finance (No. 2) Act 2013
-
-(41/2013), s. 67, commenced as per s. 67.
-
-F415
-
-Inserted (1.01.2011) by
-European Union (Value-Added Tax) Regulations 2010
-(S.I. No. 612 of 2010), reg. 4(h), in effect as per reg. 1(2).
-
-F416
-
-Inserted (1.01.2021, 21.12.2021) by
-Finance Act 2021
-
-(45/2021), s. 56(1)(a), commenced as per s. 56(2) and on enactment.
-
-F417
-
-Inserted (1.07.2022)
-by
-Finance Act 2020
-(26/2020), s. 42(1)(b), commenced as per subs.
-(2).
-
-Editorial
-Notes:
-
-E104
-
-Previous affecting
-provision: substituted (19.12.2020) by
-Finance Act 2020
-(26/2020), s.
-45(b), commenced on enactment; para. 11(1)(b) substituted (1.01.2024) as per
-F-Note above.
-
-E105
-
-Subs. (2)(e) amended
-(23.12.2014) by
-Finance Act 2014
-(37/2014), s. 71(c)(i), commenced on
-enactment; para. (e) substituted (1.03.2023) as per F-note above.
