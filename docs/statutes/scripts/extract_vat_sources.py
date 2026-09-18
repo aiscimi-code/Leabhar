@@ -42,7 +42,36 @@ def html_to_md(html: str, title: str, citation: str, url: str) -> str:
     soup = BeautifulSoup(html, "html.parser")
     for tag in soup.select("script, style, nav, header, footer, noscript, form"):
         tag.decompose()
-    root = soup.select_one("#content") or soup.select_one("main") or soup.body
+    # revisedacts.lawreform.ie has no #content id; <main id="main-content">
+    # wraps both the real provision (<section class="section"|"schedule">)
+    # and a leading <div class="act-nav"> breadcrumb ("Act as originally
+    # enacted" / "Next Section" etc.) that the old #content/main/body
+    # fallback let straight through into the flattened text. Selecting the
+    # actual provision container directly (confirmed present via a raw-HTML
+    # capture: <section class="schedule" id="SCHED2">, and by analogy
+    # class="section" for a section page) excludes that chrome at the
+    # source rather than trying to filter its text after the fact.
+    root = (
+        soup.select_one("#content") or soup.select_one("section.section, section.schedule")
+        or soup.select_one("main") or soup.body
+    )
+    # Per-provision "Amendments:" (class="f-notes") and end-of-provision
+    # "Editorial Notes:" (class="e-notes") commentary, both wrapped in a
+    # shared <div class="annotations">, interleave with the operative text
+    # in a way that survives flattening with no reliable line boundary (a
+    # wrapped citation like "commenced as per s.\n86." is indistinguishable
+    # from a real top-level paragraph "86." starting fresh) - verified via
+    # the same raw-HTML capture. Removing the whole block at the HTML level,
+    # where its boundary is unambiguous, is the only place this is fixable.
+    if root is not None:
+        for tag in root.select(".annotations, .commentary-reference"):
+            tag.decompose()
+        # The literal "[" / "]" bracket characters LRC prints around
+        # substituted/inserted text (class="markup") are its own print
+        # convention, not part of the statutory wording - the wording
+        # itself is in the accompanying class="change" span, which is kept.
+        for tag in root.select(".markup"):
+            tag.decompose()
     skip = {
         "Home", "Baile", "Acts", "Achtanna", "Introduction", "Alphabetical List",
         "Chronological List", "Annotations", "This Act", "View Full Act",
@@ -75,17 +104,6 @@ def write(path: Path, text: str) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(text)
     print(f"wrote {path} ({len(text)} bytes)")
-
-
-def _debug_dump_schedule2_html() -> None:
-    """TEMPORARY: save raw HTML for docs/statutes' own parser design work.
-    Remove once the LRC annotation-block structure is confirmed and
-    html_to_md() strips it properly (see extract_vatca()'s Schedule fetch)."""
-    url = "https://revisedacts.lawreform.ie/eli/2010/act/31/schedule/2/revised/en/html"
-    raw = Path("/tmp/vatca/sch2.html")
-    if not raw.exists():
-        fetch(url, raw)
-    write(ROOT / "vatca-2010-revised" / "_debug_schedule-2.raw.html", raw.read_text(errors="replace"))
 
 
 def extract_vatca() -> None:
@@ -178,12 +196,8 @@ jurisdiction: IE
 
 
 if __name__ == "__main__":
-    import sys
-    if "--debug-html" in sys.argv:
-        _debug_dump_schedule2_html()
-    else:
-        extract_vatca()
-        extract_si639()
-        extract_tdm()
-        extract_rates()
+    extract_vatca()
+    extract_si639()
+    extract_tdm()
+    extract_rates()
     print("done")
