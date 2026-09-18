@@ -37,7 +37,7 @@ const YEARS = /([0-9]+)\s*(?:years?|year)/gi;
 
 function parseMoney(str: string): { minor: number; raw: string } | null {
   const m = str.match(/([0-9,]+)(?:\.([0-9]{2}))?/);
-  if (!m) return null;
+  if (!m || !m[1]) return null;
   const major = Number(m[1].replace(/,/g, ''));
   const minorFrac = m[2] ? Number(`0.${m[2]}`) : 0;
   return { minor: Math.round(major * 100 + minorFrac * 100), raw: str };
@@ -88,6 +88,7 @@ export function extractFactsFromProvision(p: ParsedProvision): ExtractedFact[] {
   }
 
   while ((m = YEARS.exec(text))) {
+    if (!m[1]) continue;
     capture(m.index, Number(m[1]), 'count', m[1]);
   }
 
@@ -120,11 +121,25 @@ export interface CuratedRule {
   name: string;
   unit: ExtractedFact['unit'];
   kind: 'threshold' | 'rate' | 'other';
+  /** Broad subject the rule speaks to, for topic-based lookup. */
+  topic: string;
 }
 
 export const SECTION_RULE_KEYS: Record<string, CuratedRule> = {
-  '2': { key: 'usc.first_band_threshold', name: 'USC first band ceiling', unit: 'eur_minor', kind: 'threshold' },
-  '3': { key: 'income_tax.standard_rate_threshold', name: 'Income tax standard-rate ceiling', unit: 'eur_minor', kind: 'threshold' },
-  '13': { key: 'pension.standard_fund_threshold', name: 'Standard fund threshold adjustment', unit: 'eur_minor', kind: 'threshold' },
-  '48': { key: 'film.tax_credit_rate', name: 'Film tax credit', unit: 'percent', kind: 'rate' },
+  '2': {
+    key: 'usc.first_band_threshold', name: 'USC first band ceiling',
+    unit: 'eur_minor', kind: 'threshold', topic: 'usc',
+  },
+  '3': {
+    key: 'income_tax.standard_rate_threshold', name: 'Income tax standard-rate ceiling',
+    unit: 'eur_minor', kind: 'threshold', topic: 'income_tax',
+  },
+  '13': {
+    key: 'pension.standard_fund_threshold', name: 'Standard fund threshold adjustment',
+    unit: 'eur_minor', kind: 'threshold', topic: 'pension',
+  },
+  '48': {
+    key: 'film.tax_credit_rate', name: 'Film tax credit',
+    unit: 'percent', kind: 'rate', topic: 'corporation_tax_relief',
+  },
 };

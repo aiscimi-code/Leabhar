@@ -1,11 +1,11 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
-import { parseFinanceAct2024, parseFinanceAct2024File, provisionSlug, categoriseProvision } from './statuteParser';
+import {
+  parseFinanceAct2024, parseFinanceAct2024File, provisionSlug, categoriseProvision,
+  FINANCE_ACT_2024_MD_PATH,
+} from './statuteParser';
 
-const SRC = '/home/box/HermesWorkspace/temp/Laebhar/docs/statutes/2024-act-43/2024-act-43-enacted.md'
-  .replace('Leabhar', 'Leabhar');
-// (kept as a const so path is obvious; the repo lives under HermesWorkspace/temp/Leabhar)
-const REAL_SRC = '/home/box/HermesWorkspace/temp/Leabhar/docs/statutes/2024-act-43/2024-act-43-enacted.md';
+const REAL_SRC = FINANCE_ACT_2024_MD_PATH;
 
 describe('statuteParser', () => {
   it('parses all 118 body sections in order, no invention', () => {
@@ -42,18 +42,27 @@ describe('statuteParser', () => {
     expect(hits / tokens.length).toBeGreaterThan(0.9);
   });
 
-  it('extracts a heading for sections with a short title', () => {
+  it('extracts the heading line printed above the section number', () => {
     const provs = parseFinanceAct2024File(REAL_SRC);
     const s1 = provs.find((p) => p.sectionNumber === '1')!;
-    expect(s1.heading).toContain('Principal Act');
-    expect(s1.heading).toContain('Taxes Consolidation Act 1997');
+    // The line directly above "1.    In this Part..." reads "Interpretation (Part 1)".
+    expect(s1.heading).toBe('Interpretation (Part 1)');
   });
 
-  it('leaves heading empty when a section opens straight into a subsection', () => {
+  it('joins a heading that wraps across two printed lines', () => {
+    const provs = parseFinanceAct2024File(REAL_SRC);
+    const s15 = provs.find((p) => p.sectionNumber === '15')!;
+    expect(s15.heading).toBe(
+      'Automatic enrolment retirement savings system (amendments consequential on '
+      + 'insertion of Chapter 2E in Part 30)',
+    );
+  });
+
+  it('finds the section-specific heading rather than a subsection opener', () => {
     const provs = parseFinanceAct2024File(REAL_SRC);
     const s2 = provs.find((p) => p.sectionNumber === '2')!;
-    // S.2 body begins "(1) Section 531AN..." — no short title on the number line.
-    expect(s2.heading).not.toContain('Section 531AN');
+    // S.2's body begins "(1) Section 531AN..."; the heading is the line above it.
+    expect(s2.heading).toBe('Amendment of section 531AN of Principal Act (rate of charge)');
   });
 
   it('parses amendment targets (amendsSection) from the text only', () => {
@@ -91,10 +100,12 @@ describe('statuteParser', () => {
     const a = parseFinanceAct2024File(REAL_SRC);
     const b = parseFinanceAct2024File(REAL_SRC);
     for (let i = 0; i < a.length; i++) {
-      expect(a[i].sectionNumber).toBe(b[i].sectionNumber);
-      expect(a[i].heading).toBe(b[i].heading);
-      expect(a[i].amendsSection).toEqual(b[i].amendsSection);
-      expect(a[i].effectiveClue).toBe(b[i].effectiveClue);
+      const pa = a[i]!;
+      const pb = b[i]!;
+      expect(pa.sectionNumber).toBe(pb.sectionNumber);
+      expect(pa.heading).toBe(pb.heading);
+      expect(pa.amendsSection).toEqual(pb.amendsSection);
+      expect(pa.effectiveClue).toBe(pb.effectiveClue);
     }
   });
 });

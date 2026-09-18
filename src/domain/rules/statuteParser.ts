@@ -79,6 +79,12 @@ const ACT_CITATIONS = [
  */
 function normaliseProvisionText(raw: string): string {
   return raw
+    .split('\n')
+    // Drop page-break boilerplate (running headers, bare page numbers) that
+    // pdftotext interleaves mid-paragraph — never part of the enacted text,
+    // and their removal cannot invent or alter any word that remains.
+    .filter((line) => !PAGE_NOISE_RE.test(line.trim()))
+    .join('\n')
     .replace(/\f/g, ' ') // form feeds -> space
     .replace(/^[ \t]+/gm, '') // strip leading indentation (structure is not semantic here)
     .replace(/[ \t]{2,}/g, ' ') // collapse horizontal runs
@@ -104,30 +110,36 @@ function sectionNumberFromLine(line: string): string {
   return m ? (m[1] ?? '') : '';
 }
 
+/** Page-break/running-header noise pdftotext leaves between paragraphs, never a heading itself. */
+const PAGE_NOISE_RE = /^(PT\.|S\.\d|\[NO\. 43\.\]|\[2024\.\]|Finance Act 2024\.|SCH\.|\d+$|NO\. 43\.)/;
+
 /**
- * Parse the heading: the first non-subsection text on the section header line,
- * after the section number. If the line's remainder is an empty subsection
- * opener `(1) ...` or the section number is immediately followed by a page
- * break, the heading is the first following descriptive (non-`(n)`) line;
- * if there is none, the heading is empty (the section opens straight into a
- * subsection with no short title).
+ * Extract a section's heading, printed as its own line (occasionally wrapped
+ * across two) immediately *above* the numbered section in this Act's layout —
+ * verified against docs/statutes/2024-act-43/2024-act-43-enacted.md, e.g.:
+ *
+ *   Amendment of section 531AN of Principal Act (rate of charge)
+ *   2.   (1) Section 531AN of the Principal Act is amended—
+ *
+ * Walking upward from the section number line: page-break noise (page
+ * numbers, running headers) is skipped without ending the search; a blank
+ * line, the previous section's own number line, or a PART/CHAPTER header ends
+ * it. A section with no heading line above it (none observed in this Act, but
+ * the layout is not guaranteed) returns "" rather than guessing at body text.
  */
-function extractHeading(lines: string[], startIdx: number): string {
-  const headerLine = (lines[startIdx] ?? '').replace(SECTION_RE, '').trim();
-  // A section that opens with a subsection `(1) ...` (or page-number-only text)
-  // has no short title on the header line — fall through to following lines.
-  if (headerLine && !/^(\(|\d|PT\.|S\.|NO\. 43\.|\[2024.\])/.test(headerLine)) {
-    return headerLine;
+function extractHeadingAbove(lines: string[], startLine: number): string {
+  let j = startLine - 1;
+  const collected: string[] = [];
+  while (j >= 0) {
+    const line = (lines[j] ?? '').trim();
+    if (line === '') break;
+    if (PAGE_NOISE_RE.test(line)) { j--; continue; }
+    if (/^(PART|CHAPTER)\b/i.test(line)) return '';
+    if (SECTION_RE.test(line)) return '';
+    collected.unshift(line);
+    j--;
   }
-  // Otherwise, look for the first following descriptive (non-`(n)`) line.
-  for (let i = startIdx + 1; i < Math.min(startIdx + 6, lines.length); i++) {
-    const candidate = (lines[i] ?? '').trim();
-    if (!candidate) continue;
-    if (SUBSECTION_RE.test(candidate)) continue;
-    if (/^(PT\.|S\.|NO\. 43\.|\[2024.\]|Finance Act 2024\.)/.test(candidate)) continue;
-    return candidate;
-  }
-  return '';
+  return collected.join(' ');
 }
 
 function parseAmendsSection(text: string): string[] {
@@ -207,7 +219,7 @@ export function parseFinanceAct2024(source: string): ParsedProvision[] {
 
     if (sliceLines.length === 0) continue;
 
-    const heading = extractHeading(sliceLines, 0);
+    const heading = extractHeadingAbove(lines, startLine);
     const rawBody = sliceLines.join('\n');
     const provisionText = normaliseProvisionText(rawBody);
 
@@ -221,7 +233,7 @@ export function parseFinanceAct2024(source: string): ParsedProvision[] {
     const hasBarePrincipal = /\bPrincipal Act\b/.test(lower) && !principalActs.includes('Taxes Consolidation Act 1997');
     if (hasBarePrincipal) principalActs = ['Principal Act (Taxes Consolidation Act 1997)'];
 
-    const sourceStart = offsets[startLine];
+    const sourceStart = offsets[startLine] ?? 0;
     const lastLineIdx = startLine + sliceLines.length - 1;
     const lastLine = lines[lastLineIdx] ?? '';
     const sourceEnd = (offsets[lastLineIdx] ?? 0) + lastLine.length;
@@ -247,6 +259,12 @@ export function parseFinanceAct2024(source: string): ParsedProvision[] {
 export function parseFinanceAct2024File(path: string): ParsedProvision[] {
   return parseFinanceAct2024(readFileSync(path, 'utf8'));
 }
+
+/** Path to the bundled Finance Act 2024 enacted Markdown extract, resolved relative to this file. */
+export const FINANCE_ACT_2024_MD_PATH = new URL(
+  '../../../docs/statutes/2024-act-43/2024-act-43-enacted.md',
+  import.meta.url,
+).pathname;
 
 /** Stable slug for a provision, derived purely from section number + heading. */
 export function provisionSlug(sectionNumber: string, heading: string): string {
@@ -284,7 +302,33 @@ export function categoriseProvision(heading: string, body: string): ParsedProvis
   return 'other';
 }
 
-export type ProvisionCategory =
-  | 'income_tax' | 'corporation_tax' | 'vat' | 'usc' | 'capital_allowances'
-  | 'capital_gains_tax' | 'relief' | 'exemption' | 'penalty' | 'procedure'
-  | 'definitions' | 'repeal' | 'other';
+/**
+ * Explicit, deterministic relevance judgement for a provision (task:
+ * "do not assume every section is relevant to accounting transaction
+ * classification. Identify relevance explicitly.").
+ *
+ * A provision is relevant when its category is a substantive tax rule that
+ * could bear on how a transaction is classified or treated. Procedural,
+ * repeal-only and pure-definition provisions are not — they may still matter
+ * for interpreting a relevant provision elsewhere, but are never themselves a
+ * transaction-classification rule. `other` is treated as not relevant *and*
+ * flagged for human review, rather than silently included or excluded.
+ */
+export function assessRelevance(
+  category: ParsedProvision['category'],
+): { relevant: boolean; reason: string } {
+  switch (category) {
+    case 'procedure':
+      return { relevant: false, reason: 'Procedural provision (administration/filing), not a transaction-classification rule.' };
+    case 'repeal':
+      return { relevant: false, reason: 'Repeal-only provision; states no ongoing rule to apply to a transaction.' };
+    case 'definitions':
+      return { relevant: false, reason: 'Definitional/interpretation provision; may inform reading of a relevant provision but states no rule itself.' };
+    case 'penalty':
+      return { relevant: false, reason: 'Penalty/sanction provision; not a transaction-classification rule (compliance risk, not treatment).' };
+    case 'other':
+      return { relevant: false, reason: 'Uncategorised by heading/body keyword match; needs human review to determine relevance.' };
+    default:
+      return { relevant: true, reason: `Substantive ${category.replace(/_/g, ' ')} provision; potentially bears on transaction treatment.` };
+  }
+}
