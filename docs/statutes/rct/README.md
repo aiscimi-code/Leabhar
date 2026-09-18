@@ -5,23 +5,26 @@ and meat processing. Rates **0% / 20% / 35%** — a withholding rate, never a
 VAT rate. A construction invoice can be VAT-coded correctly and still need
 a separate RCT deduction authorisation; the two are independent regimes.
 
-| Source | URL |
+| Source | File / URL |
 |---|---|
-| TCA 1997 ss.530, 530A (definition of relevant contract / principal) | eISB as-enacted + FA overlays |
-| TDM Part 18-02-01 Relevant Operations (updated 2025/26) | https://www.revenue.ie/en/tax-professionals/tdm/income-tax-capital-gains-tax-corporation-tax/part-18/18-02-01.pdf |
-| TDM Part 18-02-02 Who is a Principal Contractor (updated Feb 2026) | https://www.revenue.ie/en/tax-professionals/tdm/income-tax-capital-gains-tax-corporation-tax/part-18/18-02-02.pdf |
-| TDM Part 18-02-04 Principals | https://www.revenue.ie/en/tax-professionals/tdm/income-tax-capital-gains-tax-corporation-tax/part-18/18-02-04.pdf |
-| TDM Part 18-02-05 Subcontractors | https://www.revenue.ie/en/tax-professionals/tdm/income-tax-capital-gains-tax-corporation-tax/part-18/18-02-05.pdf |
-| TDM Part 18-02-11 eRCT | https://www.revenue.ie/en/tax-professionals/tdm/income-tax-capital-gains-tax-corporation-tax/part-18/18-02-11.pdf |
-| SI 651/2011 eRCT Regulations | https://www.irishstatutebook.ie/eli/2011/si/651/made/en/html |
+| TCA 1997 s.530 (relevant contract / relevant operations / construction operations) | [`docs/statutes/tca-1997/s530.md`](../tca-1997/s530.md) |
+| TCA 1997 s.530A (who must operate RCT) | Not a 1997-Act file — inserted by Finance Act 2011 s.20, amended by Finance Act 2025 s.21. `s530.md` notes this; no page to link. |
+| TDM Part 18-02-01 Relevant Operations (updated 2025/26) | `tdm-18-02-01-operations.md` |
+| TDM Part 18-02-02 Who is a Principal Contractor (updated Feb 2026) | `tdm-18-02-02-principal.md` |
+| TDM Part 18-02-04 Principals | `tdm-18-02-04.md` |
+| TDM Part 18-02-05 Subcontractors | `tdm-18-02-05.md` |
+| TDM Part 18-02-11 eRCT (full, Mar 2026) | `tdm-18-02-11.md` |
+| SI 651/2011 eRCT Regulations | [`docs/statutes/si-651-2011/`](../si-651-2011/) |
 
-**Unverified citation, flagged not silently corrected:**
-`tdm-18-02-02-principal.md` cites "s.639(1)" for the "erection of buildings
-or development of land" construction-operations definition. RCT sits in
-TCA 1997 Part 18, Chapter 2 (ss.530-531); the phrase more plausibly matches
-**s.530(1)**, not s.639. Confirm against the official TDM/TCA text before
-treating this as authoritative — see
-[`docs/statutes/tca-1997/`](../tca-1997/) once s.530/530A are added there.
+**Citation refined, still not fully verified:** `tdm-18-02-02-principal.md`
+cites "s.639(1)" for the "erection of buildings or development of land"
+construction-operations definition used to decide who is a principal.
+Now that `s530.md` exists, that description is closer to what it calls
+**construction operations** — but "who is a principal" content specifically
+belongs to **s.530A** (per `s530.md`'s own text: "s.530A (who must operate
+RCT)"), not s.530 or s.639. The most plausible actual citation is
+**s.530A(1)**, but s.530A has no 1997 page to check it against (see above),
+so this stays flagged rather than silently corrected.
 
 ## Registration TDM (finish verbatim extract)
 

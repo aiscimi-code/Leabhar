@@ -4,6 +4,7 @@ citation: "2010 Act 31 Sch.4"
 source_url: "https://revisedacts.lawreform.ie/eli/2010/act/31/schedule/4/revised/en/html"
 source_type: legislation
 jurisdiction: IE
+consolidation: lrc-revised
 ---
 
 # SCHEDULE 4 — Agricultural Production Activities and Services

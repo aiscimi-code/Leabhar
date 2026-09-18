@@ -4,6 +4,7 @@ citation: "2010 Act 31 Sch.5"
 source_url: "https://revisedacts.lawreform.ie/eli/2010/act/31/schedule/5/revised/en/html"
 source_type: legislation
 jurisdiction: IE
+consolidation: lrc-revised
 ---
 
 # SCHEDULE 5 — Works of Art, Collectors’ Items and Antiques

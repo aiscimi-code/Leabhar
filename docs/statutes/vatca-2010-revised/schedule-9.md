@@ -4,6 +4,7 @@ citation: "2010 Act 31 Sch.9"
 source_url: "https://revisedacts.lawreform.ie/eli/2010/act/31/schedule/9/revised/en/html"
 source_type: legislation
 jurisdiction: IE
+consolidation: lrc-revised
 ---
 
 # SCHEDULE 9 — Non-application of section 2(4A) to certain provisions

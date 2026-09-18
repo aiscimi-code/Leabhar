@@ -4,6 +4,7 @@ citation: "2010 Act 31 Sch.6"
 source_url: "https://revisedacts.lawreform.ie/eli/2010/act/31/schedule/6/revised/en/html"
 source_type: legislation
 jurisdiction: IE
+consolidation: lrc-revised
 ---
 
 # SCHEDULE 6 — Activities Listed in Annex 1 of the VAT Directive
