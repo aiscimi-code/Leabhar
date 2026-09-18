@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Fetch official HTML/PDF for VAT items 1, 3, 5, 9 into docs/vat/.
+"""Fetch official HTML/PDF for VAT items 1, 3, 5, 9 into docs/statutes/.
 
 Usage (from repo root):
-  python3 docs/vat/scripts/extract_vat_sources.py
+  python3 docs/statutes/scripts/extract_vat_sources.py
 """
 from __future__ import annotations
 
@@ -78,7 +78,7 @@ def write(path: Path, text: str) -> None:
 
 
 def extract_vatca() -> None:
-    out = ROOT / "2010-act-31"
+    out = ROOT / "vatca-2010-revised"
     for n in VATCA_SECTIONS:
         url = f"https://revisedacts.lawreform.ie/eli/2010/act/31/section/{n}/revised/en/html"
         raw = Path(f"/tmp/vatca/s{n}.html")
@@ -111,7 +111,7 @@ def extract_si639() -> None:
     raw = Path("/tmp/si639-print.html")
     if not raw.exists():
         fetch(url, raw)
-    write(ROOT / "2010-si-639" / "2010-si-639.md", html_to_md(raw.read_text(errors="replace"), "Value-Added Tax Regulations 2010 (S.I. No. 639 of 2010)", "S.I. 639/2010", url))
+    write(ROOT / "si-639-2010" / "2010-si-639.md", html_to_md(raw.read_text(errors="replace"), "Value-Added Tax Regulations 2010 (S.I. No. 639 of 2010)", "S.I. 639/2010", url))
 
 
 def extract_tdm() -> None:

@@ -1,23 +1,29 @@
 {
-    "generatedAt": "2026-09-18T14:42:16.582Z",
+    "generatedAt": "2026-09-18T17:24:08.270Z",
     "sources": [
         {
-            "id": "src_6f06f9e39d374428ad668b02",
+            "id": "src_0107a7a3c5dc4c04a46848f5",
             "citation": "2024 Act 43",
             "sourceType": "legislation",
             "provisionCount": 118
+        },
+        {
+            "id": "src_6de63229a6024b689a283de8",
+            "citation": "2010 Act 31",
+            "sourceType": "legislation",
+            "provisionCount": 125
         }
     ],
-    "provisionCount": 118,
-    "relevantProvisionCount": 57,
-    "notRelevantProvisionCount": 61,
-    "ruleCount": 4,
+    "provisionCount": 243,
+    "relevantProvisionCount": 147,
+    "notRelevantProvisionCount": 96,
+    "ruleCount": 9,
     "rulesByReviewStatus": {
-        "ai_extracted": 4
+        "ai_extracted": 9
     },
-    "rulesRequiringHumanReview": 4,
-    "rulesRequiringGuidance": 0,
-    "rulesWithExceptions": 0,
+    "rulesRequiringHumanReview": 9,
+    "rulesRequiringGuidance": 4,
+    "rulesWithExceptions": 3,
     "provisionsWithoutExtractedRule": [],
     "ambiguousProvisions": [
         {
@@ -1372,6 +1378,26 @@
             "reference": "section 432"
         },
         {
+            "sectionNumber": "76",
+            "reference": "Section 132(3)"
+        },
+        {
+            "sectionNumber": "76",
+            "reference": "section 130"
+        },
+        {
+            "sectionNumber": "76",
+            "reference": "section 130"
+        },
+        {
+            "sectionNumber": "76",
+            "reference": "section 130"
+        },
+        {
+            "sectionNumber": "76",
+            "reference": "section 130"
+        },
+        {
             "sectionNumber": "92",
             "reference": "section 159D"
         },
@@ -1710,12 +1736,76 @@
         {
             "sectionNumber": "118",
             "reference": "section 654A"
+        },
+        {
+            "sectionNumber": "2",
+            "reference": "section 850"
+        },
+        {
+            "sectionNumber": "2",
+            "reference": "section 851"
+        },
+        {
+            "sectionNumber": "2",
+            "reference": "section 852"
+        },
+        {
+            "sectionNumber": "16",
+            "reference": "section 153"
+        },
+        {
+            "sectionNumber": "16",
+            "reference": "section 153"
+        },
+        {
+            "sectionNumber": "16",
+            "reference": "section 531(1)"
+        },
+        {
+            "sectionNumber": "16",
+            "reference": "section 531(1)"
+        },
+        {
+            "sectionNumber": "16",
+            "reference": "section 530(1)"
+        },
+        {
+            "sectionNumber": "59",
+            "reference": "section 131"
+        },
+        {
+            "sectionNumber": "78",
+            "reference": "section 917E"
+        },
+        {
+            "sectionNumber": "79",
+            "reference": "section 131"
+        },
+        {
+            "sectionNumber": "79",
+            "reference": "section 132"
+        },
+        {
+            "sectionNumber": "79",
+            "reference": "section 131"
+        },
+        {
+            "sectionNumber": "84",
+            "reference": "section 305(1)"
+        },
+        {
+            "sectionNumber": "87",
+            "reference": "section 131"
+        },
+        {
+            "sectionNumber": "116",
+            "reference": "section 134A(2)"
         }
     ],
     "duplicateRuleKeys": [],
     "testSummary": {
-        "total": 8,
-        "passed": 8,
+        "total": 0,
+        "passed": 0,
         "failed": 0,
         "neverRun": 0
     }

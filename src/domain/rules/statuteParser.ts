@@ -10,7 +10,7 @@
  * This keeps the non-negotiable invariant from AGENTS.md: "the system must not
  * silently repair" — and extends it to "the system must not silently invent".
  *
- * Input conventions (verified against docs/2024-act-43-enacted.md):
+ * Input conventions (verified against docs/statutes/finance-act-2024/2024-act-43-enacted.md):
  *  - Body sections begin at column 0 with a line matching `^<num>. ` after the
  *    Contents block. The Contents block (headings + "CONTENTS") and the
  *    front matter (`[NO. 43.]`, page-break markers `\f`) are skipped.
@@ -116,7 +116,7 @@ const PAGE_NOISE_RE = /^(PT\.|S\.\d|\[NO\. 43\.\]|\[2024\.\]|Finance Act 2024\.|
 /**
  * Extract a section's heading, printed as its own line (occasionally wrapped
  * across two) immediately *above* the numbered section in this Act's layout —
- * verified against docs/statutes/2024-act-43/2024-act-43-enacted.md, e.g.:
+ * verified against docs/statutes/finance-act-2024/2024-act-43-enacted.md, e.g.:
  *
  *   Amendment of section 531AN of Principal Act (rate of charge)
  *   2.   (1) Section 531AN of the Principal Act is amended—
@@ -262,7 +262,7 @@ export function parseFinanceAct2024File(path: string): ParsedProvision[] {
 
 /** Path to the bundled Finance Act 2024 enacted Markdown extract, resolved relative to this file. */
 export const FINANCE_ACT_2024_MD_PATH = new URL(
-  '../../../docs/statutes/2024-act-43/2024-act-43-enacted.md',
+  '../../../docs/statutes/finance-act-2024/2024-act-43-enacted.md',
   import.meta.url,
 ).pathname;
 
@@ -287,7 +287,7 @@ export function categoriseProvision(heading: string, body: string): ParsedProvis
     [/\bcorporation tax\b/, 'corporation_tax'],
     [/\b(capital gains tax|cgt)\b/, 'capital_gains_tax'],
     [/\bcapital allowances?\b/, 'capital_allowances'],
-    [/\bvat\b/, 'vat'],
+    [/\bvat\b|\bvalue-added tax\b/, 'vat'],
     [/\bincome tax\b/, 'income_tax'],
     [/\brelief\b/, 'relief'],
     [/\bexempt/, 'exemption'],
