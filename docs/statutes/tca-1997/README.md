@@ -27,19 +27,27 @@ extracts only.
 | `s18.md` | Schedule D — Case I/II trading and professional income | Present |
 | `s52.md` | Part 4 interpretation (trades) | Present |
 | `s81.md` | General rule as to deductions (wholly and exclusively) | Present |
+| `s235.md` | Athletic/amateur sports bodies exemption | Present |
+| `s284.md` | Wear and tear allowances (rates superseded — see file's own warning) | Present |
+| `s288.md` | Balancing allowances and charges | Present |
+| `s299.md` | Allowances to lessees | Present |
+| `s496.md` | Heavily amended since enactment — see file's own warning | Present |
+| `s530.md` | RCT — relevant contract / relevant operations / construction operations | Present |
+| `s613.md` | Miscellaneous CGT exemptions | Present |
 
 ## Priority sections not yet added (transaction classification)
 
-These are the biggest remaining gaps against the KB's own unresolved
-Finance-Act-2024-to-TCA cross-references (see `docs/statutes/audit-report.json`):
-
-- `s284.md` / `s288.md` — wear and tear / balancing allowances (capital allowances)
-- `s299.md`, `s235.md`, `s481.md`, `s496.md`, `s613.md`, `s826.md` — other
-  unresolved Finance Act 2024 cross-references
+Against the KB's own unresolved Finance-Act-2024-to-TCA cross-references
+(see `docs/statutes/audit-report.json`), still missing: `s481.md`, `s826.md`.
 
 Inserted later — fetch from the inserting Act, not TCA 1997 (see the
-"no LRC revised Act" warning above):
+"no LRC revised Act" warning above; also true of s.530A below, not just
+the CGT/transfer-pricing sections):
 
+- **s.530A** (who must operate RCT — read with `s530.md` above) — Finance
+  Act 2011 s.20, amended by Finance Act 2025 s.21. No 1997 enacted page
+  exists for it.
 - s.600F / 600J / 600M / 600P — CGT reliefs (search later Finance Acts)
 - s.835D — FA 2019 transfer-pricing guidelines
 - s.835DA — FA 2024 s.45 (OECD Amount B)
+- s.653AGA, s.653I, s.653Q — later Finance Act inserts
