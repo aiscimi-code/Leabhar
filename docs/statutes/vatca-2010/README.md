@@ -28,8 +28,14 @@
   The conversion stops at the first `SCHEDULE` heading: Schedules 1–5 (exempt
   activities, zero-rated goods/services, reduced-rate goods/services, etc.)
   are **not** ingested in this pass — a documented limitation, not an
-  oversight. Sections 30, 42 and 55 are also not resolved by the converter
-  (see `docs/RULES_KB.md` "Limitations").
+  oversight (see `docs/RULES_KB.md` "Limitations").
+
+  All 125 numbered body sections convert cleanly. This was cross-checked
+  against the Act's own "ARRANGEMENT OF SECTIONS" table of contents (embedded
+  in the source PDF): every section is found, and every extracted heading
+  matches its TOC entry, aside from two sections (53, 55) where the TOC and
+  the body margin render the same words with a different dash glyph — a font
+  detail, not a content error.
 
 These files are reference material only.
 

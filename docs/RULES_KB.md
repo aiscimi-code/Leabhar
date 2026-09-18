@@ -194,18 +194,32 @@ to parseable text needed its own, reusable step:
 
 - `scripts/convert-statute-pdf.ts` — a one-time PDF→Markdown converter (not
   part of the runtime pipeline, the same way the Finance Act's own PDF→text
-  step wasn't). It reads pdfjs's raw text items per page, and per visual row
-  finds the widest gap between two items; if one side of that gap matches the
-  section-number pattern (`^\d+[A-Z]?\s*\.—`) that side is main text and the
-  other is the margin note, else the shorter side is the margin note —
-  needed because the margin sits on the right on some pages and the left on
-  others (a printed book's mirrored inner/outer margins), and because a
-  short section-opening fragment can otherwise be shorter than a long
-  heading's first line and get misclassified by length alone. The heading is
-  re-attached above its section number in the same convention
-  `statuteParser.ts` already reads. See the script's own header for the
-  full algorithm and its two known edge cases (sections 30/42/55 not
-  resolved; Schedules out of scope).
+  step wasn't). It reads pdfjs's raw text items per page and splits each page
+  into a main-text column and a margin-note column by a single x threshold
+  per page parity (the margin sits on the right on odd pages, the left on
+  even ones — a printed book's mirrored inner/outer margins). That threshold
+  is derived once for the whole document, not guessed: plotting every item's
+  x position for a given parity across all 232 pages shows two dense
+  clusters with a completely empty band between them, and the boundary is
+  the midpoint of that gap. (Earlier approaches — a per-row widest-gap test,
+  or per-page bootstrapping from that page's own citations, or a small fixed
+  tolerance around one anchor x — each broke on a real case: a main/margin
+  gap as small as 6pt on some lines, pages with no citation to bootstrap
+  from, and multi-word citations whose sub-glyphs render up to 65pt further
+  from the anchor than an ordinary word gap. A global, whole-document
+  gap search sidesteps all three.) The heading is re-attached above its
+  section number in the same convention `statuteParser.ts` already reads,
+  bounded so it never runs past the *next* section's own heading — needed
+  for a short run of sections (VATCA ss.121-123) that cite no predecessor
+  provision at all and so have no `[...]` citation line to stop the
+  collection otherwise. See the script's own header for the full algorithm.
+  Cross-checked against the Act's own "ARRANGEMENT OF SECTIONS" table of
+  contents (embedded in the source PDF): all 125 body sections (1-125) are
+  found, every extracted heading matches its TOC entry (aside from two
+  sections where the TOC and the body margin render the same words with a
+  different dash glyph — a font detail, not a content error), and the
+  verbatim-excerpt test below has never needed a `provisionText` workaround
+  since. Schedules remain out of scope.
 - `src/domain/rules/vatcaParser.ts` — parses the converted Markdown, reusing
   `statuteParser.ts`'s generic (source-independent) `categoriseProvision`,
   `assessRelevance` and `provisionSlug` rather than re-implementing them.
@@ -424,8 +438,9 @@ npm run cli:rules -- audit
 
 Headline numbers:
 
-- 240 provisions ingested across both sources (118 Finance Act 2024, 122
-  VATCA 2010), 115 judged relevant to transaction classification, 125 not
+- 243 provisions ingested across both sources (118 Finance Act 2024, 125
+  VATCA 2010 — all 125 body sections now convert and parse cleanly), 147
+  judged relevant to transaction classification, 96 not
   (procedural/repeal/penalty/pure-definition, or uncategorised and flagged
   for review).
 - 9 rules extracted (4 Finance Act, 5 VATCA), all `ai_extracted`, all
@@ -434,7 +449,7 @@ Headline numbers:
 - 3 rules with a stated exception the system flags rather than evaluates
   (VATCA's place-of-supply, input-deduction and deduction-exclusion rules),
   0 duplicate rule keys.
-- 470 cross-references the report cannot resolve — expected, not a bug: the
+- 442 cross-references the report cannot resolve — expected, not a bug: the
   Finance Act 2024 *amends*, and VATCA 2010 heavily cross-refers to, the
   Taxes Consolidation Act 1997 and other Acts not themselves ingested yet, so
   "section 531AN", "section 654A" et al. have nothing to resolve against
@@ -479,7 +494,7 @@ audit
   (reverse charge, place of supply, deductibility) is a structural mechanism
   that has not been fundamentally rewritten since 2010, so curating its
   *existence* is safe even though the ingested text is not fully current.
-- **Only 9 of 115 relevant provisions have a curated rule key** (4 Finance
+- **Only 9 of 147 relevant provisions have a curated rule key** (4 Finance
   Act, 5 VATCA). Everything else is ingested (text, offsets, category all on
   disk) but not yet extracted into named rules —
   `provisionsWithoutExtractedRule` in the audit report would show these once
@@ -511,12 +526,13 @@ audit
   prose (semicolons and lettered sub-paragraphs, not full stops) can be a
   long run-on quotation. It is still verbatim and traceable to its offsets,
   just not always a tidy single sentence.
-- **`convert-statute-pdf.ts` has two known edge cases** on VATCA 2010:
-  sections 30, 42 and 55 are not resolved (a section-start row where the
-  gap-detection heuristic doesn't fire cleanly — see the script's own header)
-  and Schedules 1–5 (exempt activities, zero/reduced-rate goods and services)
-  are out of scope entirely — the conversion stops at the first `SCHEDULE`
-  heading. Both are a documented gap, not a silent one.
+- **`convert-statute-pdf.ts` does not parse Schedules.** Schedules 1–5 on
+  VATCA 2010 (exempt activities, zero/reduced-rate goods and services) are
+  out of scope entirely — the conversion stops at the first `SCHEDULE`
+  heading. All 125 numbered body sections are converted and cross-checked
+  against the Act's own table of contents (see "VATCA 2010" above); the
+  Schedules gap is the only remaining one, and it's a documented stopping
+  point, not a silent failure.
 - **`Part`/`Chapter` are not yet populated** on `irish_act_provisions` (the
   columns exist for when this is worth doing); a provision's location is
   fully identified by section number + source offsets in the meantime.
@@ -553,7 +569,7 @@ This is meant to be an ingestion, not a redesign:
   exceptions, exemption/zero-rating in the Schedules once those are in
   scope, registration thresholds — are readily curatable now).
 - Ingest the Taxes Consolidation Act 1997 and/or a first Revenue Tax and Duty
-  Manual (e.g. on VAT registration or reverse charge), to resolve the ~470
+  Manual (e.g. on VAT registration or reverse charge), to resolve the ~440
   currently-unresolved cross-references and to bring VATCA's rate section
   (s.46) up to date safely (a Revenue TDM stating the *current* rate, dated,
   would let that be curated without the staleness risk described above).

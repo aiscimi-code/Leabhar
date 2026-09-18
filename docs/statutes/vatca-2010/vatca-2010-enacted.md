@@ -1,14 +1,13 @@
 PART 1
 Preliminary and General
-1 .—This Act may be cited as the Value-Added Tax Consolidation Short title.
+
+Short title.
+1 .—This Act may be cited as the Value-Added Tax Consolidation
 Act 2010.
 
-Interpretation —
+Interpretation — general.
 2 .—(1) In this Act—
-general.
 “accountable person” has the same meaning as it has in Part 2 ;
-part) and s. 3(1B)
-and FA 2010 s.
 “accounting year” means a period of 12 months ending on 31
 December, but if a taxable person customarily makes up accounts
 for periods of 12 months ending on another fixed date, then, for such
@@ -29,8 +28,7 @@ of those goods to another person, except that, if that other person at
 the time of the assignment retains the reversion on that interest in
 those goods, that assignment shall be a surrender;
 13
-Pt. 1 S.2
-Value-Added Tax Consolidation Act [2010.]
+[ No. 31. ] Value-Added Tax Consolidation Act [2010.]
 2010 .
 “auction scheme” has the meaning assigned to it by section 89(1) ;
 “body of persons” means any body politic, corporate or collegiate,
@@ -78,7 +76,7 @@ to a capital good includes a reference to any part thereof and the
 term “capital good” shall be construed accordingly;
 “clothing” does not include footwear;
 14
-Pt. 1 S.2
+[2010.] Value-Added Tax Consolidation Act [ No. 31. ]
 2010 .
 “Collector-General” means the Collector-General appointed under
 section 851 of the Taxes Consolidation Act 1997;
@@ -124,8 +122,7 @@ the supplier of a service and his or her customer communicate by
 means of electronic mail, this shall not of itself mean that the service
 performed is an electronic service;
 15
-Pt. 1 S.2
-Value-Added Tax Consolidation Act [2010.]
+[ No. 31. ] Value-Added Tax Consolidation Act [2010.]
 2010 .
 “enactment” means an Act or statutory instrument or any part of an
 Act or statutory instrument;
@@ -171,7 +168,7 @@ things in action or money), and references to goods include refer-
 ences to both new and used goods;
 “goods threshold” means € 75,000;
 16
-Pt. 1 S.2
+[2010.] Value-Added Tax Consolidation Act [ No. 31. ]
 2010 .
 “hire”, in relation to movable goods, includes a letting on any terms
 including a leasing;
@@ -215,8 +212,7 @@ junction with each other for a total consideration covering all of
 those individual supplies, and where those individual supplies do not
 constitute a composite supply;
 17
-Pt. 1 S.2
-Value-Added Tax Consolidation Act [2010.]
+[ No. 31. ] Value-Added Tax Consolidation Act [2010.]
 2010 .
 “new means of transport” means motorised land vehicles with an
 engine cylinder capacity exceeding 48 cubic centimetres or a power
@@ -259,7 +255,7 @@ Finance Act 1920;
 “services threshold” means € 37,500;
 “stock-in-trade”, in relation to a person, means goods—
 18
-Pt. 1 S.2
+[2010.] Value-Added Tax Consolidation Act [ No. 31. ]
 2010 .
 ( a ) that are movable goods of a kind that the person has sup-
 plied in the ordinary course of the person’s business and
@@ -307,8 +303,7 @@ and cognate words shall be construed accordingly;
 referred to as the “lessee”) of an interest in those goods
 or any part of those goods to the person (in this definition
 19
-Pt. 1 S.2
-Value-Added Tax Consolidation Act [2010.]
+[ No. 31. ] Value-Added Tax Consolidation Act [2010.]
 2010 .
 referred to as the “lessor”) who, at the time of the surren-
 der, retains the reversion on that interest in those
@@ -355,7 +350,7 @@ and, in cases where the supplier of the telecommunica-
 tions service so agrees with another supplier (in this
 definition referred to as a “contracted third party
 20
-Pt. 1 S.2
+[2010.] Value-Added Tax Consolidation Act [ No. 31. ]
 2010 .
 supplier”), a right to receive other services or goods from
 that contracted third party supplier, and
@@ -407,8 +402,7 @@ deemed to be a supply of goods and not a supply of services.
 1
 OJ No. L347, 11.12.2006, p.1
 21
-Pt. 1 S.2
-Value-Added Tax Consolidation Act [2010.]
+[ No. 31. ] Value-Added Tax Consolidation Act [2010.]
 2010 .
 (4) In this Act, a reference to the territory of a Member State has
 the same meaning as it has in Articles 5 to 8 of the VAT Directive,
@@ -418,9 +412,8 @@ construed accordingly.
 Acts” mean this Act and every enactment which is to be read
 together with this Act.
 
-Charge of value- Definitions — Part
+Charge of value- added tax.
 3 .—Except as expressly otherwise provided by this Act, a tax
-added tax.
 called value-added tax is, subject to and in accordance with this Act
 and regulations, chargeable, leviable and payable on the following
 transactions:
@@ -442,9 +435,8 @@ Accountable persons
 Chapter 1
 Interpretation
 
-Definitions — Part
+Definitions — Part 2 .
 4 .—(1) In this Act—
-2 .
 “agricultural produce”, in relation to a farmer, means goods (other
 than live greyhounds) produced by the farmer in the course of an
 Annex VII activity;
@@ -462,7 +454,7 @@ which Annex is contained in Part 2 of Schedule 4 );
 “farmer” means a person who engages in at least one Annex VII
 activity, and—
 22
-Pt. 2 S.4
+[2010.] Value-Added Tax Consolidation Act [ No. 31. ]
 2010 .
 ( a ) whose supplies consist exclusively of either or both of the
 following:
@@ -499,18 +491,16 @@ more than one-half of the assets, or of more than one-
 half of the income, of the partnership.
 Chapter 2
 General rules
-5 .—(1) ( a ) Subject to paragraph (c) , a taxable person who engages Persons who are, or
-who may become,
+
+Persons who are, or who may become, accountable persons.
+5 .—(1) ( a ) Subject to paragraph (c) , a taxable person who engages
 in the supply, within the State, of taxable goods or
-accountable
 services shall be—
-persons.
 (i) an accountable person, and
 (ii) accountable for and liable to pay the tax charged in
 respect of such supply.
 23
-Pt. 2 S.5
-Value-Added Tax Consolidation Act [2010.]
+[ No. 31. ] Value-Added Tax Consolidation Act [2010.]
 2010 .
 ( b ) Subject to paragraph (c) , in addition, the persons referred
 to in sections 9 , 10 , 12 , 13 , 15 , 17(1) and 94(3) shall be
@@ -527,11 +517,9 @@ accountable person, he or she shall be deemed, for the purposes of
 this Act, to be an accountable person from the beginning of the tax-
 able period commencing next after such change.
 
-Persons not
+Persons not accountable persons unless they so elect.
 6 .—(1) Subject to subsections (2) and (3) and sections 9 , 10 , 12 ,
-accountable persons
 13 , 14(1) and 17(1) , and notwithstanding section 5(1) , the following
-unless they so elect.
 persons shall not, unless they otherwise elect and then only during
 the period for which such election has effect, be accountable persons:
 ( a ) a farmer, for whose supply in any continuous period of 12
@@ -563,7 +551,7 @@ is not likely to exceed the goods threshold;
 ( b ) a person whose supplies of taxable goods or services con-
 sist exclusively of—
 24
-Pt. 2 S.6
+[2010.] Value-Added Tax Consolidation Act [ No. 31. ]
 2010 .
 (i) supplies, to accountable persons and persons to whom
 section 102 applies, of fish (not being at a stage of
@@ -616,8 +604,7 @@ the purposes of the application of paragraphs (c) and (d)
 of subsection (1) in relation to each of those persons who
 made such supplies, be treated as if all of the supplies in
 25
-Pt. 2 S.6
-Value-Added Tax Consolidation Act [2010.]
+[ No. 31. ] Value-Added Tax Consolidation Act [2010.]
 2010 .
 question had been made by each of the last-mentioned
 persons.
@@ -631,19 +618,16 @@ referred to in section 12(3) or (5), 13 or 17(1) .
 (3) Subsection (1)(b) to (d) shall not apply to a person who is not
 established in the State.
 
-Treatment of Cancellation of
+Treatment of persons as not accountable.
 7 .—An accountable person (other than a person to whom section
-persons as not
 8 applies) may, in accordance with regulations, be treated for the
-accountable.
 purposes of this Act as a person who is not an accountable person if
 the Revenue Commissioners are satisfied that, in the absence of an
 election under section 6(1) , the person would not be an accountable
 person.
 
-Cancellation of
+Cancellation of election.
 8 .—(1) Provision may be made by regulations for the cancellation,
-election.
 at the request of a person, of an election made by the person under
 this Part and for the payment by him or her to the Revenue Commis-
 sioners of such a sum as a condition of cancellation as when added
@@ -678,7 +662,7 @@ used by that person in the course of a supply of
 services of a kind referred to in paragraph 11 of
 Schedule 3 , or
 26
-Pt. 2 S.8
+[2010.] Value-Added Tax Consolidation Act [ No. 31. ]
 2010 .
 (II) would be entitled to deduct tax in accordance
 with Chapter 1 of Part 8 in respect of the acquis-
@@ -722,18 +706,15 @@ continuous period of 12 months.
 acquired or developed on or after 1 July 2008.
 Chapter 3
 Rules for intra-Community acquisitions
-9 .—(1) Where a person engages in the intra-Community acquis- Intra-Community
-acquisitions and
+
+Intra-Community acquisitions and accountable persons.
+9 .—(1) Where a person engages in the intra-Community acquis-
 ition of goods in the State in the course or furtherance of business,
-accountable
 he or she shall be—
-persons.
 ( a ) an accountable person, and
-( b ), ( c ) and ( d )]
 ( b ) accountable for and liable to pay the tax chargeable.
 27
-Pt. 2 S.9
-Value-Added Tax Consolidation Act [2010.]
+[ No. 31. ] Value-Added Tax Consolidation Act [2010.]
 2010 .
 (2) Subject to subsection (3) and sections 12(3) and (5) , 13 and
 17(1) , and notwithstanding subsection (1) , a person for whose intra-
@@ -769,13 +750,10 @@ her, and
 (7) A person may elect that subsection (6) shall not apply to him
 or her.
 
-Certain supplies of
+Certain supplies of goods — supplier not established in the State.
 10 .—(1) Where a person not established in the State supplies gas
-goods — supplier
 through the natural gas distribution system, or electricity, to a recipi-
-not established in
 ent in the State, and where the recipient is—
-the State.
 ( a ) a taxable person who carries on a business in the State, or
 ( b ) a public body,
 then that recipient shall, in relation to that supply, be an accountable
@@ -783,7 +761,7 @@ person or be deemed to be an accountable person and shall be liable
 to pay the tax chargeable as if the recipient supplied those goods in
 the course or furtherance of business.
 28
-Pt. 2 S.10
+[2010.] Value-Added Tax Consolidation Act [ No. 31. ]
 2010 .
 (2) Where a person not established in the State supplies goods in
 the State which are installed or assembled, with or without a trial
@@ -795,8 +773,9 @@ then that recipient shall, in relation to that supply, be an accountable
 person or be deemed to be an accountable person and shall be liable
 to pay the tax chargeable as if the recipient supplied those goods in
 the course or furtherance of business.
-11 .—(1) Where a person is an accountable person only because Other provisions in
-relation to goods.
+
+Other provisions in relation to goods.
+11 .—(1) Where a person is an accountable person only because
 of an intra-Community acquisition of a new means of transport, then
 the person shall not, unless he or she so elects, be an accountable
 person for the purposes of this Act except for section 79(2) or (3) .
@@ -818,15 +797,11 @@ in the circumstances set out in section 23 .
 Chapter 4
 Services supplied in the State by persons established outside the State
 
-Services received
+Services received from abroad and accountable persons.
 12 .—(1) Where—
-from abroad and
-accountable
 ( a ) a taxable person who carries on a business in the State, or
-persons.
 a person to whom a registration number has been
 assigned in accordance with section 65(2) , receives a
-8(1A)( aa ) and ( ab )
 service from a supplier established outside the State, and
 ( b ) the place of supply of the service (as determined in accord-
 ance with section 34(a) ) is the State,
@@ -834,8 +809,7 @@ then the person is accountable for, and liable to pay, the tax charge-
 able in the State as if he or she had supplied that service for consider-
 ation in the course or furtherance of business.
 29
-Pt. 2 S.12
-Value-Added Tax Consolidation Act [2010.]
+[ No. 31. ] Value-Added Tax Consolidation Act [2010.]
 2010 .
 (2) Where—
 ( a ) a taxable person who carries on a business in the State, or
@@ -870,13 +844,10 @@ or 17(1) which are received by him or her.
 (6) A person may elect that subsection (5) shall not apply to him
 or her.
 
-Certain supplies of
+Certain supplies of services — supplier not established in the State.
 13 .—Where a person not established in the State supplies a cul-
-services — supplier
 tural, artistic, entertainment or similar service in the State, then any
-not established in
 person (other than a person acting in a private capacity) who receives
-the State.
 that service shall—
 ( a ) in relation to it, be an accountable person or be deemed
 to be an accountable person, and
@@ -884,7 +855,7 @@ to be an accountable person, and
 person had in fact supplied the service for consideration
 in the course or furtherance of business,
 30
-Pt. 2 S.13
+[2010.] Value-Added Tax Consolidation Act [ No. 31. ]
 2010 .
 but, where that service is commissioned or procured by a promoter,
 agent or other person not being a person acting in a private capacity,
@@ -892,13 +863,12 @@ then that promoter, agent or person shall be deemed to be the person
 who receives the service.
 Chapter 5
 Supplementary provisions
-14 .—(1) For the purposes of sections 9 and 10 , where an intra- The State and
-public bodies.
+
+The State and public bodies.
+14 .—(1) For the purposes of sections 9 and 10 , where an intra-
 Community acquisition is effected in the State by a public body, the
 acquisition shall be deemed to have been effected in the course or
 furtherance of business.
-and (2A) and FA
-2010 s. 117(2)( b )
 (2) Notwithstanding section 3 but subject to subsection (3) , the
 State or any public body shall not be treated as a taxable person
 acting in that capacity in respect of any activity or transaction that is
@@ -935,8 +905,7 @@ community facility until the coming into operation of an
 order under paragraph (b) in respect of that community
 facility.
 31
-Pt. 2
-Value-Added Tax Consolidation Act [2010.]
+[ No. 31. ] Value-Added Tax Consolidation Act [2010.]
 2010 .
 
 VAT groups.
@@ -990,7 +959,7 @@ person in the group, as on and from the date specified in the notice
 (which date shall not be earlier than the date of issue of the notice)
 cancel the group notification of the group.
 32
-Pt. 2 S.15
+[2010.] Value-Added Tax Consolidation Act [ No. 31. ]
 2010 .
 (4) As on and from the date on which the group notification of
 the group is cancelled under subsection (3) , this Act and regulations
@@ -1036,17 +1005,15 @@ date of the relevant cessation.
 (7) The Revenue Commissioners may make regulations as seem
 to them to be necessary for the purposes of this section.
 
-Reverse charge for
+Reverse charge for certain supplies.
 16 .—(1) ( a ) In this subsection—
-certain supplies.
 “NAMA” has the meaning assigned to it by the National
 Asset Management Agency Act 2009;
 “NAMA entity” means a person or body of persons to
 which NAMA is connected within the meaning of
 section 97(3) ;
 33
-Pt. 2 S.16
-Value-Added Tax Consolidation Act [2010.]
+[ No. 31. ] Value-Added Tax Consolidation Act [2010.]
 2010 .
 “recipient”, in relation to a relevant supply, means
 NAMA and any NAMA entity;
@@ -1097,7 +1064,7 @@ to pay such tax in respect of that supply.
 2
 OJ No. L 275, 25.10.2003, p. 32
 34
-Pt. 2 S.16
+[2010.] Value-Added Tax Consolidation Act [ No. 31. ]
 2010 .
 (3) ( a ) Paragraph (b) and sections 59(2)(i) and 66(4) shall be con-
 strued together with Chapter 2 of Part 18 of the Taxes
@@ -1117,9 +1084,8 @@ course or furtherance of business, and
 (ii) the subcontractor shall not be accountable for or
 liable to pay such tax in respect of that supply.
 
-Other provisions in
+Other provisions in relation to services.
 17 .—(1) ( a ) In this subsection—
-relation to services.
 “premises provider” means a person who owns, occupies
 or controls land, and references to the premises pro-
 vider’s land mean the land that is so owned, occupied
@@ -1152,8 +1118,7 @@ with section 13 is deemed to be supplied by that pro-
 moter, then that premises provider shall, not later than
 14 days before such service is scheduled to begin, furnish
 35
-Pt. 2 S.17
-Value-Added Tax Consolidation Act [2010.]
+[ No. 31. ] Value-Added Tax Consolidation Act [2010.]
 2010 .
 to the Revenue Commissioners, at the relevant office, the
 following particulars:
@@ -1203,16 +1168,15 @@ of any of the goods or services specified in—
 4(1) , and
 (ii) paragraph (b)(i) and (iii) of that definition.
 36
-Pt. 2
+[2010.] Value-Added Tax Consolidation Act [ No. 31. ]
 2010 .
-18 .—(1) ( a ) Notwithstanding sections 5(1) and 52(1) but subject to Distortion of
-competition,
+
+Distortion of competition, deemed taxable supplies, etc.
+18 .—(1) ( a ) Notwithstanding sections 5(1) and 52(1) but subject to
 section 6(1) , where a person (in this subsection referred
-deemed taxable
 to as the “relevant person”) supplies services which are
-supplies, etc.
 exempt in accordance with section 52 and paragraph 3(4)
-of Schedule 1 , then an authorised officer (being an officer [VATA s. 8(3C),
+of Schedule 1 , then an authorised officer (being an officer
 of the Revenue Commissioners authorised by them in
 writing for the purposes of this subsection) shall—
 (i) if the officer is satisfied that that supply of those
@@ -1260,8 +1224,7 @@ members, then, for the purposes of this Act—
 ( a ) the provision of the goods or services shall be deemed to
 be a supply by the club or other organisation of the goods
 37
-Pt. 2 S.18
-Value-Added Tax Consolidation Act [2010.]
+[ No. 31. ] Value-Added Tax Consolidation Act [2010.]
 2010 .
 or services, as the case may be, in the course or further-
 ance of business carried on by it, and
@@ -1286,9 +1249,8 @@ Taxable Transactions
 Chapter 1
 Supply of goods
 
-Meaning of supply
+Meaning of supply of goods.
 19 .—(1) In this Act “supply”, in relation to goods, means—
-of goods.
 ( a ) the transfer of ownership of the goods by agreement
 (including the transfer of ownership of the goods to a
 person supplying financial services of the kind specified
@@ -1311,7 +1273,7 @@ to as the “developer”) to another person of immovable
 goods which have been developed from goods entrusted
 to the developer by that other person for the purpose
 38
-Pt. 3 S.19
+[2010.] Value-Added Tax Consolidation Act [ No. 31. ]
 2010 .
 of such development, whether or not the developer has
 supplied any part of the goods used,
@@ -1362,8 +1324,7 @@ circumstances specified in paragraphs 1(1) to (3) ,
 transfer of the goods referred to in paragraphs 4(2) ,
 (4) and (5) and 5(2) of Schedule 2 ;
 39
-Pt. 3 S.19
-Value-Added Tax Consolidation Act [2010.]
+[ No. 31. ] Value-Added Tax Consolidation Act [2010.]
 2010 .
 (iii) the transfer of the goods for the purpose of having a
 service carried out on them where the goods which
@@ -1390,11 +1351,9 @@ buyer, then the supply to that last buyer shall be deemed, for the
 purposes of this Act, to constitute a simultaneous supply by each
 seller in the chain.
 
-Transfers, etc. ( b ) and ( d )]
+Transfers, etc. deemed not to be supplies.
 20 .—(1) For the purposes of this Act, the transfer of ownership
-deemed not to be
 of goods pursuant to a contract of the kind referred to in section
-supplies.
 19(1)(c) by the person supplying financial services of the kind speci-
 fied in paragraph 6(1)(e) of Schedule 1 as part of that contract shall
 be deemed not to be a supply of the goods.
@@ -1417,15 +1376,16 @@ a policy of insurance, being goods—
 ( a ) in relation to the acquisition of which the insured had
 borne tax, and
 40
-Pt. 3 S.20
+[2010.] Value-Added Tax Consolidation Act [ No. 31. ]
 2010 .
 ( b ) which are of such a kind or were used in such circum-
 stances that no part of the tax borne was deductible by
 the insured,
 shall be deemed, for the purposes of this Act, not to be a supply of
 the goods.
-21 .—Anything which is a supply of goods by virtue of section Supplies made free
-of charge.
+
+Supplies made free of charge.
+21 .—Anything which is a supply of goods by virtue of section
 19(1)(f), (g) or (h) shall be deemed, for the purposes of this Act, to
 have been effected for consideration in the course or furtherance of
 the business concerned except—
@@ -1437,10 +1397,10 @@ for that purpose in regulations, or
 ( b ) the gift, in reasonable quantity, to the actual or potential
 customer, of industrial samples in a form not ordinarily
 available for sale to the public.
-22 .—(1) Where an agent or auctioneer makes a sale of goods in Special rules in
-relation to supplies
+
+Special rules in relation to supplies of goods.
+22 .—(1) Where an agent or auctioneer makes a sale of goods in
 accordance with section 19(1)(b), the transfer of those goods to that
-of goods.
 agent or auctioneer shall be deemed to be a supply of the goods to
 the agent or auctioneer at the time that the agent or auctioneer
 makes that sale.
@@ -1468,15 +1428,12 @@ of his or her business.
 assignment or surrender that is deemed to be a supply of
 immovable goods as provided by section 95(5) .
 41
-Pt. 3
-Value-Added Tax Consolidation Act [2010.]
+[ No. 31. ] Value-Added Tax Consolidation Act [2010.]
 2010 .
 
-Supply following Intra-Community
+Supply following intra-Community acquisition.
 23 .—(1) Subject to subsection (2) , where a person who is not
-intra-Community
 established in the State makes an intra-Community acquisition of
-acquisition.
 goods in the State and makes a subsequent supply of the goods to
 an accountable person in the State, then the person to whom the
 supply is made shall be deemed, for the purposes of this Act, to
@@ -1491,13 +1448,10 @@ accordance with section 65 .
 Chapter 2
 Intra-Community acquisitions
 
-Intra-Community
+Intra-Community acquisitions of goods.
 24 .—(1) In this Act “intra-Community acquisition”, in relation to
-acquisitions of
 goods, means the acquisition of—
-goods.
 ( a ) movable goods (other than new means of transport)—
-(1A), (3) and (4)]
 (i) supplied by—
 (I) a person registered for value-added tax in a
 Member State,
@@ -1524,7 +1478,7 @@ as a result of being so supplied.
 to occur where the supply of those goods is subject to value-added
 tax referred to in the VAT Directive in the Member State of dispatch
 42
-Pt. 3 S.24
+[2010.] Value-Added Tax Consolidation Act [ No. 31. ]
 2010 .
 under the provisions implementing Articles 4 and 35, first subpara-
 graph of Article 139(3) and Articles 311 to 341 of that Directive in
@@ -1561,8 +1515,9 @@ the goods shall be deemed to have been dispatched or transported
 from that other Member State.
 Chapter 3
 Supply of services
-25 .—(1) In this Act “supply”, in relation to a service, means the Meaning of supply
-of services.
+
+Meaning of supply of services.
+25 .—(1) In this Act “supply”, in relation to a service, means the
 performance or omission of any act or the toleration of any situation
 other than—
 ( a ) the supply of goods, and
@@ -1572,8 +1527,7 @@ graph 8 of Schedule 2 , in a form suitable for human consumption
 without further preparation—
 ( a ) by means of a vending machine,
 43
-Pt. 3 S.25
-Value-Added Tax Consolidation Act [2010.]
+[ No. 31. ] Value-Added Tax Consolidation Act [2010.]
 2010 .
 ( b ) in the course of operating a hotel, restaurant, cafe, refresh-
 ment house, canteen, establishment licensed for the sale
@@ -1585,14 +1539,10 @@ the consumption of the food or drink supplied,
 shall be deemed, for the purposes of this Act, to be a supply of
 services and not a supply of goods.
 
-Transfer of Self-supply of
+Transfer of intangible business assets deemed not to be supply of services.
 26 .—(1) For the purposes of this section “accountable person”
-intangible business
 shall not include a person who is an accountable person solely by
-assets deemed not
 virtue of section 9 , 10 , 12 , 13 , 14(1) or 17(1) .
-to be supply of
-services.
 (2) The transfer of goodwill or other intangible assets of a busi-
 ness, in connection with the transfer of the business or part thereof
 (even if that business or that part thereof had ceased trading), or in
@@ -1605,9 +1555,8 @@ person,
 shall be deemed, for the purposes of this Act, not to be a supply
 of services.
 
-Self-supply of
+Self-supply of services.
 27 .—(1) For the purposes of this Act, any of the following, if so
-services.
 provided by regulations, and in accordance with those regulations,
 shall be deemed to be a supply of services by a person for consider-
 ation in the course or furtherance of that person’s business:
@@ -1630,7 +1579,7 @@ son, would not be wholly deductible.
 (2) The use of immovable goods forming part of the assets of
 a business—
 44
-Pt. 3 S.27
+[2010.] Value-Added Tax Consolidation Act [ No. 31. ]
 2010 .
 ( a ) for the private use of an accountable person or of such
 person’s staff, or
@@ -1643,10 +1592,10 @@ accountable person, and
 (ii) those goods are treated for tax purposes as forming part
 of the assets of the business at the time of their acquis-
 ition or development.
-28 .—(1) The supply of services through a person (in this subsec- Special rules in
-relation to supplies
+
+Special rules in relation to supplies of services.
+28 .—(1) The supply of services through a person (in this subsec-
 tion referred to as the “agent”) who, while purporting to act on his
-of services.
 or her own behalf, concludes agreements in his or her own name but
 on the instructions of, and for the account of, another person, shall
 be deemed, for the purposes of this Act, to constitute a supply of the
@@ -1669,16 +1618,16 @@ PART 4
 Place of Taxable Transactions
 Chapter 1
 Place of supply of goods
-29 .—(1) For the purposes of this Act, the place where goods are General rules.
+
+General rules.
+29 .—(1) For the purposes of this Act, the place where goods are
 supplied shall be deemed to be—
-( b ), ( c ) and ( cc )]
 ( a ) in the case of goods dispatched or transported and to
 which section 30 does not apply, subject to subsection (2) ,
 the place where the dispatch or transportation to the per-
 son to whom the goods are supplied begins,
 45
-Pt. 4 S.29
-Value-Added Tax Consolidation Act [2010.]
+[ No. 31. ] Value-Added Tax Consolidation Act [2010.]
 2010 .
 ( b ) in the case of goods which are installed or assembled, with
 or without a trial run, by or on behalf of the supplier, the
@@ -1694,10 +1643,10 @@ or transported from a place outside the Community, then, for the
 purposes of this Act, the place of supply by the person who imports
 those goods and the place of any subsequent supplies shall be
 deemed to be where the goods are imported.
-Goods supplied to 30 .—(1) ( a ) Notwithstanding section 29(1)(a) or (b) or (2) but sub-
-non-registered
+
+Goods supplied to non-registered persons.
+30 .—(1) ( a ) Notwithstanding section 29(1)(a) or (b) or (2) but sub-
 ject to paragraph (b) and subsection (2) , for the purposes
-persons.
 of this Act, the place where goods are supplied shall be
 deemed to be, in the case of goods dispatched or trans-
 ported by or on behalf of the supplier—
@@ -1728,11 +1677,12 @@ Directive unless the supplier—
 (II) registers and accounts for value-added tax in that
 Member State in respect of that supply.
 46
-Pt. 4 S.30
+[2010.] Value-Added Tax Consolidation Act [ No. 31. ]
 2010 .
 ( b ) Paragraph (a) shall not apply to new means of transport.
-31 .—(1) ( a ) In this subsection “taxable dealer” means an account- Gas and electricity
-supplies.
+
+Gas and electricity supplies.
+31 .—(1) ( a ) In this subsection “taxable dealer” means an account-
 able person whose principal business in respect of sup-
 plies of gas through the natural gas distribution system,
 or of electricity, received by that person, is the supply of
@@ -1771,18 +1721,17 @@ lishment, at the place where the customer has a perma-
 nent address or usually resides.
 Chapter 2
 Place of intra-Community transactions
-32 .—(1) The place where an intra-Community acquisition of Intra-Community
-acquisitions of
+
+Intra-Community acquisitions of goods.
+32 .—(1) The place where an intra-Community acquisition of
 goods occurs shall be deemed to be the place where the goods are
-goods.
 when the dispatch or transportation ends.
 (2) Without prejudice to subsection (1) but subject to subsection
 (3) , when the person acquiring the goods quotes his or her value-
 added tax registration number for the purpose of the acquisition, the
 place where an intra-Community acquisition of goods occurs shall be
 47
-Pt. 4 S.32
-Value-Added Tax Consolidation Act [2010.]
+[ No. 31. ] Value-Added Tax Consolidation Act [2010.]
 2010 .
 deemed to be within the territory of the Member State which issued
 that registration number, unless the person acquiring the goods can
@@ -1817,11 +1766,9 @@ poses of that section.
 Chapter 3
 Place of supply of services
 
-Application and (5E) and (9)]
+Application and interpretation of section 34 .
 33 .—(1) For the purpose of applying section 34 , every person
-interpretation of
 registered for value-added tax is a taxable person.
-section 34 .
 (2) In section 34(c) a supply of services connected with immovable
 goods includes—
 ( a ) a supply of services by experts or estate agents,
@@ -1834,7 +1781,7 @@ nation of construction work (including a supply of
 services of architects and of persons who provide on-site
 supervision).
 48
-Pt. 4 S.33
+[2010.] Value-Added Tax Consolidation Act [ No. 31. ]
 2010 .
 (3) In section 34(e) “intra-Community transport of goods” means
 any transport of goods in respect of which the place of departure and
@@ -1870,7 +1817,9 @@ systems;
 ( i ) telecommunications services;
 ( j ) radio and television broadcasting services;
 ( k ) electronically supplied services.
-34 .—The following rules apply to determine the place where, for General rules.
+
+General rules.
+34 .—The following rules apply to determine the place where, for
 the purposes of this Act, services are supplied:
 ( a ) except as provided by paragraphs (c) , (d) , (g) , (i) , (j) and
 (k) , the place of supply of services to a taxable person
@@ -1878,8 +1827,7 @@ acting as such is—
 (i) subject to subparagraph (ii) , the place where the per-
 son’s business is established,
 49
-Pt. 4 S.34
-Value-Added Tax Consolidation Act [2010.]
+[ No. 31. ] Value-Added Tax Consolidation Act [2010.]
 2010 .
 (ii) if the services are supplied to a fixed establishment of
 the person located in a place other than the place
@@ -1927,7 +1875,7 @@ consists of—
 (i) ancillary transport activities, such as loading,
 unloading and handling goods,
 50
-Pt. 4 S.34
+[2010.] Value-Added Tax Consolidation Act [ No. 31. ]
 2010 .
 (ii) carrying out valuations of, or work on, movable
 goods, or
@@ -1973,8 +1921,7 @@ taxable person—
 (ii) whose permanent address is outside the Community,
 or
 51
-Pt. 4 S.34
-Value-Added Tax Consolidation Act [2010.]
+[ No. 31. ] Value-Added Tax Consolidation Act [2010.]
 2010 .
 (iii) who usually resides outside the Community,
 the place where the person is established, has a perma-
@@ -1984,9 +1931,8 @@ non-taxable person by an intermediary acting in the name
 and on behalf of another person, the place where the
 transaction underlying the supply is made.
 
-Use and enjoyment
+Use and enjoyment provisions.
 35 .—(1) Where, in the case of a supply of services that consists of
-provisions.
 hiring out movable goods, the place of supply of the services would,
 apart from this subsection, be a place outside the Community but
 the services are in effect used and enjoyed in the State, the place of
@@ -2027,15 +1973,15 @@ of intermediary services that are provided in respect of, or in relation
 to, those services to a principal established outside the Community,
 is taken to be the State for the purposes of this Act.
 52
+[2010.] Value-Added Tax Consolidation Act [ No. 31. ]
 2010 .
 PART 5
 Taxable Amount
 Chapter 1
 Taxable amount — principal provisions
 
-Definitions —
+Definitions — Chapter 1 .
 36 .—In this Chapter—
-Chapter 1 .
 “open market price”, in relation to—
 ( a ) the supply of any goods or services (other than an interest
 in immovable goods which is not a freehold interest), or
@@ -2060,8 +2006,9 @@ or, in the absence of a purchase price, the cost price,
 determined at the time of supply,
 (ii) in respect of services, an amount that is not less than
 the full cost to the supplier of providing the service.
-37 .—(1) The amount on which tax is chargeable by virtue of General rules on
-taxable amount.
+
+General rules on taxable amount.
+37 .—(1) The amount on which tax is chargeable by virtue of
 section 3(a) or (c) shall, subject to this Chapter, be the total consider-
 ation which the person supplying goods or services becomes entitled
 to receive in respect of or in relation to such supply of goods or
@@ -2078,8 +2025,7 @@ does not consist of or does not consist wholly of an amount of money,
 the amount on which tax is chargeable shall be the total amount
 of money which might reasonably be expected to be charged if the
 53
-Pt. 5 S.37
-Value-Added Tax Consolidation Act [2010.]
+[ No. 31. ] Value-Added Tax Consolidation Act [2010.]
 2010 .
 consideration consisted entirely of an amount of money equal to the
 open market price.
@@ -2101,11 +2047,9 @@ other than that of the State until the agreement to
 use such method is withdrawn by the Revenue Com-
 missioners.
 
-Determination that
+Determination that open market value applies.
 38 .—(1) The Revenue Commissioners may, where they consider
-open market value
 it necessary or appropriate to do so to ensure the correct collection
-applies.
 of the tax, make a determination that the amount on which tax is
 chargeable on a supply of goods or services is the open market value
 of that supply, if the Commissioners are satisfied—
@@ -2130,7 +2074,7 @@ supplier—
 in non-deductible supplies or activities within
 the meaning of section 61(1) , or
 54
-Pt. 5 S.38
+[2010.] Value-Added Tax Consolidation Act [ No. 31. ]
 2010 .
 (II) is a flat-rate farmer,
 and
@@ -2152,8 +2096,9 @@ to them to be necessary for the purposes of this section.
 (4) An inspector of taxes, or such other officer as the Revenue
 Commissioners may authorise for the purpose, may make a determi-
 nation under this section.
-39 .—(1) Where the consideration actually received in relation to General provisions
-on consideration.
+
+General provisions on consideration.
+39 .—(1) Where the consideration actually received in relation to
 the supply of any goods or services exceeds the amount that the
 person supplying the goods or services was entitled to receive, the
 amount on which tax is chargeable shall be the amount actually
@@ -2175,16 +2120,13 @@ ation due in respect of that supply, the relief referred to in subsection
 in accordance with section 67(1)(b) in respect of that reduction or
 discount.
 
-Special
+Special consideration rule, triangulation.
 40 .—Where—
-consideration rule,
-triangulation.
 ( a ) an intra-Community acquisition is deemed to have taken
-place in the territory of another Member State in accord- [VATA s. 10(5A)]
+place in the territory of another Member State in accord-
 ance with section 32(1) ,
 55
-Pt. 5 S.40
-Value-Added Tax Consolidation Act [2010.]
+[ No. 31. ] Value-Added Tax Consolidation Act [2010.]
 2010 .
 ( b ) the intra-Community acquisition has been subject to
 value-added tax, referred to in the VAT Directive, in that
@@ -2219,8 +2161,9 @@ and (2) to an agreement for the supply of services shall be deemed
 to include a reference to such an agreement.
 (4) This section does not apply in respect of a supply of services
 to which section 16(3) applies.
-Taxable amount for 42 .—(1) ( a ) Subject to paragraph (c) , the amount on which tax is
-certain supplies.
+
+Taxable amount for certain supplies.
+42 .—(1) ( a ) Subject to paragraph (c) , the amount on which tax is
 chargeable in relation to a supply of goods referred to in
 section 19(1)(e)(ii) , (f) or (g) or a supply of services by
 virtue of regulations made for the purposes of section
@@ -2238,7 +2181,7 @@ of immovable goods (in this paragraph referred to as the
 appropriation shall include an amount equal to the
 amount on which tax was chargeable on the supply of
 56
-Pt. 5 S.42
+[2010.] Value-Added Tax Consolidation Act [ No. 31. ]
 2010 .
 those goods to that person, being the last supply of those
 goods to that person which preceded the appropriation.
@@ -2280,10 +2223,11 @@ tered person, the amount on which tax is chargeable in respect of
 the supply shall be increased by an amount equal to the amount of
 duty that would be payable in relation to the goods if the duty had
 become due at the time of the supply.
-43 .—(1) In this section “redeemable value” means the amount Vouchers, etc.
+
+Vouchers, etc.
+43 .—(1) In this section “redeemable value” means the amount
 stated on a coupon, stamp, telephone card, token or voucher or,
 where an amount is not so stated, the value expressed in terms of
-(7A) and s. 10(10)
 money for which a coupon, stamp, telephone card, token or voucher
 can be used as consideration (or part consideration) for a supply of
 goods or services.
@@ -2293,8 +2237,7 @@ card, token or voucher is granted for a consideration, the consider-
 ation shall be disregarded for the purposes of this Act except to the
 extent (if any) that it exceeds that redeemable value.
 57
-Pt. 5 S.43
-Value-Added Tax Consolidation Act [2010.]
+[ No. 31. ] Value-Added Tax Consolidation Act [2010.]
 2010 .
 (3) Notwithstanding subsection (2) , where—
 ( a ) a supplier—
@@ -2343,10 +2286,11 @@ supplier on the sale of the voucher.
 Article 73 of the VAT Directive, and shall be construed
 accordingly.
 58
-Pt. 5
+[2010.] Value-Added Tax Consolidation Act [ No. 31. ]
 2010 .
-44 .—(1) The amount on which tax is chargeable in relation to a Non-business use of
-immovable goods.
+
+Non-business use of immovable goods.
+44 .—(1) The amount on which tax is chargeable in relation to a
 supply of services referred to in section 27(2) in any taxable period
 shall be an amount equal to one sixth of one twentieth of the cost of
 the immovable goods used to provide those services, being—
@@ -2368,10 +2312,10 @@ poses referred to in section 27(2) , and
 ( b ) to calculate the relevant taxable amount or amounts.
 Chapter 2
 Adjustment and recovery of consideration
-45 .—(1) Where, after the making of an agreement for the supply Adjustment and
-recovery of
+
+Adjustment and recovery of consideration.
+45 .—(1) Where, after the making of an agreement for the supply
 of goods or services and before the date on which under section 74(1)
-consideration.
 or (2) , as may be appropriate, any tax in respect of the transaction
 falls due, there is a change in the amount of tax chargeable on the
 supply in question, then, in the absence of agreement to the contrary,
@@ -2392,7 +2336,7 @@ action and shall be recoverable accordingly by the person.
 ant to section 66(1) , subsection (3) shall not apply unless the invoice
 is in the form and contains the particulars specified by regulations.
 59
-Value-Added Tax Consolidation Act [2010.]
+[ No. 31. ] Value-Added Tax Consolidation Act [2010.]
 2010 .
 PART 6
 Rates and Exemption
@@ -2444,14 +2388,13 @@ a resolution annulling the order is passed by Dáil Éireann
 within the next 21 days on which Dáil Éireann has sat
 after the order is laid before it, the order shall be
 60
-Pt. 6 S.46
+[2010.] Value-Added Tax Consolidation Act [ No. 31. ]
 2010 .
 annulled accordingly, but without prejudice to the val-
 idity of anything previously done thereunder.
 
-Composite and
+Composite and multiple supplies.
 47 .—(1) Subject to section 41 —
-multiple supplies.
 ( a ) in the case of a composite supply, the tax chargeable on
 the total consideration which the accountable person is
 entitled to receive for that composite supply shall be at
@@ -2487,7 +2430,9 @@ the purposes of subsections (1) and (2) ,
 ( c ) a relatively small amount, or an element of a supply, which
 may be disregarded for the purposes of applying this
 section.
-48 .—(1) Notwithstanding section 46(1) , tax shall be charged at the Works of art, etc.
+
+Works of art, etc.
+48 .—(1) Notwithstanding section 46(1) , tax shall be charged at the
 rate specified in section 46(1)(c) of the amount on which tax is
 chargeable in relation to—
 ( a ) the importation into the State of goods specified in Sched-
@@ -2496,8 +2441,7 @@ ule 5 ,
 graph 1 of Schedule 5 , effected by its creator or the
 creator’s successors in title, or
 61
-Pt. 6 S.48
-Value-Added Tax Consolidation Act [2010.]
+[ No. 31. ] Value-Added Tax Consolidation Act [2010.]
 2010 .
 ( c ) the supply of a work of art of the kind specified in para-
 graph 1 of Schedule 5 , effected on an occasional basis by
@@ -2522,7 +2466,7 @@ ition is a supply of the kind that would be charged at the rate speci-
 fied in section 46(1)(c) in accordance with subsection (1)(b) or (c) if
 that supply had occurred within the State.
 
-Contract work. Provisions in
+Contract work.
 49 .—(1) Notwithstanding section 46(1) but subject to subsection
 (2) , the rate at which tax is chargeable on a supply of contract work
 shall be the rate that would be chargeable if that supply of services
@@ -2532,10 +2476,8 @@ the person to whom that supply is made.
 the circumstances specified in paragraph (xvi) of the Second
 Schedule.
 
-Provisions in
+Provisions in relation to certain supplies.
 50 .—(1) Where—
-relation to certain
-supplies.
 ( a ) goods are supplied by a manufacturer to a person and
 materials have been supplied by or on behalf of that per-
 son for the manufacture of those goods, and
@@ -2554,7 +2496,7 @@ the goods rate and the materials rate.
 used by a person in the course of the supply by the person
 of taxable services, and
 62
-Pt. 6 S.50
+[2010.] Value-Added Tax Consolidation Act [ No. 31. ]
 2010 .
 ( b ) the goods are provided by or on behalf of the person to
 whom the services are supplied,
@@ -2567,10 +2509,10 @@ installations are let separately from other immovable goods of which
 they form part, tax shall be chargeable in respect of the transaction
 at the rate which would be chargeable if it were a hiring of movable
 goods of the same kind.
-51 .—(1) On receipt of an application in writing from an account- Determinations on
-rates and
+
+Determinations on rates and exemptions.
+51 .—(1) On receipt of an application in writing from an account-
 able person, the Revenue Commissioners shall, in accordance with
-exemptions.
 regulations and after such consultation (if any) as may seem to them
 to be necessary with such person or body of persons as in their
 opinion may be of assistance to them, make a determination
@@ -2608,8 +2550,7 @@ nation as published in Iris Oifigiúil .
 under this section concerning any matter which has been determined
 on appeal under this Act or which is for the time being governed by
 63
-Pt. 6 S.51
-Value-Added Tax Consolidation Act [2010.]
+[ No. 31. ] Value-Added Tax Consolidation Act [2010.]
 2010 .
 an order under section 46(4) or 52(2) , and shall not be required to
 make such a determination in relation to any of the matters referred
@@ -2644,9 +2585,8 @@ ning on the date of the publication of the determination in Iris Oifigi-
 Chapter 2
 Exemptions
 
-General rule on
+General rule on exempted activity.
 52 .—(1) Tax shall not be chargeable in respect of any exempted
-exempted activity.
 activity.
 (2) ( a ) The Minister may by order declare the supply of goods or
 services of any kind to be an exempted activity.
@@ -2661,16 +2601,17 @@ after the order is laid before it, the order shall be
 annulled accordingly, but without prejudice to the val-
 idity of anything previously done thereunder.
 64
+[2010.] Value-Added Tax Consolidation Act [ No. 31. ]
 2010 .
 PART 7
 Provisions Relating to Imports, Exports, etc.
-53 .—(1) The value of imported goods for the purposes of this Imports – general
-provisions.
+
+Imports – general provisions.
+53 .—(1) The value of imported goods for the purposes of this
 section and section 54 shall be their value determined in accordance
 with the acts for the time being in force adopted by the institutions
 of the Community relating to the valuation of goods for customs
-and (8) and FA
-purposes, modified by the substitution of references to the territory 2010 s. 125]
+purposes, modified by the substitution of references to the territory
 of the State for references to the customs territory of the Com-
 munity, together with any taxes, duties, expenses resulting from the
 transport of the goods to another place of destination within the
@@ -2699,12 +2640,11 @@ dation Act 1876, and other law in force in the State relating to cus-
 toms, shall apply to tax referred to in this section or section 54 or
 120(7)(b) or (c) as if it were a duty of customs, with such exceptions
 and modifications (if any) as may be specified in regulations.
-54 .—(1) The Revenue Commissioners may, in accordance with Remission or
-repayment of tax on
+
+Remission or repayment of tax on certain imported goods.
+54 .—(1) The Revenue Commissioners may, in accordance with
 regulations, remit or repay, if they think fit, the whole or part of the
-certain imported
 tax chargeable—
-goods.
 ( a ) on the importation of any goods which are shown to their
 satisfaction to have been previously exported,
 ( b ) on the importation of any goods if they are satisfied that
@@ -2714,8 +2654,7 @@ airport by an unregistered person who shows to the satis-
 faction of the Commissioners that he or she has already
 borne tax on the goods.
 65
-Pt. 7 S.54
-Value-Added Tax Consolidation Act [2010.]
+[ No. 31. ] Value-Added Tax Consolidation Act [2010.]
 2010 .
 (2) Subject to subsection (3) , the Revenue Commissioners shall,
 in accordance with regulations, repay the tax chargeable on the
@@ -2729,9 +2668,9 @@ for value-added tax in that other Member State.
 faction of the Revenue Commissioners that the goods in question
 have been subject to value-added tax referred to in the VAT
 Directive in that other Member State.
-Goods in transit – 55 .—(1) ( a ) In this section—
-miscellaneous
-provisions.
+
+Goods in transit – miscellaneous provisions.
+55 .—(1) ( a ) In this section—
 “date of accession” means—
 (i) 1 January 1995 in respect of the Republic of Austria,
 ˚ land
@@ -2767,7 +2706,7 @@ total exemption from customs duty, or
 3
 OJ No. L365, 31.12.1994, p.53
 66
-Pt. 7 S.55
+[2010.] Value-Added Tax Consolidation Act [ No. 31. ]
 2010 .
 (ii) under one of the arrangements referred to in Article
 156(1) of the VAT Directive,
@@ -2819,8 +2758,7 @@ accession, and have not been imported before that date.
 4
 OJ No. L 226, 13.8.87, p. 1
 67
-Pt. 7 S.55
-Value-Added Tax Consolidation Act [2010.]
+[ No. 31. ] Value-Added Tax Consolidation Act [2010.]
 2010 .
 (6) The tax referred to in section 3(b) shall not be chargeable
 where—
@@ -2861,11 +2799,9 @@ Romania, or
 ( d ) the tax due by reason of the importation does not exceed
 € 130.
 
-Zero-rating scheme
+Zero-rating scheme for qualifying businesses.
 56 .—(1) For the purposes of this section and paragraph 7(7) of
-for qualifying
 Schedule 2 —
-businesses.
 “authorised person” means a qualifying person who has been author-
 ised in accordance with subsection (3) ;
 “qualifying person” means an accountable person whose turnover
@@ -2875,7 +2811,7 @@ or 3(1) or (3) of Schedule 2 ,
 ( b ) supplies of contract work where the place of supply is
 deemed to be the State, and
 68
-Pt. 7 S.56
+[2010.] Value-Added Tax Consolidation Act [ No. 31. ]
 2010 .
 ( c ) supplies of contract work made in accordance with para-
 graph 3(4) of Schedule 2 ,
@@ -2924,8 +2860,7 @@ referred to in subsection (3) to each accountable person in the State
 who supplies taxable goods or taxable services to the authorised
 person.
 69
-Pt. 7 S.56
-Value-Added Tax Consolidation Act [2010.]
+[ No. 31. ] Value-Added Tax Consolidation Act [2010.]
 2010 .
 (5) An accountable person who supplies goods or services in cir-
 cumstances where paragraph 7(7) of Schedule 2 applies shall, in
@@ -2966,9 +2901,8 @@ and control of the Revenue Commissioners, any power, function or
 duty conferred or imposed on them may be exercised or performed
 on their behalf by an officer of the Revenue Commissioners.
 
-Remission of tax on
+Remission of tax on goods exported, etc.
 57 .—(1) Regulations may make provision for remitting or repay-
-goods exported, etc.
 ing, subject to such conditions (if any) as may be specified in the
 regulations or as the Revenue Commissioners may impose, the tax
 chargeable in respect of the supply of goods, or of such goods as may
@@ -2981,16 +2915,14 @@ chargeable in respect of the supply of services directly linked to the
 export of goods or the transit of goods from a place outside the State
 to another place outside the State.
 70
-Pt. 7
+[2010.] Value-Added Tax Consolidation Act [ No. 31. ]
 2010 .
 
-Retail export
+Retail export scheme.
 58 .—(1) In this section—
-scheme.
 “traveller” means a person whose domicile or habitual residence is
 not situated within the Community and includes a person who is
-to (1D), (3B) and
-normally resident in the Community but who, at the time of the (3C)]
+normally resident in the Community but who, at the time of the
 supply of the goods, intends to take up residence outside the Com-
 munity in the near future and for a period of at least 12 consecu-
 tive months;
@@ -3038,8 +2970,7 @@ ted or repayable under this subsection,
 repaid to a traveller in a currency other than the currency
 of the State—
 71
-Pt. 7 S.58
-Value-Added Tax Consolidation Act [2010.]
+[ No. 31. ] Value-Added Tax Consolidation Act [2010.]
 2010 .
 (I) unless subparagraph (II) applies, the latest selling rate
 recorded by the Central Bank of Ireland for the cur-
@@ -3080,14 +3011,13 @@ Deductions
 Chapter 1
 General provisions
 
-Deduction for tax
+Deduction for tax borne or paid.
 59 .—(1) In this subsection and subsection (2) —
-borne or paid.
 “qualifying activities” means—
 ( a ) transport outside the State of passengers and their
 accompanying baggage,
 72
-Pt. 8 S.59
+[2010.] Value-Added Tax Consolidation Act [ No. 31. ]
 2010 .
 ( b ) supplies of goods which, by virtue of section 30 , are
 deemed to have taken place in the territory of another
@@ -3141,8 +3071,7 @@ of the purchase, hiring, intra-Community acquisition or
 5
 OJ No. L 321, 19.12.2000, p. 47
 73
-Pt. 8 S.59
-Value-Added Tax Consolidation Act [2010.]
+[ No. 31. ] Value-Added Tax Consolidation Act [2010.]
 2010 .
 importation of a qualifying vehicle, where that vehicle is
 used primarily for business purposes, being at least 60 per
@@ -3198,7 +3127,7 @@ of goods supplied under section 19(1)(h) an amount equal
 to any residual tax included in the consideration for the
 supply,
 74
-Pt. 8 S.59
+[2010.] Value-Added Tax Consolidation Act [ No. 31. ]
 2010 .
 ( m ) the tax charged to him or her during the period by other
 accountable persons in respect of services directly related
@@ -3249,15 +3178,13 @@ Chapter, would be payable in respect of such period, the excess shall
 be refunded to the accountable person in accordance with section
 99(1) , but subject to section 100 .
 75
-Pt. 8
-Value-Added Tax Consolidation Act [2010.]
+[ No. 31. ] Value-Added Tax Consolidation Act [2010.]
 2010 .
 
-General limits on
+General limits on deductibility.
 60 .—(1) In this subsection and subsection (2) —
-deductibility.
 “delegate” means a taxable person or a taxable person’s employee
-s. 12(3A) (in part)] or agent who attends a qualifying conference in the course or further-
+or agent who attends a qualifying conference in the course or further-
 ance of the taxable person’s business;
 “motor vehicles” means motor vehicles designed and constructed for
 the conveyance of persons by road and sports motor vehicles, estate
@@ -3305,7 +3232,7 @@ part of the cost of providing an advertising service
 in respect of which tax is due and payable by the
 accountable person,
 76
-Pt. 8 S.60
+[2010.] Value-Added Tax Consolidation Act [ No. 31. ]
 2010 .
 (iii) entertainment expenses incurred by the accountable
 person, his or her agents or his or her employees,
@@ -3339,9 +3266,8 @@ or (8) or 89(3) has been applied to a supply of goods to an account-
 able person, that accountable person shall not deduct, in accordance
 with section 59(2) , any tax in relation to the supply to him or her.
 
-Apportionment for
+Apportionment for dual-use inputs.
 61 .—(1) In this section—
-dual-use inputs.
 “deductible supplies or activities” means the supply of taxable goods
 or taxable services, or the carrying out of qualifying activities within
 the meaning of section 59(1) ;
@@ -3360,8 +3286,7 @@ and non-deductible supplies or activities.
 (2) Where an accountable person engages in both deductible sup-
 plies or activities and non-deductible supplies or activities, then, in
 77
-Pt. 8 S.61
-Value-Added Tax Consolidation Act [2010.]
+[ No. 31. ] Value-Added Tax Consolidation Act [2010.]
 2010 .
 relation to the person’s acquisition of dual-use inputs for the purpose
 of that person’s business for a period, the person shall be entitled to
@@ -3411,14 +3336,13 @@ plies or activities, or
 ( b ) have due regard to the range of the person’s total supplies
 and activities.
 78
-Pt. 8
+[2010.] Value-Added Tax Consolidation Act [ No. 31. ]
 2010 .
-62 .—(1) ( a ) This subsection applies where an accountable person Reduction of tax
-deductible in
+
+Reduction of tax deductible in relation to qualifying vehicles.
+62 .—(1) ( a ) This subsection applies where an accountable person
 deducts tax in relation to the purchase, intra-Community
-relation to
 acquisition or importation of a qualifying vehicle (within
-qualifying vehicles.
 the meaning of section 59(1) ) in accordance with section
 59(2)(d) , and disposes of that vehicle within 2 years of
 that purchase, acquisition or importation.
@@ -3462,15 +3386,13 @@ than 60 per cent business purposes, divided by 182
 and rounded down to the nearest whole number,
 but if that N is greater than 4 then N shall be 4.
 79
-Pt. 8
-Value-Added Tax Consolidation Act [2010.]
+[ No. 31. ] Value-Added Tax Consolidation Act [2010.]
 2010 .
 Chapter 2
 Capital goods scheme
 
-Interpretation and
+Interpretation and application.
 63 .—(1) In this Chapter—
-application.
 “adjustment period”, in relation to a capital good, means the period
 encompassing the number of intervals as provided for in section
 64(1)(a) during which adjustments of deductions are required to be
@@ -3513,7 +3435,7 @@ able to the relevant interval;
 “non-deductible amount”, in relation to a capital good, means the
 amount which is the difference between the total tax incurred in
 80
-Pt. 8 S.63
+[2010.] Value-Added Tax Consolidation Act [ No. 31. ]
 2010 .
 relation to that capital good and the total reviewed deductible
 amount in relation to that capital good;
@@ -3564,8 +3486,7 @@ on the owner’s acquisition or development of a capital
 good.
 (2) This Chapter applies to capital goods—
 81
-Pt. 8 S.63
-Value-Added Tax Consolidation Act [2010.]
+[ No. 31. ] Value-Added Tax Consolidation Act [2010.]
 2010 .
 ( a ) on the supply or development of which tax was chargeable
 to a taxable person who carries on a business in the
@@ -3574,13 +3495,11 @@ State, or
 a taxable person who carries on a business in the State
 but for the application of section 20(2)(c) .
 
-Capital goods
+Capital goods scheme.
 64 .—(1) ( a ) In relation to a capital good the number of intervals in
-scheme.
 the adjustment period during which adjustments of
 deductions are required under this Chapter to be made
 is—
-(3)( a ), ( c ) and ( d )
 (i) in the case of refurbishment, 10 intervals,
 (ii) in the case of a capital good to which subsection (5)(a)
 or (b) applies, the number of full intervals remaining
@@ -3619,7 +3538,7 @@ initial interval, or
 increase the amount of tax deductible for the pur-
 poses of Chapter 1 by the amount calculated in
 82
-Pt. 8 S.64
+[2010.] Value-Added Tax Consolidation Act [ No. 31. ]
 2010 .
 accordance with paragraph (a) for the taxable period
 immediately following the end of the initial interval.
@@ -3670,8 +3589,7 @@ where—
 C is the reference deduction amount in relation to that
 capital good,
 83
-Pt. 8 S.64
-Value-Added Tax Consolidation Act [2010.]
+[ No. 31. ] Value-Added Tax Consolidation Act [2010.]
 2010 .
 D is the interval deductible amount in relation to that
 capital good, and
@@ -3724,7 +3642,7 @@ amount calculated in accordance with subsection
 (6)(b) on that supply shall be treated as the total tax
 incurred in relation to that capital good.
 84
-Pt. 8 S.64
+[2010.] Value-Added Tax Consolidation Act [ No. 31. ]
 2010 .
 ( b ) Where in respect of a letting of a capital good that is not
 subject to a landlord’s option to tax in accordance with
@@ -3773,8 +3691,7 @@ E × N
 T
 where—
 85
-Pt. 8 S.64
-Value-Added Tax Consolidation Act [2010.]
+[ No. 31. ] Value-Added Tax Consolidation Act [2010.]
 2010 .
 E is the non-deductible amount in relation to that
 capital good or, in the case of a supply before
@@ -3823,7 +3740,7 @@ N is the number of full intervals remaining in the
 adjustment period in relation to that capital
 good at the time of supply plus one, and
 86
-Pt. 8 S.64
+[2010.] Value-Added Tax Consolidation Act [ No. 31. ]
 2010 .
 T is the total number of intervals in the adjustment
 period in relation to that capital good.
@@ -3874,8 +3791,7 @@ were the total tax incurred and the amount
 deducted by the person to whom the interest is
 assigned or surrendered, and
 87
-Pt. 8 S.64
-Value-Added Tax Consolidation Act [2010.]
+[ No. 31. ] Value-Added Tax Consolidation Act [2010.]
 2010 .
 (II) any adjustments required to be made under this
 Chapter by the tenant were made,
@@ -3924,7 +3840,7 @@ is less than the amount (in this subsection referred
 to as the “adjustment amount”) calculated in accord-
 ance with paragraph (b) .
 88
-Pt. 8 S.64
+[2010.] Value-Added Tax Consolidation Act [ No. 31. ]
 2010 .
 ( b ) The adjustment amount shall be calculated in accordance
 with the formula—
@@ -3972,8 +3888,7 @@ gations under this Chapter in relation to the capital
 good from the date of the supply or transfer of that
 capital good, as if—
 89
-Pt. 8 S.64
-Value-Added Tax Consolidation Act [2010.]
+[ No. 31. ] Value-Added Tax Consolidation Act [2010.]
 2010 .
 (I) the total tax incurred and the amount deducted
 by that seller in relation to that capital good
@@ -4022,7 +3937,7 @@ which paragraph (c) applies, and
 (II) the transferee would not have been entitled to
 deduct all of the tax that would have been
 90
-Pt. 8 S.64
+[2010.] Value-Added Tax Consolidation Act [ No. 31. ]
 2010 .
 chargeable on that transfer but for the appli-
 cation of section 20(2)(c) ,
@@ -4072,8 +3987,7 @@ the purpose of calculating the tax chargeable or
 deductible by the successor in accordance with this
 Chapter for the remainder of the adjustment period
 91
-Pt. 8 S.64
-Value-Added Tax Consolidation Act [2010.]
+[ No. 31. ] Value-Added Tax Consolidation Act [2010.]
 2010 .
 applicable to that good as from the date of its
 transfer.
@@ -4121,7 +4035,7 @@ able person, furnish in writing to the Revenue Commissioners the
 particulars specified in regulations as being required for the purpose
 of registering the person for tax.
 92
-Pt. 9 S.65
+[2010.] Value-Added Tax Consolidation Act [ No. 31. ]
 2010 .
 (4) Every person who disposes of goods which pursuant to section
 22(3) are deemed to be supplied by an accountable person in the
@@ -4132,12 +4046,9 @@ of registering the person for tax.
 Chapter 2
 Invoicing
 
-Issue of invoices
+Issue of invoices and other documents.
 66 .—(1) An accountable person—
-and other
-documents.
 ( a ) who supplies goods or services—
-(1A) and (1C) to
 (i) to another accountable person,
 (ii) to a public body,
 (iii) to a person who carries on an exempted activity,
@@ -4174,8 +4085,7 @@ regulations, and
 (or conform) with such specifications as are required
 by regulations.
 93
-Pt. 9 S.66
-Value-Added Tax Consolidation Act [2010.]
+[ No. 31. ] Value-Added Tax Consolidation Act [2010.]
 2010 .
 ( c ) The person who receives a transmission referred to in
 paragraph (a) shall not be deemed to be issued with an
@@ -4225,16 +4135,16 @@ attendance by a traveller at a qualifying conference, the
 travel agent shall issue a document to the traveller con-
 taining particulars of the amount of tax chargeable by the
 94
-Pt. 9 S.66
+[2010.] Value-Added Tax Consolidation Act [ No. 31. ]
 2010 .
 accommodation provider in respect of the supply of the
 qualifying accommodation to that traveller.
-67 .—(1) Where, subsequent to the issue of an invoice by a person Amendments to
-invoices.
+
+Amendments to invoices.
+67 .—(1) Where, subsequent to the issue of an invoice by a person
 to another person in accordance with section 66(1) , the consideration
 as stated in that invoice is increased or reduced, or a discount is
 allowed, whichever of the following provisions is appropriate shall
-(3B), (9) and (11)]
 have effect:
 ( a ) if the consideration is increased, the person shall issue to
 that other person another invoice in such form and con-
@@ -4277,8 +4187,7 @@ be deemed to have been reduced to nil,
 section (1)(b) , the person shall issue another invoice in
 accordance with this Act and regulations.
 95
-Pt. 9 S.67
-Value-Added Tax Consolidation Act [2010.]
+[ No. 31. ] Value-Added Tax Consolidation Act [2010.]
 2010 .
 (4) Where, subsequent to the issue of an invoice by a person to
 another person in accordance with section 66(1) in respect of an
@@ -4319,20 +4228,18 @@ accordance with section 80(1) , to determine that person’s
 tax liability in respect of supplies of the kind in question
 by reference to the amount of moneys received.
 
-Flat-rate farmer
+Flat-rate farmer invoices and other documents.
 68 .—(1) A flat-rate farmer who, in accordance with section 86(1) ,
-invoices and other
 is required to issue an invoice in respect of the supply of agricultural
-documents.
 produce or an agricultural service shall, in respect of each such sup-
 ply, issue an invoice in the form and containing such particulars (in
-(4), (10), (11A) and addition to those specified in section 86(1) ) as may be specified by
+addition to those specified in section 86(1) ) as may be specified by
 regulations, if the following conditions are fulfilled:
 ( a ) the issue of the invoice is requested by a purchaser;
 ( b ) the purchaser provides the form for the purpose of the
 invoice and enters the appropriate particulars thereon;
 96
-Pt. 9 S.68
+[2010.] Value-Added Tax Consolidation Act [ No. 31. ]
 2010 .
 ( c ) the purchaser gives a copy of the invoice to the flat-rate
 farmer,
@@ -4380,8 +4287,7 @@ specified by regulations, then, for the purposes of this Act—
 ( a ) the person who issues the farmer debit note shall, if the
 person to whom it is issued accepts it, be deemed to have
 97
-Pt. 9 S.68
-Value-Added Tax Consolidation Act [2010.]
+[ No. 31. ] Value-Added Tax Consolidation Act [2010.]
 2010 .
 received a farmer credit note (containing the particulars
 set out in the farmer debit note) from the person by
@@ -4416,9 +4322,8 @@ respectively shall apply in relation to farmer credit notes and farmer
 debit notes as they apply in relation to such credit notes and debit
 notes.
 
-Invoices or credit
+Invoices or credit notes — errors, etc.
 69 .—(1) Where an accountable person—
-notes — errors, etc.
 ( a ) issues an invoice stating a greater amount of tax than that
 properly attributable to the consideration stated therein,
 or
@@ -4434,7 +4339,7 @@ tax stated, be deemed, for the purposes of this Act, to be an account-
 able person and shall be liable to pay that amount to the Revenue
 Commissioners.
 98
-Pt. 9 S.69
+[2010.] Value-Added Tax Consolidation Act [ No. 31. ]
 2010 .
 (3) Where a person (other than a flat-rate farmer) issues an
 invoice stating an amount of flat-rate addition, he or she shall be
@@ -4461,8 +4366,9 @@ credit note or the amount of the deficiency of flat-rate addition, as
 the case may be, and shall, in relation to that amount or that
 deficiency, be deemed, for the purposes of this Act, to be an account-
 able person.
-70 .—(1) ( a ) An invoice, credit note or document required to be Time limits for
-issuing invoices, etc.
+
+Time limits for issuing invoices, etc.
+70 .—(1) ( a ) An invoice, credit note or document required to be
 issued in accordance with this Chapter shall be issued
 within such time after the date of supplying goods or
 services as may be specified by regulations.
@@ -4477,8 +4383,9 @@ shall issue an invoice in accordance with section 66(1) or 68(1) , as
 may be appropriate, within such time after the date of actual receipt
 of the full payment or the instalment as may be specified by
 regulations.
-71 .—(1) An invoice required under this Chapter to be issued in Self-billing and
-outsourcing.
+
+Self-billing and outsourcing.
+71 .—(1) An invoice required under this Chapter to be issued in
 respect of a supply by a person (in this section referred to as the
 “supplier”) is deemed to be so issued by that supplier if that invoice
 is drawn up and issued by the person to whom that supply is made
@@ -4488,8 +4395,7 @@ tomer that the customer may draw up and issue the
 invoice,
 ( b ) the customer is a person registered for value-added tax,
 99
-Pt. 9 S.71
-Value-Added Tax Consolidation Act [2010.]
+[ No. 31. ] Value-Added Tax Consolidation Act [2010.]
 2010 .
 ( c ) any conditions which are imposed by this Act or by regu-
 lations on the supplier in relation to the form, content or
@@ -4515,7 +4421,7 @@ this section.
 relation to the conditions applying to invoices covered by this
 section.
 
-Storage of invoices. Requests for
+Storage of invoices.
 72 .—(1) A person who issues, or is deemed to issue, an invoice
 under this Chapter shall ensure that—
 ( a ) a copy of any invoice issued by the person,
@@ -4531,19 +4437,16 @@ sioners shall be stored within the State but, subject to the agreement
 of the Commissioners and any conditions set by them, the invoice
 may be stored outside the State.
 
-Requests for
+Requests for particulars in respect of repayment of tax.
 73 .—(1) ( a ) An accountable person shall, if requested in writing by
-particulars in
 another person and if the request states that the other
-respect of
 person is entitled to repayment of tax under section 103 ,
-repayment of tax.
 give to that other person in writing the particulars of the
 amount of tax chargeable by the accountable person in
 respect of the supply by the accountable person of the
 goods or services that are specified in the request.
 100
-Pt. 9 S.73
+[2010.] Value-Added Tax Consolidation Act [ No. 31. ]
 2010 .
 ( b ) An accountable person shall, if requested in writing by
 another person and if the request states that the other
@@ -4573,8 +4476,9 @@ by the person to whom it is given within 30 days after the date on
 which the request is received by the person.
 Chapter 3
 Returns and payment of tax
-74 .—(1) Tax chargeable under section 3(a) or (c) shall be due— Tax due on
-supplies.
+
+Tax due on supplies.
+74 .—(1) Tax chargeable under section 3(a) or (c) shall be due—
 ( a ) in case an invoice is required under Chapter 2 to be issued,
 at the time of issue of the invoice or, if the invoice is not
 issued in due time, upon the expiration of the period
@@ -4594,8 +4498,7 @@ issues at least once every 3 months),
 at the time of issue of the statement of account in respect
 of those supplies, and
 101
-Pt. 9 S.74
-Value-Added Tax Consolidation Act [2010.]
+[ No. 31. ] Value-Added Tax Consolidation Act [2010.]
 2010 .
 ( d ) in any other case, at the time the goods or services are
 supplied.
@@ -4632,10 +4535,8 @@ then the tax chargeable under section 3(a) or (c) shall be reduced in
 the taxable period in which the cancellation is recorded by the
 amount of tax accounted for on the deposit.
 
-Tax due on intra- Returns and
+Tax due on intra- Community acquisitions.
 75 .—Tax chargeable under section 3(d) or (e) shall be due—
-Community
-acquisitions.
 ( a ) on the 15th day of the month following that during which
 the intra-Community acquisition occurs,
 ( b ) in case an invoice is issued before the date specified in
@@ -4643,15 +4544,14 @@ paragraph (a) by the supplier in another Member State
 to the person acquiring the goods, when that invoice is
 issued.
 
-Returns and
+Returns and remittances.
 76 .—(1) Subject to subsection (2) , an accountable person shall,
-remittances.
 within 9 days immediately after the 10th day of the month immedi-
 ately following a taxable period—
 ( a ) furnish to the Collector-General a true and correct return,
 prepared in accordance with regulations, of—
 102
-Pt. 9 S.76
+[2010.] Value-Added Tax Consolidation Act [ No. 31. ]
 2010 .
 (i) the amount of tax which became due by the person
 during that taxable period (other than tax already
@@ -4701,8 +4601,7 @@ nished by the accountable person or another person
 acting under the accountable person’s authority for
 that purpose.
 103
-Pt. 9 S.76
-Value-Added Tax Consolidation Act [2010.]
+[ No. 31. ] Value-Added Tax Consolidation Act [2010.]
 2010 .
 (ii) A return purporting to be a return furnished by a per-
 son acting under an accountable person’s authority
@@ -4714,10 +4613,8 @@ authority, the provisions of any enactment relating to
 value-added tax shall apply as if that return had been
 furnished by the accountable person.
 
-Authorisations in
+Authorisations in relation to filing dates.
 77 .—(1) ( a ) In this section—
-relation to filing
-dates.
 “accounting period” means a period, as determined by
 the Collector-General from time to time in any particular
 case, consisting of a number of consecutive taxable
@@ -4758,7 +4655,7 @@ the accounting period (other than tax already
 paid by him or her in relation to goods imported
 by him or her),
 104
-Pt. 9 S.77
+[2010.] Value-Added Tax Consolidation Act [ No. 31. ]
 2010 .
 (II) the amount (if any) which may be deducted in
 accordance with Chapter 1 of Part 8 in comput-
@@ -4806,8 +4703,7 @@ General, within 9 days immediately after the 10th day
 of the month immediately following each taxable period
 (other than the final taxable period) which is comprised
 105
-Pt. 9 S.77
-Value-Added Tax Consolidation Act [2010.]
+[ No. 31. ] Value-Added Tax Consolidation Act [2010.]
 2010 .
 in an accounting period, such an amount as may be speci-
 fied by the Collector-General.
@@ -4859,7 +4755,7 @@ or her in accordance with section 76(1) .
 by the Collector-General on the date that an authorised
 person—
 106
-Pt. 9 S.77
+[2010.] Value-Added Tax Consolidation Act [ No. 31. ]
 2010 .
 (i) ceases to trade (other than for the purposes of dispos-
 ing of the stocks and assets of his or her business),
@@ -4887,10 +4783,8 @@ able period during which the termination occurred.
 tative of a person who was an authorised person shall be
 deemed to be the accountable person concerned.
 
-Electronic
+Electronic remittances and returns.
 78 .—(1) In this section—
-remittances and
-returns.
 “electronic remittance” means a remittance made by such electronic
 means (within the meaning of section 917EA of the Taxes Consoli-
 dation Act 1997) as are required by the Revenue Commissioners;
@@ -4910,14 +4804,11 @@ is made after the period provided for in that subsection, this Act
 shall apply and have effect without regard to the other provisions of
 this section.
 107
-Pt. 9
-Value-Added Tax Consolidation Act [2010.]
+[ No. 31. ] Value-Added Tax Consolidation Act [2010.]
 2010 .
 
-Special provisions
+Special provisions in relation to payment dates.
 79 .—(1) In this section—
-in relation to
-payment dates.
 “registration of the vehicle” means the registration of the vehicle in
 accordance with section 131 of the Finance Act 1992;
 “vehicle registration tax” means the tax referred to in section 132 of
@@ -4965,15 +4856,16 @@ modifications (if any) as may be specified in regulations,
 to tax referred to in this subsection as if it were that duty
 of excise.
 108
-Pt. 9 S.79
+[2010.] Value-Added Tax Consolidation Act [ No. 31. ]
 2010 .
 (5) Notwithstanding sections 76 and 77 , where section 91 applies,
 the tax shall be payable at the time the VAT return is required to
 be submitted in accordance with section 91(6) .
 Chapter 4
 Tax due on moneys received
-80 .—(1) A person who satisfies the Revenue Commissioners Tax due on moneys
-received basis.
+
+Tax due on moneys received basis.
+80 .—(1) A person who satisfies the Revenue Commissioners
 that—
 ( a ) taking one period with another, at least 90 per cent of the
 person’s turnover is derived from taxable supplies to per-
@@ -5016,8 +4908,7 @@ sat after the order is laid before it, the order shall be
 annulled accordingly, but without prejudice to the val-
 idity of anything previously done thereunder.
 109
-Pt. 9 S.80
-Value-Added Tax Consolidation Act [2010.]
+[ No. 31. ] Value-Added Tax Consolidation Act [2010.]
 2010 .
 (4) The Revenue Commissioners—
 ( a ) may, in accordance with regulations, cancel an authoris-
@@ -5042,9 +4933,8 @@ in accordance with Chapter 3 at that time.
 Chapter 5
 Expression of doubt
 
-Letter of expression
+Letter of expression of doubt.
 81 .—(1) For the purposes of this section—
-of doubt.
 “accountable person” includes a person who is not a registered per-
 son and is in doubt as to whether he or she is an accountable person
 in respect of a transaction and, in that case, references to a return
@@ -5067,7 +4957,7 @@ the purposes of this section,
 and reference to “an expression of doubt” shall be construed
 accordingly.
 110
-Pt. 9 S.81
+[2010.] Value-Added Tax Consolidation Act [ No. 31. ]
 2010 .
 (2) ( a ) Subject to paragraph (b) , where an accountable person is
 in doubt as to the correct application of any enactment
@@ -5120,8 +5010,7 @@ tax, which was not correctly accounted for in the return referred to
 in subsection (2) , as tax due for the taxable period in which the trans-
 action occurred, and section 114 shall apply accordingly.
 111
-Pt. 9 S.81
-Value-Added Tax Consolidation Act [2010.]
+[ No. 31. ] Value-Added Tax Consolidation Act [2010.]
 2010 .
 (7) An accountable person who is aggrieved by a decision of the
 Revenue Commissioners that the person’s expression of doubt is not
@@ -5137,10 +5026,8 @@ by the accountable person for the purposes of Chapter 7 or section
 Chapter 6
 Recapitulative statements
 
-Statement of intra-
+Statement of intra- Community supplies of goods.
 82 .—(1) In this section—
-Community
-supplies of goods.
 “intra-Community supplies of goods” means supplies of goods to a
 person registered for value-added tax in another Member State;
 “prescribed threshold” means—
@@ -5172,7 +5059,7 @@ by 23 January following that calendar year a statement—
 ( a ) setting out details of those intra-Community supplies of
 goods,
 112
-Pt. 9 S.82
+[2010.] Value-Added Tax Consolidation Act [ No. 31. ]
 2010 .
 ( b ) prepared in accordance with, and containing such part-
 iculars as may be specified in, regulations (if any).
@@ -5194,12 +5081,11 @@ with the Revenue Commissioners a statement in respect of a pre-
 vious period, shall, unless otherwise authorised by the Commis-
 sioners, lodge with them before the relevant deadline a statement to
 the effect that he or she made no such supplies during that period.
-83 .—(1) In this section “intra-Community supplies of services” Statement of intra-
-Community
+
+Statement of intra- Community supplies of taxable services.
+83 .—(1) In this section “intra-Community supplies of services”
 means supplies of services to a taxable person in another Member
-supplies of taxable
 State or any other person registered for value-added tax in another
-services.
 Member State.
 (2) An accountable person shall, not later than the deadline fixed
 by this section, lodge with the Revenue Commissioners a
@@ -5228,8 +5114,7 @@ when the supply is finally completed.
 (6) An accountable person who has made no intra-Community
 supplies of services to which this section applies during a relevant
 113
-Pt. 9 S.83
-Value-Added Tax Consolidation Act [2010.]
+[ No. 31. ] Value-Added Tax Consolidation Act [2010.]
 2010 .
 period, but who was required to lodge with the Revenue Commis-
 sioners a statement in respect of a previous period, shall, unless
@@ -5239,12 +5124,10 @@ no such supplies during that period.
 Chapter 7
 Record keeping
 
-Duty to keep
+Duty to keep records.
 84 .—(1) Every accountable person shall, in accordance with regu-
-records.
 lations, keep full and true records of all transactions which affect or
 may affect his or her liability to tax and entitlement to deductibility.
-(2), (3) and (4)]
 (2) Every person (other than an accountable person) who supplies
 goods or services in the course or furtherance of business shall keep
 all invoices issued to him or her in connection with the supply of
@@ -5284,7 +5167,7 @@ the period for which the person shall retain records pur-
 suant to this Chapter shall be the duration of the waiver
 plus a further period of 6 years.
 114
-Pt. 9 S.84
+[2010.] Value-Added Tax Consolidation Act [ No. 31. ]
 2010 .
 (5) This Chapter—
 ( a ) shall not require the retention of records or invoices or any
@@ -5294,10 +5177,10 @@ tion is not required, and
 ( b ) shall not apply to the books and papers of a company
 which have been disposed of in accordance with section
 305(1) of the Companies Act 1963.
-85 .—(1) The requirement to keep records in accordance with this Supplementary
-provisions on
+
+Supplementary provisions on records.
+85 .—(1) The requirement to keep records in accordance with this
 Chapter applies to—
-records.
 ( a ) a record relating to exercising and terminating a landlord’s
 option to tax,
 ( b ) a capital good record referred to in Chapter 2 of Part 8 ,
@@ -5321,13 +5204,13 @@ ing of section 90 ) shall, in accordance with regulations, keep full and
 true records of that person’s transactions in investment gold.
 PART 10
 Special Schemes
-86 .—(1) Where a flat-rate farmer supplies agricultural produce or Special provisions
-for tax invoiced by
+
+Special provisions for tax invoiced by flat-rate farmers.
+86 .—(1) Where a flat-rate farmer supplies agricultural produce or
 an agricultural service to a person, the farmer shall, subject to section
-flat-rate farmers.
 68(1) , issue to the person an invoice indicating the consideration
 (exclusive of the flat-rate addition) in respect of the supply and an
-amount (in this Act referred to as a “flat-rate addition”) equal to 5.2 35(3)]
+amount (in this Act referred to as a “flat-rate addition”) equal to 5.2
 per cent of that consideration (exclusive of the flat-rate addition).
 (2) Where, in relation to a supply of agricultural produce or an
 agricultural service by a flat-rate farmer, the farmer issues an invoice
@@ -5335,17 +5218,14 @@ in which the flat-rate addition is stated separately, that addition is
 recoverable by the farmer as part of the consideration for the
 transaction.
 115
-Pt. 10
-Value-Added Tax Consolidation Act [2010.]
+[ No. 31. ] Value-Added Tax Consolidation Act [2010.]
 2010 .
 
-Margin scheme —
+Margin scheme — taxable dealers.
 87 .—(1) In this section—
-taxable dealers.
 “agricultural machinery” means machinery or equipment (other than
 a motor vehicle within the meaning of section 60(1) ) which has been
-12B(3) (in part) and
-s. 12C(5) (in part)] used by a flat-rate farmer for the purpose of that farmer’s Annex
+used by a flat-rate farmer for the purpose of that farmer’s Annex
 VII activity in circumstances where any tax charged on the supply of
 that machinery or equipment to the farmer would have been deduct-
 ible by him or her if he or she had elected to be an accountable
@@ -5393,7 +5273,7 @@ section 20(3) ;
 “means of transport” means motorised land vehicles with an engine
 cylinder capacity exceeding 48 cubic centimetres or a power
 116
-Pt. 10 S.87
+[2010.] Value-Added Tax Consolidation Act [ No. 31. ]
 2010 .
 exceeding 7.2 kilowatts, vessels exceeding 7.5 metres in length and
 aircraft with a take-off weight exceeding 1,550 kilogrammes, which
@@ -5445,8 +5325,7 @@ to resale, or imports the goods referred to in subsection
 specified in paragraph 6(1)(e) of Schedule 1 who acquires
 or purchases margin scheme goods for the purpose of the
 117
-Pt. 10 S.87
-Value-Added Tax Consolidation Act [2010.]
+[ No. 31. ] Value-Added Tax Consolidation Act [2010.]
 2010 .
 supply thereof as part of an agreement of the kind
 referred to in section 19(1)(c) ,
@@ -5499,7 +5378,7 @@ with subsection (4) , the dealer may, notwithstanding subsection
 (4)(b) , in respect of any individual supply of the goods specified in
 subsection (4)(a) , opt not to apply the margin scheme to that supply,
 118
-Pt. 10 S.87
+[2010.] Value-Added Tax Consolidation Act [ No. 31. ]
 2010 .
 and in such case the right to deduction of the tax charged on the
 purchase, intra-Community acquisition or importation of those goods
@@ -5551,8 +5430,7 @@ and
 (ii) where the taxable dealer referred to in subparagraph
 (i) makes supplies in any taxable period which are
 119
-Pt. 10 S.87
-Value-Added Tax Consolidation Act [2010.]
+[ No. 31. ] Value-Added Tax Consolidation Act [2010.]
 2010 .
 subject to different rates of tax, that taxable dealer
 shall calculate separate aggregate margins for that
@@ -5604,7 +5482,7 @@ or in part of the hiring of motor vehicles, or
 (iii) for use, in a driving school business, for giving driv-
 ing instruction,
 120
-Pt. 10 S.87
+[2010.] Value-Added Tax Consolidation Act [ No. 31. ]
 2010 .
 or
 ( b ) goods used by that person solely in the course of an
@@ -5646,16 +5524,14 @@ referred to at clause (I) , and
 dealer in respect of the registration of that
 means of transport.
 
-Margin scheme —
+Margin scheme — travel agents.
 88 .—(1) In this section—
-travel agents.
 “bought-in services” means goods or services which a travel agent
 purchases for the direct benefit of a traveller—
 ( a ) from another taxable person, or
 ( b ) from a person engaged in business outside the State;
 121
-Pt. 10 S.88
-Value-Added Tax Consolidation Act [2010.]
+[ No. 31. ] Value-Added Tax Consolidation Act [2010.]
 2010 .
 “margin scheme services” means bought-in services supplied by a
 travel agent to a traveller;
@@ -5703,7 +5579,7 @@ and Chapter 1 of Part 8 , a travel agent shall not be entitled to a
 deduction or a refund of tax borne or paid in respect of bought-in
 services supplied by the travel agent as margin scheme services.
 122
-Pt. 10 S.88
+[2010.] Value-Added Tax Consolidation Act [ No. 31. ]
 2010 .
 (7) Where a travel agent supplies margin scheme services together
 with other goods or services to a traveller for a total consideration,
@@ -5736,9 +5612,8 @@ or 77 .
 they consider necessary for the purposes of the operation of this
 section, including provisions for simplified accounting arrangements.
 
-Margin scheme —
+Margin scheme — auctioneers.
 89 .—(1) In this section—
-auctioneers.
 “auctioneer” means an accountable person who, in the course or
 furtherance of business, acting on behalf of another person pursuant
 to a contract under which commission is payable on purchase or sale,
@@ -5758,8 +5633,7 @@ tion while acting on behalf of a principal who is—
 ( a ) a person who was not entitled to deduct, under Chapter 1
 of Part 8 , any tax in respect of that person’s purchase,
 123
-Pt. 10 S.89
-Value-Added Tax Consolidation Act [2010.]
+[ No. 31. ] Value-Added Tax Consolidation Act [2010.]
 2010 .
 intra-Community acquisition or importation of those
 goods where that person is neither—
@@ -5809,7 +5683,7 @@ of the supply of the auction scheme goods.
 (5) Notwithstanding Chapter 2 of Part 9 , an auctioneer shall not,
 in relation to any supply to which the auction scheme has been
 124
-Pt. 10 S.89
+[2010.] Value-Added Tax Consolidation Act [ No. 31. ]
 2010 .
 applied, indicate separately the amount of tax chargeable in respect
 of the supply on any invoice or other document in lieu thereof issued
@@ -5857,8 +5731,7 @@ ing in the name and for the account of that other person;
 “investment gold” means—
 (i) gold in the form of—
 125
-Pt. 10 S.90
-Value-Added Tax Consolidation Act [2010.]
+[ No. 31. ] Value-Added Tax Consolidation Act [2010.]
 2010 .
 (I) a bar, or
 (II) a wafer,
@@ -5907,7 +5780,7 @@ the person’s right to exemption from tax in respect of
 a supply of investment gold, then, for the purposes of
 this Act—
 126
-Pt. 10 S.90
+[2010.] Value-Added Tax Consolidation Act [ No. 31. ]
 2010 .
 (i) the person to whom the supply of investment gold is
 made shall, in relation thereto—
@@ -5957,8 +5830,7 @@ gold) by him or her, and
 (iii) the tax paid or deferred on the importation by the
 person of gold (other than investment gold),
 127
-Pt. 10 S.90
-Value-Added Tax Consolidation Act [2010.]
+[ No. 31. ] Value-Added Tax Consolidation Act [2010.]
 2010 .
 where that gold is subsequently transformed into invest-
 ment gold and that person’s subsequent supply of that
@@ -6011,7 +5883,7 @@ munity acquisition of goods by him or her, and
 (iii) the tax paid or deferred by the person on the import-
 ation of goods by him or her,
 128
-Pt. 10 S.90
+[2010.] Value-Added Tax Consolidation Act [ No. 31. ]
 2010 .
 where those goods or services are linked to the pro-
 duction or transformation of that gold and that person’s
@@ -6026,9 +5898,8 @@ to be linked, amounts to at least € 15,000, and
 to whom the investment gold is so supplied as if they
 were records to be kept in accordance with section 85(3) .
 
-Electronic services
+Electronic services scheme.
 91 .—(1) In this section—
-scheme.
 “electronic services scheme” means the special arrangements for the
 taxation of electronically supplied services provided for in Articles
 358 to 369 of the VAT Directive;
@@ -6061,8 +5932,7 @@ lished person may opt to apply the electronic services scheme to his
 or her supplies of electronic services to non-taxable persons within
 the Community.
 129
-Pt. 10 S.91
-Value-Added Tax Consolidation Act [2010.]
+[ No. 31. ] Value-Added Tax Consolidation Act [2010.]
 2010 .
 (3) The Revenue Commissioners shall set up and maintain a regis-
 ter (referred to in this section as an “identification register”) of non-
@@ -6111,7 +5981,7 @@ ance with the provisions implementing Article
 58 of the VAT Directive in such other
 Member States.
 130
-Pt. 10 S.91
+[2010.] Value-Added Tax Consolidation Act [ No. 31. ]
 2010 .
 ( b ) Where an identified person has not made any such elec-
 tronic supplies to non-taxable persons into the Com-
@@ -6163,8 +6033,7 @@ required to be furnished in accordance with Chapter 3 of Part 9 .
 6
 OJ No. L326, 21.11.1986, p.40
 131
-Pt. 10 S.91
-Value-Added Tax Consolidation Act [2010.]
+[ No. 31. ] Value-Added Tax Consolidation Act [2010.]
 2010 .
 (12) ( a ) An identified person shall—
 (i) keep full and true records of all transactions covered
@@ -6205,14 +6074,12 @@ electronic services scheme.
 necessary for the purpose of giving effect to the electronic services
 scheme.
 
-Suspension
+Suspension arrangements for alcohol products.
 92 .—(1) In this section—
-arrangements for
-alcohol products.
 “alcohol products” has the meaning assigned to it by section 73(1)
 of the Finance Act 2003;
 132
-Pt. 10 S.92
+[2010.] Value-Added Tax Consolidation Act [ No. 31. ]
 2010 .
 “suspension arrangement” means an arrangement under which excis-
 able products are produced, processed, held or moved, excise duty
@@ -6262,8 +6129,7 @@ excise and the management thereof and of any instru-
 ment relating to duties of excise made under statute,
 shall, with any necessary modifications and exceptions as
 133
-Pt. 10 S.92
-Value-Added Tax Consolidation Act [2010.]
+[ No. 31. ] Value-Added Tax Consolidation Act [2010.]
 2010 .
 may be specified in regulations, apply to such tax as if it
 were a duty of excise, and
@@ -6273,10 +6139,8 @@ the Revenue Commissioners.
 PART 11
 Immovable Goods
 
-Supply of and (10) and s. 4
+Supply of immovable goods (old rules).
 93 .—(1) ( a ) In this section—
-immovable goods
-(old rules).
 (i) “interest”, in relation to immovable goods—
 (I) subject to clause (II) , means an estate or interest
 in those goods which, when it was created, was
@@ -6316,7 +6180,7 @@ ary interest or of an interest derived entirely from
 that reversionary interest shall be deemed to be a
 supply of immovable goods to which tax is not
 134
-Pt. 11 S.93
+[2010.] Value-Added Tax Consolidation Act [ No. 31. ]
 2010 .
 charged if, since the date the first-mentioned interest
 was created, those goods have not been developed
@@ -6365,8 +6229,7 @@ to 1 July 2008,
 (iii) the person who acquired that interest is obliged to pay
 rent to another person (in this subsection referred to
 135
-Pt. 11 S.93
-Value-Added Tax Consolidation Act [2010.]
+[ No. 31. ] Value-Added Tax Consolidation Act [2010.]
 2010 .
 as the “landlord”) under the terms and conditions
 laid down in respect of that interest,
@@ -6399,10 +6262,8 @@ entitled to deduct tax, in accordance with Chapter 1
 of Part 8 , as if those post-letting expenses were for
 the purposes of the landlord’s taxable supplies.
 
-Supplies of
+Supplies of immovable goods (new rules).
 94 .—(1) In this section—
-immovable goods
-(new rules).
 “completed”, in respect of immovable goods, means that the
 development of those goods has reached the state, apart from only
 such finishing or fitting work that would normally be carried out by
@@ -6417,7 +6278,7 @@ ment of those goods was granted, and
 ( b ) where those goods are let, occupied and fully in such use
 by the tenant.
 136
-Pt. 11 S.94
+[2010.] Value-Added Tax Consolidation Act [ No. 31. ]
 2010 .
 (2) Subject to subsections (3) , (5) , (8) and (9) and section 95(7)(a) ,
 tax is not chargeable on the supply of immovable goods—
@@ -6462,8 +6323,7 @@ and
 (iii) if any development of that building occurred after
 that completion—
 137
-Pt. 11 S.94
-Value-Added Tax Consolidation Act [2010.]
+[ No. 31. ] Value-Added Tax Consolidation Act [2010.]
 2010 .
 (I) such development did not and was not intended
 to adapt the building for a materially altered
@@ -6511,7 +6371,7 @@ not being the accountable person referred to in that
 section, who disposes of the immovable goods that are
 referred to in paragraph (b) .
 138
-Pt. 11 S.94
+[2010.] Value-Added Tax Consolidation Act [ No. 31. ]
 2010 .
 ( b ) Where a supply of immovable goods is a supply to which
 section 22(3) applies and that supply would otherwise be
@@ -6556,8 +6416,7 @@ of those immovable goods.
 “relevant supply” has the meaning assigned to it by
 section 16(1)(a) .
 139
-Pt. 11 S.94
-Value-Added Tax Consolidation Act [2010.]
+[ No. 31. ] Value-Added Tax Consolidation Act [2010.]
 2010 .
 ( b ) Where a taxable person supplies immovable goods to
 another person in circumstances where that supply would
@@ -6609,18 +6468,14 @@ by the recipient in relation to a relevant supply which
 would otherwise be exempt in accordance with subsection
 (2)(b) to (e) .
 140
-Pt. 11
+[2010.] Value-Added Tax Consolidation Act [ No. 31. ]
 2010 .
 
-Transitional
+Transitional measures for supplies of immovable goods.
 95 .—(1) This section applies to—
-measures for
-supplies of
 ( a ) immovable goods which are acquired or developed by a
-immovable goods.
 taxable person prior to 1 July 2008, being completed
-immovable goods before 1 July 2008, and have not been [VATA s. 4(3)( ab )
-(in part) and (8) (in
+immovable goods before 1 July 2008, and have not been
 disposed of by the taxable person prior to that date, until
 such time as those goods have been disposed of by that
 taxable person on or after that date, and
@@ -6666,8 +6521,7 @@ goods to which this section applies,
 12 of the repealed enactment, on that person’s
 acquisition or development of those goods, and
 141
-Pt. 11 S.95
-Value-Added Tax Consolidation Act [2010.]
+[ No. 31. ] Value-Added Tax Consolidation Act [2010.]
 2010 .
 (iii) makes a letting of those immovable goods to which
 paragraph 11 of Schedule 1 applies,
@@ -6713,7 +6567,7 @@ scheme applied to that transaction.
 (7) In the case of an assignment or surrender of an interest in
 immovable goods referred to in subsection (5) —
 142
-Pt. 11 S.95
+[2010.] Value-Added Tax Consolidation Act [ No. 31. ]
 2010 .
 ( a ) tax shall be chargeable where the person who makes the
 assignment or surrender was entitled to deduct in accord-
@@ -6764,8 +6618,7 @@ kind referred to in paragraphs 1 , 5(4) , 6 , 7 , 8 , 11 and
 14(3) of Schedule 1 , in the course or furtherance of
 business,
 143
-Pt. 11 S.95
-Value-Added Tax Consolidation Act [2010.]
+[ No. 31. ] Value-Added Tax Consolidation Act [2010.]
 2010 .
 then—
 (I) the person to whom those goods are supplied shall be
@@ -6817,7 +6670,7 @@ or surrendered containing the following information:
 (i) the amount of tax due and payable on that assignment
 or surrender; and
 144
-Pt. 11 S.95
+[2010.] Value-Added Tax Consolidation Act [ No. 31. ]
 2010 .
 (ii) the number of intervals remaining in the adjustment
 period as determined in accordance with subsection
@@ -6868,8 +6721,7 @@ adjustment period applicable to those immovable goods.
 able goods or interests in immovable goods to which this section
 applies—
 145
-Pt. 11 S.95
-Value-Added Tax Consolidation Act [2010.]
+[ No. 31. ] Value-Added Tax Consolidation Act [2010.]
 2010 .
 ( a ) any interest in immovable goods to which this section
 applies shall be treated as a capital good,
@@ -6921,7 +6773,7 @@ the capital goods shall be treated as the total tax incurred,
 in the adjustment period referred to in paragraph (c) shall
 be treated as the base tax amount,
 146
-Pt. 11 S.95
+[2010.] Value-Added Tax Consolidation Act [ No. 31. ]
 2010 .
 ( f ) each year in the adjustment period referred to in para-
 graph (c) shall be treated as an interval,
@@ -6974,22 +6826,15 @@ by Chapter 2 of Part 8 .
 made an adjustment in accordance with section 61(7) in
 respect of those goods.
 147
-Pt. 11
-Value-Added Tax Consolidation Act [2010.]
+[ No. 31. ] Value-Added Tax Consolidation Act [2010.]
 2010 .
 
-Waiver of
+Waiver of exemption under old rules.
 96 .—(1) In this section “waiver” means a waiver of exemption
-exemption under
 from tax under section 7(1) of the repealed enactment.
-old rules.
 (2) A waiver shall cease to have effect at the end of the taxable
-part), s. 7(3), (4)
 period during which it is cancelled in accordance with subsection (3) .
-and (6), s. 7B(1) to
-(5), s. 7B(6) (in
 (3) Provision may be made by regulations for the cancellation, at
-part) and s. 7B(9)
 the request of a person or in accordance with subsection (8) or (12) ,
 of a waiver by the person and for the payment by that person to the
 Revenue Commissioners as a condition of cancellation of such sum
@@ -7035,7 +6880,7 @@ person was obliged to take into account when that person made that
 cancellation, shall be treated as if it ended on the date on which that
 cancellation had effect.
 148
-Pt. 11 S.96
+[2010.] Value-Added Tax Consolidation Act [ No. 31. ]
 2010 .
 (6) Subsections (6) to (12) apply to an accountable person (in
 those subsections referred to as a “landlord”)—
@@ -7087,8 +6932,7 @@ graph (a) —
 (I) on 1 July 2008 that letting had been in place since
 18 February 2008, or
 149
-Pt. 11 S.96
-Value-Added Tax Consolidation Act [2010.]
+[ No. 31. ] Value-Added Tax Consolidation Act [2010.]
 2010 .
 (II) the immovable goods subject to the letting are
 owned by that landlord on 18 February 2008 and
@@ -7135,7 +6979,7 @@ then the person referred to in section 15(1)(a)(i) in respect of that
 group shall be liable to pay the amount as specified in subsection
 (8)(a) as if it were tax due in accordance with Chapter 3 of Part 9 in
 150
-Pt. 11 S.96
+[2010.] Value-Added Tax Consolidation Act [ No. 31. ]
 2010 .
 the taxable period during which that landlord became a person in
 that group.
@@ -7162,10 +7006,10 @@ payable in accordance with subsection (3) in respect
 of the cancellation of that waiver, as if it were tax
 due by that landlord for the taxable period in which
 the waiver of exemption is so treated as cancelled.
-97 .—(1) ( a ) (i) Tax shall be chargeable in accordance with this Act Option to tax
-letting of
+
+Option to tax letting of immovable goods.
+97 .—(1) ( a ) (i) Tax shall be chargeable in accordance with this Act
 on the supply of a service to which paragraph 11 of
-immovable goods.
 Schedule 1 relates (in this section referred to as a
 “letting”) where, subject to subsections (2) and (4) ,
 the supplier (in this section referred to as a
@@ -7188,8 +7032,7 @@ those immovable goods, and
 that person makes a letting in respect of which
 neither of the conditions of paragraph (c) is fulfilled.
 151
-Pt. 11 S.97
-Value-Added Tax Consolidation Act [2010.]
+[ No. 31. ] Value-Added Tax Consolidation Act [2010.]
 2010 .
 ( c ) A landlord’s option to tax in respect of a letting is exer-
 cised by—
@@ -7240,7 +7083,7 @@ those goods by way of letting or otherwise.
 ( b ) (i) Subject to subparagraph (ii) , paragraph (a)(i) and
 subsection (1)(d)(iii) shall not apply where the
 152
-Pt. 11 S.97
+[2010.] Value-Added Tax Consolidation Act [ No. 31. ]
 2010 .
 immovable goods which are the subject of the letting
 are used for the purposes of supplies or activities
@@ -7295,8 +7138,7 @@ in partnership;
 person is connected with another person if he or she
 has control over that other person, or if the other
 153
-Pt. 11 S.97
-Value-Added Tax Consolidation Act [2010.]
+[ No. 31. ] Value-Added Tax Consolidation Act [2010.]
 2010 .
 person has control over the first-mentioned person,
 or if both persons are controlled by another person
@@ -7346,7 +7188,7 @@ residential purposes, including any such letting—
 (S.I. No. 146 of 1993),
 ( c ) governed by section 10 of the Housing Act 1988,
 154
-Pt. 11 S.97
+[2010.] Value-Added Tax Consolidation Act [ No. 31. ]
 2010 .
 ( d ) of a dwelling to which Part II of the Housing (Private
 Rented Dwellings) Act 1982 applies, or
@@ -7357,13 +7199,10 @@ cease to have effect to the extent that the immovable goods which
 are the subject of the letting to which the option applies come to be
 used for residential purposes which fall within subsection (4) .
 
-Valuation of an
+Valuation of an interest in immovable goods.
 98 .—(1) In this section—
-interest in
-immovable goods.
 “interest”, in relation to immovable goods, shall be construed in
 accordance with section 93(1) ;
-part) and (10) (in
 “open market value” has the meaning assigned to it by section 36 .
 (2) ( a ) Where the Revenue Commissioners wish to ascertain the
 open market value of an interest in immovable goods,
@@ -7379,13 +7218,13 @@ be made by a person named by them, the costs of that
 valuation shall be defrayed by the Commissioners.
 PART 12
 Refunds and Repayments of Tax
-99 .—(1) Subject to subsections (2) and (3) , where in relation to a General provisions
-on refund of tax.
+
+General provisions on refund of tax.
+99 .—(1) Subject to subsections (2) and (3) , where in relation to a
 return lodged under Chapter 3 of Part 9 or a claim made in accord-
 ance with regulations, it is shown to the satisfaction of the Revenue
 Commissioners that, as respects any taxable period, the amount of
-(1B), (4), (6) and
-tax (if any) actually paid to the Collector-General in accordance with (7)]
+tax (if any) actually paid to the Collector-General in accordance with
 Chapter 3 of Part 9 together with the amount of tax (if any) which
 qualified for deduction under Chapter 1 of Part 8 exceeds the tax (if
 any) which would properly be payable if no deduction were made
@@ -7403,8 +7242,7 @@ appropriate, at the time of such application.
 (3) ( a ) Subject to paragraph (b) , the Revenue Commissioners
 may, where it appears requisite to them to do so for the
 155
-Pt. 12 S.99
-Value-Added Tax Consolidation Act [2010.]
+[ No. 31. ] Value-Added Tax Consolidation Act [2010.]
 2010 .
 protection of the revenue, require as a condition for mak-
 ing a refund in accordance with subsection (1) the giving
@@ -7457,7 +7295,7 @@ as the Revenue Commissioners may request.
 (3) ( a ) For the purposes of determining whether a refund of an
 overpaid amount or part thereof would result in the
 156
-Pt. 12 S.100
+[2010.] Value-Added Tax Consolidation Act [ No. 31. ]
 2010 .
 unjust enrichment of a claimant, the Revenue Commis-
 sioners shall have regard to—
@@ -7501,9 +7339,8 @@ of that refund, then any amount not so repaid shall, for the purposes
 of this Act, be treated as if it were tax due by the claimant for the
 taxable period within which that day falls.
 
-Intra-Community
+Intra-Community refunds of tax.
 101 .—(1) For the purposes of this section—
-refunds of tax.
 “applicant” means a taxable person who—
 ( a ) not being established in the Member State of refund, but
 being established in another Member State, and
@@ -7511,8 +7348,7 @@ being established in another Member State, and
 deduction in that other Member State,
 makes a refund application;
 157
-Pt. 12 S.101
-Value-Added Tax Consolidation Act [2010.]
+[ No. 31. ] Value-Added Tax Consolidation Act [2010.]
 2010 .
 “deductible transactions” means transactions that give rise to a right
 of deduction in the Member State concerned;
@@ -7566,7 +7402,7 @@ for or has already been refunded.
 cation during the calendar year following the period for
 which the relevant refund application was made or, if the
 158
-Pt. 12 S.101
+[2010.] Value-Added Tax Consolidation Act [ No. 31. ]
 2010 .
 applicant makes no refund applications during that calen-
 dar year, by lodging a separate declaration via the elec-
@@ -7619,8 +7455,7 @@ subsection—
 (ii) notify their decision to the applicant by electronic
 means.
 159
-Pt. 12 S.101
-Value-Added Tax Consolidation Act [2010.]
+[ No. 31. ] Value-Added Tax Consolidation Act [2010.]
 2010 .
 ( d ) (i) At any time within 4 months after the date on which
 they received a refund application from an applicant
@@ -7672,7 +7507,7 @@ they shall—
 (ii) notify their decision to the applicant by electronic
 means,
 160
-Pt. 12 S.101
+[2010.] Value-Added Tax Consolidation Act [ No. 31. ]
 2010 .
 within 8 months after the date on which they received the
 refund application.
@@ -7725,8 +7560,7 @@ within the time limits prescribed by subsection (9) , they
 shall pay an amount of interest to the applicant calculated
 at the rate provided for in section 105(4) from the day
 161
-Pt. 12 S.101
-Value-Added Tax Consolidation Act [2010.]
+[ No. 31. ] Value-Added Tax Consolidation Act [2010.]
 2010 .
 following the last day of the period within which payment
 of the amount due is required to be made to the day on
@@ -7748,12 +7582,9 @@ that is exempted in the Member State of supply in
 accordance with Article 144, 146, 148, 149, 151, 153, 159
 or 160 of the VAT Directive.
 
-Refunds to taxable Ministerial refund
+Refunds to taxable persons established outside the Community.
 102 .—(1) In this section “deductible tax”, in relation to a person
-persons established
 to whom this section applies—
-outside the
-Community.
 ( a ) subject to paragraph (b) , means tax chargeable (including
 any flat-rate addition) in respect of goods or services used
 by the person for the purposes of any business carried on
@@ -7774,15 +7605,14 @@ services for which, in accordance with section 10 , 12 , 13 ,
 16(3)(b) or 17(1) , the person to whom they are supplied
 is solely liable for the tax that is chargeable).
 
-Ministerial refund
+Ministerial refund orders.
 103 .—(1) The Minister may by order provide that a person who
-orders.
 fulfils to the satisfaction of the Revenue Commissioners such con-
 ditions as may be specified in the order shall be entitled to be repaid
 so much, as is specified in the order, of any tax borne or paid by the
 person as does not qualify for deduction under Chapter 1 of Part 8 .
 162
-Pt. 12 S.103
+[2010.] Value-Added Tax Consolidation Act [ No. 31. ]
 2010 .
 (2) The Minister may by order amend or revoke an order under
 this section, including an order under this subsection.
@@ -7794,15 +7624,13 @@ order is passed by Dáil Éireann within the next 21 days on which
 Dáil Éireann has sat after the order is laid before it, the order shall
 be annulled accordingly, but without prejudice to the validity of any-
 thing previously done under it.
-104 .—(1) ( a ) In accordance with regulations, the Revenue Commis- Repayments in
-specific
+
+Repayments in specific circumstances.
+104 .—(1) ( a ) In accordance with regulations, the Revenue Commis-
 sioners shall repay, to a person to whom this subsection
-circumstances.
 applies, the residual tax included in the consideration for
 supply of a new means of transport where such new
-13(1)( b ) and ( c ),
 means of transport is subsequently dispatched or trans-
-(2)( b ) and ( c ) and
 ported to another Member State.
 ( b ) This subsection applies to a person who is not entitled to
 a deduction under Chapter 1 of Part 8 of the tax borne
@@ -7835,8 +7663,7 @@ respect of that supply because that card was
 acquired for the purposes of resale,
 and
 163
-Pt. 12 S.104
-Value-Added Tax Consolidation Act [2010.]
+[ No. 31. ] Value-Added Tax Consolidation Act [2010.]
 2010 .
 (ii) that telephone card is subsequently used outside the
 Community for the purpose of accessing a telecom-
@@ -7882,7 +7709,7 @@ institution or society but only if—
 its primary object the amelioration of the lot of blind per-
 sons, and
 164
-Pt. 12 S.104
+[2010.] Value-Added Tax Consolidation Act [ No. 31. ]
 2010 .
 ( b ) it shows, to the satisfaction of the Revenue Commis-
 sioners, that the goods in question are intended for the
@@ -7909,9 +7736,8 @@ of Schedule 2 ,
 plant or equipment used in a vessel used, for the purposes
 of commercial sea fishing.
 
-Interest on refunds
+Interest on refunds of tax.
 105 .—(1) For the purposes of this section—
-of tax.
 “claimant” means a person who submits a valid claim for a
 refundable amount;
 “overpaid amount” means an amount which is a refundable amount
@@ -7934,8 +7760,7 @@ by the Revenue Commissioners on that amount from—
 ( a ) in the case of an overpaid amount, the day that overpaid
 amount was received by the Revenue Commissioners,
 165
-Pt. 12 S.105
-Value-Added Tax Consolidation Act [2010.]
+[ No. 31. ] Value-Added Tax Consolidation Act [2010.]
 2010 .
 ( b ) (i) subject to subparagraph (ii) , in the case of any other
 refundable amount, the 19th day of the month fol-
@@ -7983,19 +7808,19 @@ to the validity of anything previously done under it.
 (8) The Revenue Commissioners may make regulations as neces-
 sary governing the operation of this section.
 166
+[2010.] Value-Added Tax Consolidation Act [ No. 31. ]
 2010 .
 PART 13
 Administration and General
 Chapter 1
 Administration
-106 .—Tax is hereby placed under the care and management of the Care and
-management of tax.
+
+Care and management of tax.
+106 .—Tax is hereby placed under the care and management of the
 Revenue Commissioners.
 
-Officer responsible Inspection and
+Officer responsible in case of body of persons.
 107 .—(1) In this section “provisions relating to tax” means—
-in case of body of
-persons.
 ( a ) the provisions of this Act and regulations, and
 ( b ) the provisions relating to tax of any subsequent Act.
 (2) The secretary or other officer acting as secretary for the time
@@ -8011,9 +7836,8 @@ in pursuance of this section.
 any of the provisions relating to tax may be given to the secretary or
 other officer acting as secretary for the time being of that body.
 
-Inspection and
+Inspection and removal of records.
 108 .—(1) In this section—
-removal of records.
 “authorised officer” means an officer of the Revenue Commissioners
 authorised by them in writing for the purposes of this section;
 “records” means any document, or any other written or printed
@@ -8035,8 +7859,7 @@ business, to produce any books, records, accounts or
 other documents relating to the business or to any other
 business which the authorised officer has reason to
 167
-Pt. 13 S.108
-Value-Added Tax Consolidation Act [2010.]
+[ No. 31. ] Value-Added Tax Consolidation Act [2010.]
 2010 .
 believe may be, or have been, connected with such busi-
 ness or have, or have had, trading relations with such
@@ -8090,7 +7913,7 @@ employed by the person carrying on the business or who
 is associated with that person in the carrying on of the
 business, to give the authorised officer all reasonable
 168
-Pt. 13 S.108
+[2010.] Value-Added Tax Consolidation Act [ No. 31. ]
 2010 .
 assistance, including providing information and expla-
 nations and furnishing documents in connection with the
@@ -8125,10 +7948,10 @@ officer in the exercise of his or her powers under this section.
 enters any premises, carries out any search or requests production of
 any documents, he or she shall, on request, show his or her authoris-
 ation for the purpose of this section to the person concerned.
-109 .—(1) The Revenue Commissioners may, where it appears Security to be given
-by certain taxable
+
+Security to be given by certain taxable persons.
+109 .—(1) The Revenue Commissioners may, where it appears
 requisite to them to do so for the protection of the revenue, require
-persons.
 an accountable person, as a condition of the person supplying goods
 or services under a taxable supply, to give security, or further secur-
 ity, of such amount and in such manner and form as they may deter-
@@ -8141,15 +7964,13 @@ missioners within the period of 21 days from the date of the service
 of the notice, appeal the requirement of giving any security under
 subsection (1) to the Appeal Commissioners.
 169
-Pt. 13
-Value-Added Tax Consolidation Act [2010.]
+[ No. 31. ] Value-Added Tax Consolidation Act [2010.]
 2010 .
 Chapter 2
 Estimation, assessment and time limits
 
-Estimation of tax
+Estimation of tax due.
 110 .—(1) ( a ) Subject to paragraph (b) , where within the time pre-
-due.
 scribed by section 76 or 77 , as may be appropriate, an
 accountable person fails to furnish in accordance with the
 relevant regulations a return of the tax payable by that
@@ -8196,12 +8017,13 @@ and costs which may have been incurred in connection
 with the default, the notice shall stand discharged and any
 excess of tax which may have been paid shall be repaid.
 170
-Pt. 13 S.110
+[2010.] Value-Added Tax Consolidation Act [ No. 31. ]
 2010 .
 (3) A notice given by the Revenue Commissioners under subsec-
 tion (1) may extend to 2 or more taxable periods.
-111 .—(1) Where, in relation to any period, the inspector of taxes, Assessment of tax
-due.
+
+Assessment of tax due.
+111 .—(1) Where, in relation to any period, the inspector of taxes,
 or such other officer as the Revenue Commissioners may authorise
 to exercise the powers conferred by this section (in this section
 referred to as “other officer”), has reason to believe that an amount
@@ -8248,8 +8070,7 @@ from the date of the service of the notice under subsec-
 tion (1) expired or the appeal was determined by agree-
 ment or otherwise, whichever taxable period is the later.
 171
-Pt. 13 S.111
-Value-Added Tax Consolidation Act [2010.]
+[ No. 31. ] Value-Added Tax Consolidation Act [2010.]
 2010 .
 (3) Where a person appeals an assessment under subsection (1) ,
 within the time limits provided for in subsection (2) , then—
@@ -8265,13 +8086,10 @@ of the date of such determination,
 interest in accordance with section 114 shall not be
 chargeable from the date of raising of the assessment.
 
-Generation of Time limits.
+Generation of electronic, etc. estimates and assessments.
 112 .—For the purposes of this Act and regulations, where an
-electronic, etc.
 officer of the Revenue Commissioners nominated in accordance with
-estimates and
 regulations for the purposes of section 110 or an inspector of taxes
-assessments.
 or an officer of the Revenue Commissioners authorised for the pur-
 poses of section 111 , or any other officer of the Revenue Commis-
 sioners acting with the knowledge of such nominated officer or such
@@ -8305,7 +8123,7 @@ ment, statement, information, book, document, record or
 declaration required to be given, furnished, made or pro-
 duced by or under this Act or regulations.
 172
-Pt. 13 S.113
+[2010.] Value-Added Tax Consolidation Act [ No. 31. ]
 2010 .
 ( b ) A person shall be deemed not to have failed to do any-
 thing required to be done within a limited time if the
@@ -8359,8 +8177,7 @@ may be made at any time before the expiration of 2 years
 after the end of the year in which the corrective affidavit
 was lodged or the additional affidavit was or is delivered.
 173
-Pt. 13 S.113
-Value-Added Tax Consolidation Act [2010.]
+[ No. 31. ] Value-Added Tax Consolidation Act [2010.]
 2010 .
 (4) Subject to section 116(10) , proceedings for the recovery of any
 penalty under this Act may be commenced at any time within 6 years
@@ -8368,11 +8185,9 @@ next after the date on which it was incurred.
 Chapter 3
 Interest and penalties
 
-Interest payable by
+Interest payable by accountable persons.
 114 .—(1) Where any amount of tax becomes payable under
-accountable
 section 76 or 77 and is not paid, simple interest on the amount shall
-persons.
 be paid by the accountable person, and such interest shall be calcu-
 lated from the date on which the amount became payable and at a
 rate of 0.0274 per cent for each day or part of a day during which
@@ -8416,7 +8231,7 @@ taxable period are deemed to have been paid on the
 due date for submission of that return for that tax-
 able period,
 174
-Pt. 13 S.114
+[2010.] Value-Added Tax Consolidation Act [ No. 31. ]
 2010 .
 then that sum of the amounts of interest is payable.
 (4) Subsections (1) and (2) shall apply—
@@ -8430,7 +8245,9 @@ or not) as if the tax were tax which the person was liable
 to pay for the taxable period or, as the case may be, the
 later or latest taxable period included in the period com-
 prised in the notice.
-115 .—(1) A person who does not comply with section 65(3) , 82 , Penalties generally.
+
+Penalties generally.
+115 .—(1) A person who does not comply with section 65(3) , 82 ,
 86(1) or 124(7)(a) or Chapter 2 , 3 or 7 of Part 9 or any provision of
 regulations in regard to any matter to which those sections or Chap-
 ters relate shall be liable to a penalty of € 4,000.
@@ -8464,8 +8281,7 @@ be liable to a penalty of € 4,000 in respect of each such supply.
 section 124(7)(b) shall be liable to a penalty of € 4,000.
 (9) In proceedings for recovery of a penalty under this Act—
 175
-Pt. 13 S.115
-Value-Added Tax Consolidation Act [2010.]
+[ No. 31. ] Value-Added Tax Consolidation Act [2010.]
 2010 .
 ( a ) a certificate signed by an officer of the Revenue Commis-
 sioners which certifies that the officer has inspected the
@@ -8505,13 +8321,9 @@ dence without proof and shall be deemed, until the con-
 trary is proved, to have been signed by an officer of the
 Revenue Commissioners.
 
-Penalty for
+Penalty for deliberately or carelessly making incorrect returns, etc.
 116 .—(1) In this section—
-deliberately or
-carelessly making
 “carelessly” means failure to take reasonable care;
-incorrect returns,
-etc.
 “liability to tax” means a liability to the amount of the difference
 specified in subsection (11) or (12) arising from any matter referred
 to in subsection (2) , (3) , (5) or (6) ;
@@ -8525,7 +8337,7 @@ of the date on which an investigation or inquiry into any
 matter occasioning a liability to tax of that person will
 start, and
 176
-Pt. 13 S.116
+[2010.] Value-Added Tax Consolidation Act [ No. 31. ]
 2010 .
 ( b ) the date that the investigation or inquiry starts;
 “qualifying disclosure”, in relation to a person, means—
@@ -8573,8 +8385,7 @@ date on which an investigation or inquiry into any matter
 occasioning a liability to tax of that person will start,
 before that notification.
 177
-Pt. 13 S.116
-Value-Added Tax Consolidation Act [2010.]
+[ No. 31. ] Value-Added Tax Consolidation Act [2010.]
 2010 .
 (2) Where a person furnishes a return or makes a claim or declar-
 ation for the purposes of this Act or of regulations and, in so doing,
@@ -8618,7 +8429,7 @@ reduced to 40 per cent in cases where the excess referred
 to in subparagraph (I) of paragraph (b) applies and to 20
 per cent in other cases.
 178
-Pt. 13 S.116
+[2010.] Value-Added Tax Consolidation Act [ No. 31. ]
 2010 .
 ( b ) Where the person liable to the penalty cooperated fully
 with any investigation or inquiry started by the Revenue
@@ -8666,8 +8477,7 @@ deliberately.
 subsection (2) or (5) was furnished or made by a person, neither
 deliberately nor carelessly, and it comes to the person’s notice that
 179
-Pt. 13 S.116
-Value-Added Tax Consolidation Act [2010.]
+[ No. 31. ] Value-Added Tax Consolidation Act [2010.]
 2010 .
 it was incorrect, then, unless the error is remedied without unreason-
 able delay, the return, claim or declaration shall be treated for the
@@ -8716,7 +8526,7 @@ tuted for “20 per cent”, and
 (ii) clause (C) shall apply as if “20 per cent” were substi-
 tuted for “5 per cent”.
 180
-Pt. 13 S.116
+[2010.] Value-Added Tax Consolidation Act [ No. 31. ]
 2010 .
 (14) Where a third or subsequent qualifying disclosure is made by
 a person within 5 years of that person’s second qualifying disclosure,
@@ -8767,8 +8577,7 @@ been chargeable on an intra-Community acquisition of those goods
 if that declaration had been the declaration of a correct registration
 number.
 181
-Pt. 13 S.116
-Value-Added Tax Consolidation Act [2010.]
+[ No. 31. ] Value-Added Tax Consolidation Act [2010.]
 2010 .
 (20) ( a ) Where, in pursuance of regulations made for the purposes
 of section 57(1) , tax on the supply of any goods has been
@@ -8817,7 +8626,7 @@ Directive, and not for any bona fide business
 purpose.
 ( b ) Where goods—
 182
-Pt. 13 S.116
+[2010.] Value-Added Tax Consolidation Act [ No. 31. ]
 2010 .
 (i) were supplied at the rate of zero per cent subject to
 the condition that they were to be dispatched or
@@ -8868,8 +8677,7 @@ for the purposes of those subsections and any provisions in relation
 to offences under those Acts shall apply, with any necessary modifi-
 cations, in relation to those subsections.
 183
-Pt. 13 S.116
-Value-Added Tax Consolidation Act [2010.]
+[ No. 31. ] Value-Added Tax Consolidation Act [2010.]
 2010 .
 (23) Where an officer authorised by the Revenue Commissioners
 for the purposes of this subsection or a member of the Garda Síoch-
@@ -8879,20 +8687,16 @@ Act 1997 in relation to tax, by a person who is not established in the
 State, or whom that officer believes is likely to leave the State, that
 officer may arrest the person.
 
-Penalty for assisting Mitigation and Appeals.
+Penalty for assisting in making incorrect returns, etc.
 117 .—Any person who assists in or induces the making or delivery,
-in making incorrect
 for the purposes of tax, of any return, invoice, claim, credit note,
-returns, etc.
 debit note, receipt, account, voucher, bank statement, estimate, state-
 ment, information, book, document, record or declaration which he
 or she knows to be incorrect shall be liable to a penalty of € 4,000.
 
-Mitigation and Appeals.
+Mitigation and application of penalties.
 118 .—Section 1065 of the Taxes Consolidation Act 1997 shall
-application of
 apply to any penalty incurred under this Act.
-penalties.
 Chapter 4
 Appeals and regulations
 
@@ -8926,7 +8730,7 @@ he or she may, on giving notice in writing to the Revenue Commis-
 sioners within 21 days after the notification of that decision to him
 or her, appeal to the Appeal Commissioners.
 184
-Pt. 13 S.119
+[2010.] Value-Added Tax Consolidation Act [ No. 31. ]
 2010 .
 (3) For the purpose of subsection (1)(f) , a failure by the Revenue
 Commissioners to make a decision in respect of a refund application
@@ -8974,8 +8778,7 @@ an appeal against an assessment to income tax.
 (5) The modifications to the Income Tax Acts for the purposes of
 subsection (4) are—
 185
-Pt. 13 S.119
-Value-Added Tax Consolidation Act [2010.]
+[ No. 31. ] Value-Added Tax Consolidation Act [2010.]
 2010 .
 ( a ) a reference to a year of assessment shall include a refer-
 ence to the periods concerned,
@@ -9025,7 +8828,7 @@ who supplies goods or services and of the liability of an
 accountable person to whom goods or services are sup-
 plied where—
 186
-Pt. 13 S.120
+[2010.] Value-Added Tax Consolidation Act [ No. 31. ]
 2010 .
 (i) goods are returned,
 (ii) the consideration is reduced,
@@ -9071,8 +8874,7 @@ in section 59(2)(d) may be calculated,
 ( c ) the manner in which residual tax referred to in section
 59(2)(l) may be calculated and deducted,
 187
-Pt. 13 S.120
-Value-Added Tax Consolidation Act [2010.]
+[ No. 31. ] Value-Added Tax Consolidation Act [2010.]
 2010 .
 ( d ) the operation of the capital goods scheme and in particular
 the duration of a subsequent interval where the account-
@@ -9120,7 +8922,7 @@ data are required to be issued or transmitted; and
 (iv) such other conditions in relation to the issue or
 receipt, in any form, of an invoice, credit note, debit
 188
-Pt. 13 S.120
+[2010.] Value-Added Tax Consolidation Act [ No. 31. ]
 2010 .
 note and settlement voucher as may be imposed by
 the Revenue Commissioners,
@@ -9167,8 +8969,7 @@ exemption from tax on that person’s supply of services,
 ( g ) the conditions under which a person may claim a refund
 of tax in accordance with section 90(6)(b) , (7)(b) and
 189
-Pt. 13 S.120
-Value-Added Tax Consolidation Act [2010.]
+[ No. 31. ] Value-Added Tax Consolidation Act [2010.]
 2010 .
 (8)(b) , and the manner in which such refund may be
 claimed,
@@ -9214,7 +9015,7 @@ classes as may be specified in the regulations as a person
 carrying on the business of the deceased or incapaci-
 tated person,
 190
-Pt. 13 S.120
+[2010.] Value-Added Tax Consolidation Act [ No. 31. ]
 2010 .
 ( g ) the service of notices.
 (14) As regards Schedule 2 , regulations may provide for—
@@ -9257,8 +9058,7 @@ to—
 ( a ) Council Directive No. 79/1072/EEC of 6 December 1979,
 ( b ) Council Directive No. 86/560/EEC of 17 November 1986,
 191
-Pt. 13 S.120
-Value-Added Tax Consolidation Act [2010.]
+[ No. 31. ] Value-Added Tax Consolidation Act [2010.]
 2010 .
 ( c ) the VAT Directive, and
 ( d ) Council Directive No. 2008/9/EC of 12 February 2008.
@@ -9272,17 +9072,13 @@ PART 14
 Repeals, Consequential Amendments, Transitional Measures
 and Commencement
 
-Definition of Repeal of Value- Consequential
+Definition of “repealed enactment”.
 121 .—In this Part “repealed enactment” means the Value-Added
-“repealed
 Tax Act 1972 repealed by section 122.
-enactment”.
 
-Repeal of Value- Consequential
+Repeal of Value- Added Tax Act 1972, etc.
 122 .—(1) Subject to subsections (2) and (3) , the Value-Added Tax
-Added Tax Act
 Act 1972 is repealed.
-1972, etc.
 (2) ( a ) This Act shall not apply as respects any taxable period
 ending on any date prior to 1 November 2010.
 ( b ) The repealed enactment shall continue to apply as respects
@@ -9303,13 +9099,10 @@ repealed enactment correspond.
 ( b ) Nothing in this subsection shall affect the operation of
 section 124(3) and (4) .
 
-Consequential
+Consequential amendments and repeals and revocations.
 123 .—(1) Schedule 7 , which provides for amendments to other
-amendments and
 enactments consequential on the passing of this Act, shall apply for
-repeals and
 the purposes of this Act.
-revocations.
 (2) The amendment of a statutory instrument effected by subsec-
 tion (1) as read with Schedule 7 does not prevent or restrict the sub-
 sequent amendment or revocation of the instrument by another
@@ -9318,17 +9111,17 @@ statutory instrument.
 8 are hereby repealed to the extent specified in column (3) of that
 Part.
 192
-Pt. 14 S.123
+[2010.] Value-Added Tax Consolidation Act [ No. 31. ]
 2010 .
 (4) The statutory instruments specified in columns (1) and (2) of
 Part 2 of Schedule 8 are hereby revoked to the extent specified in
 column (3) of that Part.
-124 .—(1) The Revenue Commissioners shall have all the juris- Transitional
-provisions.
+
+Transitional provisions.
+124 .—(1) The Revenue Commissioners shall have all the juris-
 dictions, powers and duties in relation to value-added tax under this
 Act which they had before the passing of this Act.
-(7) and FA 2010 s.
-(2) The continuity of the operation of the law relating to value- 117(2)( d )]
+(2) The continuity of the operation of the law relating to value-
 added tax shall not be affected by the substitution of this Act for the
 repealed enactment.
 (3) Any reference, whether express or implied, in any enactment
@@ -9371,8 +9164,7 @@ repealed enactment applied shall, in addition to records
 required to be kept in accordance with any provision of
 Chapter 7 of Part 9 and regulations, keep a record of—
 193
-Pt. 14 S.124
-Value-Added Tax Consolidation Act [2010.]
+[ No. 31. ] Value-Added Tax Consolidation Act [2010.]
 2010 .
 (i) the name and address of each person from whom the
 taxable dealer purchased or acquired a means of
@@ -9406,1711 +9198,5 @@ Commencement.
 as respects any taxable period commencing on or after 1 November
 2010.
 194
+[2010.] Value-Added Tax Consolidation Act [ No. 31. ]
 2010 .
-Section 2.
-Exempt Activities
-PART 1
-Activities in the Public Interest
-This Part sets out the exemptions for certain activities in the public
-interest in accordance with Chapter 2 of Title IX of the VAT
-Directive.
-Postal services.
-1. Public postal services; including the supply of goods and services
-incidental to their provision, by An Post (including postmasters) or
-by designated persons in accordance with the European Communi-
-ties (Postal Services) Regulations 2002 (S.I. No. 616 of 2002) but only
-if that supply is not on terms that have been individually negotiated.
-Medical and related services.
-2. (1) Hospital and medical care or treatment provided by a
-hospital, nursing home, clinic or similar establishment.
-(2) Services closely related to medical care covered by section 61
-or 61A of the Health Act 1970 which are undertaken by or on behalf
-of the Health Service Executive or by home care providers duly
-recognised by that Executive under section 61A of that Act.
-(3) Professional medical care services recognised as such by the
-Department of Health and Children (other than dental or optical
-services), but only if those services are not supplied in the course of
-carrying on a business that wholly or partly consists of selling goods.
-(4) The supply by dental technicians of services of a dental nature
-and of dentures or other dental prostheses.
-(5) Professional dental or optical services.
-(6) The collection, storage, supply, intra-Community acquisition or
-importation of human organs, human blood and human milk.
-(7) Other professional medical care services that, on 1 January
-2010, were recognised by the Revenue Commissioners as exempt
-activities.
-Certain independent groups, non-profit making organisations and
-other bodies.
-3. (1) The supply of services by an independent group of persons
-(being a group that is an independent entity established for the pur-
-pose of administrative convenience by persons whose activities are
-exempt from, or are not subject to, tax) for the purpose of rendering
-to its members the services directly necessary to enable them to carry
-out their activities, but only if the group recovers from its members
-the exact amount of each member’s share of the joint expenses.
-195
-Sch. 1
-Value-Added Tax Consolidation Act [2010.]
-2010 .
-(2) The supply of goods and services closely related to welfare and
-social security by non-profit making organisations.
-(3) The supply of services and the supply of goods closely related
-to those services for the benefit of their members by non-profit mak-
-ing organisations whose aims are primarily of a political, trade union,
-religious, patriotic, philosophical, philanthropic or civic nature where
-such supply is made without payment other than the payment of any
-membership subscription.
-(4) The provision by non-profit making organisations of facilities
-for participation in sporting or physical educational activities, or of
-services closely related to the provision of those facilities (but exclud-
-ing the provision of facilities to which paragraph 12(2) or (3) of
-Schedule 3 relates).
-(5) The supply of cultural services, and the supply of goods closely
-linked to those services, by any cultural body (whether established
-by or under an enactment or not) that is recognised as such a body
-by the Revenue Commissioners for the purposes of this paragraph
-(but excluding the supply of services to which paragraph 5(2)
-relates).
-Children and education.
-4. (1) The supply of services for the protection or care of children
-and young persons, and the supply of goods closely related to that
-supply, otherwise than for profit.
-(2) The supply of services for the protection or care of children
-and young persons, and the supply of goods closely related to that
-supply, by persons whose activities may be regulated by regulations
-made under Part VII or VIII of the Child Care Act 1991.
-(3) The provision by educational establishments recognised by the
-State of children’s or young people’s education, school or university
-education, or vocational training or retraining (including the supply
-of goods and services incidental to that provision, other than the
-supply of research services), and the provision by other persons of
-education, training or retraining of a similar kind, but excluding
-instruction in the driving of mechanically propelled road vehicles
-other than—
-( a ) vehicles designed or constructed for the carriage of 1.5
-tonnes of goods or more, or
-( b ) vehicles designed or constructed for the carriage of more
-than 9 persons (including the driver).
-Other activities.
-5. (1) Catering services supplied—
-( a ) to patients of a hospital or nursing home in the hospital
-or nursing home, or
-( b ) to school students at their school.
-(2) The promotion of, and admission to, live theatrical or musical
-performances, including circuses, but excluding—
-( a ) dances, and
-196
-Sch. 1
-2010 .
-( b ) performances in conjunction with which facilities are avail-
-able for the consumption of food or drink during all or
-part of the performance by persons attending the per-
-formance.
-(3) The promotion of sporting events (other than in the course of
-the provision of facilities for taking part in sporting activities of the
-kind specified in paragraph 12(1) of Schedule 3 ).
-(4) The provision of the national broadcasting and television
-services, excluding advertising.
-PART 2
-Other Exempted Activities
-Financial services.
-6. (1) Financial services that consist of any of the following:
-( a ) issuing, transferring or otherwise dealing in stocks, shares,
-debentures and other securities (other than new stocks,
-new shares, new debentures or new securities for raising
-capital and documents establishing title to goods);
-( b ) arranging for, or underwriting, an issue of stocks, shares,
-debentures and other securities (other than documents
-establishing title to goods);
-( c ) operating a current, deposit or savings account, and nego-
-tiating or dealing in payments, transfers, debts, cheques
-and other negotiable instruments, but excluding debt col-
-lecting and factoring;
-( d ) issuing, transferring, receiving or otherwise dealing in cur-
-rency, bank notes and metal coins, in use as legal tender
-in any country, but excluding any such bank notes and
-coins that are supplied as investment goods or as collec-
-tors’ objects;
-( e ) giving and negotiating credit, and managing credit by the
-giver of the credit;
-( f ) giving, or dealing in, credit guarantees or any other securi-
-ties for money, and managing credit guarantees by the
-giver of the credit;
-( g ) managing an undertaking of a kind specified in subpara-
-graph (2) ;
-( h ) supplying services to a person under an arrangement that
-provides for the person to be reimbursed for the supply
-by the person of goods or services in accordance with a
-credit card, charge card or similar card scheme;
-( i ) entering into specified financial transactions within the
-meaning of Part 8A of the Taxes Consolidation Act 1997
-where those transactions correspond to financial services
-listed elsewhere in this paragraph.
-197
-Sch. 1
-Value-Added Tax Consolidation Act [2010.]
-2010 .
-(2) The following undertakings are specified for the purpose of
-subparagraph (1)(g ):
-( a ) a collective investment undertaking as defined in section
-172A of the Taxes Consolidation Act 1997;
-( b ) a special investment scheme within the meaning of section
-737 of the Taxes Consolidation Act 1997;
-( c ) an undertaking that is administered by the holder of an
-authorisation granted under the European Communities
-(Life Assurance) Regulations 1984 (S.I. No. 57 of 1984),
-or by a person who is deemed, by Article 6 of those
-Regulations, to be such a holder, the criteria in relation
-to which are the criteria specified in relation to an
-arrangement to which section 9(2) of the Unit Trusts Act
-1990 applies;
-( d ) a unit trust scheme established solely for the purpose of
-superannuation fund schemes or charities;
-( e ) an undertaking that is a qualifying company for the pur-
-poses of section 110 of the Taxes Consolidation Act 1997;
-( f ) any other undertaking that is determined by the Minister
-to be a collective investment undertaking to which subpa-
-ragraph (1)(g ) applies.
-(3) A determination referred to in subparagraph (2)(f ) takes effect
-on the date when it is notified to the undertaking concerned or on
-such later date as is specified in the determination.
-(4) In relation to an undertaking specified in subparagraph (2) ,
-management of the undertaking can consist of any one or more of
-the 3 functions listed in Annex II of Directive No. 2001/107/EC of
-the European Parliament and Council (being the functions included
-in the activity of collective portfolio management) where the relevant
-function is carried out by the person who has responsibility for carry-
-ing out that function in respect of the undertaking.
-Agency services.
-7. The supply of agency services relating to the financial services
-specified in paragraph 6 , excluding management and safekeeping
-services in regard to the services specified in subparagraph (1)(a ) of
-that paragraph (but not being services specified in subparagraph
-(1)(g ) of that paragraph).
-Insurance and reinsurance services.
-8. (1) Supplying insurance and reinsurance services, and supplying
-related services by insurance brokers and insurance agents.
-(2) For the purposes of this paragraph “related services”, in
-relation to insurance services, includes—
-( a ) collecting insurance premiums and selling insurance, and
-( b ) handling claims and providing claims settlement services
-where the supplier of the insurance services delegates
-authority to an agent and is bound by the agent’s decision
-in relation to claims.
-198
-Sch. 1
-2010 .
-Supply of investment gold.
-9. (1) The supply, intra-Community acquisition and importation of
-investment gold, other than supplies of investment gold to the Cen-
-tral Bank of Ireland.
-(2) In relation to investment gold, the supply of services of an
-intermediary acting in that capacity.
-(3) In this paragraph the expressions “intermediary” and “invest-
-ment gold” have the meanings respectively assigned to them by
-section 90(1) .
-Gambling and lotteries.
-10. (1) The acceptance of bets that are subject to excise duty
-imposed by section 67 of the Finance Act 2002 and bets that are
-exempted from excise duty by section 68 of that Act.
-(2) The issuing of tickets or coupons for the purpose of a lottery.
-Letting of immovable goods.
-11. (1) The letting of immovable goods, but not including any of
-the following:
-( a ) letting machinery or a business installation when let separ-
-ately from any other immovable goods of which the
-machinery or installation forms part;
-( b ) letting hotel or holiday accommodation of the kind to
-which paragraph 11 of Schedule 3 relates;
-( c ) providing facilities for taking part in sporting activities of
-the kind to which paragraph 12(1) of Schedule 3 relates;
-( d ) providing parking accommodation for vehicles by the
-operators of car parks;
-( e ) hiring safes.
-(2) Allowing a person to use a toll road or a toll bridge is not a
-letting of immovable goods for the purposes of this Act.
-Other supplies of goods.
-12. The supply of goods (other than immovable goods or goods of
-a kind specified in section 19(1)(h) ) by a person, being goods—
-( a ) that were used for the purposes of a business carried on
-by the person,
-( b ) in relation to the acquisition or application of which the
-person had borne tax, and
-( c ) that are of such a kind, or were used in such circumstances,
-that no part of the tax was deductible under Chapter 1 of
-Part 8 .
-199
-Sch. 1
-Value-Added Tax Consolidation Act [2010.]
-2010 .
-Gas and electricity services.
-13. (1) The importation of gas through the natural gas distri-
-bution system.
-(2) The importation of electricity.
-Exemptions by derogation in accordance with Article 371 of the
-VAT Directive.
-14. (1) The provision of services by a funeral undertaking.
-(2) The supply of water by local authorities.
-(3) Transporting passengers and their accompanying baggage.
-(4) The admission of spectators to sporting events.
-200
-2010 .
-Section 46 .
-Zero-rated Goods and Services
-PART 1
-International Supplies
-This Part sets out the exemptions with deductibility in accordance
-with Chapters 4 to 10 of Title IX of the VAT Directive.
-Intra-Community transactions.
-1. (1) The supply of goods dispatched or transported from the
-State to a person registered for value-added tax in another Member
-State.
-(2) The supply of new means of transport dispatched or trans-
-ported directly by or on behalf of the supplier to a person in the
-territory of another Member State.
-(3) The supply of excisable products dispatched or transported
-from within the State to a person in another Member State when the
-movement of the products is subject to Chapter II of Part 2 of the
-Finance Act 2001 (which implements the arrangements specified in
-paragraphs 4 and 5 of Article 7, or Article 16, of Council Directive
-No. 92/12/EEC of 25 February 1992).
-(4) The supply of intra-Community transport services involving
-the carriage of goods to and from the Azores or Madeira.
-Imports.
-2. (1) Subject to regulations (if any), the importation of goods that
-are, at the time of importation, consigned to another Member State.
-(2) The supply of transport services relating to the importation of
-goods where the value of the services is included in the taxable
-amount in accordance with section 53(1) .
-Exports.
-3. (1) A supply of goods that are to be transported directly by or
-on behalf of the person making the supply outside the Community.
-This subparagraph does not apply to a supply of goods to a traveller
-that the traveller exports on behalf of the supplier. Any such supply
-is to be treated as a supply of traveller’s qualifying goods.
-(2) The carriage of goods in the State by or on behalf of a person
-in performing a contract to transfer the goods to a place outside
-the Community.
-(3) A supply of goods that are to be dispatched or transported
-directly outside the Community by or on behalf of the purchaser of
-the goods where that purchaser is established outside the State.
-(4) A supply of services that consists of work on movable goods
-acquired or imported for the purpose of undergoing that work within
-the Community and dispatched or transported out of the Community
-by or on behalf of the person providing the services.
-201
-Sch. 2
-Value-Added Tax Consolidation Act [2010.]
-2010 .
-(5) In this paragraph “traveller” and “traveller’s qualifying goods”
-have the meanings respectively assigned to them by section 58(1) .
-Services relating to vessels and aircraft.
-4. (1) The provision of docking, landing, loading or unloading
-facilities (including customs clearance), directly in connection with—
-( a ) the disembarkation or embarkation of passengers, or
-( b ) the importation or exportation of goods.
-(2) The supply, modification, repair, maintenance, chartering and
-hiring of—
-( a ) sea-going vessels of a gross tonnage of more than 15 tons
-being vessels used or to be used—
-(i) for the carriage of passengers for reward,
-(ii) for the purposes of a sea fishing business,
-(iii) for other commercial or industrial purposes, or
-(iv) for rescue or assistance at sea,
-or
-( b ) aircraft used or to be used by a transport undertaking
-operating for reward chiefly on international routes.
-(3) Subject to regulations (if any), the supply, hiring, repair and
-maintenance of equipment incorporated or for use in sea-going ves-
-sels to which subparagraph (2)(a ) relates.
-(4) The supply, repair, maintenance and hiring of equipment incor-
-porated or used in aircraft to which subparagraph (2)(b ) relates.
-(5) The supply of goods for the fuelling and provisioning of sea-
-going vessels and aircraft of the kind specified in subparagraph (2) ,
-but excluding goods for supply on board the vessels or aircraft to
-passengers with a view to those goods being taken off the vessels or
-aircraft by those passengers.
-(6) The supply of navigation services by the Irish Aviation Auth-
-ority to meet the needs of aircraft to which subparagraph (2)(b )
-relates.
-Certain transactions treated as exports.
-5. (1) The supply of goods or services to international bodies
-recognised as such by the public authorities of the host Member
-State, and to members of those bodies, within the limits and under
-the conditions prescribed by the international conventions estab-
-lishing the bodies or by the agreements between the headquarters of
-those bodies and the host Member State of the headquarters.
-(2) The supply of gold to the Central Bank of Ireland.
-202
-Sch. 2
-2010 .
-Services by intermediaries.
-6. (1) Services supplied by an intermediary acting in the name or
-on behalf of another person in obtaining—
-( a ) the export of goods,
-( b ) services specified in subparagraph (2) , or
-( c ) the supply of goods or services outside the Community.
-(2) The following services are specified for the purposes of subpar-
-agraph (1)(b ):
-( a ) services of the kind referred to in paragraph 1(4) (Carriage
-of goods to or from the Azores or Madeira);
-( b ) services of the kind referred to in paragraph 3(2)
-(Carriage of goods in transit to a place outside the
-Community);
-( c ) services of the kind referred to in paragraph 4(1)
-(Provision of docking, landing, loading or unloading
-facilities);
-( d ) services of the kind referred to in paragraph 4(2) (Supply,
-hire, repair, maintenance, etc. of equipment incorporated
-or for use in sea-going vessels);
-( e ) services of the kind referred to in paragraph 5(2) (Supply
-of gold to the Central Bank of Ireland).
-(3) Services that are treated as intermediary services under the
-travel agent’s margin scheme in accordance with section 88(8) .
-International trade, etc.
-7. (1) The supply of goods by a registered person within a free
-port to another registered person within a free port.
-(2) The supply of goods by a registered person within the customs-
-free airport to another registered person within the customs-free air-
-port or a free port.
-(3) The supply of goods that are to be transported directly or on
-behalf of the person making the supply to a registered person within
-the customs-free airport.
-(4) The supply of goods that are a traveller’s qualifying goods, but
-only if section 58(2) is complied with.
-(5) The supply of services in obtaining a repayment of tax due on
-the supply of a traveller’s qualifying goods or as a result of the appli-
-cation of subparagraph (4) to that supply of goods, but only if section
-58(2) is complied with.
-(6) Subject to such conditions and in such amounts as may be
-specified in regulations (if any)—
-( a ) the supply of goods, in a tax-free shop approved by the
-Revenue Commissioners, to travellers departing the State
-for a place outside the Community, or
-203
-Sch. 2
-Value-Added Tax Consolidation Act [2010.]
-2010 .
-( b ) the supply, other than by means of a vending machine, of
-food, drink and tobacco products on board a vessel or
-aircraft to passengers departing the State for another
-Member State, for consumption on board that vessel or
-aircraft.
-(7) Subject to section 56 , the supply of qualifying goods and quali-
-fying services to, or the intra-Community acquisition or importation
-of qualifying goods by, an authorised person in accordance with that
-section (excluding a supply of goods within the meaning of section
-19(1)(f) or (g) ).
-(8) In this paragraph “traveller’s qualifying goods” has the mean-
-ing assigned to it by section 58(1) .
-PART 2
-Supplies Within the State
-This Part sets out special provisions as provided by Article 109 of
-the VAT Directive.
-Food and drink.
-8. (1) A supply of food and drink of a kind used for human con-
-sumption, other than—
-( a ) a supply to which paragraph 3(3) of Schedule 3 relates,
-( b ) supplies specified in Part A , B , C or D of Table 1 to this
-paragraph, and
-( c ) supplies specified in column (1) of Part E or F of that
-table.
-Table 1
-Food and Drink
-Part A
-Beverages chargeable with excise duty specifically charged on spirits, beer, wine,
-cider, perry or Irish wine, and preparations derived from any of them.
-Part B
-( a ) Tea and preparations derived from tea when supplied in drinkable form.
-( b ) Cocoa, coffee and chicory and other roasted coffee substitutes, and
-preparations and extracts derived from them, when supplied in drinkable
-form.
-Part C
-( a ) Ice cream, ice lollipops, water ices, frozen desserts, frozen yoghurts and
-similar frozen products, and prepared mixes and powders for making any of
-those products.
-( b ) Savoury products made from cereal or grain, or from flour or starch derived
-from cereal or grain, pork scratchings, and similar products when supplied
-for human consumption without further preparation.
-204
-Sch. 2
-2010 .
-Part D
-Any of the following when supplied for human consumption without further
-preparation:
-( a ) potato crisps, potato sticks, potato puffs and similar products made from
-potato, or from potato flour or from potato starch;
-( b ) popcorn;
-( c ) salted or roasted nuts, whether or not in their shells.
-Part E
-(2)
-( a ) Tea and preparations derived from
-items specified in column (2) of this
-drinkable form.
-( a ) drinking water, juice extracted
-other roasted coffee substitutes,
-products derived from, fruit or
-derived from any of them, when
-concentrates, essences, powders,
-crystals or other products for
-( c ) Milk and preparations and extracts
-derived from milk.
-( b ) beverages other than those
-( d ) Preparations and extracts derived
-from meat, yeast or eggs.
-Part F
-(2)
-For the purposes of this Part “bread”
-similar confectionery (including glacé
-or crystallised fruits), biscuits, crackers manufactured by baking dough
-composed exclusively of a mixture of
-cereal flour and any one or more of the
-ingredients included in column (1) of
-Table 2 to this paragraph that do not
-exceed the quantities (if any) set out for
-each ingredient in column (2) of that
-table, but does not include food
-packaged for sale as a unit (not being a
-unit designated as containing only food
-specifically for babies) containing 2 or
-more slices, segments, sections or other
-similar pieces, having a crust over
-substantially the whole of their outside
-surfaces, being a crust formed in the
-course of baking, frying or toasting.
-Table 2
-Ingredients and Weight Limits thereof for Bread as defined in column (2) of Part
-F of Table 1
-(2)
-Weight limit for the ingredient, as
-percentage of weight of flour included in
-the dough
-Yeast or other leavening or aerating
-agent, salt, malt extract, milk, water,
-gluten
-Not exceeding 2%
-Not exceeding 2%
-Not exceeding 2%
-Not exceeding 10%
-205
-Sch. 2
-Value-Added Tax Consolidation Act [2010.]
-2010 .
-(2) In this paragraph, a reference to supplying food and drink
-includes—
-( a ) a reference to supplying food without drink, and
-( b ) a reference to supplying drink without food.
-Certain printed matter.
-9. The supply of printed books and booklets, including atlases,
-but excluding—
-( a ) newspapers, periodicals, brochures, catalogues, directories
-and programmes,
-( b ) books of stationery, cheque books and similar products,
-( c ) diaries, organisers, yearbooks, planners and similar prod-
-ucts the total area of whose pages consist of 25 per cent
-or more of blank spaces for the recording of information,
-( d ) albums and similar products, and
-( e ) books of stamps, tickets or coupons.
-Children’s clothing and footwear.
-10. (1) The supply of articles of children’s personal clothing of
-sizes that do not exceed the sizes of those articles appropriate to
-children of average build of 10 years of age, but excluding—
-( a ) articles of clothing made wholly or partly of fur skin other
-than garments merely trimmed with fur skin, unless the
-trimming has an area greater than one-fifth of the area
-of the outside material, and
-( b ) articles of clothing that are not described, labelled, marked
-or marketed on the basis of age or size.
-(2) The supply of articles of children’s personal footwear of sizes
-that do not exceed the size appropriate to children of average foot
-size of 10 years of age, but excluding footwear that is not described,
-labelled, marked or marketed on the basis of age or size.
-(3) In this paragraph, a child whose age is 10 years or 10 years and
-a fraction of a year is taken to be a child of 10 years of age.
-Medicine, medical equipment and appliances .
-11. (1) The supply of medicine of a kind used for human oral con-
-sumption.
-(2) The supply of medicine of a kind used for animal oral con-
-sumption, excluding medicine which is packaged, sold or otherwise
-designated for the use of dogs, cats, cage birds or domestic pets.
-(3) The supply of medical equipment and appliances, being—
-( a ) invalid carriages and other vehicles (excluding mechan-
-ically propelled road vehicles) of a kind designed for use
-by invalids or infirm persons,
-206
-Sch. 2
-2010 .
-( b ) orthopaedic appliances, surgical belts, trusses and similar
-products, deaf aids, and artificial limbs and other artificial
-parts of the body excluding artificial teeth, corrective
-spectacles and contact lenses,
-( c ) walking frames and crutches,
-( d ) parts or accessories suitable for use solely or principally
-with any of the goods specified in clauses (a ), (b ) and (c ).
-Fertilisers, feeding stuffs, certain seeds, etc.
-12. (1) For the purpose of this paragraph “fertiliser” has the mean-
-ing assigned to it by the Fertilisers, Feeding Stuffs and Mineral Mix-
-tures Act 1955.
-(2) Fertiliser that is supplied in units of not less than 10 kilograms
-and the sale or manufacture of which is not prohibited under section
-4 or 6 of the Fertilisers, Feeding Stuffs and Mineral Mixtures Act
-1955.
-(3) Animal feeding stuff, excluding feeding stuff which is pack-
-aged, sold or otherwise designated for the use of dogs, cats, cage
-birds or domestic pets.
-(4) Seeds, plants, trees, spores, bulbs, tubers, tuberous roots,
-corms, crowns and rhizomes, of a kind used for sowing in order to
-produce food.
-Other zero-rated goods and services.
-13. (1) Services provided by the Commissioners of Irish Lights
-in connection with the operation of lightships, lighthouses or other
-navigational aids.
-(2) Life saving services provided by the Royal National Lifeboat
-Institution including the organisation and maintenance of the life-
-boat service.
-(3) The supply of sanitary towels and sanitary tampons.
-(4) The supply of wax candles and night-lights that are white and
-cylindrical, excluding candles and night-lights that are decorated, spi-
-ralled, tapered or perfumed.
-207
-Value-Added Tax Consolidation Act [2010.]
-2010 .
-Section 46 .
-Goods and Services chargeable at the reduced rate
-PART 1
-Interpretation
-Definitions — Schedule 3 .
-1. (1) In this Schedule—
-“food and drink table” means Table 1 to paragraph 8(1) of Sched-
-ule 2 ;
-“in the course of catering” means—
-( a ) in the course of operating a hotel, restaurant, cafe, refresh-
-ment house, canteen, establishment licensed for the sale
-for consumption on the premises of intoxicating liquor,
-catering business or similar business, or
-( b ) in the course of operating any other business in connection
-with the carrying on of which facilities are provided for
-the consumption of the food or drink supplied;
-“margin scheme supply” means a supply—
-( a ) by a taxable dealer in accordance with section 87(3) or
-(8) , or
-( b ) by an auctioneer within the meaning of section 89(1) and
-in accordance with section 89(3) .
-Other interpretative provisions.
-2. (1) In this Schedule, a reference to supplying food and drink
-includes—
-( a ) a reference to supplying food without drink, and
-( b ) a reference to supplying drink without food.
-(2) For the purposes of paragraph 12 , the expression “golf” does
-not include pitch and putt.
-PART 2
-Annex III Supplies
-This Part sets out supplies of goods and services as provided by
-Article 98 and Annex III of the VAT Directive.
-Food and drink for human consumption.
-3. (1) The provision of food and drink in a form suitable for human
-consumption without further preparation—
-( a ) by means of a vending machine, or
-208
-Sch. 3
-2010 .
-( b ) in the course of catering,
-being food and drink that fall within Part B of the food and drink
-table or that, apart from this subparagraph, would be chargeable to
-tax at the rate specified in section 46(1)(b ).
-(2) The supply in the course of catering of—
-( a ) food and drink that fall within—
-(i) Part C or D of the food and drink table, or
-(ii) column (1) of Part F of the food and drink table,
-or
-( b ) fruit juices other than fruit juices chargeable with a duty
-of excise,
-when that food and drink or juices are supplied in the course of
-a meal.
-(3) The supply of food and drink that consists of or includes food
-and drink—
-( a ) that—
-(i) has been heated, enabling it to be consumed at a tem-
-perature above the ambient air temperature,
-(ii) has been retained heated after cooking, enabling it to
-be consumed at a temperature above the ambient air
-temperature, or
-(iii) is supplied while still warm after cooking, enabling it
-to be consumed at a temperature above the ambient
-air temperature,
-and
-( b ) that is above the ambient air temperature at the time when
-it is provided to a customer,
-being food and drink which fall within Part B of the food and drink
-table or that, apart from this subparagraph, would be chargeable to
-tax at the rate specified in section 46(1)(b) .
-(4) Subparagraph (3) does not apply to bread as defined in column
-(2) of Part F of the food and drink table.
-(5) Food of a kind used for human consumption (other than that
-chargeable to tax at the rate specified in section 46(1)(b) ), being flour
-or egg based bakery products (including cakes, crackers, wafers and
-biscuits), but excluding—
-( a ) wafers and biscuits wholly or partly covered or decorated
-with chocolate or some other product similar in taste
-and appearance,
-( b ) food and drink which fall within Part C of the food and
-drink table, and
-209
-Sch. 3
-Value-Added Tax Consolidation Act [2010.]
-2010 .
-( c ) chocolates, sweets and similar confectionery.
-Live animals, animal feeding stuffs.
-4. (1) Greyhound feeding stuff that is packaged, advertised or held
-out for sale solely as greyhound feeding stuff, and that is supplied in
-units of not less than 10 kilograms.
-(2) Live poultry and live ostriches.
-Pharmaceutical products.
-5. Non-oral contraceptive products.
-Certain safety equipment.
-6. Children’s car safety seats.
-Books, newspapers and other printed matter.
-7. Printed matter consisting of—
-( a ) newspapers and periodicals,
-( b ) brochures, leaflets and programmes,
-( c ) catalogues, including directories, and similar printed
-matter,
-( d ) maps, hydrographic and similar charts, or
-( e ) printed music other than in book or booklet form,
-but excluding—
-(i) other printed matter wholly or substantially devoted to
-advertising,
-(ii) the items specified in subparagraphs (b ) to (e ) of para-
-graph 9 of Schedule 2 , and
-(iii) any other printed matter.
-Shows, exhibitions, cultural facilities, etc.
-8. (1) Promotion of, and admission to, showings of cinemato-
-graphic films.
-(2) Promotion of, and admission to, live theatrical or musical per-
-formances, but excluding—
-( a ) dances, and
-( b ) performances of the kind specified in paragraph 5(2) of
-Schedule 1 .
-(3) Amusement services of the kind normally supplied in fair-
-grounds or amusement parks, but excluding—
-( a ) services consisting of dances,
-( b ) services consisting of circuses,
-210
-Sch. 3
-2010 .
-( c ) services consisting of gaming, as defined in section 2 of
-the Gaming and Lotteries Act 1956 (including services
-provided by means of a gaming machine of the kind
-referred to in section 43 of the Finance Act 1975), or
-( d ) services provided by means of an amusement machine of
-the kind referred to in section 120 of the Finance Act
-1992.
-(4) Admission to exhibitions, of the kind normally held in
-museums and art galleries, of objects of historical, cultural, artistic
-or scientific interest, not being services of the kind specified in para-
-graph 3(5) of Schedule 1 .
-Private dwellings.
-9. (1) Services consisting of the development of immovable goods,
-being private dwellings, and work on such immovable goods includ-
-ing the installation of fixtures, where the value of movable goods (if
-any) provided in pursuance of an agreement in relation to such
-services does not exceed two-thirds of the total amount on which tax
-is chargeable in respect of the agreement.
-(2) Services consisting of the routine cleaning of private dwellings.
-Agricultural goods and services.
-10. (1) Agricultural services consisting of any of the following:
-( a ) field work, including reaping, mowing, threshing, baling,
-harvesting, sowing and planting;
-( b ) stock-minding, stock-rearing, farm relief services and farm
-advisory services (other than farm accountancy or farm
-management services);
-( c ) disinfecting and ensilage of agricultural products;
-( d ) destroying weeds and pests, and dusting and spraying
-crops and land;
-( e ) lopping, tree felling and similar forestry services.
-(2) Animal insemination services.
-(3) The supply of livestock semen.
-Hotel, holiday accommodation.
-11. Subject to regulations (if any)—
-( a ) letting immovable goods (other than in the course of the
-provision of facilities of the kind specified in paragraph
-12(1) ), where those goods consist of—
-(i) a room or rooms in a hotel or guesthouse,
-(ii) all or part of a house, apartment or other similar
-establishment that is let on a short-term basis for
-guest accommodation, or
-211
-Sch. 3
-Value-Added Tax Consolidation Act [2010.]
-2010 .
-(iii) a part of a caravan park, camping site or other
-similar establishment,
-or
-( b ) the provision of holiday accommodation.
-Sporting facilities.
-12. (1) The provision of facilities for taking part in sporting activi-
-ties by a person other than a non-profit making organisation.
-(2) The provision by a member-owned golf club of facilities for
-taking part in golf to any person (other than a natural person whose
-membership subscription to the club at the time when the person
-uses the facilities confers an entitlement to use them without further
-charge on at least 200 days (including the day on which the person
-uses the facilities) in a continuous period of 12 months), where the
-total consideration received by the club for providing those facilities
-exceeds, or is likely to exceed, the services threshold during any con-
-tinuous period of 12 months.
-(3) The provision by a non-profit making organisation (other than
-a member-owned golf club) of facilities for taking part in golf to any
-person, where the total consideration received by the organisation
-for providing the facilities exceeds or is likely to exceed the services
-threshold in any continuous period of 12 months.
-Other services.
-13. (1) Services consisting of the acceptance for disposal of waste
-material.
-(2) Carrying out minor repairs or modifications to bicycles, shoes
-or leather goods, clothing or household linen.
-(3) Hairdressing services.
-PART 3
-Certain Supplies with Reduced Rate at 1 January 1991 : Special
-Provisions in Accordance with Article 115 of the VAT
-Directive
-Housing.
-14. The supply of immovable goods used or to be used for residen-
-tial purposes.
-PART 4
-Certain Supplies with Reduced Rate at 1 January 1991 : Special
-Provisions in Accordance with Article 118 of the VAT
-Directive
-Non-residential immovable goods.
-15. (1) The supply of immovable goods, other than immovable
-goods used or to be used for residential purposes.
-212
-Sch. 3
-2010 .
-(2) Services consisting of the development of immovable goods
-(not being goods referred to in paragraph 9(1) ) and work on those
-goods (including the installation of fixtures), where the value of any
-movable goods supplied under an agreement relating to the services
-does not exceed two-thirds of the total amount on which tax is
-chargeable in respect of the agreement.
-(3) Services consisting of the routine cleaning of immovable goods
-(not being immovable goods referred to in paragraph 9(2) ).
-Concrete works.
-16. (1) The supply of concrete that is ready to pour, but excluding
-the margin scheme supply of the concrete.
-(2) The supply of blocks of concrete of a kind that comply with
-the specification contained in the Standard Specification (Concrete
-Building Blocks, Part 1, Normal Density Blocks) Declaration 1987
-(Irish Standard 20: Part 1: 1987), but excluding the margin scheme
-supply of those blocks.
-Energy products and supplies.
-17. (1) The supply of coal, peat and other solid substances offered
-for sale solely as fuel.
-(2) The supply of electricity, but not the distribution of electricity
-if the distribution is wholly or mainly in connection with the trans-
-mission of communication signals.
-(3) The supply of gas of a kind used for domestic or industrial
-heating or lighting, whether in gaseous or liquid form, but not
-including—
-( a ) motor vehicle gas within the meaning of section 42(1) of
-the Finance Act 1976,
-( b ) gas of a kind normally used for welding or cutting metal,
-or
-( c ) gas sold as lighter fuel.
-(4) The supply of hydrocarbon oil of a kind used for domestic or
-industrial heating, excluding gas oil (within the meaning of the Min-
-eral Oil Tax Regulations 2001 (S.I. No. 442 of 2001)), other than gas
-oil which has been duly marked in accordance with Regulation 6(2)
-of those Regulations.
-Photographic and related supplies.
-18. (1) The supply to a person of photographic prints (other than
-goods produced by means of a photocopying process), slides or nega-
-tives, that have been produced from goods provided by that person.
-(2) The supply of goods being—
-( a ) photographic prints (other than goods produced by means
-of a photocopying process) mounted or unmounted, but
-unframed,
-213
-Sch. 3
-Value-Added Tax Consolidation Act [2010.]
-2010 .
-( b ) slides and negatives, and
-( c ) cinematographic and video film,
-that record particular persons, objects or events, supplied under an
-agreement to photograph those persons, objects or events.
-(3) The supply by a photographer of—
-( a ) negatives that have been produced from film exposed for
-the purpose of the photographer’s business, and
-( b ) film that has been exposed for the purposes of the pho-
-tographer’s business.
-(4) The supply of photographic prints produced by means of a
-vending machine which incorporates a camera and developing and
-printing equipment.
-(5) Services consisting of—
-( a ) editing photographic, cinematographic and video film, or
-( b ) microfilming.
-(6) Agency services relating to a supply specified in subpara-
-graph (1) .
-Hiring for short periods.
-19. Hiring—
-( a ) a vehicle designed and constructed, or adapted, for the
-conveyance of persons by road,
-( b ) a vessel designed and constructed for the conveyance of
-passengers and not exceeding 15 tonnes gross,
-( c ) any kind of sports or pleasure boat, or
-( d ) a caravan, mobile home, tent or trailer tent,
-to a person under an agreement (other than an agreement of the
-kind referred to in section 19(1)(c) ) for any term or part of a term
-that, when added to the term of a previous hiring (whether of the
-same goods or of other goods of the same kind) to the same person
-during the 12 months ending on the date of the beginning of the
-existing hiring, does not exceed 5 weeks.
-Certain repair and related services.
-20. (1) Services, other than those specified in paragraph 13(2) , con-
-sisting of—
-( a ) repairing or maintaining movable goods, or
-214
-Sch. 3
-2010 .
-( b ) modifying used movable goods (other than contract work
-or services of a kind specified in subparagraph (2) ), but
-excluding the supply in the course of any such repair,
-maintenance or modification of—
-(i) accessories, attachments or batteries, or
-(ii) tyres, tyre cases, interchangeable tyre treads, inner
-tubes and tyre flaps, for wheels of all kinds.
-(2) The following services are specified for the purposes of subpar-
-agraph (1) :
-( a ) services specified in paragraph 3(4) of Schedule 2 (Work
-on movable goods for export);
-( b ) services specified in paragraph 4(2) of Schedule 2 (Repair,
-etc. of sea-going vessels or aircraft);
-( c ) services specified in paragraph 4(4) of Schedule 2 (Repair,
-etc. of equipment used in international aircraft).
-Miscellaneous services.
-21. (1) Services consisting of the care of the human body, including
-services supplied in the course of a health studio business or similar
-business, but not including exempted activities referred to in Part 1
-of Schedule 1 or hairdressing services referred to in paragraph 13(3) .
-(2) Services supplied in the course of their profession by jockeys.
-(3) Services supplied in the course of their profession by veterin-
-ary surgeons.
-(4) Services supplied in the course of their profession by tour
-guides.
-(5) Instruction in the driving of mechanically propelled road
-vehicles, but excluding education, training or retraining of the kind
-specified in paragraph 4(3) of Schedule 1 .
-PART 5
-Supplies of Certain Live Plants and Similar Goods
-This Part sets out special provisions in accordance with Article 122
-and Annex III (paragraph (11)) of the VAT Directive.
-Plants and bulbs, etc.
-22. (1) The supply of nursery or garden centre stock consisting of
-live plants, live trees, live shrubs, bulbs, roots and the like, not being
-of a kind specified in paragraph 12(3) of Schedule 2 , and cut flowers
-and ornamental foliage not being artificial or dried flowers or foliage.
-(2) The supply of miscanthus rhizomes, seeds, bulbs, roots and
-similar goods used for the agricultural production of bio-fuel.
-215
-Sch. 3
-Value-Added Tax Consolidation Act [2010.]
-2010 .
-PART 6
-Supplies of Certain Works of Art, Antiques and Literary
-Manuscripts
-This Part deals with special arrangements made in accordance with
-Article 311 and Annex IX of the VAT Directive.
-Works of art.
-23. The supply of a work of art that is—
-( a ) a painting, drawing or pastel, or any combination of them,
-that is produced entirely by hand, not being—
-(i) a hand-decorated article,
-(ii) a plan or drawing for the purpose of depicting topo-
-graphical features, or
-(iii) a plan or drawing produced for an architectural,
-engineering, industrial, commercial or similar
-purpose,
-( b ) an original lithograph, engraving, or print, or any combi-
-nation of them, produced directly from lithographic
-stones, plates or other engraved surfaces, that are pro-
-duced entirely by hand, or
-( c ) an original sculpture or statue (not being a mass-produced
-reproduction or work of craftsmanship of a commercial
-nature),
-but excluding the margin scheme supply of such a work.
-Antiques.
-24. The supply of an antique that is an article of furniture, silver,
-glass or porcelain (whether hand-decorated or not) of a kind speci-
-fied in regulations, that is shown to the satisfaction of the Revenue
-Commissioners to be more than 100 years old, but excluding—
-( a ) a work of art of a kind specified in paragraph 23 , and
-( b ) the margin scheme supply of an antique.
-Literary manuscripts.
-25. The supply of a literary manuscript certified by the Director of
-the National Library as being of major national importance and of
-either cultural or artistic importance.
-216
-2010 .
-Section 4 .
-Agricultural Production Activities and Services
-PART 1
-Article 295 ( 1 ) and Annex VII of the VAT Directive
-List of Agricultural Production Activities
-1. Crop Production.
-( a ) General agriculture, including viticulture.
-( b ) Growing of fruit (including olives) and of vegetables, flow-
-ers and ornamental plants, both in the open and under
-glass.
-( c ) Production of mushrooms, spices, seeds and propagating
-materials; nurseries.
-2. Stock Farming together with Cultivation.
-( a ) General stock farming.
-( b ) Poultry farming.
-( c ) Rabbit farming.
-( d ) Beekeeping.
-( e ) Silkworm farming.
-( f ) Snail farming.
-3. Forestry.
-4. Fisheries.
-( a ) Fresh-water fishing.
-( b ) Fish farming.
-( c ) Breeding of mussels, oysters and other molluscs and
-crustaceans.
-( d ) Frog farming.
-5. Where a farmer processes—
-( a ) products deriving essentially from his or her agricultural
-production, and
-( b ) using means normally employed in an agricultural, forestry
-or fisheries undertaking,
-then such processing shall also be regarded as agricultural
-production.
-217
-Sch. 4
-Value-Added Tax Consolidation Act [2010.]
-2010 .
-PART 2
-Article 295 ( 1 ) and Annex VIII of the VAT Directive
-List of Agricultural Services
-Supplies of agricultural services which normally play a part in agri-
-cultural production shall be considered the supply of agricultural
-services and include the following in particular:
-( a ) Field work, reaping and mowing, threshing, baling, col-
-lecting, harvesting, sowing and planting.
-( b ) Packing and preparation for market, for example drying,
-cleaning, grinding, disinfecting and ensilage of agricul-
-tural products.
-( c ) Storage of agricultural products.
-( d ) Stock minding, rearing and fattening.
-( e ) Hiring out, for agricultural purposes, of equipment nor-
-mally used in agricultural, forestry or fisheries
-undertakings.
-( f ) Technical assistance.
-( g ) Destruction of weeds and pests, dusting and spraying of
-crops and land.
-( h ) Operation of irrigation and drainage equipment.
-( i ) Lopping, tree felling and other forestry services.
-218
-2010 .
-Section 48 .
-Works of Art, Collectors’ Items and Antiques chargeable at [VATA Sch. 5]
-the rate specified in section 46(1)(c) in the circumstances
-specified in section 48
-Works of art.
-1. Every work of art being—
-( a ) a picture (other than a painting, drawing or pastel speci-
-fied in paragraph 23 of Schedule 3 ), collage or similar
-decorative plaque, executed entirely by hand by an artist,
-other than—
-(i) plans and drawings for architectural, engineering,
-industrial, commercial, topographical or similar
-purposes,
-(ii) hand-decorated manufactured articles, and
-(iii) theatrical scenery, studio back cloths or the like of
-painted canvas,
-( b ) a sculpture cast, the production of which is limited to 8
-copies and supervised by the artist or by the artist’s suc-
-cessors in title provided that, in the case of a statuary cast
-produced before 1 January 1989, the limit of 8 copies may
-be exceeded where so determined by the Revenue Com-
-missioners,
-( c ) a tapestry or wall textile made by hand from original
-designs provided by an artist, provided that there are not
-more than 8 copies of each,
-( d ) individual pieces of ceramics executed entirely by an artist
-and signed by the artist,
-( e ) enamels on copper, executed entirely by hand, limited to
-8 numbered copies bearing the signature of the artist or
-the studio, excluding articles of jewellery, goldsmiths’
-wares and silversmiths’ wares, or
-( f ) a photograph taken by an artist, printed by the artist or
-under the artist’s supervision, signed and numbered and
-limited to 30 copies, all sizes and mounts included, other
-than photographs specified in paragraph 18(2)(a ) of
-Schedule 3 .
-Collectors’ items.
-2. Every collectors’ item being one or more—
-( a ) postage or revenue stamps, postmarks, first-day covers,
-pre-stamped stationery and the like, franked, or if
-unfranked not being of legal tender and not being
-intended for use as legal tender, or
-( b ) collections and collectors’ pieces of zoological, botanical,
-mineralogical, anatomical, historical, archaeological,
-palaeontological, ethnographic or numismatic interest.
-219
-Sch. 5
-Value-Added Tax Consolidation Act [2010.]
-2010 .
-Antiques.
-3. Every antique being, subject to and in accordance with regu-
-lations, one or more goods which are shown to the satisfaction of the
-Revenue Commissioners to be more than 100 years old, other than
-goods specified in paragraph 18(2)(a), 23 or 24 of Schedule 3 or para-
-graph 1 or 2 of this Schedule.
-220
-2010 .
-Section 14 .
-Activities Listed in Annex 1 of the VAT Directive
-1. Telecommunication services.
-2. Supply of water, gas, electricity and thermal energy.
-3. Transport of goods.
-4. Port and airport services.
-5. Passenger transport.
-6. Supply of new goods manufactured for sale.
-7. Transactions in respect of agricultural products, carried out by
-agricultural intervention agencies pursuant to regulations on the
-common organisation of the market in those products.
-8. Organisation of trade fairs and exhibitions.
-9. Warehousing.
-10. Activities of commercial publicity bodies.
-11. Activities of travel agents.
-12. Running of staff shops, cooperatives and industrial canteens and
-similar institutions.
-13. Activities carried out by radio and television bodies in so far
-as these are not exempt pursuant to Article 132(1)(q) of the
-VAT Directive.
-221
-Value-Added Tax Consolidation Act [2010.]
-2010 .
-Section 123 .
-Consequential Amendments
-PART 1
-Consequential Amendments to Acts
-In the Act specified in column (1) of the following table for the
-words set out or referred to in column (2) there shall be substituted
-the words set out in the corresponding entry in column (3) .
-Words to be replaced Words to be substituted
-(1) (2)
-Criminal Justice (Legal
-Aid) Act 1962:
-the Value-Added Tax the Value-Added Tax
-Consolidation Act 2010 , and
-enactments amending the enactments amending or
-or extending that Act extending that Act
-the Value-Added Tax the Value-Added Tax
-Consolidation Act 2010 , and
-enactments amending the enactments amending or
-or extending that Act extending that Act
-Companies Act 1990:
-the Value-Added Tax the Value-Added Tax
-definition of “tax law”, Act 1972 and the
-enactments amending the enactments amending or
-or extending that Act extending that Act
-Finance Act 1992:
-under section 12 of under Chapter 1 of Part 8 of
-the Value-Added Tax the Value-Added Tax
-Consolidation Act 2010
-of the kind specified of the kind specified in
-in paragraph (i)( e ) of paragraph 6(1)(e) of Schedule
-1 to the Value-Added Tax
-the Value-Added Tax Consolidation Act 2010 , in
-respect of vehicles supplied
-pursuant to an agreement in
-accordance with section
-19(1)(c) of that Act
-accordance with
-section 3(1)( b ) of that
-Act
-by virtue of section by virtue of Chapter 1 of Part
-definition of “annual 10 of the Value-
-turnover”, in paragraph Added Tax Act, 1972 Consolidation Act 2010
-( a )
-contained in section contained in section 6(1) and
-definition of “annual 8(3) of the Value-
-turnover”, in paragraph Added Tax Act, 1972 Consolidation Act 2010
-( b )
-any provision in the any provision in the Value-
-Added Tax Consolidation Act
-Act, 1972
-222
-Sch. 7
-2010 .
-Words to be replaced Words to be substituted
-(1) (2)
-Criminal Assets Bureau
-Act 1996:
-the Value-Added Tax the Value-Added Tax
-definition of “Revenue Act, 1972
-Acts”, in paragraph ( e )
-Taxes Consolidation
-Act 1997:
-under section 12 of under Chapter 1 of Part 8 of
-the Value-Added Tax the Value-Added Tax
-Consolidation Act 2010
-under section 20(3) of under section 103 of that Act
-that Act
-under section 12 of under Chapter 1 of Part 8 of
-the Value-Added Tax the Value-Added Tax
-Consolidation Act 2010
-under section 20(3) of under section 103 of that Act
-that Act
-under the Value- under the Value-Added Tax
-Added Tax Act, 1972 Consolidation Act 2010
-section 531(5)( c )(ii)(I) under the Value-
-Added Tax Act, 1972 Consolidation Act 2010
-or the Value-Added or the Value-Added Tax
-Consolidation Act 2010
-and the Value-Added and the Value-Added Tax
-Consolidation Act 2010
-the Value-Added Tax the Value-Added Tax
-Consolidation Act 2010
-the Value-Added Tax the Value-Added Tax
-Consolidation Act 2010 , and
-enactments amending the enactments amending or
-or extending that Act extending that Act
-section 811A(6)( b )(i) section 19B of the
-Added Tax Consolidation Act
-Act 1972
-the Value-Added Tax the Value-Added Tax
-Consolidation Act 2010 , and
-enactments amending the enactments amending or
-or extending that Act extending that Act
-the Value-Added Tax the Value-Added Tax
-Consolidation Act 2010 , and
-enactments amending the enactments amending or
-or extending that Act extending that Act
-the Value-Added Tax the Value-Added Tax
-Consolidation Act 2010 , and
-enactments amending the enactments amending or
-or extending that Act extending that Act
-the Value-Added Tax the Value-Added Tax
-Consolidation Act 2010 , and
-enactments amending the enactments amending or
-or extending that Act extending that Act
-section 885(1)( b ), in the (within the meaning
-definition of “business” of the Value-Added
-Consolidation Act 2010 )
-1997)
-the Value-Added Tax the Value-Added Tax
-Consolidation Act 2010 , and
-enactments amending the enactments amending or
-or extending that Act extending that Act
-223
-Sch. 7
-Value-Added Tax Consolidation Act [2010.]
-2010 .
-Words to be replaced Words to be substituted
-(1) (2)
-but subject to section but subject to Chapter 2 of
-Part 9 of the Value-Added
-Added Tax Act, 1972 Tax Consolidation Act 2010
-the Value-Added Tax the Value-Added Tax
-Consolidation Act 2010 , and
-enactments amending the enactments amending or
-or extending that Act extending that Act
-relating to the Value- relating to the Value-Added
-Added Tax Act, 1972, Tax Consolidation Act 2010 ,
-and the enactments
-amending or extending that
-Act and any instruments
-and any instruments
-made thereunder
-the Value-Added Tax the Value-Added Tax
-Consolidation Act 2010 , and
-enactments amending the enactments amending or
-or extending that Act extending that Act
-the Value-Added Tax the Value-Added Tax
-Act 1972, and the Consolidation Act 2010 , and
-enactments amending the enactments amending or
-or extending that Act extending that Act
-under section 22 of under section 110 of the
-the Value-Added Tax Value-Added Tax
-Consolidation Act 2010
-“Act of 1972” means “ Act of 2010 ” means the
-the Value-Added Tax Value-Added Tax
-Consolidation Act 2010 ;
-in accordance with in accordance with section
-section 21 of the Act
-of 1972
-“Act of 1972” means “ Act of 2010 ” means the
-the Value-Added Tax Value-Added Tax
-Consolidation Act 2010 ;
-in accordance with in accordance with section
-section 21 of the Act
-of 1972
-the Value-Added Tax the Value-Added Tax
-Consolidation Act 2010
-the Value-Added Tax the Value-Added Tax
-Consolidation Act 2010 , and
-enactments amending the enactments amending or
-or extending that Act extending that Act
-section 1003(3)( d )(i) under the Value-
-Added Tax Act, 1972 Consolidation Act 2010
-the Value-Added Tax the Value-Added Tax
-Consolidation Act 2010 , and
-enactments amending the enactments amending or
-or extending that Act extending that Act
-the Value-Added Tax the Value-Added Tax
-Consolidation Act 2010 , and
-enactments amending the enactments amending or
-or extending that Act extending that Act
-a penalty referred to a penalty referred to in
-definition of “qualifying in section 27A(4) of
-the Value-Added Tax Added Tax Consolidation Act
-Act 1972
-the Value-Added Tax the Value-Added Tax
-Consolidation Act 2010 , and
-enactments amending the enactments amending or
-or extending that Act extending that Act
-224
-Sch. 7
-2010 .
-Words to be replaced Words to be substituted
-(1) (2)
-and sections 26(3D) and sections 115(9) and
-116(16) of the Value-Added
-Tax Consolidation Act 2010
-Act 1972
-the Value-Added Tax the Value-Added Tax
-Consolidation Act 2010 , and
-enactments amending the enactments amending or
-extending that Act
-Act
-the Value-Added Tax the Value-Added Tax
-Consolidation Act 2010 , and
-enactments amending the enactments amending or
-or extending that Act extending that Act
-section 27A of the section 116 of the Value-
-Added Tax Consolidation Act
-Act 1972
-in subsection (11) or in subsection (11) or (12) , as
-the case may be, of section
-116 of the Value-Added Tax
-the Value-Added Tax Consolidation Act 2010
-Act, 1972
-section 21 of the section 114 of the Value-
-Added Tax Consolidation Act
-Act, 1972
-shall be construed shall be construed together
-with the Value-Added Tax
-Consolidation Act 2010
-Acts, 1972 to 1997
-Stamp Duties
-Consolidation Act 1999:
-under section 2 of the under section 3 of the Value-
-Added Tax Consolidation Act
-Act, 1972
-under section 2 of the under section 3 of the Value-
-Added Tax Consolidation Act
-Act, 1972
-section 27A(4) of the section 116(4) of the Value-
-definition of “qualifying Value-Added Tax
-Act 1972 2010
-Standards in Public
-Office Act 2001:
-the Value-Added Tax the Value-Added Tax
-Consolidation Act 2010 , and
-enactments amending the enactments amending or
-or extending that Act extending that Act
-Local Government
-(Charges) Act 2009:
-“Act of 1972” means “ Act of 2010 ” means the
-the Value-Added Tax Value-Added Tax
-Consolidation Act 2010 ;
-section 11(2), in the the Act of 1972
-definition of “specified
-enactment”, in
-paragraph ( c )
-for the purposes of for the purposes of the Act
-the Act of 1972 of 2010
-reference number”, in
-paragraph ( b )(ii)
-225
-Sch. 7
-Value-Added Tax Consolidation Act [2010.]
-2010 .
-Words to be replaced Words to be substituted
-(1) (2)
-Finance Act 2010:
-for the purposes of for the purposes of Part 2 of
-definition of “supplier” section 8 of the
-Consolidation Act 2010
-Act 1972
-PART 2
-Consequential Amendments to Statutory Instruments
-In the statutory instrument specified in column (1) of the following
-table for the words set out or referred to in column (2) there shall
-be substituted the words set out in the corresponding entry in
-column (3) .
-Statutory Instrument Words to be replaced
-amended
-(1) (2)
-Vehicle Registration
-and Taxation
-Regulations 1992 (S.I.
-No. 318 of 1992):
-under section 9 of the under section 65 of the
-Value-Added Tax
-Consolidation Act 2010
-the registration the registration number
-under the Value-Added Tax
-Consolidation Act 2010
-Acts, 1972 to 1992
-Criminal Justice (Legal
-Aid) (Tax Clearance
-Certificate) Regulations
-1999 (S.I. No. 135 of
-1999):
-the Value-Added Tax the Value-Added Tax
-definition of “the Acts”, Act, 1972 (No. 22 of
-in paragraph ( b ) 1972) and the
-enactments amending extending that Act
-or extending that Act
-Income Tax (Relevant
-Contracts) Regulations
-2000 (S.I. No. 71 of
-2000):
-under section 9 of the under section 65 of the
-Value-Added Tax Value-Added Tax
-Act 1972 (No. 22 of Consolidation Act 2010
-1972)
-Taxes (Electronic
-Transmission of Certain
-Revenue Returns)
-(Specified Provisions
-and Appointed Day)
-Order 2000 (S.I. No.
-289 of 2000):
-Section 19(3)( a ) (as Section 76(1) of the Value-
-Added Tax Consolidation Act
-Finance Act, 1983 (No. 2010
-15 of 1983)) of the
-Value-Added Tax Act,
-1972 (No. 22 of 1972)
-226
-Sch. 7
-2010 .
-Statutory Instrument Words to be replaced
-amended
-(1) (2)
-Section 19(3)( aa ) Section 77 of the Value-
-Added Tax Consolidation Act
-Finance Act, 1989
-(No. 10 of 1989)) of
-the Value-Added Tax
-Act, 1972
-Mineral Oil Tax
-Regulations 2001 (S.I.
-No. 442 of 2001):
-under section 9 of the under section 65 of the
-Value-Added Tax Value-Added Tax
-Consolidation Act 2010
-1972)
-Taxes (Offset of
-Repayments)
-Regulations 2002 (S.I.
-No. 471 of 2002):
-regulation 2, in the section 22 of the
-definition of “estimate”, Value-Added Tax
-Act 1972 (No. 22 of 2010
-1972)
-arising under the arising under the Value-
-Added Tax Consolidation Act
-2010 and the enactments
-enactments amending amending or extending that
-or extending that Act Act
-arising under the arising under the Value-
-Added Tax Consolidation Act
-2010 and the enactments
-enactments amending amending or extending that
-or extending that Act Act
-European Communities
-(Directive 2000/31/EC)
-Regulations 2003 (S.I.
-No. 68 of 2003):
-in accordance with in accordance with section 65
-of the Value-Added Tax
-Consolidation Act 2010
-Act 1972 (No. 22 of
-1972)
-European Communities
-(Distance Marketing of
-Consumer Financial
-Services) Regulations
-2004 (S.I. No. 853 of
-2004):
-in accordance with in accordance with section 65
-section 9 of the of the Value-Added Tax
-Consolidation Act 2010
-Act 1972 (No. 22 of
-1972)
-Waste Management
-(Waste Electrical and
-Electronic Equipment)
-Regulations 2005 (S.I.
-No. 340 of 2005):
-regulation 15(3)( a )(ii) the provisions of
-Added Tax Consolidation Act
-Value-Added Tax
-Act 1972 (No. 22 of
-1972)
-227
-Sch. 7
-Value-Added Tax Consolidation Act [2010.]
-2010 .
-Statutory Instrument Words to be replaced
-amended
-(1) (2)
-Social Welfare
-(Consolidated Claims,
-Payments and Control)
-Regulations 2007 (S.I.
-No. 142 of 2007):
-in accordance with in accordance with section
-65(2) of the Value-Added
-Tax Consolidation Act 2010
-Act 1972 (No. 22 of
-1972)
-Stamp Duty (E-
-stamping of
-Instruments)
-Regulations 2009 (S.I.
-No. 476 of 2009):
-under section 9(1A) under section 65(2) of the
-(inserted by section Value-Added Tax
-171 of the Finance Consolidation Act 2010
-Act 1992 (No. 9 of
-1992)) of the Value-
-Added Tax Act 1972
-(No. 22 of 1972)
-Broadcasting Act 2009
-(Section 33) Levy
-Order, 2010 (S.I. No. 7
-of 2010):
-the Value-Added Tax the Value-Added Tax
-definition of “VAT” Act 1972
-Control of Excisable
-Products Regulations
-2010 (S.I. No. 146 of
-2010):
-regulation 4(1), in the section 9 of the
-Value-Added Tax Added Tax Consolidation Act
-number”, in paragraph Act 1972 (No. 22 of
-1972)
-228
-2010 .
-Section 123 .
-Repeals and Revocations
-PART 1
-Repeals
-Number and Year Short Title
-(1) (2)
-Finance Act 1973. Part V (sections 76 to 90), in so far as
-it is unrepealed.
-Section 98(5).
-Tenth Schedule.
-Finance Act 1975. Part V (sections 50 to 53), in so far as
-it is unrepealed.
-Section 29(3).
-Finance (No. 2) Sections 2 and 4(3) and (4).
-Schedule.
-Finance Act 1976. Part IV (sections 49 to 63), in so far as
-it is unrepealed.
-Section 83(5).
-Fifth Schedule, Part II.
-Value-Added Tax The whole Act.
-(Amendment)
-Act 1978.
-Finance Act 1979. Part III (sections 48 and 49), in so far
-as it is unrepealed.
-Section 59(4).
-Finance Act 1980. Part III (sections 80 to 82), in so far as
-it is unrepealed.
-Section 96(4).
-Finance Act 1981. Part III (sections 42 to 45), in so far as
-it is unrepealed.
-Section 54(4).
-Finance (No. 2) Part II (sections 10 to 15), in so far as
-it is unrepealed.
-Section 20(3).
-Finance Act 1982. Part III (sections 74 to 90), in so far as
-it is unrepealed.
-Section 105(4).
-Finance Act 1983. Part III (sections 77 to 89), in so far as
-it is unrepealed.
-Section 122(4).
-Finance Act 1984. Part III (sections 84 to 95), in so far as
-it is unrepealed.
-Section 116(4).
-Finance Act 1985. Part III (sections 41 to 54), in so far as
-it is unrepealed.
-Section 71(4).
-Finance Act 1986. Part III (sections 79 to 91), in so far as
-it is unrepealed.
-Section 118(4).
-Section 118(7), in so far as it relates to
-value-added tax.
-Finance Act 1987. Part III (sections 38 to 47), in so far as
-it is unrepealed.
-Section 55(4) and (8).
-229
-Sch. 8
-Value-Added Tax Consolidation Act [2010.]
-2010 .
-Number and Year Short Title
-(1) (2)
-Finance Act 1988. Part III (sections 59 to 63), in so far as
-it is unrepealed.
-Section 77(4) and (9).
-Finance Act 1989. Part III (sections 53 to 63), in so far as
-it is unrepealed.
-Section 100(4) and (9).
-Finance Act 1990. Part III (sections 97 to 107), in so far
-as it is unrepealed.
-Section 140(4) and (9).
-Finance Act 1991. Part III (sections 76 to 87), in so far as
-it is unrepealed.
-Section 132(4) and (9).
-Finance Act 1992. Part III (sections 164 to 198), in so far
-as it is unrepealed.
-Section 254(4) and (11).
-Finance Act 1993. Part III (sections 81 to 99), in so far as
-it is unrepealed.
-Section 143(4) and (9).
-Finance Act 1994. Part III (sections 90 to 101), in so far
-as it is unrepealed.
-Section 166(4) and (9).
-Finance Act 1995. Part III (sections 118 to 141), in so far
-as it is unrepealed.
-Section 179(4) and (10).
-Finance Act 1996. Part III (sections 87 to 100), in so far
-as it is unrepealed.
-Section 143(4) and (10).
-Finance Act 1997. Part III (sections 95 to 114), in so far
-as it is unrepealed.
-Section 166(4) and (10).
-Finance Act 1998. Part 3 (sections 104 to 117), in so far as
-it is unrepealed.
-Paragraph (v) of section 133(6).
-Sections 134(2) and 138(4) and (9).
-Finance Act 1999. Part 3 (sections 119 to 139), in so far as
-it is unrepealed.
-Section 217(4) and (10).
-Finance Act 2000. Part 3 (sections 107 to 124), in so far as
-it is unrepealed.
-Section 166(4) and (10).
-Finance Act 2001. Part 4 (sections 181 to 200), in so far as
-it is unrepealed.
-Section 243(4) and (10).
-Schedule 5, Part 4.
-Finance Act 2002. Part 3 (sections 98 to 110), in so far as
-it is unrepealed.
-Section 141(4) and (9).
-Schedule 6, paragraphs 1 and 6( a ).
-Finance Act 2003. Part 3 (sections 112 to 131), in so far as
-it is unrepealed.
-Section 171(4) and (10).
-Schedule 6, paragraphs 2 and 3( b ).
-Finance Act 2004. Part 3 (sections 54 to 65), in so far as it
-is unrepealed.
-Section 94(4) and (9).
-Finance Act 2005. Part 3 (sections 98 to 113), in so far as
-it is unrepealed.
-Section 150(4).
-230
-Sch. 8
-2010 .
-Number and Year Short Title
-(1) (2)
-Finance Act 2006. Part 3 (sections 92 to 101), in so far as
-it is unrepealed.
-Section 130(4).
-Schedule 2, paragraphs 8 and 9( h ).
-Finance Act 2007. Part 3 (sections 75 to 98), in so far as it
-is unrepealed.
-Section 121, in so far as it relates to
-value-added tax.
-Section 130(4).
-Schedule 3.
-Schedule 4, paragraphs 3 and 6( c ).
-Finance Act 2008. Part 3 (sections 82 to 109), in so far as
-it is unrepealed.
-Section 144(4).
-Schedule 4.
-Schedule 8, paragraph 3 and 7( c ).
-Finance (No. 2) Part 3 (sections 67 to 77), in so far as it
-is unrepealed.
-Section 102(4).
-Schedule 3, paragraph 2.
-Schedule 5, Part 3.
-Schedule 6, paragraphs 4 and 7( d ).
-Finance Act 2009. Part 3 (sections 20 to 22), in so far as it
-is unrepealed.
-Sections 29(4) and (7)( b ) and 32(4).
-No. 34 of 2009. National Asset
-Schedule 3, Part 11.
-Agency Act 2009.
-Finance Act 2010. Part 4 (sections 112 to 133), in so far as
-it is unrepealed.
-Section 165(4).
-Schedules 2 and 3.
-Schedule 4, paragraphs 4 and 6( d ).
-PART 2
-Revocations
-S.I. No. and Year Title
-(1) (2)
-Imposition of Duties Paragraph 16.
-(No. 221) (Excise
-Duties) Order 1975.
-Value-Added Tax The whole statutory instrument.
-(Reduction of Rate)
-(No. 4) Order 1978.
-S.I. No. 53 of 1981. Value-Added Tax
-(Reduction of Rate)
-(No. 5) Order 1981.
-Value-Added Tax The whole statutory instrument.
-(Exempted
-Activities) (No. 1)
-Order 1985.
-The whole statutory instrument.
-Communities
-(Value-Added Tax)
-Regulations 1992.
-231
-Sch. 8
-Value-Added Tax Consolidation Act [2010.]
-2010 .
-S.I. No. and Year Title
-(1) (2)
-Value-Added Tax The whole statutory instrument.
-(Threshold for
-Advance Payment)
-Order 1993.
-The whole statutory instrument.
-Communities
-(Value-Added Tax)
-Regulations 1994.
-Value-Added Tax The whole statutory instrument.
-(Eligibility To
-Determine Tax Due
-By Reference To
-Moneys Received)
-Order 1997.
-The whole statutory instrument.
-Communities
-(Value-Added Tax)
-Regulations 2009.
-The whole statutory instrument.
-Communities
-(Value-Added Tax)
-Regulations 2010.
-232

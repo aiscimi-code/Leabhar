@@ -45,14 +45,20 @@ interface Line {
   items: Item[];
 }
 
-async function extractPages(pdfPath: string): Promise<Array<{ width: number; items: Item[] }>> {
+interface Page {
+  pageNumber: number;
+  width: number;
+  items: Item[];
+}
+
+async function extractPages(pdfPath: string): Promise<Page[]> {
   const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs');
   const buf = readFileSync(pdfPath);
   const loadingTask = pdfjs.getDocument({
     data: new Uint8Array(buf), useSystemFonts: true, disableFontFace: true,
   });
   const pdf = await loadingTask.promise;
-  const pages: Array<{ width: number; items: Item[] }> = [];
+  const pages: Page[] = [];
 
   for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber++) {
     const page = await pdf.getPage(pageNumber);
@@ -67,7 +73,7 @@ async function extractPages(pdfPath: string): Promise<Array<{ width: number; ite
         y: Math.round((raw.transform[5] ?? 0) * 2) / 2, text: raw.str,
       });
     }
-    pages.push({ width: viewport.width, items });
+    pages.push({ pageNumber, width: viewport.width, items });
   }
   await loadingTask.destroy();
   return pages;
@@ -90,89 +96,130 @@ function lineText(line: Line): string {
   return line.items.map((i) => i.text).join(' ').replace(/\s+/g, ' ').trim();
 }
 
+interface ColumnBoundary {
+  /** x below which an item belongs to the low-x column, and at/above which it belongs to the high-x column. */
+  threshold: number;
+  /** Which side of the threshold is the margin column. */
+  marginSide: 'low' | 'high';
+}
+
 /**
- * Split a page's items into (main, margin) columns.
+ * Determine the main/margin column boundary for even and odd pages, once,
+ * from the whole document.
  *
- * The Irish Statute Book's marginal-note layout mirrors its margins on
- * facing pages, the way a printed book's inner/outer margins do: the note
- * column sits on the right on some pages and on the left on others —
- * verified against docs/statutes/vatca-2010/pdf.pdf (section 1's heading is
- * at x≈542 on a page whose body starts at x≈238 — margin on the right; a few
- * pages later section 3's heading is at x≈226 on a page whose body starts at
- * x≈318 — margin on the LEFT). A fixed threshold, or any rule assuming the
- * margin is always on one side, misclassifies whichever pages don't match it.
+ * Earlier versions of this tried to detect the column boundary *relatively*,
+ * per visual row (the widest gap between two items on that row), bootstrapped
+ * per page from that page's own citations, or classified each item by a
+ * small symmetric tolerance around the margin column's anchor x. All three
+ * fail in ways cross-checking every extracted heading against the Act's own
+ * "ARRANGEMENT OF SECTIONS" table of contents exposed:
  *
- * This works per line: for each visual row, find the widest gap between the
- * END of one item and the START of the next (not start-to-start, which
- * overstates the gap after a long item and understates it after a short
- * one). If the widest gap is far wider than normal word spacing, split the
- * line there into two groups and decide which is margin:
+ *  - Per-row gaps collapse to normal word-spacing whenever the main text
+ *    runs close to the margin (VATCA s.1: "...Value-Added Tax Consolidation"
+ *    is followed by "Short title." with only a ~6pt gap) — no threshold
+ *    distinguishes that from an ordinary space without also mis-splitting
+ *    real prose elsewhere. Most headings longer than a couple of words were
+ *    silently truncated or dropped this way.
+ *  - Per-page bootstrapping from that page's own citations fails outright on
+ *    a page with none (VATCA ss.121–123, a repeal/transitional chapter that
+ *    happens to cite nothing) — the whole page falls back to "no split",
+ *    corrupting nearby section-start lines.
+ *  - A symmetric ±4pt tolerance around the margin anchor x correctly
+ *    classifies a section-start row (main and margin content sharing one y,
+ *    e.g. "12 .—(1) Where—" beside "Services received") but misses a
+ *    multi-word citation's own sub-glyphs, which render up to ~65pt further
+ *    from the anchor than an ordinary word gap (verified: VATCA s.12's
+ *    "[VATA s. 8(1A)( aa ) and ( ab )..." has "8(1A)(" exactly at the anchor
+ *    but "aa"/"ab" render 24-65pt further out). Widening the tolerance to
+ *    catch that drift instead risks swallowing real main text on the other
+ *    side. Classifying a whole row by its leftmost item (to catch the drift
+ *    via row-consistency instead) breaks the section-start row itself: its
+ *    leftmost item is the main-column section number, so the margin heading
+ *    sharing that row gets pulled into the main column wholesale.
  *
- *  1. If either group's own joined text matches `sectionRe` (a section
- *     number followed by its opening punctuation, e.g. "12 .—(1) Where—"),
- *     THAT group is main and the other is margin — this is the case that
- *     matters most, because it is where a wrong guess would corrupt a
- *     section's own opening words rather than just a citation. A short
- *     section-start fragment ("12 .—(1) Where—", 13 chars) can otherwise be
- *     shorter than a long heading's first line ("Services received from
- *     abroad and", 27 chars) and be misclassified as the margin by length
- *     alone — verified against VATCA 2010 s.12, which this rule fixes.
- *  2. Otherwise, the smaller group (by total text length) is margin — a
- *     margin note or citation is a handful of words; ordinary body text
- *     fills the rest of the row. This handles both page layouts, since the
- *     margin column sits on the right on some pages and the left on others
- *     (verified: section 1's heading is at x≈542 on a page whose body starts
- *     at x≈238 — margin on the right; section 3's heading is at x≈226 on a
- *     page whose body starts at x≈318 — margin on the left).
- *
- * This deliberately does NOT try to also catch a margin heading's wrapped
- * continuation line with no main-column content on that row (e.g. "general."
- * alone, below "Interpretation —"): classifying a lone short line by
- * proximity to a page-wide "margin x" estimate was tried and is not safe — a
- * page's main body text can legitimately start at an x close to that
- * estimate, corrupting long unrelated runs of real body text into what looks
- * like one giant "heading". A heading occasionally missing its wrapped
- * second line is a cosmetic gap, documented as a limitation; silently
- * merging unrelated provisions is a correctness bug. See docs/RULES_KB.md.
+ * What actually resolves this: plotting every item's x for a parity across
+ * the whole document shows two dense, well-separated clusters with a
+ * completely empty band between them (verified for this document: even
+ * pages have zero items with 292 <= x <= 302; odd pages have zero items
+ * with 536 <= x <= 540) — the main column's rightmost/leftmost reach and the
+ * margin column's own reach (drift included) never overlap once aggregated
+ * over the whole book, even though a single line or page sometimes suggests
+ * otherwise. So the boundary is the midpoint of the single widest gap in
+ * that global x distribution, computed once for the whole document and
+ * keyed by `pageNumber % 2` — never per page or per row — and then applied
+ * to every item directly (no row-consistency pass needed, since a single
+ * global threshold already handles a section-start row's mixed content
+ * correctly: whichever side of the threshold each item's own x falls on).
  */
-function splitColumns(
-  page: { width: number; items: Item[] }, sectionRe: RegExp,
-): { mainLines: Line[]; marginLines: Line[] } {
-  const allLines = toLines(page.items);
-  const mainLines: Line[] = [];
-  const marginLines: Line[] = [];
-  const wideGapMinPt = 15;
-
-  for (const line of allLines) {
-    let splitIdx = -1;
-    let widestGap = wideGapMinPt;
-    for (let i = 1; i < line.items.length; i++) {
-      const gap = line.items[i]!.x - line.items[i - 1]!.end;
-      if (gap >= widestGap) { widestGap = gap; splitIdx = i; }
+function findColumnBoundaryByParity(pages: Page[]): Map<number, ColumnBoundary> {
+  const citationXByParity = new Map<number, number[]>();
+  const allXByParity = new Map<number, number[]>();
+  for (const page of pages) {
+    const parity = page.pageNumber % 2;
+    const allXs = allXByParity.get(parity) ?? [];
+    allXByParity.set(parity, allXs);
+    for (const item of page.items) {
+      allXs.push(item.x);
+      if (/^\[\s*(VATA|FA)\b/.test(item.text.trim())) {
+        const list = citationXByParity.get(parity) ?? [];
+        list.push(item.x);
+        citationXByParity.set(parity, list);
+      }
     }
-    if (splitIdx === -1) {
-      mainLines.push(line);
-      continue;
-    }
-    const left = line.items.slice(0, splitIdx);
-    const right = line.items.slice(splitIdx);
-    const joined = (items: Item[]) => items.map((i) => i.text).join(' ').replace(/\s+/g, ' ').trim();
-
-    let mainGroup: Item[];
-    let marginGroup: Item[];
-    if (sectionRe.test(joined(left))) {
-      [mainGroup, marginGroup] = [left, right];
-    } else if (sectionRe.test(joined(right))) {
-      [mainGroup, marginGroup] = [right, left];
-    } else {
-      const textLen = (items: Item[]) => items.reduce((n, i) => n + i.text.length, 0);
-      [marginGroup, mainGroup] = textLen(left) <= textLen(right) ? [left, right] : [right, left];
-    }
-    mainLines.push({ y: line.y, items: mainGroup });
-    marginLines.push({ y: line.y, items: marginGroup });
   }
 
-  return { mainLines, marginLines };
+  const boundaryByParity = new Map<number, ColumnBoundary>();
+  for (const [parity, citationXs] of citationXByParity) {
+    const sortedCitationXs = [...citationXs].sort((a, b) => a - b);
+    const marginAnchor = sortedCitationXs[Math.floor(sortedCitationXs.length / 2)]!;
+
+    // Widest gap in the whole page's x distribution, searched within 150pt
+    // of the citation anchor (the main/margin boundary is always close to
+    // it; restricting the search avoids picking up an unrelated gap
+    // elsewhere on the page, e.g. in wide whitespace between two words).
+    const distinctXs = [...new Set(allXByParity.get(parity) ?? [])]
+      .filter((x) => Math.abs(x - marginAnchor) <= 150)
+      .sort((a, b) => a - b);
+    let widestGap = 0;
+    let threshold = marginAnchor;
+    for (let i = 1; i < distinctXs.length; i++) {
+      const gap = distinctXs[i]! - distinctXs[i - 1]!;
+      if (gap > widestGap) {
+        widestGap = gap;
+        threshold = (distinctXs[i]! + distinctXs[i - 1]!) / 2;
+      }
+    }
+
+    boundaryByParity.set(parity, {
+      threshold,
+      marginSide: marginAnchor >= threshold ? 'high' : 'low',
+    });
+  }
+  return boundaryByParity;
+}
+
+/** Split a page's items into (main, margin) columns using the document's parity-keyed column boundary. */
+function splitColumns(
+  page: Page, boundaryByParity: Map<number, ColumnBoundary>,
+): { mainLines: Line[]; marginLines: Line[] } {
+  const boundary = boundaryByParity.get(page.pageNumber % 2);
+  if (boundary === undefined) {
+    // No page of this parity carried a citation anywhere in the document —
+    // would mean an Act with no predecessor cross-references at all.
+    return { mainLines: toLines(page.items), marginLines: [] };
+  }
+
+  const isMargin = (i: Item) => (
+    boundary.marginSide === 'high' ? i.x >= boundary.threshold : i.x <= boundary.threshold
+  );
+
+  const mainItems: Item[] = [];
+  const marginItems: Item[] = [];
+  for (const item of page.items) {
+    (isMargin(item) ? marginItems : mainItems).push(item);
+  }
+
+  return { mainLines: toLines(mainItems), marginLines: toLines(marginItems) };
 }
 
 interface ConvertOptions {
@@ -187,25 +234,32 @@ interface ConvertOptions {
   stopAt?: string;
 }
 
-function convert(pages: Array<{ width: number; items: Item[] }>, opts: ConvertOptions): string {
+/**
+ * Whether `text` is (or, after stripping a leaked heading prefix per the
+ * rule below, becomes) a section-start line — used both to detect the
+ * current line and to look ahead for the *next* one, so heading collection
+ * knows where the current section's margin heading must stop.
+ */
+function sectionStartText(text: string, sectionRe: RegExp): string | null {
+  const leaked = text.match(/^([A-Za-z][A-Za-z.,—\s-]{0,30}?)\s+(\d{1,3}[A-Z]?\s*\.—.*)$/);
+  const stripped = leaked && !sectionRe.test(text) ? leaked[2]! : text;
+  return sectionRe.test(stripped) ? stripped : null;
+}
+
+function convert(pages: Page[], opts: ConvertOptions): string {
   const out: string[] = [];
   let inBody = !opts.startAfter;
+  const boundaryByParity = findColumnBoundaryByParity(pages);
 
   for (const page of pages) {
-    const { mainLines, marginLines: marginLinesUnsorted } = splitColumns(page, opts.sectionRe);
+    const { mainLines, marginLines: marginLinesUnsorted } = splitColumns(page, boundaryByParity);
     const marginLines = [...marginLinesUnsorted].sort((a, b) => b.y - a.y); // top-to-bottom
 
     let stopped = false;
-    for (const line of mainLines) {
-      const text = lineText(line);
+    for (let lineIdx = 0; lineIdx < mainLines.length; lineIdx++) {
+      const line = mainLines[lineIdx]!;
+      let text = lineText(line);
       if (!text) continue;
-      // A row with zero main-column content (only a predecessor-provision
-      // citation like "[VATA s. 44]", sometimes wrapped as "[VATA s. 8(2B)"
-      // / "and (3D)( b )]") has no internal gap to split on and stays in
-      // `mainLines` by default — filtered here instead. Never true of the
-      // main text, which does not open a line with "[" or close a short
-      // line with "]" anywhere in this Act's prose style.
-      if (/^\[/.test(text) || /^[A-Za-z0-9().\s]{1,40}\]$/.test(text)) continue;
 
       if (!inBody) {
         if (opts.startAfter && text.startsWith(opts.startAfter)) inBody = true;
@@ -213,24 +267,66 @@ function convert(pages: Array<{ width: number; items: Item[] }>, opts: ConvertOp
       }
       if (opts.stopAt && text.startsWith(opts.stopAt)) { stopped = true; break; }
 
+      // A margin heading occasionally wraps onto a word or two that lands at
+      // an x between the two columns — neither close enough to the
+      // bootstrapped margin x to classify as margin, nor part of the main
+      // text — and so ends up prefixed onto the section-start row itself
+      // (verified: VATCA s.4, "Definitions — Part 4 .—(1) In this Act—",
+      // where "Part" is that stray word). Detected by the one thing this
+      // Act's own typesetting makes distinctive: "<number>.—" opens a
+      // section nowhere else in the running text, so 1-4 leaked words
+      // immediately before it are reliably heading, not body prose.
+      const leaked = text.match(/^([A-Za-z][A-Za-z.,—\s-]{0,30}?)\s+(\d{1,3}[A-Z]?\s*\.—.*)$/);
+      let leakedPrefix: string | null = null;
+      if (leaked && !opts.sectionRe.test(text)) {
+        leakedPrefix = leaked[1]!.trim();
+        text = leaked[2]!;
+      }
+
       // A section-start line gets its margin heading inserted as its own
       // line directly above — the layout convention statuteParser.ts's
       // extractHeadingAbove already parses. The heading is the contiguous
       // run of margin lines starting at this exact y and continuing while a
       // line does not look like the bracketed predecessor-provision
       // citation ("[VATA s. 44]") that follows every heading; a heading
-      // occasionally wraps onto a second line ("Interpretation —" / "general.").
+      // commonly wraps onto a second or third line (now correctly captured,
+      // since `splitColumns` classifies by absolute column position rather
+      // than a per-row gap — a wrapped continuation line has no main-column
+      // content to form a gap against, which is exactly the case that broke
+      // the previous, gap-based version).
       if (opts.sectionRe.test(text)) {
+        // A run of consecutive sections that cite no predecessor provision
+        // at all (VATCA ss.121-123, a repeal/transitional chapter) has no
+        // "[...]" citation line to stop the collection, so without a second
+        // boundary it swallows every later section's heading on the page
+        // too (verified: s.121's heading absorbed s.122's and s.123's, and
+        // s.122's absorbed s.123's, until the page ran out of margin
+        // lines). The current section's heading can never legitimately
+        // extend past where the *next* section's own heading starts, so
+        // that line's y — found the same way a section-start is detected on
+        // its own line, including the leaked-prefix case — is an
+        // additional, always-safe stop condition.
+        let nextSectionY: number | undefined;
+        for (let j = lineIdx + 1; j < mainLines.length; j++) {
+          if (sectionStartText(lineText(mainLines[j]!), opts.sectionRe)) {
+            nextSectionY = mainLines[j]!.y;
+            break;
+          }
+        }
+
         const startIdx = marginLines.findIndex((m) => m.y === line.y);
+        const headingParts: string[] = [];
         if (startIdx >= 0) {
-          const headingParts: string[] = [];
           for (let i = startIdx; i < marginLines.length; i++) {
-            const t = lineText(marginLines[i]!);
+            const m = marginLines[i]!;
+            if (nextSectionY !== undefined && m.y <= nextSectionY) break;
+            const t = lineText(m);
             if (!t || t.startsWith('[')) break;
             headingParts.push(t);
           }
-          if (headingParts.length) out.push('', headingParts.join(' '));
         }
+        if (leakedPrefix) headingParts.push(leakedPrefix);
+        if (headingParts.length) out.push('', headingParts.join(' '));
       }
       out.push(text);
     }

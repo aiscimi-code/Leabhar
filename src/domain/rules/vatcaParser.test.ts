@@ -4,16 +4,12 @@ import { parseVatca2010, parseVatca2010File, VATCA_2010_MD_PATH } from './vatcaP
 import { VATCA_CURATED_RULES } from './vatcaCuration';
 
 describe('vatcaParser', () => {
-  it('parses the body sections, skipping the table of contents and Schedules', () => {
+  it('parses every body section 1-125, skipping the table of contents and Schedules', () => {
     const provs = parseVatca2010File(VATCA_2010_MD_PATH);
-    expect(provs.length).toBeGreaterThan(100);
-    // Sections 30, 42 and 55 are a documented gap in the converter (see
-    // scripts/convert-statute-pdf.ts and docs/RULES_KB.md); nothing beyond
-    // "SCHEDULE" is parsed at all.
     const numbers = new Set(provs.map((p) => p.sectionNumber));
-    expect(numbers.has('1')).toBe(true);
-    expect(numbers.has('125')).toBe(true);
-    expect(numbers.has('30')).toBe(false);
+    for (let n = 1; n <= 125; n++) expect(numbers.has(String(n))).toBe(true);
+    // Nothing beyond "SCHEDULE" is parsed at all.
+    expect(numbers.has('126')).toBe(false);
   });
 
   it('records stable, in-bounds source offsets', () => {

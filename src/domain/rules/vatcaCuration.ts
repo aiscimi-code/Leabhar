@@ -78,18 +78,13 @@ export const VATCA_CURATED_RULES: CuratedVatcaRule[] = [
     ruleType: 'other',
     topic: 'vat',
     name: 'Reverse charge: services received from a supplier established outside the State',
-    // Verbatim from provisionText, including the interleaved margin-column
-    // words ("from abroad and" / "accountable" / "persons." / "8(1A)( aa )
-    // and ( ab )") the source PDF's two-column layout did not fully
-    // separate from the main text during conversion — left in rather than
-    // silently edited; see docs/statutes/vatca-2010/README.md.
-    statementExcerpt: '12 .—(1) Where—\nfrom abroad and\naccountable\n( a ) a taxable person who '
-      + 'carries on a business in the State, or\npersons.\na person to whom a registration number has '
-      + 'been\nassigned in accordance with section 65(2) , receives a\n8(1A)( aa ) and ( ab )\nservice '
-      + 'from a supplier established outside the State, and\n( b ) the place of supply of the service '
-      + '(as determined in accord-\nance with section 34(a) ) is the State,\nthen the person is '
-      + 'accountable for, and liable to pay, the tax charge-\nable in the State as if he or she had '
-      + 'supplied that service for consider-\nation in the course or furtherance of business.',
+    // Verbatim from provisionText.
+    statementExcerpt: '12 .—(1) Where—\n( a ) a taxable person who carries on a business in the State, or '
+      + 'a person to whom a registration number has been\nassigned in accordance with section 65(2) , '
+      + 'receives a service from a supplier established outside the State, and\n( b ) the place of '
+      + 'supply of the service (as determined in accord-\nance with section 34(a) ) is the State,\nthen '
+      + 'the person is accountable for, and liable to pay, the tax charge-\nable in the State as if he '
+      + 'or she had supplied that service for consider-\nation in the course or furtherance of business.',
     conditions: [
       { field: 'supplyType', operator: 'equals', value: 'services' },
       { field: 'supplierCountry', operator: 'not_equals', value: 'IE' },

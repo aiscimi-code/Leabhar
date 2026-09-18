@@ -1,22 +1,22 @@
 {
-    "generatedAt": "2026-09-18T15:29:47.845Z",
+    "generatedAt": "2026-09-18T16:56:13.467Z",
     "sources": [
         {
-            "id": "src_4a49dc0ba03f4d6cb803c1bd",
+            "id": "src_bade886163184e6e9f6bf9f3",
             "citation": "2024 Act 43",
             "sourceType": "legislation",
             "provisionCount": 118
         },
         {
-            "id": "src_83b63751958d4219866e6c7f",
+            "id": "src_c022f61fdfad460890b80303",
             "citation": "2010 Act 31",
             "sourceType": "legislation",
-            "provisionCount": 122
+            "provisionCount": 125
         }
     ],
-    "provisionCount": 240,
-    "relevantProvisionCount": 115,
-    "notRelevantProvisionCount": 125,
+    "provisionCount": 243,
+    "relevantProvisionCount": 147,
+    "notRelevantProvisionCount": 96,
     "ruleCount": 9,
     "rulesByReviewStatus": {
         "ai_extracted": 9
@@ -30,16 +30,6 @@
             "sectionNumber": "3",
             "heading": "Rate of charge and personal tax credits",
             "reason": "Curated: mapped to rule key \"income_tax.standard_rate_threshold\" by human editorial judgement, overriding the other category default."
-        },
-        {
-            "sectionNumber": "12",
-            "heading": "Services received",
-            "reason": "Curated: mapped to a rule in vatcaCuration.ts, overriding the other category default."
-        },
-        {
-            "sectionNumber": "34",
-            "heading": "",
-            "reason": "Curated: mapped to a rule in vatcaCuration.ts, overriding the other category default."
         }
     ],
     "unresolvedCrossReferences": [
@@ -1760,28 +1750,32 @@
             "reference": "section 852"
         },
         {
-            "sectionNumber": "2",
-            "reference": "section 55(1)"
+            "sectionNumber": "16",
+            "reference": "section 153"
         },
         {
-            "sectionNumber": "29",
-            "reference": "section 30"
+            "sectionNumber": "16",
+            "reference": "section 153"
         },
         {
-            "sectionNumber": "59",
-            "reference": "section 30"
+            "sectionNumber": "16",
+            "reference": "section 531(1)"
+        },
+        {
+            "sectionNumber": "16",
+            "reference": "section 531(1)"
+        },
+        {
+            "sectionNumber": "16",
+            "reference": "section 530(1)"
         },
         {
             "sectionNumber": "59",
             "reference": "section 131"
         },
         {
-            "sectionNumber": "59",
-            "reference": "section 30"
-        },
-        {
-            "sectionNumber": "66",
-            "reference": "section 30(1)(a)(ii)"
+            "sectionNumber": "78",
+            "reference": "section 917E"
         },
         {
             "sectionNumber": "79",
@@ -1801,134 +1795,18 @@
         },
         {
             "sectionNumber": "87",
-            "reference": "section 30"
-        },
-        {
-            "sectionNumber": "87",
             "reference": "section 131"
-        },
-        {
-            "sectionNumber": "89",
-            "reference": "section 30"
         },
         {
             "sectionNumber": "116",
             "reference": "section 134A(2)"
-        },
-        {
-            "sectionNumber": "120",
-            "reference": "section 30(2)"
-        },
-        {
-            "sectionNumber": "125",
-            "reference": "section 172A"
-        },
-        {
-            "sectionNumber": "125",
-            "reference": "section 737"
-        },
-        {
-            "sectionNumber": "125",
-            "reference": "section 42(1)"
-        },
-        {
-            "sectionNumber": "125",
-            "reference": "section 531(5)"
-        },
-        {
-            "sectionNumber": "125",
-            "reference": "section 811A(6)"
-        },
-        {
-            "sectionNumber": "125",
-            "reference": "section 885(1)"
-        },
-        {
-            "sectionNumber": "125",
-            "reference": "Section 55(4)"
-        },
-        {
-            "sectionNumber": "125",
-            "reference": "Section 140(4)"
-        },
-        {
-            "sectionNumber": "125",
-            "reference": "Section 132(4)"
-        },
-        {
-            "sectionNumber": "125",
-            "reference": "Section 254(4)"
-        },
-        {
-            "sectionNumber": "125",
-            "reference": "Section 143(4)"
-        },
-        {
-            "sectionNumber": "125",
-            "reference": "Section 166(4)"
-        },
-        {
-            "sectionNumber": "125",
-            "reference": "Section 179(4)"
-        },
-        {
-            "sectionNumber": "125",
-            "reference": "Section 143(4)"
-        },
-        {
-            "sectionNumber": "125",
-            "reference": "Section 166(4)"
-        },
-        {
-            "sectionNumber": "125",
-            "reference": "section 133(6)"
-        },
-        {
-            "sectionNumber": "125",
-            "reference": "Section 217(4)"
-        },
-        {
-            "sectionNumber": "125",
-            "reference": "Section 166(4)"
-        },
-        {
-            "sectionNumber": "125",
-            "reference": "Section 243(4)"
-        },
-        {
-            "sectionNumber": "125",
-            "reference": "Section 141(4)"
-        },
-        {
-            "sectionNumber": "125",
-            "reference": "Section 171(4)"
-        },
-        {
-            "sectionNumber": "125",
-            "reference": "Section 150(4)"
-        },
-        {
-            "sectionNumber": "125",
-            "reference": "Section 130(4)"
-        },
-        {
-            "sectionNumber": "125",
-            "reference": "Section 130(4)"
-        },
-        {
-            "sectionNumber": "125",
-            "reference": "Section 144(4)"
-        },
-        {
-            "sectionNumber": "125",
-            "reference": "Section 165(4)"
         }
     ],
     "duplicateRuleKeys": [],
     "testSummary": {
-        "total": 18,
-        "passed": 15,
-        "failed": 3,
+        "total": 0,
+        "passed": 0,
+        "failed": 0,
         "neverRun": 0
     }
 }

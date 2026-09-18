@@ -21,11 +21,11 @@
  * Input conventions (verified against docs/statutes/vatca-2010/vatca-2010-enacted.md):
  *  - A section opens with `^<num>[A-Z]? .—` (e.g. "34 .—", "12 .—(1)").
  *  - Its heading is the line(s) directly above (see convert-statute-pdf.ts).
- *  - Sections 30, 42 and 55 are not resolved by the converter (an edge case
- *    in its column-splitting heuristic — see that script's header) and so do
- *    not appear here; Schedules are out of scope for this pass entirely (the
- *    conversion stops at the first "SCHEDULE" heading). Both are documented
- *    limitations, not silent gaps — see docs/RULES_KB.md.
+ *  - All 125 numbered body sections resolve; cross-checked against the Act's
+ *    own "ARRANGEMENT OF SECTIONS" table of contents (see convert-statute-pdf.ts's
+ *    header). Schedules are out of scope for this pass entirely (the
+ *    conversion stops at the first "SCHEDULE" heading) — a documented
+ *    limitation, not a silent gap — see docs/RULES_KB.md.
  */
 import { readFileSync } from 'node:fs';
 import { categoriseProvision, provisionSlug, type ParsedProvision } from './statuteParser';
