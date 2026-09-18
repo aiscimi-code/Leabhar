@@ -1,1812 +1,1854 @@
 {
-    "generatedAt": "2026-09-18T17:24:08.270Z",
-    "sources": [
-        {
-            "id": "src_0107a7a3c5dc4c04a46848f5",
-            "citation": "2024 Act 43",
-            "sourceType": "legislation",
-            "provisionCount": 118
-        },
-        {
-            "id": "src_6de63229a6024b689a283de8",
-            "citation": "2010 Act 31",
-            "sourceType": "legislation",
-            "provisionCount": 125
-        }
-    ],
-    "provisionCount": 243,
-    "relevantProvisionCount": 147,
-    "notRelevantProvisionCount": 96,
-    "ruleCount": 9,
-    "rulesByReviewStatus": {
-        "ai_extracted": 9
+  "generatedAt": "2026-09-18T21:41:07.706Z",
+  "sources": [
+    {
+      "id": "src_780e780e102a40a38b9c48c7",
+      "citation": "2024 Act 43",
+      "sourceType": "legislation",
+      "provisionCount": 118
     },
-    "rulesRequiringHumanReview": 9,
-    "rulesRequiringGuidance": 4,
-    "rulesWithExceptions": 3,
-    "provisionsWithoutExtractedRule": [],
-    "ambiguousProvisions": [
-        {
-            "sectionNumber": "3",
-            "heading": "Rate of charge and personal tax credits",
-            "reason": "Curated: mapped to rule key \"income_tax.standard_rate_threshold\" by human editorial judgement, overriding the other category default."
-        }
-    ],
-    "unresolvedCrossReferences": [
-        {
-            "sectionNumber": "1",
-            "reference": "section 531AN"
-        },
-        {
-            "sectionNumber": "2",
-            "reference": "Section 531AN"
-        },
-        {
-            "sectionNumber": "3",
-            "reference": "section 461"
-        },
-        {
-            "sectionNumber": "3",
-            "reference": "section 462B(3)"
-        },
-        {
-            "sectionNumber": "3",
-            "reference": "section 465(1)"
-        },
-        {
-            "sectionNumber": "3",
-            "reference": "section 466(2)"
-        },
-        {
-            "sectionNumber": "3",
-            "reference": "section 466A(2)"
-        },
-        {
-            "sectionNumber": "3",
-            "reference": "section 468(2)"
-        },
-        {
-            "sectionNumber": "3",
-            "reference": "section 472(4)"
-        },
-        {
-            "sectionNumber": "3",
-            "reference": "section 472AB"
-        },
-        {
-            "sectionNumber": "3",
-            "reference": "section 472BB"
-        },
-        {
-            "sectionNumber": "5",
-            "reference": "Section 473B"
-        },
-        {
-            "sectionNumber": "5",
-            "reference": "section 473C"
-        },
-        {
-            "sectionNumber": "6",
-            "reference": "Section 473C"
-        },
-        {
-            "sectionNumber": "6",
-            "reference": "section 477C"
-        },
-        {
-            "sectionNumber": "13",
-            "reference": "section 787O(1)"
-        },
-        {
-            "sectionNumber": "13",
-            "reference": "section 790AA(1)"
-        },
-        {
-            "sectionNumber": "13",
-            "reference": "section 790D(1)"
-        },
-        {
-            "sectionNumber": "13",
-            "reference": "section 790D(1)"
-        },
-        {
-            "sectionNumber": "14",
-            "reference": "section 983"
-        },
-        {
-            "sectionNumber": "15",
-            "reference": "section 192P"
-        },
-        {
-            "sectionNumber": "15",
-            "reference": "section 246(3)"
-        },
-        {
-            "sectionNumber": "15",
-            "reference": "section 256(1)"
-        },
-        {
-            "sectionNumber": "15",
-            "reference": "section 608(2)"
-        },
-        {
-            "sectionNumber": "15",
-            "reference": "section 706(3)"
-        },
-        {
-            "sectionNumber": "15",
-            "reference": "section 739D(6)"
-        },
-        {
-            "sectionNumber": "15",
-            "reference": "section 787O(1)"
-        },
-        {
-            "sectionNumber": "15",
-            "reference": "section 787U"
-        },
-        {
-            "sectionNumber": "15",
-            "reference": "section 787U"
-        },
-        {
-            "sectionNumber": "15",
-            "reference": "section 790AA(1)"
-        },
-        {
-            "sectionNumber": "18",
-            "reference": "Section 235"
-        },
-        {
-            "sectionNumber": "18",
-            "reference": "section 235A"
-        },
-        {
-            "sectionNumber": "19",
-            "reference": "section 235"
-        },
-        {
-            "sectionNumber": "19",
-            "reference": "section 1095"
-        },
-        {
-            "sectionNumber": "19",
-            "reference": "section 235"
-        },
-        {
-            "sectionNumber": "19",
-            "reference": "section 261"
-        },
-        {
-            "sectionNumber": "19",
-            "reference": "section 847A"
-        },
-        {
-            "sectionNumber": "20",
-            "reference": "Section 847A"
-        },
-        {
-            "sectionNumber": "20",
-            "reference": "section 1094"
-        },
-        {
-            "sectionNumber": "20",
-            "reference": "section 1094"
-        },
-        {
-            "sectionNumber": "20",
-            "reference": "section 847AA"
-        },
-        {
-            "sectionNumber": "20",
-            "reference": "section 848A"
-        },
-        {
-            "sectionNumber": "20",
-            "reference": "section 1017"
-        },
-        {
-            "sectionNumber": "20",
-            "reference": "section 787"
-        },
-        {
-            "sectionNumber": "20",
-            "reference": "section 1017"
-        },
-        {
-            "sectionNumber": "20",
-            "reference": "section 787"
-        },
-        {
-            "sectionNumber": "20",
-            "reference": "section 235(2)"
-        },
-        {
-            "sectionNumber": "20",
-            "reference": "section 235(2)"
-        },
-        {
-            "sectionNumber": "21",
-            "reference": "section 847A"
-        },
-        {
-            "sectionNumber": "21",
-            "reference": "section 1095"
-        },
-        {
-            "sectionNumber": "21",
-            "reference": "section 235(1)"
-        },
-        {
-            "sectionNumber": "21",
-            "reference": "section 235(1)"
-        },
-        {
-            "sectionNumber": "21",
-            "reference": "section 847A"
-        },
-        {
-            "sectionNumber": "21",
-            "reference": "section 1017"
-        },
-        {
-            "sectionNumber": "21",
-            "reference": "section 787"
-        },
-        {
-            "sectionNumber": "21",
-            "reference": "section 1017"
-        },
-        {
-            "sectionNumber": "21",
-            "reference": "section 787"
-        },
-        {
-            "sectionNumber": "21",
-            "reference": "section 235(2)"
-        },
-        {
-            "sectionNumber": "23",
-            "reference": "Section 822"
-        },
-        {
-            "sectionNumber": "23",
-            "reference": "section 192A"
-        },
-        {
-            "sectionNumber": "24",
-            "reference": "Section 192A(1)"
-        },
-        {
-            "sectionNumber": "24",
-            "reference": "section 204A"
-        },
-        {
-            "sectionNumber": "25",
-            "reference": "Section 204A"
-        },
-        {
-            "sectionNumber": "25",
-            "reference": "section 990"
-        },
-        {
-            "sectionNumber": "26",
-            "reference": "Section 990(5)"
-        },
-        {
-            "sectionNumber": "27",
-            "reference": "section 195D"
-        },
-        {
-            "sectionNumber": "27",
-            "reference": "section 520"
-        },
-        {
-            "sectionNumber": "28",
-            "reference": "Section 520(1)"
-        },
-        {
-            "sectionNumber": "28",
-            "reference": "section 207"
-        },
-        {
-            "sectionNumber": "28",
-            "reference": "section 207"
-        },
-        {
-            "sectionNumber": "28",
-            "reference": "section 986(4A)"
-        },
-        {
-            "sectionNumber": "28",
-            "reference": "section 986"
-        },
-        {
-            "sectionNumber": "29",
-            "reference": "Section 986"
-        },
-        {
-            "sectionNumber": "29",
-            "reference": "section 195E"
-        },
-        {
-            "sectionNumber": "30",
-            "reference": "section 205B"
-        },
-        {
-            "sectionNumber": "30",
-            "reference": "section 865(4)"
-        },
-        {
-            "sectionNumber": "30",
-            "reference": "Section 865(6)"
-        },
-        {
-            "sectionNumber": "30",
-            "reference": "section 865(1)"
-        },
-        {
-            "sectionNumber": "30",
-            "reference": "section 256(1)"
-        },
-        {
-            "sectionNumber": "30",
-            "reference": "section 205A(2)"
-        },
-        {
-            "sectionNumber": "30",
-            "reference": "section 205B(1))"
-        },
-        {
-            "sectionNumber": "30",
-            "reference": "section 205C(2)"
-        },
-        {
-            "sectionNumber": "30",
-            "reference": "section 205A(3)"
-        },
-        {
-            "sectionNumber": "30",
-            "reference": "section 267(3)"
-        },
-        {
-            "sectionNumber": "30",
-            "reference": "section 205A(2)"
-        },
-        {
-            "sectionNumber": "30",
-            "reference": "section 205A(2)"
-        },
-        {
-            "sectionNumber": "30",
-            "reference": "section 205B(2)"
-        },
-        {
-            "sectionNumber": "30",
-            "reference": "section 613(1)"
-        },
-        {
-            "sectionNumber": "30",
-            "reference": "section 205C"
-        },
-        {
-            "sectionNumber": "30",
-            "reference": "section 730GA"
-        },
-        {
-            "sectionNumber": "30",
-            "reference": "section 739G(2)"
-        },
-        {
-            "sectionNumber": "31",
-            "reference": "section 205C"
-        },
-        {
-            "sectionNumber": "31",
-            "reference": "section 285C"
-        },
-        {
-            "sectionNumber": "32",
-            "reference": "Section 285C(1)"
-        },
-        {
-            "sectionNumber": "33",
-            "reference": "section 380L"
-        },
-        {
-            "sectionNumber": "33",
-            "reference": "section 380M"
-        },
-        {
-            "sectionNumber": "35",
-            "reference": "section 480C"
-        },
-        {
-            "sectionNumber": "36",
-            "reference": "Section 480C"
-        },
-        {
-            "sectionNumber": "36",
-            "reference": "section 384"
-        },
-        {
-            "sectionNumber": "37",
-            "reference": "section 489"
-        },
-        {
-            "sectionNumber": "37",
-            "reference": "section 496(5)"
-        },
-        {
-            "sectionNumber": "37",
-            "reference": "section 502"
-        },
-        {
-            "sectionNumber": "37",
-            "reference": "section 496(5)"
-        },
-        {
-            "sectionNumber": "37",
-            "reference": "section 496(7)"
-        },
-        {
-            "sectionNumber": "37",
-            "reference": "section 496(5)"
-        },
-        {
-            "sectionNumber": "37",
-            "reference": "section 496(7)"
-        },
-        {
-            "sectionNumber": "37",
-            "reference": "section 496(5)"
-        },
-        {
-            "sectionNumber": "37",
-            "reference": "section 508J(4)"
-        },
-        {
-            "sectionNumber": "37",
-            "reference": "section 508J(4)"
-        },
-        {
-            "sectionNumber": "37",
-            "reference": "section 504"
-        },
-        {
-            "sectionNumber": "37",
-            "reference": "section 507"
-        },
-        {
-            "sectionNumber": "37",
-            "reference": "section 502"
-        },
-        {
-            "sectionNumber": "37",
-            "reference": "section 496(5)"
-        },
-        {
-            "sectionNumber": "37",
-            "reference": "section 496(5)"
-        },
-        {
-            "sectionNumber": "37",
-            "reference": "section 496(7)"
-        },
-        {
-            "sectionNumber": "37",
-            "reference": "section 496(5)"
-        },
-        {
-            "sectionNumber": "37",
-            "reference": "section 496(6)"
-        },
-        {
-            "sectionNumber": "37",
-            "reference": "section 496(7)"
-        },
-        {
-            "sectionNumber": "37",
-            "reference": "section 496(5)"
-        },
-        {
-            "sectionNumber": "37",
-            "reference": "section 508(1)"
-        },
-        {
-            "sectionNumber": "37",
-            "reference": "section 507"
-        },
-        {
-            "sectionNumber": "37",
-            "reference": "section 508A"
-        },
-        {
-            "sectionNumber": "37",
-            "reference": "section 508C"
-        },
-        {
-            "sectionNumber": "37",
-            "reference": "section 508Q"
-        },
-        {
-            "sectionNumber": "37",
-            "reference": "section 493"
-        },
-        {
-            "sectionNumber": "37",
-            "reference": "section 508W(1)"
-        },
-        {
-            "sectionNumber": "37",
-            "reference": "section 507"
-        },
-        {
-            "sectionNumber": "37",
-            "reference": "section 508Z"
-        },
-        {
-            "sectionNumber": "38",
-            "reference": "section 666(4)"
-        },
-        {
-            "sectionNumber": "38",
-            "reference": "section 667B(5)"
-        },
-        {
-            "sectionNumber": "38",
-            "reference": "section 667C"
-        },
-        {
-            "sectionNumber": "40",
-            "reference": "section 285D"
-        },
-        {
-            "sectionNumber": "40",
-            "reference": "section 766C"
-        },
-        {
-            "sectionNumber": "41",
-            "reference": "Section 766C(6)"
-        },
-        {
-            "sectionNumber": "44",
-            "reference": "section 288"
-        },
-        {
-            "sectionNumber": "44",
-            "reference": "section 299(1)"
-        },
-        {
-            "sectionNumber": "44",
-            "reference": "section 299(1)"
-        },
-        {
-            "sectionNumber": "44",
-            "reference": "section 299(1)"
-        },
-        {
-            "sectionNumber": "44",
-            "reference": "section 299"
-        },
-        {
-            "sectionNumber": "44",
-            "reference": "section 299"
-        },
-        {
-            "sectionNumber": "44",
-            "reference": "section 299(1)"
-        },
-        {
-            "sectionNumber": "44",
-            "reference": "section 299(1)"
-        },
-        {
-            "sectionNumber": "44",
-            "reference": "section 299(5A))"
-        },
-        {
-            "sectionNumber": "44",
-            "reference": "section 299"
-        },
-        {
-            "sectionNumber": "44",
-            "reference": "section 312(5)"
-        },
-        {
-            "sectionNumber": "44",
-            "reference": "section 835Z(1)"
-        },
-        {
-            "sectionNumber": "44",
-            "reference": "section 403"
-        },
-        {
-            "sectionNumber": "44",
-            "reference": "Section 305(1)"
-        },
-        {
-            "sectionNumber": "44",
-            "reference": "section 404"
-        },
-        {
-            "sectionNumber": "44",
-            "reference": "section 308(1)"
-        },
-        {
-            "sectionNumber": "44",
-            "reference": "section 403"
-        },
-        {
-            "sectionNumber": "44",
-            "reference": "section 396A(3)"
-        },
-        {
-            "sectionNumber": "44",
-            "reference": "section 396B"
-        },
-        {
-            "sectionNumber": "44",
-            "reference": "section 288"
-        },
-        {
-            "sectionNumber": "44",
-            "reference": "section 403(4)"
-        },
-        {
-            "sectionNumber": "44",
-            "reference": "section 403(4)"
-        },
-        {
-            "sectionNumber": "44",
-            "reference": "section 396(1)"
-        },
-        {
-            "sectionNumber": "44",
-            "reference": "section 596"
-        },
-        {
-            "sectionNumber": "44",
-            "reference": "section 485C"
-        },
-        {
-            "sectionNumber": "45",
-            "reference": "section 835D"
-        },
-        {
-            "sectionNumber": "45",
-            "reference": "section 835D(1)"
-        },
-        {
-            "sectionNumber": "45",
-            "reference": "section 835D"
-        },
-        {
-            "sectionNumber": "45",
-            "reference": "section 826(1)"
-        },
-        {
-            "sectionNumber": "45",
-            "reference": "section 835C"
-        },
-        {
-            "sectionNumber": "45",
-            "reference": "section 835D"
-        },
-        {
-            "sectionNumber": "45",
-            "reference": "section 835DA"
-        },
-        {
-            "sectionNumber": "45",
-            "reference": "section 835DA"
-        },
-        {
-            "sectionNumber": "45",
-            "reference": "section 835D"
-        },
-        {
-            "sectionNumber": "45",
-            "reference": "section 835DA"
-        },
-        {
-            "sectionNumber": "45",
-            "reference": "section 835G"
-        },
-        {
-            "sectionNumber": "45",
-            "reference": "section 835DA"
-        },
-        {
-            "sectionNumber": "45",
-            "reference": "section 835DA"
-        },
-        {
-            "sectionNumber": "45",
-            "reference": "section 835DA(3)"
-        },
-        {
-            "sectionNumber": "45",
-            "reference": "section 835DA(3)"
-        },
-        {
-            "sectionNumber": "45",
-            "reference": "section 835DA"
-        },
-        {
-            "sectionNumber": "45",
-            "reference": "section 835DA"
-        },
-        {
-            "sectionNumber": "45",
-            "reference": "section 835DA"
-        },
-        {
-            "sectionNumber": "45",
-            "reference": "Section 835C(3)"
-        },
-        {
-            "sectionNumber": "45",
-            "reference": "section 835DA"
-        },
-        {
-            "sectionNumber": "45",
-            "reference": "section 321(2)"
-        },
-        {
-            "sectionNumber": "45",
-            "reference": "section 817U"
-        },
-        {
-            "sectionNumber": "46",
-            "reference": "Section 817U"
-        },
-        {
-            "sectionNumber": "46",
-            "reference": "section 817U"
-        },
-        {
-            "sectionNumber": "46",
-            "reference": "section 835AY"
-        },
-        {
-            "sectionNumber": "47",
-            "reference": "section 835AY"
-        },
-        {
-            "sectionNumber": "47",
-            "reference": "section 299"
-        },
-        {
-            "sectionNumber": "47",
-            "reference": "section 299(1A))"
-        },
-        {
-            "sectionNumber": "47",
-            "reference": "section 299(3)"
-        },
-        {
-            "sectionNumber": "47",
-            "reference": "section 299"
-        },
-        {
-            "sectionNumber": "47",
-            "reference": "section 299(1A))"
-        },
-        {
-            "sectionNumber": "47",
-            "reference": "section 299(3)"
-        },
-        {
-            "sectionNumber": "47",
-            "reference": "section 299(4)"
-        },
-        {
-            "sectionNumber": "47",
-            "reference": "section 299"
-        },
-        {
-            "sectionNumber": "47",
-            "reference": "section 299(1A))"
-        },
-        {
-            "sectionNumber": "47",
-            "reference": "section 299(4)"
-        },
-        {
-            "sectionNumber": "47",
-            "reference": "section 835AAD"
-        },
-        {
-            "sectionNumber": "47",
-            "reference": "section 835AAE"
-        },
-        {
-            "sectionNumber": "47",
-            "reference": "section 835AAD"
-        },
-        {
-            "sectionNumber": "47",
-            "reference": "section 835AAE"
-        },
-        {
-            "sectionNumber": "47",
-            "reference": "section 402"
-        },
-        {
-            "sectionNumber": "47",
-            "reference": "section 481"
-        },
-        {
-            "sectionNumber": "48",
-            "reference": "Section 481"
-        },
-        {
-            "sectionNumber": "48",
-            "reference": "section 481"
-        },
-        {
-            "sectionNumber": "49",
-            "reference": "section 487"
-        },
-        {
-            "sectionNumber": "49",
-            "reference": "section 481"
-        },
-        {
-            "sectionNumber": "49",
-            "reference": "section 433(4)"
-        },
-        {
-            "sectionNumber": "49",
-            "reference": "section 481"
-        },
-        {
-            "sectionNumber": "49",
-            "reference": "section 481"
-        },
-        {
-            "sectionNumber": "49",
-            "reference": "section 826(1)"
-        },
-        {
-            "sectionNumber": "49",
-            "reference": "section 886"
-        },
-        {
-            "sectionNumber": "49",
-            "reference": "section 886"
-        },
-        {
-            "sectionNumber": "49",
-            "reference": "section 886"
-        },
-        {
-            "sectionNumber": "49",
-            "reference": "section 960H"
-        },
-        {
-            "sectionNumber": "49",
-            "reference": "section 960H"
-        },
-        {
-            "sectionNumber": "49",
-            "reference": "section 959AR"
-        },
-        {
-            "sectionNumber": "49",
-            "reference": "section 1077F"
-        },
-        {
-            "sectionNumber": "49",
-            "reference": "section 440"
-        },
-        {
-            "sectionNumber": "49",
-            "reference": "section 1080"
-        },
-        {
-            "sectionNumber": "49",
-            "reference": "section 1080"
-        },
-        {
-            "sectionNumber": "49",
-            "reference": "section 960H"
-        },
-        {
-            "sectionNumber": "49",
-            "reference": "section 851A"
-        },
-        {
-            "sectionNumber": "49",
-            "reference": "section 851A"
-        },
-        {
-            "sectionNumber": "49",
-            "reference": "section 487A"
-        },
-        {
-            "sectionNumber": "50",
-            "reference": "section 831A"
-        },
-        {
-            "sectionNumber": "50",
-            "reference": "section 835YA"
-        },
-        {
-            "sectionNumber": "50",
-            "reference": "section 835AY"
-        },
-        {
-            "sectionNumber": "50",
-            "reference": "section 743"
-        },
-        {
-            "sectionNumber": "50",
-            "reference": "section 826(1)"
-        },
-        {
-            "sectionNumber": "50",
-            "reference": "section 826(1)"
-        },
-        {
-            "sectionNumber": "50",
-            "reference": "section 411(1)"
-        },
-        {
-            "sectionNumber": "50",
-            "reference": "section 419"
-        },
-        {
-            "sectionNumber": "50",
-            "reference": "section 138"
-        },
-        {
-            "sectionNumber": "50",
-            "reference": "section 626B"
-        },
-        {
-            "sectionNumber": "50",
-            "reference": "section 738"
-        },
-        {
-            "sectionNumber": "50",
-            "reference": "section 129A"
-        },
-        {
-            "sectionNumber": "50",
-            "reference": "section 831B"
-        },
-        {
-            "sectionNumber": "50",
-            "reference": "section 831B"
-        },
-        {
-            "sectionNumber": "50",
-            "reference": "section 753C(4)"
-        },
-        {
-            "sectionNumber": "50",
-            "reference": "section 129A"
-        },
-        {
-            "sectionNumber": "50",
-            "reference": "section 138"
-        },
-        {
-            "sectionNumber": "50",
-            "reference": "section 831B"
-        },
-        {
-            "sectionNumber": "50",
-            "reference": "section 129A"
-        },
-        {
-            "sectionNumber": "50",
-            "reference": "section 138"
-        },
-        {
-            "sectionNumber": "50",
-            "reference": "section 835E(2)"
-        },
-        {
-            "sectionNumber": "50",
-            "reference": "section 129"
-        },
-        {
-            "sectionNumber": "50",
-            "reference": "section 129"
-        },
-        {
-            "sectionNumber": "50",
-            "reference": "section 835Q(4)"
-        },
-        {
-            "sectionNumber": "50",
-            "reference": "section 831B"
-        },
-        {
-            "sectionNumber": "50",
-            "reference": "section 831B"
-        },
-        {
-            "sectionNumber": "50",
-            "reference": "section 486C"
-        },
-        {
-            "sectionNumber": "51",
-            "reference": "Section 486C"
-        },
-        {
-            "sectionNumber": "51",
-            "reference": "section 835YA"
-        },
-        {
-            "sectionNumber": "52",
-            "reference": "Section 835YA"
-        },
-        {
-            "sectionNumber": "54",
-            "reference": "section 600A"
-        },
-        {
-            "sectionNumber": "54",
-            "reference": "section 433"
-        },
-        {
-            "sectionNumber": "54",
-            "reference": "section 600Q(1)"
-        },
-        {
-            "sectionNumber": "54",
-            "reference": "section 493"
-        },
-        {
-            "sectionNumber": "54",
-            "reference": "section 600F(3)"
-        },
-        {
-            "sectionNumber": "54",
-            "reference": "section 600F(4)"
-        },
-        {
-            "sectionNumber": "54",
-            "reference": "section 432"
-        },
-        {
-            "sectionNumber": "54",
-            "reference": "section 433(4)"
-        },
-        {
-            "sectionNumber": "54",
-            "reference": "section 489"
-        },
-        {
-            "sectionNumber": "54",
-            "reference": "section 983"
-        },
-        {
-            "sectionNumber": "54",
-            "reference": "section 494"
-        },
-        {
-            "sectionNumber": "54",
-            "reference": "section 493"
-        },
-        {
-            "sectionNumber": "54",
-            "reference": "section 493"
-        },
-        {
-            "sectionNumber": "54",
-            "reference": "section 600C"
-        },
-        {
-            "sectionNumber": "54",
-            "reference": "section 600J"
-        },
-        {
-            "sectionNumber": "54",
-            "reference": "section 600H"
-        },
-        {
-            "sectionNumber": "54",
-            "reference": "section 600N"
-        },
-        {
-            "sectionNumber": "54",
-            "reference": "section 600D"
-        },
-        {
-            "sectionNumber": "54",
-            "reference": "section 600F(2)"
-        },
-        {
-            "sectionNumber": "54",
-            "reference": "section 600F"
-        },
-        {
-            "sectionNumber": "54",
-            "reference": "section 1095"
-        },
-        {
-            "sectionNumber": "54",
-            "reference": "section 616(1)"
-        },
-        {
-            "sectionNumber": "54",
-            "reference": "section 949I"
-        },
-        {
-            "sectionNumber": "54",
-            "reference": "section 600P"
-        },
-        {
-            "sectionNumber": "54",
-            "reference": "section 949I"
-        },
-        {
-            "sectionNumber": "54",
-            "reference": "section 600P"
-        },
-        {
-            "sectionNumber": "54",
-            "reference": "section 600P(4)"
-        },
-        {
-            "sectionNumber": "54",
-            "reference": "section 949I"
-        },
-        {
-            "sectionNumber": "54",
-            "reference": "section 600P"
-        },
-        {
-            "sectionNumber": "54",
-            "reference": "section 600I"
-        },
-        {
-            "sectionNumber": "54",
-            "reference": "section 415"
-        },
-        {
-            "sectionNumber": "54",
-            "reference": "section 411(1)"
-        },
-        {
-            "sectionNumber": "54",
-            "reference": "section 600M"
-        },
-        {
-            "sectionNumber": "54",
-            "reference": "section 508IA"
-        },
-        {
-            "sectionNumber": "54",
-            "reference": "section 600E"
-        },
-        {
-            "sectionNumber": "54",
-            "reference": "section 600J(2)"
-        },
-        {
-            "sectionNumber": "54",
-            "reference": "section 600J(2)"
-        },
-        {
-            "sectionNumber": "54",
-            "reference": "section 600M"
-        },
-        {
-            "sectionNumber": "54",
-            "reference": "section 600J(2)"
-        },
-        {
-            "sectionNumber": "54",
-            "reference": "section 400"
-        },
-        {
-            "sectionNumber": "54",
-            "reference": "section 534"
-        },
-        {
-            "sectionNumber": "54",
-            "reference": "section 600M"
-        },
-        {
-            "sectionNumber": "54",
-            "reference": "section 600J"
-        },
-        {
-            "sectionNumber": "54",
-            "reference": "section 600M"
-        },
-        {
-            "sectionNumber": "54",
-            "reference": "Section 597AA"
-        },
-        {
-            "sectionNumber": "54",
-            "reference": "section 597AA"
-        },
-        {
-            "sectionNumber": "54",
-            "reference": "Section 600M"
-        },
-        {
-            "sectionNumber": "54",
-            "reference": "section 597AA"
-        },
-        {
-            "sectionNumber": "54",
-            "reference": "Section 598"
-        },
-        {
-            "sectionNumber": "54",
-            "reference": "section 598"
-        },
-        {
-            "sectionNumber": "54",
-            "reference": "Section 600M"
-        },
-        {
-            "sectionNumber": "54",
-            "reference": "section 598"
-        },
-        {
-            "sectionNumber": "54",
-            "reference": "Section 600M"
-        },
-        {
-            "sectionNumber": "54",
-            "reference": "section 600F"
-        },
-        {
-            "sectionNumber": "54",
-            "reference": "section 600F"
-        },
-        {
-            "sectionNumber": "54",
-            "reference": "section 600F"
-        },
-        {
-            "sectionNumber": "54",
-            "reference": "section 440"
-        },
-        {
-            "sectionNumber": "54",
-            "reference": "section 600F(2)"
-        },
-        {
-            "sectionNumber": "54",
-            "reference": "section 600F(2)"
-        },
-        {
-            "sectionNumber": "54",
-            "reference": "section 600F(2)"
-        },
-        {
-            "sectionNumber": "54",
-            "reference": "section 600F(1)"
-        },
-        {
-            "sectionNumber": "54",
-            "reference": "section 600F(2)"
-        },
-        {
-            "sectionNumber": "54",
-            "reference": "section 600F(2)"
-        },
-        {
-            "sectionNumber": "54",
-            "reference": "section 949I"
-        },
-        {
-            "sectionNumber": "54",
-            "reference": "section 600F(1)"
-        },
-        {
-            "sectionNumber": "54",
-            "reference": "section 600P(2)"
-        },
-        {
-            "sectionNumber": "54",
-            "reference": "section 600F"
-        },
-        {
-            "sectionNumber": "54",
-            "reference": "Section 600M"
-        },
-        {
-            "sectionNumber": "54",
-            "reference": "section 600M"
-        },
-        {
-            "sectionNumber": "54",
-            "reference": "section 1084"
-        },
-        {
-            "sectionNumber": "54",
-            "reference": "section 851A(8)"
-        },
-        {
-            "sectionNumber": "54",
-            "reference": "section 600F"
-        },
-        {
-            "sectionNumber": "54",
-            "reference": "section 600P"
-        },
-        {
-            "sectionNumber": "54",
-            "reference": "section 599"
-        },
-        {
-            "sectionNumber": "55",
-            "reference": "Section 599"
-        },
-        {
-            "sectionNumber": "55",
-            "reference": "section 613"
-        },
-        {
-            "sectionNumber": "56",
-            "reference": "Section 613"
-        },
-        {
-            "sectionNumber": "56",
-            "reference": "section 613"
-        },
-        {
-            "sectionNumber": "56",
-            "reference": "section 613"
-        },
-        {
-            "sectionNumber": "56",
-            "reference": "section 613"
-        },
-        {
-            "sectionNumber": "56",
-            "reference": "section 613"
-        },
-        {
-            "sectionNumber": "56",
-            "reference": "section 613"
-        },
-        {
-            "sectionNumber": "69",
-            "reference": "section 432"
-        },
-        {
-            "sectionNumber": "76",
-            "reference": "Section 132(3)"
-        },
-        {
-            "sectionNumber": "76",
-            "reference": "section 130"
-        },
-        {
-            "sectionNumber": "76",
-            "reference": "section 130"
-        },
-        {
-            "sectionNumber": "76",
-            "reference": "section 130"
-        },
-        {
-            "sectionNumber": "76",
-            "reference": "section 130"
-        },
-        {
-            "sectionNumber": "92",
-            "reference": "section 159D"
-        },
-        {
-            "sectionNumber": "92",
-            "reference": "section 654A"
-        },
-        {
-            "sectionNumber": "92",
-            "reference": "section 654A"
-        },
-        {
-            "sectionNumber": "95",
-            "reference": "section 123B"
-        },
-        {
-            "sectionNumber": "95",
-            "reference": "section 124"
-        },
-        {
-            "sectionNumber": "95",
-            "reference": "section 124"
-        },
-        {
-            "sectionNumber": "95",
-            "reference": "section 124(2)"
-        },
-        {
-            "sectionNumber": "95",
-            "reference": "section 126AB"
-        },
-        {
-            "sectionNumber": "105",
-            "reference": "Section 991B"
-        },
-        {
-            "sectionNumber": "105",
-            "reference": "section 1080B"
-        },
-        {
-            "sectionNumber": "106",
-            "reference": "Section 1080B"
-        },
-        {
-            "sectionNumber": "111",
-            "reference": "section 826A"
-        },
-        {
-            "sectionNumber": "111",
-            "reference": "section 321"
-        },
-        {
-            "sectionNumber": "111",
-            "reference": "section 826"
-        },
-        {
-            "sectionNumber": "111",
-            "reference": "section 826"
-        },
-        {
-            "sectionNumber": "111",
-            "reference": "section 411(1)"
-        },
-        {
-            "sectionNumber": "111",
-            "reference": "section 865(10)"
-        },
-        {
-            "sectionNumber": "111",
-            "reference": "section 864"
-        },
-        {
-            "sectionNumber": "114",
-            "reference": "section 653A(2)"
-        },
-        {
-            "sectionNumber": "114",
-            "reference": "section 653AF(1)"
-        },
-        {
-            "sectionNumber": "114",
-            "reference": "section 653AF(1)"
-        },
-        {
-            "sectionNumber": "114",
-            "reference": "section 653I"
-        },
-        {
-            "sectionNumber": "114",
-            "reference": "section 653F"
-        },
-        {
-            "sectionNumber": "114",
-            "reference": "section 653F"
-        },
-        {
-            "sectionNumber": "114",
-            "reference": "section 653M(1)"
-        },
-        {
-            "sectionNumber": "114",
-            "reference": "section 653M(1)"
-        },
-        {
-            "sectionNumber": "114",
-            "reference": "section 653M(1)"
-        },
-        {
-            "sectionNumber": "114",
-            "reference": "section 653IA"
-        },
-        {
-            "sectionNumber": "114",
-            "reference": "section 653IA"
-        },
-        {
-            "sectionNumber": "114",
-            "reference": "section 653I"
-        },
-        {
-            "sectionNumber": "114",
-            "reference": "section 653I"
-        },
-        {
-            "sectionNumber": "114",
-            "reference": "section 653I"
-        },
-        {
-            "sectionNumber": "114",
-            "reference": "section 653Q"
-        },
-        {
-            "sectionNumber": "114",
-            "reference": "section 653I"
-        },
-        {
-            "sectionNumber": "114",
-            "reference": "section 653I"
-        },
-        {
-            "sectionNumber": "114",
-            "reference": "section 653Q"
-        },
-        {
-            "sectionNumber": "114",
-            "reference": "section 653O"
-        },
-        {
-            "sectionNumber": "114",
-            "reference": "section 653T(2)"
-        },
-        {
-            "sectionNumber": "114",
-            "reference": "section 653IA"
-        },
-        {
-            "sectionNumber": "114",
-            "reference": "section 653AD"
-        },
-        {
-            "sectionNumber": "114",
-            "reference": "section 653AD"
-        },
-        {
-            "sectionNumber": "114",
-            "reference": "section 653AGA"
-        },
-        {
-            "sectionNumber": "114",
-            "reference": "section 653AGA(2)"
-        },
-        {
-            "sectionNumber": "114",
-            "reference": "section 653AGA"
-        },
-        {
-            "sectionNumber": "114",
-            "reference": "section 653AGA"
-        },
-        {
-            "sectionNumber": "114",
-            "reference": "section 653AF"
-        },
-        {
-            "sectionNumber": "114",
-            "reference": "section 653AGA"
-        },
-        {
-            "sectionNumber": "114",
-            "reference": "section 189"
-        },
-        {
-            "sectionNumber": "114",
-            "reference": "section 653AG"
-        },
-        {
-            "sectionNumber": "114",
-            "reference": "section 653Q(2)"
-        },
-        {
-            "sectionNumber": "114",
-            "reference": "section 616"
-        },
-        {
-            "sectionNumber": "114",
-            "reference": "section 616"
-        },
-        {
-            "sectionNumber": "114",
-            "reference": "section 653AG"
-        },
-        {
-            "sectionNumber": "114",
-            "reference": "section 653AH"
-        },
-        {
-            "sectionNumber": "114",
-            "reference": "section 653T"
-        },
-        {
-            "sectionNumber": "114",
-            "reference": "section 653AH"
-        },
-        {
-            "sectionNumber": "114",
-            "reference": "section 616"
-        },
-        {
-            "sectionNumber": "114",
-            "reference": "section 616"
-        },
-        {
-            "sectionNumber": "114",
-            "reference": "section 653O(5)"
-        },
-        {
-            "sectionNumber": "114",
-            "reference": "section 653AI"
-        },
-        {
-            "sectionNumber": "114",
-            "reference": "section 653Q(4)"
-        },
-        {
-            "sectionNumber": "114",
-            "reference": "section 653Q(4)"
-        },
-        {
-            "sectionNumber": "114",
-            "reference": "section 653AF(5)"
-        },
-        {
-            "sectionNumber": "114",
-            "reference": "section 653AGA"
-        },
-        {
-            "sectionNumber": "114",
-            "reference": "section 653AGA(3)"
-        },
-        {
-            "sectionNumber": "114",
-            "reference": "section 653Q(4)"
-        },
-        {
-            "sectionNumber": "114",
-            "reference": "section 653AH(3)"
-        },
-        {
-            "sectionNumber": "114",
-            "reference": "section 653AGA(5)"
-        },
-        {
-            "sectionNumber": "114",
-            "reference": "section 653AH"
-        },
-        {
-            "sectionNumber": "114",
-            "reference": "section 653Q(4)"
-        },
-        {
-            "sectionNumber": "114",
-            "reference": "section 653AE(4)"
-        },
-        {
-            "sectionNumber": "114",
-            "reference": "section 653AF(4)"
-        },
-        {
-            "sectionNumber": "114",
-            "reference": "section 653AE(5)"
-        },
-        {
-            "sectionNumber": "114",
-            "reference": "section 653AM"
-        },
-        {
-            "sectionNumber": "114",
-            "reference": "section 653I(4)"
-        },
-        {
-            "sectionNumber": "115",
-            "reference": "section 891H"
-        },
-        {
-            "sectionNumber": "115",
-            "reference": "section 246"
-        },
-        {
-            "sectionNumber": "118",
-            "reference": "section 860(1)"
-        },
-        {
-            "sectionNumber": "118",
-            "reference": "section 959C(1)"
-        },
-        {
-            "sectionNumber": "118",
-            "reference": "section 959V(2A)"
-        },
-        {
-            "sectionNumber": "118",
-            "reference": "section 959AT(2)"
-        },
-        {
-            "sectionNumber": "118",
-            "reference": "section 130"
-        },
-        {
-            "sectionNumber": "118",
-            "reference": "section 132(3)"
-        },
-        {
-            "sectionNumber": "118",
-            "reference": "section 654A"
-        },
-        {
-            "sectionNumber": "118",
-            "reference": "section 654A"
-        },
-        {
-            "sectionNumber": "2",
-            "reference": "section 850"
-        },
-        {
-            "sectionNumber": "2",
-            "reference": "section 851"
-        },
-        {
-            "sectionNumber": "2",
-            "reference": "section 852"
-        },
-        {
-            "sectionNumber": "16",
-            "reference": "section 153"
-        },
-        {
-            "sectionNumber": "16",
-            "reference": "section 153"
-        },
-        {
-            "sectionNumber": "16",
-            "reference": "section 531(1)"
-        },
-        {
-            "sectionNumber": "16",
-            "reference": "section 531(1)"
-        },
-        {
-            "sectionNumber": "16",
-            "reference": "section 530(1)"
-        },
-        {
-            "sectionNumber": "59",
-            "reference": "section 131"
-        },
-        {
-            "sectionNumber": "78",
-            "reference": "section 917E"
-        },
-        {
-            "sectionNumber": "79",
-            "reference": "section 131"
-        },
-        {
-            "sectionNumber": "79",
-            "reference": "section 132"
-        },
-        {
-            "sectionNumber": "79",
-            "reference": "section 131"
-        },
-        {
-            "sectionNumber": "84",
-            "reference": "section 305(1)"
-        },
-        {
-            "sectionNumber": "87",
-            "reference": "section 131"
-        },
-        {
-            "sectionNumber": "116",
-            "reference": "section 134A(2)"
-        }
-    ],
-    "duplicateRuleKeys": [],
-    "testSummary": {
-        "total": 0,
-        "passed": 0,
-        "failed": 0,
-        "neverRun": 0
+    {
+      "id": "src_1c252a79b32e4806902efa37",
+      "citation": "2010 Act 31",
+      "sourceType": "legislation",
+      "provisionCount": 125
+    },
+    {
+      "id": "src_881d655030e84f33ad9378a0",
+      "citation": "2010 Act 31 Sch.2",
+      "sourceType": "legislation",
+      "provisionCount": 15
+    },
+    {
+      "id": "src_1735037fc127442f9b5a7573",
+      "citation": "2010 Act 31 Sch.3",
+      "sourceType": "legislation",
+      "provisionCount": 32
     }
+  ],
+  "provisionCount": 290,
+  "relevantProvisionCount": 164,
+  "notRelevantProvisionCount": 126,
+  "ruleCount": 17,
+  "rulesByReviewStatus": {
+    "ai_extracted": 17
+  },
+  "rulesRequiringHumanReview": 17,
+  "rulesRequiringGuidance": 12,
+  "rulesWithExceptions": 9,
+  "provisionsWithoutExtractedRule": [],
+  "ambiguousProvisions": [
+    {
+      "sectionNumber": "3",
+      "heading": "Rate of charge and personal tax credits",
+      "reason": "Curated: mapped to rule key \"income_tax.standard_rate_threshold\" by human editorial judgement, overriding the other category default."
+    },
+    {
+      "sectionNumber": "3",
+      "heading": "Exports.",
+      "reason": "Curated: mapped to a rule in vatcaScheduleCuration.ts, overriding the other category default."
+    },
+    {
+      "sectionNumber": "9",
+      "heading": "Certain printed matter.",
+      "reason": "Curated: mapped to a rule in vatcaScheduleCuration.ts, overriding the other category default."
+    },
+    {
+      "sectionNumber": "10",
+      "heading": "Children’s clothing and footwear.",
+      "reason": "Curated: mapped to a rule in vatcaScheduleCuration.ts, overriding the other category default."
+    },
+    {
+      "sectionNumber": "8",
+      "heading": "Shows, exhibitions, cultural facilities, etc.",
+      "reason": "Curated: mapped to a rule in vatcaScheduleCuration.ts, overriding the other category default."
+    },
+    {
+      "sectionNumber": "9",
+      "heading": "Private dwellings.",
+      "reason": "Curated: mapped to a rule in vatcaScheduleCuration.ts, overriding the other category default."
+    },
+    {
+      "sectionNumber": "17",
+      "heading": "Energy products and supplies.",
+      "reason": "Curated: mapped to a rule in vatcaScheduleCuration.ts, overriding the other category default."
+    }
+  ],
+  "unresolvedCrossReferences": [
+    {
+      "sectionNumber": "1",
+      "reference": "section 531AN"
+    },
+    {
+      "sectionNumber": "2",
+      "reference": "Section 531AN"
+    },
+    {
+      "sectionNumber": "3",
+      "reference": "section 461"
+    },
+    {
+      "sectionNumber": "3",
+      "reference": "section 462B(3)"
+    },
+    {
+      "sectionNumber": "3",
+      "reference": "section 465(1)"
+    },
+    {
+      "sectionNumber": "3",
+      "reference": "section 466(2)"
+    },
+    {
+      "sectionNumber": "3",
+      "reference": "section 466A(2)"
+    },
+    {
+      "sectionNumber": "3",
+      "reference": "section 468(2)"
+    },
+    {
+      "sectionNumber": "3",
+      "reference": "section 472(4)"
+    },
+    {
+      "sectionNumber": "3",
+      "reference": "section 472AB"
+    },
+    {
+      "sectionNumber": "3",
+      "reference": "section 472BB"
+    },
+    {
+      "sectionNumber": "5",
+      "reference": "Section 473B"
+    },
+    {
+      "sectionNumber": "5",
+      "reference": "section 473C"
+    },
+    {
+      "sectionNumber": "6",
+      "reference": "Section 473C"
+    },
+    {
+      "sectionNumber": "6",
+      "reference": "section 477C"
+    },
+    {
+      "sectionNumber": "13",
+      "reference": "section 787O(1)"
+    },
+    {
+      "sectionNumber": "13",
+      "reference": "section 790AA(1)"
+    },
+    {
+      "sectionNumber": "13",
+      "reference": "section 790D(1)"
+    },
+    {
+      "sectionNumber": "13",
+      "reference": "section 790D(1)"
+    },
+    {
+      "sectionNumber": "14",
+      "reference": "section 983"
+    },
+    {
+      "sectionNumber": "15",
+      "reference": "section 192P"
+    },
+    {
+      "sectionNumber": "15",
+      "reference": "section 246(3)"
+    },
+    {
+      "sectionNumber": "15",
+      "reference": "section 256(1)"
+    },
+    {
+      "sectionNumber": "15",
+      "reference": "section 608(2)"
+    },
+    {
+      "sectionNumber": "15",
+      "reference": "section 706(3)"
+    },
+    {
+      "sectionNumber": "15",
+      "reference": "section 739D(6)"
+    },
+    {
+      "sectionNumber": "15",
+      "reference": "section 787O(1)"
+    },
+    {
+      "sectionNumber": "15",
+      "reference": "section 787U"
+    },
+    {
+      "sectionNumber": "15",
+      "reference": "section 787U"
+    },
+    {
+      "sectionNumber": "15",
+      "reference": "section 790AA(1)"
+    },
+    {
+      "sectionNumber": "18",
+      "reference": "Section 235"
+    },
+    {
+      "sectionNumber": "18",
+      "reference": "section 235A"
+    },
+    {
+      "sectionNumber": "19",
+      "reference": "section 235"
+    },
+    {
+      "sectionNumber": "19",
+      "reference": "section 1095"
+    },
+    {
+      "sectionNumber": "19",
+      "reference": "section 235"
+    },
+    {
+      "sectionNumber": "19",
+      "reference": "section 261"
+    },
+    {
+      "sectionNumber": "19",
+      "reference": "section 847A"
+    },
+    {
+      "sectionNumber": "20",
+      "reference": "Section 847A"
+    },
+    {
+      "sectionNumber": "20",
+      "reference": "section 1094"
+    },
+    {
+      "sectionNumber": "20",
+      "reference": "section 1094"
+    },
+    {
+      "sectionNumber": "20",
+      "reference": "section 847AA"
+    },
+    {
+      "sectionNumber": "20",
+      "reference": "section 848A"
+    },
+    {
+      "sectionNumber": "20",
+      "reference": "section 1017"
+    },
+    {
+      "sectionNumber": "20",
+      "reference": "section 787"
+    },
+    {
+      "sectionNumber": "20",
+      "reference": "section 1017"
+    },
+    {
+      "sectionNumber": "20",
+      "reference": "section 787"
+    },
+    {
+      "sectionNumber": "20",
+      "reference": "section 235(2)"
+    },
+    {
+      "sectionNumber": "20",
+      "reference": "section 235(2)"
+    },
+    {
+      "sectionNumber": "21",
+      "reference": "section 847A"
+    },
+    {
+      "sectionNumber": "21",
+      "reference": "section 1095"
+    },
+    {
+      "sectionNumber": "21",
+      "reference": "section 235(1)"
+    },
+    {
+      "sectionNumber": "21",
+      "reference": "section 235(1)"
+    },
+    {
+      "sectionNumber": "21",
+      "reference": "section 847A"
+    },
+    {
+      "sectionNumber": "21",
+      "reference": "section 1017"
+    },
+    {
+      "sectionNumber": "21",
+      "reference": "section 787"
+    },
+    {
+      "sectionNumber": "21",
+      "reference": "section 1017"
+    },
+    {
+      "sectionNumber": "21",
+      "reference": "section 787"
+    },
+    {
+      "sectionNumber": "21",
+      "reference": "section 235(2)"
+    },
+    {
+      "sectionNumber": "23",
+      "reference": "Section 822"
+    },
+    {
+      "sectionNumber": "23",
+      "reference": "section 192A"
+    },
+    {
+      "sectionNumber": "24",
+      "reference": "Section 192A(1)"
+    },
+    {
+      "sectionNumber": "24",
+      "reference": "section 204A"
+    },
+    {
+      "sectionNumber": "25",
+      "reference": "Section 204A"
+    },
+    {
+      "sectionNumber": "25",
+      "reference": "section 990"
+    },
+    {
+      "sectionNumber": "26",
+      "reference": "Section 990(5)"
+    },
+    {
+      "sectionNumber": "27",
+      "reference": "section 195D"
+    },
+    {
+      "sectionNumber": "27",
+      "reference": "section 520"
+    },
+    {
+      "sectionNumber": "28",
+      "reference": "Section 520(1)"
+    },
+    {
+      "sectionNumber": "28",
+      "reference": "section 207"
+    },
+    {
+      "sectionNumber": "28",
+      "reference": "section 207"
+    },
+    {
+      "sectionNumber": "28",
+      "reference": "section 986(4A)"
+    },
+    {
+      "sectionNumber": "28",
+      "reference": "section 986"
+    },
+    {
+      "sectionNumber": "29",
+      "reference": "Section 986"
+    },
+    {
+      "sectionNumber": "29",
+      "reference": "section 195E"
+    },
+    {
+      "sectionNumber": "30",
+      "reference": "section 205B"
+    },
+    {
+      "sectionNumber": "30",
+      "reference": "section 865(4)"
+    },
+    {
+      "sectionNumber": "30",
+      "reference": "Section 865(6)"
+    },
+    {
+      "sectionNumber": "30",
+      "reference": "section 865(1)"
+    },
+    {
+      "sectionNumber": "30",
+      "reference": "section 256(1)"
+    },
+    {
+      "sectionNumber": "30",
+      "reference": "section 205A(2)"
+    },
+    {
+      "sectionNumber": "30",
+      "reference": "section 205B(1))"
+    },
+    {
+      "sectionNumber": "30",
+      "reference": "section 205C(2)"
+    },
+    {
+      "sectionNumber": "30",
+      "reference": "section 205A(3)"
+    },
+    {
+      "sectionNumber": "30",
+      "reference": "section 267(3)"
+    },
+    {
+      "sectionNumber": "30",
+      "reference": "section 205A(2)"
+    },
+    {
+      "sectionNumber": "30",
+      "reference": "section 205A(2)"
+    },
+    {
+      "sectionNumber": "30",
+      "reference": "section 205B(2)"
+    },
+    {
+      "sectionNumber": "30",
+      "reference": "section 613(1)"
+    },
+    {
+      "sectionNumber": "30",
+      "reference": "section 205C"
+    },
+    {
+      "sectionNumber": "30",
+      "reference": "section 730GA"
+    },
+    {
+      "sectionNumber": "30",
+      "reference": "section 739G(2)"
+    },
+    {
+      "sectionNumber": "31",
+      "reference": "section 205C"
+    },
+    {
+      "sectionNumber": "31",
+      "reference": "section 285C"
+    },
+    {
+      "sectionNumber": "32",
+      "reference": "Section 285C(1)"
+    },
+    {
+      "sectionNumber": "33",
+      "reference": "section 380L"
+    },
+    {
+      "sectionNumber": "33",
+      "reference": "section 380M"
+    },
+    {
+      "sectionNumber": "35",
+      "reference": "section 480C"
+    },
+    {
+      "sectionNumber": "36",
+      "reference": "Section 480C"
+    },
+    {
+      "sectionNumber": "36",
+      "reference": "section 384"
+    },
+    {
+      "sectionNumber": "37",
+      "reference": "section 489"
+    },
+    {
+      "sectionNumber": "37",
+      "reference": "section 496(5)"
+    },
+    {
+      "sectionNumber": "37",
+      "reference": "section 502"
+    },
+    {
+      "sectionNumber": "37",
+      "reference": "section 496(5)"
+    },
+    {
+      "sectionNumber": "37",
+      "reference": "section 496(7)"
+    },
+    {
+      "sectionNumber": "37",
+      "reference": "section 496(5)"
+    },
+    {
+      "sectionNumber": "37",
+      "reference": "section 496(7)"
+    },
+    {
+      "sectionNumber": "37",
+      "reference": "section 496(5)"
+    },
+    {
+      "sectionNumber": "37",
+      "reference": "section 508J(4)"
+    },
+    {
+      "sectionNumber": "37",
+      "reference": "section 508J(4)"
+    },
+    {
+      "sectionNumber": "37",
+      "reference": "section 504"
+    },
+    {
+      "sectionNumber": "37",
+      "reference": "section 507"
+    },
+    {
+      "sectionNumber": "37",
+      "reference": "section 502"
+    },
+    {
+      "sectionNumber": "37",
+      "reference": "section 496(5)"
+    },
+    {
+      "sectionNumber": "37",
+      "reference": "section 496(5)"
+    },
+    {
+      "sectionNumber": "37",
+      "reference": "section 496(7)"
+    },
+    {
+      "sectionNumber": "37",
+      "reference": "section 496(5)"
+    },
+    {
+      "sectionNumber": "37",
+      "reference": "section 496(6)"
+    },
+    {
+      "sectionNumber": "37",
+      "reference": "section 496(7)"
+    },
+    {
+      "sectionNumber": "37",
+      "reference": "section 496(5)"
+    },
+    {
+      "sectionNumber": "37",
+      "reference": "section 508(1)"
+    },
+    {
+      "sectionNumber": "37",
+      "reference": "section 507"
+    },
+    {
+      "sectionNumber": "37",
+      "reference": "section 508A"
+    },
+    {
+      "sectionNumber": "37",
+      "reference": "section 508C"
+    },
+    {
+      "sectionNumber": "37",
+      "reference": "section 508Q"
+    },
+    {
+      "sectionNumber": "37",
+      "reference": "section 493"
+    },
+    {
+      "sectionNumber": "37",
+      "reference": "section 508W(1)"
+    },
+    {
+      "sectionNumber": "37",
+      "reference": "section 507"
+    },
+    {
+      "sectionNumber": "37",
+      "reference": "section 508Z"
+    },
+    {
+      "sectionNumber": "38",
+      "reference": "section 666(4)"
+    },
+    {
+      "sectionNumber": "38",
+      "reference": "section 667B(5)"
+    },
+    {
+      "sectionNumber": "38",
+      "reference": "section 667C"
+    },
+    {
+      "sectionNumber": "40",
+      "reference": "section 285D"
+    },
+    {
+      "sectionNumber": "40",
+      "reference": "section 766C"
+    },
+    {
+      "sectionNumber": "41",
+      "reference": "Section 766C(6)"
+    },
+    {
+      "sectionNumber": "44",
+      "reference": "section 288"
+    },
+    {
+      "sectionNumber": "44",
+      "reference": "section 299(1)"
+    },
+    {
+      "sectionNumber": "44",
+      "reference": "section 299(1)"
+    },
+    {
+      "sectionNumber": "44",
+      "reference": "section 299(1)"
+    },
+    {
+      "sectionNumber": "44",
+      "reference": "section 299"
+    },
+    {
+      "sectionNumber": "44",
+      "reference": "section 299"
+    },
+    {
+      "sectionNumber": "44",
+      "reference": "section 299(1)"
+    },
+    {
+      "sectionNumber": "44",
+      "reference": "section 299(1)"
+    },
+    {
+      "sectionNumber": "44",
+      "reference": "section 299(5A))"
+    },
+    {
+      "sectionNumber": "44",
+      "reference": "section 299"
+    },
+    {
+      "sectionNumber": "44",
+      "reference": "section 312(5)"
+    },
+    {
+      "sectionNumber": "44",
+      "reference": "section 835Z(1)"
+    },
+    {
+      "sectionNumber": "44",
+      "reference": "section 403"
+    },
+    {
+      "sectionNumber": "44",
+      "reference": "Section 305(1)"
+    },
+    {
+      "sectionNumber": "44",
+      "reference": "section 404"
+    },
+    {
+      "sectionNumber": "44",
+      "reference": "section 308(1)"
+    },
+    {
+      "sectionNumber": "44",
+      "reference": "section 403"
+    },
+    {
+      "sectionNumber": "44",
+      "reference": "section 396A(3)"
+    },
+    {
+      "sectionNumber": "44",
+      "reference": "section 396B"
+    },
+    {
+      "sectionNumber": "44",
+      "reference": "section 288"
+    },
+    {
+      "sectionNumber": "44",
+      "reference": "section 403(4)"
+    },
+    {
+      "sectionNumber": "44",
+      "reference": "section 403(4)"
+    },
+    {
+      "sectionNumber": "44",
+      "reference": "section 396(1)"
+    },
+    {
+      "sectionNumber": "44",
+      "reference": "section 596"
+    },
+    {
+      "sectionNumber": "44",
+      "reference": "section 485C"
+    },
+    {
+      "sectionNumber": "45",
+      "reference": "section 835D"
+    },
+    {
+      "sectionNumber": "45",
+      "reference": "section 835D(1)"
+    },
+    {
+      "sectionNumber": "45",
+      "reference": "section 835D"
+    },
+    {
+      "sectionNumber": "45",
+      "reference": "section 826(1)"
+    },
+    {
+      "sectionNumber": "45",
+      "reference": "section 835C"
+    },
+    {
+      "sectionNumber": "45",
+      "reference": "section 835D"
+    },
+    {
+      "sectionNumber": "45",
+      "reference": "section 835DA"
+    },
+    {
+      "sectionNumber": "45",
+      "reference": "section 835DA"
+    },
+    {
+      "sectionNumber": "45",
+      "reference": "section 835D"
+    },
+    {
+      "sectionNumber": "45",
+      "reference": "section 835DA"
+    },
+    {
+      "sectionNumber": "45",
+      "reference": "section 835G"
+    },
+    {
+      "sectionNumber": "45",
+      "reference": "section 835DA"
+    },
+    {
+      "sectionNumber": "45",
+      "reference": "section 835DA"
+    },
+    {
+      "sectionNumber": "45",
+      "reference": "section 835DA(3)"
+    },
+    {
+      "sectionNumber": "45",
+      "reference": "section 835DA(3)"
+    },
+    {
+      "sectionNumber": "45",
+      "reference": "section 835DA"
+    },
+    {
+      "sectionNumber": "45",
+      "reference": "section 835DA"
+    },
+    {
+      "sectionNumber": "45",
+      "reference": "section 835DA"
+    },
+    {
+      "sectionNumber": "45",
+      "reference": "Section 835C(3)"
+    },
+    {
+      "sectionNumber": "45",
+      "reference": "section 835DA"
+    },
+    {
+      "sectionNumber": "45",
+      "reference": "section 321(2)"
+    },
+    {
+      "sectionNumber": "45",
+      "reference": "section 817U"
+    },
+    {
+      "sectionNumber": "46",
+      "reference": "Section 817U"
+    },
+    {
+      "sectionNumber": "46",
+      "reference": "section 817U"
+    },
+    {
+      "sectionNumber": "46",
+      "reference": "section 835AY"
+    },
+    {
+      "sectionNumber": "47",
+      "reference": "section 835AY"
+    },
+    {
+      "sectionNumber": "47",
+      "reference": "section 299"
+    },
+    {
+      "sectionNumber": "47",
+      "reference": "section 299(1A))"
+    },
+    {
+      "sectionNumber": "47",
+      "reference": "section 299(3)"
+    },
+    {
+      "sectionNumber": "47",
+      "reference": "section 299"
+    },
+    {
+      "sectionNumber": "47",
+      "reference": "section 299(1A))"
+    },
+    {
+      "sectionNumber": "47",
+      "reference": "section 299(3)"
+    },
+    {
+      "sectionNumber": "47",
+      "reference": "section 299(4)"
+    },
+    {
+      "sectionNumber": "47",
+      "reference": "section 299"
+    },
+    {
+      "sectionNumber": "47",
+      "reference": "section 299(1A))"
+    },
+    {
+      "sectionNumber": "47",
+      "reference": "section 299(4)"
+    },
+    {
+      "sectionNumber": "47",
+      "reference": "section 835AAD"
+    },
+    {
+      "sectionNumber": "47",
+      "reference": "section 835AAE"
+    },
+    {
+      "sectionNumber": "47",
+      "reference": "section 835AAD"
+    },
+    {
+      "sectionNumber": "47",
+      "reference": "section 835AAE"
+    },
+    {
+      "sectionNumber": "47",
+      "reference": "section 402"
+    },
+    {
+      "sectionNumber": "47",
+      "reference": "section 481"
+    },
+    {
+      "sectionNumber": "48",
+      "reference": "Section 481"
+    },
+    {
+      "sectionNumber": "48",
+      "reference": "section 481"
+    },
+    {
+      "sectionNumber": "49",
+      "reference": "section 487"
+    },
+    {
+      "sectionNumber": "49",
+      "reference": "section 481"
+    },
+    {
+      "sectionNumber": "49",
+      "reference": "section 433(4)"
+    },
+    {
+      "sectionNumber": "49",
+      "reference": "section 481"
+    },
+    {
+      "sectionNumber": "49",
+      "reference": "section 481"
+    },
+    {
+      "sectionNumber": "49",
+      "reference": "section 826(1)"
+    },
+    {
+      "sectionNumber": "49",
+      "reference": "section 886"
+    },
+    {
+      "sectionNumber": "49",
+      "reference": "section 886"
+    },
+    {
+      "sectionNumber": "49",
+      "reference": "section 886"
+    },
+    {
+      "sectionNumber": "49",
+      "reference": "section 960H"
+    },
+    {
+      "sectionNumber": "49",
+      "reference": "section 960H"
+    },
+    {
+      "sectionNumber": "49",
+      "reference": "section 959AR"
+    },
+    {
+      "sectionNumber": "49",
+      "reference": "section 1077F"
+    },
+    {
+      "sectionNumber": "49",
+      "reference": "section 440"
+    },
+    {
+      "sectionNumber": "49",
+      "reference": "section 1080"
+    },
+    {
+      "sectionNumber": "49",
+      "reference": "section 1080"
+    },
+    {
+      "sectionNumber": "49",
+      "reference": "section 960H"
+    },
+    {
+      "sectionNumber": "49",
+      "reference": "section 851A"
+    },
+    {
+      "sectionNumber": "49",
+      "reference": "section 851A"
+    },
+    {
+      "sectionNumber": "49",
+      "reference": "section 487A"
+    },
+    {
+      "sectionNumber": "50",
+      "reference": "section 831A"
+    },
+    {
+      "sectionNumber": "50",
+      "reference": "section 835YA"
+    },
+    {
+      "sectionNumber": "50",
+      "reference": "section 835AY"
+    },
+    {
+      "sectionNumber": "50",
+      "reference": "section 743"
+    },
+    {
+      "sectionNumber": "50",
+      "reference": "section 826(1)"
+    },
+    {
+      "sectionNumber": "50",
+      "reference": "section 826(1)"
+    },
+    {
+      "sectionNumber": "50",
+      "reference": "section 411(1)"
+    },
+    {
+      "sectionNumber": "50",
+      "reference": "section 419"
+    },
+    {
+      "sectionNumber": "50",
+      "reference": "section 138"
+    },
+    {
+      "sectionNumber": "50",
+      "reference": "section 626B"
+    },
+    {
+      "sectionNumber": "50",
+      "reference": "section 738"
+    },
+    {
+      "sectionNumber": "50",
+      "reference": "section 129A"
+    },
+    {
+      "sectionNumber": "50",
+      "reference": "section 831B"
+    },
+    {
+      "sectionNumber": "50",
+      "reference": "section 831B"
+    },
+    {
+      "sectionNumber": "50",
+      "reference": "section 753C(4)"
+    },
+    {
+      "sectionNumber": "50",
+      "reference": "section 129A"
+    },
+    {
+      "sectionNumber": "50",
+      "reference": "section 138"
+    },
+    {
+      "sectionNumber": "50",
+      "reference": "section 831B"
+    },
+    {
+      "sectionNumber": "50",
+      "reference": "section 129A"
+    },
+    {
+      "sectionNumber": "50",
+      "reference": "section 138"
+    },
+    {
+      "sectionNumber": "50",
+      "reference": "section 835E(2)"
+    },
+    {
+      "sectionNumber": "50",
+      "reference": "section 129"
+    },
+    {
+      "sectionNumber": "50",
+      "reference": "section 129"
+    },
+    {
+      "sectionNumber": "50",
+      "reference": "section 835Q(4)"
+    },
+    {
+      "sectionNumber": "50",
+      "reference": "section 831B"
+    },
+    {
+      "sectionNumber": "50",
+      "reference": "section 831B"
+    },
+    {
+      "sectionNumber": "50",
+      "reference": "section 486C"
+    },
+    {
+      "sectionNumber": "51",
+      "reference": "Section 486C"
+    },
+    {
+      "sectionNumber": "51",
+      "reference": "section 835YA"
+    },
+    {
+      "sectionNumber": "52",
+      "reference": "Section 835YA"
+    },
+    {
+      "sectionNumber": "54",
+      "reference": "section 600A"
+    },
+    {
+      "sectionNumber": "54",
+      "reference": "section 433"
+    },
+    {
+      "sectionNumber": "54",
+      "reference": "section 600Q(1)"
+    },
+    {
+      "sectionNumber": "54",
+      "reference": "section 493"
+    },
+    {
+      "sectionNumber": "54",
+      "reference": "section 600F(3)"
+    },
+    {
+      "sectionNumber": "54",
+      "reference": "section 600F(4)"
+    },
+    {
+      "sectionNumber": "54",
+      "reference": "section 432"
+    },
+    {
+      "sectionNumber": "54",
+      "reference": "section 433(4)"
+    },
+    {
+      "sectionNumber": "54",
+      "reference": "section 489"
+    },
+    {
+      "sectionNumber": "54",
+      "reference": "section 983"
+    },
+    {
+      "sectionNumber": "54",
+      "reference": "section 494"
+    },
+    {
+      "sectionNumber": "54",
+      "reference": "section 493"
+    },
+    {
+      "sectionNumber": "54",
+      "reference": "section 493"
+    },
+    {
+      "sectionNumber": "54",
+      "reference": "section 600C"
+    },
+    {
+      "sectionNumber": "54",
+      "reference": "section 600J"
+    },
+    {
+      "sectionNumber": "54",
+      "reference": "section 600H"
+    },
+    {
+      "sectionNumber": "54",
+      "reference": "section 600N"
+    },
+    {
+      "sectionNumber": "54",
+      "reference": "section 600D"
+    },
+    {
+      "sectionNumber": "54",
+      "reference": "section 600F(2)"
+    },
+    {
+      "sectionNumber": "54",
+      "reference": "section 600F"
+    },
+    {
+      "sectionNumber": "54",
+      "reference": "section 1095"
+    },
+    {
+      "sectionNumber": "54",
+      "reference": "section 616(1)"
+    },
+    {
+      "sectionNumber": "54",
+      "reference": "section 949I"
+    },
+    {
+      "sectionNumber": "54",
+      "reference": "section 600P"
+    },
+    {
+      "sectionNumber": "54",
+      "reference": "section 949I"
+    },
+    {
+      "sectionNumber": "54",
+      "reference": "section 600P"
+    },
+    {
+      "sectionNumber": "54",
+      "reference": "section 600P(4)"
+    },
+    {
+      "sectionNumber": "54",
+      "reference": "section 949I"
+    },
+    {
+      "sectionNumber": "54",
+      "reference": "section 600P"
+    },
+    {
+      "sectionNumber": "54",
+      "reference": "section 600I"
+    },
+    {
+      "sectionNumber": "54",
+      "reference": "section 415"
+    },
+    {
+      "sectionNumber": "54",
+      "reference": "section 411(1)"
+    },
+    {
+      "sectionNumber": "54",
+      "reference": "section 600M"
+    },
+    {
+      "sectionNumber": "54",
+      "reference": "section 508IA"
+    },
+    {
+      "sectionNumber": "54",
+      "reference": "section 600E"
+    },
+    {
+      "sectionNumber": "54",
+      "reference": "section 600J(2)"
+    },
+    {
+      "sectionNumber": "54",
+      "reference": "section 600J(2)"
+    },
+    {
+      "sectionNumber": "54",
+      "reference": "section 600M"
+    },
+    {
+      "sectionNumber": "54",
+      "reference": "section 600J(2)"
+    },
+    {
+      "sectionNumber": "54",
+      "reference": "section 400"
+    },
+    {
+      "sectionNumber": "54",
+      "reference": "section 534"
+    },
+    {
+      "sectionNumber": "54",
+      "reference": "section 600M"
+    },
+    {
+      "sectionNumber": "54",
+      "reference": "section 600J"
+    },
+    {
+      "sectionNumber": "54",
+      "reference": "section 600M"
+    },
+    {
+      "sectionNumber": "54",
+      "reference": "Section 597AA"
+    },
+    {
+      "sectionNumber": "54",
+      "reference": "section 597AA"
+    },
+    {
+      "sectionNumber": "54",
+      "reference": "Section 600M"
+    },
+    {
+      "sectionNumber": "54",
+      "reference": "section 597AA"
+    },
+    {
+      "sectionNumber": "54",
+      "reference": "Section 598"
+    },
+    {
+      "sectionNumber": "54",
+      "reference": "section 598"
+    },
+    {
+      "sectionNumber": "54",
+      "reference": "Section 600M"
+    },
+    {
+      "sectionNumber": "54",
+      "reference": "section 598"
+    },
+    {
+      "sectionNumber": "54",
+      "reference": "Section 600M"
+    },
+    {
+      "sectionNumber": "54",
+      "reference": "section 600F"
+    },
+    {
+      "sectionNumber": "54",
+      "reference": "section 600F"
+    },
+    {
+      "sectionNumber": "54",
+      "reference": "section 600F"
+    },
+    {
+      "sectionNumber": "54",
+      "reference": "section 440"
+    },
+    {
+      "sectionNumber": "54",
+      "reference": "section 600F(2)"
+    },
+    {
+      "sectionNumber": "54",
+      "reference": "section 600F(2)"
+    },
+    {
+      "sectionNumber": "54",
+      "reference": "section 600F(2)"
+    },
+    {
+      "sectionNumber": "54",
+      "reference": "section 600F(1)"
+    },
+    {
+      "sectionNumber": "54",
+      "reference": "section 600F(2)"
+    },
+    {
+      "sectionNumber": "54",
+      "reference": "section 600F(2)"
+    },
+    {
+      "sectionNumber": "54",
+      "reference": "section 949I"
+    },
+    {
+      "sectionNumber": "54",
+      "reference": "section 600F(1)"
+    },
+    {
+      "sectionNumber": "54",
+      "reference": "section 600P(2)"
+    },
+    {
+      "sectionNumber": "54",
+      "reference": "section 600F"
+    },
+    {
+      "sectionNumber": "54",
+      "reference": "Section 600M"
+    },
+    {
+      "sectionNumber": "54",
+      "reference": "section 600M"
+    },
+    {
+      "sectionNumber": "54",
+      "reference": "section 1084"
+    },
+    {
+      "sectionNumber": "54",
+      "reference": "section 851A(8)"
+    },
+    {
+      "sectionNumber": "54",
+      "reference": "section 600F"
+    },
+    {
+      "sectionNumber": "54",
+      "reference": "section 600P"
+    },
+    {
+      "sectionNumber": "54",
+      "reference": "section 599"
+    },
+    {
+      "sectionNumber": "55",
+      "reference": "Section 599"
+    },
+    {
+      "sectionNumber": "55",
+      "reference": "section 613"
+    },
+    {
+      "sectionNumber": "56",
+      "reference": "Section 613"
+    },
+    {
+      "sectionNumber": "56",
+      "reference": "section 613"
+    },
+    {
+      "sectionNumber": "56",
+      "reference": "section 613"
+    },
+    {
+      "sectionNumber": "56",
+      "reference": "section 613"
+    },
+    {
+      "sectionNumber": "56",
+      "reference": "section 613"
+    },
+    {
+      "sectionNumber": "56",
+      "reference": "section 613"
+    },
+    {
+      "sectionNumber": "69",
+      "reference": "section 432"
+    },
+    {
+      "sectionNumber": "76",
+      "reference": "Section 132(3)"
+    },
+    {
+      "sectionNumber": "76",
+      "reference": "section 130"
+    },
+    {
+      "sectionNumber": "76",
+      "reference": "section 130"
+    },
+    {
+      "sectionNumber": "76",
+      "reference": "section 130"
+    },
+    {
+      "sectionNumber": "76",
+      "reference": "section 130"
+    },
+    {
+      "sectionNumber": "92",
+      "reference": "section 159D"
+    },
+    {
+      "sectionNumber": "92",
+      "reference": "section 654A"
+    },
+    {
+      "sectionNumber": "92",
+      "reference": "section 654A"
+    },
+    {
+      "sectionNumber": "95",
+      "reference": "section 123B"
+    },
+    {
+      "sectionNumber": "95",
+      "reference": "section 124"
+    },
+    {
+      "sectionNumber": "95",
+      "reference": "section 124"
+    },
+    {
+      "sectionNumber": "95",
+      "reference": "section 124(2)"
+    },
+    {
+      "sectionNumber": "95",
+      "reference": "section 126AB"
+    },
+    {
+      "sectionNumber": "105",
+      "reference": "Section 991B"
+    },
+    {
+      "sectionNumber": "105",
+      "reference": "section 1080B"
+    },
+    {
+      "sectionNumber": "106",
+      "reference": "Section 1080B"
+    },
+    {
+      "sectionNumber": "111",
+      "reference": "section 826A"
+    },
+    {
+      "sectionNumber": "111",
+      "reference": "section 321"
+    },
+    {
+      "sectionNumber": "111",
+      "reference": "section 826"
+    },
+    {
+      "sectionNumber": "111",
+      "reference": "section 826"
+    },
+    {
+      "sectionNumber": "111",
+      "reference": "section 411(1)"
+    },
+    {
+      "sectionNumber": "111",
+      "reference": "section 865(10)"
+    },
+    {
+      "sectionNumber": "111",
+      "reference": "section 864"
+    },
+    {
+      "sectionNumber": "114",
+      "reference": "section 653A(2)"
+    },
+    {
+      "sectionNumber": "114",
+      "reference": "section 653AF(1)"
+    },
+    {
+      "sectionNumber": "114",
+      "reference": "section 653AF(1)"
+    },
+    {
+      "sectionNumber": "114",
+      "reference": "section 653I"
+    },
+    {
+      "sectionNumber": "114",
+      "reference": "section 653F"
+    },
+    {
+      "sectionNumber": "114",
+      "reference": "section 653F"
+    },
+    {
+      "sectionNumber": "114",
+      "reference": "section 653M(1)"
+    },
+    {
+      "sectionNumber": "114",
+      "reference": "section 653M(1)"
+    },
+    {
+      "sectionNumber": "114",
+      "reference": "section 653M(1)"
+    },
+    {
+      "sectionNumber": "114",
+      "reference": "section 653IA"
+    },
+    {
+      "sectionNumber": "114",
+      "reference": "section 653IA"
+    },
+    {
+      "sectionNumber": "114",
+      "reference": "section 653I"
+    },
+    {
+      "sectionNumber": "114",
+      "reference": "section 653I"
+    },
+    {
+      "sectionNumber": "114",
+      "reference": "section 653I"
+    },
+    {
+      "sectionNumber": "114",
+      "reference": "section 653Q"
+    },
+    {
+      "sectionNumber": "114",
+      "reference": "section 653I"
+    },
+    {
+      "sectionNumber": "114",
+      "reference": "section 653I"
+    },
+    {
+      "sectionNumber": "114",
+      "reference": "section 653Q"
+    },
+    {
+      "sectionNumber": "114",
+      "reference": "section 653O"
+    },
+    {
+      "sectionNumber": "114",
+      "reference": "section 653T(2)"
+    },
+    {
+      "sectionNumber": "114",
+      "reference": "section 653IA"
+    },
+    {
+      "sectionNumber": "114",
+      "reference": "section 653AD"
+    },
+    {
+      "sectionNumber": "114",
+      "reference": "section 653AD"
+    },
+    {
+      "sectionNumber": "114",
+      "reference": "section 653AGA"
+    },
+    {
+      "sectionNumber": "114",
+      "reference": "section 653AGA(2)"
+    },
+    {
+      "sectionNumber": "114",
+      "reference": "section 653AGA"
+    },
+    {
+      "sectionNumber": "114",
+      "reference": "section 653AGA"
+    },
+    {
+      "sectionNumber": "114",
+      "reference": "section 653AF"
+    },
+    {
+      "sectionNumber": "114",
+      "reference": "section 653AGA"
+    },
+    {
+      "sectionNumber": "114",
+      "reference": "section 189"
+    },
+    {
+      "sectionNumber": "114",
+      "reference": "section 653AG"
+    },
+    {
+      "sectionNumber": "114",
+      "reference": "section 653Q(2)"
+    },
+    {
+      "sectionNumber": "114",
+      "reference": "section 616"
+    },
+    {
+      "sectionNumber": "114",
+      "reference": "section 616"
+    },
+    {
+      "sectionNumber": "114",
+      "reference": "section 653AG"
+    },
+    {
+      "sectionNumber": "114",
+      "reference": "section 653AH"
+    },
+    {
+      "sectionNumber": "114",
+      "reference": "section 653T"
+    },
+    {
+      "sectionNumber": "114",
+      "reference": "section 653AH"
+    },
+    {
+      "sectionNumber": "114",
+      "reference": "section 616"
+    },
+    {
+      "sectionNumber": "114",
+      "reference": "section 616"
+    },
+    {
+      "sectionNumber": "114",
+      "reference": "section 653O(5)"
+    },
+    {
+      "sectionNumber": "114",
+      "reference": "section 653AI"
+    },
+    {
+      "sectionNumber": "114",
+      "reference": "section 653Q(4)"
+    },
+    {
+      "sectionNumber": "114",
+      "reference": "section 653Q(4)"
+    },
+    {
+      "sectionNumber": "114",
+      "reference": "section 653AF(5)"
+    },
+    {
+      "sectionNumber": "114",
+      "reference": "section 653AGA"
+    },
+    {
+      "sectionNumber": "114",
+      "reference": "section 653AGA(3)"
+    },
+    {
+      "sectionNumber": "114",
+      "reference": "section 653Q(4)"
+    },
+    {
+      "sectionNumber": "114",
+      "reference": "section 653AH(3)"
+    },
+    {
+      "sectionNumber": "114",
+      "reference": "section 653AGA(5)"
+    },
+    {
+      "sectionNumber": "114",
+      "reference": "section 653AH"
+    },
+    {
+      "sectionNumber": "114",
+      "reference": "section 653Q(4)"
+    },
+    {
+      "sectionNumber": "114",
+      "reference": "section 653AE(4)"
+    },
+    {
+      "sectionNumber": "114",
+      "reference": "section 653AF(4)"
+    },
+    {
+      "sectionNumber": "114",
+      "reference": "section 653AE(5)"
+    },
+    {
+      "sectionNumber": "114",
+      "reference": "section 653AM"
+    },
+    {
+      "sectionNumber": "114",
+      "reference": "section 653I(4)"
+    },
+    {
+      "sectionNumber": "115",
+      "reference": "section 891H"
+    },
+    {
+      "sectionNumber": "115",
+      "reference": "section 246"
+    },
+    {
+      "sectionNumber": "118",
+      "reference": "section 860(1)"
+    },
+    {
+      "sectionNumber": "118",
+      "reference": "section 959C(1)"
+    },
+    {
+      "sectionNumber": "118",
+      "reference": "section 959V(2A)"
+    },
+    {
+      "sectionNumber": "118",
+      "reference": "section 959AT(2)"
+    },
+    {
+      "sectionNumber": "118",
+      "reference": "section 130"
+    },
+    {
+      "sectionNumber": "118",
+      "reference": "section 132(3)"
+    },
+    {
+      "sectionNumber": "118",
+      "reference": "section 654A"
+    },
+    {
+      "sectionNumber": "118",
+      "reference": "section 654A"
+    },
+    {
+      "sectionNumber": "2",
+      "reference": "section 850"
+    },
+    {
+      "sectionNumber": "2",
+      "reference": "section 851"
+    },
+    {
+      "sectionNumber": "2",
+      "reference": "section 852"
+    },
+    {
+      "sectionNumber": "16",
+      "reference": "section 153"
+    },
+    {
+      "sectionNumber": "16",
+      "reference": "section 153"
+    },
+    {
+      "sectionNumber": "16",
+      "reference": "section 531(1)"
+    },
+    {
+      "sectionNumber": "16",
+      "reference": "section 531(1)"
+    },
+    {
+      "sectionNumber": "16",
+      "reference": "section 530(1)"
+    },
+    {
+      "sectionNumber": "59",
+      "reference": "section 131"
+    },
+    {
+      "sectionNumber": "78",
+      "reference": "section 917E"
+    },
+    {
+      "sectionNumber": "79",
+      "reference": "section 131"
+    },
+    {
+      "sectionNumber": "79",
+      "reference": "section 132"
+    },
+    {
+      "sectionNumber": "79",
+      "reference": "section 131"
+    },
+    {
+      "sectionNumber": "84",
+      "reference": "section 305(1)"
+    },
+    {
+      "sectionNumber": "87",
+      "reference": "section 131"
+    },
+    {
+      "sectionNumber": "116",
+      "reference": "section 134A(2)"
+    }
+  ],
+  "duplicateRuleKeys": [],
+  "testSummary": {
+    "total": 0,
+    "passed": 0,
+    "failed": 0,
+    "neverRun": 0
+  }
 }

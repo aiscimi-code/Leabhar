@@ -7,7 +7,12 @@ transaction to the rules that apply to it. Two sources are ingested:
 - the Finance Act 2024 (2024 Act 43), from
   `docs/statutes/finance-act-2024/2024-act-43-enacted.md`;
 - the Value-Added Tax Consolidation Act 2010 (2010 Act 31), from
-  `docs/statutes/vatca-2010/vatca-2010-enacted.md`.
+  `docs/statutes/vatca-2010/vatca-2010-enacted.md`;
+- VATCA 2010 Schedules 2 and 3 (zero-rated / reduced-rate goods and
+  services), from the LRC's revised text at
+  `docs/statutes/vatca-2010-revised/schedule-{2,3}.md` — ingested as their own
+  sources, distinct from the principal Act's as-enacted text above (see
+  "VATCA 2010 Schedules 2 and 3" below).
 
 This is not a RAG system and it does not ask an LLM what the tax treatment
 should be. The pipeline is:
@@ -250,6 +255,56 @@ scoping by their own source's citation (`vatcaIngestion.test.ts`, "never
 matches a curated section number against a DIFFERENT source's provision with
 the same number", is the regression test).
 
+### VATCA 2010 Schedules 2 and 3
+
+Schedules 2 (zero-rated goods and services) and 3 (goods and services
+chargeable at the reduced rate) are ingested from a **different source and a
+different point-in-time text** than the principal Act's own sections above —
+never conflated with it:
+
+- The as-enacted PDF `convert-statute-pdf.ts` converts stops at the first
+  `SCHEDULE` heading (documented in "Limitations" below), so the Schedules
+  come instead from the LRC's revised-Act HTML
+  (`revisedacts.lawreform.ie/eli/2010/act/31/schedule/{2,3}/revised/en/html`),
+  fetched and converted by `docs/statutes/scripts/extract_vat_sources.py` into
+  `docs/statutes/vatca-2010-revised/schedule-{2,3}.md`. That conversion strips
+  LRC's own page chrome, inline amendment-footnote markers
+  (`<span class="commentary-reference">`), and the substitution-bracket print
+  convention (`<span class="markup">`) at the HTML level — a raw-HTML capture
+  showed a wrapped footnote citation ("commenced as per s.\n86.") was
+  otherwise indistinguishable, once flattened to plain text, from a genuine
+  top-level paragraph "86." starting fresh, corrupting the paragraph
+  numbering. See the script's own `html_to_md()` for the fix.
+- `src/domain/rules/vatcaScheduleParser.ts` — a Schedule paragraph opens as a
+  bare `N.` / `N. (1)` / `NA.` at the start of a line, not the principal Act's
+  `N .—` convention, and unlike the principal Act, a paragraph's marginal-note
+  heading sits one blank line *above* its number rather than adjacent to it.
+  Blank lines are not otherwise a reliable paragraph boundary here — the
+  HTML→text flattening emits one for some inline cross-reference links
+  mid-sentence too — so, exactly like `vatcaParser.ts`, a paragraph's extent
+  is found by locating every paragraph-opening *line* and slicing to just
+  before the next one, never by grouping blank-line-delimited blocks.
+- `src/domain/rules/vatcaScheduleIngestion.ts` — `ingestVatcaSchedule`/
+  `deriveVatcaScheduleRules`, ingesting each Schedule under its own citation
+  (`2010 Act 31 Sch.2` / `Sch.3`, read from the file's own front matter) as
+  its own `irish_knowledge_sources` row — never merged into `2010 Act 31`
+  (the principal Act's citation), and scoped so that Schedule 2's paragraph 9
+  (printed matter) is never confused with Schedule 3's own, unrelated
+  paragraph 9 (private dwelling services).
+- `src/domain/rules/vatcaScheduleCuration.ts` — 8 hand-authored rate rules (4
+  per Schedule): intra-Community goods dispatch, export outside the
+  Community, printed books, and children's clothing/footwear (Schedule 2,
+  zero-rate); dwelling construction/repair/cleaning, solid fuel, repair of
+  movable goods, and cinema admission (Schedule 3, reduced rate) — the
+  paragraphs most likely to bear on an ordinary business's transactions, out
+  of the ~39 total across both Schedules. Every rule's condition is a
+  *description keyword match*, the same imperfect-proxy approach as the
+  principal Act's `vat.deduction_exclusions_entertainment` rule: matching
+  words against what is actually a legal list (a specific good, a specific
+  class of service, each with its own exclusions) is an unassessable-by-
+  keyword factor, so `requiresGuidance` is always true and every rule
+  surfaces for human review before any classification is authoritative.
+
 ## Rule format
 
 Conceptually, a stored rule looks like:
@@ -433,27 +488,29 @@ and reproducible with:
 ```
 npm run cli:rules -- ingest --source finance-act-2024 && npm run cli:rules -- extract --source finance-act-2024
 npm run cli:rules -- ingest --source vatca-2010 && npm run cli:rules -- extract --source vatca-2010
+npm run cli:rules -- ingest --source vatca-2010-sch2 && npm run cli:rules -- extract --source vatca-2010-sch2
+npm run cli:rules -- ingest --source vatca-2010-sch3 && npm run cli:rules -- extract --source vatca-2010-sch3
 npm run cli:rules -- audit
 ```
 
 Headline numbers:
 
-- 243 provisions ingested across both sources (118 Finance Act 2024, 125
-  VATCA 2010 — all 125 body sections now convert and parse cleanly), 147
-  judged relevant to transaction classification, 96 not
-  (procedural/repeal/penalty/pure-definition, or uncategorised and flagged
-  for review).
-- 9 rules extracted (4 Finance Act, 5 VATCA), all `ai_extracted`, all
-  `human_review_required = true` — **zero rules in this KB are authoritative
-  yet.**
-- 3 rules with a stated exception the system flags rather than evaluates
-  (VATCA's place-of-supply, input-deduction and deduction-exclusion rules),
+- 290 provisions ingested across four sources (118 Finance Act 2024, 125
+  VATCA 2010, 15 VATCA 2010 Schedule 2, 32 VATCA 2010 Schedule 3), 164 judged
+  relevant to transaction classification, 126 not (procedural/repeal/
+  penalty/pure-definition, or uncategorised and flagged for review).
+- 17 rules extracted (4 Finance Act, 5 VATCA principal-Act, 4 Schedule 2, 4
+  Schedule 3), all `ai_extracted`, all `human_review_required = true` —
+  **zero rules in this KB are authoritative yet.**
+- 9 rules with a stated exception the system flags rather than evaluates,
   0 duplicate rule keys.
 - 442 cross-references the report cannot resolve — expected, not a bug: the
   Finance Act 2024 *amends*, and VATCA 2010 heavily cross-refers to, the
   Taxes Consolidation Act 1997 and other Acts not themselves ingested yet, so
   "section 531AN", "section 654A" et al. have nothing to resolve against
-  inside this KB alone.
+  inside this KB alone. (The Schedule sources add none of their own: their
+  `amendsSection`/`citedActs` are not modelled — see "VATCA 2010 Schedules 2
+  and 3" above.)
 
 **This is not a claim that the knowledge base is legally complete.** It is a
 record of what was ingested, what was judged relevant, what was extracted,
@@ -467,7 +524,7 @@ to be.
 ```
 ingest [--source <s>] [--file <path>]
                             Ingest a source's Markdown (--source: finance-act-2024
-                            [default] | vatca-2010)
+                            [default] | vatca-2010 | vatca-2010-sch2 | vatca-2010-sch3)
 extract [--source <s>]     Derive irish_tax_rules from ingested provisions
 list-provisions [--category <c>] [--relevant-only]
 show-provision --section <n>
@@ -494,12 +551,12 @@ audit
   (reverse charge, place of supply, deductibility) is a structural mechanism
   that has not been fundamentally rewritten since 2010, so curating its
   *existence* is safe even though the ingested text is not fully current.
-- **Only 9 of 147 relevant provisions have a curated rule key** (4 Finance
-  Act, 5 VATCA). Everything else is ingested (text, offsets, category all on
-  disk) but not yet extracted into named rules —
-  `provisionsWithoutExtractedRule` in the audit report would show these once
-  curated; today it's empty because the curated set and the derived set match
-  exactly.
+- **Only 17 of 164 relevant provisions have a curated rule key** (4 Finance
+  Act, 5 VATCA principal-Act, 4 Schedule 2, 4 Schedule 3). Everything else is
+  ingested (text, offsets, category all on disk) but not yet extracted into
+  named rules — `provisionsWithoutExtractedRule` in the audit report would
+  show these once curated; today it's empty because the curated set and the
+  derived set match exactly.
 - **VATCA's conditions are curated, not mechanically extracted — and this is
   recorded, not glossed over.** Mapping "a supplier established outside the
   State" onto `supplierCountry != 'IE'` is an interpretation; every VATCA
@@ -526,13 +583,20 @@ audit
   prose (semicolons and lettered sub-paragraphs, not full stops) can be a
   long run-on quotation. It is still verbatim and traceable to its offsets,
   just not always a tidy single sentence.
-- **`convert-statute-pdf.ts` does not parse Schedules.** Schedules 1–5 on
-  VATCA 2010 (exempt activities, zero/reduced-rate goods and services) are
-  out of scope entirely — the conversion stops at the first `SCHEDULE`
-  heading. All 125 numbered body sections are converted and cross-checked
-  against the Act's own table of contents (see "VATCA 2010" above); the
-  Schedules gap is the only remaining one, and it's a documented stopping
-  point, not a silent failure.
+- **`convert-statute-pdf.ts` does not parse Schedules**, so the as-enacted
+  principal-Act pipeline's Schedules gap (all 125 numbered body sections
+  convert and cross-check against the Act's own table of contents; the
+  conversion stops at the first `SCHEDULE` heading) is real and documented.
+  Schedules 2 and 3 are, however, now ingested from a *different* source (the
+  LRC's revised HTML, not the as-enacted PDF — see "VATCA 2010 Schedules 2
+  and 3" above), so they are not a gap in the knowledge base overall, only in
+  this one converter. Schedules 1, 4 and 5 remain uningested from any source.
+- **The Schedule 2/3 curation covers 8 of ~39 total paragraphs** across both
+  Schedules — the ones judged most likely to bear on an ordinary business's
+  transactions (see "VATCA 2010 Schedules 2 and 3" above for the list).
+  Everything else in both Schedules is ingested (text, offsets, category all
+  on disk, queryable via `list-provisions`/`show-provision`) but not yet
+  extracted into a named rule.
 - **`Part`/`Chapter` are not yet populated** on `irish_act_provisions` (the
   columns exist for when this is worth doing); a provision's location is
   fully identified by section number + source offsets in the meantime.

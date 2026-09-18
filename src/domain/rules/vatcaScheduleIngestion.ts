@@ -1,0 +1,262 @@
+/**
+ * Ingestion and rule derivation for VATCA 2010 Schedules 2 and 3.
+ *
+ * Mirrors `vatcaIngestion.ts` (ingest -> provisions -> derive curated rules
+ * -> generic lookup), but as its own module for a reason that matters: the
+ * Schedule text here is the LRC's *revised* consolidation
+ * (revisedacts.lawreform.ie), not the *as-enacted* text `vatcaIngestion.ts`
+ * reads for the principal Act's own sections. Different consolidation,
+ * different point-in-time wording, different citation ("2010 Act 31 Sch.2"/
+ * "Sch.3", not "2010 Act 31") — so this ingests as its own
+ * `irish_knowledge_sources` row per Schedule, never merged into or confused
+ * with the principal Act's source (AGENTS.md invariant #6: configuration —
+ * and here, which exact wording a rule was extracted from — is superseded,
+ * never overwritten or silently conflated).
+ */
+import { and, eq } from 'drizzle-orm';
+import type { AppDatabase } from '@/db';
+import {
+  irishKnowledgeSources, irishActProvisions, irishTaxRules, type IrishSourceType,
+} from '@/db/schema';
+import { ids } from '@/lib/ids';
+import { nowIso } from '../dates';
+import { sha256Hex } from '@/lib/hash';
+import {
+  parseVatcaSchedule, parseScheduleFrontMatter, provisionSlug, assessRelevance,
+  VATCA_SCHEDULE_2_MD_PATH, VATCA_SCHEDULE_3_MD_PATH,
+} from './vatcaScheduleParser';
+import { VATCA_SCHEDULE_CURATED_RULES } from './vatcaScheduleCuration';
+import { upsertReviewItem } from '../extraction/service';
+
+export type VatcaScheduleNumber = '2' | '3';
+
+/** The Act's own commencement date — see the module docstring on why a
+ *  per-paragraph commencement date is not modelled here. */
+const VATCA_2010_ENACTED_DATE = '2010-11-01';
+
+const SCHEDULE_SOURCE_TYPE: IrishSourceType = 'legislation';
+
+export { VATCA_SCHEDULE_2_MD_PATH, VATCA_SCHEDULE_3_MD_PATH };
+
+export interface VatcaScheduleIngestResult {
+  sourceId: string;
+  scheduleNumber: VatcaScheduleNumber;
+  paragraphCount: number;
+  relevantCount: number;
+  ingested: boolean;
+}
+
+/** Ingest one Schedule's converted Markdown. Idempotent by content, same as `ingestVatca2010`. */
+export function ingestVatcaSchedule(
+  db: AppDatabase,
+  params: {
+    companyId?: string | null;
+    scheduleNumber: VatcaScheduleNumber;
+    markdown: string;
+    ingestVersion: string;
+    localPath?: string;
+  },
+): VatcaScheduleIngestResult {
+  const fm = parseScheduleFrontMatter(params.markdown);
+  const digest = sha256Hex(params.markdown);
+
+  const existing = db.select({ id: irishKnowledgeSources.id }).from(irishKnowledgeSources)
+    .where(and(
+      eq(irishKnowledgeSources.citation, fm.citation),
+      eq(irishKnowledgeSources.sha256, digest),
+    )).get();
+
+  if (existing) {
+    const rows = db.select({ relevant: irishActProvisions.relevant }).from(irishActProvisions)
+      .where(eq(irishActProvisions.sourceId, existing.id)).all();
+    if (rows.length > 0) {
+      return {
+        sourceId: existing.id, scheduleNumber: params.scheduleNumber, paragraphCount: rows.length,
+        relevantCount: rows.filter((r) => r.relevant).length, ingested: false,
+      };
+    }
+  }
+
+  return db.transaction((tx) => {
+    const sourceId = ids.knowledgeSource();
+    tx.insert(irishKnowledgeSources).values({
+      id: sourceId,
+      companyId: params.companyId ?? null,
+      sourceType: SCHEDULE_SOURCE_TYPE,
+      title: fm.title,
+      citation: fm.citation,
+      jurisdiction: 'IE',
+      sourceUrl: fm.sourceUrl,
+      localPath: params.localPath
+        ?? (params.scheduleNumber === '2' ? VATCA_SCHEDULE_2_MD_PATH : VATCA_SCHEDULE_3_MD_PATH),
+      sha256: digest,
+      ingestVersion: params.ingestVersion,
+      publicationDate: null,
+      retrievedAt: nowIso(),
+      effectiveFrom: VATCA_2010_ENACTED_DATE,
+      sourceNote: `Ingest ${params.ingestVersion} of ${fm.citation}: the LRC's revised (amendments-to-date) `
+        + 'consolidated text, not the as-enacted text `vatcaIngestion.ts` reads for the principal Act\'s own '
+        + 'sections — different citation, different source row, never conflated. Per-paragraph/subparagraph '
+        + "commencement dates (the source HTML's own \"Amendments:\"/\"Editorial Notes:\" annotations, stripped "
+        + 'during extraction as non-statutory editorial commentary) are not modelled; effectiveFrom is the '
+        + "Act's own commencement date, not a claim every paragraph's current wording was in force from then.",
+      sourceDate: nowIso(),
+    }).run();
+
+    const parsed = parseVatcaSchedule(params.markdown);
+    const curatedParagraphs = new Set(
+      VATCA_SCHEDULE_CURATED_RULES
+        .filter((r) => r.scheduleNumber === params.scheduleNumber)
+        .map((r) => r.sectionNumber),
+    );
+    let relevantCount = 0;
+    for (const p of parsed) {
+      let { relevant, reason } = assessRelevance(p.category);
+      if (!relevant && curatedParagraphs.has(p.paragraphNumber)) {
+        relevant = true;
+        reason = `Curated: mapped to a rule in vatcaScheduleCuration.ts, overriding the ${p.category} category default.`;
+      }
+      if (relevant) relevantCount++;
+
+      tx.insert(irishActProvisions).values({
+        id: ids.provision(),
+        companyId: params.companyId ?? null,
+        sourceId,
+        sectionNumber: p.paragraphNumber,
+        part: p.part,
+        slug: provisionSlug(`${params.scheduleNumber}-${p.paragraphNumber}`, p.heading),
+        heading: p.heading || `Schedule ${params.scheduleNumber} paragraph ${p.paragraphNumber}`,
+        principalAct: null,
+        provisionText: p.provisionText,
+        sourceStart: p.sourceStart,
+        sourceEnd: p.sourceEnd,
+        category: p.category,
+        amendsSection: null,
+        effectiveClue: null,
+        citedActs: [],
+        relevant,
+        relevanceReason: reason,
+        source: 'import',
+        provenanceStatus: 'imported',
+      }).run();
+    }
+
+    return {
+      sourceId, scheduleNumber: params.scheduleNumber,
+      paragraphCount: parsed.length, relevantCount, ingested: true,
+    };
+  });
+}
+
+export interface VatcaScheduleDeriveResult {
+  created: number;
+  superseded: number;
+  unchanged: number;
+  skippedNoProvision: string[];
+}
+
+/**
+ * Derive `irish_tax_rules` rows from `VATCA_SCHEDULE_CURATED_RULES` for one
+ * Schedule. Scoped to that Schedule's own source id — never a bare
+ * `sectionNumber` match across sources, for the same reason
+ * `deriveVatcaRules` scopes to VATCA_2010's own source id (a paragraph "9"
+ * exists independently in Schedule 2 and Schedule 3).
+ */
+export function deriveVatcaScheduleRules(
+  db: AppDatabase,
+  params: { companyId: string; scheduleNumber: VatcaScheduleNumber; sourceId?: string },
+): VatcaScheduleDeriveResult {
+  const citation = params.scheduleNumber === '2' ? '2010 Act 31 Sch.2' : '2010 Act 31 Sch.3';
+  const sourceId = params.sourceId ?? db
+    .select({ id: irishKnowledgeSources.id })
+    .from(irishKnowledgeSources)
+    .where(eq(irishKnowledgeSources.citation, citation))
+    .get()?.id;
+
+  const provisionsQuery = db.select().from(irishActProvisions);
+  const provisions = (sourceId
+    ? provisionsQuery.where(eq(irishActProvisions.sourceId, sourceId))
+    : provisionsQuery
+  ).all();
+
+  let created = 0;
+  let superseded = 0;
+  let unchanged = 0;
+  const skippedNoProvision: string[] = [];
+
+  const curated = VATCA_SCHEDULE_CURATED_RULES.filter((r) => r.scheduleNumber === params.scheduleNumber);
+
+  for (const rule of curated) {
+    const prov = provisions.find((p) => p.sectionNumber === rule.sectionNumber);
+    if (!prov) { skippedNoProvision.push(rule.ruleKey); continue; }
+    if (!prov.relevant) { skippedNoProvision.push(rule.ruleKey); continue; }
+
+    const existing = db.select().from(irishTaxRules)
+      .where(and(
+        eq(irishTaxRules.companyId, params.companyId),
+        eq(irishTaxRules.ruleKey, rule.ruleKey),
+        eq(irishTaxRules.active, true),
+      )).get();
+
+    if (existing) {
+      if (existing.statement === rule.statementExcerpt) { unchanged++; continue; }
+      db.update(irishTaxRules)
+        .set({ effectiveTo: VATCA_2010_ENACTED_DATE, active: false })
+        .where(eq(irishTaxRules.id, existing.id)).run();
+      superseded++;
+    }
+
+    const newRuleId = ids.taxRule();
+    db.insert(irishTaxRules).values({
+      id: newRuleId,
+      companyId: params.companyId,
+      provisionId: prov.id,
+      ruleKey: rule.ruleKey,
+      ruleType: rule.ruleType,
+      topic: rule.topic,
+      name: rule.name,
+      statement: rule.statementExcerpt,
+      extractedFact: null,
+      humanExplanation: rule.interpretationNote,
+      numericValue: null,
+      unit: null,
+      qualifier: null,
+      conditions: rule.conditions,
+      exceptions: rule.exceptions,
+      crossReferences: [],
+      accountingEffect: rule.accountingEffect,
+      taxEffect: null,
+      vatEffect: rule.vatEffect,
+      reportingEffect: rule.reportingEffect,
+      requiresGuidance: rule.requiresGuidance,
+      humanReviewRequired: true,
+      reviewStatus: 'ai_extracted',
+      ruleVersion: existing ? existing.ruleVersion + 1 : 1,
+      supersedesRuleId: existing?.id ?? null,
+      priority: 100,
+      effectiveFrom: VATCA_2010_ENACTED_DATE,
+      source: 'derived',
+      confidence: 65,
+      provenanceStatus: 'ai_suggestion',
+      sourceNote: `Curated from ${citation} para.${rule.sectionNumber}; not yet human-reviewed. ${rule.interpretationNote}`,
+      sourceDate: nowIso(),
+    }).run();
+    created++;
+
+    upsertReviewItem(db, {
+      companyId: params.companyId,
+      kind: 'unresolved_ai_suggestion',
+      severity: 'info',
+      title: `New Irish VAT rate rule extracted: ${rule.name}`,
+      detail: `${citation} para.${rule.sectionNumber}. ${rule.interpretationNote} `
+        + 'Review the condition mapping against the source text and approve, or reject, before it '
+        + 'is treated as authoritative.',
+      entityType: 'irish_tax_rule',
+      entityId: newRuleId,
+      dedupeKey: `irish_tax_rule:${newRuleId}`,
+      context: { ruleKey: rule.ruleKey, scheduleNumber: params.scheduleNumber, paragraphNumber: rule.sectionNumber },
+    });
+  }
+
+  return { created, superseded, unchanged, skippedNoProvision };
+}

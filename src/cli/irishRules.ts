@@ -9,6 +9,10 @@ import {
   FINANCE_ACT_2024_MD_PATH,
 } from '@/domain/rules/irishRules';
 import { ingestVatca2010, deriveVatcaRules, VATCA_2010_MD_PATH } from '@/domain/rules/vatcaIngestion';
+import {
+  ingestVatcaSchedule, deriveVatcaScheduleRules,
+  VATCA_SCHEDULE_2_MD_PATH, VATCA_SCHEDULE_3_MD_PATH, type VatcaScheduleNumber,
+} from '@/domain/rules/vatcaScheduleIngestion';
 import { lookupTransactionRules, type TransactionContext } from '@/domain/rules/transactionLookup';
 import { setRuleReviewStatus } from '@/domain/rules/review';
 import { generateDefaultTestCases, runTestCases } from '@/domain/rules/testCases';
@@ -24,7 +28,8 @@ Usage: npm run cli:rules -- <command> [flags]
 Commands:
   ingest [--source <s>] [--file <path>]
                                        Ingest a source's Markdown (--source: finance-act-2024
-                                       [default] | vatca-2010; --file overrides its default path)
+                                       [default] | vatca-2010 | vatca-2010-sch2 | vatca-2010-sch3;
+                                       --file overrides its default path)
   extract [--source <s>]              Derive irish_tax_rules from ingested provisions
                                        (--source as above; default finance-act-2024)
   list-provisions [--category <c>] [--relevant-only]
@@ -72,6 +77,17 @@ export async function main(argv: string[], options: CliOptions = {}): Promise<nu
           print(ingestVatca2010(db, { companyId, markdown, ingestVersion: 'v1', localPath: file }), format);
           return 0;
         }
+        if (source === 'vatca-2010-sch2' || source === 'vatca-2010-sch3') {
+          const scheduleNumber: VatcaScheduleNumber = source === 'vatca-2010-sch2' ? '2' : '3';
+          const defaultFile = scheduleNumber === '2' ? VATCA_SCHEDULE_2_MD_PATH : VATCA_SCHEDULE_3_MD_PATH;
+          const file = getFlag(flags, 'file') ?? defaultFile;
+          const markdown = readFileSync(file, 'utf8');
+          print(
+            ingestVatcaSchedule(db, { companyId, scheduleNumber, markdown, ingestVersion: 'v1', localPath: file }),
+            format,
+          );
+          return 0;
+        }
         if (source !== 'finance-act-2024') throw new Error(`Unknown --source: ${source}`);
         const file = getFlag(flags, 'file') ?? FINANCE_ACT_2024_MD_PATH;
         const markdown = readFileSync(file, 'utf8');
@@ -86,6 +102,11 @@ export async function main(argv: string[], options: CliOptions = {}): Promise<nu
         const source = getFlag(flags, 'source') ?? 'finance-act-2024';
         if (source === 'vatca-2010') {
           print(deriveVatcaRules(db, { companyId }), format);
+          return 0;
+        }
+        if (source === 'vatca-2010-sch2' || source === 'vatca-2010-sch3') {
+          const scheduleNumber: VatcaScheduleNumber = source === 'vatca-2010-sch2' ? '2' : '3';
+          print(deriveVatcaScheduleRules(db, { companyId, scheduleNumber }), format);
           return 0;
         }
         if (source !== 'finance-act-2024') throw new Error(`Unknown --source: ${source}`);
