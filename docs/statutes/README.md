@@ -27,7 +27,7 @@ architecture and [`SOURCE-REGISTER.md`](SOURCE-REGISTER.md) for the full
 |---|---|---|---|
 | `finance-act-2024/` | Finance Act 2024 (No. 43 of 2024) | Deterministic (full Act) + a reference cross-check extract (Part 3 only) | Complete (deterministic); ingested |
 | `vatca-2010/` | VATCA 2010 (No. 31 of 2010) | Deterministic (full Act, as-enacted) + 4 reference pointers to current/revised text | Complete (deterministic, all 125 sections); ingested. Revised pointers cover ss. 5, 46, 65, 84 only |
-| `tca-1997/` | Taxes Consolidation Act 1997 (No. 39 of 1997) | Reference only | ss. 885-887 only (record-keeping). Not ingested into the KB at all yet — see `docs/RULES_KB.md` "Next steps" |
+| `tca-1997/` | Taxes Consolidation Act 1997 (No. 39 of 1997) | Reference only | ss. 885-887, 18, 52, 81 (record-keeping + Case I/II + deductibility). Not ingested into the KB at all yet — see `docs/RULES_KB.md` "Next steps" |
 | `si-639-2010/` | VAT Regulations 2010 (S.I. 639/2010) | Reference only | Partial: regs 20, 27 only |
 | `si-156-2012/` | Mandatory e-filing Regulations 2012 (S.I. 156/2012) | Reference only | Complete |
 | `si-69-2025/` | European Union (VAT) Regulations 2025 (S.I. 69/2025) | Reference only | Summary of all substantive amendments |
@@ -45,7 +45,7 @@ because they describe the set as a whole, not one instrument:
 
 ## Known gaps (see `SOURCE-REGISTER.md` for detail on each)
 
-- `tca-1997/` covers only 3 sections; nothing here yet supports the bulk of
+- `tca-1997/` covers only 6 sections; nothing here yet supports the bulk of
   Finance-Act-to-TCA cross-references the audit report flags as unresolved.
 - `si-639-2010/`, `tdm-38-01-03b/` are partial extracts of larger instruments.
 - The reference-only folders are not wired into the deterministic pipeline
