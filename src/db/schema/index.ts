@@ -7,3 +7,4 @@ export * from './banking';
 export * from './documents';
 export * from './invoices';
 export * from './operations';
+export * from './irishRules';
