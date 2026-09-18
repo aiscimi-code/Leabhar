@@ -13,6 +13,9 @@ import {
   irishKnowledgeSources, irishActProvisions, irishTaxRules, irishTaxRuleTests,
 } from '@/db/schema';
 import { SECTION_RULE_KEYS } from './factExtractor';
+import { VATCA_CURATED_RULES } from './vatcaCuration';
+import { FINANCE_ACT_2024 } from './irishRules';
+import { VATCA_2010 } from './vatcaIngestion';
 
 export interface AuditReport {
   generatedAt: string;
@@ -54,17 +57,27 @@ export function generateAuditReport(db: AppDatabase, params: { companyId: string
   }));
 
   const relevant = provisions.filter((p) => p.relevant);
-  const ruledSectionNumbers = new Set(rules.map((r) => {
-    const prov = provisions.find((p) => p.id === r.provisionId);
-    return prov?.sectionNumber;
-  }));
+
+  // Curated section -> rule key, per source citation. Keyed by (sourceId,
+  // sectionNumber) rather than checked globally: two sources can both have a
+  // "section 12", and only one of them is the one a given curation table means.
+  const sourceById = new Map(sourceRows.map((s) => [s.id, s]));
+  const curatedKeyFor = (sourceId: string, sectionNumber: string): string | undefined => {
+    const citation = sourceById.get(sourceId)?.citation;
+    if (citation === FINANCE_ACT_2024.citation) return SECTION_RULE_KEYS[sectionNumber]?.key;
+    if (citation === VATCA_2010.citation) {
+      return VATCA_CURATED_RULES.find((r) => r.sectionNumber === sectionNumber)?.ruleKey;
+    }
+    return undefined;
+  };
+
+  const ruledProvisionIds = new Set(rules.map((r) => r.provisionId));
 
   const provisionsWithoutExtractedRule = relevant
-    .filter((p) => SECTION_RULE_KEYS[p.sectionNumber] && !ruledSectionNumbers.has(p.sectionNumber))
-    .map((p) => ({
-      sectionNumber: p.sectionNumber, heading: p.heading,
-      ruleKey: SECTION_RULE_KEYS[p.sectionNumber]!.key,
-    }));
+    .map((p) => ({ p, ruleKey: curatedKeyFor(p.sourceId, p.sectionNumber) }))
+    .filter((x): x is { p: typeof relevant[number]; ruleKey: string } =>
+      x.ruleKey !== undefined && !ruledProvisionIds.has(x.p.id))
+    .map(({ p, ruleKey }) => ({ sectionNumber: p.sectionNumber, heading: p.heading, ruleKey }));
 
   const ambiguousProvisions = relevant
     .filter((p) => p.category === 'other')

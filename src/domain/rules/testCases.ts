@@ -8,6 +8,17 @@
  * a floor, not a substitute for the hand-written positive/negative/exception/
  * boundary cases in `transactionLookup.test.ts` — those cover conditions and
  * exceptions this generator cannot infer on its own.
+ *
+ * Known limitation: the synthetic "positive" context only sets `topic` and
+ * `transactionDate` — for a rule whose `conditions` require other fields
+ * (e.g. VATCA's reverse-charge rule needs `supplyType`/`supplierCountry`/
+ * `vatRegistered`), that context correctly does NOT satisfy them, so the
+ * generated positive case fails `runTestCases` by design, not by bug. Real
+ * positive coverage for a condition-bearing rule lives in
+ * `transactionLookup.test.ts`, which builds a context that actually meets
+ * its conditions. `npm run cli:rules -- test` will show these as failures;
+ * that is expected until this generator learns to synthesize a satisfying
+ * context per condition (see docs/RULES_KB.md "Limitations").
  */
 import { eq } from 'drizzle-orm';
 import type { AppDatabase } from '@/db';

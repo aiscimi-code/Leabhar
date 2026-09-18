@@ -8,6 +8,7 @@ import {
   ingestFinanceAct2024, deriveTaxRules, lookupTaxRule, listTaxRulesByTopic,
   FINANCE_ACT_2024_MD_PATH,
 } from '@/domain/rules/irishRules';
+import { ingestVatca2010, deriveVatcaRules, VATCA_2010_MD_PATH } from '@/domain/rules/vatcaIngestion';
 import { lookupTransactionRules, type TransactionContext } from '@/domain/rules/transactionLookup';
 import { setRuleReviewStatus } from '@/domain/rules/review';
 import { generateDefaultTestCases, runTestCases } from '@/domain/rules/testCases';
@@ -21,9 +22,11 @@ Leabhar Irish rules knowledge base CLI
 Usage: npm run cli:rules -- <command> [flags]
 
 Commands:
-  ingest [--file <path>]              Ingest the Finance Act 2024 Markdown
-                                       (default: docs/statutes/2024-act-43/2024-act-43-enacted.md)
-  extract                             Derive irish_tax_rules from ingested provisions
+  ingest [--source <s>] [--file <path>]
+                                       Ingest a source's Markdown (--source: finance-act-2024
+                                       [default] | vatca-2010; --file overrides its default path)
+  extract [--source <s>]              Derive irish_tax_rules from ingested provisions
+                                       (--source as above; default finance-act-2024)
   list-provisions [--category <c>] [--relevant-only]
                                        List ingested provisions
   show-provision --section <n>        Print one provision's full text + source offsets
@@ -62,6 +65,14 @@ export async function main(argv: string[], options: CliOptions = {}): Promise<nu
 
     switch (command) {
       case 'ingest': {
+        const source = getFlag(flags, 'source') ?? 'finance-act-2024';
+        if (source === 'vatca-2010') {
+          const file = getFlag(flags, 'file') ?? VATCA_2010_MD_PATH;
+          const markdown = readFileSync(file, 'utf8');
+          print(ingestVatca2010(db, { companyId, markdown, ingestVersion: 'v1', localPath: file }), format);
+          return 0;
+        }
+        if (source !== 'finance-act-2024') throw new Error(`Unknown --source: ${source}`);
         const file = getFlag(flags, 'file') ?? FINANCE_ACT_2024_MD_PATH;
         const markdown = readFileSync(file, 'utf8');
         const result = ingestFinanceAct2024(db, {
@@ -72,6 +83,12 @@ export async function main(argv: string[], options: CliOptions = {}): Promise<nu
       }
 
       case 'extract': {
+        const source = getFlag(flags, 'source') ?? 'finance-act-2024';
+        if (source === 'vatca-2010') {
+          print(deriveVatcaRules(db, { companyId }), format);
+          return 0;
+        }
+        if (source !== 'finance-act-2024') throw new Error(`Unknown --source: ${source}`);
         const result = deriveTaxRules(db, { companyId });
         print(result, format);
         return 0;

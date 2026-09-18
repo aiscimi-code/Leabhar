@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import { createTestDatabase } from '@/db/testing';
 import { createCompany } from '../config/setup';
 import { ingestFinanceAct2024, deriveTaxRules, FINANCE_ACT_2024_MD_PATH } from './irishRules';
+import { ingestVatca2010, deriveVatcaRules, VATCA_2010_MD_PATH } from './vatcaIngestion';
 import { lookupTransactionRules, identifyTopics } from './transactionLookup';
 import { irishTaxRules } from '@/db/schema';
 import { eq } from 'drizzle-orm';
@@ -10,13 +11,16 @@ import type { AppDatabase } from '@/db';
 
 let db: AppDatabase;
 let companyId: string;
-const markdown = readFileSync(FINANCE_ACT_2024_MD_PATH, 'utf8');
+const financeActMd = readFileSync(FINANCE_ACT_2024_MD_PATH, 'utf8');
+const vatcaMd = readFileSync(VATCA_2010_MD_PATH, 'utf8');
 
 beforeEach(() => {
   ({ db } = createTestDatabase());
   ({ companyId } = createCompany(db, { legalName: 'Lookup Ltd', seedYears: [2025] }));
-  ingestFinanceAct2024(db, { companyId, markdown, ingestVersion: 'v1' });
+  ingestFinanceAct2024(db, { companyId, markdown: financeActMd, ingestVersion: 'v1' });
   deriveTaxRules(db, { companyId });
+  ingestVatca2010(db, { companyId, markdown: vatcaMd, ingestVersion: 'v1' });
+  deriveVatcaRules(db, { companyId });
 });
 
 describe('identifyTopics', () => {
@@ -44,38 +48,56 @@ describe('identifyTopics', () => {
 });
 
 describe('lookupTransactionRules — task example scenarios', () => {
-  it('a Revolut bank charge: identifies topics but invents no treatment the KB does not hold', () => {
+  it('a Revolut bank charge: resolves the general VATCA input-deduction rule, still flags review', () => {
     const result = lookupTransactionRules(db, {
       companyId,
       transaction: {
         transactionDate: '2026-09-18', amountMinor: 1000, currency: 'EUR',
         entityType: 'Irish_LTD', vatRegistered: true,
         transactionType: 'bank_charge', description: 'REVOLUT bank charge',
-        businessUsePercent: 100, invoiceAvailable: false,
+        supplyType: 'services', businessUsePercent: 100, invoiceAvailable: true,
       },
     });
-    expect(result.identifiedTopics).toEqual(expect.arrayContaining(['banking', 'business_expense']));
-    expect(result.applicableRules).toHaveLength(0);
+    expect(result.identifiedTopics).toEqual(expect.arrayContaining(['banking', 'business_expense', 'vat']));
+    expect(result.applicableRules.map((r) => r.ruleKey)).toContain('vat.input_deduction_general');
+    // Still not authoritative: every VATCA rule here is ai_extracted, unreviewed.
     expect(result.reviewRequired).toBe(true);
-    expect(result.reviewReasons.join(' ')).toMatch(/No rule in the ingested knowledge base/);
-    // No hallucinated VAT rate or deductibility claim anywhere in the treatment.
-    expect(result.possibleTreatment.vat).toHaveLength(0);
-    expect(result.possibleTreatment.tax).toHaveLength(0);
+    // No entertainment/food/motor-vehicle exclusion (VATCA s.60) fires for a bank charge.
+    expect(result.applicableRules.map((r) => r.ruleKey)).not.toContain('vat.deduction_exclusions_entertainment');
   });
 
-  it('an AI SaaS charge from a US supplier: flags vat topic, requires review, invents nothing', () => {
+  it('an AI SaaS charge from a US supplier: resolves the reverse-charge and place-of-supply rules', () => {
     const result = lookupTransactionRules(db, {
       companyId,
       transaction: {
         transactionDate: '2026-09-18', amountMinor: 123000, currency: 'EUR',
         entityType: 'Irish_LTD', vatRegistered: true,
         supplierCountry: 'US', supplierType: 'software_service', transactionType: 'AI_SaaS',
-        businessUsePercent: 100, invoiceAvailable: true,
+        supplyType: 'services', businessUsePercent: 100, invoiceAvailable: true,
       },
     });
     expect(result.identifiedTopics).toContain('vat');
-    expect(result.applicableRules).toHaveLength(0);
+    const keys = result.applicableRules.map((r) => r.ruleKey);
+    expect(keys).toContain('vat.reverse_charge_services_from_abroad');
+    expect(keys).toContain('vat.place_of_supply_b2b_general');
+    expect(keys).toContain('vat.input_deduction_general');
+    // Still flagged: every VATCA rule is ai_extracted and s.34/s.59 carry exceptions this system does not evaluate.
     expect(result.reviewRequired).toBe(true);
+    expect(result.reviewReasons.join(' ')).toMatch(/not yet human-approved/);
+  });
+
+  it('the same AI SaaS charge with no supplyType given: reverse charge is unresolved, not silently assumed', () => {
+    const result = lookupTransactionRules(db, {
+      companyId,
+      transaction: {
+        transactionDate: '2026-09-18', amountMinor: 123000, currency: 'EUR',
+        entityType: 'Irish_LTD', vatRegistered: true,
+        supplierCountry: 'US', supplierType: 'software_service', transactionType: 'AI_SaaS',
+        businessUsePercent: 100, invoiceAvailable: true, // supplyType omitted
+      },
+    });
+    expect(result.applicableRules.map((r) => r.ruleKey)).not.toContain('vat.reverse_charge_services_from_abroad');
+    expect(result.unresolvedFields).toContain('supplyType');
   });
 
   it('a personal purchase charged to the business account: flags director_transaction, requires review', () => {
@@ -89,7 +111,12 @@ describe('lookupTransactionRules — task example scenarios', () => {
       },
     });
     expect(result.identifiedTopics).toContain('director_transaction');
-    expect(result.applicableRules).toHaveLength(0);
+    const keys = result.applicableRules.map((r) => r.ruleKey);
+    // Only the foundational "VAT is chargeable" declaration applies (it has no
+    // conditions); the deductibility rule does NOT — no invoice and 0% business
+    // use both fail its conditions — so no deduction is invented for this spend.
+    expect(keys).toEqual(['vat.charge_general']);
+    expect(keys).not.toContain('vat.input_deduction_general');
     expect(result.reviewRequired).toBe(true);
   });
 });

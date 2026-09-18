@@ -1,29 +1,45 @@
 {
-    "generatedAt": "2026-09-18T14:42:16.582Z",
+    "generatedAt": "2026-09-18T15:29:47.845Z",
     "sources": [
         {
-            "id": "src_6f06f9e39d374428ad668b02",
+            "id": "src_4a49dc0ba03f4d6cb803c1bd",
             "citation": "2024 Act 43",
             "sourceType": "legislation",
             "provisionCount": 118
+        },
+        {
+            "id": "src_83b63751958d4219866e6c7f",
+            "citation": "2010 Act 31",
+            "sourceType": "legislation",
+            "provisionCount": 122
         }
     ],
-    "provisionCount": 118,
-    "relevantProvisionCount": 57,
-    "notRelevantProvisionCount": 61,
-    "ruleCount": 4,
+    "provisionCount": 240,
+    "relevantProvisionCount": 115,
+    "notRelevantProvisionCount": 125,
+    "ruleCount": 9,
     "rulesByReviewStatus": {
-        "ai_extracted": 4
+        "ai_extracted": 9
     },
-    "rulesRequiringHumanReview": 4,
-    "rulesRequiringGuidance": 0,
-    "rulesWithExceptions": 0,
+    "rulesRequiringHumanReview": 9,
+    "rulesRequiringGuidance": 4,
+    "rulesWithExceptions": 3,
     "provisionsWithoutExtractedRule": [],
     "ambiguousProvisions": [
         {
             "sectionNumber": "3",
             "heading": "Rate of charge and personal tax credits",
             "reason": "Curated: mapped to rule key \"income_tax.standard_rate_threshold\" by human editorial judgement, overriding the other category default."
+        },
+        {
+            "sectionNumber": "12",
+            "heading": "Services received",
+            "reason": "Curated: mapped to a rule in vatcaCuration.ts, overriding the other category default."
+        },
+        {
+            "sectionNumber": "34",
+            "heading": "",
+            "reason": "Curated: mapped to a rule in vatcaCuration.ts, overriding the other category default."
         }
     ],
     "unresolvedCrossReferences": [
@@ -1372,6 +1388,26 @@
             "reference": "section 432"
         },
         {
+            "sectionNumber": "76",
+            "reference": "Section 132(3)"
+        },
+        {
+            "sectionNumber": "76",
+            "reference": "section 130"
+        },
+        {
+            "sectionNumber": "76",
+            "reference": "section 130"
+        },
+        {
+            "sectionNumber": "76",
+            "reference": "section 130"
+        },
+        {
+            "sectionNumber": "76",
+            "reference": "section 130"
+        },
+        {
             "sectionNumber": "92",
             "reference": "section 159D"
         },
@@ -1710,13 +1746,189 @@
         {
             "sectionNumber": "118",
             "reference": "section 654A"
+        },
+        {
+            "sectionNumber": "2",
+            "reference": "section 850"
+        },
+        {
+            "sectionNumber": "2",
+            "reference": "section 851"
+        },
+        {
+            "sectionNumber": "2",
+            "reference": "section 852"
+        },
+        {
+            "sectionNumber": "2",
+            "reference": "section 55(1)"
+        },
+        {
+            "sectionNumber": "29",
+            "reference": "section 30"
+        },
+        {
+            "sectionNumber": "59",
+            "reference": "section 30"
+        },
+        {
+            "sectionNumber": "59",
+            "reference": "section 131"
+        },
+        {
+            "sectionNumber": "59",
+            "reference": "section 30"
+        },
+        {
+            "sectionNumber": "66",
+            "reference": "section 30(1)(a)(ii)"
+        },
+        {
+            "sectionNumber": "79",
+            "reference": "section 131"
+        },
+        {
+            "sectionNumber": "79",
+            "reference": "section 132"
+        },
+        {
+            "sectionNumber": "79",
+            "reference": "section 131"
+        },
+        {
+            "sectionNumber": "84",
+            "reference": "section 305(1)"
+        },
+        {
+            "sectionNumber": "87",
+            "reference": "section 30"
+        },
+        {
+            "sectionNumber": "87",
+            "reference": "section 131"
+        },
+        {
+            "sectionNumber": "89",
+            "reference": "section 30"
+        },
+        {
+            "sectionNumber": "116",
+            "reference": "section 134A(2)"
+        },
+        {
+            "sectionNumber": "120",
+            "reference": "section 30(2)"
+        },
+        {
+            "sectionNumber": "125",
+            "reference": "section 172A"
+        },
+        {
+            "sectionNumber": "125",
+            "reference": "section 737"
+        },
+        {
+            "sectionNumber": "125",
+            "reference": "section 42(1)"
+        },
+        {
+            "sectionNumber": "125",
+            "reference": "section 531(5)"
+        },
+        {
+            "sectionNumber": "125",
+            "reference": "section 811A(6)"
+        },
+        {
+            "sectionNumber": "125",
+            "reference": "section 885(1)"
+        },
+        {
+            "sectionNumber": "125",
+            "reference": "Section 55(4)"
+        },
+        {
+            "sectionNumber": "125",
+            "reference": "Section 140(4)"
+        },
+        {
+            "sectionNumber": "125",
+            "reference": "Section 132(4)"
+        },
+        {
+            "sectionNumber": "125",
+            "reference": "Section 254(4)"
+        },
+        {
+            "sectionNumber": "125",
+            "reference": "Section 143(4)"
+        },
+        {
+            "sectionNumber": "125",
+            "reference": "Section 166(4)"
+        },
+        {
+            "sectionNumber": "125",
+            "reference": "Section 179(4)"
+        },
+        {
+            "sectionNumber": "125",
+            "reference": "Section 143(4)"
+        },
+        {
+            "sectionNumber": "125",
+            "reference": "Section 166(4)"
+        },
+        {
+            "sectionNumber": "125",
+            "reference": "section 133(6)"
+        },
+        {
+            "sectionNumber": "125",
+            "reference": "Section 217(4)"
+        },
+        {
+            "sectionNumber": "125",
+            "reference": "Section 166(4)"
+        },
+        {
+            "sectionNumber": "125",
+            "reference": "Section 243(4)"
+        },
+        {
+            "sectionNumber": "125",
+            "reference": "Section 141(4)"
+        },
+        {
+            "sectionNumber": "125",
+            "reference": "Section 171(4)"
+        },
+        {
+            "sectionNumber": "125",
+            "reference": "Section 150(4)"
+        },
+        {
+            "sectionNumber": "125",
+            "reference": "Section 130(4)"
+        },
+        {
+            "sectionNumber": "125",
+            "reference": "Section 130(4)"
+        },
+        {
+            "sectionNumber": "125",
+            "reference": "Section 144(4)"
+        },
+        {
+            "sectionNumber": "125",
+            "reference": "Section 165(4)"
         }
     ],
     "duplicateRuleKeys": [],
     "testSummary": {
-        "total": 8,
-        "passed": 8,
-        "failed": 0,
+        "total": 18,
+        "passed": 15,
+        "failed": 3,
         "neverRun": 0
     }
 }
