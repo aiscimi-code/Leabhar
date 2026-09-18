@@ -20,12 +20,12 @@ document, which a paraphrase cannot satisfy. See
 |---|---|---|---|---|
 | 1.1 | `vatca-2010/s5-revised.md`, `s46-revised.md`, `s65-revised.md`, `s84-revised.md` | VATCA 2010 (No. 31) ss. 5, 46, 65, 84 revised | https://revisedacts.lawreform.ie/eli/2010/act/31/front/revised/en/html | Partial: scoped to ss. 2, 5, 46, 59, 65, 66, 84; only these 4 exist. VATCA s.59 is separately fully ingested verbatim (as-enacted) into the deterministic KB. |
 | 1.2 | `finance-act-2024/2024-act-43-part3-vat.md` | Finance Act 2024 (No. 43), Part 3 (VAT, ss. 77-88) | https://www.irishstatutebook.ie/eli/2024/act/43/enacted/en/print | Cross-check extract only; the KB's actual parser input is the full-Act `2024-act-43-enacted.md` in the same folder, not this. |
-| 1.3 | `si-639-2010/2010-si-639.md` | VAT Regulations 2010 (S.I. 639/2010) | https://www.irishstatutebook.ie/eli/2010/si/639/made/en/print | Partial: regs 20 and 27 only (invoice contents, accounts). |
+| 1.3 | `si-639-2010/` | VAT Regulations 2010 (S.I. 639/2010) | https://www.irishstatutebook.ie/eli/2010/si/639/made/en/print | Partial: regs 14, 19, 20, 23, 24, 27, 29, plus reg 14A (postponed accounting, inserted by S.I. 734/2020 — a separate instrument, not the original 639/2010 text). Still missing regs 21, 22, 25, 26. |
 | 1.4 | `si-69-2025/2025-si-69.md` | European Union (Value-Added Tax) Regulations 2025 (S.I. 69/2025) | https://www.irishstatutebook.ie/eli/2025/si/69/made/en/html | Summary of all substantive amendments (ss. 2, 5, 6, 59, 60, 80, new ss. 92B-92D). |
 | 1.5 | `tca-1997/1997-act-39-ss-885-887.md` | TCA 1997 ss. 885-887 (as enacted) | https://www.irishstatutebook.ie/eli/1997/act/39/section/886/enacted/en/html | Complete for these 3 sections. See `tca-1997/` for the broader (separate, Tier 2) transaction-classification effort. |
 | 1.6 | `si-156-2012/2012-si-156.md` | Mandatory e-filing Regulations 2012 (S.I. 156/2012) | https://www.irishstatutebook.ie/eli/2012/si/156/made/en/html | Complete. |
 | 5 | `tdm-38-01-03b/38-01-03b-p19-36.md` | Revenue TDM Part 38-01-03b — Guidelines for VAT Registration | https://www.revenue.ie/en/tax-professionals/tdm/income-tax-capital-gains-tax-corporation-tax/part-38/38-01-03b.pdf | Partial: pages 19-36 of 54, paraphrased. |
-| 9 | `vat-rates/current-vat-rates.md` | Revenue current VAT rates table | https://www.revenue.ie/en/vat/vat-rates/search-vat-rates/current-vat-rates.aspx | Complete (2020-2026), retrieved 2026-09-18. |
+| 9 | `vat-rates/current-vat-rates.md` + `rates.json` | Revenue current VAT rates table | https://www.revenue.ie/en/vat/vat-rates/search-vat-rates/current-vat-rates.aspx | Complete (2020-2026), retrieved 2026-09-18. `rates.json` is the same data machine-readable, keyed by `effective_from` — not yet wired into the app's own `tax_rates` table. |
 
 `scripts/extract_vat_sources.py` (and the `workflow_dispatch` GH Actions job
 `.github/workflows/extract-vat-docs.yml` that runs it on a network-unrestricted

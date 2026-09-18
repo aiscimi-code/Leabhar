@@ -27,11 +27,12 @@ architecture and [`SOURCE-REGISTER.md`](SOURCE-REGISTER.md) for the full
 |---|---|---|---|
 | `finance-act-2024/` | Finance Act 2024 (No. 43 of 2024) | Deterministic (full Act) + a reference cross-check extract (Part 3 only) | Complete (deterministic); ingested |
 | `vatca-2010/` | VATCA 2010 (No. 31 of 2010) | Deterministic (full Act, as-enacted) + 4 reference pointers to current/revised text | Complete (deterministic, all 125 sections); ingested. Revised pointers cover ss. 5, 46, 65, 84 only |
+| `vatca-2010-revised/` | VATCA 2010, full LRC-revised corpus (separate from the 4 pointers above) | Reference only | Schedules 4, 5, 6, 9 only so far; individual sections not yet started |
 | `tca-1997/` | Taxes Consolidation Act 1997 (No. 39 of 1997) | Reference only | ss. 885-887, 18, 52, 81 (record-keeping + Case I/II + deductibility). Not ingested into the KB at all yet — see `docs/RULES_KB.md` "Next steps" |
-| `si-639-2010/` | VAT Regulations 2010 (S.I. 639/2010) | Reference only | Partial: regs 20, 27 only |
+| `si-639-2010/` | VAT Regulations 2010 (S.I. 639/2010) | Reference only | Partial: regs 14, 19, 20, 23, 24, 27, 29 + 14A (via S.I. 734/2020); missing 21, 22, 25, 26 |
 | `si-156-2012/` | Mandatory e-filing Regulations 2012 (S.I. 156/2012) | Reference only | Complete |
 | `si-69-2025/` | European Union (VAT) Regulations 2025 (S.I. 69/2025) | Reference only | Summary of all substantive amendments |
-| `vat-rates/` | Revenue current VAT rates table | Reference only | Complete, dated (2020-2026 history, retrieved 2026-09-18) |
+| `vat-rates/` | Revenue current VAT rates table (Markdown + machine-readable JSON) | Reference only | Complete, dated (2020-2026 history, retrieved 2026-09-18) |
 | `tdm-38-01-03b/` | Revenue TDM Part 38-01-03b (VAT registration guidelines) | Reference only | Partial: pages 19-36 of 54, paraphrased |
 | `import-vat/` | Customs Manual on Import VAT (guidance) + VATCA s.3(b)/s.53A pointers | Reference only | One TDM extract |
 | `rct/` | Relevant Contracts Tax (TCA 1997 ss.530/530A, SI 651/2011) — a withholding regime, not VAT | Reference only | 2 TDM extracts (18-02-01, 18-02-02); one citation unverified, see `rct/README.md` |

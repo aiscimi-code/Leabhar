@@ -37,6 +37,6 @@ TDM VAT-RTD-S76. Four blocks:
 3. Goods or services purchased for resale (Irish, intra-EU, postponed accounting, non-EU imports).
 4. Other deductible goods and services.
 
-Rate columns on the RTD follow the live table in `docs/vat/vat-rates/rates.json` (23 / 13.5 / 9 / 4.8 / farmer %). Do not hard-code the 2010 enacted 21%.
+Rate columns on the RTD follow the live table in `docs/statutes/vat-rates/rates.json` (23 / 13.5 / 9 / 4.8 / farmer %). Do not hard-code the 2010 enacted 21%.
 
 RTD TDM: https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part09-obligations-accountable-persons/return/VAT-RTD-S76.pdf
