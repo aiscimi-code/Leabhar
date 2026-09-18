@@ -6,7 +6,7 @@
  * rather than above it the way an amending Act like the Finance Acts are).
  *
  * This is NOT part of the application's runtime ingestion pipeline — it is
- * the same one-off step that produced docs/statutes/2024-act-43/
+ * the same one-off step that produced docs/statutes/finance-act-2024/
  * 2024-act-43-enacted.md (see that file's own header). Run it once per
  * source document, review the output, and commit the result alongside the
  * PDF; `src/domain/rules/*Parser.ts` then parses the committed Markdown

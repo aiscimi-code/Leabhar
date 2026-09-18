@@ -40,14 +40,14 @@ export interface KnowledgeSourceRef {
 /**
  * The Finance Act 2024 (2024 Act 43) metadata. `enactedDate` is taken from the
  * Act's own long title ("... [12th November, 2024]" in
- * docs/statutes/2024-act-43/2024-act-43-enacted.md), not inferred.
+ * docs/statutes/finance-act-2024/2024-act-43-enacted.md), not inferred.
  */
 export const FINANCE_ACT_2024: KnowledgeSourceRef = {
   title: 'Finance Act 2024',
   citation: '2024 Act 43',
   sourceType: 'legislation',
   sourceUrl: 'https://www.irishstatutebook.ie/eli/2024/act/43/enacted/en/pdf',
-  localPath: 'docs/statutes/2024-act-43/2024-act-43-enacted.md',
+  localPath: 'docs/statutes/finance-act-2024/2024-act-43-enacted.md',
   enactedDate: '2024-11-12',
 };
 
