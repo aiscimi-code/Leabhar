@@ -3,7 +3,7 @@ import type { AppDatabase } from '@/db';
 import { rules, bankTransactions, suppliers, auditEvents, accounts, vatTreatments } from '@/db/schema';
 import { ids } from '@/lib/ids';
 import { nowIso } from '../dates';
-import { normaliseDescription } from '../banking/fingerprint';
+import { evaluateAllConditions, type RuleCondition as SharedRuleCondition } from './conditionEval';
 
 /**
  * Deterministic rules engine (README §18).
@@ -17,13 +17,8 @@ import { normaliseDescription } from '../banking/fingerprint';
  * explicit step.
  */
 
-export type RuleCondition = {
-  field: string;
-  operator: 'equals' | 'not_equals' | 'contains' | 'not_contains' | 'starts_with'
-    | 'ends_with' | 'matches' | 'gt' | 'gte' | 'lt' | 'lte' | 'between' | 'in' | 'is_null';
-  value: string | number | Array<string | number> | null;
-  caseSensitive?: boolean;
-};
+/** Re-exported from the shared evaluator (conditionEval.ts) so existing imports keep working. */
+export type RuleCondition = SharedRuleCondition;
 
 export type RuleAction = {
   field: 'accountId' | 'vatTreatmentId' | 'supplierId' | 'customerId'
@@ -98,16 +93,16 @@ export function evaluateRules(
   const effectiveActions: Record<string, string | null> = {};
 
   for (const rule of candidates) {
-    const conditionResults = (rule.conditions as RuleCondition[]).map((condition) => {
-      const { passed, detail } = evaluateCondition(condition, params.subject);
-      return { condition, passed, detail };
-    });
-
     // Every condition must hold. A rule with no conditions matches nothing,
     // rather than matching everything — a blank rule is almost certainly
     // half-finished, and treating it as "always" would silently reclassify
     // the entire ledger.
-    const allPassed = conditionResults.length > 0 && conditionResults.every((r) => r.passed);
+    const { allPassed, results: conditionResults } = evaluateAllConditions(
+      rule.conditions as RuleCondition[],
+      params.subject,
+      humaniseField,
+      (n) => (n / 100).toFixed(2), // money, minor units -> "45.00"
+    );
     if (!allPassed) continue;
 
     const match: RuleMatch = {
@@ -134,115 +129,6 @@ export function evaluateRules(
   }
 
   return { matches, winner: matches[0] ?? null, effectiveActions };
-}
-
-function evaluateCondition(
-  condition: RuleCondition, subject: RuleSubject,
-): { passed: boolean; detail: string } {
-  const raw = subject[condition.field];
-  const label = humaniseField(condition.field);
-
-  if (condition.operator === 'is_null') {
-    const passed = raw === null || raw === undefined || raw === '';
-    return { passed, detail: `${label} is ${passed ? '' : 'not '}empty` };
-  }
-
-  if (raw === null || raw === undefined) {
-    return { passed: false, detail: `${label} is empty` };
-  }
-
-  const numericOperators = ['gt', 'gte', 'lt', 'lte', 'between'];
-  if (numericOperators.includes(condition.operator)) {
-    const actual = typeof raw === 'number' ? raw : Number(raw);
-    if (!Number.isFinite(actual)) {
-      return { passed: false, detail: `${label} is not a number` };
-    }
-    return evaluateNumeric(condition, actual, label);
-  }
-
-  const caseSensitive = condition.caseSensitive ?? false;
-  const actual = String(raw);
-  const haystack = caseSensitive ? actual : actual.toLowerCase();
-
-  const asText = (value: unknown): string => {
-    const text = String(value);
-    return caseSensitive ? text : text.toLowerCase();
-  };
-
-  switch (condition.operator) {
-    case 'equals': {
-      const passed = haystack === asText(condition.value);
-      return { passed, detail: `${label} ${passed ? 'is' : 'is not'} "${condition.value}"` };
-    }
-    case 'not_equals': {
-      const passed = haystack !== asText(condition.value);
-      return { passed, detail: `${label} ${passed ? 'is not' : 'is'} "${condition.value}"` };
-    }
-    case 'contains': {
-      // Normalised, so "VERCEL INC." in a bank narrative matches "vercel inc".
-      const passed = normaliseDescription(actual).includes(normaliseDescription(String(condition.value)));
-      return { passed, detail: `${label} ${passed ? 'contains' : 'does not contain'} "${condition.value}"` };
-    }
-    case 'not_contains': {
-      const passed = !normaliseDescription(actual).includes(normaliseDescription(String(condition.value)));
-      return { passed, detail: `${label} ${passed ? 'does not contain' : 'contains'} "${condition.value}"` };
-    }
-    case 'starts_with': {
-      const passed = haystack.startsWith(asText(condition.value));
-      return { passed, detail: `${label} ${passed ? 'starts with' : 'does not start with'} "${condition.value}"` };
-    }
-    case 'ends_with': {
-      const passed = haystack.endsWith(asText(condition.value));
-      return { passed, detail: `${label} ${passed ? 'ends with' : 'does not end with'} "${condition.value}"` };
-    }
-    case 'matches': {
-      try {
-        const passed = new RegExp(String(condition.value), caseSensitive ? '' : 'i').test(actual);
-        return { passed, detail: `${label} ${passed ? 'matches' : 'does not match'} /${condition.value}/` };
-      } catch {
-        // An invalid pattern must never match everything by accident.
-        return { passed: false, detail: `${label}: the pattern /${condition.value}/ is not valid` };
-      }
-    }
-    case 'in': {
-      const list = Array.isArray(condition.value) ? condition.value : [condition.value];
-      const passed = list.some((v) => asText(v) === haystack);
-      return { passed, detail: `${label} ${passed ? 'is' : 'is not'} one of ${list.join(', ')}` };
-    }
-    default:
-      return { passed: false, detail: `${label}: unknown operator` };
-  }
-}
-
-function evaluateNumeric(
-  condition: RuleCondition, actual: number, label: string,
-): { passed: boolean; detail: string } {
-  const money = (n: number): string => (n / 100).toFixed(2);
-
-  if (condition.operator === 'between') {
-    const [low, high] = Array.isArray(condition.value)
-      ? [Number(condition.value[0]), Number(condition.value[1])]
-      : [NaN, NaN];
-    const passed = actual >= low && actual <= high;
-    return {
-      passed,
-      detail: `${label} (${money(actual)}) is ${passed ? '' : 'not '}between `
-        + `${money(low)} and ${money(high)}`,
-    };
-  }
-
-  const bound = Number(condition.value);
-  const comparisons: Record<string, [boolean, string]> = {
-    gt: [actual > bound, 'greater than'],
-    gte: [actual >= bound, 'at least'],
-    lt: [actual < bound, 'less than'],
-    lte: [actual <= bound, 'at most'],
-  };
-  const [passed, word] = comparisons[condition.operator] ?? [false, '?'];
-  return {
-    passed,
-    detail: `${label} (${money(actual)}) is ${passed ? '' : 'not '}${word} ${money(bound)}`,
-  };
 }
 
 function humaniseField(field: string): string {

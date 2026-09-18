@@ -28,6 +28,7 @@
     "db:migrate": "tsx src/db/migrate.ts",
     "db:seed": "tsx src/db/seed/run.ts",
     "cli": "tsx src/cli/reconcile.ts",
+    "cli:rules": "tsx src/cli/irishRules.ts",
     "build:package": "node scripts/build-package.mjs",
     "build:installer": "makensis scripts/installer.nsi"
   },
