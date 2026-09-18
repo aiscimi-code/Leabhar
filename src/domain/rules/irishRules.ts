@@ -194,6 +194,18 @@ export function deriveTaxRules(
   db: AppDatabase,
   params: { companyId: string; sourceId?: string },
 ): DeriveResult {
+  // Scoped to this source's own provisions, never every provision in the
+  // company's DB: once a second source (e.g. VATCA 2010) is ingested into
+  // the same company, an un-scoped scan would match a section number against
+  // whichever source's row happens to come first — silently deriving a rule
+  // from the wrong Act's text. A caller may still pass a specific
+  // `sourceId` (e.g. to re-derive against one re-ingested version).
+  const sourceId = params.sourceId ?? db
+    .select({ id: irishKnowledgeSources.id })
+    .from(irishKnowledgeSources)
+    .where(eq(irishKnowledgeSources.citation, FINANCE_ACT_2024.citation))
+    .get()?.id;
+
   const provisionsQuery = db
     .select({
       id: irishActProvisions.id,
@@ -208,8 +220,8 @@ export function deriveTaxRules(
     })
     .from(irishActProvisions);
 
-  const provisions = (params.sourceId
-    ? provisionsQuery.where(eq(irishActProvisions.sourceId, params.sourceId))
+  const provisions = (sourceId
+    ? provisionsQuery.where(eq(irishActProvisions.sourceId, sourceId))
     : provisionsQuery
   ).all();
 

@@ -40,6 +40,9 @@ export interface TransactionContext {
   description?: string | null;
   businessUsePercent?: number | null; // 0-100; undefined means not yet assessed
   invoiceAvailable?: boolean | null;
+  /** "goods" or "services" — several VATCA 2010 rules (place of supply, reverse
+   *  charge) turn on this distinction and it is not safely inferable from free text. */
+  supplyType?: 'goods' | 'services' | null;
   [key: string]: unknown;
 }
 
@@ -67,8 +70,16 @@ const TEXT_FIELDS = (ctx: TransactionContext): string =>
  * it must not by itself determine the accounting treatment").
  */
 const TOPIC_RULES: TopicRule[] = [
-  { topic: 'vat', test: (ctx) => /\bvat\b|saas|software|digital service|reverse charge/i.test(TEXT_FIELDS(ctx))
-      || (!!ctx.supplierCountry && ctx.supplierCountry.toUpperCase() !== 'IE') },
+  {
+    topic: 'vat',
+    // VAT deductibility (section 59/60) is a candidate question for any
+    // VAT-registered entity's purchase, not only cross-border ones — a
+    // narrower test here would miss ordinary domestic input VAT questions
+    // (e.g. "is the VAT on this bank charge deductible?").
+    test: (ctx) => ctx.vatRegistered === true
+      || /\bvat\b|saas|software|digital service|reverse charge/i.test(TEXT_FIELDS(ctx))
+      || (!!ctx.supplierCountry && ctx.supplierCountry.toUpperCase() !== 'IE'),
+  },
   { topic: 'banking', test: (ctx) => /\bbank\b|\bfee\b|\bcharge\b/i.test(TEXT_FIELDS(ctx)) },
   { topic: 'business_expense', test: () => true }, // deductibility is a candidate question for every transaction
   {

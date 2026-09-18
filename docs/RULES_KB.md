@@ -2,9 +2,12 @@
 
 A structured, versioned, source-linked knowledge base for Irish accounting/tax
 statutes and guidance, and a deterministic lookup engine that maps a
-transaction to the rules that apply to it. The immediate source is the
-Finance Act 2024 (2024 Act 43), ingested from
-`docs/statutes/2024-act-43/2024-act-43-enacted.md`.
+transaction to the rules that apply to it. Two sources are ingested:
+
+- the Finance Act 2024 (2024 Act 43), from
+  `docs/statutes/2024-act-43/2024-act-43-enacted.md`;
+- the Value-Added Tax Consolidation Act 2010 (2010 Act 31), from
+  `docs/statutes/vatca-2010/vatca-2010-enacted.md`.
 
 This is not a RAG system and it does not ask an LLM what the tax treatment
 should be. The pipeline is:
@@ -84,10 +87,10 @@ leabhar_implementation_rule          -> rank 4 (this practice's own convention)
 The ranking lives in one place, `src/domain/rules/sourceHierarchy.ts`
 (`sourceAuthorityRank`), and nowhere else — it is never duplicated as a stored
 column. A Revenue eBrief can update how a Tax and Duty Manual is read; it can
-never edit, merge into, or outrank a `legislation` row. Today the KB holds one
-source (`legislation`); the architecture is what makes adding a Revenue Tax
-and Duty Manual later an *ingestion*, not a redesign — see "Adding a new
-source" below.
+never edit, merge into, or outrank a `legislation` row. Today the KB holds two
+sources, both `legislation` (Finance Act 2024, VATCA 2010); the architecture
+is what makes adding a Revenue Tax and Duty Manual later an *ingestion*, not a
+redesign — see "Adding a new source" below.
 
 ## Schema
 
@@ -180,6 +183,73 @@ a key for them.
   rule also gets a `review_items` row (see above), so it surfaces where a
   practice already looks for things needing attention.
 
+### VATCA 2010
+
+The Value-Added Tax Consolidation Act 2010 is a *principal* Act (it states
+the law directly, unlike the Finance Act's "section X of the Principal Act is
+amended by..." form) and is printed in the Irish Statute Book's "marginal
+note" layout: each section's short heading and predecessor-provision citation
+sit in a column beside the section rather than above it. Getting from the PDF
+to parseable text needed its own, reusable step:
+
+- `scripts/convert-statute-pdf.ts` — a one-time PDF→Markdown converter (not
+  part of the runtime pipeline, the same way the Finance Act's own PDF→text
+  step wasn't). It reads pdfjs's raw text items per page and splits each page
+  into a main-text column and a margin-note column by a single x threshold
+  per page parity (the margin sits on the right on odd pages, the left on
+  even ones — a printed book's mirrored inner/outer margins). That threshold
+  is derived once for the whole document, not guessed: plotting every item's
+  x position for a given parity across all 232 pages shows two dense
+  clusters with a completely empty band between them, and the boundary is
+  the midpoint of that gap. (Earlier approaches — a per-row widest-gap test,
+  or per-page bootstrapping from that page's own citations, or a small fixed
+  tolerance around one anchor x — each broke on a real case: a main/margin
+  gap as small as 6pt on some lines, pages with no citation to bootstrap
+  from, and multi-word citations whose sub-glyphs render up to 65pt further
+  from the anchor than an ordinary word gap. A global, whole-document
+  gap search sidesteps all three.) The heading is re-attached above its
+  section number in the same convention `statuteParser.ts` already reads,
+  bounded so it never runs past the *next* section's own heading — needed
+  for a short run of sections (VATCA ss.121-123) that cite no predecessor
+  provision at all and so have no `[...]` citation line to stop the
+  collection otherwise. See the script's own header for the full algorithm.
+  Cross-checked against the Act's own "ARRANGEMENT OF SECTIONS" table of
+  contents (embedded in the source PDF): all 125 body sections (1-125) are
+  found, every extracted heading matches its TOC entry (aside from two
+  sections where the TOC and the body margin render the same words with a
+  different dash glyph — a font detail, not a content error), and the
+  verbatim-excerpt test below has never needed a `provisionText` workaround
+  since. Schedules remain out of scope.
+- `src/domain/rules/vatcaParser.ts` — parses the converted Markdown, reusing
+  `statuteParser.ts`'s generic (source-independent) `categoriseProvision`,
+  `assessRelevance` and `provisionSlug` rather than re-implementing them.
+- `src/domain/rules/vatcaCuration.ts` — hand-authored rules for 5 sections
+  (charge to VAT, reverse charge for services from abroad, place of supply of
+  services, general input VAT deduction, the food/drink/entertainment/motor
+  deduction exclusions). Unlike the Finance Act's mechanical figure
+  extraction, VATCA mostly states *conditional* rules ("if a taxable person
+  receives a service from a supplier established outside the State..."), so
+  turning that into a `conditions` array is an interpretive act, not a regex
+  match — recorded as such: `provenanceStatus: 'ai_suggestion'` (not
+  `'system_rule'`), lower `confidence` (70, not 90), and an
+  `interpretationNote` on every curated rule explaining exactly how its
+  condition maps onto `TransactionContext` fields and where that mapping is
+  a simplification (e.g. `supplierCountry != 'IE'` stands in for "established
+  outside the State", which is a location test, not a country-code test).
+  Every `statementExcerpt` is verified (`vatcaParser.test.ts`) to be a
+  verbatim substring of the parsed provision text.
+- `src/domain/rules/vatcaIngestion.ts` — `ingestVatca2010`/`deriveVatcaRules`,
+  mirroring the Finance Act functions' idempotency and versioning.
+
+A real bug surfaced by adding this second source, fixed before it shipped:
+`deriveTaxRules`/`deriveVatcaRules` originally looked up "the provision for
+section N" across *every* ingested source in the company, not just their own
+— harmless with one source, silently wrong with two, since both Acts have
+their own "section 3", "section 12", etc. Both functions now default to
+scoping by their own source's citation (`vatcaIngestion.test.ts`, "never
+matches a curated section number against a DIFFERENT source's provision with
+the same number", is the regression test).
+
 ## Rule format
 
 Conceptually, a stored rule looks like:
@@ -207,7 +277,28 @@ Conceptually, a stored rule looks like:
 `conditions` is empty here because this particular rule is a flat statutory
 fact (a threshold that applies whenever its topic and effective window
 match), not a rule conditioned on transaction attributes — see "Empty
-conditions mean different things in the two engines" below.
+conditions mean different things in the two engines" below. A VATCA rule, by
+contrast, usually does carry conditions, because the provision itself states
+a conditional test:
+
+```json
+{
+  "rule_key": "vat.reverse_charge_services_from_abroad",
+  "topic": "vat",
+  "rule_type": "other",
+  "conditions": [
+    { "field": "supplyType", "operator": "equals", "value": "services" },
+    { "field": "supplierCountry", "operator": "not_equals", "value": "IE" },
+    { "field": "vatRegistered", "operator": "equals", "value": "true" }
+  ],
+  "effect": { "vat": "The RECIPIENT (not the overseas supplier) is accountable for, and liable to pay, Irish VAT on the supply, as if the recipient had supplied it themself (the reverse charge)...", "accounting": null, "tax": null, "reporting": null },
+  "source": { "citation": "2010 Act 31", "section": "12" },
+  "effective_from": "2010-11-01",
+  "requires_guidance": true,
+  "human_review_required": true,
+  "review_status": "ai_extracted"
+}
+```
 
 ## Transaction lookup
 
@@ -240,20 +331,35 @@ Conditions (when a rule has any) are evaluated with the same
 plain-language today (see "Limitations"), so a rule with any exception is
 never silently applied — it's flagged for review instead.
 
-**The result never claims a treatment the KB doesn't support.** Run against
-the task's own worked examples (`transactionLookup.test.ts`,
-"task example scenarios"):
+**The result never claims a treatment beyond what the KB actually supports.**
+Run against the task's own worked examples (`transactionLookup.test.ts`,
+"task example scenarios"), now that VATCA 2010 is ingested alongside the
+Finance Act:
 
-- A €10 Revolut bank charge → topics `banking`, `business_expense` →
-  zero applicable rules (this KB, so far, only holds income-tax/USC/pension/
-  film-relief facts from the Finance Act) → `reviewRequired: true`,
-  `possibleTreatment` entirely empty. No invented VAT rate, no invented
-  deductibility claim.
-- An AI SaaS charge from a US supplier → topic `vat` → zero applicable rules
-  → `reviewRequired: true`. The system does not guess at reverse-charge VAT
-  treatment it has no ingested rule for.
-- A personal purchase charged to the business account → topic
-  `director_transaction` → zero applicable rules → `reviewRequired: true`.
+- A €10 Revolut bank charge (VAT-registered, invoice available) → topics
+  `banking`, `business_expense`, `vat` → resolves VATCA's general input VAT
+  deduction rule (`vat.input_deduction_general`, s.59) — deductible, since no
+  exclusion (s.60) matches — but `reviewRequired: true` regardless, because
+  no VATCA rule has been through human review yet.
+- An AI SaaS charge from a US supplier (`supplyType: 'services'`) → topic
+  `vat` → resolves the reverse-charge rule (`vat.reverse_charge_services_from_abroad`,
+  s.12), the general B2B place-of-supply rule (`vat.place_of_supply_b2b_general`,
+  s.34) and the input-deduction rule (s.59) — the recipient self-accounts for
+  VAT under the reverse charge and can normally recover it. Omit
+  `supplyType` and the reverse-charge rule does **not** apply — it shows up
+  in `unresolvedFields` instead of being silently assumed either way.
+- A personal purchase charged to the business account (0% business use, no
+  invoice) → topic `director_transaction` → only the foundational "VAT is
+  chargeable" declaration applies; the deductibility rule's own conditions
+  (an invoice, business use > 0%) are not met, so no deduction is invented
+  for it.
+- A client dinner at a restaurant → resolves *both* the general deduction
+  rule (s.59) *and* the food/drink/entertainment exclusion (s.60,
+  `vat.deduction_exclusions_entertainment`) at once — the system surfaces the
+  conflict for a human to resolve rather than picking a side.
+
+Every one of these still comes back `reviewRequired: true`: no rule in this
+KB has reached `reviewStatus: 'active'` yet (see "Versioning and review").
 
 ### Empty conditions mean different things in the two engines
 
@@ -307,28 +413,47 @@ five case types the task asks for against real data:
 | Boundary | 2024-12-31 vs 2025-01-01 give different answers |
 | Effective-date | a 2010 transaction resolves against no Finance-Act-2024 rule |
 
-`npm test` (692 tests, whole project) and `npm run typecheck` both pass as of
+`npm test` (708 tests, whole project) and `npm run typecheck` both pass as of
 this change.
+
+Note: `generateDefaultTestCases`'s synthetic positive case only sets `topic`
+and `transactionDate` — for a VATCA rule whose conditions need other fields
+(`supplyType`, `vatRegistered`, ...) that generic context correctly fails to
+satisfy them, so `npm run cli:rules -- test` shows 3 "failures" for the
+condition-bearing VATCA rules. That is the generator's known limitation, not
+a defect in the rules themselves — see "Limitations".
 
 ## Audit report
 
 Generated by `src/domain/rules/audit.ts` (`generateAuditReport`); a snapshot
-from a fresh ingest is committed at
+from a fresh ingest of both sources is committed at
 [`docs/statutes/2024-act-43/audit-report.json`](statutes/2024-act-43/audit-report.json)
-and reproducible with `npm run cli:rules -- ingest && npm run cli:rules --
-extract && npm run cli:rules -- audit`. Headline numbers:
+and reproducible with:
 
-- 118 provisions ingested, 57 judged relevant to transaction classification,
-  61 not (procedural/repeal/penalty/pure-definition, or uncategorised and
-  flagged for review).
-- 4 rules extracted (the curated set), all `ai_extracted`, all
+```
+npm run cli:rules -- ingest --source finance-act-2024 && npm run cli:rules -- extract --source finance-act-2024
+npm run cli:rules -- ingest --source vatca-2010 && npm run cli:rules -- extract --source vatca-2010
+npm run cli:rules -- audit
+```
+
+Headline numbers:
+
+- 243 provisions ingested across both sources (118 Finance Act 2024, 125
+  VATCA 2010 — all 125 body sections now convert and parse cleanly), 147
+  judged relevant to transaction classification, 96 not
+  (procedural/repeal/penalty/pure-definition, or uncategorised and flagged
+  for review).
+- 9 rules extracted (4 Finance Act, 5 VATCA), all `ai_extracted`, all
   `human_review_required = true` — **zero rules in this KB are authoritative
   yet.**
-- 0 rules with unevaluable exceptions, 0 duplicate rule keys.
-- 421 cross-references the report cannot resolve — expected, not a bug: the
-  Finance Act 2024 *amends* the Taxes Consolidation Act 1997 and other Acts,
-  none of which are themselves ingested yet, so "section 531AN" et al. have
-  nothing to resolve against inside this KB alone.
+- 3 rules with a stated exception the system flags rather than evaluates
+  (VATCA's place-of-supply, input-deduction and deduction-exclusion rules),
+  0 duplicate rule keys.
+- 442 cross-references the report cannot resolve — expected, not a bug: the
+  Finance Act 2024 *amends*, and VATCA 2010 heavily cross-refers to, the
+  Taxes Consolidation Act 1997 and other Acts not themselves ingested yet, so
+  "section 531AN", "section 654A" et al. have nothing to resolve against
+  inside this KB alone.
 
 **This is not a claim that the knowledge base is legally complete.** It is a
 record of what was ingested, what was judged relevant, what was extracted,
@@ -340,8 +465,10 @@ to be.
 `npm run cli:rules -- <command>` (`src/cli/irishRules.ts`):
 
 ```
-ingest [--file <path>]     Ingest the Finance Act 2024 Markdown
-extract                    Derive irish_tax_rules from ingested provisions
+ingest [--source <s>] [--file <path>]
+                            Ingest a source's Markdown (--source: finance-act-2024
+                            [default] | vatca-2010)
+extract [--source <s>]     Derive irish_tax_rules from ingested provisions
 list-provisions [--category <c>] [--relevant-only]
 show-provision --section <n>
 list-rules [--topic <t>] [--status <s>]
@@ -356,28 +483,56 @@ audit
 
 ## Limitations (explicit, not hidden)
 
-- **Only the Finance Act 2024 is ingested.** The Taxes Consolidation Act 1997
-  and Value-Added Tax Consolidation Act 2010 it amends are not — so a lookup
-  on a VAT or general income-tax question will almost always come back with
-  zero applicable rules and `reviewRequired: true`. That is the system
-  working as designed (never inventing a treatment it has no source for), not
-  a bug, but it does mean the KB is presently much narrower than "Irish tax
-  law."
-- **Only 4 of 57 relevant provisions have a curated rule key.** The other 53
-  are ingested (text, offsets, category all on disk) but not yet extracted
-  into named rules — `provisionsWithoutExtractedRule` in the audit report
-  would show these once curated; today it's empty because the curated set and
-  the derived set match exactly.
-- **Exceptions are plain-language, not structured.** `exceptions` stores
-  `{condition, effect}` text the extractor found stated near a rule, but there
-  is no parser turning "save where the Minister otherwise directs" into an
-  evaluable condition yet. A rule with any exception is always flagged for
-  review rather than silently applied or silently ignored.
+- **Only the Finance Act 2024 and VATCA 2010's *enacted* text are ingested.**
+  The Taxes Consolidation Act 1997 (which the Finance Act amends, and which
+  VATCA cross-refers to constantly) is not, so most cross-references resolve
+  nowhere inside this KB alone. VATCA's own rate section (s.46) states
+  21%/13.5%/4.8%/0% *as enacted in 2010* — the standard rate has since
+  changed to 23% by later Finance Acts not ingested here, so that section is
+  deliberately **not** curated into a live rule: a stale rate presented as
+  current is worse than no rule at all. Everything else curated from VATCA
+  (reverse charge, place of supply, deductibility) is a structural mechanism
+  that has not been fundamentally rewritten since 2010, so curating its
+  *existence* is safe even though the ingested text is not fully current.
+- **Only 9 of 147 relevant provisions have a curated rule key** (4 Finance
+  Act, 5 VATCA). Everything else is ingested (text, offsets, category all on
+  disk) but not yet extracted into named rules —
+  `provisionsWithoutExtractedRule` in the audit report would show these once
+  curated; today it's empty because the curated set and the derived set match
+  exactly.
+- **VATCA's conditions are curated, not mechanically extracted — and this is
+  recorded, not glossed over.** Mapping "a supplier established outside the
+  State" onto `supplierCountry != 'IE'` is an interpretation; every VATCA
+  rule's `interpretationNote` says exactly what its condition mapping does
+  and does not capture (e.g. it cannot tell a place-of-supply exception
+  applies, or that a motor-vehicle purchase qualifies for a carve-out). Its
+  `confidence` (70) and `provenanceStatus` (`ai_suggestion`) are lower than
+  the Finance Act's mechanical figure extraction (90, `system_rule`) for
+  exactly this reason.
+- **The entertainment/food/motor-vehicle exclusion rule (VATCA s.60) matches
+  by keyword on the transaction description**, not by reading the actual
+  supply — a "hotel" transaction that IS qualifying-conference accommodation
+  is excepted from the exclusion (`exceptions` records this), but the keyword
+  match cannot itself tell the two apart. It surfaces the candidate for
+  review; it does not classify it.
+- **Exceptions are plain-language, not structured**, beyond the fact of
+  their existence. `exceptions` stores `{condition, effect}` text found
+  stated near a rule, but there is no parser turning "save where the
+  Minister otherwise directs" into an evaluable condition. A rule with any
+  exception is always flagged for review rather than silently applied or
+  silently ignored.
 - **No sentence-boundary NLP.** `factExtractor`'s "evidence" sentence is
   everything between two periods in the source text, which for statute
   prose (semicolons and lettered sub-paragraphs, not full stops) can be a
   long run-on quotation. It is still verbatim and traceable to its offsets,
   just not always a tidy single sentence.
+- **`convert-statute-pdf.ts` does not parse Schedules.** Schedules 1–5 on
+  VATCA 2010 (exempt activities, zero/reduced-rate goods and services) are
+  out of scope entirely — the conversion stops at the first `SCHEDULE`
+  heading. All 125 numbered body sections are converted and cross-checked
+  against the Act's own table of contents (see "VATCA 2010" above); the
+  Schedules gap is the only remaining one, and it's a documented stopping
+  point, not a silent failure.
 - **`Part`/`Chapter` are not yet populated** on `irish_act_provisions` (the
   columns exist for when this is worth doing); a provision's location is
   fully identified by section number + source offsets in the meantime.
@@ -408,12 +563,20 @@ This is meant to be an ingestion, not a redesign:
 
 ## Next steps
 
-- Curate rule keys for the remaining ~53 relevant provisions (or accept that
-  most Finance Act sections are amendments best resolved once the underlying
-  Act — TCA 1997 / VATCA 2010 — is itself ingested).
-- Ingest VATCA 2010 and/or a first Revenue Tax and Duty Manual, to give the
-  `vat`/`business_expense` topics real candidates for the AI-SaaS/bank-charge
-  style transactions this task uses as its worked examples.
+- Curate rule keys for the remaining ~106 relevant provisions (many Finance
+  Act sections are amendments best resolved once the underlying Act — TCA
+  1997 — is itself ingested; several more VATCA sections — place-of-supply
+  exceptions, exemption/zero-rating in the Schedules once those are in
+  scope, registration thresholds — are readily curatable now).
+- Ingest the Taxes Consolidation Act 1997 and/or a first Revenue Tax and Duty
+  Manual (e.g. on VAT registration or reverse charge), to resolve the ~440
+  currently-unresolved cross-references and to bring VATCA's rate section
+  (s.46) up to date safely (a Revenue TDM stating the *current* rate, dated,
+  would let that be curated without the staleness risk described above).
+- Extend the converter (`convert-statute-pdf.ts`) to also parse Schedules
+  (numbering resets per Schedule, which the current stop-at-`SCHEDULE` scope
+  sidesteps) — Schedules 1–3 hold the exemption/zero-rate/reduced-rate lists
+  that would materially deepen `vat` topic coverage.
 - A structured-exception parser, once there's a large enough exception corpus
   to justify one.
 - A `/rules` (or a section of the existing one) admin UI for

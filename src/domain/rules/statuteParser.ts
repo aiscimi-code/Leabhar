@@ -287,7 +287,7 @@ export function categoriseProvision(heading: string, body: string): ParsedProvis
     [/\bcorporation tax\b/, 'corporation_tax'],
     [/\b(capital gains tax|cgt)\b/, 'capital_gains_tax'],
     [/\bcapital allowances?\b/, 'capital_allowances'],
-    [/\bvat\b/, 'vat'],
+    [/\bvat\b|\bvalue-added tax\b/, 'vat'],
     [/\bincome tax\b/, 'income_tax'],
     [/\brelief\b/, 'relief'],
     [/\bexempt/, 'exemption'],
