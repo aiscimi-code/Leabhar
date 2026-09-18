@@ -41,3 +41,18 @@ These files are reference material only.
 
 This Act is ingested into the Irish rules knowledge base — see
 [`docs/RULES_KB.md`](../../RULES_KB.md).
+
+## Revised-text pointers
+
+`s5-revised.md`, `s46-revised.md`, `s65-revised.md`, `s84-revised.md` are
+short, curated summaries (not verbatim) of the *current, LRC-revised* text of
+those four sections, sourced from
+`https://revisedacts.lawreform.ie/eli/2010/act/31/section/{n}/revised/en/html`.
+They exist because `vatca-2010-enacted.md` above is deliberately the
+*2010-as-enacted* text — later amendments (e.g. S.I. 69/2025's changes to
+ss. 5, 59, 60, 80 and the new ss. 92B-92D) are not reflected in it. Where the
+two disagree, the revised pointer is the more current one, but neither
+substitutes for reading the official page directly for anything
+consequential. See [`docs/statutes/SOURCE-REGISTER.md`](../SOURCE-REGISTER.md)
+(item 1.1) for the full register entry and known gaps (only 4 of the
+originally-scoped 7 sections have a pointer file).
