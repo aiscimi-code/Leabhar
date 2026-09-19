@@ -107,6 +107,26 @@ npm run cli -- list-transactions [--account <id>] [--unposted] [--unclassified]
 npm run cli -- show-invoice <number>                   # full detail incl. lines and payments
 npm run cli -- year-end --from <date> --to <date>      # P&L, balance sheet, tax worksheet, ...
 npm run cli -- vat-return --period <id-or-name>        # VAT3 box figures for one period
+npm run cli -- list-suppliers                          # every supplier (id, name, country, VAT no.)
+npm run cli -- list-customers                          # every customer (id, name, country, VAT no.)
+
+# Review queue
+npm run cli -- scan-anomalies [--from <date>] [--to <date>] [--sync]
+    # runs the deterministic anomaly scan (duplicate invoices, hospitality-
+    # rate mismatches, an unidentified supplier, ...). --sync also writes the
+    # findings into the review queue; without it, this only reports them.
+npm run cli -- list-review-queue [--status open|resolved|dismissed|snoozed|superseded|all]
+    [--severity info|warning|error|blocking] [--kind <kind>]
+    # defaults to open items, sorted blocking -> error -> warning -> info
+
+# Corrections
+npm run cli -- void-invoice <number> --date <date> --reason "..."
+    # reverses the invoice's journal entry and any VAT entries (dated at
+    # --date, not the invoice date) and marks it void. Refuses an invoice
+    # that already has a payment allocated — unallocate it first.
+npm run cli -- reverse-journal <entry-id> --date <date> --reason "..."
+    # reverses any journal entry (debits/credits swapped), for a mistake
+    # made via journal or any other posting path
 
 # Discovery
 npm run cli -- list-accounts                          # bank accounts (id, name, currency)
@@ -186,7 +206,12 @@ The intended workflow from there is:
 7. **Inspect**: `list-transactions --unposted`/`--unclassified` to find what
    is left, `show-invoice` for one document's full detail, `year-end` for
    the P&L/balance sheet/tax worksheet pack, `vat-return` for one period's
-   VAT3 box figures.
+   VAT3 box figures, `list-suppliers`/`list-customers` to recall an id.
+8. **Review**: `scan-anomalies --sync` periodically to write duplicate
+   invoices, hospitality-rate mismatches, an unidentified supplier and the
+   rest into the review queue; `list-review-queue` to see what is open.
+   `void-invoice`/`reverse-journal` correct a mistake by reversing it —
+   never by editing or deleting the original posting.
 
 ### Multi-currency accounts
 

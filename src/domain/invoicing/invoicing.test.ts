@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { eq, and } from 'drizzle-orm';
 import { createTestDatabase } from '@/db/testing';
 import { createCompany, addBankAccount, systemAccountId } from '../config/setup';
-import { createInvoice, InvoicingError } from './invoices';
+import { createInvoice, voidInvoice, InvoicingError } from './invoices';
 import { recordPayment, outstandingInvoices, agedAnalysis } from './payments';
 import { trialBalance, accountBalance } from '../accounting/ledger';
 import { buildVat3Return } from '../vat/report';
@@ -355,6 +355,102 @@ describe('purchase invoices', () => {
       expect(items).toHaveLength(1);
       expect(items[0]!.detail).toMatch(/Unidentified Supplier/);
     });
+  });
+});
+
+describe('voidInvoice', () => {
+  beforeEach(() => setup('invoice'));
+
+  it('reverses the journal entry and zeroes the account balances', () => {
+    const invoice = salesInvoice();
+    expect(accountBalance(db, { companyId, accountId: acc['debtors']! })).toBe(123_000);
+
+    voidInvoice(db, {
+      companyId, invoiceId: invoice.invoiceId, voidDate: makeDate(2025, 3, 1), reason: 'entered in error',
+    });
+
+    expect(accountBalance(db, { companyId, accountId: acc['debtors']! })).toBe(0);
+    expect(accountBalance(db, { companyId, accountId: byCode['4020']! })).toBe(0);
+    expect(accountBalance(db, { companyId, accountId: acc['vat_on_sales']! })).toBe(0);
+    expect(trialBalance(db, { companyId, asOf: makeDate(2025, 12, 31) }).balanced).toBe(true);
+  });
+
+  it('marks the invoice void with a reason, and outstanding at zero', () => {
+    const invoice = salesInvoice();
+    voidInvoice(db, {
+      companyId, invoiceId: invoice.invoiceId, voidDate: makeDate(2025, 3, 1), reason: 'entered in error',
+    });
+
+    const row = db.select().from(invoices).where(eq(invoices.id, invoice.invoiceId)).get()!;
+    expect(row.status).toBe('void');
+    expect(row.voidReason).toBe('entered in error');
+    expect(row.voidedAt).toBeTruthy();
+    expect(row.outstandingMinor).toBe(0);
+  });
+
+  // The reversal is dated at voidDate, not the invoice date, so a filed
+  // period's own VAT3 figures are never rewritten after the fact.
+  it('reverses VAT into the void date\'s own period, leaving the original period untouched', () => {
+    const invoice = salesInvoice(); // dated 2025-02-20, in "Jan–Feb 2025"
+    voidInvoice(db, {
+      companyId, invoiceId: invoice.invoiceId, voidDate: makeDate(2025, 3, 1), reason: 'entered in error',
+    });
+
+    expect(vatFor('Jan–Feb 2025').T1.amountMinor).toBe(23_000);
+    expect(vatFor('Mar–Apr 2025').T1.amountMinor).toBe(-23_000);
+  });
+
+  it('reverses both legs of a reverse-charge purchase invoice', () => {
+    setup('cash_receipts');
+    const invoice = createInvoice(db, {
+      companyId, direction: 'purchase', invoiceDate: makeDate(2025, 2, 20), supplierId,
+      lines: [{
+        description: 'EU hosting', netMinor: 50_000,
+        accountId: byCode['6010']!, vatTreatmentId: tr['EU_SERVICES_RCV']!,
+      }],
+    });
+
+    voidInvoice(db, {
+      companyId, invoiceId: invoice.invoiceId, voidDate: makeDate(2025, 3, 1), reason: 'wrong treatment',
+    });
+
+    const report = vatFor('Mar–Apr 2025');
+    expect(report.T1.amountMinor).toBe(-11_500);
+    expect(report.T2.amountMinor).toBe(-11_500);
+    expect(report.netPositionMinor).toBe(0);
+  });
+
+  it('refuses to void an invoice that is already void', () => {
+    const invoice = salesInvoice();
+    voidInvoice(db, { companyId, invoiceId: invoice.invoiceId, voidDate: makeDate(2025, 3, 1), reason: 'first' });
+    expect(() => voidInvoice(db, {
+      companyId, invoiceId: invoice.invoiceId, voidDate: makeDate(2025, 3, 2), reason: 'second',
+    })).toThrow(/already void/);
+  });
+
+  it('refuses to void an invoice with a payment allocated', () => {
+    const invoice = salesInvoice();
+    recordPayment(db, {
+      companyId, direction: 'received', paymentDate: makeDate(2025, 2, 25), amountMinor: 123_000,
+      allocations: [{ invoiceId: invoice.invoiceId, allocatedMinor: 123_000 }],
+    });
+
+    expect(() => voidInvoice(db, {
+      companyId, invoiceId: invoice.invoiceId, voidDate: makeDate(2025, 3, 1), reason: 'entered in error',
+    })).toThrow(/Unallocate the payment/);
+  });
+
+  it('refuses a missing invoice id', () => {
+    expect(() => voidInvoice(db, {
+      companyId, invoiceId: 'inv_doesnotexist', voidDate: makeDate(2025, 3, 1), reason: 'entered in error',
+    })).toThrow(/not found/);
+  });
+
+  it('refuses an empty reason', () => {
+    const invoice = salesInvoice();
+    expect(() => voidInvoice(db, {
+      companyId, invoiceId: invoice.invoiceId, voidDate: makeDate(2025, 3, 1), reason: '',
+    })).toThrow(/needs a reason/);
   });
 });
 
