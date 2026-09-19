@@ -19,8 +19,8 @@ import type { AppDatabase } from '@/db';
 import { irishTaxRules, irishActProvisions, irishKnowledgeSources } from '@/db/schema';
 import type { IrishRuleException } from '@/db/schema';
 import { evaluateAllConditions, type ConditionResult } from './conditionEval';
-import { today } from '../dates';
-import { listTaxRulesByTopic, type LookupResult } from './irishRules';
+import { today, isIsoDate } from '../dates';
+import { listTaxRulesByTopic, listIngestedCitations, type LookupResult } from './irishRules';
 import { RCT_SCOPE_RE } from './rctCuration';
 
 /**
@@ -47,11 +47,17 @@ export interface TransactionContext {
   [key: string]: unknown;
 }
 
-/** Fill in what normalisation can safely infer; invent nothing else. */
+/**
+ * Fill in what normalisation can safely infer; invent nothing else.
+ *
+ * `currency` is deliberately left as the caller supplied it, including
+ * omitted — defaulting an omitted currency to EUR would be inventing a fact
+ * no one stated (see issue #136 bug 5). A rule that actually depends on the
+ * currency will surface it via the normal unresolved-condition path instead.
+ */
 export function normaliseTransactionContext(input: TransactionContext): TransactionContext {
   return {
     ...input,
-    currency: input.currency ?? 'EUR',
     transactionDate: input.transactionDate,
   };
 }
@@ -81,7 +87,15 @@ const TOPIC_RULES: TopicRule[] = [
       || /\bvat\b|saas|software|digital service|reverse charge/i.test(TEXT_FIELDS(ctx))
       || (!!ctx.supplierCountry && ctx.supplierCountry.toUpperCase() !== 'IE'),
   },
-  { topic: 'banking', test: (ctx) => /\bbank\b|\bfee\b|\bcharge\b/i.test(TEXT_FIELDS(ctx)) },
+  {
+    topic: 'banking',
+    // Deliberately narrower than a bare `fee|charge` match: those words alone
+    // also hit "service charge", "card charge" (retail, not a bank fee) and
+    // "charging point" (EV charging) — none of them a banking-topic question
+    // (issue #136 bug 7). Require the word "bank"/"banking" itself, or a
+    // small set of unambiguous banking terms.
+    test: (ctx) => /\bbank(ing)?\b|\batm\b|\boverdraft\b|\biban\b|\bswift\b/i.test(TEXT_FIELDS(ctx)),
+  },
   {
     topic: 'rct',
     // Shared with rctCuration.ts's own condition regex, so the topic router
@@ -184,13 +198,37 @@ export function lookupTransactionRules(
 
   const subject: Record<string, unknown> = { ...ctx };
 
-  const candidates: LookupResult[] = topics.flatMap(
-    (topic) => listTaxRulesByTopic(db, { companyId: params.companyId, topic, asOfDate: asOf }),
-  );
-
   const applicableRules: ApplicableRule[] = [];
   const unresolvedFields = new Set<string>();
   const reviewReasons = new Set<string>();
+
+  // Fail closed on a malformed date or amount rather than let a broken
+  // effective-date/monetary comparison silently open (date, issue #136 bug 3)
+  // or attach (amount, bug 5) every in-force rule. Neither is a case where
+  // *some* rule set can safely apply — the transaction itself is unusable
+  // until corrected, so no candidate is even retrieved.
+  const dateValid = isIsoDate(asOf);
+  if (!dateValid) {
+    unresolvedFields.add('transactionDate');
+    reviewReasons.add(
+      `transactionDate ${JSON.stringify(asOf)} is not a valid ISO date (YYYY-MM-DD); no effective-dated rule `
+      + 'can be safely applied without one, so none was looked up.',
+    );
+  }
+
+  const amountValid = Number.isFinite(ctx.amountMinor) && ctx.amountMinor > 0;
+  if (!amountValid) {
+    unresolvedFields.add('amountMinor');
+    reviewReasons.add(
+      `amountMinor (${JSON.stringify(ctx.amountMinor)}) must be a positive number; no rule was looked up for it.`,
+    );
+  }
+
+  const candidates: LookupResult[] = (dateValid && amountValid)
+    ? topics.flatMap(
+      (topic) => listTaxRulesByTopic(db, { companyId: params.companyId, topic, asOfDate: asOf }),
+    )
+    : [];
 
   for (const rule of candidates) {
     const conditions = getRuleConditions(db, rule.id);
@@ -259,11 +297,13 @@ export function lookupTransactionRules(
     reporting: dedupe(applicableRules.map((r) => r.effect.reporting)),
   };
 
-  if (applicableRules.length === 0) {
+  if (applicableRules.length === 0 && dateValid && amountValid) {
+    const sources = listIngestedCitations(db, params.companyId);
+    const kbDescription = sources.length > 0 ? sources.join(', ') : 'no sources';
     reviewReasons.add(
       'No rule in the ingested knowledge base is applicable to this transaction. '
       + 'This is not a determination that no tax/VAT/accounting treatment applies — '
-      + 'it means the KB (currently: Finance Act 2024 only) has no ingested rule that speaks to it.',
+      + `it means the KB (currently ingesting: ${kbDescription}) has no ingested rule that speaks to it.`,
     );
   }
 
