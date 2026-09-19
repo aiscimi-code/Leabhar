@@ -17,6 +17,16 @@ import { upsertReviewItem } from '../extraction/service';
 export class InvoicingError extends AccountingError {}
 
 /**
+ * A supplier record whose own name says the supplier is not actually known
+ * (issue #147 finding 3) — a placeholder such as "Unknown Supplier" used to
+ * let a payment post while the real counterparty is still being tracked
+ * down. The name is the only signal available here; VAT recovery on such an
+ * invoice is held back until the supplier is identified, same as an invoice
+ * whose stated VAT cannot be trusted (issue #145 defect 1).
+ */
+const UNIDENTIFIED_SUPPLIER_RE = /\bunknown\b|\bunidentified\b/i;
+
+/**
  * Invoices (README §26, §27).
  *
  * README §26 is explicit that payment-on-issue must not be assumed, so the
@@ -127,6 +137,11 @@ export function createInvoice(db: AppDatabase, input: CreateInvoiceInput): Creat
   // supplier's country is resolved once per invoice, not per line, since
   // one invoice has one supplier.
   const supplierCountryCode = !isSales ? counterpartyCountry(db, input) : null;
+  const supplierDisplayName = !isSales && input.supplierId
+    ? db.select({ name: suppliers.name }).from(suppliers)
+        .where(eq(suppliers.id, input.supplierId)).get()?.name ?? null
+    : null;
+  const unidentifiedSupplier = !!supplierDisplayName && UNIDENTIFIED_SUPPLIER_RE.test(supplierDisplayName);
 
   // ---- Compute each line ----
   const computed = input.lines.map((line, index) => {
@@ -152,7 +167,15 @@ export function createInvoice(db: AppDatabase, input: CreateInvoiceInput): Creat
     let vatReviewReason: string | null = null;
     let recoverableOverrideMinor: number | undefined;
     if (!isSales && resolved.treatment.appliesRate) {
-      if (resolved.treatment.isReverseCharge) {
+      if (unidentifiedSupplier) {
+        // Not knowing who was actually paid undermines even a reverse-charge
+        // self-assessment, so this takes priority over — and applies
+        // regardless of — the treatment-specific checks below.
+        recoverableOverrideMinor = 0;
+        vatReviewReason = `The supplier is recorded as "${supplierDisplayName}", which does not identify `
+          + 'who was actually paid. The VAT has been costed as stated but held back from recovery until '
+          + 'the supplier is identified.';
+      } else if (resolved.treatment.isReverseCharge) {
         if (line.statedVatMinor !== undefined && line.statedVatMinor !== 0) {
           vatReviewReason = 'This is a reverse-charge supply, so VAT is self-assessed at the '
             + 'treatment\'s own rate — but the document itself also states a VAT amount. A '

@@ -675,6 +675,61 @@ document's own figures are trusted to mean once posted.
   (`/\b(donation|donated|charity|charitable)\b/i`) — informational, asking
   for reclassification rather than assuming it.
 
+### Issue #147: test-pack leftovers after #145
+
+A further retest of the same accounting test pack against `main` `cc2a1a4`
+(after #145) found four more misses, all narrower gaps in the fixes above
+rather than new categories of problem. Two rows from the pack are left as
+explicit, documented gaps rather than fixed here.
+
+- **Finding 1 — the hospitality keyword set was narrower than the pack's
+  own wording.** The bank narrative for `ENT-001` ("Restaurant - business
+  dinner") matched `HOSPITALITY_KEYWORD_RE`, but purchase invoice PI-017's
+  own line description is only "Business dinner" — no
+  "restaurant"/"catering" wording at all, so `hospitalityRateMismatches`
+  never fired on it. Widened to also match
+  `dinner|lunch|meal|entertainment` — the same vocabulary
+  `vat.deduction_exclusions_entertainment`'s own condition already uses.
+- **Finding 2 — a bare "CARD PAYMENT" narrative still opened the `vat`
+  topic.** `NON_TRADING_BANK_NARRATIVE_RE` (issue #145 defect 3) covered
+  `unknown`/`unidentified` but not a card payment with literally no other
+  identifying text (UNKNOWN-002). A new `BARE_CARD_PAYMENT_RE` closes the
+  topic specifically for a description that, trimmed, is exactly "CARD
+  PAYMENT" — deliberately an exact match rather than a substring test, so
+  "CARD PAYMENT - AWS DUBLIN" (a real, evidenced merchant) is unaffected.
+  MISMATCH-001 (a named merchant, "Computer Equipment Ltd", whose bank
+  amount disagrees with its matched invoice by €5) is a **known, explicit
+  gap**: that is an invoice-vs-bank-transaction reconciliation question,
+  not a topic-routing one, and `identifyTopics` has no visibility into a
+  transaction's matching state at all — a real merchant name is correctly
+  routed to `vat`, whatever the mismatch turns out to be.
+- **Finding 3 — an invoice from "Unknown Supplier" was posted and its VAT
+  fully recovered.** The supplier *name* is the only signal `createInvoice`
+  had; nothing read it. A new `UNIDENTIFIED_SUPPLIER_RE` check
+  (`invoices.ts`) holds back recovery (`recoverableOverrideMinor: 0`) and
+  raises a review item whenever a purchase invoice's own supplier record
+  matches `/\bunknown\b|\bunidentified\b/i` — checked first and applied
+  regardless of treatment, including under reverse charge, since not
+  knowing who was actually paid undermines a reverse-charge
+  self-assessment just as much as a domestic one.
+- **Finding 4 — bank-side duplicate payments were never scanned.**
+  `nearDuplicatePurchaseInvoices` (issue #145 defect 2) only ever looks at
+  invoices; DUP-001/DUP-002 (two outflows of the same amount to the same
+  supplier, days apart, with no second invoice at all) and DUP-ANT-01 (a
+  second payment against an already-settled invoice) are bank-only facts.
+  A new `duplicateBankPayments` anomaly groups bank transactions by
+  counterparty (`supplierId` or `customerId`) and *signed* `amountMinor`
+  (so an outflow and an inflow of the same magnitude are never treated as
+  duplicates of each other) and flags a pair within 5 days — the same
+  window, and the same recurring-charge rationale, as the invoice-side check.
+- **Finding 5 (lower priority, not fixed) — a supplier refund still reads
+  as a standard-rated supply.** `REF-001`–`REF-004` correctly should not be
+  counted as income, but nothing in this KB distinguishes a refund/offset
+  of an earlier purchase from a new supply — there is no `transactionType`
+  or similar signal for it yet. Left as an explicit gap: inventing a
+  "refund" heuristic without a concrete signal to condition on would be
+  exactly the kind of guess AGENTS.md invariant #7 exists to prevent.
+
 ### Capital allowances
 
 The first curation from TCA 1997 outside RCT, and the first to use a new

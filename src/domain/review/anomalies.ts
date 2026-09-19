@@ -74,6 +74,7 @@ export function scanForAnomalies(
     ...impossibleRecovery(vatRows),
     ...duplicateInvoiceNumbers(invoiceRows),
     ...nearDuplicatePurchaseInvoices(invoiceRows),
+    ...duplicateBankPayments(transactions),
     ...hospitalityRateMismatches(invoiceRows, invoiceLineRows),
     ...possibleNonTradingPurchases(invoiceRows, invoiceLineRows),
     ...suspenseBalance(db, params.companyId),
@@ -358,6 +359,63 @@ function nearDuplicatePurchaseInvoices(
 }
 
 /**
+ * The same amount moving between the company and the same counterparty
+ * twice, days apart, on the bank statement itself (issue #147 finding 4).
+ *
+ * `nearDuplicatePurchaseInvoices` above catches the same document entered
+ * twice; it says nothing about the bank side, where a payment can be
+ * duplicated (or a receipt double-lodged) without any second invoice ever
+ * being created — DUP-001/DUP-002 and a second payment against an
+ * already-settled invoice (DUP-ANT-01) are both bank-only facts. Grouping
+ * on the *signed* amount keeps an outflow and an inflow of the same
+ * magnitude (a payment and, say, an unrelated refund) in separate groups; a
+ * genuine recurring charge is caught by the same 5-day window rationale as
+ * the invoice-side check.
+ */
+function duplicateBankPayments(
+  transactions: Array<typeof bankTransactions.$inferSelect>,
+): Anomaly[] {
+  const WINDOW_DAYS = 5;
+  const groups = new Map<string, Array<typeof bankTransactions.$inferSelect>>();
+
+  for (const t of transactions) {
+    const counterpartyId = t.supplierId ?? t.customerId;
+    if (!counterpartyId) continue;
+    const key = `${counterpartyId}|${t.amountMinor}|${t.currency}`;
+    const group = groups.get(key) ?? [];
+    group.push(t);
+    groups.set(key, group);
+  }
+
+  const anomalies: Anomaly[] = [];
+  for (const group of groups.values()) {
+    if (group.length < 2) continue;
+    for (const t of group) {
+      const near = group.filter((other) => other.id !== t.id
+        && Math.abs(daysBetween(asIsoDate(t.transactionDate), asIsoDate(other.transactionDate))) <= WINDOW_DAYS);
+      if (near.length === 0) continue;
+
+      anomalies.push({
+        code: 'duplicate_bank_payment',
+        severity: 'warning',
+        title: t.amountMinor < 0
+          ? 'The same payment amount left the bank twice, days apart'
+          : 'The same receipt amount arrived twice, days apart',
+        detail: `${(Math.abs(t.amountMinor) / 100).toFixed(2)} ${t.currency} with the same counterparty as `
+          + `${near.map((n) => n.id).join(', ')}, dated within ${WINDOW_DAYS} days of each other.`,
+        entityType: 'bank_transaction',
+        entityId: t.id,
+        suggestion: 'Check whether this is a duplicated bank entry rather than two genuinely separate '
+          + 'transactions. A duplicated payment would overstate what was paid against the invoice; a '
+          + 'duplicated receipt would overstate income.',
+        dedupeKey: `anomaly:dup_bank_payment:${t.id}`,
+      });
+    }
+  }
+  return anomalies;
+}
+
+/**
  * A purchase line whose own description suggests a reduced-rate hospitality
  * supply, but which was posted at the standard rate (issue #145 defect 4).
  *
@@ -370,8 +428,18 @@ function nearDuplicatePurchaseInvoices(
  * bundles a room hire with the meal, for instance, may genuinely be 23% on
  * part of the bill. It only says the description and the rate disagree
  * often enough to be worth a look.
+ *
+ * Issue #147 finding 1: the bank narrative for a meal ("Restaurant -
+ * business dinner") and the purchase invoice's own line description for the
+ * same document ("Business dinner") do not always share a word. Widened
+ * from the original restaurant/catering/takeaway set to also catch
+ * dinner/lunch/meal/entertainment — the same vocabulary
+ * `vat.deduction_exclusions_entertainment`'s own condition already uses
+ * (`vatcaCuration.ts`), since a line worth checking for the reduced rate is
+ * also, independently, a section 60 deductibility candidate.
  */
-const HOSPITALITY_KEYWORD_RE = /\b(restaurant|catering|takeaway|take-away|take away|hot food)\b/i;
+const HOSPITALITY_KEYWORD_RE =
+  /\b(restaurant|catering|takeaway|take-away|take away|hot food|dinner|lunch|meal|entertainment)\b/i;
 const STANDARD_RATE_BASIS_POINTS = 2300;
 
 function hospitalityRateMismatches(
@@ -588,7 +656,8 @@ function anomalyKind(code: string): 'suspected_duplicate' | 'currency_discrepanc
   | 'uncertain_vat_treatment' | 'other' {
   switch (code) {
     case 'duplicate_invoice_number':
-    case 'near_duplicate_purchase_invoice': return 'suspected_duplicate';
+    case 'near_duplicate_purchase_invoice':
+    case 'duplicate_bank_payment': return 'suspected_duplicate';
     case 'document_amount_mismatch': return 'invoice_total_mismatch';
     case 'vat_arithmetic':
     case 'impossible_recovery': return 'negative_vat';
