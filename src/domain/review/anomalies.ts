@@ -1,7 +1,7 @@
 import { and, eq, gte, lte, sql, ne, isNull } from 'drizzle-orm';
 import type { AppDatabase } from '@/db';
 import {
-  bankTransactions, suppliers, documents, invoices, vatEntries,
+  bankTransactions, suppliers, documents, invoices, invoiceLines, vatEntries,
   journalLines, journalEntries, accounts, companies, fixedAssets,
 } from '@/db/schema';
 import { accountBalance } from '../accounting/ledger';
@@ -59,6 +59,8 @@ export function scanForAnomalies(
   const transactions = db.select().from(bankTransactions).where(and(...conditions)).all();
   const invoiceRows = db.select().from(invoices)
     .where(eq(invoices.companyId, params.companyId)).all();
+  const invoiceLineRows = db.select().from(invoiceLines)
+    .where(eq(invoiceLines.companyId, params.companyId)).all();
   const documentRows = db.select().from(documents)
     .where(and(eq(documents.companyId, params.companyId), eq(documents.archived, false))).all();
   const vatRows = db.select().from(vatEntries)
@@ -71,6 +73,9 @@ export function scanForAnomalies(
     ...vatArithmeticFailures(vatRows),
     ...impossibleRecovery(vatRows),
     ...duplicateInvoiceNumbers(invoiceRows),
+    ...nearDuplicatePurchaseInvoices(invoiceRows),
+    ...hospitalityRateMismatches(invoiceRows, invoiceLineRows),
+    ...possibleNonTradingPurchases(invoiceRows, invoiceLineRows),
     ...suspenseBalance(db, params.companyId),
     ...directorDebitBalance(db, params.companyId),
     ...unusedCapitalPurchases(db, params.companyId, transactions),
@@ -299,6 +304,148 @@ function duplicateInvoiceNumbers(
   return anomalies;
 }
 
+/**
+ * Two purchase invoices for the same supplier and the same net amount, dated
+ * close together but under different invoice numbers (issue #145 defect 2).
+ *
+ * `duplicateInvoiceNumbers` above catches the same invoice number appearing
+ * twice; it cannot catch the same commercial document entered twice under
+ * two different numbers, which is exactly the PI-019/PI-027 case the test
+ * pack was built to catch. A short window (5 days) is deliberate: a genuine
+ * recurring subscription at a flat monthly fee is the same supplier and the
+ * same net amount too, but its invoices are a month apart, not days.
+ */
+function nearDuplicatePurchaseInvoices(
+  invoiceRows: Array<typeof invoices.$inferSelect>,
+): Anomaly[] {
+  const WINDOW_DAYS = 5;
+  const groups = new Map<string, Array<typeof invoices.$inferSelect>>();
+
+  for (const invoice of invoiceRows) {
+    if (invoice.direction !== 'purchase' || invoice.isCreditNote) continue;
+    if (invoice.status === 'void' || !invoice.supplierId) continue;
+    const key = `${invoice.supplierId}|${invoice.netMinor}|${invoice.currency}`;
+    const group = groups.get(key) ?? [];
+    group.push(invoice);
+    groups.set(key, group);
+  }
+
+  const anomalies: Anomaly[] = [];
+  for (const group of groups.values()) {
+    if (group.length < 2) continue;
+    for (const invoice of group) {
+      const near = group.filter((other) => other.id !== invoice.id
+        && Math.abs(daysBetween(asIsoDate(invoice.invoiceDate), asIsoDate(other.invoiceDate))) <= WINDOW_DAYS);
+      if (near.length === 0) continue;
+
+      anomalies.push({
+        code: 'near_duplicate_purchase_invoice',
+        severity: 'warning',
+        title: 'Two purchase invoices for the same amount, days apart',
+        detail: `${(invoice.netMinor / 100).toFixed(2)} ${invoice.currency} from the same supplier as `
+          + `invoice${near.length > 1 ? 's' : ''} ${near.map((n) => n.invoiceNumber ?? n.id).join(', ')}, `
+          + `dated within ${WINDOW_DAYS} days of each other.`,
+        entityType: 'invoice',
+        entityId: invoice.id,
+        suggestion: 'Check whether this is the same commercial document entered twice under a '
+          + 'different invoice number. A duplicated purchase invoice would claim the cost and '
+          + 'the VAT twice over.',
+        dedupeKey: `anomaly:near_dup_invoice:${invoice.id}`,
+      });
+    }
+  }
+  return anomalies;
+}
+
+/**
+ * A purchase line whose own description suggests a reduced-rate hospitality
+ * supply, but which was posted at the standard rate (issue #145 defect 4).
+ *
+ * `lookupTransactionRules` already knows the restaurant/catering reduced
+ * rate (`vatcaRevisedCuration.ts`'s `vat.rate_restaurant_catering_reduced_current`);
+ * this mirrors its keyword test rather than importing it, because the two
+ * ask different questions — the lookup proposes a treatment for a
+ * transaction that has not been posted yet, this flags an invoice that
+ * already has been. Neither determines the correct rate: an invoice that
+ * bundles a room hire with the meal, for instance, may genuinely be 23% on
+ * part of the bill. It only says the description and the rate disagree
+ * often enough to be worth a look.
+ */
+const HOSPITALITY_KEYWORD_RE = /\b(restaurant|catering|takeaway|take-away|take away|hot food)\b/i;
+const STANDARD_RATE_BASIS_POINTS = 2300;
+
+function hospitalityRateMismatches(
+  invoiceRows: Array<typeof invoices.$inferSelect>,
+  invoiceLineRows: Array<typeof invoiceLines.$inferSelect>,
+): Anomaly[] {
+  const invoicesById = new Map(invoiceRows.map((i) => [i.id, i]));
+  const anomalies: Anomaly[] = [];
+
+  for (const line of invoiceLineRows) {
+    const invoice = invoicesById.get(line.invoiceId);
+    if (!invoice || invoice.direction !== 'purchase' || invoice.status === 'void') continue;
+    if (!HOSPITALITY_KEYWORD_RE.test(line.description)) continue;
+    if (line.rateBasisPoints !== STANDARD_RATE_BASIS_POINTS) continue;
+
+    anomalies.push({
+      code: 'hospitality_rate_mismatch',
+      severity: 'info',
+      title: `"${line.description}" was posted at the standard rate`,
+      detail: 'The description suggests a restaurant, catering or takeaway supply, which is '
+        + 'often reduced-rated, but this line was posted at the 23% standard rate.',
+      entityType: 'invoice',
+      entityId: invoice.id,
+      suggestion: 'Confirm the correct VAT treatment for this line — a reduced hospitality rate '
+        + 'may apply, subject to when the supply took place. Note that the section 60 '
+        + 'entertainment deduction exclusion is a separate question from the rate charged: even '
+        + 'a correctly-rated meal can still be non-deductible.',
+      dedupeKey: `anomaly:hospitality_rate:${line.id}`,
+    });
+  }
+  return anomalies;
+}
+
+/**
+ * A purchase line whose own description reads as a donation or charitable
+ * payment (issue #145 defect 5).
+ *
+ * A donation is not a supply the business received in the course of trade,
+ * so posting it as an ordinary zero-rated or standard-rated purchase
+ * conflates a non-trading appropriation with turnover. This never changes
+ * what was posted — it only asks a human to confirm the classification and,
+ * usually, that the VAT (if any) was not treated as deductible.
+ */
+const DONATION_KEYWORD_RE = /\b(donation|donated|charity|charitable)\b/i;
+
+function possibleNonTradingPurchases(
+  invoiceRows: Array<typeof invoices.$inferSelect>,
+  invoiceLineRows: Array<typeof invoiceLines.$inferSelect>,
+): Anomaly[] {
+  const invoicesById = new Map(invoiceRows.map((i) => [i.id, i]));
+  const anomalies: Anomaly[] = [];
+
+  for (const line of invoiceLineRows) {
+    const invoice = invoicesById.get(line.invoiceId);
+    if (!invoice || invoice.direction !== 'purchase' || invoice.status === 'void') continue;
+    if (!DONATION_KEYWORD_RE.test(line.description)) continue;
+
+    anomalies.push({
+      code: 'possible_donation',
+      severity: 'info',
+      title: `"${line.description}" reads as a donation, not a purchase`,
+      detail: `${(line.grossMinor / 100).toFixed(2)} was posted as an ordinary purchase line, `
+        + 'but its description suggests a donation or charitable payment.',
+      entityType: 'invoice',
+      entityId: invoice.id,
+      suggestion: 'A donation is not a trading supply. Confirm whether this should be '
+        + 'reclassified as a non-deductible appropriation rather than a purchase, and that any '
+        + 'VAT on it was not treated as recoverable.',
+      dedupeKey: `anomaly:donation:${line.id}`,
+    });
+  }
+  return anomalies;
+}
+
 /** Anything left sitting in suspense. */
 function suspenseBalance(db: AppDatabase, companyId: string): Anomaly[] {
   const accountId = systemAccountId(db, companyId, 'suspense');
@@ -437,13 +584,16 @@ export function syncAnomaliesToReviewQueue(
 }
 
 function anomalyKind(code: string): 'suspected_duplicate' | 'currency_discrepancy'
-  | 'invoice_total_mismatch' | 'negative_vat' | 'capital_purchase_review' | 'other' {
+  | 'invoice_total_mismatch' | 'negative_vat' | 'capital_purchase_review'
+  | 'uncertain_vat_treatment' | 'other' {
   switch (code) {
-    case 'duplicate_invoice_number': return 'suspected_duplicate';
+    case 'duplicate_invoice_number':
+    case 'near_duplicate_purchase_invoice': return 'suspected_duplicate';
     case 'document_amount_mismatch': return 'invoice_total_mismatch';
     case 'vat_arithmetic':
     case 'impossible_recovery': return 'negative_vat';
     case 'possible_capital_purchase': return 'capital_purchase_review';
+    case 'hospitality_rate_mismatch': return 'uncertain_vat_treatment';
     default: return 'other';
   }
 }

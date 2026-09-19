@@ -455,6 +455,97 @@ describe('lookupTransactionRules — issue #136 bugs 1 and 8: VAT rate exclusivi
   });
 });
 
+describe('identifyTopics — issue #145 defect 3: non-trading bank narratives', () => {
+  const nonTrading = (description: string, extra: Record<string, unknown> = {}) =>
+    identifyTopics({
+      transactionDate: '2026-09-18', amountMinor: 50000, vatRegistered: true,
+      description, ...extra,
+    });
+
+  it('does not route a director funds-introduced narrative to vat', () => {
+    expect(nonTrading('Funds introduced by director')).not.toContain('vat');
+  });
+
+  it('does not route a director current account narrative to vat', () => {
+    expect(nonTrading('Director current account transfer')).not.toContain('vat');
+  });
+
+  it('does not route a Revenue VAT settlement payment to vat', () => {
+    expect(nonTrading('Revenue payment - VAT settlement')).not.toContain('vat');
+  });
+
+  it('does not route a PAYE remittance to vat', () => {
+    expect(nonTrading('Revenue payment - PAYE/PRSI')).not.toContain('vat');
+  });
+
+  it('does not route an ATM withdrawal to vat', () => {
+    expect(nonTrading('ATM withdrawal')).not.toContain('vat');
+  });
+
+  it('does not route a cash withdrawal to vat', () => {
+    expect(nonTrading('Cash withdrawal')).not.toContain('vat');
+  });
+
+  it('does not route an unknown/unidentified receipt to vat', () => {
+    expect(nonTrading('Unknown lodgement, no invoice on file')).not.toContain('vat');
+  });
+
+  it('still routes a real invoice with an explicit supplyType, however worded', () => {
+    // The exclusion only ever applies to a bare bank narrative with no
+    // supplyType — a real invoice must never be caught by it, whatever it
+    // happens to be worded like.
+    expect(nonTrading('Director consultancy services invoice', { supplyType: 'services' }))
+      .toContain('vat');
+  });
+});
+
+describe('lookupTransactionRules — issue #145 defect 3: non-trading bank lines never get a VAT rate', () => {
+  const s46Md = readFileSync(VATCA_REVISED_S046_MD_PATH, 'utf8');
+
+  beforeEach(() => {
+    ingestVatcaRevisedSection(db, { companyId, markdown: s46Md, ingestVersion: 'v1' });
+    deriveVatcaRevisedRules(db, { companyId });
+  });
+
+  it('a director funds-introduced line does not attach the standard VAT rate', () => {
+    const result = lookupTransactionRules(db, {
+      companyId,
+      transaction: {
+        transactionDate: '2026-09-18', amountMinor: 500000, currency: 'EUR',
+        vatRegistered: true, description: 'Funds introduced by director',
+      },
+    });
+    const rateKeys = result.applicableRules
+      .filter((r) => r.topic === 'vat' && r.ruleType === 'rate')
+      .map((r) => r.ruleKey);
+    expect(rateKeys).toEqual([]);
+  });
+
+  it('a Revenue VAT settlement payment does not attach the standard VAT rate', () => {
+    const result = lookupTransactionRules(db, {
+      companyId,
+      transaction: {
+        transactionDate: '2026-01-31', amountMinor: 50000, currency: 'EUR',
+        vatRegistered: true, description: 'Revenue payment - VAT settlement',
+      },
+    });
+    expect(result.applicableRules.filter((r) => r.ruleType === 'rate').map((r) => r.ruleKey))
+      .not.toContain('vat.rate_standard_current');
+  });
+
+  it('an ATM withdrawal does not attach the standard VAT rate', () => {
+    const result = lookupTransactionRules(db, {
+      companyId,
+      transaction: {
+        transactionDate: '2026-09-18', amountMinor: 20000, currency: 'EUR',
+        vatRegistered: true, description: 'ATM withdrawal',
+      },
+    });
+    expect(result.applicableRules.filter((r) => r.ruleType === 'rate').map((r) => r.ruleKey))
+      .not.toContain('vat.rate_standard_current');
+  });
+});
+
 describe('lookupTransactionRules — unregistered trader over the registration threshold', () => {
   beforeEach(() => {
     deriveFinanceAct2024VatThresholds(db, { companyId });

@@ -227,6 +227,113 @@ describe('invoice anomalies', () => {
     expect(found[0]!.suggestion).toContain('claim the cost and the VAT twice');
   });
 
+  // Issue #145 defect 2: PI-019/PI-027, the same commercial document entered
+  // twice under two different invoice numbers.
+  it('flags the same supplier and amount entered twice under different invoice numbers', () => {
+    for (const invoiceNumber of ['PI-019', 'PI-027']) {
+      createInvoice(db, {
+        companyId, direction: 'purchase', invoiceDate: makeDate(2025, 3, 15),
+        supplierId, invoiceNumber,
+        lines: [{
+          description: 'Software Co subscription', netMinor: 10_000,
+          accountId: byCode['6010']!, vatTreatmentId: tr['IE_STD']!,
+        }],
+      });
+    }
+
+    const scan = scanForAnomalies(db, { companyId });
+    const found = scan.anomalies.filter((a) => a.code === 'near_duplicate_purchase_invoice');
+    expect(found).toHaveLength(2);
+    expect(found[0]!.suggestion).toContain('entered twice under a different invoice number');
+  });
+
+  it('does not flag a recurring monthly subscription at the same price a month apart', () => {
+    createInvoice(db, {
+      companyId, direction: 'purchase', invoiceDate: makeDate(2025, 1, 15),
+      supplierId, invoiceNumber: 'INV-JAN',
+      lines: [{
+        description: 'Monthly hosting', netMinor: 10_000,
+        accountId: byCode['6010']!, vatTreatmentId: tr['IE_STD']!,
+      }],
+    });
+    createInvoice(db, {
+      companyId, direction: 'purchase', invoiceDate: makeDate(2025, 2, 15),
+      supplierId, invoiceNumber: 'INV-FEB',
+      lines: [{
+        description: 'Monthly hosting', netMinor: 10_000,
+        accountId: byCode['6010']!, vatTreatmentId: tr['IE_STD']!,
+      }],
+    });
+
+    const scan = scanForAnomalies(db, { companyId });
+    expect(scan.anomalies.filter((a) => a.code === 'near_duplicate_purchase_invoice')).toHaveLength(0);
+  });
+
+  // Issue #145 defect 4: a restaurant/catering line posted at 23% instead of
+  // the reduced rate the description suggests.
+  it('flags a restaurant purchase line posted at the standard rate', () => {
+    const invoice = createInvoice(db, {
+      companyId, direction: 'purchase', invoiceDate: makeDate(2025, 3, 15),
+      supplierId, invoiceNumber: 'PI-017',
+      lines: [{
+        description: 'Restaurant - business dinner', netMinor: 10_000,
+        accountId: byCode['6110']!, vatTreatmentId: tr['IE_STD']!,
+      }],
+    });
+
+    const scan = scanForAnomalies(db, { companyId });
+    const found = scan.anomalies.find((a) => a.code === 'hospitality_rate_mismatch');
+    expect(found).toBeTruthy();
+    expect(found!.entityId).toBe(invoice.invoiceId);
+  });
+
+  it('does not flag a restaurant line already posted at the reduced rate', () => {
+    createInvoice(db, {
+      companyId, direction: 'purchase', invoiceDate: makeDate(2025, 3, 15),
+      supplierId, invoiceNumber: 'PI-017',
+      lines: [{
+        description: 'Restaurant - business dinner', netMinor: 10_000,
+        accountId: byCode['6110']!, vatTreatmentId: tr['IE_RED']!,
+      }],
+    });
+
+    const scan = scanForAnomalies(db, { companyId });
+    expect(scan.anomalies.filter((a) => a.code === 'hospitality_rate_mismatch')).toHaveLength(0);
+  });
+
+  // Issue #145 defect 5: a charitable donation posted as an ordinary
+  // zero-rated purchase, conflating a non-trading appropriation with turnover.
+  it('flags a donation posted as an ordinary purchase line', () => {
+    const invoice = createInvoice(db, {
+      companyId, direction: 'purchase', invoiceDate: makeDate(2025, 3, 15),
+      supplierId, invoiceNumber: 'PI-032',
+      lines: [{
+        description: 'Charity donation', netMinor: 10_000,
+        accountId: byCode['6120']!, vatTreatmentId: tr['IE_ZERO']!,
+      }],
+    });
+
+    const scan = scanForAnomalies(db, { companyId });
+    const found = scan.anomalies.find((a) => a.code === 'possible_donation');
+    expect(found).toBeTruthy();
+    expect(found!.entityId).toBe(invoice.invoiceId);
+    expect(found!.suggestion).toContain('non-deductible appropriation');
+  });
+
+  it('does not flag an ordinary purchase with no donation/charity wording', () => {
+    createInvoice(db, {
+      companyId, direction: 'purchase', invoiceDate: makeDate(2025, 3, 15),
+      supplierId, invoiceNumber: 'PI-999',
+      lines: [{
+        description: 'Office supplies', netMinor: 10_000,
+        accountId: byCode['6120']!, vatTreatmentId: tr['IE_STD']!,
+      }],
+    });
+
+    const scan = scanForAnomalies(db, { companyId });
+    expect(scan.anomalies.filter((a) => a.code === 'possible_donation')).toHaveLength(0);
+  });
+
   it('flags a long-overdue sales invoice', () => {
     createInvoice(db, {
       companyId, direction: 'sales', invoiceDate: makeDate(2025, 1, 5),

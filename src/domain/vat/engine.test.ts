@@ -142,6 +142,42 @@ describe('calculateVat', () => {
     });
     expect(result.vatMinor).toBe(1_350);
   });
+
+  // Issue #145 defects 1/3: a non-Irish supplier under a reverse-charge
+  // treatment is not entitled to charge Irish VAT, so whatever figure their
+  // own document states is not evidence of anything and must never become
+  // the self-assessed amount — that is always the treatment's own rate on
+  // the net, regardless of what was stated.
+  it('ignores a stated VAT amount under reverse charge and always self-assesses via the rate', () => {
+    const result = calculateVat({
+      treatment: treatment('NON_EU_SERVICES_RCV'), rateBasisPoints: 2300,
+      direction: 'purchases', netMinor: 20_000, statedVatMinor: 4_000, // a wrong "20%" printed on a US invoice
+    });
+    expect(result.netMinor).toBe(20_000);
+    expect(result.vatMinor).toBe(4_600); // self-assessed at the Irish 23% rate, not the stated 4,000
+    expect(result.recoverableVatMinor).toBe(4_600);
+  });
+
+  it('ignores a stated VAT amount under reverse charge even on the gross path', () => {
+    const result = calculateVat({
+      treatment: treatment('EU_SERVICES_RCV'), rateBasisPoints: 2300,
+      direction: 'purchases', grossMinor: 12_000, statedVatMinor: 2_500,
+    });
+    // Reverse charge: the gross IS the net (no VAT was actually charged),
+    // so self-assessment is 23% of 12,000, not derived from the stated figure.
+    expect(result.netMinor).toBe(12_000);
+    expect(result.vatMinor).toBe(2_760);
+  });
+
+  it('recoverableOverrideMinor holds back recovery pending review without changing the VAT charged', () => {
+    const result = calculateVat({
+      treatment: treatment('IE_STD'), rateBasisPoints: 2300,
+      direction: 'purchases', netMinor: 20_000, statedVatMinor: 4_000,
+      recoverableOverrideMinor: 0,
+    });
+    expect(result.vatMinor).toBe(4_000); // the stated figure is still the cost incurred
+    expect(result.recoverableVatMinor).toBe(0); // but not automatically reclaimable
+  });
 });
 
 describe('vatDiscrepancy', () => {

@@ -131,6 +131,16 @@ export interface CalculateVatInput {
   grossMinor?: number;
   /** When the document states the VAT explicitly, trust it over recomputing. */
   statedVatMinor?: number;
+  /**
+   * Override `computeRecoverable`'s result. Set when a caller has already
+   * decided this line's input VAT cannot yet be trusted as reclaimable —
+   * e.g. it disagrees with the treatment's rate, or the supplier is not
+   * established in the State under a treatment that isn't reverse-charge
+   * (issue #145) — and wants the review item, not the ledger, to carry the
+   * open question. The net/VAT/gross figures still reflect the evidence;
+   * only the recoverable slice is held back.
+   */
+  recoverableOverrideMinor?: number;
 }
 
 /**
@@ -141,23 +151,32 @@ export interface CalculateVatInput {
  * of being quietly overwritten. Suppliers round per line, apply rounding
  * adjustments, and occasionally just get it wrong; silently "correcting" their
  * figure would make the books disagree with the evidence behind them.
+ *
+ * The one exception is a reverse-charge treatment: a supplier who is not
+ * Irish-VAT-registered is not entitled to charge Irish VAT at all, so a
+ * figure printed on their document is not evidence of anything and is never
+ * used as the self-assessed amount — that amount is always the treatment's
+ * own rate applied to the net (issue #145 defects 1 and 3). Whether the
+ * document also states an unexpected VAT figure is for the caller to raise
+ * as a review item; this function only ever self-assesses.
  */
 export function calculateVat(input: CalculateVatInput): VatCalculation {
   const { treatment, rateBasisPoints, direction } = input;
   const appliesRate = treatment.appliesRate;
   const effectiveRate = appliesRate ? rateBasisPoints : 0;
+  const trustStated = input.statedVatMinor !== undefined && !treatment.isReverseCharge;
 
   let netMinor: Minor;
   let vatMinor: Minor;
 
   if (input.netMinor !== undefined) {
     netMinor = asMinor(input.netMinor);
-    vatMinor = input.statedVatMinor !== undefined
-      ? asMinor(input.statedVatMinor)
+    vatMinor = trustStated
+      ? asMinor(input.statedVatMinor!)
       : vatFromNet(netMinor, effectiveRate);
   } else if (input.grossMinor !== undefined) {
-    if (input.statedVatMinor !== undefined) {
-      vatMinor = asMinor(input.statedVatMinor);
+    if (trustStated) {
+      vatMinor = asMinor(input.statedVatMinor!);
       netMinor = asMinor(input.grossMinor - vatMinor);
     } else if (treatment.isReverseCharge) {
       // Under reverse charge the supplier charges no VAT, so the invoice total
@@ -178,7 +197,9 @@ export function calculateVat(input: CalculateVatInput): VatCalculation {
     ? netMinor
     : asMinor(netMinor + vatMinor);
 
-  const recoverableVatMinor = computeRecoverable(treatment, direction, vatMinor);
+  const recoverableVatMinor = input.recoverableOverrideMinor !== undefined
+    ? asMinor(input.recoverableOverrideMinor)
+    : computeRecoverable(treatment, direction, vatMinor);
 
   return {
     netMinor,
@@ -287,6 +308,9 @@ export interface CreateVatEntriesInput {
   netMinor?: number;
   grossMinor?: number;
   statedVatMinor?: number;
+  /** See `CalculateVatInput.recoverableOverrideMinor` — threaded through so the
+   *  posted VAT entry (and hence the VAT3 T2 box) agrees with the journal. */
+  recoverableOverrideMinor?: number;
   currency: string;
   baseCurrency: string;
   fxRate?: { numerator: number; denominator: number };
@@ -331,6 +355,7 @@ export function createVatEntries(
     netMinor: input.netMinor,
     grossMinor: input.grossMinor,
     statedVatMinor: input.statedVatMinor,
+    recoverableOverrideMinor: input.recoverableOverrideMinor,
   });
 
   const period = findVatPeriod(db, input.companyId, input.taxPointDate);
@@ -387,7 +412,9 @@ export function createVatEntries(
       created.push(output);
 
       // Leg 2: input VAT, reclaimed to the extent the treatment allows.
-      const recoverable = computeRecoverable(treatment, 'purchases', calculation.vatMinor);
+      const recoverable = input.recoverableOverrideMinor !== undefined
+        ? asMinor(input.recoverableOverrideMinor)
+        : computeRecoverable(treatment, 'purchases', calculation.vatMinor);
       const input2 = tx.insert(vatEntries).values({
         ...common,
         id: ids.vatEntry(),

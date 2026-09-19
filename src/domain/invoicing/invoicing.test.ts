@@ -9,7 +9,7 @@ import { buildVat3Return } from '../vat/report';
 import { importStatement } from '../banking/import';
 import {
   invoices, journalLines, vatEntries, vatPeriods, customers, suppliers,
-  companies, bankTransactions, paymentAllocations, companyOfficers,
+  companies, bankTransactions, paymentAllocations, companyOfficers, reviewItems,
 } from '@/db/schema';
 import { makeDate } from '../dates';
 import { ids } from '@/lib/ids';
@@ -203,6 +203,107 @@ describe('purchase invoices', () => {
 
   it('refuses a purchase invoice without a supplier', () => {
     expect(() => purchaseInvoice({ supplierId: null })).toThrow(/needs a supplier/);
+  });
+
+  // Issue #145 defects 1 and 3: exception rows the test pack exists to catch
+  // — a wrong stated rate, a foreign supplier posted under a domestic
+  // treatment, and a reverse-charge document that states VAT it should not.
+  describe('issue #145: an untrustworthy VAT figure is flagged, not reclaimed', () => {
+    it('does not reclaim VAT stated at a rate that disagrees with the treatment', () => {
+      // PI-028 Google Ads: net €200, "20%"/€40 stated on an IE_STD (23%) line.
+      const invoice = purchaseInvoice({
+        lines: [{
+          description: 'Google Ads', netMinor: 20_000,
+          accountId: byCode['6070']!, vatTreatmentId: tr['IE_STD']!,
+          statedVatMinor: 4_000,
+        }],
+      });
+      // The cost still reflects what was actually paid...
+      expect(invoice.vatMinor).toBe(4_000);
+      // ...but none of it is treated as recoverable input VAT.
+      expect(accountBalance(db, { companyId, accountId: acc['vat_on_purchases']! })).toBe(0);
+      expect(vatFor('Jan–Feb 2025').T2.amountMinor).toBe(0);
+
+      const items = db.select().from(reviewItems)
+        .where(eq(reviewItems.entityId, invoice.invoiceId)).all();
+      expect(items).toHaveLength(1);
+      expect(items[0]).toMatchObject({ kind: 'uncertain_vat_treatment', status: 'open' });
+      expect(items[0]!.detail).toMatch(/40\.00/);
+      expect(items[0]!.detail).toMatch(/46\.00/);
+    });
+
+    it('does not accept Irish VAT stated on a domestic treatment from a non-Irish supplier', () => {
+      const usSupplierId = ids.supplier();
+      db.insert(suppliers).values({
+        id: usSupplierId, companyId, name: 'Acme US Inc',
+        matchKey: 'acme us inc', countryCode: 'US',
+      }).run();
+
+      // The stated figure agrees with the treatment's own 23% rate — the
+      // problem here is the supplier, not a rate mismatch.
+      const invoice = purchaseInvoice({
+        supplierId: usSupplierId,
+        lines: [{
+          description: 'Anthropic API usage', netMinor: 20_000,
+          accountId: byCode['6070']!, vatTreatmentId: tr['IE_STD']!,
+          statedVatMinor: 4_600,
+        }],
+      });
+      expect(invoice.vatMinor).toBe(4_600);
+      expect(accountBalance(db, { companyId, accountId: acc['vat_on_purchases']! })).toBe(0);
+
+      const items = db.select().from(reviewItems)
+        .where(eq(reviewItems.entityId, invoice.invoiceId)).all();
+      expect(items).toHaveLength(1);
+      expect(items[0]!.detail).toMatch(/US/);
+    });
+
+    it('self-assesses reverse-charge VAT and flags, but does not block on, a stated figure', () => {
+      const usSupplierId = ids.supplier();
+      db.insert(suppliers).values({
+        id: usSupplierId, companyId, name: 'Anthropic PBC',
+        matchKey: 'anthropic pbc', countryCode: 'US',
+      }).run();
+
+      const invoice = purchaseInvoice({
+        supplierId: usSupplierId,
+        lines: [{
+          description: 'Claude API usage', netMinor: 20_000,
+          accountId: byCode['6010']!, vatTreatmentId: tr['NON_EU_SERVICES_RCV']!,
+          statedVatMinor: 4_600, // "23% Irish VAT" printed on a US invoice
+        }],
+      });
+      // Self-assessed at the treatment's own rate — net-nil since fully recoverable.
+      const report = vatFor('Jan–Feb 2025');
+      expect(report.T1.amountMinor).toBe(4_600);
+      expect(report.T2.amountMinor).toBe(4_600);
+      expect(report.netPositionMinor).toBe(0);
+      expect(trialBalance(db, { companyId, asOf: makeDate(2025, 12, 31) }).balanced).toBe(true);
+
+      const items = db.select().from(reviewItems)
+        .where(eq(reviewItems.entityId, invoice.invoiceId)).all();
+      expect(items).toHaveLength(1);
+      expect(items[0]!.detail).toMatch(/reverse-charge/i);
+    });
+
+    it('does not flag an ordinary reverse-charge invoice with no stated VAT figure', () => {
+      const invoice = purchaseInvoice({
+        lines: [{
+          description: 'EU hosting', netMinor: 50_000,
+          accountId: byCode['6010']!, vatTreatmentId: tr['EU_SERVICES_RCV']!,
+        }],
+      });
+      const items = db.select().from(reviewItems)
+        .where(eq(reviewItems.entityId, invoice.invoiceId)).all();
+      expect(items).toHaveLength(0);
+    });
+
+    it('does not flag a domestic Irish supplier whose stated VAT agrees with the rate', () => {
+      const invoice = purchaseInvoice();
+      const items = db.select().from(reviewItems)
+        .where(eq(reviewItems.entityId, invoice.invoiceId)).all();
+      expect(items).toHaveLength(0);
+    });
   });
 });
 
