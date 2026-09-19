@@ -25,6 +25,9 @@ import { ingestSi639, deriveSi639Rules, SI_639_2010_MD_PATH } from '@/domain/rul
 import { ingestSi156, deriveSi156Rules, SI_156_2012_MD_PATH } from '@/domain/rules/si156Ingestion';
 import { ingestSi692025Reg8, deriveSi692025Rules, SI_69_2025_MD_PATH } from '@/domain/rules/si692025Ingestion';
 import { deriveFinanceAct2024VatThresholds } from '@/domain/rules/financeAct2024VatThresholdsIngestion';
+import {
+  ingestTdm3801_03bCapacityExclusion, deriveTdm3801_03bCapacityExclusionRule, TDM_38_01_03B_MD_PATH,
+} from '@/domain/rules/tdm3801_03bIngestion';
 import { lookupTransactionRules, type TransactionContext } from '@/domain/rules/transactionLookup';
 import { setRuleReviewStatus } from '@/domain/rules/review';
 import { generateDefaultTestCases, runTestCases } from '@/domain/rules/testCases';
@@ -42,7 +45,8 @@ Commands:
                                        Ingest a source's Markdown (--source: finance-act-2024
                                        [default] | vatca-2010 | vatca-2010-sch2 | vatca-2010-sch3 |
                                        rct-tca530 | rct-tdm | rct-tdm-05 | rct-tdm-11 |
-                                       vatca-2010-revised | tca1997-s284 | si639 | si156 | si69-2025; --file overrides
+                                       vatca-2010-revised | tca1997-s284 | si639 | si156 | si69-2025 | tdm-38-01-03b;
+                                       --file overrides
                                        its default path, e.g. to ingest a different revised section)
   extract [--source <s>]              Derive irish_tax_rules from ingested provisions
                                        (--source as above, but rct-tca530/rct-tdm/rct-tdm-05/rct-tdm-11 all use
@@ -158,6 +162,12 @@ export async function main(argv: string[], options: CliOptions = {}): Promise<nu
           print(ingestSi692025Reg8(db, { companyId, markdown, ingestVersion: 'v1', localPath: file }), format);
           return 0;
         }
+        if (source === 'tdm-38-01-03b') {
+          const file = getFlag(flags, 'file') ?? TDM_38_01_03B_MD_PATH;
+          const markdown = readFileSync(file, 'utf8');
+          print(ingestTdm3801_03bCapacityExclusion(db, { companyId, markdown, ingestVersion: 'v1', localPath: file }), format);
+          return 0;
+        }
         if (source !== 'finance-act-2024') throw new Error(`Unknown --source: ${source}`);
         const file = getFlag(flags, 'file') ?? FINANCE_ACT_2024_MD_PATH;
         const markdown = readFileSync(file, 'utf8');
@@ -205,6 +215,10 @@ export async function main(argv: string[], options: CliOptions = {}): Promise<nu
         }
         if (source === 'finance-act-2024-vat-thresholds') {
           print(deriveFinanceAct2024VatThresholds(db, { companyId }), format);
+          return 0;
+        }
+        if (source === 'tdm-38-01-03b') {
+          print(deriveTdm3801_03bCapacityExclusionRule(db, { companyId }), format);
           return 0;
         }
         if (source !== 'finance-act-2024') throw new Error(`Unknown --source: ${source}`);

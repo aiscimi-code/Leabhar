@@ -47,7 +47,13 @@ transaction to the rules that apply to it. Two sources are ingested:
   now also curated for the current VAT registration turnover thresholds
   (€85,000 goods / €42,500 services, from 1 January 2025) — no new document,
   just a derive step that had been missed the first time (see "Finance Act
-  2024 VAT Registration Thresholds" below).
+  2024 VAT Registration Thresholds" below);
+- Revenue TDM Part 38-01-03b (Guidelines for VAT Registration), one passage
+  only, from `docs/statutes/tdm-38-01-03b/38-01-03b.md` — Revenue's own
+  guidance on the "capacity" exclusion from mandatory electronic VAT
+  filing, closing a gap "S.I. 156/2012 (Mandatory Electronic Filing)" above
+  explicitly left open (see "Revenue TDM 38-01-03b (Mandatory E-Filing
+  Exclusion)" below).
 
 This is not a RAG system and it does not ask an LLM what the tax treatment
 should be. The pipeline is:
@@ -558,7 +564,9 @@ oversight:
   access, or an individual prevented by age/infirmity), **without** stating
   what specifically qualifies for it, because that text is exactly the part
   this local file only summarises rather than quotes — asserting the actual
-  criteria would mean inventing text this KB does not hold.
+  criteria would mean inventing text this KB does not hold. (A companion
+  rule sourced from Revenue's own guidance now states those criteria in
+  full — see "Revenue TDM 38-01-03b (Mandatory E-Filing Exclusion)" below.)
 
 ### S.I. 69/2025 (Cash Accounting Thresholds)
 
@@ -633,6 +641,37 @@ Act still holds:
   field, never inferred from free text — this KB cannot tell from a
   description alone whether a transaction is a supply of goods or of
   services, and guessing wrongly here would apply the wrong threshold.
+
+### Revenue TDM 38-01-03b (Mandatory E-Filing Exclusion)
+
+The first source ingested purely to close a gap left by a *different*
+already-ingested source, rather than to extract new content in its own
+right:
+
+- `src/domain/rules/tdm3801_03bParser.ts` extracts one named passage —
+  "Exclusion from Mandatory Electronic Filing and Payment of Tax" — from
+  Revenue's 40+ page "Guidelines for VAT Registration" TDM
+  (`docs/statutes/tdm-38-01-03b/38-01-03b.md`, genuinely verbatim: a real
+  `source_pdf_sha256` from a `pdfplumber`-extracted PDF, not a hand-written
+  summary). The passage repeats byte-identically four times in the source
+  document (once per registrant-type scenario — resident/non-resident
+  individual/company); the parser verifies all four match before extracting
+  the first, and throws rather than silently picking one if they ever
+  diverge.
+- `src/domain/rules/tdm3801_03bCuration.ts` / `tdm3801_03bIngestion.ts` —
+  one rule, `vat.mandatory_electronic_filing_capacity_exclusion`: a
+  taxpayer who lacks "capacity" (insufficient internet access, or — for an
+  individual — prevented by age or mental/physical infirmity) can apply in
+  writing to their local tax office to be excluded from S.I. 156/2012
+  reg.4's mandatory-electronic-filing obligation.
+- This is exactly the gap "S.I. 156/2012 (Mandatory Electronic Filing)"
+  above explicitly left open: reg.5's own "capacity" exclusion criteria are
+  not restated in this KB because the local si-156-2012 transcript only
+  summarises regs 5-9 rather than quoting them. Revenue's own current
+  guidance states the same criteria and the application procedure, verbatim
+  and independently — a different, lower-ranked source (`revenue_guidance`,
+  not `legislation` — see "Source hierarchy" below) than the Regulation
+  itself, but genuinely citable rather than invented.
 
 ## Rule format
 
@@ -828,41 +867,40 @@ npm run cli:rules -- ingest --source si639 && npm run cli:rules -- extract --sou
 npm run cli:rules -- ingest --source si156 && npm run cli:rules -- extract --source si156
 npm run cli:rules -- ingest --source si69-2025 && npm run cli:rules -- extract --source si69-2025
 npm run cli:rules -- extract --source finance-act-2024-vat-thresholds
+npm run cli:rules -- ingest --source tdm-38-01-03b && npm run cli:rules -- extract --source tdm-38-01-03b
 npm run cli:rules -- audit
 ```
 
 Headline numbers:
 
-- 347 provisions ingested across thirteen sources (118 Finance Act 2024, 125
+- 348 provisions ingested across fourteen sources (118 Finance Act 2024, 125
   VATCA 2010, 15 VATCA 2010 Schedule 2, 32 VATCA 2010 Schedule 3, 1 TCA 1997
   s.530, 1 Revenue TDM 18-02-04, 1 VATCA 2010 s.46 revised, 1 TCA 1997
   s.284, 1 Revenue TDM 18-02-05, 1 Revenue TDM 18-02-11, 47 S.I. 639/2010, 3
-  S.I. 156/2012, 1 S.I. 69/2025 reg.8), 193 judged relevant to transaction
-  classification, 154 not (procedural/repeal/penalty/pure-definition, or
-  uncategorised and flagged for review) — one higher than before because
-  Finance Act 2024 s.78's relevant flag was corrected when its two VAT
-  registration thresholds were curated (see "Finance Act 2024 VAT
-  Registration Thresholds" below).
-- 31 rules extracted (4 Finance Act, 5 VATCA principal-Act, 4 Schedule 2, 4
+  S.I. 156/2012, 1 S.I. 69/2025 reg.8, 1 Revenue TDM 38-01-03b), 194 judged
+  relevant to transaction classification, 154 not (procedural/repeal/
+  penalty/pure-definition, or uncategorised and flagged for review).
+- 32 rules extracted (4 Finance Act, 5 VATCA principal-Act, 4 Schedule 2, 4
   Schedule 3, 4 RCT, 3 current VAT rates, 1 capital allowances, 1 S.I.
   639/2010 cash accounting, 1 S.I. 156/2012 mandatory e-filing, 2 S.I.
   69/2025 cash-accounting eligibility thresholds, 2 Finance Act 2024 VAT
-  registration thresholds), all `ai_extracted`, all
-  `human_review_required = true` — **zero rules in this KB are authoritative
-  yet.**
+  registration thresholds, 1 Revenue TDM 38-01-03b e-filing capacity
+  exclusion), all `ai_extracted`, all `human_review_required = true` —
+  **zero rules in this KB are authoritative yet.**
 - 15 rules with a stated exception the system flags rather than evaluates,
   0 duplicate rule keys.
 - 442 cross-references the report cannot resolve — expected, not a bug: the
   Finance Act 2024 *amends*, and VATCA 2010 heavily cross-refers to, the
   Taxes Consolidation Act 1997 and other Acts not themselves ingested yet, so
   "section 531AN", "section 654A" et al. have nothing to resolve against
-  inside this KB alone. (The Schedule, RCT, current-rates, S.I. 639/2010 and
-  S.I. 156/2012 sources add none of their own; S.I. 69/2025's own
-  `amendsSection: "80"` resolves locally since VATCA 2010 is already
-  ingested, so it adds no new unresolved reference either — see "VATCA 2010
-  Schedules 2 and 3", "Relevant Contracts Tax (RCT)", "VATCA 2010 current
-  rates", "S.I. 639/2010 (VAT Regulations 2010)", "S.I. 156/2012 (Mandatory
-  Electronic Filing)" and "S.I. 69/2025 (Cash Accounting Thresholds)"
+  inside this KB alone. (The Schedule, RCT, current-rates, S.I. 639/2010,
+  S.I. 156/2012 and Revenue TDM 38-01-03b sources add none of their own;
+  S.I. 69/2025's own `amendsSection: "80"` resolves locally since VATCA
+  2010 is already ingested, so it adds no new unresolved reference either —
+  see "VATCA 2010 Schedules 2 and 3", "Relevant Contracts Tax (RCT)",
+  "VATCA 2010 current rates", "S.I. 639/2010 (VAT Regulations 2010)", "S.I.
+  156/2012 (Mandatory Electronic Filing)", "S.I. 69/2025 (Cash Accounting
+  Thresholds)" and "Revenue TDM 38-01-03b (Mandatory E-Filing Exclusion)"
   above.)
 
 **This is not a claim that the knowledge base is legally complete.** It is a
@@ -879,7 +917,7 @@ ingest [--source <s>] [--file <path>]
                             Ingest a source's Markdown (--source: finance-act-2024
                             [default] | vatca-2010 | vatca-2010-sch2 | vatca-2010-sch3 |
                             rct-tca530 | rct-tdm | rct-tdm-05 | rct-tdm-11 |
-                            vatca-2010-revised | tca1997-s284 | si639 | si156 | si69-2025)
+                            vatca-2010-revised | tca1997-s284 | si639 | si156 | si69-2025 | tdm-38-01-03b)
 extract [--source <s>]     Derive irish_tax_rules from ingested provisions
 list-provisions [--category <c>] [--relevant-only]
 show-provision --section <n>
@@ -907,14 +945,14 @@ audit
   the as-enacted VATCA text (reverse charge, place of supply, deductibility)
   is a structural mechanism that has not been fundamentally rewritten since
   2010, so curating its *existence* from the frozen text remains safe.
-- **Only 31 of 193 relevant provisions have a curated rule key** (4 Finance
+- **Only 32 of 194 relevant provisions have a curated rule key** (4 Finance
   Act, 5 VATCA principal-Act, 4 Schedule 2, 4 Schedule 3, 4 RCT, 3 current
   rates, 1 capital allowances, 1 S.I. 639/2010, 1 S.I. 156/2012, 2 S.I.
-  69/2025, 2 Finance Act 2024 VAT thresholds). Everything else is ingested
-  (text, offsets, category all on disk) but not yet extracted into named
-  rules — `provisionsWithoutExtractedRule` in the audit report would show
-  these once curated; today it's empty because the curated set and the
-  derived set match exactly.
+  69/2025, 2 Finance Act 2024 VAT thresholds, 1 Revenue TDM 38-01-03b).
+  Everything else is ingested (text, offsets, category all on disk) but not
+  yet extracted into named rules — `provisionsWithoutExtractedRule` in the
+  audit report would show these once curated; today it's empty because the
+  curated set and the derived set match exactly.
 - **RCT's actual deduction rate (0%/20%/35%) is not in this KB at all**,
   by design (see "Relevant Contracts Tax (RCT)" above) — TCA 1997
   ss.530A-530V, which govern it, were inserted by Finance Act 2011 s.20 and
