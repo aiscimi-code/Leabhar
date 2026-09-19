@@ -94,7 +94,7 @@ describe('deriveFinanceAct2024VatThresholds', () => {
     expect(items.length).toBeGreaterThanOrEqual(FINANCE_ACT_2024_VAT_THRESHOLD_RULES.length);
   });
 
-  it('a goods-supply transaction surfaces only the goods threshold rule', () => {
+  it('a goods-supply transaction with turnover over the threshold surfaces only the goods threshold rule', () => {
     deriveFinanceAct2024VatThresholds(db, { companyId });
     const result = lookupTransactionRules(db, {
       companyId,
@@ -104,6 +104,7 @@ describe('deriveFinanceAct2024VatThresholds', () => {
         description: 'Sale of goods to a new customer',
         supplyType: 'goods',
         vatRegistered: true,
+        annualTurnoverCurrentYearMinor: 9_000_000, // €90,000, over the €85,000 goods threshold
       },
     });
     const keys = result.applicableRules.map((r) => r.ruleKey);
@@ -111,7 +112,7 @@ describe('deriveFinanceAct2024VatThresholds', () => {
     expect(keys).not.toContain('vat.registration_threshold_services');
   });
 
-  it('a services-supply transaction surfaces only the services threshold rule', () => {
+  it('a services-supply transaction with turnover over the threshold surfaces only the services threshold rule', () => {
     deriveFinanceAct2024VatThresholds(db, { companyId });
     const result = lookupTransactionRules(db, {
       companyId,
@@ -121,10 +122,47 @@ describe('deriveFinanceAct2024VatThresholds', () => {
         description: 'Consulting services invoice',
         supplyType: 'services',
         vatRegistered: true,
+        annualTurnoverPreviousYearMinor: 5_000_000, // €50,000, over the €42,500 services threshold
       },
     });
     const keys = result.applicableRules.map((r) => r.ruleKey);
     expect(keys).toContain('vat.registration_threshold_services');
     expect(keys).not.toContain('vat.registration_threshold_goods');
+  });
+
+  it('issue #136 bug 2: a single low-value invoice with no turnover figure does not match the registration threshold', () => {
+    deriveFinanceAct2024VatThresholds(db, { companyId });
+    const result = lookupTransactionRules(db, {
+      companyId,
+      transaction: {
+        transactionDate: '2026-01-15',
+        amountMinor: 12300, // a single €123 services invoice
+        description: 'Small consulting invoice',
+        supplyType: 'services',
+        vatRegistered: true,
+        // annualTurnoverCurrentYearMinor / annualTurnoverPreviousYearMinor deliberately omitted
+      },
+    });
+    const keys = result.applicableRules.map((r) => r.ruleKey);
+    expect(keys).not.toContain('vat.registration_threshold_services');
+    expect(result.unresolvedFields).toContain('annualTurnoverMaxMinor');
+  });
+
+  it('turnover under the threshold in both years does not match the registration threshold', () => {
+    deriveFinanceAct2024VatThresholds(db, { companyId });
+    const result = lookupTransactionRules(db, {
+      companyId,
+      transaction: {
+        transactionDate: '2026-01-15',
+        amountMinor: 500000,
+        description: 'Consulting services invoice',
+        supplyType: 'services',
+        vatRegistered: true,
+        annualTurnoverCurrentYearMinor: 3_000_000, // €30,000
+        annualTurnoverPreviousYearMinor: 2_000_000, // €20,000, both under €42,500
+      },
+    });
+    const keys = result.applicableRules.map((r) => r.ruleKey);
+    expect(keys).not.toContain('vat.registration_threshold_services');
   });
 });

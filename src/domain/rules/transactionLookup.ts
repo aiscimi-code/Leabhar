@@ -44,7 +44,58 @@ export interface TransactionContext {
   /** "goods" or "services" — several VATCA 2010 rules (place of supply, reverse
    *  charge) turn on this distinction and it is not safely inferable from free text. */
   supplyType?: 'goods' | 'services' | null;
+  /** Integer minor units — the business's own actual annual turnover in the
+   *  current calendar year, for the VATCA s.6(1)(c)/(d) registration-threshold
+   *  test (issue #136 bug 2 / #137). This KB cannot compute it; the caller
+   *  supplies it (or leaves both this and the previous-year figure unset,
+   *  which leaves the threshold rules unresolved rather than falsely matched). */
+  annualTurnoverCurrentYearMinor?: number | null;
+  /** Same as above, for the previous calendar year — s.6(1)(c)/(d) tests
+   *  "the current calendar year OR the previous calendar year". */
+  annualTurnoverPreviousYearMinor?: number | null;
+  /**
+   * A direct, human-made determination of whether the supplier is
+   * "established outside the State" per VATCA s.12/s.34's actual legal test
+   * (EU Reg 282/2011 arts.10-11: seat of economic activity / fixed
+   * establishment — see docs/statutes/282-2011/articles-10-13b-establishment.md),
+   * as opposed to the crude `supplierCountry != 'IE'` proxy those rules used
+   * before this field existed (issue #136 bug 4 / #138). When supplied, this
+   * takes precedence over the country-code proxy; the multi-factor test
+   * itself is not something this KB can compute from a country code alone.
+   */
+  supplierEstablishedOutsideState?: boolean | null;
   [key: string]: unknown;
+}
+
+/**
+ * ISO 3166-1 alpha-2 country codes currently assigned by ISO. Used only to
+ * tell a real, if imperfect, `supplierCountry` proxy apart from garbage
+ * (issue #136 bug 4) — this is not itself the VATCA "established" test (see
+ * `supplierEstablishedOutsideState` above), just a data-quality gate on the
+ * one field the crude proxy depends on.
+ */
+const ISO_3166_ALPHA2 = new Set([
+  'AD', 'AE', 'AF', 'AG', 'AI', 'AL', 'AM', 'AO', 'AQ', 'AR', 'AS', 'AT', 'AU', 'AW', 'AX', 'AZ',
+  'BA', 'BB', 'BD', 'BE', 'BF', 'BG', 'BH', 'BI', 'BJ', 'BL', 'BM', 'BN', 'BO', 'BQ', 'BR', 'BS',
+  'BT', 'BV', 'BW', 'BY', 'BZ', 'CA', 'CC', 'CD', 'CF', 'CG', 'CH', 'CI', 'CK', 'CL', 'CM', 'CN',
+  'CO', 'CR', 'CU', 'CV', 'CW', 'CX', 'CY', 'CZ', 'DE', 'DJ', 'DK', 'DM', 'DO', 'DZ', 'EC', 'EE',
+  'EG', 'EH', 'ER', 'ES', 'ET', 'FI', 'FJ', 'FK', 'FM', 'FO', 'FR', 'GA', 'GB', 'GD', 'GE', 'GF',
+  'GG', 'GH', 'GI', 'GL', 'GM', 'GN', 'GP', 'GQ', 'GR', 'GS', 'GT', 'GU', 'GW', 'GY', 'HK', 'HM',
+  'HN', 'HR', 'HT', 'HU', 'ID', 'IE', 'IL', 'IM', 'IN', 'IO', 'IQ', 'IR', 'IS', 'IT', 'JE', 'JM',
+  'JO', 'JP', 'KE', 'KG', 'KH', 'KI', 'KM', 'KN', 'KP', 'KR', 'KW', 'KY', 'KZ', 'LA', 'LB', 'LC',
+  'LI', 'LK', 'LR', 'LS', 'LT', 'LU', 'LV', 'LY', 'MA', 'MC', 'MD', 'ME', 'MF', 'MG', 'MH', 'MK',
+  'ML', 'MM', 'MN', 'MO', 'MP', 'MQ', 'MR', 'MS', 'MT', 'MU', 'MV', 'MW', 'MX', 'MY', 'MZ', 'NA',
+  'NC', 'NE', 'NF', 'NG', 'NI', 'NL', 'NO', 'NP', 'NR', 'NU', 'NZ', 'OM', 'PA', 'PE', 'PF', 'PG',
+  'PH', 'PK', 'PL', 'PM', 'PN', 'PR', 'PS', 'PT', 'PW', 'PY', 'QA', 'RE', 'RO', 'RS', 'RU', 'RW',
+  'SA', 'SB', 'SC', 'SD', 'SE', 'SG', 'SH', 'SI', 'SJ', 'SK', 'SL', 'SM', 'SN', 'SO', 'SR', 'SS',
+  'ST', 'SV', 'SX', 'SY', 'SZ', 'TC', 'TD', 'TF', 'TG', 'TH', 'TJ', 'TK', 'TL', 'TM', 'TN', 'TO',
+  'TR', 'TT', 'TV', 'TW', 'TZ', 'UA', 'UG', 'UM', 'US', 'UY', 'UZ', 'VA', 'VC', 'VE', 'VG', 'VI',
+  'VN', 'VU', 'WF', 'WS', 'YE', 'YT', 'ZA', 'ZM', 'ZW',
+]);
+
+/** True only for a real, currently-assigned ISO 3166-1 alpha-2 code. */
+export function isValidIsoCountryCode(code: string): boolean {
+  return ISO_3166_ALPHA2.has(code.toUpperCase());
 }
 
 /**
@@ -54,11 +105,44 @@ export interface TransactionContext {
  * omitted — defaulting an omitted currency to EUR would be inventing a fact
  * no one stated (see issue #136 bug 5). A rule that actually depends on the
  * currency will surface it via the normal unresolved-condition path instead.
+ *
+ * Three fields are derived here, never invented beyond what the caller
+ * supplied:
+ *
+ *  - `supplierCountry` is sanitised to `null` when it isn't a real,
+ *    currently-assigned ISO 3166-1 alpha-2 code (e.g. `"XX"`) — an unknown
+ *    code is unresolved, not "established outside the State" (issue #136
+ *    bug 4).
+ *  - `supplierEstablishedOutsideStateResolved` is the caller's own
+ *    `supplierEstablishedOutsideState` determination when given (the actual
+ *    VATCA s.12/s.34 legal test, EU Reg 282/2011 arts.10-11 — see
+ *    docs/statutes/282-2011/articles-10-13b-establishment.md), falling back
+ *    to the sanitised `supplierCountry != 'IE'` proxy only when no direct
+ *    determination was supplied, and to `null` (unresolved) when neither is
+ *    available.
+ *  - `annualTurnoverMaxMinor` is the greater of `annualTurnoverCurrentYearMinor`
+ *    and `annualTurnoverPreviousYearMinor` when at least one is a finite
+ *    number — implementing VATCA s.6(1)(c)/(d)'s "current calendar year or
+ *    the previous calendar year" turnover test (issue #136 bug 2 / #137) as
+ *    a single field the registration-threshold rules can condition on.
  */
 export function normaliseTransactionContext(input: TransactionContext): TransactionContext {
+  const supplierCountry = input.supplierCountry && isValidIsoCountryCode(input.supplierCountry)
+    ? input.supplierCountry.toUpperCase()
+    : (input.supplierCountry ? null : input.supplierCountry);
+
+  const supplierEstablishedOutsideStateResolved =
+    input.supplierEstablishedOutsideState ?? (supplierCountry ? supplierCountry !== 'IE' : null);
+
+  const turnoverFigures = [input.annualTurnoverCurrentYearMinor, input.annualTurnoverPreviousYearMinor]
+    .filter((v): v is number => typeof v === 'number' && Number.isFinite(v));
+
   return {
     ...input,
     transactionDate: input.transactionDate,
+    supplierCountry,
+    supplierEstablishedOutsideStateResolved,
+    ...(turnoverFigures.length > 0 ? { annualTurnoverMaxMinor: Math.max(...turnoverFigures) } : {}),
   };
 }
 

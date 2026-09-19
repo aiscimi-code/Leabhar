@@ -3,11 +3,13 @@ import { readFileSync } from 'node:fs';
 import { eq } from 'drizzle-orm';
 import { createTestDatabase } from '@/db/testing';
 import { createCompany } from '../config/setup';
-import { ingestSi692025Reg8, deriveSi692025Rules, SI_69_2025_MD_PATH } from './si692025Ingestion';
+import {
+  ingestSi692025Reg5, ingestSi692025Reg8, ingestSi692025Reg9, deriveSi692025Rules, SI_69_2025_MD_PATH,
+} from './si692025Ingestion';
 import { lookupTaxRule } from './irishRules';
 import { lookupTransactionRules } from './transactionLookup';
 import { SI_69_2025_CURATED_RULES } from './si692025Curation';
-import { irishTaxRules, irishKnowledgeSources, reviewItems } from '@/db/schema';
+import { irishTaxRules, irishActProvisions, irishKnowledgeSources, reviewItems } from '@/db/schema';
 import type { AppDatabase } from '@/db';
 
 let db: AppDatabase;
@@ -38,15 +40,62 @@ describe('ingestSi692025Reg8', () => {
   });
 });
 
-describe('deriveSi692025Rules', () => {
-  beforeEach(() => {
-    ingestSi692025Reg8(db, { companyId, markdown, ingestVersion: 'v1' });
+describe('ingestSi692025Reg5 / ingestSi692025Reg9 (share one source document with reg.8)', () => {
+  it('reg.5 and reg.9 each get their own provision row under the shared S.I. 69/2025 source', () => {
+    const reg8 = ingestSi692025Reg8(db, { companyId, markdown, ingestVersion: 'v1' });
+    const reg5 = ingestSi692025Reg5(db, { companyId, markdown, ingestVersion: 'v1' });
+    const reg9 = ingestSi692025Reg9(db, { companyId, markdown, ingestVersion: 'v1' });
+
+    // Same physical instrument, same content hash -> one shared knowledge-source row.
+    expect(reg5.sourceId).toBe(reg8.sourceId);
+    expect(reg9.sourceId).toBe(reg8.sourceId);
+    expect(reg5.ingested).toBe(true);
+    expect(reg9.ingested).toBe(true);
+
+    const provisions = db.select({ sectionNumber: irishActProvisions.sectionNumber })
+      .from(irishActProvisions).where(eq(irishActProvisions.sourceId, reg8.sourceId)).all();
+    expect(provisions.map((p) => p.sectionNumber).sort()).toEqual(['5', '8', '9']);
   });
 
-  it('creates both cash-accounting eligibility threshold rules', () => {
+  it('ingesting reg.5 or reg.9 a second time is idempotent, independently of the other regulations', () => {
+    ingestSi692025Reg8(db, { companyId, markdown, ingestVersion: 'v1' });
+    const first = ingestSi692025Reg5(db, { companyId, markdown, ingestVersion: 'v1' });
+    const second = ingestSi692025Reg5(db, { companyId, markdown, ingestVersion: 'v1' });
+    expect(first.ingested).toBe(true);
+    expect(second.ingested).toBe(false);
+  });
+
+  it('order of ingestion does not matter — reg.9 first still gets its own row when reg.8 has not been ingested yet', () => {
+    const reg9 = ingestSi692025Reg9(db, { companyId, markdown, ingestVersion: 'v1' });
+    expect(reg9.ingested).toBe(true);
+    const provisions = db.select({ sectionNumber: irishActProvisions.sectionNumber })
+      .from(irishActProvisions).where(eq(irishActProvisions.sourceId, reg9.sourceId)).all();
+    expect(provisions.map((p) => p.sectionNumber)).toEqual(['9']);
+  });
+});
+
+describe('deriveSi692025Rules', () => {
+  beforeEach(() => {
+    ingestSi692025Reg5(db, { companyId, markdown, ingestVersion: 'v1' });
+    ingestSi692025Reg8(db, { companyId, markdown, ingestVersion: 'v1' });
+    ingestSi692025Reg9(db, { companyId, markdown, ingestVersion: 'v1' });
+  });
+
+  it('creates every curated rule once all three regulations are ingested', () => {
     const result = deriveSi692025Rules(db, { companyId });
     expect(result.created).toBe(SI_69_2025_CURATED_RULES.length);
     expect(result.skippedNoProvision).toEqual([]);
+  });
+
+  it('skips a rule whose regulation was not ingested', () => {
+    const { db: freshDb } = createTestDatabase();
+    const { companyId: freshCompanyId } = createCompany(freshDb, { legalName: 'Reg8 Only Ltd', seedYears: [2025] });
+    ingestSi692025Reg8(freshDb, { companyId: freshCompanyId, markdown, ingestVersion: 'v1' });
+    const result = deriveSi692025Rules(freshDb, { companyId: freshCompanyId });
+    expect(result.created).toBe(2); // only the two reg.8 rules
+    expect(result.skippedNoProvision).toEqual(
+      expect.arrayContaining(['vat.registration_threshold_turnover_test', 'vat.annual_turnover_definition']),
+    );
   });
 
   it('the €2,000,000 turnover threshold rule states the real current figure in integer minor units', () => {

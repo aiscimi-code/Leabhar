@@ -280,8 +280,12 @@ to parseable text needed its own, reusable step:
   `'system_rule'`), lower `confidence` (70, not 90), and an
   `interpretationNote` on every curated rule explaining exactly how its
   condition maps onto `TransactionContext` fields and where that mapping is
-  a simplification (e.g. `supplierCountry != 'IE'` stands in for "established
-  outside the State", which is a location test, not a country-code test).
+  a simplification (e.g. `supplierEstablishedOutsideStateResolved` falls
+  back to an ISO-3166-validated `supplierCountry != 'IE'` proxy only when
+  the caller supplies no direct establishment determination — "established
+  outside the State" is a multi-factor legal test (EU Reg 282/2011
+  arts.10-11), not a country-code test; see issue #136 bug 4 / issue #138
+  and docs/statutes/282-2011/articles-10-13b-establishment.md).
   Every `statementExcerpt` is verified (`vatcaParser.test.ts`) to be a
   verbatim substring of the parsed provision text.
 - `src/domain/rules/vatcaIngestion.ts` — `ingestVatca2010`/`deriveVatcaRules`,
@@ -568,44 +572,64 @@ oversight:
   rule sourced from Revenue's own guidance now states those criteria in
   full — see "Revenue TDM 38-01-03b (Mandatory E-Filing Exclusion)" below.)
 
-### S.I. 69/2025 (Cash Accounting Thresholds)
+### S.I. 69/2025 (Cash Accounting Thresholds, and the Registration-Threshold Turnover Test)
 
-Closes a gap flagged, not fixed, in an earlier pass:
+Closes two gaps flagged, not fixed, in earlier passes — Regulation 8 first,
+Regulations 5 and 9 added later for issue #136 bug 2 / issue #137:
 
-- `src/domain/rules/si692025Parser.ts` extracts exactly one named
-  regulation (Regulation 8) from the whole instrument, rather than parsing
-  every regulation — this document's ten top-level regulations sit
-  alongside a newly-inserted VATCA Chapter (sections 92B, 92C, 92D)
-  *embedded inside* Regulation 9's own substituted text, and "92B." would
-  itself match a naive bare-number-opener regex the way S.I. 639/2010's
-  regulations do. Rather than build a whole-document parser that has to
-  tell a top-level regulation boundary apart from a nested inserted-section
-  number, `parseSi692025Regulation` finds one named regulation's own
-  `"^N. "` line-start marker and the next top-level regulation's marker (or
-  end of document) as its boundary — the same targeted approach
-  `vatcaRevisedSectionParser.ts` uses for a single VATCA section.
-- `src/domain/rules/si692025Curation.ts` / `si692025Ingestion.ts` — two
-  rules from Regulation 8, which substitutes the *current* text of VATCA
-  2010 s.80(1)(a) and (b) (the eligibility test for the moneys-received/
-  cash basis of VAT accounting): `vat.cash_accounting_turnover_threshold`
-  (€2,000,000 total annual turnover, not exceeded and not likely to exceed,
-  in any continuous 12-month period — stored as `200,000,000` `eur_minor`
-  per AGENTS.md invariant #1, money is integer minor units) and
-  `vat.cash_accounting_supplies_to_unregistered_persons_test` (at least 90%
-  of annual turnover from supplies to unregistered persons). A person need
-  only satisfy one test, not both.
-- This is exactly the threshold "S.I. 639/2010 (VAT Regulations 2010)"
+- `src/domain/rules/si692025Parser.ts` extracts one named regulation at a
+  time from the whole instrument, rather than parsing every regulation —
+  this document's ten top-level regulations sit alongside a newly-inserted
+  VATCA Chapter (sections 92B, 92C, 92D) *embedded inside* Regulation 9's
+  own substituted text, and "92B." would itself match a naive
+  bare-number-opener regex the way S.I. 639/2010's regulations do. Rather
+  than build a whole-document parser that has to tell a top-level
+  regulation boundary apart from a nested inserted-section number,
+  `parseSi692025Regulation` finds one named regulation's own `"^N. "`
+  line-start marker and the next top-level regulation's marker (or end of
+  document) as its boundary — the same targeted approach
+  `vatcaRevisedSectionParser.ts` uses for a single VATCA section. It is
+  generic over the regulation number, so `si692025Ingestion.ts` calls it
+  for Regulations 5, 8 and 9 from the same already-fetched file, each
+  becoming its own `irish_act_provisions` row under one shared
+  `irish_knowledge_sources` row (same citation, same content hash — it is
+  one physical instrument; the ingestion's idempotency check is scoped to
+  citation + hash + *this regulation's own section number*, not "does this
+  source have any provision at all", so ingesting a second regulation from
+  an already-ingested file doesn't get silently skipped).
+- `src/domain/rules/si692025Curation.ts` / `si692025Ingestion.ts` — four
+  rules in total:
+  - Two from Regulation 8, which substitutes the *current* text of VATCA
+    2010 s.80(1)(a) and (b) (the eligibility test for the moneys-received/
+    cash basis of VAT accounting): `vat.cash_accounting_turnover_threshold`
+    (€2,000,000 total annual turnover, not exceeded and not likely to
+    exceed, in any continuous 12-month period — stored as `200,000,000`
+    `eur_minor` per AGENTS.md invariant #1, money is integer minor units)
+    and `vat.cash_accounting_supplies_to_unregistered_persons_test` (at
+    least 90% of annual turnover from supplies to unregistered persons). A
+    person need only satisfy one test, not both.
+  - `vat.registration_threshold_turnover_test`, from Regulation 5, which
+    substitutes the current "has not exceeded, in the current calendar
+    year or the previous calendar year" test into VATCA s.6(1)(c)/(d) — the
+    actual accountable-person test the flat s.2(1)/s.78 threshold figures
+    (see "Finance Act 2024 VAT Registration Thresholds" below) are tested
+    against. Declaratory (empty `conditions`, like a citation fact); the
+    Finance Act rules are the ones that actually gate on it.
+  - `vat.annual_turnover_definition`, from Regulation 9, stating VATCA
+    s.92B's definition of "annual turnover" (excludes VAT and capital-asset
+    disposals entirely; includes goods/services/immovable-goods/insurance
+    supplies unless incidental) — the definition both the turnover test
+    above and the EU cross-border SME scheme rely on. Also declaratory.
+- This closes exactly the threshold "S.I. 639/2010 (VAT Regulations 2010)"
   above explicitly said was *not* curated there: "the real threshold lives
   in VATCA 2010 s.80(1) itself" (Regulation 25 only requires the Revenue
   authorisation, it states no eligibility figure of its own). With this
   source ingested, both eligibility limbs are now real, current, curated
   rules — effective from 6 March 2025, the date this instrument was made
   (it carries no separate commencement clause).
-- Regulation 7 (restricting VAT deductibility for a person availing of the
-  EU cross-border SME exemption scheme this same instrument introduces) is
-  **not** curated in this pass — a distinct, narrower rule that deserves
-  its own review, left for a future pass, along with Regulations 1-6, 9 and
-  10 (the cross-border SME exemption scheme itself).
+- Regulations 1-4, 6, 7 and 10 (the rest of the cross-border SME exemption
+  scheme and its consequential amendments) remain **not** curated in this
+  pass — left for a future pass.
 
 ### Finance Act 2024 VAT Registration Thresholds
 
@@ -619,6 +643,16 @@ Act still holds:
   threshold" definitions): `vat.registration_threshold_goods` (€85,000) and
   `vat.registration_threshold_services` (€42,500), both effective 1 January
   2025, stated in the section's own text.
+- Both rules also condition on `annualTurnoverMaxMinor` (`gte` the
+  threshold) — a field `transactionLookup.ts` derives as the greater of
+  `annualTurnoverCurrentYearMinor`/`annualTurnoverPreviousYearMinor`,
+  implementing the actual VATCA s.6(1)(c)/(d) test (see
+  `vat.registration_threshold_turnover_test` above). Before this condition
+  existed, the rule matched off `supplyType` alone, so a single low-value
+  invoice "matched" a registration-threshold rule regardless of the
+  business's actual turnover (issue #136 bug 2 / issue #137) — now, absent
+  turnover data, the rule is correctly unresolved rather than falsely
+  matched.
 - s.78 states two independent euro figures in one section, which the
   generic `SECTION_RULE_KEYS`/`extractFactsFromProvision` pipeline
   (`factExtractor.ts`) is not built to split — that pipeline picks a single
@@ -711,7 +745,7 @@ a conditional test:
   "rule_type": "other",
   "conditions": [
     { "field": "supplyType", "operator": "equals", "value": "services" },
-    { "field": "supplierCountry", "operator": "not_equals", "value": "IE" },
+    { "field": "supplierEstablishedOutsideStateResolved", "operator": "equals", "value": "true" },
     { "field": "vatRegistered", "operator": "equals", "value": "true" }
   ],
   "effect": { "vat": "The RECIPIENT (not the overseas supplier) is accountable for, and liable to pay, Irish VAT on the supply, as if the recipient had supplied it themself (the reverse charge)...", "accounting": null, "tax": null, "reporting": null },
@@ -865,7 +899,10 @@ npm run cli:rules -- ingest --source vatca-2010-revised && npm run cli:rules -- 
 npm run cli:rules -- ingest --source tca1997-s284 && npm run cli:rules -- extract --source tca1997-s284
 npm run cli:rules -- ingest --source si639 && npm run cli:rules -- extract --source si639
 npm run cli:rules -- ingest --source si156 && npm run cli:rules -- extract --source si156
-npm run cli:rules -- ingest --source si69-2025 && npm run cli:rules -- extract --source si69-2025
+npm run cli:rules -- ingest --source si69-2025-reg5
+npm run cli:rules -- ingest --source si69-2025
+npm run cli:rules -- ingest --source si69-2025-reg9
+npm run cli:rules -- extract --source si69-2025
 npm run cli:rules -- extract --source finance-act-2024-vat-thresholds
 npm run cli:rules -- ingest --source tdm-38-01-03b && npm run cli:rules -- extract --source tdm-38-01-03b
 npm run cli:rules -- audit
@@ -917,7 +954,8 @@ ingest [--source <s>] [--file <path>]
                             Ingest a source's Markdown (--source: finance-act-2024
                             [default] | vatca-2010 | vatca-2010-sch2 | vatca-2010-sch3 |
                             rct-tca530 | rct-tdm | rct-tdm-05 | rct-tdm-11 |
-                            vatca-2010-revised | tca1997-s284 | si639 | si156 | si69-2025 | tdm-38-01-03b)
+                            vatca-2010-revised | tca1997-s284 | si639 | si156 |
+                            si69-2025 (alias si69-2025-reg8) | si69-2025-reg5 | si69-2025-reg9 | tdm-38-01-03b)
 extract [--source <s>]     Derive irish_tax_rules from ingested provisions
 list-provisions [--category <c>] [--relevant-only]
 show-provision --section <n>
@@ -971,7 +1009,8 @@ audit
   reg.25.** Regulation 25 only requires the Revenue authorisation; the
   actual VATCA 2010 s.80(1)(a)/(b) eligibility tests are now curated
   separately from S.I. 69/2025 Regulation 8 (see "S.I. 69/2025 (Cash
-  Accounting Thresholds)" above) — the two rules together are what a reader
+  Accounting Thresholds, and the Registration-Threshold Turnover Test)"
+  above) — the two rules together are what a reader
   needs (the authorisation requirement, and the tests it is granted
   against). Regulation 14A (postponed accounting for import VAT) remains
   excluded for a distinct reason: it was inserted by a later, un-ingested
@@ -991,7 +1030,9 @@ audit
   quotes verbatim.
 - **VATCA's conditions are curated, not mechanically extracted — and this is
   recorded, not glossed over.** Mapping "a supplier established outside the
-  State" onto `supplierCountry != 'IE'` is an interpretation; every VATCA
+  State" onto `supplierEstablishedOutsideStateResolved` (itself a caller's
+  direct determination, falling back to an ISO-3166-validated
+  `supplierCountry != 'IE'` proxy) is an interpretation; every VATCA
   rule's `interpretationNote` says exactly what its condition mapping does
   and does not capture (e.g. it cannot tell a place-of-supply exception
   applies, or that a motor-vehicle purchase qualifies for a carve-out). Its

@@ -25,6 +25,18 @@
  * same curated-override judgement `SECTION_RULE_KEYS` makes for other
  * sections at ingest time, just applied after the fact since Finance Act
  * 2024 was ingested before this section was reviewed.
+ *
+ * Both rules also condition on `annualTurnoverMaxMinor` — a field
+ * `transactionLookup.ts`'s `normaliseTransactionContext` derives as the
+ * greater of the caller-supplied `annualTurnoverCurrentYearMinor` and
+ * `annualTurnoverPreviousYearMinor`, implementing the "current calendar year
+ * or the previous calendar year" test in VATCA s.6(1)(c)/(d) (see
+ * `vat.registration_threshold_turnover_test`, curated from S.I. 69/2025
+ * reg.5 in `si692025Curation.ts`, for the verbatim text). Before this field
+ * existed, a rule matched off `supplyType` alone — meaning a single low-value
+ * invoice "matched" a registration-threshold rule regardless of the
+ * business's actual turnover (issue #136 bug 2). Now, absent turnover data,
+ * the rule is correctly unresolved rather than falsely matched.
  */
 import type { IrishRuleCondition, IrishRuleException } from '@/db/schema';
 
@@ -53,6 +65,7 @@ export const FINANCE_ACT_2024_VAT_THRESHOLD_RULES: CuratedFinanceAct2024VatThres
     numericValueMinor: 8_500_000, // €85,000
     conditions: [
       { field: 'supplyType', operator: 'equals', value: 'goods' },
+      { field: 'annualTurnoverMaxMinor', operator: 'gte', value: 8_500_000 },
     ],
     exceptions: [],
     vatEffect: 'A person whose annual turnover from taxable supplies of goods (of the kind to which the goods '
@@ -61,7 +74,14 @@ export const FINANCE_ACT_2024_VAT_THRESHOLD_RULES: CuratedFinanceAct2024VatThres
     interpretationNote: 'This is one of two independent VATCA s.2(1) thresholds substituted by the same '
       + 'section (see also vat.registration_threshold_services); which one applies turns on whether the supply '
       + 'is of goods or services, which this KB can only take from an explicit `supplyType` field, never infer '
-      + 'from free text. It does not itself compute a business\'s actual rolling annual turnover.',
+      + 'from free text. The `annualTurnoverMaxMinor` condition (added for issue #136 bug 2 / issue #137) '
+      + 'implements the actual VATCA s.6(1)(c) test — "has not exceeded, in the current calendar year or the '
+      + 'previous calendar year" — via a field `transactionLookup.ts` derives from '
+      + '`annualTurnoverCurrentYearMinor`/`annualTurnoverPreviousYearMinor`; without either supplied, the '
+      + 'condition fails and the field is unresolved, not silently passed. It still does not itself compute a '
+      + 'business\'s actual rolling annual turnover, and does not model the s.92B "incidental transaction" '
+      + 'carve-outs (see vat.annual_turnover_definition) — those remain the caller\'s responsibility to apply '
+      + 'before supplying the figure.',
   },
   {
     ruleKey: 'vat.registration_threshold_services',
@@ -71,6 +91,7 @@ export const FINANCE_ACT_2024_VAT_THRESHOLD_RULES: CuratedFinanceAct2024VatThres
     numericValueMinor: 4_250_000, // €42,500
     conditions: [
       { field: 'supplyType', operator: 'equals', value: 'services' },
+      { field: 'annualTurnoverMaxMinor', operator: 'gte', value: 4_250_000 },
     ],
     exceptions: [],
     vatEffect: 'A person whose annual turnover from taxable supplies of services (of the kind to which the '
@@ -79,6 +100,13 @@ export const FINANCE_ACT_2024_VAT_THRESHOLD_RULES: CuratedFinanceAct2024VatThres
     interpretationNote: 'This is one of two independent VATCA s.2(1) thresholds substituted by the same '
       + 'section (see also vat.registration_threshold_goods); which one applies turns on whether the supply is '
       + 'of goods or services, which this KB can only take from an explicit `supplyType` field, never infer from '
-      + 'free text. It does not itself compute a business\'s actual rolling annual turnover.',
+      + 'free text. The `annualTurnoverMaxMinor` condition (added for issue #136 bug 2 / issue #137) implements '
+      + 'the actual VATCA s.6(1)(d) test — "has not exceeded, in the current calendar year or the previous '
+      + 'calendar year" — via a field `transactionLookup.ts` derives from '
+      + '`annualTurnoverCurrentYearMinor`/`annualTurnoverPreviousYearMinor`; without either supplied, the '
+      + 'condition fails and the field is unresolved, not silently passed. It still does not itself compute a '
+      + 'business\'s actual rolling annual turnover, and does not model the s.92B "incidental transaction" '
+      + 'carve-outs (see vat.annual_turnover_definition) — those remain the caller\'s responsibility to apply '
+      + 'before supplying the figure.',
   },
 ];

@@ -245,3 +245,60 @@ describe('lookupTransactionRules — issue #136 data-quality gates', () => {
     expect(topics).toContain('banking');
   });
 });
+
+describe('lookupTransactionRules — issue #136 bug 4 / issue #138: supplier establishment', () => {
+  it('an invalid/garbage supplierCountry does not proxy as "established outside the State"', () => {
+    const result = lookupTransactionRules(db, {
+      companyId,
+      transaction: {
+        transactionDate: '2026-09-18', amountMinor: 123000, currency: 'EUR',
+        vatRegistered: true, supplyType: 'services', supplierCountry: 'XX',
+        supplierType: 'software_service', transactionType: 'AI_SaaS',
+      },
+    });
+    expect(result.applicableRules.map((r) => r.ruleKey)).not.toContain('vat.reverse_charge_services_from_abroad');
+    expect(result.unresolvedFields).toContain('supplierEstablishedOutsideStateResolved');
+    expect(result.transactionContext.supplierCountry).toBeNull();
+  });
+
+  it('a valid non-Irish ISO code still resolves the reverse-charge rule via the country-code proxy', () => {
+    const result = lookupTransactionRules(db, {
+      companyId,
+      transaction: {
+        transactionDate: '2026-09-18', amountMinor: 123000, currency: 'EUR',
+        vatRegistered: true, supplyType: 'services', supplierCountry: 'us',
+        supplierType: 'software_service', transactionType: 'AI_SaaS',
+      },
+    });
+    expect(result.applicableRules.map((r) => r.ruleKey)).toContain('vat.reverse_charge_services_from_abroad');
+    expect(result.transactionContext.supplierCountry).toBe('US');
+  });
+
+  it('an explicit supplierEstablishedOutsideState overrides an "IE" country code', () => {
+    // e.g. a supplier that invoices from an Irish address but is actually
+    // established abroad — the crude country-code proxy would say "no reverse
+    // charge"; a direct determination should still trigger it.
+    const result = lookupTransactionRules(db, {
+      companyId,
+      transaction: {
+        transactionDate: '2026-09-18', amountMinor: 123000, currency: 'EUR',
+        vatRegistered: true, supplyType: 'services', supplierCountry: 'IE',
+        supplierEstablishedOutsideState: true,
+      },
+    });
+    expect(result.applicableRules.map((r) => r.ruleKey)).toContain('vat.reverse_charge_services_from_abroad');
+  });
+
+  it('an explicit supplierEstablishedOutsideState: false overrides a non-Irish country code', () => {
+    // e.g. a supplier invoicing from abroad but actually established in Ireland.
+    const result = lookupTransactionRules(db, {
+      companyId,
+      transaction: {
+        transactionDate: '2026-09-18', amountMinor: 123000, currency: 'EUR',
+        vatRegistered: true, supplyType: 'services', supplierCountry: 'US',
+        supplierEstablishedOutsideState: false,
+      },
+    });
+    expect(result.applicableRules.map((r) => r.ruleKey)).not.toContain('vat.reverse_charge_services_from_abroad');
+  });
+});

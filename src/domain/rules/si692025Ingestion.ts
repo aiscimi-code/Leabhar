@@ -1,7 +1,30 @@
 /**
- * Ingestion and rule derivation for S.I. 69/2025 Regulation 8 (the current
- * VATCA 2010 s.80(1) cash-accounting eligibility thresholds), built on
- * `si692025Parser.ts`.
+ * Ingestion and rule derivation for S.I. 69/2025 (European Union
+ * (Value-Added Tax) Regulations 2025), built on `si692025Parser.ts`.
+ *
+ * Three named regulations are ingested from this single document, each as
+ * its own `irish_act_provisions` row under one shared `irish_knowledge_sources`
+ * row (same citation, same content hash — it is one physical instrument):
+ *
+ *  - Regulation 5: substitutes the current "current calendar year or the
+ *    previous calendar year" turnover test into VATCA 2010 s.6(1)(c)/(d) —
+ *    closes the gap issue #136 bug 2 / issue #137 flagged: the registration-
+ *    threshold rules (`financeAct2024VatThresholdsCuration.ts`) stated a
+ *    threshold *figure* with no way to test actual turnover against it.
+ *  - Regulation 8: substitutes the current text of VATCA 2010 s.80(1)(a)/(b),
+ *    the moneys-received/cash-basis eligibility thresholds — closes a gap
+ *    `si639Curation.ts` explicitly flagged ("the real threshold lives in
+ *    section 80(1) of the Act, not this Regulation").
+ *  - Regulation 9: inserts VATCA 2010 s.92B, defining "annual turnover" for
+ *    the cross-border SME exemption scheme — and, as of Regulation 5 above,
+ *    the same definition the registration-threshold turnover test now relies
+ *    on (s.6(1)(c)/(d) as substituted use "annual turnover", not "consideration").
+ *
+ * Because all three share one source document, the idempotency check below
+ * is scoped to (source citation + content hash + this regulation's own
+ * section number) — the naive "does this source have *any* provision yet"
+ * check the single-regulation predecessor of this file used would silently
+ * skip ingesting a second regulation from the same already-ingested file.
  */
 import { and, eq } from 'drizzle-orm';
 import type { AppDatabase } from '@/db';
@@ -15,14 +38,51 @@ import { upsertReviewItem } from '../extraction/service';
 
 export { SI_69_2025_MD_PATH };
 
-const SI_69_2025 = {
+export const SI_69_2025 = {
   citation: 'S.I. 69/2025',
   sourceUrl: 'https://www.irishstatutebook.ie/eli/2025/si/69/made/en/print',
   // No separate commencement clause in this instrument; it took effect when
   // made (front matter: "in_force_from: 2025-03-06", matching "GIVEN under
   // my Official Seal, 6 March, 2025.").
   effectiveFrom: '2025-03-06',
+};
+
+interface NamedRegulation {
+  regulationNumber: string;
+  heading: string;
+  amendsSection: string;
+  sourceNote: string;
+}
+
+const REG_5: NamedRegulation = {
+  regulationNumber: '5',
+  heading: 'Amendment of section 6(1) of the Value-Added Tax Consolidation Act 2010 '
+    + '(registration-threshold turnover test: current or previous calendar year)',
+  amendsSection: '6',
+  sourceNote: 'Only Regulation 5 (substituting the current "current calendar year or the previous calendar '
+    + 'year" turnover test into VATCA 2010 s.6(1)(c) and (d), and the "annual turnover" terminology into '
+    + 's.6(1)(a)(ii)/(2)(b)) is ingested from this instrument in this pass — see si692025Parser.ts.',
+};
+
+const REG_8: NamedRegulation = {
   regulationNumber: '8',
+  heading: 'Amendment of section 80(1) of the Value-Added Tax Consolidation Act 2010 '
+    + '(moneys-received basis of accounting: eligibility thresholds)',
+  amendsSection: '80',
+  sourceNote: 'Only Regulation 8 (substituting the current text of VATCA 2010 s.80(1)(a)/(b), the '
+    + 'moneys-received/cash-basis eligibility thresholds) is ingested from this instrument in this pass — see '
+    + 'si692025Parser.ts.',
+};
+
+const REG_9: NamedRegulation = {
+  regulationNumber: '9',
+  heading: 'Insertion of Chapter 5 of Part 10 of the Value-Added Tax Consolidation Act 2010 '
+    + '(cross-border SME exemption scheme: s.92B "annual turnover" definitions)',
+  amendsSection: '92A',
+  sourceNote: 'Only Regulation 9 (inserting VATCA 2010 ss.92B-92D; s.92B\'s "annual turnover" and related '
+    + 'definitions only) is ingested from this instrument in this pass — see si692025Parser.ts. ss.92C/92D '
+    + '(the cross-border scheme\'s registration/notification mechanics) are part of the same inserted text but '
+    + 'not separately curated.',
 };
 
 export interface Si692025IngestResult {
@@ -32,28 +92,63 @@ export interface Si692025IngestResult {
   ingested: boolean;
 }
 
-/** Ingest S.I. 69/2025 Regulation 8 only — see si692025Parser.ts's header. */
-export function ingestSi692025Reg8(
+function ingestSi692025NamedRegulation(
   db: AppDatabase,
   params: { companyId?: string | null; markdown: string; ingestVersion: string; localPath?: string },
+  reg: NamedRegulation,
 ): Si692025IngestResult {
   const digest = sha256Hex(params.markdown);
 
-  const existing = db.select({ id: irishKnowledgeSources.id }).from(irishKnowledgeSources)
+  const existingSource = db.select({ id: irishKnowledgeSources.id }).from(irishKnowledgeSources)
     .where(and(
       eq(irishKnowledgeSources.citation, SI_69_2025.citation),
       eq(irishKnowledgeSources.sha256, digest),
     )).get();
 
-  if (existing) {
-    const rows = db.select({ relevant: irishActProvisions.relevant }).from(irishActProvisions)
-      .where(eq(irishActProvisions.sourceId, existing.id)).all();
-    if (rows.length > 0) {
+  if (existingSource) {
+    const existingProvision = db.select({ relevant: irishActProvisions.relevant }).from(irishActProvisions)
+      .where(and(
+        eq(irishActProvisions.sourceId, existingSource.id),
+        eq(irishActProvisions.sectionNumber, reg.regulationNumber),
+      )).get();
+    if (existingProvision) {
       return {
-        sourceId: existing.id, regulationCount: rows.length,
-        relevantCount: rows.filter((r) => r.relevant).length, ingested: false,
+        sourceId: existingSource.id, regulationCount: 1,
+        relevantCount: existingProvision.relevant ? 1 : 0, ingested: false,
       };
     }
+
+    // The source document (this same file) was already ingested for a
+    // different regulation — reuse its knowledge-source row and add just
+    // this regulation's own provision, rather than skipping it as if the
+    // whole document (and every regulation in it) were already covered.
+    const parsed = parseSi692025Regulation(params.markdown, reg.regulationNumber);
+    const relevant = true;
+    const reason = `Curated: mapped to rule(s) in si692025Curation.ts for regulation ${reg.regulationNumber}, `
+      + 'overriding the mechanical "other" category default for amending text with no VAT keyword of its own.';
+
+    db.insert(irishActProvisions).values({
+      id: ids.provision(),
+      companyId: params.companyId ?? null,
+      sourceId: existingSource.id,
+      sectionNumber: reg.regulationNumber,
+      slug: provisionSlug(reg.regulationNumber, reg.heading),
+      heading: reg.heading,
+      principalAct: 'Value-Added Tax Consolidation Act 2010',
+      provisionText: parsed.provisionText,
+      sourceStart: parsed.sourceStart,
+      sourceEnd: parsed.sourceEnd,
+      category: 'vat',
+      amendsSection: reg.amendsSection,
+      effectiveClue: null,
+      citedActs: ['Value-Added Tax Consolidation Act 2010'],
+      relevant,
+      relevanceReason: reason,
+      source: 'import',
+      provenanceStatus: 'imported',
+    }).run();
+
+    return { sourceId: existingSource.id, regulationCount: 1, relevantCount: relevant ? 1 : 0, ingested: true };
   }
 
   return db.transaction((tx) => {
@@ -62,7 +157,7 @@ export function ingestSi692025Reg8(
       id: sourceId,
       companyId: params.companyId ?? null,
       sourceType: 'legislation',
-      title: 'European Union (Value-Added Tax) Regulations 2025 — Regulation 8 (VATCA s.80(1) amendment)',
+      title: 'European Union (Value-Added Tax) Regulations 2025',
       citation: SI_69_2025.citation,
       jurisdiction: 'IE',
       sourceUrl: SI_69_2025.sourceUrl,
@@ -72,38 +167,28 @@ export function ingestSi692025Reg8(
       publicationDate: SI_69_2025.effectiveFrom,
       retrievedAt: nowIso(),
       effectiveFrom: SI_69_2025.effectiveFrom,
-      sourceNote: 'Only Regulation 8 (substituting the current text of VATCA 2010 s.80(1)(a)/(b), the '
-        + 'moneys-received/cash-basis eligibility thresholds) is ingested from this instrument — see '
-        + 'si692025Parser.ts. Regulations 1-7, 9 and 10 (the EU cross-border SME exemption scheme and its '
-        + 'consequential amendments) are not ingested in this pass.',
+      sourceNote: reg.sourceNote,
       sourceDate: nowIso(),
     }).run();
 
-    const reg = parseSi692025Regulation(params.markdown, SI_69_2025.regulationNumber);
-    const heading = 'Amendment of section 80(1) of the Value-Added Tax Consolidation Act 2010 '
-      + '(moneys-received basis of accounting: eligibility thresholds)';
-    // Curated override: reg.8 is pure amending-drafting text ("Section 80(1)
-    // of the Act of 2010 is amended...") with no "VAT" keyword of its own, so
-    // categoriseProvision's mechanical keyword match alone would call it
-    // 'other' and mark it not relevant by default.
+    const parsed = parseSi692025Regulation(params.markdown, reg.regulationNumber);
     const relevant = true;
-    const reason = 'Curated: mapped to two rules in si692025Curation.ts (the s.80(1)(a)/(b) cash-accounting '
-      + 'eligibility thresholds), overriding the mechanical "other" category default for amending text with no '
-      + 'VAT keyword of its own.';
+    const reason = `Curated: mapped to rule(s) in si692025Curation.ts for regulation ${reg.regulationNumber}, `
+      + 'overriding the mechanical "other" category default for amending text with no VAT keyword of its own.';
 
     tx.insert(irishActProvisions).values({
       id: ids.provision(),
       companyId: params.companyId ?? null,
       sourceId,
       sectionNumber: reg.regulationNumber,
-      slug: provisionSlug(reg.regulationNumber, heading),
-      heading,
+      slug: provisionSlug(reg.regulationNumber, reg.heading),
+      heading: reg.heading,
       principalAct: 'Value-Added Tax Consolidation Act 2010',
-      provisionText: reg.provisionText,
-      sourceStart: reg.sourceStart,
-      sourceEnd: reg.sourceEnd,
+      provisionText: parsed.provisionText,
+      sourceStart: parsed.sourceStart,
+      sourceEnd: parsed.sourceEnd,
       category: 'vat',
-      amendsSection: '80',
+      amendsSection: reg.amendsSection,
       effectiveClue: null,
       citedActs: ['Value-Added Tax Consolidation Act 2010'],
       relevant,
@@ -114,6 +199,30 @@ export function ingestSi692025Reg8(
 
     return { sourceId, regulationCount: 1, relevantCount: relevant ? 1 : 0, ingested: true };
   });
+}
+
+/** Ingest S.I. 69/2025 Regulation 5 (current VATCA s.6(1)(c)/(d) turnover test) only. */
+export function ingestSi692025Reg5(
+  db: AppDatabase,
+  params: { companyId?: string | null; markdown: string; ingestVersion: string; localPath?: string },
+): Si692025IngestResult {
+  return ingestSi692025NamedRegulation(db, params, REG_5);
+}
+
+/** Ingest S.I. 69/2025 Regulation 8 (current VATCA s.80(1) cash-accounting thresholds) only. */
+export function ingestSi692025Reg8(
+  db: AppDatabase,
+  params: { companyId?: string | null; markdown: string; ingestVersion: string; localPath?: string },
+): Si692025IngestResult {
+  return ingestSi692025NamedRegulation(db, params, REG_8);
+}
+
+/** Ingest S.I. 69/2025 Regulation 9 (VATCA s.92B "annual turnover" definitions) only. */
+export function ingestSi692025Reg9(
+  db: AppDatabase,
+  params: { companyId?: string | null; markdown: string; ingestVersion: string; localPath?: string },
+): Si692025IngestResult {
+  return ingestSi692025NamedRegulation(db, params, REG_9);
 }
 
 export interface Si692025DeriveResult {
@@ -129,11 +238,6 @@ export function deriveSi692025Rules(
 ): Si692025DeriveResult {
   const sourceId = db.select({ id: irishKnowledgeSources.id }).from(irishKnowledgeSources)
     .where(eq(irishKnowledgeSources.citation, SI_69_2025.citation)).get()?.id;
-  const prov = sourceId
-    ? db.select().from(irishActProvisions)
-      .where(and(eq(irishActProvisions.sourceId, sourceId), eq(irishActProvisions.sectionNumber, SI_69_2025.regulationNumber)))
-      .get()
-    : undefined;
 
   let created = 0;
   let superseded = 0;
@@ -141,6 +245,11 @@ export function deriveSi692025Rules(
   const skippedNoProvision: string[] = [];
 
   for (const rule of SI_69_2025_CURATED_RULES) {
+    const prov = sourceId
+      ? db.select().from(irishActProvisions)
+        .where(and(eq(irishActProvisions.sourceId, sourceId), eq(irishActProvisions.sectionNumber, rule.regulationNumber)))
+        .get()
+      : undefined;
     if (!prov || !prov.relevant) { skippedNoProvision.push(rule.ruleKey); continue; }
 
     const existing = db.select().from(irishTaxRules)
@@ -175,7 +284,7 @@ export function deriveSi692025Rules(
       qualifier: rule.qualifier,
       conditions: rule.conditions,
       exceptions: rule.exceptions,
-      crossReferences: ['Value-Added Tax Consolidation Act 2010 s.80'],
+      crossReferences: [`Value-Added Tax Consolidation Act 2010 s.${rule.amendsSection}`],
       accountingEffect: null,
       taxEffect: null,
       vatEffect: rule.vatEffect,
@@ -190,7 +299,7 @@ export function deriveSi692025Rules(
       source: 'derived',
       confidence: 80,
       provenanceStatus: 'ai_suggestion',
-      sourceNote: `Curated from ${SI_69_2025.citation} reg.8; not yet human-reviewed. ${rule.interpretationNote}`,
+      sourceNote: `Curated from ${SI_69_2025.citation} reg.${rule.regulationNumber}; not yet human-reviewed. ${rule.interpretationNote}`,
       sourceDate: nowIso(),
     }).run();
     created++;
@@ -200,12 +309,12 @@ export function deriveSi692025Rules(
       kind: 'unresolved_ai_suggestion',
       severity: 'info',
       title: `New Irish VAT rule extracted: ${rule.name}`,
-      detail: `${SI_69_2025.citation} reg.8. ${rule.interpretationNote} `
+      detail: `${SI_69_2025.citation} reg.${rule.regulationNumber}. ${rule.interpretationNote} `
         + 'Review against the source text and approve, or reject, before it is treated as authoritative.',
       entityType: 'irish_tax_rule',
       entityId: newRuleId,
       dedupeKey: `irish_tax_rule:${newRuleId}`,
-      context: { ruleKey: rule.ruleKey, regulationNumber: SI_69_2025.regulationNumber },
+      context: { ruleKey: rule.ruleKey, regulationNumber: rule.regulationNumber },
     });
   }
 

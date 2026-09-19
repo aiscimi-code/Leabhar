@@ -38,13 +38,18 @@ describe('parseSi692025Regulation', () => {
     expect(a).toEqual(b);
   });
 
-  it('every curated rule\'s statement excerpt is a verbatim substring of regulation 8\'s text', () => {
-    const reg8 = parseSi692025RegulationFile(SI_69_2025_MD_PATH, '8');
+  it('every curated rule\'s statement excerpt is a verbatim substring of its own regulation\'s text', () => {
     const norm = (s: string) => s.replace(/\s+/g, ' ').trim();
+    const byRegulation = new Map<string, string>();
     for (const rule of SI_69_2025_CURATED_RULES) {
+      let text = byRegulation.get(rule.regulationNumber);
+      if (text === undefined) {
+        text = norm(parseSi692025RegulationFile(SI_69_2025_MD_PATH, rule.regulationNumber).provisionText);
+        byRegulation.set(rule.regulationNumber, text);
+      }
       expect(
-        norm(reg8.provisionText),
-        `${rule.ruleKey}: statementExcerpt must be verbatim`,
+        text,
+        `${rule.ruleKey}: statementExcerpt must be verbatim against regulation ${rule.regulationNumber}`,
       ).toContain(norm(rule.statementExcerpt));
     }
   });
