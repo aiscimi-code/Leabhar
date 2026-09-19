@@ -88,6 +88,13 @@ const TOPIC_RULES: TopicRule[] = [
     // and every curated RCT rule agree on what counts as a candidate.
     test: (ctx) => new RegExp(RCT_SCOPE_RE, 'i').test(TEXT_FIELDS(ctx)),
   },
+  {
+    topic: 'capital_allowances',
+    // Matches capitalAllowancesCuration.ts's own machinery/plant condition —
+    // a candidate for a capital allowance rather than a same-year deduction.
+    test: (ctx) => ctx.isCapitalExpenditure === true
+      || /\b(machinery|plant|equipment|vehicle|computer|furniture)\b/i.test(TEXT_FIELDS(ctx)),
+  },
   { topic: 'business_expense', test: () => true }, // deductibility is a candidate question for every transaction
   {
     topic: 'director_transaction',

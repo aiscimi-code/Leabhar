@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-19T04:50:51.519Z",
+  "generatedAt": "2026-09-19T04:59:11.514Z",
   "sources": [
     {
       "id": "src_780e780e102a40a38b9c48c7",
@@ -42,18 +42,24 @@
       "citation": "2010 Act 31 s.46",
       "sourceType": "legislation",
       "provisionCount": 1
+    },
+    {
+      "id": "src_dd70acda374c41a39bbbd1fc",
+      "citation": "1997 Act 39 s.284",
+      "sourceType": "legislation",
+      "provisionCount": 1
     }
   ],
-  "provisionCount": 293,
-  "relevantProvisionCount": 167,
+  "provisionCount": 294,
+  "relevantProvisionCount": 168,
   "notRelevantProvisionCount": 126,
-  "ruleCount": 23,
+  "ruleCount": 24,
   "rulesByReviewStatus": {
-    "ai_extracted": 23
+    "ai_extracted": 24
   },
-  "rulesRequiringHumanReview": 23,
-  "rulesRequiringGuidance": 18,
-  "rulesWithExceptions": 11,
+  "rulesRequiringHumanReview": 24,
+  "rulesRequiringGuidance": 19,
+  "rulesWithExceptions": 12,
   "provisionsWithoutExtractedRule": [],
   "ambiguousProvisions": [
     {
@@ -90,6 +96,11 @@
       "sectionNumber": "17",
       "heading": "Energy products and supplies.",
       "reason": "Curated: mapped to a rule in vatcaScheduleCuration.ts, overriding the other category default."
+    },
+    {
+      "sectionNumber": "284",
+      "heading": "Wear and tear allowances.",
+      "reason": "Curated: mapped to a rule, overriding the other category default."
     }
   ],
   "unresolvedCrossReferences": [
