@@ -21,7 +21,11 @@ transaction to the rules that apply to it. Two sources are ingested:
 - VATCA 2010 s.46 (rates of tax), from the LRC's revised text at
   `docs/statutes/vatca-2010-revised/s046.md` — the *current* 23%/13.5%/4.8%
   VAT rates, ingested as its own source distinct from every other VATCA
-  source above (see "VATCA 2010 current rates" below).
+  source above (see "VATCA 2010 current rates" below);
+- TCA 1997 s.284 (wear and tear allowances), from
+  `docs/statutes/tca-1997/s284.md` — the first non-VAT, non-RCT TCA 1997
+  curation, and the first to demonstrate the generic `tca1997Ingestion.ts`
+  pipeline (see "Capital allowances" below).
 
 This is not a RAG system and it does not ask an LLM what the tax treatment
 should be. The pipeline is:
@@ -408,6 +412,35 @@ source instead of trying to fix the frozen one:
   same subsection (one of which is in force at the time of writing) — each
   needs the same care as the headline rates and is left for a future pass.
 
+### Capital allowances
+
+The first curation from TCA 1997 outside RCT, and the first to use a new
+generic pipeline rather than a one-off module:
+
+- `src/domain/rules/tca1997Ingestion.ts` — a generic `ingestTca1997Section`
+  built on `tca1997SectionParser.ts` (already written for RCT's s.530),
+  taking any curated-rules set keyed by section number rather than one
+  hard-coded citation. `rctIngestion.ts`'s own `ingestTca1997S530` predates
+  this and is left as-is (it carries RCT-specific commentary that doesn't
+  belong in a generic module); every TCA 1997 section ingested after this
+  one should use the generic function instead of writing a new hand-rolled
+  ingestion module each time.
+- `src/domain/rules/capitalAllowancesCuration.ts` /
+  `capitalAllowancesIngestion.ts` — one rule from TCA 1997 s.284 (wear and
+  tear allowances): capital expenditure on machinery/plant, wholly and
+  exclusively for the trade, qualifies for a wear-and-tear allowance.
+  **Deliberately excludes the allowance percentage.** s.284(2) states 15%
+  (general plant/machinery) and 20% (certain vehicles) as enacted in 1997 —
+  this file's own front matter carries the standing "No LRC revised TCA;
+  later Finance Acts may have substituted this section" warning, and
+  Ireland's actual capital allowances regime for most plant/machinery today
+  is 12.5% straight-line, not either enacted figure. Curating either
+  percentage as current would repeat exactly the mistake "VATCA 2010
+  current rates" above exists to fix, with no fresher TCA 1997 source yet
+  ingested to fix it the same way — so only the *qualification* test is
+  curated, and the rule's own `taxEffect` says explicitly that the rate is
+  not determined by it.
+
 ## Rule format
 
 Conceptually, a stored rule looks like:
@@ -595,21 +628,23 @@ npm run cli:rules -- ingest --source vatca-2010-sch2 && npm run cli:rules -- ext
 npm run cli:rules -- ingest --source vatca-2010-sch3 && npm run cli:rules -- extract --source vatca-2010-sch3
 npm run cli:rules -- ingest --source rct-tca530 && npm run cli:rules -- ingest --source rct-tdm && npm run cli:rules -- extract --source rct
 npm run cli:rules -- ingest --source vatca-2010-revised && npm run cli:rules -- extract --source vatca-2010-revised
+npm run cli:rules -- ingest --source tca1997-s284 && npm run cli:rules -- extract --source tca1997-s284
 npm run cli:rules -- audit
 ```
 
 Headline numbers:
 
-- 293 provisions ingested across seven sources (118 Finance Act 2024, 125
+- 294 provisions ingested across eight sources (118 Finance Act 2024, 125
   VATCA 2010, 15 VATCA 2010 Schedule 2, 32 VATCA 2010 Schedule 3, 1 TCA 1997
-  s.530, 1 Revenue TDM 18-02-04, 1 VATCA 2010 s.46 revised), 167 judged
-  relevant to transaction classification, 126 not (procedural/repeal/
-  penalty/pure-definition, or uncategorised and flagged for review).
-- 23 rules extracted (4 Finance Act, 5 VATCA principal-Act, 4 Schedule 2, 4
-  Schedule 3, 3 RCT, 3 current VAT rates), all `ai_extracted`, all
-  `human_review_required = true` — **zero rules in this KB are authoritative
-  yet.**
-- 11 rules with a stated exception the system flags rather than evaluates,
+  s.530, 1 Revenue TDM 18-02-04, 1 VATCA 2010 s.46 revised, 1 TCA 1997
+  s.284), 168 judged relevant to transaction classification, 126 not
+  (procedural/repeal/penalty/pure-definition, or uncategorised and flagged
+  for review).
+- 24 rules extracted (4 Finance Act, 5 VATCA principal-Act, 4 Schedule 2, 4
+  Schedule 3, 3 RCT, 3 current VAT rates, 1 capital allowances), all
+  `ai_extracted`, all `human_review_required = true` — **zero rules in this
+  KB are authoritative yet.**
+- 12 rules with a stated exception the system flags rather than evaluates,
   0 duplicate rule keys.
 - 442 cross-references the report cannot resolve — expected, not a bug: the
   Finance Act 2024 *amends*, and VATCA 2010 heavily cross-refers to, the
@@ -633,7 +668,7 @@ to be.
 ingest [--source <s>] [--file <path>]
                             Ingest a source's Markdown (--source: finance-act-2024
                             [default] | vatca-2010 | vatca-2010-sch2 | vatca-2010-sch3 |
-                            rct-tca530 | rct-tdm | vatca-2010-revised)
+                            rct-tca530 | rct-tdm | vatca-2010-revised | tca1997-s284)
 extract [--source <s>]     Derive irish_tax_rules from ingested provisions
 list-provisions [--category <c>] [--relevant-only]
 show-provision --section <n>
@@ -661,11 +696,12 @@ audit
   the as-enacted VATCA text (reverse charge, place of supply, deductibility)
   is a structural mechanism that has not been fundamentally rewritten since
   2010, so curating its *existence* from the frozen text remains safe.
-- **Only 23 of 167 relevant provisions have a curated rule key** (4 Finance
+- **Only 24 of 168 relevant provisions have a curated rule key** (4 Finance
   Act, 5 VATCA principal-Act, 4 Schedule 2, 4 Schedule 3, 3 RCT, 3 current
-  rates). Everything else is ingested (text, offsets, category all on disk)
-  but not yet extracted into named rules — `provisionsWithoutExtractedRule`
-  in the audit report would show these once curated; today it's empty
+  rates, 1 capital allowances). Everything else is ingested (text, offsets,
+  category all on disk) but not yet extracted into named rules —
+  `provisionsWithoutExtractedRule` in the audit report would show these
+  once curated; today it's empty
   because the curated set and the derived set match exactly.
 - **RCT's actual deduction rate (0%/20%/35%) is not in this KB at all**,
   by design (see "Relevant Contracts Tax (RCT)" above) — TCA 1997
@@ -673,6 +709,13 @@ audit
   have no 1997 as-enacted page; that Act is not yet ingested. The curated
   `rct.deduction_rate_not_determinable` rule states this gap as the finding
   rather than guessing a rate.
+- **The wear-and-tear allowance *percentage* (TCA 1997 s.284(2)) is not in
+  this KB either, for the same reason and by the same design**: the enacted
+  15%/20% figures are very likely stale (most plant/machinery is commonly
+  written off at 12.5% straight-line today), and no LRC-revised or current
+  TCA 1997 text is ingested to safely curate a live figure the way "VATCA
+  2010 current rates" did for VAT. Only the qualification test is curated;
+  computing an actual allowance amount from this KB alone would be wrong.
 - **VATCA's conditions are curated, not mechanically extracted — and this is
   recorded, not glossed over.** Mapping "a supplier established outside the
   State" onto `supplierCountry != 'IE'` is an interpretation; every VATCA

@@ -19,6 +19,7 @@ import {
 import {
   ingestVatcaRevisedSection, deriveVatcaRevisedRules, VATCA_REVISED_S046_MD_PATH,
 } from '@/domain/rules/vatcaRevisedIngestion';
+import { ingestTca1997S284, deriveCapitalAllowancesRules } from '@/domain/rules/capitalAllowancesIngestion';
 import { lookupTransactionRules, type TransactionContext } from '@/domain/rules/transactionLookup';
 import { setRuleReviewStatus } from '@/domain/rules/review';
 import { generateDefaultTestCases, runTestCases } from '@/domain/rules/testCases';
@@ -35,7 +36,7 @@ Commands:
   ingest [--source <s>] [--file <path>]
                                        Ingest a source's Markdown (--source: finance-act-2024
                                        [default] | vatca-2010 | vatca-2010-sch2 | vatca-2010-sch3 |
-                                       rct-tca530 | rct-tdm | vatca-2010-revised; --file overrides
+                                       rct-tca530 | rct-tdm | vatca-2010-revised | tca1997-s284; --file overrides
                                        its default path, e.g. to ingest a different revised section)
   extract [--source <s>]              Derive irish_tax_rules from ingested provisions
                                        (--source as above, but rct-tca530/rct-tdm both use
@@ -117,6 +118,14 @@ export async function main(argv: string[], options: CliOptions = {}): Promise<nu
           print(ingestVatcaRevisedSection(db, { companyId, markdown, ingestVersion: 'v1', localPath: file }), format);
           return 0;
         }
+        if (source === 'tca1997-s284') {
+          const file = getFlag(flags, 'file');
+          print(
+            ingestTca1997S284(db, { companyId, markdown: file ? readFileSync(file, 'utf8') : undefined, ingestVersion: 'v1', localPath: file }),
+            format,
+          );
+          return 0;
+        }
         if (source !== 'finance-act-2024') throw new Error(`Unknown --source: ${source}`);
         const file = getFlag(flags, 'file') ?? FINANCE_ACT_2024_MD_PATH;
         const markdown = readFileSync(file, 'utf8');
@@ -144,6 +153,10 @@ export async function main(argv: string[], options: CliOptions = {}): Promise<nu
         }
         if (source === 'vatca-2010-revised') {
           print(deriveVatcaRevisedRules(db, { companyId }), format);
+          return 0;
+        }
+        if (source === 'tca1997-s284') {
+          print(deriveCapitalAllowancesRules(db, { companyId }), format);
           return 0;
         }
         if (source !== 'finance-act-2024') throw new Error(`Unknown --source: ${source}`);
