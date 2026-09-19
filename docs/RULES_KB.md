@@ -42,7 +42,12 @@ transaction to the rules that apply to it. Two sources are ingested:
   *current* VATCA 2010 s.80(1) moneys-received/cash-basis eligibility
   thresholds (90% test / €2,000,000 turnover), closing a gap "S.I. 639/2010
   (VAT Regulations 2010)" above explicitly left open (see "S.I. 69/2025
-  (Cash Accounting Thresholds)" below).
+  (Cash Accounting Thresholds)" below);
+- Finance Act 2024 s.78 (already ingested as part of the whole Act above),
+  now also curated for the current VAT registration turnover thresholds
+  (€85,000 goods / €42,500 services, from 1 January 2025) — no new document,
+  just a derive step that had been missed the first time (see "Finance Act
+  2024 VAT Registration Thresholds" below).
 
 This is not a RAG system and it does not ask an LLM what the tax treatment
 should be. The pipeline is:
@@ -585,6 +590,41 @@ Closes a gap flagged, not fixed, in an earlier pass:
   its own review, left for a future pass, along with Regulations 1-6, 9 and
   10 (the cross-border SME exemption scheme itself).
 
+### Finance Act 2024 VAT Registration Thresholds
+
+Not a new source — Finance Act 2024 was already ingested in full above —
+just a missed derive step, found while auditing what the already-ingested
+Act still holds:
+
+- `src/domain/rules/financeAct2024VatThresholdsCuration.ts` /
+  `financeAct2024VatThresholdsIngestion.ts` — two rules from s.78
+  (amendment of VATCA 2010 s.2(1)'s "goods threshold" and "services
+  threshold" definitions): `vat.registration_threshold_goods` (€85,000) and
+  `vat.registration_threshold_services` (€42,500), both effective 1 January
+  2025, stated in the section's own text.
+- s.78 states two independent euro figures in one section, which the
+  generic `SECTION_RULE_KEYS`/`extractFactsFromProvision` pipeline
+  (`factExtractor.ts`) is not built to split — that pipeline picks a single
+  fact per curated section. Rather than extend a shared, already-relied-on
+  mechanism for one two-value section, this is a small dedicated curation
+  in the same style as the S.I. modules above: explicit statement excerpts
+  and explicit numeric values (`8,500,000` / `4,250,000` `eur_minor` — real
+  cents, per AGENTS.md invariant #1), verified verbatim against the stored
+  provision text by a dedicated test.
+- s.78's mechanical category is `'definitions'` — its text says "in the
+  definition of ... threshold", which matches the definitions keyword rule
+  before anything VAT-specific — so Finance Act 2024's original ingest
+  marked it *not relevant* by the default categoriser, and it was never
+  extracted. `deriveFinanceAct2024VatThresholds` corrects that provision's
+  `relevant` flag when it derives these rules: the same curated-override
+  judgement `SECTION_RULE_KEYS` makes for other sections at ingest time,
+  just applied after the fact since this section was reviewed later than
+  the rest of the Act.
+- The two rules route on an explicit `supplyType` ('goods' | 'services')
+  field, never inferred from free text — this KB cannot tell from a
+  description alone whether a transaction is a supply of goods or of
+  services, and guessing wrongly here would apply the wrong threshold.
+
 ## Rule format
 
 Conceptually, a stored rule looks like:
@@ -778,6 +818,7 @@ npm run cli:rules -- ingest --source tca1997-s284 && npm run cli:rules -- extrac
 npm run cli:rules -- ingest --source si639 && npm run cli:rules -- extract --source si639
 npm run cli:rules -- ingest --source si156 && npm run cli:rules -- extract --source si156
 npm run cli:rules -- ingest --source si69-2025 && npm run cli:rules -- extract --source si69-2025
+npm run cli:rules -- extract --source finance-act-2024-vat-thresholds
 npm run cli:rules -- audit
 ```
 
@@ -787,13 +828,17 @@ Headline numbers:
   VATCA 2010, 15 VATCA 2010 Schedule 2, 32 VATCA 2010 Schedule 3, 1 TCA 1997
   s.530, 1 Revenue TDM 18-02-04, 1 VATCA 2010 s.46 revised, 1 TCA 1997
   s.284, 1 Revenue TDM 18-02-05, 1 Revenue TDM 18-02-11, 47 S.I. 639/2010, 3
-  S.I. 156/2012, 1 S.I. 69/2025 reg.8), 192 judged relevant to transaction
-  classification, 155 not (procedural/repeal/penalty/pure-definition, or
-  uncategorised and flagged for review).
-- 29 rules extracted (4 Finance Act, 5 VATCA principal-Act, 4 Schedule 2, 4
+  S.I. 156/2012, 1 S.I. 69/2025 reg.8), 193 judged relevant to transaction
+  classification, 154 not (procedural/repeal/penalty/pure-definition, or
+  uncategorised and flagged for review) — one higher than before because
+  Finance Act 2024 s.78's relevant flag was corrected when its two VAT
+  registration thresholds were curated (see "Finance Act 2024 VAT
+  Registration Thresholds" below).
+- 31 rules extracted (4 Finance Act, 5 VATCA principal-Act, 4 Schedule 2, 4
   Schedule 3, 4 RCT, 3 current VAT rates, 1 capital allowances, 1 S.I.
   639/2010 cash accounting, 1 S.I. 156/2012 mandatory e-filing, 2 S.I.
-  69/2025 cash-accounting eligibility thresholds), all `ai_extracted`, all
+  69/2025 cash-accounting eligibility thresholds, 2 Finance Act 2024 VAT
+  registration thresholds), all `ai_extracted`, all
   `human_review_required = true` — **zero rules in this KB are authoritative
   yet.**
 - 15 rules with a stated exception the system flags rather than evaluates,
@@ -853,14 +898,14 @@ audit
   the as-enacted VATCA text (reverse charge, place of supply, deductibility)
   is a structural mechanism that has not been fundamentally rewritten since
   2010, so curating its *existence* from the frozen text remains safe.
-- **Only 29 of 192 relevant provisions have a curated rule key** (4 Finance
+- **Only 31 of 193 relevant provisions have a curated rule key** (4 Finance
   Act, 5 VATCA principal-Act, 4 Schedule 2, 4 Schedule 3, 4 RCT, 3 current
   rates, 1 capital allowances, 1 S.I. 639/2010, 1 S.I. 156/2012, 2 S.I.
-  69/2025). Everything else is ingested (text, offsets, category all on
-  disk) but not yet extracted into named rules —
-  `provisionsWithoutExtractedRule` in the audit report would show these
-  once curated; today it's empty because the curated set and the derived
-  set match exactly.
+  69/2025, 2 Finance Act 2024 VAT thresholds). Everything else is ingested
+  (text, offsets, category all on disk) but not yet extracted into named
+  rules — `provisionsWithoutExtractedRule` in the audit report would show
+  these once curated; today it's empty because the curated set and the
+  derived set match exactly.
 - **RCT's actual deduction rate (0%/20%/35%) is not in this KB at all**,
   by design (see "Relevant Contracts Tax (RCT)" above) — TCA 1997
   ss.530A-530V, which govern it, were inserted by Finance Act 2011 s.20 and
