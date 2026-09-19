@@ -496,6 +496,59 @@ describe('bank payment anomalies', () => {
       const scan = scanForAnomalies(db, { companyId });
       expect(scan.anomalies.filter((a) => a.code === 'possible_annual_duplicate_payment')).toHaveLength(0);
     });
+
+    // Issue #151 finding 2: a monthly subscription/fee recurs the same
+    // amount ten-plus times a year by design — that volume is itself
+    // evidence of a recognised recurring charge, not a duplicate.
+    it('does not emit an annual-duplicate finding for a fee that recurs every month', () => {
+      for (let month = 1; month <= 12; month++) {
+        addTransaction('REVOLUT BUSINESS FEE', -1_000, `2025-${String(month).padStart(2, '0')}-05`, { supplierId: null });
+      }
+
+      const scan = scanForAnomalies(db, { companyId });
+      const annual = scan.anomalies.filter((a) => a.code === 'possible_annual_duplicate_payment');
+      expect(annual.length).toBeLessThan(12);
+      expect(annual).toHaveLength(0);
+    });
+
+    it('does not emit an annual-duplicate finding for three or more genuine same-amount charges', () => {
+      addTransaction('ACME DIGITAL', -123_000, '2025-01-10');
+      addTransaction('ACME DIGITAL', -123_000, '2025-05-10');
+      addTransaction('ACME DIGITAL', -123_000, '2025-09-10');
+
+      const scan = scanForAnomalies(db, { companyId });
+      expect(scan.anomalies.filter((a) => a.code === 'possible_annual_duplicate_payment')).toHaveLength(0);
+    });
+  });
+
+  // Issue #151 finding 1: DUP-ANT-01. Two raw imported rows, same day, same
+  // amount, no supplierId — but the narratives share only the merchant name
+  // once SEPA/"duplicate payment" boilerplate is stripped out.
+  describe('grouping narratives that share a merchant name but not the whole string', () => {
+    it('groups "SEPA PAYMENT Anthropic" with "ANTHROPIC duplicate payment" on the same amount and day', () => {
+      const first = addTransaction('SEPA PAYMENT Anthropic', -12_300, '2026-11-07', { supplierId: null });
+      const second = addTransaction('ANTHROPIC duplicate payment', -12_300, '2026-11-07', { supplierId: null });
+
+      const scan = scanForAnomalies(db, { companyId });
+      const found = scan.anomalies.filter((a) => a.code === 'duplicate_bank_payment');
+      expect(found.map((a) => a.entityId).sort()).toEqual([first, second].sort());
+    });
+
+    it('does not group two narratives that share only boilerplate and no merchant name', () => {
+      addTransaction('SEPA PAYMENT', -12_300, '2026-11-07', { supplierId: null });
+      addTransaction('SEPA PAYMENT duplicate', -12_300, '2026-11-08', { supplierId: null });
+
+      const scan = scanForAnomalies(db, { companyId });
+      expect(scan.anomalies.filter((a) => a.code === 'duplicate_bank_payment')).toHaveLength(0);
+    });
+
+    it('does not group two different merchants that both happen to say "payment"', () => {
+      addTransaction('SEPA PAYMENT Anthropic', -12_300, '2026-11-07', { supplierId: null });
+      addTransaction('SEPA PAYMENT Vercel', -12_300, '2026-11-08', { supplierId: null });
+
+      const scan = scanForAnomalies(db, { companyId });
+      expect(scan.anomalies.filter((a) => a.code === 'duplicate_bank_payment')).toHaveLength(0);
+    });
   });
 });
 

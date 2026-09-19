@@ -759,6 +759,34 @@ a user actually hits: a raw statement import.
   full calendar year, at `info` (not `warning`) severity, and reports
   independently of the 5-day check rather than replacing it.
 
+### Issue #151: annual bank-dup check too noisy; exact-string grouping too strict
+
+Two narrower problems in the issue #149 fix, found by the same retest.
+
+- **Finding 1 — `bankCounterpartyKey`'s description fallback required
+  exact-string equality.** DUP-ANT-01's own pair of raw bank rows — "SEPA
+  PAYMENT Anthropic" and "ANTHROPIC duplicate payment" — describe the same
+  counterparty on the same day for the same amount, but do not normalise
+  to the same string once bank-generated boilerplate ("SEPA PAYMENT",
+  "duplicate payment") surrounds the merchant name differently in each. The
+  fallback key is now the *sorted set* of words left after stripping a
+  `BANK_NARRATIVE_BOILERPLATE` list (payment/sepa/duplicate/transfer/direct
+  debit/standing order/etc.) rather than the whole normalised string — both
+  narratives above reduce to `anthropic`. `GENERIC_BANK_NARRATIVE_RE` still
+  runs first, so a narrative that is *only* boilerplate (no merchant word
+  survives stripping) is still treated as unidentified rather than grouped
+  on an empty key.
+- **Finding 2 — the annual check flagged every recurring monthly charge.**
+  `possibleAnnualDuplicatePayments` grouped on counterparty + amount + year
+  with no test for how many times that combination is expected to recur —
+  a monthly subscription or fee (GitHub, a Revolut charge) is the same
+  amount ten-plus times a year *by design*, and the check produced roughly
+  100 `info` rows on one real statement, burying the two rows
+  (DUP-001/DUP-002) it exists to surface. Gated to exactly two occurrences
+  in the year: three or more is itself evidence of a recognised recurring
+  charge, not a duplicate, so those groups are now suppressed entirely
+  rather than each occurrence adding another row.
+
 ### Capital allowances
 
 The first curation from TCA 1997 outside RCT, and the first to use a new
