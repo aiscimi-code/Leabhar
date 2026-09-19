@@ -1,77 +1,83 @@
 {
-  "generatedAt": "2026-09-19T08:31:07.947Z",
+  "generatedAt": "2026-09-19T08:58:33.814Z",
   "sources": [
     {
-      "id": "src_780e780e102a40a38b9c48c7",
+      "id": "src_7aa4b972a62d4094b8361eba",
       "citation": "2024 Act 43",
       "sourceType": "legislation",
       "provisionCount": 118
     },
     {
-      "id": "src_1c252a79b32e4806902efa37",
+      "id": "src_9710202e3f164b9092aad601",
       "citation": "2010 Act 31",
       "sourceType": "legislation",
       "provisionCount": 125
     },
     {
-      "id": "src_881d655030e84f33ad9378a0",
+      "id": "src_71b17232565e4e65b845c3a6",
       "citation": "2010 Act 31 Sch.2",
       "sourceType": "legislation",
       "provisionCount": 15
     },
     {
-      "id": "src_1735037fc127442f9b5a7573",
+      "id": "src_ac04d8664b654122827bb584",
       "citation": "2010 Act 31 Sch.3",
       "sourceType": "legislation",
       "provisionCount": 32
     },
     {
-      "id": "src_92e4c92787d049b09322d7f8",
+      "id": "src_b0aad2fa70854b169dfd890b",
       "citation": "1997 Act 39 s.530",
       "sourceType": "legislation",
       "provisionCount": 1
     },
     {
-      "id": "src_2ce59afc1a814488beee6ebe",
+      "id": "src_d2a58cb3e47448609bf5c8c1",
       "citation": "Revenue TDM Part 18-02-04",
       "sourceType": "revenue_guidance",
       "provisionCount": 1
     },
     {
-      "id": "src_49e20fa190b741d4ae1f8e42",
-      "citation": "2010 Act 31 s.46",
-      "sourceType": "legislation",
-      "provisionCount": 1
-    },
-    {
-      "id": "src_dd70acda374c41a39bbbd1fc",
-      "citation": "1997 Act 39 s.284",
-      "sourceType": "legislation",
-      "provisionCount": 1
-    },
-    {
-      "id": "src_72a78bf3837c459bb210e767",
+      "id": "src_175c9af3778b4599b54755e4",
       "citation": "Revenue TDM Part 18-02-05",
       "sourceType": "revenue_guidance",
       "provisionCount": 1
     },
     {
-      "id": "src_d31b4b7678444998a9fccd52",
+      "id": "src_6e88829321af461e97a80e90",
       "citation": "Revenue TDM Part 18-02-11",
       "sourceType": "revenue_guidance",
       "provisionCount": 1
+    },
+    {
+      "id": "src_269b138cf5144571a4b1c041",
+      "citation": "2010 Act 31 s.46",
+      "sourceType": "legislation",
+      "provisionCount": 1
+    },
+    {
+      "id": "src_4d82f9d5fc6b48d69c0b3731",
+      "citation": "1997 Act 39 s.284",
+      "sourceType": "legislation",
+      "provisionCount": 1
+    },
+    {
+      "id": "src_41c31c55b82f459283801e7a",
+      "citation": "S.I. 639/2010",
+      "sourceType": "legislation",
+      "provisionCount": 47
     }
   ],
-  "provisionCount": 296,
-  "relevantProvisionCount": 169,
-  "notRelevantProvisionCount": 127,
-  "ruleCount": 25,
+  "provisionCount": 343,
+  "relevantProvisionCount": 190,
+  "notRelevantProvisionCount": 153,
+  "ruleCount": 26,
   "rulesByReviewStatus": {
-    "ai_extracted": 25
+    "ai_extracted": 26
   },
-  "rulesRequiringHumanReview": 25,
-  "rulesRequiringGuidance": 20,
-  "rulesWithExceptions": 13,
+  "rulesRequiringHumanReview": 26,
+  "rulesRequiringGuidance": 21,
+  "rulesWithExceptions": 14,
   "provisionsWithoutExtractedRule": [],
   "ambiguousProvisions": [
     {
@@ -113,6 +119,11 @@
       "sectionNumber": "284",
       "heading": "Wear and tear allowances.",
       "reason": "Curated: mapped to a rule, overriding the other category default."
+    },
+    {
+      "sectionNumber": "25",
+      "heading": "Determination of tax due by reference to moneys received",
+      "reason": "Curated: mapped to a rule in si639Curation.ts, overriding the other category default."
     }
   ],
   "unresolvedCrossReferences": [
