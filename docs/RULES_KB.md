@@ -1042,6 +1042,67 @@ audit
   it), but a future schema change will hit the same `drizzle-kit generate`
   failure until that chain is repaired — out of scope for this change.
 
+## Documents reviewed, not curated
+
+Every file below was read and judged during the documents-intake pass, not
+skipped. Each is excluded for a stated, checkable reason — verbatim-only
+policy, no rule-worthy content, or (a new category below) real-looking
+statute text this KB still can't prove is verbatim. None of these back a
+curated rule.
+
+**Paraphrase / hand-written summary — no source hash, cannot back a rule:**
+
+- `docs/statutes/tca-1997/s18.md` — a five-sentence prose summary of
+  Schedule D Cases I-V, no statutory text at all.
+- `docs/statutes/tca-1997/s52.md` — a one-paragraph pointer describing Part
+  4's interpretation section, no statutory text.
+- `docs/statutes/tca-1997/1997-act-39-ss-885-887.md` — a hand-written
+  summary of record-keeping obligations (6-year retention, electronic
+  storage, tax-reference-number-on-invoices duty); explicitly says "Full
+  section: [link]" rather than quoting it, confirming it is not a capture.
+- `docs/statutes/vat3-rtd/vat3-rtd-boxes.md` — a hand-built reference table
+  mapping VAT3/RTD return boxes (T1-T4, E1/E2, ES1/ES2, PA1) to their
+  meaning, useful for a human but not a capture of an official document.
+- `docs/statutes/companies-act-2014/companies-act-2014.md` — a hand-written
+  summary of several sections (s.282 accounting records, s.280A/D/E small/
+  micro company thresholds, s.352 abridged filing, ss.358-360 audit
+  exemption). The thresholds it describes are real and not currently in
+  this KB, but this file cannot back them — it would need re-capturing from
+  the LRC-revised Companies Act 2014 HTML with a source hash first.
+- `docs/statutes/frs-102/frs-102.md` — a citation index only, by design: its
+  own front matter says "Do not store the standard text in this repo" (FRC
+  copyright). Maps accounting decisions to FRS 102 section numbers; not
+  eligible for verbatim ingestion at all.
+
+**Verbatim, reviewed, no new rule-worthy content found:**
+
+- `docs/statutes/import-vat/customs-manual-import-vat.md` — genuinely
+  verbatim (`source_pdf_sha256` present). Confirms the Postponed Accounting
+  mechanics already understood from other sources (VAT3 boxes T1/T2/PA1,
+  CP42 Onward Supply Relief) but states no new numeric threshold or
+  obligation beyond what S.I. 639/2010 and the VAT3/RTD box mapping above
+  already establish. Left uningested rather than ingested-for-citability-
+  only, since no other rule in this KB currently cites it.
+
+**Real-looking statute text with no provenance proof — a genuine gap, not a
+paraphrase, and flagged rather than guessed past:**
+
+- `docs/statutes/tca-1997/s235.md`, `s288.md`, `s299.md`, `s496.md`,
+  `s613.md` — each reads as full verbatim TCA 1997 section text (s.235:
+  athletic/sports body exemption; s.288: balancing allowances/charges on
+  disposal of machinery/plant; s.299: deemed ownership for lessees'
+  capital allowances; s.496: an obsolete pre-euro relief scheme; s.613: CGT
+  exemptions for savings bonuses/betting winnings/certain settlements) —
+  but **none carries a `source_pdf_sha256`/`source_html_sha256` or a
+  `conversion:` marker** the way every other genuinely verbatim source in
+  this KB does (compare `docs/statutes/tca-1997/s530.md` or `s284.md`,
+  which do). This KB's verbatim-only policy is about provable provenance,
+  not just plausible-looking prose, so these five are **not** ingested
+  despite reading like the real thing. s.288 in particular (capital
+  allowances balancing mechanics) would be a genuine curation candidate if
+  re-captured with a real hash; s.496 and s.613 are outside this KB's VAT/
+  registration/RCT/cash-accounting scope even if re-captured.
+
 ## Adding a new source (Revenue guidance, EU law, another Act)
 
 This is meant to be an ingestion, not a redesign:
