@@ -423,6 +423,80 @@ describe('bank payment anomalies', () => {
     const scan = scanForAnomalies(db, { companyId });
     expect(scan.anomalies.filter((a) => a.code === 'duplicate_bank_payment')).toHaveLength(0);
   });
+
+  // Issue #149 defect 1: importStatement writes description/amount/date
+  // only — supplierId/customerId are filled in later by classification,
+  // which a fresh company has not done yet. The detector must still work
+  // on a raw, unclassified import.
+  describe('on unclassified bank rows (no supplierId/customerId)', () => {
+    it('flags two unmatched bank outflows with the same description and amount', () => {
+      const first = addTransaction('ANTHROPIC', -12_300, '2025-11-06', { supplierId: null });
+      const second = addTransaction('ANTHROPIC', -12_300, '2025-11-07', { supplierId: null });
+
+      const scan = scanForAnomalies(db, { companyId });
+      const found = scan.anomalies.filter((a) => a.code === 'duplicate_bank_payment');
+      expect(found.map((a) => a.entityId).sort()).toEqual([first, second].sort());
+    });
+
+    it('is case- and punctuation-insensitive when matching the narrative', () => {
+      const first = addTransaction('Anthropic, PBC', -12_300, '2025-11-06', { supplierId: null });
+      const second = addTransaction('ANTHROPIC PBC', -12_300, '2025-11-07', { supplierId: null });
+
+      const scan = scanForAnomalies(db, { companyId });
+      const found = scan.anomalies.filter((a) => a.code === 'duplicate_bank_payment');
+      expect(found.map((a) => a.entityId).sort()).toEqual([first, second].sort());
+    });
+
+    it('does not treat two unrelated bare card payments as duplicates of each other', () => {
+      addTransaction('CARD PAYMENT', -5_000, '2025-11-06', { supplierId: null });
+      addTransaction('CARD PAYMENT', -5_000, '2025-11-07', { supplierId: null });
+
+      const scan = scanForAnomalies(db, { companyId });
+      expect(scan.anomalies.filter((a) => a.code === 'duplicate_bank_payment')).toHaveLength(0);
+    });
+
+    it('does not treat two unrelated ATM withdrawals as duplicates of each other', () => {
+      addTransaction('ATM withdrawal', -10_000, '2025-11-06', { supplierId: null });
+      addTransaction('ATM withdrawal', -10_000, '2025-11-07', { supplierId: null });
+
+      const scan = scanForAnomalies(db, { companyId });
+      expect(scan.anomalies.filter((a) => a.code === 'duplicate_bank_payment')).toHaveLength(0);
+    });
+  });
+
+  // Issue #149 defect 2: DUP-001 (21 Mar) and DUP-002 (2 Jul) — the pack's
+  // own labelled "possible duplicate" pair, months apart, invisible to the
+  // 5-day window above.
+  describe('possible annual duplicate payments (wider than the 5-day window)', () => {
+    it('flags the same counterparty and amount recurring months apart in the same year, at info severity', () => {
+      const dup001 = addTransaction('ACME DIGITAL', -123_000, '2025-03-21');
+      const dup002 = addTransaction('ACME DIGITAL', -123_000, '2025-07-02');
+
+      const scan = scanForAnomalies(db, { companyId });
+      expect(scan.anomalies.filter((a) => a.code === 'duplicate_bank_payment')).toHaveLength(0);
+
+      const found = scan.anomalies.filter((a) => a.code === 'possible_annual_duplicate_payment');
+      expect(found.map((a) => a.entityId).sort()).toEqual([dup001, dup002].sort());
+      expect(found[0]!.severity).toBe('info');
+    });
+
+    it('works on an unclassified bank row too', () => {
+      const dup001 = addTransaction('ACME DIGITAL', -123_000, '2025-03-21', { supplierId: null });
+      const dup002 = addTransaction('ACME DIGITAL', -123_000, '2025-07-02', { supplierId: null });
+
+      const scan = scanForAnomalies(db, { companyId });
+      const found = scan.anomalies.filter((a) => a.code === 'possible_annual_duplicate_payment');
+      expect(found.map((a) => a.entityId).sort()).toEqual([dup001, dup002].sort());
+    });
+
+    it('does not flag the same amount recurring in a different year', () => {
+      addTransaction('ACME DIGITAL', -123_000, '2025-12-21');
+      addTransaction('ACME DIGITAL', -123_000, '2026-01-02');
+
+      const scan = scanForAnomalies(db, { companyId });
+      expect(scan.anomalies.filter((a) => a.code === 'possible_annual_duplicate_payment')).toHaveLength(0);
+    });
+  });
 });
 
 describe('capital purchases', () => {
