@@ -370,6 +370,19 @@ function nearDuplicatePurchaseInvoices(
 const GENERIC_BANK_NARRATIVE_RE = /^(card payment|atm withdrawal|cash withdrawal|unknown|unidentified)\.?$/;
 
 /**
+ * Words a bank narrative uses to describe the payment mechanism or its own
+ * status, not who the other side is (issue #151 finding 1). "SEPA PAYMENT
+ * Anthropic" and "ANTHROPIC duplicate payment" describe the same
+ * counterparty in two narratives that share no more than this boilerplate
+ * with each other otherwise — stripped out, both reduce to "anthropic".
+ */
+const BANK_NARRATIVE_BOILERPLATE = new Set([
+  'sepa', 'payment', 'payments', 'paid', 'duplicate', 'transfer', 'direct',
+  'debit', 'standing', 'order', 'card', 'faster', 'bank', 'giro', 'ref',
+  'reference', 'transaction', 'txn', 'inv', 'invoice', 'the', 'and', 'for',
+]);
+
+/**
  * A key identifying who the other side of a bank transaction is, for
  * duplicate-payment grouping (issue #149 defect 1).
  *
@@ -380,15 +393,26 @@ const GENERIC_BANK_NARRATIVE_RE = /^(card payment|atm withdrawal|cash withdrawal
  * the normalised description lets the same check work before any
  * classification has happened, while `GENERIC_BANK_NARRATIVE_RE` stops a
  * pair of otherwise-unrelated, un-narrated card payments from being treated
- * as identified at all. Returns null when nothing here — bank reference
- * included — actually identifies a counterparty.
+ * as identified at all.
+ *
+ * Beyond that generic-label exclusion, the key is the *set* of remaining
+ * significant words rather than the whole normalised string (issue #151
+ * finding 1): two narratives for the same counterparty rarely match
+ * character-for-character once bank-generated boilerplate ("SEPA PAYMENT",
+ * "duplicate payment") is mixed in around the merchant name. Returns null
+ * when nothing here — bank reference included — actually identifies a
+ * counterparty.
  */
 function bankCounterpartyKey(t: typeof bankTransactions.$inferSelect): string | null {
   if (t.supplierId) return `s:${t.supplierId}`;
   if (t.customerId) return `c:${t.customerId}`;
   const normalised = normaliseDescription(t.description);
   if (!normalised || GENERIC_BANK_NARRATIVE_RE.test(normalised)) return null;
-  return `d:${normalised}`;
+  const tokens = [...new Set(
+    normalised.split(' ').filter((word) => word.length >= 3 && !BANK_NARRATIVE_BOILERPLATE.has(word)),
+  )].sort();
+  if (tokens.length === 0) return null;
+  return `d:${tokens.join(' ')}`;
 }
 
 function groupBankTransactionsByCounterpartyAndAmount(
@@ -463,6 +487,16 @@ function duplicateBankPayments(
  * different, weaker signal (a genuine repeat purchase looks identical) and
  * so is kept at `info` severity and reported separately rather than folded
  * into the warning-level check above.
+ *
+ * Gated to exactly two occurrences in the year (issue #151 finding 2): a
+ * monthly subscription or fee (GitHub, a Revolut charge) recurs the same
+ * amount ten or more times a year by design, and flagging every one of
+ * those as a "possible duplicate" produced ~100 info rows on one real
+ * statement — enough noise to bury the two rows the check exists to
+ * surface. Three or more occurrences of the same counterparty and amount in
+ * a year is itself evidence of a recognised recurring charge, not evidence
+ * of a duplicate; only a genuine, isolated *pair* is distinctive enough to
+ * be worth a look.
  */
 function possibleAnnualDuplicatePayments(
   transactions: Array<typeof bankTransactions.$inferSelect>,
@@ -479,7 +513,7 @@ function possibleAnnualDuplicatePayments(
     }
 
     for (const inYear of byYear.values()) {
-      if (inYear.length < 2) continue;
+      if (inYear.length !== 2) continue;
       for (const t of inYear) {
         const others = inYear.filter((other) => other.id !== t.id);
         if (others.length === 0) continue;
