@@ -183,6 +183,18 @@ const NON_TRADING_BANK_NARRATIVE_RE =
   /\bdirector\b|\bdrawings?\b|\bfunds introduced\b|\brevenue payment\b|\bvat settlement\b|\bpaye\b|\batm\b|\bcash withdrawal\b|\bunknown\b|\bunidentified\b/i;
 
 /**
+ * A card-payment line whose narrative carries no other identifying text —
+ * no merchant, no reference, nothing beyond the payment method itself
+ * (issue #147 finding 2, UNKNOWN-002). This is deliberately an exact match
+ * on the whole (trimmed) description rather than a substring test: "CARD
+ * PAYMENT" alone is evidence of nothing, but "CARD PAYMENT - AWS DUBLIN"
+ * names a real merchant and is exactly the kind of narrative the `vat` topic
+ * exists to catch — widening this to a substring match would also exclude
+ * every genuinely evidenced card purchase.
+ */
+const BARE_CARD_PAYMENT_RE = /^card payment\.?$/i;
+
+/**
  * Deterministic keyword -> topic table. Extend this when a new rule topic is
  * added to the knowledge base; a transaction is never routed to a topic by
  * semantic similarity alone (task: "semantic search may retrieve candidates;
@@ -208,7 +220,10 @@ const TOPIC_RULES: TopicRule[] = [
     // its own absence still surfaces as `unresolvedFields` once the topic
     // is at least opened, instead of the question never being asked.
     test: (ctx) => {
-      if (ctx.supplyType == null && NON_TRADING_BANK_NARRATIVE_RE.test(TEXT_FIELDS(ctx))) return false;
+      if (ctx.supplyType == null && (
+        NON_TRADING_BANK_NARRATIVE_RE.test(TEXT_FIELDS(ctx))
+        || BARE_CARD_PAYMENT_RE.test((ctx.description ?? '').trim())
+      )) return false;
       return ctx.vatRegistered === true
         || ctx.vatRegistered === false
         || ctx.supplyType != null

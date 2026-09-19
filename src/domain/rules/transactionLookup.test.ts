@@ -499,6 +499,34 @@ describe('identifyTopics — issue #145 defect 3: non-trading bank narratives', 
   });
 });
 
+describe('identifyTopics — issue #147 finding 2: a bare card-payment narrative', () => {
+  it('does not route "CARD PAYMENT" alone (no merchant, no reference) to vat', () => {
+    const topics = identifyTopics({
+      transactionDate: '2026-08-16', amountMinor: 7325, vatRegistered: true,
+      description: 'CARD PAYMENT',
+    });
+    expect(topics).not.toContain('vat');
+  });
+
+  it('is case- and punctuation-insensitive', () => {
+    expect(identifyTopics({
+      transactionDate: '2026-08-16', amountMinor: 7325, vatRegistered: true,
+      description: '  card payment.  ',
+    })).not.toContain('vat');
+  });
+
+  it('still routes a card payment that names a real merchant', () => {
+    // Only the bare, evidence-free narrative is excluded — a card payment
+    // that identifies who was actually paid is exactly what the vat topic
+    // exists to catch.
+    const topics = identifyTopics({
+      transactionDate: '2026-08-16', amountMinor: 7325, vatRegistered: true,
+      description: 'CARD PAYMENT - AWS DUBLIN',
+    });
+    expect(topics).toContain('vat');
+  });
+});
+
 describe('lookupTransactionRules — issue #145 defect 3: non-trading bank lines never get a VAT rate', () => {
   const s46Md = readFileSync(VATCA_REVISED_S046_MD_PATH, 'utf8');
 
@@ -543,6 +571,19 @@ describe('lookupTransactionRules — issue #145 defect 3: non-trading bank lines
     });
     expect(result.applicableRules.filter((r) => r.ruleType === 'rate').map((r) => r.ruleKey))
       .not.toContain('vat.rate_standard_current');
+  });
+
+  // The issue's own suggested test (UNKNOWN-002: a card payment with no
+  // invoice on record).
+  it('does not attach a VAT rate to CARD PAYMENT with no invoice', () => {
+    const result = lookupTransactionRules(db, {
+      companyId,
+      transaction: {
+        transactionDate: '2026-08-16', amountMinor: 7325, currency: 'EUR',
+        vatRegistered: true, description: 'CARD PAYMENT',
+      },
+    });
+    expect(result.applicableRules.filter((r) => r.ruleType === 'rate')).toEqual([]);
   });
 });
 

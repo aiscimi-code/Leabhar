@@ -304,6 +304,57 @@ describe('purchase invoices', () => {
         .where(eq(reviewItems.entityId, invoice.invoiceId)).all();
       expect(items).toHaveLength(0);
     });
+
+    // Issue #147 finding 3: PI-029, an invoice whose supplier is only ever
+    // recorded as "Unknown Supplier".
+    it('holds back recovery and flags an invoice from an unidentified supplier', () => {
+      const unknownSupplierId = ids.supplier();
+      db.insert(suppliers).values({
+        id: unknownSupplierId, companyId, name: 'Unknown Supplier', matchKey: 'unknown supplier',
+      }).run();
+
+      const invoice = purchaseInvoice({
+        supplierId: unknownSupplierId,
+        lines: [{
+          description: 'Materials', netMinor: 25_000,
+          accountId: byCode['6070']!, vatTreatmentId: tr['IE_STD']!,
+          statedVatMinor: 5_750,
+        }],
+      });
+      expect(invoice.vatMinor).toBe(5_750);
+      expect(accountBalance(db, { companyId, accountId: acc['vat_on_purchases']! })).toBe(0);
+
+      const items = db.select().from(reviewItems)
+        .where(eq(reviewItems.entityId, invoice.invoiceId)).all();
+      expect(items).toHaveLength(1);
+      expect(items[0]!.detail).toMatch(/Unknown Supplier/);
+    });
+
+    it('holds back recovery on an unidentified supplier even under a reverse-charge treatment', () => {
+      const unknownSupplierId = ids.supplier();
+      db.insert(suppliers).values({
+        id: unknownSupplierId, companyId, name: 'Unidentified Supplier', matchKey: 'unidentified',
+        countryCode: 'US',
+      }).run();
+
+      const invoice = purchaseInvoice({
+        supplierId: unknownSupplierId,
+        lines: [{
+          description: 'API usage', netMinor: 20_000,
+          accountId: byCode['6010']!, vatTreatmentId: tr['NON_EU_SERVICES_RCV']!,
+        }],
+      });
+      // Self-assessed VAT is still charged (T1 = self-assessed output), but
+      // not treated as automatically recoverable (T2 = 0) pending review.
+      const report = vatFor('Jan–Feb 2025');
+      expect(report.T1.amountMinor).toBe(4_600);
+      expect(report.T2.amountMinor).toBe(0);
+
+      const items = db.select().from(reviewItems)
+        .where(eq(reviewItems.entityId, invoice.invoiceId)).all();
+      expect(items).toHaveLength(1);
+      expect(items[0]!.detail).toMatch(/Unidentified Supplier/);
+    });
   });
 });
 

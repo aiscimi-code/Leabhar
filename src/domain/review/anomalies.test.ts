@@ -287,6 +287,24 @@ describe('invoice anomalies', () => {
     expect(found!.entityId).toBe(invoice.invoiceId);
   });
 
+  // Issue #147 finding 1: PI-017's own line description is just "Business
+  // dinner" — no "restaurant"/"catering" wording at all.
+  it('flags a purchase line described only as "Business dinner" posted at the standard rate', () => {
+    const invoice = createInvoice(db, {
+      companyId, direction: 'purchase', invoiceDate: makeDate(2025, 3, 15),
+      supplierId, invoiceNumber: 'PI-017',
+      lines: [{
+        description: 'Business dinner', netMinor: 3_000,
+        accountId: byCode['6110']!, vatTreatmentId: tr['IE_STD']!,
+      }],
+    });
+
+    const scan = scanForAnomalies(db, { companyId });
+    const found = scan.anomalies.find((a) => a.code === 'hospitality_rate_mismatch');
+    expect(found).toBeTruthy();
+    expect(found!.entityId).toBe(invoice.invoiceId);
+  });
+
   it('does not flag a restaurant line already posted at the reduced rate', () => {
     createInvoice(db, {
       companyId, direction: 'purchase', invoiceDate: makeDate(2025, 3, 15),
@@ -348,6 +366,62 @@ describe('invoice anomalies', () => {
     const found = scan.anomalies.find((a) => a.code === 'long_overdue_invoice')!;
     expect(found.suggestion).toContain('write it off deliberately');
     expect(found.suggestion).toContain('VAT deferred that will never fall due');
+  });
+});
+
+describe('bank payment anomalies', () => {
+  // Issue #147 finding 4: DUP-001/DUP-002, two outflows of the same amount
+  // to the same supplier, days apart, with no corresponding duplicate invoice.
+  it('flags the same payment amount leaving the bank twice, days apart', () => {
+    const first = addTransaction('ACME DIGITAL', -123_000, '2025-03-10');
+    const second = addTransaction('ACME DIGITAL', -123_000, '2025-03-13');
+
+    const scan = scanForAnomalies(db, { companyId });
+    const found = scan.anomalies.filter((a) => a.code === 'duplicate_bank_payment');
+    expect(found.map((a) => a.entityId).sort()).toEqual([first, second].sort());
+    expect(found[0]!.suggestion).toContain('duplicated bank entry');
+  });
+
+  // DUP-ANT-01: a second payment against an already-settled invoice.
+  it('flags a second payment of the same amount to the same supplier', () => {
+    addTransaction('ANTHROPIC', -12_300, '2025-03-01');
+    addTransaction('ANTHROPIC', -12_300, '2025-03-04');
+
+    const scan = scanForAnomalies(db, { companyId });
+    expect(scan.anomalies.filter((a) => a.code === 'duplicate_bank_payment')).toHaveLength(2);
+  });
+
+  it('flags a duplicated customer receipt, not just a duplicated payment', () => {
+    const first = addTransaction('MULLIGAN DIGITAL', 61_500, '2025-03-10', { supplierId: null, customerId });
+    const second = addTransaction('MULLIGAN DIGITAL', 61_500, '2025-03-12', { supplierId: null, customerId });
+
+    const scan = scanForAnomalies(db, { companyId });
+    const found = scan.anomalies.filter((a) => a.code === 'duplicate_bank_payment');
+    expect(found.map((a) => a.entityId).sort()).toEqual([first, second].sort());
+  });
+
+  it('does not flag a recurring monthly payment at the same price a month apart', () => {
+    addTransaction('ACME DIGITAL', -123_000, '2025-01-10');
+    addTransaction('ACME DIGITAL', -123_000, '2025-02-10');
+
+    const scan = scanForAnomalies(db, { companyId });
+    expect(scan.anomalies.filter((a) => a.code === 'duplicate_bank_payment')).toHaveLength(0);
+  });
+
+  it('does not flag two different amounts to the same supplier', () => {
+    addTransaction('ACME DIGITAL', -123_000, '2025-03-10');
+    addTransaction('ACME DIGITAL', -45_000, '2025-03-11');
+
+    const scan = scanForAnomalies(db, { companyId });
+    expect(scan.anomalies.filter((a) => a.code === 'duplicate_bank_payment')).toHaveLength(0);
+  });
+
+  it('does not flag an outflow and an inflow of the same magnitude as duplicates of each other', () => {
+    addTransaction('MULLIGAN DIGITAL', -61_500, '2025-03-10', { supplierId: null, customerId });
+    addTransaction('MULLIGAN DIGITAL', 61_500, '2025-03-11', { supplierId: null, customerId });
+
+    const scan = scanForAnomalies(db, { companyId });
+    expect(scan.anomalies.filter((a) => a.code === 'duplicate_bank_payment')).toHaveLength(0);
   });
 });
 
