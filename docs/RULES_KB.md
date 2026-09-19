@@ -730,6 +730,35 @@ explicit, documented gaps rather than fixed here.
   "refund" heuristic without a concrete signal to condition on would be
   exactly the kind of guess AGENTS.md invariant #7 exists to prevent.
 
+### Issue #149: the bank duplicate detector never fired on a fresh import
+
+PR #148's `duplicateBankPayments` was correct but never reached on the path
+a user actually hits: a raw statement import.
+
+- **Defect 1 — the check required `supplierId`/`customerId`, which
+  `importStatement` never sets.** Classification (coding rules, accepted
+  matches) is what fills those in, and a fresh company has neither yet — so
+  a 200-row import produced zero `duplicate_bank_payment` hits, even though
+  the same rows produced 14 once something else had already classified
+  them. `bankCounterpartyKey` (`anomalies.ts`) now falls back to a
+  normalised description when neither id is set, so the check works before
+  any classification has happened. A new `GENERIC_BANK_NARRATIVE_RE` keeps
+  two otherwise-unrelated, un-narrated lines (a bare "CARD PAYMENT", an ATM
+  withdrawal) from being treated as identified at all — the same
+  evidence-free vocabulary `NON_TRADING_BANK_NARRATIVE_RE`
+  (`transactionLookup.ts`, issue #145 defect 3) already uses, so "two card
+  payments of the same amount" is never mistaken for "two payments to the
+  same counterparty".
+- **Defect 2 — the 5-day window missed the pack's own labelled pair.**
+  DUP-001 (21 Mar) and DUP-002 (2 Jul) are the same counterparty and the
+  same €1,230 outflow, four months apart — a 5-day window answers "paid
+  twice this week", not "paid the same amount again months later", and
+  widening it outright would just trade false negatives for false
+  positives on any genuine recurring charge. A new, separate
+  `possibleAnnualDuplicatePayments` check groups the same way but over a
+  full calendar year, at `info` (not `warning`) severity, and reports
+  independently of the 5-day check rather than replacing it.
+
 ### Capital allowances
 
 The first curation from TCA 1997 outside RCT, and the first to use a new

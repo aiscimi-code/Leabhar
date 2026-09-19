@@ -75,6 +75,7 @@ export function scanForAnomalies(
     ...duplicateInvoiceNumbers(invoiceRows),
     ...nearDuplicatePurchaseInvoices(invoiceRows),
     ...duplicateBankPayments(transactions),
+    ...possibleAnnualDuplicatePayments(transactions),
     ...hospitalityRateMismatches(invoiceRows, invoiceLineRows),
     ...possibleNonTradingPurchases(invoiceRows, invoiceLineRows),
     ...suspenseBalance(db, params.companyId),
@@ -359,37 +360,72 @@ function nearDuplicatePurchaseInvoices(
 }
 
 /**
+ * A bank narrative that carries no identifying information beyond the
+ * payment method itself — the same generic labels `transactionLookup.ts`
+ * treats as evidence-free (issue #145 defect 3 / #147 finding 2). Excluded
+ * from the description-based grouping key below: two unrelated "CARD
+ * PAYMENT" lines of the same amount are not evidence of anything, whereas
+ * two "ANTHROPIC" lines of the same amount are.
+ */
+const GENERIC_BANK_NARRATIVE_RE = /^(card payment|atm withdrawal|cash withdrawal|unknown|unidentified)\.?$/;
+
+/**
+ * A key identifying who the other side of a bank transaction is, for
+ * duplicate-payment grouping (issue #149 defect 1).
+ *
+ * `supplierId`/`customerId` are set by classification, not by
+ * `importStatement` itself — a raw import writes description/amount/date
+ * only, so gating on them meant the duplicate check never fired on the path
+ * a user actually hits right after importing a statement. Falling back to
+ * the normalised description lets the same check work before any
+ * classification has happened, while `GENERIC_BANK_NARRATIVE_RE` stops a
+ * pair of otherwise-unrelated, un-narrated card payments from being treated
+ * as identified at all. Returns null when nothing here — bank reference
+ * included — actually identifies a counterparty.
+ */
+function bankCounterpartyKey(t: typeof bankTransactions.$inferSelect): string | null {
+  if (t.supplierId) return `s:${t.supplierId}`;
+  if (t.customerId) return `c:${t.customerId}`;
+  const normalised = normaliseDescription(t.description);
+  if (!normalised || GENERIC_BANK_NARRATIVE_RE.test(normalised)) return null;
+  return `d:${normalised}`;
+}
+
+function groupBankTransactionsByCounterpartyAndAmount(
+  transactions: Array<typeof bankTransactions.$inferSelect>,
+): Array<Array<typeof bankTransactions.$inferSelect>> {
+  const groups = new Map<string, Array<typeof bankTransactions.$inferSelect>>();
+  for (const t of transactions) {
+    const counterpartyKey = bankCounterpartyKey(t);
+    if (!counterpartyKey) continue;
+    const key = `${counterpartyKey}|${t.amountMinor}|${t.currency}`;
+    const group = groups.get(key) ?? [];
+    group.push(t);
+    groups.set(key, group);
+  }
+  return [...groups.values()].filter((group) => group.length >= 2);
+}
+
+/**
  * The same amount moving between the company and the same counterparty
  * twice, days apart, on the bank statement itself (issue #147 finding 4).
  *
  * `nearDuplicatePurchaseInvoices` above catches the same document entered
  * twice; it says nothing about the bank side, where a payment can be
  * duplicated (or a receipt double-lodged) without any second invoice ever
- * being created — DUP-001/DUP-002 and a second payment against an
- * already-settled invoice (DUP-ANT-01) are both bank-only facts. Grouping
- * on the *signed* amount keeps an outflow and an inflow of the same
- * magnitude (a payment and, say, an unrelated refund) in separate groups; a
- * genuine recurring charge is caught by the same 5-day window rationale as
- * the invoice-side check.
+ * being created — a second payment against an already-settled invoice
+ * (DUP-ANT-01) is a bank-only fact. Grouping on the *signed* amount keeps an
+ * outflow and an inflow of the same magnitude (a payment and, say, an
+ * unrelated refund) in separate groups; a genuine recurring charge is kept
+ * out by the 5-day window itself.
  */
 function duplicateBankPayments(
   transactions: Array<typeof bankTransactions.$inferSelect>,
 ): Anomaly[] {
   const WINDOW_DAYS = 5;
-  const groups = new Map<string, Array<typeof bankTransactions.$inferSelect>>();
-
-  for (const t of transactions) {
-    const counterpartyId = t.supplierId ?? t.customerId;
-    if (!counterpartyId) continue;
-    const key = `${counterpartyId}|${t.amountMinor}|${t.currency}`;
-    const group = groups.get(key) ?? [];
-    group.push(t);
-    groups.set(key, group);
-  }
-
   const anomalies: Anomaly[] = [];
-  for (const group of groups.values()) {
-    if (group.length < 2) continue;
+
+  for (const group of groupBankTransactionsByCounterpartyAndAmount(transactions)) {
     for (const t of group) {
       const near = group.filter((other) => other.id !== t.id
         && Math.abs(daysBetween(asIsoDate(t.transactionDate), asIsoDate(other.transactionDate))) <= WINDOW_DAYS);
@@ -410,6 +446,60 @@ function duplicateBankPayments(
           + 'duplicated receipt would overstate income.',
         dedupeKey: `anomaly:dup_bank_payment:${t.id}`,
       });
+    }
+  }
+  return anomalies;
+}
+
+/**
+ * The same counterparty and signed amount recurring later in the same
+ * calendar year — informational, and independent of the 5-day window above
+ * (issue #149 defect 2).
+ *
+ * DUP-001 (21 Mar) and DUP-002 (2 Jul) are the pack's own labelled
+ * "possible duplicate" pair: same counterparty, same €1,230 outflow, four
+ * months apart. A 5-day window is right for "paid twice this week"; it says
+ * nothing about "paid the same amount again months later", which is a
+ * different, weaker signal (a genuine repeat purchase looks identical) and
+ * so is kept at `info` severity and reported separately rather than folded
+ * into the warning-level check above.
+ */
+function possibleAnnualDuplicatePayments(
+  transactions: Array<typeof bankTransactions.$inferSelect>,
+): Anomaly[] {
+  const anomalies: Anomaly[] = [];
+
+  for (const group of groupBankTransactionsByCounterpartyAndAmount(transactions)) {
+    const byYear = new Map<string, Array<typeof bankTransactions.$inferSelect>>();
+    for (const t of group) {
+      const year = t.transactionDate.slice(0, 4);
+      const inYear = byYear.get(year) ?? [];
+      inYear.push(t);
+      byYear.set(year, inYear);
+    }
+
+    for (const inYear of byYear.values()) {
+      if (inYear.length < 2) continue;
+      for (const t of inYear) {
+        const others = inYear.filter((other) => other.id !== t.id);
+        if (others.length === 0) continue;
+
+        anomalies.push({
+          code: 'possible_annual_duplicate_payment',
+          severity: 'info',
+          title: t.amountMinor < 0
+            ? 'The same payment amount recurs with the same counterparty this year'
+            : 'The same receipt amount recurs with the same counterparty this year',
+          detail: `${(Math.abs(t.amountMinor) / 100).toFixed(2)} ${t.currency} with the same counterparty as `
+            + `${others.map((n) => n.id).join(', ')}, earlier or later in ${t.transactionDate.slice(0, 4)}.`,
+          entityType: 'bank_transaction',
+          entityId: t.id,
+          suggestion: 'A genuine repeat purchase or payment looks identical to a duplicate that was only '
+            + 'ever entered once but paid twice — this is informational, not an assertion either way. '
+            + 'Check it against the invoice history if the amount is unusual for this counterparty.',
+          dedupeKey: `anomaly:annual_dup_bank_payment:${t.id}`,
+        });
+      }
     }
   }
   return anomalies;
@@ -657,7 +747,8 @@ function anomalyKind(code: string): 'suspected_duplicate' | 'currency_discrepanc
   switch (code) {
     case 'duplicate_invoice_number':
     case 'near_duplicate_purchase_invoice':
-    case 'duplicate_bank_payment': return 'suspected_duplicate';
+    case 'duplicate_bank_payment':
+    case 'possible_annual_duplicate_payment': return 'suspected_duplicate';
     case 'document_amount_mismatch': return 'invoice_total_mismatch';
     case 'vat_arithmetic':
     case 'impossible_recovery': return 'negative_vat';
