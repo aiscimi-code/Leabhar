@@ -8,8 +8,11 @@ import { asMinor, multiplyRational } from '../money';
 import { nowIso, type IsoDate } from '../dates';
 import { postJournalEntry } from '../accounting/journal';
 import { systemAccountId } from '../config/setup';
-import { resolveTreatment, calculateVat, createVatEntries, determineTaxPoint } from '../vat/engine';
+import {
+  resolveTreatment, calculateVat, createVatEntries, determineTaxPoint, vatDiscrepancy,
+} from '../vat/engine';
 import { AccountingError } from '../accounting/errors';
+import { upsertReviewItem } from '../extraction/service';
 
 export class InvoicingError extends AccountingError {}
 
@@ -119,6 +122,12 @@ export function createInvoice(db: AppDatabase, input: CreateInvoiceInput): Creat
   const sign = input.isCreditNote ? -1 : 1;
   const taxPointBase = input.supplyDate ?? input.invoiceDate;
 
+  // A purchase invoice's input VAT is only ever as trustworthy as the
+  // supplier's own VAT status (issue #145 defects 1 and 3): a non-Irish
+  // supplier's country is resolved once per invoice, not per line, since
+  // one invoice has one supplier.
+  const supplierCountryCode = !isSales ? counterpartyCountry(db, input) : null;
+
   // ---- Compute each line ----
   const computed = input.lines.map((line, index) => {
     const resolved = resolveTreatment(db, {
@@ -132,15 +141,57 @@ export function createInvoice(db: AppDatabase, input: CreateInvoiceInput): Creat
       ? line.netMinor
       : multiplyRational(asMinor(line.unitPriceMinor ?? 0), line.quantityMilli ?? 1000, 1000);
 
+    // Issue #145 defect 1: a purchase line's input VAT is held back from
+    // recovery — flagged for review instead — rather than trusted outright,
+    // when either the stated figure disagrees with what the treatment's own
+    // rate implies, or the treatment is a domestic (non-reverse-charge) one
+    // applied to a supplier who is not established in the State. Neither
+    // check fires for a genuine reverse-charge line: that VAT is always
+    // self-assessed (see calculateVat), so a stated figure on the document
+    // is worth flagging for a human, but never changes what is recoverable.
+    let vatReviewReason: string | null = null;
+    let recoverableOverrideMinor: number | undefined;
+    if (!isSales && resolved.treatment.appliesRate) {
+      if (resolved.treatment.isReverseCharge) {
+        if (line.statedVatMinor !== undefined && line.statedVatMinor !== 0) {
+          vatReviewReason = 'This is a reverse-charge supply, so VAT is self-assessed at the '
+            + 'treatment\'s own rate — but the document itself also states a VAT amount. A '
+            + 'supplier who is not established in the State is not entitled to charge Irish '
+            + 'VAT; the stated figure was not used and this invoice is worth checking.';
+        }
+      } else {
+        const discrepancy = line.statedVatMinor === undefined
+          ? null
+          : vatDiscrepancy(lineNet, line.statedVatMinor, resolved.rateBasisPoints);
+        const foreignSupplier = !!supplierCountryCode && supplierCountryCode.toUpperCase() !== 'IE';
+
+        if (discrepancy && Math.abs(discrepancy.differenceMinor) > 1) {
+          recoverableOverrideMinor = 0;
+          vatReviewReason = `The invoice states VAT of ${(discrepancy.statedMinor / 100).toFixed(2)}, `
+            + `but the treatment's own rate implies ${(discrepancy.expectedMinor / 100).toFixed(2)} — `
+            + 'a difference too large to be per-line rounding. The VAT has been costed as stated '
+            + 'but held back from input VAT recovery pending review.';
+        } else if (foreignSupplier) {
+          recoverableOverrideMinor = 0;
+          vatReviewReason = `The supplier is established in ${supplierCountryCode}, not the State, `
+            + `but this line was posted under a domestic treatment ("${resolved.treatment.name}") `
+            + 'that trusts VAT stated on the document. A non-Irish supplier is not entitled to '
+            + 'charge Irish VAT, so it has been held back from recovery pending review — confirm '
+            + 'whether a reverse-charge treatment applies instead.';
+        }
+      }
+    }
+
     const calculation = calculateVat({
       treatment: resolved.treatment,
       rateBasisPoints: resolved.rateBasisPoints,
       direction: isSales ? 'sales' : 'purchases',
       netMinor: lineNet * sign,
       statedVatMinor: line.statedVatMinor === undefined ? undefined : line.statedVatMinor * sign,
+      recoverableOverrideMinor,
     });
 
-    return { line, index, resolved, calculation };
+    return { line, index, resolved, calculation, recoverableOverrideMinor, vatReviewReason };
   });
 
   const netMinor = computed.reduce((s, c) => s + c.calculation.netMinor, 0);
@@ -252,7 +303,7 @@ export function createInvoice(db: AppDatabase, input: CreateInvoiceInput): Creat
   // ---- VAT entries ----
   const vatEntryIds: string[] = [];
   if (!vatDeferred) {
-    for (const { line, calculation, resolved } of computed) {
+    for (const { line, calculation, resolved, recoverableOverrideMinor } of computed) {
       if (calculation.vatMinor === 0 && !resolved.treatment.appliesRate) continue;
       const taxPoint = determineTaxPoint({
         basis: company.vatAccountingBasis,
@@ -275,6 +326,8 @@ export function createInvoice(db: AppDatabase, input: CreateInvoiceInput): Creat
         taxPointDate: taxPoint.taxPointDate,
         netMinor: calculation.netMinor,
         statedVatMinor: calculation.vatMinor,
+        recoverableOverrideMinor: recoverableOverrideMinor === undefined
+          ? undefined : recoverableOverrideMinor * sign,
         currency,
         baseCurrency,
         fxRate: input.fxRate
@@ -369,6 +422,25 @@ export function createInvoice(db: AppDatabase, input: CreateInvoiceInput): Creat
         : null,
       requestId: input.requestId ?? null,
     }).run();
+
+    // Issue #145 defects 1 and 3: an untrustworthy VAT figure is never
+    // silently repaired (AGENTS.md invariant #7) — it becomes a review item
+    // alongside the posted invoice, whether or not recovery was held back.
+    for (const { index, vatReviewReason } of computed) {
+      if (!vatReviewReason) continue;
+      const lineNumber = index + 1;
+      upsertReviewItem(tx, {
+        companyId: input.companyId,
+        kind: 'uncertain_vat_treatment',
+        severity: 'warning',
+        title: `Invoice ${input.invoiceNumber ?? invoiceId}, line ${lineNumber}: VAT needs review`,
+        detail: vatReviewReason,
+        entityType: 'invoice',
+        entityId: invoiceId,
+        dedupeKey: `invoice:${invoiceId}:line:${lineNumber}:vat-review`,
+        context: { lineNumber, invoiceId },
+      });
+    }
   });
 
   return {

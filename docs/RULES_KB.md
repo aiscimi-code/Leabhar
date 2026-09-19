@@ -600,6 +600,81 @@ already-ingested sources.
   a topic with a VAT rate rule). Changed to `ruleType: 'other'`
   (`rctCuration.ts`).
 
+### Issue #145: an accounting test pack's exception rows were posted, not flagged
+
+Issue #143 fixed the deterministic *lookup*, but a separate accounting test
+pack (200 bank rows, 26 sales invoices, 32 purchase invoices) showed that the
+*posting* path — `createInvoice`, `calculateVat`/`createVatEntries` — still
+trusted evidence it should not have, and that the lookup's own topic routing
+still let a non-trading bank line reach a VAT rate. All five defects below
+are fixed here without changing what any curated rule states — only what a
+document's own figures are trusted to mean once posted.
+
+- **Defect 1 — a stated VAT amount was trusted even when it could not be
+  right.** `calculateVat` used `statedVatMinor` unconditionally whenever it
+  was supplied, with no check against the treatment's own rate or the
+  supplier's country. Fixed on two fronts:
+  - `vatDiscrepancy` (already written, never called) is now actually used:
+    `createInvoice` compares a purchase line's stated VAT against what the
+    treatment's own rate implies, and when they disagree by more than one
+    cent, the VAT is still costed as stated (the evidence is not
+    overwritten) but held back from recovery — `recoverableVatMinor` is
+    forced to zero via a new `recoverableOverrideMinor` on
+    `CalculateVatInput`/`CreateVatEntriesInput` — and a
+    `uncertain_vat_treatment` review item is raised.
+  - The same override fires when a non-reverse-charge (domestic) treatment
+    is applied to a line whose supplier's country is not `IE`: a non-Irish
+    supplier is not entitled to charge Irish VAT, so a domestic treatment
+    trusting a figure off their document is never assumed correct.
+- **Defect 3 (VAT engine half) — a reverse-charge line trusted whatever the
+  foreign document stated as its self-assessed amount.** A supplier who is
+  not Irish-VAT-registered cannot validly state Irish VAT at all, so a
+  figure on their invoice is not evidence of anything — yet
+  `calculateVat` fed `statedVatMinor` straight through even under
+  `treatment.isReverseCharge`. Fixed: under reverse charge, `calculateVat`
+  now *always* self-assesses via the treatment's own rate on the net,
+  on both the net and gross input paths, and ignores any stated figure
+  entirely. `createInvoice` separately raises a review item (no numeric
+  override — self-assessment is already correct) when a reverse-charge
+  line's document states a nonzero VAT figure, since that is itself worth
+  a human's attention regardless of whether the number happens to agree.
+- **Defect 2 — the same commercial document, entered twice under different
+  invoice numbers, was posted twice.** `duplicateInvoiceNumbers`
+  (`review/anomalies.ts`) only ever caught the *same* invoice number
+  appearing twice. A new `nearDuplicatePurchaseInvoices` check groups
+  purchase invoices by supplier + net amount + currency and flags any pair
+  dated within 5 days of each other, regardless of invoice number — wide
+  enough to catch a duplicate entry, narrow enough that a genuine monthly
+  subscription at a flat price (a month apart) is not flagged.
+- **Defect 3 (lookup half) — a non-trading bank line still reached a VAT
+  rate.** `identifyTopics`'s `vat` test opens on `vatRegistered === true`
+  alone (needed so an ordinary VAT-registered purchase reaches the topic at
+  all), which also opened it for director drawings, a Revenue VAT/PAYE
+  settlement, an ATM withdrawal, or an unidentified receipt — none of which
+  is a supply of goods or services. Fixed with a
+  `NON_TRADING_BANK_NARRATIVE_RE` gate (director/drawings/funds
+  introduced/revenue payment/VAT settlement/PAYE/ATM/cash withdrawal/
+  unknown/unidentified) that closes the `vat` topic for a bare bank
+  narrative — but only when `supplyType` is absent, so a real invoice is
+  never affected by how its own narrative happens to read.
+- **Defect 4 — lookup and posting could name two different rates for the
+  same meal.** `lookupTransactionRules` proposes the reduced hospitality
+  rate for a restaurant/catering narrative, but nothing checked that an
+  *already-posted* purchase line agreed. A new `hospitalityRateMismatches`
+  anomaly (`review/anomalies.ts`) flags a purchase line whose description
+  matches the restaurant/catering keyword set but was posted at the 23%
+  standard rate — informational, since a bundled bill can genuinely mix
+  rates, but worth a look. (The separate section 60 entertainment-deduction
+  question — issue #143 finding D — is independent of the rate charged and
+  was already handled by `resolveDeductionExclusivity`.)
+- **Defect 5 — a donation was posted as an ordinary zero-rated purchase.**
+  A donation is not a trading supply; posting it as a purchase line
+  conflates a non-trading appropriation with turnover. A new
+  `possibleNonTradingPurchases` anomaly flags a purchase line whose
+  description reads as a donation or charitable payment
+  (`/\b(donation|donated|charity|charitable)\b/i`) — informational, asking
+  for reclassification rather than assuming it.
+
 ### Capital allowances
 
 The first curation from TCA 1997 outside RCT, and the first to use a new

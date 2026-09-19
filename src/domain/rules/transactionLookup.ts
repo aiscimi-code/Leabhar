@@ -168,6 +168,21 @@ const TEXT_FIELDS = (ctx: TransactionContext): string =>
   [ctx.transactionType, ctx.supplierType, ctx.description].filter(Boolean).join(' ').toLowerCase();
 
 /**
+ * Bank narratives describing a movement of funds rather than a taxable
+ * supply of goods or services — a director's own money moving in or out, a
+ * tax remittance to Revenue, or cash withdrawn/received with no evidence
+ * attached (issue #145 defect 3). None of these is a purchase or a sale, so
+ * even a VAT-registered company's own `vatRegistered: true` context must not
+ * open the `vat` topic for them — that would attach a rate rule
+ * (`vat.rate_standard_current`) to a line that was never a supply to begin
+ * with. Only gates the topic when `supplyType` is absent, so a genuine
+ * invoice that explicitly states its supply type is never affected by this
+ * exclusion, however its narrative happens to be worded.
+ */
+const NON_TRADING_BANK_NARRATIVE_RE =
+  /\bdirector\b|\bdrawings?\b|\bfunds introduced\b|\brevenue payment\b|\bvat settlement\b|\bpaye\b|\batm\b|\bcash withdrawal\b|\bunknown\b|\bunidentified\b/i;
+
+/**
  * Deterministic keyword -> topic table. Extend this when a new rule topic is
  * added to the knowledge base; a transaction is never routed to a topic by
  * semantic similarity alone (task: "semantic search may retrieve candidates;
@@ -192,13 +207,16 @@ const TOPIC_RULES: TopicRule[] = [
     // registration question, with or without `supplyType` alongside it —
     // its own absence still surfaces as `unresolvedFields` once the topic
     // is at least opened, instead of the question never being asked.
-    test: (ctx) => ctx.vatRegistered === true
-      || ctx.vatRegistered === false
-      || ctx.supplyType != null
-      || ctx.annualTurnoverCurrentYearMinor != null
-      || ctx.annualTurnoverPreviousYearMinor != null
-      || /\bvat\b|saas|software|digital service|reverse charge/i.test(TEXT_FIELDS(ctx))
-      || (!!ctx.supplierCountry && ctx.supplierCountry.toUpperCase() !== 'IE'),
+    test: (ctx) => {
+      if (ctx.supplyType == null && NON_TRADING_BANK_NARRATIVE_RE.test(TEXT_FIELDS(ctx))) return false;
+      return ctx.vatRegistered === true
+        || ctx.vatRegistered === false
+        || ctx.supplyType != null
+        || ctx.annualTurnoverCurrentYearMinor != null
+        || ctx.annualTurnoverPreviousYearMinor != null
+        || /\bvat\b|saas|software|digital service|reverse charge/i.test(TEXT_FIELDS(ctx))
+        || (!!ctx.supplierCountry && ctx.supplierCountry.toUpperCase() !== 'IE');
+    },
   },
   {
     topic: 'banking',
