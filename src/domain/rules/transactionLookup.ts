@@ -21,6 +21,7 @@ import type { IrishRuleException } from '@/db/schema';
 import { evaluateAllConditions, type ConditionResult } from './conditionEval';
 import { today } from '../dates';
 import { listTaxRulesByTopic, type LookupResult } from './irishRules';
+import { RCT_SCOPE_RE } from './rctCuration';
 
 /**
  * A transaction as presented for classification — the task's example shape,
@@ -81,6 +82,12 @@ const TOPIC_RULES: TopicRule[] = [
       || (!!ctx.supplierCountry && ctx.supplierCountry.toUpperCase() !== 'IE'),
   },
   { topic: 'banking', test: (ctx) => /\bbank\b|\bfee\b|\bcharge\b/i.test(TEXT_FIELDS(ctx)) },
+  {
+    topic: 'rct',
+    // Shared with rctCuration.ts's own condition regex, so the topic router
+    // and every curated RCT rule agree on what counts as a candidate.
+    test: (ctx) => new RegExp(RCT_SCOPE_RE, 'i').test(TEXT_FIELDS(ctx)),
+  },
   { topic: 'business_expense', test: () => true }, // deductibility is a candidate question for every transaction
   {
     topic: 'director_transaction',

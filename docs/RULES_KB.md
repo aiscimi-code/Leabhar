@@ -12,7 +12,12 @@ transaction to the rules that apply to it. Two sources are ingested:
   services), from the LRC's revised text at
   `docs/statutes/vatca-2010-revised/schedule-{2,3}.md` — ingested as their own
   sources, distinct from the principal Act's as-enacted text above (see
-  "VATCA 2010 Schedules 2 and 3" below).
+  "VATCA 2010 Schedules 2 and 3" below);
+- TCA 1997 s.530 (RCT definitions) and Revenue TDM Part 18-02-04 (the
+  current post-2011 RCT procedure) — a wholly different tax (a withholding
+  regime, never VAT) from `docs/statutes/tca-1997/s530.md` and
+  `docs/statutes/rct/tdm-18-02-04.md` (see "Relevant Contracts Tax (RCT)"
+  below).
 
 This is not a RAG system and it does not ask an LLM what the tax treatment
 should be. The pipeline is:
@@ -305,6 +310,51 @@ never conflated with it:
   keyword factor, so `requiresGuidance` is always true and every rule
   surfaces for human review before any classification is authoritative.
 
+### Relevant Contracts Tax (RCT)
+
+RCT is a withholding regime on payments under a "relevant contract" in
+construction, forestry and meat processing — **never a VAT rate**, a wholly
+independent tax from every source above (`docs/statutes/rct/README.md`).
+Two sources, ingested as two separate `irish_knowledge_sources` rows:
+
+- **TCA 1997 s.530** (`legislation`, as-enacted 1997) — Chapter 2's
+  foundational definitions (relevant contract, relevant operations,
+  construction/forestry/meat-processing operations). `src/domain/rules/
+  tca1997SectionParser.ts` is a new parser shape: each `docs/statutes/
+  tca-1997/*.md` file holds exactly one section (there is no LRC-revised
+  TCA to fetch as a single document — see that directory's own README), so
+  unlike `vatcaParser.ts`/`statuteParser.ts` this parser finds one section
+  per file rather than many sections in one converted Markdown, and drops a
+  single leading `[FA70 s17...]`-style amendment-history citation bracket
+  that isn't statutory text.
+- **Revenue TDM Part 18-02-04** (`revenue_guidance`) — "RCT for Principal
+  Contractors", the only verbatim source this KB holds for the actual
+  2011-restructured procedure. TCA 1997 ss.530A-530V (which actually govern
+  the modern electronic RCT system, including the deduction rate) have **no
+  1997 as-enacted page to fetch** — they were inserted by Finance Act 2011
+  s.20, a different Act not yet ingested here. Ingested as one whole-document
+  provision (continuous prose with numbered headings, not an addressable
+  statute), tagged `revenue_guidance` so it can never outrank a statute
+  covering the same ground once one is ingested (`sourceHierarchy.ts`).
+- `src/domain/rules/rctCuration.ts` — 3 curated rules: the relevant-
+  operations scope gate (from s.530), the payment-notification procedural
+  requirement, and — deliberately — a rule that states the 0%/20%/35%
+  deduction rate **cannot be determined from transaction data at all**.
+  Unlike every VAT rate rule in this KB, RCT's rate is not a fact stated in
+  legislation or guidance for a given transaction: it is an individualised
+  determination Revenue issues per payment notification, based on the
+  subcontractor's own compliance history. Curating a guessed rate here would
+  be exactly the "silently repaired" failure AGENTS.md invariant #7 forbids,
+  so the rule surfaces the absence of a determinable rate as the finding
+  instead of inventing one.
+- **S.I. 651/2011 (the 2011 eRCT Regulations) is deliberately not used as a
+  source**, even though it is genuinely verbatim: Revenue's own TDM 18-02-04
+  §14 records that it "were subsequently revoked and replaced by [S.I.
+  576/2012]... These regulations came into effect on 24 December 2012",
+  itself later amended by S.I. 412/2013 and S.I. 5/2015 — none of which are
+  ingested. This was discovered while curating RCT and is recorded rather
+  than silently worked around (`docs/statutes/si-651-2011/README.md`).
+
 ## Rule format
 
 Conceptually, a stored rule looks like:
@@ -490,27 +540,29 @@ npm run cli:rules -- ingest --source finance-act-2024 && npm run cli:rules -- ex
 npm run cli:rules -- ingest --source vatca-2010 && npm run cli:rules -- extract --source vatca-2010
 npm run cli:rules -- ingest --source vatca-2010-sch2 && npm run cli:rules -- extract --source vatca-2010-sch2
 npm run cli:rules -- ingest --source vatca-2010-sch3 && npm run cli:rules -- extract --source vatca-2010-sch3
+npm run cli:rules -- ingest --source rct-tca530 && npm run cli:rules -- ingest --source rct-tdm && npm run cli:rules -- extract --source rct
 npm run cli:rules -- audit
 ```
 
 Headline numbers:
 
-- 290 provisions ingested across four sources (118 Finance Act 2024, 125
-  VATCA 2010, 15 VATCA 2010 Schedule 2, 32 VATCA 2010 Schedule 3), 164 judged
-  relevant to transaction classification, 126 not (procedural/repeal/
-  penalty/pure-definition, or uncategorised and flagged for review).
-- 17 rules extracted (4 Finance Act, 5 VATCA principal-Act, 4 Schedule 2, 4
-  Schedule 3), all `ai_extracted`, all `human_review_required = true` —
-  **zero rules in this KB are authoritative yet.**
-- 9 rules with a stated exception the system flags rather than evaluates,
+- 292 provisions ingested across six sources (118 Finance Act 2024, 125
+  VATCA 2010, 15 VATCA 2010 Schedule 2, 32 VATCA 2010 Schedule 3, 1 TCA 1997
+  s.530, 1 Revenue TDM 18-02-04), 166 judged relevant to transaction
+  classification, 126 not (procedural/repeal/penalty/pure-definition, or
+  uncategorised and flagged for review).
+- 20 rules extracted (4 Finance Act, 5 VATCA principal-Act, 4 Schedule 2, 4
+  Schedule 3, 3 RCT), all `ai_extracted`, all `human_review_required = true`
+  — **zero rules in this KB are authoritative yet.**
+- 11 rules with a stated exception the system flags rather than evaluates,
   0 duplicate rule keys.
 - 442 cross-references the report cannot resolve — expected, not a bug: the
   Finance Act 2024 *amends*, and VATCA 2010 heavily cross-refers to, the
   Taxes Consolidation Act 1997 and other Acts not themselves ingested yet, so
   "section 531AN", "section 654A" et al. have nothing to resolve against
-  inside this KB alone. (The Schedule sources add none of their own: their
-  `amendsSection`/`citedActs` are not modelled — see "VATCA 2010 Schedules 2
-  and 3" above.)
+  inside this KB alone. (The Schedule and RCT sources add none of their own:
+  their `amendsSection`/`citedActs` are not modelled — see "VATCA 2010
+  Schedules 2 and 3" and "Relevant Contracts Tax (RCT)" above.)
 
 **This is not a claim that the knowledge base is legally complete.** It is a
 record of what was ingested, what was judged relevant, what was extracted,
@@ -524,7 +576,8 @@ to be.
 ```
 ingest [--source <s>] [--file <path>]
                             Ingest a source's Markdown (--source: finance-act-2024
-                            [default] | vatca-2010 | vatca-2010-sch2 | vatca-2010-sch3)
+                            [default] | vatca-2010 | vatca-2010-sch2 | vatca-2010-sch3 |
+                            rct-tca530 | rct-tdm)
 extract [--source <s>]     Derive irish_tax_rules from ingested provisions
 list-provisions [--category <c>] [--relevant-only]
 show-provision --section <n>
@@ -551,12 +604,18 @@ audit
   (reverse charge, place of supply, deductibility) is a structural mechanism
   that has not been fundamentally rewritten since 2010, so curating its
   *existence* is safe even though the ingested text is not fully current.
-- **Only 17 of 164 relevant provisions have a curated rule key** (4 Finance
-  Act, 5 VATCA principal-Act, 4 Schedule 2, 4 Schedule 3). Everything else is
-  ingested (text, offsets, category all on disk) but not yet extracted into
-  named rules — `provisionsWithoutExtractedRule` in the audit report would
-  show these once curated; today it's empty because the curated set and the
-  derived set match exactly.
+- **Only 20 of 166 relevant provisions have a curated rule key** (4 Finance
+  Act, 5 VATCA principal-Act, 4 Schedule 2, 4 Schedule 3, 3 RCT). Everything
+  else is ingested (text, offsets, category all on disk) but not yet
+  extracted into named rules — `provisionsWithoutExtractedRule` in the audit
+  report would show these once curated; today it's empty because the
+  curated set and the derived set match exactly.
+- **RCT's actual deduction rate (0%/20%/35%) is not in this KB at all**,
+  by design (see "Relevant Contracts Tax (RCT)" above) — TCA 1997
+  ss.530A-530V, which govern it, were inserted by Finance Act 2011 s.20 and
+  have no 1997 as-enacted page; that Act is not yet ingested. The curated
+  `rct.deduction_rate_not_determinable` rule states this gap as the finding
+  rather than guessing a rate.
 - **VATCA's conditions are curated, not mechanically extracted — and this is
   recorded, not glossed over.** Mapping "a supplier established outside the
   State" onto `supplierCountry != 'IE'` is an interpretation; every VATCA
@@ -597,9 +656,11 @@ audit
   Everything else in both Schedules is ingested (text, offsets, category all
   on disk, queryable via `list-provisions`/`show-provision`) but not yet
   extracted into a named rule.
-- **`Part`/`Chapter` are not yet populated** on `irish_act_provisions` (the
-  columns exist for when this is worth doing); a provision's location is
-  fully identified by section number + source offsets in the meantime.
+- **`Part`/`Chapter` are populated only where a source states one cleanly**
+  (VATCA Schedule paragraphs get `part`; TCA 1997 s.530 gets `chapter`).
+  Finance Act 2024 and VATCA 2010's own principal-Act provisions still leave
+  both null — a provision's location there is fully identified by section
+  number + source offsets instead.
 - **The pre-existing drizzle-kit snapshot chain is broken** (`drizzle/meta/
   0000_snapshot.json` through `0002` all share one id/prevId, unrelated to
   this change — `npm run db:generate` fails on it). Migration 0004 here was
