@@ -6,9 +6,10 @@ import {
 } from '@/db/schema';
 import { asIsoDate, today } from '@/domain/dates';
 import { parseAmount } from '@/domain/money';
-import { createInvoice, type CreatedInvoice } from '@/domain/invoicing/invoices';
+import { createInvoice, voidInvoice, type CreatedInvoice, type VoidedInvoice } from '@/domain/invoicing/invoices';
 import { recordPayment, type RecordedPayment } from '@/domain/invoicing/payments';
 import { createAdjustment, type CreatedAdjustment } from '@/domain/accounting/adjustments';
+import { reverseJournalEntry, type PostedJournal } from '@/domain/accounting/journal';
 import { yearEndPack, type YearEndPack } from '@/domain/reports/yearEnd';
 import { buildVat3Return, type Vat3Return } from '@/domain/vat/report';
 import { resolveAccountId, resolveVatTreatmentId } from './reconcile';
@@ -16,6 +17,7 @@ import { resolveCustomerId, resolveSupplierId } from './induction';
 import type {
   CreateInvoiceCsvInput, RecordPaymentCliInput, JournalCliInput,
   ListTransactionsInput, ShowInvoiceInput, YearEndCliInput, VatReturnCliInput,
+  VoidInvoiceCliInput, ReverseJournalCliInput,
 } from './schema';
 
 /**
@@ -429,4 +431,41 @@ export function resolveVatPeriodId(db: AppDatabase, companyId: string, idOrName:
 export function vatReturnCli(db: AppDatabase, input: VatReturnCliInput): Vat3Return {
   const vatPeriodId = resolveVatPeriodId(db, input.companyId, input.period);
   return buildVat3Return(db, { companyId: input.companyId, vatPeriodId });
+}
+
+// ---- void-invoice ----
+
+/**
+ * A mistake made via create-invoice needed no CLI-driven fix path (issue
+ * #155) — this resolves the invoice by number and hands off to the domain
+ * layer's own voidInvoice, which reverses the journal entry and any VAT
+ * entries rather than editing or deleting the original posting.
+ */
+export function voidInvoiceCli(db: AppDatabase, input: VoidInvoiceCliInput): VoidedInvoice {
+  const invoice = resolveInvoiceByNumber(db, input.companyId, input.number);
+  return voidInvoice(db, {
+    companyId: input.companyId,
+    invoiceId: invoice.id,
+    voidDate: asIsoDate(input.date),
+    reason: input.reason,
+    actor: 'cli',
+  });
+}
+
+// ---- reverse-journal ----
+
+/**
+ * A mistake made via journal (or any other posting path) needed no
+ * CLI-driven fix path (issue #155) — wraps reverseJournalEntry directly,
+ * which works for any journal entry rather than only ones typed as a
+ * manual adjustment.
+ */
+export function reverseJournalCli(db: AppDatabase, input: ReverseJournalCliInput): PostedJournal {
+  return reverseJournalEntry(db, {
+    companyId: input.companyId,
+    entryId: input.entryId,
+    reversalDate: asIsoDate(input.date),
+    reason: input.reason,
+    createdBy: 'cli',
+  });
 }

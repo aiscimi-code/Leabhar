@@ -1,15 +1,15 @@
 import { and, eq, desc } from 'drizzle-orm';
 import type { AppDatabase } from '@/db';
 import {
-  invoices, invoiceLines, companies, auditEvents, suppliers, customers,
+  invoices, invoiceLines, companies, auditEvents, suppliers, customers, vatEntries,
 } from '@/db/schema';
 import { ids } from '@/lib/ids';
 import { asMinor, multiplyRational } from '../money';
 import { nowIso, type IsoDate } from '../dates';
-import { postJournalEntry } from '../accounting/journal';
+import { postJournalEntry, reverseJournalEntry } from '../accounting/journal';
 import { systemAccountId } from '../config/setup';
 import {
-  resolveTreatment, calculateVat, createVatEntries, determineTaxPoint, vatDiscrepancy,
+  resolveTreatment, calculateVat, createVatEntries, determineTaxPoint, vatDiscrepancy, findVatPeriod,
 } from '../vat/engine';
 import { AccountingError } from '../accounting/errors';
 import { upsertReviewItem } from '../extraction/service';
@@ -474,6 +474,149 @@ export function createInvoice(db: AppDatabase, input: CreateInvoiceInput): Creat
     vatEntryIds,
     vatDeferred,
   };
+}
+
+export interface VoidInvoiceInput {
+  companyId: string;
+  invoiceId: string;
+  voidDate: IsoDate;
+  /** Mandatory. Recorded in the audit trail and on the invoice itself. */
+  reason: string;
+  actor?: string;
+  requestId?: string;
+}
+
+export interface VoidedInvoice {
+  invoiceId: string;
+  reversalJournalEntryId: string | null;
+  reversedVatEntryIds: string[];
+}
+
+/**
+ * Void an invoice entered in error.
+ *
+ * Posted journals are immutable (AGENTS.md invariant #2), so this never
+ * edits or deletes the original posting. It reverses the invoice's journal
+ * entry — debits and credits swapped, dated at `voidDate` rather than the
+ * invoice date, so voiding something in a closed period does not reach back
+ * into it — and, for each VAT entry the invoice created (both legs of a
+ * reverse charge, where one applies), posts an equal-and-opposite entry at
+ * the same rate and box, also dated at `voidDate`. The invoice row itself is
+ * marked void rather than deleted, so what it originally said is still
+ * there.
+ *
+ * A part-paid or paid invoice is refused rather than silently unwound: its
+ * payment allocations would be left pointing at an invoice that no longer
+ * owes anything, which is exactly the kind of problem AGENTS.md invariant #7
+ * says becomes a review item, not something this function guesses how to
+ * fix on its own. Unallocate the payment first.
+ */
+export function voidInvoice(db: AppDatabase, input: VoidInvoiceInput): VoidedInvoice {
+  if (!input.reason || input.reason.trim().length < 3) {
+    throw new InvoicingError('Voiding an invoice needs a reason.');
+  }
+
+  const invoice = db.select().from(invoices)
+    .where(and(eq(invoices.id, input.invoiceId), eq(invoices.companyId, input.companyId)))
+    .get();
+  if (!invoice) throw new InvoicingError(`Invoice ${input.invoiceId} not found.`);
+  if (invoice.status === 'void') {
+    throw new InvoicingError(`Invoice ${invoice.invoiceNumber ?? invoice.id} is already void.`);
+  }
+  if (invoice.paidMinor !== 0) {
+    throw new InvoicingError(
+      `Invoice ${invoice.invoiceNumber ?? invoice.id} has ${(invoice.paidMinor / 100).toFixed(2)} `
+        + 'allocated against it. Unallocate the payment before voiding it — voiding would '
+        + 'otherwise silently leave that allocation pointed at an invoice that owes nothing.',
+    );
+  }
+
+  let reversalJournalEntryId: string | null = null;
+  if (invoice.journalEntryId) {
+    const reversal = reverseJournalEntry(db, {
+      companyId: input.companyId,
+      entryId: invoice.journalEntryId,
+      reversalDate: input.voidDate,
+      reason: input.reason,
+      createdBy: input.actor ?? 'user',
+      requestId: input.requestId,
+    });
+    reversalJournalEntryId = reversal.id;
+  }
+
+  const sourceType = invoice.direction === 'sales' ? 'sales_invoice' : 'purchase_invoice';
+  const originalVatEntries = db.select().from(vatEntries)
+    .where(and(
+      eq(vatEntries.companyId, input.companyId),
+      eq(vatEntries.sourceType, sourceType),
+      eq(vatEntries.sourceId, invoice.id),
+    )).all();
+  const period = findVatPeriod(db, input.companyId, input.voidDate);
+
+  const reversedVatEntryIds: string[] = [];
+
+  db.transaction((tx) => {
+    for (const entry of originalVatEntries) {
+      const reversedId = ids.vatEntry();
+      tx.insert(vatEntries).values({
+        id: reversedId,
+        companyId: input.companyId,
+        journalEntryId: reversalJournalEntryId,
+        sourceType: entry.sourceType,
+        sourceId: invoice.id,
+        direction: entry.direction,
+        vatTreatmentId: entry.vatTreatmentId,
+        taxRateId: entry.taxRateId,
+        rateBasisPoints: entry.rateBasisPoints,
+        netMinor: -entry.netMinor,
+        vatMinor: -entry.vatMinor,
+        grossMinor: -entry.grossMinor,
+        currency: entry.currency,
+        baseNetMinor: -entry.baseNetMinor,
+        baseVatMinor: -entry.baseVatMinor,
+        baseGrossMinor: -entry.baseGrossMinor,
+        baseCurrency: entry.baseCurrency,
+        recoverableVatMinor: -entry.recoverableVatMinor,
+        baseRecoverableVatMinor: -entry.baseRecoverableVatMinor,
+        taxPointDate: input.voidDate,
+        vatPeriodId: period?.id ?? null,
+        vatBox: entry.vatBox,
+        netBox: entry.netBox,
+        pairedEntryId: null,
+        isReverseChargeLeg: entry.isReverseChargeLeg,
+        counterpartyVatNumber: entry.counterpartyVatNumber,
+        counterpartyCountry: entry.counterpartyCountry,
+        notes: `Reversal of voided invoice ${invoice.invoiceNumber ?? invoice.id}: ${input.reason}`,
+        source: 'user',
+        provenanceStatus: 'manually_entered',
+      }).run();
+      reversedVatEntryIds.push(reversedId);
+    }
+
+    tx.update(invoices).set({
+      status: 'void',
+      voidedAt: nowIso(),
+      voidReason: input.reason,
+      outstandingMinor: 0,
+    }).where(eq(invoices.id, invoice.id)).run();
+
+    tx.insert(auditEvents).values({
+      id: ids.audit(),
+      companyId: input.companyId,
+      occurredAt: nowIso(),
+      entityType: 'invoice',
+      entityId: invoice.id,
+      action: 'voided',
+      previousValue: JSON.stringify({ status: invoice.status }),
+      newValue: JSON.stringify({ status: 'void', reversalJournalEntryId }),
+      source: 'user',
+      actor: input.actor ?? 'user',
+      reason: input.reason,
+      requestId: input.requestId ?? null,
+    }).run();
+  });
+
+  return { invoiceId: invoice.id, reversalJournalEntryId, reversedVatEntryIds };
 }
 
 function buildNarrative(db: AppDatabase, input: CreateInvoiceInput, isSales: boolean): string {

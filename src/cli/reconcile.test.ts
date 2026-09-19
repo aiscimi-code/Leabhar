@@ -6,6 +6,7 @@ import { createRule } from '@/domain/rules/engine';
 import { importStatement } from '@/domain/banking/import';
 import { storeDocument } from '@/domain/documents/storage';
 import { bankTransactions, reconciliations, documents, documentMatches, suppliers } from '@/db/schema';
+import { makeDate } from '@/domain/dates';
 import { main } from './reconcile';
 import { mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -984,6 +985,175 @@ describe('cli reconcile — induction and books (issue #153)', () => {
           expect(JSON.parse(c.stdout.join(''))).toEqual([]);
         });
       });
+    });
+  });
+});
+
+// Issue #155: the anomaly-detection/review-queue layer, void-invoice /
+// reverse-journal corrections, and list-suppliers/list-customers — each a
+// thin CLI wrapper around an existing, already-tested domain layer.
+describe('cli reconcile — review queue and corrections (issue #155)', () => {
+  let rDb: AppDatabase;
+  let rCompanyId: string;
+  let rBankAccount: string;
+  let rByCode: Record<string, string>;
+  let rTr: Record<string, string>;
+  let rRun: (argv: string[]) => Promise<number>;
+
+  beforeEach(async () => {
+    ({ db: rDb } = createTestDatabase());
+    const created = createCompany(rDb, {
+      legalName: 'Acme Ltd', vatRegistrationStatus: 'registered', vatAccountingBasis: 'invoice',
+      seedYears: [2025],
+    });
+    rCompanyId = created.companyId;
+    rByCode = created.accountsByCode;
+    rTr = created.treatmentsByCode;
+    rBankAccount = addBankAccount(rDb, {
+      companyId: rCompanyId, bankName: 'BOI', accountName: 'Current',
+      openingDate: '2025-01-01', accountId: created.accountsByKey['bank_control'],
+    });
+    rRun = (argv) => main(argv, { db: rDb, companyId: rCompanyId });
+  });
+
+  it('list-suppliers and list-customers return what was created, and nothing before that', async () => {
+    let c = capture();
+    let code = await rRun(['list-suppliers']);
+    c.restore();
+    expect(code).toBe(0);
+    expect(JSON.parse(c.stdout.join(''))).toEqual([]);
+
+    await rRun(['create-supplier', '--name', 'Byrne Accountancy', '--country', 'IE']);
+    await rRun(['add-customer', '--name', 'Mulligan Digital Limited', '--country', 'IE']);
+
+    c = capture();
+    code = await rRun(['list-suppliers']);
+    c.restore();
+    expect(code).toBe(0);
+    const suppliersOut = JSON.parse(c.stdout.join(''));
+    expect(suppliersOut).toHaveLength(1);
+    expect(suppliersOut[0]).toMatchObject({ name: 'Byrne Accountancy', countryCode: 'IE' });
+
+    c = capture();
+    code = await rRun(['list-customers']);
+    c.restore();
+    expect(code).toBe(0);
+    const customersOut = JSON.parse(c.stdout.join(''));
+    expect(customersOut).toHaveLength(1);
+    expect(customersOut[0]).toMatchObject({ name: 'Mulligan Digital Limited', countryCode: 'IE' });
+  });
+
+  describe('with an invoice, and a journal entry, already posted', () => {
+    let invoiceId: string;
+    let journalEntryId: string;
+
+    beforeEach(async () => {
+      const { createInvoice } = await import('@/domain/invoicing/invoices');
+      const { ids } = await import('@/lib/ids');
+      const customerId = ids.customer();
+      const { customers } = await import('@/db/schema');
+      rDb.insert(customers).values({
+        id: customerId, companyId: rCompanyId, name: 'Mulligan Digital', matchKey: 'mulligan digital',
+      }).run();
+
+      const invoice = createInvoice(rDb, {
+        companyId: rCompanyId, direction: 'sales', invoiceDate: makeDate(2025, 2, 20), customerId,
+        invoiceNumber: 'INV-2025-001',
+        lines: [{
+          description: 'Consulting', netMinor: 100_000,
+          accountId: rByCode['4020']!, vatTreatmentId: rTr['IE_STD']!,
+        }],
+      });
+      invoiceId = invoice.invoiceId;
+      journalEntryId = invoice.journalEntryId;
+    });
+
+    it('void-invoice reverses the journal entry and marks the invoice void', async () => {
+      const c = capture();
+      const code = await rRun(['void-invoice', 'INV-2025-001', '--date', '2025-03-01', '--reason', 'entered in error']);
+      c.restore();
+      expect(code).toBe(0);
+      const parsed = JSON.parse(c.stdout.join(''));
+      expect(parsed.reversalJournalEntryId).toBeTruthy();
+      expect(parsed.reversedVatEntryIds).toHaveLength(1);
+
+      const show = capture();
+      await rRun(['show-invoice', 'INV-2025-001']);
+      show.restore();
+      const invoice = JSON.parse(show.stdout.join('')).invoice;
+      expect(invoice.status).toBe('void');
+      expect(invoice.outstandingMinor).toBe(0);
+    });
+
+    it('void-invoice refuses an invoice that is already void', async () => {
+      await rRun(['void-invoice', 'INV-2025-001', '--date', '2025-03-01', '--reason', 'first']);
+      const c = capture();
+      const code = await rRun(['void-invoice', 'INV-2025-001', '--date', '2025-03-02', '--reason', 'second']);
+      c.restore();
+      expect(code).toBe(1);
+      expect(c.stderr.join('')).toContain('already void');
+    });
+
+    it('reverse-journal reverses any entry, netting its accounts to zero', async () => {
+      const c = capture();
+      const code = await rRun(['reverse-journal', journalEntryId, '--date', '2025-03-01', '--reason', 'wrong account']);
+      c.restore();
+      expect(code).toBe(0);
+      const parsed = JSON.parse(c.stdout.join(''));
+      expect(parsed.id).toBeTruthy();
+      expect(parsed.lines).toHaveLength(3);
+    });
+
+    it('reverse-journal refuses to reverse the same entry twice', async () => {
+      await rRun(['reverse-journal', journalEntryId, '--date', '2025-03-01', '--reason', 'first']);
+      const c = capture();
+      const code = await rRun(['reverse-journal', journalEntryId, '--date', '2025-03-02', '--reason', 'second']);
+      c.restore();
+      expect(code).toBe(1);
+      expect(c.stderr.join('')).toContain('already been reversed');
+    });
+
+    it('scan-anomalies reports the long-overdue invoice without --sync writing anything', async () => {
+      let c = capture();
+      let code = await rRun(['scan-anomalies']);
+      c.restore();
+      expect(code).toBe(0);
+      const scan = JSON.parse(c.stdout.join(''));
+      expect(scan.anomalies.some((a: { code: string }) => a.code === 'long_overdue_invoice')).toBe(true);
+      expect(scan.syncedToReviewQueue).toBeNull();
+
+      c = capture();
+      code = await rRun(['list-review-queue']);
+      c.restore();
+      expect(code).toBe(0);
+      expect(JSON.parse(c.stdout.join(''))).toEqual([]);
+    });
+
+    it('scan-anomalies --sync writes findings into the review queue', async () => {
+      let c = capture();
+      const code = await rRun(['scan-anomalies', '--sync']);
+      c.restore();
+      expect(code).toBe(0);
+      const scan = JSON.parse(c.stdout.join(''));
+      expect(scan.syncedToReviewQueue).toBeGreaterThan(0);
+
+      c = capture();
+      await rRun(['list-review-queue']);
+      c.restore();
+      const queue = JSON.parse(c.stdout.join(''));
+      expect(queue.length).toBe(scan.syncedToReviewQueue);
+      expect(queue[0].status).toBe('open');
+    });
+
+    it('list-review-queue filters by severity', async () => {
+      await rRun(['scan-anomalies', '--sync']);
+      const c = capture();
+      const code = await rRun(['list-review-queue', '--severity', 'info']);
+      c.restore();
+      expect(code).toBe(0);
+      const queue = JSON.parse(c.stdout.join(''));
+      expect(queue.length).toBeGreaterThan(0);
+      expect(queue.every((item: { severity: string }) => item.severity === 'info')).toBe(true);
     });
   });
 });

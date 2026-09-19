@@ -26,12 +26,14 @@ import {
 } from '@/agent/match';
 import { createSupplierFromExtraction } from '@/domain/extraction/service';
 import {
-  initCompany, addBank, addAccount, addCustomer,
+  initCompany, addBank, addAccount, addCustomer, listSuppliersCli, listCustomersCli,
 } from '@/agent/induction';
 import {
   createInvoicesFromCsv, recordPaymentCli, journalCli,
   listTransactionsCli, showInvoiceCli, yearEndCli, vatReturnCli,
+  voidInvoiceCli, reverseJournalCli,
 } from '@/agent/books';
+import { scanAnomaliesCli, listReviewQueueCli } from '@/agent/review';
 import {
   importInput,
   autoClassifyInput,
@@ -58,6 +60,11 @@ import {
   showInvoiceInput,
   yearEndCliInput,
   vatReturnCliInput,
+  voidInvoiceCliInput,
+  reverseJournalCliInput,
+  scanAnomaliesCliInput,
+  listReviewQueueInput,
+  listPartiesInput,
   type CreateRuleCliInput,
 } from '@/agent/schema';
 
@@ -136,6 +143,26 @@ Inspect:
   year-end --from <date> --to <date>     P&L, balance sheet, tax worksheet,
                                           fixed assets, VAT periods, issues
   vat-return --period <id-or-name>       VAT3 box figures for one period
+  list-suppliers                         Every supplier (id, name, country, VAT no.)
+  list-customers                         Every customer (id, name, country, VAT no.)
+
+Review queue:
+  scan-anomalies [--from <date>] [--to <date>] [--sync]
+      Runs the deterministic anomaly scan (duplicate invoices, hospitality-
+      rate mismatches, an unidentified supplier, ...). --sync also writes
+      the findings into the review queue; without it, this only reports them.
+  list-review-queue [--status open|resolved|dismissed|snoozed|superseded|all]
+      [--severity info|warning|error|blocking] [--kind <kind>]
+      Defaults to open items, sorted blocking -> error -> warning -> info.
+
+Corrections:
+  void-invoice <number> --date <date> --reason "..."
+      Reverses the invoice's journal entry and any VAT entries (dated at
+      --date, not the invoice date) and marks it void. Refuses an invoice
+      that already has a payment allocated — unallocate it first.
+  reverse-journal <entry-id> --date <date> --reason "..."
+      Reverses any journal entry (debits/credits swapped), for a mistake
+      made via journal or any other posting path.
 
 Agent workflow:
   1. init-company, add-bank --opening, add-account for anything the default
@@ -149,6 +176,8 @@ Agent workflow:
      anything that is not a single-account posting
   6. set-fx on foreign lines that lack a settled base amount
   7. reconcile; --sign-off when reconciled; year-end / vat-return to inspect
+  8. scan-anomalies --sync periodically; void-invoice / reverse-journal to
+     correct a mistake rather than editing or deleting the original posting
 
 Matching links evidence to a transaction but does NOT classify or post it.
 Classification (classify, auto-classify, or the UI) posts the journal entry
@@ -185,6 +214,9 @@ Flags:
   --unallocated       Leave the payment unallocated, on account (record-payment)
   --narrative, --lines <json>  Journal narrative and lines (journal)
   --unposted, --unclassified   Filter for list-transactions
+  --sync              Also write scan-anomalies findings to the review queue
+  --status, --severity, --kind  Filters for list-review-queue
+  --entry <id>         Journal entry id (reverse-journal)
   --period <id-or-name>  VAT period id or exact name (vat-return)
   --format <json|human>  Output format (default: json)
   --help              Show this message
@@ -600,6 +632,62 @@ export async function main(argv: string[], options: CliOptions = {}): Promise<nu
           period: requireFlag(flags, 'period'),
         });
         print(vatReturnCli(db, parsed), format);
+        return 0;
+      }
+
+      case 'void-invoice': {
+        const parsed = voidInvoiceCliInput.parse({
+          companyId,
+          number: positionals[0] ?? requireFlag(flags, 'invoice', 'number'),
+          date: requireFlag(flags, 'date'),
+          reason: requireFlag(flags, 'reason'),
+        });
+        print(voidInvoiceCli(db, parsed), format);
+        return 0;
+      }
+
+      case 'reverse-journal': {
+        const parsed = reverseJournalCliInput.parse({
+          companyId,
+          entryId: positionals[0] ?? requireFlag(flags, 'entry', 'entry-id', 'entryId'),
+          date: requireFlag(flags, 'date'),
+          reason: requireFlag(flags, 'reason'),
+        });
+        print(reverseJournalCli(db, parsed), format);
+        return 0;
+      }
+
+      case 'scan-anomalies': {
+        const parsed = scanAnomaliesCliInput.parse({
+          companyId,
+          from: getFlag(flags, 'from'),
+          to: getFlag(flags, 'to'),
+          sync: hasFlag(flags, 'sync'),
+        });
+        print(scanAnomaliesCli(db, parsed), format);
+        return 0;
+      }
+
+      case 'list-review-queue': {
+        const parsed = listReviewQueueInput.parse({
+          companyId,
+          status: getFlag(flags, 'status'),
+          severity: getFlag(flags, 'severity'),
+          kind: getFlag(flags, 'kind'),
+        });
+        print(listReviewQueueCli(db, parsed), format);
+        return 0;
+      }
+
+      case 'list-suppliers': {
+        const parsed = listPartiesInput.parse({ companyId });
+        print(listSuppliersCli(db, parsed), format);
+        return 0;
+      }
+
+      case 'list-customers': {
+        const parsed = listPartiesInput.parse({ companyId });
+        print(listCustomersCli(db, parsed), format);
         return 0;
       }
 

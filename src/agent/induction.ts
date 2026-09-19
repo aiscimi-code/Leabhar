@@ -8,7 +8,7 @@ import { createAccount, upsertCustomer } from '@/domain/config/mutations';
 import { parseAmount } from '@/domain/money';
 import { resolveAccountId } from './reconcile';
 import type {
-  InitCompanyInput, AddBankInput, AddAccountInput, AddCustomerInput,
+  InitCompanyInput, AddBankInput, AddAccountInput, AddCustomerInput, ListPartiesInput,
 } from './schema';
 
 /**
@@ -164,4 +164,34 @@ export function resolveSupplierId(db: AppDatabase, companyId: string, nameOrId: 
     .where(and(eq(suppliers.companyId, companyId), eq(suppliers.matchKey, matchKeyOf(nameOrId)))).get();
   if (!row) throw new Error(`Supplier "${nameOrId}" not found. Use create-supplier to create it first.`);
   return row.id;
+}
+
+/**
+ * List suppliers/customers created via create-invoice/journal by name or id
+ * alone (issue #155) — until now nothing gave that name/id pairing back.
+ */
+export function listSuppliersCli(db: AppDatabase, input: ListPartiesInput) {
+  return db.select({
+    id: suppliers.id,
+    name: suppliers.name,
+    countryCode: suppliers.countryCode,
+    vatNumber: suppliers.vatNumber,
+    active: suppliers.active,
+  }).from(suppliers)
+    .where(eq(suppliers.companyId, input.companyId))
+    .orderBy(suppliers.name)
+    .all();
+}
+
+export function listCustomersCli(db: AppDatabase, input: ListPartiesInput) {
+  return db.select({
+    id: customers.id,
+    name: customers.name,
+    countryCode: customers.countryCode,
+    vatNumber: customers.vatNumber,
+    active: customers.active,
+  }).from(customers)
+    .where(eq(customers.companyId, input.companyId))
+    .orderBy(customers.name)
+    .all();
 }

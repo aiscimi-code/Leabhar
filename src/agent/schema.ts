@@ -273,3 +273,62 @@ export type ListTransactionsInput = z.infer<typeof listTransactionsInput>;
 export type ShowInvoiceInput = z.infer<typeof showInvoiceInput>;
 export type YearEndCliInput = z.infer<typeof yearEndCliInput>;
 export type VatReturnCliInput = z.infer<typeof vatReturnCliInput>;
+
+// ---- Corrections (issue #155): void-invoice, reverse-journal ----
+
+export const voidInvoiceCliInput = z.object({
+  companyId: z.string(),
+  number: z.string(),
+  date: isoDate,
+  reason: z.string(),
+});
+
+export const reverseJournalCliInput = z.object({
+  companyId: z.string(),
+  entryId: z.string(),
+  date: isoDate,
+  reason: z.string(),
+});
+
+export type VoidInvoiceCliInput = z.infer<typeof voidInvoiceCliInput>;
+export type ReverseJournalCliInput = z.infer<typeof reverseJournalCliInput>;
+
+// ---- Review queue (issue #155): scan-anomalies, list-review-queue ----
+
+const reviewItemKind = z.enum([
+  'unmatched_transaction', 'unclassified_transaction', 'missing_document',
+  'uncertain_vat_treatment', 'uncertain_match', 'suspected_duplicate',
+  'currency_discrepancy', 'invoice_total_mismatch', 'missing_fx_rate',
+  'unbalanced_journal', 'capital_purchase_review', 'missing_vat_number',
+  'negative_vat', 'transaction_outside_period', 'unresolved_ai_suggestion',
+  'extraction_failed', 'reconciliation_difference', 'period_validation',
+  'other',
+]);
+
+const reviewItemSeverity = z.enum(['info', 'warning', 'error', 'blocking']);
+
+export const scanAnomaliesCliInput = z.object({
+  companyId: z.string(),
+  from: isoDate.optional(),
+  to: isoDate.optional(),
+  /** Also write findings into the review queue, not just report them. */
+  sync: z.boolean().default(false),
+});
+
+export const listReviewQueueInput = z.object({
+  companyId: z.string(),
+  status: z.enum(['open', 'resolved', 'dismissed', 'snoozed', 'superseded', 'all']).optional(),
+  severity: reviewItemSeverity.optional(),
+  kind: reviewItemKind.optional(),
+});
+
+export type ScanAnomaliesCliInput = z.infer<typeof scanAnomaliesCliInput>;
+export type ListReviewQueueInput = z.infer<typeof listReviewQueueInput>;
+
+// ---- Party lists (issue #155): list-suppliers, list-customers ----
+
+export const listPartiesInput = z.object({
+  companyId: z.string(),
+});
+
+export type ListPartiesInput = z.infer<typeof listPartiesInput>;
