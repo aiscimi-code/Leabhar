@@ -15,7 +15,11 @@
  * criteria are not available verbatim here. The curated rule's own
  * `exceptions` records the *fact* that an exclusion regime exists, without
  * asserting what specifically qualifies for it — asserting that would be
- * inventing text this KB does not hold.
+ * inventing text this KB does not hold. (Revenue's own current guidance
+ * states the same criteria verbatim and independently — see
+ * `tdm3801_03bCuration.ts`'s `vat.mandatory_electronic_filing_capacity_exclusion`,
+ * a lower-ranked but genuinely citable companion rule, not a substitute for
+ * this Regulation's own text.)
  */
 import type { IrishRuleCondition, IrishRuleException, IrishRuleType } from '@/db/schema';
 
