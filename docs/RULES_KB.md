@@ -36,7 +36,13 @@ transaction to the rules that apply to it. Two sources are ingested:
   `docs/statutes/si-156-2012/2012-si-156.md` — curated for Regulation 4
   (VAT-accountable persons must file and pay electronically), the first
   source where the local transcript is only *partly* verbatim (see "S.I.
-  156/2012 (Mandatory Electronic Filing)" below).
+  156/2012 (Mandatory Electronic Filing)" below);
+- S.I. No. 69/2025 (European Union (Value-Added Tax) Regulations 2025),
+  Regulation 8 only, from `docs/statutes/si-69-2025/2025-si-69.md` — the
+  *current* VATCA 2010 s.80(1) moneys-received/cash-basis eligibility
+  thresholds (90% test / €2,000,000 turnover), closing a gap "S.I. 639/2010
+  (VAT Regulations 2010)" above explicitly left open (see "S.I. 69/2025
+  (Cash Accounting Thresholds)" below).
 
 This is not a RAG system and it does not ask an LLM what the tax treatment
 should be. The pipeline is:
@@ -540,6 +546,45 @@ oversight:
   this local file only summarises rather than quotes — asserting the actual
   criteria would mean inventing text this KB does not hold.
 
+### S.I. 69/2025 (Cash Accounting Thresholds)
+
+Closes a gap flagged, not fixed, in an earlier pass:
+
+- `src/domain/rules/si692025Parser.ts` extracts exactly one named
+  regulation (Regulation 8) from the whole instrument, rather than parsing
+  every regulation — this document's ten top-level regulations sit
+  alongside a newly-inserted VATCA Chapter (sections 92B, 92C, 92D)
+  *embedded inside* Regulation 9's own substituted text, and "92B." would
+  itself match a naive bare-number-opener regex the way S.I. 639/2010's
+  regulations do. Rather than build a whole-document parser that has to
+  tell a top-level regulation boundary apart from a nested inserted-section
+  number, `parseSi692025Regulation` finds one named regulation's own
+  `"^N. "` line-start marker and the next top-level regulation's marker (or
+  end of document) as its boundary — the same targeted approach
+  `vatcaRevisedSectionParser.ts` uses for a single VATCA section.
+- `src/domain/rules/si692025Curation.ts` / `si692025Ingestion.ts` — two
+  rules from Regulation 8, which substitutes the *current* text of VATCA
+  2010 s.80(1)(a) and (b) (the eligibility test for the moneys-received/
+  cash basis of VAT accounting): `vat.cash_accounting_turnover_threshold`
+  (€2,000,000 total annual turnover, not exceeded and not likely to exceed,
+  in any continuous 12-month period — stored as `200,000,000` `eur_minor`
+  per AGENTS.md invariant #1, money is integer minor units) and
+  `vat.cash_accounting_supplies_to_unregistered_persons_test` (at least 90%
+  of annual turnover from supplies to unregistered persons). A person need
+  only satisfy one test, not both.
+- This is exactly the threshold "S.I. 639/2010 (VAT Regulations 2010)"
+  above explicitly said was *not* curated there: "the real threshold lives
+  in VATCA 2010 s.80(1) itself" (Regulation 25 only requires the Revenue
+  authorisation, it states no eligibility figure of its own). With this
+  source ingested, both eligibility limbs are now real, current, curated
+  rules — effective from 6 March 2025, the date this instrument was made
+  (it carries no separate commencement clause).
+- Regulation 7 (restricting VAT deductibility for a person availing of the
+  EU cross-border SME exemption scheme this same instrument introduces) is
+  **not** curated in this pass — a distinct, narrower rule that deserves
+  its own review, left for a future pass, along with Regulations 1-6, 9 and
+  10 (the cross-border SME exemption scheme itself).
+
 ## Rule format
 
 Conceptually, a stored rule looks like:
@@ -732,36 +777,39 @@ npm run cli:rules -- ingest --source vatca-2010-revised && npm run cli:rules -- 
 npm run cli:rules -- ingest --source tca1997-s284 && npm run cli:rules -- extract --source tca1997-s284
 npm run cli:rules -- ingest --source si639 && npm run cli:rules -- extract --source si639
 npm run cli:rules -- ingest --source si156 && npm run cli:rules -- extract --source si156
+npm run cli:rules -- ingest --source si69-2025 && npm run cli:rules -- extract --source si69-2025
 npm run cli:rules -- audit
 ```
 
 Headline numbers:
 
-- 346 provisions ingested across twelve sources (118 Finance Act 2024, 125
+- 347 provisions ingested across thirteen sources (118 Finance Act 2024, 125
   VATCA 2010, 15 VATCA 2010 Schedule 2, 32 VATCA 2010 Schedule 3, 1 TCA 1997
   s.530, 1 Revenue TDM 18-02-04, 1 VATCA 2010 s.46 revised, 1 TCA 1997
   s.284, 1 Revenue TDM 18-02-05, 1 Revenue TDM 18-02-11, 47 S.I. 639/2010, 3
-  S.I. 156/2012), 191 judged relevant to transaction classification, 155 not
-  (procedural/repeal/penalty/pure-definition, or uncategorised and flagged
-  for review).
-- 27 rules extracted (4 Finance Act, 5 VATCA principal-Act, 4 Schedule 2, 4
+  S.I. 156/2012, 1 S.I. 69/2025 reg.8), 192 judged relevant to transaction
+  classification, 155 not (procedural/repeal/penalty/pure-definition, or
+  uncategorised and flagged for review).
+- 29 rules extracted (4 Finance Act, 5 VATCA principal-Act, 4 Schedule 2, 4
   Schedule 3, 4 RCT, 3 current VAT rates, 1 capital allowances, 1 S.I.
-  639/2010 cash accounting, 1 S.I. 156/2012 mandatory e-filing), all
-  `ai_extracted`, all `human_review_required = true` — **zero rules in this
-  KB are authoritative yet.**
-- 15 rules with a stated exception the system flags rather than evaluates
-  (S.I. 156/2012's un-curated Regulation 5 capacity exclusion adds one on
-  top of the 14 already present), 0 duplicate rule keys.
+  639/2010 cash accounting, 1 S.I. 156/2012 mandatory e-filing, 2 S.I.
+  69/2025 cash-accounting eligibility thresholds), all `ai_extracted`, all
+  `human_review_required = true` — **zero rules in this KB are authoritative
+  yet.**
+- 15 rules with a stated exception the system flags rather than evaluates,
+  0 duplicate rule keys.
 - 442 cross-references the report cannot resolve — expected, not a bug: the
   Finance Act 2024 *amends*, and VATCA 2010 heavily cross-refers to, the
   Taxes Consolidation Act 1997 and other Acts not themselves ingested yet, so
   "section 531AN", "section 654A" et al. have nothing to resolve against
   inside this KB alone. (The Schedule, RCT, current-rates, S.I. 639/2010 and
-  S.I. 156/2012 sources add none of their own: their
-  `amendsSection`/`citedActs` are not modelled — see "VATCA 2010 Schedules 2
-  and 3", "Relevant Contracts Tax (RCT)", "VATCA 2010 current rates", "S.I.
-  639/2010 (VAT Regulations 2010)" and "S.I. 156/2012 (Mandatory Electronic
-  Filing)" above.)
+  S.I. 156/2012 sources add none of their own; S.I. 69/2025's own
+  `amendsSection: "80"` resolves locally since VATCA 2010 is already
+  ingested, so it adds no new unresolved reference either — see "VATCA 2010
+  Schedules 2 and 3", "Relevant Contracts Tax (RCT)", "VATCA 2010 current
+  rates", "S.I. 639/2010 (VAT Regulations 2010)", "S.I. 156/2012 (Mandatory
+  Electronic Filing)" and "S.I. 69/2025 (Cash Accounting Thresholds)"
+  above.)
 
 **This is not a claim that the knowledge base is legally complete.** It is a
 record of what was ingested, what was judged relevant, what was extracted,
@@ -777,7 +825,7 @@ ingest [--source <s>] [--file <path>]
                             Ingest a source's Markdown (--source: finance-act-2024
                             [default] | vatca-2010 | vatca-2010-sch2 | vatca-2010-sch3 |
                             rct-tca530 | rct-tdm | rct-tdm-05 | rct-tdm-11 |
-                            vatca-2010-revised | tca1997-s284 | si639 | si156)
+                            vatca-2010-revised | tca1997-s284 | si639 | si156 | si69-2025)
 extract [--source <s>]     Derive irish_tax_rules from ingested provisions
 list-provisions [--category <c>] [--relevant-only]
 show-provision --section <n>
@@ -805,13 +853,14 @@ audit
   the as-enacted VATCA text (reverse charge, place of supply, deductibility)
   is a structural mechanism that has not been fundamentally rewritten since
   2010, so curating its *existence* from the frozen text remains safe.
-- **Only 27 of 191 relevant provisions have a curated rule key** (4 Finance
+- **Only 29 of 192 relevant provisions have a curated rule key** (4 Finance
   Act, 5 VATCA principal-Act, 4 Schedule 2, 4 Schedule 3, 4 RCT, 3 current
-  rates, 1 capital allowances, 1 S.I. 639/2010, 1 S.I. 156/2012). Everything
-  else is ingested (text, offsets, category all on disk) but not yet
-  extracted into named rules — `provisionsWithoutExtractedRule` in the audit
-  report would show these once curated; today it's empty because the
-  curated set and the derived set match exactly.
+  rates, 1 capital allowances, 1 S.I. 639/2010, 1 S.I. 156/2012, 2 S.I.
+  69/2025). Everything else is ingested (text, offsets, category all on
+  disk) but not yet extracted into named rules —
+  `provisionsWithoutExtractedRule` in the audit report would show these
+  once curated; today it's empty because the curated set and the derived
+  set match exactly.
 - **RCT's actual deduction rate (0%/20%/35%) is not in this KB at all**,
   by design (see "Relevant Contracts Tax (RCT)" above) — TCA 1997
   ss.530A-530V, which govern it, were inserted by Finance Act 2011 s.20 and
@@ -825,16 +874,17 @@ audit
   TCA 1997 text is ingested to safely curate a live figure the way "VATCA
   2010 current rates" did for VAT. Only the qualification test is curated;
   computing an actual allowance amount from this KB alone would be wrong.
-- **S.I. 639/2010 reg.25's own eligibility threshold is not curated here
-  either — deliberately, and for a different reason than the stale-rate
-  cases above.** Regulation 25 does not restate a numeric turnover figure of
-  its own; the real threshold lives in VATCA 2010 s.80(1)(a)/(b), which is
-  not yet ingested. So there is no stale figure to guard against, but also
-  no eligibility test this KB can evaluate — only the procedural fact that
-  authorisation is required is curated. Regulation 14A (postponed accounting
-  for import VAT) is excluded for a related but distinct reason: it was
-  inserted by a later, un-ingested instrument (S.I. 734/2020), and the only
-  local reference to its text is a paraphrase, which the verbatim-only
+- **S.I. 639/2010 reg.25 itself still states no numeric eligibility
+  threshold — that gap is now filled by a different source, not by
+  reg.25.** Regulation 25 only requires the Revenue authorisation; the
+  actual VATCA 2010 s.80(1)(a)/(b) eligibility tests are now curated
+  separately from S.I. 69/2025 Regulation 8 (see "S.I. 69/2025 (Cash
+  Accounting Thresholds)" above) — the two rules together are what a reader
+  needs (the authorisation requirement, and the tests it is granted
+  against). Regulation 14A (postponed accounting for import VAT) remains
+  excluded for a distinct reason: it was inserted by a later, un-ingested
+  instrument (S.I. 734/2020), and the only local reference to its text is a
+  paraphrase, which the verbatim-only
   policy already rules out as a source regardless of the ingestion gap.
 - **S.I. 156/2012's own local transcript is only partly verbatim, and the
   ingestion is scoped to match.** Regulations 1, 2 and 4 are the official
