@@ -30,7 +30,9 @@ superseded and what to use instead.
   s046.md` (current rates) and `schedule-{2,3}.md`; `tca-1997/s530.md` and
   `s284.md`; `rct/tdm-18-02-{04,05,11}.md`; `si-639-2010/2010-si-639.md`
   (all 47 regs parsed, reg.25 curated); `si-156-2012/2012-si-156.md` (regs
-  1/2/4 only, reg.4 curated); `si-69-2025/2025-si-69.md` (reg.8 only); and
+  1/2/4 only, reg.4 curated); `si-69-2025/2025-si-69.md` (regs.5, 8 and 9 —
+  reg.5 curated for issue #136 bug 2/#137's turnover-test fix, reg.9 for
+  the s.92B "annual turnover" definition it depends on); and
   one passage of `tdm-38-01-03b/38-01-03b.md` (the e-filing capacity
   exclusion).
 - **Reference material** (everything else below): curated pointers,
@@ -54,7 +56,7 @@ superseded and what to use instead.
 | `tca-1997/` | Taxes Consolidation Act 1997 (No. 39 of 1997) | Deterministic (s.530, s.284) + reference (the other 9 sections) | s.530 (RCT definitions) and s.284 (wear-and-tear qualification, no rate) ingested. s18, s52, ss.885-887 are paraphrase; s235, s288, s299, s496, s613 read as verbatim but carry no source hash — see `docs/RULES_KB.md` "Documents reviewed, not curated" |
 | `si-639-2010/` | VAT Regulations 2010 (S.I. 639/2010) | Deterministic (whole document, reg.25 curated) | All 47 regulations parsed and ingested; only reg.25 (cash-accounting authorisation) has a curated rule. Reg 14A (postponed accounting, via S.I. 734/2020) and most others are ingested text without a rule |
 | `si-156-2012/` | Mandatory e-filing Regulations 2012 (S.I. 156/2012) | Deterministic (regs 1/2/4 only, reg.4 curated) | The local transcript only quotes regs 1, 2 and 4 verbatim (regs 5-9 are an editorial summary, not ingested); reg.4 (mandatory e-filing) is curated |
-| `si-69-2025/` | European Union (VAT) Regulations 2025 (S.I. 69/2025) | Deterministic (reg.8 only) | Reg.8 (current s.80(1) cash-accounting eligibility thresholds: 90% test / €2,000,000) ingested and curated as 2 rules. Regs 1-7, 9, 10 (the cross-border SME scheme) not ingested |
+| `si-69-2025/` | European Union (VAT) Regulations 2025 (S.I. 69/2025) | Deterministic (regs.5, 8 and 9) | Reg.8 (current s.80(1) cash-accounting eligibility thresholds: 90% test / €2,000,000) ingested and curated as 2 rules. Reg.5 (current VATCA s.6(1)(c)/(d) "current or previous calendar year" turnover test) and reg.9 (s.92B "annual turnover" definition) ingested and curated as part of the issue #136 bug 2/#137 fix. Regs 1-4, 6, 7, 10 (the rest of the cross-border SME scheme) not ingested |
 | `si-651-2011/` | Income Tax and Corporation Tax (RCT) Regulations 2011 (S.I. 651/2011) | Reference only | eRCT administration mechanics; superseded by SI 576/2012 — see the folder's own README |
 | `vat-rates/` | Revenue current VAT rates table (Markdown + machine-readable JSON) + category-move notes | Reference only, not a source (no hash) | Rate history complete (2020-2026, retrieved 2026-09-18); `schedule-moves-2025-2026.md` tracks category reclassifications (e.g. restaurant/hairdressing to 9% from 1 Jul 2026) the headline table alone doesn't show |
 | `tdm-38-01-03b/` | Revenue TDM Part 38-01-03b (VAT registration guidelines) | Deterministic (one passage only) | Only the "Exclusion from Mandatory Electronic Filing and Payment of Tax" passage is ingested and curated (closes an S.I. 156/2012 reg.5 gap); the rest of the 40+ page manual is reference-only |
@@ -63,6 +65,13 @@ superseded and what to use instead.
 | `vat3-rtd/` | VAT3 / annual RTD box mapping (Revenue guidance) | Reference only, not a source (no hash) | One box-mapping doc |
 | `frs-102/` | FRS 102 pointer (not the standard text — FRC copyright) | Reference only (`accounting_standard` rank) | Pointer only, by design |
 | `companies-act-2014/` | Companies Act 2014 — records, size thresholds, filing | Reference only, not a source (no hash) | ss. 282, 280A, 280D/280E, 352, 358-360 |
+| `vat-thresholds/` | Revenue: What are the VAT thresholds? | Reference only, not a source (no hash) | Added for issue #137; cross-check for the turnover-test conditions curated from S.I. 69/2025 reg.5 |
+| `sme-scheme/` | Revenue TDM: EU VAT SME Scheme — Domestic Layer | Reference only, not a source (no hash) | Added for issue #137; worked turnover-threshold examples (Table 1) cross-checked against the curated rule's own test cases |
+| `282-2011/` | Council Implementing Regulation (EU) No 282/2011 | Deterministic excerpt (Articles 10-13b, reference only — not curated into a rule) | Added for issue #138. Full consolidated text plus a verbatim Articles 10-13b extract (the "established"/"fixed establishment"/"permanent address"/"usually resides" tests); not turned into a `conditions`-array rule because it is an inherently multi-factor legal test — see `vatcaCuration.ts`'s updated `interpretationNote` and the `supplierEstablishedOutsideState` override field it now supports |
+| `pos-of-services/` | Revenue: General/exceptions place of supply of services pages | Reference only, not a source (no hash) | Added for issue #138; cross-check for VATCA s.34's already-curated B2B general rule and its documented exceptions |
+| `tbe-services/` | Revenue TDM: Telecommunications, broadcasting and electronic (TBE) services | Reference only, not a source (no hash) | Added for issue #138; documents the s.34(kc) exception this KB does not yet curate |
+| `immovable-property/` | Revenue TDM: Services connected with immovable property | Reference only, not a source (no hash) | Added for issue #138; documents the s.33(2)/s.34(c) exception this KB does not yet curate |
+| `distance-sales/` | Revenue TDM: VAT and intra-Community Distance Sales of Goods | Reference only, not a source (no hash) | Added for issue #138; documents the distance-selling €10,000 threshold, distinct from the registration thresholds this KB curates |
 | `scripts/` | `extract_vat_sources.py` — HTML/PDF -> Markdown extractor for the reference sources above | Tooling | Requires network access this repo's own sandboxes don't have; run via `.github/workflows/extract-vat-docs.yml` (`workflow_dispatch`) on a GitHub-hosted runner instead |
 
 Four files live at this top level rather than under a source's own folder,

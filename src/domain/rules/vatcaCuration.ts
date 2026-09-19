@@ -87,7 +87,7 @@ export const VATCA_CURATED_RULES: CuratedVatcaRule[] = [
       + 'or she had supplied that service for consider-\nation in the course or furtherance of business.',
     conditions: [
       { field: 'supplyType', operator: 'equals', value: 'services' },
-      { field: 'supplierCountry', operator: 'not_equals', value: 'IE' },
+      { field: 'supplierEstablishedOutsideStateResolved', operator: 'equals', value: 'true' },
       { field: 'vatRegistered', operator: 'equals', value: 'true' },
     ],
     exceptions: [],
@@ -101,9 +101,15 @@ export const VATCA_CURATED_RULES: CuratedVatcaRule[] = [
     reportingEffect: null,
     requiresGuidance: true,
     interpretationNote: '"supplier established outside the State" is mapped onto '
-      + '`supplierCountry != \'IE\'` — a reasonable but imperfect proxy (a supplier can be established '
-      + 'in Ireland while invoicing from elsewhere, or vice versa; establishment, not invoicing '
-      + 'address, is the statutory test). "a taxable person who carries on a business in the State" '
+      + '`supplierEstablishedOutsideStateResolved` (`transactionLookup.ts`\'s `normaliseTransactionContext`) — '
+      + 'the caller\'s own direct determination when supplied (the actual multi-factor test: EU Reg 282/2011 '
+      + 'arts.10-11, seat of economic activity / fixed establishment — see '
+      + 'docs/statutes/282-2011/articles-10-13b-establishment.md), falling back to an ISO-3166-validated '
+      + '`supplierCountry != \'IE\'` proxy only when no direct determination is given (a supplier can be '
+      + 'established in Ireland while invoicing from elsewhere, or vice versa; establishment, not invoicing '
+      + 'address, is the statutory test — issue #136 bug 4 / #138). An unresolved or invalid country code no '
+      + 'longer defaults to "abroad": it leaves the field unresolved instead. "a taxable person who carries on '
+      + 'a business in the State" '
       + 'is mapped onto `vatRegistered = true`, which is necessary but not sufficient (the section '
       + 'also covers unregistered persons with a registration number under s.65(2), not modelled '
       + 'here). requiresGuidance is set because subsections (2)–(6) carry further conditions '
