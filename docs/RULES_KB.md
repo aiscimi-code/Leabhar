@@ -30,7 +30,13 @@ transaction to the rules that apply to it. Two sources are ingested:
   `docs/statutes/si-639-2010/2010-si-639.md` — a whole 47-regulation
   statutory instrument, curated for Regulation 25 (moneys-received/cash
   basis of VAT accounting requires a Revenue authorisation, not a bookkeeping
-  election) (see "S.I. 639/2010 (VAT Regulations 2010)" below).
+  election) (see "S.I. 639/2010 (VAT Regulations 2010)" below);
+- S.I. No. 156 of 2012 (Tax Returns and Payments (Mandatory Electronic
+  Filing and Payment of Tax) Regulations 2012), from
+  `docs/statutes/si-156-2012/2012-si-156.md` — curated for Regulation 4
+  (VAT-accountable persons must file and pay electronically), the first
+  source where the local transcript is only *partly* verbatim (see "S.I.
+  156/2012 (Mandatory Electronic Filing)" below).
 
 This is not a RAG system and it does not ask an LLM what the tax treatment
 should be. The pipeline is:
@@ -505,6 +511,35 @@ into the KB, and a new whole-document parser shape:
   used as a source; the whole-document parse above is the only verbatim
   source for these regulations.
 
+### S.I. 156/2012 (Mandatory Electronic Filing)
+
+The first source where the local Markdown transcript is only **partly**
+verbatim, and the KB's handling of that is deliberate rather than an
+oversight:
+
+- `docs/statutes/si-156-2012/2012-si-156.md` quotes Regulations 1, 2 and 4 of
+  the instrument in full, official-text form, but Regulation 3 has no body at
+  all in the file and Regulations 5-9 are replaced with a single editorial
+  summary sentence ("5–9. Capacity exclusions, Appeal Commissioners review,
+  revocation of exclusion, and electronic payment timing rules as in the
+  official instrument."). That sentence is a paraphrase, not a source.
+- `src/domain/rules/si156Parser.ts` never emits a provision for the
+  placeholder section — its numbered-opener regex requires a period after
+  the leading digits ("N. "), which "5–9." (an en-dash, not a period) does
+  not match, so the exclusion happens by construction rather than a special
+  case. Only regs 1, 2 and 4 are ever parsed.
+- `src/domain/rules/si156Curation.ts` / `si156Ingestion.ts` — one rule from
+  Regulation 4: `vat.mandatory_electronic_filing`. A VAT-accountable person
+  must file returns and pay VAT electronically (via ROS or another
+  electronic channel) from the date they became accountable, or 1 June 2012
+  if already accountable on that date — this is a compliance/procedure fact
+  with no numeric figure, so no stale-figure risk. Its `exceptions` records
+  that a Regulation 5 "capacity" exclusion exists (insufficient internet
+  access, or an individual prevented by age/infirmity), **without** stating
+  what specifically qualifies for it, because that text is exactly the part
+  this local file only summarises rather than quotes — asserting the actual
+  criteria would mean inventing text this KB does not hold.
+
 ## Rule format
 
 Conceptually, a stored rule looks like:
@@ -696,34 +731,37 @@ npm run cli:rules -- extract --source rct
 npm run cli:rules -- ingest --source vatca-2010-revised && npm run cli:rules -- extract --source vatca-2010-revised
 npm run cli:rules -- ingest --source tca1997-s284 && npm run cli:rules -- extract --source tca1997-s284
 npm run cli:rules -- ingest --source si639 && npm run cli:rules -- extract --source si639
+npm run cli:rules -- ingest --source si156 && npm run cli:rules -- extract --source si156
 npm run cli:rules -- audit
 ```
 
 Headline numbers:
 
-- 343 provisions ingested across eleven sources (118 Finance Act 2024, 125
+- 346 provisions ingested across twelve sources (118 Finance Act 2024, 125
   VATCA 2010, 15 VATCA 2010 Schedule 2, 32 VATCA 2010 Schedule 3, 1 TCA 1997
   s.530, 1 Revenue TDM 18-02-04, 1 VATCA 2010 s.46 revised, 1 TCA 1997
-  s.284, 1 Revenue TDM 18-02-05, 1 Revenue TDM 18-02-11, 47 S.I. 639/2010),
-  190 judged relevant to transaction classification, 153 not (procedural/
-  repeal/penalty/pure-definition, or uncategorised and flagged for review).
-- 26 rules extracted (4 Finance Act, 5 VATCA principal-Act, 4 Schedule 2, 4
+  s.284, 1 Revenue TDM 18-02-05, 1 Revenue TDM 18-02-11, 47 S.I. 639/2010, 3
+  S.I. 156/2012), 191 judged relevant to transaction classification, 155 not
+  (procedural/repeal/penalty/pure-definition, or uncategorised and flagged
+  for review).
+- 27 rules extracted (4 Finance Act, 5 VATCA principal-Act, 4 Schedule 2, 4
   Schedule 3, 4 RCT, 3 current VAT rates, 1 capital allowances, 1 S.I.
-  639/2010 cash accounting), all `ai_extracted`, all
-  `human_review_required = true` — **zero rules in this KB are authoritative
-  yet.**
-- 14 rules with a stated exception the system flags rather than evaluates
-  (S.I. 639/2010 reg.25's connected-persons and withdrawal-for-noncompliance
-  exceptions add one), 0 duplicate rule keys.
+  639/2010 cash accounting, 1 S.I. 156/2012 mandatory e-filing), all
+  `ai_extracted`, all `human_review_required = true` — **zero rules in this
+  KB are authoritative yet.**
+- 15 rules with a stated exception the system flags rather than evaluates
+  (S.I. 156/2012's un-curated Regulation 5 capacity exclusion adds one on
+  top of the 14 already present), 0 duplicate rule keys.
 - 442 cross-references the report cannot resolve — expected, not a bug: the
   Finance Act 2024 *amends*, and VATCA 2010 heavily cross-refers to, the
   Taxes Consolidation Act 1997 and other Acts not themselves ingested yet, so
   "section 531AN", "section 654A" et al. have nothing to resolve against
-  inside this KB alone. (The Schedule, RCT, current-rates and S.I. 639/2010
-  sources add none of their own: their `amendsSection`/`citedActs` are not
-  modelled — see "VATCA 2010 Schedules 2 and 3", "Relevant Contracts Tax
-  (RCT)", "VATCA 2010 current rates" and "S.I. 639/2010 (VAT Regulations
-  2010)" above.)
+  inside this KB alone. (The Schedule, RCT, current-rates, S.I. 639/2010 and
+  S.I. 156/2012 sources add none of their own: their
+  `amendsSection`/`citedActs` are not modelled — see "VATCA 2010 Schedules 2
+  and 3", "Relevant Contracts Tax (RCT)", "VATCA 2010 current rates", "S.I.
+  639/2010 (VAT Regulations 2010)" and "S.I. 156/2012 (Mandatory Electronic
+  Filing)" above.)
 
 **This is not a claim that the knowledge base is legally complete.** It is a
 record of what was ingested, what was judged relevant, what was extracted,
@@ -739,7 +777,7 @@ ingest [--source <s>] [--file <path>]
                             Ingest a source's Markdown (--source: finance-act-2024
                             [default] | vatca-2010 | vatca-2010-sch2 | vatca-2010-sch3 |
                             rct-tca530 | rct-tdm | rct-tdm-05 | rct-tdm-11 |
-                            vatca-2010-revised | tca1997-s284 | si639)
+                            vatca-2010-revised | tca1997-s284 | si639 | si156)
 extract [--source <s>]     Derive irish_tax_rules from ingested provisions
 list-provisions [--category <c>] [--relevant-only]
 show-provision --section <n>
@@ -767,13 +805,13 @@ audit
   the as-enacted VATCA text (reverse charge, place of supply, deductibility)
   is a structural mechanism that has not been fundamentally rewritten since
   2010, so curating its *existence* from the frozen text remains safe.
-- **Only 26 of 190 relevant provisions have a curated rule key** (4 Finance
+- **Only 27 of 191 relevant provisions have a curated rule key** (4 Finance
   Act, 5 VATCA principal-Act, 4 Schedule 2, 4 Schedule 3, 4 RCT, 3 current
-  rates, 1 capital allowances, 1 S.I. 639/2010). Everything else is ingested
-  (text, offsets, category all on disk) but not yet extracted into named
-  rules — `provisionsWithoutExtractedRule` in the audit report would show
-  these once curated; today it's empty because the curated set and the
-  derived set match exactly.
+  rates, 1 capital allowances, 1 S.I. 639/2010, 1 S.I. 156/2012). Everything
+  else is ingested (text, offsets, category all on disk) but not yet
+  extracted into named rules — `provisionsWithoutExtractedRule` in the audit
+  report would show these once curated; today it's empty because the
+  curated set and the derived set match exactly.
 - **RCT's actual deduction rate (0%/20%/35%) is not in this KB at all**,
   by design (see "Relevant Contracts Tax (RCT)" above) — TCA 1997
   ss.530A-530V, which govern it, were inserted by Finance Act 2011 s.20 and
@@ -797,7 +835,18 @@ audit
   for import VAT) is excluded for a related but distinct reason: it was
   inserted by a later, un-ingested instrument (S.I. 734/2020), and the only
   local reference to its text is a paraphrase, which the verbatim-only
-  policy already rules out regardless of the ingestion gap.
+  policy already rules out as a source regardless of the ingestion gap.
+- **S.I. 156/2012's own local transcript is only partly verbatim, and the
+  ingestion is scoped to match.** Regulations 1, 2 and 4 are the official
+  text; regs 3 and 5-9 are either absent or replaced by one editorial
+  summary sentence. Only regs 1, 2 and 4 are parsed into provisions at all —
+  `si156Parser.ts`'s numbered-opener regex excludes the placeholder section
+  by construction — and only reg.4's mandatory-e-filing obligation is
+  curated. Regulation 5's actual "capacity" exclusion criteria are not
+  restated anywhere in this KB: the curated rule's `exceptions` records that
+  an exclusion regime exists without asserting what qualifies for it, since
+  that text is exactly the part this local file only summarises rather than
+  quotes verbatim.
 - **VATCA's conditions are curated, not mechanically extracted — and this is
   recorded, not glossed over.** Mapping "a supplier established outside the
   State" onto `supplierCountry != 'IE'` is an interpretation; every VATCA
