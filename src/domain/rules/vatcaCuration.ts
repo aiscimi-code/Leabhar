@@ -31,6 +31,20 @@
  */
 import type { IrishRuleCondition, IrishRuleException, IrishRuleType } from '@/db/schema';
 
+/**
+ * `vat.input_deduction_general`'s own curated `exceptions` array already
+ * records that the s.60(2)(a) exclusions below override it ("no deduction
+ * regardless of business purpose"), but until issue #143 finding D,
+ * `transactionLookup.ts` only surfaced that as review-reason prose — a
+ * matching transaction still carried BOTH `vat.input_deduction_general`
+ * ("deductible") and `vat.deduction_exclusions_entertainment` ("no
+ * deduction") side by side. These two constants are what
+ * `resolveDeductionExclusivity` (transactionLookup.ts) uses to drop the
+ * general rule whenever any exclusion rule below also matched.
+ */
+export const VAT_GENERAL_DEDUCTION_RULE_KEY = 'vat.input_deduction_general';
+export const VAT_DEDUCTION_EXCLUSION_RULE_KEYS = ['vat.deduction_exclusions_entertainment'];
+
 export interface CuratedVatcaRule {
   sectionNumber: string;
   ruleKey: string;

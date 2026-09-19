@@ -68,7 +68,11 @@ export const SI_69_2025_CURATED_RULES: CuratedSi692025Rule[] = [
   {
     ruleKey: 'vat.registration_threshold_turnover_test',
     ruleType: 'other',
-    topic: 'vat',
+    // topic 'vat_reference', not 'vat' (issue #143 finding E): a purely
+    // declaratory citation fact would otherwise attach to and pollute
+    // applicableRules/possibleTreatment for EVERY vat-topic transaction —
+    // still citable directly by ruleKey, just never auto-routed to.
+    topic: 'vat_reference',
     name: 'Registration-threshold turnover test: current calendar year or previous calendar year',
     regulationNumber: '5',
     amendsSection: '6',
@@ -99,7 +103,7 @@ export const SI_69_2025_CURATED_RULES: CuratedSi692025Rule[] = [
   {
     ruleKey: 'vat.annual_turnover_definition',
     ruleType: 'other',
-    topic: 'vat',
+    topic: 'vat_reference', // see the note on vat.registration_threshold_turnover_test above
     name: 'Definition of "annual turnover" for the SME exemption scheme and registration thresholds',
     regulationNumber: '9',
     amendsSection: '92A',
@@ -143,7 +147,7 @@ export const SI_69_2025_CURATED_RULES: CuratedSi692025Rule[] = [
     qualifier: 'not exceeded, and not likely to exceed, in any continuous 12-month period — an alternative to '
       + 'the s.80(1)(a) 90%-of-turnover test, not a condition combined with it',
     conditions: [
-      { field: 'description', operator: 'matches', value: '\\b(cash basis|moneys received basis|money received basis)\\b' },
+      { field: 'cashBasisIndicated', operator: 'equals', value: 'true' },
     ],
     exceptions: [],
     vatEffect: 'A business is eligible to apply to use the moneys-received basis of VAT accounting under VATCA '
@@ -152,11 +156,13 @@ export const SI_69_2025_CURATED_RULES: CuratedSi692025Rule[] = [
       + 'S.I. 639/2010 reg.25 still requires a separate written Revenue authorisation before the basis actually '
       + 'applies (see vat.cash_accounting_requires_authorisation).',
     reportingEffect: null,
-    interpretationNote: 'The description keyword match only flags a candidate cash-basis mention; it cannot '
-      + 'itself compute a rolling 12-month annual turnover figure from this KB alone, so a human must confirm '
-      + 'eligibility against the business\'s actual turnover. This threshold is one of two independent eligibility '
-      + 'tests in s.80(1) — satisfying either is sufficient; see also '
-      + 'vat.cash_accounting_supplies_to_unregistered_persons_test.',
+    interpretationNote: '`cashBasisIndicated` (issue #143 finding F) is true when either the transaction '
+      + 'description mentions "cash basis"/"moneys received basis", or the company\'s own '
+      + '`vatAccountingBasis` is `cash_receipts` — a trader who has already set that up does not need every '
+      + 'invoice to spell it out again. Neither signal can itself compute a rolling 12-month annual turnover '
+      + 'figure from this KB alone, so a human must confirm eligibility against the business\'s actual '
+      + 'turnover. This threshold is one of two independent eligibility tests in s.80(1) — satisfying either '
+      + 'is sufficient; see also vat.cash_accounting_supplies_to_unregistered_persons_test.',
   },
   {
     ruleKey: 'vat.cash_accounting_supplies_to_unregistered_persons_test',
@@ -172,7 +178,7 @@ export const SI_69_2025_CURATED_RULES: CuratedSi692025Rule[] = [
     qualifier: 'of annual turnover, taking one VAT period with another — an alternative to the s.80(1)(b) '
       + '€2,000,000 turnover threshold, not a condition combined with it',
     conditions: [
-      { field: 'description', operator: 'matches', value: '\\b(cash basis|moneys received basis|money received basis)\\b' },
+      { field: 'cashBasisIndicated', operator: 'equals', value: 'true' },
     ],
     exceptions: [],
     vatEffect: 'A business is also eligible for the moneys-received basis under VATCA s.80(1)(a) if, taking one '
@@ -180,8 +186,9 @@ export const SI_69_2025_CURATED_RULES: CuratedSi692025Rule[] = [
       + 'not themselves VAT-registered (typically retail/consumer-facing trade). Satisfying either this test or '
       + 'the €2,000,000 turnover threshold in s.80(1)(b) is sufficient.',
     reportingEffect: null,
-    interpretationNote: 'This KB cannot itself compute what proportion of a business\'s turnover is to registered '
-      + 'versus unregistered customers; the condition only flags a cash-basis candidate transaction for human '
-      + 'review against the business\'s actual customer mix.',
+    interpretationNote: 'See vat.cash_accounting_turnover_threshold above for what `cashBasisIndicated` means '
+      + '(issue #143 finding F). This KB cannot itself compute what proportion of a business\'s turnover is to '
+      + 'registered versus unregistered customers; the condition only flags a cash-basis candidate transaction '
+      + 'for human review against the business\'s actual customer mix.',
   },
 ];

@@ -105,6 +105,7 @@ describe('deriveFinanceAct2024VatThresholds', () => {
         supplyType: 'goods',
         vatRegistered: true,
         annualTurnoverCurrentYearMinor: 9_000_000, // €90,000, over the €85,000 goods threshold
+        goodsShareOfAnnualTurnoverPercent: 100, // a pure goods retailer
       },
     });
     const keys = result.applicableRules.map((r) => r.ruleKey);

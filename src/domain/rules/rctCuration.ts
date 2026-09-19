@@ -70,9 +70,14 @@ import type { IrishRuleCondition, IrishRuleException, IrishRuleType } from '@/db
  * or meat-processing work.
  */
 export const RCT_SCOPE_RE =
-  '\\b(construction|building site|renovat|demolition|scaffolding|groundwork|'
+  '\\b(construction|building site|renovat\\w*|demolition|scaffolding|groundwork|'
   + 'forestry|felling|logging|tree surgery|meat processing|slaughter|abattoir|'
   + 'subcontractor)\\b';
+// `renovat\w*`, not `renovat` (issue #143 finding C): a bare `\brenovat\b`
+// only matches the literal four-letter stem as its own whole word, which
+// never occurs in real English — "renovation"/"renovate"/"renovating" all
+// failed to match at all, missing exactly the construction-on-a-dwelling
+// overlap this scope regex exists to catch.
 
 export type RctSourceKind = 'tca1997_s530' | 'tdm_18_02_04' | 'tdm_18_02_05' | 'tdm_18_02_11';
 
@@ -169,7 +174,11 @@ export const RCT_CURATED_RULES: CuratedRctRule[] = [
     source: 'tdm_18_02_04',
     sectionNumber: 'full',
     ruleKey: 'rct.deduction_rate_not_determinable',
-    ruleType: 'rate',
+    // 'other', not 'rate' (issue #143 finding H): this states that no rate
+    // can be determined, not a rate figure — a consumer filtering
+    // `ruleType === 'rate'` (e.g. transactionLookup.ts's VAT rate
+    // exclusivity) must never mistake it for a competing VAT/RCT rate.
+    ruleType: 'other',
     topic: 'rct',
     name: 'RCT deduction rate cannot be determined from transaction data alone',
     statementExcerpt: 'There are three rates of tax that can apply to subcontractors',
