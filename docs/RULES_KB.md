@@ -450,6 +450,15 @@ source instead of trying to fix the frozen one:
   Deliberately not curated: five narrower, date-boxed 9% carve-outs in the
   same subsection (one of which is in force at the time of writing) — each
   needs the same care as the headline rates and is left for a future pass.
+- `docs/statutes/vat-rates/current-vat-rates.md`, `schedule-moves-2025-2026.md`
+  and `rates.json` are **not sources** and back no rule: none carries a
+  source hash, and each is a hand-compiled reference table (a Revenue rates
+  page transcribed by year, and a note cross-referencing Finance Act 2025 and
+  S.I. 69/2025 provisions not yet ingested here). `rates.json`'s own `note`
+  field makes the same point the LRC-revised-text fix above already
+  established from a real source: "Do not use VATCA s.46 as enacted (21%)".
+  They are useful for a human cross-checking this KB's curated rates by eye,
+  but are never read by any ingestion code.
 
 ### Capital allowances
 
