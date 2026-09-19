@@ -510,6 +510,96 @@ source instead of trying to fix the frozen one:
   They are useful for a human cross-checking this KB's curated rates by eye,
   but are never read by any ingestion code.
 
+### Issue #143: E2E persona harness findings
+
+A 15-business, 26-transaction end-to-end retest (sole traders, an LTD, a
+partnership, a farmer, a non-established EU supplier, a principal
+contractor, hospitality, a garage, a bookshop, a children's-clothing
+retailer, an unregistered RCT subcontractor) surfaced eight further gaps
+once the issue #136 fixes above were in place. All eight are fixed here;
+none required new ingestion, all are curation/engine changes on top of
+already-ingested sources.
+
+- **Finding A — unregistered SMEs never reached the `vat` topic.**
+  `identifyTopics`'s `vat` test already routed on a bare `supplyType`
+  (issue #136's own topic-routing fix), but a caller who stated
+  `vatRegistered: false` or supplied only a turnover figure, with no
+  `supplyType` and no VAT keyword yet, still never opened the topic — so
+  `supplyType`'s own absence never even got a chance to become an
+  `unresolvedFields` entry. Fixed by adding `vatRegistered === false`,
+  `annualTurnoverCurrentYearMinor != null` and
+  `annualTurnoverPreviousYearMinor != null` as further routes into `vat`.
+- **Finding B — the VATCA s.6(1)(c)(ii) 90%-of-turnover test was missing.**
+  `vat.registration_threshold_goods` conditioned on the euro figure and the
+  turnover-window field, but not on the statute's own proviso: paragraph
+  (c)(i)'s goods-threshold test "shall apply only if at least 90 per cent
+  of the total annual turnover... is derived from the supply of taxable
+  goods" — so a mixed trader below that share (e.g. 70% goods / 30%
+  fitting services) would incorrectly match the goods threshold on euro
+  figure alone. Fixed by adding a new `goodsShareOfAnnualTurnoverPercent`
+  `TransactionContext` field and a `>= 90` condition
+  (`financeAct2024VatThresholdsCuration.ts`); absent, the rule is
+  unresolved rather than assuming a pure-goods share.
+- **Finding C — `RCT_SCOPE_RE`'s `\brenovat\b` never matched "renovation".**
+  A bare word-boundary around the four-letter stem `renovat` only matches
+  that literal string as a complete word, which never occurs in real
+  English ("renovation"/"renovate"/"renovating" all failed). Fixed by
+  widening it to `renovat\w*` (`rctCuration.ts`) — construction-on-a-
+  dwelling is the core RCT/VAT overlap this regex exists to catch.
+- **Finding D — deductibility exclusivity was not enforced.**
+  `vat.input_deduction_general` (s.59) and
+  `vat.deduction_exclusions_entertainment` (s.60(2)(a)) can both genuinely
+  match the same transaction (a client restaurant meal, or petrol) — the
+  general rule's own curated `exceptions` already record that the
+  exclusion overrides it, but nothing before this fix actually enforced
+  that. `transactionLookup.ts`'s new `resolveDeductionExclusivity` (called
+  right after `resolveVatRateExclusivity`) drops
+  `VAT_GENERAL_DEDUCTION_RULE_KEY` whenever any rule in
+  `VAT_DEDUCTION_EXCLUSION_RULE_KEYS` (both exported from
+  `vatcaCuration.ts`) also matched.
+- **Finding E — the two declaratory SI 69/2025 facts polluted every VAT
+  transaction.** `vat.registration_threshold_turnover_test` and
+  `vat.annual_turnover_definition` (added for issue #136 bug 2) are
+  citation facts, not per-transaction determinations, but their
+  `topic: 'vat'` meant they attached to any VAT-topic transaction
+  regardless. Retopic'd to `vat_reference` (`si692025Curation.ts`) — a
+  topic `identifyTopics` never routes to, so they stay directly citable by
+  `ruleKey` (`lookupTaxRule`) without auto-attaching.
+- **Finding F — the company's own profile never reached the lookup.**
+  `companyType`, `vatRegistrationStatus` and `vatAccountingBasis` are
+  columns on the `companies` row, never previously read by
+  `lookupTransactionRules`; a cash-basis trader's own accounting-basis
+  setting was silent unless the *transaction description* happened to say
+  "cash basis". `lookupTransactionRules` now fetches the company row and
+  exposes `companyType`/`companyVatRegistrationStatus`/
+  `companyVatAccountingBasis` as facts a condition can reference —
+  additively, never overwriting the transaction's own fields (a specific
+  transaction's `vatRegistered` still means what the caller stated for
+  it). A new derived `cashBasisIndicated` fact (true on either the
+  description keyword match or `vatAccountingBasis === 'cash_receipts'`)
+  is what `vat.cash_accounting_turnover_threshold`/
+  `_supplies_to_unregistered_persons_test` now condition on, replacing the
+  description-only match. `companyType` (sole trader vs LTD vs partnership
+  vs foreign company) and the farmer flat-rate scheme remain unconsumed by
+  any curated rule — no rule cites them yet, which is a curation gap, not
+  a plumbing one; the flat-rate scheme specifically needs its own source
+  pass before there is anything to condition on.
+- **Finding G — the restaurant/hospitality rules matched goods, not just
+  services.** "Takeaway coffee" sold as `supplyType: 'goods'` (a bag of
+  beans, not a hot prepared drink) matched the hospitality-gap rule on
+  keyword alone. Restaurant/catering is a supply of *services* (VATCA
+  Schedule 3 paragraph 1(1)); both
+  `vat.rate_restaurant_catering_reduced_current` and
+  `vat.rate_hospitality_9pct_not_modelled` now also require
+  `supplyType: 'services'`.
+- **Finding H — `rct.deduction_rate_not_determinable` was typed as a
+  `ruleType: 'rate'`.** It states that no rate can be determined, not a
+  rate figure, so it showed up in the same list as real 23%/13.5%/4.8%
+  matches and could confuse any consumer filtering `ruleType === 'rate'`
+  (including this KB's own VAT rate-exclusivity logic, had it ever shared
+  a topic with a VAT rate rule). Changed to `ruleType: 'other'`
+  (`rctCuration.ts`).
+
 ### Capital allowances
 
 The first curation from TCA 1997 outside RCT, and the first to use a new

@@ -196,6 +196,7 @@ export const VATCA_REVISED_CURATED_RULES: CuratedVatcaRevisedRule[] = [
     qualifier: 'the general reduced rate under paragraph (c), for restaurant/catering/hot-takeaway-food supplies '
       + '(VATCA Schedule 3 paragraph 1(1)) specifically, up to 30 June 2026',
     conditions: [
+      { field: 'supplyType', operator: 'equals', value: 'services' },
       {
         field: 'description', operator: 'matches',
         value: '\\b(restaurant|catering|takeaway|take-away|take away|hot food)\\b',
@@ -214,7 +215,10 @@ export const VATCA_REVISED_CURATED_RULES: CuratedVatcaRevisedRule[] = [
       + 'alcohol/bottled-water/soft-drink sales the schedule-moves note itself excludes from the 9% category, '
       + 'still standard-rated) — requiresGuidance is always true regardless. `effectiveTo` is set to the date '
       + 'this KB itself already knows the 13.5% rate stops applying to this category, not a guess: see '
-      + 'vat.rate_hospitality_9pct_not_modelled below for what applies from that date.',
+      + 'vat.rate_hospitality_9pct_not_modelled below for what applies from that date. `supplyType` is required '
+      + 'to be \'services\' (issue #143 finding G) because restaurant/catering is a supply of services (VATCA '
+      + 'Schedule 3 paragraph 1(1)) — a "takeaway coffee" sold as goods (e.g. a bag of beans) is not this '
+      + 'category even though the description keywords alone would match it.',
   },
   {
     citation: '2010 Act 31 s.46',
@@ -230,6 +234,7 @@ export const VATCA_REVISED_CURATED_RULES: CuratedVatcaRevisedRule[] = [
     qualifier: 'one of the temporary 9% sub-rates in paragraphs (ca)-(cb) this KB does not curate individually — '
       + 'see this file\'s own header and issue #129',
     conditions: [
+      { field: 'supplyType', operator: 'equals', value: 'services' },
       {
         field: 'description', operator: 'matches',
         value: '\\b(restaurant|catering|takeaway|take-away|take away|hot food)\\b',

@@ -16,13 +16,14 @@
  */
 import { eq, and } from 'drizzle-orm';
 import type { AppDatabase } from '@/db';
-import { irishTaxRules, irishActProvisions, irishKnowledgeSources } from '@/db/schema';
+import { irishTaxRules, irishActProvisions, irishKnowledgeSources, companies } from '@/db/schema';
 import type { IrishRuleException } from '@/db/schema';
 import { evaluateAllConditions, type ConditionResult } from './conditionEval';
 import { today, isIsoDate } from '../dates';
 import { listTaxRulesByTopic, listIngestedCitations, type LookupResult } from './irishRules';
 import { RCT_SCOPE_RE } from './rctCuration';
 import { VAT_STANDARD_RATE_FALLBACK_RULE_KEY } from './vatcaRevisedCuration';
+import { VAT_GENERAL_DEDUCTION_RULE_KEY, VAT_DEDUCTION_EXCLUSION_RULE_KEYS } from './vatcaCuration';
 
 /**
  * A transaction as presented for classification — the task's example shape,
@@ -54,6 +55,17 @@ export interface TransactionContext {
   /** Same as above, for the previous calendar year — s.6(1)(c)/(d) tests
    *  "the current calendar year OR the previous calendar year". */
   annualTurnoverPreviousYearMinor?: number | null;
+  /**
+   * 0-100: what share of the business's annual turnover (in the same
+   * current/previous-year window as `annualTurnoverMaxMinor` above) comes
+   * from supplies of goods, as opposed to services. VATCA s.6(1)(c)(ii)
+   * gates the €85,000 goods threshold on this being at least 90% for a
+   * trader who supplies both goods and services — a mixed trader below
+   * that share falls to the €42,500 services threshold instead (issue
+   * #143 finding B). This KB cannot compute it; absent, the goods-threshold
+   * rule is unresolved rather than assumed to pass.
+   */
+  goodsShareOfAnnualTurnoverPercent?: number | null;
   /**
    * A direct, human-made determination of whether the supplier is
    * "established outside the State" per VATCA s.12/s.34's actual legal test
@@ -174,8 +186,17 @@ const TOPIC_RULES: TopicRule[] = [
     // not — gating it on `vatRegistered === true` made it unreachable for
     // exactly the population it exists to catch (an unregistered trader
     // whose turnover has passed the threshold never got looked up at all).
+    // An explicit `vatRegistered === false` (issue #143 finding A) and
+    // either turnover-window field are the same signal by a different
+    // route: a caller who bothered to state either is already asking the
+    // registration question, with or without `supplyType` alongside it —
+    // its own absence still surfaces as `unresolvedFields` once the topic
+    // is at least opened, instead of the question never being asked.
     test: (ctx) => ctx.vatRegistered === true
+      || ctx.vatRegistered === false
       || ctx.supplyType != null
+      || ctx.annualTurnoverCurrentYearMinor != null
+      || ctx.annualTurnoverPreviousYearMinor != null
       || /\bvat\b|saas|software|digital service|reverse charge/i.test(TEXT_FIELDS(ctx))
       || (!!ctx.supplierCountry && ctx.supplierCountry.toUpperCase() !== 'IE'),
   },
@@ -288,7 +309,35 @@ export function lookupTransactionRules(
   const topics = identifyTopics(ctx);
   const asOf = ctx.transactionDate || today();
 
-  const subject: Record<string, unknown> = { ...ctx };
+  // Company profile facts (issue #143 finding F): `companyType`,
+  // `vatRegistrationStatus` and `vatAccountingBasis` are stored on the
+  // company row, not the transaction, and were previously never read by
+  // this lookup at all — sole trader vs LTD vs partnership vs foreign
+  // company made no difference, and a cash-basis trader's own accounting
+  // basis was silent unless the transaction description happened to say
+  // "cash basis". Exposed here as `company*`-prefixed facts a condition can
+  // reference, alongside the transaction's own fields — never overwriting
+  // them: `vatRegistered` on a specific transaction is still what the
+  // caller stated for that transaction, not overridden by the company's
+  // default registration status.
+  const company = db.select({
+    companyType: companies.companyType,
+    vatRegistrationStatus: companies.vatRegistrationStatus,
+    vatAccountingBasis: companies.vatAccountingBasis,
+  }).from(companies).where(eq(companies.id, params.companyId)).get();
+
+  const subject: Record<string, unknown> = {
+    ...ctx,
+    companyType: company?.companyType ?? null,
+    companyVatRegistrationStatus: company?.vatRegistrationStatus ?? null,
+    companyVatAccountingBasis: company?.vatAccountingBasis ?? null,
+    // A cash-basis trader's own accounting-basis setting is just as valid a
+    // signal as the transaction description saying "cash basis" — Tony
+    // Cash's cash_receipts company profile should not need every invoice
+    // to spell that out in words.
+    cashBasisIndicated: company?.vatAccountingBasis === 'cash_receipts'
+      || /\b(cash basis|moneys received basis|money received basis)\b/i.test(TEXT_FIELDS(ctx)),
+  };
 
   const applicableRules: ApplicableRule[] = [];
   const unresolvedFields = new Set<string>();
@@ -382,7 +431,8 @@ export function lookupTransactionRules(
     });
   }
 
-  const finalApplicableRules = resolveVatRateExclusivity(applicableRules, reviewReasons);
+  const rateResolved = resolveVatRateExclusivity(applicableRules, reviewReasons);
+  const finalApplicableRules = resolveDeductionExclusivity(rateResolved, reviewReasons);
 
   const possibleTreatment = {
     accounting: dedupe(finalApplicableRules.map((r) => r.effect.accounting)),
@@ -491,6 +541,46 @@ function resolveVatRateExclusivity(
   reviewReasons.add(reason);
 
   return applicableRules.filter((r) => !excludeRuleKeys.has(r.ruleKey));
+}
+
+/**
+ * Deductibility exclusivity (issue #143 finding D).
+ *
+ * `vat.input_deduction_general` (s.59) and `vat.deduction_exclusions_entertainment`
+ * (s.60(2)(a)) both carry real conditions and can both genuinely match the
+ * same transaction — a client restaurant meal satisfies s.59's own test
+ * (VAT-registered, invoiced, business use) *and* falls within the s.60
+ * exclusion list. `vat.input_deduction_general`'s own curated `exceptions`
+ * array already states the exclusion overrides it ("no deduction
+ * regardless of business purpose"); before this function existed,
+ * `transactionLookup.ts` only ever surfaced that as review-reason prose —
+ * both rules, and their contradictory `vatEffect` text ("deductible" /
+ * "no deduction"), still ended up side by side in `applicableRules` and
+ * `possibleTreatment.vat`.
+ *
+ * The fix mirrors `resolveVatRateExclusivity`: it changes no rule's own
+ * conditions, only which already-matched rules are kept. If any rule in
+ * `VAT_DEDUCTION_EXCLUSION_RULE_KEYS` matched, `VAT_GENERAL_DEDUCTION_RULE_KEY`
+ * is dropped — the specific exclusion always wins over the general rule it
+ * excepts, never the other way round.
+ */
+function resolveDeductionExclusivity(
+  applicableRules: ApplicableRule[],
+  reviewReasons: Set<string>,
+): ApplicableRule[] {
+  const generalRule = applicableRules.find((r) => r.ruleKey === VAT_GENERAL_DEDUCTION_RULE_KEY);
+  if (!generalRule) return applicableRules;
+
+  const matchedExclusions = applicableRules.filter((r) => VAT_DEDUCTION_EXCLUSION_RULE_KEYS.includes(r.ruleKey));
+  if (matchedExclusions.length === 0) return applicableRules;
+
+  const excludedNames = matchedExclusions.map((r) => `"${r.name}"`).join(', ');
+  reviewReasons.add(
+    `Excluded "${generalRule.name}" because ${excludedNames} already matched this transaction — the specific `
+    + 'deduction exclusion overrides the general deduction rule it is an exception to, per its own curated exceptions.',
+  );
+
+  return applicableRules.filter((r) => r.ruleKey !== VAT_GENERAL_DEDUCTION_RULE_KEY);
 }
 
 function getRuleConditions(db: AppDatabase, ruleId: string) {

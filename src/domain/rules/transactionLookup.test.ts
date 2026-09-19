@@ -9,6 +9,9 @@ import { ingestVatcaRevisedSection, deriveVatcaRevisedRules, VATCA_REVISED_S046_
 import {
   ingestVatcaSchedule, deriveVatcaScheduleRules, VATCA_SCHEDULE_2_MD_PATH, VATCA_SCHEDULE_3_MD_PATH,
 } from './vatcaScheduleIngestion';
+import {
+  ingestSi692025Reg5, ingestSi692025Reg8, ingestSi692025Reg9, deriveSi692025Rules, SI_69_2025_MD_PATH,
+} from './si692025Ingestion';
 import { lookupTransactionRules, identifyTopics } from './transactionLookup';
 import { irishTaxRules } from '@/db/schema';
 import { eq } from 'drizzle-orm';
@@ -61,6 +64,34 @@ describe('identifyTopics', () => {
       vatRegistered: false, supplyType: 'services', description: 'Consulting',
     });
     expect(topics).toContain('vat');
+  });
+
+  it('routes to vat on vatRegistered: false alone, with neither supplyType nor a VAT keyword', () => {
+    // issue #143 finding A's residual case: a caller who states the
+    // registration status but not (yet) the supply type should still open
+    // the topic, so supplyType's own absence surfaces as unresolved rather
+    // than the whole question never being asked.
+    const topics = identifyTopics({
+      transactionDate: '2026-09-18', amountMinor: 500000,
+      vatRegistered: false, description: 'Sale of cattle at the mart',
+    });
+    expect(topics).toContain('vat');
+  });
+
+  it('routes to vat on a bare annual-turnover figure, with no supplyType or VAT keyword', () => {
+    const topics = identifyTopics({
+      transactionDate: '2026-09-18', amountMinor: 500000,
+      annualTurnoverCurrentYearMinor: 5_000_000, description: 'Sale of cattle at the mart',
+    });
+    expect(topics).toContain('vat');
+  });
+
+  it('issue #143 finding C: "Renovation of a private dwelling house" is an RCT candidate', () => {
+    const topics = identifyTopics({
+      transactionDate: '2026-09-18', amountMinor: 100000,
+      description: 'Renovation of a private dwelling house',
+    });
+    expect(topics).toContain('rct');
   });
 });
 
@@ -452,5 +483,152 @@ describe('lookupTransactionRules — unregistered trader over the registration t
       },
     });
     expect(result.applicableRules.map((r) => r.ruleKey)).not.toContain('vat.registration_threshold_services');
+  });
+
+  it('issue #143 finding B: a mixed trader below the 90% goods share does not hit the goods threshold', () => {
+    // MixedMart: 70% goods / 30% fitting services, €82,000 combined turnover
+    // — over the €85,000 goods threshold's own euro figure, but VATCA
+    // s.6(1)(c)(ii) requires at least 90% of that turnover to be from goods
+    // before the goods threshold (rather than the services threshold)
+    // applies at all.
+    const result = lookupTransactionRules(db, {
+      companyId,
+      transaction: {
+        transactionDate: '2026-09-18', amountMinor: 500000, currency: 'EUR',
+        vatRegistered: false, supplyType: 'goods', description: 'Kitchen units supply and fit',
+        annualTurnoverCurrentYearMinor: 8_200_000, // €82,000
+        goodsShareOfAnnualTurnoverPercent: 70,
+      },
+    });
+    expect(result.applicableRules.map((r) => r.ruleKey)).not.toContain('vat.registration_threshold_goods');
+  });
+
+  it('does not assume a pure-goods share when goodsShareOfAnnualTurnoverPercent is omitted entirely', () => {
+    const result = lookupTransactionRules(db, {
+      companyId,
+      transaction: {
+        transactionDate: '2026-09-18', amountMinor: 500000, currency: 'EUR',
+        vatRegistered: false, supplyType: 'goods', description: 'Sale of goods to a new customer',
+        annualTurnoverCurrentYearMinor: 9_000_000, // €90,000, over the euro figure alone
+        // goodsShareOfAnnualTurnoverPercent deliberately omitted
+      },
+    });
+    expect(result.applicableRules.map((r) => r.ruleKey)).not.toContain('vat.registration_threshold_goods');
+    expect(result.unresolvedFields).toContain('goodsShareOfAnnualTurnoverPercent');
+  });
+
+  it('a mixed trader at or above the 90% goods share hits the goods threshold', () => {
+    const result = lookupTransactionRules(db, {
+      companyId,
+      transaction: {
+        transactionDate: '2026-09-18', amountMinor: 500000, currency: 'EUR',
+        vatRegistered: false, supplyType: 'goods', description: 'Kitchen units supply and fit',
+        annualTurnoverCurrentYearMinor: 9_000_000, // €90,000
+        goodsShareOfAnnualTurnoverPercent: 95,
+      },
+    });
+    expect(result.applicableRules.map((r) => r.ruleKey)).toContain('vat.registration_threshold_goods');
+  });
+});
+
+describe('lookupTransactionRules — issue #143 findings D, E, F, G', () => {
+  const si69Md = readFileSync(SI_69_2025_MD_PATH, 'utf8');
+
+  beforeEach(() => {
+    ingestVatcaRevisedSection(db, { companyId, markdown: readFileSync(VATCA_REVISED_S046_MD_PATH, 'utf8'), ingestVersion: 'v1' });
+    deriveVatcaRevisedRules(db, { companyId });
+    ingestSi692025Reg5(db, { companyId, markdown: si69Md, ingestVersion: 'v1' });
+    ingestSi692025Reg8(db, { companyId, markdown: si69Md, ingestVersion: 'v1' });
+    ingestSi692025Reg9(db, { companyId, markdown: si69Md, ingestVersion: 'v1' });
+    deriveSi692025Rules(db, { companyId });
+  });
+
+  it('finding E: the declaratory SI 69/2025 citation facts do not attach to an ordinary VAT transaction', () => {
+    const result = lookupTransactionRules(db, {
+      companyId,
+      transaction: {
+        transactionDate: '2026-09-18', amountMinor: 4500, currency: 'EUR',
+        vatRegistered: true, supplyType: 'services', description: 'Legal advisory services',
+      },
+    });
+    const keys = result.applicableRules.map((r) => r.ruleKey);
+    expect(keys).not.toContain('vat.registration_threshold_turnover_test');
+    expect(keys).not.toContain('vat.annual_turnover_definition');
+  });
+
+  it('finding D: the s.60 entertainment exclusion overrides the general input-deduction rule, not alongside it', () => {
+    const result = lookupTransactionRules(db, {
+      companyId,
+      transaction: {
+        transactionDate: '2026-09-18', amountMinor: 4500, currency: 'EUR',
+        vatRegistered: true, supplyType: 'services', invoiceAvailable: true, businessUsePercent: 100,
+        description: 'Client restaurant entertainment meal',
+      },
+    });
+    const keys = result.applicableRules.map((r) => r.ruleKey);
+    expect(keys).toContain('vat.deduction_exclusions_entertainment');
+    expect(keys).not.toContain('vat.input_deduction_general');
+    expect(result.reviewReasons.join(' ')).toMatch(/Excluded.*input_deduction_general|overrides the general/i);
+  });
+
+  it('finding D: petrol also excludes the general input-deduction rule, not alongside it', () => {
+    const result = lookupTransactionRules(db, {
+      companyId,
+      transaction: {
+        transactionDate: '2026-09-18', amountMinor: 8000, currency: 'EUR',
+        vatRegistered: true, supplyType: 'goods', invoiceAvailable: true, businessUsePercent: 100,
+        description: 'Petrol for company car',
+      },
+    });
+    const keys = result.applicableRules.map((r) => r.ruleKey);
+    expect(keys).toContain('vat.deduction_exclusions_entertainment');
+    expect(keys).not.toContain('vat.input_deduction_general');
+  });
+
+  it('a plain deductible purchase with no exclusion keyword still gets the general deduction rule', () => {
+    const result = lookupTransactionRules(db, {
+      companyId,
+      transaction: {
+        transactionDate: '2026-09-18', amountMinor: 20000, currency: 'EUR',
+        vatRegistered: true, supplyType: 'services', invoiceAvailable: true, businessUsePercent: 100,
+        description: 'Office stationery order',
+      },
+    });
+    expect(result.applicableRules.map((r) => r.ruleKey)).toContain('vat.input_deduction_general');
+  });
+
+  it('finding F: a cash_receipts company profile surfaces the cash-accounting rules without saying "cash basis"', () => {
+    const { companyId: tonyId } = createCompany(db, {
+      legalName: 'Tony Cash', vatAccountingBasis: 'cash_receipts', seedYears: [2025],
+    });
+    ingestFinanceAct2024(db, { companyId: tonyId, markdown: financeActMd, ingestVersion: 'v1' });
+    deriveTaxRules(db, { companyId: tonyId });
+    ingestVatca2010(db, { companyId: tonyId, markdown: vatcaMd, ingestVersion: 'v1' });
+    deriveVatcaRules(db, { companyId: tonyId });
+    ingestSi692025Reg8(db, { companyId: tonyId, markdown: readFileSync(SI_69_2025_MD_PATH, 'utf8'), ingestVersion: 'v1' });
+    deriveSi692025Rules(db, { companyId: tonyId });
+    const result = lookupTransactionRules(db, {
+      companyId: tonyId,
+      transaction: {
+        transactionDate: '2026-09-18', amountMinor: 15000, currency: 'EUR',
+        vatRegistered: true, supplyType: 'services', description: 'Plumbing repair for a customer',
+      },
+    });
+    const keys = result.applicableRules.map((r) => r.ruleKey);
+    expect(keys).toContain('vat.cash_accounting_turnover_threshold');
+    expect(keys).toContain('vat.cash_accounting_supplies_to_unregistered_persons_test');
+  });
+
+  it('finding G: a takeaway coffee sold as goods does not hit the restaurant/hospitality rules', () => {
+    const result = lookupTransactionRules(db, {
+      companyId,
+      transaction: {
+        transactionDate: '2026-07-02', amountMinor: 350, currency: 'EUR',
+        vatRegistered: true, supplyType: 'goods', description: 'Takeaway coffee',
+      },
+    });
+    const keys = result.applicableRules.map((r) => r.ruleKey);
+    expect(keys).not.toContain('vat.rate_hospitality_9pct_not_modelled');
+    expect(keys).not.toContain('vat.rate_restaurant_catering_reduced_current');
   });
 });

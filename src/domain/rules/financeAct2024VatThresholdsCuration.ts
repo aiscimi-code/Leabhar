@@ -66,6 +66,7 @@ export const FINANCE_ACT_2024_VAT_THRESHOLD_RULES: CuratedFinanceAct2024VatThres
     conditions: [
       { field: 'supplyType', operator: 'equals', value: 'goods' },
       { field: 'annualTurnoverMaxMinor', operator: 'gte', value: 8_500_000 },
+      { field: 'goodsShareOfAnnualTurnoverPercent', operator: 'gte', value: 90 },
     ],
     exceptions: [],
     vatEffect: 'A person whose annual turnover from taxable supplies of goods (of the kind to which the goods '
@@ -78,7 +79,12 @@ export const FINANCE_ACT_2024_VAT_THRESHOLD_RULES: CuratedFinanceAct2024VatThres
       + 'implements the actual VATCA s.6(1)(c) test — "has not exceeded, in the current calendar year or the '
       + 'previous calendar year" — via a field `transactionLookup.ts` derives from '
       + '`annualTurnoverCurrentYearMinor`/`annualTurnoverPreviousYearMinor`; without either supplied, the '
-      + 'condition fails and the field is unresolved, not silently passed. It still does not itself compute a '
+      + 'condition fails and the field is unresolved, not silently passed. The `goodsShareOfAnnualTurnoverPercent '
+      + '>= 90` condition (issue #143 finding B) implements s.6(1)(c)(ii)\'s own proviso — "subparagraph (i) '
+      + 'shall apply only if at least 90 per cent of the total annual turnover referred to therein is derived '
+      + 'from the supply of taxable goods" — a mixed goods-and-services trader below that share is not within '
+      + 'the goods threshold at all (see vat.registration_threshold_services instead), even a pure-goods trader '
+      + '(100% share) must have the figure supplied rather than assumed. It still does not itself compute a '
       + 'business\'s actual rolling annual turnover, and does not model the s.92B "incidental transaction" '
       + 'carve-outs (see vat.annual_turnover_definition) — those remain the caller\'s responsibility to apply '
       + 'before supplying the figure.',
