@@ -195,9 +195,28 @@ jurisdiction: IE
 """)
 
 
+def _debug_dump_section46_html() -> None:
+    """TEMPORARY: save raw HTML for an ordinary VATCA section page (s.46),
+    to diagnose why html_to_md() leaves "Act as originally enacted" / "Next
+    Section" chrome unstripped on individual section files even though the
+    same fix cleanly strips it from Schedule files (see docs/statutes/
+    vatca-2010-revised/s046.md vs schedule-2.md). Remove once the root
+    container selector is confirmed and fixed for section pages too.
+    """
+    url = "https://revisedacts.lawreform.ie/eli/2010/act/31/section/46/revised/en/html"
+    raw = Path("/tmp/vatca/s46-debug.html")
+    if not raw.exists():
+        fetch(url, raw)
+    write(ROOT / "vatca-2010-revised" / "_debug_section-46.raw.html", raw.read_text(errors="replace"))
+
+
 if __name__ == "__main__":
-    extract_vatca()
-    extract_si639()
-    extract_tdm()
-    extract_rates()
-    print("done")
+    import sys
+    if "--debug-html" in sys.argv:
+        _debug_dump_section46_html()
+    else:
+        extract_vatca()
+        extract_si639()
+        extract_tdm()
+        extract_rates()
+        print("done")
