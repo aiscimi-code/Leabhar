@@ -16,7 +16,7 @@ import {
   type IrishSourceType, type IrishProvisionCategory,
 } from '@/db/schema';
 import { ids } from '@/lib/ids';
-import { nowIso, today } from '../dates';
+import { nowIso, today, isIsoDate } from '../dates';
 import { sha256Hex } from '@/lib/hash';
 import {
   parseFinanceAct2024, provisionSlug, categoriseProvision, assessRelevance,
@@ -413,6 +413,7 @@ export function lookupTaxRule(
   params: { companyId: string; ruleKey: string; asOfDate?: string },
 ): LookupResult | null {
   const asOf = params.asOfDate ?? today();
+  if (!isIsoDate(asOf)) return null; // an invalid as-of date must fail closed, never open every in-force version
   const rows = db
     .select(LOOKUP_COLUMNS)
     .from(irishTaxRules)
@@ -439,6 +440,7 @@ export function listTaxRulesByTopic(
   params: { companyId: string; topic: string; asOfDate?: string },
 ): LookupResult[] {
   const asOf = params.asOfDate ?? today();
+  if (!isIsoDate(asOf)) return []; // an invalid as-of date must fail closed, never open every in-force rule
   const rows = db
     .select(LOOKUP_COLUMNS)
     .from(irishTaxRules)
@@ -461,6 +463,7 @@ export function listTaxRulesByCategory(
   params: { companyId: string; category: IrishProvisionCategory; asOfDate?: string },
 ): LookupResult[] {
   const asOf = params.asOfDate ?? today();
+  if (!isIsoDate(asOf)) return []; // an invalid as-of date must fail closed, never open every in-force rule
   const rows = db
     .select(LOOKUP_COLUMNS)
     .from(irishTaxRules)
@@ -475,4 +478,21 @@ export function listTaxRulesByCategory(
     .all()
     .filter((r) => r.effectiveFrom <= asOf && (!r.effectiveTo || r.effectiveTo > asOf));
   return rows.map(toLookupResult);
+}
+
+/**
+ * Distinct source citations (e.g. "2024 Act 43", "VATCA 2010") currently
+ * ingested and enabled for a company, so a caller describing what the KB
+ * does and does not cover reads the actual state rather than a copy that
+ * goes stale the moment a new source is ingested.
+ */
+export function listIngestedCitations(db: AppDatabase, companyId: string): string[] {
+  const rows = db
+    .select({ citation: irishKnowledgeSources.citation })
+    .from(irishTaxRules)
+    .innerJoin(irishActProvisions, eq(irishTaxRules.provisionId, irishActProvisions.id))
+    .innerJoin(irishKnowledgeSources, eq(irishActProvisions.sourceId, irishKnowledgeSources.id))
+    .where(and(eq(irishTaxRules.companyId, companyId), eq(irishTaxRules.enabled, true)))
+    .all();
+  return [...new Set(rows.map((r) => r.citation))];
 }

@@ -184,3 +184,64 @@ describe('lookupTransactionRules — positive/negative/exception/boundary/effect
     expect(result.applicableRules.find((r) => r.ruleKey === 'usc.first_band_threshold')).toBeUndefined();
   });
 });
+
+describe('lookupTransactionRules — issue #136 data-quality gates', () => {
+  it('rejects a non-ISO transactionDate instead of opening every in-force rule', () => {
+    const result = lookupTransactionRules(db, {
+      companyId,
+      transaction: { transactionDate: 'not-a-date', amountMinor: 100000, transactionType: 'payroll' },
+    });
+    expect(result.applicableRules).toEqual([]);
+    expect(result.unresolvedFields).toContain('transactionDate');
+    expect(result.reviewRequired).toBe(true);
+    expect(result.reviewReasons.join(' ')).toMatch(/not a valid ISO date/);
+  });
+
+  it('rejects a negative amountMinor instead of attaching VAT rate/deduction rules', () => {
+    const result = lookupTransactionRules(db, {
+      companyId,
+      transaction: {
+        transactionDate: '2026-09-18', amountMinor: -500, currency: 'EUR',
+        vatRegistered: true, supplyType: 'services',
+      },
+    });
+    expect(result.applicableRules).toEqual([]);
+    expect(result.unresolvedFields).toContain('amountMinor');
+    expect(result.reviewRequired).toBe(true);
+  });
+
+  it('does not silently default an omitted currency to EUR', () => {
+    const result = lookupTransactionRules(db, {
+      companyId,
+      transaction: { transactionDate: '2026-09-18', amountMinor: 1000, transactionType: 'payroll' },
+    });
+    expect(result.transactionContext.currency).toBeUndefined();
+  });
+
+  it('describes the KB from the actual ingested citations, not a hardcoded copy', () => {
+    const result = lookupTransactionRules(db, {
+      companyId,
+      transaction: { transactionDate: '2025-06-01', amountMinor: 500, transactionType: 'office_supplies', description: 'Stationery order' },
+    });
+    expect(result.applicableRules).toEqual([]);
+    const reasons = result.reviewReasons.join(' ');
+    expect(reasons).not.toMatch(/Finance Act 2024 only/);
+    expect(reasons).toMatch(/currently ingesting/);
+  });
+
+  it('does not route a retail/EV "charge" narrative to the banking topic', () => {
+    const topics = identifyTopics({
+      transactionDate: '2026-09-18', amountMinor: 500,
+      description: 'EV charging point service charge',
+    });
+    expect(topics).not.toContain('banking');
+  });
+
+  it('still routes an actual bank fee (no literal "bank") to the banking topic via ATM/overdraft terms', () => {
+    const topics = identifyTopics({
+      transactionDate: '2026-09-18', amountMinor: 500,
+      description: 'ATM withdrawal fee',
+    });
+    expect(topics).toContain('banking');
+  });
+});
