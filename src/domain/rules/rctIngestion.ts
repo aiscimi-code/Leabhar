@@ -1,18 +1,23 @@
 /**
  * Ingestion and rule derivation for Relevant Contracts Tax (RCT).
  *
- * Two distinct sources, two distinct `irish_knowledge_sources` rows, never
- * conflated (see `rctCuration.ts`'s own header for why each is used the way
- * it is, and why S.I. 651/2011 is used for neither):
+ * Distinct sources, distinct `irish_knowledge_sources` rows, never conflated
+ * (see `rctCuration.ts`'s own header for why each is used the way it is, and
+ * why S.I. 651/2011, and TDM 18-02-01/18-02-02, are used for none):
  *
  *  - TCA 1997 s.530 (`legislation`, as-enacted-1997) — parsed with
  *    `tca1997SectionParser.ts` into a single provision.
- *  - Revenue TDM Part 18-02-04 (`revenue_guidance`) — ingested as a single
- *    whole-document provision (it is continuous prose with numbered
- *    headings, not a statute with addressable sections), never as
- *    `legislation`, so this KB's source hierarchy can never let Revenue's
- *    own explanation outrank a statute once one covering the same ground is
- *    ingested.
+ *  - Revenue TDMs 18-02-04, 18-02-05 and 18-02-11 (`revenue_guidance`) —
+ *    each ingested as a single whole-document provision (continuous prose
+ *    with numbered headings, not a statute with addressable sections),
+ *    never as `legislation`, so this KB's source hierarchy can never let
+ *    Revenue's own explanation outrank a statute covering the same ground
+ *    once one is ingested. TDM 18-02-01 (Relevant Operations) and 18-02-02
+ *    (Who is a Principal Contractor) are NOT ingested here even though
+ *    listed in docs/statutes/rct/README.md: both are still paraphrased
+ *    summaries in this repo (no page markers, no source hash), not the
+ *    verbatim text this KB's provenance policy requires before curating
+ *    anything from them.
  */
 import { and, eq } from 'drizzle-orm';
 import type { AppDatabase } from '@/db';
@@ -25,7 +30,7 @@ import { sha256Hex } from '@/lib/hash';
 import {
   parseTca1997Section, provisionSlug, assessRelevance, TCA_1997_S530_MD_PATH,
 } from './tca1997SectionParser';
-import { RCT_CURATED_RULES } from './rctCuration';
+import { RCT_CURATED_RULES, type RctSourceKind } from './rctCuration';
 import { upsertReviewItem } from '../extraction/service';
 
 export { TCA_1997_S530_MD_PATH };
@@ -42,16 +47,35 @@ const TCA_1997_S530 = {
   effectiveFrom: '1997-01-01',
 };
 
-const RCT_TDM_18_02_04 = {
-  citation: 'Revenue TDM Part 18-02-04',
-  sourceType: 'revenue_guidance' as IrishSourceType,
-  sourceUrl: 'https://www.revenue.ie/en/tax-professionals/tdm/income-tax-capital-gains-tax-corporation-tax/part-18/18-02-04.pdf',
-  // The TDM describes the electronic RCT system operating "since 1 January
-  // 2012" (its own §1) — used as the effective date of the guidance it
-  // gives, not a claim about when the document itself was authored (it was
-  // last reviewed November 2025 per its own front matter).
-  effectiveFrom: '2012-01-01',
-  localPath: 'docs/statutes/rct/tdm-18-02-04.md',
+type RctTdmKey = Exclude<RctSourceKind, 'tca1997_s530'>;
+
+const RCT_TDM_SOURCES: Record<RctTdmKey, {
+  citation: string; sourceType: IrishSourceType; sourceUrl: string; effectiveFrom: string; localPath: string;
+}> = {
+  tdm_18_02_04: {
+    citation: 'Revenue TDM Part 18-02-04',
+    sourceType: 'revenue_guidance',
+    sourceUrl: 'https://www.revenue.ie/en/tax-professionals/tdm/income-tax-capital-gains-tax-corporation-tax/part-18/18-02-04.pdf',
+    // The TDM describes the electronic RCT system operating "since 1 January
+    // 2012" (its own §1) — used as the effective date of the guidance it
+    // gives, not a claim about when the document itself was authored.
+    effectiveFrom: '2012-01-01',
+    localPath: 'docs/statutes/rct/tdm-18-02-04.md',
+  },
+  tdm_18_02_05: {
+    citation: 'Revenue TDM Part 18-02-05',
+    sourceType: 'revenue_guidance',
+    sourceUrl: 'https://www.revenue.ie/en/tax-professionals/tdm/income-tax-capital-gains-tax-corporation-tax/part-18/18-02-05.pdf',
+    effectiveFrom: '2012-01-01',
+    localPath: 'docs/statutes/rct/tdm-18-02-05.md',
+  },
+  tdm_18_02_11: {
+    citation: 'Revenue TDM Part 18-02-11',
+    sourceType: 'revenue_guidance',
+    sourceUrl: 'https://www.revenue.ie/en/tax-professionals/tdm/income-tax-capital-gains-tax-corporation-tax/part-18/18-02-11.pdf',
+    effectiveFrom: '2012-01-01',
+    localPath: 'docs/statutes/rct/tdm-18-02-11.md',
+  },
 };
 
 function stripFrontMatterAndTitle(markdown: string): { title: string; body: string } {
@@ -155,16 +179,17 @@ export function ingestTca1997S530(
   });
 }
 
-/** Ingest the whole TDM 18-02-04 document as a single provision. */
-export function ingestRctTdm18_02_04(
+/** Ingest one whole RCT TDM document as a single provision. */
+function ingestRctTdm(
   db: AppDatabase,
-  params: { companyId?: string | null; markdown: string; ingestVersion: string; localPath?: string },
+  params: { tdmKey: RctTdmKey; companyId?: string | null; markdown: string; ingestVersion: string; localPath?: string },
 ): RctIngestResult {
+  const meta = RCT_TDM_SOURCES[params.tdmKey];
   const digest = sha256Hex(params.markdown);
 
   const existing = db.select({ id: irishKnowledgeSources.id }).from(irishKnowledgeSources)
     .where(and(
-      eq(irishKnowledgeSources.citation, RCT_TDM_18_02_04.citation),
+      eq(irishKnowledgeSources.citation, meta.citation),
       eq(irishKnowledgeSources.sha256, digest),
     )).get();
 
@@ -186,17 +211,17 @@ export function ingestRctTdm18_02_04(
     tx.insert(irishKnowledgeSources).values({
       id: sourceId,
       companyId: params.companyId ?? null,
-      sourceType: RCT_TDM_18_02_04.sourceType,
+      sourceType: meta.sourceType,
       title,
-      citation: RCT_TDM_18_02_04.citation,
+      citation: meta.citation,
       jurisdiction: 'IE',
-      sourceUrl: RCT_TDM_18_02_04.sourceUrl,
-      localPath: params.localPath ?? RCT_TDM_18_02_04.localPath,
+      sourceUrl: meta.sourceUrl,
+      localPath: params.localPath ?? meta.localPath,
       sha256: digest,
       ingestVersion: params.ingestVersion,
       publicationDate: null,
       retrievedAt: nowIso(),
-      effectiveFrom: RCT_TDM_18_02_04.effectiveFrom,
+      effectiveFrom: meta.effectiveFrom,
       sourceNote: "Revenue guidance, not legislation — never allowed to outrank TCA 1997 ss.530-530V "
         + '(sourceHierarchy.ts). Ingested as one whole-document provision rather than split by heading: '
         + 'it is continuous procedural prose, not an addressable statute.',
@@ -204,9 +229,11 @@ export function ingestRctTdm18_02_04(
     }).run();
 
     // Ingested wholesale, not run through categoriseProvision/assessRelevance
-    // (designed for a single statute section, not a 18-page mixed-topic
-    // guidance document) — always relevant, since this is the sole reason
-    // it is ingested at all.
+    // (designed for a single statute section, not an 18-page mixed-topic
+    // guidance document) — relevant only when this TDM actually backs a
+    // curated rule (RCT_CURATED_RULES), same override convention every
+    // other ingestion module in this KB applies.
+    const curated = RCT_CURATED_RULES.some((r) => r.source === params.tdmKey);
     tx.insert(irishActProvisions).values({
       id: ids.provision(),
       companyId: params.companyId ?? null,
@@ -223,15 +250,37 @@ export function ingestRctTdm18_02_04(
       amendsSection: null,
       effectiveClue: null,
       citedActs: [],
-      relevant: true,
-      relevanceReason: 'Curated: the sole source for the current (post-2011) RCT procedure this KB holds '
-        + '(rctCuration.ts).',
+      relevant: curated,
+      relevanceReason: curated
+        ? 'Curated: mapped to a rule in rctCuration.ts.'
+        : 'Ingested for citability; not currently curated into a rule (see rctCuration.ts for what is).',
       source: 'import',
       provenanceStatus: 'imported',
     }).run();
 
-    return { sourceId, provisionCount: 1, relevantCount: 1, ingested: true };
+    return { sourceId, provisionCount: 1, relevantCount: curated ? 1 : 0, ingested: true };
   });
+}
+
+export function ingestRctTdm18_02_04(
+  db: AppDatabase,
+  params: { companyId?: string | null; markdown: string; ingestVersion: string; localPath?: string },
+): RctIngestResult {
+  return ingestRctTdm(db, { ...params, tdmKey: 'tdm_18_02_04' });
+}
+
+export function ingestRctTdm18_02_05(
+  db: AppDatabase,
+  params: { companyId?: string | null; markdown: string; ingestVersion: string; localPath?: string },
+): RctIngestResult {
+  return ingestRctTdm(db, { ...params, tdmKey: 'tdm_18_02_05' });
+}
+
+export function ingestRctTdm18_02_11(
+  db: AppDatabase,
+  params: { companyId?: string | null; markdown: string; ingestVersion: string; localPath?: string },
+): RctIngestResult {
+  return ingestRctTdm(db, { ...params, tdmKey: 'tdm_18_02_11' });
 }
 
 export interface RctDeriveResult {
@@ -246,17 +295,21 @@ export function deriveRctRules(
   db: AppDatabase,
   params: { companyId: string },
 ): RctDeriveResult {
-  const s530SourceId = db.select({ id: irishKnowledgeSources.id }).from(irishKnowledgeSources)
-    .where(eq(irishKnowledgeSources.citation, TCA_1997_S530.citation)).get()?.id;
-  const tdmSourceId = db.select({ id: irishKnowledgeSources.id }).from(irishKnowledgeSources)
-    .where(eq(irishKnowledgeSources.citation, RCT_TDM_18_02_04.citation)).get()?.id;
+  const citationFor = (source: RctSourceKind): string =>
+    source === 'tca1997_s530' ? TCA_1997_S530.citation : RCT_TDM_SOURCES[source].citation;
+  const effectiveFromFor = (source: RctSourceKind): string =>
+    source === 'tca1997_s530' ? TCA_1997_S530.effectiveFrom : RCT_TDM_SOURCES[source].effectiveFrom;
 
-  const s530Provisions = s530SourceId
-    ? db.select().from(irishActProvisions).where(eq(irishActProvisions.sourceId, s530SourceId)).all()
-    : [];
-  const tdmProvisions = tdmSourceId
-    ? db.select().from(irishActProvisions).where(eq(irishActProvisions.sourceId, tdmSourceId)).all()
-    : [];
+  const usedSources = [...new Set(RCT_CURATED_RULES.map((r) => r.source))];
+  const provisionsBySource = new Map<RctSourceKind, (typeof irishActProvisions.$inferSelect)[]>();
+  for (const source of usedSources) {
+    const sourceId = db.select({ id: irishKnowledgeSources.id }).from(irishKnowledgeSources)
+      .where(eq(irishKnowledgeSources.citation, citationFor(source))).get()?.id;
+    provisionsBySource.set(
+      source,
+      sourceId ? db.select().from(irishActProvisions).where(eq(irishActProvisions.sourceId, sourceId)).all() : [],
+    );
+  }
 
   let created = 0;
   let superseded = 0;
@@ -264,7 +317,7 @@ export function deriveRctRules(
   const skippedNoProvision: string[] = [];
 
   for (const rule of RCT_CURATED_RULES) {
-    const provisions = rule.source === 'tca1997_s530' ? s530Provisions : tdmProvisions;
+    const provisions = provisionsBySource.get(rule.source) ?? [];
     const prov = provisions.find((p) => p.sectionNumber === rule.sectionNumber);
     if (!prov) { skippedNoProvision.push(rule.ruleKey); continue; }
     if (!prov.relevant) { skippedNoProvision.push(rule.ruleKey); continue; }
@@ -276,7 +329,7 @@ export function deriveRctRules(
         eq(irishTaxRules.active, true),
       )).get();
 
-    const effectiveFrom = rule.source === 'tca1997_s530' ? TCA_1997_S530.effectiveFrom : RCT_TDM_18_02_04.effectiveFrom;
+    const effectiveFrom = effectiveFromFor(rule.source);
 
     if (existing) {
       if (existing.statement === rule.statementExcerpt) { unchanged++; continue; }
@@ -318,7 +371,7 @@ export function deriveRctRules(
       source: 'derived',
       confidence: 60,
       provenanceStatus: 'ai_suggestion',
-      sourceNote: `Curated from ${rule.source === 'tca1997_s530' ? TCA_1997_S530.citation : RCT_TDM_18_02_04.citation}`
+      sourceNote: `Curated from ${citationFor(rule.source)}`
         + `, para/section ${rule.sectionNumber}; not yet human-reviewed. ${rule.interpretationNote}`,
       sourceDate: nowIso(),
     }).run();

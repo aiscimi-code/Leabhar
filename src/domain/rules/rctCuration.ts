@@ -2,7 +2,7 @@
  * Curated rules for Relevant Contracts Tax (RCT) — the withholding regime on
  * payments under a "relevant contract" in construction, forestry and meat
  * processing (docs/statutes/rct/README.md: "a withholding rate, never a VAT
- * rate... two independent regimes"). Sourced from two ingested documents:
+ * rate... two independent regimes"). Sourced from these ingested documents:
  *
  *  - TCA 1997 s.530 (legislation, as-enacted-1997) — Chapter 2's foundational
  *    definitions (relevant contract, relevant operations, construction/
@@ -16,10 +16,23 @@
  *    as-enacted page to fetch — they were inserted by Finance Act 2011 s.20,
  *    a different Act not yet ingested here; see
  *    docs/statutes/tca-1997/README.md "Priority sections not yet added").
- *    Tagged `revenue_guidance`, never `legislation` — this KB's source
- *    hierarchy (sourceHierarchy.ts) exists precisely so Revenue's own
- *    explanation of a statutory scheme is never confused with, or allowed to
- *    outrank, the statute itself once that statute is ingested.
+ *  - Revenue TDM Part 18-02-05 (revenue_guidance) — "RCT for Subcontractors".
+ *    Its §3.5 states, verbatim, Revenue's own published criteria for the
+ *    zero/20%/35% rate tiers (compliance history, fixed place of business,
+ *    record keeping) — genuinely useful context, but still not a
+ *    computation: none of those criteria (a subcontractor's own 3-year
+ *    compliance record) are available from a transaction record, so
+ *    `rct.subcontractor_compliance_criteria` below describes the criteria,
+ *    it does not evaluate them.
+ *  - TDM 18-02-01 (Relevant Operations) and 18-02-02 (Who is a Principal
+ *    Contractor), both listed in docs/statutes/rct/README.md, are NOT used
+ *    as sources here: both are still paraphrased summaries in this repo (no
+ *    page markers, no source hash) — see `rctIngestion.ts`'s own header.
+ *
+ * Every Revenue-guidance source here is tagged `revenue_guidance`, never
+ * `legislation` — this KB's source hierarchy (sourceHierarchy.ts) exists
+ * precisely so Revenue's own explanation of a statutory scheme is never
+ * confused with, or allowed to outrank, the statute itself once ingested.
  *
  * **What is deliberately NOT curated here, and why:**
  *  - The actual 0%/20%/35% deduction rate for a given payment. Unlike
@@ -61,7 +74,7 @@ export const RCT_SCOPE_RE =
   + 'forestry|felling|logging|tree surgery|meat processing|slaughter|abattoir|'
   + 'subcontractor)\\b';
 
-export type RctSourceKind = 'tca1997_s530' | 'tdm_18_02_04';
+export type RctSourceKind = 'tca1997_s530' | 'tdm_18_02_04' | 'tdm_18_02_05' | 'tdm_18_02_11';
 
 export interface CuratedRctRule {
   source: RctSourceKind;
@@ -180,5 +193,43 @@ export const RCT_CURATED_RULES: CuratedRctRule[] = [
       + 'is silently repaired" — a detected RCT-candidate transaction with no recorded deduction-authorisation '
       + 'reference is a review item, never a defaulted-to-zero or defaulted-to-20% assumption). '
       + 'requiresGuidance is always true and always will be for this rule.',
+  },
+  {
+    source: 'tdm_18_02_05',
+    sectionNumber: 'full',
+    ruleKey: 'rct.subcontractor_compliance_criteria',
+    ruleType: 'other',
+    topic: 'rct',
+    name: 'RCT rate criteria: 3-year tax compliance history, fixed place of business, record keeping',
+    statementExcerpt: 'Subcontractor has throughout the previous 3 years complied with all the obligations\n'
+      + 'imposed by the Tax Acts, the Capital Gains Tax Acts and the Value-Added Tax Acts, in\nrelation to:',
+    conditions: [],
+    exceptions: [
+      {
+        condition: 'the Revenue Commissioners are satisfied the person will disregard a requirement in all '
+          + 'the circumstances (sections 530G/530H "Revenue disregard")',
+        effect: 'that specific requirement (e.g. a compliance or record-keeping shortfall) does not by itself '
+          + 'prevent the zero or standard rate',
+      },
+    ],
+    taxEffect: 'Per TDM 18-02-05 §3.5, Revenue\'s own published criteria for the zero rate require: the '
+      + 'subcontractor is (or is about to become) engaged in relevant operations; a fixed place of business '
+      + 'in a permanent building with the equipment/stock/facilities the business needs; proper record '
+      + 'keeping (section 886(2)); and full compliance with all Tax Acts/CGT Acts/VAT Acts obligations '
+      + '(payment, filing, supplying information) throughout the previous 3 years. The standard (20%) rate '
+      + 'uses the same criteria but requires only *substantial* (not full) 3-year compliance, taking into '
+      + 'account "the extent to which any non-compliance is being addressed". The 35% rate applies by default '
+      + 'wherever the subcontractor is unknown/unregistered, or does not meet either set of criteria, or '
+      + 'Revenue considers standard-rate deductions would leave the year\'s income tax liability unpaid.',
+    accountingEffect: null,
+    reportingEffect: null,
+    requiresGuidance: true,
+    interpretationNote: 'This is descriptive, not evaluative — it exists to give a human reviewer the real '
+      + 'criteria Revenue applies (rather than nothing), never to let this system compute a rate from them. '
+      + 'None of "3 years of compliance history", "fixed place of business", or "proper record keeping" is '
+      + 'data a transaction record carries, so `conditions` is deliberately empty; this rule always surfaces '
+      + 'alongside rct.deduction_rate_not_determinable, never instead of it. The underlying legislative test '
+      + '(TCA 1997 ss.530E/530G/530H) is not independently ingested — this is Revenue\'s own restatement of '
+      + 'it, tagged `revenue_guidance` accordingly.',
   },
 ];

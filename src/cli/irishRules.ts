@@ -14,7 +14,8 @@ import {
   VATCA_SCHEDULE_2_MD_PATH, VATCA_SCHEDULE_3_MD_PATH, type VatcaScheduleNumber,
 } from '@/domain/rules/vatcaScheduleIngestion';
 import {
-  ingestTca1997S530, ingestRctTdm18_02_04, deriveRctRules, TCA_1997_S530_MD_PATH,
+  ingestTca1997S530, ingestRctTdm18_02_04, ingestRctTdm18_02_05, ingestRctTdm18_02_11, deriveRctRules,
+  TCA_1997_S530_MD_PATH,
 } from '@/domain/rules/rctIngestion';
 import {
   ingestVatcaRevisedSection, deriveVatcaRevisedRules, VATCA_REVISED_S046_MD_PATH,
@@ -36,10 +37,11 @@ Commands:
   ingest [--source <s>] [--file <path>]
                                        Ingest a source's Markdown (--source: finance-act-2024
                                        [default] | vatca-2010 | vatca-2010-sch2 | vatca-2010-sch3 |
-                                       rct-tca530 | rct-tdm | vatca-2010-revised | tca1997-s284; --file overrides
+                                       rct-tca530 | rct-tdm | rct-tdm-05 | rct-tdm-11 |
+                                       vatca-2010-revised | tca1997-s284; --file overrides
                                        its default path, e.g. to ingest a different revised section)
   extract [--source <s>]              Derive irish_tax_rules from ingested provisions
-                                       (--source as above, but rct-tca530/rct-tdm both use
+                                       (--source as above, but rct-tca530/rct-tdm/rct-tdm-05/rct-tdm-11 all use
                                        --source rct; default finance-act-2024)
   list-provisions [--category <c>] [--relevant-only]
                                        List ingested provisions
@@ -103,13 +105,19 @@ export async function main(argv: string[], options: CliOptions = {}): Promise<nu
           print(ingestTca1997S530(db, { companyId, markdown, ingestVersion: 'v1', localPath: file }), format);
           return 0;
         }
-        if (source === 'rct-tdm') {
-          const defaultFile = new URL(
-            '../../docs/statutes/rct/tdm-18-02-04.md', import.meta.url,
-          ).pathname;
+        if (source === 'rct-tdm' || source === 'rct-tdm-05' || source === 'rct-tdm-11') {
+          const rctTdmFiles: Record<string, string> = {
+            'rct-tdm': 'tdm-18-02-04.md',
+            'rct-tdm-05': 'tdm-18-02-05.md',
+            'rct-tdm-11': 'tdm-18-02-11.md',
+          };
+          const defaultFile = new URL(`../../docs/statutes/rct/${rctTdmFiles[source]}`, import.meta.url).pathname;
           const file = getFlag(flags, 'file') ?? defaultFile;
           const markdown = readFileSync(file, 'utf8');
-          print(ingestRctTdm18_02_04(db, { companyId, markdown, ingestVersion: 'v1', localPath: file }), format);
+          const ingestFn = source === 'rct-tdm'
+            ? ingestRctTdm18_02_04
+            : source === 'rct-tdm-05' ? ingestRctTdm18_02_05 : ingestRctTdm18_02_11;
+          print(ingestFn(db, { companyId, markdown, ingestVersion: 'v1', localPath: file }), format);
           return 0;
         }
         if (source === 'vatca-2010-revised') {
