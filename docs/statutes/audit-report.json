@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-19T04:12:36.985Z",
+  "generatedAt": "2026-09-19T04:50:51.519Z",
   "sources": [
     {
       "id": "src_780e780e102a40a38b9c48c7",
@@ -36,17 +36,23 @@
       "citation": "Revenue TDM Part 18-02-04",
       "sourceType": "revenue_guidance",
       "provisionCount": 1
+    },
+    {
+      "id": "src_49e20fa190b741d4ae1f8e42",
+      "citation": "2010 Act 31 s.46",
+      "sourceType": "legislation",
+      "provisionCount": 1
     }
   ],
-  "provisionCount": 292,
-  "relevantProvisionCount": 166,
+  "provisionCount": 293,
+  "relevantProvisionCount": 167,
   "notRelevantProvisionCount": 126,
-  "ruleCount": 20,
+  "ruleCount": 23,
   "rulesByReviewStatus": {
-    "ai_extracted": 20
+    "ai_extracted": 23
   },
-  "rulesRequiringHumanReview": 20,
-  "rulesRequiringGuidance": 15,
+  "rulesRequiringHumanReview": 23,
+  "rulesRequiringGuidance": 18,
   "rulesWithExceptions": 11,
   "provisionsWithoutExtractedRule": [],
   "ambiguousProvisions": [

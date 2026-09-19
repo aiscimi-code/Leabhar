@@ -43,16 +43,21 @@ def html_to_md(html: str, title: str, citation: str, url: str) -> str:
     for tag in soup.select("script, style, nav, header, footer, noscript, form"):
         tag.decompose()
     # revisedacts.lawreform.ie has no #content id; <main id="main-content">
-    # wraps both the real provision (<section class="section"|"schedule">)
-    # and a leading <div class="act-nav"> breadcrumb ("Act as originally
-    # enacted" / "Next Section" etc.) that the old #content/main/body
-    # fallback let straight through into the flattened text. Selecting the
-    # actual provision container directly (confirmed present via a raw-HTML
-    # capture: <section class="schedule" id="SCHED2">, and by analogy
-    # class="section" for a section page) excludes that chrome at the
-    # source rather than trying to filter its text after the fact.
+    # wraps both the real provision and a leading <div class="act-nav">
+    # breadcrumb ("Act as originally enacted" / "Next Section" etc.) that
+    # the old #content/main/body fallback let straight through into the
+    # flattened text. Selecting the actual provision container directly
+    # excludes that chrome at the source rather than trying to filter its
+    # text after the fact. Confirmed via two separate raw-HTML captures:
+    # a Schedule page uses <section class="schedule" id="SCHED2">, but an
+    # ordinary section page uses <section class="sect" id="SEC46"> — NOT
+    # "section" as first assumed, which silently fell through to the
+    # <main> fallback (chrome and all) for every individual section file
+    # while Schedules came out clean from the same fix. "sect" caught late
+    # precisely because nothing failed loudly: the fallback always
+    # produces *some* output, just with the leading chrome still in it.
     root = (
-        soup.select_one("#content") or soup.select_one("section.section, section.schedule")
+        soup.select_one("#content") or soup.select_one("section.sect, section.schedule")
         or soup.select_one("main") or soup.body
     )
     # Per-provision "Amendments:" (class="f-notes") and end-of-provision
