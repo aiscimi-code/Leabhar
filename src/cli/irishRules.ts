@@ -24,6 +24,7 @@ import { ingestTca1997S284, deriveCapitalAllowancesRules } from '@/domain/rules/
 import { ingestSi639, deriveSi639Rules, SI_639_2010_MD_PATH } from '@/domain/rules/si639Ingestion';
 import { ingestSi156, deriveSi156Rules, SI_156_2012_MD_PATH } from '@/domain/rules/si156Ingestion';
 import { ingestSi692025Reg8, deriveSi692025Rules, SI_69_2025_MD_PATH } from '@/domain/rules/si692025Ingestion';
+import { deriveFinanceAct2024VatThresholds } from '@/domain/rules/financeAct2024VatThresholdsIngestion';
 import { lookupTransactionRules, type TransactionContext } from '@/domain/rules/transactionLookup';
 import { setRuleReviewStatus } from '@/domain/rules/review';
 import { generateDefaultTestCases, runTestCases } from '@/domain/rules/testCases';
@@ -45,7 +46,9 @@ Commands:
                                        its default path, e.g. to ingest a different revised section)
   extract [--source <s>]              Derive irish_tax_rules from ingested provisions
                                        (--source as above, but rct-tca530/rct-tdm/rct-tdm-05/rct-tdm-11 all use
-                                       --source rct; default finance-act-2024)
+                                       --source rct; also finance-act-2024-vat-thresholds, which requires
+                                       finance-act-2024 already ingested (no separate document); default
+                                       finance-act-2024)
   list-provisions [--category <c>] [--relevant-only]
                                        List ingested provisions
   show-provision --section <n>        Print one provision's full text + source offsets
@@ -198,6 +201,10 @@ export async function main(argv: string[], options: CliOptions = {}): Promise<nu
         }
         if (source === 'si69-2025') {
           print(deriveSi692025Rules(db, { companyId }), format);
+          return 0;
+        }
+        if (source === 'finance-act-2024-vat-thresholds') {
+          print(deriveFinanceAct2024VatThresholds(db, { companyId }), format);
           return 0;
         }
         if (source !== 'finance-act-2024') throw new Error(`Unknown --source: ${source}`);
