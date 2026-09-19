@@ -10,6 +10,7 @@ import { DEFAULT_ACCOUNTS, type SystemAccountKey } from './chartOfAccounts';
 import { DEFAULT_TAX_RATES, DEFAULT_VAT_TREATMENTS } from './vatTreatments';
 import { generateVatPeriods, generateFinancialYear, type VatFrequency } from './periods';
 import { GLOSSARY_TERMS } from '../help/glossary';
+import { postJournalEntry } from '../accounting/journal';
 
 export interface CreateCompanyInput {
   legalName: string;
@@ -249,7 +250,18 @@ export function systemAccountId(
   return row.id;
 }
 
-/** Add a bank account and link it to its ledger control account. */
+/**
+ * Add a bank account and link it to its ledger control account.
+ *
+ * A nonzero `openingBalanceMinor` is also journaled — Dr/Cr the account's own
+ * control account against retained earnings, dated at `openingDate` — not
+ * merely stored on this row. Before this, the figure sat only on
+ * `bank_accounts.opening_balance_minor` and never reached the ledger, so the
+ * balance a supplied statement closed to was unexplained by exactly the
+ * opening amount (issue #153): the books had no entry for where that money
+ * came from. `sourceType: 'opening_balance'` exists in the schema for
+ * precisely this posting.
+ */
 export function addBankAccount(
   db: AppDatabase,
   params: {
@@ -263,9 +275,58 @@ export function addBankAccount(
     openingBalanceMinor?: number;
     openingDate: IsoDate | string;
     accountId?: string;
+    actor?: string;
   },
 ): string {
   const id = ids.bankAccount();
+  const accountId = params.accountId ?? systemAccountId(db, params.companyId, 'bank_control');
+  const openingBalanceMinor = params.openingBalanceMinor ?? 0;
+  const openingDate = asIsoDate(String(params.openingDate));
+
+  if (openingBalanceMinor !== 0) {
+    const company = db.select({ baseCurrency: companies.baseCurrency }).from(companies)
+      .where(eq(companies.id, params.companyId)).get();
+    if (!company) throw new Error(`Company ${params.companyId} not found.`);
+
+    const accountCurrency = (params.currency ?? 'EUR').toUpperCase();
+    if (accountCurrency !== company.baseCurrency.toUpperCase()) {
+      throw new Error(
+        `This account is in ${accountCurrency} but the company's base currency is `
+          + `${company.baseCurrency}. Posting a foreign-currency opening balance needs a `
+          + 'deliberate exchange rate, which this function does not yet take — post it as a '
+          + 'manual adjustment instead.',
+      );
+    }
+
+    const retainedEarnings = systemAccountId(db, params.companyId, 'retained_earnings');
+    const magnitude = Math.abs(openingBalanceMinor);
+    const positive = openingBalanceMinor > 0;
+
+    // Posted before the bank_accounts row exists — same order createInvoice
+    // uses (journal first, then the row referencing it): a failed posting
+    // (e.g. no financial year covers openingDate yet) must not leave a bank
+    // account whose stated opening balance was never journaled.
+    postJournalEntry(db, {
+      companyId: params.companyId,
+      entryDate: openingDate,
+      narrative: `Opening balance: ${params.bankName} ${params.accountName}`,
+      sourceType: 'opening_balance',
+      sourceId: id,
+      baseCurrency: company.baseCurrency,
+      createdBy: params.actor ?? 'user',
+      createdVia: 'user',
+      lines: positive
+        ? [
+          { accountId, debitMinor: magnitude, memo: 'Opening balance' },
+          { accountId: retainedEarnings, creditMinor: magnitude, memo: 'Opening balance' },
+        ]
+        : [
+          { accountId, creditMinor: magnitude, memo: 'Opening balance (overdrawn)' },
+          { accountId: retainedEarnings, debitMinor: magnitude, memo: 'Opening balance (overdrawn)' },
+        ],
+    });
+  }
+
   db.insert(bankAccounts).values({
     id,
     companyId: params.companyId,
@@ -275,9 +336,9 @@ export function addBankAccount(
     bic: params.bic ?? null,
     currency: (params.currency ?? 'EUR').toUpperCase(),
     accountType: params.accountType ?? 'current',
-    openingBalanceMinor: params.openingBalanceMinor ?? 0,
-    openingDate: asIsoDate(String(params.openingDate)),
-    accountId: params.accountId ?? systemAccountId(db, params.companyId, 'bank_control'),
+    openingBalanceMinor,
+    openingDate,
+    accountId,
   }).run();
   return id;
 }

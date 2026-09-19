@@ -418,6 +418,14 @@ function ledgerEntriesWithoutStatementLine(
 
   for (const row of rows) {
     if (evidenced.has(row.entryId)) continue;
+    // An opening balance predates any statement by definition — it is the
+    // starting point a statement's own balance already assumes, not a
+    // pending movement waiting to clear (issue #153). Without this
+    // exclusion, add-bank's own opening-balance posting would show up as a
+    // permanently "unexplained" ledger-only item on every reconciliation of
+    // the period it falls in, even when the supplied statement balance
+    // already accounts for it exactly.
+    if (row.sourceType === 'opening_balance') continue;
     const existing = byEntry.get(row.entryId);
     const amount = row.debit - row.credit;
     if (existing) existing.amountMinor += amount;

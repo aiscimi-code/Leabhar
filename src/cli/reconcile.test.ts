@@ -7,7 +7,7 @@ import { importStatement } from '@/domain/banking/import';
 import { storeDocument } from '@/domain/documents/storage';
 import { bankTransactions, reconciliations, documents, documentMatches, suppliers } from '@/db/schema';
 import { main } from './reconcile';
-import { mkdtempSync } from 'node:fs';
+import { mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import type { AppDatabase } from '@/db';
@@ -701,5 +701,289 @@ describe('cli reconcile — classify, create-rule, set-fx', () => {
     expect(parsed.counts.unposted).toBe(0);
     expect(parsed.unexplainedMinor).toBe(0);
     expect(parsed.reconciled).toBe(true);
+  });
+});
+
+// Issue #153: an agent can load a non-demo company end-to-end from the CLI
+// alone — induction (company, bank with a posted opening balance, an extra
+// chart account, a customer) through books (invoices from CSV, payments,
+// a manual journal) to inspection (transactions, an invoice, year-end, VAT).
+describe('cli reconcile — induction and books (issue #153)', () => {
+  it('init-company creates a company with no company existing yet', async () => {
+    const { db: freshDb } = createTestDatabase();
+    const c = capture();
+    const code = await main([
+      'init-company', '--name', 'Wild Atlantic Woodcraft Ltd',
+      '--vat-basis', 'invoice', '--vat-frequency', 'bi_monthly',
+      '--year-end', '12-31', '--seed-years', '2025',
+    ], { db: freshDb });
+    c.restore();
+    expect(code).toBe(0);
+    const parsed = JSON.parse(c.stdout.join(''));
+    expect(parsed.companyId).toBeTruthy();
+    expect(parsed.accountsByKey.bank_control).toBeTruthy();
+    expect(parsed.treatmentsByCode.IE_STD).toBeTruthy();
+  });
+
+  describe('a freshly induced company', () => {
+    let iDb: AppDatabase;
+    let iCompanyId: string;
+    let iRun: (argv: string[]) => Promise<number>;
+    let iCapture: () => ReturnType<typeof capture>;
+
+    beforeEach(async () => {
+      ({ db: iDb } = createTestDatabase());
+      iRun = (argv) => main(argv, { db: iDb, companyId: iCompanyId });
+      iCapture = capture;
+
+      let c = iCapture();
+      await main([
+        'init-company', '--name', 'Wild Atlantic Woodcraft Ltd',
+        '--vat-basis', 'invoice', '--seed-years', '2025',
+      ], { db: iDb });
+      iCompanyId = JSON.parse(c.stdout.join('')).companyId;
+      c.restore();
+    });
+
+    it('add-bank --opening posts the balance and reconcile agrees exactly', async () => {
+      let c = iCapture();
+      await iRun([
+        'add-bank', '--name', 'AIB Current', '--opening', '14250.00',
+        '--opening-date', '2025-01-01',
+      ]);
+      const bank = JSON.parse(c.stdout.join(''));
+      c.restore();
+      expect(bank.openingBalancePosted).toBe(true);
+
+      c = iCapture();
+      const code = await iRun([
+        'reconcile', '--account', bank.bankAccountId,
+        '--from', '2025-01-01', '--to', '2025-01-31',
+        '--statement-balance', '1425000',
+      ]);
+      c.restore();
+      expect(code).toBe(0);
+      const reconciled = JSON.parse(c.stdout.join(''));
+      expect(reconciled.items).toEqual([]);
+      expect(reconciled.unexplainedMinor).toBe(0);
+      expect(reconciled.reconciled).toBe(true);
+    });
+
+    it('add-bank without --opening posts nothing', async () => {
+      const c = iCapture();
+      await iRun(['add-bank', '--name', 'Savings', '--opening-date', '2025-01-01']);
+      c.restore();
+      const bank = JSON.parse(c.stdout.join(''));
+      expect(bank.openingBalancePosted).toBe(false);
+    });
+
+    it('add-account adds a chart account with a defaulted report section', async () => {
+      const c = iCapture();
+      const code = await iRun(['add-account', '--code', '6180', '--name', 'Wages and salaries', '--type', 'expense']);
+      c.restore();
+      expect(code).toBe(0);
+      const parsed = JSON.parse(c.stdout.join(''));
+      expect(parsed.accountId).toBeTruthy();
+
+      const chart = iCapture();
+      await iRun(['list-chart']);
+      chart.restore();
+      const accounts = JSON.parse(chart.stdout.join(''));
+      expect(accounts.some((a: { code: string }) => a.code === '6180')).toBe(true);
+    });
+
+    it('add-account refuses a report section neither report reads', async () => {
+      const c = iCapture();
+      const code = await iRun([
+        'add-account', '--code', '9999', '--name', 'Nonsense', '--type', 'liability',
+        '--report-section', 'not_a_real_section',
+      ]);
+      c.restore();
+      expect(code).toBe(1);
+      expect(c.stderr.join('')).toContain('not a report section');
+    });
+
+    it('add-customer creates a customer usable by name in create-invoice', async () => {
+      const c = iCapture();
+      const code = await iRun(['add-customer', '--name', 'Mulligan Digital Limited', '--country', 'IE']);
+      c.restore();
+      expect(code).toBe(0);
+      expect(JSON.parse(c.stdout.join('')).customerId).toBeTruthy();
+    });
+
+    describe('with a customer and a supplier on file', () => {
+      let root: string;
+
+      beforeEach(async () => {
+        root = mkdtempSync(join(tmpdir(), 'induction-'));
+        await iRun(['add-customer', '--name', 'Mulligan Digital Limited', '--country', 'IE']);
+        await iRun(['create-supplier', '--name', 'Byrne Accountancy', '--country', 'IE']);
+      });
+
+      it('create-invoice posts every row of a CSV, sales and purchase alike', async () => {
+        const salesCsv = join(root, 'sales.csv');
+        writeFileSync(salesCsv, [
+          'invoiceNumber,date,party,description,net,account,vatTreatment',
+          'INV-2025-001,2025-02-20,Mulligan Digital Limited,Consulting,1000.00,4020,IE_STD',
+        ].join('\n'));
+
+        let c = iCapture();
+        let code = await iRun(['create-invoice', '--direction', 'sales', '--file', salesCsv]);
+        c.restore();
+        expect(code).toBe(0);
+        let parsed = JSON.parse(c.stdout.join(''));
+        expect(parsed.created).toBe(1);
+        expect(parsed.failed).toBe(0);
+
+        const purchaseCsv = join(root, 'purchase.csv');
+        writeFileSync(purchaseCsv, [
+          'invoiceNumber,date,party,description,net,account,vatTreatment',
+          'BAS-0044,2025-02-20,Byrne Accountancy,Accountancy,500.00,6070,IE_STD',
+        ].join('\n'));
+
+        c = iCapture();
+        code = await iRun(['create-invoice', '--direction', 'purchase', '--file', purchaseCsv]);
+        c.restore();
+        expect(code).toBe(0);
+        parsed = JSON.parse(c.stdout.join(''));
+        expect(parsed.created).toBe(1);
+        expect(parsed.failed).toBe(0);
+      });
+
+      it('create-invoice reports a row-level error without aborting the rest of the file', async () => {
+        const csv = join(root, 'mixed.csv');
+        writeFileSync(csv, [
+          'invoiceNumber,date,party,description,net,account,vatTreatment',
+          'INV-BAD,2025-02-20,Nobody At All,Consulting,1000.00,4020,IE_STD',
+          'INV-GOOD,2025-02-21,Mulligan Digital Limited,Consulting,500.00,4020,IE_STD',
+        ].join('\n'));
+
+        const c = iCapture();
+        const code = await iRun(['create-invoice', '--direction', 'sales', '--file', csv]);
+        c.restore();
+        expect(code).toBe(0);
+        const parsed = JSON.parse(c.stdout.join(''));
+        expect(parsed.created).toBe(1);
+        expect(parsed.failed).toBe(1);
+        expect(parsed.results[0].error).toMatch(/Nobody At All/);
+        expect(parsed.results[1].invoiceId).toBeTruthy();
+      });
+
+      describe('with a sales invoice posted', () => {
+        beforeEach(async () => {
+          const csv = join(root, 'sales.csv');
+          writeFileSync(csv, [
+            'invoiceNumber,date,party,description,net,account,vatTreatment',
+            'INV-2025-001,2025-02-20,Mulligan Digital Limited,Consulting,1000.00,4020,IE_STD',
+          ].join('\n'));
+          await iRun(['create-invoice', '--direction', 'sales', '--file', csv]);
+        });
+
+        it('show-invoice returns the invoice, its line and its account/treatment', async () => {
+          const c = iCapture();
+          const code = await iRun(['show-invoice', 'INV-2025-001']);
+          c.restore();
+          expect(code).toBe(0);
+          const parsed = JSON.parse(c.stdout.join(''));
+          expect(parsed.invoice.grossMinor).toBe(123_000);
+          expect(parsed.party.name).toBe('Mulligan Digital Limited');
+          expect(parsed.lines[0]).toMatchObject({ accountCode: '4020', treatmentCode: 'IE_STD' });
+        });
+
+        it('record-payment pays an invoice in full with no --amount (the exact case)', async () => {
+          const c = iCapture();
+          const code = await iRun(['record-payment', '--invoices', 'INV-2025-001', '--date', '2025-03-01']);
+          c.restore();
+          expect(code).toBe(0);
+          const parsed = JSON.parse(c.stdout.join(''));
+          expect(parsed.allocatedMinor).toBe(123_000);
+          expect(parsed.unallocatedMinor).toBe(0);
+          expect(parsed.invoiceStatuses[0]).toMatchObject({ status: 'paid', outstandingMinor: 0 });
+        });
+
+        it('record-payment --unallocated leaves the payment on account on purpose', async () => {
+          const c = iCapture();
+          const code = await iRun([
+            'record-payment', '--amount', '50.00', '--date', '2025-03-01',
+            '--unallocated', '--direction', 'received',
+          ]);
+          c.restore();
+          expect(code).toBe(0);
+          const parsed = JSON.parse(c.stdout.join(''));
+          expect(parsed.allocatedMinor).toBe(0);
+          expect(parsed.unallocatedMinor).toBe(5_000);
+        });
+
+        it('record-payment allocates a part-payment below the outstanding balance', async () => {
+          const c = iCapture();
+          await iRun(['record-payment', '--invoices', 'INV-2025-001', '--amount', '100.00', '--date', '2025-03-01']);
+          c.restore();
+
+          const show = iCapture();
+          await iRun(['show-invoice', 'INV-2025-001']);
+          show.restore();
+          const invoice = JSON.parse(show.stdout.join('')).invoice;
+          expect(invoice.outstandingMinor).toBe(123_000 - 10_000);
+          expect(invoice.status).not.toBe('paid');
+        });
+
+        it('journal posts a balanced multi-line manual adjustment', async () => {
+          const c = iCapture();
+          const code = await iRun([
+            'journal', '--date', '2025-03-15', '--narrative', 'Stripe payout Mar 15',
+            '--lines', JSON.stringify([
+              { account: '1010', debit: '98.50' },
+              { account: '6100', debit: '1.50' },
+              { account: '4020', credit: '100.00' },
+            ]),
+          ]);
+          c.restore();
+          expect(code).toBe(0);
+          const parsed = JSON.parse(c.stdout.join(''));
+          expect(parsed.journalEntryId).toBeTruthy();
+          expect(parsed.totalMinor).toBe(10_000);
+        });
+
+        it('journal refuses an unbalanced set of lines', async () => {
+          const c = iCapture();
+          const code = await iRun([
+            'journal', '--date', '2025-03-15', '--narrative', 'Bad entry',
+            '--lines', JSON.stringify([
+              { account: '1010', debit: '10.00' },
+              { account: '4020', credit: '5.00' },
+            ]),
+          ]);
+          c.restore();
+          expect(code).toBe(1);
+          expect(c.stderr.join('')).toContain('does not balance');
+        });
+
+        it('year-end reflects the posted invoice in revenue', async () => {
+          const c = iCapture();
+          const code = await iRun(['year-end', '--from', '2025-01-01', '--to', '2025-12-31']);
+          c.restore();
+          expect(code).toBe(0);
+          const parsed = JSON.parse(c.stdout.join(''));
+          expect(parsed.profitAndLoss.revenue.valueMinor).toBe(100_000);
+        });
+
+        it('vat-return by period name reports the invoice\'s output VAT', async () => {
+          const c = iCapture();
+          const code = await iRun(['vat-return', '--period', 'Jan–Feb 2025']);
+          c.restore();
+          expect(code).toBe(0);
+          const parsed = JSON.parse(c.stdout.join(''));
+          expect(parsed.T1.amountMinor).toBe(23_000);
+        });
+
+        it('list-transactions --unposted excludes the invoice (it has no bank transaction)', async () => {
+          const c = iCapture();
+          const code = await iRun(['list-transactions', '--unposted']);
+          c.restore();
+          expect(code).toBe(0);
+          expect(JSON.parse(c.stdout.join(''))).toEqual([]);
+        });
+      });
+    });
   });
 });

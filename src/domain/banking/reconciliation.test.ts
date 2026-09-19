@@ -414,3 +414,64 @@ describe('reconcileBankAccount — multi-currency', () => {
     expect(result.reconciled).toBe(true);
   });
 });
+
+// Issue #153: an opening balance predates any statement by definition — it
+// is the starting point a supplied statement balance already assumes, not a
+// pending movement waiting to clear. Before this fix it showed up as a
+// permanently "unexplained" ledger-only item on every reconciliation of the
+// period it falls in.
+describe('reconcileBankAccount — opening balance', () => {
+  it('does not treat a posted opening balance as an unexplained ledger-only movement', () => {
+    const { db: obDb } = createTestDatabase();
+    const created = createCompany(obDb, {
+      legalName: 'Wild Atlantic Woodcraft Ltd', vatRegistrationStatus: 'registered', seedYears: [2025],
+    });
+    const obAccountId = addBankAccount(obDb, {
+      companyId: created.companyId, bankName: 'AIB', accountName: 'Current',
+      openingBalanceMinor: 1_425_000, openingDate: '2025-01-01',
+    });
+
+    const result = reconcileBankAccount(obDb, {
+      companyId: created.companyId, bankAccountId: obAccountId,
+      periodStart: makeDate(2025, 1, 1), periodEnd: makeDate(2025, 1, 31),
+      statementClosingBalanceMinor: 1_425_000,
+    });
+
+    expect(result.items).toEqual([]);
+    expect(result.unexplainedMinor).toBe(0);
+    expect(result.reconciled).toBe(true);
+  });
+
+  it('still surfaces a genuine manual adjustment on the account as ledger-only', () => {
+    const { db: obDb } = createTestDatabase();
+    const created = createCompany(obDb, {
+      legalName: 'Wild Atlantic Woodcraft Ltd', vatRegistrationStatus: 'registered', seedYears: [2025],
+    });
+    const obAccountId = addBankAccount(obDb, {
+      companyId: created.companyId, bankName: 'AIB', accountName: 'Current',
+      openingDate: '2025-01-01',
+    });
+    postJournalEntry(obDb, {
+      companyId: created.companyId, entryDate: makeDate(2025, 1, 10),
+      narrative: 'Director loan advanced', sourceType: 'manual_adjustment', baseCurrency: 'EUR',
+      lines: [
+        { accountId: created.accountsByKey['bank_control']!, debitMinor: 50_000 },
+        { accountId: created.accountsByKey['directors_current_account']!, creditMinor: 50_000 },
+      ],
+    });
+
+    // The statement balance already matches the ledger — unlike an opening
+    // balance, an ordinary manual adjustment is not assumed to predate the
+    // statement, so an unmatched movement here is a genuine open question,
+    // not something the fix should silently wave through.
+    const result = reconcileBankAccount(obDb, {
+      companyId: created.companyId, bankAccountId: obAccountId,
+      periodStart: makeDate(2025, 1, 1), periodEnd: makeDate(2025, 1, 31),
+      statementClosingBalanceMinor: 50_000,
+    });
+
+    expect(result.items).toHaveLength(1);
+    expect(result.items[0]!.kind).toBe('ledger_not_on_statement');
+    expect(result.reconciled).toBe(false);
+  });
+});
