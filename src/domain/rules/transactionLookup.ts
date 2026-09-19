@@ -167,8 +167,15 @@ const TOPIC_RULES: TopicRule[] = [
     // VAT deductibility (section 59/60) is a candidate question for any
     // VAT-registered entity's purchase, not only cross-border ones — a
     // narrower test here would miss ordinary domestic input VAT questions
-    // (e.g. "is the VAT on this bank charge deductible?").
+    // (e.g. "is the VAT on this bank charge deductible?"). `supplyType`
+    // alone also routes here, `vatRegistered` or not: whether someone
+    // SHOULD be registered (the s.6(1)(c)/(d) registration-threshold test)
+    // is a question about a currently-*unregistered* trader more often than
+    // not — gating it on `vatRegistered === true` made it unreachable for
+    // exactly the population it exists to catch (an unregistered trader
+    // whose turnover has passed the threshold never got looked up at all).
     test: (ctx) => ctx.vatRegistered === true
+      || ctx.supplyType != null
       || /\bvat\b|saas|software|digital service|reverse charge/i.test(TEXT_FIELDS(ctx))
       || (!!ctx.supplierCountry && ctx.supplierCountry.toUpperCase() !== 'IE'),
   },

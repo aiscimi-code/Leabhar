@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import { createTestDatabase } from '@/db/testing';
 import { createCompany } from '../config/setup';
 import { ingestFinanceAct2024, deriveTaxRules, FINANCE_ACT_2024_MD_PATH } from './irishRules';
+import { deriveFinanceAct2024VatThresholds } from './financeAct2024VatThresholdsIngestion';
 import { ingestVatca2010, deriveVatcaRules, VATCA_2010_MD_PATH } from './vatcaIngestion';
 import { ingestVatcaRevisedSection, deriveVatcaRevisedRules, VATCA_REVISED_S046_MD_PATH } from './vatcaRevisedIngestion';
 import {
@@ -48,6 +49,18 @@ describe('identifyTopics', () => {
       description: 'Personal purchase charged to business account', businessUsePercent: 0,
     });
     expect(topics).toContain('director_transaction');
+  });
+
+  it('routes a supplyType-bearing transaction to vat even when vatRegistered is false', () => {
+    // The registration-threshold rules exist precisely to catch an
+    // UNREGISTERED trader whose turnover has passed the threshold — gating
+    // the vat topic on vatRegistered === true made that population
+    // unreachable in the first place.
+    const topics = identifyTopics({
+      transactionDate: '2026-09-18', amountMinor: 5000000,
+      vatRegistered: false, supplyType: 'services', description: 'Consulting',
+    });
+    expect(topics).toContain('vat');
   });
 });
 
@@ -408,5 +421,36 @@ describe('lookupTransactionRules — issue #136 bugs 1 and 8: VAT rate exclusivi
     expect(result.possibleTreatment.vat.some((v) => v.includes('13.5%') || v.includes('23%'))).toBe(false);
     expect(result.reviewRequired).toBe(true);
     expect(result.reviewReasons.join(' ')).toMatch(/not modelled/i);
+  });
+});
+
+describe('lookupTransactionRules — unregistered trader over the registration threshold', () => {
+  beforeEach(() => {
+    deriveFinanceAct2024VatThresholds(db, { companyId });
+  });
+
+  it('an unregistered trader whose turnover exceeds the services threshold still hits the threshold rule', () => {
+    const result = lookupTransactionRules(db, {
+      companyId,
+      transaction: {
+        transactionDate: '2026-09-18', amountMinor: 500000, currency: 'EUR',
+        vatRegistered: false, supplyType: 'services', description: 'Consulting',
+        annualTurnoverCurrentYearMinor: 5_000_000, // €50,000, over the €42,500 services threshold
+      },
+    });
+    expect(result.identifiedTopics).toContain('vat');
+    expect(result.applicableRules.map((r) => r.ruleKey)).toContain('vat.registration_threshold_services');
+  });
+
+  it('an unregistered trader under the threshold does not hit the threshold rule', () => {
+    const result = lookupTransactionRules(db, {
+      companyId,
+      transaction: {
+        transactionDate: '2026-09-18', amountMinor: 500000, currency: 'EUR',
+        vatRegistered: false, supplyType: 'services', description: 'Consulting',
+        annualTurnoverCurrentYearMinor: 1_000_000, // €10,000, under the €42,500 services threshold
+      },
+    });
+    expect(result.applicableRules.map((r) => r.ruleKey)).not.toContain('vat.registration_threshold_services');
   });
 });
