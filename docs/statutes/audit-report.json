@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-19T04:59:11.514Z",
+  "generatedAt": "2026-09-19T08:31:07.947Z",
   "sources": [
     {
       "id": "src_780e780e102a40a38b9c48c7",
@@ -48,18 +48,30 @@
       "citation": "1997 Act 39 s.284",
       "sourceType": "legislation",
       "provisionCount": 1
+    },
+    {
+      "id": "src_72a78bf3837c459bb210e767",
+      "citation": "Revenue TDM Part 18-02-05",
+      "sourceType": "revenue_guidance",
+      "provisionCount": 1
+    },
+    {
+      "id": "src_d31b4b7678444998a9fccd52",
+      "citation": "Revenue TDM Part 18-02-11",
+      "sourceType": "revenue_guidance",
+      "provisionCount": 1
     }
   ],
-  "provisionCount": 294,
-  "relevantProvisionCount": 168,
-  "notRelevantProvisionCount": 126,
-  "ruleCount": 24,
+  "provisionCount": 296,
+  "relevantProvisionCount": 169,
+  "notRelevantProvisionCount": 127,
+  "ruleCount": 25,
   "rulesByReviewStatus": {
-    "ai_extracted": 24
+    "ai_extracted": 25
   },
-  "rulesRequiringHumanReview": 24,
-  "rulesRequiringGuidance": 19,
-  "rulesWithExceptions": 12,
+  "rulesRequiringHumanReview": 25,
+  "rulesRequiringGuidance": 20,
+  "rulesWithExceptions": 13,
   "provisionsWithoutExtractedRule": [],
   "ambiguousProvisions": [
     {

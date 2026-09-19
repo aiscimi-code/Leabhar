@@ -4,7 +4,8 @@ import { eq } from 'drizzle-orm';
 import { createTestDatabase } from '@/db/testing';
 import { createCompany } from '../config/setup';
 import {
-  ingestTca1997S530, ingestRctTdm18_02_04, deriveRctRules, TCA_1997_S530_MD_PATH,
+  ingestTca1997S530, ingestRctTdm18_02_04, ingestRctTdm18_02_05, ingestRctTdm18_02_11, deriveRctRules,
+  TCA_1997_S530_MD_PATH,
 } from './rctIngestion';
 import { lookupTaxRule } from './irishRules';
 import { lookupTransactionRules } from './transactionLookup';
@@ -17,6 +18,14 @@ let companyId: string;
 const s530Markdown = readFileSync(TCA_1997_S530_MD_PATH, 'utf8');
 const tdmMarkdown = readFileSync(
   new URL('../../../docs/statutes/rct/tdm-18-02-04.md', import.meta.url).pathname,
+  'utf8',
+);
+const tdm05Markdown = readFileSync(
+  new URL('../../../docs/statutes/rct/tdm-18-02-05.md', import.meta.url).pathname,
+  'utf8',
+);
+const tdm11Markdown = readFileSync(
+  new URL('../../../docs/statutes/rct/tdm-18-02-11.md', import.meta.url).pathname,
   'utf8',
 );
 
@@ -57,10 +66,32 @@ describe('ingestRctTdm18_02_04', () => {
   });
 });
 
+describe('ingestRctTdm18_02_05 / ingestRctTdm18_02_11', () => {
+  it('ingest each as its own revenue_guidance source, distinct from 18-02-04', () => {
+    const tdm04 = ingestRctTdm18_02_04(db, { companyId, markdown: tdmMarkdown, ingestVersion: 'v1' });
+    const tdm05 = ingestRctTdm18_02_05(db, { companyId, markdown: tdm05Markdown, ingestVersion: 'v1' });
+    const tdm11 = ingestRctTdm18_02_11(db, { companyId, markdown: tdm11Markdown, ingestVersion: 'v1' });
+
+    const sources = db.select().from(irishKnowledgeSources).all();
+    const citations = new Set(sources.map((s) => s.citation));
+    expect(citations.has('Revenue TDM Part 18-02-04')).toBe(true);
+    expect(citations.has('Revenue TDM Part 18-02-05')).toBe(true);
+    expect(citations.has('Revenue TDM Part 18-02-11')).toBe(true);
+    expect(new Set([tdm04.sourceId, tdm05.sourceId, tdm11.sourceId]).size).toBe(3);
+  });
+
+  it('18-02-11 is ingested for citability but not currently curated into a rule, so it is not marked relevant', () => {
+    const result = ingestRctTdm18_02_11(db, { companyId, markdown: tdm11Markdown, ingestVersion: 'v1' });
+    expect(result.ingested).toBe(true);
+    expect(result.relevantCount).toBe(0);
+  });
+});
+
 describe('deriveRctRules', () => {
   beforeEach(() => {
     ingestTca1997S530(db, { companyId, markdown: s530Markdown, ingestVersion: 'v1' });
     ingestRctTdm18_02_04(db, { companyId, markdown: tdmMarkdown, ingestVersion: 'v1' });
+    ingestRctTdm18_02_05(db, { companyId, markdown: tdm05Markdown, ingestVersion: 'v1' });
   });
 
   it('creates one rule per curated RCT rule, resolved against the correct source for each', () => {
@@ -99,6 +130,15 @@ describe('deriveRctRules', () => {
     expect(rule!.provisionText).toContain('construction operations');
   });
 
+  it('the compliance-criteria rule resolves to TDM 18-02-05, describes criteria without evaluating them', () => {
+    deriveRctRules(db, { companyId });
+    const rule = lookupTaxRule(db, { companyId, ruleKey: 'rct.subcontractor_compliance_criteria' });
+    expect(rule).not.toBeNull();
+    expect(rule!.citation).toBe('Revenue TDM Part 18-02-05');
+    expect(rule!.taxEffect).toContain('previous 3 years');
+    expect(rule!.value).toBeNull();
+  });
+
   it('is idempotent: re-deriving unchanged curation creates nothing new', () => {
     deriveRctRules(db, { companyId });
     const second = deriveRctRules(db, { companyId });
@@ -113,7 +153,7 @@ describe('deriveRctRules', () => {
     expect(items.every((i) => i.entityType === 'irish_tax_rule')).toBe(true);
   });
 
-  it('a construction-invoice transaction is routed to the rct topic and surfaces all three rules for review', () => {
+  it('a construction-invoice transaction is routed to the rct topic and surfaces all four rules for review', () => {
     deriveRctRules(db, { companyId });
     const result = lookupTransactionRules(db, {
       companyId,
@@ -127,6 +167,7 @@ describe('deriveRctRules', () => {
     const ruleKeys = result.applicableRules.map((r) => r.ruleKey);
     expect(ruleKeys).toEqual(expect.arrayContaining([
       'rct.relevant_operations_scope', 'rct.payment_notification_required', 'rct.deduction_rate_not_determinable',
+      'rct.subcontractor_compliance_criteria',
     ]));
     expect(result.reviewRequired).toBe(true);
   });

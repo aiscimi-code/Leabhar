@@ -13,11 +13,11 @@ transaction to the rules that apply to it. Two sources are ingested:
   `docs/statutes/vatca-2010-revised/schedule-{2,3}.md` — ingested as their own
   sources, distinct from the principal Act's as-enacted text above (see
   "VATCA 2010 Schedules 2 and 3" below);
-- TCA 1997 s.530 (RCT definitions) and Revenue TDM Part 18-02-04 (the
-  current post-2011 RCT procedure) — a wholly different tax (a withholding
-  regime, never VAT) from `docs/statutes/tca-1997/s530.md` and
-  `docs/statutes/rct/tdm-18-02-04.md` (see "Relevant Contracts Tax (RCT)"
-  below);
+- TCA 1997 s.530 (RCT definitions) and Revenue TDMs 18-02-04, 18-02-05 and
+  18-02-11 (the current post-2011 RCT procedure and rate criteria) — a
+  wholly different tax (a withholding regime, never VAT) from
+  `docs/statutes/tca-1997/s530.md` and `docs/statutes/rct/tdm-18-02-{04,05,11}.md`
+  (see "Relevant Contracts Tax (RCT)" below);
 - VATCA 2010 s.46 (rates of tax), from the LRC's revised text at
   `docs/statutes/vatca-2010-revised/s046.md` — the *current* 23%/13.5%/4.8%
   VAT rates, ingested as its own source distinct from every other VATCA
@@ -323,7 +323,7 @@ never conflated with it:
 RCT is a withholding regime on payments under a "relevant contract" in
 construction, forestry and meat processing — **never a VAT rate**, a wholly
 independent tax from every source above (`docs/statutes/rct/README.md`).
-Two sources, ingested as two separate `irish_knowledge_sources` rows:
+Four sources, each its own `irish_knowledge_sources` row:
 
 - **TCA 1997 s.530** (`legislation`, as-enacted 1997) — Chapter 2's
   foundational definitions (relevant contract, relevant operations,
@@ -344,17 +344,29 @@ Two sources, ingested as two separate `irish_knowledge_sources` rows:
   provision (continuous prose with numbered headings, not an addressable
   statute), tagged `revenue_guidance` so it can never outrank a statute
   covering the same ground once one is ingested (`sourceHierarchy.ts`).
-- `src/domain/rules/rctCuration.ts` — 3 curated rules: the relevant-
+- **Revenue TDM Part 18-02-05** (`revenue_guidance`) — "RCT for
+  Subcontractors". Its §3.5 states, verbatim, Revenue's own published
+  criteria for the zero/20%/35% rate tiers (3-year tax compliance history,
+  fixed place of business, record keeping) — used for
+  `rct.subcontractor_compliance_criteria` below.
+- **Revenue TDM Part 18-02-11** (`revenue_guidance`) — the electronic RCT
+  system's ROS mechanics (re-opening a closed contract, unreported payment
+  windows, bulk rate review). Ingested for citability but not currently
+  curated into a rule: it is genuinely verbatim, but its content (screen
+  navigation, closed-contract time windows) is UI procedure rather than a
+  transaction-classification rule.
+- `src/domain/rules/rctCuration.ts` — 4 curated rules: the relevant-
   operations scope gate (from s.530), the payment-notification procedural
-  requirement, and — deliberately — a rule that states the 0%/20%/35%
-  deduction rate **cannot be determined from transaction data at all**.
+  requirement, a rule that states the 0%/20%/35% deduction rate **cannot be
+  determined from transaction data at all**, and a rule describing Revenue's
+  own published rate criteria (from TDM 18-02-05) without evaluating them.
   Unlike every VAT rate rule in this KB, RCT's rate is not a fact stated in
   legislation or guidance for a given transaction: it is an individualised
   determination Revenue issues per payment notification, based on the
-  subcontractor's own compliance history. Curating a guessed rate here would
-  be exactly the "silently repaired" failure AGENTS.md invariant #7 forbids,
-  so the rule surfaces the absence of a determinable rate as the finding
-  instead of inventing one.
+  subcontractor's own compliance history — a 3-year record no transaction
+  carries. Curating a guessed rate here would be exactly the "silently
+  repaired" failure AGENTS.md invariant #7 forbids, so both rate rules
+  surface the criteria/absence-of-a-rate as the finding, never a number.
 - **S.I. 651/2011 (the 2011 eRCT Regulations) is deliberately not used as a
   source**, even though it is genuinely verbatim: Revenue's own TDM 18-02-04
   §14 records that it "were subsequently revoked and replaced by [S.I.
@@ -362,6 +374,11 @@ Two sources, ingested as two separate `irish_knowledge_sources` rows:
   itself later amended by S.I. 412/2013 and S.I. 5/2015 — none of which are
   ingested. This was discovered while curating RCT and is recorded rather
   than silently worked around (`docs/statutes/si-651-2011/README.md`).
+- **TDM 18-02-01 (Relevant Operations) and 18-02-02 (Who is a Principal
+  Contractor), both listed in `docs/statutes/rct/README.md`, are NOT used as
+  sources**: both are still paraphrased summaries in this repo (no page
+  markers, no source hash) rather than the verbatim text this KB's
+  provenance policy requires before curating anything from them.
 
 ### VATCA 2010 current rates
 
@@ -626,7 +643,9 @@ npm run cli:rules -- ingest --source finance-act-2024 && npm run cli:rules -- ex
 npm run cli:rules -- ingest --source vatca-2010 && npm run cli:rules -- extract --source vatca-2010
 npm run cli:rules -- ingest --source vatca-2010-sch2 && npm run cli:rules -- extract --source vatca-2010-sch2
 npm run cli:rules -- ingest --source vatca-2010-sch3 && npm run cli:rules -- extract --source vatca-2010-sch3
-npm run cli:rules -- ingest --source rct-tca530 && npm run cli:rules -- ingest --source rct-tdm && npm run cli:rules -- extract --source rct
+npm run cli:rules -- ingest --source rct-tca530 && npm run cli:rules -- ingest --source rct-tdm
+npm run cli:rules -- ingest --source rct-tdm-05 && npm run cli:rules -- ingest --source rct-tdm-11
+npm run cli:rules -- extract --source rct
 npm run cli:rules -- ingest --source vatca-2010-revised && npm run cli:rules -- extract --source vatca-2010-revised
 npm run cli:rules -- ingest --source tca1997-s284 && npm run cli:rules -- extract --source tca1997-s284
 npm run cli:rules -- audit
@@ -634,17 +653,17 @@ npm run cli:rules -- audit
 
 Headline numbers:
 
-- 294 provisions ingested across eight sources (118 Finance Act 2024, 125
+- 296 provisions ingested across ten sources (118 Finance Act 2024, 125
   VATCA 2010, 15 VATCA 2010 Schedule 2, 32 VATCA 2010 Schedule 3, 1 TCA 1997
   s.530, 1 Revenue TDM 18-02-04, 1 VATCA 2010 s.46 revised, 1 TCA 1997
-  s.284), 168 judged relevant to transaction classification, 126 not
-  (procedural/repeal/penalty/pure-definition, or uncategorised and flagged
-  for review).
-- 24 rules extracted (4 Finance Act, 5 VATCA principal-Act, 4 Schedule 2, 4
-  Schedule 3, 3 RCT, 3 current VAT rates, 1 capital allowances), all
+  s.284, 1 Revenue TDM 18-02-05, 1 Revenue TDM 18-02-11), 169 judged
+  relevant to transaction classification, 127 not (procedural/repeal/
+  penalty/pure-definition, or uncategorised and flagged for review).
+- 25 rules extracted (4 Finance Act, 5 VATCA principal-Act, 4 Schedule 2, 4
+  Schedule 3, 4 RCT, 3 current VAT rates, 1 capital allowances), all
   `ai_extracted`, all `human_review_required = true` — **zero rules in this
   KB are authoritative yet.**
-- 12 rules with a stated exception the system flags rather than evaluates,
+- 13 rules with a stated exception the system flags rather than evaluates,
   0 duplicate rule keys.
 - 442 cross-references the report cannot resolve — expected, not a bug: the
   Finance Act 2024 *amends*, and VATCA 2010 heavily cross-refers to, the
@@ -668,7 +687,8 @@ to be.
 ingest [--source <s>] [--file <path>]
                             Ingest a source's Markdown (--source: finance-act-2024
                             [default] | vatca-2010 | vatca-2010-sch2 | vatca-2010-sch3 |
-                            rct-tca530 | rct-tdm | vatca-2010-revised | tca1997-s284)
+                            rct-tca530 | rct-tdm | rct-tdm-05 | rct-tdm-11 |
+                            vatca-2010-revised | tca1997-s284)
 extract [--source <s>]     Derive irish_tax_rules from ingested provisions
 list-provisions [--category <c>] [--relevant-only]
 show-provision --section <n>
@@ -696,8 +716,8 @@ audit
   the as-enacted VATCA text (reverse charge, place of supply, deductibility)
   is a structural mechanism that has not been fundamentally rewritten since
   2010, so curating its *existence* from the frozen text remains safe.
-- **Only 24 of 168 relevant provisions have a curated rule key** (4 Finance
-  Act, 5 VATCA principal-Act, 4 Schedule 2, 4 Schedule 3, 3 RCT, 3 current
+- **Only 25 of 169 relevant provisions have a curated rule key** (4 Finance
+  Act, 5 VATCA principal-Act, 4 Schedule 2, 4 Schedule 3, 4 RCT, 3 current
   rates, 1 capital allowances). Everything else is ingested (text, offsets,
   category all on disk) but not yet extracted into named rules —
   `provisionsWithoutExtractedRule` in the audit report would show these
