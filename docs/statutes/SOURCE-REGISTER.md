@@ -20,14 +20,14 @@ document, which a paraphrase cannot satisfy. See
 |---|---|---|---|---|
 | 1.1 | `vatca-2010/s5-revised.md`, `s46-revised.md`, `s65-revised.md`, `s84-revised.md` | VATCA 2010 (No. 31) ss. 5, 46, 65, 84 revised | https://revisedacts.lawreform.ie/eli/2010/act/31/front/revised/en/html | Partial: scoped to ss. 2, 5, 46, 59, 65, 66, 84; only these 4 exist. VATCA s.59 is separately fully ingested verbatim (as-enacted) into the deterministic KB. |
 | 1.2 | `finance-act-2024/2024-act-43-part3-vat.md` | Finance Act 2024 (No. 43), Part 3 (VAT, ss. 77-88) | https://www.irishstatutebook.ie/eli/2024/act/43/enacted/en/print | Cross-check extract only; the KB's actual parser input is the full-Act `2024-act-43-enacted.md` in the same folder, not this. |
-| 1.3 | `si-639-2010/` | VAT Regulations 2010 (S.I. 639/2010) | https://www.irishstatutebook.ie/eli/2010/si/639/made/en/print | Regs 14, 19-27, 29 covered, plus reg 14A (postponed accounting, inserted by S.I. 734/2020 — a separate instrument, not the original 639/2010 text). Regs 15-18 and 28 not confirmed present or absent. |
-| 1.4 | `si-69-2025/2025-si-69.md` | European Union (Value-Added Tax) Regulations 2025 (S.I. 69/2025) | https://www.irishstatutebook.ie/eli/2025/si/69/made/en/html | Summary of all substantive amendments (ss. 2, 5, 6, 59, 60, 80, new ss. 92B-92D). |
-| 1.5 | `tca-1997/` | TCA 1997 (as enacted) | https://www.irishstatutebook.ie/eli/1997/act/39/section/886/enacted/en/html | 11 sections: 885-887, 18, 52, 81, 235, 284, 288, 299, 496, 530, 613. Against 442 unresolved Finance-Act-to-TCA cross-references — s.600F/835DA/653AGA and others can never be a plain TCA file (later Finance Act inserts, no 1997 page exists). |
-| 1.6 | `si-156-2012/2012-si-156.md` | Mandatory e-filing Regulations 2012 (S.I. 156/2012) | https://www.irishstatutebook.ie/eli/2012/si/156/made/en/html | Complete. |
-| — | `si-651-2011/2011-si-651.md` | Income Tax and Corporation Tax (RCT) Regulations 2011 (S.I. 651/2011) | https://www.irishstatutebook.ie/eli/2011/si/651/made/en/print | Not part of the original 1.1-1.6 register — added for the separate RCT effort (`rct/`). eRCT administration mechanics. |
-| 5 | `tdm-38-01-03b/p01-18.md`, `p19-36.md`, `p37-54.md` | Revenue TDM Part 38-01-03b — Guidelines for VAT Registration | https://www.revenue.ie/en/tax-professionals/tdm/income-tax-capital-gains-tax-corporation-tax/part-38/38-01-03b.pdf | Complete — all 54 pages, paraphrased. |
-| 9 | `vat-rates/current-vat-rates.md` + `rates.json` + `schedule-moves-2025-2026.md` | Revenue current VAT rates table | https://www.revenue.ie/en/vat/vat-rates/search-vat-rates/current-vat-rates.aspx | Complete (2020-2026), retrieved 2026-09-18. `rates.json` is the same data machine-readable, keyed by `effective_from` — not yet wired into the app's own `tax_rates` table (application code, not a docs change). |
-| — | `vatca-2010-revised/` | VATCA 2010, full LRC-revised corpus | https://revisedacts.lawreform.ie/eli/2010/act/31/revised/en/html | Not part of the original 1.1-1.6 register — a separate, wider effort than item 1.1's 4 pointers. Schedules 2, 3, 4, 5, 6, 9 committed (2 and 3, the rate-determining ones, most recently); Schedules 1, 7, 8 and individual sections not yet. |
+| 1.3 | `si-639-2010/` | VAT Regulations 2010 (S.I. 639/2010) | https://www.irishstatutebook.ie/eli/2010/si/639/made/en/print | Regs 14, 19-27, 29 covered, plus reg 14A (postponed accounting, inserted by S.I. 734/2020 — a separate instrument, not the original 639/2010 text). Regs 15-18 and 28 not confirmed present or absent. **The whole 47-regulation document is separately ingested verbatim as its own file, `si-639-2010/2010-si-639.md`, with reg.25 (cash-accounting authorisation) curated into the deterministic KB.** |
+| 1.4 | `si-69-2025/2025-si-69.md` | European Union (Value-Added Tax) Regulations 2025 (S.I. 69/2025) | https://www.irishstatutebook.ie/eli/2025/si/69/made/en/html | Summary of all substantive amendments (ss. 2, 5, 6, 59, 60, 80, new ss. 92B-92D). **This same file's Regulation 8 (current s.80(1) cash-accounting eligibility thresholds) is separately ingested verbatim and curated into the deterministic KB.** |
+| 1.5 | `tca-1997/` | TCA 1997 (as enacted) | https://www.irishstatutebook.ie/eli/1997/act/39/section/886/enacted/en/html | 11 sections: 885-887, 18, 52, 81, 235, 284, 288, 299, 496, 530, 613. Against 442 unresolved Finance-Act-to-TCA cross-references — s.600F/835DA/653AGA and others can never be a plain TCA file (later Finance Act inserts, no 1997 page exists). **s.530 and s.284 are separately ingested verbatim and curated into the deterministic KB; s235, s288, s299, s496 and s613 carry no source hash despite reading as verbatim — see `docs/RULES_KB.md` "Documents reviewed, not curated".** |
+| 1.6 | `si-156-2012/2012-si-156.md` | Mandatory e-filing Regulations 2012 (S.I. 156/2012) | https://www.irishstatutebook.ie/eli/2012/si/156/made/en/html | Complete. **Regs 1, 2 and 4 of this same file are separately ingested verbatim into the deterministic KB (regs 5-9 are this file's own editorial summary, not verbatim); reg.4 (mandatory e-filing) is curated.** |
+| — | `si-651-2011/2011-si-651.md` | Income Tax and Corporation Tax (RCT) Regulations 2011 (S.I. 651/2011) | https://www.irishstatutebook.ie/eli/2011/si/651/made/en/print | Not part of the original 1.1-1.6 register — added for the separate RCT effort (`rct/`). eRCT administration mechanics; superseded by SI 576/2012 — not deterministically ingested. |
+| 5 | `tdm-38-01-03b/p01-18.md`, `p19-36.md`, `p37-54.md` | Revenue TDM Part 38-01-03b — Guidelines for VAT Registration | https://www.revenue.ie/en/tax-professionals/tdm/income-tax-capital-gains-tax-corporation-tax/part-38/38-01-03b.pdf | Complete — all 54 pages, paraphrased. **One passage of the full-document file `tdm-38-01-03b/38-01-03b.md` (the "Exclusion from Mandatory Electronic Filing" guidance) is separately ingested verbatim and curated into the deterministic KB, closing an S.I. 156/2012 reg.5 gap.** |
+| 9 | `vat-rates/current-vat-rates.md` + `rates.json` + `schedule-moves-2025-2026.md` | Revenue current VAT rates table | https://www.revenue.ie/en/vat/vat-rates/search-vat-rates/current-vat-rates.aspx | Complete (2020-2026), retrieved 2026-09-18. `rates.json` is the same data machine-readable, keyed by `effective_from` — not yet wired into the app's own `tax_rates` table (application code, not a docs change). None of these three files carries a source hash; they back no deterministic rule. |
+| — | `vatca-2010-revised/` | VATCA 2010, full LRC-revised corpus | https://revisedacts.lawreform.ie/eli/2010/act/31/revised/en/html | Not part of the original 1.1-1.6 register — a separate, wider effort than item 1.1's 4 pointers. Schedules 2, 3, 4, 5, 6, 9 and s.46 committed; Schedules 1, 7, 8 and other individual sections not yet. **s.46 (current VAT rates) and Schedules 2/3 (8 curated paragraphs) are deterministically ingested; Schedules 4, 5, 6, 9 are committed as text only.** |
 
 `scripts/extract_vat_sources.py` (and the `workflow_dispatch` GH Actions job
 `.github/workflows/extract-vat-docs.yml` that runs it on a network-unrestricted
@@ -37,20 +37,32 @@ reserved for the as-enacted text and its 4 hand-picked revised pointers).
 
 ## Relationship to the deterministic knowledge base
 
-The Irish rules KB (`docs/RULES_KB.md`) ingests the **full verbatim text**
-of two sources by a different route — a reviewed PDF-to-Markdown converter,
-not this HTML register:
+The Irish rules KB (`docs/RULES_KB.md`) originally ingested the **full
+verbatim text** of two sources by a different route — a reviewed
+PDF/HTML-to-Markdown converter, not this HTML register:
 
-- Finance Act 2024 — `finance-act-2024/2024-act-43-enacted.md`
+- Finance Act 2024 — `finance-act-2024/2024-act-43-enacted.md` (whole Act;
+  s.78 is separately curated for the current VAT registration thresholds)
 - VATCA 2010, all 125 sections — `vatca-2010/vatca-2010-enacted.md`
 
-Where a file in this register overlaps a KB-ingested section (VATCA ss. 5,
-46, 65, 84; Finance Act 2024 Part 3), the KB's own copy is the verbatim,
-offset-traceable one and is authoritative for rule extraction. This
-register's value is the sources the KB does *not* ingest at all yet
-(SI 639/2010, SI 156/2012, SI 69/2025, TCA 1997) and the pointers to
-revised/current text (the KB's VATCA text is the 2010-as-enacted wording;
-SI 69/2025 in particular documents specific amendments made since).
+That has since grown to include several of this register's own instruments
+in full or in part, each as its own separate whole-document (or
+one-provision) file rather than this register's hand-picked reference
+extracts: VATCA s.46 and Schedules 2/3 (`vatca-2010-revised/`), TCA 1997
+s.530 and s.284 (`tca-1997/`), S.I. 639/2010 (whole document), S.I.
+156/2012 (regs 1/2/4), S.I. 69/2025 (reg.8), and one passage of Revenue TDM
+38-01-03b — see `docs/statutes/README.md`'s "Two kinds of content here"
+for the current, authoritative list.
+
+Where a file in this register overlaps a KB-ingested section, the KB's own
+copy is the verbatim, offset-traceable one and is authoritative for rule
+extraction — this register's paraphrased/partial reference files back no
+rule regardless. This register's remaining value is documenting sources
+the KB still does *not* fully ingest (most of TCA 1997; most of S.I.
+639/2010's individual regulations beyond reg.25; S.I. 69/2025's regs 1-7,
+9-10) and the pointers to revised/current text (the KB's VATCA principal-
+Act text is the 2010-as-enacted wording; S.I. 69/2025 in particular
+documents specific amendments made since).
 
 Notes:
 
