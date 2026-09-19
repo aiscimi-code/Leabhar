@@ -75,7 +75,13 @@ describe('deriveVatcaRevisedRules', () => {
       expect(row.humanReviewRequired).toBe(true);
       expect(row.reviewStatus).toBe('ai_extracted');
       expect(row.provenanceStatus).toBe('ai_suggestion');
-      expect(row.numericValue).not.toBeNull();
+      // vat.rate_hospitality_9pct_not_modelled deliberately states no figure
+      // (issue #136 bug 8) — every rule that DOES claim to state a rate has one.
+      if (row.ruleKey !== 'vat.rate_hospitality_9pct_not_modelled') {
+        expect(row.numericValue).not.toBeNull();
+      } else {
+        expect(row.numericValue).toBeNull();
+      }
     }
   });
 

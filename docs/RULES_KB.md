@@ -446,20 +446,60 @@ source instead of trying to fix the frozen one:
   whole-Act source) and from any Schedule source. Built generically so a
   future pass can ingest more of the ~50 available revised sections without
   a new ingestion function each time.
-- `src/domain/rules/vatcaRevisedCuration.ts` — 3 rate rules (23% standard,
-  13.5% reduced, 4.8% livestock), the first in this KB to carry a real
-  `numericValue`/`unit: 'percent'` rather than `conditions` to evaluate: a
-  rate is a fact, not a test, the same reason `vat.charge_general` (s.3) has
-  no conditions either. The standard rate's `effectiveFrom` (2021-03-01) is
-  not a guess — s.46(1A)'s own text states a temporary 21% substitution
-  running only "from 1 September 2020 to 28 February 2021", which is itself
-  proof, from the statute's own words, that 23% resumed immediately after.
-  The 13.5%/4.8% rules carry no comparable textual evidence of an exact
-  commencement date, so their `effectiveFrom` is honestly the date this KB
-  confirmed them, not a claim about how long they've actually been in force.
-  Deliberately not curated: five narrower, date-boxed 9% carve-outs in the
-  same subsection (one of which is in force at the time of writing) — each
-  needs the same care as the headline rates and is left for a future pass.
+- `src/domain/rules/vatcaRevisedCuration.ts` — originally 3 rate rules (23%
+  standard, 13.5% reduced, 4.8% livestock), the first in this KB to carry a
+  real `numericValue`/`unit: 'percent'` rather than `conditions` to
+  evaluate: a rate is a fact, not a test, the same reason `vat.charge_general`
+  (s.3) has no conditions either. The standard rate's `effectiveFrom`
+  (2021-03-01) is not a guess — s.46(1A)'s own text states a temporary 21%
+  substitution running only "from 1 September 2020 to 28 February 2021",
+  which is itself proof, from the statute's own words, that 23% resumed
+  immediately after. The 13.5%/4.8% rules carry no comparable textual
+  evidence of an exact commencement date, so their `effectiveFrom` is
+  honestly the date this KB confirmed them, not a claim about how long
+  they've actually been in force. Deliberately not curated: five narrower,
+  date-boxed 9% carve-outs in the same subsection (one of which is in force
+  at the time of writing) — each needs the same care as the headline rates
+  and is left for a future pass (tracked as issue #129).
+- **VAT rate exclusivity (issue #136 bugs 1 and 8) — added in a later pass.**
+  Because the three headline rate rules above carry no `conditions`, and
+  `transactionLookup.ts` treats an empty condition list as "matches whenever
+  the topic and effective window match" (the opposite default from the
+  coding-rules engine, deliberately, for statute-derived facts — see "Empty
+  conditions mean different things in the two engines" below), all three
+  matched *every* VAT-topic transaction: a solicitor invoice or a US SaaS
+  reverse charge would quote 23%, 13.5% and 4.8% simultaneously. Two fixes,
+  both in `vatcaRevisedCuration.ts` and `transactionLookup.ts`:
+  1. `vat.rate_livestock_current` now carries a real condition — a keyword
+     match against VATCA s.2(1)'s own "livestock" definition — instead of
+     matching unconditionally.
+  2. Two new rules give the one Schedule 3 sub-category issue #136 bug 8
+     named (restaurant/catering/hot-takeaway food) an explicit, dated pair:
+     `vat.rate_restaurant_catering_reduced_current` (13.5%, keyword-
+     conditioned, `effectiveTo: '2026-07-01'`) and
+     `vat.rate_hospitality_9pct_not_modelled` (same keyword condition,
+     `effectiveFrom: '2026-07-01'`, `vatEffect: null` — it deliberately
+     asserts no rate). The cutoff date comes from
+     `docs/statutes/vat-rates/schedule-moves-2025-2026.md` (Revenue's own
+     administrative rates table, citing Finance Act 2025 ss.70-71 — not yet
+     independently verified against that Act's enacted text, which this KB
+     does not ingest), not a guess.
+  3. `transactionLookup.ts`'s new `resolveVatRateExclusivity` (called from
+     `lookupTransactionRules`, right before `possibleTreatment` is built):
+     among matched `topic: 'vat'`, `ruleType: 'rate'` rules, if any matched
+     with a *real* (non-empty) condition — a Schedule 2/3 item, the
+     conditioned livestock rule, or the hospitality-gap rule — every
+     empty-condition rate rule is dropped. Otherwise, only
+     `VAT_STANDARD_RATE_FALLBACK_RULE_KEY`
+     (`vat.rate_standard_current`) survives among the empty-condition rate
+     rules; `vat.rate_reduced_current` on its own is never presented as the
+     answer, because an unconditioned "the reduced rate is 13.5%" fact is
+     not itself evidence that a given transaction is within Schedule 3. A
+     reviewReason records what was excluded and why. Restaurant/catering
+     supplies dated on or after 1 July 2026 therefore come back with *no*
+     asserted rate and a review reason naming the modelling gap — matching
+     issue #136 bug 8's own stated expectation ("review + '9% second
+     reduced rate not modelled'"), not a guessed 23% or a stale 13.5%.
 - `docs/statutes/vat-rates/current-vat-rates.md`, `schedule-moves-2025-2026.md`
   and `rates.json` are **not sources** and back no rule: none carries a
   source hash, and each is a hand-compiled reference table (a Revenue rates
@@ -828,6 +868,15 @@ topic and effective window match** — because every rule here passed through
 curated extraction, so an empty condition list is a reviewed statement that
 the fact is unconditional (e.g. "the USC first band ceiling is €27,382"),
 not an omission. This is documented at both call sites, not left implicit.
+
+This default is exactly right for a genuinely unconditional fact, but wrong
+for a VAT *rate* — exactly one of standard/zero/reduced/livestock always
+applies to a real supply, so an unconditioned "the reduced rate is 13.5%"
+rule matching every VAT-topic transaction is not a fact, it's a fallback
+being mistaken for a determination (issue #136 bug 1). See "VAT rate
+exclusivity" above and `resolveVatRateExclusivity` in
+`transactionLookup.ts` for how this KB now tells the two apart without
+changing the empty-conditions default itself.
 
 ## Versioning and review
 

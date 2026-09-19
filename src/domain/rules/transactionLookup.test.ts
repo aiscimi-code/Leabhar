@@ -4,6 +4,10 @@ import { createTestDatabase } from '@/db/testing';
 import { createCompany } from '../config/setup';
 import { ingestFinanceAct2024, deriveTaxRules, FINANCE_ACT_2024_MD_PATH } from './irishRules';
 import { ingestVatca2010, deriveVatcaRules, VATCA_2010_MD_PATH } from './vatcaIngestion';
+import { ingestVatcaRevisedSection, deriveVatcaRevisedRules, VATCA_REVISED_S046_MD_PATH } from './vatcaRevisedIngestion';
+import {
+  ingestVatcaSchedule, deriveVatcaScheduleRules, VATCA_SCHEDULE_2_MD_PATH, VATCA_SCHEDULE_3_MD_PATH,
+} from './vatcaScheduleIngestion';
 import { lookupTransactionRules, identifyTopics } from './transactionLookup';
 import { irishTaxRules } from '@/db/schema';
 import { eq } from 'drizzle-orm';
@@ -300,5 +304,109 @@ describe('lookupTransactionRules — issue #136 bug 4 / issue #138: supplier est
       },
     });
     expect(result.applicableRules.map((r) => r.ruleKey)).not.toContain('vat.reverse_charge_services_from_abroad');
+  });
+});
+
+describe('lookupTransactionRules — issue #136 bugs 1 and 8: VAT rate exclusivity', () => {
+  const s46Md = readFileSync(VATCA_REVISED_S046_MD_PATH, 'utf8');
+  const schedule2Md = readFileSync(VATCA_SCHEDULE_2_MD_PATH, 'utf8');
+  const schedule3Md = readFileSync(VATCA_SCHEDULE_3_MD_PATH, 'utf8');
+
+  beforeEach(() => {
+    ingestVatcaRevisedSection(db, { companyId, markdown: s46Md, ingestVersion: 'v1' });
+    deriveVatcaRevisedRules(db, { companyId });
+    ingestVatcaSchedule(db, { companyId, scheduleNumber: '2', markdown: schedule2Md, ingestVersion: 'v1' });
+    ingestVatcaSchedule(db, { companyId, scheduleNumber: '3', markdown: schedule3Md, ingestVersion: 'v1' });
+    deriveVatcaScheduleRules(db, { companyId, scheduleNumber: '2' });
+    deriveVatcaScheduleRules(db, { companyId, scheduleNumber: '3' });
+  });
+
+  it('a domestic professional-services invoice gets only the standard rate, not 23%+13.5%+4.8% at once', () => {
+    const result = lookupTransactionRules(db, {
+      companyId,
+      transaction: {
+        transactionDate: '2026-09-18', amountMinor: 100000, currency: 'EUR',
+        vatRegistered: true, supplyType: 'services', description: 'Legal advisory services',
+      },
+    });
+    const rateKeys = result.applicableRules
+      .filter((r) => r.topic === 'vat' && r.ruleType === 'rate')
+      .map((r) => r.ruleKey);
+    expect(rateKeys).toEqual(['vat.rate_standard_current']);
+  });
+
+  it('a US SaaS reverse-charge invoice gets only the standard rate among VAT rate rules', () => {
+    const result = lookupTransactionRules(db, {
+      companyId,
+      transaction: {
+        transactionDate: '2026-09-18', amountMinor: 123000, currency: 'EUR',
+        vatRegistered: true, supplyType: 'services', supplierCountry: 'US',
+        supplierType: 'software_service', transactionType: 'AI_SaaS',
+      },
+    });
+    const rateKeys = result.applicableRules
+      .filter((r) => r.topic === 'vat' && r.ruleType === 'rate')
+      .map((r) => r.ruleKey);
+    expect(rateKeys).toEqual(['vat.rate_standard_current']);
+  });
+
+  it('a livestock supply gets only the livestock rate, not the standard/reduced fallbacks', () => {
+    const result = lookupTransactionRules(db, {
+      companyId,
+      transaction: {
+        transactionDate: '2026-09-18', amountMinor: 500000, currency: 'EUR',
+        vatRegistered: true, supplyType: 'goods', description: 'Sale of cattle at the mart',
+      },
+    });
+    const rateKeys = result.applicableRules
+      .filter((r) => r.topic === 'vat' && r.ruleType === 'rate')
+      .map((r) => r.ruleKey);
+    expect(rateKeys).toEqual(['vat.rate_livestock_current']);
+  });
+
+  it('a Schedule 2 zero-rated supply gets only the zero-rate item, not the standard/reduced fallbacks', () => {
+    const result = lookupTransactionRules(db, {
+      companyId,
+      transaction: {
+        transactionDate: '2026-09-18', amountMinor: 5000, currency: 'EUR',
+        vatRegistered: true, supplyType: 'goods', description: "Purchase of children's clothing",
+      },
+    });
+    const rateKeys = result.applicableRules
+      .filter((r) => r.topic === 'vat' && r.ruleType === 'rate')
+      .map((r) => r.ruleKey);
+    expect(rateKeys).toEqual(['vat.zero_rate_childrens_clothing_footwear']);
+  });
+
+  it('a restaurant meal before 1 July 2026 gets only the dated 13.5% restaurant rule', () => {
+    const result = lookupTransactionRules(db, {
+      companyId,
+      transaction: {
+        transactionDate: '2026-06-15', amountMinor: 4500, currency: 'EUR',
+        vatRegistered: true, supplyType: 'services', description: 'Restaurant meal with a client',
+      },
+    });
+    const rateKeys = result.applicableRules
+      .filter((r) => r.topic === 'vat' && r.ruleType === 'rate')
+      .map((r) => r.ruleKey);
+    expect(rateKeys).toEqual(['vat.rate_restaurant_catering_reduced_current']);
+    expect(result.possibleTreatment.vat.some((v) => v.includes('13.5%'))).toBe(true);
+  });
+
+  it('issue #136 bug 8: a restaurant meal on/after 1 July 2026 flags the unmodelled 9% gap, asserts no rate', () => {
+    const result = lookupTransactionRules(db, {
+      companyId,
+      transaction: {
+        transactionDate: '2026-07-02', amountMinor: 4500, currency: 'EUR',
+        vatRegistered: true, supplyType: 'services', description: 'Restaurant meal with a client',
+      },
+    });
+    const rateKeys = result.applicableRules
+      .filter((r) => r.topic === 'vat' && r.ruleType === 'rate')
+      .map((r) => r.ruleKey);
+    expect(rateKeys).toEqual(['vat.rate_hospitality_9pct_not_modelled']);
+    expect(result.possibleTreatment.vat.some((v) => v.includes('13.5%') || v.includes('23%'))).toBe(false);
+    expect(result.reviewRequired).toBe(true);
+    expect(result.reviewReasons.join(' ')).toMatch(/not modelled/i);
   });
 });

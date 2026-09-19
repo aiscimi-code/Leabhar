@@ -22,6 +22,7 @@ import { evaluateAllConditions, type ConditionResult } from './conditionEval';
 import { today, isIsoDate } from '../dates';
 import { listTaxRulesByTopic, listIngestedCitations, type LookupResult } from './irishRules';
 import { RCT_SCOPE_RE } from './rctCuration';
+import { VAT_STANDARD_RATE_FALLBACK_RULE_KEY } from './vatcaRevisedCuration';
 
 /**
  * A transaction as presented for classification — the task's example shape,
@@ -374,14 +375,16 @@ export function lookupTransactionRules(
     });
   }
 
+  const finalApplicableRules = resolveVatRateExclusivity(applicableRules, reviewReasons);
+
   const possibleTreatment = {
-    accounting: dedupe(applicableRules.map((r) => r.effect.accounting)),
-    tax: dedupe(applicableRules.map((r) => r.effect.tax)),
-    vat: dedupe(applicableRules.map((r) => r.effect.vat)),
-    reporting: dedupe(applicableRules.map((r) => r.effect.reporting)),
+    accounting: dedupe(finalApplicableRules.map((r) => r.effect.accounting)),
+    tax: dedupe(finalApplicableRules.map((r) => r.effect.tax)),
+    vat: dedupe(finalApplicableRules.map((r) => r.effect.vat)),
+    reporting: dedupe(finalApplicableRules.map((r) => r.effect.reporting)),
   };
 
-  if (applicableRules.length === 0 && dateValid && amountValid) {
+  if (finalApplicableRules.length === 0 && dateValid && amountValid) {
     const sources = listIngestedCitations(db, params.companyId);
     const kbDescription = sources.length > 0 ? sources.join(', ') : 'no sources';
     reviewReasons.add(
@@ -395,15 +398,15 @@ export function lookupTransactionRules(
     transactionContext: ctx,
     identifiedTopics: topics,
     candidateCount: candidates.length,
-    applicableRules,
+    applicableRules: finalApplicableRules,
     unresolvedFields: [...unresolvedFields],
     possibleTreatment,
     // Always true today: no rule in this KB has reached reviewStatus 'active'
     // yet (task: "never make AI-generated legal rules automatically
     // authoritative"). Kept as a real computed value, not a hard-coded true,
     // so it starts reflecting reality the moment rules are approved.
-    reviewRequired: applicableRules.length === 0
-      || applicableRules.some((r) => r.humanReviewRequired || r.requiresGuidance || r.exceptions.length > 0)
+    reviewRequired: finalApplicableRules.length === 0
+      || finalApplicableRules.some((r) => r.humanReviewRequired || r.requiresGuidance || r.exceptions.length > 0)
       || unresolvedFields.size > 0,
     reviewReasons: [...reviewReasons],
   };
@@ -411,6 +414,76 @@ export function lookupTransactionRules(
 
 function dedupe(values: Array<string | null>): string[] {
   return [...new Set(values.filter((v): v is string => v !== null))];
+}
+
+/**
+ * VAT rate exclusivity (issue #136 bugs 1 and 8).
+ *
+ * `vat.rate_standard_current` (23%), `vat.rate_reduced_current` (13.5%) and
+ * — before this fix — `vat.rate_livestock_current` (4.8%) carry no
+ * `conditions` at all (see `vatcaRevisedCuration.ts`'s own header): each is
+ * a topic-level fact ("the current standard rate is 23%"), which is exactly
+ * why the main loop above treats an empty condition list as "matches
+ * whenever the topic and effective window match" for statute-derived rules.
+ * That default is correct for a rule that states an unconditional fact
+ * (`vat.charge_general`, `vat.annual_turnover_definition`, ...), but a VAT
+ * *rate* is never unconditional in reality — exactly one of standard/zero/
+ * reduced/livestock applies to any given supply, by construction of the
+ * statute itself (VATCA s.46(1)(a)-(d)). Before this function existed, every
+ * empty-condition rate rule that matched a transaction's topic and
+ * effective window was listed side by side with every rule that had a real,
+ * satisfied condition (a Schedule 2/3 item, the now-conditioned livestock
+ * rate, or the hospitality-gap rule below) — a solicitor invoice or a US
+ * SaaS reverse charge would come back quoting 23%, 13.5% AND 4.8% as
+ * simultaneous "possible" treatments.
+ *
+ * The fix does not change what conditions any rule state matches on;
+ * exclusivity is resolved purely from which rules already matched:
+ *
+ *  - If any VAT `rate`-type rule matched with a REAL (non-empty) condition
+ *    — a Schedule 2/3 item, the conditioned livestock rule, or a dated
+ *    carve-out like the hospitality-gap rule — every empty-condition VAT
+ *    rate rule is dropped. A real determination always wins over a bare
+ *    "this rate exists" citation fact.
+ *  - Otherwise (no rate rule with a real condition matched), only
+ *    `VAT_STANDARD_RATE_FALLBACK_RULE_KEY` survives among the
+ *    empty-condition rate rules — the statute's own residual case ("the
+ *    default rate outside the zero/reduced/livestock cases"). Any other
+ *    empty-condition rate rule (today, just `vat.rate_reduced_current`) is
+ *    dropped: an unconditioned "the reduced rate is 13.5%" fact is not
+ *    itself evidence that THIS transaction is within Schedule 3, so it is
+ *    never presented as the answer on its own.
+ *
+ * A rule is "real-condition" here iff its own `conditions` array was
+ * non-empty (`conditionResults.length > 0` on the `ApplicableRule` already
+ * built above — conditionResults is only ever populated when conditions
+ * existed to evaluate; see the main loop).
+ */
+function resolveVatRateExclusivity(
+  applicableRules: ApplicableRule[],
+  reviewReasons: Set<string>,
+): ApplicableRule[] {
+  const vatRateRules = applicableRules.filter((r) => r.topic === 'vat' && r.ruleType === 'rate');
+  if (vatRateRules.length <= 1) return applicableRules;
+
+  const hasRealConditionMatch = vatRateRules.some((r) => r.conditionResults.length > 0);
+  const excludeRuleKeys = new Set(
+    hasRealConditionMatch
+      ? vatRateRules.filter((r) => r.conditionResults.length === 0).map((r) => r.ruleKey)
+      : vatRateRules.filter((r) => r.ruleKey !== VAT_STANDARD_RATE_FALLBACK_RULE_KEY).map((r) => r.ruleKey),
+  );
+  if (excludeRuleKeys.size === 0) return applicableRules;
+
+  const excludedNames = vatRateRules
+    .filter((r) => excludeRuleKeys.has(r.ruleKey))
+    .map((r) => `"${r.name}"`)
+    .join(', ');
+  const reason = hasRealConditionMatch
+    ? `Excluded fallback VAT rate rule(s) (${excludedNames}) because a more specific VAT rate rule already matched this transaction.`
+    : `Excluded VAT rate rule(s) (${excludedNames}) because, absent a more specific match, only the standard-rate fallback is kept — an unconditioned rate fact is not evidence this transaction is within that rate's category.`;
+  reviewReasons.add(reason);
+
+  return applicableRules.filter((r) => !excludeRuleKeys.has(r.ruleKey));
 }
 
 function getRuleConditions(db: AppDatabase, ruleId: string) {
