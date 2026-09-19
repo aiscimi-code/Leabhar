@@ -17,7 +17,11 @@ transaction to the rules that apply to it. Two sources are ingested:
   current post-2011 RCT procedure) — a wholly different tax (a withholding
   regime, never VAT) from `docs/statutes/tca-1997/s530.md` and
   `docs/statutes/rct/tdm-18-02-04.md` (see "Relevant Contracts Tax (RCT)"
-  below).
+  below);
+- VATCA 2010 s.46 (rates of tax), from the LRC's revised text at
+  `docs/statutes/vatca-2010-revised/s046.md` — the *current* 23%/13.5%/4.8%
+  VAT rates, ingested as its own source distinct from every other VATCA
+  source above (see "VATCA 2010 current rates" below).
 
 This is not a RAG system and it does not ask an LLM what the tax treatment
 should be. The pipeline is:
@@ -355,6 +359,55 @@ Two sources, ingested as two separate `irish_knowledge_sources` rows:
   ingested. This was discovered while curating RCT and is recorded rather
   than silently worked around (`docs/statutes/si-651-2011/README.md`).
 
+### VATCA 2010 current rates
+
+`vatcaCuration.ts`'s own header explains a deliberate gap: the as-enacted
+s.46 states 2010's rates (21%/13.5%/4.8%/0%), the standard rate has since
+changed (23% today), and curating a live rule from stale text would let a
+current transaction resolve against a wrong rate with no signal that it's
+wrong — so it was left uncurated. This gap is now closed, without touching
+that reasoning, by ingesting s.46 from a *different, continuously-updated*
+source instead of trying to fix the frozen one:
+
+- A real bug was found and fixed on the way here: every individual VATCA
+  revised-section file (`docs/statutes/vatca-2010-revised/s002.md` through
+  `s108C.md`, ~50 files — already fetched for other purposes, but never
+  ingested) still had unstripped LRC nav chrome ("Act as originally
+  enacted", "Next Section") even after the Schedule chrome fix earlier in
+  this KB's history. Root-caused with a fresh raw-HTML capture of s.46: an
+  ordinary section page's container is `<section class="sect" id="SEC46">`,
+  not `class="section"` as the earlier fix assumed (Schedules do use
+  `class="schedule"`, which is why *they* came out clean from the same fix
+  while every ordinary section didn't) — `extract_vat_sources.py`'s
+  `html_to_md()` now selects `section.sect, section.schedule`.
+- `src/domain/rules/vatcaRevisedSectionParser.ts` — a third VATCA parser
+  shape, for one-section-per-file LRC-revised text. Its operative-text
+  marker is inconsistently formatted across real files ("46\n.—(1)",
+  "91A\n.\n—\nIn", "108A\n.\n—\n(1)" all appear), so rather than match one
+  line pattern it searches the whole post-title text for `<sectionNumber>`
+  then `.` then `—` with any whitespace (including newlines) between each —
+  verified against four different real files chosen specifically to cover
+  that variation, not just s.46.
+- `src/domain/rules/vatcaRevisedIngestion.ts` — ingests s.46 as its own
+  source (`2010 Act 31 s.46`), distinct from `2010 Act 31` (the as-enacted
+  whole-Act source) and from any Schedule source. Built generically so a
+  future pass can ingest more of the ~50 available revised sections without
+  a new ingestion function each time.
+- `src/domain/rules/vatcaRevisedCuration.ts` — 3 rate rules (23% standard,
+  13.5% reduced, 4.8% livestock), the first in this KB to carry a real
+  `numericValue`/`unit: 'percent'` rather than `conditions` to evaluate: a
+  rate is a fact, not a test, the same reason `vat.charge_general` (s.3) has
+  no conditions either. The standard rate's `effectiveFrom` (2021-03-01) is
+  not a guess — s.46(1A)'s own text states a temporary 21% substitution
+  running only "from 1 September 2020 to 28 February 2021", which is itself
+  proof, from the statute's own words, that 23% resumed immediately after.
+  The 13.5%/4.8% rules carry no comparable textual evidence of an exact
+  commencement date, so their `effectiveFrom` is honestly the date this KB
+  confirmed them, not a claim about how long they've actually been in force.
+  Deliberately not curated: five narrower, date-boxed 9% carve-outs in the
+  same subsection (one of which is in force at the time of writing) — each
+  needs the same care as the headline rates and is left for a future pass.
+
 ## Rule format
 
 Conceptually, a stored rule looks like:
@@ -541,28 +594,31 @@ npm run cli:rules -- ingest --source vatca-2010 && npm run cli:rules -- extract 
 npm run cli:rules -- ingest --source vatca-2010-sch2 && npm run cli:rules -- extract --source vatca-2010-sch2
 npm run cli:rules -- ingest --source vatca-2010-sch3 && npm run cli:rules -- extract --source vatca-2010-sch3
 npm run cli:rules -- ingest --source rct-tca530 && npm run cli:rules -- ingest --source rct-tdm && npm run cli:rules -- extract --source rct
+npm run cli:rules -- ingest --source vatca-2010-revised && npm run cli:rules -- extract --source vatca-2010-revised
 npm run cli:rules -- audit
 ```
 
 Headline numbers:
 
-- 292 provisions ingested across six sources (118 Finance Act 2024, 125
+- 293 provisions ingested across seven sources (118 Finance Act 2024, 125
   VATCA 2010, 15 VATCA 2010 Schedule 2, 32 VATCA 2010 Schedule 3, 1 TCA 1997
-  s.530, 1 Revenue TDM 18-02-04), 166 judged relevant to transaction
-  classification, 126 not (procedural/repeal/penalty/pure-definition, or
-  uncategorised and flagged for review).
-- 20 rules extracted (4 Finance Act, 5 VATCA principal-Act, 4 Schedule 2, 4
-  Schedule 3, 3 RCT), all `ai_extracted`, all `human_review_required = true`
-  — **zero rules in this KB are authoritative yet.**
+  s.530, 1 Revenue TDM 18-02-04, 1 VATCA 2010 s.46 revised), 167 judged
+  relevant to transaction classification, 126 not (procedural/repeal/
+  penalty/pure-definition, or uncategorised and flagged for review).
+- 23 rules extracted (4 Finance Act, 5 VATCA principal-Act, 4 Schedule 2, 4
+  Schedule 3, 3 RCT, 3 current VAT rates), all `ai_extracted`, all
+  `human_review_required = true` — **zero rules in this KB are authoritative
+  yet.**
 - 11 rules with a stated exception the system flags rather than evaluates,
   0 duplicate rule keys.
 - 442 cross-references the report cannot resolve — expected, not a bug: the
   Finance Act 2024 *amends*, and VATCA 2010 heavily cross-refers to, the
   Taxes Consolidation Act 1997 and other Acts not themselves ingested yet, so
   "section 531AN", "section 654A" et al. have nothing to resolve against
-  inside this KB alone. (The Schedule and RCT sources add none of their own:
-  their `amendsSection`/`citedActs` are not modelled — see "VATCA 2010
-  Schedules 2 and 3" and "Relevant Contracts Tax (RCT)" above.)
+  inside this KB alone. (The Schedule, RCT and current-rates sources add
+  none of their own: their `amendsSection`/`citedActs` are not modelled —
+  see "VATCA 2010 Schedules 2 and 3", "Relevant Contracts Tax (RCT)" and
+  "VATCA 2010 current rates" above.)
 
 **This is not a claim that the knowledge base is legally complete.** It is a
 record of what was ingested, what was judged relevant, what was extracted,
@@ -577,7 +633,7 @@ to be.
 ingest [--source <s>] [--file <path>]
                             Ingest a source's Markdown (--source: finance-act-2024
                             [default] | vatca-2010 | vatca-2010-sch2 | vatca-2010-sch3 |
-                            rct-tca530 | rct-tdm)
+                            rct-tca530 | rct-tdm | vatca-2010-revised)
 extract [--source <s>]     Derive irish_tax_rules from ingested provisions
 list-provisions [--category <c>] [--relevant-only]
 show-provision --section <n>
@@ -593,23 +649,24 @@ audit
 
 ## Limitations (explicit, not hidden)
 
-- **Only the Finance Act 2024 and VATCA 2010's *enacted* text are ingested.**
-  The Taxes Consolidation Act 1997 (which the Finance Act amends, and which
-  VATCA cross-refers to constantly) is not, so most cross-references resolve
-  nowhere inside this KB alone. VATCA's own rate section (s.46) states
-  21%/13.5%/4.8%/0% *as enacted in 2010* — the standard rate has since
-  changed to 23% by later Finance Acts not ingested here, so that section is
-  deliberately **not** curated into a live rule: a stale rate presented as
-  current is worse than no rule at all. Everything else curated from VATCA
-  (reverse charge, place of supply, deductibility) is a structural mechanism
-  that has not been fundamentally rewritten since 2010, so curating its
-  *existence* is safe even though the ingested text is not fully current.
-- **Only 20 of 166 relevant provisions have a curated rule key** (4 Finance
-  Act, 5 VATCA principal-Act, 4 Schedule 2, 4 Schedule 3, 3 RCT). Everything
-  else is ingested (text, offsets, category all on disk) but not yet
-  extracted into named rules — `provisionsWithoutExtractedRule` in the audit
-  report would show these once curated; today it's empty because the
-  curated set and the derived set match exactly.
+- **The Finance Act 2024 and VATCA 2010's *enacted* text are ingested in
+  full; the Taxes Consolidation Act 1997 (which the Finance Act amends, and
+  which VATCA cross-refers to constantly) is not**, apart from the single
+  s.530 extract RCT needed — so most cross-references still resolve nowhere
+  inside this KB alone. VATCA's own as-enacted rate section (s.46) states
+  21%/13.5%/4.8%/0% as they stood in 2010; that text is still deliberately
+  **not** curated (a stale rate is worse than no rule), but the *current*
+  rates (23%/13.5%/4.8%) are now curated separately from the LRC-revised
+  text — see "VATCA 2010 current rates" above. Everything else curated from
+  the as-enacted VATCA text (reverse charge, place of supply, deductibility)
+  is a structural mechanism that has not been fundamentally rewritten since
+  2010, so curating its *existence* from the frozen text remains safe.
+- **Only 23 of 167 relevant provisions have a curated rule key** (4 Finance
+  Act, 5 VATCA principal-Act, 4 Schedule 2, 4 Schedule 3, 3 RCT, 3 current
+  rates). Everything else is ingested (text, offsets, category all on disk)
+  but not yet extracted into named rules — `provisionsWithoutExtractedRule`
+  in the audit report would show these once curated; today it's empty
+  because the curated set and the derived set match exactly.
 - **RCT's actual deduction rate (0%/20%/35%) is not in this KB at all**,
   by design (see "Relevant Contracts Tax (RCT)" above) — TCA 1997
   ss.530A-530V, which govern it, were inserted by Finance Act 2011 s.20 and
