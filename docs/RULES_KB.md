@@ -818,6 +818,15 @@ explicit that "semantic search may retrieve candidates; it must not by
 itself determine the accounting treatment," and here it isn't even
 semantic — it's a lookup table a reviewer can read top to bottom.
 
+The `vat` topic also routes on a bare `supplyType` now, `vatRegistered` or
+not (a fix that followed the bugs 1/2/4/8 fixes above): the registration-
+threshold rules (`vat.registration_threshold_goods`/`_services`) exist to
+catch a trader who has crossed the threshold and should therefore *become*
+registered, which by definition is usually a currently-*unregistered*
+trader — gating the whole `vat` topic on `vatRegistered === true` made that
+population unreachable, i.e. `lookupTransactionRules` never even retrieved
+the threshold rules as candidates for the exact case they exist to flag.
+
 For each identified topic, `listTaxRulesByTopic` retrieves rules **in force
 on the transaction's own date**, not today's — so a historical transaction
 resolves against the rule that applied when it happened
