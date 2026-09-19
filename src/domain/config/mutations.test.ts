@@ -6,12 +6,14 @@ import {
   updateCompany, supersedeTaxRate, createTaxRate, deactivateTaxRate,
   updateVatTreatment, createAccount, updateAccount, deleteAccount,
   generateVatPeriodsForYear, generateFinancialYearPeriod, updateVatPeriod,
-  ConfigurationError,
+  upsertCustomer, ConfigurationError,
 } from './mutations';
 import { postJournalEntry } from '../accounting/journal';
 import { createVatEntries, resolveRate } from '../vat/engine';
+import { accountBalance } from '../accounting/ledger';
 import {
   taxRates, vatTreatments, accounts, vatPeriods, auditEvents, companies, taxDeadlines,
+  journalEntries, customers,
 } from '@/db/schema';
 import { makeDate } from '../dates';
 import type { AppDatabase } from '@/db';
@@ -352,5 +354,74 @@ describe('periods', () => {
       changes: { name: 'First bi-monthly period 2025' },
     });
     expect(result.changed).toContain('name');
+  });
+});
+
+// Issue #153: openingBalanceMinor was stored on bank_accounts but never
+// journaled, leaving a supplied statement close unexplained by exactly the
+// opening amount.
+describe('addBankAccount opening balance', () => {
+  it('journals a positive opening balance: Dr the control account, Cr retained earnings', () => {
+    const bankAccountId = addBankAccount(db, {
+      companyId, bankName: 'AIB', accountName: 'Current',
+      openingBalanceMinor: 1_425_000, openingDate: '2025-01-01',
+    });
+
+    expect(accountBalance(db, { companyId, accountId: acc['bank_control']! })).toBe(1_425_000);
+    expect(accountBalance(db, { companyId, accountId: acc['retained_earnings']! })).toBe(1_425_000);
+
+    const entry = db.select().from(journalEntries)
+      .where(eq(journalEntries.sourceId, bankAccountId)).get()!;
+    expect(entry.sourceType).toBe('opening_balance');
+    expect(entry.entryDate).toBe('2025-01-01');
+  });
+
+  it('journals a negative (overdrawn) opening balance the other way round', () => {
+    addBankAccount(db, {
+      companyId, bankName: 'AIB', accountName: 'Overdraft',
+      openingBalanceMinor: -50_000, openingDate: '2025-01-01',
+    });
+
+    expect(accountBalance(db, { companyId, accountId: acc['bank_control']! })).toBe(-50_000);
+    expect(accountBalance(db, { companyId, accountId: acc['retained_earnings']! })).toBe(-50_000);
+  });
+
+  it('posts nothing for a zero opening balance', () => {
+    const bankAccountId = addBankAccount(db, {
+      companyId, bankName: 'AIB', accountName: 'Savings', openingDate: '2025-01-01',
+    });
+    expect(db.select().from(journalEntries)
+      .where(eq(journalEntries.sourceId, bankAccountId)).all()).toHaveLength(0);
+  });
+
+  it('refuses a nonzero opening balance with no financial year to post it into', () => {
+    expect(() => addBankAccount(db, {
+      companyId, bankName: 'AIB', accountName: 'Current',
+      openingBalanceMinor: 1_000_00, openingDate: '2030-01-01',
+    })).toThrow(/No accounting period covers/);
+  });
+
+  it('refuses a foreign-currency opening balance rather than posting it as base currency', () => {
+    expect(() => addBankAccount(db, {
+      companyId, bankName: 'Wise', accountName: 'USD account', currency: 'USD',
+      openingBalanceMinor: 10_000, openingDate: '2025-01-01',
+    })).toThrow(/deliberate exchange rate/);
+  });
+});
+
+describe('upsertCustomer', () => {
+  it('creates a customer with a normalised match key', () => {
+    const id = upsertCustomer(db, { companyId, name: 'Mulligan Digital Limited' });
+    const row = db.select().from(customers).where(eq(customers.id, id)).get()!;
+    expect(row.matchKey).toBe('mulligan digital');
+  });
+
+  it('updates an existing customer in place rather than duplicating it', () => {
+    const id = upsertCustomer(db, { companyId, name: 'Mulligan Digital Limited' });
+    upsertCustomer(db, { companyId, customerId: id, name: 'Mulligan Digital Ltd', countryCode: 'IE' });
+
+    expect(db.select().from(customers).where(eq(customers.companyId, companyId)).all()).toHaveLength(1);
+    const row = db.select().from(customers).where(eq(customers.id, id)).get()!;
+    expect(row.countryCode).toBe('IE');
   });
 });

@@ -73,6 +73,41 @@ error. `npm run cli -- --help` lists every command and flag.
 ### Commands
 
 ```
+# Induction — before any of this exists (issue #153)
+npm run cli -- init-company --name "..."              # company + default chart
+    [--vat-basis invoice|cash_receipts] [--vat-frequency bi_monthly]
+    [--year-end MM-DD] [--base-currency EUR] [--seed-years "2024,2025"]
+npm run cli -- add-bank --name "..." [--iban ...] [--currency EUR]
+    [--opening <amount> --opening-date <date>]
+    # --opening also journals the balance (Dr this account / Cr retained
+    # earnings) at --opening-date — it is not just stored on the row.
+npm run cli -- add-account --code <code> --name "..."
+    --type asset|liability|equity|income|expense [--subtype ...]
+    [--report-section current_assets|current_liabilities|fixed_assets|
+                       revenue|cost_of_sales|operating_expenses|equity]
+npm run cli -- add-customer --name "..." [--country IE] [--default-account <code>]
+
+# Books — once induction is done
+npm run cli -- create-invoice --direction sales|purchase --file invoices.csv
+    # one row per invoice/bill; columns: invoiceNumber, date, party (a
+    # customer/supplier name or id), description, net, account, vatTreatment,
+    # and optionally dueDate, supplyDate, statedVat, currency, creditNote, reference
+npm run cli -- record-payment [--transaction <id>] [--invoices "INV-1,INV-2"]
+    [--amount <amount>] [--date <date>] [--unallocated] [--direction ...]
+    # exact: one invoice, no --amount. lump: several --invoices, paid off in
+    # order until the amount runs out. part: one invoice with --amount below
+    # its outstanding balance. --unallocated leaves it on account on purpose.
+npm run cli -- journal --date <date> --narrative "..." --lines <json> [--reason "..."]
+    # a multi-line manual adjustment — Stripe payout splits, a loan
+    # repayment's capital/interest split, a VAT3 settlement, an own-account
+    # transfer. --lines: [{"account":"code","debit":"100.00"}, ...], major units.
+
+# Inspect
+npm run cli -- list-transactions [--account <id>] [--unposted] [--unclassified]
+npm run cli -- show-invoice <number>                   # full detail incl. lines and payments
+npm run cli -- year-end --from <date> --to <date>      # P&L, balance sheet, tax worksheet, ...
+npm run cli -- vat-return --period <id-or-name>        # VAT3 box figures for one period
+
 # Discovery
 npm run cli -- list-accounts                          # bank accounts (id, name, currency)
 npm run cli -- list-chart                             # chart of accounts (code, name, type)
@@ -110,7 +145,18 @@ npm run cli -- run ... --sign-off                     # ...and record it
 
 ### Agent workflow
 
-The intended workflow is:
+`db:seed` only ever loads the Acme demo. To load a real (or synthetic) SME
+company from the CLI alone, start with induction:
+
+0. **Induct** the company: `init-company`, then `add-bank --opening` for
+   each bank account (this is the only place an opening balance gets
+   journaled — the row on `bank_accounts` alone is not enough), `add-account`
+   for anything the default chart does not cover, and `add-customer` for
+   sales counterparties. `create-supplier` (below) covers the purchase side.
+   Load invoices with `create-invoice --file` from a CSV once the parties
+   and accounts it references exist.
+
+The intended workflow from there is:
 
 1. **Import** a statement (or re-run `run` without `--file` over
    already-imported data).
@@ -125,14 +171,22 @@ The intended workflow is:
    does **not** classify or post a transaction.
 4. **Classify** transactions. Use `classify` to post a single transaction
    manually (accepting an account code and VAT treatment code from
-   `list-chart` / `list-vat-treatments`), or `create-rule` + `auto-classify`
-   to post in batch from deterministic rules. Both post a balanced journal
-   entry that the reconciliation then agrees with.
+   `list-chart` / `list-vat-treatments`), `create-rule` + `auto-classify`
+   to post in batch from deterministic rules, `record-payment` where a
+   transaction settles an invoice, or `journal` for anything that is not a
+   single-account posting (a Stripe payout's gross/fee split, a loan
+   repayment's capital/interest split, a VAT3 settlement, an own-account
+   transfer). Each posts a balanced journal entry that the reconciliation
+   then agrees with.
 5. **Set FX** on foreign lines that lack a settled base amount: `set-fx`
    before classifying or reconciling (see Multi-currency below).
 6. **Reconcile**; add `--sign-off` when the result is reconciled (or
    `--accept-difference "reason"` to sign off despite an unexplained
    difference, which is recorded in the audit trail).
+7. **Inspect**: `list-transactions --unposted`/`--unclassified` to find what
+   is left, `show-invoice` for one document's full detail, `year-end` for
+   the P&L/balance sheet/tax worksheet pack, `vat-return` for one period's
+   VAT3 box figures.
 
 ### Multi-currency accounts
 

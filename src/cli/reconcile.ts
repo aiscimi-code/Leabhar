@@ -26,6 +26,13 @@ import {
 } from '@/agent/match';
 import { createSupplierFromExtraction } from '@/domain/extraction/service';
 import {
+  initCompany, addBank, addAccount, addCustomer,
+} from '@/agent/induction';
+import {
+  createInvoicesFromCsv, recordPaymentCli, journalCli,
+  listTransactionsCli, showInvoiceCli, yearEndCli, vatReturnCli,
+} from '@/agent/books';
+import {
   importInput,
   autoClassifyInput,
   reconcileInput,
@@ -40,6 +47,17 @@ import {
   classifyTxnInput,
   createRuleCliInput,
   setFxInput,
+  initCompanyInput,
+  addBankInput,
+  addAccountInput,
+  addCustomerInput,
+  createInvoiceCsvInput,
+  recordPaymentInput,
+  journalCliInput,
+  listTransactionsInput,
+  showInvoiceInput,
+  yearEndCliInput,
+  vatReturnCliInput,
   type CreateRuleCliInput,
 } from '@/agent/schema';
 
@@ -77,14 +95,60 @@ Commands:
   run --account <id> [--file <path>]     import (optional) -> auto-classify -> reconcile
      --from <date> --to <date>
 
+Induction (no company/bank/chart yet):
+  init-company --name "..."              Create a company + default chart
+      [--vat-basis invoice|cash_receipts] [--vat-frequency bi_monthly]
+      [--year-end MM-DD] [--base-currency EUR] [--seed-years "2024,2025"]
+  add-bank --name "..."                  Add a bank account
+      [--iban ...] [--currency EUR] [--account-type current]
+      [--opening <amount> --opening-date <date>]  Also journals the opening
+      balance (Dr this account / Cr retained earnings) — not just stored.
+  add-account --code <code> --name "..." --type asset|liability|equity|income|expense
+      [--subtype ...] [--report-section current_assets|current_liabilities|
+      fixed_assets|revenue|cost_of_sales|operating_expenses|equity]
+      [--vat-applicable=false]
+  add-customer --name "..." [--country <IE>] [--default-account <code>]
+
+Books (once induction is done):
+  create-invoice --direction sales|purchase --file <invoices.csv>
+      One row per invoice/bill. Columns: invoiceNumber, date, party (a
+      customer/supplier name or id), description, net, account, vatTreatment,
+      and optionally dueDate, supplyDate, statedVat, currency, creditNote,
+      reference.
+  record-payment [--transaction <id>] [--invoices "INV-1,INV-2"]
+      [--amount <amount>] [--date <date>] [--unallocated] [--method ...]
+      [--direction received|made]  Needed only if neither --invoices nor
+      --transaction implies it (e.g. an --unallocated payment with no evidence).
+      Exact: one invoice, no --amount (pays it in full). Lump: several
+      --invoices, paid off in the order given until the amount runs out.
+      Part: one invoice with --amount below its outstanding balance.
+      --unallocated leaves the whole payment on account, on purpose.
+  journal --date <date> --narrative "..." --lines <json>
+      [--reason "..."]  A multi-line manual adjustment (Stripe payout splits,
+      a loan repayment's capital/interest split, a VAT3 settlement, an
+      own-account transfer). --lines is a JSON array of
+      {"account":"code","debit":"100.00"} / {"account":"code","credit":"100.00"}
+      objects, amounts in major units; at least two lines, and they must balance.
+
+Inspect:
+  list-transactions [--account <id>] [--unposted] [--unclassified]
+  show-invoice <number>                  Full detail incl. lines and payments
+  year-end --from <date> --to <date>     P&L, balance sheet, tax worksheet,
+                                          fixed assets, VAT periods, issues
+  vat-return --period <id-or-name>       VAT3 box figures for one period
+
 Agent workflow:
-  1. import a statement (or run over already-imported data)
-  2. create suppliers for extracted names that have no supplier yet
-  3. match documents to bank transactions (evidence linking; does not post)
-  4. classify transactions (manually via classify, or via auto-classify
-     from rules created with create-rule)
-  5. set-fx on foreign lines that lack a settled base amount
-  6. reconcile; --sign-off when reconciled
+  1. init-company, add-bank --opening, add-account for anything the default
+     chart does not cover, add-customer for sales counterparties
+  2. import a statement (or run over already-imported data)
+  3. create-invoice from CSV (sales/purchase), create suppliers for names
+     that have no supplier yet
+  4. match documents to bank transactions (evidence linking; does not post)
+  5. classify transactions (manually via classify, auto-classify from rules,
+     or record-payment where a transaction settles an invoice) and journal
+     anything that is not a single-account posting
+  6. set-fx on foreign lines that lack a settled base amount
+  7. reconcile; --sign-off when reconciled; year-end / vat-return to inspect
 
 Matching links evidence to a transaction but does NOT classify or post it.
 Classification (classify, auto-classify, or the UI) posts the journal entry
@@ -111,6 +175,17 @@ Flags:
   --sign-off          Record the reconciliation (not just compute it)
   --accept-difference  Reason to sign off despite an unexplained difference
   --statement-balance <amount>  Closing balance from the paper statement
+  --vat-basis, --vat-frequency, --year-end, --base-currency, --seed-years  init-company
+  --opening, --opening-date  Opening balance amount/date (add-bank)
+  --code, --type, --subtype, --report-section, --vat-applicable  add-account
+  --default-account <code>  Customer's default sales account (add-customer)
+  --direction sales|purchase  Invoice direction (create-invoice)
+  --invoices "A,B"    Comma-separated invoice numbers (record-payment)
+  --amount <amount>   Payment amount, or override a journal line's account (record-payment)
+  --unallocated       Leave the payment unallocated, on account (record-payment)
+  --narrative, --lines <json>  Journal narrative and lines (journal)
+  --unposted, --unclassified   Filter for list-transactions
+  --period <id-or-name>  VAT period id or exact name (vat-return)
   --format <json|human>  Output format (default: json)
   --help              Show this message
 
@@ -124,7 +199,7 @@ export interface CliOptions {
 }
 
 export async function main(argv: string[], options: CliOptions = {}): Promise<number> {
-  const { command, flags } = parseArgs(argv);
+  const { command, flags, positionals } = parseArgs(argv);
   const format: Format = getFlag(flags, 'format') === 'human' ? 'human' : 'json';
 
   if (command === '' || hasFlag(flags, 'help', 'h')) {
@@ -134,6 +209,26 @@ export async function main(argv: string[], options: CliOptions = {}): Promise<nu
 
   try {
     const db = options.db ?? getAgentDb();
+
+    // init-company runs before any company exists, so it cannot go through
+    // requireCompany() like every other command below.
+    if (command === 'init-company') {
+      const parsed = initCompanyInput.parse({
+        legalName: requireFlag(flags, 'name'),
+        tradingName: getFlag(flags, 'trading-name'),
+        croNumber: getFlag(flags, 'cro-number'),
+        vatNumber: getFlag(flags, 'vat-number'),
+        vatRegistrationStatus: getFlag(flags, 'vat-registration-status'),
+        vatAccountingBasis: getFlag(flags, 'vat-basis'),
+        vatPeriodFrequency: getFlag(flags, 'vat-frequency'),
+        yearEnd: getFlag(flags, 'year-end'),
+        baseCurrency: getFlag(flags, 'base-currency'),
+        seedYears: getFlag(flags, 'seed-years'),
+      });
+      print(initCompany(db, parsed), format);
+      return 0;
+    }
+
     const companyId = options.companyId ?? requireCompany(db).id;
 
     switch (command) {
@@ -386,6 +481,125 @@ export async function main(argv: string[], options: CliOptions = {}): Promise<nu
           actor: 'cli',
         });
         print(result, format);
+        return 0;
+      }
+
+      case 'add-bank': {
+        const parsed = addBankInput.parse({
+          companyId,
+          bankName: requireFlag(flags, 'name', 'bank-name'),
+          accountName: getFlag(flags, 'account-name'),
+          iban: getFlag(flags, 'iban'),
+          bic: getFlag(flags, 'bic'),
+          currency: getFlag(flags, 'currency'),
+          accountType: getFlag(flags, 'account-type'),
+          opening: getFlag(flags, 'opening'),
+          openingDate: getFlag(flags, 'opening-date'),
+        });
+        print(addBank(db, parsed), format);
+        return 0;
+      }
+
+      case 'add-account': {
+        const parsed = addAccountInput.parse({
+          companyId,
+          code: requireFlag(flags, 'code'),
+          name: requireFlag(flags, 'name'),
+          type: requireFlag(flags, 'type'),
+          subtype: getFlag(flags, 'subtype'),
+          reportSection: getFlag(flags, 'report-section'),
+          vatApplicable: hasFlag(flags, 'vat-applicable') ? getFlag(flags, 'vat-applicable') !== 'false' : undefined,
+        });
+        print(addAccount(db, parsed), format);
+        return 0;
+      }
+
+      case 'add-customer': {
+        const parsed = addCustomerInput.parse({
+          companyId,
+          name: requireFlag(flags, 'name'),
+          countryCode: getFlag(flags, 'country', 'country-code', 'countryCode'),
+          vatNumber: getFlag(flags, 'vat-number', 'vatNumber', 'vat'),
+          defaultAccount: getFlag(flags, 'default-account'),
+        });
+        print(addCustomer(db, parsed), format);
+        return 0;
+      }
+
+      case 'create-invoice': {
+        const parsed = createInvoiceCsvInput.parse({
+          companyId,
+          direction: requireFlag(flags, 'direction'),
+          file: requireFlag(flags, 'file'),
+        });
+        print(await createInvoicesFromCsv(db, parsed), format);
+        return 0;
+      }
+
+      case 'record-payment': {
+        const parsed = recordPaymentInput.parse({
+          companyId,
+          bankTransactionId: getFlag(flags, 'transaction', 'transaction-id', 'transactionId', 'bank-transaction-id', 'bankTransactionId'),
+          invoices: getFlag(flags, 'invoices', 'invoice'),
+          amount: getFlag(flags, 'amount'),
+          date: getFlag(flags, 'date'),
+          unallocated: hasFlag(flags, 'unallocated'),
+          direction: getFlag(flags, 'direction'),
+          method: getFlag(flags, 'method'),
+          reference: getFlag(flags, 'reference'),
+        });
+        print(recordPaymentCli(db, parsed), format);
+        return 0;
+      }
+
+      case 'journal': {
+        const parsed = journalCliInput.parse({
+          companyId,
+          date: requireFlag(flags, 'date'),
+          narrative: requireFlag(flags, 'narrative'),
+          reason: getFlag(flags, 'reason'),
+          lines: requireFlag(flags, 'lines'),
+        });
+        print(journalCli(db, parsed), format);
+        return 0;
+      }
+
+      case 'list-transactions': {
+        const parsed = listTransactionsInput.parse({
+          companyId,
+          bankAccountId: getFlag(flags, 'account', 'account-id', 'accountId'),
+          unposted: hasFlag(flags, 'unposted'),
+          unclassified: hasFlag(flags, 'unclassified'),
+        });
+        print(listTransactionsCli(db, parsed), format);
+        return 0;
+      }
+
+      case 'show-invoice': {
+        const parsed = showInvoiceInput.parse({
+          companyId,
+          number: positionals[0] ?? requireFlag(flags, 'number'),
+        });
+        print(showInvoiceCli(db, parsed), format);
+        return 0;
+      }
+
+      case 'year-end': {
+        const parsed = yearEndCliInput.parse({
+          companyId,
+          from: requireFlag(flags, 'from'),
+          to: requireFlag(flags, 'to'),
+        });
+        print(yearEndCli(db, parsed), format);
+        return 0;
+      }
+
+      case 'vat-return': {
+        const parsed = vatReturnCliInput.parse({
+          companyId,
+          period: requireFlag(flags, 'period'),
+        });
+        print(vatReturnCli(db, parsed), format);
         return 0;
       }
 

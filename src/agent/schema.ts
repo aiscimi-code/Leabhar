@@ -154,3 +154,122 @@ export const setFxInput = z.object({
 export type ClassifyTxnInput = z.infer<typeof classifyTxnInput>;
 export type CreateRuleCliInput = z.infer<typeof createRuleCliInput>;
 export type SetFxInput = z.infer<typeof setFxInput>;
+
+// ---- Induction (issue #153) ----
+
+export const initCompanyInput = z.object({
+  legalName: z.string(),
+  tradingName: z.string().optional(),
+  croNumber: z.string().optional(),
+  vatNumber: z.string().optional(),
+  vatRegistrationStatus: z.enum(['not_registered', 'registered', 'deregistered', 'pending']).optional(),
+  vatAccountingBasis: z.enum(['invoice', 'cash_receipts']).optional(),
+  vatPeriodFrequency: z.enum(['monthly', 'bi_monthly', 'four_monthly', 'half_yearly', 'annual']).optional(),
+  /** "MM-DD", e.g. "12-31". Defaults to 31 December. */
+  yearEnd: z.string().regex(/^\d{2}-\d{2}$/, 'Use MM-DD, e.g. 12-31').optional(),
+  baseCurrency: z.string().optional(),
+  /** Comma-separated years to seed financial/VAT periods for, e.g. "2024,2025". */
+  seedYears: z.string().optional(),
+});
+
+export const addBankInput = z.object({
+  companyId: z.string(),
+  bankName: z.string(),
+  accountName: z.string().optional(),
+  iban: z.string().optional(),
+  bic: z.string().optional(),
+  currency: z.string().optional(),
+  accountType: z.enum(['current', 'deposit', 'savings', 'credit_card', 'loan', 'merchant', 'other']).optional(),
+  /** Decimal string in major units, e.g. "14250.00" — parsed with parseAmount(), never a float. */
+  opening: z.string().optional(),
+  openingDate: isoDate.optional(),
+});
+
+export const addAccountInput = z.object({
+  companyId: z.string(),
+  code: z.string(),
+  name: z.string(),
+  type: z.enum(['asset', 'liability', 'equity', 'income', 'expense']),
+  subtype: z.string().optional(),
+  reportSection: z.string().optional(),
+  vatApplicable: z.boolean().optional(),
+});
+
+export const addCustomerInput = z.object({
+  companyId: z.string(),
+  name: z.string(),
+  countryCode: z.string().optional(),
+  vatNumber: z.string().optional(),
+  defaultAccount: z.string().optional(),
+});
+
+export type InitCompanyInput = z.infer<typeof initCompanyInput>;
+export type AddBankInput = z.infer<typeof addBankInput>;
+export type AddAccountInput = z.infer<typeof addAccountInput>;
+export type AddCustomerInput = z.infer<typeof addCustomerInput>;
+
+// ---- Books (issue #153) ----
+
+export const createInvoiceCsvInput = z.object({
+  companyId: z.string(),
+  direction: z.enum(['sales', 'purchase']),
+  file: z.string(),
+});
+
+export const recordPaymentInput = z.object({
+  companyId: z.string(),
+  bankTransactionId: z.string().optional(),
+  /** Comma-separated invoice numbers, in the order to allocate against. */
+  invoices: z.string().optional(),
+  /** Decimal string in major units — parsed with parseAmount(), never a float. */
+  amount: z.string().optional(),
+  date: isoDate.optional(),
+  unallocated: z.boolean().default(false),
+  /** Only needed when neither --invoices nor --transaction implies it. */
+  direction: z.enum(['received', 'made']).optional(),
+  method: z.enum([
+    'bank_transfer', 'card', 'direct_debit', 'cash', 'cheque',
+    'director_personal', 'offset', 'other',
+  ]).optional(),
+  reference: z.string().optional(),
+});
+
+export const journalCliInput = z.object({
+  companyId: z.string(),
+  date: isoDate,
+  narrative: z.string(),
+  reason: z.string().optional(),
+  /** JSON array of {account, debit?, credit?, memo?, supplier?, customer?}, amounts in major units. */
+  lines: z.string(),
+});
+
+export const listTransactionsInput = z.object({
+  companyId: z.string(),
+  bankAccountId: z.string().optional(),
+  unposted: z.boolean().default(false),
+  unclassified: z.boolean().default(false),
+});
+
+export const showInvoiceInput = z.object({
+  companyId: z.string(),
+  number: z.string(),
+});
+
+export const yearEndCliInput = z.object({
+  companyId: z.string(),
+  from: isoDate,
+  to: isoDate,
+});
+
+export const vatReturnCliInput = z.object({
+  companyId: z.string(),
+  period: z.string(),
+});
+
+export type CreateInvoiceCsvInput = z.infer<typeof createInvoiceCsvInput>;
+export type RecordPaymentCliInput = z.infer<typeof recordPaymentInput>;
+export type JournalCliInput = z.infer<typeof journalCliInput>;
+export type ListTransactionsInput = z.infer<typeof listTransactionsInput>;
+export type ShowInvoiceInput = z.infer<typeof showInvoiceInput>;
+export type YearEndCliInput = z.infer<typeof yearEndCliInput>;
+export type VatReturnCliInput = z.infer<typeof vatReturnCliInput>;

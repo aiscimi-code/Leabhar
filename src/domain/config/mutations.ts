@@ -882,3 +882,47 @@ export function upsertSupplier(
   }).run();
   return id;
 }
+
+/** Mirrors `upsertSupplier` for the sales side (issue #153 induction). */
+export function upsertCustomer(
+  db: AppDatabase,
+  params: {
+    companyId: string; customerId?: string; name: string;
+    countryCode?: string | null; vatNumber?: string | null;
+    defaultAccountId?: string | null; defaultVatTreatmentId?: string | null;
+    aliases?: string[]; notes?: string | null; actor?: string;
+  },
+): string {
+  const matchKey = params.name.toLowerCase()
+    .replace(/\b(limited|ltd|plc|inc|incorporated|llc|gmbh|bv|sarl|pbc|co)\b/g, '')
+    .replace(/[^a-z0-9]+/g, ' ').trim().replace(/\s+/g, ' ');
+
+  if (params.customerId) {
+    db.update(customers).set({
+      name: params.name, matchKey,
+      countryCode: params.countryCode ?? null,
+      vatNumber: params.vatNumber ?? null,
+      defaultAccountId: params.defaultAccountId ?? null,
+      defaultVatTreatmentId: params.defaultVatTreatmentId ?? null,
+      aliases: params.aliases ?? [],
+      notes: params.notes ?? null,
+      updatedAt: nowIso(),
+    }).where(and(
+      eq(customers.id, params.customerId),
+      eq(customers.companyId, params.companyId),
+    )).run();
+    return params.customerId;
+  }
+
+  const id = ids.customer();
+  db.insert(customers).values({
+    id, companyId: params.companyId, name: params.name, matchKey,
+    countryCode: params.countryCode ?? null,
+    vatNumber: params.vatNumber ?? null,
+    defaultAccountId: params.defaultAccountId ?? null,
+    defaultVatTreatmentId: params.defaultVatTreatmentId ?? null,
+    aliases: params.aliases ?? [],
+    notes: params.notes ?? null,
+  }).run();
+  return id;
+}
