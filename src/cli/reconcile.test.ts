@@ -1,11 +1,11 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { eq } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 import { createTestDatabase } from '@/db/testing';
 import { createCompany, addBankAccount } from '@/domain/config/setup';
 import { createRule } from '@/domain/rules/engine';
 import { importStatement } from '@/domain/banking/import';
 import { storeDocument } from '@/domain/documents/storage';
-import { bankTransactions, reconciliations, documents, documentMatches, suppliers } from '@/db/schema';
+import { bankTransactions, reconciliations, documents, documentMatches, suppliers, accounts } from '@/db/schema';
 import { makeDate } from '@/domain/dates';
 import { main } from './reconcile';
 import { mkdtempSync, writeFileSync } from 'node:fs';
@@ -780,7 +780,7 @@ describe('cli reconcile — induction and books (issue #153)', () => {
 
     it('add-account adds a chart account with a defaulted report section', async () => {
       const c = iCapture();
-      const code = await iRun(['add-account', '--code', '6180', '--name', 'Wages and salaries', '--type', 'expense']);
+      const code = await iRun(['add-account', '--code', '7000', '--name', 'Freight and carriage', '--type', 'expense']);
       c.restore();
       expect(code).toBe(0);
       const parsed = JSON.parse(c.stdout.join(''));
@@ -790,7 +790,84 @@ describe('cli reconcile — induction and books (issue #153)', () => {
       await iRun(['list-chart']);
       chart.restore();
       const accounts = JSON.parse(chart.stdout.join(''));
-      expect(accounts.some((a: { code: string }) => a.code === '6180')).toBe(true);
+      expect(accounts.some((a: { code: string }) => a.code === '7000')).toBe(true);
+    });
+
+    // Issue #159: wages, materials, a term loan, rent, a second bank
+    // account — no longer need add-account first, unlike 7000 above.
+    it('the default chart already has 6180/6190/5030/2210/1020 without add-account', async () => {
+      const c = iCapture();
+      await iRun(['list-chart']);
+      c.restore();
+      const accounts: Array<{ code: string; name: string }> = JSON.parse(c.stdout.join(''));
+      const byCode = new Map(accounts.map((a) => [a.code, a.name]));
+      expect(byCode.get('6180')).toBe('Wages and salaries');
+      expect(byCode.get('6190')).toBe('Employer PRSI');
+      expect(byCode.get('5030')).toBe('Materials');
+      expect(byCode.get('2210')).toBe('Bank loans');
+      expect(byCode.get('1020')).toBe('Bank deposit / saver account');
+      // 6160 stays reserved for actual directors' remuneration, not payroll.
+      expect(byCode.get('6160')).toBe('Directors remuneration');
+    });
+
+    it('ensure-default-accounts adds back a code missing from a company induced earlier', async () => {
+      // Simulate a company created before 6180 existed in DEFAULT_ACCOUNTS.
+      const row = iDb.select().from(accounts)
+        .where(and(eq(accounts.companyId, iCompanyId), eq(accounts.code, '6180'))).get()!;
+      iDb.delete(accounts).where(eq(accounts.id, row.id)).run();
+
+      const c = iCapture();
+      const code = await iRun(['ensure-default-accounts']);
+      c.restore();
+      expect(code).toBe(0);
+      expect(JSON.parse(c.stdout.join(''))).toEqual({ added: ['6180'] });
+    });
+
+    it('install-rule-pack posts a salary and a rent line to the right accounts via auto-classify', async () => {
+      let c = iCapture();
+      await iRun(['add-bank', '--name', 'AIB Current', '--opening-date', '2025-01-01']);
+      const bankAccountId = JSON.parse(c.stdout.join('')).bankAccountId;
+      c.restore();
+
+      c = iCapture();
+      const packCode = await iRun(['install-rule-pack', '--employee', 'Finn O\'Reilly']);
+      c.restore();
+      expect(packCode).toBe(0);
+      const rules: Array<{ name: string }> = JSON.parse(c.stdout.join(''));
+      expect(rules.map((r) => r.name)).toContain('Salary payment — Finn O\'Reilly');
+
+      const root = mkdtempSync(join(tmpdir(), 'rule-pack-'));
+      const csv = join(root, 'wages.csv');
+      writeFileSync(csv, [
+        'Date,Description,Amount',
+        '28/03/2025,SALARY - FINN OREILLY,-2200.00',
+        '01/04/2025,RENT STANDING ORDER,-1500.00',
+      ].join('\n'));
+      await iRun(['import', '--account', bankAccountId, '--file', csv]);
+      await iRun(['auto-classify', '--account', bankAccountId]);
+
+      c = iCapture();
+      await iRun(['list-transactions']);
+      c.restore();
+      const posted: Array<{ description: string; status: string }> = JSON.parse(c.stdout.join(''));
+      expect(posted.every((t) => t.status === 'posted')).toBe(true);
+
+      const wagesAccount = iDb.select().from(accounts)
+        .where(and(eq(accounts.companyId, iCompanyId), eq(accounts.code, '6180'))).get()!;
+      const rentAccount = iDb.select().from(accounts)
+        .where(and(eq(accounts.companyId, iCompanyId), eq(accounts.code, '6200'))).get()!;
+      const posted6180 = iDb.select().from(bankTransactions)
+        .where(and(
+          eq(bankTransactions.companyId, iCompanyId), eq(bankTransactions.accountId, wagesAccount.id),
+        )).all();
+      const posted6200 = iDb.select().from(bankTransactions)
+        .where(and(
+          eq(bankTransactions.companyId, iCompanyId), eq(bankTransactions.accountId, rentAccount.id),
+        )).all();
+      expect(posted6180).toHaveLength(1);
+      expect(posted6180[0]!.description).toBe('SALARY - FINN OREILLY');
+      expect(posted6200).toHaveLength(1);
+      expect(posted6200[0]!.description).toBe('RENT STANDING ORDER');
     });
 
     it('add-account refuses a report section neither report reads', async () => {

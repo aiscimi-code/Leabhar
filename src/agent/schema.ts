@@ -347,3 +347,22 @@ export const listPartiesInput = z.object({
 });
 
 export type ListPartiesInput = z.infer<typeof listPartiesInput>;
+
+// ---- Chart defaults + Irish SME rule pack (issue #159) ----
+
+export const ensureDefaultAccountsInput = z.object({
+  companyId: z.string(),
+});
+
+export const installRulePackInput = z.object({
+  companyId: z.string(),
+  /** Also match this employee's name in the description, alongside the generic SALARY keyword. */
+  employee: z.string().optional(),
+  /** Account code for a second/savings bank account (defaults to the seeded 1020). */
+  secondBankAccount: z.string().optional(),
+  /** Account code rent is posted to (defaults to the seeded 6200). */
+  rentAccount: z.string().optional(),
+});
+
+export type EnsureDefaultAccountsInput = z.infer<typeof ensureDefaultAccountsInput>;
+export type InstallRulePackInput = z.infer<typeof installRulePackInput>;

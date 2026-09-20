@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { eq, and } from 'drizzle-orm';
 import { createTestDatabase } from '@/db/testing';
-import { createCompany, addBankAccount } from './setup';
+import { createCompany, addBankAccount, ensureDefaultAccounts } from './setup';
 import {
   updateCompany, supersedeTaxRate, createTaxRate, deactivateTaxRate,
   updateVatTreatment, createAccount, updateAccount, deleteAccount,
@@ -230,7 +230,7 @@ describe('VAT treatments', () => {
 describe('chart of accounts', () => {
   it('creates an account', () => {
     const id = createAccount(db, {
-      companyId, code: '6180', name: 'Research and development',
+      companyId, code: '7000', name: 'Research and development',
       type: 'expense', reportSection: 'operating_expenses',
     });
     expect(db.select().from(accounts).where(eq(accounts.id, id)).get()!.name)
@@ -281,6 +281,41 @@ describe('chart of accounts', () => {
       changes: { name: 'Bank of Ireland current account' },
     });
     expect(result.changed).toContain('name');
+  });
+});
+
+// Issue #159: a company induced before a code existed in DEFAULT_ACCOUNTS —
+// simulated here by deleting one after createCompany already seeded it —
+// should be able to pick it up without editing chartOfAccounts.ts by hand.
+describe('ensureDefaultAccounts', () => {
+  it('adds a missing default account without touching the rest of the chart', () => {
+    db.delete(accounts).where(eq(accounts.id, byCode['6180']!)).run();
+    const before = db.select().from(accounts).where(eq(accounts.companyId, companyId)).all().length;
+
+    const result = ensureDefaultAccounts(db, companyId);
+    expect(result.added).toEqual(['6180']);
+
+    const after = db.select().from(accounts)
+      .where(and(eq(accounts.companyId, companyId), eq(accounts.code, '6180'))).get()!;
+    expect(after.name).toBe('Wages and salaries');
+    expect(db.select().from(accounts).where(eq(accounts.companyId, companyId)).all())
+      .toHaveLength(before + 1);
+  });
+
+  it('does nothing when every default account already exists', () => {
+    expect(ensureDefaultAccounts(db, companyId)).toEqual({ added: [] });
+  });
+
+  it('never re-adds an account whose code has since moved, by systemKey', () => {
+    // Simulates a company whose bank control account was renumbered outside
+    // the normal update path; ensureDefaultAccounts must not create a second
+    // '1000' just because the code moved.
+    db.update(accounts).set({ code: '1005' }).where(eq(accounts.id, acc['bank_control']!)).run();
+    const result = ensureDefaultAccounts(db, companyId);
+    expect(result.added).not.toContain('1000');
+    expect(db.select().from(accounts)
+      .where(and(eq(accounts.companyId, companyId), eq(accounts.code, '1000'))).get())
+      .toBeUndefined();
   });
 });
 

@@ -86,6 +86,18 @@ npm run cli -- add-account --code <code> --name "..."
     [--report-section current_assets|current_liabilities|fixed_assets|
                        revenue|cost_of_sales|operating_expenses|equity]
 npm run cli -- add-customer --name "..." [--country IE] [--default-account <code>]
+npm run cli -- ensure-default-accounts                # add any default chart
+    # accounts introduced since this company was created (issue #159, e.g.
+    # 6180 Wages and salaries, 6190 Employer PRSI, 5030 Materials, 2210 Bank
+    # loans, 1020 Bank deposit/saver) — a new company gets them all already;
+    # this is only for one induced earlier.
+npm run cli -- install-rule-pack [--employee "Name"] [--second-bank-account <code>]
+    [--rent-account <code>]
+    # starter Irish SME bank-narrative rules (wages, employer PRSI, a
+    # Revenue PAYE remittance, VAT3, rent, an own-account transfer to
+    # savings, director drawings) — every rule is a normal, editable row.
+    # A Stripe payout or a loan's capital/interest split is a multi-line
+    # journal --transaction (issue #158), not something a rule can target.
 
 # Books — once induction is done
 npm run cli -- create-invoice --direction sales|purchase --file invoices.csv
@@ -190,10 +202,14 @@ company from the CLI alone, start with induction:
 0. **Induct** the company: `init-company`, then `add-bank --opening` for
    each bank account (this is the only place an opening balance gets
    journaled — the row on `bank_accounts` alone is not enough), `add-account`
-   for anything the default chart does not cover, and `add-customer` for
+   for anything the default chart does not cover (or `ensure-default-accounts`
+   for a company induced before a code existed), and `add-customer` for
    sales counterparties. `create-supplier` (below) covers the purchase side.
    Load invoices with `create-invoice --file` from a CSV once the parties
-   and accounts it references exist.
+   and accounts it references exist. `install-rule-pack` seeds common Irish
+   SME bank-narrative rules (wages, PAYE/PRSI, VAT3, rent, an own-account
+   transfer, director drawings) so auto-classify handles them without a
+   rule written by hand for each one.
 
 The intended workflow from there is:
 

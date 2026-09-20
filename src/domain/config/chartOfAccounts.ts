@@ -68,6 +68,12 @@ export const DEFAULT_ACCOUNTS: AccountSeed[] = [
   // ---------------- Cost of sales ----------------
   { code: '5000', name: 'Direct service costs', type: 'expense', subtype: 'cost_of_sales', reportSection: 'cost_of_sales' },
   { code: '5010', name: 'Subcontractor costs', type: 'expense', subtype: 'cost_of_sales', reportSection: 'cost_of_sales' },
+  {
+    code: '5030', name: 'Materials', type: 'expense', subtype: 'cost_of_sales',
+    reportSection: 'cost_of_sales',
+    description: 'Raw materials and supplies bought in to make or fit out what the '
+      + 'business sells — issue #159, for a company whose trade is not pure software/services.',
+  },
 
   // ---------------- Operating expenses ----------------
   { code: '6000', name: 'Software and subscriptions', type: 'expense', subtype: 'operating_expense', reportSection: 'operating_expenses' },
@@ -94,6 +100,24 @@ export const DEFAULT_ACCOUNTS: AccountSeed[] = [
       + 'back in the corporation tax computation and replaced by capital allowances, '
       + 'because Irish tax law does not accept accounting depreciation as a deduction.',
   },
+  {
+    code: '6180', name: 'Wages and salaries', type: 'expense', subtype: 'operating_expense',
+    vatApplicable: false, reportSection: 'operating_expenses',
+    description: 'Employee payroll, distinct from directors’ remuneration (6160) '
+      + '— issue #159: a rule pointed at 6160 mislabels employee pay as directors’ pay.',
+  },
+  {
+    code: '6190', name: 'Employer PRSI', type: 'expense', subtype: 'operating_expense',
+    vatApplicable: false, reportSection: 'operating_expenses',
+    description: 'The employer’s own PRSI contribution, kept separate from wages '
+      + '(6180) so each is visible on its own line.',
+  },
+  {
+    code: '6200', name: 'Rent and rates', type: 'expense', subtype: 'operating_expense',
+    vatApplicable: false, reportSection: 'operating_expenses',
+    description: 'Commercial rent is usually VAT-exempt unless the landlord has '
+      + 'opted to charge VAT on it — confirm against the actual lease.',
+  },
   { code: '6900', name: 'Other expenses', type: 'expense', subtype: 'operating_expense', reportSection: 'operating_expenses' },
   {
     code: '6950', name: 'Disposal of fixed assets', type: 'expense', subtype: 'operating_expense',
@@ -106,6 +130,13 @@ export const DEFAULT_ACCOUNTS: AccountSeed[] = [
     systemKey: 'bank_control', vatApplicable: false, reportSection: 'current_assets',
   },
   { code: '1010', name: 'Cash', type: 'asset', subtype: 'current_asset', systemKey: 'cash', vatApplicable: false, reportSection: 'current_assets' },
+  {
+    code: '1020', name: 'Bank deposit / saver account', type: 'asset', subtype: 'current_asset',
+    vatApplicable: false, reportSection: 'current_assets',
+    description: 'A second bank account’s own ledger — pass this account’s code as '
+      + '--account when add-bank creates it, so its balance is tracked separately from '
+      + 'the main current account (1000) rather than folding into it (issue #159).',
+  },
   {
     code: '1100', name: 'Trade debtors', type: 'asset', subtype: 'current_asset',
     systemKey: 'debtors', vatApplicable: false, reportSection: 'current_assets',
@@ -156,6 +187,13 @@ export const DEFAULT_ACCOUNTS: AccountSeed[] = [
   {
     code: '2200', name: 'Corporation tax payable', type: 'liability', subtype: 'current_liability',
     systemKey: 'corporation_tax_liability', vatApplicable: false, reportSection: 'current_liabilities',
+  },
+  {
+    code: '2210', name: 'Bank loans', type: 'liability', subtype: 'non_current_liability',
+    vatApplicable: false, reportSection: 'current_liabilities',
+    description: 'A term loan’s outstanding balance. Repaying it is a capital/interest '
+      + 'split (issue #158’s journal --transaction), not a single expense line — the '
+      + 'capital portion reduces this balance and the interest portion is a cost.',
   },
   { code: '2300', name: 'Accruals', type: 'liability', subtype: 'current_liability', vatApplicable: false, reportSection: 'current_liabilities' },
   { code: '2400', name: 'PAYE/PRSI/USC payable', type: 'liability', subtype: 'current_liability', vatApplicable: false, reportSection: 'current_liabilities' },
