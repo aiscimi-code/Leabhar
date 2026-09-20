@@ -28,6 +28,9 @@ VATCA_LETTERED = [
     "91A", "91B", "91C", "91D", "91E", "91F", "91G", "91H", "91I", "91J",
     "92A", "92B", "92C", "92D", "108A", "108B", "108C",
 ]
+CA2014_SECTIONS = [
+    "282", "280A", "280D", "280E", "352", "358", "359", "360",
+]
 
 
 def fetch(url: str, dest: Path) -> Path:
@@ -140,6 +143,25 @@ def extract_vatca() -> None:
         write(out / f"schedule-{n}.md", html_to_md(raw.read_text(errors="replace"), f"VATCA 2010 Schedule {n} (revised)", f"2010 Act 31 Sch.{n}", url))
 
 
+def extract_companies_act_2014() -> None:
+    out = ROOT / "companies-act-2014"
+    for n in CA2014_SECTIONS:
+        url = f"https://revisedacts.lawreform.ie/eli/2014/act/38/section/{n}/revised/en/html"
+        raw = Path(f"/tmp/ca2014/s{n}.html")
+        if not raw.exists():
+            fetch(url, raw)
+            time.sleep(0.2)
+        write(
+            out / f"s{n}.md",
+            html_to_md(
+                raw.read_text(errors="replace"),
+                f"Companies Act 2014 s.{n} (revised)",
+                f"2014 Act 38 s.{n}",
+                url,
+            ),
+        )
+
+
 def extract_si639() -> None:
     url = "https://www.irishstatutebook.ie/eli/2010/si/639/made/en/print"
     raw = Path("/tmp/si639-print.html")
@@ -202,6 +224,7 @@ jurisdiction: IE
 
 if __name__ == "__main__":
     extract_vatca()
+    extract_companies_act_2014()
     extract_si639()
     extract_tdm()
     extract_rates()

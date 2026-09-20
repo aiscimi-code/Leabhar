@@ -30,6 +30,9 @@ import { deriveFinanceAct2024VatThresholds } from '@/domain/rules/financeAct2024
 import {
   ingestTdm3801_03bCapacityExclusion, deriveTdm3801_03bCapacityExclusionRule, TDM_38_01_03B_MD_PATH,
 } from '@/domain/rules/tdm3801_03bIngestion';
+import {
+  ingestAllCompaniesAct2014Sections, deriveCompaniesAct2014Rules,
+} from '@/domain/rules/companiesAct2014Ingestion';
 import { lookupTransactionRules, type TransactionContext } from '@/domain/rules/transactionLookup';
 import { setRuleReviewStatus } from '@/domain/rules/review';
 import { generateDefaultTestCases, runTestCases } from '@/domain/rules/testCases';
@@ -48,7 +51,8 @@ Commands:
                                        [default] | vatca-2010 | vatca-2010-sch2 | vatca-2010-sch3 |
                                        rct-tca530 | rct-tdm | rct-tdm-05 | rct-tdm-11 |
                                        vatca-2010-revised | tca1997-s284 | si639 | si156 |
-                                       si69-2025 (alias si69-2025-reg8) | si69-2025-reg5 | si69-2025-reg9 | tdm-38-01-03b;
+                                       si69-2025 (alias si69-2025-reg8) | si69-2025-reg5 | si69-2025-reg9 | tdm-38-01-03b |
+                                       companies-act-2014 (ingests all eight fetched sections; no --file);
                                        --file overrides
                                        its default path, e.g. to ingest a different revised section)
   extract [--source <s>]              Derive irish_tax_rules from ingested provisions
@@ -183,6 +187,11 @@ export async function main(argv: string[], options: CliOptions = {}): Promise<nu
           print(ingestTdm3801_03bCapacityExclusion(db, { companyId, markdown, ingestVersion: 'v1', localPath: file }), format);
           return 0;
         }
+        if (source === 'companies-act-2014') {
+          // No single default file (eight sections, each its own source) — --file is not supported here.
+          print(ingestAllCompaniesAct2014Sections(db, { companyId, ingestVersion: 'v1' }), format);
+          return 0;
+        }
         if (source !== 'finance-act-2024') throw new Error(`Unknown --source: ${source}`);
         const file = getFlag(flags, 'file') ?? FINANCE_ACT_2024_MD_PATH;
         const markdown = readFileSync(file, 'utf8');
@@ -234,6 +243,10 @@ export async function main(argv: string[], options: CliOptions = {}): Promise<nu
         }
         if (source === 'tdm-38-01-03b') {
           print(deriveTdm3801_03bCapacityExclusionRule(db, { companyId }), format);
+          return 0;
+        }
+        if (source === 'companies-act-2014') {
+          print(deriveCompaniesAct2014Rules(db, { companyId }), format);
           return 0;
         }
         if (source !== 'finance-act-2024') throw new Error(`Unknown --source: ${source}`);
