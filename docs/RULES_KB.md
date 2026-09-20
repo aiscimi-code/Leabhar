@@ -1410,13 +1410,19 @@ audit
   Finance Act 2024 and VATCA 2010's own principal-Act provisions still leave
   both null — a provision's location there is fully identified by section
   number + source offsets instead.
-- **The pre-existing drizzle-kit snapshot chain is broken** (`drizzle/meta/
-  0000_snapshot.json` through `0002` all share one id/prevId, unrelated to
-  this change — `npm run db:generate` fails on it). Migration 0004 here was
-  therefore hand-written in the existing SQL style rather than generated, and
-  applies and runs cleanly (`npm test`, `npm run db:migrate` both exercise
-  it), but a future schema change will hit the same `drizzle-kit generate`
-  failure until that chain is repaired — out of scope for this change.
+- **The pre-existing drizzle-kit snapshot chain was broken** (`drizzle/meta/
+  0000_snapshot.json` through `0002` all shared one id/prevId, unrelated to
+  this change — `npm run db:generate` failed on it). Migration 0004 here was
+  therefore hand-written in the existing SQL style rather than generated;
+  it applied and ran cleanly (`npm test`, `npm run db:migrate` both exercised
+  it), but a future schema change would have hit the same `drizzle-kit
+  generate` failure until that chain was repaired. **Fixed in issue #134**:
+  `drizzle/0005_repair_snapshot_chain.sql` (an intentional no-op — see its
+  own header comment for the full diagnosis) gave 0001/0002 their own ids
+  correctly chained from 0000, and gave migration 0004 the
+  `0004_snapshot.json` it never got, so `npm run db:generate` now reports
+  "No schema changes, nothing to migrate" against current `schema.ts` and
+  will correctly diff any future one.
 
 ## Documents reviewed, not curated
 

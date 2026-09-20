@@ -1,0 +1,56 @@
+-- Intentionally empty (issue #134).
+--
+-- drizzle-kit's snapshot chain (drizzle/meta/*_snapshot.json) was broken in
+-- two independent ways, both fixed by this migration + its accompanying
+-- 0005_snapshot.json, neither of which needed any new DDL:
+--
+-- 1. drizzle/meta/0000_snapshot.json through 0002_snapshot.json shared one
+--    `id`/`prevId` (a straight copy-paste rather than each migration step
+--    getting its own id), which made every one of the three claim to be the
+--    chain's root — `drizzle-kit generate` refused with "are pointing to a
+--    parent snapshot ... which is a collision". Fixed by giving 0001 and
+--    0002 their own fresh ids, correctly chained to the snapshot before each
+--    (0000 was already the genuine root and is unchanged; 0003's `prevId`,
+--    which had been pointing at 0000's id instead of 0002's, now points at
+--    0002's corrected id). Snapshot 0001's *content* is legitimately
+--    identical to 0000's, not a bug: migration 0001
+--    (journal_immutability) only adds SQLite triggers, which drizzle's
+--    declarative schema snapshot does not represent at all.
+--
+-- 2. Migration 0004 (irish_rules_kb) was hand-written — necessarily, since
+--    fix #1 above wasn't diagnosed yet — and so was never given a matching
+--    0004_snapshot.json. `drizzle-kit generate`'s target snapshot is always
+--    freshly introspected from schema.ts, so the *chain* fix alone did not
+--    fix this: it still diffed current schema.ts against stale 0003 (which
+--    predates both migration 0002's provenance columns and all of migration
+--    0004's tables) and proposed recreating everything already live —
+--    confirmed by running plain `generate` once, inspecting the output
+--    (4 CREATE TABLEs matching migration 0004 verbatim, and the same ALTER
+--    TABLE ADD COLUMN statements as migration 0002, structurally diffed
+--    against both to confirm no unintended drift), then discarding that
+--    output rather than applying it: every one of those statements already
+--    ran, so replaying them would fail loudly against any already-migrated
+--    database ("table already exists" / "duplicate column").
+--
+--    That comparison did surface one genuine, if dormant, drift: schema.ts's
+--    shared `provenance.source` default is 'user', but migration
+--    0002_line_provenance.sql deliberately gave `depreciation_charges.source`
+--    a 'system' default instead (depreciation charges are system-computed,
+--    never user-entered). The column-level default was never actually
+--    exercised — src/domain/assets/depreciation.ts always sets `source:
+--    'system'` explicitly on insert — but schema.ts is fixed in the same
+--    commit as this migration (an explicit override in
+--    src/db/schema/operations.ts) so the declared schema matches the real
+--    database, and this migration's own target snapshot is accurate rather
+--    than perpetuating the mismatch.
+--
+-- This migration is therefore an accurate no-op: 0005_snapshot.json fully
+-- and correctly represents the schema every earlier migration (0000-0004)
+-- already produced, so a future `npm run db:generate` now diffs against
+-- reality and emits only the genuinely new statements a real schema change
+-- needs — the normal generate-and-review workflow, restored.
+--
+-- A comment-only file is not valid SQL to better-sqlite3's migrator (it
+-- rejects "the supplied SQL string contains no statements"), so this needs
+-- one real, harmless statement:
+SELECT 1;
