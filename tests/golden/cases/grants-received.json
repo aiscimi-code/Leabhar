@@ -1,0 +1,33 @@
+{
+  "id": "grants-received",
+  "description": "State grant received (not taxable supply of goods/services)",
+  "authority": "PROFESSIONAL_PRACTICE",
+  "references": ["finance-act-2024"],
+  "notes": "A government grant is not income from a taxable supply. It is recognised as other income (grant income) or deferred as a liability if conditions remain to be fulfilled. No output VAT arises — this is not a supply of goods or services to the Revenue.",
+  "inputs": {
+    "transaction": {
+      "transactionDate": "2026-09-18",
+      "amountMinor": 1000000,
+      "currency": "EUR",
+      "entityType": "Irish_LTD",
+      "vatRegistered": true,
+      "description": "Enterprise Ireland grant received"
+    }
+  },
+  "expected_classification": {
+    "identifiedTopics": ["business_expense"],
+    "reviewRequired": true
+  },
+  "expected_journal": {
+    "posted": true,
+    "balanced": true,
+    "lines": [
+      { "accountCode": "bank_control", "debitMinor": 1000000 },
+      { "accountCode": "8600", "creditMinor": 1000000 }
+    ]
+  },
+  "expected_vat": {
+    "entryCount": 0
+  },
+  "review_required": true
+}

@@ -1,0 +1,44 @@
+{
+  "id": "ie-sale-standard-rate",
+  "description": "Irish standard-rated domestic sale with 23% output VAT",
+  "authority": "LEABHAR_RULE",
+  "references": ["vat.rate_standard_current"],
+  "notes": "A VAT-registered Irish Ltd sells services to an Irish customer at the 23% standard rate. Output VAT is charged (T1 box), not recoverable.",
+  "inputs": {
+    "transaction": {
+      "transactionDate": "2026-09-18",
+      "amountMinor": 100000,
+      "currency": "EUR",
+      "entityType": "Irish_LTD",
+      "vatRegistered": true,
+      "supplyType": "services",
+      "description": "Consulting services to Irish client",
+      "invoiceAvailable": true
+    }
+  },
+  "expected_classification": {
+    "identifiedTopics": ["vat"],
+    "applicableRuleKeys": ["vat.rate_standard_current"],
+    "reviewRequired": true
+  },
+  "expected_journal": {
+    "posted": true,
+    "balanced": true,
+    "lines": [
+      { "accountCode": "bank_control", "debitMinor": 123000 },
+      { "accountCode": "4000", "creditMinor": 100000 },
+      { "accountCode": "vat_output", "creditMinor": 23000 }
+    ]
+  },
+  "expected_vat": {
+    "entryCount": 1,
+    "totalNetMinor": 100000,
+    "totalVatMinor": 23000,
+    "totalGrossMinor": 123000,
+    "totalRecoverableMinor": 0,
+    "isReverseCharge": false,
+    "rateBasisPoints": 2300,
+    "vatBoxes": ["T1"]
+  },
+  "review_required": true
+}

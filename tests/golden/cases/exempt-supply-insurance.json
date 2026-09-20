@@ -1,0 +1,25 @@
+{
+  "id": "exempt-supply-insurance",
+  "description": "Exempt insurance intermediary commission",
+  "authority": "LEABHAR_RULE",
+  "references": ["vatca-2010-revised/schedule-4"],
+  "notes": "Under VATCA 2010 Sch 4, insurance intermediation services are exempt from VAT. No input VAT can be recovered on costs directly attributable to exempt activities.",
+  "inputs": {
+    "transaction": {
+      "transactionDate": "2026-09-18",
+      "amountMinor": 25000,
+      "currency": "EUR",
+      "entityType": "Irish_LTD",
+      "vatRegistered": true,
+      "supplyType": "services",
+      "description": "Insurance broker commission",
+      "businessUsePercent": 100,
+      "invoiceAvailable": true
+    }
+  },
+  "expected_classification": {
+    "identifiedTopics": ["vat"],
+    "reviewRequired": true
+  },
+  "review_required": true
+}

@@ -1,0 +1,34 @@
+{
+  "id": "loan-repayment",
+  "description": "Director repays a loan to the company",
+  "authority": "PROFESSIONAL_PRACTICE",
+  "references": [],
+  "notes": "A loan repayment is a balance-sheet transaction, not income. The journal debits the director's current account (liability) and credits the bank. No VAT applies — this is not a supply.",
+  "inputs": {
+    "transaction": {
+      "transactionDate": "2026-09-18",
+      "amountMinor": 100000,
+      "currency": "EUR",
+      "entityType": "Irish_LTD",
+      "vatRegistered": true,
+      "description": "Director loan repayment by cheque"
+    }
+  },
+  "expected_classification": {
+    "identifiedTopics": ["director_transaction"],
+    "notApplicableRuleKeys": ["vat.input_deduction_general"],
+    "reviewRequired": true
+  },
+  "expected_journal": {
+    "posted": true,
+    "balanced": true,
+    "lines": [
+      { "accountCode": "directors_current_account", "debitMinor": 100000 },
+      { "accountCode": "bank_control", "creditMinor": 100000 }
+    ]
+  },
+  "expected_vat": {
+    "entryCount": 0
+  },
+  "review_required": true
+}

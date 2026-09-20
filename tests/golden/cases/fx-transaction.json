@@ -1,0 +1,43 @@
+{
+  "id": "fx-transaction",
+  "description": "Foreign currency purchase with FX rate recorded as a rational pair",
+  "authority": "PROFESSIONAL_PRACTICE",
+  "references": ["AGENTS.md-invariant-1", "money.ts"],
+  "notes": "AGENTS.md invariant #1: money is integer minor units, never a float. FX rates are stored as rational pairs (numerator/denominator) so conversion is reproducible. A USD invoice of $100.00 at a 0.92 USD/EUR rate converts to €92.00 (9,200 cents) base, with 23% VAT = €2,116 base.",
+  "inputs": {
+    "transaction": {
+      "transactionDate": "2026-09-18",
+      "amountMinor": 12300,
+      "currency": "USD",
+      "entityType": "Irish_LTD",
+      "vatRegistered": true,
+      "supplyType": "services",
+      "description": "US software subscription",
+      "businessUsePercent": 100,
+      "invoiceAvailable": true
+    }
+  },
+  "expected_classification": {
+    "identifiedTopics": ["vat", "business_expense"],
+    "applicableRuleKeys": ["vat.reverse_charge_services_from_abroad"],
+    "reviewRequired": true
+  },
+  "expected_journal": {
+    "posted": true,
+    "balanced": true,
+    "lines": [
+      { "accountCode": "6010", "debitMinor": 10000, "currency": "USD" },
+      { "accountCode": "vat_input", "debitMinor": 2300, "currency": "USD" },
+      { "accountCode": "bank_control", "creditMinor": 12300, "currency": "USD" }
+    ]
+  },
+  "expected_vat": {
+    "entryCount": 2,
+    "totalNetMinor": 10000,
+    "totalVatMinor": 2300,
+    "totalGrossMinor": 12300,
+    "totalRecoverableMinor": 2300,
+    "isReverseCharge": true
+  },
+  "review_required": true
+}

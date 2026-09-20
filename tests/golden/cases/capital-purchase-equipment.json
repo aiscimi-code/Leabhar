@@ -1,0 +1,27 @@
+{
+  "id": "capital-purchase-equipment",
+  "description": "Capital purchase of computer equipment (capital allowances, not revenue expense)",
+  "authority": "LEABHAR_RULE",
+  "references": ["tca-1997/s284", "vat.input_deduction_general"],
+  "notes": "Under TCA 1997 s.284, capital expenditure on machinery/plant used wholly and exclusively for the trade qualifies for a wear-and-tear allowance. The purchase is a debit to a fixed-asset account (not a revenue expense), with 23% standard-rate input VAT recoverable.",
+  "inputs": {
+    "transaction": {
+      "transactionDate": "2026-09-18",
+      "amountMinor": 12300,
+      "currency": "EUR",
+      "entityType": "Irish_LTD",
+      "vatRegistered": true,
+      "supplyType": "goods",
+      "description": "Dell XPS 15 laptop for business",
+      "isCapitalExpenditure": true,
+      "businessUsePercent": 100,
+      "invoiceAvailable": true
+    }
+  },
+  "expected_classification": {
+    "identifiedTopics": ["vat", "capital_allowances", "business_expense"],
+    "applicableRuleKeys": ["vat.input_deduction_general"],
+    "reviewRequired": true
+  },
+  "review_required": true
+}

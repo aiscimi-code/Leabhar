@@ -1,0 +1,58 @@
+{
+  "id": "non-eu-service-reverse-charge",
+  "description": "US SaaS service purchased by Irish VAT-registered Ltd (reverse charge)",
+  "authority": "LEABHAR_RULE",
+  "references": ["vat.reverse_charge_services_from_abroad", "vat.place_of_supply_b2b_general", "vat.input_deduction_general", "vat.rate_standard_current"],
+  "notes": "Under VATCA s.12, a VAT-registered person acquiring services from a supplier established outside the State self-accounts for VAT (reverse charge). The recipient both owes output VAT (T1) and claims input VAT (T2), which net to zero. Gross is the net (no VAT was actually charged by the supplier).",
+  "inputs": {
+    "transaction": {
+      "transactionDate": "2026-09-18",
+      "amountMinor": 12000,
+      "currency": "EUR",
+      "entityType": "Irish_LTD",
+      "vatRegistered": true,
+      "supplyType": "services",
+      "supplierCountry": "US",
+      "supplierType": "software_service",
+      "transactionType": "AI_SaaS",
+      "description": "Anthropic API usage",
+      "businessUsePercent": 100,
+      "invoiceAvailable": true
+    },
+    "preJournalEntries": [
+      {
+        "lines": [
+          { "accountId": "6010", "debitMinor": 100000 },
+          { "accountId": "bank_control", "creditMinor": 100000 }
+        ],
+        "narrative": "Opening bank deposit",
+        "entryDate": "2026-09-15"
+      }
+    ]
+  },
+  "expected_classification": {
+    "identifiedTopics": ["vat", "business_expense"],
+    "applicableRuleKeys": ["vat.reverse_charge_services_from_abroad", "vat.place_of_supply_b2b_general", "vat.input_deduction_general"],
+    "reviewRequired": true
+  },
+  "expected_journal": {
+    "posted": true,
+    "balanced": true,
+    "lines": [
+      { "accountCode": "6010", "debitMinor": 12000 },
+      { "accountCode": "vat_input", "debitMinor": 2760 },
+      { "accountCode": "vat_output", "creditMinor": 2760 },
+      { "accountCode": "bank_control", "creditMinor": 12000 }
+    ]
+  },
+  "expected_vat": {
+    "entryCount": 2,
+    "totalNetMinor": 12000,
+    "totalVatMinor": 5520,
+    "totalRecoverableMinor": 2760,
+    "isReverseCharge": true,
+    "rateBasisPoints": 2300,
+    "vatBoxes": ["T1", "T2"]
+  },
+  "review_required": true
+}

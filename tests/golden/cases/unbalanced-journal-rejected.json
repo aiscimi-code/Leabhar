@@ -1,0 +1,26 @@
+{
+  "id": "unbalanced-journal-rejected",
+  "description": "Unbalanced journal entry is rejected by the accounting engine",
+  "authority": "PROFESSIONAL_PRACTICE",
+  "references": [],
+  "notes": "Double-entry bookkeeping requires debits to equal credits. The journal engine must reject any attempt to post an unbalanced entry. This case verifies that invariant #3 (from AGENTS.md) is enforced at the database write level.",
+  "inputs": {
+    "transaction": {
+      "transactionDate": "2026-09-18",
+      "amountMinor": 10000,
+      "currency": "EUR",
+      "entityType": "Irish_LTD",
+      "vatRegistered": true,
+      "description": "Test unbalanced journal"
+    }
+  },
+  "expected_journal": {
+    "posted": false,
+    "balanced": false,
+    "lines": [
+      { "accountCode": "6010", "debitMinor": 10000 },
+      { "accountCode": "bank_control", "creditMinor": 9999 }
+    ]
+  },
+  "review_required": true
+}
