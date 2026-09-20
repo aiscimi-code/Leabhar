@@ -146,6 +146,14 @@ export const depreciationCharges = sqliteTable('depreciation_charges', {
   journalEntryId: text('journal_entry_id'),
   notes: text('notes'),
   ...provenance,
+  // Depreciation charges are computed by the system, never user-entered
+  // (see calculateDepreciation in src/domain/assets/depreciation.ts, which
+  // always sets `source: 'system'` explicitly) — override the shared
+  // provenance default, which was already 'system' here at the database
+  // level (migration 0002_line_provenance.sql) but undeclared in schema.ts
+  // until the drizzle-kit snapshot chain repair (issue #134) surfaced the
+  // mismatch.
+  source: text('source', { enum: ['ai', 'rule', 'user', 'import', 'system', 'derived'] }).notNull().default('system'),
   ...timestamps,
 }, (t) => [index('depreciation_asset_idx').on(t.fixedAssetId, t.periodStart)]);
 
