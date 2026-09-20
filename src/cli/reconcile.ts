@@ -30,7 +30,7 @@ import {
   ensureDefaultAccountsCli, installRulePackCli,
 } from '@/agent/induction';
 import {
-  createInvoicesFromCsv, recordPaymentCli, journalCli,
+  createInvoicesFromCsv, importInvoicesFromCsv, recordPaymentCli, journalCli,
   listTransactionsCli, showInvoiceCli, yearEndCli, vatReturnCli,
   voidInvoiceCli, reverseJournalCli,
 } from '@/agent/books';
@@ -55,6 +55,7 @@ import {
   addAccountInput,
   addCustomerInput,
   createInvoiceCsvInput,
+  importInvoicesCsvInput,
   recordPaymentInput,
   journalCliInput,
   listTransactionsInput,
@@ -136,6 +137,20 @@ Books (once induction is done):
       customer/supplier name or id), description, net, account, vatTreatment,
       and optionally dueDate, supplyDate, statedVat, currency, creditNote,
       reference.
+  import-invoices --direction sales|purchase --file <invoices.csv>
+      --account <code> --vat-treatment <code>
+      The intake version: also creates a documents row (a real CSV/PDF if
+      the row's own "document" column points to one, else a synthetic text
+      stand-in) linked to the invoice, so match() and missingDocuments can
+      actually find it — create-invoice alone posts the invoice with no
+      evidence behind it. Creates or reuses the customer/supplier by name.
+      Every row posts to the SAME --account/--vat-treatment (no per-row
+      account column, unlike create-invoice --file). Columns: invoiceNumber,
+      date, party, net, and optionally vat (stated, trusted over
+      recomputing), gross (cross-checked; a mismatch is a warning, not a
+      failure), due, description, currency, reference, document, and type
+      (contains "credit", or a number starting "CN-", -> credit note; net/
+      vat/gross are still given as positive amounts either way).
   record-payment [--transaction <id>] [--invoices "INV-1,INV-2"]
       [--amount <amount>] [--date <date>] [--unallocated] [--method ...]
       [--direction received|made]  Needed only if neither --invoices nor
@@ -191,8 +206,10 @@ Agent workflow:
      ensure-default-accounts if this company was induced before a code
      existed; install-rule-pack for common Irish SME bank narratives.
   2. import a statement (or run over already-imported data)
-  3. create-invoice from CSV (sales/purchase), create suppliers for names
-     that have no supplier yet
+  3. import-invoices from CSV (sales/purchase) if the pack is invoice-led —
+     also creates the matchable document create-invoice alone does not;
+     create-invoice where a per-row account/vatTreatment is needed instead.
+     create suppliers for names that have no supplier yet.
   4. match documents to bank transactions (evidence linking; does not post)
   5. classify transactions (manually via classify, auto-classify from rules,
      or record-payment where a transaction settles an invoice) and journal
@@ -588,6 +605,18 @@ export async function main(argv: string[], options: CliOptions = {}): Promise<nu
           file: requireFlag(flags, 'file'),
         });
         print(await createInvoicesFromCsv(db, parsed), format);
+        return 0;
+      }
+
+      case 'import-invoices': {
+        const parsed = importInvoicesCsvInput.parse({
+          companyId,
+          direction: requireFlag(flags, 'direction'),
+          file: requireFlag(flags, 'file'),
+          account: requireFlag(flags, 'account', 'account-id', 'accountId'),
+          vatTreatment: requireFlag(flags, 'vat-treatment', 'vat-treatment-id', 'vatTreatmentId'),
+        });
+        print(await importInvoicesFromCsv(db, parsed), format);
         return 0;
       }
 

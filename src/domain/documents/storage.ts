@@ -64,6 +64,13 @@ export interface StoreDocumentInput {
   documentDate?: string | null;
   supplierId?: string | null;
   customerId?: string | null;
+  /** The invoice this document is evidence for (issue #160). */
+  invoiceId?: string | null;
+  invoiceNumber?: string | null;
+  currency?: string | null;
+  netMinor?: number | null;
+  vatMinor?: number | null;
+  grossMinor?: number | null;
   notes?: string | null;
   uploadedBy?: string;
   root?: string;
@@ -135,6 +142,12 @@ export function storeDocument(db: AppDatabase, input: StoreDocumentInput): Store
       documentDate: input.documentDate ?? null,
       supplierId: input.supplierId ?? null,
       customerId: input.customerId ?? null,
+      invoiceId: input.invoiceId ?? null,
+      invoiceNumber: input.invoiceNumber ?? null,
+      currency: input.currency ?? null,
+      netMinor: input.netMinor ?? null,
+      vatMinor: input.vatMinor ?? null,
+      grossMinor: input.grossMinor ?? null,
       extractionStatus: isExtractable(mimeType) ? 'pending' : 'skipped',
       isDuplicateOf: existing?.id ?? null,
       notes: input.notes ?? null,

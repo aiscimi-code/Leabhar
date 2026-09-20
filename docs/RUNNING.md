@@ -104,6 +104,20 @@ npm run cli -- create-invoice --direction sales|purchase --file invoices.csv
     # one row per invoice/bill; columns: invoiceNumber, date, party (a
     # customer/supplier name or id), description, net, account, vatTreatment,
     # and optionally dueDate, supplyDate, statedVat, currency, creditNote, reference
+npm run cli -- import-invoices --direction sales|purchase --file invoices.csv
+    --account <code> --vat-treatment <code>
+    # the intake version (issue #160): also creates a documents row (a real
+    # CSV/PDF if the row's own `document` column names one, else a synthetic
+    # text stand-in) linked to the invoice, so match() and missingDocuments
+    # can actually find it — create-invoice alone posts the invoice with no
+    # evidence behind it. Creates or reuses the customer/supplier by name.
+    # Every row posts to the SAME --account/--vat-treatment, since there is
+    # no per-row account column. Columns: invoiceNumber, date, party, net,
+    # and optionally vat (stated, trusted over recomputing), gross
+    # (cross-checked; a mismatch is a warning, not a failure), due,
+    # description, currency, reference, document, and type (contains
+    # "credit", or a number starting "CN-", -> credit note; net/vat/gross
+    # are still given as positive amounts either way).
 npm run cli -- record-payment [--transaction <id>] [--invoices "INV-1,INV-2"]
     [--amount <amount>] [--date <date>] [--unallocated] [--direction ...]
     # exact: one invoice, no --amount. lump: several --invoices, paid off in
@@ -206,10 +220,13 @@ company from the CLI alone, start with induction:
    for a company induced before a code existed), and `add-customer` for
    sales counterparties. `create-supplier` (below) covers the purchase side.
    Load invoices with `create-invoice --file` from a CSV once the parties
-   and accounts it references exist. `install-rule-pack` seeds common Irish
-   SME bank-narrative rules (wages, PAYE/PRSI, VAT3, rent, an own-account
-   transfer, director drawings) so auto-classify handles them without a
-   rule written by hand for each one.
+   and accounts it references exist — or `import-invoices --file` for an
+   invoice-led pack, which also creates the `documents` row `match` (step 3
+   below) needs to find each invoice; `create-invoice` alone posts the
+   invoice with no evidence behind it. `install-rule-pack` seeds common
+   Irish SME bank-narrative rules (wages, PAYE/PRSI, VAT3, rent, an
+   own-account transfer, director drawings) so auto-classify handles them
+   without a rule written by hand for each one.
 
 The intended workflow from there is:
 
