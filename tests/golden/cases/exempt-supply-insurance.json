@@ -1,0 +1,33 @@
+{
+  "id": "exempt-supply-insurance",
+  "description": "Exempt insurance intermediary commission",
+  "authority": "PROFESSIONAL_PRACTICE",
+  "references": [],
+  "notes": "Insurance intermediary commissions are an exempt supply under VATCA. No VAT is charged or recovered. The commission goes to income. The business_expense topic is identified, but no specific VAT rules apply. Review required — the exemption needs professional verification.",
+  "inputs": {
+    "transaction": {
+      "transactionDate": "2025-06-15",
+      "amountMinor": 50000,
+      "currency": "EUR",
+      "entityType": "Irish_LTD",
+      "vatRegistered": true,
+      "transactionType": "insurance_commission",
+      "description": "Insurance brokerage commission",
+      "businessUsePercent": 100,
+      "invoiceAvailable": true
+    }
+  },
+  "expected_classification": {
+    "identifiedTopics": ["business_expense"],
+    "reviewRequired": true
+  },
+  "expected_journal": {
+    "posted": true,
+    "balanced": true,
+    "lines": [
+      { "accountKey": "bank_control", "debitMinor": 50000 },
+      { "accountCode": "4000", "creditMinor": 50000 }
+    ]
+  },
+  "review_required": true
+}

@@ -1,0 +1,35 @@
+{
+  "id": "ie-purchase-standard-rate",
+  "description": "Irish standard-rated domestic purchase with 23% input VAT, fully recoverable",
+  "authority": "LEABHAR_RULE",
+  "references": ["vat.input_deduction_general", "vat.rate_standard_current"],
+  "notes": "A standard-rated purchase in Ireland. The input VAT is deductible under VATCA s.59(1), the standard rate is 23%. This is a deterministic rule application — the rules exist in the KB and conditions match (Irish supplier, standard-rated supply, business use). Review is required because rules carry reviewStatus 'ai_extracted' until human-approved.",
+  "inputs": {
+    "transaction": {
+      "transactionDate": "2025-06-15",
+      "amountMinor": 12300,
+      "currency": "EUR",
+      "entityType": "Irish_LTD",
+      "vatRegistered": true,
+      "transactionType": "purchase_invoice",
+      "description": "Purchase from Irish supplier - standard rated goods",
+      "businessUsePercent": 100,
+      "invoiceAvailable": true
+    }
+  },
+  "expected_classification": {
+    "identifiedTopics": ["vat"],
+    "applicableRuleKeys": ["vat.input_deduction_general", "vat.rate_standard_current"],
+    "reviewRequired": true
+  },
+  "expected_journal": {
+    "posted": true,
+    "balanced": true,
+    "lines": [
+      { "accountCode": "6120", "debitMinor": 10000 },
+      { "accountKey": "vat_on_purchases", "debitMinor": 2300 },
+      { "accountKey": "bank_control", "creditMinor": 12300 }
+    ]
+  },
+  "review_required": true
+}

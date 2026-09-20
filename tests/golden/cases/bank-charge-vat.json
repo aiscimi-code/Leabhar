@@ -1,0 +1,34 @@
+{
+  "id": "bank-charge-vat",
+  "description": "Bank charge with input VAT, deductible under general rule",
+  "authority": "LEABHAR_RULE",
+  "references": ["vat.input_deduction_general", "vat.rate_standard_current"],
+  "notes": "A bank charge is a service supplied in Ireland at the standard rate (23%). The input VAT is subject to the general deduction rule (VATCA s.59). The VAT rules exist in the KB. Review required because rules carry reviewStatus 'ai_extracted'.",
+  "inputs": {
+    "transaction": {
+      "transactionDate": "2025-06-15",
+      "amountMinor": 5000,
+      "currency": "EUR",
+      "entityType": "Irish_LTD",
+      "vatRegistered": true,
+      "transactionType": "bank_charge",
+      "description": "Bank of Ireland monthly charge",
+      "businessUsePercent": 100,
+      "invoiceAvailable": true
+    }
+  },
+  "expected_classification": {
+    "identifiedTopics": ["vat", "banking"],
+    "reviewRequired": true
+  },
+  "expected_journal": {
+    "posted": true,
+    "balanced": true,
+    "lines": [
+      { "accountCode": "6100", "debitMinor": 4065 },
+      { "accountKey": "vat_on_purchases", "debitMinor": 935 },
+      { "accountKey": "bank_control", "creditMinor": 5000 }
+    ]
+  },
+  "review_required": true
+}

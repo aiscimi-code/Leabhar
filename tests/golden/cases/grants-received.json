@@ -1,0 +1,32 @@
+{
+  "id": "grants-received",
+  "description": "State grant received (not taxable supply of goods/services)",
+  "authority": "PROFESSIONAL_PRACTICE",
+  "references": [],
+  "notes": "A state grant is not a supply of goods/services for VAT purposes — it is a non-recoverable contribution that goes to income. Under standard Irish accounting practice, grants are credited to other income. No VAT applies. The business_expense topic will be identified, but no VAT rules apply. Review required.",
+  "inputs": {
+    "transaction": {
+      "transactionDate": "2025-06-15",
+      "amountMinor": 250000,
+      "currency": "EUR",
+      "entityType": "Irish_LTD",
+      "vatRegistered": true,
+      "transactionType": "grant_received",
+      "description": "Enterprise Ireland grant payment",
+      "invoiceAvailable": true
+    }
+  },
+  "expected_classification": {
+    "identifiedTopics": ["business_expense"],
+    "reviewRequired": true
+  },
+  "expected_journal": {
+    "posted": true,
+    "balanced": true,
+    "lines": [
+      { "accountKey": "bank_control", "debitMinor": 250000 },
+      { "accountCode": "4090", "creditMinor": 250000 }
+    ]
+  },
+  "review_required": true
+}

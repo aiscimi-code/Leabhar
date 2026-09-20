@@ -1,0 +1,34 @@
+{
+  "id": "credit-note-standard-rate",
+  "description": "Credit note for a standard-rated purchase, correcting overcharged VAT",
+  "authority": "PROFESSIONAL_PRACTICE",
+  "references": ["vat.input_deduction_general"],
+  "notes": "A credit note reduces both the expense and the recoverable input VAT. Under VATCA s.59(2), a credit note for an input VAT deduction must be reported in the same period as the original invoice for it to reduce the same period's VAT return; otherwise it carries forward. The general rule (s.59) and standard rate exist in the KB. Review required because rules are ai_extracted.",
+  "inputs": {
+    "transaction": {
+      "transactionDate": "2025-06-15",
+      "amountMinor": 12300,
+      "currency": "EUR",
+      "entityType": "Irish_LTD",
+      "vatRegistered": true,
+      "transactionType": "credit_note",
+      "description": "Credit note from Irish supplier",
+      "businessUsePercent": 100,
+      "invoiceAvailable": true
+    }
+  },
+  "expected_classification": {
+    "identifiedTopics": ["vat"],
+    "reviewRequired": true
+  },
+  "expected_journal": {
+    "posted": true,
+    "balanced": true,
+    "lines": [
+      { "accountCode": "6120", "creditMinor": 10000 },
+      { "accountKey": "vat_on_purchases", "creditMinor": 2300 },
+      { "accountKey": "bank_control", "debitMinor": 12300 }
+    ]
+  },
+  "review_required": true
+}

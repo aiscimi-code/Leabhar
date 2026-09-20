@@ -1,0 +1,34 @@
+{
+  "id": "capital-purchase-equipment",
+  "description": "Capital purchase of computer equipment (capital allowances, not revenue expense)",
+  "authority": "LEABHAR_RULE",
+  "references": ["tca1997.s284"],
+  "notes": "Under TCA 1997 s.284, computer equipment qualifies for capital allowances (writing down allowances). Capital purchases are not treated as revenue expenses — they go to a fixed-asset account. The capital_allowances topic exists in the KB. Review required because rules carry reviewStatus 'ai_extracted'.",
+  "inputs": {
+    "transaction": {
+      "transactionDate": "2025-06-15",
+      "amountMinor": 123000,
+      "currency": "EUR",
+      "entityType": "Irish_LTD",
+      "vatRegistered": true,
+      "transactionType": "capital_purchase",
+      "description": "Purchase of computer equipment from Irish supplier",
+      "businessUsePercent": 100,
+      "invoiceAvailable": true,
+      "isCapitalExpenditure": true
+    }
+  },
+  "expected_classification": {
+    "identifiedTopics": ["capital_allowances", "vat"],
+    "reviewRequired": true
+  },
+  "expected_journal": {
+    "posted": true,
+    "balanced": true,
+    "lines": [
+      { "accountKey": "computer_equipment", "debitMinor": 123000 },
+      { "accountKey": "bank_control", "creditMinor": 123000 }
+    ]
+  },
+  "review_required": true
+}

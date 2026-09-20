@@ -1,0 +1,35 @@
+{
+  "id": "ie-sale-standard-rate",
+  "description": "Irish standard-rated domestic sale with 23% output VAT",
+  "authority": "LEABHAR_RULE",
+  "references": ["vat.rate_standard_current", "vat.charge_general"],
+  "notes": "A standard-rated sale in Ireland at the 23% rate. The output VAT is reported in the T1 box. This is a deterministic rule application — the standard rate rule and general charge to VAT exist in the KB. Review required because rules carry reviewStatus 'ai_extracted'.",
+  "inputs": {
+    "transaction": {
+      "transactionDate": "2025-06-15",
+      "amountMinor": 12300,
+      "currency": "EUR",
+      "entityType": "Irish_LTD",
+      "vatRegistered": true,
+      "transactionType": "sale_invoice",
+      "description": "Sale of software to Irish customer",
+      "businessUsePercent": 100,
+      "invoiceAvailable": true
+    }
+  },
+  "expected_classification": {
+    "identifiedTopics": ["vat"],
+    "applicableRuleKeys": ["vat.rate_standard_current"],
+    "reviewRequired": true
+  },
+  "expected_journal": {
+    "posted": true,
+    "balanced": true,
+    "lines": [
+      { "accountKey": "bank_control", "debitMinor": 12300 },
+      { "accountCode": "4000", "creditMinor": 10000 },
+      { "accountKey": "vat_on_sales", "creditMinor": 2300 }
+    ]
+  },
+  "review_required": true
+}

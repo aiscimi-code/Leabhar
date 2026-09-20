@@ -1,0 +1,38 @@
+{
+  "id": "vat-discrepancy-held-back",
+  "description": "Purchase where stated VAT disagrees with the treatment's rate",
+  "authority": "PROFESSIONAL_PRACTICE",
+  "references": ["issue-145-defect-1"],
+  "notes": "When a supplier's stated VAT disagrees with the treatment's expected rate, the VAT is costed as stated (evidence is preserved) but held back from recovery (recoverableVatMinor forced to 0) and a review item is raised. This preserves evidence while preventing automatic recovery of a potentially incorrect amount. The reverse charge rules exist in the KB; review is always required for rule conflicts.",
+  "inputs": {
+    "transaction": {
+      "transactionDate": "2025-06-15",
+      "amountMinor": 12300,
+      "currency": "EUR",
+      "entityType": "Irish_LTD",
+      "vatRegistered": true,
+      "supplyType": "services",
+      "supplierCountry": "US",
+      "supplierType": "software_service",
+      "transactionType": "AI_SaaS",
+      "description": "Anthropic API monthly subscription",
+      "businessUsePercent": 100,
+      "invoiceAvailable": true
+    }
+  },
+  "expected_classification": {
+    "identifiedTopics": ["vat"],
+    "reviewRequired": true
+  },
+  "expected_journal": {
+    "posted": true,
+    "balanced": true,
+    "lines": [
+      { "accountCode": "6120", "debitMinor": 10000 },
+      { "accountKey": "vat_on_purchases", "debitMinor": 2300 },
+      { "accountKey": "vat_on_purchases", "creditMinor": 2300 },
+      { "accountKey": "bank_control", "creditMinor": 10000 }
+    ]
+  },
+  "review_required": true
+}

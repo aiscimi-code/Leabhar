@@ -1,0 +1,35 @@
+{
+  "id": "eu-goods-supply",
+  "description": "Intra-Community supply of goods to an EU customer (zero-rated, E1 box)",
+  "authority": "LEABHAR_RULE",
+  "references": ["vat.reverse_charge_services_from_abroad"],
+  "notes": "Under VATCA s.21, supplies of goods to a person in another EU member state are charged at zero rate. The journal posts the full amount to income with no output VAT. The reverse charge / place of supply rules exist in the KB. Review required because rules carry reviewStatus 'ai_extracted'.",
+  "inputs": {
+    "transaction": {
+      "transactionDate": "2025-06-15",
+      "amountMinor": 100000,
+      "currency": "EUR",
+      "entityType": "Irish_LTD",
+      "vatRegistered": true,
+      "supplyType": "goods",
+      "supplierCountry": "IE",
+      "transactionType": "sale_invoice",
+      "description": "Intra-Community supply of widgets to French customer",
+      "businessUsePercent": 100,
+      "invoiceAvailable": true
+    }
+  },
+  "expected_classification": {
+    "identifiedTopics": ["vat"],
+    "reviewRequired": true
+  },
+  "expected_journal": {
+    "posted": true,
+    "balanced": true,
+    "lines": [
+      { "accountKey": "bank_control", "debitMinor": 100000 },
+      { "accountCode": "4000", "creditMinor": 100000 }
+    ]
+  },
+  "review_required": true
+}

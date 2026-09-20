@@ -1,0 +1,33 @@
+{
+  "id": "zero-rated-export-supply",
+  "description": "Zero-rated export supply of goods to EU customer (reverse charge on customer side)",
+  "authority": "LEABHAR_RULE",
+  "references": ["vat.rate_zero_rated", "vat.place_of_supply_b2b_general"],
+  "notes": "Under VATCA s.21 and s.34, supplies of goods to a person in another EU member state are charged at zero rate. The output VAT is 0%. The rule 'Zero-rated supply' exists in the KB. Review required because the zero-rate rule carries reviewStatus 'ai_extracted'.",
+  "inputs": {
+    "transaction": {
+      "transactionDate": "2025-06-15",
+      "amountMinor": 100000,
+      "currency": "EUR",
+      "entityType": "Irish_LTD",
+      "vatRegistered": true,
+      "supplyType": "goods",
+      "supplierCountry": "IE",
+      "description": "Sale of widgets to French customer, shipped to FR",
+      "invoiceAvailable": true
+    }
+  },
+  "expected_classification": {
+    "identifiedTopics": ["vat"],
+    "reviewRequired": true
+  },
+  "expected_journal": {
+    "posted": true,
+    "balanced": true,
+    "lines": [
+      { "accountKey": "bank_control", "debitMinor": 100000 },
+      { "accountCode": "4000", "creditMinor": 100000 }
+    ]
+  },
+  "review_required": true
+}
