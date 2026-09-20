@@ -1009,6 +1009,48 @@ describe('cli reconcile — induction and books (issue #153)', () => {
           expect(code).toBe(0);
           expect(JSON.parse(c.stdout.join(''))).toEqual([]);
         });
+
+        // Issue #158: today a caller must post then UPDATE the bank_transactions
+        // row itself to link it — journal --transaction does both in one call.
+        it('journal --transaction posts a split for one statement line and links it', async () => {
+          let c = iCapture();
+          await iRun(['add-bank', '--name', 'AIB Current', '--opening-date', '2025-01-01']);
+          const bankAccountId = JSON.parse(c.stdout.join('')).bankAccountId;
+          c.restore();
+
+          const stripeCsv = join(root, 'stripe.csv');
+          writeFileSync(stripeCsv, [
+            'Date,Description,Amount,Notes',
+            '15/03/2025,STRIPE PAYOUT,2107.34,gross card sales 2146.28 less processing fees 38.94',
+          ].join('\n'));
+          await iRun(['import', '--account', bankAccountId, '--file', stripeCsv]);
+
+          c = iCapture();
+          await iRun(['list-transactions']);
+          const [tx] = JSON.parse(c.stdout.join(''));
+          c.restore();
+          expect(tx.description).toBe('STRIPE PAYOUT');
+
+          c = iCapture();
+          const code = await iRun([
+            'journal', '--transaction', tx.id,
+            '--lines', JSON.stringify([
+              { account: '1010', debit: '2107.34', memo: 'Stripe net payout' },
+              { account: '6100', debit: '38.94', memo: 'Stripe processing fees' },
+              { account: '4020', credit: '2146.28', memo: 'Card sales' },
+            ]),
+          ]);
+          c.restore();
+          expect(code).toBe(0);
+          const parsed = JSON.parse(c.stdout.join(''));
+          expect(parsed.journalEntryId).toBeTruthy();
+          expect(parsed.bankTransactionId).toBe(tx.id);
+
+          const posted = iCapture();
+          await iRun(['list-transactions', '--unposted']);
+          posted.restore();
+          expect(JSON.parse(posted.stdout.join(''))).toEqual([]);
+        });
       });
     });
   });

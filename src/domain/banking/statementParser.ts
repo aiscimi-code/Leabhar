@@ -15,7 +15,7 @@ export type DomainField =
   | 'transaction_date' | 'value_date' | 'description' | 'amount'
   | 'debit' | 'credit' | 'currency' | 'bank_reference' | 'bank_transaction_id'
   | 'balance' | 'counterparty_name' | 'counterparty_iban' | 'transaction_type'
-  | 'base_amount' | 'original_amount' | 'ignore';
+  | 'base_amount' | 'original_amount' | 'notes' | 'ignore';
 
 export interface ColumnMapping {
   [sourceColumn: string]: DomainField;
@@ -49,6 +49,13 @@ export interface ParsedTransaction {
   counterpartyName: string | null;
   counterpartyIban: string | null;
   transactionType: string | null;
+  /**
+   * A statement's own free-text remark, distinct from `description` — a
+   * Stripe payout's "gross card sales X less processing fees Y", or a loan
+   * repayment's "capital A / interest B" (issue #158). Never derived from
+   * `description`: only populated when a column is deliberately mapped here.
+   */
+  notes: string | null;
   fingerprint: string;
   rawData: Record<string, string>;
 }
@@ -87,7 +94,12 @@ const COLUMN_PATTERNS: Array<{ field: DomainField; patterns: RegExp[] }> = [
   { field: 'counterparty_iban', patterns: [/iban/i] },
   { field: 'counterparty_name', patterns: [/^(counterparty|payee|merchant|beneficiary)(\s*name)?$/i] },
   { field: 'transaction_type', patterns: [/^(transaction\s*)?type$/i, /^category$/i] },
-  { field: 'description', patterns: [/^description$/i, /^details$/i, /^narrative$/i, /^memo$/i, /description|details|narrative/i] },
+  // A statement's own free-text remark (issue #158) — Stripe's fee breakdown,
+  // a loan's capital/interest split. Tried before `description` so a column
+  // literally named "Notes" or "Narrative" lands here rather than being
+  // folded into the description, which every row already has.
+  { field: 'notes', patterns: [/^notes?$/i, /^narrative$/i, /^comments?$/i, /^remarks?$/i] },
+  { field: 'description', patterns: [/^description$/i, /^details$/i, /^memo$/i, /description|details|narrative/i] },
 ];
 
 /**
@@ -286,6 +298,7 @@ export function buildResult(
         counterpartyName: pick(raw, reverse.counterparty_name) || null,
         counterpartyIban: pick(raw, reverse.counterparty_iban) || null,
         transactionType: pick(raw, reverse.transaction_type) || null,
+        notes: pick(raw, reverse.notes) || null,
         fingerprint: transactionFingerprint({
           bankAccountId: options.bankAccountId,
           transactionDate,

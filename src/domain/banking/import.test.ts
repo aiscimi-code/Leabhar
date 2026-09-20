@@ -3,6 +3,7 @@ import { eq, and } from 'drizzle-orm';
 import { createTestDatabase } from '@/db/testing';
 import { createCompany, addBankAccount } from '../config/setup';
 import { importStatement, saveImportProfile, findMatchingProfile } from './import';
+import { proposeColumnMapping } from './statementParser';
 import { bankTransactions, statementImports } from '@/db/schema';
 import type { AppDatabase } from '@/db';
 
@@ -208,6 +209,36 @@ describe('importStatement', () => {
     // The same lines on a different account are different transactions.
     expect(result.imported).toBe(3);
     expect(db.select().from(bankTransactions).all()).toHaveLength(6);
+  });
+
+  // Issue #158: a Stripe payout's fee breakdown or a loan's capital/interest
+  // split already sits in the statement's own remark column — it should
+  // survive the import rather than being dropped on the floor.
+  it('imports a Notes column onto the transaction, separate from its description', async () => {
+    const content = [
+      'Date,Description,Amount,Notes',
+      '05/05/2025,STRIPE PAYOUT,2107.34,gross card sales 2146.28 less processing fees 38.94',
+      '06/05/2025,LOAN REPAYMENT,-603.92,capital EUR 512.25 / interest EUR 91.67',
+    ].join('\n');
+    await doImport(content, {
+      columnMap: { ...columnMap, Notes: 'notes' as const },
+    });
+
+    const rows = db.select().from(bankTransactions).orderBy(bankTransactions.transactionDate).all();
+    expect(rows[0]).toMatchObject({
+      description: 'STRIPE PAYOUT',
+      notes: 'gross card sales 2146.28 less processing fees 38.94',
+    });
+    expect(rows[1]).toMatchObject({
+      description: 'LOAN REPAYMENT',
+      notes: 'capital EUR 512.25 / interest EUR 91.67',
+    });
+  });
+
+  it('auto-proposes a column literally named Notes onto the notes field', () => {
+    const { mapping } = proposeColumnMapping(['Date', 'Description', 'Amount', 'Notes']);
+    expect(mapping.Notes).toBe('notes');
+    expect(mapping.Description).toBe('description');
   });
 });
 
