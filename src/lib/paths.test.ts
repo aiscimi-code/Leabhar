@@ -11,7 +11,7 @@ import { homedir } from 'node:os';
  */
 const ENV_KEYS = [
   'LEABHAR_PACKAGED', 'LEABHAR_APP_ROOT', 'LEABHAR_DATA_ROOT', 'LEABHAR_DATA_DIR',
-  'DATABASE_PATH', 'DOCUMENT_STORAGE_PATH', 'BACKUP_PATH', 'LEABHAR_MIGRATIONS',
+  'DATABASE_PATH', 'DOCUMENT_STORAGE_PATH', 'BACKUP_PATH', 'LEABHAR_MIGRATIONS', 'LEABHAR_LOG_DIR',
 ] as const;
 
 async function loadPaths(env: Record<string, string | undefined>) {
@@ -55,6 +55,8 @@ describe('paths.ts', () => {
     expect(paths.dataDir()).toBe(join(expectedDataRoot, 'data'));
     expect(paths.storageRoot()).toBe(join(expectedDataRoot, 'storage', 'documents'));
     expect(paths.backupRoot()).toBe(join(expectedDataRoot, 'backups'));
+    // Logs are user-relevant runtime data (issue #61), so DATA_ROOT too — never wiped by uninstall.
+    expect(paths.logDirectory()).toBe(join(expectedDataRoot, 'logs'));
     // Migrations ship with the binaries, so they stay under the app root.
     expect(paths.migrationsFolder()).toBe(join(expectedAppRoot, 'drizzle'));
   });
@@ -87,11 +89,13 @@ describe('paths.ts', () => {
       BACKUP_PATH: '/custom/backups',
       LEABHAR_DATA_DIR: '/custom/data',
       LEABHAR_MIGRATIONS: '/custom/migrations',
+      LEABHAR_LOG_DIR: '/custom/logs',
     });
     expect(paths.databasePath()).toBe('/custom/db.sqlite');
     expect(paths.storageRoot()).toBe('/custom/docs');
     expect(paths.backupRoot()).toBe('/custom/backups');
     expect(paths.dataDir()).toBe('/custom/data');
     expect(paths.migrationsFolder()).toBe('/custom/migrations');
+    expect(paths.logDirectory()).toBe('/custom/logs');
   });
 });

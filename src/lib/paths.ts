@@ -71,6 +71,11 @@ export function backupRoot(): string {
   return resolve(process.env.BACKUP_PATH ?? join(DATA_ROOT, 'backups'));
 }
 
+/** Launcher/server log files (issue #61) — user-relevant runtime data, so DATA_ROOT, not APP_ROOT. */
+export function logDirectory(): string {
+  return resolve(process.env.LEABHAR_LOG_DIR ?? join(DATA_ROOT, 'logs'));
+}
+
 export function migrationsFolder(): string {
   return resolve(process.env.LEABHAR_MIGRATIONS ?? join(APP_ROOT, 'drizzle'));
 }
