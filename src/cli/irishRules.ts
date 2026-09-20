@@ -14,7 +14,9 @@ import {
   VATCA_SCHEDULE_2_MD_PATH, VATCA_SCHEDULE_3_MD_PATH, type VatcaScheduleNumber,
 } from '@/domain/rules/vatcaScheduleIngestion';
 import {
-  ingestTca1997S530, ingestRctTdm18_02_04, ingestRctTdm18_02_05, ingestRctTdm18_02_11, deriveRctRules,
+  ingestTca1997S530, ingestTca1997S530A, ingestTca1997S530E, ingestTca1997S530G, ingestTca1997S530H,
+  ingestTca1997S530I, tca1997RctSectionMdPath, ingestRctTdm18_02_04, ingestRctTdm18_02_05, ingestRctTdm18_02_11,
+  deriveRctRules,
   TCA_1997_S530_MD_PATH,
 } from '@/domain/rules/rctIngestion';
 import {
@@ -51,7 +53,8 @@ Commands:
   ingest [--source <s>] [--file <path>]
                                        Ingest a source's Markdown (--source: finance-act-2024
                                        [default] | vatca-2010 | vatca-2010-sch2 | vatca-2010-sch3 |
-                                       rct-tca530 | rct-tdm | rct-tdm-05 | rct-tdm-11 |
+                                       rct-tca530 | rct-fa2011-a | rct-fa2011-e | rct-fa2011-g |
+                                       rct-fa2011-h | rct-fa2011-i | rct-tdm | rct-tdm-05 | rct-tdm-11 |
                                        vatca-2010-revised | tca1997-s284 | si639 | si156 |
                                        si69-2025 (alias si69-2025-reg8) | si69-2025-reg5 | si69-2025-reg7 |
                                        si69-2025-reg9 | tdm-38-01-03b |
@@ -59,8 +62,8 @@ Commands:
                                        --file overrides
                                        its default path, e.g. to ingest a different revised section)
   extract [--source <s>]              Derive irish_tax_rules from ingested provisions
-                                       (--source as above, but rct-tca530/rct-tdm/rct-tdm-05/rct-tdm-11 all use
-                                       --source rct; also finance-act-2024-vat-thresholds, which requires
+                                       (--source as above, but rct-tca530/rct-fa2011-*/rct-tdm/rct-tdm-05/
+                                       rct-tdm-11 all use --source rct; also finance-act-2024-vat-thresholds, which requires
                                        finance-act-2024 already ingested (no separate document); default
                                        finance-act-2024)
   list-provisions [--category <c>] [--relevant-only]
@@ -127,6 +130,19 @@ export async function main(argv: string[], options: CliOptions = {}): Promise<nu
           const file = getFlag(flags, 'file') ?? TCA_1997_S530_MD_PATH;
           const markdown = readFileSync(file, 'utf8');
           print(ingestTca1997S530(db, { companyId, markdown, ingestVersion: 'v1', localPath: file }), format);
+          return 0;
+        }
+        if (source.startsWith('rct-fa2011-')) {
+          const letter = source.slice('rct-fa2011-'.length).toUpperCase();
+          const ingestFns: Record<string, typeof ingestTca1997S530A> = {
+            A: ingestTca1997S530A, E: ingestTca1997S530E, G: ingestTca1997S530G,
+            H: ingestTca1997S530H, I: ingestTca1997S530I,
+          };
+          const ingestFn = ingestFns[letter];
+          if (!ingestFn) throw new Error(`Unknown --source: ${source} (supported: rct-fa2011-a/e/g/h/i)`);
+          const file = getFlag(flags, 'file') ?? tca1997RctSectionMdPath(`530${letter}`);
+          const markdown = readFileSync(file, 'utf8');
+          print(ingestFn(db, { companyId, markdown, ingestVersion: 'v1', localPath: file }), format);
           return 0;
         }
         if (source === 'rct-tdm' || source === 'rct-tdm-05' || source === 'rct-tdm-11') {

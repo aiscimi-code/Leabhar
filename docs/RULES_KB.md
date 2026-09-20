@@ -355,7 +355,6 @@ never conflated with it:
 RCT is a withholding regime on payments under a "relevant contract" in
 construction, forestry and meat processing — **never a VAT rate**, a wholly
 independent tax from every source above (`docs/statutes/rct/README.md`).
-Four sources, each its own `irish_knowledge_sources` row:
 
 - **TCA 1997 s.530** (`legislation`, as-enacted 1997) — Chapter 2's
   foundational definitions (relevant contract, relevant operations,
@@ -367,38 +366,66 @@ Four sources, each its own `irish_knowledge_sources` row:
   per file rather than many sections in one converted Markdown, and drops a
   single leading `[FA70 s17...]`-style amendment-history citation bracket
   that isn't statutory text.
+- **TCA 1997 ss.530A, 530E, 530G, 530H, 530I** (`legislation`,
+  as-enacted-2011; issue #131) — the load-bearing rate-determination
+  sections, inserted by Finance Act 2011 s.20. Confirmed (2026-09-20) that
+  **no LRC-revised TCA 1997 exists for ss.530A-530V**: every
+  `revisedacts.lawreform.ie/eli/1997/act/39/section/530X/revised/en/html`
+  404s, as does the Act-level revised page. These were fetched instead from
+  the eISB **as-enacted Finance Act 2011 s.20** page — the inserting Act's
+  own text, which quotes each new section in full — split one file per
+  section (`docs/statutes/tca-1997/s530A.md`-`s530V.md`, all 22 letters,
+  same shared `source_html_sha256` since they share one physical page).
+  `src/domain/rules/financeAct2011RctSectionParser.ts` is a new parser: the
+  section-opening line here is `"530A.— (1) ..."` (number and first
+  subsection on one line), not `s530.md`'s isolated bare `"530."`, so
+  `tca1997SectionParser.ts` doesn't match this source's shape as-is. Only
+  the six load-bearing sections are ingested; the other sixteen (530B-D,
+  530J-V — registration, returns, assessment, penalties, record-keeping)
+  exist verbatim on disk for a future pass.
 - **Revenue TDM Part 18-02-04** (`revenue_guidance`) — "RCT for Principal
-  Contractors", the only verbatim source this KB holds for the actual
-  2011-restructured procedure. TCA 1997 ss.530A-530V (which actually govern
-  the modern electronic RCT system, including the deduction rate) have **no
-  1997 as-enacted page to fetch** — they were inserted by Finance Act 2011
-  s.20, a different Act not yet ingested here. Ingested as one whole-document
+  Contractors", still the only verbatim source this KB holds for the
+  2011-restructured payment-notification *procedure* (ss.530B/530C are
+  verbatim on disk too but not ingested). Ingested as one whole-document
   provision (continuous prose with numbered headings, not an addressable
   statute), tagged `revenue_guidance` so it can never outrank a statute
   covering the same ground once one is ingested (`sourceHierarchy.ts`).
 - **Revenue TDM Part 18-02-05** (`revenue_guidance`) — "RCT for
   Subcontractors". Its §3.5 states, verbatim, Revenue's own published
   criteria for the zero/20%/35% rate tiers (3-year tax compliance history,
-  fixed place of business, record keeping) — used for
-  `rct.subcontractor_compliance_criteria` below.
+  fixed place of business, record keeping) — `rct.subcontractor_compliance_
+  criteria` below. Now that ss.530G/530H are ingested, this KB also holds
+  the actual statutory test the TDM restates.
 - **Revenue TDM Part 18-02-11** (`revenue_guidance`) — the electronic RCT
   system's ROS mechanics (re-opening a closed contract, unreported payment
   windows, bulk rate review). Ingested for citability but not currently
   curated into a rule: it is genuinely verbatim, but its content (screen
   navigation, closed-contract time windows) is UI procedure rather than a
   transaction-classification rule.
-- `src/domain/rules/rctCuration.ts` — 4 curated rules: the relevant-
-  operations scope gate (from s.530), the payment-notification procedural
-  requirement, a rule that states the 0%/20%/35% deduction rate **cannot be
-  determined from transaction data at all**, and a rule describing Revenue's
-  own published rate criteria (from TDM 18-02-05) without evaluating them.
-  Unlike every VAT rate rule in this KB, RCT's rate is not a fact stated in
-  legislation or guidance for a given transaction: it is an individualised
-  determination Revenue issues per payment notification, based on the
-  subcontractor's own compliance history — a 3-year record no transaction
-  carries. Curating a guessed rate here would be exactly the "silently
-  repaired" failure AGENTS.md invariant #7 forbids, so both rate rules
-  surface the criteria/absence-of-a-rate as the finding, never a number.
+- `src/domain/rules/rctCuration.ts` — 11 curated rules. From s.530: the
+  relevant-operations scope gate. From s.530A: who counts as a "principal"
+  obliged to operate RCT (broader than the obvious construction-industry
+  business — also a local authority, a Minister, certain statutory bodies,
+  and gas/water/electricity/dock/canal/railway undertakings). From TDM
+  18-02-04: the payment-notification procedural requirement. From s.530E:
+  the real zero rate (`rct.rate_zero`, 0%), the 35% default/no-authorisation
+  rate (`rct.rate_default_35pct`, also citing s.530F(2)(a)'s independent
+  35% liability), and a standard-rate cross-reference
+  (`rct.rate_standard_reference`) that deliberately states **no**
+  `numericValue` — s.530E/530H only say "the standard rate (within the
+  meaning of section 3)", and TCA 1997 s.3 itself is not ingested, so this
+  KB does not assert the figure (currently 20% per Revenue's own public
+  guidance, but not independently verified here). From s.530G/s.530H: the
+  real statutory zero-rate and standard-rate subcontractor criteria
+  (superseding `rct.subcontractor_compliance_criteria`'s TDM paraphrase as
+  the load-bearing source, per `sourceHierarchy.ts`). From s.530I: a
+  procedure rule for Revenue's determination-and-appeal mechanism, and a
+  **re-sourced** `rct.deduction_rate_not_determinable` — narrowed, not
+  retired: the three tiers are now real curated facts, but *which* tier a
+  given subcontractor gets is still Revenue's own individualised
+  determination, not a fact any transaction record can supply. Curating a
+  rule that guessed *which* tier applies would be exactly the "silently
+  repaired" failure AGENTS.md invariant #7 forbids.
 - **S.I. 651/2011 (the 2011 eRCT Regulations) is deliberately not used as a
   source**, even though it is genuinely verbatim: Revenue's own TDM 18-02-04
   §14 records that it "were subsequently revoked and replaced by [S.I.
@@ -1353,12 +1380,18 @@ audit
   yet extracted into named rules — `provisionsWithoutExtractedRule` in the
   audit report would show these once curated; today it's empty because the
   curated set and the derived set match exactly.
-- **RCT's actual deduction rate (0%/20%/35%) is not in this KB at all**,
-  by design (see "Relevant Contracts Tax (RCT)" above) — TCA 1997
-  ss.530A-530V, which govern it, were inserted by Finance Act 2011 s.20 and
-  have no 1997 as-enacted page; that Act is not yet ingested. The curated
-  `rct.deduction_rate_not_determinable` rule states this gap as the finding
-  rather than guessing a rate.
+- **RCT's actual 0%/standard/35% deduction-rate structure is now in this KB
+  (issue #131)**, sourced from TCA 1997 ss.530A/530E/530G/530H/530I as
+  inserted by Finance Act 2011 s.20 (as-enacted text — no LRC-revised TCA
+  1997 exists for these sections; every `revisedacts.lawreform.ie` URL for
+  them 404s, reconfirmed 2026-09-20). What is still **not** in this KB, by
+  design: *which* of the three tiers a given subcontractor gets (an
+  individualised Revenue determination under s.530I, not a fact any
+  transaction record can supply — `rct.deduction_rate_not_determinable`
+  states this as the finding), and the numeric value of "the standard rate
+  (within the meaning of section 3)" (TCA 1997 s.3 itself is not ingested,
+  so `rct.rate_standard_reference` states no `numericValue`, even though
+  it is currently published as 20%).
 - **The wear-and-tear allowance *percentage* (TCA 1997 s.284(2)) is not in
   this KB either, for the same reason and by the same design**: the enacted
   15%/20% figures are very likely stale (most plant/machinery is commonly

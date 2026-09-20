@@ -7,6 +7,13 @@
  *
  *  - TCA 1997 s.530 (`legislation`, as-enacted-1997) — parsed with
  *    `tca1997SectionParser.ts` into a single provision.
+ *  - TCA 1997 ss.530A, 530E, 530G, 530H, 530I (`legislation`,
+ *    as-enacted-2011; issue #131) — parsed with
+ *    `financeAct2011RctSectionParser.ts`, one provision per section, each
+ *    under its own `irish_knowledge_sources` row (own citation, e.g.
+ *    "1997 Act 39 s.530E") even though all six share one physical source
+ *    document (the eISB Finance Act 2011 s.20 page) — same per-section
+ *    citation convention `si692025Ingestion.ts` uses for a shared document.
  *  - Revenue TDMs 18-02-04, 18-02-05 and 18-02-11 (`revenue_guidance`) —
  *    each ingested as a single whole-document provision (continuous prose
  *    with numbered headings, not a statute with addressable sections),
@@ -30,10 +37,14 @@ import { sha256Hex } from '@/lib/hash';
 import {
   parseTca1997Section, provisionSlug, assessRelevance, TCA_1997_S530_MD_PATH,
 } from './tca1997SectionParser';
+import {
+  parseFinanceAct2011RctSection, tca1997RctSectionMdPath,
+} from './financeAct2011RctSectionParser';
 import { RCT_CURATED_RULES, type RctSourceKind } from './rctCuration';
 import { upsertReviewItem } from '../extraction/service';
 
 export { TCA_1997_S530_MD_PATH };
+export { tca1997RctSectionMdPath };
 
 const TCA_1997_S530 = {
   citation: '1997 Act 39 s.530',
@@ -47,7 +58,56 @@ const TCA_1997_S530 = {
   effectiveFrom: '1997-01-01',
 };
 
-type RctTdmKey = Exclude<RctSourceKind, 'tca1997_s530'>;
+type RctFa2011SectionKey = Extract<
+  RctSourceKind, 'tca1997_s530a' | 'tca1997_s530e' | 'tca1997_s530g' | 'tca1997_s530h' | 'tca1997_s530i'
+>;
+
+const RCT_FA2011_SECTIONS: Record<RctFa2011SectionKey, {
+  sectionNumber: string; citation: string; sourceUrl: string; effectiveFrom: string; localPath: string;
+}> = {
+  // TDM 18-02-04 §1 gives the electronic RCT system's own start date
+  // (1 January 2012) as the effective date of the guidance it describes —
+  // reused here for the sections it describes too, for the same reason
+  // RCT_TDM_SOURCES below does: this KB has not independently verified
+  // Finance Act 2011's own commencement order against a primary source.
+  tca1997_s530a: {
+    sectionNumber: '530A',
+    citation: '1997 Act 39 s.530A',
+    sourceUrl: 'https://www.irishstatutebook.ie/eli/2011/act/6/section/20/enacted/en/html',
+    effectiveFrom: '2012-01-01',
+    localPath: 'docs/statutes/tca-1997/s530A.md',
+  },
+  tca1997_s530e: {
+    sectionNumber: '530E',
+    citation: '1997 Act 39 s.530E',
+    sourceUrl: 'https://www.irishstatutebook.ie/eli/2011/act/6/section/20/enacted/en/html',
+    effectiveFrom: '2012-01-01',
+    localPath: 'docs/statutes/tca-1997/s530E.md',
+  },
+  tca1997_s530g: {
+    sectionNumber: '530G',
+    citation: '1997 Act 39 s.530G',
+    sourceUrl: 'https://www.irishstatutebook.ie/eli/2011/act/6/section/20/enacted/en/html',
+    effectiveFrom: '2012-01-01',
+    localPath: 'docs/statutes/tca-1997/s530G.md',
+  },
+  tca1997_s530h: {
+    sectionNumber: '530H',
+    citation: '1997 Act 39 s.530H',
+    sourceUrl: 'https://www.irishstatutebook.ie/eli/2011/act/6/section/20/enacted/en/html',
+    effectiveFrom: '2012-01-01',
+    localPath: 'docs/statutes/tca-1997/s530H.md',
+  },
+  tca1997_s530i: {
+    sectionNumber: '530I',
+    citation: '1997 Act 39 s.530I',
+    sourceUrl: 'https://www.irishstatutebook.ie/eli/2011/act/6/section/20/enacted/en/html',
+    effectiveFrom: '2012-01-01',
+    localPath: 'docs/statutes/tca-1997/s530I.md',
+  },
+};
+
+type RctTdmKey = Exclude<RctSourceKind, 'tca1997_s530' | RctFa2011SectionKey>;
 
 const RCT_TDM_SOURCES: Record<RctTdmKey, {
   citation: string; sourceType: IrishSourceType; sourceUrl: string; effectiveFrom: string; localPath: string;
@@ -137,9 +197,11 @@ export function ingestTca1997S530(
       effectiveFrom: TCA_1997_S530.effectiveFrom,
       sourceNote: 'As-enacted 1997 text — no LRC revised TCA exists (docs/statutes/tca-1997/README.md). '
         + 'The definitions here (relevant contract, relevant operations) remain part of the current RCT '
-        + 'scheme alongside ss.530A-530V (inserted by Finance Act 2011 s.20, not yet ingested); the '
-        + 'pre-2012 compliance mechanics this section also defines (certificate of authorisation, relevant '
-        + 'payments card) were superseded by the electronic system and are not curated into any rule here.',
+        + 'scheme alongside ss.530A-530V (inserted by Finance Act 2011 s.20; the load-bearing rate-'
+        + 'determination sections, 530A/530E/530G/530H/530I, are ingested separately below — see '
+        + '`ingestTca1997RctFa2011Section`). The pre-2012 compliance mechanics this section also defines '
+        + '(certificate of authorisation, relevant payments card) were superseded by the electronic system '
+        + 'and are not curated into any rule here.',
       sourceDate: nowIso(),
     }).run();
 
@@ -177,6 +239,127 @@ export function ingestTca1997S530(
 
     return { sourceId, provisionCount: 1, relevantCount: relevant ? 1 : 0, ingested: true };
   });
+}
+
+/**
+ * Ingest one TCA 1997 section as inserted by Finance Act 2011 s.20 (issue
+ * #131). Idempotent by (own citation + content hash), same pattern as
+ * `ingestTca1997S530` — each of the six sections gets its own
+ * `irish_knowledge_sources` row even though all six were fetched from the
+ * same physical Finance Act 2011 s.20 page (same content hash across all
+ * six files, per docs/statutes/tca-1997/s530A.md etc.'s own front matter).
+ */
+function ingestTca1997RctFa2011Section(
+  db: AppDatabase,
+  params: { companyId?: string | null; markdown: string; ingestVersion: string; localPath?: string },
+  key: RctFa2011SectionKey,
+): RctIngestResult {
+  const meta = RCT_FA2011_SECTIONS[key];
+  const digest = sha256Hex(params.markdown);
+
+  const existing = db.select({ id: irishKnowledgeSources.id }).from(irishKnowledgeSources)
+    .where(and(
+      eq(irishKnowledgeSources.citation, meta.citation),
+      eq(irishKnowledgeSources.sha256, digest),
+    )).get();
+
+  if (existing) {
+    const rows = db.select({ relevant: irishActProvisions.relevant }).from(irishActProvisions)
+      .where(eq(irishActProvisions.sourceId, existing.id)).all();
+    if (rows.length > 0) {
+      return {
+        sourceId: existing.id, provisionCount: rows.length,
+        relevantCount: rows.filter((r) => r.relevant).length, ingested: false,
+      };
+    }
+  }
+
+  return db.transaction((tx) => {
+    const sourceId = ids.knowledgeSource();
+    const parsed = parseFinanceAct2011RctSection(params.markdown);
+    tx.insert(irishKnowledgeSources).values({
+      id: sourceId,
+      companyId: params.companyId ?? null,
+      sourceType: 'legislation',
+      title: `TCA 1997 s.${parsed.sectionNumber} (as inserted by FA 2011 s.20)`,
+      citation: meta.citation,
+      jurisdiction: 'IE',
+      sourceUrl: meta.sourceUrl,
+      localPath: params.localPath ?? tca1997RctSectionMdPath(meta.sectionNumber),
+      sha256: digest,
+      ingestVersion: params.ingestVersion,
+      publicationDate: null,
+      retrievedAt: nowIso(),
+      effectiveFrom: meta.effectiveFrom,
+      sourceNote: 'Inserted by Finance Act 2011 s.20 — no LRC revised TCA 1997 page exists for ss.530A-530V '
+        + '(every revisedacts.lawreform.ie URL for them 404s, reconfirmed for issue #131), so this was fetched '
+        + 'from the eISB as-enacted Finance Act 2011 s.20 page instead, the inserting Act\'s own text. Later '
+        + 'Finance Acts may have amended this section since 2011; not independently checked here.',
+      sourceDate: nowIso(),
+    }).run();
+
+    const curated = RCT_CURATED_RULES.some((r) => r.source === key && r.sectionNumber === parsed.sectionNumber);
+    tx.insert(irishActProvisions).values({
+      id: ids.provision(),
+      companyId: params.companyId ?? null,
+      sourceId,
+      sectionNumber: parsed.sectionNumber,
+      chapter: null,
+      slug: provisionSlug(parsed.sectionNumber, parsed.heading),
+      heading: parsed.heading,
+      principalAct: 'Taxes Consolidation Act 1997',
+      provisionText: parsed.provisionText,
+      sourceStart: parsed.sourceStart,
+      sourceEnd: parsed.sourceEnd,
+      category: parsed.category,
+      amendsSection: null,
+      effectiveClue: null,
+      citedActs: ['Taxes Consolidation Act 1997', 'Finance Act 2011'],
+      relevant: curated,
+      relevanceReason: curated
+        ? `Curated: mapped to rule(s) in rctCuration.ts for s.${parsed.sectionNumber}.`
+        : `Ingested for citability; not currently curated (see rctCuration.ts for s.${parsed.sectionNumber}).`,
+      source: 'import',
+      provenanceStatus: 'imported',
+    }).run();
+
+    return { sourceId, provisionCount: 1, relevantCount: curated ? 1 : 0, ingested: true };
+  });
+}
+
+export function ingestTca1997S530A(
+  db: AppDatabase,
+  params: { companyId?: string | null; markdown: string; ingestVersion: string; localPath?: string },
+): RctIngestResult {
+  return ingestTca1997RctFa2011Section(db, params, 'tca1997_s530a');
+}
+
+export function ingestTca1997S530E(
+  db: AppDatabase,
+  params: { companyId?: string | null; markdown: string; ingestVersion: string; localPath?: string },
+): RctIngestResult {
+  return ingestTca1997RctFa2011Section(db, params, 'tca1997_s530e');
+}
+
+export function ingestTca1997S530G(
+  db: AppDatabase,
+  params: { companyId?: string | null; markdown: string; ingestVersion: string; localPath?: string },
+): RctIngestResult {
+  return ingestTca1997RctFa2011Section(db, params, 'tca1997_s530g');
+}
+
+export function ingestTca1997S530H(
+  db: AppDatabase,
+  params: { companyId?: string | null; markdown: string; ingestVersion: string; localPath?: string },
+): RctIngestResult {
+  return ingestTca1997RctFa2011Section(db, params, 'tca1997_s530h');
+}
+
+export function ingestTca1997S530I(
+  db: AppDatabase,
+  params: { companyId?: string | null; markdown: string; ingestVersion: string; localPath?: string },
+): RctIngestResult {
+  return ingestTca1997RctFa2011Section(db, params, 'tca1997_s530i');
 }
 
 /** Ingest one whole RCT TDM document as a single provision. */
@@ -295,10 +478,17 @@ export function deriveRctRules(
   db: AppDatabase,
   params: { companyId: string },
 ): RctDeriveResult {
-  const citationFor = (source: RctSourceKind): string =>
-    source === 'tca1997_s530' ? TCA_1997_S530.citation : RCT_TDM_SOURCES[source].citation;
-  const effectiveFromFor = (source: RctSourceKind): string =>
-    source === 'tca1997_s530' ? TCA_1997_S530.effectiveFrom : RCT_TDM_SOURCES[source].effectiveFrom;
+  const isFa2011Section = (source: RctSourceKind): source is RctFa2011SectionKey => source in RCT_FA2011_SECTIONS;
+  const citationFor = (source: RctSourceKind): string => {
+    if (source === 'tca1997_s530') return TCA_1997_S530.citation;
+    if (isFa2011Section(source)) return RCT_FA2011_SECTIONS[source].citation;
+    return RCT_TDM_SOURCES[source].citation;
+  };
+  const effectiveFromFor = (source: RctSourceKind): string => {
+    if (source === 'tca1997_s530') return TCA_1997_S530.effectiveFrom;
+    if (isFa2011Section(source)) return RCT_FA2011_SECTIONS[source].effectiveFrom;
+    return RCT_TDM_SOURCES[source].effectiveFrom;
+  };
 
   const usedSources = [...new Set(RCT_CURATED_RULES.map((r) => r.source))];
   const provisionsBySource = new Map<RctSourceKind, (typeof irishActProvisions.$inferSelect)[]>();
@@ -349,11 +539,11 @@ export function deriveRctRules(
       topic: rule.topic,
       name: rule.name,
       statement: rule.statementExcerpt,
-      extractedFact: null,
+      extractedFact: rule.numericValue !== null ? String(rule.numericValue) : null,
       humanExplanation: rule.interpretationNote,
-      numericValue: null,
-      unit: null,
-      qualifier: null,
+      numericValue: rule.numericValue,
+      unit: rule.unit,
+      qualifier: rule.qualifier,
       conditions: rule.conditions,
       exceptions: rule.exceptions,
       crossReferences: [],
