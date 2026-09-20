@@ -59,7 +59,7 @@ import type { AppDatabase } from '@/db';
 // Load all golden case JSON files.
 // import.meta.glob with query:'raw' returns the raw file content wrapped in
 // an object under `.default` in vitest.
-const caseModules = import.meta.glob<string>('./cases/*.json', { eager: true, query: 'raw' });
+const caseModules = import.meta.glob('./cases/*.json', { eager: true, query: 'raw' }) as Record<string, { default: string }>;
 const caseFiles = Object.entries(caseModules);
 
 let db: AppDatabase;
@@ -134,10 +134,10 @@ beforeEach(() => {
 });
 
 describe('golden accounting cases', () => {
-  for (const [path, rawContent] of caseFiles) {
-    const rawStr = typeof rawContent === 'string'
-      ? rawContent
-      : (rawContent as { default?: string })?.default ?? JSON.stringify(rawContent);
+  for (const [path, module] of caseFiles) {
+    const rawStr = typeof module === 'string'
+      ? module
+      : (module as { default?: string })?.default ?? JSON.stringify(module);
     const testCase = JSON.parse(rawStr) as GoldenCase;
 
     it(`[${testCase.authority}] ${testCase.id}`, () => {

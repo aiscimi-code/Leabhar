@@ -73,7 +73,8 @@ export function runGoldenCase(
   const journalEntryIds: string[] = [];
   const vatEntryIds: string[] = [];
 
-  const { transaction, bankTransaction, preJournalEntries } = testCase.inputs;
+  const { transaction } = testCase.inputs;
+  const preJournalEntries = transaction.preJournalEntries;
 
   // --- Step 1: Run deterministic rule lookup ---
   let lookupResult: ReturnType<typeof lookupTransactionRules> | undefined;
@@ -135,9 +136,9 @@ export function runGoldenCase(
     for (const entry of preJournalEntries) {
       const posted = postJournalEntry(db, {
         companyId,
-        entryDate: entry.entryDate ?? transaction.transactionDate,
-        narrative: entry.narrative ?? `Pre-journal: ${testCase.description}`,
-        sourceType: (entry.sourceType ?? 'manual_adjustment') as PostJournalInput['sourceType'],
+        entryDate: (entry as any).entryDate ?? transaction.transactionDate as never,
+        narrative: (entry as any).narrative ?? `Pre-journal: ${testCase.description}`,
+        sourceType: ((entry as any).sourceType ?? 'manual_adjustment') as PostJournalInput['sourceType'],
         baseCurrency: transaction.currency ?? 'EUR',
         lines: entry.lines.map((l): JournalLineInput => ({
           accountId: resolveAccountId(l.accountId, accountsByCode, accountsByKey),
@@ -156,7 +157,7 @@ export function runGoldenCase(
     const baseCurrency = transaction.currency ?? 'EUR';
 
     const journalLinesInput = (ej.lines ?? []).map((l): JournalLineInput => ({
-      accountId: resolveAccountId(l.accountCode ?? l.accountKey, accountsByCode, accountsByKey),
+      accountId: resolveAccountId(l.accountCode ?? l.accountKey ?? '', accountsByCode, accountsByKey),
       debitMinor: l.debitMinor,
       creditMinor: l.creditMinor,
     }));
@@ -167,7 +168,7 @@ export function runGoldenCase(
       try {
         const posted = postJournalEntry(db, {
           companyId,
-          entryDate: txDate,
+          entryDate: txDate as never,
           narrative: testCase.description,
           sourceType: 'purchase_invoice',
           baseCurrency,
@@ -260,8 +261,8 @@ export function runGoldenCase(
         const result = reconcileBankAccount(db, {
           companyId,
           bankAccountId: bankAccount.id,
-          periodStart: transaction.transactionDate,
-          periodEnd: addDays(transaction.transactionDate, 30),
+          periodStart: transaction.transactionDate as never,
+          periodEnd: addDays(transaction.transactionDate as never, 30),
         });
 
         if (er.reconciled !== undefined && result.reconciled !== er.reconciled) {

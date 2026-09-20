@@ -52,13 +52,12 @@ beforeEach(() => {
     companyId,
     bankName: 'Test Bank',
     accountName: 'Business Account',
-    accountNumber: '12345678',
-    sortCode: '123456',
+    iban: 'IE12345678',
     currency: 'EUR',
     openingBalanceMinor: 100_000,
     openingDate: makeDate(2025, 1, 1),
   });
-  bankAccountLedgerId = byKey['bank_control'] ?? byCode['0100'];
+  bankAccountLedgerId = byKey['bank_control']! ?? byCode['0100']!;
 });
 
 const BANK = () => bankAccountLedgerId;
@@ -89,14 +88,16 @@ function importAndClassify(
     transactionDate: date,
     balanceAfterMinor: null,
     fingerprint: 'fp-' + txId,
-    source: 'test',
+    occurrenceIndex: 0,
+    source: 'import',
+    provenanceStatus: 'imported',
   }).run();
 
   postJournalEntry(db, {
     companyId,
-    entryDate: date,
+    entryDate: date as never,
     narrative: `Classified: ${description}`,
-    sourceType: 'classification',
+    sourceType: 'payment',
     baseCurrency: 'EUR',
     lines: amount > 0
       ? [
@@ -200,7 +201,7 @@ describe('reconciliation #2 — transaction-to-journal', () => {
 describe('reconciliation #3 — trial balance integrity', () => {
   it('SUM(debits) == SUM(credits) across all posted journal lines', () => {
     postJournalEntry(db, {
-      companyId, entryDate: PERIOD_START, narrative: 'Sale',
+      companyId, entryDate: PERIOD_START as never, narrative: 'Sale',
       sourceType: 'manual_adjustment', baseCurrency: 'EUR',
       lines: [
         { accountId: BANK(), debitMinor: 123_000 },
@@ -209,7 +210,7 @@ describe('reconciliation #3 — trial balance integrity', () => {
       ],
     });
     postJournalEntry(db, {
-      companyId, entryDate: makeDate(2025, 1, 16), narrative: 'Purchase',
+      companyId, entryDate: makeDate(2025, 1, 16) as never, narrative: 'Purchase',
       sourceType: 'manual_adjustment', baseCurrency: 'EUR',
       lines: [
         { accountId: EXPENSE(), debitMinor: 50_000 },

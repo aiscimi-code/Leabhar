@@ -119,10 +119,10 @@ describe('buildAccountingDecision — structure', () => {
     expect(decision.decidedAt).toBe('2025-06-15T12:00:00Z');
     expect(decision.transaction).toEqual(transaction);
     expect(decision.evidence).toHaveLength(1);
-    expect(decision.evidence[0].id).toBe('INV-001');
+    expect(decision.evidence[0]!.id).toBe('INV-001');
     expect(decision.extractedFacts).toHaveLength(4);
     expect(decision.aiSuggestions).toHaveLength(1);
-    expect(decision.aiSuggestions[0].confidence).toBe(85);
+    expect(decision.aiSuggestions[0]!.confidence).toBe(85);
     expect(decision.rulesEvaluated.length).toBeGreaterThan(0);
     expect(decision.rulesApplied.length).toBeGreaterThan(0);
     expect(decision.accountingResult.journal).toBeDefined();
@@ -209,7 +209,7 @@ describe('buildAccountingDecision — structure', () => {
 
   it('verification state is VERIFIED when rules approved and journal balanced', () => {
     // Create a company without VAT registration (so no review-required rules)
-    const { db: db2, companyId: cid2 } = createTestDatabaseWithVat();
+    const { db: db2 } = createTestDatabaseWithVat();
     const created = createCompany(db2, {
       legalName: 'NoVAT Ltd',
       seedYears: [2025],
@@ -270,6 +270,6 @@ describe('buildAccountingDecision — structure', () => {
 });
 
 function createTestDatabaseWithVat() {
-  const { db, companyId } = createTestDatabase();
-  return { db, companyId };
+  const { db } = createTestDatabase();
+  return { db };
 }

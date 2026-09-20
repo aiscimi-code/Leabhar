@@ -138,7 +138,7 @@ export function traceJournalLine(
       sourceId: entry.sourceId,
       createdVia: entry.createdVia,
       provenanceStatus: entry.provenanceStatus,
-      source: entry.source,
+      source: entry.sourceType,
     },
     sourceTransaction,
     auditTrail,
