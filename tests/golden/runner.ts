@@ -156,7 +156,7 @@ export function runGoldenCase(
     const baseCurrency = transaction.currency ?? 'EUR';
 
     const journalLinesInput = (ej.lines ?? []).map((l): JournalLineInput => ({
-      accountId: resolveAccountId(l.accountCode, accountsByCode, accountsByKey),
+      accountId: resolveAccountId(l.accountCode ?? l.accountKey, accountsByCode, accountsByKey),
       debitMinor: l.debitMinor,
       creditMinor: l.creditMinor,
     }));

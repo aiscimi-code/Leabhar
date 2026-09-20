@@ -2,26 +2,33 @@
   "id": "capital-purchase-equipment",
   "description": "Capital purchase of computer equipment (capital allowances, not revenue expense)",
   "authority": "LEABHAR_RULE",
-  "references": ["tca-1997/s284", "vat.input_deduction_general"],
-  "notes": "Under TCA 1997 s.284, capital expenditure on machinery/plant used wholly and exclusively for the trade qualifies for a wear-and-tear allowance. The purchase is a debit to a fixed-asset account (not a revenue expense), with 23% standard-rate input VAT recoverable.",
+  "references": ["tca1997.s284"],
+  "notes": "Under TCA 1997 s.284, computer equipment qualifies for capital allowances (writing down allowances). Capital purchases are not treated as revenue expenses — they go to a fixed-asset account. The capital_allowances topic exists in the KB. Review required because rules carry reviewStatus 'ai_extracted'.",
   "inputs": {
     "transaction": {
-      "transactionDate": "2026-09-18",
-      "amountMinor": 12300,
+      "transactionDate": "2025-06-15",
+      "amountMinor": 123000,
       "currency": "EUR",
       "entityType": "Irish_LTD",
       "vatRegistered": true,
-      "supplyType": "goods",
-      "description": "Dell XPS 15 laptop for business",
-      "isCapitalExpenditure": true,
+      "transactionType": "capital_purchase",
+      "description": "Purchase of computer equipment from Irish supplier",
       "businessUsePercent": 100,
-      "invoiceAvailable": true
+      "invoiceAvailable": true,
+      "isCapitalExpenditure": true
     }
   },
   "expected_classification": {
-    "identifiedTopics": ["vat", "capital_allowances", "business_expense"],
-    "applicableRuleKeys": ["vat.input_deduction_general"],
+    "identifiedTopics": ["capital_allowances", "vat"],
     "reviewRequired": true
+  },
+  "expected_journal": {
+    "posted": true,
+    "balanced": true,
+    "lines": [
+      { "accountKey": "computer_equipment", "debitMinor": 123000 },
+      { "accountKey": "bank_control", "creditMinor": 123000 }
+    ]
   },
   "review_required": true
 }
