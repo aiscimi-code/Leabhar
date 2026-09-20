@@ -1496,6 +1496,69 @@ This is meant to be an ingestion, not a redesign:
    type correctly relative to existing ones — nothing to change there unless
    the ranking itself needs revisiting.
 
+### Companies Act 2014 size thresholds (issue #135)
+
+The first source outside VAT, RCT and capital allowances — company size
+classification (small/micro company) and the filing/audit-exemption
+consequences that turn on it, a distinct subject from every prior source
+(never a VAT rate, never a withholding rate). Previously the KB held only a
+hand-written paraphrase, `docs/statutes/companies-act-2014/companies-act-2014.md`,
+which carries no source hash and cannot back a curated rule under this KB's
+verbatim-only policy.
+
+- Eight sections fetched verbatim from the LRC-revised Companies Act 2014
+  (`docs/statutes/companies-act-2014/s282.md`, `s280A.md`, `s280D.md`,
+  `s280E.md`, `s352.md`, `s358.md`, `s359.md`, `s360.md`), each with a real
+  `source_html_sha256`, via a new `extract_companies_act_2014()` in
+  `docs/statutes/scripts/extract_vat_sources.py` — the same per-section LRC
+  fetch shape `vatca-2010-revised/` already uses. s.359(3)-(12) are genuine
+  LRC deletions (superseded by the 2016/2017 statutory-audit restructuring),
+  rendered as bare "…" in the fetched text; nothing is curated from them.
+- `src/domain/rules/companiesAct2014SectionParser.ts` — a new parser shape:
+  this Act's operative-text marker is a bare `"<N>."` alone on its own line,
+  with no em-dash at all (unlike VATCA's `"46\n.—(1)"` convention, which
+  never matches here), verified against all eight fetched files.
+- `src/domain/rules/companiesAct2014Ingestion.ts` —
+  `ingestCompaniesAct2014Section`/`ingestAllCompaniesAct2014Sections`/
+  `deriveCompaniesAct2014Rules`, mirroring `vatcaRevisedIngestion.ts`'s
+  idempotency and per-section-as-its-own-source discipline; wired into the
+  CLI as `--source companies-act-2014` (ingests all eight; no single
+  default file to point `--file` at).
+- `src/domain/rules/companiesAct2014Curation.ts` — ten rules from six of the
+  eight sections: the s.280A small-company 2-of-3 test's three independent
+  limbs (turnover €15m, balance sheet €7.5m, employees 50) as three separate
+  rule keys (the same split `financeAct2024VatThresholdsCuration.ts` uses
+  for one section stating two independent figures); the s.280D micro-company
+  test's same three-limb split (€900,000/€450,000/10 employees); the s.352
+  abridged-filing exemption; and the s.358/s.359/s.360 audit-exemption gate/
+  gate/effect. s.280E (states no figure of its own) is ingested for
+  citability but backs no separate rule.
+- **Every rule carries `conditions: []`, deliberately.** Unlike VATCA's
+  registration/cash-accounting thresholds — wired to real
+  `TransactionContext` fields (`annualTurnoverCurrentYearMinor` etc.) — this
+  KB has no company-level "turnover", "balance sheet total" or "average
+  employees" field anywhere (neither on `companies` nor on
+  `TransactionContext`), and Companies Act "turnover" is not the same legal
+  concept as VAT taxable turnover. Fabricating a condition against a
+  nonexistent field, or silently reusing the VAT field for a different test,
+  would be exactly the kind of invented match AGENTS.md invariant #7
+  forbids — so these rules state the figures/tests for a human to apply, the
+  same "criteria without evaluating them" treatment `rctCuration.ts` already
+  gives Revenue's rate criteria (a 3-year compliance history is not
+  transaction data either).
+- `topic: 'company_filing_reference'` is deliberately not one of
+  `transactionLookup.ts`'s `TOPIC_RULES`, so none of these ten rules is ever
+  auto-routed to for a bank transaction or invoice lookup — the same
+  `_reference` convention `si692025Curation.ts` established for declaratory
+  citation facts. All ten remain directly citable by `ruleKey` via
+  `lookupTaxRule`.
+- Not curated: s.280A(2)/(4) and s.280D(2)/(4)'s own multi-year/exclusion
+  provisos (referenced in each rule's `interpretationNote`, not modelled);
+  s.317 (the employee-averaging method both Act sections defer to); s.280B
+  (the small-group test s.358/s.359 both defer to); s.353/s.355/s.356 (what
+  "abridged" statements must contain, their approval, and the special
+  auditors' report s.352 defers to) — none of these is ingested here.
+
 ## Next steps
 
 - Curate rule keys for the remaining ~106 relevant provisions (many Finance
