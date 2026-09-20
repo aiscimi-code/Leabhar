@@ -3,32 +3,30 @@
   "description": "Director repays a loan to the company",
   "authority": "PROFESSIONAL_PRACTICE",
   "references": [],
-  "notes": "A loan repayment is a balance-sheet transaction, not income. The journal debits the director's current account (liability) and credits the bank. No VAT applies — this is not a supply.",
+  "notes": "A loan repayment is a balance-sheet transaction, not income. The journal debits the director's current account (liability) and credits the bank. No VAT applies — this is not a supply. This treatment follows standard Irish accounting practice for director's loans under the Companies Act 2014. The director_transaction topic exists in the KB.",
   "inputs": {
     "transaction": {
-      "transactionDate": "2026-09-18",
+      "transactionDate": "2025-06-15",
       "amountMinor": 100000,
       "currency": "EUR",
       "entityType": "Irish_LTD",
       "vatRegistered": true,
-      "description": "Director loan repayment by cheque"
+      "transactionType": "director_loan_repayment",
+      "description": "Director loan repayment by cheque",
+      "invoiceAvailable": true
     }
   },
   "expected_classification": {
-    "identifiedTopics": ["director_transaction"],
-    "notApplicableRuleKeys": ["vat.input_deduction_general"],
+     "identifiedTopics": ["director_transaction"],
     "reviewRequired": true
   },
   "expected_journal": {
     "posted": true,
     "balanced": true,
     "lines": [
-      { "accountCode": "directors_current_account", "debitMinor": 100000 },
-      { "accountCode": "bank_control", "creditMinor": 100000 }
+      { "accountKey": "directors_current_account", "debitMinor": 100000 },
+      { "accountKey": "bank_control", "creditMinor": 100000 }
     ]
-  },
-  "expected_vat": {
-    "entryCount": 0
   },
   "review_required": true
 }

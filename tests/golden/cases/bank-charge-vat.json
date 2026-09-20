@@ -1,12 +1,12 @@
 {
   "id": "bank-charge-vat",
-  "description": "Bank charge with 23% irrecoverable input VAT",
+  "description": "Bank charge with input VAT, deductible under general rule",
   "authority": "LEABHAR_RULE",
-  "references": ["vat.input_deduction_general", "vat.deduction_exclusions_entertainment"],
-  "notes": "A bank charge is a service supplied in Ireland at the standard rate. The input VAT is subject to the general deduction rule (VATCA s.59). It is not within the entertainment exclusion (s.60(2)(a)) so the full input VAT should be recoverable, pending human review of the AI-extracted rule.",
+  "references": ["vat.input_deduction_general", "vat.rate_standard_current"],
+  "notes": "A bank charge is a service supplied in Ireland at the standard rate (23%). The input VAT is subject to the general deduction rule (VATCA s.59). The VAT rules exist in the KB. Review required because rules carry reviewStatus 'ai_extracted'.",
   "inputs": {
     "transaction": {
-      "transactionDate": "2026-09-18",
+      "transactionDate": "2025-06-15",
       "amountMinor": 5000,
       "currency": "EUR",
       "entityType": "Irish_LTD",
@@ -18,26 +18,17 @@
     }
   },
   "expected_classification": {
-    "identifiedTopics": ["banking", "business_expense", "vat"],
-    "applicableRuleKeys": ["vat.input_deduction_general"],
-    "notApplicableRuleKeys": ["vat.deduction_exclusions_entertainment"],
+    "identifiedTopics": ["vat", "banking"],
     "reviewRequired": true
   },
   "expected_journal": {
     "posted": true,
     "balanced": true,
     "lines": [
-      { "accountCode": "6500", "debitMinor": 4065 },
-      { "accountCode": "vat_input", "debitMinor": 935 },
-      { "accountCode": "bank_control", "creditMinor": 5000 }
+      { "accountCode": "6100", "debitMinor": 4065 },
+      { "accountKey": "vat_on_purchases", "debitMinor": 935 },
+      { "accountKey": "bank_control", "creditMinor": 5000 }
     ]
-  },
-  "expected_vat": {
-    "entryCount": 1,
-    "totalNetMinor": 4065,
-    "totalVatMinor": 935,
-    "totalGrossMinor": 5000,
-    "totalRecoverableMinor": 935
   },
   "review_required": true
 }

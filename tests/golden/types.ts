@@ -3,178 +3,104 @@
  * Package 03).
  *
  * A "golden case" is a single accounting scenario with explicit, hand-verified
- * expected results across the full pipeline: extraction → AI suggestion →
- * deterministic rules → classification → journal → VAT → reconciliation.
- *
- * Each case is a plain JSON file so that adding a new case is a matter of
- * writing data, not code. The runner (`runGoldenCase`) loads a case, seeds a
- * fresh in-memory database with the minimal state the case needs, runs the
- * specified pipeline steps, and asserts each expected field.
- *
- * The framework is intentionally minimal: it does not invent assertions. Every
- * field in `expected_*` is compared exactly. A case that omits an expected
- * field is not checked on that dimension — useful while building a new case.
- *
- * All cases live under `tests/golden/cases/` as `.json` files. The runner is
- * `tests/golden/runner.ts`; the test file that exercises every case is
- * `tests/golden/index.test.ts`.
+ * expected results across all nine trust-model questions.
  */
-import type { AppDatabase } from '@/db';
-import { eq, and } from 'drizzle-orm';
-import { journalEntries, journalLines, bankTransactions, vatEntries } from '@/db/schema';
-import { sumExplained } from '@/domain/reports/explain';
-import { lookupTransactionRules, type TransactionContext } from '@/domain/rules/transactionLookup';
-import { trialBalance } from '@/domain/accounting/ledger';
-import type { BankTransaction, JournalEntry, VatEntry } from './types';
 
-/**
- * A single golden accounting case. Stored as JSON; this is the in-memory
- * shape after parsing.
- */
-export interface GoldenCase {
-  /** Stable, human-readable identifier, e.g. "ie-purchase-standard-rate". */
+/** Authority tag — distinguishes deterministic rules from professional-practice assertions. */
+export type GoldenAuthority = 'LEABHAR_RULE' | 'PROFESSIONAL_PRACTICE' | 'REVENUE_GUIDANCE' | 'LEGISLATION' | 'REVIEW_REQUIRED';
+
+export interface GoldenEvidenceSpec {
+  /** Document type, e.g. "invoice", "bank_statement", "receipt" */
+  type: 'invoice' | 'bank_statement' | 'receipt' | 'credit_note' | 'statement' | 'contract';
+  /** Identifier that would appear on the source document */
   id: string;
-  /** One-line description of the scenario. */
+  /** URL or path to the source document (optional) */
+  url?: string;
+}
+
+export interface GoldenTransactionInput {
+  transactionDate: string;
+  amountMinor: number;
+  currency?: string;
+  entityType?: string;
+  vatRegistered?: boolean;
+  supplierType?: string;
+  supplierCountry?: string;
+  transactionType?: string;
+  description?: string;
+  businessUsePercent?: number;
+  invoiceAvailable?: boolean;
+  supplyType?: 'goods' | 'services';
+  isReverseCharge?: boolean;
+  /** Pre-journal entries to post before the main case (opening balances, etc.). */
+  preJournalEntries?: Array<{ lines: Array<{ accountId: string; debitMinor?: number; creditMinor?: number }> }>;
+}
+
+export interface GoldenJournalLineSpec {
+  /** Account code (e.g. "6010") OR system key (e.g. "bank_control"). Exactly one. */
+  accountCode?: string;
+  accountKey?: string;
+  debitMinor?: number;
+  creditMinor?: number;
+  currency?: string;
+  memo?: string;
+}
+
+export interface GoldenJournalSpec {
+  /** Whether a journal entry is expected to be posted. */
+  posted?: boolean;
+  balanced?: boolean;
+  lines: GoldenJournalLineSpec[];
+}
+
+export interface GoldenVatSpec {
+  /** Whether any VAT computation is expected. */
+  computed?: boolean;
+  entryCount?: number;
+  totalNetMinor?: number;
+  totalVatMinor?: number;
+  totalGrossMinor?: number;
+  totalRecoverableMinor?: number;
+  isReverseCharge?: boolean;
+  rateBasisPoints?: number;
+  vatBoxes?: string[];
+}
+
+export interface GoldenClassificationSpec {
+  identifiedTopics?: string[];
+  applicableRuleKeys?: string[];
+  notApplicableRuleKeys?: string[];
+  reviewRequired?: boolean;
+}
+
+export interface GoldenReconciliationSpec {
+  /** Whether the transaction should be reconciled to a bank entry. */
+  reconciled?: boolean;
+}
+
+export interface GoldenCase {
+  id: string;
   description: string;
-  /**
-   * The accounting treatment authority this case is grounded in.
-   * "LEABHAR_RULE" — derived from the project's own rule KB (see
-   * docs/RULES_KB.md). "IRISH_LEGISLATION" — states a statute that must be
-   * independently verifiable in the rule KB. "PROFESSIONAL_PRACTICE" — a
-   * standard accounting practice assertion. "REVIEW_REQUIRED" — the case
-   * cannot yet be verified from an authoritative source.
-   */
-  authority: 'LEABHAR_RULE' | 'IRISH_LEGISLATION' | 'PROFESSIONAL_PRACTICE' | 'REVIEW_REQUIRED';
-  /** The rule key(s) or section citation this case tests, for traceability. */
+  authority: GoldenAuthority;
   references?: string[];
-  /** Human-authored notes explaining the expected result and its source. */
   notes?: string;
-
-  /** The transaction context fed to the deterministic rule lookup. */
   inputs: {
-    transaction: TransactionContext;
-    /** Optional bank statement line to seed before classification. */
-    bankTransaction?: {
-      amountMinor: number; // signed: negative = money out
-      description: string;
-      transactionDate?: string;
-      currency?: string;
-      bankReference?: string;
-    };
-    /** Optional journal entries to post before running the case (opening entries, etc.). Each entry must be a complete balanced pair/tuple. */
-    preJournalEntries?: Array<{
-      lines: Array<{
-        accountId: string;
-        debitMinor?: number;
-        creditMinor?: number;
-      }>;
-      narrative?: string;
-      entryDate?: string;
-      sourceType?: string;
-    }>;
+    transaction: GoldenTransactionInput;
+    evidence?: GoldenEvidenceSpec[];
+    bankTransaction?: GoldenTransactionInput;
+    preJournalEntries?: GoldenJournalLineSpec[][];
   };
-
-  /** What the rule lookup should return. */
-  expected_classification?: {
-    /** Rule keys that must be in the applicable set (subset check). */
-    applicableRuleKeys?: string[];
-    /** Rule keys that must NOT be in the applicable set. */
-    notApplicableRuleKeys?: string[];
-    /** Topics that must be identified. */
-    identifiedTopics?: string[];
-    /** Whether review is required (true if any rule is unapproved/has exceptions/...) */
-    reviewRequired?: boolean;
-  };
-
-  /** Expected journal entry structure after classification. */
-  expected_journal?: {
-    /** Whether a journal entry should be posted at all. */
-    posted?: boolean;
-    /** Each line: account code, debit, or credit (one of debit/credit must be set). */
-    lines?: Array<{ accountCode: string; debitMinor?: number; creditMinor?: number }>;
-    /** Whether the journal must balance. */
-    balanced?: boolean;
-  };
-
-  /** Expected VAT result. */
-  expected_vat?: {
-    /** Number of VAT entries. */
-    entryCount?: number;
-    /** Total net, vat, gross across all entries (base currency minor units). */
-    totalNetMinor?: number;
-    totalVatMinor?: number;
-    totalGrossMinor?: number;
-    /** Total recoverable VAT. */
-    totalRecoverableMinor?: number;
-    /** Whether the VAT treatment is reverse-charge. */
-    isReverseCharge?: boolean;
-    /** Expected VAT rate basis points (e.g. 2300 for 23%). */
-    rateBasisPoints?: number;
-    /** Expected VAT box codes (e.g. ["T1","T2"]). */
-    vatBoxes?: string[];
-  };
-
-  /** Expected reconciliation outcome. */
-  expected_reconciliation?: {
-    /** Statement balance minor units. */
-    statementBalanceMinor?: number;
-    /** Ledger balance minor units. */
-    ledgerBalanceMinor?: number;
-    /** Whether the account reconciles. */
-    reconciled?: boolean;
-    /** Unexplained difference in minor units. */
-    unexplainedMinor?: number;
-  };
-
-  /** Whether this case requires human review (by design). */
+  expected_classification?: GoldenClassificationSpec;
+  expected_journal?: GoldenJournalSpec;
+  expected_vat?: GoldenVatSpec;
+  expected_reconciliation?: GoldenReconciliationSpec;
   review_required: boolean;
 }
 
-/**
- * Assert the journal for a transaction balances: SUM(debits) == SUM(credits)
- * in base currency. This is the integrity invariant (AGENTS.md invariant #3),
- * checked directly from the database rather than trusting the in-memory value.
- */
-export function assertJournalBalanced(db: AppDatabase, journalEntryId: string): {
-  balanced: boolean;
-  totalDebit: number;
-  totalCredit: number;
-} {
-  const lines = db.select().from(journalLines)
-    .where(eq(journalLines.journalEntryId, journalEntryId)).all();
-  const totalDebit = lines.reduce((s, l) => s + (l.baseDebitMinor ?? 0), 0);
-  const totalCredit = lines.reduce((s, l) => s + (l.baseCreditMinor ?? 0), 0);
-  return { balanced: totalDebit === totalCredit, totalDebit, totalCredit };
-}
-
-/**
- * Assert that ALL posted journal entries in the company balance.
- * Fails if any entry has debits != credits in base currency.
- */
-export function assertAllJournalsBalanced(db: AppDatabase, companyId: string): {
-  balanced: boolean;
-  failures: Array<{ entryNumber: number; totalDebit: number; totalCredit: number }>;
-} {
-  const entries = db.select().from(journalEntries)
-    .where(eq(journalEntries.companyId, companyId)).all();
-  const failures: Array<{ entryNumber: number; totalDebit: number; totalCredit: number }> = [];
-  for (const entry of entries) {
-    const lines = db.select().from(journalLines)
-      .where(eq(journalLines.journalEntryId, entry.id)).all();
-    const totalDebit = lines.reduce((s, l) => s + (l.baseDebitMinor ?? 0), 0);
-    const totalCredit = lines.reduce((s, l) => s + (l.baseCreditMinor ?? 0), 0);
-    if (totalDebit !== totalCredit) {
-      failures.push({ entryNumber: entry.entryNumber, totalDebit, totalCredit });
-    }
-  }
-  return { balanced: failures.length === 0, failures };
-}
-
-/**
- * Load all golden cases from a directory. Each `.json` file is one case.
- */
-export function loadGoldenCases(dir: string): GoldenCase[] {
-  // Loaded by index.test.ts via glob; this function is for programmatic use.
-  // The test file reads files directly using vitest's import.meta.glob.
-  return [];
+export interface GoldenCaseResult {
+  id: string;
+  pass: boolean;
+  failures: string[];
+  lookupResult: ReturnType<typeof import('@/domain/rules/transactionLookup').lookupTransactionRules> | null;
+  journalResult: ReturnType<typeof import('@/domain/accounting/journal').postJournalEntry> | null;
 }

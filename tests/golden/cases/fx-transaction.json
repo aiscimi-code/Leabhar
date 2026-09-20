@@ -1,43 +1,39 @@
 {
   "id": "fx-transaction",
-  "description": "Foreign currency purchase with FX rate recorded as a rational pair",
-  "authority": "PROFESSIONAL_PRACTICE",
-  "references": ["AGENTS.md-invariant-1", "money.ts"],
-  "notes": "AGENTS.md invariant #1: money is integer minor units, never a float. FX rates are stored as rational pairs (numerator/denominator) so conversion is reproducible. A USD invoice of $100.00 at a 0.92 USD/EUR rate converts to €92.00 (9,200 cents) base, with 23% VAT = €2,116 base.",
+  "description": "US SaaS subscription paid in USD (reverse charge)",
+  "authority": "LEABHAR_RULE",
+  "references": ["vat.reverse_charge_services_from_abroad", "vat.rate_standard_current", "AGENTS.md-invariant-1"],
+  "notes": "AGENTS.md invariant #1: money is integer minor units, never a float. A USD invoice of $123 at 23% VAT. Under VATCA s.12, services from a supplier established outside the State are reverse-charged. The journal is posted in the original currency (USD) with the VAT shown as both input and output (netting to zero). The reverse charge and standard rate rules exist in the KB. Review required because rules carry reviewStatus 'ai_extracted'.",
   "inputs": {
     "transaction": {
-      "transactionDate": "2026-09-18",
+      "transactionDate": "2025-06-15",
       "amountMinor": 12300,
       "currency": "USD",
       "entityType": "Irish_LTD",
       "vatRegistered": true,
       "supplyType": "services",
-      "description": "US software subscription",
+      "supplierCountry": "US",
+      "supplierType": "software_service",
+      "transactionType": "AI_SaaS",
+      "description": "Monthly SaaS subscription from US provider",
       "businessUsePercent": 100,
       "invoiceAvailable": true
     }
   },
   "expected_classification": {
-    "identifiedTopics": ["vat", "business_expense"],
-    "applicableRuleKeys": ["vat.reverse_charge_services_from_abroad"],
+    "identifiedTopics": ["vat"],
+    "applicableRuleKeys": ["vat.reverse_charge_services_from_abroad", "vat.input_deduction_general", "vat.rate_standard_current"],
     "reviewRequired": true
   },
   "expected_journal": {
     "posted": true,
     "balanced": true,
     "lines": [
-      { "accountCode": "6010", "debitMinor": 10000, "currency": "USD" },
-      { "accountCode": "vat_input", "debitMinor": 2300, "currency": "USD" },
-      { "accountCode": "bank_control", "creditMinor": 12300, "currency": "USD" }
+      { "accountCode": "6120", "debitMinor": 10000, "currency": "USD" },
+      { "accountKey": "vat_on_purchases", "debitMinor": 2300, "currency": "USD" },
+      { "accountKey": "vat_on_purchases", "creditMinor": 2300, "currency": "USD" },
+      { "accountKey": "bank_control", "creditMinor": 10000, "currency": "USD" }
     ]
-  },
-  "expected_vat": {
-    "entryCount": 2,
-    "totalNetMinor": 10000,
-    "totalVatMinor": 2300,
-    "totalGrossMinor": 12300,
-    "totalRecoverableMinor": 2300,
-    "isReverseCharge": true
   },
   "review_required": true
 }

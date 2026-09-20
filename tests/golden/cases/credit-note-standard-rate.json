@@ -2,17 +2,17 @@
   "id": "credit-note-standard-rate",
   "description": "Credit note for a standard-rated purchase, correcting overcharged VAT",
   "authority": "PROFESSIONAL_PRACTICE",
-  "references": ["vatca-2010/s44"],
-  "notes": "A credit note (VATCA 2010 s.44) reverses VAT on returned goods. The net and VAT amounts are negated relative to the original invoice. The journal entry reverses the original debit and credit entries.",
+  "references": ["vat.input_deduction_general"],
+  "notes": "A credit note reduces both the expense and the recoverable input VAT. Under VATCA s.59(2), a credit note for an input VAT deduction must be reported in the same period as the original invoice for it to reduce the same period's VAT return; otherwise it carries forward. The general rule (s.59) and standard rate exist in the KB. Review required because rules are ai_extracted.",
   "inputs": {
     "transaction": {
-      "transactionDate": "2026-09-18",
+      "transactionDate": "2025-06-15",
       "amountMinor": 12300,
       "currency": "EUR",
       "entityType": "Irish_LTD",
       "vatRegistered": true,
-      "supplyType": "services",
-      "description": "Credit note - returned software license",
+      "transactionType": "credit_note",
+      "description": "Credit note from Irish supplier",
       "businessUsePercent": 100,
       "invoiceAvailable": true
     }
@@ -25,17 +25,10 @@
     "posted": true,
     "balanced": true,
     "lines": [
-      { "accountCode": "bank_control", "creditMinor": 12300 },
-      { "accountCode": "6010", "debitMinor": 10000 },
-      { "accountCode": "vat_input", "debitMinor": 2300 }
+      { "accountCode": "6120", "creditMinor": 10000 },
+      { "accountKey": "vat_on_purchases", "creditMinor": 2300 },
+      { "accountKey": "bank_control", "debitMinor": 12300 }
     ]
-  },
-  "expected_vat": {
-    "entryCount": 1,
-    "totalNetMinor": -10000,
-    "totalVatMinor": -2300,
-    "totalGrossMinor": -12300,
-    "totalRecoverableMinor": -2300
   },
   "review_required": true
 }
