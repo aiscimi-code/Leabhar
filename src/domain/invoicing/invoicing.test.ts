@@ -747,6 +747,92 @@ describe('payments', () => {
   });
 });
 
+// Issue #157: recordPayment('made') refused to settle a sales credit note
+// (a customer refund) because it required the payment direction to match
+// the invoice's own direction unconditionally. A credit note's cash flow
+// runs the opposite way from its own direction.
+describe('payments — credit notes (issue #157)', () => {
+  beforeEach(() => setup('invoice'));
+
+  it('settles a sales credit note with a payment made (customer refund)', () => {
+    const credit = salesInvoice({ isCreditNote: true, invoiceNumber: 'CN-0001' });
+    expect(credit.grossMinor).toBe(-123_000);
+
+    const payment = recordPayment(db, {
+      companyId, direction: 'made', paymentDate: makeDate(2025, 5, 6),
+      amountMinor: 123_000,
+      allocations: [{ invoiceId: credit.invoiceId, allocatedMinor: 123_000 }],
+    });
+
+    expect(payment.unallocatedMinor).toBe(0);
+    expect(payment.invoiceStatuses[0]).toMatchObject({ invoiceId: credit.invoiceId, status: 'paid', outstandingMinor: 0 });
+
+    const after = db.select().from(invoices).where(eq(invoices.id, credit.invoiceId)).get()!;
+    expect(after.outstandingMinor).toBe(0);
+    expect(after.paidMinor).toBe(-123_000);
+
+    expect(accountBalance(db, { companyId, accountId: acc['debtors']! })).toBe(0);
+    expect(accountBalance(db, { companyId, accountId: acc['bank_control']! })).toBe(-123_000);
+    expect(trialBalance(db, { companyId, asOf: makeDate(2025, 12, 31) }).balanced).toBe(true);
+  });
+
+  it('settles a purchase credit note with a receipt (supplier refund)', () => {
+    const credit = createInvoice(db, {
+      companyId, direction: 'purchase', invoiceDate: makeDate(2025, 2, 20),
+      supplierId, invoiceNumber: 'PCN-0001', isCreditNote: true,
+      lines: [{
+        description: 'Returned goods', netMinor: 50_000,
+        accountId: byCode['6070']!, vatTreatmentId: tr['IE_STD']!,
+      }],
+    });
+    expect(credit.grossMinor).toBe(-61_500);
+
+    const payment = recordPayment(db, {
+      companyId, direction: 'received', paymentDate: makeDate(2025, 5, 6),
+      amountMinor: 61_500,
+      allocations: [{ invoiceId: credit.invoiceId, allocatedMinor: 61_500 }],
+    });
+
+    expect(payment.unallocatedMinor).toBe(0);
+    const after = db.select().from(invoices).where(eq(invoices.id, credit.invoiceId)).get()!;
+    expect(after.outstandingMinor).toBe(0);
+    expect(after.status).toBe('paid');
+
+    expect(accountBalance(db, { companyId, accountId: acc['creditors']! })).toBe(0);
+    expect(accountBalance(db, { companyId, accountId: acc['bank_control']! })).toBe(61_500);
+    expect(trialBalance(db, { companyId, asOf: makeDate(2025, 12, 31) }).balanced).toBe(true);
+  });
+
+  it('still refuses a payment made against an ordinary sales invoice (not a credit note)', () => {
+    const invoice = salesInvoice();
+    expect(() => recordPayment(db, {
+      companyId, direction: 'made', paymentDate: makeDate(2025, 3, 1),
+      amountMinor: 123_000,
+      allocations: [{ invoiceId: invoice.invoiceId, allocatedMinor: 123_000 }],
+    })).toThrow(/cannot settle a sales invoice/);
+  });
+
+  it('refuses to over-refund a credit note beyond its own outstanding balance', () => {
+    const credit = salesInvoice({ isCreditNote: true, invoiceNumber: 'CN-0002' });
+    expect(() => recordPayment(db, {
+      companyId, direction: 'made', paymentDate: makeDate(2025, 5, 6),
+      amountMinor: 200_000,
+      allocations: [{ invoiceId: credit.invoiceId, allocatedMinor: 200_000 }],
+    })).toThrow(/still outstanding/);
+  });
+
+  it('allows a partial refund of a credit note', () => {
+    const credit = salesInvoice({ isCreditNote: true, invoiceNumber: 'CN-0003' });
+    const payment = recordPayment(db, {
+      companyId, direction: 'made', paymentDate: makeDate(2025, 5, 6),
+      amountMinor: 50_000,
+      allocations: [{ invoiceId: credit.invoiceId, allocatedMinor: 50_000 }],
+    });
+    expect(payment.invoiceStatuses[0]).toMatchObject({ status: 'part_paid', outstandingMinor: -73_000 });
+    expect(trialBalance(db, { companyId, asOf: makeDate(2025, 12, 31) }).balanced).toBe(true);
+  });
+});
+
 describe('foreign currency settlement', () => {
   beforeEach(() => setup('invoice'));
 

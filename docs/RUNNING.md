@@ -97,6 +97,10 @@ npm run cli -- record-payment [--transaction <id>] [--invoices "INV-1,INV-2"]
     # exact: one invoice, no --amount. lump: several --invoices, paid off in
     # order until the amount runs out. part: one invoice with --amount below
     # its outstanding balance. --unallocated leaves it on account on purpose.
+    # A credit note's own cash flow runs the other way from its direction —
+    # a sales credit note (customer refund) is settled with --direction made,
+    # a purchase credit note (supplier refund) with --direction received;
+    # --invoices infers this automatically per invoice.
 npm run cli -- journal --date <date> --narrative "..." --lines <json> [--reason "..."]
     # a multi-line manual adjustment — Stripe payout splits, a loan
     # repayment's capital/interest split, a VAT3 settlement, an own-account
