@@ -33,7 +33,7 @@ jobs:
           $url = "https://nodejs.org/dist/$nodeVersion/node-$nodeVersion-win-x64.zip"
           Invoke-WebRequest -Uri $url -OutFile node-portable.zip
           Expand-Archive node-portable.zip -DestinationPath node-portable
-          Copy-Item "node-portable/node-$nodeVersion-win-x64/node.exe" "dist/leabhar/node.exe"
+          Copy-Item "node-portable/node-$nodeVersion-win-x64/node.exe" "dist/leabhar/app/node.exe"
 
       - name: Install NSIS
         run: choco install nsis -y --no-progress
