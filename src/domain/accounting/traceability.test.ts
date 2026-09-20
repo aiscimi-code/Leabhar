@@ -129,9 +129,9 @@ describe('traceability — import → posting → ledger', () => {
     expect(trace).not.toBeNull();
     expect(trace!.bankTransaction.id).toBe(bankTxId);
     expect(trace!.journalEntries).toHaveLength(1);
-    expect(trace!.journalEntries[0].lines).toHaveLength(2);
-    expect(trace!.journalEntries[0].lines.some((l) => l.accountCode === '6120')).toBe(true);
-    expect(trace!.journalEntries[0].lines.some((l) => l.accountCode === '1000')).toBe(true); // bank_control
+    expect(trace!.journalEntries[0]!.lines).toHaveLength(2);
+    expect(trace!.journalEntries[0]!.lines.some((l) => l.accountCode === '6120')).toBe(true);
+    expect(trace!.journalEntries[0]!.lines.some((l) => l.accountCode === '1000')).toBe(true); // bank_control
   });
 });
 
@@ -204,7 +204,7 @@ describe('traceability — survives reconciliation', () => {
     const trace = traceBankTransaction(db, companyId, bankTxId);
     expect(trace).not.toBeNull();
     expect(trace!.journalEntries).toHaveLength(1);
-    expect(trace!.journalEntries[0].lines).toHaveLength(3);
+    expect(trace!.journalEntries[0]!.lines).toHaveLength(3);
 
     // Trace backward: journal line → bank transaction
     const line = db

@@ -34,6 +34,10 @@ export interface GoldenTransactionInput {
   isReverseCharge?: boolean;
   /** Pre-journal entries to post before the main case (opening balances, etc.). */
   preJournalEntries?: Array<{ lines: Array<{ accountId: string; debitMinor?: number; creditMinor?: number }> }>;
+  /** Optional entry date for preJournalEntries (defaults to transactionDate). */
+  preJournalEntryDate?: string;
+  /** Optional narrative for preJournalEntries (defaults to "Pre-journal"). */
+  preJournalNarrative?: string;
 }
 
 export interface GoldenJournalLineSpec {
@@ -76,6 +80,12 @@ export interface GoldenClassificationSpec {
 export interface GoldenReconciliationSpec {
   /** Whether the transaction should be reconciled to a bank entry. */
   reconciled?: boolean;
+  /** Expected ledger balance (opening + movements) in minor units. */
+  ledgerBalanceMinor?: number;
+  /** Expected unexplained difference in minor units (0 means fully reconciled). */
+  unexplainedMinor?: number;
+  /** Expected statement closing balance (what the bank says). */
+  statementBalanceMinor?: number;
 }
 
 export interface GoldenCase {

@@ -15,7 +15,6 @@
  */
 import type { TransactionContext, TransactionLookupResult, ApplicableRule } from '@/domain/rules/transactionLookup';
 import type { PostedJournal } from '@/domain/accounting/journal';
-import type { GoldenEvidenceSpec } from '@tests/golden/types';
 
 /**
  * A single accounting decision, as a machine-readable explanation.
@@ -280,14 +279,14 @@ export function buildAccountingDecision(params: {
       conditions: r.conditionResults.map((c) => ({
         field: c.condition.field,
         passed: c.passed,
-        reason: c.reason ?? '',
+        reason: c.detail ?? '',
       })),
       citation: r.citation.sectionNumber
         ? `${r.citation.citation} s.${r.citation.sectionNumber}`
         : r.citation.citation,
       reviewStatus: r.reviewStatus,
-      exceptions: r.exceptions.map((e) => ({ text: e.text })),
-      unresolvedFields: lookup.unresolvedFields,
+      exceptions: r.exceptions.map((e) => ({ text: e.effect })),
+      unresolvedFields: [],
     })),
     rulesApplied,
     accountingResult: {

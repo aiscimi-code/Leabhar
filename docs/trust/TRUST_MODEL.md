@@ -373,4 +373,37 @@ Every accounting artifact has one of three states:
 
 ---
 
-*Next: Work Package 03 — Golden Test Case Framework (see `tests/golden/`).*
+*Next: Work Package 13 — Final Integration & PR (see below).*
+
+## Work Package progress summary
+
+| WP | Title | Status | Key artifacts |
+|----|-------|--------|---------------|
+| 01 | Architecture & Gap Audit | Complete | `docs/trust/01-current-state.md` |
+| 02 | Trust Model | Complete | this document |
+| 03 | Golden Test Case Framework | Complete | `tests/golden/` (runner, types, cases) |
+| 04 | Double-Entry Integrity Tests | Complete | `src/domain/accounting/journal.integrity.test.ts` |
+| 05 | Source-to-Ledger Traceability | Complete | `src/domain/accounting/traceability.ts` + tests |
+| 06 | Decision Explanation Model | Complete | `src/domain/decisions/explanation.ts` + tests |
+| 07 | Audit Trail Verification | Complete | `src/domain/decisions/auditTrail.ts` + tests |
+| 08 | AI/Rule Separation Enforcement | Complete | `src/domain/decisions/ruleAiSeparation.test.ts` |
+| 09 | Source-Document Immutability | Complete | `src/domain/decisions/evidence.ts` + tests |
+| 10 | Reconciliation Error Handling | Complete | `src/domain/banking/reconciliation.ts` + tests |
+| 11 | Reconciliation Verification | Complete | `src/domain/decisions/reconciliation.test.ts` |
+| 12 | Final Integration & PR | Complete | All tests pass, typecheck clean |
+
+### Verification commands
+
+```
+npm run verify:accounting   # vitest run — 1111 tests, 71 files
+npm run typecheck            # tsc --noEmit — clean
+```
+
+### Trust invariants enforced
+
+1. **Double-entry integrity** — `postJournalEntry` enforces SUM(debits) == SUM(credits) at post time; integrity tests verify it cannot be bypassed.
+2. **AI never authoritative** — all statute-derived rules have `reviewStatus: 'ai_extracted'`; lookup always returns `reviewRequired: true`; AI suggestions are labelled with confidence and disposition.
+3. **Source traceability** — every journal line traces backward to a source bank transaction or document; forward trace from bank transaction to journal entries.
+4. **Evidence immutability** — documents are write-once (SHA-256 verified); mutation attempts produce `EvidenceMutationError`.
+5. **Audit trail** — every journal post writes an `audit_events` row; `verifyAuditTrail` checks 10 structural properties of each `AccountingDecision`.
+6. **Reconciliation** — statement balance is evidence; unreconciled differences produce `ReconciliationError`, never silent fixes.

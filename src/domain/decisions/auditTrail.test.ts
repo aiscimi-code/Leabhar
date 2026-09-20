@@ -14,6 +14,7 @@ import {
   verifyEvidenceChain,
 } from '@/domain/decisions/auditTrail';
 import { makeDate } from '@/domain/dates';
+import type { AppDatabase } from '@/db';
 import type { AccountingDecision } from '@/domain/decisions/explanation';
 import {
   ingestFinanceAct2024, deriveTaxRules, FINANCE_ACT_2024_MD_PATH,
@@ -216,7 +217,7 @@ describe('verifyJournalBalance — standalone check', () => {
 
   it('detects imbalance', () => {
     const journal = buildValidDecision().accountingResult.journal!;
-    journal.lines[0].debitMinor = 15000;
+    journal.lines[0]!.debitMinor = 15000;
 
     const result = verifyJournalBalance(journal);
     expect(result.balanced).toBe(false);
