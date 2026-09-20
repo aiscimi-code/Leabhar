@@ -1565,6 +1565,68 @@ verbatim-only policy.
   "abridged" statements must contain, their approval, and the special
   auditors' report s.352 defers to) — none of these is ingested here.
 
+### Tax rate sync (issue #133)
+
+The first change in this KB's history that writes to the *application's own*
+tables (`tax_rates`), not just `irish_knowledge_sources`/`irish_act_provisions`/
+`irish_tax_rules`. `docs/statutes/vat-rates/rates.json` (a hand-compiled,
+effective-dated VAT rates table, cross-checked against this KB's curated
+figures but carrying no source hash of its own) had sat unused since it was
+added — this issue's own text posed the choice explicitly: load it directly
+into `tax_rates`, or drive `tax_rates` from the already-verified curated
+rules instead and leave `rates.json` reference-only.
+
+**Decision: the latter.** `rates.json` backs no rule under this KB's
+verbatim-only policy (`docs/statutes/SOURCE-REGISTER.md`), so it was never a
+candidate to drive live financial configuration that directly determines
+invoice VAT — only a source-hash-verified fact is. `tax_rates` is instead
+synced from the curated VATCA s.46 rate facts already ingested and tested
+(`vatcaRevisedCuration.ts`'s `vat.rate_standard_current`/
+`vat.rate_reduced_current`/`vat.rate_livestock_current`), the same three
+this KB independently confirmed against the LRC-revised text for "VATCA
+2010 current rates" above.
+
+- `src/domain/rules/taxRateSync.ts` — `syncTaxRatesFromIrishRules(db,
+  {companyId})`, mapping each of the three ruleKeys above to its
+  `tax_rates.code` (`VAT_STD`/`VAT_RED`/`VAT_LIVESTOCK`, from
+  `DEFAULT_TAX_RATES` in `src/domain/config/vatTreatments.ts`). A curated
+  rule is only trusted to drive live config once a human has approved it
+  (`reviewStatus: 'approved'` or `'active'`) — an `ai_extracted` rule is
+  exactly as unreviewed here as everywhere else in this KB, and live
+  invoicing config is not the place to relax that gate. Wired into the CLI
+  as `npm run cli:rules -- sync-tax-rates`, a deliberate manual step (not
+  automatic on app load), consistent with this KB's `ingest` -> `extract`
+  -> `review` -> (now) `sync-tax-rates` pipeline.
+- Never edits a `tax_rates` row in place: a changed figure closes the
+  current row's effective window (`src/domain/config/mutations.ts`'s
+  existing `supersedeTaxRate`, extended with an optional `source` param so
+  the resulting audit event is correctly attributed `'derived'` rather than
+  the hardcoded `'user'` every other caller of that function is) and opens
+  a new one — README §6 / AGENTS.md invariant #6, the same discipline every
+  other rate change in this app already follows. Idempotent: an unchanged
+  figure is a no-op past the first run, which only sets the `irish_tax_rules
+  .taxRateId` back-link (present in the schema since the original KB design
+  but never populated by any curation until now) so a curated rate and the
+  config row it backs are traceable to each other.
+- Every sync-driven change is also raised as an `info`-severity review item
+  (kind `other`, since no existing `review_items.kind` fits a config-sync
+  event specifically) — even a verified, approved source changing live
+  financial config is surfaced for a human to see, never a silent write
+  (AGENTS.md invariant #7).
+- Deliberately excluded: `VAT_SECOND_RED` (the second-reduced/9% rate) and
+  every non-VAT `tax_rates` row (corporation tax etc.). This KB curates no
+  current, unconditional fact for any of them —
+  `vat.rate_hospitality_9pct_not_modelled` (see "VAT rate exclusivity"
+  above) exists specifically because the second-reduced rate has no such
+  fact today (issue #129 tracks modelling it); syncing from an absent
+  source would mean inventing one. `DEFAULT_TAX_RATES`' own seeded
+  `VAT_SECOND_RED` figure was found, while investigating this issue, to
+  already read as stale (seeded as if a standing rate from 2021, when it is
+  in fact a temporary hospitality-only carve-out per
+  `docs/statutes/vat-rates/schedule-moves-2025-2026.md`) — left as-is
+  rather than guessed at here, since fixing it correctly needs the same
+  sourced ingestion issue #129 already tracks, not a hand-edited date.
+
 ## Next steps
 
 - Curate rule keys for the remaining ~106 relevant provisions (many Finance

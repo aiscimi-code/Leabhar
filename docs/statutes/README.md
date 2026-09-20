@@ -104,7 +104,12 @@ because they describe the set as a whole, not one instrument:
   (not confirmed present or absent).
 - Most reference-only folders are not wired into the deterministic pipeline
   at all — see `docs/RULES_KB.md` for what would be needed to change that
-  (verbatim, offset-traceable text, not a paraphrase). This includes
-  `vat-rates/rates.json`, which is structured and effective-dated and ready
-  to load into the app's own `tax_rates` table, but doing so is application
-  code, not a documentation change.
+  (verbatim, offset-traceable text, not a paraphrase). **Resolved for
+  `vat-rates/rates.json` (issue #133):** it stays reference-only and is
+  still never read by application code — `rates.json` carries no source
+  hash, so it was never a candidate to drive live financial config.
+  `src/domain/rules/taxRateSync.ts` instead syncs the app's own `tax_rates`
+  table from the source-hash-verified `irish_tax_rules` rate facts
+  (`vat.rate_standard_current` etc.), gated on human review, via a new
+  `npm run cli:rules -- sync-tax-rates` step — see `docs/RULES_KB.md` "Tax
+  rate sync (issue #133)".
