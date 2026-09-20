@@ -14,15 +14,19 @@ import { sessionCookieName } from '@/domain/auth/constants';
  * is a strong signal of a real session.
  */
 
-const PUBLIC_PATHS = ['/login'];
+const PUBLIC_PATHS = ['/login', '/api/health'];
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Always allow the login page, static assets, and the portal (issue #166):
-  // the portal has its own per-vault password, unrelated to this app's
-  // single local-install login, and by design keeps nothing server-side for
-  // that login to gate access to in the first place.
+  // Always allow the login page, static assets, the portal (issue #166),
+  // and the health check (issue #61): the packaged launcher polls
+  // /api/health before any user has ever logged in — a session cookie
+  // can't exist yet at that point, so gating it behind auth would mean
+  // the launcher's readiness check can never succeed. The portal has its
+  // own per-vault password, unrelated to this app's single local-install
+  // login, and by design keeps nothing server-side for that login to gate
+  // access to in the first place.
   if (
     PUBLIC_PATHS.includes(pathname)
     || pathname.startsWith('/_next')
@@ -52,7 +56,8 @@ export const config = {
      * - /favicon.ico
      * - /login (the login page itself)
      * - /portal/* (issue #166 — its own password, no server-side session)
+     * - /api/health (issue #61 — polled by the launcher before any login exists)
      */
-    '/((?!_next|favicon.ico|login|portal).*)',
+    '/((?!_next|favicon.ico|login|portal|api/health).*)',
   ],
 };

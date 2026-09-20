@@ -3,6 +3,7 @@ import { Page, Panel, Badge, Empty, Help } from '@/components/primitives';
 import { BackupButton } from '@/components/BackupButton';
 import { RestoreButton } from '@/components/RestoreButton';
 import { dateTime } from '@/lib/format';
+import { logDirectory } from '@/lib/paths';
 
 export const dynamic = 'force-dynamic';
 
@@ -40,6 +41,19 @@ export default function BackupPage() {
             Backups are written to <code>{backupRoot()}</code>. They stay on this machine —
             copy them somewhere else as well, because a backup on the same disk as the
             original protects you from mistakes but not from losing the disk.
+          </p>
+        </div>
+      </Panel>
+
+      <Panel title="Logs">
+        <div className="px-4 py-3 text-ink-muted max-w-3xl space-y-2.5 leading-relaxed">
+          <p>
+            If the packaged app ever fails to start, the launcher writes what happened —
+            including why, when it can tell — to a log file, alongside a message in its own
+            console window telling you your accounting data was not touched.
+          </p>
+          <p className="text-[11.5px] text-ink-faint">
+            Logs are written to <code>{logDirectory()}</code>.
           </p>
         </div>
       </Panel>
