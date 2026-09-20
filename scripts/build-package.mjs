@@ -9,8 +9,15 @@
  *  3. Copy drizzle migrations.
  *  4. Copy the launcher.
  *  5. Copy the better-sqlite3 native addon (platform-specific).
- *  6. Stage everything into dist/leabhar/.
+ *  6. Stage everything into dist/leabhar/app/.
  *  7. Write leabhar.bat (the thing the shortcut runs).
+ *
+ * Staged under an `app/` subfolder, not `dist/leabhar/` directly, so it
+ * mirrors exactly what the installer extracts to on the user's machine
+ * (`<install dir>\app`) — see `scripts/installer.nsi` and
+ * `src/lib/paths.ts`'s "App root vs. data root" for why (issue #59): the
+ * installer's uninstaller removes only that `app` subfolder, never its
+ * parent, where the user's database/documents/backups live.
  *
  * Usage:  node scripts/build-package.mjs
  * Prereq:  npm ci  (so node_modules is populated)
@@ -24,7 +31,7 @@ import { fileURLToPath } from 'node:url';
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const NEXT = join(ROOT, '.next');
 const STANDALONE = join(NEXT, 'standalone');
-const DIST = join(ROOT, 'dist', 'leabhar');
+const DIST = join(ROOT, 'dist', 'leabhar', 'app');
 
 function run(label, command) {
   console.log(`\n=== ${label} ===`);
@@ -69,7 +76,7 @@ const bsqliteDest = join(STANDALONE, 'node_modules', 'better-sqlite3', 'build', 
 mkdirSync(bsqliteDest, { recursive: true });
 copy('better-sqlite3 native addon', nativeAddon, bsqliteDest);
 
-// 6. Stage into dist/leabhar/
+// 6. Stage into dist/leabhar/app/
 console.log('\n=== Stage dist ===');
 if (existsSync(DIST)) rmSync(DIST, { recursive: true, force: true });
 mkdirSync(DIST, { recursive: true });

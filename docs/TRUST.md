@@ -23,6 +23,18 @@ That feature is **off by default** and only switches on if you, the user,
 explicitly provide an Anthropic API key. Until you do, no byte of your
 data leaves the computer.
 
+## Uninstalling is safe
+
+Your accounting database, documents and backups live in a directory the
+installer never touches, not even on uninstall. The installer keeps two
+separate folders: your chosen install location (`%LOCALAPPDATA%\Leabhar`
+by default) holds your data, and the app's own program files live one
+level down, in an `app` subfolder inside it. Uninstalling removes only
+that `app` subfolder — never the parent folder your data lives in — and
+tells you exactly where your data still is when it finishes. This is
+enforced by `src/lib/paths.ts` and `scripts/installer.nsi`, both public
+source you can read yourself.
+
 ## How to verify this yourself
 
 Three levels, from easiest to most thorough.
