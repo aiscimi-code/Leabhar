@@ -175,6 +175,10 @@ export function supersedeTaxRate(
     effectiveFrom: IsoDate;
     sourceNote?: string;
     actor?: string;
+    /** Who actually made this change, for the audit trail — defaults to 'user' (a human editing config).
+     *  A caller acting on the user's behalf without direct input (e.g. an automated sync from a verified
+     *  source) should pass its own source so the audit event doesn't misattribute the change. */
+    source?: typeof auditEvents.$inferInsert['source'];
   },
 ): { newRateId: string; closedRateId: string } {
   const existing = db.select().from(taxRates)
@@ -224,7 +228,7 @@ export function supersedeTaxRate(
       field: 'rateBasisPoints',
       previousValue: String(existing.rateBasisPoints),
       newValue: String(params.newRateBasisPoints),
-      source: 'user',
+      source: params.source ?? 'user',
       actor: params.actor ?? 'user',
       reason: `Supersedes ${existing.code} from ${params.effectiveFrom}; the previous rate `
         + `still applies to transactions up to ${addDays(params.effectiveFrom, -1)}`,
@@ -241,6 +245,7 @@ export function createTaxRate(
     taxType?: 'vat' | 'corporation_tax' | 'income_tax' | 'prsi' | 'usc' | 'other';
     jurisdiction?: string; effectiveFrom: IsoDate; notes?: string;
     sourceNote?: string; actor?: string;
+    source?: typeof auditEvents.$inferInsert['source'];
   },
 ): string {
   if (params.rateBasisPoints < 0) {
@@ -267,7 +272,7 @@ export function createTaxRate(
       id: ids.audit(), companyId: params.companyId, occurredAt: nowIso(),
       entityType: 'tax_rate', entityId: id, action: 'created',
       newValue: JSON.stringify({ code: params.code, rate: params.rateBasisPoints }),
-      source: 'user', actor: params.actor ?? 'user',
+      source: params.source ?? 'user', actor: params.actor ?? 'user',
     }).run();
   });
   return id;

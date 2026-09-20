@@ -33,6 +33,7 @@ import {
 import {
   ingestAllCompaniesAct2014Sections, deriveCompaniesAct2014Rules,
 } from '@/domain/rules/companiesAct2014Ingestion';
+import { syncTaxRatesFromIrishRules } from '@/domain/rules/taxRateSync';
 import { lookupTransactionRules, type TransactionContext } from '@/domain/rules/transactionLookup';
 import { setRuleReviewStatus } from '@/domain/rules/review';
 import { generateDefaultTestCases, runTestCases } from '@/domain/rules/testCases';
@@ -67,6 +68,10 @@ Commands:
                                        List derived rules
   review --rule <id> --status <s>     Move a rule through the review lifecycle
          --by <name> [--notes "..."]  (draft|ai_extracted|human_review|approved|active|superseded|rejected)
+  sync-tax-rates                      Sync tax_rates VAT rows from approved irish_tax_rules facts
+                                       (standard/reduced/livestock only — see taxRateSync.ts; a rule
+                                       must be reviewed to approved/active first, via the review command
+                                       above, before it can supersede live config)
   lookup --json <transactionContextJson>
                                        Run the deterministic transaction lookup
   generate-tests                      Write default positive/effective-date test cases
@@ -306,6 +311,11 @@ export async function main(argv: string[], options: CliOptions = {}): Promise<nu
           notes: getFlag(flags, 'notes'),
         });
         print({ ruleId, status, updated: true }, format);
+        return 0;
+      }
+
+      case 'sync-tax-rates': {
+        print(syncTaxRatesFromIrishRules(db, { companyId, actor: getFlag(flags, 'actor') }), format);
         return 0;
       }
 
