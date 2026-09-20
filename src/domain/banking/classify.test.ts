@@ -2,7 +2,10 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { eq, and } from 'drizzle-orm';
 import { createTestDatabase } from '@/db/testing';
 import { createCompany, addBankAccount, systemAccountId } from '../config/setup';
-import { classifyTransaction, reclassifyTransaction, recordDirectorPaidExpense } from './classify';
+import {
+  classifyTransaction, reclassifyTransaction, recordDirectorPaidExpense,
+  postBankTransactionJournal, ClassificationError,
+} from './classify';
 import { importStatement } from './import';
 import { trialBalance, accountBalance } from '../accounting/ledger';
 import { buildVat3Return } from '../vat/report';
@@ -489,5 +492,99 @@ describe('director-paid reverse charge', () => {
     expect(report.T1.amountMinor).toBe(1_932);
     expect(report.T2.amountMinor).toBe(1_932);
     expect(report.netPositionMinor).toBe(0);
+  });
+});
+
+// Issue #158: a Stripe payout net of fees, or a loan repayment's
+// capital/interest split, is one statement amount that needs posting to more
+// than one account. `classifyTransaction` is deliberately one account + one
+// VAT treatment; this is the explicit, caller-driven alternative for a split.
+describe('postBankTransactionJournal', () => {
+  it('posts a loan repayment split with no VAT involved', async () => {
+    const tx = await importOne('LOAN REPAYMENT', '-603.92');
+    const result = postBankTransactionJournal(db, {
+      companyId, bankTransactionId: tx.id,
+      lines: [
+        { accountId: byCode['2300']!, debitMinor: 51_225, memo: 'Capital' },
+        { accountId: byCode['6100']!, debitMinor: 9_167, memo: 'Interest' },
+        { accountId: acc['bank_control']!, creditMinor: 60_392 },
+      ],
+    });
+
+    const lines = db.select().from(journalLines)
+      .where(eq(journalLines.journalEntryId, result.journalEntryId))
+      .orderBy(journalLines.lineNumber).all();
+    expect(lines).toHaveLength(3);
+    expect(lines[2]).toMatchObject({ accountId: acc['bank_control'], creditMinor: 60_392 });
+    expect(trialBalance(db, { companyId, asOf: makeDate(2025, 12, 31) }).balanced).toBe(true);
+
+    const after = db.select().from(bankTransactions).where(eq(bankTransactions.id, tx.id)).get()!;
+    expect(after.journalEntryId).toBe(result.journalEntryId);
+    expect(after.status).toBe('posted');
+    // The evidence itself is untouched.
+    expect(after.amountMinor).toBe(tx.amountMinor);
+    expect(after.description).toBe(tx.description);
+  });
+
+  it('posts a Stripe payout split and records output VAT on the gross, not the net that hit the bank', async () => {
+    const tx = await importOne('STRIPE PAYOUT', '2107.34');
+    const result = postBankTransactionJournal(db, {
+      companyId, bankTransactionId: tx.id,
+      lines: [
+        { accountId: acc['bank_control']!, debitMinor: 210_734, memo: 'Stripe net payout' },
+        { accountId: byCode['6100']!, debitMinor: 3_894, memo: 'Stripe processing fees' },
+        { accountId: byCode['4000']!, creditMinor: 174_494, memo: 'Card sales (net)' },
+        { accountId: acc['vat_on_sales']!, creditMinor: 40_134, memo: 'Output VAT on card sales' },
+      ],
+      vat: {
+        direction: 'sales', treatmentId: tr['IE_STD']!,
+        netMinor: 174_494, statedVatMinor: 40_134,
+      },
+    });
+
+    expect(result.vatEntryIds).toHaveLength(1);
+    const lines = db.select().from(journalLines)
+      .where(eq(journalLines.journalEntryId, result.journalEntryId)).all();
+    expect(lines).toHaveLength(4);
+    expect(trialBalance(db, { companyId, asOf: makeDate(2025, 12, 31) }).balanced).toBe(true);
+
+    const periodId = db.select().from(vatPeriods)
+      .where(eq(vatPeriods.name, 'Mar–Apr 2025')).get()!.id;
+    const report = buildVat3Return(db, { companyId, vatPeriodId: periodId });
+    // The gross card sales VAT (40,134), not the net that settled to the bank.
+    expect(report.T1.amountMinor).toBe(40_134);
+  });
+
+  it('refuses a transaction that has already been posted', async () => {
+    const tx = await importOne('STRIPE PAYOUT', '2107.34');
+    classifyTransaction(db, {
+      companyId, bankTransactionId: tx.id,
+      accountId: byCode['4000']!, vatTreatmentId: tr['OUT_OF_SCOPE']!,
+    });
+    expect(() => postBankTransactionJournal(db, {
+      companyId, bankTransactionId: tx.id,
+      lines: [
+        { accountId: acc['bank_control']!, debitMinor: 210_734 },
+        { accountId: byCode['4000']!, creditMinor: 210_734 },
+      ],
+    })).toThrow(/already been posted/);
+  });
+
+  it('refuses fewer than two lines', async () => {
+    const tx = await importOne('LOAN REPAYMENT', '-603.92');
+    expect(() => postBankTransactionJournal(db, {
+      companyId, bankTransactionId: tx.id,
+      lines: [{ accountId: acc['bank_control']!, creditMinor: 60_392 }],
+    })).toThrow(/at least two lines/);
+  });
+
+  it('refuses a missing transaction', () => {
+    expect(() => postBankTransactionJournal(db, {
+      companyId, bankTransactionId: 'btx_missing',
+      lines: [
+        { accountId: acc['bank_control']!, creditMinor: 100 },
+        { accountId: byCode['4000']!, debitMinor: 100 },
+      ],
+    })).toThrow(ClassificationError);
   });
 });

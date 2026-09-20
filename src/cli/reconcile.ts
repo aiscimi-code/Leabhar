@@ -587,10 +587,12 @@ export async function main(argv: string[], options: CliOptions = {}): Promise<nu
       case 'journal': {
         const parsed = journalCliInput.parse({
           companyId,
-          date: requireFlag(flags, 'date'),
-          narrative: requireFlag(flags, 'narrative'),
+          date: getFlag(flags, 'date'),
+          narrative: getFlag(flags, 'narrative'),
           reason: getFlag(flags, 'reason'),
           lines: requireFlag(flags, 'lines'),
+          transaction: getFlag(flags, 'transaction', 'transaction-id', 'transactionId', 'bank-transaction-id', 'bankTransactionId'),
+          vat: getFlag(flags, 'vat'),
         });
         print(journalCli(db, parsed), format);
         return 0;

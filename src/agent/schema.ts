@@ -236,11 +236,26 @@ export const recordPaymentInput = z.object({
 
 export const journalCliInput = z.object({
   companyId: z.string(),
-  date: isoDate,
-  narrative: z.string(),
+  date: isoDate.optional(),
+  narrative: z.string().optional(),
   reason: z.string().optional(),
   /** JSON array of {account, debit?, credit?, memo?, supplier?, customer?}, amounts in major units. */
   lines: z.string(),
+  /**
+   * A bank transaction id, same as --transaction on classify/record-payment
+   * (issue #158). When given, this posts a split for THAT statement line
+   * instead of a standalone manual
+   * adjustment — linking `bank_transactions.journalEntryId`/`status` to the
+   * new entry in the same call, rather than a caller posting then updating
+   * the row itself as a second step. `date` and `reason` are ignored: the
+   * entry is dated at the transaction's own date, and it is not an
+   * adjustment needing a reason.
+   */
+  transaction: z.string().optional(),
+  /** JSON {direction, treatment, net? or gross?, statedVat?, rate?}, major units — only with --transaction. */
+  vat: z.string().optional(),
+}).refine((v) => v.transaction || (v.date && v.narrative), {
+  message: '--date and --narrative are required unless --transaction is given.',
 });
 
 export const listTransactionsInput = z.object({

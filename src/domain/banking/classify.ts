@@ -316,6 +316,162 @@ export function classifyTransaction(db: AppDatabase, input: ClassifyInput): Clas
   };
 }
 
+export interface BankTransactionJournalLine {
+  accountId: string;
+  debitMinor?: number;
+  creditMinor?: number;
+  currency?: string;
+  memo?: string;
+  supplierId?: string | null;
+  customerId?: string | null;
+}
+
+export interface BankTransactionJournalInput {
+  companyId: string;
+  bankTransactionId: string;
+  lines: BankTransactionJournalLine[];
+  narrative?: string;
+  /**
+   * A statement line's own P&L split — Stripe's gross-less-fees, a loan's
+   * capital/interest — is one statement amount posted to more than one
+   * account (issue #158). This is deliberately a distinct command from
+   * `classifyTransaction`: it never becomes classify's default, since a
+   * rule matching a Stripe payout would otherwise post two P&L lines
+   * silently. Also, optionally, records this transaction's own VAT position
+   * — e.g. output VAT on a Stripe payout's *gross* card sales, which the
+   * settled net that hit the bank does not by itself report to VAT3.
+   */
+  vat?: {
+    direction: 'sales' | 'purchases';
+    treatmentId: string;
+    netMinor?: number;
+    grossMinor?: number;
+    statedVatMinor?: number;
+    taxRateId?: string;
+  };
+  notes?: string | null;
+  actor?: string;
+  requestId?: string;
+}
+
+export interface BankTransactionJournalResult {
+  bankTransactionId: string;
+  journalEntryId: string;
+  entryNumber: number;
+  vatEntryIds: string[];
+}
+
+/**
+ * Post an arbitrary multi-line journal for one statement line, linking it in
+ * the same call — `bank_transactions.journalEntryId`/`status` change with the
+ * journal that explains them, rather than a caller posting the entry and then
+ * updating the row itself as a separate step (issue #158).
+ */
+export function postBankTransactionJournal(
+  db: AppDatabase, input: BankTransactionJournalInput,
+): BankTransactionJournalResult {
+  const transaction = db.select().from(bankTransactions)
+    .where(and(
+      eq(bankTransactions.id, input.bankTransactionId),
+      eq(bankTransactions.companyId, input.companyId),
+    )).get();
+  if (!transaction) {
+    throw new ClassificationError(`Bank transaction ${input.bankTransactionId} not found.`);
+  }
+  if (transaction.journalEntryId) {
+    throw new ClassificationError(
+      'This transaction has already been posted. Reclassify it, or reverse the existing '
+        + 'entry, rather than posting a second one over the same statement line.',
+      { bankTransactionId: transaction.id, journalEntryId: transaction.journalEntryId },
+    );
+  }
+  if (input.lines.length < 2) {
+    throw new ClassificationError('A split journal needs at least two lines.');
+  }
+
+  const company = db.select().from(companies).where(eq(companies.id, input.companyId)).get()!;
+  const baseCurrency = company.baseCurrency;
+  const entryDate = asIsoDate(transaction.transactionDate);
+  const narrative = (input.narrative ?? transaction.description).slice(0, 200);
+
+  const journal = postJournalEntry(db, {
+    companyId: input.companyId,
+    entryDate,
+    narrative,
+    sourceType: 'bank_transaction',
+    sourceId: transaction.id,
+    baseCurrency,
+    createdBy: input.actor ?? 'user',
+    createdVia: 'user',
+    requestId: input.requestId,
+    lines: input.lines.map((line) => ({
+      accountId: line.accountId,
+      debitMinor: line.debitMinor,
+      creditMinor: line.creditMinor,
+      currency: line.currency ?? transaction.currency,
+      supplierId: line.supplierId ?? transaction.supplierId,
+      customerId: line.customerId ?? transaction.customerId,
+      memo: line.memo ?? narrative,
+    })),
+  });
+
+  const vatEntryIds: string[] = [];
+  if (input.vat) {
+    const vatResult = createVatEntries(db, {
+      companyId: input.companyId,
+      journalEntryId: journal.id,
+      sourceType: 'bank_transaction',
+      sourceId: transaction.id,
+      direction: input.vat.direction,
+      treatmentId: input.vat.treatmentId,
+      rateOverrideId: input.vat.taxRateId,
+      taxPointDate: entryDate,
+      netMinor: input.vat.netMinor,
+      grossMinor: input.vat.grossMinor,
+      statedVatMinor: input.vat.statedVatMinor,
+      currency: transaction.currency,
+      baseCurrency,
+      source: 'user',
+      provenanceStatus: 'manually_entered',
+    });
+    vatEntryIds.push(...vatResult.entries.map((e) => e.id));
+  }
+
+  db.transaction((tx) => {
+    tx.update(bankTransactions).set({
+      journalEntryId: journal.id,
+      status: 'posted',
+      source: 'user',
+      provenanceStatus: 'manually_entered',
+      notes: input.notes ?? transaction.notes,
+      updatedAt: nowIso(),
+    }).where(eq(bankTransactions.id, transaction.id)).run();
+
+    tx.insert(auditEvents).values({
+      id: ids.audit(),
+      companyId: input.companyId,
+      occurredAt: nowIso(),
+      entityType: 'bank_transaction',
+      entityId: transaction.id,
+      action: 'classified',
+      previousValue: JSON.stringify({ status: transaction.status }),
+      newValue: JSON.stringify({
+        journalEntryId: journal.id, status: 'posted', lines: input.lines.length,
+      }),
+      source: 'user',
+      actor: input.actor ?? 'user',
+      requestId: input.requestId ?? null,
+    }).run();
+  });
+
+  return {
+    bankTransactionId: transaction.id,
+    journalEntryId: journal.id,
+    entryNumber: journal.entryNumber,
+    vatEntryIds,
+  };
+}
+
 function counterpartyVatNumber(db: AppDatabase, input: ClassifyInput): string | null {
   if (input.supplierId) {
     return db.select({ v: suppliers.vatNumber }).from(suppliers)

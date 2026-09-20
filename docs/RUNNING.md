@@ -102,9 +102,21 @@ npm run cli -- record-payment [--transaction <id>] [--invoices "INV-1,INV-2"]
     # a purchase credit note (supplier refund) with --direction received;
     # --invoices infers this automatically per invoice.
 npm run cli -- journal --date <date> --narrative "..." --lines <json> [--reason "..."]
-    # a multi-line manual adjustment — Stripe payout splits, a loan
-    # repayment's capital/interest split, a VAT3 settlement, an own-account
-    # transfer. --lines: [{"account":"code","debit":"100.00"}, ...], major units.
+    # a standalone multi-line manual adjustment — a VAT3 settlement, an
+    # own-account transfer. --lines: [{"account":"code","debit":"100.00"}, ...],
+    # major units.
+npm run cli -- journal --transaction <id> --lines <json> [--vat <json>]
+    # a split for ONE statement line instead — a Stripe payout's fee
+    # breakdown, a loan repayment's capital/interest split — posted and
+    # linked (bank_transactions.journalEntryId/status) in the same call,
+    # dated at the transaction's own date. --date/--narrative/--reason do not
+    # apply here. --vat additionally records this transaction's own VAT
+    # position (e.g. output VAT on a Stripe payout's *gross* card sales,
+    # which the settled net that hit the bank does not by itself report to
+    # VAT3): {"direction":"sales","treatment":"IE_STD","net":"1744.94",
+    # "statedVat":"401.34"}. classify stays one account + one VAT treatment
+    # on purpose — this is the explicit alternative for a split, not a
+    # change to what classify posts by default.
 
 # Inspect
 npm run cli -- list-transactions [--account <id>] [--unposted] [--unclassified]
@@ -141,6 +153,9 @@ npm run cli -- list-matches [--decision pending]      # document<->bank match ca
 
 # End-to-end flow
 npm run cli -- import --account <id> --file <path>    # import a statement (CSV/XLSX)
+    # a "Notes"/"Narrative"/"Comments" column is auto-detected onto the
+    # transaction's own notes field, separate from its description — a
+    # Stripe payout's fee breakdown, a loan's capital/interest split (#158)
 npm run cli -- create-supplier --name "..." [--country IE] [--document <id>]
                                                       # create a supplier (ai_suggestion)
 npm run cli -- match                                  # link documents to bank transactions

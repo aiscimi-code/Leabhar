@@ -9,6 +9,7 @@ import { parseAmount } from '@/domain/money';
 import { createInvoice, voidInvoice, type CreatedInvoice, type VoidedInvoice } from '@/domain/invoicing/invoices';
 import { recordPayment, type RecordedPayment } from '@/domain/invoicing/payments';
 import { createAdjustment, type CreatedAdjustment } from '@/domain/accounting/adjustments';
+import { postBankTransactionJournal, type BankTransactionJournalResult } from '@/domain/banking/classify';
 import { reverseJournalEntry, type PostedJournal } from '@/domain/accounting/journal';
 import { yearEndPack, type YearEndPack } from '@/domain/reports/yearEnd';
 import { buildVat3Return, type Vat3Return } from '@/domain/vat/report';
@@ -262,7 +263,7 @@ export function recordPaymentCli(db: AppDatabase, input: RecordPaymentCliInput):
   });
 }
 
-// ---- journal (manual multi-line adjustment) ----
+// ---- journal (manual multi-line adjustment, or a split for one statement line) ----
 
 interface JournalLineJson {
   account: string;
@@ -273,32 +274,93 @@ interface JournalLineJson {
   customer?: string;
 }
 
-export function journalCli(db: AppDatabase, input: JournalCliInput): CreatedAdjustment {
-  const company = db.select().from(companies).where(eq(companies.id, input.companyId)).get();
-  if (!company) throw new Error(`Company ${input.companyId} not found.`);
-  const currency = company.baseCurrency;
+interface JournalVatJson {
+  direction: 'sales' | 'purchases';
+  treatment: string;
+  net?: number | string;
+  gross?: number | string;
+  statedVat?: number | string;
+}
 
+const parseJournalLines = (
+  db: AppDatabase, companyId: string, raw: string, currency: string,
+): Array<{
+  accountId: string; debitMinor?: number; creditMinor?: number; memo?: string;
+  supplierId?: string; customerId?: string;
+}> => {
   let rawLines: JournalLineJson[];
   try {
-    rawLines = JSON.parse(input.lines) as JournalLineJson[];
+    rawLines = JSON.parse(raw) as JournalLineJson[];
   } catch (e) {
     throw new Error(`--lines is not valid JSON: ${e instanceof Error ? e.message : e}`);
   }
   if (!Array.isArray(rawLines) || rawLines.length < 2) {
     throw new Error('--lines must be a JSON array with at least two entries.');
   }
-
-  const lines = rawLines.map((line, index) => {
+  return rawLines.map((line, index) => {
     if (!line.account) throw new Error(`Line ${index + 1} is missing "account".`);
     return {
-      accountId: resolveAccountId(db, input.companyId, line.account),
+      accountId: resolveAccountId(db, companyId, line.account),
       debitMinor: line.debit !== undefined ? parseAmount(String(line.debit), currency) : undefined,
       creditMinor: line.credit !== undefined ? parseAmount(String(line.credit), currency) : undefined,
       memo: line.memo,
-      supplierId: line.supplier ? resolveSupplierId(db, input.companyId, line.supplier) : undefined,
-      customerId: line.customer ? resolveCustomerId(db, input.companyId, line.customer) : undefined,
+      supplierId: line.supplier ? resolveSupplierId(db, companyId, line.supplier) : undefined,
+      customerId: line.customer ? resolveCustomerId(db, companyId, line.customer) : undefined,
     };
   });
+};
+
+export function journalCli(
+  db: AppDatabase, input: JournalCliInput,
+): CreatedAdjustment | BankTransactionJournalResult {
+  const company = db.select().from(companies).where(eq(companies.id, input.companyId)).get();
+  if (!company) throw new Error(`Company ${input.companyId} not found.`);
+
+  if (input.transaction) {
+    const transaction = db.select().from(bankTransactions)
+      .where(and(
+        eq(bankTransactions.id, input.transaction),
+        eq(bankTransactions.companyId, input.companyId),
+      )).get();
+    if (!transaction) throw new Error(`Bank transaction ${input.transaction} not found.`);
+
+    const lines = parseJournalLines(db, input.companyId, input.lines, transaction.currency);
+
+    let vat: NonNullable<Parameters<typeof postBankTransactionJournal>[1]['vat']> | undefined;
+    if (input.vat) {
+      let rawVat: JournalVatJson;
+      try {
+        rawVat = JSON.parse(input.vat) as JournalVatJson;
+      } catch (e) {
+        throw new Error(`--vat is not valid JSON: ${e instanceof Error ? e.message : e}`);
+      }
+      if (!rawVat.direction || !rawVat.treatment) {
+        throw new Error('--vat needs at least "direction" and "treatment".');
+      }
+      vat = {
+        direction: rawVat.direction,
+        treatmentId: resolveVatTreatmentId(db, input.companyId, rawVat.treatment),
+        netMinor: rawVat.net !== undefined ? parseAmount(String(rawVat.net), transaction.currency) : undefined,
+        grossMinor: rawVat.gross !== undefined ? parseAmount(String(rawVat.gross), transaction.currency) : undefined,
+        statedVatMinor: rawVat.statedVat !== undefined
+          ? parseAmount(String(rawVat.statedVat), transaction.currency) : undefined,
+      };
+    }
+
+    return postBankTransactionJournal(db, {
+      companyId: input.companyId,
+      bankTransactionId: transaction.id,
+      lines,
+      narrative: input.narrative,
+      vat,
+      actor: 'cli',
+    });
+  }
+
+  if (!input.date || !input.narrative) {
+    throw new Error('--date and --narrative are required unless --transaction is given.');
+  }
+  const lines = parseJournalLines(db, input.companyId, input.lines, company.baseCurrency);
 
   return createAdjustment(db, {
     companyId: input.companyId,

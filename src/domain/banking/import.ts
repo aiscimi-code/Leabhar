@@ -224,6 +224,7 @@ export async function importStatement(
         counterpartyName: transaction.counterpartyName,
         counterpartyIban: transaction.counterpartyIban,
         transactionType: transaction.transactionType,
+        notes: transaction.notes,
         rawData: transaction.rawData,
         fingerprint: transaction.fingerprint,
         occurrenceIndex: transaction.occurrenceIndex,
