@@ -31,6 +31,7 @@ VATCA_LETTERED = [
 CA2014_SECTIONS = [
     "282", "280A", "280D", "280E", "352", "358", "359", "360",
 ]
+TCA1997_SECTIONS = [235, 288, 299, 496, 613]
 
 
 def fetch(url: str, dest: Path) -> Path:
@@ -59,8 +60,12 @@ def html_to_md(html: str, title: str, citation: str, url: str) -> str:
     # while Schedules came out clean from the same fix. "sect" caught late
     # precisely because nothing failed loudly: the fallback always
     # produces *some* output, just with the leading chrome still in it.
+    # eISB as-enacted section pages put the provision in #act
+    # (class="act-content"), not #content. Without this selector the
+    # <main> fallback pulls in View-by-Section / Bill History chrome.
     root = (
-        soup.select_one("#content") or soup.select_one("section.sect, section.schedule")
+        soup.select_one("#content") or soup.select_one("#act, div.act-content")
+        or soup.select_one("section.sect, section.schedule")
         or soup.select_one("main") or soup.body
     )
     # Per-provision "Amendments:" (class="f-notes") and end-of-provision
@@ -162,6 +167,30 @@ def extract_companies_act_2014() -> None:
         )
 
 
+def extract_tca1997() -> None:
+    out = ROOT / "tca-1997"
+    for n in TCA1997_SECTIONS:
+        url = f"https://www.irishstatutebook.ie/eli/1997/act/39/section/{n}/enacted/en/html"
+        raw = Path(f"/tmp/tca1997/s{n}.html")
+        if not raw.exists():
+            fetch(url, raw)
+            time.sleep(0.2)
+        md = html_to_md(
+            raw.read_text(errors="replace"),
+            f"TCA 1997 s.{n} (as enacted)",
+            f"1997 Act 39 s.{n}",
+            url,
+        )
+        md = md.replace(
+            "jurisdiction: IE\n",
+            "jurisdiction: IE\n"
+            "consolidation: as-enacted-1997\n"
+            "warning: \"No LRC revised TCA. Later Finance Acts may have substituted this section.\"\n",
+            1,
+        )
+        write(out / f"s{n}.md", md)
+
+
 def extract_si639() -> None:
     url = "https://www.irishstatutebook.ie/eli/2010/si/639/made/en/print"
     raw = Path("/tmp/si639-print.html")
@@ -225,6 +254,7 @@ jurisdiction: IE
 if __name__ == "__main__":
     extract_vatca()
     extract_companies_act_2014()
+    extract_tca1997()
     extract_si639()
     extract_tdm()
     extract_rates()
