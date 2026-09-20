@@ -287,6 +287,23 @@ leabhar_implementation_rule          → rank 4 (this practice's own convention)
 - `bank_transactions.status` — `unclassified/suggested/classified/matched/
   posted/reconciled/ignored/duplicate`.
 
+## Audit trail and traceability
+
+- **Traceability** (WP05, `src/domain/accounting/traceability.ts`): `traceJournalLine`
+  traces a ledger line backward to its source bank transaction and import.
+  `traceBankTransaction` traces forward from a bank transaction to all journal
+  entries and lines it produced.
+- **Decision explanation** (WP06, `src/domain/decisions/explanation.ts`): `AccountingDecision`
+  is a structured representation tying together evidence, extracted facts, AI
+  suggestions, rule evaluations, accounting result, and VAT result.
+  `buildAccountingDecision` assembles it from deterministic pipeline outputs —
+  never invents fields.
+- **Audit trail verification** (WP07, `src/domain/decisions/auditTrail.ts`):
+  `verifyAuditTrail` runs 10 structural checks on an `AccountingDecision`.
+  `verifySerialization` confirms JSON round-trip fidelity. `verifyJournalBalance`
+  checks debits == credits. `verifyEvidenceChain` confirms every journal line
+  traces back to source evidence.
+
 ## Verification
 
 ### Tests
@@ -351,7 +368,9 @@ Every accounting artifact has one of three states:
 - Source document hashing — SHA-256.
 - Rule ingestion from statutes (`statuteParser.ts`, `factExtractor.ts`) —
   text parsing, no inference about what a figure "should" be.
+- Decision explanation assembly (`decisions/explanation.ts`) — pure assembler of
+  deterministic outputs; AI suggestions are labelled, never authoritative.
 
 ---
 
-*Next: Work Package 03 — Golden Test Case Framework.*
+*Next: Work Package 03 — Golden Test Case Framework (see `tests/golden/`).*
