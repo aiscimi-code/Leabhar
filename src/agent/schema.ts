@@ -216,6 +216,19 @@ export const createInvoiceCsvInput = z.object({
   file: z.string(),
 });
 
+// ---- import-invoices (issue #160): invoice + matchable document, in one row ----
+
+export const importInvoicesCsvInput = z.object({
+  companyId: z.string(),
+  direction: z.enum(['sales', 'purchase']),
+  file: z.string(),
+  /** Every row's single line posts here — the CSV has no per-row account column. */
+  account: z.string(),
+  vatTreatment: z.string(),
+});
+
+export type ImportInvoicesCsvInput = z.infer<typeof importInvoicesCsvInput>;
+
 export const recordPaymentInput = z.object({
   companyId: z.string(),
   bankTransactionId: z.string().optional(),

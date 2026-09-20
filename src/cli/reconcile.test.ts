@@ -5,7 +5,7 @@ import { createCompany, addBankAccount } from '@/domain/config/setup';
 import { createRule } from '@/domain/rules/engine';
 import { importStatement } from '@/domain/banking/import';
 import { storeDocument } from '@/domain/documents/storage';
-import { bankTransactions, reconciliations, documents, documentMatches, suppliers, accounts } from '@/db/schema';
+import { bankTransactions, reconciliations, documents, documentMatches, suppliers, accounts, invoices } from '@/db/schema';
 import { makeDate } from '@/domain/dates';
 import { main } from './reconcile';
 import { mkdtempSync, writeFileSync } from 'node:fs';
@@ -868,6 +868,97 @@ describe('cli reconcile — induction and books (issue #153)', () => {
       expect(posted6180[0]!.description).toBe('SALARY - FINN OREILLY');
       expect(posted6200).toHaveLength(1);
       expect(posted6200[0]!.description).toBe('RENT STANDING ORDER');
+    });
+
+    // Issue #160: create-invoice --file posts the invoice alone; import-invoices
+    // also creates matchable evidence, so a bank line referencing the invoice
+    // number in its narrative can actually be found by match().
+    it('import-invoices creates both the invoice and a document match() can find', async () => {
+      let c = iCapture();
+      await iRun(['add-bank', '--name', 'AIB Current', '--opening-date', '2025-01-01']);
+      const bankAccountId = JSON.parse(c.stdout.join('')).bankAccountId;
+      c.restore();
+
+      await iRun(['add-account', '--code', '4020', '--name', 'Consulting income', '--type', 'income']);
+
+      const root = mkdtempSync(join(tmpdir(), 'import-invoices-'));
+      const salesCsv = join(root, 'sales.csv');
+      writeFileSync(salesCsv, [
+        'invoiceNumber,date,party,net,vat,gross,due',
+        'INV-2025-010,2025-02-20,Mulligan Digital Limited,100.00,23.00,123.00,2025-03-22',
+      ].join('\n'));
+
+      c = iCapture();
+      const code = await iRun([
+        'import-invoices', '--direction', 'sales', '--file', salesCsv,
+        '--account', '4020', '--vat-treatment', 'IE_STD',
+      ]);
+      c.restore();
+      expect(code).toBe(0);
+      const parsed = JSON.parse(c.stdout.join(''));
+      expect(parsed.created).toBe(1);
+      expect(parsed.failed).toBe(0);
+      expect(parsed.results[0].documentId).toBeTruthy();
+
+      const doc = iDb.select().from(documents)
+        .where(eq(documents.id, parsed.results[0].documentId)).get()!;
+      expect(doc.invoiceNumber).toBe('INV-2025-010');
+      expect(doc.grossMinor).toBe(12_300);
+      expect(doc.currency).toBe('EUR');
+      expect(doc.customerId).toBeTruthy();
+      expect(doc.invoiceId).toBe(parsed.results[0].invoiceId);
+
+      const invoiceRow = iDb.select().from(invoices)
+        .where(eq(invoices.id, parsed.results[0].invoiceId)).get()!;
+      expect(invoiceRow.documentId).toBe(doc.id);
+
+      // A bank line referencing the invoice number, close in amount and date.
+      const bankCsv = join(root, 'bank.csv');
+      writeFileSync(bankCsv, [
+        'Date,Description,Amount',
+        '01/03/2025,PAYMENT REF INV-2025-010,123.00',
+      ].join('\n'));
+      await iRun(['import', '--account', bankAccountId, '--file', bankCsv]);
+
+      c = iCapture();
+      const matchCode = await iRun(['match']);
+      c.restore();
+      expect(matchCode).toBe(0);
+      const matchResult = JSON.parse(c.stdout.join(''));
+      expect(matchResult.autoMatched + matchResult.needingReview).toBeGreaterThanOrEqual(1);
+
+      const afterMatch = iDb.select().from(documents).where(eq(documents.id, doc.id)).get()!;
+      expect(afterMatch.matchedTransactionId).toBeTruthy();
+    });
+
+    it('import-invoices treats a CN- number as a credit note with positive line amounts', async () => {
+      let c = iCapture();
+      await iRun(['add-bank', '--name', 'AIB Current', '--opening-date', '2025-01-01']);
+      c.restore();
+      await iRun(['add-account', '--code', '4020', '--name', 'Consulting income', '--type', 'income']);
+
+      const root = mkdtempSync(join(tmpdir(), 'import-invoices-cn-'));
+      const csv = join(root, 'credit.csv');
+      writeFileSync(csv, [
+        'invoiceNumber,date,party,net,vat,gross',
+        'CN-0001,2025-05-06,Mulligan Digital Limited,280.00,64.40,344.40',
+      ].join('\n'));
+
+      c = iCapture();
+      const code = await iRun([
+        'import-invoices', '--direction', 'sales', '--file', csv,
+        '--account', '4020', '--vat-treatment', 'IE_STD',
+      ]);
+      c.restore();
+      expect(code).toBe(0);
+      const parsed = JSON.parse(c.stdout.join(''));
+      expect(parsed.created).toBe(1);
+      expect(parsed.results[0].warning).toBeUndefined();
+
+      const invoiceRow = iDb.select().from(invoices)
+        .where(eq(invoices.id, parsed.results[0].invoiceId)).get()!;
+      expect(invoiceRow.isCreditNote).toBe(true);
+      expect(invoiceRow.grossMinor).toBe(-34_440);
     });
 
     it('add-account refuses a report section neither report reads', async () => {

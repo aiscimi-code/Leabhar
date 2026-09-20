@@ -13,10 +13,12 @@ import { postBankTransactionJournal, type BankTransactionJournalResult } from '@
 import { reverseJournalEntry, type PostedJournal } from '@/domain/accounting/journal';
 import { yearEndPack, type YearEndPack } from '@/domain/reports/yearEnd';
 import { buildVat3Return, type Vat3Return } from '@/domain/vat/report';
+import { storeDocument } from '@/domain/documents/storage';
+import { upsertSupplier, upsertCustomer } from '@/domain/config/mutations';
 import { resolveAccountId, resolveVatTreatmentId } from './reconcile';
 import { resolveCustomerId, resolveSupplierId } from './induction';
 import type {
-  CreateInvoiceCsvInput, RecordPaymentCliInput, JournalCliInput,
+  CreateInvoiceCsvInput, ImportInvoicesCsvInput, RecordPaymentCliInput, JournalCliInput,
   ListTransactionsInput, ShowInvoiceInput, YearEndCliInput, VatReturnCliInput,
   VoidInvoiceCliInput, ReverseJournalCliInput,
 } from './schema';
@@ -146,6 +148,182 @@ export async function createInvoicesFromCsv(
       });
 
       results.push({ row: rowNumber, invoiceNumber, invoiceId: created.invoiceId });
+    } catch (e) {
+      results.push({ row: rowNumber, invoiceNumber, error: e instanceof Error ? e.message : String(e) });
+    }
+  }
+
+  return {
+    created: results.filter((r) => !r.error).length,
+    failed: results.filter((r) => r.error).length,
+    results,
+  };
+}
+
+// ---- import-invoices --file <csv> (issue #160) ----
+
+export interface ImportInvoiceCsvRowResult {
+  row: number;
+  invoiceNumber: string | null;
+  invoiceId?: string;
+  documentId?: string;
+  warning?: string;
+  error?: string;
+}
+
+export interface ImportInvoicesFromCsvResult {
+  created: number;
+  failed: number;
+  results: ImportInvoiceCsvRowResult[];
+}
+
+const buildSyntheticDocumentText = (params: {
+  direction: 'sales' | 'purchase'; invoiceNumber: string | null; partyName: string;
+  date: string; currency: string; netMinor: number; vatMinor: number; grossMinor: number;
+  dueDate: string | null; description: string | null;
+}): string => {
+  const amount = (minor: number): string => `${(minor / 100).toFixed(2)} ${params.currency}`;
+  return [
+    `${params.direction === 'sales' ? 'Sales invoice' : 'Purchase invoice'}${params.invoiceNumber ? ` ${params.invoiceNumber}` : ''}`,
+    `Date: ${params.date}`,
+    `${params.direction === 'sales' ? 'Customer' : 'Supplier'}: ${params.partyName}`,
+    params.description ? `Description: ${params.description}` : null,
+    `Net: ${amount(params.netMinor)}`,
+    `VAT: ${amount(params.vatMinor)}`,
+    `Gross: ${amount(params.grossMinor)}`,
+    params.dueDate ? `Due: ${params.dueDate}` : null,
+  ].filter((line): line is string => line !== null).join('\n');
+};
+
+/**
+ * Intake contract for an invoice-led pack (issue #160): a row becomes both a
+ * posted invoice AND matchable evidence — a `documents` row carrying the
+ * invoice number, date, currency and gross that `match()` scores against
+ * bank transactions, and which `missingDocuments` no longer counts as
+ * missing. `create-invoice --file` (issue #153) posts the invoice alone;
+ * this is the version that also gives `match` something to find.
+ *
+ * Unlike `create-invoice --file`, there is no per-row account/vatTreatment
+ * column — every row in one file posts to the same `--account`/
+ * `--vat-treatment`, since a simple sales/purchase ledger CSV normally has
+ * one line per invoice already summarised to net/vat/gross rather than a
+ * breakdown by account. Required columns: `invoiceNumber`, `date`, `party`
+ * (a customer/supplier name — created if it doesn't already exist), `net`.
+ * Optional: `vat` (stated, trusted over recomputing — README's own rule for
+ * a document that states VAT explicitly), `gross` (cross-checked against
+ * net+vat; a material mismatch is a warning, not a failure), `due`,
+ * `description`, `currency`, `reference`, `type` (contains "credit" →
+ * credit note), and `document` (a path to the actual CSV/PDF; without it, a
+ * synthetic text stand-in is generated from the row).
+ */
+export async function importInvoicesFromCsv(
+  db: AppDatabase, input: ImportInvoicesCsvInput,
+): Promise<ImportInvoicesFromCsvResult> {
+  const { readFile } = await import('node:fs/promises');
+  const content = await readFile(input.file, 'utf8');
+  const rows = parseCsv(content);
+  if (rows.length === 0) throw new Error('CSV file is empty.');
+
+  const header = rows[0]!.map((h) => h.trim());
+  const dataRows = rows.slice(1);
+
+  const company = db.select().from(companies).where(eq(companies.id, input.companyId)).get();
+  if (!company) throw new Error(`Company ${input.companyId} not found.`);
+
+  const accountId = resolveAccountId(db, input.companyId, input.account);
+  const vatTreatmentId = resolveVatTreatmentId(db, input.companyId, input.vatTreatment);
+
+  const results: ImportInvoiceCsvRowResult[] = [];
+
+  for (const [index, cells] of dataRows.entries()) {
+    const rowNumber = index + 2;
+    const record: Record<string, string> = {};
+    header.forEach((h, i) => { record[h] = (cells[i] ?? '').trim(); });
+    const invoiceNumber = record.invoiceNumber || null;
+
+    try {
+      const requireCell = (column: string): string => {
+        const value = record[column];
+        if (!value) throw new Error(`Row ${rowNumber} is missing "${column}".`);
+        return value;
+      };
+
+      const currency = (record.currency || company.baseCurrency).toUpperCase();
+      const partyName = requireCell('party');
+      const isCreditNote = /credit/i.test(record.type ?? '') || /^CN-/i.test(invoiceNumber ?? '');
+
+      const partyId = input.direction === 'sales'
+        ? upsertCustomer(db, { companyId: input.companyId, name: partyName, actor: 'cli' })
+        : upsertSupplier(db, { companyId: input.companyId, name: partyName, actor: 'cli' });
+
+      const netMinor = parseAmount(requireCell('net'), currency);
+      const statedVatMinor = record.vat ? parseAmount(record.vat, currency) : undefined;
+      const invoiceDate = requireCell('date');
+      const dueDate = record.due || null;
+
+      const created: CreatedInvoice = createInvoice(db, {
+        companyId: input.companyId,
+        direction: input.direction,
+        invoiceDate: asIsoDate(invoiceDate),
+        dueDate: dueDate ? asIsoDate(dueDate) : null,
+        supplierId: input.direction === 'purchase' ? partyId : null,
+        customerId: input.direction === 'sales' ? partyId : null,
+        invoiceNumber,
+        reference: record.reference || null,
+        currency: currency !== company.baseCurrency.toUpperCase() ? currency : undefined,
+        isCreditNote,
+        lines: [{
+          description: record.description || invoiceNumber || `${input.direction} invoice`,
+          netMinor, accountId, vatTreatmentId, statedVatMinor,
+        }],
+        actor: 'cli',
+      });
+
+      let warning: string | undefined;
+      if (record.gross) {
+        const statedGrossMinor = parseAmount(record.gross, currency);
+        const grossSign = isCreditNote ? -1 : 1;
+        if (Math.abs(statedGrossMinor * grossSign - created.grossMinor) > 1) {
+          warning = `Row ${rowNumber}'s stated gross (${record.gross}) does not match `
+            + `net + VAT as posted (${(created.grossMinor / 100).toFixed(2)}).`;
+        }
+      }
+
+      const documentContent = record.document
+        ? await readFile(record.document)
+        : Buffer.from(buildSyntheticDocumentText({
+          direction: input.direction, invoiceNumber, partyName, date: invoiceDate, currency,
+          netMinor: created.netMinor, vatMinor: created.vatMinor, grossMinor: created.grossMinor,
+          dueDate, description: record.description || null,
+        }), 'utf8');
+      const documentFilename = record.document
+        ? record.document.split('/').pop()!
+        : `${invoiceNumber ?? `row-${rowNumber}`}.txt`;
+
+      const stored = storeDocument(db, {
+        companyId: input.companyId,
+        filename: documentFilename,
+        content: documentContent,
+        documentType: isCreditNote ? 'credit_note' : input.direction === 'sales' ? 'sales_invoice' : 'supplier_invoice',
+        documentDate: invoiceDate,
+        supplierId: input.direction === 'purchase' ? partyId : null,
+        customerId: input.direction === 'sales' ? partyId : null,
+        invoiceId: created.invoiceId,
+        invoiceNumber,
+        currency,
+        netMinor: created.netMinor,
+        vatMinor: created.vatMinor,
+        grossMinor: created.grossMinor,
+        uploadedBy: 'cli',
+      });
+
+      db.update(invoices).set({ documentId: stored.documentId })
+        .where(eq(invoices.id, created.invoiceId)).run();
+
+      results.push({
+        row: rowNumber, invoiceNumber, invoiceId: created.invoiceId,
+        documentId: stored.documentId, warning,
+      });
     } catch (e) {
       results.push({ row: rowNumber, invoiceNumber, error: e instanceof Error ? e.message : String(e) });
     }
