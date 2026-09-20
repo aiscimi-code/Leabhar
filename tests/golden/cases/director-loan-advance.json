@@ -1,0 +1,34 @@
+{
+  "id": "director-loan-advance",
+  "description": "Director introduces funds via a loan (not share capital)",
+  "authority": "PROFESSIONAL_PRACTICE",
+  "references": [],
+  "notes": "A director loan is not share capital. The journal debits the bank account and credits the director's current account (a liability). No VAT applies — this is a balance sheet transaction, not a supply of goods or services.",
+  "inputs": {
+    "transaction": {
+      "transactionDate": "2026-09-18",
+      "amountMinor": 500000,
+      "currency": "EUR",
+      "entityType": "Irish_LTD",
+      "vatRegistered": true,
+      "description": "Funds introduced by director"
+    }
+  },
+  "expected_classification": {
+    "identifiedTopics": ["director_transaction"],
+    "notApplicableRuleKeys": ["vat.input_deduction_general", "vat.reverse_charge_services_from_abroad"],
+    "reviewRequired": true
+  },
+  "expected_journal": {
+    "posted": true,
+    "balanced": true,
+    "lines": [
+      { "accountCode": "bank_control", "debitMinor": 500000 },
+      { "accountCode": "directors_current_account", "creditMinor": 500000 }
+    ]
+  },
+  "expected_vat": {
+    "entryCount": 0
+  },
+  "review_required": true
+}

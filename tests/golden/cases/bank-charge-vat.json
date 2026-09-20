@@ -1,0 +1,43 @@
+{
+  "id": "bank-charge-vat",
+  "description": "Bank charge with 23% irrecoverable input VAT",
+  "authority": "LEABHAR_RULE",
+  "references": ["vat.input_deduction_general", "vat.deduction_exclusions_entertainment"],
+  "notes": "A bank charge is a service supplied in Ireland at the standard rate. The input VAT is subject to the general deduction rule (VATCA s.59). It is not within the entertainment exclusion (s.60(2)(a)) so the full input VAT should be recoverable, pending human review of the AI-extracted rule.",
+  "inputs": {
+    "transaction": {
+      "transactionDate": "2026-09-18",
+      "amountMinor": 5000,
+      "currency": "EUR",
+      "entityType": "Irish_LTD",
+      "vatRegistered": true,
+      "transactionType": "bank_charge",
+      "description": "Bank of Ireland monthly charge",
+      "businessUsePercent": 100,
+      "invoiceAvailable": true
+    }
+  },
+  "expected_classification": {
+    "identifiedTopics": ["banking", "business_expense", "vat"],
+    "applicableRuleKeys": ["vat.input_deduction_general"],
+    "notApplicableRuleKeys": ["vat.deduction_exclusions_entertainment"],
+    "reviewRequired": true
+  },
+  "expected_journal": {
+    "posted": true,
+    "balanced": true,
+    "lines": [
+      { "accountCode": "6500", "debitMinor": 4065 },
+      { "accountCode": "vat_input", "debitMinor": 935 },
+      { "accountCode": "bank_control", "creditMinor": 5000 }
+    ]
+  },
+  "expected_vat": {
+    "entryCount": 1,
+    "totalNetMinor": 4065,
+    "totalVatMinor": 935,
+    "totalGrossMinor": 5000,
+    "totalRecoverableMinor": 935
+  },
+  "review_required": true
+}

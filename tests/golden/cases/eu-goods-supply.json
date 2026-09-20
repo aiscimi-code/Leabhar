@@ -1,0 +1,39 @@
+{
+  "id": "eu-goods-supply",
+  "description": "Intra-Community supply of goods to an EU customer (zero-rated, E1 box)",
+  "authority": "LEABHAR_RULE",
+  "references": ["vatca-2010/s21", "vatca-2010/s44"],
+  "notes": "Under VATCA 2010 s.21, supplies of goods to a person in another EU member state are charged at zero rate and reported in the E1 box (intra-community supply of goods). The customer accounts for VAT in their own country under the reverse charge.",
+  "inputs": {
+    "transaction": {
+      "transactionDate": "2026-09-18",
+      "amountMinor": 80000,
+      "currency": "EUR",
+      "entityType": "Irish_LTD",
+      "vatRegistered": true,
+      "supplyType": "goods",
+      "description": "Sale of widgets to French customer, shipped to FR",
+      "invoiceAvailable": true
+    }
+  },
+  "expected_classification": {
+    "identifiedTopics": ["vat"],
+    "reviewRequired": true
+  },
+  "expected_journal": {
+    "posted": true,
+    "balanced": true,
+    "lines": [
+      { "accountCode": "bank_control", "debitMinor": 80000 },
+      { "accountCode": "4000", "creditMinor": 80000 }
+    ]
+  },
+  "expected_vat": {
+    "entryCount": 1,
+    "totalNetMinor": 80000,
+    "totalVatMinor": 0,
+    "totalRecoverableMinor": 0,
+    "vatBoxes": ["E1"]
+  },
+  "review_required": true
+}

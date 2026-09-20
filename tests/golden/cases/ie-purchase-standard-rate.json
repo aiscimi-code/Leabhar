@@ -1,0 +1,55 @@
+{
+  "id": "ie-purchase-standard-rate",
+  "description": "Irish standard-rated domestic purchase with 23% input VAT, fully recoverable",
+  "authority": "LEABHAR_RULE",
+  "references": ["vat.input_deduction_general", "vat.rate_standard_current"],
+  "notes": "A VAT-registered Irish Ltd purchases software from an Irish supplier at the 23% standard rate. Input VAT is deductible under VATCA s.59. The journal must debit the software expense account and the input VAT account, and credit the bank.",
+  "inputs": {
+    "transaction": {
+      "transactionDate": "2026-09-18",
+      "amountMinor": 12300,
+      "currency": "EUR",
+      "entityType": "Irish_LTD",
+      "vatRegistered": true,
+      "supplyType": "services",
+      "description": "Software subscription - Anthropic",
+      "businessUsePercent": 100,
+      "invoiceAvailable": true
+    },
+    "preJournalEntries": [
+      {
+        "lines": [
+          { "accountId": "6010", "debitMinor": 10000 },
+          { "accountId": "bank_control", "creditMinor": 10000 }
+        ],
+        "narrative": "Opening bank deposit",
+        "entryDate": "2026-09-15"
+      }
+    ]
+  },
+  "expected_classification": {
+    "identifiedTopics": ["vat", "business_expense"],
+    "applicableRuleKeys": ["vat.input_deduction_general"],
+    "reviewRequired": true
+  },
+  "expected_journal": {
+    "posted": true,
+    "balanced": true,
+    "lines": [
+      { "accountCode": "6010", "debitMinor": 10000 },
+      { "accountCode": "vat_input", "debitMinor": 2300 },
+      { "accountCode": "bank_control", "creditMinor": 12300 }
+    ]
+  },
+  "expected_vat": {
+    "entryCount": 1,
+    "totalNetMinor": 10000,
+    "totalVatMinor": 2300,
+    "totalGrossMinor": 12300,
+    "totalRecoverableMinor": 2300,
+    "isReverseCharge": false,
+    "rateBasisPoints": 2300,
+    "vatBoxes": ["T2"]
+  },
+  "review_required": true
+}

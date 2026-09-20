@@ -1,0 +1,35 @@
+{
+  "id": "zero-rated-export-supply",
+  "description": "Zero-rated export supply of goods to EU customer (reverse charge on customer side)",
+  "authority": "LEABHAR_RULE",
+  "references": ["vatca-2010-revised/schedule-2", "vat.rate_zero_export"],
+  "notes": "Under VATCA 2010 Sch 2, exports of goods outside the EU are zero-rated. No output VAT is charged. The supply is outside the scope of Irish VAT when the goods are dispatched to the customer outside the State.",
+  "inputs": {
+    "transaction": {
+      "transactionDate": "2026-09-18",
+      "amountMinor": 50000,
+      "currency": "EUR",
+      "entityType": "Irish_LTD",
+      "vatRegistered": true,
+      "supplyType": "goods",
+      "description": "Export shipment to UK customer",
+      "invoiceAvailable": true
+    }
+  },
+  "expected_classification": {
+    "identifiedTopics": ["vat"],
+    "reviewRequired": true
+  },
+  "expected_journal": {
+    "posted": true,
+    "balanced": true,
+    "lines": [
+      { "accountCode": "bank_control", "debitMinor": 50000 },
+      { "accountCode": "4000", "creditMinor": 50000 }
+    ]
+  },
+  "expected_vat": {
+    "entryCount": 0
+  },
+  "review_required": true
+}
