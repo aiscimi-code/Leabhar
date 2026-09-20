@@ -4,7 +4,8 @@ import { eq } from 'drizzle-orm';
 import { createTestDatabase } from '@/db/testing';
 import { createCompany } from '../config/setup';
 import {
-  ingestSi692025Reg5, ingestSi692025Reg8, ingestSi692025Reg9, deriveSi692025Rules, SI_69_2025_MD_PATH,
+  ingestSi692025Reg5, ingestSi692025Reg7, ingestSi692025Reg8, ingestSi692025Reg9, deriveSi692025Rules,
+  SI_69_2025_MD_PATH,
 } from './si692025Ingestion';
 import { lookupTaxRule } from './irishRules';
 import { lookupTransactionRules } from './transactionLookup';
@@ -40,21 +41,24 @@ describe('ingestSi692025Reg8', () => {
   });
 });
 
-describe('ingestSi692025Reg5 / ingestSi692025Reg9 (share one source document with reg.8)', () => {
-  it('reg.5 and reg.9 each get their own provision row under the shared S.I. 69/2025 source', () => {
+describe('ingestSi692025Reg5 / ingestSi692025Reg7 / ingestSi692025Reg9 (share one source document with reg.8)', () => {
+  it('reg.5, reg.7 and reg.9 each get their own provision row under the shared S.I. 69/2025 source', () => {
     const reg8 = ingestSi692025Reg8(db, { companyId, markdown, ingestVersion: 'v1' });
     const reg5 = ingestSi692025Reg5(db, { companyId, markdown, ingestVersion: 'v1' });
+    const reg7 = ingestSi692025Reg7(db, { companyId, markdown, ingestVersion: 'v1' });
     const reg9 = ingestSi692025Reg9(db, { companyId, markdown, ingestVersion: 'v1' });
 
     // Same physical instrument, same content hash -> one shared knowledge-source row.
     expect(reg5.sourceId).toBe(reg8.sourceId);
+    expect(reg7.sourceId).toBe(reg8.sourceId);
     expect(reg9.sourceId).toBe(reg8.sourceId);
     expect(reg5.ingested).toBe(true);
+    expect(reg7.ingested).toBe(true);
     expect(reg9.ingested).toBe(true);
 
     const provisions = db.select({ sectionNumber: irishActProvisions.sectionNumber })
       .from(irishActProvisions).where(eq(irishActProvisions.sourceId, reg8.sourceId)).all();
-    expect(provisions.map((p) => p.sectionNumber).sort()).toEqual(['5', '8', '9']);
+    expect(provisions.map((p) => p.sectionNumber).sort()).toEqual(['5', '7', '8', '9']);
   });
 
   it('ingesting reg.5 or reg.9 a second time is idempotent, independently of the other regulations', () => {
@@ -77,11 +81,12 @@ describe('ingestSi692025Reg5 / ingestSi692025Reg9 (share one source document wit
 describe('deriveSi692025Rules', () => {
   beforeEach(() => {
     ingestSi692025Reg5(db, { companyId, markdown, ingestVersion: 'v1' });
+    ingestSi692025Reg7(db, { companyId, markdown, ingestVersion: 'v1' });
     ingestSi692025Reg8(db, { companyId, markdown, ingestVersion: 'v1' });
     ingestSi692025Reg9(db, { companyId, markdown, ingestVersion: 'v1' });
   });
 
-  it('creates every curated rule once all three regulations are ingested', () => {
+  it('creates every curated rule once all four regulations are ingested', () => {
     const result = deriveSi692025Rules(db, { companyId });
     expect(result.created).toBe(SI_69_2025_CURATED_RULES.length);
     expect(result.skippedNoProvision).toEqual([]);
@@ -94,7 +99,12 @@ describe('deriveSi692025Rules', () => {
     const result = deriveSi692025Rules(freshDb, { companyId: freshCompanyId });
     expect(result.created).toBe(2); // only the two reg.8 rules
     expect(result.skippedNoProvision).toEqual(
-      expect.arrayContaining(['vat.registration_threshold_turnover_test', 'vat.annual_turnover_definition']),
+      expect.arrayContaining([
+        'vat.registration_threshold_turnover_test',
+        'vat.annual_turnover_definition',
+        'vat.cross_border_sme_scheme_input_deductibility_restriction',
+        'vat.cross_border_sme_scheme_union_threshold',
+      ]),
     );
   });
 
@@ -114,6 +124,24 @@ describe('deriveSi692025Rules', () => {
     expect(rule).not.toBeNull();
     expect(rule!.value).toBe(90);
     expect(rule!.unit).toBe('percent');
+  });
+
+  describe('issue #130: regulation 7 deductibility restriction + the union threshold', () => {
+    it('the cross-border SME scheme deductibility restriction rule resolves, with no numeric value', () => {
+      deriveSi692025Rules(db, { companyId });
+      const rule = lookupTaxRule(db, { companyId, ruleKey: 'vat.cross_border_sme_scheme_input_deductibility_restriction' });
+      expect(rule).not.toBeNull();
+      expect(rule!.value).toBeNull();
+      expect(rule!.citation).toBe('S.I. 69/2025');
+    });
+
+    it('the union threshold rule states €100,000 in integer minor units', () => {
+      deriveSi692025Rules(db, { companyId });
+      const rule = lookupTaxRule(db, { companyId, ruleKey: 'vat.cross_border_sme_scheme_union_threshold' });
+      expect(rule).not.toBeNull();
+      expect(rule!.value).toBe(10_000_000); // €100,000 in cents
+      expect(rule!.unit).toBe('eur_minor');
+    });
   });
 
   it('every rule starts unreviewed with ai_suggestion provenance', () => {

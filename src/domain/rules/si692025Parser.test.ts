@@ -11,6 +11,13 @@ describe('parseSi692025Regulation', () => {
     expect(reg8.provisionText).toContain('€2,000,000 in any continuous period of 12 months');
   });
 
+  it('extracts regulation 7\'s full verbatim body (the s.60(4) deductibility restriction)', () => {
+    const reg7 = parseSi692025RegulationFile(SI_69_2025_MD_PATH, '7');
+    expect(reg7.provisionText.startsWith('7. Section 60 of the Act of 2010 is amended')).toBe(true);
+    expect(reg7.provisionText).toContain('shall not deduct any tax on expenditure incurred for the purpose of supplies made in accordance with Chapter 5 of Part 10');
+    expect(reg7.provisionText).not.toContain('Section 80(1)');
+  });
+
   it('stops before the next top-level regulation, not the inserted 92B/92C/92D sections inside regulation 9', () => {
     const reg8 = parseSi692025RegulationFile(SI_69_2025_MD_PATH, '8');
     expect(reg8.provisionText).not.toContain('Part 10 of the Act of 2010');

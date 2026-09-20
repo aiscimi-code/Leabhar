@@ -24,7 +24,8 @@ import { ingestTca1997S284, deriveCapitalAllowancesRules } from '@/domain/rules/
 import { ingestSi639, deriveSi639Rules, SI_639_2010_MD_PATH } from '@/domain/rules/si639Ingestion';
 import { ingestSi156, deriveSi156Rules, SI_156_2012_MD_PATH } from '@/domain/rules/si156Ingestion';
 import {
-  ingestSi692025Reg5, ingestSi692025Reg8, ingestSi692025Reg9, deriveSi692025Rules, SI_69_2025_MD_PATH,
+  ingestSi692025Reg5, ingestSi692025Reg7, ingestSi692025Reg8, ingestSi692025Reg9, deriveSi692025Rules,
+  SI_69_2025_MD_PATH,
 } from '@/domain/rules/si692025Ingestion';
 import { deriveFinanceAct2024VatThresholds } from '@/domain/rules/financeAct2024VatThresholdsIngestion';
 import {
@@ -52,7 +53,8 @@ Commands:
                                        [default] | vatca-2010 | vatca-2010-sch2 | vatca-2010-sch3 |
                                        rct-tca530 | rct-tdm | rct-tdm-05 | rct-tdm-11 |
                                        vatca-2010-revised | tca1997-s284 | si639 | si156 |
-                                       si69-2025 (alias si69-2025-reg8) | si69-2025-reg5 | si69-2025-reg9 | tdm-38-01-03b |
+                                       si69-2025 (alias si69-2025-reg8) | si69-2025-reg5 | si69-2025-reg7 |
+                                       si69-2025-reg9 | tdm-38-01-03b |
                                        companies-act-2014 (ingests all eight fetched sections; no --file);
                                        --file overrides
                                        its default path, e.g. to ingest a different revised section)
@@ -178,6 +180,12 @@ export async function main(argv: string[], options: CliOptions = {}): Promise<nu
           const file = getFlag(flags, 'file') ?? SI_69_2025_MD_PATH;
           const markdown = readFileSync(file, 'utf8');
           print(ingestSi692025Reg5(db, { companyId, markdown, ingestVersion: 'v1', localPath: file }), format);
+          return 0;
+        }
+        if (source === 'si69-2025-reg7') {
+          const file = getFlag(flags, 'file') ?? SI_69_2025_MD_PATH;
+          const markdown = readFileSync(file, 'utf8');
+          print(ingestSi692025Reg7(db, { companyId, markdown, ingestVersion: 'v1', localPath: file }), format);
           return 0;
         }
         if (source === 'si69-2025-reg9') {

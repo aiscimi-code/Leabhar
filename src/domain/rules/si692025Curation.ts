@@ -1,6 +1,6 @@
 /**
  * Curated rules for S.I. 69/2025 (European Union (Value-Added Tax)
- * Regulations 2025) — Regulations 5, 8 and 9.
+ * Regulations 2025) — Regulations 5, 7, 8 and 9.
  *
  * Regulation 8 closes a gap `si639Curation.ts` explicitly flagged: Regulation 25 of
  * S.I. 639/2010 requires a Revenue authorisation to use the moneys-received
@@ -35,8 +35,28 @@
  * the ones that actually gate on it (via `annualTurnoverMaxMinor`), citing
  * these two rules' text rather than duplicating the mechanical condition.
  *
- * Regulations 1-4, 6, 7 and 10 (the rest of the cross-border SME exemption
- * scheme and its consequential amendments) remain deliberately NOT curated
+ * Regulation 7 (issue #130) inserts VATCA s.60(4): a person availing of the
+ * cross-border SME exemption scheme (Chapter 5 of Part 10, inserted by
+ * Regulation 9) may not deduct input tax on expenditure incurred for the
+ * purpose of the scheme's exempt supplies. It has a real, direct VAT
+ * effect (denying a deduction), but this KB has no transaction-context
+ * signal for "this expenditure relates to a cross-border SME scheme
+ * supply" — the scheme is itself opt-in and narrow — so, like the
+ * Regulation 5/9 pair above, it is curated declaratively (topic
+ * 'vat_reference') rather than wired to a fabricated always-on condition.
+ *
+ * Regulation 9's s.92B also defines the €100,000 "Union threshold" that
+ * gates eligibility for the cross-border scheme itself (ss.92C(1)(c),
+ * 92D(1)(e)); that figure is curated here too, for the same declaratory-
+ * citation reason as `vat.annual_turnover_definition` above. The rest of
+ * ss.92C/92D — the scheme's registration, notification and quarterly-
+ * reporting mechanics — are Revenue-administration procedure, not a VAT
+ * amount or deductibility test; they do not feed any figure this KB
+ * computes today and remain deliberately NOT curated, consistent with the
+ * restraint already exercised in this file.
+ *
+ * Regulations 1-4, 6 and 10 (definitions, consequential/commencement
+ * provisions, and a Schedule 9 insertion) remain deliberately NOT curated
  * in this pass — left for a future pass, same as before.
  */
 import type { IrishRuleCondition, IrishRuleException, IrishRuleType } from '@/db/schema';
@@ -190,5 +210,61 @@ export const SI_69_2025_CURATED_RULES: CuratedSi692025Rule[] = [
       + '(issue #143 finding F). This KB cannot itself compute what proportion of a business\'s turnover is to '
       + 'registered versus unregistered customers; the condition only flags a cash-basis candidate transaction '
       + 'for human review against the business\'s actual customer mix.',
+  },
+  {
+    ruleKey: 'vat.cross_border_sme_scheme_input_deductibility_restriction',
+    ruleType: 'deductibility',
+    topic: 'vat_reference', // see the note on vat.registration_threshold_turnover_test above
+    name: 'No input VAT deduction for expenditure on cross-border SME exemption scheme supplies',
+    regulationNumber: '7',
+    amendsSection: '60',
+    statementExcerpt: '“(4) Notwithstanding anything in this Chapter, a person shall not deduct any tax on '
+      + 'expenditure incurred for the purpose of supplies made in accordance with Chapter 5 of Part 10.”',
+    numericValue: null,
+    unit: null,
+    qualifier: 'inserted as VATCA s.60(4) — applies only to expenditure incurred for the purpose of supplies '
+      + 'made under the cross-border SME exemption scheme (VATCA Chapter 5 of Part 10, inserted by Regulation 9 '
+      + 'of this instrument)',
+    conditions: [],
+    exceptions: [],
+    vatEffect: 'Input VAT may not be deducted on expenditure incurred for the purpose of supplies made in '
+      + 'accordance with the cross-border SME exemption scheme. This mirrors the general principle that VAT on '
+      + 'costs of exempt supplies is non-deductible, made explicit for this scheme (T2 sums recoverable VAT '
+      + 'only — see AGENTS.md).',
+    reportingEffect: null,
+    interpretationNote: 'Declaratory citation only: this KB has no transaction-context signal for "this '
+      + 'expenditure relates to a cross-border SME exemption scheme supply" (the scheme is itself opt-in and '
+      + 'narrow — see vat.cross_border_sme_scheme_union_threshold), so the rule is not wired to a mechanical '
+      + 'condition. A human reviewer citing this rule confirms deductibility should be denied for the specific '
+      + 'expenditure, rather than the KB inferring it from free text.',
+  },
+  {
+    ruleKey: 'vat.cross_border_sme_scheme_union_threshold',
+    ruleType: 'threshold',
+    topic: 'vat_reference', // see the note on vat.registration_threshold_turnover_test above
+    name: 'Union threshold for the cross-border SME exemption scheme: €100,000',
+    regulationNumber: '9',
+    amendsSection: '92B',
+    statementExcerpt: '‘Union threshold’ means €100,000.',
+    // AGENTS.md invariant #1: money is integer minor units, never a bare
+    // number without a currency — €100,000 is stored as 10,000,000 cents.
+    numericValue: 10_000_000,
+    unit: 'eur_minor',
+    qualifier: 'VATCA s.92B, inserted by this instrument — the figure a taxable person\'s Union annual turnover '
+      + '(annual turnover across all Member States) must not exceed, in both the current and immediately '
+      + 'preceding calendar year, to remain eligible for the cross-border SME exemption scheme (ss.92C(1)(c), '
+      + '92D(1)(e))',
+    conditions: [],
+    exceptions: [],
+    vatEffect: 'A taxable person whose Union annual turnover exceeds €100,000 in the current or immediately '
+      + 'preceding calendar year cannot avail of (or must cease availing of) the cross-border SME exemption '
+      + 'scheme in any other Member State. This is a distinct figure from the domestic registration thresholds '
+      + '(VATCA s.2(1)) and from the Member State annual turnover threshold each individual Member State sets '
+      + 'for its own SME exemption scheme.',
+    reportingEffect: null,
+    interpretationNote: 'Declaratory citation of the figure only. This KB does not compute a business\'s Union '
+      + '(cross-Member-State) annual turnover, and ss.92C/92D\'s registration, notification and quarterly-'
+      + 'reporting mechanics that operationalise this threshold are Revenue-administration procedure, not a VAT '
+      + 'amount or deductibility test — they remain out of scope for this curation pass (issue #130).',
   },
 ];

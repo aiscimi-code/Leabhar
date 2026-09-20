@@ -889,10 +889,12 @@ oversight:
   rule sourced from Revenue's own guidance now states those criteria in
   full — see "Revenue TDM 38-01-03b (Mandatory E-Filing Exclusion)" below.)
 
-### S.I. 69/2025 (Cash Accounting Thresholds, and the Registration-Threshold Turnover Test)
+### S.I. 69/2025 (Cash Accounting Thresholds, the Registration-Threshold Turnover Test, and the Cross-Border SME Scheme's Deductibility Restriction + Union Threshold)
 
-Closes two gaps flagged, not fixed, in earlier passes — Regulation 8 first,
-Regulations 5 and 9 added later for issue #136 bug 2 / issue #137:
+Closes gaps flagged, not fixed, in earlier passes — Regulation 8 first,
+Regulations 5 and 9 added later for issue #136 bug 2 / issue #137, Regulation
+7 and the Regulation 9 "Union threshold" definition added later still for
+issue #130:
 
 - `src/domain/rules/si692025Parser.ts` extracts one named regulation at a
   time from the whole instrument, rather than parsing every regulation —
@@ -907,14 +909,19 @@ Regulations 5 and 9 added later for issue #136 bug 2 / issue #137:
   document) as its boundary — the same targeted approach
   `vatcaRevisedSectionParser.ts` uses for a single VATCA section. It is
   generic over the regulation number, so `si692025Ingestion.ts` calls it
-  for Regulations 5, 8 and 9 from the same already-fetched file, each
+  for Regulations 5, 7, 8 and 9 from the same already-fetched file, each
   becoming its own `irish_act_provisions` row under one shared
   `irish_knowledge_sources` row (same citation, same content hash — it is
   one physical instrument; the ingestion's idempotency check is scoped to
   citation + hash + *this regulation's own section number*, not "does this
   source have any provision at all", so ingesting a second regulation from
-  an already-ingested file doesn't get silently skipped).
-- `src/domain/rules/si692025Curation.ts` / `si692025Ingestion.ts` — four
+  an already-ingested file doesn't get silently skipped). Regulation 9's own
+  provision row is the *entire* inserted Chapter 5 text (ss.92B-92D
+  together) — since a curated rule's `statementExcerpt` only needs to be a
+  verbatim substring of its own regulation's already-extracted text, citing
+  a fact from inside s.92B or s.92C/92D needs no further sub-section
+  boundary parsing of its own.
+- `src/domain/rules/si692025Curation.ts` / `si692025Ingestion.ts` — six
   rules in total:
   - Two from Regulation 8, which substitutes the *current* text of VATCA
     2010 s.80(1)(a) and (b) (the eligibility test for the moneys-received/
@@ -937,6 +944,21 @@ Regulations 5 and 9 added later for issue #136 bug 2 / issue #137:
     disposals entirely; includes goods/services/immovable-goods/insurance
     supplies unless incidental) — the definition both the turnover test
     above and the EU cross-border SME scheme rely on. Also declaratory.
+  - `vat.cross_border_sme_scheme_input_deductibility_restriction` (issue
+    #130), from Regulation 7, which inserts VATCA s.60(4): a person may not
+    deduct input VAT on expenditure incurred for the purpose of supplies
+    made under the cross-border SME exemption scheme (VATCA Chapter 5 of
+    Part 10, inserted by Regulation 9). States no numeric figure — a real
+    deductibility restriction, but declaratory (`topic: 'vat_reference'`,
+    empty `conditions`): this KB has no transaction-context signal for
+    "this expenditure relates to a cross-border SME scheme supply", so it
+    is not wired to a mechanical, always-on condition.
+  - `vat.cross_border_sme_scheme_union_threshold` (issue #130), from
+    Regulation 9, stating VATCA s.92B's definition: `'Union threshold' means
+    €100,000` — stored as `10,000,000` `eur_minor` per AGENTS.md invariant
+    #1. The figure a taxable person's Union (cross-Member-State) annual
+    turnover must not exceed to remain eligible for the cross-border scheme
+    (ss.92C(1)(c), 92D(1)(e)). Also declaratory.
 - This closes exactly the threshold "S.I. 639/2010 (VAT Regulations 2010)"
   above explicitly said was *not* curated there: "the real threshold lives
   in VATCA 2010 s.80(1) itself" (Regulation 25 only requires the Revenue
@@ -944,9 +966,14 @@ Regulations 5 and 9 added later for issue #136 bug 2 / issue #137:
   source ingested, both eligibility limbs are now real, current, curated
   rules — effective from 6 March 2025, the date this instrument was made
   (it carries no separate commencement clause).
-- Regulations 1-4, 6, 7 and 10 (the rest of the cross-border SME exemption
-  scheme and its consequential amendments) remain **not** curated in this
-  pass — left for a future pass.
+- ss.92C/92D's own registration, notification and quarterly-reporting
+  mechanics (the 35-working-day response window, the 15-working-day
+  threshold-breach report, the quarterly turnover report, and so on) remain
+  **not** curated — they are Revenue-administration procedure, not a VAT
+  amount or deductibility test, and feed no figure this KB computes today.
+  Regulations 1-4, 6 and 10 (definitions, consequential/commencement
+  provisions, and a Schedule 9 insertion) also remain **not** curated in
+  this pass — left for a future pass.
 
 ### Finance Act 2024 VAT Registration Thresholds
 

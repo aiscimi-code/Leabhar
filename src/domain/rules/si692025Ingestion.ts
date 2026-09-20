@@ -2,7 +2,7 @@
  * Ingestion and rule derivation for S.I. 69/2025 (European Union
  * (Value-Added Tax) Regulations 2025), built on `si692025Parser.ts`.
  *
- * Three named regulations are ingested from this single document, each as
+ * Four named regulations are ingested from this single document, each as
  * its own `irish_act_provisions` row under one shared `irish_knowledge_sources`
  * row (same citation, same content hash — it is one physical instrument):
  *
@@ -11,16 +11,20 @@
  *    closes the gap issue #136 bug 2 / issue #137 flagged: the registration-
  *    threshold rules (`financeAct2024VatThresholdsCuration.ts`) stated a
  *    threshold *figure* with no way to test actual turnover against it.
+ *  - Regulation 7 (issue #130): inserts VATCA 2010 s.60(4), denying input VAT
+ *    deduction on expenditure incurred for the purpose of cross-border SME
+ *    exemption scheme supplies.
  *  - Regulation 8: substitutes the current text of VATCA 2010 s.80(1)(a)/(b),
  *    the moneys-received/cash-basis eligibility thresholds — closes a gap
  *    `si639Curation.ts` explicitly flagged ("the real threshold lives in
  *    section 80(1) of the Act, not this Regulation").
- *  - Regulation 9: inserts VATCA 2010 s.92B, defining "annual turnover" for
- *    the cross-border SME exemption scheme — and, as of Regulation 5 above,
- *    the same definition the registration-threshold turnover test now relies
- *    on (s.6(1)(c)/(d) as substituted use "annual turnover", not "consideration").
+ *  - Regulation 9: inserts VATCA 2010 s.92B, defining "annual turnover" and
+ *    the €100,000 "Union threshold" for the cross-border SME exemption
+ *    scheme — and, as of Regulation 5 above, "annual turnover" is the same
+ *    definition the registration-threshold turnover test now relies on
+ *    (s.6(1)(c)/(d) as substituted use "annual turnover", not "consideration").
  *
- * Because all three share one source document, the idempotency check below
+ * Because all four share one source document, the idempotency check below
  * is scoped to (source citation + content hash + this regulation's own
  * section number) — the naive "does this source have *any* provision yet"
  * check the single-regulation predecessor of this file used would silently
@@ -64,6 +68,16 @@ const REG_5: NamedRegulation = {
     + 's.6(1)(a)(ii)/(2)(b)) is ingested from this instrument in this pass — see si692025Parser.ts.',
 };
 
+const REG_7: NamedRegulation = {
+  regulationNumber: '7',
+  heading: 'Amendment of section 60 of the Value-Added Tax Consolidation Act 2010 '
+    + '(no input VAT deduction for cross-border SME exemption scheme supplies)',
+  amendsSection: '60',
+  sourceNote: 'Only Regulation 7 (inserting VATCA 2010 s.60(4), denying input VAT deduction on expenditure '
+    + 'incurred for the purpose of cross-border SME exemption scheme supplies) is ingested from this instrument '
+    + 'in this pass — see si692025Parser.ts.',
+};
+
 const REG_8: NamedRegulation = {
   regulationNumber: '8',
   heading: 'Amendment of section 80(1) of the Value-Added Tax Consolidation Act 2010 '
@@ -77,12 +91,12 @@ const REG_8: NamedRegulation = {
 const REG_9: NamedRegulation = {
   regulationNumber: '9',
   heading: 'Insertion of Chapter 5 of Part 10 of the Value-Added Tax Consolidation Act 2010 '
-    + '(cross-border SME exemption scheme: s.92B "annual turnover" definitions)',
+    + '(cross-border SME exemption scheme: s.92B "annual turnover" and "Union threshold" definitions)',
   amendsSection: '92A',
-  sourceNote: 'Only Regulation 9 (inserting VATCA 2010 ss.92B-92D; s.92B\'s "annual turnover" and related '
-    + 'definitions only) is ingested from this instrument in this pass — see si692025Parser.ts. ss.92C/92D '
-    + '(the cross-border scheme\'s registration/notification mechanics) are part of the same inserted text but '
-    + 'not separately curated.',
+  sourceNote: 'Only Regulation 9 (inserting VATCA 2010 ss.92B-92D; s.92B\'s "annual turnover" and "Union '
+    + 'threshold" definitions only) is curated from this instrument in this pass — see si692025Parser.ts. '
+    + 'ss.92C/92D\'s registration/notification/quarterly-reporting mechanics are part of the same inserted text '
+    + '(and this same provision row) but remain not separately curated (issue #130).',
 };
 
 export interface Si692025IngestResult {
@@ -207,6 +221,14 @@ export function ingestSi692025Reg5(
   params: { companyId?: string | null; markdown: string; ingestVersion: string; localPath?: string },
 ): Si692025IngestResult {
   return ingestSi692025NamedRegulation(db, params, REG_5);
+}
+
+/** Ingest S.I. 69/2025 Regulation 7 (VATCA s.60(4) cross-border SME scheme deductibility restriction) only. */
+export function ingestSi692025Reg7(
+  db: AppDatabase,
+  params: { companyId?: string | null; markdown: string; ingestVersion: string; localPath?: string },
+): Si692025IngestResult {
+  return ingestSi692025NamedRegulation(db, params, REG_7);
 }
 
 /** Ingest S.I. 69/2025 Regulation 8 (current VATCA s.80(1) cash-accounting thresholds) only. */
