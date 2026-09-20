@@ -21,6 +21,9 @@ Open `http://localhost:3000`. On first run you are redirected to `/login`
 to create the single local user (display name, username, password). After
 that you can use the app.
 
+`/portal` is a separate, unauthenticated front door for a hosted deployment
+that keeps nothing server-side — see `docs/PORTAL.md`.
+
 ### The `better-sqlite3` native binding
 
 `better-sqlite3` is a native module. If `npm run dev` fails with
