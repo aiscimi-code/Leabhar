@@ -457,10 +457,10 @@ source instead of trying to fix the frozen one:
   immediately after. The 13.5%/4.8% rules carry no comparable textual
   evidence of an exact commencement date, so their `effectiveFrom` is
   honestly the date this KB confirmed them, not a claim about how long
-  they've actually been in force. Deliberately not curated: five narrower,
-  date-boxed 9% carve-outs in the same subsection (one of which is in force
-  at the time of writing) — each needs the same care as the headline rates
-  and is left for a future pass (tracked as issue #129).
+  they've actually been in force. Deliberately not curated at first: five
+  narrower, date-boxed 9% carve-outs in the same subsection — **curated in a
+  later pass, see "The five 9% second-reduced-rate carve-outs (issue #129)"
+  below.**
 - **VAT rate exclusivity (issue #136 bugs 1 and 8) — added in a later pass.**
   Because the three headline rate rules above carry no `conditions`, and
   `transactionLookup.ts` treats an empty condition list as "matches whenever
@@ -1626,6 +1626,79 @@ this KB independently confirmed against the LRC-revised text for "VATCA
   `docs/statutes/vat-rates/schedule-moves-2025-2026.md`) — left as-is
   rather than guessed at here, since fixing it correctly needs the same
   sourced ingestion issue #129 already tracks, not a hand-edited date.
+
+### The five 9% second-reduced-rate carve-outs (issue #129)
+
+`vatcaRevisedCuration.ts`'s own header deferred curating s.46(1)'s five
+lettered 9% carve-outs — (ca), (caa), (cab), (cac), (cb) — "each needs the
+same care as the headline rates". Both source documents this needed were
+already ingested (`vatca-2010-revised/s046.md` for the carve-outs
+themselves, `vatca-2010-revised/schedule-3.md` for what each one's Schedule
+3 references actually cover), so this closes the gap without any new
+ingestion.
+
+- Each lettered paragraph bundles multiple, legally distinct Schedule 3
+  subjects under one sentence — (ca) alone covers periodicals, sporting
+  facilities AND heat pumps together, and (cb) covers six unrelated
+  subjects. Rather than one rule per paragraph with a single grab-bag
+  keyword condition (which would blur which Schedule 3 category actually
+  matched a given transaction), this curates one rule per distinct subject,
+  11 in total, reusing the same paragraph's `statementExcerpt` across
+  sibling rules where it bundles more than one — the same pattern
+  `vat.rate_restaurant_catering_reduced_current` and `vat.rate_reduced_current`
+  already shared one s.46(1)(c) excerpt.
+- (ca) (periodicals, sporting facilities, heat pumps) states no commencement
+  date of its own in the fetched text, unlike its four siblings, which each
+  state an explicit "during the period from X to Y" — its three rules use
+  the date this KB confirmed the text as `effectiveFrom`, the same
+  "confirmed accurate as of ingest" convention the source-ingestion layer
+  already uses, not a historical commencement claim.
+- **A real bug was found and fixed on the way**: `vat.rate_restaurant_catering_reduced_current`
+  ran from 2010-11-01 with no carve-out for s.46(1)(cb), which
+  verbatim-states this exact category (Schedule 3 paragraph 3(1)/(3)) at
+  9% — not 13.5% — from 1 November 2020 to 31 August 2023 (a COVID-era
+  hospitality relief window). Left uncorrected, a 2021 restaurant
+  transaction would have matched both rules at two different rates with no
+  way to tell which applied. Corrected by splitting into three
+  non-overlapping periods: `vat.rate_restaurant_catering_reduced_pre_9pct_window`
+  (13.5%, to 2020-11-01), `vat.rate_restaurant_catering_9pct_2020_2023`
+  (9%, the verified window), and the original rule narrowed to start
+  2023-09-01. A regression test (`vatcaRevisedIngestion.test.ts`) asserts
+  the three periods tile exactly with no gap and no overlap.
+- **A subtle date-boundary convention, easy to get backwards**: `lookupTaxRule`'s
+  window test is `effectiveFrom <= asOf && (!effectiveTo || effectiveTo >
+  asOf)` — a strict `>`. A window meant to cover 31 August 2023 inclusive
+  therefore needs `effectiveTo: '2023-09-01'` (the day the NEXT period
+  starts), not `'2023-08-31'` (the day the statute's own prose names as the
+  last day) — this file's `effectiveTo` values got this backwards on a
+  first pass and were corrected before landing; `deriveVatcaRevisedRules`'s
+  own supersede step already confirms the convention (a closed row's
+  `effectiveTo` is set to the literal `effectiveFrom` of what replaces it,
+  never a day earlier). This is the opposite of `src/domain/config/mutations.ts`'s
+  `supersedeTaxRate`, which uses `addDays(effectiveFrom, -1)` for `tax_rates` —
+  the two tables' effective-dating conventions are NOT interchangeable; the
+  boundary semantics must be checked per table, not assumed.
+- **Known, deliberate, unresolved overlap**: the new
+  `vat.rate_admission_9pct_2020_2023` rule (cinema/theatre/fairground/
+  exhibition admission, 2020-2023) genuinely overlaps
+  `vat.reduced_rate_cinema_admission` (13.5%, open-ended) in
+  `vatcaScheduleCuration.ts` for that same window. That rule's own ingestion
+  pipeline (`vatcaScheduleIngestion.ts`) hardcodes one open-ended
+  `effectiveFrom` per rule with no per-rule `effectiveTo` support at all —
+  unlike this file's pipeline — so it cannot currently express "13.5% except
+  during this window" the way the restaurant/catering rule was corrected
+  above. For a matching transaction dated in that window, both rules
+  surface side by side (13.5% and 9%) rather than one silently winning —
+  the safer of two imperfect outcomes, but a genuine follow-up:
+  `vatcaScheduleIngestion.ts` needs `effectiveTo` support before this can be
+  resolved cleanly.
+- `vat.rate_hospitality_9pct_not_modelled` (added for issue #136 bug 8,
+  asserting no rate for restaurant/catering from 1 July 2026, sourced only
+  from the non-verbatim `schedule-moves-2025-2026.md` reference table) is
+  now independently confirmed by this pass: the actual s.46(1)(ca)-(cb) text
+  contains no reference to a 1 July 2026 date or to restaurant/catering at
+  all. Its "not modelled" stance was correct, not merely pending — left
+  unchanged.
 
 ## Next steps
 
