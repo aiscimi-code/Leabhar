@@ -33,7 +33,13 @@ import { InvoicingError } from './invoices';
 
 export interface PaymentAllocationInput {
   invoiceId: string;
-  /** In the payment's currency. */
+  /**
+   * In the payment's currency, always as a positive amount of cash — the
+   * same whether the target is an invoice or a credit note. A credit note's
+   * `outstandingMinor` is negative; this function negates the allocation
+   * internally when settling one (issue #157), so a caller never has to
+   * know that sign convention to zero a credit note out.
+   */
   allocatedMinor: number;
 }
 
@@ -123,7 +129,11 @@ export function recordPayment(db: AppDatabase, input: RecordPaymentInput): Recor
       );
     }
     const expectedDirection = isReceived ? 'sales' : 'purchase';
-    if (invoice.direction !== expectedDirection) {
+    // A credit note reverses the cash flow of its own direction: a sales
+    // credit note is settled by a refund going out ('made'), a purchase
+    // credit note by a refund coming in ('received') — issue #157. Any other
+    // mismatch is still refused.
+    if (invoice.direction !== expectedDirection && !invoice.isCreditNote) {
       throw new InvoicingError(
         `A payment ${input.direction} cannot settle a ${invoice.direction} invoice.`,
         { invoiceId: invoice.id },
@@ -152,20 +162,30 @@ export function recordPayment(db: AppDatabase, input: RecordPaymentInput): Recor
         { invoiceId: invoice.id },
       );
     }
-    const invoiceAllocatedMinor = crossCurrency && input.fxRate
+    const allocatedMagnitude = crossCurrency && input.fxRate
       ? multiplyRational(asMinor(allocation.allocatedMinor), input.fxRate.numerator, input.fxRate.denominator)
       : allocation.allocatedMinor;
+    // A credit note's outstandingMinor is negative (issue #157): the caller's
+    // allocatedMinor is always a positive amount of cash, so settling one
+    // moves the invoice's own outstanding balance the opposite way from
+    // settling an ordinary invoice or bill.
+    const invoiceAllocatedMinor = invoice.isCreditNote ? -allocatedMagnitude : allocatedMagnitude;
+    const signedAllocatedMinor = invoice.isCreditNote
+      ? -allocation.allocatedMinor : allocation.allocatedMinor;
 
-    if (invoiceAllocatedMinor > invoice.outstandingMinor) {
+    if (Math.abs(invoiceAllocatedMinor) > Math.abs(invoice.outstandingMinor)) {
       throw new InvoicingError(
-        `Allocating ${invoiceAllocatedMinor} to invoice `
-          + `${invoice.invoiceNumber ?? invoice.id} exceeds the ${invoice.outstandingMinor} `
+        `Allocating ${allocatedMagnitude} to invoice `
+          + `${invoice.invoiceNumber ?? invoice.id} exceeds the ${Math.abs(invoice.outstandingMinor)} `
           + 'still outstanding on it. Overpayments must be recorded deliberately, not '
           + 'absorbed into an allocation.',
         { invoiceId: invoice.id, outstandingMinor: invoice.outstandingMinor },
       );
     }
-    return { invoice, allocatedMinor: allocation.allocatedMinor, invoiceAllocatedMinor, crossCurrency };
+    return {
+      invoice, allocatedMinor: allocation.allocatedMinor, invoiceAllocatedMinor,
+      signedAllocatedMinor, crossCurrency,
+    };
   });
 
   const debtors = systemAccountId(db, input.companyId, 'debtors');
@@ -228,7 +248,7 @@ export function recordPayment(db: AppDatabase, input: RecordPaymentInput): Recor
     baseAllocatedMinor: number; fxDifferenceMinor: number;
   }> = [];
 
-  for (const { invoice, allocatedMinor, invoiceAllocatedMinor, crossCurrency } of targets) {
+  for (const { invoice, invoiceAllocatedMinor, signedAllocatedMinor, crossCurrency } of targets) {
     // The receivable is relieved at the rate it was booked at, not today's.
     const invoiceFx = invoice.fxRateNumerator && invoice.fxRateDenominator
       ? {
@@ -242,9 +262,20 @@ export function recordPayment(db: AppDatabase, input: RecordPaymentInput): Recor
     // The debtors/creditors line relieves the invoice in its own currency.
     // For a cross-currency settlement the allocated amount has been converted
     // to the invoice currency; for a same-currency payment it is unchanged.
+    // Which control account carries it follows the invoice's own direction,
+    // not the payment's — a credit note refund (issue #157) settles a sales
+    // invoice's debtors with a payment made, or a purchase invoice's
+    // creditors with a payment received. Debit/credit follows the sign of
+    // invoiceAllocatedMinor, which is negative exactly when relieving a
+    // credit note's negative outstanding.
+    const isSalesInvoice = invoice.direction === 'sales';
+    const settleControlAccount = isSalesInvoice ? debtors : creditors;
+    const positiveSettlement = invoiceAllocatedMinor >= 0;
     journalLines.push({
-      accountId: isReceived ? debtors : creditors,
-      ...(isReceived ? { creditMinor: invoiceAllocatedMinor } : { debitMinor: invoiceAllocatedMinor }),
+      accountId: settleControlAccount,
+      ...(positiveSettlement === isSalesInvoice
+        ? { creditMinor: Math.abs(invoiceAllocatedMinor) }
+        : { debitMinor: Math.abs(invoiceAllocatedMinor) }),
       currency: invoice.currency, fxRate: invoiceFx,
       supplierId: invoice.supplierId, customerId: invoice.customerId,
       memo: `Settles ${invoice.invoiceNumber ?? invoice.id}`,
@@ -253,7 +284,7 @@ export function recordPayment(db: AppDatabase, input: RecordPaymentInput): Recor
     const baseAtInvoiceRate = invoiceFx
       ? multiplyRational(asMinor(invoiceAllocatedMinor), invoiceFx.numerator, invoiceFx.denominator)
       : invoiceAllocatedMinor;
-    const baseAtPaymentRate = toBase(allocatedMinor);
+    const baseAtPaymentRate = toBase(signedAllocatedMinor);
     const difference = baseAtPaymentRate - baseAtInvoiceRate;
     fxDifferenceMinor += difference;
 
@@ -293,8 +324,14 @@ export function recordPayment(db: AppDatabase, input: RecordPaymentInput): Recor
   }
 
   // ---- Cash-basis VAT release ----
-  const vatReleases = isReceived && company.vatAccountingBasis === 'cash_receipts'
-    ? computeVatReleases(db, targets)
+  // Scoped to sales-direction targets explicitly, not just `isReceived`: a
+  // purchase credit note settled by a receipt (issue #157) is also
+  // `isReceived`, but the cash receipts basis defers output VAT on sales
+  // only (AGENTS.md) — input VAT is never deferred, so this must never run
+  // against a purchase-direction target regardless of payment direction.
+  const salesTargets = targets.filter((t) => t.invoice.direction === 'sales');
+  const vatReleases = isReceived && company.vatAccountingBasis === 'cash_receipts' && salesTargets.length > 0
+    ? computeVatReleases(db, salesTargets)
     : [];
 
   const vatReleasedMinor = vatReleases.reduce((s, r) => s + r.vatMinor, 0);

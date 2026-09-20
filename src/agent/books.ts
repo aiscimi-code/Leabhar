@@ -194,11 +194,19 @@ export function recordPaymentCli(db: AppDatabase, input: RecordPaymentCliInput):
 
   let direction: 'received' | 'made';
   if (resolvedInvoices.length > 0) {
-    const directions = new Set(resolvedInvoices.map((inv) => inv.direction));
-    if (directions.size > 1) {
-      throw new Error('All invoices in one payment must be the same direction — all sales or all purchase.');
+    // A credit note's cash flow runs the opposite way from its own
+    // direction — a sales credit note is refunded ('made'), a purchase
+    // credit note refunds us ('received') — issue #157. Grouping by
+    // `direction` alone would infer the wrong cash flow for one.
+    const cashDirections = new Set<'received' | 'made'>(resolvedInvoices.map((inv) =>
+      (inv.direction === 'sales') !== inv.isCreditNote ? 'received' : 'made'));
+    if (cashDirections.size > 1) {
+      throw new Error(
+        'All invoices in one payment must need the same cash-flow direction — mixing an '
+          + 'invoice with a credit note that refunds the opposite way is not supported in one payment.',
+      );
     }
-    direction = resolvedInvoices[0]!.direction === 'sales' ? 'received' : 'made';
+    direction = [...cashDirections][0]!;
   } else if (transaction) {
     direction = transaction.amountMinor < 0 ? 'made' : 'received';
   } else if (input.direction) {
@@ -211,22 +219,26 @@ export function recordPaymentCli(db: AppDatabase, input: RecordPaymentCliInput):
   }
 
   const currency = (resolvedInvoices[0]?.currency ?? transaction?.currency ?? company.baseCurrency).toUpperCase();
+  // A credit note's outstandingMinor is negative (issue #157); the amount of
+  // cash it takes to settle one is the magnitude, not the signed figure.
   const amountMinor = input.amount !== undefined
     ? parseAmount(input.amount, currency)
     : transaction
       ? Math.abs(transaction.amountMinor)
-      : resolvedInvoices.reduce((s, inv) => s + inv.outstandingMinor, 0);
+      : resolvedInvoices.reduce((s, inv) => s + Math.abs(inv.outstandingMinor), 0);
 
   // Allocate in the order the invoices were given, each up to its own
   // outstanding balance, until the payment is exhausted — covering an exact
   // single-invoice payment, a lump payment across several invoices, and a
   // part-payment (an --amount below the first invoice's outstanding) alike.
+  // Allocated amounts are always positive magnitudes, credit note or not —
+  // recordPayment itself applies the credit note's sign (issue #157).
   const allocations: Array<{ invoiceId: string; allocatedMinor: number }> = [];
   if (!input.unallocated) {
     let remaining = amountMinor;
     for (const invoice of resolvedInvoices) {
       if (remaining <= 0) break;
-      const allocate = Math.min(remaining, invoice.outstandingMinor);
+      const allocate = Math.min(remaining, Math.abs(invoice.outstandingMinor));
       if (allocate > 0) {
         allocations.push({ invoiceId: invoice.id, allocatedMinor: allocate });
         remaining -= allocate;

@@ -928,6 +928,31 @@ describe('cli reconcile — induction and books (issue #153)', () => {
           expect(invoice.status).not.toBe('paid');
         });
 
+        // Issue #157: a sales credit note's cash flow runs the opposite way
+        // from its own direction — record-payment must infer 'made' for it,
+        // not 'received', even when the direction is inferred from --invoices
+        // rather than given explicitly.
+        it('record-payment refunds a sales credit note with an inferred direction', async () => {
+          const csv = join(root, 'credit-note.csv');
+          writeFileSync(csv, [
+            'invoiceNumber,date,party,description,net,account,vatTreatment,creditNote',
+            'CN-0001,2025-05-06,Mulligan Digital Limited,Damaged table,280.00,4020,IE_STD,true',
+          ].join('\n'));
+          await iRun(['create-invoice', '--direction', 'sales', '--file', csv]);
+
+          const c = iCapture();
+          const code = await iRun(['record-payment', '--invoices', 'CN-0001', '--date', '2025-05-06']);
+          c.restore();
+          expect(code).toBe(0);
+          const parsed = JSON.parse(c.stdout.join(''));
+          expect(parsed.invoiceStatuses[0]).toMatchObject({ status: 'paid', outstandingMinor: 0 });
+
+          const show = iCapture();
+          await iRun(['show-invoice', 'CN-0001']);
+          show.restore();
+          expect(JSON.parse(show.stdout.join('')).invoice.outstandingMinor).toBe(0);
+        });
+
         it('journal posts a balanced multi-line manual adjustment', async () => {
           const c = iCapture();
           const code = await iRun([
