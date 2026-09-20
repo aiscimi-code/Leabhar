@@ -2,13 +2,15 @@ import { and, eq } from 'drizzle-orm';
 import type { AppDatabase } from '@/db';
 import { companies, customers, suppliers } from '@/db/schema';
 import {
-  createCompany, addBankAccount, type CreatedCompany,
+  createCompany, addBankAccount, ensureDefaultAccounts, type CreatedCompany,
 } from '@/domain/config/setup';
 import { createAccount, upsertCustomer } from '@/domain/config/mutations';
 import { parseAmount } from '@/domain/money';
-import { resolveAccountId } from './reconcile';
+import { createRule, type RuleCondition, type RuleAction } from '@/domain/rules/engine';
+import { resolveAccountId, resolveVatTreatmentId } from './reconcile';
 import type {
   InitCompanyInput, AddBankInput, AddAccountInput, AddCustomerInput, ListPartiesInput,
+  EnsureDefaultAccountsInput, InstallRulePackInput,
 } from './schema';
 
 /**
@@ -194,4 +196,141 @@ export function listCustomersCli(db: AppDatabase, input: ListPartiesInput) {
     .where(eq(customers.companyId, input.companyId))
     .orderBy(customers.name)
     .all();
+}
+
+/**
+ * Add any default chart accounts introduced since a company was created
+ * (issue #159) — 6180 Wages and salaries, 6190 Employer PRSI, 5030
+ * Materials, 2210 Bank loans, 1020 Bank deposit/saver, for a company
+ * induced before those existed. A new company gets them all from
+ * `createCompany` already; this is only for one created earlier.
+ */
+export function ensureDefaultAccountsCli(
+  db: AppDatabase, input: EnsureDefaultAccountsInput,
+): { added: string[] } {
+  return ensureDefaultAccounts(db, input.companyId, 'cli');
+}
+
+/**
+ * Install a starter pack of Irish SME bank-narrative rules (issue #159) —
+ * wages, employer PRSI, a Revenue PAYE remittance, a VAT3 payment, rent, an
+ * own-account transfer to savings, director drawings. Every rule is a normal,
+ * user-editable row: this is a starting point, not a fixed behaviour, and a
+ * rule that turns out wrong for this company can be edited or disabled like
+ * any other. A Stripe payout or a loan repayment's capital/interest split is
+ * deliberately left out — those are a multi-line split (`journal
+ * --transaction`, issue #158), not a single account a rule could point at.
+ */
+export function installRulePackCli(
+  db: AppDatabase, input: InstallRulePackInput,
+): Array<{ ruleId: string; name: string }> {
+  const outOfScope = resolveVatTreatmentId(db, input.companyId, 'OUT_OF_SCOPE');
+  const exempt = resolveVatTreatmentId(db, input.companyId, 'IE_EXEMPT');
+
+  const wagesAccount = resolveAccountId(db, input.companyId, '6180');
+  const employerPrsiAccount = resolveAccountId(db, input.companyId, '6190');
+  const payePayableAccount = resolveAccountId(db, input.companyId, '2400');
+  const vatPayableAccount = resolveAccountId(db, input.companyId, '2100');
+  const rentAccount = resolveAccountId(db, input.companyId, input.rentAccount ?? '6200');
+  const secondBankAccount = resolveAccountId(db, input.companyId, input.secondBankAccount ?? '1020');
+  const directorsAccount = resolveAccountId(db, input.companyId, '2500');
+
+  const installed: Array<{ ruleId: string; name: string }> = [];
+  const install = (params: {
+    name: string; description?: string;
+    conditions: RuleCondition[]; actions: RuleAction[];
+  }): void => {
+    const ruleId = createRule(db, {
+      companyId: input.companyId, autoApply: true, actor: 'cli', ...params,
+    });
+    installed.push({ ruleId, name: params.name });
+  };
+
+  const moneyOut: RuleCondition = { field: 'direction', operator: 'equals', value: 'out' };
+
+  install({
+    name: 'Salary payment',
+    description: 'A wage/salary disbursement, matched by keyword. Add a rule for a '
+      + 'specific employee name for a more precise match.',
+    conditions: [{ field: 'description', operator: 'contains', value: 'SALARY' }, moneyOut],
+    actions: [
+      { field: 'accountId', value: wagesAccount },
+      { field: 'vatTreatmentId', value: outOfScope },
+    ],
+  });
+
+  if (input.employee) {
+    install({
+      name: `Salary payment — ${input.employee}`,
+      conditions: [{ field: 'description', operator: 'contains', value: input.employee }, moneyOut],
+      actions: [
+        { field: 'accountId', value: wagesAccount },
+        { field: 'vatTreatmentId', value: outOfScope },
+      ],
+    });
+  }
+
+  install({
+    name: 'Employer PRSI',
+    conditions: [{ field: 'description', operator: 'contains', value: 'EMPLOYER PRSI' }, moneyOut],
+    actions: [
+      { field: 'accountId', value: employerPrsiAccount },
+      { field: 'vatTreatmentId', value: outOfScope },
+    ],
+  });
+
+  install({
+    name: 'Revenue PAYE remittance',
+    conditions: [
+      { field: 'description', operator: 'contains', value: 'REVENUE' },
+      { field: 'description', operator: 'contains', value: 'PAYE' },
+      moneyOut,
+    ],
+    actions: [
+      { field: 'accountId', value: payePayableAccount },
+      { field: 'vatTreatmentId', value: outOfScope },
+    ],
+  });
+
+  install({
+    name: 'VAT3 payment',
+    conditions: [{ field: 'description', operator: 'contains', value: 'VAT3' }, moneyOut],
+    actions: [
+      { field: 'accountId', value: vatPayableAccount },
+      { field: 'vatTreatmentId', value: outOfScope },
+    ],
+  });
+
+  install({
+    name: 'Rent standing order',
+    description: 'Commercial rent is usually VAT-exempt — confirm against the actual '
+      + 'lease if the landlord has opted to charge VAT.',
+    conditions: [{ field: 'description', operator: 'contains', value: 'RENT' }, moneyOut],
+    actions: [
+      { field: 'accountId', value: rentAccount },
+      { field: 'vatTreatmentId', value: exempt },
+    ],
+  });
+
+  install({
+    name: 'Transfer to savings',
+    description: 'An own-account transfer, not a real expense — works for money moving '
+      + 'either way between the two accounts.',
+    conditions: [{ field: 'description', operator: 'contains', value: 'SAVER' }],
+    actions: [
+      { field: 'accountId', value: secondBankAccount },
+      { field: 'vatTreatmentId', value: outOfScope },
+    ],
+  });
+
+  install({
+    name: 'Director drawings',
+    conditions: [{ field: 'description', operator: 'contains', value: 'DIRECTOR' }, moneyOut],
+    actions: [
+      { field: 'accountId', value: directorsAccount },
+      { field: 'vatTreatmentId', value: outOfScope },
+    ],
+  });
+
+  return installed;
 }

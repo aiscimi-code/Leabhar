@@ -234,6 +234,74 @@ export function createCompany(db: AppDatabase, input: CreateCompanyInput): Creat
   });
 }
 
+/**
+ * Add any of the default chart accounts an existing company does not already
+ * have, by code. New companies get the full chart at creation (`createCompany`);
+ * this is for a company created before a code was added to `DEFAULT_ACCOUNTS`
+ * (issue #159) — never touches an account that already exists, by code or by
+ * `systemKey`, so it cannot clash with one the user has since renamed or
+ * recoded.
+ */
+export function ensureDefaultAccounts(
+  db: AppDatabase, companyId: string, actor?: string,
+): { added: string[] } {
+  const existingCodes = new Set(
+    db.select({ code: accounts.code }).from(accounts)
+      .where(eq(accounts.companyId, companyId)).all().map((r) => r.code),
+  );
+  const existingKeys = new Set(
+    db.select({ key: accounts.systemKey }).from(accounts)
+      .where(eq(accounts.companyId, companyId)).all()
+      .map((r) => r.key).filter((k): k is string => k !== null),
+  );
+
+  const missing = DEFAULT_ACCOUNTS.filter((seed) =>
+    !existingCodes.has(seed.code) && (!seed.systemKey || !existingKeys.has(seed.systemKey)));
+  if (missing.length === 0) return { added: [] };
+
+  const timestamp = nowIso();
+  const added: string[] = [];
+
+  db.transaction((tx) => {
+    const startOrder = tx.select({ code: accounts.code }).from(accounts)
+      .where(eq(accounts.companyId, companyId)).all().length;
+    for (const [offset, seed] of missing.entries()) {
+      const id = ids.account();
+      tx.insert(accounts).values({
+        id,
+        companyId,
+        code: seed.code,
+        name: seed.name,
+        type: seed.type,
+        subtype: seed.subtype ?? null,
+        vatApplicable: seed.vatApplicable ?? true,
+        isSystem: seed.systemKey !== undefined,
+        systemKey: seed.systemKey ?? null,
+        reportSection: seed.reportSection,
+        reportOrder: startOrder + offset,
+        description: seed.description ?? null,
+        effectiveFrom: '1900-01-01',
+      }).run();
+      added.push(seed.code);
+    }
+
+    tx.insert(auditEvents).values({
+      id: ids.audit(),
+      companyId,
+      occurredAt: timestamp,
+      entityType: 'account',
+      entityId: companyId,
+      action: 'created',
+      newValue: JSON.stringify({ addedCodes: added }),
+      source: 'system',
+      actor: actor ?? 'system',
+      reason: 'Added default chart accounts introduced since this company was created',
+    }).run();
+  });
+
+  return { added };
+}
+
 /** Resolve a system account, failing loudly rather than posting to the wrong place. */
 export function systemAccountId(
   db: AppDatabase, companyId: string, key: SystemAccountKey,

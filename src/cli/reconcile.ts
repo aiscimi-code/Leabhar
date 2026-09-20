@@ -27,6 +27,7 @@ import {
 import { createSupplierFromExtraction } from '@/domain/extraction/service';
 import {
   initCompany, addBank, addAccount, addCustomer, listSuppliersCli, listCustomersCli,
+  ensureDefaultAccountsCli, installRulePackCli,
 } from '@/agent/induction';
 import {
   createInvoicesFromCsv, recordPaymentCli, journalCli,
@@ -65,6 +66,8 @@ import {
   scanAnomaliesCliInput,
   listReviewQueueInput,
   listPartiesInput,
+  ensureDefaultAccountsInput,
+  installRulePackInput,
   type CreateRuleCliInput,
 } from '@/agent/schema';
 
@@ -115,6 +118,17 @@ Induction (no company/bank/chart yet):
       fixed_assets|revenue|cost_of_sales|operating_expenses|equity]
       [--vat-applicable=false]
   add-customer --name "..." [--country <IE>] [--default-account <code>]
+  ensure-default-accounts                Add any default chart accounts
+      introduced since this company was created (e.g. 6180/6190/5030/2210/
+      1020) — a new company gets them all already; this is only for one
+      induced earlier.
+  install-rule-pack [--employee "Name"] [--second-bank-account <code>]
+      [--rent-account <code>]            Starter Irish SME bank-narrative
+      rules (wages, employer PRSI, a Revenue PAYE remittance, VAT3, rent, an
+      own-account transfer to savings, director drawings) — every rule is a
+      normal, editable row, not a fixed behaviour. A Stripe payout or a
+      loan's capital/interest split is a multi-line journal --transaction,
+      not something a single-account rule can point at.
 
 Books (once induction is done):
   create-invoice --direction sales|purchase --file <invoices.csv>
@@ -130,12 +144,19 @@ Books (once induction is done):
       --invoices, paid off in the order given until the amount runs out.
       Part: one invoice with --amount below its outstanding balance.
       --unallocated leaves the whole payment on account, on purpose.
-  journal --date <date> --narrative "..." --lines <json>
-      [--reason "..."]  A multi-line manual adjustment (Stripe payout splits,
-      a loan repayment's capital/interest split, a VAT3 settlement, an
+  journal --date <date> --narrative "..." --lines <json> [--reason "..."]
+      A standalone multi-line manual adjustment (a VAT3 settlement, an
       own-account transfer). --lines is a JSON array of
       {"account":"code","debit":"100.00"} / {"account":"code","credit":"100.00"}
       objects, amounts in major units; at least two lines, and they must balance.
+  journal --transaction <id> --lines <json> [--vat <json>]
+      A split for ONE statement line instead (a Stripe payout's fee
+      breakdown, a loan repayment's capital/interest split) — posted and
+      linked (bank_transactions.journalEntryId/status) in the same call,
+      dated at the transaction's own date. --date/--narrative/--reason do
+      not apply here. --vat additionally records this transaction's own VAT
+      position: {"direction":"sales","treatment":"IE_STD","net":"1744.94",
+      "statedVat":"401.34"}.
 
 Inspect:
   list-transactions [--account <id>] [--unposted] [--unclassified]
@@ -166,7 +187,9 @@ Corrections:
 
 Agent workflow:
   1. init-company, add-bank --opening, add-account for anything the default
-     chart does not cover, add-customer for sales counterparties
+     chart does not cover, add-customer for sales counterparties.
+     ensure-default-accounts if this company was induced before a code
+     existed; install-rule-pack for common Irish SME bank narratives.
   2. import a statement (or run over already-imported data)
   3. create-invoice from CSV (sales/purchase), create suppliers for names
      that have no supplier yet
@@ -690,6 +713,23 @@ export async function main(argv: string[], options: CliOptions = {}): Promise<nu
       case 'list-customers': {
         const parsed = listPartiesInput.parse({ companyId });
         print(listCustomersCli(db, parsed), format);
+        return 0;
+      }
+
+      case 'ensure-default-accounts': {
+        const parsed = ensureDefaultAccountsInput.parse({ companyId });
+        print(ensureDefaultAccountsCli(db, parsed), format);
+        return 0;
+      }
+
+      case 'install-rule-pack': {
+        const parsed = installRulePackInput.parse({
+          companyId,
+          employee: getFlag(flags, 'employee'),
+          secondBankAccount: getFlag(flags, 'second-bank-account', 'second-bank', 'secondBankAccount'),
+          rentAccount: getFlag(flags, 'rent-account', 'rentAccount'),
+        });
+        print(installRulePackCli(db, parsed), format);
         return 0;
       }
 
