@@ -6,7 +6,7 @@ import { importStatement } from './import';
 import { classifyTransaction } from './classify';
 import { reconcileBankAccount, completeReconciliation, ReconciliationError } from './reconciliation';
 import { postJournalEntry } from '../accounting/journal';
-import { bankTransactions, reconciliations, auditEvents } from '@/db/schema';
+import { bankAccounts, bankTransactions, reconciliations, auditEvents } from '@/db/schema';
 import { makeDate } from '../dates';
 import type { AppDatabase } from '@/db';
 
@@ -473,5 +473,80 @@ describe('reconcileBankAccount — opening balance', () => {
     expect(result.items).toHaveLength(1);
     expect(result.items[0]!.kind).toBe('ledger_not_on_statement');
     expect(result.reconciled).toBe(false);
+  });
+});
+
+// Issue #156: a supplied paper close must compose with the opening balance
+// the same way whether or not the caller also journaled it. Before this fix,
+// a posted opening journal was counted twice against a supplied close (once
+// via the journal, once implicitly via the raw ledger total already
+// including it) while an un-journaled opening was missing entirely — +14,250
+// one way, -14,250 the other, never zero either way once real movements sat
+// alongside it.
+describe('reconcileBankAccount — opening balance composes with movements (issue #156)', () => {
+  const setUpAndReconcile = async (openingJournaled: boolean) => {
+    const { db: obDb } = createTestDatabase();
+    const created = createCompany(obDb, {
+      legalName: 'Wild Atlantic Woodcraft Ltd', vatRegistrationStatus: 'registered', seedYears: [2025],
+    });
+    const obAccountId = addBankAccount(obDb, {
+      companyId: created.companyId, bankName: 'AIB', accountName: 'Current',
+      openingBalanceMinor: openingJournaled ? 1_425_000 : 0,
+      openingDate: '2025-01-01',
+    });
+    if (!openingJournaled) {
+      // A legacy row whose opening was only ever stored on the field, never
+      // journaled — the state issue #153 fixed for rows `addBankAccount`
+      // creates from now on, but one still possible for data brought in some
+      // other way.
+      obDb.update(bankAccounts).set({ openingBalanceMinor: 1_425_000 })
+        .where(eq(bankAccounts.id, obAccountId)).run();
+    }
+
+    await importStatement(obDb, {
+      companyId: created.companyId, bankAccountId: obAccountId, filename: 'year.csv',
+      content: [
+        'Date,Description,Amount',
+        '15/06/2025,SALES RECEIPT,2000.00',
+      ].join('\n'),
+      fileFormat: 'csv',
+      columnMap: { Date: 'transaction_date', Description: 'description', Amount: 'amount' },
+    });
+    const line = obDb.select().from(bankTransactions)
+      .where(eq(bankTransactions.description, 'SALES RECEIPT')).get()!;
+    classifyTransaction(obDb, {
+      companyId: created.companyId, bankTransactionId: line.id,
+      accountId: created.accountsByCode['4000']!,
+      vatTreatmentId: created.treatmentsByCode['OUT_OF_SCOPE']!,
+    });
+
+    return reconcileBankAccount(obDb, {
+      companyId: created.companyId, bankAccountId: obAccountId,
+      periodStart: makeDate(2025, 1, 1), periodEnd: makeDate(2025, 12, 31),
+      // Opening (14,250.00) plus the year's one movement (2,000.00).
+      statementClosingBalanceMinor: 1_625_000,
+    });
+  };
+
+  it('reconciles a supplied close when the opening was journaled', async () => {
+    const result = await setUpAndReconcile(true);
+    expect(result.openingBalanceMinor).toBe(1_425_000);
+    expect(result.movementsMinor).toBe(200_000);
+    expect(result.ledgerBalanceMinor).toBe(1_625_000);
+    expect(result.differenceMinor).toBe(0);
+    expect(result.unexplainedMinor).toBe(0);
+    expect(result.items).toEqual([]);
+    expect(result.reconciled).toBe(true);
+  });
+
+  it('reconciles the very same close when the opening was never journaled', async () => {
+    const result = await setUpAndReconcile(false);
+    expect(result.openingBalanceMinor).toBe(1_425_000);
+    expect(result.movementsMinor).toBe(200_000);
+    expect(result.ledgerBalanceMinor).toBe(1_625_000);
+    expect(result.differenceMinor).toBe(0);
+    expect(result.unexplainedMinor).toBe(0);
+    expect(result.items).toEqual([]);
+    expect(result.reconciled).toBe(true);
   });
 });
