@@ -828,20 +828,37 @@ generic pipeline rather than a one-off module:
   one should use the generic function instead of writing a new hand-rolled
   ingestion module each time.
 - `src/domain/rules/capitalAllowancesCuration.ts` /
-  `capitalAllowancesIngestion.ts` — one rule from TCA 1997 s.284 (wear and
-  tear allowances): capital expenditure on machinery/plant, wholly and
-  exclusively for the trade, qualifies for a wear-and-tear allowance.
-  **Deliberately excludes the allowance percentage.** s.284(2) states 15%
-  (general plant/machinery) and 20% (certain vehicles) as enacted in 1997 —
-  this file's own front matter carries the standing "No LRC revised TCA;
-  later Finance Acts may have substituted this section" warning, and
-  Ireland's actual capital allowances regime for most plant/machinery today
-  is 12.5% straight-line, not either enacted figure. Curating either
-  percentage as current would repeat exactly the mistake "VATCA 2010
-  current rates" above exists to fix, with no fresher TCA 1997 source yet
-  ingested to fix it the same way — so only the *qualification* test is
-  curated, and the rule's own `taxEffect` says explicitly that the rate is
-  not determined by it.
+  `capitalAllowancesIngestion.ts` — from TCA 1997 s.284 (wear and tear
+  allowances): `income_tax.wear_and_tear_allowance_qualifies` — capital
+  expenditure on machinery/plant, wholly and exclusively for the trade,
+  qualifies for a wear-and-tear allowance. s.284(2) states 15% (general
+  plant/machinery) and 20% (certain vehicles) as enacted in 1997 — this
+  file's own front matter carries the standing "No LRC revised TCA; later
+  Finance Acts may have substituted this section" warning, and Ireland's
+  actual capital allowances regime for most plant/machinery today is 12.5%
+  straight-line, not either enacted figure — so this rule states only the
+  *qualification* test, never a rate.
+- **The current 12.5% rate itself (issue #132).** Unlike VATCA 2010, there
+  is no LRC-revised TCA 1997 corpus to fetch the current text from, so the
+  VATCA-s.46 pattern (ingest the revised text) doesn't directly apply.
+  Instead, `income_tax.wear_and_tear_rate_current` is curated from
+  **Finance Act 2003 s.23** — the amending Act that actually inserted TCA
+  1997 s.284(2)(ad), 12.5% of actual cost, for capital expenditure incurred
+  on or after 4 December 2002 — confirmed by first reading Finance Act 2001
+  s.53 (which inserted an earlier 20% rate from 1 January 2001) and finding
+  it itself superseded by FA 2003 s.23. `docs/statutes/finance-act-2001/
+  s53.md` exists verbatim on disk for the trail but is not ingested — no
+  rule needs to state a superseded, decades-stale figure. `capitalAllowances
+  Ingestion.ts` reuses `parseTca1997Section` directly for the FA 2003 s.23
+  file (same one-section-per-file, bare-`"N."`-opener shape as `s530.md`),
+  since that parser's logic is structural, not TCA-1997-specific — only the
+  knowledge-source citation/URL metadata needed a small dedicated ingestion
+  function, `ingestFinanceAct2003S23`. A companion Revenue TDM
+  (`docs/statutes/tdm-04-08-12/04-08-12.md`, Part 04-08-12 "Capital
+  Allowances and Rented Residential Premises") restates the same 12.5%
+  figure for the Case V furnished-lettings context — exists verbatim on
+  disk but is not itself ingested, since the statute already states the
+  figure and `sourceHierarchy.ts` would rank it above the TDM anyway.
 
 ### S.I. 639/2010 (VAT Regulations 2010)
 
@@ -1392,13 +1409,12 @@ audit
   (within the meaning of section 3)" (TCA 1997 s.3 itself is not ingested,
   so `rct.rate_standard_reference` states no `numericValue`, even though
   it is currently published as 20%).
-- **The wear-and-tear allowance *percentage* (TCA 1997 s.284(2)) is not in
-  this KB either, for the same reason and by the same design**: the enacted
-  15%/20% figures are very likely stale (most plant/machinery is commonly
-  written off at 12.5% straight-line today), and no LRC-revised or current
-  TCA 1997 text is ingested to safely curate a live figure the way "VATCA
-  2010 current rates" did for VAT. Only the qualification test is curated;
-  computing an actual allowance amount from this KB alone would be wrong.
+- **The current wear-and-tear allowance percentage is now in this KB
+  (issue #132)**: `income_tax.wear_and_tear_rate_current` states 12.5%,
+  sourced from Finance Act 2003 s.23 — the Act that actually substituted
+  TCA 1997 s.284(2)(ad), not the enacted-1997 s.284(2) text itself (which
+  still states the stale 15%/20% figures and is not used for the rate).
+  See "Capital allowances" above.
 - **S.I. 639/2010 reg.25 itself still states no numeric eligibility
   threshold — that gap is now filled by a different source, not by
   reg.25.** Regulation 25 only requires the Revenue authorisation; the

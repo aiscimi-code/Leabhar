@@ -22,7 +22,9 @@ import {
 import {
   ingestVatcaRevisedSection, deriveVatcaRevisedRules, VATCA_REVISED_S046_MD_PATH,
 } from '@/domain/rules/vatcaRevisedIngestion';
-import { ingestTca1997S284, deriveCapitalAllowancesRules } from '@/domain/rules/capitalAllowancesIngestion';
+import {
+  ingestTca1997S284, ingestFinanceAct2003S23, deriveCapitalAllowancesRules,
+} from '@/domain/rules/capitalAllowancesIngestion';
 import { ingestSi639, deriveSi639Rules, SI_639_2010_MD_PATH } from '@/domain/rules/si639Ingestion';
 import { ingestSi156, deriveSi156Rules, SI_156_2012_MD_PATH } from '@/domain/rules/si156Ingestion';
 import {
@@ -55,7 +57,7 @@ Commands:
                                        [default] | vatca-2010 | vatca-2010-sch2 | vatca-2010-sch3 |
                                        rct-tca530 | rct-fa2011-a | rct-fa2011-e | rct-fa2011-g |
                                        rct-fa2011-h | rct-fa2011-i | rct-tdm | rct-tdm-05 | rct-tdm-11 |
-                                       vatca-2010-revised | tca1997-s284 | si639 | si156 |
+                                       vatca-2010-revised | tca1997-s284 | finance-act-2003-s23 | si639 | si156 |
                                        si69-2025 (alias si69-2025-reg8) | si69-2025-reg5 | si69-2025-reg7 |
                                        si69-2025-reg9 | tdm-38-01-03b |
                                        companies-act-2014 (ingests all eight fetched sections; no --file);
@@ -63,7 +65,8 @@ Commands:
                                        its default path, e.g. to ingest a different revised section)
   extract [--source <s>]              Derive irish_tax_rules from ingested provisions
                                        (--source as above, but rct-tca530/rct-fa2011-*/rct-tdm/rct-tdm-05/
-                                       rct-tdm-11 all use --source rct; also finance-act-2024-vat-thresholds, which requires
+                                       rct-tdm-11 all use --source rct, and finance-act-2003-s23 uses --source
+                                       tca1997-s284; also finance-act-2024-vat-thresholds, which requires
                                        finance-act-2024 already ingested (no separate document); default
                                        finance-act-2024)
   list-provisions [--category <c>] [--relevant-only]
@@ -170,6 +173,14 @@ export async function main(argv: string[], options: CliOptions = {}): Promise<nu
           const file = getFlag(flags, 'file');
           print(
             ingestTca1997S284(db, { companyId, markdown: file ? readFileSync(file, 'utf8') : undefined, ingestVersion: 'v1', localPath: file }),
+            format,
+          );
+          return 0;
+        }
+        if (source === 'finance-act-2003-s23') {
+          const file = getFlag(flags, 'file');
+          print(
+            ingestFinanceAct2003S23(db, { companyId, markdown: file ? readFileSync(file, 'utf8') : undefined, ingestVersion: 'v1', localPath: file }),
             format,
           );
           return 0;
