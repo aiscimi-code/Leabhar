@@ -102,7 +102,22 @@ export interface ReconciliationResult {
   /** What the bank says, from the statement's own running balance. */
   statementBalanceMinor: number;
   statementBalanceSource: 'statement_running_balance' | 'supplied' | 'derived_from_movements';
-  /** What the books say. */
+  /**
+   * The account's stated opening balance (`bank_accounts.openingBalanceMinor`),
+   * converted to base currency. Named separately (issue #156) so it is visible
+   * rather than folded silently into `movementsMinor` or double-counted
+   * against an opening journal `addBankAccount` may also have posted.
+   */
+  openingBalanceMinor: number;
+  /**
+   * Posted ledger movements on the account, excluding the opening-balance
+   * posting itself — whether or not that posting exists. `ledgerBalanceMinor`
+   * is `openingBalanceMinor + movementsMinor` regardless of whether the
+   * opening was journaled, so the two compose to the same figure either way
+   * (issue #156).
+   */
+  movementsMinor: number;
+  /** What the books say: openingBalanceMinor + movementsMinor. */
   ledgerBalanceMinor: number;
   /** Statement less ledger. */
   differenceMinor: number;
@@ -161,10 +176,22 @@ export function reconcileBankAccount(
   );
 
   // ---- What the books say ----
+  // Composed from the account's own openingBalanceMinor field plus posted
+  // movements *excluding* any opening-balance posting, rather than a single
+  // raw ledger total. That single-counts the opening exactly once whether or
+  // not `addBankAccount` (or a legacy row) actually journaled it — otherwise
+  // a caller who journals the opening sees it counted twice (once via the
+  // journal, once via the field folding into a supplied statement close's
+  // own comparison) and a caller who never journals it sees it missing
+  // entirely (issue #156).
   const ledgerAccountId = account.accountId;
-  const ledgerBalanceMinor = ledgerAccountId
+  const openingBalanceMinor = ledgerAccountId
+    ? accountAmountToBase(account, transactions, baseCurrency, account.openingBalanceMinor)
+    : 0;
+  const movementsMinor = ledgerAccountId
     ? bankLedgerBalance(db, params.companyId, ledgerAccountId, params.periodEnd)
     : 0;
+  const ledgerBalanceMinor = openingBalanceMinor + movementsMinor;
 
   const differenceMinor = statementBalanceMinor - ledgerBalanceMinor;
 
@@ -265,6 +292,8 @@ export function reconcileBankAccount(
     periodEnd: params.periodEnd,
     statementBalanceMinor,
     statementBalanceSource,
+    openingBalanceMinor,
+    movementsMinor,
     ledgerBalanceMinor,
     differenceMinor,
     items,
@@ -286,6 +315,32 @@ export function reconcileBankAccount(
 }
 
 /**
+ * Convert an amount in the bank account's own currency into base currency,
+ * using the exchange rate the latest in-period statement line carried. Used
+ * both for the statement's own supplied/derived balance and for
+ * `openingBalanceMinor`, which is likewise stored in the account's currency,
+ * not base.
+ */
+function accountAmountToBase(
+  account: typeof bankAccounts.$inferSelect,
+  transactions: Array<typeof bankTransactions.$inferSelect>,
+  baseCurrency: string,
+  amountMinor: number,
+): number {
+  if (amountMinor === 0 || account.currency === baseCurrency) return amountMinor;
+  const rate = latestInPeriodFxRate(transactions);
+  if (!rate) {
+    throw new ReconciliationError(
+      `Bank account ${account.id} is in ${account.currency} but the books are in `
+        + `${baseCurrency}, and no in-period statement line carries an exchange rate. `
+        + 'Import a statement with a settled (base-currency) amount column, or classify a '
+        + 'transaction with an exchange rate, before reconciling.',
+    );
+  }
+  return multiplyRational(amountMinor, rate.numerator, rate.denominator);
+}
+
+/**
  * The bank's own closing balance.
  *
  * Preferred source is the running balance the statement itself carried, because
@@ -301,24 +356,8 @@ function statementBalance(
   transactions: Array<typeof bankTransactions.$inferSelect>,
   baseCurrency: string,
 ): { statementBalanceMinor: number; statementBalanceSource: ReconciliationResult['statementBalanceSource'] } {
-  const foreignAccount = account.currency !== baseCurrency;
-
-  // Convert a balance figure in the account's own currency into base currency,
-  // using the rate the latest in-period statement line carried. A foreign
-  // account cannot be reconciled against a base-currency ledger without a rate.
-  const toBase = (amountMinor: number): number => {
-    if (!foreignAccount) return amountMinor;
-    const rate = latestInPeriodFxRate(transactions);
-    if (!rate) {
-      throw new ReconciliationError(
-        `Bank account ${account.id} is in ${account.currency} but the books are in `
-          + `${baseCurrency}, and no in-period statement line carries an exchange rate. `
-          + 'Import a statement with a settled (base-currency) amount column, or classify a '
-          + 'transaction with an exchange rate, before reconciling.',
-      );
-    }
-    return multiplyRational(amountMinor, rate.numerator, rate.denominator);
-  };
+  const toBase = (amountMinor: number): number =>
+    accountAmountToBase(account, transactions, baseCurrency, amountMinor);
 
   if (params.statementClosingBalanceMinor !== undefined) {
     return {
@@ -343,7 +382,7 @@ function statementBalance(
   // No running balance in the import. Fall back to opening balance plus
   // movements, and say so: this cannot detect a missing statement line.
   // Each movement is converted to base so the sum is in a single currency.
-  const opening = foreignAccount ? toBase(account.openingBalanceMinor) : account.openingBalanceMinor;
+  const opening = toBase(account.openingBalanceMinor);
   const movements = transactions.reduce(
     (sum, t) => sum + transactionBaseAmount(t, baseCurrency), 0,
   );
@@ -353,7 +392,17 @@ function statementBalance(
   };
 }
 
-/** The ledger balance of a bank account, as a signed bank balance. */
+/**
+ * Posted movements on a bank account's ledger control account, as a signed
+ * bank balance, *excluding* any opening-balance posting.
+ *
+ * The opening is counted separately via `bank_accounts.openingBalanceMinor`
+ * (issue #156) so it is added exactly once whether or not it was ever
+ * journaled — summing every posted line including the opening one would
+ * double it once `addBankAccount` journals it, and a caller who never
+ * journals it (a legacy row, say) would otherwise show a permanent gap here
+ * with nothing tracking it at all.
+ */
 function bankLedgerBalance(
   db: AppDatabase, companyId: string, ledgerAccountId: string, asOf: IsoDate,
 ): number {
@@ -368,6 +417,7 @@ function bankLedgerBalance(
       eq(journalLines.accountId, ledgerAccountId),
       eq(journalEntries.isPosted, true),
       lte(journalEntries.entryDate, asOf),
+      ne(journalEntries.sourceType, 'opening_balance'),
     )).get();
 
   // A bank account is a debit-normal asset: debits increase it.
