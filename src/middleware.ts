@@ -25,7 +25,15 @@ const PUBLIC_SITE_HOSTS = new Set(['fgi.ie', 'www.fgi.ie']);
 function requestHost(request: NextRequest): string {
   const forwarded = request.headers.get('x-forwarded-host')?.split(',')[0]?.trim();
   const raw = forwarded || request.headers.get('host') || request.nextUrl.host;
-  return raw.split(':')[0].toLowerCase();
+  const host = raw.split(':')[0] ?? '';
+  return host.toLowerCase();
+}
+
+function continueRequest(request: NextRequest, markPortal: boolean) {
+  if (!markPortal) return NextResponse.next();
+  const headers = new Headers(request.headers);
+  headers.set('x-leabhar-portal', '1');
+  return NextResponse.next({ request: { headers } });
 }
 
 function isPublicSite(request: NextRequest): boolean {
@@ -34,23 +42,23 @@ function isPublicSite(request: NextRequest): boolean {
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  const onPortal = pathname === '/portal' || pathname.startsWith('/portal/');
 
   // The public domain only serves the portal. Every other route in this app
   // reads the on-disk database, which does not exist on Vercel.
   if (isPublicSite(request)) {
-    const portal =
-      pathname === '/portal'
-      || pathname.startsWith('/portal/')
+    const allowed =
+      onPortal
       || pathname.startsWith('/_next')
       || pathname.startsWith('/favicon')
       || pathname === '/api/health';
-    if (!portal) {
+    if (!allowed) {
       const portalUrl = request.nextUrl.clone();
       portalUrl.pathname = '/portal';
       portalUrl.search = '';
       return NextResponse.redirect(portalUrl);
     }
-    return NextResponse.next();
+    return continueRequest(request, onPortal);
   }
 
   // Always allow the login page, static assets, the portal (issue #166),
@@ -65,9 +73,9 @@ export function middleware(request: NextRequest) {
     PUBLIC_PATHS.includes(pathname)
     || pathname.startsWith('/_next')
     || pathname.startsWith('/favicon')
-    || pathname.startsWith('/portal')
+    || onPortal
   ) {
-    return NextResponse.next();
+    return continueRequest(request, onPortal);
   }
 
   const token = request.cookies.get(sessionCookieName)?.value;
@@ -88,12 +96,13 @@ export const config = {
      * Match all paths except:
      * - /_next/* (Next.js internals)
      * - /favicon.ico
-     * - /portal/* (issue #166 — its own password, no server-side session)
      * - /api/health (issue #61 — polled by the launcher before any login exists)
      *
+     * /portal is matched so this function can mark the request. The portal
+     * keeps its own vault password and is not gated by the local session.
      * /login is matched on purpose: the public domain redirects it to /portal.
      * On a local install it is still allowed through below.
      */
-    '/((?!_next|favicon.ico|portal|api/health).*)',
+    '/((?!_next|favicon.ico|api/health).*)',
   ],
 };
