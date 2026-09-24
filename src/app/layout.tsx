@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { headers } from 'next/headers';
 import './globals.css';
 import { Nav } from '@/components/Nav';
 import { activeCompany } from '@/lib/queries';
@@ -11,7 +12,25 @@ export const metadata: Metadata = {
 
 export const dynamic = 'force-dynamic';
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+function publicSiteHost(header: string | null): boolean {
+  const host = header?.split(',')[0]?.trim().split(':')[0]?.toLowerCase() ?? '';
+  return host === 'fgi.ie' || host === 'www.fgi.ie';
+}
+
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const headerStore = await headers();
+  // On www.fgi.ie the only page that can run is the portal. The local-install
+  // navigation links at routes that need the on-disk database.
+  if (publicSiteHost(headerStore.get('x-forwarded-host')) || publicSiteHost(headerStore.get('host'))) {
+    return (
+      <html lang="en-IE">
+        <body>
+          <main className="min-h-screen">{children}</main>
+        </body>
+      </html>
+    );
+  }
+
   let company: ReturnType<typeof activeCompany>;
   try {
     company = activeCompany();
