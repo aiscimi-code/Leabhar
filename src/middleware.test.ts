@@ -3,8 +3,8 @@ import { NextRequest } from 'next/server';
 import { middleware } from './middleware';
 import { sessionCookieName } from '@/domain/auth/constants';
 
-function request(path: string, cookie?: string): NextRequest {
-  const req = new NextRequest(new URL(path, 'http://localhost:3000'));
+function request(path: string, cookie?: string, host = 'localhost:3000'): NextRequest {
+  const req = new NextRequest(new URL(path, `http://${host}`));
   if (cookie) req.cookies.set(sessionCookieName, cookie);
   return req;
 }
@@ -33,5 +33,29 @@ describe('middleware', () => {
   it('still lets /login through with no session cookie', () => {
     const res = middleware(request('/login'));
     expect(res.headers.get('location')).toBeNull();
+  });
+
+  it('sends the public site root to the portal, not the local login', () => {
+    const res = middleware(request('/', undefined, 'www.fgi.ie'));
+    expect(res.status).toBe(307);
+    expect(res.headers.get('location')).toBe('http://www.fgi.ie/portal');
+  });
+
+  it('sends the apex host to the portal as well', () => {
+    const res = middleware(request('/login', undefined, 'fgi.ie'));
+    expect(res.headers.get('location')).toBe('http://fgi.ie/portal');
+  });
+
+  it('honours x-forwarded-host when Vercel rewrites the host header', () => {
+    const req = request('/transactions', undefined, 'leabhar.vercel.app');
+    req.headers.set('x-forwarded-host', 'www.fgi.ie');
+    const res = middleware(req);
+    expect(res.headers.get('location')).toBe('http://leabhar.vercel.app/portal');
+  });
+
+  it('still sends a local install root to login', () => {
+    const res = middleware(request('/'));
+    expect(res.status).toBe(307);
+    expect(res.headers.get('location')).toContain('/login');
   });
 });
