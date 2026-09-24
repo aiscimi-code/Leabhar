@@ -19,9 +19,15 @@ function publicSiteHost(header: string | null): boolean {
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const headerStore = await headers();
-  // On www.fgi.ie the only page that can run is the portal. The local-install
-  // navigation links at routes that need the on-disk database.
-  if (publicSiteHost(headerStore.get('x-forwarded-host')) || publicSiteHost(headerStore.get('host'))) {
+  // www.fgi.ie only serves the portal. The portal is also opened without the
+  // installed-app navigation, including on a Vercel preview, because that
+  // chrome links at routes that need the on-disk database.
+  const portalOnly = headerStore.get('x-leabhar-portal') === '1';
+  if (
+    portalOnly
+    || publicSiteHost(headerStore.get('x-forwarded-host'))
+    || publicSiteHost(headerStore.get('host'))
+  ) {
     return (
       <html lang="en-IE">
         <body>
