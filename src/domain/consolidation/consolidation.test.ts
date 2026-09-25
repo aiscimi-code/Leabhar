@@ -266,6 +266,16 @@ describe('settling bank lines against invoices', () => {
     expect(db.select().from(documents).where(eq(documents.id, doc)).get()!.matchedTransactionId).toBe(find('MURPHY OFFICE').id);
   });
 
+  it('refuses to unlink a document from the bank line that paid its invoice', async () => {
+    const { unmatchDocument } = await import('../matching/service');
+    const find = await bank([['16/03/2025', 'PAID', '-24.60']]);
+    const doc = confirmed({ lines: [line('Paper', 2_000, 2300, 460)] });
+    const inv = postDocumentAsInvoice(db, { companyId, documentId: doc, coding: [code('6120', 'IE_STD')] });
+    settleBankTransaction(db, { companyId, bankTransactionId: find('PAID').id, allocations: [{ invoiceId: inv.invoiceId, amountMinor: 2_460 }] });
+    expect(() => unmatchDocument(db, { companyId, documentId: doc, reason: 'test' })).toThrow(/cannot be unlinked/);
+    expect(db.select().from(documents).where(eq(documents.id, doc)).get()!.matchedTransactionId).toBe(find('PAID').id);
+  });
+
   it('holds and flags money left over after the chosen invoices', async () => {
     const inv = post([line('Paper', 2_000, 2300, 460)]);
     const find = await bank([['20/03/2025', 'OVERPAID', '-30.00']]);
