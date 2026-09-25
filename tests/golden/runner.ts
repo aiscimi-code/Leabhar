@@ -16,7 +16,7 @@ import { journalEntries, journalLines, bankAccounts, vatEntries } from '@/db/sch
 import { lookupTransactionRules } from '@/domain/rules/transactionLookup';
 import { postJournalEntry } from '@/domain/accounting/journal';
 import { reconcileBankAccount } from '@/domain/banking/reconciliation';
-import { addDays } from '@/domain/dates';
+import { addDays, asIsoDate } from '@/domain/dates';
 import type { GoldenCase } from './types';
 import type { TransactionContext } from '@/domain/rules/transactionLookup';
 import type { PostJournalInput, JournalLineInput } from '@/domain/accounting/journal';
@@ -136,9 +136,9 @@ export function runGoldenCase(
     for (const entry of preJournalEntries) {
       const posted = postJournalEntry(db, {
         companyId,
-        entryDate: (entry as any).entryDate ?? transaction.transactionDate as never,
-        narrative: (entry as any).narrative ?? `Pre-journal: ${testCase.description}`,
-        sourceType: ((entry as any).sourceType ?? 'manual_adjustment') as PostJournalInput['sourceType'],
+        entryDate: asIsoDate(entry.entryDate ?? transaction.transactionDate),
+        narrative: entry.narrative ?? `Pre-journal: ${testCase.description}`,
+        sourceType: entry.sourceType ?? 'manual_adjustment',
         baseCurrency: transaction.currency ?? 'EUR',
         lines: entry.lines.map((l): JournalLineInput => ({
           accountId: resolveAccountId(l.accountId, accountsByCode, accountsByKey),

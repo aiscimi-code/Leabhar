@@ -6,6 +6,8 @@
  * expected results across all nine trust-model questions.
  */
 
+import type { PostJournalInput } from '@/domain/accounting/journal';
+
 /** Authority tag — distinguishes deterministic rules from professional-practice assertions. */
 export type GoldenAuthority = 'LEABHAR_RULE' | 'PROFESSIONAL_PRACTICE' | 'REVENUE_GUIDANCE' | 'LEGISLATION' | 'REVIEW_REQUIRED';
 
@@ -33,11 +35,17 @@ export interface GoldenTransactionInput {
   supplyType?: 'goods' | 'services';
   isReverseCharge?: boolean;
   /** Pre-journal entries to post before the main case (opening balances, etc.). */
-  preJournalEntries?: Array<{ lines: Array<{ accountId: string; debitMinor?: number; creditMinor?: number }> }>;
-  /** Optional entry date for preJournalEntries (defaults to transactionDate). */
-  preJournalEntryDate?: string;
-  /** Optional narrative for preJournalEntries (defaults to "Pre-journal"). */
-  preJournalNarrative?: string;
+  preJournalEntries?: GoldenPreJournalEntry[];
+}
+
+export interface GoldenPreJournalEntry {
+  /** Defaults to the transaction date. */
+  entryDate?: string;
+  /** Defaults to "Pre-journal: <case description>". */
+  narrative?: string;
+  /** Defaults to 'manual_adjustment'. */
+  sourceType?: PostJournalInput['sourceType'];
+  lines: Array<{ accountId: string; debitMinor?: number; creditMinor?: number }>;
 }
 
 export interface GoldenJournalLineSpec {
