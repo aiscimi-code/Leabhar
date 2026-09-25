@@ -34,6 +34,11 @@ These are enforced by tests. Breaking one is a bug, not a trade-off.
   reference to the supplier's invoice date under both bases.
 - **T2 sums recoverable VAT, not VAT charged.** Non-deductible and restricted
   input VAT must not be claimed.
+- **An extracted document is a draft, not evidence.** Matching, linking and VAT
+  suggestions read `review_status = 'confirmed'` documents only; a person
+  confirms each one on the review screen. Never match straight after extraction.
+- **Invoice amounts are stored as printed.** A credit note's figures are
+  positive; its `document_type` carries the sign.
 - **A rule with no conditions matches nothing**, not everything.
 - **An unassessable match factor carries zero weight** and is excluded, rather
   than scoring as half-right or counting against.

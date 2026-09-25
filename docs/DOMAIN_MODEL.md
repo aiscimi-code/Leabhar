@@ -328,13 +328,32 @@ audited event with a mandatory reason.
 
 ```
 uploaded → hashed → (duplicate? → flagged, never overwritten)
-        → type identified → text extracted → fields extracted
-        → classified (suggested) → matched (suggested)
-        → user confirmed → linked to invoice/transaction
+        → read (PDF text layer, OCR on this computer, or the optional AI reader)
+        → DRAFT: header, parties, every line, VAT per rate, VAT wording
+        → person checks it against the page, corrects, adds what is missing
+        → CONFIRMED (or rejected)
+        → matched to a bank transaction / linked to an invoice
 ```
 
-Status: `pending | extracting | extracted | needs_review | classified |
-matched | confirmed | failed | duplicate`.
+Review status: `unreviewed | confirmed | rejected` (`documents.review_status`).
+Extraction status and match status are tracked separately.
+
+A draft is never evidence. Matching (`findMatchesForDocument`, `linkDocument`,
+`matchAllUnmatched`) and VAT suggestions (`transactionFacts`) read confirmed
+documents only; an unconfirmed document raises an error there rather than being
+used. Confirmation runs `checkDocumentValues` (`src/domain/documents/checks.ts`):
+errors (no date, total, currency or counterparty) block it; arithmetic warnings
+(line VAT ≠ rate × net, lines not summing to the header, per-rate totals not
+summing) must be acknowledged one by one. Every field changed at confirmation is
+audited against the draft. A re-read never overwrites a confirmed document; to
+correct one, reopen it, which is refused while it supports a match or invoice.
+
+Amounts are stored as printed. A credit note's lines and totals are positive;
+`document_type = 'credit_note'` carries the sign.
+
+Lines live in `document_lines`, per-rate VAT in `document_vat_totals`, both with
+provenance. The VAT rate for a purchase comes from these confirmed lines — never
+from a bank amount.
 
 ### Bank transaction
 

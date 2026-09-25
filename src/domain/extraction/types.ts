@@ -15,6 +15,10 @@ export interface ExtractedField<T = string> {
   evidence?: string;
 }
 
+import type { ExtractedLineSnapshot, ExtractedVatTotalSnapshot } from '@/db/schema';
+
+export type { ExtractedLineSnapshot, ExtractedVatTotalSnapshot };
+
 export interface ExtractedDocument {
   documentType: ExtractedField<string>;
   supplierName: ExtractedField<string>;
@@ -31,6 +35,14 @@ export interface ExtractedDocument {
   supplierVatNumber: ExtractedField<string>;
   customerVatNumber: ExtractedField<string>;
   supplierCountry: ExtractedField<string>;
+  /** Everything else the document states (issue #202). */
+  supplyDate: ExtractedField<string>;
+  supplierAddress: ExtractedField<string>;
+  customerAddress: ExtractedField<string>;
+  customerCountry: ExtractedField<string>;
+  paymentTerms: ExtractedField<string>;
+  /** For a credit note: the invoice number it credits. */
+  originalDocumentNumber: ExtractedField<string>;
   /** A treatment CODE, e.g. NON_EU_SERVICES_RCV. Always a suggestion. */
   suggestedVatTreatment: ExtractedField<string>;
   /** An account CODE from the chart of accounts. Always a suggestion. */
@@ -44,6 +56,12 @@ export interface ExtractionResult {
   textExtractionMethod: 'pdf_text_layer' | 'ocr' | 'none' | 'provided';
   extractedText: string;
   fields: ExtractedDocument;
+  /** Every line the document lists, as read (issue #202). Empty when none could be read. */
+  lines: ExtractedLineSnapshot[];
+  /** The VAT analysis by rate, as printed. */
+  vatTotals: ExtractedVatTotalSnapshot[];
+  /** VAT wording found on the document ("reverse charge", "Article 196", "zero-rated", "exempt"...). */
+  vatLegends: string[];
   overallConfidence: number;
   status: 'succeeded' | 'partial' | 'failed';
   errorMessage?: string;
@@ -100,6 +118,12 @@ export function emptyFields(): ExtractedDocument {
     supplierVatNumber: emptyField<string>(),
     customerVatNumber: emptyField<string>(),
     supplierCountry: emptyField<string>(),
+    supplyDate: emptyField<string>(),
+    supplierAddress: emptyField<string>(),
+    customerAddress: emptyField<string>(),
+    customerCountry: emptyField<string>(),
+    paymentTerms: emptyField<string>(),
+    originalDocumentNumber: emptyField<string>(),
     suggestedVatTreatment: emptyField<string>(),
     suggestedAccountCode: emptyField<string>(),
   };

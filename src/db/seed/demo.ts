@@ -12,6 +12,7 @@ import { storeDocument } from '@/domain/documents/storage';
 import { extractDocument } from '@/domain/extraction/service';
 import { LocalExtractionProvider } from '@/domain/extraction/localProvider';
 import { matchAllUnmatched } from '@/domain/matching/service';
+import { documentReviewValues, confirmDocument, checkDocumentValues } from '@/domain/documents/review';
 import { createRule } from '@/domain/rules/engine';
 import { postJournalEntry } from '@/domain/accounting/journal';
 import { makeDate } from '@/domain/dates';
@@ -163,6 +164,7 @@ const DEMO_DOCUMENTS: Array<{ filename: string; body: string }> = [
       'Policy Number: PI-2025-77213', 'Invoice Date: 19/03/2025',
       '', 'Professional indemnity — annual      480.00',
       'Total                                  480.00',
+      'Currency: EUR',
       '', 'Exempt from VAT (insurance services).',
     ].join('\n'),
   },
@@ -177,6 +179,7 @@ const DEMO_DOCUMENTS: Array<{ filename: string; body: string }> = [
       'Subtotal                              3500.00',
       'VAT @ 23%                              805.00',
       'Total Due                             4305.00',
+      'Currency: EUR',
     ].join('\n'),
   },
   {
@@ -190,6 +193,7 @@ const DEMO_DOCUMENTS: Array<{ filename: string; body: string }> = [
       'Subtotal                              6000.00',
       'VAT                                      0.00',
       'Total Due                             6000.00',
+      'Currency: EUR',
       '', 'Reverse charge: VAT to be accounted for by the recipient under Article 196.',
     ].join('\n'),
   },
@@ -512,6 +516,14 @@ export async function seedDemoCompany(
       companyId, documentId: stored.documentId,
       storageRootPath: options.storageRoot,
       providers: [new LocalExtractionProvider()], actor: 'demo',
+    });
+    // The demo stands in for a person checking each document against the page.
+    const { values } = documentReviewValues(db, { companyId, documentId: stored.documentId });
+    confirmDocument(db, {
+      companyId, documentId: stored.documentId, values, reviewedBy: 'demo',
+      acknowledgedCheckCodes: checkDocumentValues(values).map((c) => c.code),
+      createSupplier: values.documentType !== 'sales_invoice',
+      createCustomer: values.documentType === 'sales_invoice',
     });
     documentCount += 1;
   }

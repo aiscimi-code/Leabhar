@@ -390,7 +390,7 @@ describe('cli reconcile — matching + suppliers', () => {
     documentId = stored.documentId;
     mDb.update(documents).set({
       grossMinor: 4217, currency: 'EUR', documentDate: '2025-03-14',
-      documentType: 'supplier_invoice', supplierId: 'sup_vercel',
+      documentType: 'supplier_invoice', supplierId: 'sup_vercel', reviewStatus: 'confirmed',
     }).where(eq(documents.id, documentId)).run();
   });
 

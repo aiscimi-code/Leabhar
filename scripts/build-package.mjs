@@ -66,6 +66,25 @@ copy('drizzle migrations', join(ROOT, 'drizzle'), join(STANDALONE, 'drizzle'));
 // re-reads them to verify their SHA-256, so they must ship with the app.
 copy('statute sources', join(ROOT, 'docs', 'statutes'), join(STANDALONE, 'docs', 'statutes'));
 
+// 3c. Copy the OCR and PDF-rendering assets the review screen serves to the
+// browser (issue #202). The list mirrors OCR_ASSETS in src/lib/ocrAssets.ts;
+// they are read from disk at run time, so file tracing does not pick them up.
+for (const asset of [
+  'node_modules/tesseract.js/dist/worker.min.js',
+  'node_modules/tesseract.js-core/tesseract-core-simd-lstm.wasm.js',
+  'node_modules/tesseract.js-core/tesseract-core-lstm.wasm.js',
+  'node_modules/@tesseract.js-data/eng/4.0.0_best_int/eng.traineddata.gz',
+  'node_modules/pdfjs-dist/build/pdf.worker.min.mjs',
+]) {
+  const src = join(ROOT, asset);
+  if (!existsSync(src)) {
+    console.error(`ERROR: OCR asset missing: ${asset}. Run \`npm ci\` first.`);
+    process.exit(1);
+  }
+  mkdirSync(dirname(join(STANDALONE, asset)), { recursive: true });
+  copy('OCR asset', src, join(STANDALONE, asset));
+}
+
 // 4. Copy the launcher
 copy('launcher', join(ROOT, 'scripts', 'launcher.cjs'), join(STANDALONE, 'launcher.cjs'));
 

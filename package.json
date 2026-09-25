@@ -34,6 +34,9 @@
     "build:installer": "makensis scripts/installer.nsi"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.128.0",
+    "@noble/hashes": "^2.4.0",
+    "@tesseract.js-data/eng": "^1.0.0",
     "better-sqlite3": "^13.0.3",
     "drizzle-orm": "^0.45.2",
     "exceljs": "^4.4.0",
@@ -44,8 +47,7 @@
     "react-dom": "^19.1.0",
     "tesseract.js": "^5.1.1",
     "zod": "^4.6.4",
-    "zustand": "^5.0.0",
-    "@noble/hashes": "^2.4.0"
+    "zustand": "^5.0.0"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.11",

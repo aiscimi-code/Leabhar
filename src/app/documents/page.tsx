@@ -11,22 +11,25 @@ export default async function DocumentsPage({ searchParams }: {
   searchParams: Promise<Record<string, string | undefined>>;
 }) {
   const params = await searchParams;
-  const rows = documentList({ status: params['status'], search: params['q'] });
+  const rows = documentList({ status: params['status'], review: params['review'], search: params['q'] });
   const company = activeCompany();
   const hasWatchPath = !!(company?.documentWatchPath);
 
   const unmatched = rows.filter((r) => r.document.matchStatus !== 'matched').length;
+  const awaiting = rows.filter((r) => r.document.reviewStatus === 'unreviewed').length;
 
   return (
     <Page
       title="Documents"
-      subtitle={`${rows.length} stored${unmatched > 0 ? `, ${unmatched} not yet matched to a transaction` : ''}. Originals are never modified.`}
+      subtitle={`${rows.length} stored${awaiting > 0 ? `, ${awaiting} awaiting your confirmation` : ''}`
+        + `${unmatched > 0 ? `, ${unmatched} not yet matched to a transaction` : ''}. Originals are never modified.`}
       actions={<RematchButton />}
     >
       <Panel
         title="Add documents"
-        description="Invoices, receipts, credit notes and statements. PDFs and images are read
-          automatically; nothing is ever written back to the file you upload."
+        description="Invoices, receipts, credit notes and statements. Each one is read, then waits
+          for you to check the details against the page and confirm them. Nothing is ever written
+          back to the file you upload."
       >
         <div className="px-4 py-3 space-y-3">
           <UploadForm />
@@ -55,6 +58,18 @@ export default async function DocumentsPage({ searchParams }: {
               {['all', 'unmatched', 'suggested', 'matched', 'conflict'].map((s) => (
                 <option key={s} value={s}>{s === 'all' ? 'All' : label(s)}</option>
               ))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-[10px] uppercase tracking-wide font-semibold text-ink-faint mb-0.5">
+              Details
+            </label>
+            <select name="review" defaultValue={params['review'] ?? 'all'}
+              className="border border-line-strong rounded px-2 py-1 text-[12px]">
+              <option value="all">All</option>
+              <option value="unreviewed">Awaiting confirmation</option>
+              <option value="confirmed">Confirmed</option>
+              <option value="rejected">Rejected</option>
             </select>
           </div>
           <button type="submit"
@@ -108,6 +123,10 @@ export default async function DocumentsPage({ searchParams }: {
                   </td>
                   <td>
                     <div className="flex flex-wrap gap-1">
+                      {doc.reviewStatus === 'unreviewed' && (
+                        <Link href={`/documents/${doc.id}`}><Badge tone="caution">Confirm details</Badge></Link>
+                      )}
+                      {doc.reviewStatus === 'rejected' && <Badge tone="negative">Rejected</Badge>}
                       <Badge tone={doc.matchStatus === 'matched' ? 'positive'
                         : doc.matchStatus === 'conflict' ? 'negative'
                         : doc.matchStatus === 'suggested' ? 'accent' : 'caution'}>
