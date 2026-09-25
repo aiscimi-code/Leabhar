@@ -217,7 +217,7 @@ export function recordPayment(db: AppDatabase, input: RecordPaymentInput): Recor
   let moneyAccountId: string;
   if (input.officerId) {
     const officer = db.select().from(companyOfficers)
-      .where(eq(companyOfficers.id, input.officerId)).get();
+      .where(and(eq(companyOfficers.id, input.officerId), eq(companyOfficers.companyId, input.companyId))).get();
     if (!officer) throw new InvoicingError(`Officer ${input.officerId} not found.`);
     moneyAccountId = officer.currentAccountId
       ?? systemAccountId(db, input.companyId, 'directors_current_account');

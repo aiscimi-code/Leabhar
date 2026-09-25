@@ -143,7 +143,10 @@ npm run cli -- journal --transaction <id> --lines <json> [--vat <json>]
     # position (e.g. output VAT on a Stripe payout's *gross* card sales,
     # which the settled net that hit the bank does not by itself report to
     # VAT3): {"direction":"sales","treatment":"IE_STD","net":"1744.94",
-    # "statedVat":"401.34"}. classify stays one account + one VAT treatment
+    # "statedVat":"401.34"}. Output VAT only: input VAT comes only from a
+    # confirmed supplier invoice, so --vat with "direction":"purchases", or a
+    # line debiting VAT on purchases, is refused (issue #221) — post the
+    # invoice and settle the line against it instead. classify stays one account + one VAT treatment
     # on purpose — this is the explicit alternative for a split, not a
     # change to what classify posts by default.
 

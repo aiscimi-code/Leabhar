@@ -11,7 +11,7 @@ import { trialBalance, accountBalance } from '../accounting/ledger';
 import { buildVat3Return } from '../vat/report';
 import {
   bankTransactions, journalEntries, journalLines, vatEntries, vatPeriods,
-  companyOfficers, auditEvents,
+  companyOfficers, auditEvents, reviewItems,
 } from '@/db/schema';
 import { makeDate } from '../dates';
 import { ids } from '@/lib/ids';
@@ -391,13 +391,19 @@ describe('reclassifyTransaction', () => {
   });
 });
 
-describe('director-paid expenses', () => {
-  it('credits the director’s current account instead of the bank', () => {
+// Issue #221: with no invoice, a director-paid expense claims no input VAT.
+// With one, the invoice is posted and settled by the director (consolidation.test).
+describe('director-paid expenses without an invoice', () => {
+  const director = () => {
     const officerId = ids.officer();
     db.insert(companyOfficers).values({
       id: officerId, companyId, name: 'A. Director', role: 'director',
     }).run();
+    return officerId;
+  };
 
+  it('credits the director’s current account with the whole amount as cost, and claims no VAT', () => {
+    const officerId = director();
     const result = recordDirectorPaidExpense(db, {
       companyId, officerId, date: makeDate(2025, 3, 15),
       description: 'Conference ticket', accountId: byCode['6140']!,
@@ -407,86 +413,58 @@ describe('director-paid expenses', () => {
     const lines = db.select().from(journalLines)
       .where(eq(journalLines.journalEntryId, result.journalEntryId))
       .orderBy(journalLines.lineNumber).all();
-
-    expect(lines[0]).toMatchObject({ accountId: byCode['6140'], debitMinor: 20_000 });
-    expect(lines[1]).toMatchObject({ accountId: acc['vat_on_purchases'], debitMinor: 4_600 });
-    expect(lines[2]).toMatchObject({
+    expect(lines).toHaveLength(2);
+    expect(lines[0]).toMatchObject({ accountId: byCode['6140'], debitMinor: 24_600 });
+    expect(lines[1]).toMatchObject({
       accountId: acc['directors_current_account'], creditMinor: 24_600, officerId,
     });
+    expect(result.vatEntryIds).toEqual([]);
+    expect(db.select().from(vatEntries).all()).toHaveLength(0);
 
-    // The company now owes the director, and the bank is untouched.
-    expect(accountBalance(db, { companyId, accountId: acc['directors_current_account']! }))
-      .toBe(24_600);
+    // The company owes the director, and the bank is untouched.
+    expect(accountBalance(db, { companyId, accountId: acc['directors_current_account']! })).toBe(24_600);
     expect(accountBalance(db, { companyId, accountId: acc['bank_control']! })).toBe(0);
     expect(trialBalance(db, { companyId, asOf: makeDate(2025, 12, 31) }).balanced).toBe(true);
+
+    const flagged = db.select().from(reviewItems)
+      .where(and(eq(reviewItems.entityId, result.journalEntryId), eq(reviewItems.kind, 'missing_document'))).get();
+    expect(flagged?.title).toMatch(/no input VAT claimed/);
   });
 
-  it('still claims the input VAT', () => {
-    const officerId = ids.officer();
-    db.insert(companyOfficers).values({
-      id: officerId, companyId, name: 'A. Director', role: 'director',
-    }).run();
+  it('puts nothing on the VAT return', () => {
     recordDirectorPaidExpense(db, {
-      companyId, officerId, date: makeDate(2025, 3, 15),
+      companyId, officerId: director(), date: makeDate(2025, 3, 15),
       description: 'Laptop bag', accountId: byCode['6120']!,
       vatTreatmentId: tr['IE_STD']!, grossMinor: 12_300,
     });
     const periodId = db.select().from(vatPeriods)
       .where(eq(vatPeriods.name, 'Mar–Apr 2025')).get()!.id;
-    expect(buildVat3Return(db, { companyId, vatPeriodId: periodId }).T2.amountMinor).toBe(2_300);
+    expect(buildVat3Return(db, { companyId, vatPeriodId: periodId }).T2.amountMinor).toBe(0);
   });
-});
 
-describe('director-paid reverse charge', () => {
-  it('balances when a director personally pays a reverse-charge supplier', () => {
-    const officerId = ids.officer();
-    db.insert(companyOfficers).values({
-      id: officerId, companyId, name: 'A. Director', role: 'director',
-    }).run();
-
-    // A domain renewal on a personal card: no VAT charged by the supplier,
-    // but the VAT is still self-accounted.
+  it('self-assesses no reverse charge without the invoice, and flags it', () => {
     const result = recordDirectorPaidExpense(db, {
-      companyId, officerId, date: makeDate(2025, 3, 6),
+      companyId, officerId: director(), date: makeDate(2025, 3, 6),
       description: 'Domain renewals paid on personal card',
-      accountId: byCode['6020']!, vatTreatmentId: tr['NON_EU_SERVICES_RCV']!,
-      grossMinor: 8_400,
+      accountId: byCode['6020']!, vatTreatmentId: tr['NON_EU_SERVICES_RCV']!, grossMinor: 8_400,
     });
-
     const lines = db.select().from(journalLines)
-      .where(eq(journalLines.journalEntryId, result.journalEntryId))
-      .orderBy(journalLines.lineNumber).all();
-
-    expect(lines).toHaveLength(4);
-    expect(lines[0]).toMatchObject({ accountId: byCode['6020'], debitMinor: 8_400 });
-    expect(lines[1]).toMatchObject({ accountId: acc['vat_on_purchases'], debitMinor: 1_932 });
-    expect(lines[2]).toMatchObject({ accountId: acc['vat_on_sales'], creditMinor: 1_932 });
-    // The director is owed only what they actually paid out.
-    expect(lines[3]).toMatchObject({
-      accountId: acc['directors_current_account'], creditMinor: 8_400, officerId,
-    });
-
-    expect(trialBalance(db, { companyId, asOf: makeDate(2025, 12, 31) }).balanced).toBe(true);
-    expect(accountBalance(db, { companyId, accountId: acc['directors_current_account']! }))
-      .toBe(8_400);
+      .where(eq(journalLines.journalEntryId, result.journalEntryId)).all();
+    expect(lines).toHaveLength(2);
+    expect(db.select().from(vatEntries).all()).toHaveLength(0);
+    const flagged = db.select().from(reviewItems)
+      .where(eq(reviewItems.entityId, result.journalEntryId)).get();
+    expect(flagged?.detail).toMatch(/no reverse-charge VAT/);
   });
 
-  it('nets the reverse charge to zero on the VAT return', () => {
-    const officerId = ids.officer();
-    db.insert(companyOfficers).values({
-      id: officerId, companyId, name: 'A. Director', role: 'director',
-    }).run();
-    recordDirectorPaidExpense(db, {
-      companyId, officerId, date: makeDate(2025, 3, 6),
-      description: 'Domain renewals', accountId: byCode['6020']!,
-      vatTreatmentId: tr['NON_EU_SERVICES_RCV']!, grossMinor: 8_400,
+  it('does not flag an expense whose treatment carries no VAT', () => {
+    const result = recordDirectorPaidExpense(db, {
+      companyId, officerId: director(), date: makeDate(2025, 3, 6),
+      description: 'Train fare', accountId: byCode['6120']!,
+      vatTreatmentId: tr['OUT_OF_SCOPE']!, grossMinor: 2_000,
     });
-    const periodId = db.select().from(vatPeriods)
-      .where(eq(vatPeriods.name, 'Mar–Apr 2025')).get()!.id;
-    const report = buildVat3Return(db, { companyId, vatPeriodId: periodId });
-    expect(report.T1.amountMinor).toBe(1_932);
-    expect(report.T2.amountMinor).toBe(1_932);
-    expect(report.netPositionMinor).toBe(0);
+    expect(db.select().from(reviewItems).where(eq(reviewItems.entityId, result.journalEntryId)).all())
+      .toHaveLength(0);
   });
 });
 
@@ -563,6 +541,24 @@ describe('postBankTransactionJournal', () => {
         { accountId: byCode['4000']!, creditMinor: 210_734 },
       ],
     })).toThrow(/already been posted/);
+  });
+
+  it('refuses input VAT: it comes only from a confirmed invoice (issue #221)', async () => {
+    const tx = await importOne('SPLIT PURCHASE', '-123.00');
+    const lines = [
+      { accountId: byCode['6120']!, debitMinor: 10_000 },
+      { accountId: acc['vat_on_purchases']!, debitMinor: 2_300 },
+      { accountId: acc['bank_control']!, creditMinor: 12_300 },
+    ];
+    expect(() => postBankTransactionJournal(db, {
+      companyId, bankTransactionId: tx.id, lines,
+      vat: { direction: 'purchases', treatmentId: tr['IE_STD']!, netMinor: 10_000, statedVatMinor: 2_300 },
+    })).toThrow(/confirmed supplier invoice/);
+    // Nor by debiting input VAT directly, without a VAT position.
+    expect(() => postBankTransactionJournal(db, { companyId, bankTransactionId: tx.id, lines }))
+      .toThrow(/confirmed supplier invoice/);
+    expect(db.select().from(journalEntries).all()).toHaveLength(0);
+    expect(db.select().from(vatEntries).all()).toHaveLength(0);
   });
 
   it('refuses fewer than two lines', async () => {

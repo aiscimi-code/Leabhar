@@ -417,6 +417,7 @@ export interface BankTransactionJournalInput {
    * settled net that hit the bank does not by itself report to VAT3.
    */
   vat?: {
+    /** 'purchases' is refused: input VAT comes only from a confirmed invoice (issue #221). */
     direction: 'sales' | 'purchases';
     treatmentId: string;
     netMinor?: number;
@@ -462,6 +463,19 @@ export function postBankTransactionJournal(
   }
   if (input.lines.length < 2) {
     throw new ClassificationError('A split journal needs at least two lines.');
+  }
+  // The invoice is the only proof of input VAT (issue #221). A split journal
+  // may record this line's own output VAT (a Stripe payout's gross card
+  // sales), but never input VAT: that comes from a confirmed invoice, posted
+  // as a purchase invoice and settled against this line.
+  const noInputVat = 'Input VAT can only be claimed on a confirmed supplier invoice. Confirm the invoice, '
+    + 'post it as a purchase invoice, and settle this bank line against it.';
+  if (input.vat?.direction === 'purchases') {
+    throw new ClassificationError(noInputVat, { bankTransactionId: transaction.id });
+  }
+  const vatOnPurchasesId = systemAccountId(db, input.companyId, 'vat_on_purchases');
+  if (input.lines.some((line) => line.accountId === vatOnPurchasesId && (line.debitMinor ?? 0) > 0)) {
+    throw new ClassificationError(noInputVat, { bankTransactionId: transaction.id });
   }
 
   const company = db.select().from(companies).where(eq(companies.id, input.companyId)).get()!;
@@ -702,11 +716,20 @@ export function reclassifyTransaction(
 }
 
 /**
- * Record a company expense paid personally by a director (README §28).
+ * Record a company expense paid personally by a director (README §28), when
+ * there is no invoice for it.
  *
  * There is no bank transaction, because no company money moved. The expense is
  * debited and the director's current account is credited, creating a balance
  * the company owes them.
+ *
+ * The invoice is the only proof of input VAT (issue #221), so this claims
+ * none: the whole amount is the cost, no VAT entry is written, and the missing
+ * invoice is flagged. (Under a reverse charge the net also comes from the
+ * invoice, so nothing is self-assessed until it is posted — flagged the same
+ * way.) When there is an invoice, confirm it, post it as a purchase invoice
+ * (`postDocumentAsInvoice`) and settle it as paid by the director
+ * (`settleInvoiceByDirector`); the VAT then comes from the invoice's lines.
  */
 export function recordDirectorPaidExpense(
   db: AppDatabase,
@@ -719,12 +742,13 @@ export function recordDirectorPaidExpense(
     vatTreatmentId: string;
     grossMinor: number;
     currency?: string;
-    documentId?: string | null;
     actor?: string;
   },
 ): { journalEntryId: string; vatEntryIds: string[] } {
   const company = db.select().from(companies).where(eq(companies.id, params.companyId)).get()!;
   const currency = (params.currency ?? company.baseCurrency).toUpperCase();
+  const amount = asMinor(params.grossMinor);
+  if (amount <= 0) throw new ClassificationError('A director-paid expense needs a positive amount.');
 
   const officer = db.select().from(companyOfficers)
     .where(and(
@@ -738,57 +762,9 @@ export function recordDirectorPaidExpense(
     treatmentId: params.vatTreatmentId,
     onDate: params.date,
   });
-  const calculation = calculateVat({
-    treatment: resolved.treatment,
-    rateBasisPoints: resolved.rateBasisPoints,
-    direction: 'purchases',
-    grossMinor: params.grossMinor,
-  });
 
   const directorsAccount = officer.currentAccountId
     ?? systemAccountId(db, params.companyId, 'directors_current_account');
-  const vatOnPurchasesId = systemAccountId(db, params.companyId, 'vat_on_purchases');
-
-  const lines: Parameters<typeof postJournalEntry>[1]['lines'] = [
-    {
-      accountId: params.accountId,
-      debitMinor: calculation.netMinor + (calculation.vatMinor - calculation.recoverableVatMinor),
-      currency,
-      memo: params.description,
-    },
-  ];
-  if (calculation.recoverableVatMinor > 0) {
-    lines.push({
-      accountId: vatOnPurchasesId,
-      debitMinor: calculation.recoverableVatMinor,
-      currency,
-      memo: `Input VAT — ${resolved.treatment.name}`,
-    });
-  }
-  // A director can pay a reverse-charge supplier personally just as easily as
-  // the company can — a domain renewal on a personal card, say. The VAT is
-  // still self-accounted, so the output leg belongs here too. Without it the
-  // entry does not balance.
-  if (resolved.treatment.isReverseCharge && calculation.vatMinor > 0) {
-    lines.push({
-      accountId: systemAccountId(db, params.companyId, 'vat_on_sales'),
-      creditMinor: calculation.vatMinor,
-      currency,
-      memo: `Output VAT (reverse charge) — ${resolved.treatment.name}`,
-    });
-  }
-
-  lines.push({
-    accountId: directorsAccount,
-    // What the director actually paid out of pocket. Under a reverse charge
-    // that is the net, because the supplier charged no VAT.
-    creditMinor: calculation.grossMinor,
-    currency,
-    officerId: officer.id,
-    memo: `Paid personally by ${officer.name}`,
-  });
-
-  assertVatPeriodWritable(db, params.companyId, params.date, `The VAT on "${params.description}"`);
 
   const journal = postJournalEntry(db, {
     companyId: params.companyId,
@@ -799,23 +775,33 @@ export function recordDirectorPaidExpense(
     baseCurrency: company.baseCurrency,
     createdBy: params.actor ?? 'user',
     createdVia: 'user',
-    lines,
+    lines: [
+      { accountId: params.accountId, debitMinor: amount, currency, memo: params.description },
+      {
+        accountId: directorsAccount, creditMinor: amount, currency, officerId: officer.id,
+        memo: `Paid personally by ${officer.name}`,
+      },
+    ],
   });
 
-  const vatResult = createVatEntries(db, {
-    companyId: params.companyId,
-    journalEntryId: journal.id,
-    sourceType: 'manual_adjustment',
-    sourceId: journal.id,
-    direction: 'purchases',
-    treatmentId: params.vatTreatmentId,
-    taxPointDate: params.date,
-    grossMinor: params.grossMinor,
-    currency,
-    baseCurrency: company.baseCurrency,
-    provenanceStatus: 'manually_entered',
-    source: 'user',
-  });
+  if (resolved.treatment.appliesRate) {
+    upsertReviewItem(db, {
+      companyId: params.companyId,
+      kind: 'missing_document',
+      severity: 'warning',
+      title: `No invoice for "${params.description}" (paid by ${officer.name}): no input VAT claimed`,
+      detail: resolved.treatment.isReverseCharge
+        ? `Recorded under "${resolved.treatment.name}", but without the supplier's invoice there is no net `
+          + 'to self-assess on, so no reverse-charge VAT has been accounted for. Upload and confirm the '
+          + 'invoice, post it, and record it as paid by the director; then reverse this entry.'
+        : `Recorded with the full ${(amount / 100).toFixed(2)} as cost. Input VAT can only be reclaimed on `
+          + 'the supplier\'s invoice. Upload and confirm it, post it, and record it as paid by the director; '
+          + 'then reverse this entry.',
+      entityType: 'journal_entry',
+      entityId: journal.id,
+      dedupeKey: `journal_entry:${journal.id}:no_invoice`,
+    });
+  }
 
-  return { journalEntryId: journal.id, vatEntryIds: vatResult.entries.map((e) => e.id) };
+  return { journalEntryId: journal.id, vatEntryIds: [] };
 }

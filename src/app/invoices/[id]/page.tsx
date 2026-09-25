@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation';
-import { invoiceDetail, unpostedTransactionOptions } from '@/lib/queries';
+import { invoiceDetail, unpostedTransactionOptions, officerList } from '@/lib/queries';
 import {
   Page, Panel, Badge, Stat, Empty, Disclosure, ProvenanceBadge,
 } from '@/components/primitives';
@@ -169,6 +169,7 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
                 invoiceCurrency={invoice.currency}
                 outstandingMinor={invoice.outstandingMinor}
                 bankTransactions={unpostedTransactionOptions()}
+                officers={isSales ? [] : officerList().map((o) => ({ value: o.id, label: o.name }))}
               />
             </div>
           </Disclosure>

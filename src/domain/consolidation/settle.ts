@@ -49,25 +49,7 @@ export function settleBankTransaction(db: AppDatabase, input: SettleInput): Reco
     throw new ConsolidationError('Choose at least one invoice for this payment to settle.');
   }
 
-  // A purchase invoice must rest on a confirmed document: that is the evidence
-  // for the VAT it carries. (Sales invoices the company issued itself are
-  // their own evidence.)
-  for (const allocation of input.allocations) {
-    const invoice = db.select().from(invoices)
-      .where(and(eq(invoices.id, allocation.invoiceId), eq(invoices.companyId, input.companyId))).get();
-    if (!invoice) throw new ConsolidationError(`Invoice ${allocation.invoiceId} not found.`);
-    if (invoice.direction === 'purchase') {
-      const doc = invoice.documentId
-        ? db.select({ reviewStatus: documents.reviewStatus }).from(documents)
-          .where(eq(documents.id, invoice.documentId)).get()
-        : undefined;
-      if (doc?.reviewStatus !== 'confirmed') {
-        throw new ConsolidationError(
-          `Invoice ${invoice.invoiceNumber ?? invoice.id} has no confirmed supplier document behind it.`,
-        );
-      }
-    }
-  }
+  assertInvoicesEvidenced(db, input.companyId, input.allocations);
 
   const payment = recordPayment(db, {
     companyId: input.companyId,
@@ -128,4 +110,81 @@ export function settleBankTransaction(db: AppDatabase, input: SettleInput): Reco
     });
   }
   return payment;
+}
+
+/**
+ * A purchase invoice must rest on a confirmed document: that is the evidence
+ * for the VAT it carries. (Sales invoices the company issued itself are their
+ * own evidence.)
+ */
+function assertInvoicesEvidenced(db: AppDatabase, companyId: string, allocations: SettleAllocation[]): void {
+  for (const allocation of allocations) {
+    const invoice = db.select().from(invoices)
+      .where(and(eq(invoices.id, allocation.invoiceId), eq(invoices.companyId, companyId))).get();
+    if (!invoice) throw new ConsolidationError(`Invoice ${allocation.invoiceId} not found.`);
+    if (invoice.direction === 'purchase') {
+      const doc = invoice.documentId
+        ? db.select({ reviewStatus: documents.reviewStatus }).from(documents)
+          .where(eq(documents.id, invoice.documentId)).get()
+        : undefined;
+      if (doc?.reviewStatus !== 'confirmed') {
+        throw new ConsolidationError(
+          `Invoice ${invoice.invoiceNumber ?? invoice.id} has no confirmed supplier document behind it.`,
+        );
+      }
+    }
+  }
+}
+
+export interface SettleByDirectorInput {
+  companyId: string;
+  officerId: string;
+  /** The day the director paid. */
+  paymentDate: IsoDate;
+  allocations: SettleAllocation[];
+  currency?: string;
+  fxRate?: { numerator: number; denominator: number; source: string; date?: string };
+  reference?: string | null;
+  actor?: string;
+  requestId?: string;
+}
+
+/**
+ * Settle purchase invoices a director paid personally (issue #221): a card
+ * payment on a personal account, say. No company money moved, so there is no
+ * bank line; the director's current account is credited with what they paid
+ * and the company owes it to them. As with a bank settlement, the input VAT
+ * was posted from the confirmed invoice's lines — nothing is computed here.
+ */
+export function settleInvoiceByDirector(db: AppDatabase, input: SettleByDirectorInput): RecordedPayment {
+  if (input.allocations.length === 0) {
+    throw new ConsolidationError('Choose at least one invoice the director paid.');
+  }
+  for (const allocation of input.allocations) {
+    const invoice = db.select({ direction: invoices.direction }).from(invoices)
+      .where(and(eq(invoices.id, allocation.invoiceId), eq(invoices.companyId, input.companyId))).get();
+    if (invoice && invoice.direction !== 'purchase') {
+      throw new ConsolidationError('A director pays purchase invoices; a sales invoice is paid by the customer.');
+    }
+  }
+  assertInvoicesEvidenced(db, input.companyId, input.allocations);
+  const amountMinor = input.allocations.reduce((sum, a) => {
+    const invoice = db.select({ isCreditNote: invoices.isCreditNote }).from(invoices)
+      .where(eq(invoices.id, a.invoiceId)).get();
+    return sum + (invoice?.isCreditNote ? -a.amountMinor : a.amountMinor);
+  }, 0);
+  return recordPayment(db, {
+    companyId: input.companyId,
+    direction: 'made',
+    paymentDate: input.paymentDate,
+    amountMinor,
+    currency: input.currency,
+    fxRate: input.fxRate,
+    method: 'director_personal',
+    officerId: input.officerId,
+    allocations: input.allocations.map((a) => ({ invoiceId: a.invoiceId, allocatedMinor: a.amountMinor })),
+    reference: input.reference ?? null,
+    actor: input.actor,
+    requestId: input.requestId,
+  });
 }

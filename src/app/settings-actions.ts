@@ -16,6 +16,7 @@ import { postDepreciation } from '@/domain/assets/depreciation';
 import { scanForAnomalies, syncAnomaliesToReviewQueue } from '@/domain/review/anomalies';
 import { createInvoice } from '@/domain/invoicing/invoices';
 import { recordPayment } from '@/domain/invoicing/payments';
+import { settleInvoiceByDirector } from '@/domain/consolidation/settle';
 import { parseAmount, parseRate } from '@/domain/money';
 import { asIsoDate } from '@/domain/dates';
 import type { VatFrequency } from '@/domain/config/periods';
@@ -675,19 +676,30 @@ export async function recordPaymentAction(formData: FormData): Promise<ActionRes
     const fxRateText = text(formData, 'fxRate');
     const fxRate = fxRateText ? parseRateToRational(fxRateText) : undefined;
 
-    const result = recordPayment(getDb(), {
-      companyId: company.id,
-      direction: String(formData.get('direction')) as 'received' | 'made',
-      paymentDate: asIsoDate(text(formData, 'paymentDate')
-        ?? new Date().toISOString().slice(0, 10)),
-      amountMinor,
-      currency,
-      bankTransactionId: text(formData, 'bankTransactionId'),
-      fxRate,
-      reference: text(formData, 'reference'),
-      allocations: [{ invoiceId, allocatedMinor: amountMinor }],
-      actor: 'user',
-    });
+    const paymentDate = asIsoDate(text(formData, 'paymentDate')
+      ?? new Date().toISOString().slice(0, 10));
+    // A director who paid a purchase invoice personally (issue #221): the
+    // invoice must rest on a confirmed document, as a bank settlement must.
+    const officerId = text(formData, 'officerId');
+    const result = officerId
+      ? settleInvoiceByDirector(getDb(), {
+          companyId: company.id, officerId, paymentDate, currency, fxRate,
+          reference: text(formData, 'reference'),
+          allocations: [{ invoiceId, amountMinor }],
+          actor: 'user',
+        })
+      : recordPayment(getDb(), {
+          companyId: company.id,
+          direction: String(formData.get('direction')) as 'received' | 'made',
+          paymentDate,
+          amountMinor,
+          currency,
+          bankTransactionId: text(formData, 'bankTransactionId'),
+          fxRate,
+          reference: text(formData, 'reference'),
+          allocations: [{ invoiceId, allocatedMinor: amountMinor }],
+          actor: 'user',
+        });
 
     revalidatePath('/invoices');
     revalidatePath('/vat');

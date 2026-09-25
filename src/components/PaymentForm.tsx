@@ -19,7 +19,7 @@ interface BankTxOption {
  */
 export function PaymentForm({
   action, invoiceId, direction, invoiceCurrency, outstandingMinor,
-  bankTransactions,
+  bankTransactions, officers = [],
 }: {
   action: (formData: FormData) => Promise<ActionResult>;
   invoiceId: string;
@@ -27,6 +27,8 @@ export function PaymentForm({
   invoiceCurrency: string;
   outstandingMinor: number;
   bankTransactions: BankTxOption[];
+  /** Directors who could have paid a purchase invoice personally (issue #221). */
+  officers?: Array<{ value: string; label: string }>;
 }) {
   const today = new Date().toISOString().slice(0, 10);
   const [amount, setAmount] = useState((outstandingMinor / 100).toFixed(2));
@@ -34,6 +36,7 @@ export function PaymentForm({
   const [reference, setReference] = useState('');
   const [bankTransactionId, setBankTransactionId] = useState('');
   const [fxRate, setFxRate] = useState('');
+  const [officerId, setOfficerId] = useState('');
   const [result, setResult] = useState<ActionResult | null>(null);
   const [pending, startTransition] = useTransition();
 
@@ -56,6 +59,7 @@ export function PaymentForm({
         setReference('');
         setFxRate('');
         setBankTransactionId('');
+        setOfficerId('');
       }
     });
   };
@@ -84,7 +88,24 @@ export function PaymentForm({
         </Field>
       </div>
 
-      {bankTransactions.length > 0 && (
+      {officers.length > 0 && (
+        <div className="mt-3">
+          <Field label="Paid by" hint="A director who paid this personally is owed it back through their current account.">
+            <select
+              name="officerId" value={officerId}
+              onChange={(e) => { setOfficerId(e.target.value); setBankTransactionId(''); }}
+              className="w-full border border-line-strong rounded px-2 py-1 text-[12px]"
+            >
+              <option value="">The company</option>
+              {officers.map((o) => (
+                <option key={o.value} value={o.value}>{o.label}, personally</option>
+              ))}
+            </select>
+          </Field>
+        </div>
+      )}
+
+      {bankTransactions.length > 0 && !officerId && (
         <div className="mt-3">
           <Field label="Bank transaction" hint="Link the statement line that evidences this payment.">
             <select
