@@ -378,6 +378,17 @@ through, with the reason. A reversal is refused in a closed accounting period
 or a locked or filed VAT period (choose a later date), and while the bank line
 is part of a completed bank reconciliation.
 
+**A locked or filed VAT return is never changed.** Posting an invoice, settling
+a receipt, classifying or reclassifying a bank line, voiding an invoice, a VAT
+adjustment or a reversal that would put VAT into a VAT period that is locked or
+submitted is refused, and nothing is written. Each of those screens has "The
+VAT return for this date is locked or filed?": give the date of an open VAT
+period and the VAT is declared there instead. The entry keeps its true tax
+point, notes where it was declared, and raises a review item so your accountant
+can confirm the correction (for example whether a supplementary return is
+needed). A locked (not yet filed) period can instead be unlocked from its VAT
+period page.
+
 A payment with no invoice (bank charges, wages, transfers, or one whose invoice
 you do not have) can still be classified. A purchase classified this way claims
 **no input VAT**: the whole amount is the cost, and it is flagged "no invoice"
