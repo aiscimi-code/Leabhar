@@ -316,12 +316,13 @@ describe('period lifecycle', () => {
     expect(period.filedT2Minor).toBe(2_300);
     expect(period.submissionReference).toBe('ROS-1');
 
-    // A later entry changes the live figure but not the filed snapshot.
-    addVat('IE_STD', { netMinor: 50_000 });
+    // A later entry into the filed period is refused (issue #226): the live
+    // return stays equal to what was filed.
+    expect(() => addVat('IE_STD', { netMinor: 50_000 })).toThrow(/submitted/);
     const after = db.select().from(vatPeriods).where(eq(vatPeriods.id, periodId)).get()!;
     expect(after.filedT2Minor).toBe(2_300);
     expect(buildVat3Return(db, { companyId, vatPeriodId: periodId }).T2.amountMinor)
-      .toBe(13_800);
+      .toBe(2_300);
   });
 
   it('refuses any transition out of submitted', () => {

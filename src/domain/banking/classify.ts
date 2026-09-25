@@ -1,15 +1,15 @@
-import { and, eq } from 'drizzle-orm';
+import { and, eq, isNull } from 'drizzle-orm';
 import type { AppDatabase } from '@/db';
 import {
   bankTransactions, accounts, vatTreatments, companies, bankAccounts,
-  auditEvents, journalEntries, vatEntries, suppliers, customers, companyOfficers, documents,
+  auditEvents, journalEntries, vatEntries, suppliers, customers, companyOfficers, documents, payments,
 } from '@/db/schema';
 import { ids } from '@/lib/ids';
 import { asIsoDate, nowIso, type IsoDate } from '../dates';
 import { asMinor, multiplyRational } from '../money';
 import { postJournalEntry, reverseJournalEntry } from '../accounting/journal';
 import { systemAccountId } from '../config/setup';
-import { createVatEntries, resolveTreatment, calculateVat } from '../vat/engine';
+import { createVatEntries, resolveTreatment, calculateVat, assertVatPeriodWritable, findVatPeriod } from '../vat/engine';
 import { AccountingError } from '../accounting/errors';
 import { upsertReviewItem } from '../extraction/service';
 
@@ -25,6 +25,11 @@ export interface ClassifyInput {
   customerId?: string | null;
   /** When the document states VAT explicitly, pass it rather than recomputing. */
   statedVatMinor?: number;
+  /**
+   * Declare this line's VAT in the VAT period covering this date, when the
+   * transaction's own period is locked or filed (issue #226). Flagged for review.
+   */
+  vatDeclarationDate?: IsoDate | null;
   /** Required when the bank account is not in the company's base currency. */
   fxRate?: { numerator: number; denominator: number; source: string; date?: string };
   notes?: string | null;
@@ -252,6 +257,13 @@ export function classifyTransaction(db: AppDatabase, input: ClassifyInput): Clas
     }
   }
 
+  const createsVat = !withoutInvoice && (calculation.vatMinor !== 0 || resolved.treatment.appliesRate);
+  if (createsVat) {
+    // A locked or filed VAT return is never changed (issue #226).
+    assertVatPeriodWritable(db, input.companyId, input.vatDeclarationDate ?? transactionDate,
+      `The VAT on "${transaction.description}"`);
+  }
+
   const journal = postJournalEntry(db, {
     companyId: input.companyId,
     entryDate: transactionDate,
@@ -265,12 +277,13 @@ export function classifyTransaction(db: AppDatabase, input: ClassifyInput): Clas
     lines,
   });
 
-  const vatResult = !withoutInvoice && (calculation.vatMinor !== 0 || resolved.treatment.appliesRate)
+  const vatResult = createsVat
     ? createVatEntries(db, {
         companyId: input.companyId,
         journalEntryId: journal.id,
         sourceType: 'bank_transaction',
         sourceId: transaction.id,
+        declarationDate: input.vatDeclarationDate ?? undefined,
         direction,
         treatmentId: input.vatTreatmentId,
         rateOverrideId: input.taxRateId,
@@ -455,6 +468,9 @@ export function postBankTransactionJournal(
   const baseCurrency = company.baseCurrency;
   const entryDate = asIsoDate(transaction.transactionDate);
   const narrative = (input.narrative ?? transaction.description).slice(0, 200);
+  if (input.vat) {
+    assertVatPeriodWritable(db, input.companyId, entryDate, `The VAT on "${transaction.description}"`);
+  }
 
   const journal = postJournalEntry(db, {
     companyId: input.companyId,
@@ -581,11 +597,53 @@ export function reclassifyTransaction(
     return classifyTransaction(db, input);
   }
 
-  const reversalDate = input.reversalDate ?? asIsoDate(transaction.transactionDate);
+  // A payment posted this bank line: it is corrected by reversing the
+  // settlement, never by reclassifying the bank line (issue #220).
+  const livePayment = db.select({ id: payments.id }).from(payments)
+    .where(and(eq(payments.bankTransactionId, transaction.id), isNull(payments.reversedAt))).get();
+  if (livePayment) {
+    throw new ClassificationError(
+      'This bank line was posted by settling invoices. Reverse the settlement instead of reclassifying it.',
+      { bankTransactionId: transaction.id, paymentId: livePayment.id },
+    );
+  }
 
-  reverseJournalEntry(db, {
+  const transactionDate = asIsoDate(transaction.transactionDate);
+  const reversalDate = input.reversalDate ?? transactionDate;
+  const currentJournalId = transaction.journalEntryId;
+  // Only the entries of the classification being replaced are reversed.
+  const superseded = db.select().from(vatEntries)
+    .where(and(
+      eq(vatEntries.companyId, input.companyId),
+      eq(vatEntries.sourceType, 'bank_transaction'),
+      eq(vatEntries.sourceId, transaction.id),
+      eq(vatEntries.journalEntryId, currentJournalId),
+    )).all();
+
+  // ---- Refuse before writing anything (issue #226) ----
+  // The superseded VAT is reversed by negative entries dated at the reversal
+  // date, never detached from the return it was declared in.
+  const reversalPeriod = superseded.length > 0
+    ? assertVatPeriodWritable(db, input.companyId, reversalDate, `Reversing the VAT on "${transaction.description}"`)
+    : findVatPeriod(db, input.companyId, reversalDate);
+  // The new classification's VAT: at the transaction date if its period is
+  // open, otherwise declared at the reversal date the person chose.
+  const ownPeriod = findVatPeriod(db, input.companyId, transactionDate);
+  const ownPeriodClosed = ownPeriod?.status === 'locked' || ownPeriod?.status === 'submitted';
+  const vatDeclarationDate = input.vatDeclarationDate
+    ?? (ownPeriodClosed && input.reversalDate ? input.reversalDate : undefined);
+  const newTreatment = resolveTreatment(db, {
+    companyId: input.companyId, treatmentId: input.vatTreatmentId, onDate: transactionDate, rateOverrideId: input.taxRateId,
+  }).treatment;
+  const newCreatesVat = transaction.amountMinor >= 0 && newTreatment.appliesRate;
+  if (newCreatesVat) {
+    assertVatPeriodWritable(db, input.companyId, vatDeclarationDate ?? transactionDate,
+      `The VAT on "${transaction.description}" under its new treatment`);
+  }
+
+  const reversal = reverseJournalEntry(db, {
     companyId: input.companyId,
-    entryId: transaction.journalEntryId,
+    entryId: currentJournalId,
     reversalDate,
     reason: input.reason,
     createdBy: input.actor ?? 'user',
@@ -593,16 +651,28 @@ export function reclassifyTransaction(
   });
 
   db.transaction((tx) => {
-    // VAT entries from the reversed classification no longer apply. They are
-    // detached from their period rather than deleted, so the original decision
-    // remains visible in the audit trail.
-    tx.update(vatEntries)
-      .set({ vatPeriodId: null, notes: `Superseded: ${input.reason}` })
-      .where(and(
-        eq(vatEntries.companyId, input.companyId),
-        eq(vatEntries.sourceType, 'bank_transaction'),
-        eq(vatEntries.sourceId, transaction.id),
-      )).run();
+    const timestamp = nowIso();
+    for (const entry of superseded) {
+      tx.insert(vatEntries).values({
+        ...entry,
+        id: ids.vatEntry(),
+        journalEntryId: reversal.id,
+        netMinor: -entry.netMinor,
+        vatMinor: -entry.vatMinor,
+        grossMinor: -entry.grossMinor,
+        baseNetMinor: -entry.baseNetMinor,
+        baseVatMinor: -entry.baseVatMinor,
+        baseGrossMinor: -entry.baseGrossMinor,
+        recoverableVatMinor: -entry.recoverableVatMinor,
+        baseRecoverableVatMinor: -entry.baseRecoverableVatMinor,
+        taxPointDate: reversalDate,
+        vatPeriodId: reversalPeriod?.id ?? null,
+        pairedEntryId: null,
+        notes: `Reversal on reclassification: ${input.reason}`,
+        createdAt: timestamp,
+        updatedAt: timestamp,
+      }).run();
+    }
 
     tx.update(bankTransactions)
       .set({ journalEntryId: null, status: 'classified' })
@@ -628,7 +698,7 @@ export function reclassifyTransaction(
     }).run();
   });
 
-  return classifyTransaction(db, input);
+  return classifyTransaction(db, { ...input, vatDeclarationDate });
 }
 
 /**
@@ -717,6 +787,8 @@ export function recordDirectorPaidExpense(
     officerId: officer.id,
     memo: `Paid personally by ${officer.name}`,
   });
+
+  assertVatPeriodWritable(db, params.companyId, params.date, `The VAT on "${params.description}"`);
 
   const journal = postJournalEntry(db, {
     companyId: params.companyId,

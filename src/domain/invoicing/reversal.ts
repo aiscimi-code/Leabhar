@@ -6,7 +6,7 @@ import {
 import { ids } from '@/lib/ids';
 import { asIsoDate, nowIso, type IsoDate } from '../dates';
 import { reverseJournalEntry } from '../accounting/journal';
-import { findVatPeriod } from '../vat/engine';
+import { findVatPeriod, assertVatPeriodWritable } from '../vat/engine';
 import { InvoicingError } from './invoices';
 
 /**
@@ -74,14 +74,11 @@ export function reversePayment(db: AppDatabase, input: ReversePaymentInput): Rev
     .where(and(eq(vatEntries.sourceType, 'payment'), eq(vatEntries.sourceId, payment.id))).all();
 
   // ---- Refuse before writing anything ----
-  const vatPeriod = findVatPeriod(db, input.companyId, reversalDate);
-  if (released.length > 0 && vatPeriod && (vatPeriod.status === 'locked' || vatPeriod.status === 'submitted')) {
-    throw new InvoicingError(
-      `This payment released output VAT, and the VAT period "${vatPeriod.name}" covering ${reversalDate} is `
-        + `${vatPeriod.status}. A filed return is never changed; reverse the payment at a date in an open VAT period.`,
-      { vatPeriodId: vatPeriod.id, status: vatPeriod.status },
-    );
-  }
+  // The reversing VAT lands in the period of the reversal date: never a locked
+  // or filed one (issue #226).
+  const vatPeriod = released.length > 0
+    ? assertVatPeriodWritable(db, input.companyId, reversalDate, 'Reversing the output VAT this payment released')
+    : findVatPeriod(db, input.companyId, reversalDate);
 
   const allocations = db.select().from(paymentAllocations).where(eq(paymentAllocations.paymentId, payment.id)).all();
   const targets = allocations.map((allocation) => {

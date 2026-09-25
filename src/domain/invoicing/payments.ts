@@ -9,7 +9,7 @@ import { asMinor, multiplyRational } from '../money';
 import { asIsoDate, nowIso, type IsoDate } from '../dates';
 import { postJournalEntry } from '../accounting/journal';
 import { systemAccountId } from '../config/setup';
-import { createVatEntries } from '../vat/engine';
+import { createVatEntries, assertVatPeriodWritable } from '../vat/engine';
 import { InvoicingError } from './invoices';
 
 /**
@@ -57,6 +57,12 @@ export interface RecordPaymentInput {
   /** Set when a director settled the invoice personally. */
   officerId?: string | null;
   allocations: PaymentAllocationInput[];
+  /**
+   * Declare the output VAT this receipt releases (cash receipts basis) in the
+   * VAT period covering this date, when the receipt's own period is locked or
+   * filed (issue #226). Flagged for review.
+   */
+  vatDeclarationDate?: IsoDate | null;
   reference?: string | null;
   notes?: string | null;
   actor?: string;
@@ -367,6 +373,13 @@ export function recordPayment(db: AppDatabase, input: RecordPaymentInput): Recor
     });
   }
 
+  // A locked or filed VAT return is never changed (issue #226): checked before
+  // the journal is posted, so a refusal leaves nothing half-written.
+  if (vatReleases.some((r) => r.netMinor !== 0 || r.vatMinor !== 0)) {
+    assertVatPeriodWritable(db, input.companyId, input.vatDeclarationDate ?? input.paymentDate,
+      'The output VAT this receipt releases');
+  }
+
   const paymentId = ids.payment();
 
   const journal = postJournalEntry(db, {
@@ -406,6 +419,7 @@ export function recordPayment(db: AppDatabase, input: RecordPaymentInput): Recor
       rateOverrideId: release.taxRateId ?? undefined,
       // The tax point is the payment date. This is the whole point of the basis.
       taxPointDate: input.paymentDate,
+      declarationDate: input.vatDeclarationDate ?? undefined,
       netMinor: release.netMinor,
       statedVatMinor: release.vatMinor,
       currency: releaseCurrency,

@@ -1,7 +1,7 @@
 import { and, eq, isNull, ne } from 'drizzle-orm';
 import type { AppDatabase } from '@/db';
 import { bankTransactions, invoices, documents, documentMatches } from '@/db/schema';
-import { asIsoDate } from '../dates';
+import { asIsoDate, type IsoDate } from '../dates';
 import { recordPayment, type RecordedPayment } from '../invoicing/payments';
 import { upsertReviewItem } from '../extraction/service';
 import { ConsolidationError } from './postDocument';
@@ -34,6 +34,8 @@ export interface SettleInput {
   allocations: SettleAllocation[];
   /** Needed when the bank line's currency is not the base currency, or differs from an invoice's. */
   fxRate?: { numerator: number; denominator: number; source: string; date?: string };
+  /** See `RecordPaymentInput.vatDeclarationDate` (issue #226). */
+  vatDeclarationDate?: IsoDate | null;
   actor?: string;
   requestId?: string;
 }
@@ -74,6 +76,7 @@ export function settleBankTransaction(db: AppDatabase, input: SettleInput): Reco
     amountMinor: Math.abs(tx.amountMinor),
     currency: tx.currency,
     fxRate: input.fxRate,
+    vatDeclarationDate: input.vatDeclarationDate,
     method: 'bank_transfer',
     bankTransactionId: tx.id,
     allocations: input.allocations.map((a) => ({ invoiceId: a.invoiceId, allocatedMinor: a.amountMinor })),

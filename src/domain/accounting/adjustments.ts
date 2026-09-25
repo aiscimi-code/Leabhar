@@ -6,7 +6,7 @@ import {
 import { ids } from '@/lib/ids';
 import { nowIso, type IsoDate } from '../dates';
 import { postJournalEntry, reverseJournalEntry } from './journal';
-import { createVatEntries } from '../vat/engine';
+import { createVatEntries, assertVatPeriodWritable } from '../vat/engine';
 import { AccountingError } from './errors';
 
 export class AdjustmentError extends AccountingError {}
@@ -106,6 +106,13 @@ export function createAdjustment(
     if (!account) {
       throw new AdjustmentError(`Line ${index + 1} names an account that does not exist.`);
     }
+  }
+
+  if (input.vat) {
+    // A locked or filed VAT return is never changed (issue #226), not even by
+    // an adjustment: correct it in an open period instead.
+    assertVatPeriodWritable(db, input.companyId, input.vat.taxPointDate ?? input.date,
+      'The VAT in this adjustment');
   }
 
   const journal = postJournalEntry(db, {
