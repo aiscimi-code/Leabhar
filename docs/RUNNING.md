@@ -312,23 +312,39 @@ All settings are environment variables, with working defaults:
 | `DOCUMENT_STORAGE_PATH` | `./storage/documents` | Original documents, content-addressed |
 | `BANK_IMPORT_WATCH_PATH` | `./storage/inbox` | Where the refresh action looks for statements |
 | `BACKUP_PATH` | `./backups` | Versioned backups |
-| `EXTRACTION_PROVIDER` | `local` | `local` or `anthropic` |
-| `ANTHROPIC_API_KEY` | unset | Only needed for the `anthropic` provider |
+| `ANTHROPIC_API_KEY` | unset | Only needed for the optional AI reader |
+| `ANTHROPIC_EXTRACTION_MODEL` | `claude-sonnet-5` | Model the AI reader uses |
 
-### Document extraction
+### Reading documents, and confirming them
 
-The default extractor is deterministic and local: it reads the PDF text layer
-and applies labelled-field patterns. It needs no API key and no network, and the
-application works end to end with AI switched off entirely.
+Every uploaded document is read into a **draft**: the header (number, dates,
+currency, totals), the supplier and customer (names, addresses, VAT numbers,
+countries), **every line item**, the **VAT analysis per rate**, VAT wording
+(reverse charge, exempt, zero-rated …), payment terms and, for a credit note,
+the invoice it credits.
 
-Setting `EXTRACTION_PROVIDER=anthropic` with an API key present adds a
-model-based extractor, used first with the local one as a fallback. It is asked
-only for figures printed on the document, and its arithmetic is re-checked in
-code afterwards — a model that helpfully recalculates a total is worse than one
-that misreads it, because the error looks correct.
+Nothing uses a draft. Open the document (Documents → the file, or the review
+queue's "Check and confirm" item) to see the page beside an editable sheet of
+everything that was read. Compare them, correct anything wrong, add anything
+missing, and **Confirm these details**. The same arithmetic checks run as you
+type and again on the server: missing essentials block confirmation, and any
+figure that does not add up must be ticked as "the document really says this".
+Only then is the document matched to its bank transaction and used for VAT.
+Reject a document that is not usable evidence; the file is kept.
 
-Neither provider decides anything. Extracted values are written with provenance
-`ai_suggestion` and are excluded from a VAT return until you confirm them.
+How documents are read is your choice, under **Setup → Company → Reading
+documents**:
+
+- **On this computer** (default). Text is read from a PDF's text layer. For a
+  scan or a photo, press **Read text from the image (OCR)** on the review screen:
+  the page is recognised in the browser with Tesseract, served by the app itself
+  (no internet needed, nothing leaves the machine), and then read the same way.
+- **AI reader (Anthropic)**, available when `ANTHROPIC_API_KEY` is set. The file
+  is sent to Anthropic, which returns the same fields, lines and VAT analysis as
+  structured data. Figures are re-parsed and re-checked in code; the local reader
+  is used if the AI reader is unavailable.
+
+Either way you confirm each document yourself.
 
 ## Backups
 
