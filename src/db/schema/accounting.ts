@@ -166,6 +166,9 @@ export const vatEntries = sqliteTable('vat_entries', {
   taxPointDate: text('tax_point_date').notNull(),
   vatPeriodId: text('vat_period_id').references(() => vatPeriods.id),
 
+  /** The invoice line this entry arises from, when it came from an invoice (issue #203). */
+  invoiceLineId: text('invoice_line_id'),
+
   /** Snapshotted VAT3 box mapping. */
   vatBox: text('vat_box'),   // T1 or T2
   netBox: text('net_box'),   // E1 / E2 / ES1 / ES2 / PA1

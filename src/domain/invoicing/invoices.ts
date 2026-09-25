@@ -55,6 +55,10 @@ export interface InvoiceLineInput {
   /** Where the document states VAT explicitly, use it rather than recomputing. */
   statedVatMinor?: number;
   fixedAssetId?: string | null;
+  /** The confirmed document line this invoice line is posted from (issue #203). */
+  documentLineId?: string | null;
+  /** The statutory rules behind the chosen VAT treatment, for the trace. */
+  vatRuleKeys?: string[];
 }
 
 export interface CreateInvoiceInput {
@@ -214,7 +218,7 @@ export function createInvoice(db: AppDatabase, input: CreateInvoiceInput): Creat
       recoverableOverrideMinor,
     });
 
-    return { line, index, resolved, calculation, recoverableOverrideMinor, vatReviewReason };
+    return { line, index, lineId: ids.invoiceLine(), resolved, calculation, recoverableOverrideMinor, vatReviewReason };
   });
 
   const netMinor = computed.reduce((s, c) => s + c.calculation.netMinor, 0);
@@ -326,7 +330,7 @@ export function createInvoice(db: AppDatabase, input: CreateInvoiceInput): Creat
   // ---- VAT entries ----
   const vatEntryIds: string[] = [];
   if (!vatDeferred) {
-    for (const { line, calculation, resolved, recoverableOverrideMinor } of computed) {
+    for (const { line, lineId, calculation, resolved, recoverableOverrideMinor } of computed) {
       if (calculation.vatMinor === 0 && !resolved.treatment.appliesRate) continue;
       const taxPoint = determineTaxPoint({
         basis: company.vatAccountingBasis,
@@ -343,6 +347,7 @@ export function createInvoice(db: AppDatabase, input: CreateInvoiceInput): Creat
         journalEntryId: journal.id,
         sourceType: isSales ? 'sales_invoice' : 'purchase_invoice',
         sourceId: invoiceId,
+        invoiceLineId: lineId,
         direction: isSales ? 'sales' : 'purchases',
         treatmentId: line.vatTreatmentId,
         rateOverrideId: line.taxRateId,
@@ -404,9 +409,9 @@ export function createInvoice(db: AppDatabase, input: CreateInvoiceInput): Creat
       provenanceStatus: 'manually_entered',
     }).run();
 
-    for (const { line, index, calculation, resolved } of computed) {
+    for (const { line, index, lineId, calculation, resolved } of computed) {
       tx.insert(invoiceLines).values({
-        id: ids.invoiceLine(),
+        id: lineId,
         companyId: input.companyId,
         invoiceId,
         lineNumber: index + 1,
@@ -422,6 +427,8 @@ export function createInvoice(db: AppDatabase, input: CreateInvoiceInput): Creat
         grossMinor: calculation.grossMinor,
         currency,
         fixedAssetId: line.fixedAssetId ?? null,
+        documentLineId: line.documentLineId ?? null,
+        vatRuleKeys: line.vatRuleKeys ?? [],
         source: 'user',
         provenanceStatus: 'manually_entered',
       }).run();

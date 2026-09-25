@@ -301,6 +301,8 @@ export interface CreateVatEntriesInput {
   journalEntryId?: string | null;
   sourceType: typeof vatEntries.$inferInsert['sourceType'];
   sourceId?: string | null;
+  /** The invoice line this entry arises from, for the trace (issue #203). */
+  invoiceLineId?: string | null;
   direction: VatDirection;
   treatmentId: string;
   rateOverrideId?: string;
@@ -371,6 +373,7 @@ export function createVatEntries(
     journalEntryId: input.journalEntryId ?? null,
     sourceType: input.sourceType,
     sourceId: input.sourceId ?? null,
+    invoiceLineId: input.invoiceLineId ?? null,
     vatTreatmentId: treatment.id,
     taxRateId: resolved.rate?.id ?? null,
     // Snapshotted so a later edit to the rate row cannot rewrite history.
