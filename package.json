@@ -34,6 +34,7 @@
     "build:installer": "makensis scripts/installer.nsi"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.128.0",
     "@noble/hashes": "^2.4.0",
     "@tesseract.js-data/eng": "^1.0.0",
     "better-sqlite3": "^13.0.3",
