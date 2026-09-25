@@ -16,6 +16,8 @@ import {
 import { actorName } from '@/lib/session';
 import { postDocumentAsInvoice, type LineCoding } from '@/domain/consolidation/postDocument';
 import { settleBankTransaction, type SettleAllocation } from '@/domain/consolidation/settle';
+import { reversePayment } from '@/domain/invoicing/reversal';
+import { asIsoDate } from '@/domain/dates';
 import { scanWatchFolder } from '@/domain/documents/watch';
 import { importStatement } from '@/domain/banking/import';
 import { seedDemoCompany } from '@/db/seed/demo';
@@ -504,6 +506,33 @@ export async function settleTransactionAction(input: {
       message: payment.unallocatedMinor
         ? `Settled. ${(payment.unallocatedMinor / 100).toFixed(2)} is held on account and flagged for review.`
         : 'Settled in full.',
+    };
+  } catch (error) {
+    return fail(error);
+  }
+}
+
+/** Reverse a settlement so the bank line can be settled again, correctly (issue #220). */
+export async function reversePaymentAction(input: {
+  paymentId: string; bankTransactionId: string; reason: string; reversalDate?: string;
+}): Promise<ActionResult> {
+  try {
+    const company = requireCompany();
+    const result = reversePayment(getDb(), {
+      companyId: company.id, paymentId: input.paymentId, reason: input.reason,
+      reversalDate: input.reversalDate ? asIsoDate(input.reversalDate) : undefined,
+      actor: await actorName(),
+    });
+    revalidatePath(`/transactions/${input.bankTransactionId}`);
+    revalidatePath('/transactions');
+    revalidatePath('/invoices');
+    revalidatePath('/vat');
+    revalidatePath('/');
+    return {
+      ok: true,
+      message: `Reversed. ${result.invoiceStatuses.length} invoice${result.invoiceStatuses.length === 1 ? ' is' : 's are'} open again`
+        + `${result.reversedVatEntryIds.length ? ' and the output VAT this receipt released is reversed' : ''}. `
+        + 'Settle the bank line again against the right invoices.',
     };
   } catch (error) {
     return fail(error);

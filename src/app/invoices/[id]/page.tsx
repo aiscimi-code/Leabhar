@@ -126,9 +126,16 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
             </thead>
             <tbody>
               {allocations.map(({ allocation, payment }) => (
-                <tr key={allocation.id}>
+                <tr key={allocation.id} className={payment.reversedAt ? 'text-ink-faint line-through' : ''}>
                   <td className="num !text-left">{date(payment.paymentDate)}</td>
-                  <td>{payment.reference ?? <span className="text-ink-faint">—</span>}</td>
+                  <td>
+                    {payment.reference ?? <span className="text-ink-faint">—</span>}
+                    {payment.reversedAt && (
+                      <span className="no-underline ml-1.5 text-caution" style={{ textDecoration: 'none' }}>
+                        reversed{payment.reversalReason ? `: ${payment.reversalReason}` : ''}
+                      </span>
+                    )}
+                  </td>
                   <td className="text-ink-muted">{label(payment.method)}</td>
                   <td className="text-right num">
                     {money(allocation.allocatedMinor, allocation.currency)}

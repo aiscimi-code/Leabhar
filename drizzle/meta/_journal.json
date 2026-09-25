@@ -64,6 +64,13 @@
       "when": 1790365684174,
       "tag": "0008_invoice_line_trace",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "6",
+      "when": 1790368400535,
+      "tag": "0009_payment_reversal",
+      "breakpoints": true
     }
   ]
 }
