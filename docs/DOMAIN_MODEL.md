@@ -370,6 +370,16 @@ by the payment, dated at receipt. One payment may settle several invoices, an
 invoice may be settled in parts, and a credit note allocated in the payment's
 own direction reduces the cash. A remainder is held on account and flagged.
 
+Across currencies a settlement takes one rate (issue #223): when the bank line
+is foreign, it converts the line to base currency (the statement's own rate is
+used unless the person enters one); when the line is in base currency and an
+invoice is foreign, it converts the payment into the invoice's currency. Three
+currencies at once, or invoices in two foreign currencies from one line, are
+refused. `previewSettlement` computes exactly what settling would post — the
+exchange difference and any remainder — by running the same code in a
+transaction that is always rolled back; the settle screen shows it before
+anything is written.
+
 `classifyTransaction` remains for bank lines with no invoice. On a purchase it
 claims no input VAT under any VAT-charging treatment (no VAT entry is created)
 and raises a `missing_document` review item. It refuses a bank line matched to

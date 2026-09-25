@@ -284,6 +284,20 @@ export function multiplyRational(
   return asMinor(roundHalfUp(product / denominator));
 }
 
+/**
+ * A decimal exchange rate as typed ("0.92", up to six places) as an exact
+ * integer fraction, so no float reaches a posting. Null when it is not a
+ * positive decimal.
+ */
+export function parseDecimalRate(input: string): { numerator: number; denominator: number } | null {
+  const text = input.trim();
+  if (!/^\d+(\.\d{1,6})?$/.test(text)) return null;
+  const [whole = '0', frac = ''] = text.split('.');
+  const denominator = 10 ** frac.length;
+  const numerator = Number(whole) * denominator + (frac ? Number(frac) : 0);
+  return numerator > 0 ? { numerator, denominator } : null;
+}
+
 /** VAT rates are stored as integer basis points: 23% is 2300. */
 export const BASIS_POINTS_SCALE = 10_000;
 
