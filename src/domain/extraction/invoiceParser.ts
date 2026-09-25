@@ -61,6 +61,8 @@ function toQuantity(token: string): string | null {
   return t.replace(',', '.');
 }
 
+const MONTH_WORD = /^(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|june?|july?|aug(?:ust)?|sept?(?:ember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?|q[1-4])[.,]?$/i;
+
 /**
  * Split a line into a description and its trailing numeric columns.
  * Tokens are separated by 2+ spaces or tabs where the layout preserved them,
@@ -71,6 +73,8 @@ function splitColumns(line: string): { description: string; tail: string[] } {
   const tail: string[] = [];
   while (tokens.length > 1) {
     const last = tokens[tokens.length - 1]!;
+    // "January 2025": a year after a month name belongs to the description.
+    if (/^(?:19|20)\d\d$/.test(last) && MONTH_WORD.test(tokens[tokens.length - 2] ?? '')) break;
     if (AMOUNT_TOKEN.test(last) || RATE_TOKEN.test(last) || QTY_TOKEN.test(last.replace(/x$/i, ''))
         || /^[€£$]$/.test(last) || /^x$/i.test(last)) {
       tail.unshift(tokens.pop()!);
@@ -132,8 +136,17 @@ function interpretAmounts(
   }
   if (amounts.length === 3) {
     const [a, b, c] = amounts as [number, number, number];
+    // Unit price, VAT, line total, with the net not printed: quantity × unit + VAT = total.
+    if (qty !== null && qty !== 1) {
+      const net = Math.round(a * qty);
+      if (net + b === c && (rate === null || Math.abs(vatFromNet(net, rate) - b) <= 1)) {
+        return { ...blank, unitPriceMinor: a, netMinor: net, vatMinor: b, grossMinor: c,
+          vatRateBasisPoints: rate ?? impliedRate(net, b), confidence: 65 };
+      }
+    }
     if (a + b === c) {
-      return { ...blank, netMinor: a, vatMinor: b, grossMinor: c, vatRateBasisPoints: rate ?? impliedRate(a, b), confidence: 70 };
+      return { ...blank, unitPriceMinor: qty === 1 ? a : null, netMinor: a, vatMinor: b, grossMinor: c,
+        vatRateBasisPoints: rate ?? impliedRate(a, b), confidence: 70 };
     }
     if (qtyTimes(a, b)) {
       // unit, net, and the third is either VAT or gross.
@@ -269,7 +282,7 @@ export function findPaymentTerms(textLines: string[]): ExtractedField<string> | 
 /** For a credit note: the invoice it credits, when stated. */
 export function findOriginalDocumentNumber(textLines: string[]): ExtractedField<string> | null {
   const PATTERNS = [
-    /\b(?:original\s+invoice|against\s+invoice|credit(?:ing)?\s+(?:for|of)\s+invoice|re:?\s*invoice|relates\s+to\s+invoice|invoice\s+ref(?:erence)?)\s*(?:no\.?|number|#)?\s*:?\s*([A-Z0-9][A-Z0-9\-_/]{2,30})/i,
+    /\b(?:original\s+invoice|against\s+invoice|credit(?:ing)?\s+(?:for|of)\s+invoice|credit\s+note\s+(?:for|against|re:?)\s+invoice|re:?\s*invoice|relates\s+to\s+invoice|invoice\s+ref(?:erence)?)\s*(?:no\.?|number|#)?\s*:?\s*([A-Z0-9][A-Z0-9\-_/]{2,30})/i,
   ];
   for (const line of textLines) {
     for (const p of PATTERNS) {
