@@ -23,12 +23,18 @@ import { nowIso } from '../dates';
 import { sha256Hex } from '@/lib/hash';
 import {
   parseVatcaSchedule, parseScheduleFrontMatter, provisionSlug, assessRelevance,
-  VATCA_SCHEDULE_2_MD_PATH, VATCA_SCHEDULE_3_MD_PATH,
+  VATCA_SCHEDULE_1_MD_PATH, VATCA_SCHEDULE_2_MD_PATH, VATCA_SCHEDULE_3_MD_PATH,
 } from './vatcaScheduleParser';
 import { VATCA_SCHEDULE_CURATED_RULES } from './vatcaScheduleCuration';
+import { VAT_SCOPE_CURATED_RULES } from './vatScopeCuration';
 import { upsertReviewItem } from '../extraction/service';
 
-export type VatcaScheduleNumber = '2' | '3';
+/** Schedule 1 (exempt activities) is ingested for the exempt rules in vatScopeCuration.ts (issue #200). */
+export type VatcaScheduleNumber = '1' | '2' | '3';
+
+const SCHEDULE_PATHS: Record<VatcaScheduleNumber, string> = {
+  '1': VATCA_SCHEDULE_1_MD_PATH, '2': VATCA_SCHEDULE_2_MD_PATH, '3': VATCA_SCHEDULE_3_MD_PATH,
+};
 
 /** The Act's own commencement date — see the module docstring on why a
  *  per-paragraph commencement date is not modelled here. */
@@ -36,7 +42,7 @@ const VATCA_2010_ENACTED_DATE = '2010-11-01';
 
 const SCHEDULE_SOURCE_TYPE: IrishSourceType = 'legislation';
 
-export { VATCA_SCHEDULE_2_MD_PATH, VATCA_SCHEDULE_3_MD_PATH };
+export { VATCA_SCHEDULE_1_MD_PATH, VATCA_SCHEDULE_2_MD_PATH, VATCA_SCHEDULE_3_MD_PATH };
 
 export interface VatcaScheduleIngestResult {
   sourceId: string;
@@ -87,8 +93,7 @@ export function ingestVatcaSchedule(
       citation: fm.citation,
       jurisdiction: 'IE',
       sourceUrl: fm.sourceUrl,
-      localPath: params.localPath
-        ?? (params.scheduleNumber === '2' ? VATCA_SCHEDULE_2_MD_PATH : VATCA_SCHEDULE_3_MD_PATH),
+      localPath: params.localPath ?? SCHEDULE_PATHS[params.scheduleNumber],
       sha256: digest,
       ingestVersion: params.ingestVersion,
       publicationDate: null,
@@ -104,17 +109,20 @@ export function ingestVatcaSchedule(
     }).run();
 
     const parsed = parseVatcaSchedule(params.markdown);
-    const curatedParagraphs = new Set(
-      VATCA_SCHEDULE_CURATED_RULES
+    const curatedParagraphs = new Set([
+      ...VATCA_SCHEDULE_CURATED_RULES
         .filter((r) => r.scheduleNumber === params.scheduleNumber)
         .map((r) => r.sectionNumber),
-    );
+      ...VAT_SCOPE_CURATED_RULES
+        .filter((r) => r.citation === fm.citation)
+        .map((r) => r.sectionNumber),
+    ]);
     let relevantCount = 0;
     for (const p of parsed) {
       let { relevant, reason } = assessRelevance(p.category);
       if (!relevant && curatedParagraphs.has(p.paragraphNumber)) {
         relevant = true;
-        reason = `Curated: mapped to a rule in vatcaScheduleCuration.ts, overriding the ${p.category} category default.`;
+        reason = `Curated: mapped to a rule in vatcaScheduleCuration.ts or vatScopeCuration.ts, overriding the ${p.category} category default.`;
       }
       if (relevant) relevantCount++;
 
@@ -166,7 +174,7 @@ export function deriveVatcaScheduleRules(
   db: AppDatabase,
   params: { companyId: string; scheduleNumber: VatcaScheduleNumber; sourceId?: string },
 ): VatcaScheduleDeriveResult {
-  const citation = params.scheduleNumber === '2' ? '2010 Act 31 Sch.2' : '2010 Act 31 Sch.3';
+  const citation = `2010 Act 31 Sch.${params.scheduleNumber}`;
   const sourceId = params.sourceId ?? db
     .select({ id: irishKnowledgeSources.id })
     .from(irishKnowledgeSources)

@@ -40,6 +40,7 @@ import {
 } from './si692025Ingestion';
 import { deriveFinanceAct2024VatThresholds } from './financeAct2024VatThresholdsIngestion';
 import { ingestTdm3801_03bCapacityExclusion, deriveTdm3801_03bCapacityExclusionRule } from './tdm3801_03bIngestion';
+import { deriveVatScopeRules } from './vatScopeIngestion';
 import {
   ingestCompaniesAct2014Section, deriveCompaniesAct2014Rules, COMPANIES_ACT_2014_SECTION_NUMBERS,
 } from './companiesAct2014Ingestion';
@@ -55,6 +56,10 @@ type IngestFn = (db: AppDatabase, params: IngestParams) => unknown;
 const SOURCES: Array<{ path: string; ingest: IngestFn }> = [
   { path: 'docs/statutes/finance-act-2024/2024-act-43-enacted.md', ingest: ingestFinanceAct2024 },
   { path: 'docs/statutes/vatca-2010/vatca-2010-enacted.md', ingest: ingestVatca2010 },
+  {
+    path: 'docs/statutes/vatca-2010-revised/schedule-1.md',
+    ingest: (db, p) => ingestVatcaSchedule(db, { ...p, scheduleNumber: '1' }),
+  },
   {
     path: 'docs/statutes/vatca-2010-revised/schedule-2.md',
     ingest: (db, p) => ingestVatcaSchedule(db, { ...p, scheduleNumber: '2' }),
@@ -73,6 +78,8 @@ const SOURCES: Array<{ path: string; ingest: IngestFn }> = [
   { path: 'docs/statutes/rct/tdm-18-02-05.md', ingest: ingestRctTdm18_02_05 },
   { path: 'docs/statutes/rct/tdm-18-02-11.md', ingest: ingestRctTdm18_02_11 },
   { path: 'docs/statutes/vatca-2010-revised/s046.md', ingest: ingestVatcaRevisedSection },
+  { path: 'docs/statutes/vatca-2010-revised/s002.md', ingest: ingestVatcaRevisedSection },
+  { path: 'docs/statutes/vatca-2010-revised/s003.md', ingest: ingestVatcaRevisedSection },
   { path: 'docs/statutes/tca-1997/s284.md', ingest: ingestTca1997S284 },
   { path: 'docs/statutes/finance-act-2003/s23.md', ingest: ingestFinanceAct2003S23 },
   { path: 'docs/statutes/si-639-2010/2010-si-639.md', ingest: ingestSi639 },
@@ -103,6 +110,7 @@ const DERIVES: Array<(db: AppDatabase, params: { companyId: string }) => unknown
   deriveFinanceAct2024VatThresholds,
   deriveTdm3801_03bCapacityExclusionRule,
   deriveCompaniesAct2014Rules,
+  deriveVatScopeRules,
 ];
 
 /** Resolve a repo-relative statute path against the running app's root (the install directory when packaged). */

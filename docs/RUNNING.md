@@ -253,9 +253,12 @@ The intended workflow from there is:
    thing, links to `/statutes/provision/<id>` (which re-reads the file and
    re-checks its hash), and pre-selects a specific suggestion in the
    classification form. It is never posted automatically: every statutory
-   rule is still unapproved. A `fallback_only` result (only the 23% residual
-   rule matched) is shown but not pre-selected, because the knowledge base
-   does not yet hold exemption or outside-the-scope rules.
+   rule is still unapproved. Exempt (Schedule 1: postal, bank account
+   services, insurance, letting, passenger transport) and outside-the-scope
+   (s.2/s.3: wages, tax payments, capital/loans/dividends, own-account
+   transfers) rules take precedence over any rate. A `fallback_only` result
+   (only the 23% residual rule matched) is shown but not pre-selected, because
+   the knowledge base cannot yet rule out every exemption.
 4. **Classify** transactions. Use `classify` to post a single transaction
    manually (accepting an account code and VAT treatment code from
    `list-chart` / `list-vat-treatments`), `create-rule` + `auto-classify`

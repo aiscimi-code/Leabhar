@@ -32,6 +32,7 @@ import { countStatutoryRules } from './knowledgeBase';
 import { EU_COUNTRY_CODES, parseVatNumber } from '../extraction/vatNumbers';
 import { resolveTreatment } from '../vat/engine';
 import { asIsoDate } from '../dates';
+import { VAT_SCOPE_CURATED_RULES } from './vatScopeCuration';
 import { provisionCitation } from './citation';
 
 export type TransactionDirection = 'purchase' | 'sale';
@@ -59,7 +60,14 @@ export interface TreatmentBinding {
   gap?: string;
 }
 
+const scopeKeys = (treatment: 'IE_EXEMPT' | 'OUT_OF_SCOPE'): string[] =>
+  VAT_SCOPE_CURATED_RULES.filter((r) => r.treatment === treatment).map((r) => r.ruleKey);
+
 export const RULE_TREATMENT_BINDINGS: TreatmentBinding[] = [
+  // Not a supply at all: nothing else about VAT applies (s.2(1), s.3).
+  { ruleKeys: scopeKeys('OUT_OF_SCOPE'), direction: 'either', treatmentCode: () => 'OUT_OF_SCOPE' },
+  // An exempt supply: no VAT, and so no reverse charge or rate either (Schedule 1).
+  { ruleKeys: scopeKeys('IE_EXEMPT'), direction: 'either', treatmentCode: () => 'IE_EXEMPT' },
   {
     ruleKeys: ['vat.deduction_exclusions_entertainment'],
     direction: 'purchase',
@@ -158,8 +166,8 @@ export interface StatutoryCitation {
 export type VatSuggestionStatus =
   | 'suggested'          // a specific rule matched and maps to a configured treatment
   | 'fallback_only'      // only the residual standard-rate rule matched: 23% applies IF this is a
-                         // taxable supply, but the KB holds no exemption or outside-scope rules to rule
-                         // that out (issue #200), so this is never pre-selected
+                         // taxable supply, but the KB curates only some exemption and outside-scope
+                         // rules, so it cannot rule the rest out (issue #200); never pre-selected
   | 'no_treatment'       // a rule matched but maps to no configured treatment
   | 'no_rule'            // no bound rule matched this transaction
   | 'kb_empty';          // the statutory knowledge base has not been loaded for this company
@@ -463,9 +471,10 @@ export function suggestVatTreatment(
   if (fallbackOnly) {
     reviewReasons.push(
       'Only the residual standard-rate rule matched. It applies to a taxable supply that no zero, reduced or '
-      + 'exemption rule covers — but the knowledge base holds no exemption (Schedule 1) or outside-the-scope '
-      + 'rules yet, so it cannot rule those out (issue #200). Insurance, bank charges, wages, tax payments and '
-      + 'capital introduced are not standard-rated.',
+      + 'exemption rule covers — but the knowledge base curates only five Schedule 1 exemptions (postal, bank '
+      + 'account services, insurance, letting, passenger transport) and four outside-the-scope categories '
+      + '(wages, tax payments, capital/loans/dividends, own-account transfers), matched on description '
+      + 'keywords, so it cannot rule out an exemption or scope question it has no rule for (issue #200).',
     );
   }
   const booked = db.select({ vatTreatmentId: bankTransactions.vatTreatmentId }).from(bankTransactions)
