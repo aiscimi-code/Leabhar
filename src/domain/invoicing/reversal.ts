@@ -5,7 +5,7 @@ import {
 } from '@/db/schema';
 import { ids } from '@/lib/ids';
 import { asIsoDate, nowIso, type IsoDate } from '../dates';
-import { reverseJournalEntry } from '../accounting/journal';
+import { reverseJournalEntry, atomically } from '../accounting/journal';
 import { findVatPeriod, assertVatPeriodWritable } from '../vat/engine';
 import { InvoicingError } from './invoices';
 
@@ -44,7 +44,13 @@ export interface ReversedPayment {
   bankTransactionId: string | null;
 }
 
-export function reversePayment(db: AppDatabase, input: ReversePaymentInput): ReversedPayment {
+export function reversePayment(
+  db: AppDatabase, input: Parameters<typeof reversePaymentSteps>[1],
+): ReturnType<typeof reversePaymentSteps> {
+  return atomically(db, () => reversePaymentSteps(db, input));
+}
+
+function reversePaymentSteps(db: AppDatabase, input: ReversePaymentInput): ReversedPayment {
   if (!input.reason || input.reason.trim().length < 3) {
     throw new InvoicingError('Reversing a payment needs a reason.');
   }

@@ -8,7 +8,7 @@ import { asMinor, multiplyRational } from '../money';
 import {
   asIsoDate, nowIso, addMonths, endOfMonth, parts, makeDate, type IsoDate,
 } from '../dates';
-import { postJournalEntry } from '../accounting/journal';
+import { postJournalEntry, atomically } from '../accounting/journal';
 import { systemAccountId } from '../config/setup';
 import { AccountingError } from '../accounting/errors';
 
@@ -155,6 +155,12 @@ export interface PostDepreciationResult {
  * obvious way to use it is to run it at every period end.
  */
 export function postDepreciation(
+  db: AppDatabase, input: Parameters<typeof postDepreciationSteps>[1],
+): ReturnType<typeof postDepreciationSteps> {
+  return atomically(db, () => postDepreciationSteps(db, input));
+}
+
+function postDepreciationSteps(
   db: AppDatabase,
   params: { companyId: string; upTo: IsoDate; actor?: string; requestId?: string },
 ): PostDepreciationResult {
@@ -389,6 +395,12 @@ function yearsBetween(from: IsoDate, to: IsoDate): number {
  * hold.
  */
 export function disposeAsset(
+  db: AppDatabase, input: Parameters<typeof disposeAssetSteps>[1],
+): ReturnType<typeof disposeAssetSteps> {
+  return atomically(db, () => disposeAssetSteps(db, input));
+}
+
+function disposeAssetSteps(
   db: AppDatabase,
   params: {
     companyId: string;

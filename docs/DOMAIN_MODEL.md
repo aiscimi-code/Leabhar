@@ -388,6 +388,21 @@ Trace: `vat_entries.invoice_line_id` → `invoice_lines.document_line_id` and
 `invoice_lines.vat_rule_keys` → `document_lines` → `documents`
 (`transactionTrace`).
 
+### Posting paths are atomic
+
+Every exported posting path — classify, reclassify, split journal,
+director-paid expense, create and void invoice, record and reverse payment,
+post a document, settle, adjustments, depreciation and disposal — runs as one
+database transaction (`atomically`; nested paths become savepoints). A step
+refused after an earlier step posted rolls the earlier one back (issue #231).
+
+Reclassifying checks the accounting period of both posting dates before
+writing: the reversal date, and the transaction's own date, where the new
+classification posts. If the transaction's own period is locked or closed the
+reclassification is refused with nothing changed — the person unlocks the
+period, or leaves the line and posts a dated adjustment in an open period. The
+new classification is never moved to another period.
+
 ### VAT period lock
 
 A VAT entry is never written into a VAT period whose status is `locked` or
