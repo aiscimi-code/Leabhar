@@ -61,6 +61,11 @@ if (!existsSync(join(ROOT, 'drizzle'))) {
 }
 copy('drizzle migrations', join(ROOT, 'drizzle'), join(STANDALONE, 'drizzle'));
 
+// 3b. Copy the statute sources the statutory VAT rules cite (issue #200):
+// the knowledge base is loaded from these files and the provision page
+// re-reads them to verify their SHA-256, so they must ship with the app.
+copy('statute sources', join(ROOT, 'docs', 'statutes'), join(STANDALONE, 'docs', 'statutes'));
+
 // 4. Copy the launcher
 copy('launcher', join(ROOT, 'scripts', 'launcher.cjs'), join(STANDALONE, 'launcher.cjs'));
 

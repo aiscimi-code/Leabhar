@@ -35,6 +35,8 @@ import {
   voidInvoiceCli, reverseJournalCli,
 } from '@/agent/books';
 import { scanAnomaliesCli, listReviewQueueCli } from '@/agent/review';
+import { suggestVatTreatment } from '@/domain/rules/vatSuggestion';
+import { loadStatutoryKnowledgeBase } from '@/domain/rules/knowledgeBase';
 import {
   importInput,
   autoClassifyInput,
@@ -119,6 +121,7 @@ Induction (no company/bank/chart yet):
       fixed_assets|revenue|cost_of_sales|operating_expenses|equity]
       [--vat-applicable=false]
   add-customer --name "..." [--country <IE>] [--default-account <code>]
+      [--taxable-status taxable_person|non_taxable_person]  (VATCA s.34: business or consumer)
   ensure-default-accounts                Add any default chart accounts
       introduced since this company was created (e.g. 6180/6190/5030/2210/
       1020) — a new company gets them all already; this is only for one
@@ -181,6 +184,13 @@ Inspect:
   vat-return --period <id-or-name>       VAT3 box figures for one period
   list-suppliers                         Every supplier (id, name, country, VAT no.)
   list-customers                         Every customer (id, name, country, VAT no.)
+
+Statutory VAT rules (issue #200):
+  load-statutory-rules                   Ingest every docs/statutes source and derive the
+                                         statutory rules for this company (idempotent)
+  suggest-vat --transaction <id>         Suggest a VAT treatment for one bank transaction
+      from the statutory rules, with the provision, source file, SHA-256 and
+      quoted text that justify it. A suggestion only: nothing is posted.
 
 Review queue:
   scan-anomalies [--from <date>] [--to <date>] [--sync]
@@ -593,6 +603,7 @@ export async function main(argv: string[], options: CliOptions = {}): Promise<nu
           countryCode: getFlag(flags, 'country', 'country-code', 'countryCode'),
           vatNumber: getFlag(flags, 'vat-number', 'vatNumber', 'vat'),
           defaultAccount: getFlag(flags, 'default-account'),
+          taxableStatus: getFlag(flags, 'taxable-status'),
         });
         print(addCustomer(db, parsed), format);
         return 0;
@@ -708,6 +719,19 @@ export async function main(argv: string[], options: CliOptions = {}): Promise<nu
           reason: requireFlag(flags, 'reason'),
         });
         print(reverseJournalCli(db, parsed), format);
+        return 0;
+      }
+
+      case 'load-statutory-rules': {
+        print(loadStatutoryKnowledgeBase(db, { companyId }), format);
+        return 0;
+      }
+
+      case 'suggest-vat': {
+        const bankTransactionId = requireFlag(flags, 'transaction');
+        const suggestion = suggestVatTreatment(db, { companyId, bankTransactionId });
+        if (!suggestion) throw new Error(`Bank transaction ${bankTransactionId} not found.`);
+        print(suggestion, format);
         return 0;
       }
 

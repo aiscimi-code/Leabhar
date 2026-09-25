@@ -16,6 +16,7 @@ import { seedDemoCompany } from '@/db/seed/demo';
 import { runMigrations } from '@/db/migrate';
 import { createBackup, restoreBackup, verifyBackup } from '@/domain/backup/backup';
 import { nowIso } from '@/domain/dates';
+import { loadStatutoryKnowledgeBase } from '@/domain/rules/knowledgeBase';
 
 /**
  * Server actions.
@@ -445,5 +446,22 @@ export async function restoreBackupAction(formData: FormData): Promise<ActionRes
     };
   } catch (error) {
     return fail(error);
+  }
+}
+
+/** Load the statutory knowledge base for the current company (issue #200). Idempotent. */
+export async function loadStatutoryRulesAction(): Promise<ActionResult> {
+  try {
+    const db = getDb();
+    const company = requireCompany();
+    const result = loadStatutoryKnowledgeBase(db, { companyId: company.id });
+    revalidatePath('/transactions');
+    return {
+      ok: true,
+      message: `Statutory rules loaded: ${result.rulesAfter} rules from ${result.sourcesProcessed} source files `
+        + `(${result.rulesAfter - result.rulesBefore} new). None is approved yet; every suggestion is flagged for review.`,
+    };
+  } catch (err) {
+    return fail(err);
   }
 }

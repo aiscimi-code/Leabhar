@@ -174,6 +174,11 @@ export function parseVatcaScheduleFile(path: string): ParsedScheduleParagraph[] 
   return parseVatcaSchedule(readFileSync(path, 'utf8'));
 }
 
+export const VATCA_SCHEDULE_1_MD_PATH = new URL(
+  '../../../docs/statutes/vatca-2010-revised/schedule-1.md',
+  import.meta.url,
+).pathname;
+
 export const VATCA_SCHEDULE_2_MD_PATH = new URL(
   '../../../docs/statutes/vatca-2010-revised/schedule-2.md',
   import.meta.url,

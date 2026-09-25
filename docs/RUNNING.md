@@ -244,6 +244,26 @@ The intended workflow from there is:
    are usable.
 3. **Match** documents to bank transactions. Matching links evidence but
    does **not** classify or post a transaction.
+3a. **Check the statutory VAT suggestion** (issue #200). Run
+   `load-statutory-rules` once per company (idempotent; it ingests every
+   `docs/statutes` source and derives the statutory rules), then
+   `suggest-vat --transaction <id>` for a line. It returns the suggested
+   treatment, the rule that decided it, and the provision, source file,
+   SHA-256 and quoted text behind it. The transaction screen shows the same
+   thing, links to `/statutes/provision/<id>` (which re-reads the file and
+   re-checks its hash), and pre-selects a specific suggestion in the
+   classification form. It is never posted automatically: every statutory
+   rule is still unapproved. Exempt (Schedule 1: postal, bank account
+   services, insurance, letting, passenger transport) and outside-the-scope
+   (s.2/s.3: wages, tax payments, capital/loans/dividends, own-account
+   transfers) rules take precedence over any rate. A service sold to a
+   business established abroad is suggested as `EU_SERVICES_SUPPLY` or
+   `NON_EU_SERVICES_SUPPLY` (revised s.34(a)); that turns on whether the
+   customer buys as a business, which comes from an EU VAT number or from
+   `add-customer --taxable-status taxable_person|non_taxable_person` — a
+   customer outside the EU with no recorded status gets no suggestion. A `fallback_only` result
+   (only the 23% residual rule matched) is shown but not pre-selected, because
+   the knowledge base cannot yet rule out every exemption.
 4. **Classify** transactions. Use `classify` to post a single transaction
    manually (accepting an account code and VAT treatment code from
    `list-chart` / `list-vat-treatments`), `create-rule` + `auto-classify`

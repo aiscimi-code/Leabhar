@@ -11,7 +11,7 @@ import {
 import { ingestVatca2010, deriveVatcaRules, VATCA_2010_MD_PATH } from '@/domain/rules/vatcaIngestion';
 import {
   ingestVatcaSchedule, deriveVatcaScheduleRules,
-  VATCA_SCHEDULE_2_MD_PATH, VATCA_SCHEDULE_3_MD_PATH, type VatcaScheduleNumber,
+  VATCA_SCHEDULE_1_MD_PATH, VATCA_SCHEDULE_2_MD_PATH, VATCA_SCHEDULE_3_MD_PATH, type VatcaScheduleNumber,
 } from '@/domain/rules/vatcaScheduleIngestion';
 import {
   ingestTca1997S530, ingestTca1997S530A, ingestTca1997S530E, ingestTca1997S530G, ingestTca1997S530H,
@@ -39,6 +39,8 @@ import {
   ingestAllCompaniesAct2014Sections, deriveCompaniesAct2014Rules,
 } from '@/domain/rules/companiesAct2014Ingestion';
 import { syncTaxRatesFromIrishRules } from '@/domain/rules/taxRateSync';
+import { loadStatutoryKnowledgeBase } from '@/domain/rules/knowledgeBase';
+import { deriveVatScopeRules } from '@/domain/rules/vatScopeIngestion';
 import { lookupTransactionRules, type TransactionContext } from '@/domain/rules/transactionLookup';
 import { setRuleReviewStatus } from '@/domain/rules/review';
 import { generateDefaultTestCases, runTestCases } from '@/domain/rules/testCases';
@@ -54,7 +56,7 @@ Usage: npm run cli:rules -- <command> [flags]
 Commands:
   ingest [--source <s>] [--file <path>]
                                        Ingest a source's Markdown (--source: finance-act-2024
-                                       [default] | vatca-2010 | vatca-2010-sch2 | vatca-2010-sch3 |
+                                       [default] | vatca-2010 | vatca-2010-sch1 | vatca-2010-sch2 | vatca-2010-sch3 |
                                        rct-tca530 | rct-fa2011-a | rct-fa2011-e | rct-fa2011-g |
                                        rct-fa2011-h | rct-fa2011-i | rct-tdm | rct-tdm-05 | rct-tdm-11 |
                                        vatca-2010-revised | tca1997-s284 | finance-act-2003-s23 | si639 | si156 |
@@ -63,11 +65,15 @@ Commands:
                                        companies-act-2014 (ingests all eight fetched sections; no --file);
                                        --file overrides
                                        its default path, e.g. to ingest a different revised section)
+  ingest-all                          Ingest every source and derive every rule in one step
+                                       (same as the ingest/extract sequence below; idempotent)
   extract [--source <s>]              Derive irish_tax_rules from ingested provisions
                                        (--source as above, but rct-tca530/rct-fa2011-*/rct-tdm/rct-tdm-05/
                                        rct-tdm-11 all use --source rct, and finance-act-2003-s23 uses --source
                                        tca1997-s284; also finance-act-2024-vat-thresholds, which requires
-                                       finance-act-2024 already ingested (no separate document); default
+                                       finance-act-2024 already ingested (no separate document); and vat-scope,
+                                       the exempt/outside-scope rules, which need vatca-2010-sch1 and the revised
+                                       s002.md/s003.md ingested via vatca-2010-revised --file; default
                                        finance-act-2024)
   list-provisions [--category <c>] [--relevant-only]
                                        List ingested provisions
@@ -118,9 +124,9 @@ export async function main(argv: string[], options: CliOptions = {}): Promise<nu
           print(ingestVatca2010(db, { companyId, markdown, ingestVersion: 'v1', localPath: file }), format);
           return 0;
         }
-        if (source === 'vatca-2010-sch2' || source === 'vatca-2010-sch3') {
-          const scheduleNumber: VatcaScheduleNumber = source === 'vatca-2010-sch2' ? '2' : '3';
-          const defaultFile = scheduleNumber === '2' ? VATCA_SCHEDULE_2_MD_PATH : VATCA_SCHEDULE_3_MD_PATH;
+        if (source === 'vatca-2010-sch1' || source === 'vatca-2010-sch2' || source === 'vatca-2010-sch3') {
+          const scheduleNumber = source.slice(-1) as VatcaScheduleNumber;
+          const defaultFile = { '1': VATCA_SCHEDULE_1_MD_PATH, '2': VATCA_SCHEDULE_2_MD_PATH, '3': VATCA_SCHEDULE_3_MD_PATH }[scheduleNumber];
           const file = getFlag(flags, 'file') ?? defaultFile;
           const markdown = readFileSync(file, 'utf8');
           print(
@@ -242,6 +248,11 @@ export async function main(argv: string[], options: CliOptions = {}): Promise<nu
         return 0;
       }
 
+      case 'ingest-all': {
+        print(loadStatutoryKnowledgeBase(db, { companyId }), format);
+        return 0;
+      }
+
       case 'extract': {
         const source = getFlag(flags, 'source') ?? 'finance-act-2024';
         if (source === 'vatca-2010') {
@@ -251,6 +262,10 @@ export async function main(argv: string[], options: CliOptions = {}): Promise<nu
         if (source === 'vatca-2010-sch2' || source === 'vatca-2010-sch3') {
           const scheduleNumber: VatcaScheduleNumber = source === 'vatca-2010-sch2' ? '2' : '3';
           print(deriveVatcaScheduleRules(db, { companyId, scheduleNumber }), format);
+          return 0;
+        }
+        if (source === 'vat-scope') {
+          print(deriveVatScopeRules(db, { companyId }), format);
           return 0;
         }
         if (source === 'rct') {

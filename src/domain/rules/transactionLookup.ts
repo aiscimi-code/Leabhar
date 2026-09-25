@@ -256,6 +256,12 @@ const TOPIC_RULES: TopicRule[] = [
       || /\b(machinery|plant|equipment|vehicle|computer|furniture)\b/i.test(TEXT_FIELDS(ctx)),
   },
   { topic: 'business_expense', test: () => true }, // deductibility is a candidate question for every transaction
+  // Whether a line is within the scope of VAT at all, and if so whether it is
+  // exempt, is a question for EVERY transaction — including the director,
+  // PAYE and Revenue-payment lines the `vat` topic above deliberately
+  // excludes, which are exactly the lines the outside-the-scope rules answer
+  // (vatScopeCuration.ts, issue #200). Each rule carries its own conditions.
+  { topic: 'vat_scope', test: () => true },
   {
     topic: 'director_transaction',
     test: (ctx) => /personal|director|shareholder/i.test(TEXT_FIELDS(ctx))

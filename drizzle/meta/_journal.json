@@ -43,6 +43,13 @@
       "when": 1789901920089,
       "tag": "0005_repair_snapshot_chain",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1790350578536,
+      "tag": "0006_customer_taxable_status",
+      "breakpoints": true
     }
   ]
 }

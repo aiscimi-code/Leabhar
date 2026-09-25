@@ -896,6 +896,8 @@ export function upsertCustomer(
     countryCode?: string | null; vatNumber?: string | null;
     defaultAccountId?: string | null; defaultVatTreatmentId?: string | null;
     aliases?: string[]; notes?: string | null; actor?: string;
+    /** VATCA s.34(a)/(b) customer status. Omitted on an update leaves the stored value unchanged. */
+    taxableStatus?: 'taxable_person' | 'non_taxable_person' | null;
   },
 ): string {
   const matchKey = params.name.toLowerCase()
@@ -911,6 +913,7 @@ export function upsertCustomer(
       defaultVatTreatmentId: params.defaultVatTreatmentId ?? null,
       aliases: params.aliases ?? [],
       notes: params.notes ?? null,
+      ...(params.taxableStatus !== undefined ? { taxableStatus: params.taxableStatus } : {}),
       updatedAt: nowIso(),
     }).where(and(
       eq(customers.id, params.customerId),
@@ -928,6 +931,7 @@ export function upsertCustomer(
     defaultVatTreatmentId: params.defaultVatTreatmentId ?? null,
     aliases: params.aliases ?? [],
     notes: params.notes ?? null,
+    taxableStatus: params.taxableStatus ?? null,
   }).run();
   return id;
 }
