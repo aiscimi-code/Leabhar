@@ -1,0 +1,22 @@
+file,doc_type,direction,issuer,recipient,invoice_no,date,currency,net,vat,gross,quirks
+01_hp_inv_vanguard_daycare.pdf,INVOICE,sales,Harbour Paws Pet Care Ltd,Vanguard Tech Dublin Ltd,INV-25-014,14/05/2025,EUR,1950.0,263.25,2213.25,service_vat_13_5|b2b
+02_hp_inv_keane_wholesale.pdf,INVOICE,sales,Harbour Paws Pet Care Ltd,Keane Veterinary Ltd,INV-24-007,09/02/2024,EUR,1057.3,243.18,1300.48,multi_line|goods_vat_23
+03_hp_inv_ballsbridge_mixed.pdf,TAX INVOICE,sales,Harbour Paws Pet Care Ltd,Ballsbridge Pet Hotel,INV-26-019,22/07/2026,EUR,1932.0,335.68,2267.68,mixed_vat_bands_13_5_and_23
+04_hp_inv_coastal_aquatics.pdf,Invoice,sales,Harbour Paws Pet Care Ltd,Coastal Aquatics Ltd,INV-25-031,03/10/2025,EUR,877.5,201.83,1079.33,wrong_reference_in_books|goods_vat_23
+05_pi_harbour_retail_fitout.pdf,INVOICE,purchase,Harbour Retail Fit-Out Ltd,Harbour Paws Pet Care Ltd,PI-24-001,12/02/2024,EUR,28000.0,6440.0,34440.0,large_capex|single_line
+06_pi_irish_grooming_equipment.pdf,Invoice,purchase,Irish Grooming Equipment Ltd,Harbour Paws Pet Care Ltd,PI-24-002,05/03/2024,EUR,9400.0,2162.0,11562.0,capex|many_lines
+07_pi_omalley_motors_van.pdf,Sales Invoice,purchase,O'Malley Motors Ltd,Harbour Paws Pet Care Ltd,PI-25-003,15/07/2025,EUR,26500.0,6095.0,32595.0,vehicle_capex|vin_in_description
+08_cn_groompro_credit.pdf,CREDIT NOTE,purchase,GroomPro Supplies Ireland,Harbour Paws Pet Care Ltd,CN-PI-26-002,30/04/2026,EUR,-78.29,-18.01,-96.3,credit_note|negative_amounts
+09_pi_whiskers_dense.pdf,INVOICE,purchase,Whiskers & Co Pet Foods Ltd,Harbour Paws Pet Care Ltd,PI-26-118,06/08/2026,EUR,3992.77,918.35,4911.12,many_lines_18|goods_vat_23|retention_of_title_clause
+10_pi_packright_no_vat_no.pdf,Invoice,purchase,PackRight Ireland,Harbour Paws Pet Care Ltd,PI-26-120,10/08/2026,EUR,104.64,24.07,128.71,missing_supplier_vat_number|small_supplier
+11_pi_groompro_565.pdf,INVOICE,purchase,GroomPro Supplies Ireland,Harbour Paws Pet Care Ltd,PI-26-133,06/05/2026,EUR,460.13,105.83,565.96,related_credit_note|payment_net_of_credit_note
+12_pi_yorkshire_gbp_reverse.pdf,INVOICE,purchase,Yorkshire Pet Supplies Ltd,Harbour Paws Pet Care Ltd,YPS-88412,28/07/2026,GBP,1240.0,0.0,1240.0,foreign_currency_gbp|reverse_charge|zero_vat_band
+13_pi_dublin_pet_wholesale.pdf,INVOICE,purchase,Dublin Pet Wholesale Ltd,Harbour Paws Pet Care Ltd,PI-25-073,14/11/2025,EUR,403.14,92.72,495.86,part_paid_in_books|credit_pending|rounding
+13b_pi_dublin_pet_wholesale_resent.pdf,INVOICE,purchase,Dublin Pet Wholesale Ltd,Harbour Paws Pet Care Ltd,PI-25-073,14/11/2025,EUR,403.14,92.72,495.86,duplicate_resend|dedup_test
+14_pf_atlantic_print_proforma.pdf,PRO-FORMA INVOICE,purchase,Atlantic Print & Design,Harbour Paws Pet Care Ltd,PF-2026-011,02/09/2026,EUR,350.0,80.5,430.5,proforma_not_a_tax_invoice
+15_stmt_whiskers_jul2026.pdf,STATEMENT OF ACCOUNT,purchase,Whiskers & Co Pet Foods Ltd,Harbour Paws Pet Care Ltd,STMT-2026-07,31/07/2026,EUR,1899.25,n/a (statement),1899.25,statement_not_invoice|aggregation_risk
+16_pi_vetmed_scan.pdf,INVOICE,purchase,VetMed Products Ltd,Harbour Paws Pet Care Ltd,PI-26-141,21/07/2026,EUR,502.2,115.51,617.71,image_only_pdf_requires_ocr|skewed_scan
+17_pi_topoil_photocopy.pdf,INVOICE,purchase,Top Oil Fuels,Harbour Paws Pet Care Ltd,PI-26-150,29/07/2026,EUR,263.14,35.52,298.66,image_only_pdf_requires_ocr|low_contrast|reduced_vat_13_5
+18_pi_dublin_wholesale_no_number.pdf,INVOICE,purchase,Dublin Pet Wholesale Ltd,Harbour Paws Pet Care Ltd,,18/08/2026,EUR,526.2,121.03,647.23,missing_invoice_number|validation_needed
+19_pi_sligo_safety_vat_inclusive.pdf,Invoice,purchase,Sligo Safety Gear,Harbour Paws Pet Care Ltd,PI-26-160,11/08/2026,EUR,121.87,28.03,149.9,no_vat_breakdownpvat_inclusive_prices
+20_pi_murphys_timber_cross_recipient.pdf,INVOICE,purchase,Murphy's Timber Ltd,Wild Atlantic Woodcraft Ltd,MT-88314,05/08/2026,EUR,1102.96,253.68,1356.64,recipient_is_other_company|routing_test
