@@ -123,7 +123,7 @@ export default async function TransactionDetailPage({ params }: {
 
           {vatSuggestion && <StatutorySuggestion suggestion={vatSuggestion} />}
 
-          {trace && <TracePanel trace={trace} />}
+          {trace && <TracePanel trace={trace} bankTransactionId={t.id} paymentDate={t.transactionDate} />}
 
           {!t.journalEntryId && (
             <Panel
@@ -157,8 +157,8 @@ export default async function TransactionDetailPage({ params }: {
           >
             {trace?.kind === 'settled' ? (
               <p className="px-4 py-3 text-[12px] text-ink-muted">
-                This payment was posted by settling its invoices (above). To change it, void or correct the
-                invoice rather than reclassifying the payment.
+                This payment was posted by settling its invoices (above). To change it, reverse the settlement there
+                and settle it again; it is never reclassified.
               </p>
             ) : !t.journalEntryId && confirmedDocument ? (
               <p className="px-4 py-3 text-[12px] text-ink-muted">

@@ -480,11 +480,12 @@ export function unmatchDocument(
       .where(and(
         eq(payments.bankTransactionId, document.matchedTransactionId),
         eq(paymentAllocations.invoiceId, document.invoiceId),
+        isNull(payments.reversedAt),
       )).get();
     if (settled) {
       throw new Error(
         'This bank line has paid the invoice posted from this document, so they cannot be unlinked. '
-          + 'The payment must be reversed first.',
+          + 'Reverse the payment first.',
       );
     }
   }

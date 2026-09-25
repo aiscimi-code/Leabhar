@@ -274,6 +274,14 @@ describe('settling bank lines against invoices', () => {
     settleBankTransaction(db, { companyId, bankTransactionId: find('PAID').id, allocations: [{ invoiceId: inv.invoiceId, amountMinor: 2_460 }] });
     expect(() => unmatchDocument(db, { companyId, documentId: doc, reason: 'test' })).toThrow(/cannot be unlinked/);
     expect(db.select().from(documents).where(eq(documents.id, doc)).get()!.matchedTransactionId).toBe(find('PAID').id);
+
+    // Once the payment is reversed (issue #220) the document can be unlinked.
+    const { reversePayment } = await import('../invoicing/reversal');
+    const { payments } = await import('@/db/schema');
+    const payment = db.select().from(payments).where(eq(payments.bankTransactionId, find('PAID').id)).get()!;
+    reversePayment(db, { companyId, paymentId: payment.id, reason: 'Settled in error' });
+    unmatchDocument(db, { companyId, documentId: doc, reason: 'test' });
+    expect(db.select().from(documents).where(eq(documents.id, doc)).get()!.matchedTransactionId).toBeNull();
   });
 
   it('holds and flags money left over after the chosen invoices', async () => {

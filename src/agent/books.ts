@@ -629,6 +629,7 @@ export function showInvoiceCli(db: AppDatabase, input: ShowInvoiceInput): Invoic
     allocatedMinor: paymentAllocations.allocatedMinor,
     paymentDate: payments.paymentDate,
     method: payments.method,
+    reversedAt: payments.reversedAt,
   }).from(paymentAllocations)
     .innerJoin(payments, eq(paymentAllocations.paymentId, payments.id))
     .where(eq(paymentAllocations.invoiceId, invoice.id))
