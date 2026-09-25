@@ -45,10 +45,9 @@ The stored sha256 is of the converted `.md`, not the upstream HTML or PDF. The u
 
 ## 2. Full inventory table
 
-The full Step-1 table (sources, then tables A, B and C, one row per `ruleKey` × 68) is about 65 KB, which hits GitHub's issue-body limit. So:
-- **Table C** (grade, dependencies, finding) is in this body, under §3 below.
-- **Tables A and B** (chain, offsets, dates, conditions, bindings, quote) are in the first two comments on this issue.
-- All of it is committed as `docs/trust/rule-traceability-audit.md` on branch `claude/irish-rules-traceability-audit-qua1i1`.
+The full Step-1 table (sources, then tables A, B and C, one row per `ruleKey` × 68) is about 65 KB, which is over GitHub's issue-body limit. So:
+- **Table C** (grade, dependencies, finding for every key) is in the issue body.
+- The **sources table and tables A and B** (chain, offsets and slice check, dates, versions, conditions, bindings, extractedFact vs seed, ≤30-word provision quote) are in the appendix of this file, `docs/trust/rule-traceability-audit.md` on branch `claude/irish-rules-traceability-audit-qua1i1`. They are generated from the dump, not hand-typed.
 
 ## 3. Dependency graphs (lookups actually run against the ingested DB)
 
