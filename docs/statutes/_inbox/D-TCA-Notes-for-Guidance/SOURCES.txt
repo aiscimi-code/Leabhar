@@ -1,0 +1,20 @@
+# SOURCES — section D
+Retrieved: 2026-09-25
+
+Revenue Notes for Guidance — Taxes Consolidation Act 1997 (Finance Act 2025 edition)
+Index: https://www.revenue.ie/en/tax-professionals/legislation/notes-for-guidance/taxes-consolidation-act-tca.aspx
+PDF pattern: https://www.revenue.ie/en/tax-professionals/documents/notes-for-guidance/tca/<file>.pdf
+
+- introduction.pdf
+- part01.pdf  (ss.1–11; includes s.3)
+- part02.pdf  (ss.12–31; includes s.15, s.18, s.21, s.21A)
+- part04.pdf  (ss.52–111; includes s.65, s.66, s.67, s.76, s.81)
+- part09.pdf  Part 9 in full
+- part12.pdf  Part 12 in full
+- part13.pdf  Part 13 in full
+- part15.pdf  Part 15 in full
+- part18.pdf  Part 18 in full (includes Chapter 2 RCT ss.530–530V)
+- part18d.pdf Part 18D USC in full
+- part36.pdf  contains s.840 Business entertainment (verified by pdftotext)
+- part41a.pdf Part 41A in full
+- part43.pdf  Part 43 in full

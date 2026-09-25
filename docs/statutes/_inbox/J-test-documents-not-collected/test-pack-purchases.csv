@@ -1,0 +1,33 @@
+invoice_id,date,supplier,country,description,pack_net,pack_vat_rate,pack_vat,pack_gross,status,treatment_used,system_vat_minor,posted,flags
+PI-001,2026-01-04,GitHub,US,Developer subscription,36.59,23,8.42,45.01,normal,NON_EU_SERVICES_RCV,842,True,normal
+PI-002,2026-01-06,Vercel,US,Hosting,16.26,23,3.74,20,normal,NON_EU_SERVICES_RCV,374,True,normal
+PI-003,2026-01-12,Blacknight,IE,Hosting,25,23,5.75,30.75,normal,IE_STD,575,True,normal
+PI-004,2026-01-25,Anthropic,US,AI API,100,23,23,123,normal,NON_EU_SERVICES_RCV,2300,True,normal|US_SUPPLIER_IRISH_VAT_ON_INVOICE
+PI-005,2026-02-01,Office Supplies Ltd,IE,Office equipment,200,23,46,246,normal,IE_STD,4600,True,normal
+PI-006,2026-02-10,Cloud Services EU,DE,Cloud infrastructure,50,23,11.5,61.5,normal,EU_SERVICES_RCV,1150,True,normal|EU_SUPPLIER_IRISH_VAT_ON_INVOICE
+PI-007,2026-02-28,GoDaddy,US,Domain registration,30,23,6.9,36.9,normal,NON_EU_SERVICES_RCV,690,True,normal
+PI-008,2026-03-05,Anthropic,US,AI API,200,23,46,246,normal,NON_EU_SERVICES_RCV,4600,True,normal|US_SUPPLIER_IRISH_VAT_ON_INVOICE
+PI-009,2026-03-12,Business Insurance Co,IE,Business insurance,600,0,0,600,normal,IE_EXEMPT,0,True,normal
+PI-026,2026-03-20,Office Supplies Ltd,IE,Credit note - returned equipment,-40,23,-9.2,-49.2,credit_note,IE_STD,-920,True,credit_note
+PI-010,2026-04-01,Vercel,US,Hosting,50,23,11.5,61.5,normal,NON_EU_SERVICES_RCV,1150,True,normal
+PI-011,2026-04-08,Vodafone Business,IE,Business phone,50,23,11.5,61.5,normal,IE_STD,1150,True,normal
+PI-012,2026-04-15,Solicitors LLP,IE,Legal advice,300,23,69,369,normal,IE_STD,6900,True,normal
+PI-013,2026-05-02,Computer Equipment Ltd,IE,Laptop,1000,23,230,1230,normal,IE_STD,23000,True,normal|CAPITAL_CANDIDATE
+PI-014,2026-05-12,Anthropic,US,AI API,100,23,23,123,normal,NON_EU_SERVICES_RCV,2300,True,normal|US_SUPPLIER_IRISH_VAT_ON_INVOICE
+PI-015,2026-05-18,Irish Rail,IE,Business travel,55,0,0,55,normal,IE_ZERO,0,True,normal
+PI-016,2026-06-02,Blacknight,IE,Hosting,20,23,4.6,24.6,normal,IE_STD,460,True,normal
+PI-017,2026-06-19,Restaurant Ltd,IE,Business dinner,150,23,34.5,184.5,normal,IE_STD,3450,True,normal
+PI-018,2026-07-01,Anthropic,US,AI API,200,23,46,246,normal,NON_EU_SERVICES_RCV,4600,True,normal|US_SUPPLIER_IRISH_VAT_ON_INVOICE
+PI-019,2026-07-10,Software Co,US,Software subscription,100,23,23,123,normal,NON_EU_SERVICES_RCV,2300,True,normal
+PI-027,2026-07-11,Software Co,US,Duplicate subscription invoice,100,23,23,123,duplicate,NON_EU_SERVICES_RCV,2300,True,duplicate|DO_NOT_DOUBLE_COUNT
+PI-020,2026-08-01,Cloud Services EU,DE,Cloud infrastructure,100,23,23,123,normal,EU_SERVICES_RCV,2300,True,normal|EU_SUPPLIER_IRISH_VAT_ON_INVOICE
+PI-021,2026-08-10,Google Ads,IE,Advertising,200,23,46,246,normal,IE_STD,4600,True,normal
+PI-028,2026-08-15,Google Ads,IE,Advertising - invoice says €246 gross,200,20,40,240,incorrect_vat,IE_STD,4000,True,incorrect_vat|STATED_VAT_TRUSTED_EVEN_IF_WRONG
+PI-022,2026-09-01,Anthropic,US,AI API,100,23,23,123,normal,NON_EU_SERVICES_RCV,2300,True,normal|US_SUPPLIER_IRISH_VAT_ON_INVOICE
+PI-023,2026-09-15,Dublin Hotel,IE,Accommodation,150.46,9,13.54,164,normal,IE_SECOND_RED,1354,True,normal
+PI-029,2026-09-20,Unknown Supplier,IE,Missing/ambiguous invoice,250,23,57.5,307.5,missing_supplier,IE_STD,5750,True,missing_supplier
+PI-024,2026-10-01,GoDaddy,US,Domain,30,23,6.9,36.9,normal,NON_EU_SERVICES_RCV,690,True,normal
+PI-025,2026-10-10,Training Provider,IE,Training,500,23,115,615,normal,IE_STD,11500,True,normal
+PI-030,2026-11-05,Computer Equipment Ltd,IE,Monitor,500,23,115,615,normal,IE_STD,11500,True,normal|CAPITAL_CANDIDATE
+PI-031,2026-11-06,Anthropic,US,AI API - duplicate bank payment,100,23,23,123,duplicate_payment,NON_EU_SERVICES_RCV,2300,True,duplicate_payment|US_SUPPLIER_IRISH_VAT_ON_INVOICE|DO_NOT_DOUBLE_COUNT
+PI-032,2026-12-15,Charity,IE,Donation,100,0,0,100,non_deductible_candidate,IE_ZERO,0,True,non_deductible_candidate

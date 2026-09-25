@@ -1,0 +1,131 @@
+{
+  "tool": "Leabhar",
+  "version": "0.2.5",
+  "commit": "06465e5",
+  "branch": "main",
+  "ranAt": "2026-09-20T20:40:18.100Z",
+  "api": {
+    "used": [
+      "initCompany",
+      "addBank",
+      "addAccount",
+      "installRulePackCli",
+      "importInvoicesFromCsv",
+      "importStatementFile",
+      "recordPaymentCli",
+      "journalCli",
+      "autoClassifyFromRules",
+      "classifyTransaction",
+      "reconcile",
+      "trialBalance",
+      "yearEndCli"
+    ]
+  },
+  "company": "Wild Atlantic Woodcraft Ltd",
+  "period": "2025-01-01/2025-12-31",
+  "induction": {
+    "openingBalancePosted": true,
+    "rulesInstalled": [
+      "Salary payment",
+      "Salary payment — FINN O",
+      "Employer PRSI",
+      "Revenue PAYE remittance",
+      "VAT3 payment",
+      "Rent standing order",
+      "Transfer to savings",
+      "Director drawings"
+    ]
+  },
+  "import": {
+    "importId": "imp_054b091761714b658fd7a651",
+    "rowsRead": 406,
+    "imported": 406,
+    "duplicates": 0,
+    "failed": 0,
+    "errors": [],
+    "warnings": [],
+    "statementStartDate": "2025-01-01",
+    "statementEndDate": "2025-12-31"
+  },
+  "created": {
+    "sales": 41,
+    "salesFailed": 0,
+    "purchases": 53,
+    "purchasesFailed": 0
+  },
+  "invoiceImportWarnings": [],
+  "bank": {
+    "imported": 406,
+    "posted": 406,
+    "unposted": 0,
+    "unpostedSample": [],
+    "notesKept": 168
+  },
+  "payments": {
+    "attempted": 87,
+    "ok": 87,
+    "failed": [],
+    "unallocated": [
+      {
+        "txn": "TXN-0051",
+        "ok": true,
+        "unallocated": 185220
+      },
+      {
+        "txn": "TXN-0371",
+        "ok": true,
+        "unallocated": 15000
+      }
+    ]
+  },
+  "autoClassify": {
+    "examined": 319,
+    "classified": 52,
+    "unclassified": 267,
+    "errors": []
+  },
+  "specials": {
+    "ok": 112,
+    "failed": [],
+    "leftoverClassified": 155,
+    "leftoverErrors": []
+  },
+  "trialBalance": {
+    "balanced": true,
+    "debitMinor": 52272169,
+    "creditMinor": 52272169,
+    "differenceMinor": 0
+  },
+  "reconciliation": {
+    "statementBalanceMinor": 12210133,
+    "statementBalanceSource": "supplied",
+    "ledgerBalanceMinor": 12210133,
+    "differenceMinor": 0,
+    "unexplainedMinor": 0,
+    "reconciled": true,
+    "summary": "The bank and the books agree exactly.",
+    "counts": {
+      "transactionsInPeriod": 406,
+      "unposted": 0,
+      "ledgerOnly": 0,
+      "suspectedDuplicates": 0,
+      "missingDocuments": 406
+    },
+    "items": []
+  },
+  "yearEndIssues": [
+    {
+      "severity": "warning",
+      "title": "94 documents not matched to a transaction",
+      "detail": "Either the payment has not been imported, it was paid personally, or the match has not been confirmed.",
+      "href": "/documents?status=unmatched"
+    },
+    {
+      "severity": "warning",
+      "title": "6 VAT periods in this year not recorded as submitted",
+      "detail": "If those returns have been filed, record them so the figures as filed are snapshotted and any later change is visible.",
+      "href": "/vat"
+    }
+  ],
+  "mishandling": []
+}
