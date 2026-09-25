@@ -7,7 +7,7 @@ import { createTestDatabase } from '@/db/testing';
 import { createCompany, addBankAccount } from '../config/setup';
 import { importStatement } from '../banking/import';
 import { storeDocument } from './storage';
-import { extractDocument } from '../extraction/service';
+import { extractDocument, extractDocumentFromText } from '../extraction/service';
 import { LocalExtractionProvider } from '../extraction/localProvider';
 import {
   checkDocumentValues, confirmDocument, rejectDocument, reopenDocument, documentReviewValues,
@@ -162,6 +162,32 @@ describe('extraction writes a draft, never a confirmed document', () => {
     });
     expect(doc(id).invoiceNumber).toBe('CORRECTED');
     expect(doc(id).reviewStatus).toBe('confirmed');
+  });
+});
+
+describe('reading an image through OCR', () => {
+  it('fills the draft from the recognised text and closes the earlier read\'s notes', async () => {
+    const stored = storeDocument(db, {
+      companyId, filename: 'scan.png', content: Buffer.from([0x89, 0x50, 0x4e, 0x47, 1, 2, 3]), root,
+    });
+    await extractDocument(db, {
+      companyId, documentId: stored.documentId, storageRootPath: root, providers: [new LocalExtractionProvider()],
+    });
+    const failed = () => db.select().from(reviewItems)
+      .where(eq(reviewItems.dedupeKey, `document:${stored.documentId}:extraction_failed`)).get();
+    expect(failed()?.status).toBe('open');
+
+    const result = extractDocumentFromText(db, {
+      companyId, documentId: stored.documentId, text: INVOICE, method: 'ocr', actor: 'joe',
+    });
+    expect(result.applied).toBe(true);
+    expect(result.result.textExtractionMethod).toBe('ocr');
+    expect(failed()?.status).toBe('resolved');
+    expect(failed()?.resolution).toMatch(/Superseded/);
+    const d = doc(stored.documentId);
+    expect(d.grossMinor).toBe(61_500);
+    expect(d.reviewStatus).toBe('unreviewed');
+    expect(db.select().from(documentLines).where(eq(documentLines.documentId, stored.documentId)).all()).toHaveLength(2);
   });
 });
 

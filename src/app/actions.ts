@@ -9,7 +9,11 @@ import { classifyTransaction, reclassifyTransaction } from '@/domain/banking/cla
 import { acceptMatch, rejectMatch, findMatchesForDocument, matchAllUnmatched, linkDocument, unmatchDocument } from '@/domain/matching/service';
 import { transitionVatPeriod, type VatPeriodStatus } from '@/domain/vat/periodClose';
 import { storeDocument } from '@/domain/documents/storage';
-import { extractDocument } from '@/domain/extraction/service';
+import { extractDocument, extractDocumentFromText } from '@/domain/extraction/service';
+import {
+  confirmDocument, rejectDocument, reopenDocument, type ReviewedDocumentValues,
+} from '@/domain/documents/review';
+import { actorName } from '@/lib/session';
 import { scanWatchFolder } from '@/domain/documents/watch';
 import { importStatement } from '@/domain/banking/import';
 import { seedDemoCompany } from '@/db/seed/demo';
@@ -352,6 +356,116 @@ export async function importStatementAction(formData: FormData): Promise<ActionR
     for (const warning of result.warnings) parts.push(warning);
 
     return { ok: true, message: parts.join(' ') };
+  } catch (error) {
+    return fail(error);
+  }
+}
+
+// ---- Document review (issue #202) ----
+
+export interface ConfirmDocumentInput {
+  documentId: string;
+  values: ReviewedDocumentValues;
+  acknowledgedCheckCodes: string[];
+  supplierId: string | null;
+  customerId: string | null;
+  createSupplier: boolean;
+  createCustomer: boolean;
+  note: string | null;
+}
+
+/**
+ * Confirm a document with the values the person checked against the page,
+ * then look for its bank transaction — matching only ever runs on confirmed
+ * documents.
+ */
+export async function confirmDocumentAction(input: ConfirmDocumentInput): Promise<ActionResult> {
+  try {
+    const db = getDb();
+    const company = requireCompany();
+    const reviewedBy = await actorName();
+    const result = confirmDocument(db, { companyId: company.id, ...input, reviewedBy });
+    const match = findMatchesForDocument(db, { companyId: company.id, documentId: input.documentId });
+    revalidatePath(`/documents/${input.documentId}`);
+    revalidatePath('/documents');
+    revalidatePath('/review');
+    revalidatePath('/');
+    const corrected = result.changedFields.length;
+    return {
+      ok: true,
+      message: `Confirmed${corrected ? ` with ${corrected} correction${corrected === 1 ? '' : 's'}` : ''}. `
+        + (match.applied ? 'Matched to its bank transaction.'
+          : match.best ? 'A possible bank match is waiting for your decision.'
+          : 'No bank transaction matches it yet.'),
+    };
+  } catch (error) {
+    return fail(error);
+  }
+}
+
+export async function rejectDocumentAction(documentId: string, reason: string): Promise<ActionResult> {
+  try {
+    const company = requireCompany();
+    rejectDocument(getDb(), { companyId: company.id, documentId, reason, reviewedBy: await actorName() });
+    revalidatePath(`/documents/${documentId}`);
+    revalidatePath('/documents');
+    revalidatePath('/review');
+    return { ok: true, message: 'Rejected. The file is kept, but nothing will use it.' };
+  } catch (error) {
+    return fail(error);
+  }
+}
+
+export async function reopenDocumentAction(documentId: string, reason: string): Promise<ActionResult> {
+  try {
+    const company = requireCompany();
+    reopenDocument(getDb(), { companyId: company.id, documentId, reason, reviewedBy: await actorName() });
+    revalidatePath(`/documents/${documentId}`);
+    revalidatePath('/documents');
+    revalidatePath('/review');
+    return { ok: true, message: 'Reopened for correction.' };
+  } catch (error) {
+    return fail(error);
+  }
+}
+
+/**
+ * Text recognised from the page image in the browser. It is read the same way
+ * as a PDF's text layer and replaces the unconfirmed draft; the person still
+ * checks every value before confirming.
+ */
+export async function readRecognisedTextAction(documentId: string, text: string): Promise<ActionResult> {
+  try {
+    if (text.length > 200_000) throw new Error('The recognised text is too long to be one document.');
+    const company = requireCompany();
+    const result = extractDocumentFromText(getDb(), {
+      companyId: company.id, documentId, text, method: 'ocr', actor: await actorName(),
+    });
+    revalidatePath(`/documents/${documentId}`);
+    return {
+      ok: true,
+      message: result.applied
+        ? `Read ${result.result.lines.length} line${result.result.lines.length === 1 ? '' : 's'} from the recognised text. Check every value against the page.`
+        : 'The text was recognised but stored only: this document is already confirmed.',
+    };
+  } catch (error) {
+    return fail(error);
+  }
+}
+
+export async function setExtractionEngineAction(engine: 'local' | 'anthropic'): Promise<ActionResult> {
+  try {
+    if (engine !== 'local' && engine !== 'anthropic') throw new Error('Unknown extraction engine.');
+    const company = requireCompany();
+    getDb().update(companies).set({ extractionEngine: engine, updatedAt: nowIso() })
+      .where(eq(companies.id, company.id)).run();
+    revalidatePath('/settings/company');
+    return {
+      ok: true,
+      message: engine === 'local'
+        ? 'Documents will be read on this computer. Nothing is sent anywhere.'
+        : 'Documents will be sent to Anthropic to be read. You still confirm every one.',
+    };
   } catch (error) {
     return fail(error);
   }

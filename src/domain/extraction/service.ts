@@ -1,4 +1,4 @@
-import { and, eq } from 'drizzle-orm';
+import { and, eq, like, or } from 'drizzle-orm';
 import type { AppDatabase } from '@/db';
 import {
   documents, documentExtractions, suppliers, customers, companies,
@@ -304,6 +304,22 @@ function recordExtraction(
     }).run();
 
     // ---- Review items ----
+    // A new reading replaces the previous reading's notes; they are closed with
+    // the reason recorded rather than left to contradict the new one.
+    const closed = nowIso();
+    tx.update(reviewItems).set({
+      status: 'resolved', resolvedAt: closed, resolvedBy: 'system',
+      resolution: `Superseded by a later reading (${result.provider}, ${result.textExtractionMethod}).`,
+      updatedAt: closed,
+    }).where(and(
+      eq(reviewItems.companyId, params.companyId),
+      eq(reviewItems.status, 'open'),
+      or(
+        like(reviewItems.dedupeKey, `document:${params.documentId}:obs:%`),
+        ...(result.status !== 'failed' ? [eq(reviewItems.dedupeKey, `document:${params.documentId}:extraction_failed`)] : []),
+      ),
+    )).run();
+
     if (result.status === 'failed') {
       upsertReviewItem(tx, {
         companyId: params.companyId,

@@ -7,6 +7,7 @@ import {
 import { money, date, dateTime, label, percent } from '@/lib/format';
 import { LinkControls } from '@/components/LinkControls';
 import { CandidateActions } from '@/components/CandidateActions';
+import { DocumentReview } from '@/components/DocumentReview';
 import { linkDocumentAction, unmatchDocumentAction, acceptMatchAction, rejectMatchAction } from '@/app/actions';
 
 export const dynamic = 'force-dynamic';
@@ -45,7 +46,7 @@ export default async function DocumentDetailPage({ params }: {
   if (!detail) notFound();
 
   const { document: doc, supplier, extractions, matches, matchedTransaction,
-          audit, duplicateOf, company } = detail;
+          audit, duplicateOf, company, review, supplierOptions, customerOptions, openItems } = detail;
   const latest = extractions[0];
   const currency = doc.currency ?? company.baseCurrency;
   const linkableTransactions = unpostedTransactionOptions();
@@ -75,13 +76,34 @@ export default async function DocumentDetailPage({ params }: {
         </Panel>
       )}
 
+      <div className="mb-4">
+        <DocumentReview
+          key={latest?.id ?? 'none'}
+          documentId={doc.id}
+          filename={doc.originalFilename}
+          mimeType={doc.mimeType}
+          reviewStatus={doc.reviewStatus}
+          reviewedBy={doc.reviewedBy}
+          reviewNote={doc.reviewNote}
+          inUse={Boolean(doc.invoiceId || doc.matchedTransactionId)}
+          values={review.values}
+          baseCurrency={company.baseCurrency}
+          confidence={Object.fromEntries(Object.entries(latest?.fields ?? {}).map(([k, f]) => [k, f.confidence]))}
+          observations={openItems}
+          supplierId={doc.supplierId}
+          customerId={doc.customerId}
+          supplierOptions={supplierOptions}
+          customerOptions={customerOptions}
+        />
+      </div>
+
       <div className="grid grid-cols-[1.3fr_1fr] gap-4 items-start">
         <div>
-          <Panel title="What was read from this document"
+          <Panel title="How each value was read"
             description={latest
               ? `Read by the ${latest.provider} extractor${latest.model ? ` (${latest.model})` : ''}, `
-                + `${percent(latest.overallConfidence)} overall confidence. Every value here is a `
-                + 'suggestion until you confirm it.'
+                + `${percent(latest.overallConfidence)} overall confidence. The evidence behind each `
+                + 'value in the latest automatic read — the sheet above is what counts.'
               : undefined}>
             {!latest ? (
               <Empty title="Not yet read" />
@@ -294,6 +316,12 @@ export default async function DocumentDetailPage({ params }: {
             </Panel>
           ) : (
             <Panel title="Matched transaction" description="No transaction linked.">
+              {doc.reviewStatus !== 'confirmed' ? (
+                <p className="px-4 py-3 text-[12px] text-ink-muted">
+                  Confirm this document&apos;s details first. Only a confirmed document can be linked to a
+                  bank transaction.
+                </p>
+              ) : (
               <LinkControls
                 action={linkDocumentAction}
                 options={linkableTransactions}
@@ -303,6 +331,7 @@ export default async function DocumentDetailPage({ params }: {
                 submit="Link"
                 emptyHint="No unposted transactions available to link."
               />
+              )}
             </Panel>
           )}
 

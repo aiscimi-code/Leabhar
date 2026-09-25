@@ -4,6 +4,7 @@ import {
 } from '@/components/primitives';
 import { ActionForm } from '@/components/ActionForm';
 import { DemoLoader } from '@/components/DemoLoader';
+import { ExtractionEngineSetting } from '@/components/ExtractionEngineSetting';
 import {
   updateCompanyAction, createCompanyAction,
   addBankAccountAction, updateBankAccountAction,
@@ -392,6 +393,12 @@ export default function CompanySettingsPage() {
             </Field>
           </ActionForm>
         </Disclosure>
+      </Panel>
+
+      <Panel title="Reading documents"
+        description="How uploaded invoices and receipts are read. Whichever you choose, you check and confirm each document before it is used.">
+        <ExtractionEngineSetting engine={company.extractionEngine}
+          aiAvailable={Boolean(process.env.ANTHROPIC_API_KEY)} />
       </Panel>
 
       <div className="grid grid-cols-2 gap-4 items-start">

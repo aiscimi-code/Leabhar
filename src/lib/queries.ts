@@ -19,6 +19,7 @@ import { reconcileBankAccount, reconciliationHistory } from '@/domain/banking/re
 import { search } from '@/domain/search/search';
 import { suggestVatTreatment } from '@/domain/rules/vatSuggestion';
 import { verifyStatuteFile } from '@/domain/rules/knowledgeBase';
+import { documentReviewValues } from '@/domain/documents/review';
 import { asIsoDate, today, makeDate, type IsoDate } from '@/domain/dates';
 import { money } from '@/lib/format';
 
@@ -347,7 +348,7 @@ export function vatPeriodDetail(periodId: string) {
   };
 }
 
-export function documentList(filters: { status?: string; search?: string } = {}) {
+export function documentList(filters: { status?: string; review?: string; search?: string } = {}) {
   const db = getDb();
   const company = requireCompany();
 
@@ -357,6 +358,9 @@ export function documentList(filters: { status?: string; search?: string } = {})
   ];
   if (filters.status && filters.status !== 'all') {
     conditions.push(eq(documents.matchStatus, filters.status as 'matched'));
+  }
+  if (filters.review && ['unreviewed', 'confirmed', 'rejected'].includes(filters.review)) {
+    conditions.push(eq(documents.reviewStatus, filters.review as 'confirmed'));
   }
   if (filters.search) {
     const needle = `%${filters.search.toLowerCase()}%`;
@@ -642,8 +646,25 @@ export function documentDetail(documentId: string) {
     ? db.select().from(documents).where(eq(documents.id, document.isDuplicateOf)).get()
     : undefined;
 
+  const review = documentReviewValues(db, { companyId: company.id, documentId });
+  // Open review items about this document, other than "please confirm it":
+  // what the reader noticed (unreadable image, VAT numbers ambiguous, duplicate).
+  const openItems = db.select({ title: reviewItems.title, detail: reviewItems.detail, dedupeKey: reviewItems.dedupeKey })
+    .from(reviewItems)
+    .where(and(
+      eq(reviewItems.companyId, company.id), eq(reviewItems.entityType, 'document'),
+      eq(reviewItems.entityId, documentId), eq(reviewItems.status, 'open'),
+    )).all()
+    .filter((i) => i.dedupeKey !== `document:${documentId}:awaiting_confirmation`)
+    .map((i) => (i.detail ? `${i.title}: ${i.detail}` : i.title));
+  const supplierOptions = db.select({ id: suppliers.id, name: suppliers.name }).from(suppliers)
+    .where(eq(suppliers.companyId, company.id)).orderBy(suppliers.name).all();
+  const customerOptions = db.select({ id: customers.id, name: customers.name }).from(customers)
+    .where(eq(customers.companyId, company.id)).orderBy(customers.name).all();
+
   return {
     document, supplier, extractions, matches, matchedTransaction, audit, duplicateOf, company,
+    review, supplierOptions, customerOptions, openItems,
   };
 }
 
