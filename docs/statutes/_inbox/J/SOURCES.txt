@@ -1,5 +1,35 @@
 # SOURCES — section J
-Retrieved: 2026-09-25
+Retrieved / assembled: 2026-09-25
 
-NOT collected. No anonymised invoices / receipts / credit notes / Z-reports were supplied.
-Do not invent fixtures. Do not tick.
+These are regression fixtures from earlier Leabhar E2E runs in this project.
+They are NOT anonymised customer invoices. No live client documents were
+supplied. They are included because they are the best existing test points
+for invoice import, VAT treatments, payments, bank coding, and year-end.
+
+## Test Pack Digital Ltd (invoice / purchase / bank pack)
+Company: Test Pack Digital Ltd, VAT-registered, invoice basis.
+Source run: 2026-09-19, Leabhar main e31bdae
+Files:
+- test-pack-sales.csv — 25 sales + 1 credit note (SI-001..SI-026). Includes 0% sale SI-025.
+- test-pack-purchases.csv — 32 purchase rows (PI-001..PI-032). Treatments: IE_STD, NON_EU_SERVICES_RCV, EU_SERVICES_RCV, IE_EXEMPT, IE_ZERO, IE_SECOND_RED. Flags: credit_note, duplicate, incorrect_vat, missing_supplier, CAPITAL_CANDIDATE, US/EU Irish VAT on invoice, non_deductible_candidate.
+- test-pack-bank.csv — 200 bank lines (BT-*).
+- test-pack-results.md — scored pack results (sales/purchases/bank tables).
+- test-pack-results.json — machine-readable pack results.
+
+## Wild Atlantic Woodcraft Ltd (full-year E2E)
+Company: Wild Atlantic Woodcraft Ltd
+Period: 2025-01-01/2025-12-31
+Source run: 2026-09-20T20:40:18Z, Leabhar 0.2.5 commit 06465e5 (PR #185 double-entry integrity)
+File: leabhar-e2e-results.json
+Observed scores from that run (do not treat as current product truth):
+- bank import 406/406
+- sales created 41, purchases created 53
+- payments 87/87
+- trial balance ties 522721.69 / 522721.69
+- recon ties 122101.33
+- missingDocuments 406 (import did not match/link documents)
+- mishandling []
+
+## Still not collected
+No anonymised scan/PDF invoices, receipts, credit notes, or Z-reports from a live trader.
+Do not invent those.
