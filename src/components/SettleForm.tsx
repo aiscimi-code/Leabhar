@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useEffect, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button, Input } from './primitives';
-import { settleTransactionAction, type ActionResult } from '@/app/actions';
+import { settleTransactionAction, previewSettlementAction, type ActionResult } from '@/app/actions';
 import { parseAmount } from '@/domain/money';
 
 /**
@@ -36,9 +36,11 @@ export function SettleForm({ bankTransactionId, amountMinor, currency, invoices,
   const cash = Math.abs(amountMinor);
   const [amounts, setAmounts] = useState<Record<string, string>>(() => {
     const pre = invoices.find((i) => i.invoiceId === preselectInvoiceId);
-    return pre ? { [pre.invoiceId]: fmt(Math.min(Math.abs(pre.outstandingMinor), cash)) } : {};
+    return pre ? { [pre.invoiceId]: fmt(pre.currency !== currency ? cash : Math.min(Math.abs(pre.outstandingMinor), cash)) } : {};
   });
   const [lateDate, setLateDate] = useState('');
+  const [fxText, setFxText] = useState('');
+  const [check, setCheck] = useState<Awaited<ReturnType<typeof previewSettlementAction>> | null>(null);
   const [result, setResult] = useState<ActionResult | null>(null);
   const [pending, startTransition] = useTransition();
 
@@ -48,11 +50,32 @@ export function SettleForm({ bankTransactionId, amountMinor, currency, invoices,
   const chosen = parsed.filter((p) => p.amountMinor > 0);
   const net = chosen.reduce((s, p) => s + (invoices.find((i) => i.invoiceId === p.invoiceId)?.isCreditNote ? -p.amountMinor : p.amountMinor), 0);
   const remainder = cash - net;
-  const invalid = parsed.some((p) => !p.ok) || net > cash || net < 0 || chosen.length === 0;
+  const allocations = chosen.map(({ invoiceId, amountMinor: a }) => ({ invoiceId, amountMinor: a }));
+  const allocationKey = JSON.stringify(allocations);
+
+  // Ask the domain what this settlement needs and would post; nothing is written.
+  useEffect(() => {
+    let live = true;
+    const timer = setTimeout(() => {
+      previewSettlementAction({ bankTransactionId, allocations: JSON.parse(allocationKey), fxRateText: fxText })
+        .then((r) => { if (live) setCheck(r); })
+        .catch(() => { if (live) setCheck(null); });
+    }, 250);
+    return () => { live = false; clearTimeout(timer); };
+  }, [bankTransactionId, allocationKey, fxText]);
+
+  const need = check?.need;
+  const preview = check?.preview;
+  const rateMissing = need?.needed === true && !fxText.trim() && !need.statementRate;
+  const invalid = parsed.some((p) => !p.ok) || net > cash || net < 0 || chosen.length === 0
+    || need?.needed === 'unsupported' || rateMissing || preview?.ok === false;
 
   const toggle = (inv: OpenInvoice, on: boolean) => setAmounts((a) => {
     const next = { ...a };
-    if (on) next[inv.invoiceId] = fmt(Math.min(Math.abs(inv.outstandingMinor), inv.isCreditNote ? Math.abs(inv.outstandingMinor) : Math.max(0, remainder)));
+    // Across currencies the outstanding is not in the payment's currency, so the
+    // default is what is left of the payment; the preview shows how it applies.
+    if (on) next[inv.invoiceId] = fmt(inv.currency !== currency ? Math.max(0, remainder)
+      : Math.min(Math.abs(inv.outstandingMinor), inv.isCreditNote ? Math.abs(inv.outstandingMinor) : Math.max(0, remainder)));
     else delete next[inv.invoiceId];
     return next;
   });
@@ -96,6 +119,31 @@ export function SettleForm({ bankTransactionId, amountMinor, currency, invoices,
         {remainder > 0 && ` · ${fmt(remainder)} left over will be held on account and flagged`}
         {remainder < 0 && ' · more than the payment — reduce an allocation'}
       </p>
+      {need?.needed === 'unsupported' && <p className="text-[12px] text-negative">{need.reason}</p>}
+      {need?.needed === true && (
+        <div className="text-[12px] space-y-1">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-ink-faint">{need.to} per 1 {need.from}</span>
+            <Input className="!w-32" aria-label={`${need.to} per 1 ${need.from}`} value={fxText}
+              placeholder={need.statementRate ?? 'e.g. 1.0842'} onChange={(e) => setFxText(e.target.value)} />
+            {need.statementRate && !fxText.trim() && <span className="text-ink-faint">the statement&apos;s rate is used</span>}
+          </div>
+          <p className="text-ink-faint">{need.reason} It is recorded exactly as entered.</p>
+        </div>
+      )}
+      {preview?.ok === false && <p className="text-[12px] text-negative">{preview.error}</p>}
+      {preview?.ok && (preview.payment.fxDifferenceMinor !== 0 || need?.needed === true) && (
+        <p className="text-[12px] text-ink-muted">
+          {preview.payment.fxDifferenceMinor === 0
+            ? 'No exchange difference: the payment converts at the invoices\' own rates.'
+            : `Exchange ${preview.payment.fxDifferenceMinor > 0 === (amountMinor > 0) ? 'gain' : 'loss'} of `
+              + `${fmt(Math.abs(preview.payment.fxDifferenceMinor))} will be posted to foreign exchange gains and losses.`}
+          {preview.payment.invoiceStatuses.map((st) => {
+            const inv = invoices.find((i) => i.invoiceId === st.invoiceId);
+            return inv ? ` ${inv.invoiceNumber ?? 'Invoice'}: ${fmt(st.outstandingMinor)} ${inv.currency} left outstanding.` : '';
+          }).join('')}
+        </p>
+      )}
       {amountMinor > 0 && (
         <details className="text-[12px]">
           <summary className="cursor-pointer text-ink-muted">The VAT return for this receipt&apos;s date is locked or filed?</summary>
@@ -108,7 +156,7 @@ export function SettleForm({ bankTransactionId, amountMinor, currency, invoices,
       )}
       <Button variant="primary" disabled={pending || invalid} onClick={() => startTransition(async () => {
         const r = await settleTransactionAction({
-          bankTransactionId, allocations: chosen.map(({ invoiceId, amountMinor: a }) => ({ invoiceId, amountMinor: a })),
+          bankTransactionId, allocations, fxRateText: fxText || undefined,
           vatDeclarationDate: lateDate || undefined,
         });
         setResult(r);

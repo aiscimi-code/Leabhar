@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   parseAmount, formatAmount, formatAmountGrouped, asMinor, add, subtract, allocate,
   multiplyRational, vatFromNet, vatFromGross, netFromGross, parseRate, formatRate,
-  currencyExponent, MoneyError, roundHalfUp, isAmbiguousAmount,
+  currencyExponent, MoneyError, roundHalfUp, isAmbiguousAmount, parseDecimalRate,
 } from './money';
 
 describe('parseAmount', () => {
@@ -222,5 +222,17 @@ describe('add/subtract', () => {
   });
   it('subtracts', () => {
     expect(subtract(asMinor(10000), asMinor(2300))).toBe(7700);
+  });
+});
+
+describe('parseDecimalRate (issue #223)', () => {
+  it('reads a typed rate as an exact fraction', () => {
+    expect(parseDecimalRate('1.0842')).toEqual({ numerator: 10842, denominator: 10000 });
+    expect(parseDecimalRate(' 2 ')).toEqual({ numerator: 2, denominator: 1 });
+  });
+  it('refuses anything that is not a positive decimal of up to six places', () => {
+    for (const bad of ['', '0', '0.000', '-1.2', '1,08', '1.0000001', 'abc', '1e3']) {
+      expect(parseDecimalRate(bad)).toBeNull();
+    }
   });
 });

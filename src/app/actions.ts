@@ -15,7 +15,10 @@ import {
 } from '@/domain/documents/review';
 import { actorName } from '@/lib/session';
 import { postDocumentAsInvoice, type LineCoding } from '@/domain/consolidation/postDocument';
-import { settleBankTransaction, type SettleAllocation } from '@/domain/consolidation/settle';
+import {
+  settleBankTransaction, settlementRateNeed, previewSettlement, type SettleAllocation, type SettlementRateNeed,
+} from '@/domain/consolidation/settle';
+import { parseDecimalRate } from '@/domain/money';
 import { reversePayment } from '@/domain/invoicing/reversal';
 import { asIsoDate } from '@/domain/dates';
 import { scanWatchFolder } from '@/domain/documents/watch';
@@ -491,14 +494,53 @@ export async function postDocumentAction(input: {
 }
 
 /** Settle a bank line against one or more invoices. */
+/** A typed decimal rate as an exact fraction, or undefined when none was typed (issue #223). */
+function typedFxRate(text: string | undefined): FxInput | undefined {
+  if (!text?.trim()) return undefined;
+  const rate = parseDecimalRate(text);
+  if (!rate) throw new Error(`"${text}" is not an exchange rate. Enter a positive decimal, e.g. 1.0842.`);
+  return { ...rate, source: 'user_supplied' };
+}
+
+/**
+ * What the settle form needs as the person ticks invoices: whether a rate is
+ * needed (and which way it converts), and what settling would post — per
+ * invoice, the exchange difference and any remainder — computed by the domain
+ * without writing anything (issue #223).
+ */
+export async function previewSettlementAction(input: {
+  bankTransactionId: string; allocations: SettleAllocation[]; fxRateText?: string;
+}): Promise<{ need: SettlementRateNeed; preview: ReturnType<typeof previewSettlement> | null }> {
+  const company = requireCompany();
+  const db = getDb();
+  const need = settlementRateNeed(db, {
+    companyId: company.id, bankTransactionId: input.bankTransactionId,
+    invoiceIds: input.allocations.map((a) => a.invoiceId),
+  });
+  if (input.allocations.length === 0 || need.needed === 'unsupported') return { need, preview: null };
+  let fxRate: FxInput | undefined;
+  try {
+    fxRate = typedFxRate(input.fxRateText);
+  } catch (error) {
+    return { need, preview: { ok: false, error: (error as Error).message } };
+  }
+  if (need.needed === true && !fxRate && !need.statementRate) return { need, preview: null };
+  return {
+    need,
+    preview: previewSettlement(db, {
+      companyId: company.id, bankTransactionId: input.bankTransactionId, allocations: input.allocations, fxRate,
+    }),
+  };
+}
+
 export async function settleTransactionAction(input: {
-  bankTransactionId: string; allocations: SettleAllocation[]; fxRate?: FxInput; vatDeclarationDate?: string;
+  bankTransactionId: string; allocations: SettleAllocation[]; fxRateText?: string; vatDeclarationDate?: string;
 }): Promise<ActionResult> {
   try {
     const company = requireCompany();
     const payment = settleBankTransaction(getDb(), {
       companyId: company.id, bankTransactionId: input.bankTransactionId, allocations: input.allocations,
-      fxRate: input.fxRate, actor: await actorName(),
+      fxRate: typedFxRate(input.fxRateText), actor: await actorName(),
       vatDeclarationDate: input.vatDeclarationDate ? asIsoDate(input.vatDeclarationDate) : undefined,
     });
     revalidatePath(`/transactions/${input.bankTransactionId}`);
@@ -506,12 +548,13 @@ export async function settleTransactionAction(input: {
     revalidatePath('/invoices');
     revalidatePath('/review');
     revalidatePath('/');
-    return {
-      ok: true,
-      message: payment.unallocatedMinor
-        ? `Settled. ${(payment.unallocatedMinor / 100).toFixed(2)} is held on account and flagged for review.`
-        : 'Settled in full.',
-    };
+    const parts = [payment.unallocatedMinor
+      ? `Settled. ${(payment.unallocatedMinor / 100).toFixed(2)} is held on account and flagged for review.`
+      : 'Settled in full.'];
+    if (payment.fxDifferenceMinor !== 0) {
+      parts.push(`An exchange difference of ${(payment.fxDifferenceMinor / 100).toFixed(2)} was posted.`);
+    }
+    return { ok: true, message: parts.join(' ') };
   } catch (error) {
     return fail(error);
   }

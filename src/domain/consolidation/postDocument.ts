@@ -1,4 +1,5 @@
 import { and, eq } from 'drizzle-orm';
+import { atomically } from '../accounting/journal';
 import type { AppDatabase } from '@/db';
 import { documents, documentLines, documentVatTotals, auditEvents, companies } from '@/db/schema';
 import { ids } from '@/lib/ids';
@@ -166,7 +167,13 @@ const quantityMilli = (q: string | null): number | undefined => {
   return Number(whole) * 1000 + Number((frac + '000').slice(0, 3));
 };
 
-export function postDocumentAsInvoice(db: AppDatabase, input: PostDocumentInput): CreatedInvoice {
+export function postDocumentAsInvoice(
+  db: AppDatabase, input: Parameters<typeof postDocumentAsInvoiceSteps>[1],
+): ReturnType<typeof postDocumentAsInvoiceSteps> {
+  return atomically(db, () => postDocumentAsInvoiceSteps(db, input));
+}
+
+function postDocumentAsInvoiceSteps(db: AppDatabase, input: PostDocumentInput): CreatedInvoice {
   const { document: doc, direction, lines } = documentEvidenceLines(db, input);
   if (doc.invoiceId) {
     throw new ConsolidationError('This document has already been posted as an invoice.', { invoiceId: doc.invoiceId });

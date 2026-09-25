@@ -6,7 +6,7 @@ import {
 import { ids } from '@/lib/ids';
 import { asMinor, multiplyRational } from '../money';
 import { nowIso, type IsoDate } from '../dates';
-import { postJournalEntry, reverseJournalEntry } from '../accounting/journal';
+import { postJournalEntry, reverseJournalEntry, atomically } from '../accounting/journal';
 import { systemAccountId } from '../config/setup';
 import {
   resolveTreatment, calculateVat, createVatEntries, determineTaxPoint, vatDiscrepancy, findVatPeriod,
@@ -110,7 +110,13 @@ export interface CreatedInvoice {
  * invoice can legitimately carry several treatments and rates — common on an EU
  * supplier invoice mixing goods and services.
  */
-export function createInvoice(db: AppDatabase, input: CreateInvoiceInput): CreatedInvoice {
+export function createInvoice(
+  db: AppDatabase, input: Parameters<typeof createInvoiceSteps>[1],
+): ReturnType<typeof createInvoiceSteps> {
+  return atomically(db, () => createInvoiceSteps(db, input));
+}
+
+function createInvoiceSteps(db: AppDatabase, input: CreateInvoiceInput): CreatedInvoice {
   const company = db.select().from(companies).where(eq(companies.id, input.companyId)).get();
   if (!company) throw new InvoicingError(`Company ${input.companyId} not found.`);
   if (input.lines.length === 0) {
@@ -542,7 +548,13 @@ export interface VoidedInvoice {
  * says becomes a review item, not something this function guesses how to
  * fix on its own. Unallocate the payment first.
  */
-export function voidInvoice(db: AppDatabase, input: VoidInvoiceInput): VoidedInvoice {
+export function voidInvoice(
+  db: AppDatabase, input: Parameters<typeof voidInvoiceSteps>[1],
+): ReturnType<typeof voidInvoiceSteps> {
+  return atomically(db, () => voidInvoiceSteps(db, input));
+}
+
+function voidInvoiceSteps(db: AppDatabase, input: VoidInvoiceInput): VoidedInvoice {
   if (!input.reason || input.reason.trim().length < 3) {
     throw new InvoicingError('Voiding an invoice needs a reason.');
   }

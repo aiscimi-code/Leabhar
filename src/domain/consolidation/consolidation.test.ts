@@ -10,14 +10,14 @@ import { classifyTransaction, ClassificationError } from '../banking/classify';
 import { storeDocument } from '../documents/storage';
 import { confirmDocument, type ReviewedDocumentValues, type ReviewedLine } from '../documents/review';
 import { postDocumentAsInvoice, documentEvidenceLines, ConsolidationError } from './postDocument';
-import { settleBankTransaction, settleInvoiceByDirector } from './settle';
+import { settleBankTransaction, settleInvoiceByDirector, settlementRateNeed, previewSettlement } from './settle';
 import { transactionHistory } from './history';
 import { reversePayment } from '../invoicing/reversal';
 import { trialBalance, accountBalance } from '../accounting/ledger';
 import { makeDate } from '../dates';
 import {
   invoices, invoiceLines, vatEntries, bankTransactions, reviewItems, suppliers, customers, documents,
-  companyOfficers, payments,
+  companyOfficers, payments, journalLines,
 } from '@/db/schema';
 import { ids } from '@/lib/ids';
 import type { AppDatabase } from '@/db';
@@ -564,5 +564,90 @@ describe('transaction history', () => {
     const find = await bank([['20/03/2025', 'LINE A', '-12.30'], ['21/03/2025', 'LINE B', '-5.00']]);
     settleBankTransaction(db, { companyId, bankTransactionId: find('LINE A').id, allocations: [{ invoiceId: inv.invoiceId, amountMinor: 1_230 }] });
     expect(transactionHistory(db, { companyId, bankTransactionId: find('LINE B').id })).toEqual([]);
+  });
+});
+
+// Issue #223: settling across currencies takes one deliberate rate, falls back
+// to the statement's own rate for a foreign bank line, and can be previewed
+// without writing anything.
+describe('settling across currencies', () => {
+  const usdInvoice = () => {
+    const doc = confirmed({ currency: 'USD', supplierCountry: 'US', lines: [line('API usage', 10_000, null, 0)] });
+    return postDocumentAsInvoice(db, {
+      companyId, documentId: doc, coding: [code('6000', 'NON_EU_SERVICES_RCV')],
+      fxRate: { numerator: 9, denominator: 10, source: 'ecb', date: '2025-03-14' },
+    });
+  };
+  const fxLines = () => db.select().from(journalLines).where(eq(journalLines.accountId, systemAccountId(db, companyId, 'fx_gain_loss'))).all();
+
+  it('asks for USD per 1 EUR when a EUR line pays a USD invoice, and posts the exchange difference', async () => {
+    const inv = usdInvoice(); // USD 100.00 booked at EUR 90.00
+    const find = await bank([['20/03/2025', 'API PAYMENT', '-92.00']]);
+    const tx = find('API PAYMENT');
+    const need = settlementRateNeed(db, { companyId, bankTransactionId: tx.id, invoiceIds: [inv.invoiceId] });
+    expect(need).toMatchObject({ needed: true, from: 'EUR', to: 'USD' });
+    expect(() => settleBankTransaction(db, {
+      companyId, bankTransactionId: tx.id, allocations: [{ invoiceId: inv.invoiceId, amountMinor: 9_200 }],
+    })).toThrow(/deliberate/);
+
+    const fxRate = { numerator: 100, denominator: 92, source: 'user_supplied' };
+    const paid = settleBankTransaction(db, {
+      companyId, bankTransactionId: tx.id, fxRate, allocations: [{ invoiceId: inv.invoiceId, amountMinor: 9_200 }],
+    });
+    // Paid EUR 92.00 for a bill booked at EUR 90.00: a loss of 2.00.
+    expect(paid.fxDifferenceMinor).toBe(200);
+    expect(db.select().from(invoices).where(eq(invoices.id, inv.invoiceId)).get()!.status).toBe('paid');
+    expect(fxLines().reduce((s, l) => s + l.baseDebitMinor - l.baseCreditMinor, 0)).toBe(200);
+    balanced();
+  });
+
+  it('uses the statement’s own rate for a USD bank line paying a USD invoice', async () => {
+    const inv = usdInvoice();
+    await importStatement(db, {
+      companyId, bankAccountId, filename: 'usd.csv',
+      content: 'Date,Description,Amount,Currency,Settled Amount\n20/03/2025,API USD,-100.00,USD,-95.00',
+      fileFormat: 'csv',
+      columnMap: { Date: 'transaction_date', Description: 'description', Amount: 'amount', Currency: 'currency', 'Settled Amount': 'base_amount' },
+    });
+    const tx = db.select().from(bankTransactions).where(eq(bankTransactions.description, 'API USD')).get()!;
+    const need = settlementRateNeed(db, { companyId, bankTransactionId: tx.id, invoiceIds: [inv.invoiceId] });
+    expect(need).toMatchObject({ needed: true, from: 'USD', to: 'EUR', statementRate: '0.950000' });
+    const paid = settleBankTransaction(db, {
+      companyId, bankTransactionId: tx.id, allocations: [{ invoiceId: inv.invoiceId, amountMinor: 10_000 }],
+    });
+    expect(paid.fxDifferenceMinor).toBe(500); // EUR 95.00 paid for EUR 90.00 booked
+    balanced();
+  });
+
+  it('refuses invoices in two foreign currencies from one base-currency line', async () => {
+    const usd = usdInvoice();
+    const gbpDoc = confirmed({ currency: 'GBP', supplierCountry: 'GB', lines: [line('Licence', 5_000, null, 0)] });
+    const gbp = postDocumentAsInvoice(db, {
+      companyId, documentId: gbpDoc, coding: [code('6000', 'NON_EU_SERVICES_RCV')],
+      fxRate: { numerator: 12, denominator: 10, source: 'ecb' },
+    });
+    const find = await bank([['20/03/2025', 'MIXED', '-150.00']]);
+    expect(settlementRateNeed(db, { companyId, bankTransactionId: find('MIXED').id, invoiceIds: [usd.invoiceId, gbp.invoiceId] }))
+      .toMatchObject({ needed: 'unsupported' });
+  });
+
+  it('previews exactly what settling would post, and writes nothing', async () => {
+    const inv = usdInvoice();
+    const find = await bank([['20/03/2025', 'API PAYMENT', '-92.00']]);
+    const tx = find('API PAYMENT');
+    const counts = () => [journalLines, vatEntries, reviewItems].map((t) => db.select().from(t).all().length);
+    const before = counts();
+    const input = {
+      companyId, bankTransactionId: tx.id, fxRate: { numerator: 100, denominator: 92, source: 'user_supplied' },
+      allocations: [{ invoiceId: inv.invoiceId, amountMinor: 9_200 }],
+    };
+    const preview = previewSettlement(db, input);
+    expect(preview).toMatchObject({ ok: true, payment: { fxDifferenceMinor: 200, unallocatedMinor: 0 } });
+    expect(counts()).toEqual(before);
+    expect(db.select().from(invoices).where(eq(invoices.id, inv.invoiceId)).get()!.outstandingMinor).toBe(10_000);
+    expect(db.select().from(bankTransactions).where(eq(bankTransactions.id, tx.id)).get()!.journalEntryId).toBeNull();
+    expect(previewSettlement(db, { ...input, fxRate: undefined })).toMatchObject({ ok: false });
+    // And settling for real gives the same figures.
+    expect(settleBankTransaction(db, input).fxDifferenceMinor).toBe(200);
   });
 });

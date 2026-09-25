@@ -1,6 +1,7 @@
 import { and, eq, isNull, ne } from 'drizzle-orm';
+import { atomically } from '../accounting/journal';
 import type { AppDatabase } from '@/db';
-import { bankTransactions, invoices, documents, documentMatches, auditEvents } from '@/db/schema';
+import { bankTransactions, invoices, documents, documentMatches, auditEvents, companies } from '@/db/schema';
 import { ids } from '@/lib/ids';
 import { asIsoDate, type IsoDate } from '../dates';
 import { recordPayment, type RecordedPayment } from '../invoicing/payments';
@@ -41,7 +42,13 @@ export interface SettleInput {
   requestId?: string;
 }
 
-export function settleBankTransaction(db: AppDatabase, input: SettleInput): RecordedPayment {
+export function settleBankTransaction(
+  db: AppDatabase, input: Parameters<typeof settleBankTransactionSteps>[1],
+): ReturnType<typeof settleBankTransactionSteps> {
+  return atomically(db, () => settleBankTransactionSteps(db, input));
+}
+
+function settleBankTransactionSteps(db: AppDatabase, input: SettleInput): RecordedPayment {
   const tx = db.select().from(bankTransactions)
     .where(and(eq(bankTransactions.id, input.bankTransactionId), eq(bankTransactions.companyId, input.companyId)))
     .get();
@@ -58,7 +65,7 @@ export function settleBankTransaction(db: AppDatabase, input: SettleInput): Reco
     paymentDate: asIsoDate(tx.transactionDate),
     amountMinor: Math.abs(tx.amountMinor),
     currency: tx.currency,
-    fxRate: input.fxRate,
+    fxRate: input.fxRate ?? statementRate(db, input.companyId, tx),
     vatDeclarationDate: input.vatDeclarationDate,
     method: 'bank_transfer',
     bankTransactionId: tx.id,
@@ -198,4 +205,114 @@ export function settleInvoiceByDirector(db: AppDatabase, input: SettleByDirector
     actor: input.actor,
     requestId: input.requestId,
   });
+}
+
+/**
+ * The bank's own rate, when the statement carried one for a foreign-currency
+ * line: it converts the line to base currency. A rate the person enters takes
+ * precedence (issue #223).
+ */
+function statementRate(
+  db: AppDatabase, companyId: string, tx: typeof bankTransactions.$inferSelect,
+): SettleInput['fxRate'] {
+  const base = db.select({ c: companies.baseCurrency }).from(companies).where(eq(companies.id, companyId)).get()!.c;
+  if (tx.currency.toUpperCase() === base.toUpperCase()) return undefined;
+  if (!tx.fxRateNumerator || !tx.fxRateDenominator) return undefined;
+  return {
+    numerator: tx.fxRateNumerator, denominator: tx.fxRateDenominator,
+    source: tx.fxRateSource ?? 'bank_statement',
+  };
+}
+
+/** What exchange rate, if any, settling a bank line against these invoices needs (issue #223). */
+export type SettlementRateNeed =
+  | { needed: false; statementRate: string | null }
+  | {
+      needed: true;
+      /** One unit of this currency (the bank line's)… */
+      from: string;
+      /** …is worth this many units of this one. */
+      to: string;
+      /** Why the rate is asked for, for the screen. */
+      reason: string;
+      /** The statement's own rate, when there is one to pre-fill with. */
+      statementRate: string | null;
+    }
+  | { needed: 'unsupported'; reason: string };
+
+/**
+ * `recordPayment` takes one rate, converting the payment's currency: to base
+ * when the bank line is foreign (and then to the invoice currency, which must
+ * be the same or base), otherwise to the invoice's currency.
+ */
+export function settlementRateNeed(
+  db: AppDatabase, input: { companyId: string; bankTransactionId: string; invoiceIds: string[] },
+): SettlementRateNeed {
+  const tx = db.select().from(bankTransactions)
+    .where(and(eq(bankTransactions.id, input.bankTransactionId), eq(bankTransactions.companyId, input.companyId)))
+    .get();
+  if (!tx) throw new ConsolidationError(`Bank transaction ${input.bankTransactionId} not found.`);
+  const base = db.select({ c: companies.baseCurrency }).from(companies)
+    .where(eq(companies.id, input.companyId)).get()!.c.toUpperCase();
+  const paid = tx.currency.toUpperCase();
+  const invoiceCurrencies = [...new Set(input.invoiceIds.map((id) => db.select({ c: invoices.currency })
+    .from(invoices).where(and(eq(invoices.id, id), eq(invoices.companyId, input.companyId))).get()?.c.toUpperCase())
+    .filter((c): c is string => Boolean(c)))];
+  const statement = statementRate(db, input.companyId, tx);
+  // For display only: the posting uses the statement's exact fraction.
+  const statementText = statement ? (statement.numerator / statement.denominator).toFixed(6) : null;
+
+  if (paid !== base) {
+    const other = invoiceCurrencies.find((c) => c !== paid && c !== base);
+    if (other) {
+      return {
+        needed: 'unsupported',
+        reason: `A ${other} invoice settled from a ${paid} bank line involves three currencies with ${base} as `
+          + 'the base currency, and is not supported.',
+      };
+    }
+    return {
+      needed: true, from: paid, to: base, statementRate: statementText,
+      reason: statement
+        ? `The statement gives the bank's rate for this ${paid} line; change it only if the bank's figure is wrong.`
+        : `This bank line is in ${paid}: the rate converts it to ${base} for the books.`,
+    };
+  }
+  const foreign = invoiceCurrencies.filter((c) => c !== paid);
+  if (foreign.length > 1) {
+    return {
+      needed: 'unsupported',
+      reason: `The invoices ticked are in ${foreign.join(' and ')}. Settle one currency at a time.`,
+    };
+  }
+  if (foreign.length === 1) {
+    return {
+      needed: true, from: paid, to: foreign[0]!, statementRate: null,
+      reason: `The invoice is in ${foreign[0]} and the payment in ${paid}: the rate converts what was paid into `
+        + 'the invoice\'s currency to settle it.',
+    };
+  }
+  return { needed: false, statementRate: null };
+}
+
+class DryRun extends Error {
+  constructor(readonly payment: RecordedPayment) { super('dry run'); }
+}
+
+/**
+ * What settling would post — the amount applied to each invoice in its own
+ * currency, the exchange difference, what is left on account — computed by
+ * the same code that posts it, inside a transaction that is always rolled
+ * back. Nothing is written (issue #223).
+ */
+export function previewSettlement(
+  db: AppDatabase, input: SettleInput,
+): { ok: true; payment: RecordedPayment } | { ok: false; error: string } {
+  try {
+    db.transaction(() => { throw new DryRun(settleBankTransaction(db, input)); });
+    throw new Error('unreachable');
+  } catch (error) {
+    if (error instanceof DryRun) return { ok: true, payment: error.payment };
+    return { ok: false, error: error instanceof Error ? error.message : String(error) };
+  }
 }

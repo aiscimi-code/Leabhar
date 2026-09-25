@@ -17,7 +17,7 @@ import { scanForAnomalies, syncAnomaliesToReviewQueue } from '@/domain/review/an
 import { createInvoice } from '@/domain/invoicing/invoices';
 import { recordPayment } from '@/domain/invoicing/payments';
 import { settleInvoiceByDirector } from '@/domain/consolidation/settle';
-import { parseAmount, parseRate } from '@/domain/money';
+import { parseAmount, parseRate, parseDecimalRate } from '@/domain/money';
 import { asIsoDate } from '@/domain/dates';
 import type { VatFrequency } from '@/domain/config/periods';
 
@@ -54,12 +54,8 @@ const optional = (formData: FormData, key: string): string | null | undefined =>
 
 /** Convert a decimal exchange rate (e.g. "0.92") to an integer rational. */
 function parseRateToRational(input: string): { numerator: number; denominator: number; source: string } | undefined {
-  const text = input.trim();
-  if (!/^\d+(\.\d{1,6})?$/.test(text)) return undefined;
-  const [whole = '0', frac = ''] = text.split('.');
-  const denominator = Math.pow(10, frac.length || 0);
-  const numerator = Number(whole) * denominator + (frac ? Number(frac) : 0);
-  return { numerator, denominator, source: 'manual' };
+  const rate = parseDecimalRate(input);
+  return rate ? { ...rate, source: 'manual' } : undefined;
 }
 
 export async function updateCompanyAction(formData: FormData): Promise<ActionResult> {

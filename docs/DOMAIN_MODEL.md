@@ -370,6 +370,16 @@ by the payment, dated at receipt. One payment may settle several invoices, an
 invoice may be settled in parts, and a credit note allocated in the payment's
 own direction reduces the cash. A remainder is held on account and flagged.
 
+Across currencies a settlement takes one rate (issue #223): when the bank line
+is foreign, it converts the line to base currency (the statement's own rate is
+used unless the person enters one); when the line is in base currency and an
+invoice is foreign, it converts the payment into the invoice's currency. Three
+currencies at once, or invoices in two foreign currencies from one line, are
+refused. `previewSettlement` computes exactly what settling would post — the
+exchange difference and any remainder — by running the same code in a
+transaction that is always rolled back; the settle screen shows it before
+anything is written.
+
 `classifyTransaction` remains for bank lines with no invoice. On a purchase it
 claims no input VAT under any VAT-charging treatment (no VAT entry is created)
 and raises a `missing_document` review item. It refuses a bank line matched to
@@ -387,6 +397,21 @@ purchases, is refused.
 Trace: `vat_entries.invoice_line_id` → `invoice_lines.document_line_id` and
 `invoice_lines.vat_rule_keys` → `document_lines` → `documents`
 (`transactionTrace`).
+
+### Posting paths are atomic
+
+Every exported posting path — classify, reclassify, split journal,
+director-paid expense, create and void invoice, record and reverse payment,
+post a document, settle, adjustments, depreciation and disposal — runs as one
+database transaction (`atomically`; nested paths become savepoints). A step
+refused after an earlier step posted rolls the earlier one back (issue #231).
+
+Reclassifying checks the accounting period of both posting dates before
+writing: the reversal date, and the transaction's own date, where the new
+classification posts. If the transaction's own period is locked or closed the
+reclassification is refused with nothing changed — the person unlocks the
+period, or leaves the line and posts a dated adjustment in an open period. The
+new classification is never moved to another period.
 
 ### VAT period lock
 

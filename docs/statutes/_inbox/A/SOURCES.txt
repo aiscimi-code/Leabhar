@@ -1,0 +1,11 @@
+# SOURCES — section A
+Retrieved: 2026-09-25
+
+- finance-act-2025-enacted-print.html + finance-act-2025-enacted.pdf
+  https://www.irishstatutebook.ie/eli/2025/act/18/enacted/en/print
+  https://www.irishstatutebook.ie/eli/2025/act/18/enacted/en/pdf
+  Finance Act 2025 (No. 18 of 2025), whole Act as enacted.
+- Commencement orders listed on https://www.irishstatutebook.ie/isbc/2025_18.html
+  (retrieved 2026-09-25). Each print HTML from eli/.../made/en/print:
+  S.I. 684/2025, 685/2025, 686/2025, 687/2025, 305/2026, 306/2026, 324/2026.
+  S.I. 477 of 2026 on that page is the ISB "updated to" marker, not an order under this Act; not collected as a commencement order.
