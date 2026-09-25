@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { eq } from 'drizzle-orm';
-import { createTestDatabase } from '@/db/testing';
+import { createTestDatabase, insertTestBankTransaction } from '@/db/testing';
 import { createCompany, addBankAccount } from '../config/setup';
 import { scanForAnomalies, syncAnomaliesToReviewQueue } from './anomalies';
 import { importStatement } from '../banking/import';
@@ -58,13 +58,10 @@ const addTransaction = (
   description: string, amountMinor: number, date = '2025-03-15',
   over: Partial<typeof bankTransactions.$inferInsert> = {},
 ): string => {
-  const id = ids.bankTransaction();
-  db.insert(bankTransactions).values({
-    id, companyId, bankAccountId, transactionDate: date, description,
-    amountMinor, currency: 'EUR', fingerprint: `fp-${id}`,
+  return insertTestBankTransaction(db, {
+    companyId, bankAccountId, transactionDate: date, description, amountMinor,
     supplierId, status: 'posted', ...over,
-  }).run();
-  return id;
+  });
 };
 
 describe('unusual supplier amounts', () => {
