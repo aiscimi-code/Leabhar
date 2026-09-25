@@ -14,6 +14,8 @@ import {
   confirmDocument, rejectDocument, reopenDocument, type ReviewedDocumentValues,
 } from '@/domain/documents/review';
 import { actorName } from '@/lib/session';
+import { postDocumentAsInvoice, type LineCoding } from '@/domain/consolidation/postDocument';
+import { settleBankTransaction, type SettleAllocation } from '@/domain/consolidation/settle';
 import { scanWatchFolder } from '@/domain/documents/watch';
 import { importStatement } from '@/domain/banking/import';
 import { seedDemoCompany } from '@/db/seed/demo';
@@ -447,6 +449,61 @@ export async function readRecognisedTextAction(documentId: string, text: string)
       message: result.applied
         ? `Read ${result.result.lines.length} line${result.result.lines.length === 1 ? '' : 's'} from the recognised text. Check every value against the page.`
         : 'The text was recognised but stored only: this document is already confirmed.',
+    };
+  } catch (error) {
+    return fail(error);
+  }
+}
+
+// ---- Consolidation (issue #203) ----
+
+type FxInput = { numerator: number; denominator: number; source: string; date?: string };
+
+/** Post a confirmed document as an invoice, from the person's coding of each line. */
+export async function postDocumentAction(input: {
+  documentId: string; coding: LineCoding[]; fxRate?: FxInput;
+}): Promise<ActionResult> {
+  try {
+    const company = requireCompany();
+    const created = postDocumentAsInvoice(getDb(), {
+      companyId: company.id, documentId: input.documentId, coding: input.coding, fxRate: input.fxRate,
+      actor: await actorName(),
+    });
+    revalidatePath(`/documents/${input.documentId}`);
+    revalidatePath('/documents');
+    revalidatePath('/invoices');
+    revalidatePath('/vat');
+    return {
+      ok: true,
+      message: `Posted: net ${(created.netMinor / 100).toFixed(2)}, VAT ${(created.vatMinor / 100).toFixed(2)}`
+        + `${created.vatDeferred ? ' (output VAT due when paid, cash receipts basis)' : ''}. `
+        + 'Now settle its bank payment against it.',
+    };
+  } catch (error) {
+    return fail(error);
+  }
+}
+
+/** Settle a bank line against one or more invoices. */
+export async function settleTransactionAction(input: {
+  bankTransactionId: string; allocations: SettleAllocation[]; fxRate?: FxInput;
+}): Promise<ActionResult> {
+  try {
+    const company = requireCompany();
+    const payment = settleBankTransaction(getDb(), {
+      companyId: company.id, bankTransactionId: input.bankTransactionId, allocations: input.allocations,
+      fxRate: input.fxRate, actor: await actorName(),
+    });
+    revalidatePath(`/transactions/${input.bankTransactionId}`);
+    revalidatePath('/transactions');
+    revalidatePath('/invoices');
+    revalidatePath('/review');
+    revalidatePath('/');
+    return {
+      ok: true,
+      message: payment.unallocatedMinor
+        ? `Settled. ${(payment.unallocatedMinor / 100).toFixed(2)} is held on account and flagged for review.`
+        : 'Settled in full.',
     };
   } catch (error) {
     return fail(error);

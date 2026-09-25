@@ -355,6 +355,30 @@ Lines live in `document_lines`, per-rate VAT in `document_vat_totals`, both with
 provenance. The VAT rate for a purchase comes from these confirmed lines — never
 from a bank amount.
 
+### Consolidation (bank ↔ invoice)
+
+```
+confirmed document ──postDocumentAsInvoice──▶ invoice (one line per printed line,
+                                               stated net and VAT, VAT entry per line)
+bank line ──settleBankTransaction──▶ payment ──allocations──▶ invoices / credit notes
+```
+
+The invoice proves the supply and its VAT; the bank line proves payment. Input
+VAT is dated by the invoice (tax point = supply date, else invoice date) under
+both bases; on the cash receipts basis a sales invoice's output VAT is released
+by the payment, dated at receipt. One payment may settle several invoices, an
+invoice may be settled in parts, and a credit note allocated in the payment's
+own direction reduces the cash. A remainder is held on account and flagged.
+
+`classifyTransaction` remains for bank lines with no invoice. On a purchase it
+claims no input VAT under any VAT-charging treatment (no VAT entry is created)
+and raises a `missing_document` review item. It refuses a bank line matched to
+a confirmed document, which must be posted and settled instead.
+
+Trace: `vat_entries.invoice_line_id` → `invoice_lines.document_line_id` and
+`invoice_lines.vat_rule_keys` → `document_lines` → `documents`
+(`transactionTrace`).
+
 ### Bank transaction
 
 ```

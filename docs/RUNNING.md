@@ -346,6 +346,35 @@ documents**:
 
 Either way you confirm each document yourself.
 
+### Posting invoices and settling payments
+
+The VAT in the books comes from the invoice, never from the bank amount. Once a
+document is confirmed, its page offers **Post as an invoice**: one row per line
+of the document with the confirmed net and VAT. For each line choose the
+account and the VAT treatment. Each treatment offered says why:
+
+- a statutory rule that matched the document's facts (with a link to the provision),
+- the treatment confirmed for this supplier or customer before,
+- the rate printed on the line,
+- VAT wording printed on the invoice (reverse charge, exempt, …).
+
+One is pre-selected only when all of these agree; otherwise the line is flagged
+and you choose. A treatment whose rate differs from the rate printed on the line
+is refused.
+
+Then open the bank line and use **Settle against invoices**. Tick the invoices
+the payment covers: several invoices, part of one, or invoices less a credit
+note. Anything left over is held on account and flagged. **Where the VAT comes
+from** on the bank line then shows the whole chain: the invoice, the confirmed
+document, each line and its rule, the VAT entry, the VAT3 box and the period.
+
+A payment with no invoice (bank charges, wages, transfers, or one whose invoice
+you do not have) can still be classified. A purchase classified this way claims
+**no input VAT**: the whole amount is the cost, and it is flagged "no invoice"
+until the invoice is confirmed, posted and settled. A receipt classified without
+a sales invoice or till record keeps its output VAT, so the liability is not
+understated, but it is flagged too.
+
 ## Backups
 
 Create one from **Setup → Backup**. Each backup is a new numbered version

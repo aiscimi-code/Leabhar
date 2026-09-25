@@ -20,6 +20,8 @@ import { search } from '@/domain/search/search';
 import { suggestVatTreatment } from '@/domain/rules/vatSuggestion';
 import { verifyStatuteFile } from '@/domain/rules/knowledgeBase';
 import { documentReviewValues } from '@/domain/documents/review';
+import { transactionTrace } from '@/domain/consolidation/trace';
+import { documentLineChoices } from '@/domain/consolidation/suggest';
 import { asIsoDate, today, makeDate, type IsoDate } from '@/domain/dates';
 import { money } from '@/lib/format';
 
@@ -309,10 +311,31 @@ export function transactionDetail(transactionId: string) {
         .where(eq(statementImports.id, transaction.statementImportId)).get()
     : undefined;
 
+  // Consolidation (issue #203): what this bank line can be settled against,
+  // and the trace behind whatever it was posted as.
+  const trace = transactionTrace(db, { companyId: company.id, bankTransactionId: transaction.id });
+  const settleDirection = transaction.amountMinor < 0 ? 'purchase' : 'sales';
+  const openInvoices = transaction.journalEntryId ? [] : db.select({
+    invoice: invoices, supplierName: suppliers.name, customerName: customers.name,
+  }).from(invoices)
+    .leftJoin(suppliers, eq(invoices.supplierId, suppliers.id))
+    .leftJoin(customers, eq(invoices.customerId, customers.id))
+    .where(and(
+      eq(invoices.companyId, company.id), eq(invoices.direction, settleDirection),
+      ne(invoices.status, 'void'), ne(invoices.outstandingMinor, 0),
+    ))
+    .orderBy(invoices.invoiceDate).all()
+    .map((r) => ({
+      invoiceId: r.invoice.id, invoiceNumber: r.invoice.invoiceNumber, invoiceDate: r.invoice.invoiceDate,
+      party: r.supplierName ?? r.customerName ?? '—', isCreditNote: r.invoice.isCreditNote,
+      outstandingMinor: r.invoice.outstandingMinor, currency: r.invoice.currency,
+      documentId: r.invoice.documentId,
+    }));
+
   return {
     transaction, account, treatment, supplier, customer, entry, lines,
     vatEntries: vatRows, matchedDocument, candidates, audit, bankAccount, statementImport,
-    company,
+    company, trace, openInvoices,
   };
 }
 
@@ -662,9 +685,21 @@ export function documentDetail(documentId: string) {
   const customerOptions = db.select({ id: customers.id, name: customers.name }).from(customers)
     .where(eq(customers.companyId, company.id)).orderBy(customers.name).all();
 
+  // Posting (issue #203): the choices for coding each line, once confirmed.
+  let posting: { choices: ReturnType<typeof documentLineChoices> | null; error: string | null } | null = null;
+  if (document.reviewStatus === 'confirmed' && !document.invoiceId) {
+    try {
+      posting = { choices: documentLineChoices(db, { companyId: company.id, documentId }), error: null };
+    } catch (error) {
+      posting = { choices: null, error: error instanceof Error ? error.message : String(error) };
+    }
+  }
+  const invoice = document.invoiceId
+    ? db.select().from(invoices).where(eq(invoices.id, document.invoiceId)).get() : undefined;
+
   return {
     document, supplier, extractions, matches, matchedTransaction, audit, duplicateOf, company,
-    review, supplierOptions, customerOptions, openItems,
+    review, supplierOptions, customerOptions, openItems, posting, invoice,
   };
 }
 

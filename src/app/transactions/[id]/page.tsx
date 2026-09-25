@@ -12,6 +12,8 @@ import { CandidateActions } from '@/components/CandidateActions';
 import { linkDocumentAction, unmatchDocumentAction, acceptMatchAction, rejectMatchAction } from '@/app/actions';
 import { chartOfAccounts, treatmentsWithRates, statutoryVatSuggestion } from '@/lib/queries';
 import { StatutorySuggestion } from '@/components/StatutorySuggestion';
+import { SettleForm } from '@/components/SettleForm';
+import { TracePanel } from '@/components/TracePanel';
 import { asIsoDate } from '@/domain/dates';
 
 export const dynamic = 'force-dynamic';
@@ -35,7 +37,11 @@ export default async function TransactionDetailPage({ params }: {
   const {
     transaction: t, account, treatment, supplier, customer, entry, lines,
     vatEntries, matchedDocument, candidates, audit, bankAccount, statementImport, company,
+    trace, openInvoices,
   } = detail;
+  // A confirmed invoice behind this line: it is posted from the invoice and
+  // settled, never classified as if the bank amount were the evidence (issue #203).
+  const confirmedDocument = matchedDocument?.reviewStatus === 'confirmed' ? matchedDocument : null;
 
   const accounts = chartOfAccounts().filter((a) => a.active);
   // Rates are resolved server-side, as of this transaction's date, from the
@@ -117,13 +123,57 @@ export default async function TransactionDetailPage({ params }: {
 
           {vatSuggestion && <StatutorySuggestion suggestion={vatSuggestion} />}
 
+          {trace && <TracePanel trace={trace} />}
+
+          {!t.journalEntryId && (
+            <Panel
+              title="Settle against invoices"
+              description="The usual way to post a payment: it settles the invoices it pays, whose VAT comes from their confirmed lines."
+            >
+              {confirmedDocument && !confirmedDocument.invoiceId && (
+                <p className="px-4 pt-3 text-[12px] text-caution">
+                  The matched document{' '}
+                  <Link href={`/documents/${confirmedDocument.id}`} className="text-accent hover:underline">
+                    {confirmedDocument.originalFilename}
+                  </Link>{' '}
+                  is confirmed but not yet posted. Post it as an invoice first.
+                </p>
+              )}
+              <SettleForm
+                bankTransactionId={t.id}
+                amountMinor={t.amountMinor}
+                currency={t.currency}
+                invoices={openInvoices}
+                preselectInvoiceId={confirmedDocument?.invoiceId ?? null}
+              />
+            </Panel>
+          )}
+
           <Panel
             title="Accounting classification"
             description={t.journalEntryId
               ? 'Posted. Changing it reverses the original entry and posts a new one, so both remain in the audit trail.'
               : 'Not yet posted to the ledger.'}
           >
+            {trace?.kind === 'settled' ? (
+              <p className="px-4 py-3 text-[12px] text-ink-muted">
+                This payment was posted by settling its invoices (above). To change it, void or correct the
+                invoice rather than reclassifying the payment.
+              </p>
+            ) : !t.journalEntryId && confirmedDocument ? (
+              <p className="px-4 py-3 text-[12px] text-ink-muted">
+                This payment has a confirmed invoice behind it, so it is settled against that invoice (above) rather
+                than classified on its own.
+              </p>
+            ) : (
             <div className="px-4 py-3">
+              {t.amountMinor < 0 && !t.journalEntryId && (
+                <p className="text-[12px] text-caution mb-2">
+                  Classifying a payment without its invoice claims no input VAT: the whole amount is posted as the
+                  cost, and it is flagged "no invoice". Use it for bank charges, wages, transfers and payments whose
+                  invoice you do not have.
+                </p>
+              )}
               <ClassifyForm
                 transactionId={t.id}
                 accounts={accounts.map((a) => ({
@@ -144,6 +194,7 @@ export default async function TransactionDetailPage({ params }: {
                 suggestedTreatmentId={vatSuggestion?.status === 'suggested' ? vatSuggestion.treatment?.id : null}
               />
             </div>
+            )}
           </Panel>
 
           {entry && (
@@ -323,7 +374,7 @@ export default async function TransactionDetailPage({ params }: {
               <>
                 <Empty
                   title="No document"
-                  detail="VAT reclaimed without a supporting invoice can be disallowed on audit."
+                  detail="Input VAT is claimed only on a confirmed invoice. Upload it to reclaim the VAT on this payment."
                   action={<LinkButton href="/documents">Upload a document</LinkButton>}
                 />
                 <div className="px-4 py-2.5 border-t border-line">

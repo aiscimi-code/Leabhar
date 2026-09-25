@@ -277,7 +277,8 @@ describe('explainAccount', () => {
       companyId, accountId: byCode['6010']!, to: FY_END,
     });
 
-    expect(explanation.valueMinor).toBe(10_000);
+    // No invoice, so no input VAT: the whole payment is the cost (issue #203).
+    expect(explanation.valueMinor).toBe(12_300);
     expect(explanation.sources).toHaveLength(1);
     // The source points at the bank transaction, so the UI can reach the document.
     expect(explanation.sources[0]!.entityType).toBe('bank_transaction');

@@ -2,6 +2,7 @@ import { and, eq, gte, lte, ne, isNull, or, sql } from 'drizzle-orm';
 import type { AppDatabase } from '@/db';
 import {
   documents, bankTransactions, documentMatches, suppliers, auditEvents, reviewItems,
+  payments, paymentAllocations,
 } from '@/db/schema';
 import { ids } from '@/lib/ids';
 import { nowIso, addDays, asIsoDate } from '../dates';
@@ -470,6 +471,24 @@ export function unmatchDocument(
     .where(eq(documents.id, params.documentId)).get();
   if (!document?.matchedTransactionId) return;
 
+  // A document whose invoice this bank line has paid is not merely matched:
+  // the payment is posted. Unlinking it would leave the payment in the books
+  // with its evidence apparently gone (issue #203).
+  if (document.invoiceId) {
+    const settled = db.select({ id: payments.id }).from(payments)
+      .innerJoin(paymentAllocations, eq(paymentAllocations.paymentId, payments.id))
+      .where(and(
+        eq(payments.bankTransactionId, document.matchedTransactionId),
+        eq(paymentAllocations.invoiceId, document.invoiceId),
+      )).get();
+    if (settled) {
+      throw new Error(
+        'This bank line has paid the invoice posted from this document, so they cannot be unlinked. '
+          + 'The payment must be reversed first.',
+      );
+    }
+  }
+
   db.transaction((tx) => {
     tx.update(documents).set({
       matchedTransactionId: null, matchStatus: 'unmatched', updatedAt: nowIso(),
@@ -491,7 +510,7 @@ export function unmatchDocument(
 }
 
 /** Close the review item a resolved decision was raised for. */
-function resolveReviewItems(
+export function resolveReviewItems(
   tx: Tx | AppDatabase, companyId: string, dedupeKey: string, resolution: string,
 ): void {
   tx.update(reviewItems).set({

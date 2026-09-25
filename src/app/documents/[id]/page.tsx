@@ -8,6 +8,9 @@ import { money, date, dateTime, label, percent } from '@/lib/format';
 import { LinkControls } from '@/components/LinkControls';
 import { CandidateActions } from '@/components/CandidateActions';
 import { DocumentReview } from '@/components/DocumentReview';
+import { PostInvoiceForm } from '@/components/PostInvoiceForm';
+import { chartOfAccounts, treatmentsWithRates } from '@/lib/queries';
+import { asIsoDate } from '@/domain/dates';
 import { linkDocumentAction, unmatchDocumentAction, acceptMatchAction, rejectMatchAction } from '@/app/actions';
 
 export const dynamic = 'force-dynamic';
@@ -46,7 +49,7 @@ export default async function DocumentDetailPage({ params }: {
   if (!detail) notFound();
 
   const { document: doc, supplier, extractions, matches, matchedTransaction,
-          audit, duplicateOf, company, review, supplierOptions, customerOptions, openItems } = detail;
+          audit, duplicateOf, company, review, supplierOptions, customerOptions, openItems, posting, invoice } = detail;
   const latest = extractions[0];
   const currency = doc.currency ?? company.baseCurrency;
   const linkableTransactions = unpostedTransactionOptions();
@@ -96,6 +99,43 @@ export default async function DocumentDetailPage({ params }: {
           customerOptions={customerOptions}
         />
       </div>
+
+      {posting && (
+        <Panel title="Post as an invoice"
+          description="The VAT posted is the VAT on each confirmed line — never a split of the bank payment. Choose the account and treatment for every line; each option says why it is offered.">
+          {posting.error ? (
+            <p className="px-4 py-3 text-[12px] text-negative">{posting.error}</p>
+          ) : posting.choices && (
+            <PostInvoiceForm
+              documentId={doc.id}
+              direction={posting.choices.direction}
+              currency={(doc.currency ?? company.baseCurrency).toUpperCase()}
+              baseCurrency={company.baseCurrency}
+              lines={posting.choices.lines.map((c) => ({
+                number: c.line.number, description: c.line.description, netMinor: c.line.netMinor,
+                vatMinor: c.line.vatMinor, rateBasisPoints: c.line.rateBasisPoints, options: c.options,
+                preselectedTreatmentId: c.preselectedTreatmentId, accountId: c.accountId,
+                accountReason: c.accountReason, flags: c.flags,
+              }))}
+              accounts={chartOfAccounts().filter((a) => a.active).map((a) => ({ id: a.id, code: a.code, name: a.name, type: a.type }))}
+              treatments={treatmentsWithRates(asIsoDate(doc.documentDate ?? new Date().toISOString().slice(0, 10)))
+                .map((t) => ({ id: t.id, code: t.code, name: t.name }))}
+            />
+          )}
+        </Panel>
+      )}
+      {invoice && (
+        <Panel title="Posted as an invoice">
+          <p className="px-4 py-3 text-[12px]">
+            <Link href={`/invoices/${invoice.id}`} className="text-accent hover:underline">
+              {invoice.invoiceNumber ?? 'Invoice'}
+            </Link>{' '}
+            · net {money(invoice.netMinor, invoice.currency)} · VAT {money(invoice.vatMinor, invoice.currency)}
+            {' '}· {label(invoice.status)}
+            {invoice.outstandingMinor !== 0 && ` · ${money(invoice.outstandingMinor, invoice.currency)} outstanding`}
+          </p>
+        </Panel>
+      )}
 
       <div className="grid grid-cols-[1.3fr_1fr] gap-4 items-start">
         <div>

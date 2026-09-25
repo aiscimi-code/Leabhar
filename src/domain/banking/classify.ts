@@ -2,7 +2,7 @@ import { and, eq } from 'drizzle-orm';
 import type { AppDatabase } from '@/db';
 import {
   bankTransactions, accounts, vatTreatments, companies, bankAccounts,
-  auditEvents, journalEntries, vatEntries, suppliers, customers, companyOfficers,
+  auditEvents, journalEntries, vatEntries, suppliers, customers, companyOfficers, documents,
 } from '@/db/schema';
 import { ids } from '@/lib/ids';
 import { asIsoDate, nowIso, type IsoDate } from '../dates';
@@ -11,6 +11,7 @@ import { postJournalEntry, reverseJournalEntry } from '../accounting/journal';
 import { systemAccountId } from '../config/setup';
 import { createVatEntries, resolveTreatment, calculateVat } from '../vat/engine';
 import { AccountingError } from '../accounting/errors';
+import { upsertReviewItem } from '../extraction/service';
 
 export class ClassificationError extends AccountingError {}
 
@@ -78,6 +79,23 @@ export function classifyTransaction(db: AppDatabase, input: ClassifyInput): Clas
     );
   }
 
+  // A bank line with a confirmed invoice behind it is posted from the invoice
+  // (its lines carry the VAT) and settled by a payment — never classified as
+  // if the bank amount itself were the evidence (issue #203).
+  const confirmedDocument = db.select({ id: documents.id, name: documents.originalFilename }).from(documents)
+    .where(and(
+      eq(documents.companyId, input.companyId),
+      eq(documents.matchedTransactionId, transaction.id),
+      eq(documents.reviewStatus, 'confirmed'),
+    )).get();
+  if (confirmedDocument) {
+    throw new ClassificationError(
+      `This payment is matched to the confirmed document "${confirmedDocument.name}". Post that document as `
+        + 'an invoice and settle this bank line against it, so the VAT comes from the invoice lines.',
+      { bankTransactionId: transaction.id, documentId: confirmedDocument.id },
+    );
+  }
+
   const company = db.select().from(companies).where(eq(companies.id, input.companyId)).get()!;
   const account = db.select().from(accounts)
     .where(and(eq(accounts.id, input.accountId), eq(accounts.companyId, input.companyId)))
@@ -132,13 +150,25 @@ export function classifyTransaction(db: AppDatabase, input: ClassifyInput): Clas
   const direction = isMoneyOut ? 'purchases' : 'sales';
   const statementAmount = Math.abs(transaction.amountMinor);
 
-  const calculation = calculateVat({
-    treatment: resolved.treatment,
-    rateBasisPoints: resolved.rateBasisPoints,
-    direction,
-    grossMinor: statementAmount,
-    statedVatMinor: input.statedVatMinor,
-  });
+  // The invoice is the only proof of input VAT (issue #203). A payment with no
+  // confirmed invoice behind it claims none: the whole amount is the cost, no
+  // VAT entry is created, and the missing invoice is flagged. VAT is never
+  // derived by splitting a bank amount on the purchase side. (Under a reverse
+  // charge the net also comes from the invoice, so nothing is self-assessed
+  // until the invoice is confirmed and posted — flagged the same way.)
+  const withoutInvoice = isMoneyOut && resolved.treatment.appliesRate;
+  const calculation = withoutInvoice
+    ? {
+        netMinor: asMinor(statementAmount), vatMinor: asMinor(0), grossMinor: asMinor(statementAmount),
+        recoverableVatMinor: asMinor(0), rateBasisPoints: 0,
+      }
+    : calculateVat({
+        treatment: resolved.treatment,
+        rateBasisPoints: resolved.rateBasisPoints,
+        direction,
+        grossMinor: statementAmount,
+        statedVatMinor: input.statedVatMinor,
+      });
 
   const toBase = (amount: number): number =>
     resolvedFxRate ? multiplyRational(asMinor(amount), resolvedFxRate.numerator, resolvedFxRate.denominator) : amount;
@@ -235,7 +265,7 @@ export function classifyTransaction(db: AppDatabase, input: ClassifyInput): Clas
     lines,
   });
 
-  const vatResult = calculation.vatMinor !== 0 || resolved.treatment.appliesRate
+  const vatResult = !withoutInvoice && (calculation.vatMinor !== 0 || resolved.treatment.appliesRate)
     ? createVatEntries(db, {
         companyId: input.companyId,
         journalEntryId: journal.id,
@@ -280,6 +310,38 @@ export function classifyTransaction(db: AppDatabase, input: ClassifyInput): Clas
       notes: input.notes ?? transaction.notes,
       updatedAt: nowIso(),
     }).where(eq(bankTransactions.id, transaction.id)).run();
+
+    if (withoutInvoice) {
+      upsertReviewItem(tx, {
+        companyId: input.companyId,
+        kind: 'missing_document',
+        severity: 'warning',
+        title: `No invoice for "${transaction.description}": no input VAT claimed`,
+        detail: resolved.treatment.isReverseCharge
+          ? `Posted under "${resolved.treatment.name}", but without the supplier's invoice there is no net `
+            + 'to self-assess on, so no reverse-charge VAT has been accounted for. Upload and confirm the '
+            + 'invoice, then post it and settle this payment against it.'
+          : `Posted under "${resolved.treatment.name}" with the full ${(statementAmount / 100).toFixed(2)} as `
+            + 'cost. Input VAT can only be reclaimed on the supplier\'s invoice. Upload and confirm it, then '
+            + 'post it and settle this payment against it.',
+        entityType: 'bank_transaction',
+        entityId: transaction.id,
+        dedupeKey: `bank_transaction:${transaction.id}:no_invoice`,
+      });
+    } else if (!isMoneyOut && resolved.treatment.appliesRate) {
+      upsertReviewItem(tx, {
+        companyId: input.companyId,
+        kind: 'missing_document',
+        severity: 'info',
+        title: `No sales invoice or record for "${transaction.description}"`,
+        detail: 'Output VAT has been accounted for on this receipt so the liability is not understated, but '
+          + 'it rests on the bank amount. Attach the sales invoice or the day\'s sales record (till Z-report) '
+          + 'as evidence.',
+        entityType: 'bank_transaction',
+        entityId: transaction.id,
+        dedupeKey: `bank_transaction:${transaction.id}:no_sales_evidence`,
+      });
+    }
 
     tx.insert(auditEvents).values({
       id: ids.audit(),

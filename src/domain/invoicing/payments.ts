@@ -106,15 +106,6 @@ export function recordPayment(db: AppDatabase, input: RecordPaymentInput): Recor
       : amount;
 
   // ---- Validate allocations ----
-  const allocatedTotal = input.allocations.reduce((s, a) => s + a.allocatedMinor, 0);
-  if (allocatedTotal > input.amountMinor) {
-    throw new InvoicingError(
-      `Allocations total ${allocatedTotal} but the payment is only ${input.amountMinor}. `
-        + 'A payment cannot settle more than it is worth.',
-      { allocatedTotal, amountMinor: input.amountMinor },
-    );
-  }
-
   const targets = input.allocations.map((allocation) => {
     const invoice = db.select().from(invoices)
       .where(and(
@@ -182,11 +173,33 @@ export function recordPayment(db: AppDatabase, input: RecordPaymentInput): Recor
         { invoiceId: invoice.id, outstandingMinor: invoice.outstandingMinor },
       );
     }
+    // Cash this allocation accounts for. A credit note in the same direction as
+    // the payment (a supplier's credit note deducted from what we pay them, or
+    // our credit note deducted from what a customer pays us) reduces the cash:
+    // the payment is net of it (issue #203). A credit note settled by a refund
+    // in the opposite direction (issue #157) is cash in its own right.
+    const offsetsCash = invoice.isCreditNote && invoice.direction === expectedDirection;
+    const cashMinor = offsetsCash ? -allocation.allocatedMinor : allocation.allocatedMinor;
     return {
       invoice, allocatedMinor: allocation.allocatedMinor, invoiceAllocatedMinor,
-      signedAllocatedMinor, crossCurrency,
+      signedAllocatedMinor, crossCurrency, cashMinor,
     };
   });
+
+  const allocatedTotal = targets.reduce((s, t) => s + t.cashMinor, 0);
+  if (allocatedTotal > input.amountMinor) {
+    throw new InvoicingError(
+      `Allocations total ${allocatedTotal} but the payment is only ${input.amountMinor}. `
+        + 'A payment cannot settle more than it is worth.',
+      { allocatedTotal, amountMinor: input.amountMinor },
+    );
+  }
+  if (allocatedTotal < 0) {
+    throw new InvoicingError(
+      'The credit notes allocated are worth more than the invoices they are netted against, so this '
+        + 'would be a refund, not a payment. Record the refund in the direction the money moved.',
+    );
+  }
 
   const debtors = systemAccountId(db, input.companyId, 'debtors');
   const creditors = systemAccountId(db, input.companyId, 'creditors');
@@ -329,7 +342,11 @@ export function recordPayment(db: AppDatabase, input: RecordPaymentInput): Recor
   // `isReceived`, but the cash receipts basis defers output VAT on sales
   // only (AGENTS.md) — input VAT is never deferred, so this must never run
   // against a purchase-direction target regardless of payment direction.
-  const salesTargets = targets.filter((t) => t.invoice.direction === 'sales');
+  // Only an invoice whose VAT was deferred has anything to release. A sales
+  // invoice with no VAT at all (an EU or export supply, say) is never deferred:
+  // its entry — and the net it reports in ES1/E1 — was created on the invoice,
+  // and releasing it again at payment would report the supply twice.
+  const salesTargets = targets.filter((t) => t.invoice.direction === 'sales' && t.invoice.vatMinor !== 0);
   const vatReleases = isReceived && company.vatAccountingBasis === 'cash_receipts' && salesTargets.length > 0
     ? computeVatReleases(db, salesTargets)
     : [];

@@ -108,6 +108,14 @@ export const invoiceLines = sqliteTable('invoice_lines', {
   /** Set when the line is a capital purchase, linking to the asset register. */
   fixedAssetId: text('fixed_asset_id'),
 
+  /**
+   * The confirmed document line this invoice line was posted from (issue #203),
+   * so every VAT figure traces back to the printed line that evidences it.
+   */
+  documentLineId: text('document_line_id'),
+  /** The statutory rules behind the VAT treatment chosen for this line. */
+  vatRuleKeys: text('vat_rule_keys', { mode: 'json' }).$type<string[]>().notNull().default([]),
+
   notes: text('notes'),
   ...provenance,
   ...timestamps,

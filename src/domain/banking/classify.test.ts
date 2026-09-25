@@ -52,25 +52,26 @@ beforeEach(() => {
 });
 
 describe('classifyTransaction — domestic purchase', () => {
-  it('splits a VAT-inclusive payment into net expense, VAT and bank', async () => {
+  it('claims no input VAT without an invoice: the whole payment is the cost (issue #203)', async () => {
     const tx = await importOne('IRISH SUPPLIER', '-123.00');
     const result = classifyTransaction(db, {
       companyId, bankTransactionId: tx.id,
       accountId: byCode['6010']!, vatTreatmentId: tr['IE_STD']!,
     });
 
-    expect(result.netMinor).toBe(10_000);
-    expect(result.vatMinor).toBe(2_300);
-    expect(result.grossMinor).toBe(12_300);
+    // The invoice is the only proof of input VAT; a bank amount is never split.
+    expect(result.netMinor).toBe(12_300);
+    expect(result.vatMinor).toBe(0);
+    expect(result.vatEntryIds).toEqual([]);
 
     const lines = db.select().from(journalLines)
       .where(eq(journalLines.journalEntryId, result.journalEntryId))
       .orderBy(journalLines.lineNumber).all();
 
-    expect(lines).toHaveLength(3);
-    expect(lines[0]).toMatchObject({ accountId: byCode['6010'], debitMinor: 10_000 });
-    expect(lines[1]).toMatchObject({ accountId: acc['vat_on_purchases'], debitMinor: 2_300 });
-    expect(lines[2]).toMatchObject({ accountId: acc['bank_control'], creditMinor: 12_300 });
+    expect(lines).toHaveLength(2);
+    expect(lines[0]).toMatchObject({ accountId: byCode['6010'], debitMinor: 12_300 });
+    expect(lines[1]).toMatchObject({ accountId: acc['bank_control'], creditMinor: 12_300 });
+    expect(accountBalance(db, { companyId, accountId: acc['vat_on_purchases']! })).toBe(0);
   });
 
   it('leaves the books balanced', async () => {
@@ -110,31 +111,24 @@ describe('classifyTransaction — domestic purchase', () => {
 });
 
 describe('classifyTransaction — reverse charge', () => {
-  it('treats the payment as net and self-accounts the VAT', async () => {
-    // A $120 Anthropic invoice carries no VAT. 120 is the NET.
+  it('without the invoice, self-assesses nothing and flags it (issue #203)', async () => {
+    // The reverse-charge net comes from the supplier's invoice, not the bank line.
     const tx = await importOne('ANTHROPIC', '-120.00');
     const result = classifyTransaction(db, {
       companyId, bankTransactionId: tx.id,
       accountId: byCode['6000']!, vatTreatmentId: tr['NON_EU_SERVICES_RCV']!,
     });
 
-    expect(result.netMinor).toBe(12_000);
-    expect(result.vatMinor).toBe(2_760);
-
+    expect(result.vatMinor).toBe(0);
     const lines = db.select().from(journalLines)
       .where(eq(journalLines.journalEntryId, result.journalEntryId))
       .orderBy(journalLines.lineNumber).all();
-
-    // Expense at net, input VAT debited, output VAT credited, bank credited
-    // with only what actually left the account.
-    expect(lines).toHaveLength(4);
+    expect(lines).toHaveLength(2);
     expect(lines[0]).toMatchObject({ accountId: byCode['6000'], debitMinor: 12_000 });
-    expect(lines[1]).toMatchObject({ accountId: acc['vat_on_purchases'], debitMinor: 2_760 });
-    expect(lines[2]).toMatchObject({ accountId: acc['vat_on_sales'], creditMinor: 2_760 });
-    expect(lines[3]).toMatchObject({ accountId: acc['bank_control'], creditMinor: 12_000 });
+    expect(lines[1]).toMatchObject({ accountId: acc['bank_control'], creditMinor: 12_000 });
   });
 
-  it('balances, and nets to zero on the VAT return', async () => {
+  it('balances, and puts nothing on the VAT return until the invoice is posted', async () => {
     const tx = await importOne('ANTHROPIC', '-120.00');
     classifyTransaction(db, {
       companyId, bankTransactionId: tx.id,
@@ -145,9 +139,8 @@ describe('classifyTransaction — reverse charge', () => {
     const periodId = db.select().from(vatPeriods)
       .where(eq(vatPeriods.name, 'Mar–Apr 2025')).get()!.id;
     const report = buildVat3Return(db, { companyId, vatPeriodId: periodId });
-    expect(report.T1.amountMinor).toBe(2_760);
-    expect(report.T2.amountMinor).toBe(2_760);
-    expect(report.netPositionMinor).toBe(0);
+    expect(report.T1.amountMinor).toBe(0);
+    expect(report.T2.amountMinor).toBe(0);
   });
 
   it('charges the bank only what actually left the account', async () => {
@@ -354,29 +347,31 @@ describe('reclassifyTransaction', () => {
       .where(eq(journalEntries.id, first.journalEntryId)).get()!;
     expect(original.reversedByEntryId).toBeTruthy();
 
-    // Net effect: hosting back to zero, software carries the cost.
+    // Net effect: hosting back to zero, software carries the cost — all of it,
+    // since without an invoice no input VAT is claimed (issue #203).
     expect(accountBalance(db, { companyId, accountId: byCode['6010']! })).toBe(0);
-    expect(accountBalance(db, { companyId, accountId: byCode['6000']! })).toBe(10_000);
+    expect(accountBalance(db, { companyId, accountId: byCode['6000']! })).toBe(12_300);
     expect(trialBalance(db, { companyId, asOf: makeDate(2025, 12, 31) }).balanced).toBe(true);
     expect(second.journalEntryId).not.toBe(first.journalEntryId);
   });
 
   it('removes the superseded VAT entries from the return', async () => {
-    const tx = await importOne('MISCODED', '-123.00');
+    // A receipt: output VAT is posted on it, so there is an entry to supersede.
+    const tx = await importOne('MISCODED', '123.00');
     classifyTransaction(db, {
       companyId, bankTransactionId: tx.id,
-      accountId: byCode['6010']!, vatTreatmentId: tr['IE_STD']!,
+      accountId: byCode['4000']!, vatTreatmentId: tr['IE_STD']!,
     });
     reclassifyTransaction(db, {
       companyId, bankTransactionId: tx.id,
-      accountId: byCode['6000']!, vatTreatmentId: tr['IE_ZERO']!,
+      accountId: byCode['4000']!, vatTreatmentId: tr['IE_ZERO']!,
       reason: 'Zero rated after all',
     });
 
     const periodId = db.select().from(vatPeriods)
       .where(eq(vatPeriods.name, 'Mar–Apr 2025')).get()!.id;
     // Only the new zero-rated entry counts; the superseded 23% one does not.
-    expect(buildVat3Return(db, { companyId, vatPeriodId: periodId }).T2.amountMinor).toBe(0);
+    expect(buildVat3Return(db, { companyId, vatPeriodId: periodId }).T1.amountMinor).toBe(0);
   });
 
   it('records the reason in the audit trail', async () => {

@@ -13,6 +13,8 @@ import { extractDocument } from '@/domain/extraction/service';
 import { LocalExtractionProvider } from '@/domain/extraction/localProvider';
 import { matchAllUnmatched } from '@/domain/matching/service';
 import { documentReviewValues, confirmDocument, checkDocumentValues } from '@/domain/documents/review';
+import { postDocumentAsInvoice, documentEvidenceLines } from '@/domain/consolidation/postDocument';
+import { settleBankTransaction } from '@/domain/consolidation/settle';
 import { createRule } from '@/domain/rules/engine';
 import { postJournalEntry } from '@/domain/accounting/journal';
 import { makeDate } from '@/domain/dates';
@@ -421,38 +423,97 @@ export async function seedDemoCompany(
     }).where(eq(bankTransactions.id, loanTx.id)).run();
   }
 
-  classify('VERCEL INC,-42.17', '6010', 'NON_EU_SERVICES_RCV', { supplierId: vercel });
-  for (const tx of transactions.filter((t) => t.description.includes('VERCEL'))) {
-    const fresh = db.select().from(bankTransactions)
-      .where(eq(bankTransactions.id, tx.id)).get()!;
-    if (fresh.journalEntryId) continue;
-    classifyTransaction(db, {
-      companyId, bankTransactionId: tx.id, accountId: byCode['6010']!,
-      vatTreatmentId: tr['NON_EU_SERVICES_RCV']!, supplierId: vercel,
-      source: 'rule', provenanceStatus: 'system_rule', confidence: 100, actor: 'demo',
+  // ---- Documents: read, confirmed, posted as invoices, settled from the bank ----
+  // The workflow a person follows (issue #203): the invoice proves the supply
+  // and its VAT, the bank line proves payment, and the payment ties them
+  // together. VAT comes from the confirmed invoice lines, never the bank amount.
+  const DOCUMENT_POSTING: Record<string, {
+    party: { supplierId?: string; customerId?: string };
+    account: string; treatment: string; bank: string;
+  }> = {
+    'vercel-2025-01.txt': { party: { supplierId: vercel }, account: '6010', treatment: 'NON_EU_SERVICES_RCV', bank: '2025-01-15|VERCEL' },
+    'anthropic-2025-01.txt': { party: { supplierId: anthropic }, account: '6000', treatment: 'NON_EU_SERVICES_RCV', bank: '2025-01-17|ANTHROPIC' },
+    'byrne-accountancy-2025-01.txt': { party: { supplierId: byrne }, account: '6070', treatment: 'IE_STD', bank: '2025-01-20|BYRNE' },
+    'aws-2025-02.txt': { party: { supplierId: aws }, account: '6010', treatment: 'EU_SERVICES_RCV', bank: '2025-02-03|AWS EMEA' },
+    'hetzner-2025-02.txt': { party: { supplierId: hetzner }, account: '6010', treatment: 'EU_SERVICES_RCV', bank: '2025-02-11|HETZNER' },
+    // Capital purchase: to the asset account, not an expense.
+    'apple-store-2025-02.txt': { party: { supplierId: apple }, account: '1500', treatment: 'IE_STD', bank: '2025-02-21|APPLE STORE' },
+    'github-2025-03.txt': { party: { supplierId: github }, account: '6000', treatment: 'NON_EU_SERVICES_RCV', bank: '2025-03-05|GITHUB' },
+    'insurance-ireland-2025-03.txt': { party: { supplierId: insurance }, account: '6090', treatment: 'IE_EXEMPT', bank: '2025-03-19|INSURANCE IRELAND' },
+    'sales-invoice-2025-001.txt': { party: { customerId: mulligan }, account: '4020', treatment: 'IE_STD', bank: '2025-01-31|MULLIGAN DIGITAL LTD INV-2025-001' },
+    'sales-invoice-2025-003.txt': { party: { customerId: continental }, account: '4000', treatment: 'EU_SERVICES_SUPPLY', bank: '2025-03-31|CONTINENTAL DESIGN' },
+  };
+  const findOn = (key: string) => {
+    const [date, needle] = key.split('|') as [string, string];
+    return transactions.find((t) => t.transactionDate === date && t.description.includes(needle));
+  };
+
+  let documentCount = 0;
+  for (const demo of DEMO_DOCUMENTS) {
+    const posting = DOCUMENT_POSTING[demo.filename]!;
+    const stored = storeDocument(db, {
+      companyId, filename: demo.filename,
+      content: Buffer.from(demo.body, 'utf8'),
+      root: options.storageRoot, uploadedBy: 'demo',
     });
-  }
-  for (const tx of transactions.filter((t) => t.description.includes('ANTHROPIC'))) {
-    classifyTransaction(db, {
-      companyId, bankTransactionId: tx.id, accountId: byCode['6000']!,
-      vatTreatmentId: tr['NON_EU_SERVICES_RCV']!, supplierId: anthropic,
-      source: 'user', provenanceStatus: 'user_confirmed', actor: 'demo',
+    await extractDocument(db, {
+      companyId, documentId: stored.documentId,
+      storageRootPath: options.storageRoot,
+      providers: [new LocalExtractionProvider()], actor: 'demo',
     });
+    // The demo stands in for a person checking each document against the page.
+    const { values } = documentReviewValues(db, { companyId, documentId: stored.documentId });
+    confirmDocument(db, {
+      companyId, documentId: stored.documentId, values, reviewedBy: 'demo',
+      acknowledgedCheckCodes: checkDocumentValues(values).map((c) => c.code),
+      supplierId: posting.party.supplierId ?? null,
+      customerId: posting.party.customerId ?? null,
+    });
+    const { lines } = documentEvidenceLines(db, { companyId, documentId: stored.documentId });
+    const invoice = postDocumentAsInvoice(db, {
+      companyId, documentId: stored.documentId, actor: 'demo',
+      coding: lines.map(() => ({ accountId: byCode[posting.account]!, vatTreatmentId: tr[posting.treatment]! })),
+    });
+    const paid = findOn(posting.bank);
+    if (paid) {
+      settleBankTransaction(db, {
+        companyId, bankTransactionId: paid.id, actor: 'demo',
+        allocations: [{ invoiceId: invoice.invoiceId, amountMinor: Math.abs(paid.amountMinor) }],
+      });
+    }
+    documentCount += 1;
   }
 
-  classify('BYRNE ACCOUNTANCY', '6070', 'IE_STD', { supplierId: byrne });
-  classify('AWS EMEA', '6010', 'EU_SERVICES_RCV', { supplierId: aws });
-  classify('HETZNER', '6010', 'EU_SERVICES_RCV', { supplierId: hetzner });
-  classify('GITHUB', '6000', 'NON_EU_SERVICES_RCV', { supplierId: github });
+  // A duplicate document upload (README §51).
+  storeDocument(db, {
+    companyId, filename: 'vercel-2025-01-copy.txt',
+    content: Buffer.from(DEMO_DOCUMENTS[0]!.body, 'utf8'),
+    root: options.storageRoot, uploadedBy: 'demo',
+  });
+  documentCount += 1;
+
+  // ---- Bank lines with no invoice on file ----
+  // Classified, but a purchase without its invoice claims no input VAT (and a
+  // reverse charge is not self-assessed without the invoice's net): each is
+  // flagged "no invoice" in the review queue, as it would be for a real company.
+  const unposted = (needle: string) => db.select().from(bankTransactions)
+    .where(eq(bankTransactions.companyId, companyId)).all()
+    .filter((t) => t.description.includes(needle) && !t.journalEntryId);
+  for (const [needle, account, treatment, party, source] of [
+    ['VERCEL', '6010', 'NON_EU_SERVICES_RCV', { supplierId: vercel }, 'rule'],
+    ['ANTHROPIC', '6000', 'NON_EU_SERVICES_RCV', { supplierId: anthropic }, 'user'],
+  ] as const) {
+    for (const tx of unposted(needle)) {
+      classifyTransaction(db, {
+        companyId, bankTransactionId: tx.id, accountId: byCode[account]!, vatTreatmentId: tr[treatment]!,
+        supplierId: party.supplierId, source,
+        provenanceStatus: source === 'rule' ? 'system_rule' : 'user_confirmed', confidence: 100, actor: 'demo',
+      });
+    }
+  }
   classify('BANK CHARGES', '6100', 'IE_EXEMPT');
-  classify('INSURANCE IRELAND', '6090', 'IE_EXEMPT', { supplierId: insurance });
   classify('IARNROD EIREANN', '6110', 'IE_EXEMPT', { supplierId: irishRail });
-  classify('MULLIGAN DIGITAL LTD INV-2025-001', '4020', 'IE_STD', { customerId: mulligan });
   classify('MULLIGAN DIGITAL LTD INV-2025-002', '4020', 'IE_STD', { customerId: mulligan });
-  classify('CONTINENTAL DESIGN', '4000', 'EU_SERVICES_SUPPLY', { customerId: continental });
-
-  // Capital purchase: to the asset account, not an expense.
-  classify('APPLE STORE', '1500', 'IE_STD', { supplierId: apple });
 
   // The VAT payment settles the liability; it is not an expense.
   const vatPaymentTx = find('REVENUE VAT PAYMENT');
@@ -503,39 +564,7 @@ export async function seedDemoCompany(
     grossMinor: 8_400, actor: 'demo',
   });
 
-  // ---- Documents ----
-  let documentCount = 0;
-  for (const demo of DEMO_DOCUMENTS) {
-    const stored = storeDocument(db, {
-      companyId, filename: demo.filename,
-      content: Buffer.from(demo.body, 'utf8'),
-      root: options.storageRoot, uploadedBy: 'demo',
-      documentType: demo.filename.startsWith('sales') ? 'sales_invoice' : 'supplier_invoice',
-    });
-    await extractDocument(db, {
-      companyId, documentId: stored.documentId,
-      storageRootPath: options.storageRoot,
-      providers: [new LocalExtractionProvider()], actor: 'demo',
-    });
-    // The demo stands in for a person checking each document against the page.
-    const { values } = documentReviewValues(db, { companyId, documentId: stored.documentId });
-    confirmDocument(db, {
-      companyId, documentId: stored.documentId, values, reviewedBy: 'demo',
-      acknowledgedCheckCodes: checkDocumentValues(values).map((c) => c.code),
-      createSupplier: values.documentType !== 'sales_invoice',
-      createCustomer: values.documentType === 'sales_invoice',
-    });
-    documentCount += 1;
-  }
-
-  // A duplicate document upload (README §51).
-  storeDocument(db, {
-    companyId, filename: 'vercel-2025-01-copy.txt',
-    content: Buffer.from(DEMO_DOCUMENTS[0]!.body, 'utf8'),
-    root: options.storageRoot, uploadedBy: 'demo',
-  });
-  documentCount += 1;
-
+  // Nothing left to match: every confirmed document was posted and settled above.
   matchAllUnmatched(db, { companyId });
 
   // ---- Tax calendar ----
