@@ -37,6 +37,10 @@ These are enforced by tests. Breaking one is a bug, not a trade-off.
 - **An extracted document is a draft, not evidence.** Matching, linking and VAT
   suggestions read `review_status = 'confirmed'` documents only; a person
   confirms each one on the review screen. Never match straight after extraction.
+- **Input VAT comes only from a confirmed invoice.** A confirmed document is
+  posted as an invoice line by line (`postDocumentAsInvoice`) and the bank line
+  settles it (`settleBankTransaction`). A purchase classified without an invoice
+  claims no input VAT and is flagged; never split a bank amount into net and VAT.
 - **Invoice amounts are stored as printed.** A credit note's figures are
   positive; its `document_type` carries the sign.
 - **A rule with no conditions matches nothing**, not everything.

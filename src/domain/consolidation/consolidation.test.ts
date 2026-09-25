@@ -252,6 +252,20 @@ describe('settling bank lines against invoices', () => {
     balanced();
   });
 
+  it('records the scored match as accepted when the payment settles its invoice', async () => {
+    const { findMatchesForDocument } = await import('../matching/service');
+    const { documentMatches } = await import('@/db/schema');
+    const find = await bank([['16/03/2025', 'MURPHY OFFICE', '-24.60']]);
+    const doc = confirmed({ lines: [line('Paper', 2_000, 2300, 460)] });
+    findMatchesForDocument(db, { companyId, documentId: doc, autoAcceptThreshold: null });
+    expect(db.select().from(documentMatches).where(eq(documentMatches.documentId, doc)).get()?.decision).toBe('pending');
+    const inv = postDocumentAsInvoice(db, { companyId, documentId: doc, coding: [code('6120', 'IE_STD')] });
+    settleBankTransaction(db, { companyId, bankTransactionId: find('MURPHY OFFICE').id, allocations: [{ invoiceId: inv.invoiceId, amountMinor: 2_460 }] });
+    const match = db.select().from(documentMatches).where(eq(documentMatches.documentId, doc)).get()!;
+    expect([match.decision, match.provenanceStatus]).toEqual(['accepted', 'user_confirmed']);
+    expect(db.select().from(documents).where(eq(documents.id, doc)).get()!.matchedTransactionId).toBe(find('MURPHY OFFICE').id);
+  });
+
   it('holds and flags money left over after the chosen invoices', async () => {
     const inv = post([line('Paper', 2_000, 2300, 460)]);
     const find = await bank([['20/03/2025', 'OVERPAID', '-30.00']]);

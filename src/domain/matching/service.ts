@@ -491,7 +491,7 @@ export function unmatchDocument(
 }
 
 /** Close the review item a resolved decision was raised for. */
-function resolveReviewItems(
+export function resolveReviewItems(
   tx: Tx | AppDatabase, companyId: string, dedupeKey: string, resolution: string,
 ): void {
   tx.update(reviewItems).set({

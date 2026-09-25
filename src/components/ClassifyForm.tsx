@@ -197,7 +197,7 @@ export function ClassifyForm({
                 <td className="num !text-left">{money(preview.netMinor, currency)}</td>
               </tr>
               <tr>
-                <td className="text-ink-muted">VAT at {preview.ratePercent}</td>
+                <td className="text-ink-muted">VAT {preview.withoutInvoice ? '' : 'at '}{preview.ratePercent}</td>
                 <td className="num !text-left">{money(preview.vatMinor, currency)}</td>
               </tr>
               <tr>
@@ -210,7 +210,13 @@ export function ClassifyForm({
               </tr>
             </tbody>
           </table>
-          {treatment?.isReverseCharge && (
+          {preview.withoutInvoice && (
+            <p className="px-3 py-2 text-[11.5px] text-caution border-t border-line leading-snug">
+              No input VAT is claimed on a payment without its invoice. To reclaim it, upload and confirm the
+              invoice, post it, and settle this payment against it.
+            </p>
+          )}
+          {treatment?.isReverseCharge && !preview.withoutInvoice && (
             <p className="px-3 py-2 text-[11.5px] text-ink-muted border-t border-line leading-snug">
               The supplier charged no VAT, so the invoice total is the <em>net</em> amount.
               You account for {money(preview.vatMinor, currency)} of VAT as though you had
@@ -272,14 +278,20 @@ function buildPreview(amountMinor: number, treatment: TreatmentOption | undefine
   const basisPoints = treatment.rateBasisPoints;
   const ratePercent = `${basisPoints / 100}%`;
 
+  // A payment classified without its invoice claims no input VAT (issue #203):
+  // the whole amount is the cost, exactly as the engine posts it.
+  if (amountMinor < 0 && (treatment.isReverseCharge || basisPoints > 0)) {
+    return { netMinor: gross, vatMinor: 0, ratePercent: 'none claimed — no invoice', withoutInvoice: true };
+  }
+
   if (treatment.isReverseCharge) {
     // The supplier charged no VAT, so the invoice total IS the net amount.
     const vat = Math.round((gross * basisPoints) / 10_000);
-    return { netMinor: gross, vatMinor: vat, ratePercent };
+    return { netMinor: gross, vatMinor: vat, ratePercent, withoutInvoice: false };
   }
 
   const vat = Math.round((gross * basisPoints) / (10_000 + basisPoints));
-  return { netMinor: gross - vat, vatMinor: vat, ratePercent };
+  return { netMinor: gross - vat, vatMinor: vat, ratePercent, withoutInvoice: false };
 }
 
 /**

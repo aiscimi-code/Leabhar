@@ -1,10 +1,12 @@
-import { and, eq, isNull } from 'drizzle-orm';
+import { and, eq, isNull, ne } from 'drizzle-orm';
 import type { AppDatabase } from '@/db';
-import { bankTransactions, invoices, documents } from '@/db/schema';
+import { bankTransactions, invoices, documents, documentMatches } from '@/db/schema';
 import { asIsoDate } from '../dates';
 import { recordPayment, type RecordedPayment } from '../invoicing/payments';
 import { upsertReviewItem } from '../extraction/service';
 import { ConsolidationError } from './postDocument';
+import { resolveReviewItems } from '../matching/service';
+import { nowIso } from '../dates';
 
 /**
  * Settle a bank line against one or more invoices (issue #203).
@@ -88,6 +90,25 @@ export function settleBankTransaction(db: AppDatabase, input: SettleInput): Reco
     if (!invoice?.documentId) continue;
     db.update(documents).set({ matchedTransactionId: tx.id, matchStatus: 'matched' })
       .where(and(eq(documents.id, invoice.documentId), isNull(documents.matchedTransactionId))).run();
+    // Settling is the person's decision on the match: record the scored
+    // candidate for this pair as accepted, and the document's other pending
+    // candidates as rejected by implication (as acceptMatch does).
+    const decidedAt = nowIso();
+    db.update(documentMatches).set({
+      decision: 'accepted', decidedAt, decidedBy: input.actor ?? 'user',
+      decisionReason: 'Settled against its invoice', provenanceStatus: 'user_confirmed',
+    }).where(and(
+      eq(documentMatches.documentId, invoice.documentId), eq(documentMatches.bankTransactionId, tx.id),
+      eq(documentMatches.decision, 'pending'),
+    )).run();
+    db.update(documentMatches).set({ decision: 'rejected', decidedAt })
+      .where(and(
+        eq(documentMatches.documentId, invoice.documentId), ne(documentMatches.bankTransactionId, tx.id),
+        eq(documentMatches.decision, 'pending'),
+      )).run();
+    resolveReviewItems(db, input.companyId, `document:${invoice.documentId}:match`,
+      `Settled by bank transaction ${tx.id}.`);
+    resolveReviewItems(db, input.companyId, `document:${invoice.documentId}:no_match`, 'Settled by a payment.');
   }
 
   if (payment.unallocatedMinor !== 0) {
