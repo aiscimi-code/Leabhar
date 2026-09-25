@@ -379,6 +379,15 @@ Trace: `vat_entries.invoice_line_id` → `invoice_lines.document_line_id` and
 `invoice_lines.vat_rule_keys` → `document_lines` → `documents`
 (`transactionTrace`).
 
+### VAT period lock
+
+A VAT entry is never written into a VAT period whose status is `locked` or
+`submitted` (`assertVatPeriodWritable`), and never detached from one.
+Corrections are negative entries in an open period. A late document or a
+correction may be declared in a later open period only when the person names
+it (`declarationDate`); the tax point is unchanged and a `period_validation`
+review item is raised.
+
 ### Bank transaction
 
 ```

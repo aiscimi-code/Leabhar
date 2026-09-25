@@ -48,6 +48,9 @@ export async function classifyTransactionAction(formData: FormData): Promise<Act
     const accountId = String(formData.get('accountId'));
     const vatTreatmentId = String(formData.get('vatTreatmentId'));
     const reason = formData.get('reason') ? String(formData.get('reason')) : null;
+    // Only when the transaction's own VAT return is locked or filed (issue #226):
+    // the date of an open period to make the correction in.
+    const correctionDate = formData.get('correctionDate') ? asIsoDate(String(formData.get('correctionDate'))) : undefined;
 
     if (!accountId || !vatTreatmentId) {
       return { ok: false, error: 'Choose both an account and a VAT treatment.' };
@@ -79,7 +82,7 @@ export async function classifyTransactionAction(formData: FormData): Promise<Act
       }
       reclassifyTransaction(db, {
         companyId: company.id, bankTransactionId: transactionId,
-        accountId, vatTreatmentId, reason, fxRate,
+        accountId, vatTreatmentId, reason, fxRate, reversalDate: correctionDate,
         source: 'user', provenanceStatus: 'user_confirmed', actor: 'user',
       });
       revalidatePath('/transactions');
@@ -89,7 +92,7 @@ export async function classifyTransactionAction(formData: FormData): Promise<Act
 
     classifyTransaction(db, {
       companyId: company.id, bankTransactionId: transactionId,
-      accountId, vatTreatmentId, fxRate,
+      accountId, vatTreatmentId, fxRate, vatDeclarationDate: correctionDate,
       source: 'user', provenanceStatus: 'user_confirmed', actor: 'user',
     });
 
@@ -463,12 +466,13 @@ type FxInput = { numerator: number; denominator: number; source: string; date?: 
 
 /** Post a confirmed document as an invoice, from the person's coding of each line. */
 export async function postDocumentAction(input: {
-  documentId: string; coding: LineCoding[]; fxRate?: FxInput;
+  documentId: string; coding: LineCoding[]; fxRate?: FxInput; vatDeclarationDate?: string;
 }): Promise<ActionResult> {
   try {
     const company = requireCompany();
     const created = postDocumentAsInvoice(getDb(), {
       companyId: company.id, documentId: input.documentId, coding: input.coding, fxRate: input.fxRate,
+      vatDeclarationDate: input.vatDeclarationDate ? asIsoDate(input.vatDeclarationDate) : undefined,
       actor: await actorName(),
     });
     revalidatePath(`/documents/${input.documentId}`);
@@ -488,13 +492,14 @@ export async function postDocumentAction(input: {
 
 /** Settle a bank line against one or more invoices. */
 export async function settleTransactionAction(input: {
-  bankTransactionId: string; allocations: SettleAllocation[]; fxRate?: FxInput;
+  bankTransactionId: string; allocations: SettleAllocation[]; fxRate?: FxInput; vatDeclarationDate?: string;
 }): Promise<ActionResult> {
   try {
     const company = requireCompany();
     const payment = settleBankTransaction(getDb(), {
       companyId: company.id, bankTransactionId: input.bankTransactionId, allocations: input.allocations,
       fxRate: input.fxRate, actor: await actorName(),
+      vatDeclarationDate: input.vatDeclarationDate ? asIsoDate(input.vatDeclarationDate) : undefined,
     });
     revalidatePath(`/transactions/${input.bankTransactionId}`);
     revalidatePath('/transactions');

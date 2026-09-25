@@ -2,7 +2,7 @@ import { and, eq } from 'drizzle-orm';
 import type { AppDatabase } from '@/db';
 import { documents, documentLines, documentVatTotals, auditEvents, companies } from '@/db/schema';
 import { ids } from '@/lib/ids';
-import { nowIso, asIsoDate } from '../dates';
+import { nowIso, asIsoDate, type IsoDate } from '../dates';
 import { AccountingError } from '../accounting/errors';
 import { assertDocumentConfirmed } from '../documents/review';
 import { upsertReviewItem } from '../extraction/service';
@@ -57,6 +57,11 @@ export interface PostDocumentInput {
   coding: LineCoding[];
   /** Required when the document's currency is not the company's base currency. */
   fxRate?: { numerator: number; denominator: number; source: string; date?: string };
+  /**
+   * Declare the VAT in the VAT period covering this date: only for a late
+   * document whose own period's return is locked or filed (issue #226).
+   */
+  vatDeclarationDate?: IsoDate;
   actor?: string;
   requestId?: string;
 }
@@ -249,6 +254,7 @@ export function postDocumentAsInvoice(db: AppDatabase, input: PostDocumentInput)
     lines: invoiceLines,
     documentId: doc.id,
     isCreditNote: doc.documentType === 'credit_note',
+    vatDeclarationDate: input.vatDeclarationDate,
     actor: input.actor,
     requestId: input.requestId,
   });

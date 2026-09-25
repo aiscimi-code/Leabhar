@@ -43,6 +43,7 @@ export function PostInvoiceForm({ documentId, direction, currency, baseCurrency,
   const [accountIds, setAccountIds] = useState<Array<string>>(lines.map((l) => l.accountId ?? ''));
   const [treatmentIds, setTreatmentIds] = useState<Array<string>>(lines.map((l) => l.preselectedTreatmentId ?? ''));
   const [fx, setFx] = useState('');
+  const [lateDate, setLateDate] = useState('');
   const [result, setResult] = useState<ActionResult | null>(null);
   const [pending, startTransition] = useTransition();
   const foreign = currency !== baseCurrency;
@@ -65,6 +66,7 @@ export function PostInvoiceForm({ documentId, direction, currency, baseCurrency,
         return { accountId: accountIds[i]!, vatTreatmentId: treatmentIds[i]!, vatRuleKeys: chosen?.ruleKeys ?? [] };
       }),
       fxRate,
+      vatDeclarationDate: lateDate || undefined,
     });
     setResult(r);
     if (r.ok) router.refresh();
@@ -130,6 +132,15 @@ export function PostInvoiceForm({ documentId, direction, currency, baseCurrency,
           <span className="text-ink-faint">The rate on the invoice date. It is recorded as you enter it.</span>
         </div>
       )}
+
+      <details className="text-[12px]">
+        <summary className="cursor-pointer text-ink-muted">The VAT return for this invoice&apos;s date is locked or filed?</summary>
+        <div className="mt-1.5 flex items-center gap-2 flex-wrap">
+          <Input type="date" className="!w-44" value={lateDate} onChange={(e) => setLateDate(e.target.value)} />
+          <span className="text-ink-faint">Declare its VAT in the open VAT period covering this date. A filed return is
+            never changed; this is recorded and flagged for your accountant.</span>
+        </div>
+      </details>
 
       <div className="flex items-center gap-3">
         <Button variant="primary" disabled={pending || !complete} onClick={post}>

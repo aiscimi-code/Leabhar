@@ -38,6 +38,7 @@ export function SettleForm({ bankTransactionId, amountMinor, currency, invoices,
     const pre = invoices.find((i) => i.invoiceId === preselectInvoiceId);
     return pre ? { [pre.invoiceId]: fmt(Math.min(Math.abs(pre.outstandingMinor), cash)) } : {};
   });
+  const [lateDate, setLateDate] = useState('');
   const [result, setResult] = useState<ActionResult | null>(null);
   const [pending, startTransition] = useTransition();
 
@@ -95,8 +96,21 @@ export function SettleForm({ bankTransactionId, amountMinor, currency, invoices,
         {remainder > 0 && ` · ${fmt(remainder)} left over will be held on account and flagged`}
         {remainder < 0 && ' · more than the payment — reduce an allocation'}
       </p>
+      {amountMinor > 0 && (
+        <details className="text-[12px]">
+          <summary className="cursor-pointer text-ink-muted">The VAT return for this receipt&apos;s date is locked or filed?</summary>
+          <div className="mt-1.5 flex items-center gap-2 flex-wrap">
+            <Input type="date" className="!w-44" value={lateDate} onChange={(e) => setLateDate(e.target.value)} />
+            <span className="text-ink-faint">On the cash receipts basis this receipt releases output VAT; declare it in
+              the open VAT period covering this date. Recorded and flagged for your accountant.</span>
+          </div>
+        </details>
+      )}
       <Button variant="primary" disabled={pending || invalid} onClick={() => startTransition(async () => {
-        const r = await settleTransactionAction({ bankTransactionId, allocations: chosen.map(({ invoiceId, amountMinor: a }) => ({ invoiceId, amountMinor: a })) });
+        const r = await settleTransactionAction({
+          bankTransactionId, allocations: chosen.map(({ invoiceId, amountMinor: a }) => ({ invoiceId, amountMinor: a })),
+          vatDeclarationDate: lateDate || undefined,
+        });
         setResult(r);
         if (r.ok) router.refresh();
       })}>{pending ? 'Settling…' : 'Settle'}</Button>

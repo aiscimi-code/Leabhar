@@ -247,6 +247,18 @@ export function ClassifyForm({
         </div>
       )}
 
+      <details className="mt-3 text-[12px]">
+        <summary className="cursor-pointer text-ink-muted">The VAT return for this date is locked or filed?</summary>
+        <div className="mt-1.5 flex items-center gap-2 flex-wrap">
+          <input type="date" name="correctionDate"
+            className="border border-line-strong rounded px-2 py-1 text-[12px]" />
+          <span className="text-ink-faint">
+            The date of an open VAT period to make the {isPosted ? 'correction' : 'declaration'} in. A filed return is
+            never changed; this is recorded and flagged for your accountant.
+          </span>
+        </div>
+      </details>
+
       <div className="mt-3 flex items-center gap-2">
         <Button
           type="submit" variant="primary"

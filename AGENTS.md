@@ -41,6 +41,10 @@ These are enforced by tests. Breaking one is a bug, not a trade-off.
   posted as an invoice line by line (`postDocumentAsInvoice`) and the bank line
   settles it (`settleBankTransaction`). A purchase classified without an invoice
   claims no input VAT and is flagged; never split a bank amount into net and VAT.
+- **A locked or filed VAT return is never changed.** Every path that writes VAT
+  entries calls `assertVatPeriodWritable` before writing anything. A correction
+  goes in an open period — negative entries, never a detached or edited one —
+  and a late declaration only when the person names the period (flagged).
 - **Invoice amounts are stored as printed.** A credit note's figures are
   positive; its `document_type` carries the sign.
 - **A rule with no conditions matches nothing**, not everything.

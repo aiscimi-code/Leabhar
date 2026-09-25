@@ -10,6 +10,7 @@ import { postJournalEntry, reverseJournalEntry } from '../accounting/journal';
 import { systemAccountId } from '../config/setup';
 import {
   resolveTreatment, calculateVat, createVatEntries, determineTaxPoint, vatDiscrepancy, findVatPeriod,
+  assertVatPeriodWritable,
 } from '../vat/engine';
 import { AccountingError } from '../accounting/errors';
 import { upsertReviewItem } from '../extraction/service';
@@ -78,6 +79,12 @@ export interface CreateInvoiceInput {
   documentId?: string | null;
   isCreditNote?: boolean;
   creditNoteOfId?: string | null;
+  /**
+   * Declare this invoice's VAT in the VAT period covering this date instead of
+   * the one covering its tax point — only for a late document whose own
+   * period's return is locked or filed (issue #226). Flagged for review.
+   */
+  vatDeclarationDate?: IsoDate | null;
   notes?: string | null;
   actor?: string;
   requestId?: string;
@@ -312,6 +319,22 @@ export function createInvoice(db: AppDatabase, input: CreateInvoiceInput): Creat
     });
   }
 
+  // A locked or filed VAT return is never changed (issue #226): checked before
+  // anything is written, so a refusal leaves no half-posted invoice.
+  const vatTaxPoint = determineTaxPoint({
+    basis: company.vatAccountingBasis,
+    direction: isSales ? 'sales' : 'purchases',
+    invoiceDate: input.invoiceDate,
+    supplyDate: input.supplyDate,
+    paymentDate: input.invoiceDate,
+  }).taxPointDate;
+  const createsVatNow = !vatDeferred
+    && computed.some((c) => c.calculation.vatMinor !== 0 || c.resolved.treatment.appliesRate);
+  if (createsVatNow) {
+    assertVatPeriodWritable(db, input.companyId, input.vatDeclarationDate ?? vatTaxPoint,
+      `The VAT on ${input.invoiceNumber ? `invoice ${input.invoiceNumber}` : 'this invoice'}`);
+  }
+
   const invoiceId = ids.invoice();
 
   const journal = postJournalEntry(db, {
@@ -348,6 +371,7 @@ export function createInvoice(db: AppDatabase, input: CreateInvoiceInput): Creat
         sourceType: isSales ? 'sales_invoice' : 'purchase_invoice',
         sourceId: invoiceId,
         invoiceLineId: lineId,
+        declarationDate: input.vatDeclarationDate ?? undefined,
         direction: isSales ? 'sales' : 'purchases',
         treatmentId: line.vatTreatmentId,
         rateOverrideId: line.taxRateId,
@@ -536,6 +560,19 @@ export function voidInvoice(db: AppDatabase, input: VoidInvoiceInput): VoidedInv
         + 'allocated against it. Unallocate the payment before voiding it — voiding would '
         + 'otherwise silently leave that allocation pointed at an invoice that owes nothing.',
     );
+  }
+
+  const sourceTypeForVat = invoice.direction === 'sales' ? 'sales_invoice' : 'purchase_invoice';
+  const hasVatEntries = db.select({ id: vatEntries.id }).from(vatEntries)
+    .where(and(
+      eq(vatEntries.companyId, input.companyId),
+      eq(vatEntries.sourceType, sourceTypeForVat),
+      eq(vatEntries.sourceId, invoice.id),
+    )).get();
+  if (hasVatEntries) {
+    // The reversing VAT lands in the period of the void date: never a locked or filed one (issue #226).
+    assertVatPeriodWritable(db, input.companyId, input.voidDate,
+      `Voiding invoice ${invoice.invoiceNumber ?? invoice.id} reverses its VAT, which`);
   }
 
   let reversalJournalEntryId: string | null = null;

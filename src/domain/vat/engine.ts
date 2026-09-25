@@ -1,6 +1,6 @@
 import { and, eq, lte, gte, isNull, or, desc } from 'drizzle-orm';
 import type { AppDatabase } from '@/db';
-import { vatTreatments, taxRates, vatPeriods, vatEntries, companies } from '@/db/schema';
+import { vatTreatments, taxRates, vatPeriods, vatEntries, companies, reviewItems } from '@/db/schema';
 import { ids } from '@/lib/ids';
 import {
   asMinor, vatFromNet, vatFromGross, netFromGross, multiplyRational, type Minor,
@@ -9,6 +9,34 @@ import type { IsoDate } from '../dates';
 import { AccountingError } from '../accounting/errors';
 
 export class VatError extends AccountingError {}
+
+/** A VAT entry would change a return that is locked for filing or already filed (issue #226). */
+export class VatPeriodClosedError extends VatError {}
+
+/**
+ * The VAT period a date falls in, refused when that period is locked or
+ * submitted (issue #226). A filed return is never changed, and a locked one is
+ * not changed without unlocking it first. `what` names the thing being
+ * recorded, for the message. Every path that writes VAT entries calls this
+ * before it writes anything — journals included — so a refusal leaves no
+ * half-posted change behind.
+ */
+export function assertVatPeriodWritable(
+  db: AppDatabase, companyId: string, date: IsoDate, what: string,
+): typeof vatPeriods.$inferSelect | undefined {
+  const period = findVatPeriod(db, companyId, date);
+  if (period && (period.status === 'locked' || period.status === 'submitted')) {
+    throw new VatPeriodClosedError(
+      `${what} falls on ${date}, in the VAT period "${period.name}", which is ${period.status}. `
+        + (period.status === 'submitted'
+          ? 'Its return has been filed and is never changed. '
+          : 'It is locked for filing; unlock it first if this belongs in that return. ')
+        + 'To correct it in a later return instead, give the date of an open VAT period to declare it in.',
+      { vatPeriodId: period.id, status: period.status, date },
+    );
+  }
+  return period;
+}
 
 export type VatDirection = 'sales' | 'purchases';
 
@@ -301,6 +329,13 @@ export interface CreateVatEntriesInput {
   journalEntryId?: string | null;
   sourceType: typeof vatEntries.$inferInsert['sourceType'];
   sourceId?: string | null;
+  /**
+   * Declare the entry in the VAT period covering this date rather than the one
+   * covering its tax point (issue #226): a correction or a late document whose
+   * own period's return is locked or filed. The tax point stays true; the
+   * choice is recorded on the entry and flagged for review. Never automatic.
+   */
+  declarationDate?: IsoDate;
   /** The invoice line this entry arises from, for the trace (issue #203). */
   invoiceLineId?: string | null;
   direction: VatDirection;
@@ -360,7 +395,10 @@ export function createVatEntries(
     recoverableOverrideMinor: input.recoverableOverrideMinor,
   });
 
-  const period = findVatPeriod(db, input.companyId, input.taxPointDate);
+  const declaredOn = input.declarationDate ?? input.taxPointDate;
+  const period = assertVatPeriodWritable(db, input.companyId, declaredOn, 'This VAT');
+  const declaredLate = input.declarationDate !== undefined
+    && findVatPeriod(db, input.companyId, input.taxPointDate)?.id !== period?.id;
   const toBase = (amount: number): number =>
     input.fxRate ? multiplyRational(asMinor(amount), input.fxRate.numerator, input.fxRate.denominator) : amount;
 
@@ -387,7 +425,10 @@ export function createVatEntries(
     source: input.source ?? 'system',
     confidence: input.confidence ?? null,
     provenanceStatus: input.provenanceStatus ?? 'manually_entered',
-    notes: input.notes ?? null,
+    notes: declaredLate
+      ? [input.notes, `Tax point ${input.taxPointDate}; declared in ${period?.name ?? declaredOn} because its own `
+        + 'period\'s return is locked or filed.'].filter(Boolean).join(' ')
+      : input.notes ?? null,
   } as const;
 
   const created: Array<typeof vatEntries.$inferSelect> = [];
@@ -458,6 +499,23 @@ export function createVatEntries(
       created.push(entry);
     }
   });
+
+  if (declaredLate && created[0]) {
+    // Declaring VAT outside its own period is a judgement an accountant checks.
+    db.insert(reviewItems).values({
+      id: ids.reviewItem(),
+      companyId: input.companyId,
+      kind: 'period_validation',
+      severity: 'warning',
+      title: `VAT with tax point ${input.taxPointDate} declared in ${period?.name ?? declaredOn}`,
+      detail: 'The return for the period covering the tax point is locked or filed, so this VAT was declared in a '
+        + 'later open period at the person\'s choice. Confirm the correction is made the right way (for an '
+        + 'underdeclaration, whether a supplementary return is needed instead).',
+      entityType: 'vat_entry',
+      entityId: created[0].id,
+      dedupeKey: `vat_entry:${created[0].id}:declared_late`,
+    }).run();
+  }
 
   return { entries: created, calculation, isReverseCharge: treatment.isReverseCharge };
 }
