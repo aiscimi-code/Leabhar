@@ -1,0 +1,2992 @@
+{
+  "description": "Rule coverage matrix (issue #204). One row per provision, VAT treatment and common transaction type; each has exactly one status: rule (ruleKeys), not_applicable (reason) or deferred (reason, issue). Checked by src/domain/rules/coverage.test.ts.",
+  "rows": [
+    {
+      "id": "vatca:s1",
+      "area": "vatca_section",
+      "title": "s.1 Short title.",
+      "status": "not_applicable",
+      "reason": "Short title."
+    },
+    {
+      "id": "vatca:s2",
+      "area": "vatca_section",
+      "title": "s.2 Interpretation — general.",
+      "status": "rule",
+      "ruleKeys": [
+        "vat.outside_scope_employment"
+      ]
+    },
+    {
+      "id": "vatca:s3",
+      "area": "vatca_section",
+      "title": "s.3 Charge of value- added tax.",
+      "status": "rule",
+      "ruleKeys": [
+        "vat.charge_general",
+        "vat.outside_scope_tax_payment",
+        "vat.outside_scope_capital_loans_dividends",
+        "vat.outside_scope_own_account_transfer"
+      ]
+    },
+    {
+      "id": "vatca:s4",
+      "area": "vatca_section",
+      "title": "s.4 Definitions — Part 2 .",
+      "status": "not_applicable",
+      "reason": "Definitions for Part 2; applied through the rules that use them."
+    },
+    {
+      "id": "vatca:s5",
+      "area": "vatca_section",
+      "title": "s.5 Persons who are, or who may become, accountable persons.",
+      "status": "deferred",
+      "issue": 206,
+      "reason": "Accountable persons and elections."
+    },
+    {
+      "id": "vatca:s6",
+      "area": "vatca_section",
+      "title": "s.6 Persons not accountable persons unless they so elect.",
+      "status": "deferred",
+      "issue": 206,
+      "reason": "Accountable persons and elections."
+    },
+    {
+      "id": "vatca:s7",
+      "area": "vatca_section",
+      "title": "s.7 Treatment of persons as not accountable.",
+      "status": "deferred",
+      "issue": 206,
+      "reason": "Accountable persons and elections."
+    },
+    {
+      "id": "vatca:s8",
+      "area": "vatca_section",
+      "title": "s.8 Cancellation of election.",
+      "status": "deferred",
+      "issue": 206,
+      "reason": "Accountable persons and elections."
+    },
+    {
+      "id": "vatca:s9",
+      "area": "vatca_section",
+      "title": "s.9 Intra-Community acquisitions and accountable persons.",
+      "status": "deferred",
+      "issue": 207,
+      "reason": "Cross-border accountable persons."
+    },
+    {
+      "id": "vatca:s10",
+      "area": "vatca_section",
+      "title": "s.10 Certain supplies of goods — supplier not established in the State.",
+      "status": "deferred",
+      "issue": 207,
+      "reason": "Cross-border accountable persons."
+    },
+    {
+      "id": "vatca:s11",
+      "area": "vatca_section",
+      "title": "s.11 Other provisions in relation to goods.",
+      "status": "deferred",
+      "issue": 207,
+      "reason": "Cross-border accountable persons."
+    },
+    {
+      "id": "vatca:s12",
+      "area": "vatca_section",
+      "title": "s.12 Services received from abroad and accountable persons.",
+      "status": "rule",
+      "ruleKeys": [
+        "vat.reverse_charge_services_from_abroad"
+      ]
+    },
+    {
+      "id": "vatca:s13",
+      "area": "vatca_section",
+      "title": "s.13 Certain supplies of services — supplier not established in the State.",
+      "status": "deferred",
+      "issue": 207,
+      "reason": "Cross-border accountable persons."
+    },
+    {
+      "id": "vatca:s14",
+      "area": "vatca_section",
+      "title": "s.14 The State and public bodies.",
+      "status": "deferred",
+      "issue": 206,
+      "reason": "Accountable persons: public bodies, VAT groups."
+    },
+    {
+      "id": "vatca:s15",
+      "area": "vatca_section",
+      "title": "s.15 VAT groups.",
+      "status": "deferred",
+      "issue": 206,
+      "reason": "Accountable persons: public bodies, VAT groups."
+    },
+    {
+      "id": "vatca:s16",
+      "area": "vatca_section",
+      "title": "s.16 Reverse charge for certain supplies.",
+      "status": "deferred",
+      "issue": 208,
+      "reason": "Domestic reverse charges (construction, scrap, etc.)."
+    },
+    {
+      "id": "vatca:s17",
+      "area": "vatca_section",
+      "title": "s.17 Other provisions in relation to services.",
+      "status": "deferred",
+      "issue": 206,
+      "reason": "Scope of supplies of services / deemed supplies."
+    },
+    {
+      "id": "vatca:s18",
+      "area": "vatca_section",
+      "title": "s.18 Distortion of competition, deemed taxable supplies, etc.",
+      "status": "deferred",
+      "issue": 206,
+      "reason": "Scope of supplies of services / deemed supplies."
+    },
+    {
+      "id": "vatca:s19",
+      "area": "vatca_section",
+      "title": "s.19 Meaning of supply of goods.",
+      "status": "deferred",
+      "issue": 206,
+      "reason": "Meaning of supply of goods."
+    },
+    {
+      "id": "vatca:s20",
+      "area": "vatca_section",
+      "title": "s.20 Transfers, etc. deemed not to be supplies.",
+      "status": "deferred",
+      "issue": 206,
+      "reason": "Meaning of supply of goods."
+    },
+    {
+      "id": "vatca:s21",
+      "area": "vatca_section",
+      "title": "s.21 Supplies made free of charge.",
+      "status": "deferred",
+      "issue": 206,
+      "reason": "Meaning of supply of goods."
+    },
+    {
+      "id": "vatca:s22",
+      "area": "vatca_section",
+      "title": "s.22 Special rules in relation to supplies of goods.",
+      "status": "deferred",
+      "issue": 206,
+      "reason": "Meaning of supply of goods."
+    },
+    {
+      "id": "vatca:s23",
+      "area": "vatca_section",
+      "title": "s.23 Supply following intra-Community acquisition.",
+      "status": "deferred",
+      "issue": 207,
+      "reason": "Intra-Community acquisitions."
+    },
+    {
+      "id": "vatca:s24",
+      "area": "vatca_section",
+      "title": "s.24 Intra-Community acquisitions of goods.",
+      "status": "deferred",
+      "issue": 207,
+      "reason": "Intra-Community acquisitions."
+    },
+    {
+      "id": "vatca:s25",
+      "area": "vatca_section",
+      "title": "s.25 Meaning of supply of services.",
+      "status": "deferred",
+      "issue": 206,
+      "reason": "Meaning of supply of services."
+    },
+    {
+      "id": "vatca:s26",
+      "area": "vatca_section",
+      "title": "s.26 Transfer of intangible business assets deemed not to be supply of services.",
+      "status": "deferred",
+      "issue": 206,
+      "reason": "Meaning of supply of services."
+    },
+    {
+      "id": "vatca:s27",
+      "area": "vatca_section",
+      "title": "s.27 Self-supply of services.",
+      "status": "deferred",
+      "issue": 206,
+      "reason": "Meaning of supply of services."
+    },
+    {
+      "id": "vatca:s28",
+      "area": "vatca_section",
+      "title": "s.28 Special rules in relation to supplies of services.",
+      "status": "deferred",
+      "issue": 206,
+      "reason": "Meaning of supply of services."
+    },
+    {
+      "id": "vatca:s29",
+      "area": "vatca_section",
+      "title": "s.29 General rules.",
+      "status": "deferred",
+      "issue": 207,
+      "reason": "Place of supply of goods."
+    },
+    {
+      "id": "vatca:s30",
+      "area": "vatca_section",
+      "title": "s.30 Goods supplied to non-registered persons.",
+      "status": "deferred",
+      "issue": 207,
+      "reason": "Place of supply of goods."
+    },
+    {
+      "id": "vatca:s31",
+      "area": "vatca_section",
+      "title": "s.31 Gas and electricity supplies.",
+      "status": "deferred",
+      "issue": 207,
+      "reason": "Place of supply of goods."
+    },
+    {
+      "id": "vatca:s32",
+      "area": "vatca_section",
+      "title": "s.32 Intra-Community acquisitions of goods.",
+      "status": "deferred",
+      "issue": 207,
+      "reason": "Place of supply of goods."
+    },
+    {
+      "id": "vatca:s33",
+      "area": "vatca_section",
+      "title": "s.33 Application and interpretation of section 34 .",
+      "status": "deferred",
+      "issue": 207,
+      "reason": "Place of supply of goods."
+    },
+    {
+      "id": "vatca:s34",
+      "area": "vatca_section",
+      "title": "s.34 General rules.",
+      "status": "rule",
+      "ruleKeys": [
+        "vat.place_of_supply_b2b_general",
+        "vat.place_of_supply_services_to_business_abroad",
+        "vat.place_of_supply_services_to_consumer"
+      ]
+    },
+    {
+      "id": "vatca:s35",
+      "area": "vatca_section",
+      "title": "s.35 Use and enjoyment provisions.",
+      "status": "deferred",
+      "issue": 207,
+      "reason": "Use and enjoyment."
+    },
+    {
+      "id": "vatca:s36",
+      "area": "vatca_section",
+      "title": "s.36 Definitions — Chapter 1 .",
+      "status": "deferred",
+      "issue": 245,
+      "reason": "Taxable amount."
+    },
+    {
+      "id": "vatca:s37",
+      "area": "vatca_section",
+      "title": "s.37 General rules on taxable amount.",
+      "status": "deferred",
+      "issue": 245,
+      "reason": "Taxable amount."
+    },
+    {
+      "id": "vatca:s38",
+      "area": "vatca_section",
+      "title": "s.38 Determination that open market value applies.",
+      "status": "deferred",
+      "issue": 245,
+      "reason": "Taxable amount."
+    },
+    {
+      "id": "vatca:s39",
+      "area": "vatca_section",
+      "title": "s.39 General provisions on consideration.",
+      "status": "deferred",
+      "issue": 245,
+      "reason": "Taxable amount."
+    },
+    {
+      "id": "vatca:s40",
+      "area": "vatca_section",
+      "title": "s.40 Special consideration rule, triangulation.",
+      "status": "deferred",
+      "issue": 245,
+      "reason": "Taxable amount."
+    },
+    {
+      "id": "vatca:s41",
+      "area": "vatca_section",
+      "title": "s.41 Two-thirds rule.",
+      "status": "deferred",
+      "issue": 245,
+      "reason": "Two-thirds rule: part of the taxable amount (#245); it also decides the rate (#205)."
+    },
+    {
+      "id": "vatca:s42",
+      "area": "vatca_section",
+      "title": "s.42 Taxable amount for certain supplies.",
+      "status": "deferred",
+      "issue": 245,
+      "reason": "Taxable amount."
+    },
+    {
+      "id": "vatca:s43",
+      "area": "vatca_section",
+      "title": "s.43 Vouchers, etc.",
+      "status": "deferred",
+      "issue": 208,
+      "reason": "Vouchers."
+    },
+    {
+      "id": "vatca:s44",
+      "area": "vatca_section",
+      "title": "s.44 Non-business use of immovable goods.",
+      "status": "deferred",
+      "issue": 208,
+      "reason": "Non-business use of immovable goods."
+    },
+    {
+      "id": "vatca:s45",
+      "area": "vatca_section",
+      "title": "s.45 Adjustment and recovery of consideration.",
+      "status": "deferred",
+      "issue": 245,
+      "reason": "Taxable amount."
+    },
+    {
+      "id": "vatca:s46",
+      "area": "vatca_section",
+      "title": "s.46 Rates of tax.",
+      "status": "rule",
+      "ruleKeys": [
+        "vat.rate_standard_current",
+        "vat.rate_reduced_current",
+        "vat.rate_livestock_current",
+        "vat.rate_restaurant_catering_reduced_current",
+        "vat.rate_restaurant_catering_reduced_pre_9pct_window",
+        "vat.rate_hospitality_9pct_not_modelled",
+        "vat.rate_periodicals_9pct_current",
+        "vat.rate_sporting_facilities_9pct_current",
+        "vat.rate_heat_pump_installation_9pct_current",
+        "vat.rate_gas_electricity_9pct_current",
+        "vat.rate_social_housing_apartment_9pct_2025_narrow",
+        "vat.rate_social_housing_apartment_9pct_current",
+        "vat.rate_restaurant_catering_9pct_2020_2023",
+        "vat.rate_printed_matter_9pct_2020_2023",
+        "vat.rate_admission_9pct_2020_2023",
+        "vat.rate_hotel_accommodation_9pct_2020_2023",
+        "vat.rate_hairdressing_9pct_2020_2023"
+      ]
+    },
+    {
+      "id": "vatca:s47",
+      "area": "vatca_section",
+      "title": "s.47 Composite and multiple supplies.",
+      "status": "deferred",
+      "issue": 206,
+      "reason": "Composite and multiple supplies."
+    },
+    {
+      "id": "vatca:s48",
+      "area": "vatca_section",
+      "title": "s.48 Works of art, etc.",
+      "status": "deferred",
+      "issue": 205,
+      "reason": "Works of art rate (Sch.5)."
+    },
+    {
+      "id": "vatca:s49",
+      "area": "vatca_section",
+      "title": "s.49 Contract work.",
+      "status": "deferred",
+      "issue": 206,
+      "reason": "Contract work and certain supplies."
+    },
+    {
+      "id": "vatca:s50",
+      "area": "vatca_section",
+      "title": "s.50 Provisions in relation to certain supplies.",
+      "status": "deferred",
+      "issue": 206,
+      "reason": "Contract work and certain supplies."
+    },
+    {
+      "id": "vatca:s51",
+      "area": "vatca_section",
+      "title": "s.51 Determinations on rates and exemptions.",
+      "status": "deferred",
+      "issue": 205,
+      "reason": "Revenue determinations on rates and exemptions."
+    },
+    {
+      "id": "vatca:s52",
+      "area": "vatca_section",
+      "title": "s.52 General rule on exempted activity.",
+      "status": "deferred",
+      "issue": 206,
+      "reason": "Exempted activity."
+    },
+    {
+      "id": "vatca:s53",
+      "area": "vatca_section",
+      "title": "s.53 Imports – general provisions.",
+      "status": "deferred",
+      "issue": 207,
+      "reason": "Imports and exports."
+    },
+    {
+      "id": "vatca:s54",
+      "area": "vatca_section",
+      "title": "s.54 Remission or repayment of tax on certain imported goods.",
+      "status": "deferred",
+      "issue": 207,
+      "reason": "Imports and exports."
+    },
+    {
+      "id": "vatca:s55",
+      "area": "vatca_section",
+      "title": "s.55 Goods in transit – miscellaneous provisions.",
+      "status": "deferred",
+      "issue": 207,
+      "reason": "Imports and exports."
+    },
+    {
+      "id": "vatca:s56",
+      "area": "vatca_section",
+      "title": "s.56 Zero-rating scheme for qualifying businesses.",
+      "status": "deferred",
+      "issue": 207,
+      "reason": "Imports and exports."
+    },
+    {
+      "id": "vatca:s57",
+      "area": "vatca_section",
+      "title": "s.57 Remission of tax on goods exported, etc.",
+      "status": "deferred",
+      "issue": 207,
+      "reason": "Imports and exports."
+    },
+    {
+      "id": "vatca:s58",
+      "area": "vatca_section",
+      "title": "s.58 Retail export scheme.",
+      "status": "deferred",
+      "issue": 207,
+      "reason": "Imports and exports."
+    },
+    {
+      "id": "vatca:s59",
+      "area": "vatca_section",
+      "title": "s.59 Deduction for tax borne or paid.",
+      "status": "rule",
+      "ruleKeys": [
+        "vat.input_deduction_general"
+      ]
+    },
+    {
+      "id": "vatca:s60",
+      "area": "vatca_section",
+      "title": "s.60 General limits on deductibility.",
+      "status": "rule",
+      "ruleKeys": [
+        "vat.deduction_exclusions_entertainment"
+      ]
+    },
+    {
+      "id": "vatca:s61",
+      "area": "vatca_section",
+      "title": "s.61 Apportionment for dual-use inputs.",
+      "status": "deferred",
+      "issue": 209,
+      "reason": "Apportionment for dual-use inputs."
+    },
+    {
+      "id": "vatca:s62",
+      "area": "vatca_section",
+      "title": "s.62 Reduction of tax deductible in relation to qualifying vehicles.",
+      "status": "deferred",
+      "issue": 209,
+      "reason": "Qualifying vehicles."
+    },
+    {
+      "id": "vatca:s63",
+      "area": "vatca_section",
+      "title": "s.63 Interpretation and application.",
+      "status": "deferred",
+      "issue": 208,
+      "reason": "Capital goods scheme — interpretation."
+    },
+    {
+      "id": "vatca:s64",
+      "area": "vatca_section",
+      "title": "s.64 Capital goods scheme.",
+      "status": "deferred",
+      "issue": 208,
+      "reason": "Capital goods scheme."
+    },
+    {
+      "id": "vatca:s65",
+      "area": "vatca_section",
+      "title": "s.65 Registration.",
+      "status": "deferred",
+      "issue": 206,
+      "reason": "Registration — who must register."
+    },
+    {
+      "id": "vatca:s66",
+      "area": "vatca_section",
+      "title": "s.66 Issue of invoices and other documents.",
+      "status": "deferred",
+      "issue": 209,
+      "reason": "Invoices and credit notes — validity for deduction."
+    },
+    {
+      "id": "vatca:s67",
+      "area": "vatca_section",
+      "title": "s.67 Amendments to invoices.",
+      "status": "deferred",
+      "issue": 209,
+      "reason": "Invoices and credit notes — validity for deduction."
+    },
+    {
+      "id": "vatca:s68",
+      "area": "vatca_section",
+      "title": "s.68 Flat-rate farmer invoices and other documents.",
+      "status": "deferred",
+      "issue": 209,
+      "reason": "Invoices and credit notes — validity for deduction."
+    },
+    {
+      "id": "vatca:s69",
+      "area": "vatca_section",
+      "title": "s.69 Invoices or credit notes — errors, etc.",
+      "status": "deferred",
+      "issue": 209,
+      "reason": "Invoices and credit notes — validity for deduction."
+    },
+    {
+      "id": "vatca:s70",
+      "area": "vatca_section",
+      "title": "s.70 Time limits for issuing invoices, etc.",
+      "status": "deferred",
+      "issue": 209,
+      "reason": "Invoices and credit notes — validity for deduction."
+    },
+    {
+      "id": "vatca:s71",
+      "area": "vatca_section",
+      "title": "s.71 Self-billing and outsourcing.",
+      "status": "deferred",
+      "issue": 209,
+      "reason": "Invoices and credit notes — validity for deduction."
+    },
+    {
+      "id": "vatca:s72",
+      "area": "vatca_section",
+      "title": "s.72 Storage of invoices.",
+      "status": "deferred",
+      "issue": 209,
+      "reason": "Invoices and credit notes — validity for deduction."
+    },
+    {
+      "id": "vatca:s73",
+      "area": "vatca_section",
+      "title": "s.73 Requests for particulars in respect of repayment of tax.",
+      "status": "deferred",
+      "issue": 210,
+      "reason": "Particulars for repayment claims."
+    },
+    {
+      "id": "vatca:s74",
+      "area": "vatca_section",
+      "title": "s.74 Tax due on supplies.",
+      "status": "deferred",
+      "issue": 210,
+      "reason": "Tax due, returns and remittances."
+    },
+    {
+      "id": "vatca:s75",
+      "area": "vatca_section",
+      "title": "s.75 Tax due on intra- Community acquisitions.",
+      "status": "deferred",
+      "issue": 210,
+      "reason": "Tax due, returns and remittances."
+    },
+    {
+      "id": "vatca:s76",
+      "area": "vatca_section",
+      "title": "s.76 Returns and remittances.",
+      "status": "deferred",
+      "issue": 210,
+      "reason": "Tax due, returns and remittances."
+    },
+    {
+      "id": "vatca:s77",
+      "area": "vatca_section",
+      "title": "s.77 Authorisations in relation to filing dates.",
+      "status": "deferred",
+      "issue": 210,
+      "reason": "Tax due, returns and remittances."
+    },
+    {
+      "id": "vatca:s78",
+      "area": "vatca_section",
+      "title": "s.78 Electronic remittances and returns.",
+      "status": "deferred",
+      "issue": 210,
+      "reason": "Tax due, returns and remittances."
+    },
+    {
+      "id": "vatca:s79",
+      "area": "vatca_section",
+      "title": "s.79 Special provisions in relation to payment dates.",
+      "status": "deferred",
+      "issue": 210,
+      "reason": "Tax due, returns and remittances."
+    },
+    {
+      "id": "vatca:s80",
+      "area": "vatca_section",
+      "title": "s.80 Tax due on moneys received basis.",
+      "status": "deferred",
+      "issue": 208,
+      "reason": "Moneys received (cash) basis."
+    },
+    {
+      "id": "vatca:s81",
+      "area": "vatca_section",
+      "title": "s.81 Letter of expression of doubt.",
+      "status": "not_applicable",
+      "reason": "procedure or administration — not a transaction classification"
+    },
+    {
+      "id": "vatca:s82",
+      "area": "vatca_section",
+      "title": "s.82 Statement of intra- Community supplies of goods.",
+      "status": "deferred",
+      "issue": 210,
+      "reason": "VIES — goods."
+    },
+    {
+      "id": "vatca:s83",
+      "area": "vatca_section",
+      "title": "s.83 Statement of intra- Community supplies of taxable services.",
+      "status": "deferred",
+      "issue": 210,
+      "reason": "VIES — services."
+    },
+    {
+      "id": "vatca:s84",
+      "area": "vatca_section",
+      "title": "s.84 Duty to keep records.",
+      "status": "not_applicable",
+      "reason": "Record-keeping duty: met by the ledger itself, not a transaction classification."
+    },
+    {
+      "id": "vatca:s85",
+      "area": "vatca_section",
+      "title": "s.85 Supplementary provisions on records.",
+      "status": "not_applicable",
+      "reason": "Record-keeping duty: met by the ledger itself, not a transaction classification."
+    },
+    {
+      "id": "vatca:s86",
+      "area": "vatca_section",
+      "title": "s.86 Special provisions for tax invoiced by flat-rate farmers.",
+      "status": "deferred",
+      "issue": 208,
+      "reason": "Flat-rate farmers."
+    },
+    {
+      "id": "vatca:s87",
+      "area": "vatca_section",
+      "title": "s.87 Margin scheme — taxable dealers.",
+      "status": "deferred",
+      "issue": 208,
+      "reason": "Margin schemes."
+    },
+    {
+      "id": "vatca:s88",
+      "area": "vatca_section",
+      "title": "s.88 Margin scheme — travel agents.",
+      "status": "deferred",
+      "issue": 208,
+      "reason": "Margin schemes."
+    },
+    {
+      "id": "vatca:s89",
+      "area": "vatca_section",
+      "title": "s.89 Margin scheme — auctioneers.",
+      "status": "deferred",
+      "issue": 208,
+      "reason": "Margin schemes."
+    },
+    {
+      "id": "vatca:s90",
+      "area": "vatca_section",
+      "title": "s.90 Investment gold.",
+      "status": "deferred",
+      "issue": 208,
+      "reason": "Investment gold."
+    },
+    {
+      "id": "vatca:s91",
+      "area": "vatca_section",
+      "title": "s.91 Electronic services scheme.",
+      "status": "deferred",
+      "issue": 207,
+      "reason": "Electronic services / OSS scheme."
+    },
+    {
+      "id": "vatca:s92",
+      "area": "vatca_section",
+      "title": "s.92 Suspension arrangements for alcohol products.",
+      "status": "deferred",
+      "issue": 207,
+      "reason": "Suspension arrangements for alcohol products."
+    },
+    {
+      "id": "vatca:s93",
+      "area": "vatca_section",
+      "title": "s.93 Supply of immovable goods (old rules).",
+      "status": "deferred",
+      "issue": 208,
+      "reason": "Immovable goods."
+    },
+    {
+      "id": "vatca:s94",
+      "area": "vatca_section",
+      "title": "s.94 Supplies of immovable goods (new rules).",
+      "status": "deferred",
+      "issue": 208,
+      "reason": "Immovable goods."
+    },
+    {
+      "id": "vatca:s95",
+      "area": "vatca_section",
+      "title": "s.95 Transitional measures for supplies of immovable goods.",
+      "status": "deferred",
+      "issue": 208,
+      "reason": "Immovable goods."
+    },
+    {
+      "id": "vatca:s96",
+      "area": "vatca_section",
+      "title": "s.96 Waiver of exemption under old rules.",
+      "status": "deferred",
+      "issue": 208,
+      "reason": "Immovable goods."
+    },
+    {
+      "id": "vatca:s97",
+      "area": "vatca_section",
+      "title": "s.97 Option to tax letting of immovable goods.",
+      "status": "deferred",
+      "issue": 208,
+      "reason": "Immovable goods."
+    },
+    {
+      "id": "vatca:s98",
+      "area": "vatca_section",
+      "title": "s.98 Valuation of an interest in immovable goods.",
+      "status": "deferred",
+      "issue": 208,
+      "reason": "Immovable goods."
+    },
+    {
+      "id": "vatca:s99",
+      "area": "vatca_section",
+      "title": "s.99 General provisions on refund of tax.",
+      "status": "not_applicable",
+      "reason": "procedure or administration — not a transaction classification"
+    },
+    {
+      "id": "vatca:s100",
+      "area": "vatca_section",
+      "title": "s.100 Unjust enrichment.",
+      "status": "not_applicable",
+      "reason": "procedure or administration — not a transaction classification"
+    },
+    {
+      "id": "vatca:s101",
+      "area": "vatca_section",
+      "title": "s.101 Intra-Community refunds of tax.",
+      "status": "not_applicable",
+      "reason": "procedure or administration — not a transaction classification"
+    },
+    {
+      "id": "vatca:s102",
+      "area": "vatca_section",
+      "title": "s.102 Refunds to taxable persons established outside the Community.",
+      "status": "not_applicable",
+      "reason": "procedure or administration — not a transaction classification"
+    },
+    {
+      "id": "vatca:s103",
+      "area": "vatca_section",
+      "title": "s.103 Ministerial refund orders.",
+      "status": "not_applicable",
+      "reason": "procedure or administration — not a transaction classification"
+    },
+    {
+      "id": "vatca:s104",
+      "area": "vatca_section",
+      "title": "s.104 Repayments in specific circumstances.",
+      "status": "not_applicable",
+      "reason": "procedure or administration — not a transaction classification"
+    },
+    {
+      "id": "vatca:s105",
+      "area": "vatca_section",
+      "title": "s.105 Interest on refunds of tax.",
+      "status": "not_applicable",
+      "reason": "procedure or administration — not a transaction classification"
+    },
+    {
+      "id": "vatca:s106",
+      "area": "vatca_section",
+      "title": "s.106 Care and management of tax.",
+      "status": "not_applicable",
+      "reason": "procedure or administration — not a transaction classification"
+    },
+    {
+      "id": "vatca:s107",
+      "area": "vatca_section",
+      "title": "s.107 Officer responsible in case of body of persons.",
+      "status": "not_applicable",
+      "reason": "procedure or administration — not a transaction classification"
+    },
+    {
+      "id": "vatca:s108",
+      "area": "vatca_section",
+      "title": "s.108 Inspection and removal of records.",
+      "status": "not_applicable",
+      "reason": "procedure or administration — not a transaction classification"
+    },
+    {
+      "id": "vatca:s109",
+      "area": "vatca_section",
+      "title": "s.109 Security to be given by certain taxable persons.",
+      "status": "not_applicable",
+      "reason": "procedure or administration — not a transaction classification"
+    },
+    {
+      "id": "vatca:s110",
+      "area": "vatca_section",
+      "title": "s.110 Estimation of tax due.",
+      "status": "not_applicable",
+      "reason": "procedure or administration — not a transaction classification"
+    },
+    {
+      "id": "vatca:s111",
+      "area": "vatca_section",
+      "title": "s.111 Assessment of tax due.",
+      "status": "not_applicable",
+      "reason": "procedure or administration — not a transaction classification"
+    },
+    {
+      "id": "vatca:s112",
+      "area": "vatca_section",
+      "title": "s.112 Generation of electronic, etc. estimates and assessments.",
+      "status": "not_applicable",
+      "reason": "procedure or administration — not a transaction classification"
+    },
+    {
+      "id": "vatca:s113",
+      "area": "vatca_section",
+      "title": "s.113 Time limits.",
+      "status": "not_applicable",
+      "reason": "procedure or administration — not a transaction classification"
+    },
+    {
+      "id": "vatca:s114",
+      "area": "vatca_section",
+      "title": "s.114 Interest payable by accountable persons.",
+      "status": "not_applicable",
+      "reason": "procedure or administration — not a transaction classification"
+    },
+    {
+      "id": "vatca:s115",
+      "area": "vatca_section",
+      "title": "s.115 Penalties generally.",
+      "status": "not_applicable",
+      "reason": "procedure or administration — not a transaction classification"
+    },
+    {
+      "id": "vatca:s116",
+      "area": "vatca_section",
+      "title": "s.116 Penalty for deliberately or carelessly making incorrect returns, etc.",
+      "status": "not_applicable",
+      "reason": "procedure or administration — not a transaction classification"
+    },
+    {
+      "id": "vatca:s117",
+      "area": "vatca_section",
+      "title": "s.117 Penalty for assisting in making incorrect returns, etc.",
+      "status": "not_applicable",
+      "reason": "procedure or administration — not a transaction classification"
+    },
+    {
+      "id": "vatca:s118",
+      "area": "vatca_section",
+      "title": "s.118 Mitigation and application of penalties.",
+      "status": "not_applicable",
+      "reason": "procedure or administration — not a transaction classification"
+    },
+    {
+      "id": "vatca:s119",
+      "area": "vatca_section",
+      "title": "s.119 Appeals.",
+      "status": "not_applicable",
+      "reason": "procedure or administration — not a transaction classification"
+    },
+    {
+      "id": "vatca:s120",
+      "area": "vatca_section",
+      "title": "s.120 Regulations.",
+      "status": "not_applicable",
+      "reason": "procedure or administration — not a transaction classification"
+    },
+    {
+      "id": "vatca:s121",
+      "area": "vatca_section",
+      "title": "s.121 Definition of “repealed enactment”.",
+      "status": "not_applicable",
+      "reason": "procedure or administration — not a transaction classification"
+    },
+    {
+      "id": "vatca:s122",
+      "area": "vatca_section",
+      "title": "s.122 Repeal of Value- Added Tax Act 1972, etc.",
+      "status": "not_applicable",
+      "reason": "procedure or administration — not a transaction classification"
+    },
+    {
+      "id": "vatca:s123",
+      "area": "vatca_section",
+      "title": "s.123 Consequential amendments and repeals and revocations.",
+      "status": "not_applicable",
+      "reason": "procedure or administration — not a transaction classification"
+    },
+    {
+      "id": "vatca:s124",
+      "area": "vatca_section",
+      "title": "s.124 Transitional provisions.",
+      "status": "not_applicable",
+      "reason": "procedure or administration — not a transaction classification"
+    },
+    {
+      "id": "vatca:s125",
+      "area": "vatca_section",
+      "title": "s.125 Commencement.",
+      "status": "not_applicable",
+      "reason": "procedure or administration — not a transaction classification"
+    },
+    {
+      "id": "vatca:s108A",
+      "area": "vatca_section",
+      "title": "s.108A (inserted)",
+      "status": "not_applicable",
+      "reason": "procedure or administration — not a transaction classification"
+    },
+    {
+      "id": "vatca:s108B",
+      "area": "vatca_section",
+      "title": "s.108B (inserted)",
+      "status": "not_applicable",
+      "reason": "procedure or administration — not a transaction classification"
+    },
+    {
+      "id": "vatca:s108C",
+      "area": "vatca_section",
+      "title": "s.108C (inserted)",
+      "status": "not_applicable",
+      "reason": "procedure or administration — not a transaction classification"
+    },
+    {
+      "id": "vatca:s91A",
+      "area": "vatca_section",
+      "title": "s.91A (inserted)",
+      "status": "deferred",
+      "issue": 207,
+      "reason": "OSS / import schemes (inserted)."
+    },
+    {
+      "id": "vatca:s91B",
+      "area": "vatca_section",
+      "title": "s.91B (inserted)",
+      "status": "deferred",
+      "issue": 207,
+      "reason": "OSS / import schemes (inserted)."
+    },
+    {
+      "id": "vatca:s91C",
+      "area": "vatca_section",
+      "title": "s.91C (inserted)",
+      "status": "deferred",
+      "issue": 207,
+      "reason": "OSS / import schemes (inserted)."
+    },
+    {
+      "id": "vatca:s91D",
+      "area": "vatca_section",
+      "title": "s.91D (inserted)",
+      "status": "deferred",
+      "issue": 207,
+      "reason": "OSS / import schemes (inserted)."
+    },
+    {
+      "id": "vatca:s91E",
+      "area": "vatca_section",
+      "title": "s.91E (inserted)",
+      "status": "deferred",
+      "issue": 207,
+      "reason": "OSS / import schemes (inserted)."
+    },
+    {
+      "id": "vatca:s91F",
+      "area": "vatca_section",
+      "title": "s.91F (inserted)",
+      "status": "deferred",
+      "issue": 207,
+      "reason": "OSS / import schemes (inserted)."
+    },
+    {
+      "id": "vatca:s91G",
+      "area": "vatca_section",
+      "title": "s.91G (inserted)",
+      "status": "deferred",
+      "issue": 207,
+      "reason": "OSS / import schemes (inserted)."
+    },
+    {
+      "id": "vatca:s91H",
+      "area": "vatca_section",
+      "title": "s.91H (inserted)",
+      "status": "deferred",
+      "issue": 207,
+      "reason": "OSS / import schemes (inserted)."
+    },
+    {
+      "id": "vatca:s91I",
+      "area": "vatca_section",
+      "title": "s.91I (inserted)",
+      "status": "deferred",
+      "issue": 207,
+      "reason": "OSS / import schemes (inserted)."
+    },
+    {
+      "id": "vatca:s91J",
+      "area": "vatca_section",
+      "title": "s.91J (inserted)",
+      "status": "deferred",
+      "issue": 207,
+      "reason": "OSS / import schemes (inserted)."
+    },
+    {
+      "id": "vatca:s92A",
+      "area": "vatca_section",
+      "title": "s.92A (inserted)",
+      "status": "deferred",
+      "issue": 208,
+      "reason": "Deposit return scheme."
+    },
+    {
+      "id": "vatca:s92B",
+      "area": "vatca_section",
+      "title": "s.92B (inserted)",
+      "status": "deferred",
+      "issue": 207,
+      "reason": "SME scheme definitions (S.I. 69/2025)."
+    },
+    {
+      "id": "vatca:s92C",
+      "area": "vatca_section",
+      "title": "s.92C (inserted)",
+      "status": "deferred",
+      "issue": 207,
+      "reason": "SME scheme (S.I. 69/2025)."
+    },
+    {
+      "id": "vatca:s92D",
+      "area": "vatca_section",
+      "title": "s.92D (inserted)",
+      "status": "deferred",
+      "issue": 207,
+      "reason": "SME scheme for enterprises not established in the State (S.I. 69/2025)."
+    },
+    {
+      "id": "vatca:sch1:p1:1",
+      "area": "vatca_schedule",
+      "title": "Sch.1 para 1 — Postal services.",
+      "status": "rule",
+      "ruleKeys": [
+        "vat.exempt_postal_universal_service"
+      ]
+    },
+    {
+      "id": "vatca:sch1:p1:2",
+      "area": "vatca_schedule",
+      "title": "Sch.1 para 2 — Medical and related services.",
+      "status": "deferred",
+      "issue": 206,
+      "reason": "Exemption not yet ruled."
+    },
+    {
+      "id": "vatca:sch1:p1:3",
+      "area": "vatca_schedule",
+      "title": "Sch.1 para 3 — Certain independent groups, non-profit making organisations and other bodies.",
+      "status": "deferred",
+      "issue": 206,
+      "reason": "Exemption not yet ruled."
+    },
+    {
+      "id": "vatca:sch1:p1:4",
+      "area": "vatca_schedule",
+      "title": "Sch.1 para 4 — Children and education.",
+      "status": "deferred",
+      "issue": 206,
+      "reason": "Exemption not yet ruled."
+    },
+    {
+      "id": "vatca:sch1:p1:5",
+      "area": "vatca_schedule",
+      "title": "Sch.1 para 5 — Other activities.",
+      "status": "deferred",
+      "issue": 206,
+      "reason": "Exemption not yet ruled."
+    },
+    {
+      "id": "vatca:sch1:p2:6",
+      "area": "vatca_schedule",
+      "title": "Sch.1 para 6 — Financial services.",
+      "status": "rule",
+      "ruleKeys": [
+        "vat.exempt_bank_account_and_payment_services"
+      ]
+    },
+    {
+      "id": "vatca:sch1:p2:7",
+      "area": "vatca_schedule",
+      "title": "Sch.1 para 7 — Agency services.",
+      "status": "deferred",
+      "issue": 206,
+      "reason": "Exemption not yet ruled."
+    },
+    {
+      "id": "vatca:sch1:p2:8",
+      "area": "vatca_schedule",
+      "title": "Sch.1 para 8 — Insurance and reinsurance services.",
+      "status": "rule",
+      "ruleKeys": [
+        "vat.exempt_insurance"
+      ]
+    },
+    {
+      "id": "vatca:sch1:p2:9",
+      "area": "vatca_schedule",
+      "title": "Sch.1 para 9 — Supply of investment gold.",
+      "status": "deferred",
+      "issue": 206,
+      "reason": "Exemption not yet ruled."
+    },
+    {
+      "id": "vatca:sch1:p2:10",
+      "area": "vatca_schedule",
+      "title": "Sch.1 para 10 — Gambling and lotteries.",
+      "status": "deferred",
+      "issue": 206,
+      "reason": "Exemption not yet ruled."
+    },
+    {
+      "id": "vatca:sch1:p2:11",
+      "area": "vatca_schedule",
+      "title": "Sch.1 para 11 — Letting of immovable goods.",
+      "status": "rule",
+      "ruleKeys": [
+        "vat.exempt_letting_immovable_goods"
+      ]
+    },
+    {
+      "id": "vatca:sch1:p2:12",
+      "area": "vatca_schedule",
+      "title": "Sch.1 para 12 — Other supplies of goods.",
+      "status": "deferred",
+      "issue": 206,
+      "reason": "Exemption not yet ruled."
+    },
+    {
+      "id": "vatca:sch1:p2:13",
+      "area": "vatca_schedule",
+      "title": "Sch.1 para 13 — Gas and electricity services etc.",
+      "status": "deferred",
+      "issue": 206,
+      "reason": "Exemption not yet ruled."
+    },
+    {
+      "id": "vatca:sch1:p2:14",
+      "area": "vatca_schedule",
+      "title": "Sch.1 para 14 — Exemptions by derogation in accordance with Article 371 of the VAT Directive.",
+      "status": "rule",
+      "ruleKeys": [
+        "vat.exempt_passenger_transport"
+      ]
+    },
+    {
+      "id": "vatca:sch1:p2:15",
+      "area": "vatca_schedule",
+      "title": "Sch.1 para 15 — Imports by certain international bodies",
+      "status": "deferred",
+      "issue": 206,
+      "reason": "Exemption not yet ruled."
+    },
+    {
+      "id": "vatca:sch2:p1:1",
+      "area": "vatca_schedule",
+      "title": "Sch.2 para 1 — Intra-Community transactions.",
+      "status": "rule",
+      "ruleKeys": [
+        "vat.zero_rate_intra_community_goods"
+      ]
+    },
+    {
+      "id": "vatca:sch2:p1:2",
+      "area": "vatca_schedule",
+      "title": "Sch.2 para 2 — Imports.",
+      "status": "deferred",
+      "issue": 205,
+      "reason": "Rate paragraph not yet ruled."
+    },
+    {
+      "id": "vatca:sch2:p1:3",
+      "area": "vatca_schedule",
+      "title": "Sch.2 para 3 — Exports.",
+      "status": "rule",
+      "ruleKeys": [
+        "vat.zero_rate_export_outside_community"
+      ]
+    },
+    {
+      "id": "vatca:sch2:p1:4",
+      "area": "vatca_schedule",
+      "title": "Sch.2 para 4 — Services relating to vessels and aircraft.",
+      "status": "deferred",
+      "issue": 205,
+      "reason": "Rate paragraph not yet ruled."
+    },
+    {
+      "id": "vatca:sch2:p1:5",
+      "area": "vatca_schedule",
+      "title": "Sch.2 para 5 — Certain transactions treated as exports.",
+      "status": "deferred",
+      "issue": 205,
+      "reason": "Rate paragraph not yet ruled."
+    },
+    {
+      "id": "vatca:sch2:p1:6",
+      "area": "vatca_schedule",
+      "title": "Sch.2 para 6 — Services by intermediaries.",
+      "status": "deferred",
+      "issue": 205,
+      "reason": "Rate paragraph not yet ruled."
+    },
+    {
+      "id": "vatca:sch2:p1:7",
+      "area": "vatca_schedule",
+      "title": "Sch.2 para 7 — International trade, etc.",
+      "status": "deferred",
+      "issue": 205,
+      "reason": "Rate paragraph not yet ruled."
+    },
+    {
+      "id": "vatca:sch2:p2:8",
+      "area": "vatca_schedule",
+      "title": "Sch.2 para 8 — Food and drink.",
+      "status": "deferred",
+      "issue": 205,
+      "reason": "Rate paragraph not yet ruled."
+    },
+    {
+      "id": "vatca:sch2:p2:9",
+      "area": "vatca_schedule",
+      "title": "Sch.2 para 9 — Certain printed matter.",
+      "status": "rule",
+      "ruleKeys": [
+        "vat.zero_rate_printed_books"
+      ]
+    },
+    {
+      "id": "vatca:sch2:p2:9A",
+      "area": "vatca_schedule",
+      "title": "Sch.2 para 9A — Certain electronically supplied matter",
+      "status": "deferred",
+      "issue": 205,
+      "reason": "Rate paragraph not yet ruled."
+    },
+    {
+      "id": "vatca:sch2:p2:10",
+      "area": "vatca_schedule",
+      "title": "Sch.2 para 10 — Children’s clothing and footwear.",
+      "status": "rule",
+      "ruleKeys": [
+        "vat.zero_rate_childrens_clothing_footwear"
+      ]
+    },
+    {
+      "id": "vatca:sch2:p2:11",
+      "area": "vatca_schedule",
+      "title": "Sch.2 para 11 — Medicine, medical equipment and appliances .",
+      "status": "deferred",
+      "issue": 205,
+      "reason": "Rate paragraph not yet ruled."
+    },
+    {
+      "id": "vatca:sch2:p2:12",
+      "area": "vatca_schedule",
+      "title": "Sch.2 para 12 — Fertilisers, feeding stuffs, certain seeds, etc.",
+      "status": "deferred",
+      "issue": 205,
+      "reason": "Rate paragraph not yet ruled."
+    },
+    {
+      "id": "vatca:sch2:p2:13",
+      "area": "vatca_schedule",
+      "title": "Sch.2 para 13 — Other zero-rated goods and services.",
+      "status": "deferred",
+      "issue": 205,
+      "reason": "Rate paragraph not yet ruled."
+    },
+    {
+      "id": "vatca:sch2:p2:14",
+      "area": "vatca_schedule",
+      "title": "Sch.2 para 14 — Solar panels",
+      "status": "deferred",
+      "issue": 205,
+      "reason": "Rate paragraph not yet ruled."
+    },
+    {
+      "id": "vatca:sch3:p1:1",
+      "area": "vatca_schedule",
+      "title": "Sch.3 para 1 — Definitions — Schedule 3 .",
+      "status": "deferred",
+      "issue": 205,
+      "reason": "Rate paragraph not yet ruled."
+    },
+    {
+      "id": "vatca:sch3:p1:2",
+      "area": "vatca_schedule",
+      "title": "Sch.3 para 2 — Other interpretative provisions.",
+      "status": "deferred",
+      "issue": 205,
+      "reason": "Rate paragraph not yet ruled."
+    },
+    {
+      "id": "vatca:sch3:p2:3",
+      "area": "vatca_schedule",
+      "title": "Sch.3 para 3 — Food and drink for human consumption.",
+      "status": "deferred",
+      "issue": 205,
+      "reason": "Rate paragraph not yet ruled."
+    },
+    {
+      "id": "vatca:sch3:p2:3A",
+      "area": "vatca_schedule",
+      "title": "Sch.3 para 3A — Food supplements.",
+      "status": "deferred",
+      "issue": 205,
+      "reason": "Rate paragraph not yet ruled."
+    },
+    {
+      "id": "vatca:sch3:p2:4",
+      "area": "vatca_schedule",
+      "title": "Sch.3 para 4 — Live animals, animal feeding stuffs.",
+      "status": "deferred",
+      "issue": 205,
+      "reason": "Rate paragraph not yet ruled."
+    },
+    {
+      "id": "vatca:sch3:p2:5",
+      "area": "vatca_schedule",
+      "title": "Sch.3 para 5 — Pharmaceutical products.",
+      "status": "deferred",
+      "issue": 205,
+      "reason": "Rate paragraph not yet ruled."
+    },
+    {
+      "id": "vatca:sch3:p2:5A",
+      "area": "vatca_schedule",
+      "title": "Sch.3 para 5A",
+      "status": "deferred",
+      "issue": 205,
+      "reason": "Rate paragraph not yet ruled."
+    },
+    {
+      "id": "vatca:sch3:p2:6",
+      "area": "vatca_schedule",
+      "title": "Sch.3 para 6 — Certain safety equipment.",
+      "status": "deferred",
+      "issue": 205,
+      "reason": "Rate paragraph not yet ruled."
+    },
+    {
+      "id": "vatca:sch3:p2:7",
+      "area": "vatca_schedule",
+      "title": "Sch.3 para 7 — Books, newspapers and other printed matter.",
+      "status": "deferred",
+      "issue": 205,
+      "reason": "Rate paragraph not yet ruled."
+    },
+    {
+      "id": "vatca:sch3:p2:7A",
+      "area": "vatca_schedule",
+      "title": "Sch.3 para 7A — Certain electronically supplied matter",
+      "status": "deferred",
+      "issue": 205,
+      "reason": "Rate paragraph not yet ruled."
+    },
+    {
+      "id": "vatca:sch3:p2:8",
+      "area": "vatca_schedule",
+      "title": "Sch.3 para 8 — Shows, exhibitions, cultural facilities, etc.",
+      "status": "rule",
+      "ruleKeys": [
+        "vat.reduced_rate_cinema_admission"
+      ]
+    },
+    {
+      "id": "vatca:sch3:p2:9",
+      "area": "vatca_schedule",
+      "title": "Sch.3 para 9 — Private dwellings.",
+      "status": "rule",
+      "ruleKeys": [
+        "vat.reduced_rate_dwelling_services"
+      ]
+    },
+    {
+      "id": "vatca:sch3:p2:9A",
+      "area": "vatca_schedule",
+      "title": "Sch.3 para 9A — Housing as part of a social policy.",
+      "status": "deferred",
+      "issue": 205,
+      "reason": "Rate paragraph not yet ruled."
+    },
+    {
+      "id": "vatca:sch3:p2:9B",
+      "area": "vatca_schedule",
+      "title": "Sch.3 para 9B — Supply and construction of housing as part of a social policy.",
+      "status": "deferred",
+      "issue": 205,
+      "reason": "Rate paragraph not yet ruled."
+    },
+    {
+      "id": "vatca:sch3:p2:10",
+      "area": "vatca_schedule",
+      "title": "Sch.3 para 10 — Agricultural goods and services.",
+      "status": "deferred",
+      "issue": 205,
+      "reason": "Rate paragraph not yet ruled."
+    },
+    {
+      "id": "vatca:sch3:p2:11",
+      "area": "vatca_schedule",
+      "title": "Sch.3 para 11 — Hotel, holiday accommodation.",
+      "status": "deferred",
+      "issue": 205,
+      "reason": "Rate paragraph not yet ruled."
+    },
+    {
+      "id": "vatca:sch3:p2:12",
+      "area": "vatca_schedule",
+      "title": "Sch.3 para 12 — Sporting facilities.",
+      "status": "deferred",
+      "issue": 205,
+      "reason": "Rate paragraph not yet ruled."
+    },
+    {
+      "id": "vatca:sch3:p2:12A",
+      "area": "vatca_schedule",
+      "title": "Sch.3 para 12A — Low emissions heat pump heating systems",
+      "status": "deferred",
+      "issue": 205,
+      "reason": "Rate paragraph not yet ruled."
+    },
+    {
+      "id": "vatca:sch3:p2:13",
+      "area": "vatca_schedule",
+      "title": "Sch.3 para 13 — Other services.",
+      "status": "deferred",
+      "issue": 205,
+      "reason": "Rate paragraph not yet ruled."
+    },
+    {
+      "id": "vatca:sch3:p2:13A",
+      "area": "vatca_schedule",
+      "title": "Sch.3 para 13A — District heating .",
+      "status": "deferred",
+      "issue": 205,
+      "reason": "Rate paragraph not yet ruled."
+    },
+    {
+      "id": "vatca:sch3:p2:13B",
+      "area": "vatca_schedule",
+      "title": "Sch.3 para 13B — Horses and greyhounds",
+      "status": "deferred",
+      "issue": 205,
+      "reason": "Rate paragraph not yet ruled."
+    },
+    {
+      "id": "vatca:sch3:p3:14",
+      "area": "vatca_schedule",
+      "title": "Sch.3 para 14 — Housing.",
+      "status": "deferred",
+      "issue": 205,
+      "reason": "Rate paragraph not yet ruled."
+    },
+    {
+      "id": "vatca:sch3:p4:15",
+      "area": "vatca_schedule",
+      "title": "Sch.3 para 15 — Non-residential immovable goods.",
+      "status": "deferred",
+      "issue": 205,
+      "reason": "Rate paragraph not yet ruled."
+    },
+    {
+      "id": "vatca:sch3:p4:16",
+      "area": "vatca_schedule",
+      "title": "Sch.3 para 16 — Concrete works.",
+      "status": "deferred",
+      "issue": 205,
+      "reason": "Rate paragraph not yet ruled."
+    },
+    {
+      "id": "vatca:sch3:p4:17",
+      "area": "vatca_schedule",
+      "title": "Sch.3 para 17 — Energy products and supplies.",
+      "status": "rule",
+      "ruleKeys": [
+        "vat.reduced_rate_solid_fuel"
+      ]
+    },
+    {
+      "id": "vatca:sch3:p4:18",
+      "area": "vatca_schedule",
+      "title": "Sch.3 para 18 — Photographic and related supplies.",
+      "status": "deferred",
+      "issue": 205,
+      "reason": "Rate paragraph not yet ruled."
+    },
+    {
+      "id": "vatca:sch3:p4:19",
+      "area": "vatca_schedule",
+      "title": "Sch.3 para 19 — Hiring for short periods.",
+      "status": "deferred",
+      "issue": 205,
+      "reason": "Rate paragraph not yet ruled."
+    },
+    {
+      "id": "vatca:sch3:p4:20",
+      "area": "vatca_schedule",
+      "title": "Sch.3 para 20 — Certain repair and related services.",
+      "status": "rule",
+      "ruleKeys": [
+        "vat.reduced_rate_repair_movable_goods"
+      ]
+    },
+    {
+      "id": "vatca:sch3:p5:22",
+      "area": "vatca_schedule",
+      "title": "Sch.3 para 22 — Plants and bulbs, etc.",
+      "status": "deferred",
+      "issue": 205,
+      "reason": "Rate paragraph not yet ruled."
+    },
+    {
+      "id": "vatca:sch3:p6:23",
+      "area": "vatca_schedule",
+      "title": "Sch.3 para 23 — Works of art.",
+      "status": "deferred",
+      "issue": 205,
+      "reason": "Rate paragraph not yet ruled."
+    },
+    {
+      "id": "vatca:sch3:p6:24",
+      "area": "vatca_schedule",
+      "title": "Sch.3 para 24 — Antiques.",
+      "status": "deferred",
+      "issue": 205,
+      "reason": "Rate paragraph not yet ruled."
+    },
+    {
+      "id": "vatca:sch3:p6:25",
+      "area": "vatca_schedule",
+      "title": "Sch.3 para 25 — Literary manuscripts.",
+      "status": "deferred",
+      "issue": 205,
+      "reason": "Rate paragraph not yet ruled."
+    },
+    {
+      "id": "vatca:sch4:1",
+      "area": "vatca_schedule",
+      "title": "Sch.4 para 1 — ## Part 1 — List of Agricultural Production Activities",
+      "status": "deferred",
+      "issue": 208,
+      "reason": "Agricultural production (flat-rate farmers)."
+    },
+    {
+      "id": "vatca:sch4:2",
+      "area": "vatca_schedule",
+      "title": "Sch.4 para 2",
+      "status": "deferred",
+      "issue": 208,
+      "reason": "Agricultural production (flat-rate farmers)."
+    },
+    {
+      "id": "vatca:sch4:3",
+      "area": "vatca_schedule",
+      "title": "Sch.4 para 3",
+      "status": "deferred",
+      "issue": 208,
+      "reason": "Agricultural production (flat-rate farmers)."
+    },
+    {
+      "id": "vatca:sch4:4",
+      "area": "vatca_schedule",
+      "title": "Sch.4 para 4",
+      "status": "deferred",
+      "issue": 208,
+      "reason": "Agricultural production (flat-rate farmers)."
+    },
+    {
+      "id": "vatca:sch4:5",
+      "area": "vatca_schedule",
+      "title": "Sch.4 para 5",
+      "status": "deferred",
+      "issue": 208,
+      "reason": "Agricultural production (flat-rate farmers)."
+    },
+    {
+      "id": "vatca:sch5:1",
+      "area": "vatca_schedule",
+      "title": "Sch.5 para 1 — Works of art",
+      "status": "deferred",
+      "issue": 205,
+      "reason": "Rate paragraph not yet ruled."
+    },
+    {
+      "id": "vatca:sch5:2",
+      "area": "vatca_schedule",
+      "title": "Sch.5 para 2 — Collectors’ items",
+      "status": "deferred",
+      "issue": 205,
+      "reason": "Rate paragraph not yet ruled."
+    },
+    {
+      "id": "vatca:sch5:3",
+      "area": "vatca_schedule",
+      "title": "Sch.5 para 3 — Antiques",
+      "status": "deferred",
+      "issue": 205,
+      "reason": "Rate paragraph not yet ruled."
+    },
+    {
+      "id": "vatca:sch6:1",
+      "area": "vatca_schedule",
+      "title": "Sch.6 para 1 — Section 14.",
+      "status": "deferred",
+      "issue": 206,
+      "reason": "Annex 1 activities (public bodies as taxable persons)."
+    },
+    {
+      "id": "vatca:sch6:2",
+      "area": "vatca_schedule",
+      "title": "Sch.6 para 2",
+      "status": "deferred",
+      "issue": 206,
+      "reason": "Annex 1 activities (public bodies as taxable persons)."
+    },
+    {
+      "id": "vatca:sch6:3",
+      "area": "vatca_schedule",
+      "title": "Sch.6 para 3",
+      "status": "deferred",
+      "issue": 206,
+      "reason": "Annex 1 activities (public bodies as taxable persons)."
+    },
+    {
+      "id": "vatca:sch6:4",
+      "area": "vatca_schedule",
+      "title": "Sch.6 para 4",
+      "status": "deferred",
+      "issue": 206,
+      "reason": "Annex 1 activities (public bodies as taxable persons)."
+    },
+    {
+      "id": "vatca:sch6:5",
+      "area": "vatca_schedule",
+      "title": "Sch.6 para 5",
+      "status": "deferred",
+      "issue": 206,
+      "reason": "Annex 1 activities (public bodies as taxable persons)."
+    },
+    {
+      "id": "vatca:sch6:6",
+      "area": "vatca_schedule",
+      "title": "Sch.6 para 6",
+      "status": "deferred",
+      "issue": 206,
+      "reason": "Annex 1 activities (public bodies as taxable persons)."
+    },
+    {
+      "id": "vatca:sch6:7",
+      "area": "vatca_schedule",
+      "title": "Sch.6 para 7",
+      "status": "deferred",
+      "issue": 206,
+      "reason": "Annex 1 activities (public bodies as taxable persons)."
+    },
+    {
+      "id": "vatca:sch6:8",
+      "area": "vatca_schedule",
+      "title": "Sch.6 para 8",
+      "status": "deferred",
+      "issue": 206,
+      "reason": "Annex 1 activities (public bodies as taxable persons)."
+    },
+    {
+      "id": "vatca:sch6:9",
+      "area": "vatca_schedule",
+      "title": "Sch.6 para 9",
+      "status": "deferred",
+      "issue": 206,
+      "reason": "Annex 1 activities (public bodies as taxable persons)."
+    },
+    {
+      "id": "vatca:sch6:10",
+      "area": "vatca_schedule",
+      "title": "Sch.6 para 10",
+      "status": "deferred",
+      "issue": 206,
+      "reason": "Annex 1 activities (public bodies as taxable persons)."
+    },
+    {
+      "id": "vatca:sch6:11",
+      "area": "vatca_schedule",
+      "title": "Sch.6 para 11",
+      "status": "deferred",
+      "issue": 206,
+      "reason": "Annex 1 activities (public bodies as taxable persons)."
+    },
+    {
+      "id": "vatca:sch6:12",
+      "area": "vatca_schedule",
+      "title": "Sch.6 para 12",
+      "status": "deferred",
+      "issue": 206,
+      "reason": "Annex 1 activities (public bodies as taxable persons)."
+    },
+    {
+      "id": "vatca:sch6:13",
+      "area": "vatca_schedule",
+      "title": "Sch.6 para 13",
+      "status": "deferred",
+      "issue": 206,
+      "reason": "Annex 1 activities (public bodies as taxable persons)."
+    },
+    {
+      "id": "vatca:sch3:p4:21",
+      "area": "vatca_schedule",
+      "title": "Sch.3 para 21 — Miscellaneous services",
+      "status": "deferred",
+      "issue": 205,
+      "reason": "Rate paragraph not yet ruled.",
+      "note": "The LRC revised text prints this paragraph (substituted, F481) without its number; it sits between paragraphs 20 and 22 under the heading \"Miscellaneous services\"."
+    },
+    {
+      "id": "vatca:sch9:part1",
+      "area": "vatca_schedule",
+      "title": "Sch.9 Part 1",
+      "status": "deferred",
+      "issue": 207,
+      "reason": "Northern Ireland protocol provisions."
+    },
+    {
+      "id": "vatca:sch9:part2",
+      "area": "vatca_schedule",
+      "title": "Sch.9 Part 2",
+      "status": "deferred",
+      "issue": 207,
+      "reason": "Northern Ireland protocol provisions."
+    },
+    {
+      "id": "vatca:sch9:part3",
+      "area": "vatca_schedule",
+      "title": "Sch.9 Part 3",
+      "status": "deferred",
+      "issue": 207,
+      "reason": "Northern Ireland protocol provisions."
+    },
+    {
+      "id": "treatment:IE_STD",
+      "area": "vat_treatment",
+      "title": "IE_STD",
+      "status": "rule",
+      "ruleKeys": [
+        "vat.rate_standard_current"
+      ]
+    },
+    {
+      "id": "treatment:IE_RED",
+      "area": "vat_treatment",
+      "title": "IE_RED",
+      "status": "rule",
+      "ruleKeys": [
+        "vat.rate_reduced_current",
+        "vat.rate_restaurant_catering_reduced_current",
+        "vat.rate_restaurant_catering_reduced_pre_9pct_window",
+        "vat.reduced_rate_cinema_admission",
+        "vat.reduced_rate_dwelling_services",
+        "vat.reduced_rate_repair_movable_goods",
+        "vat.reduced_rate_solid_fuel"
+      ]
+    },
+    {
+      "id": "treatment:IE_SECOND_RED",
+      "area": "vat_treatment",
+      "title": "IE_SECOND_RED",
+      "status": "rule",
+      "ruleKeys": [
+        "vat.rate_admission_9pct_2020_2023",
+        "vat.rate_gas_electricity_9pct_current",
+        "vat.rate_hairdressing_9pct_2020_2023",
+        "vat.rate_heat_pump_installation_9pct_current",
+        "vat.rate_hotel_accommodation_9pct_2020_2023",
+        "vat.rate_periodicals_9pct_current",
+        "vat.rate_printed_matter_9pct_2020_2023",
+        "vat.rate_restaurant_catering_9pct_2020_2023",
+        "vat.rate_social_housing_apartment_9pct_2025_narrow",
+        "vat.rate_social_housing_apartment_9pct_current",
+        "vat.rate_sporting_facilities_9pct_current"
+      ]
+    },
+    {
+      "id": "treatment:IE_ZERO",
+      "area": "vat_treatment",
+      "title": "IE_ZERO",
+      "status": "rule",
+      "ruleKeys": [
+        "vat.zero_rate_childrens_clothing_footwear",
+        "vat.zero_rate_export_outside_community",
+        "vat.zero_rate_printed_books"
+      ]
+    },
+    {
+      "id": "treatment:IE_EXEMPT",
+      "area": "vat_treatment",
+      "title": "IE_EXEMPT",
+      "status": "rule",
+      "ruleKeys": [
+        "vat.exempt_bank_account_and_payment_services",
+        "vat.exempt_insurance",
+        "vat.exempt_letting_immovable_goods",
+        "vat.exempt_passenger_transport",
+        "vat.exempt_postal_universal_service"
+      ]
+    },
+    {
+      "id": "treatment:OUT_OF_SCOPE",
+      "area": "vat_treatment",
+      "title": "OUT_OF_SCOPE",
+      "status": "rule",
+      "ruleKeys": [
+        "vat.outside_scope_capital_loans_dividends",
+        "vat.outside_scope_employment",
+        "vat.outside_scope_own_account_transfer",
+        "vat.outside_scope_tax_payment"
+      ]
+    },
+    {
+      "id": "treatment:EU_GOODS_ACQ",
+      "area": "vat_treatment",
+      "title": "EU_GOODS_ACQ",
+      "status": "deferred",
+      "issue": 207,
+      "reason": "No rule produces intra-Community acquisitions yet."
+    },
+    {
+      "id": "treatment:EU_SERVICES_RCV",
+      "area": "vat_treatment",
+      "title": "EU_SERVICES_RCV",
+      "status": "rule",
+      "ruleKeys": [
+        "vat.reverse_charge_services_from_abroad"
+      ]
+    },
+    {
+      "id": "treatment:EU_GOODS_SUPPLY",
+      "area": "vat_treatment",
+      "title": "EU_GOODS_SUPPLY",
+      "status": "rule",
+      "ruleKeys": [
+        "vat.zero_rate_intra_community_goods"
+      ]
+    },
+    {
+      "id": "treatment:EU_SERVICES_SUPPLY",
+      "area": "vat_treatment",
+      "title": "EU_SERVICES_SUPPLY",
+      "status": "rule",
+      "ruleKeys": [
+        "vat.place_of_supply_services_to_business_abroad"
+      ]
+    },
+    {
+      "id": "treatment:NON_EU_SERVICES_RCV",
+      "area": "vat_treatment",
+      "title": "NON_EU_SERVICES_RCV",
+      "status": "rule",
+      "ruleKeys": [
+        "vat.reverse_charge_services_from_abroad"
+      ]
+    },
+    {
+      "id": "treatment:NON_EU_SERVICES_SUPPLY",
+      "area": "vat_treatment",
+      "title": "NON_EU_SERVICES_SUPPLY",
+      "status": "rule",
+      "ruleKeys": [
+        "vat.place_of_supply_services_to_business_abroad"
+      ]
+    },
+    {
+      "id": "treatment:IMPORT_PA",
+      "area": "vat_treatment",
+      "title": "IMPORT_PA",
+      "status": "deferred",
+      "issue": 207,
+      "reason": "No rule produces postponed accounting on imports yet."
+    },
+    {
+      "id": "treatment:IMPORT_VAT_PAID",
+      "area": "vat_treatment",
+      "title": "IMPORT_VAT_PAID",
+      "status": "deferred",
+      "issue": 207,
+      "reason": "No rule produces import VAT paid at entry yet."
+    },
+    {
+      "id": "treatment:RC_CONSTRUCTION",
+      "area": "vat_treatment",
+      "title": "RC_CONSTRUCTION",
+      "status": "deferred",
+      "issue": 208,
+      "reason": "No rule produces the s.16 construction reverse charge yet."
+    },
+    {
+      "id": "treatment:NON_DEDUCTIBLE",
+      "area": "vat_treatment",
+      "title": "NON_DEDUCTIBLE",
+      "status": "rule",
+      "ruleKeys": [
+        "vat.deduction_exclusions_entertainment"
+      ]
+    },
+    {
+      "id": "tca:s3",
+      "area": "tca_section",
+      "title": "TCA 1997 s3",
+      "status": "deferred",
+      "issue": 211,
+      "reason": "Not yet ruled."
+    },
+    {
+      "id": "tca:s15",
+      "area": "tca_section",
+      "title": "TCA 1997 s15",
+      "status": "deferred",
+      "issue": 212,
+      "reason": "Not yet ruled."
+    },
+    {
+      "id": "tca:s18",
+      "area": "tca_section",
+      "title": "TCA 1997 s18",
+      "status": "deferred",
+      "issue": 212,
+      "reason": "Not yet ruled."
+    },
+    {
+      "id": "tca:s21",
+      "area": "tca_section",
+      "title": "TCA 1997 s21",
+      "status": "deferred",
+      "issue": 211,
+      "reason": "Not yet ruled."
+    },
+    {
+      "id": "tca:s21A",
+      "area": "tca_section",
+      "title": "TCA 1997 s21A",
+      "status": "deferred",
+      "issue": 211,
+      "reason": "Not yet ruled."
+    },
+    {
+      "id": "tca:s65",
+      "area": "tca_section",
+      "title": "TCA 1997 s65",
+      "status": "deferred",
+      "issue": 212,
+      "reason": "Not yet ruled."
+    },
+    {
+      "id": "tca:s66",
+      "area": "tca_section",
+      "title": "TCA 1997 s66",
+      "status": "deferred",
+      "issue": 212,
+      "reason": "Not yet ruled."
+    },
+    {
+      "id": "tca:s67",
+      "area": "tca_section",
+      "title": "TCA 1997 s67",
+      "status": "deferred",
+      "issue": 212,
+      "reason": "Not yet ruled."
+    },
+    {
+      "id": "tca:s76",
+      "area": "tca_section",
+      "title": "TCA 1997 s76",
+      "status": "deferred",
+      "issue": 211,
+      "reason": "Not yet ruled."
+    },
+    {
+      "id": "tca:s81",
+      "area": "tca_section",
+      "title": "TCA 1997 s81",
+      "status": "deferred",
+      "issue": 211,
+      "reason": "Not yet ruled."
+    },
+    {
+      "id": "tca:s284",
+      "area": "tca_section",
+      "title": "TCA 1997 s284",
+      "status": "rule",
+      "ruleKeys": [
+        "income_tax.wear_and_tear_allowance_qualifies"
+      ]
+    },
+    {
+      "id": "tca:s288",
+      "area": "tca_section",
+      "title": "TCA 1997 s288",
+      "status": "deferred",
+      "issue": 211,
+      "reason": "Not yet ruled."
+    },
+    {
+      "id": "tca:part9-computer-software",
+      "area": "tca_section",
+      "title": "TCA 1997 part9-computer-software",
+      "status": "deferred",
+      "issue": 211,
+      "reason": "Not yet ruled."
+    },
+    {
+      "id": "tca:part9-motor-vehicles",
+      "area": "tca_section",
+      "title": "TCA 1997 part9-motor-vehicles",
+      "status": "deferred",
+      "issue": 211,
+      "reason": "Not yet ruled."
+    },
+    {
+      "id": "tca:s396",
+      "area": "tca_section",
+      "title": "TCA 1997 s396",
+      "status": "deferred",
+      "issue": 211,
+      "reason": "Not yet ruled."
+    },
+    {
+      "id": "tca:s396A",
+      "area": "tca_section",
+      "title": "TCA 1997 s396A",
+      "status": "deferred",
+      "issue": 211,
+      "reason": "Not yet ruled."
+    },
+    {
+      "id": "tca:s430",
+      "area": "tca_section",
+      "title": "TCA 1997 s430",
+      "status": "deferred",
+      "issue": 211,
+      "reason": "Not yet ruled."
+    },
+    {
+      "id": "tca:s440",
+      "area": "tca_section",
+      "title": "TCA 1997 s440",
+      "status": "deferred",
+      "issue": 211,
+      "reason": "Not yet ruled."
+    },
+    {
+      "id": "tca:s441",
+      "area": "tca_section",
+      "title": "TCA 1997 s441",
+      "status": "deferred",
+      "issue": 211,
+      "reason": "Not yet ruled."
+    },
+    {
+      "id": "tca:s472AB",
+      "area": "tca_section",
+      "title": "TCA 1997 s472AB",
+      "status": "deferred",
+      "issue": 212,
+      "reason": "Not yet ruled."
+    },
+    {
+      "id": "tca:part18D",
+      "area": "tca_section",
+      "title": "TCA 1997 part18D",
+      "status": "deferred",
+      "issue": 212,
+      "reason": "Not yet ruled."
+    },
+    {
+      "id": "tca:part41A",
+      "area": "tca_section",
+      "title": "TCA 1997 part41A",
+      "status": "deferred",
+      "issue": 211,
+      "reason": "Not yet ruled."
+    },
+    {
+      "id": "tca:s840",
+      "area": "tca_section",
+      "title": "TCA 1997 s840",
+      "status": "deferred",
+      "issue": 211,
+      "reason": "Not yet ruled."
+    },
+    {
+      "id": "tca:s1007",
+      "area": "tca_section",
+      "title": "TCA 1997 s1007",
+      "status": "deferred",
+      "issue": 212,
+      "reason": "Not yet ruled."
+    },
+    {
+      "id": "tca:s1008",
+      "area": "tca_section",
+      "title": "TCA 1997 s1008",
+      "status": "deferred",
+      "issue": 212,
+      "reason": "Not yet ruled."
+    },
+    {
+      "id": "tca:s530",
+      "area": "tca_section",
+      "title": "TCA 1997 s530",
+      "status": "rule",
+      "ruleKeys": [
+        "rct.relevant_operations_scope"
+      ]
+    },
+    {
+      "id": "tca:s530A",
+      "area": "tca_section",
+      "title": "TCA 1997 s530A",
+      "status": "rule",
+      "ruleKeys": [
+        "rct.principal_obligation_scope"
+      ]
+    },
+    {
+      "id": "tca:s530B",
+      "area": "tca_section",
+      "title": "TCA 1997 s530B",
+      "status": "deferred",
+      "issue": 213,
+      "reason": "Not yet ruled."
+    },
+    {
+      "id": "tca:s530C",
+      "area": "tca_section",
+      "title": "TCA 1997 s530C",
+      "status": "deferred",
+      "issue": 213,
+      "reason": "Not yet ruled."
+    },
+    {
+      "id": "tca:s530D",
+      "area": "tca_section",
+      "title": "TCA 1997 s530D",
+      "status": "deferred",
+      "issue": 213,
+      "reason": "Not yet ruled."
+    },
+    {
+      "id": "tca:s530E",
+      "area": "tca_section",
+      "title": "TCA 1997 s530E",
+      "status": "rule",
+      "ruleKeys": [
+        "rct.rate_zero",
+        "rct.rate_standard_reference",
+        "rct.rate_default_35pct"
+      ]
+    },
+    {
+      "id": "tca:s530F",
+      "area": "tca_section",
+      "title": "TCA 1997 s530F",
+      "status": "deferred",
+      "issue": 213,
+      "reason": "Not yet ruled."
+    },
+    {
+      "id": "tca:s530G",
+      "area": "tca_section",
+      "title": "TCA 1997 s530G",
+      "status": "rule",
+      "ruleKeys": [
+        "rct.zero_rate_subcontractor_criteria"
+      ]
+    },
+    {
+      "id": "tca:s530H",
+      "area": "tca_section",
+      "title": "TCA 1997 s530H",
+      "status": "rule",
+      "ruleKeys": [
+        "rct.standard_rate_subcontractor_criteria"
+      ]
+    },
+    {
+      "id": "tca:s530I",
+      "area": "tca_section",
+      "title": "TCA 1997 s530I",
+      "status": "rule",
+      "ruleKeys": [
+        "rct.deduction_rate_not_determinable",
+        "rct.rate_determination_and_appeal_procedure"
+      ]
+    },
+    {
+      "id": "tca:s530J",
+      "area": "tca_section",
+      "title": "TCA 1997 s530J",
+      "status": "deferred",
+      "issue": 213,
+      "reason": "Not yet ruled."
+    },
+    {
+      "id": "tca:s530K",
+      "area": "tca_section",
+      "title": "TCA 1997 s530K",
+      "status": "deferred",
+      "issue": 213,
+      "reason": "Not yet ruled."
+    },
+    {
+      "id": "tca:s530L",
+      "area": "tca_section",
+      "title": "TCA 1997 s530L",
+      "status": "deferred",
+      "issue": 213,
+      "reason": "Not yet ruled."
+    },
+    {
+      "id": "tca:s530M",
+      "area": "tca_section",
+      "title": "TCA 1997 s530M",
+      "status": "deferred",
+      "issue": 213,
+      "reason": "Not yet ruled."
+    },
+    {
+      "id": "tca:s530N",
+      "area": "tca_section",
+      "title": "TCA 1997 s530N",
+      "status": "deferred",
+      "issue": 213,
+      "reason": "Not yet ruled."
+    },
+    {
+      "id": "tca:s530O",
+      "area": "tca_section",
+      "title": "TCA 1997 s530O",
+      "status": "deferred",
+      "issue": 213,
+      "reason": "Not yet ruled."
+    },
+    {
+      "id": "tca:s530P",
+      "area": "tca_section",
+      "title": "TCA 1997 s530P",
+      "status": "deferred",
+      "issue": 213,
+      "reason": "Not yet ruled."
+    },
+    {
+      "id": "tca:s530Q",
+      "area": "tca_section",
+      "title": "TCA 1997 s530Q",
+      "status": "deferred",
+      "issue": 213,
+      "reason": "Not yet ruled."
+    },
+    {
+      "id": "tca:s530R",
+      "area": "tca_section",
+      "title": "TCA 1997 s530R",
+      "status": "deferred",
+      "issue": 213,
+      "reason": "Not yet ruled."
+    },
+    {
+      "id": "tca:s530S",
+      "area": "tca_section",
+      "title": "TCA 1997 s530S",
+      "status": "deferred",
+      "issue": 213,
+      "reason": "Not yet ruled."
+    },
+    {
+      "id": "tca:s530T",
+      "area": "tca_section",
+      "title": "TCA 1997 s530T",
+      "status": "deferred",
+      "issue": 213,
+      "reason": "Not yet ruled."
+    },
+    {
+      "id": "tca:s530U",
+      "area": "tca_section",
+      "title": "TCA 1997 s530U",
+      "status": "deferred",
+      "issue": 213,
+      "reason": "Not yet ruled."
+    },
+    {
+      "id": "tca:s530V",
+      "area": "tca_section",
+      "title": "TCA 1997 s530V",
+      "status": "deferred",
+      "issue": 213,
+      "reason": "Not yet ruled."
+    },
+    {
+      "id": "ca2014:s280A",
+      "area": "companies_act",
+      "title": "CA 2014 s280A",
+      "status": "rule",
+      "ruleKeys": [
+        "company.small_company_turnover_threshold",
+        "company.small_company_balance_sheet_threshold",
+        "company.small_company_employee_threshold"
+      ]
+    },
+    {
+      "id": "ca2014:s280B",
+      "area": "companies_act",
+      "title": "CA 2014 s280B",
+      "status": "deferred",
+      "issue": 214,
+      "reason": "Not yet ruled."
+    },
+    {
+      "id": "ca2014:s280C",
+      "area": "companies_act",
+      "title": "CA 2014 s280C",
+      "status": "deferred",
+      "issue": 214,
+      "reason": "Not yet ruled."
+    },
+    {
+      "id": "ca2014:s280D",
+      "area": "companies_act",
+      "title": "CA 2014 s280D",
+      "status": "rule",
+      "ruleKeys": [
+        "company.micro_company_turnover_threshold",
+        "company.micro_company_balance_sheet_threshold",
+        "company.micro_company_employee_threshold"
+      ]
+    },
+    {
+      "id": "ca2014:s280E",
+      "area": "companies_act",
+      "title": "CA 2014 s280E",
+      "status": "deferred",
+      "issue": 214,
+      "reason": "Not yet ruled."
+    },
+    {
+      "id": "ca2014:s280F",
+      "area": "companies_act",
+      "title": "CA 2014 s280F",
+      "status": "deferred",
+      "issue": 214,
+      "reason": "Not yet ruled."
+    },
+    {
+      "id": "ca2014:s281",
+      "area": "companies_act",
+      "title": "CA 2014 s281",
+      "status": "deferred",
+      "issue": 214,
+      "reason": "Not yet ruled."
+    },
+    {
+      "id": "ca2014:s282",
+      "area": "companies_act",
+      "title": "CA 2014 s282",
+      "status": "deferred",
+      "issue": 214,
+      "reason": "Not yet ruled."
+    },
+    {
+      "id": "ca2014:s283",
+      "area": "companies_act",
+      "title": "CA 2014 s283",
+      "status": "deferred",
+      "issue": 214,
+      "reason": "Not yet ruled."
+    },
+    {
+      "id": "ca2014:s284",
+      "area": "companies_act",
+      "title": "CA 2014 s284",
+      "status": "deferred",
+      "issue": 214,
+      "reason": "Not yet ruled."
+    },
+    {
+      "id": "ca2014:s285",
+      "area": "companies_act",
+      "title": "CA 2014 s285",
+      "status": "deferred",
+      "issue": 214,
+      "reason": "Not yet ruled."
+    },
+    {
+      "id": "ca2014:s286",
+      "area": "companies_act",
+      "title": "CA 2014 s286",
+      "status": "deferred",
+      "issue": 214,
+      "reason": "Not yet ruled."
+    },
+    {
+      "id": "ca2014:s290",
+      "area": "companies_act",
+      "title": "CA 2014 s290",
+      "status": "deferred",
+      "issue": 214,
+      "reason": "Not yet ruled."
+    },
+    {
+      "id": "ca2014:s291",
+      "area": "companies_act",
+      "title": "CA 2014 s291",
+      "status": "deferred",
+      "issue": 214,
+      "reason": "Not yet ruled."
+    },
+    {
+      "id": "ca2014:s292",
+      "area": "companies_act",
+      "title": "CA 2014 s292",
+      "status": "deferred",
+      "issue": 214,
+      "reason": "Not yet ruled."
+    },
+    {
+      "id": "ca2014:s293",
+      "area": "companies_act",
+      "title": "CA 2014 s293",
+      "status": "deferred",
+      "issue": 214,
+      "reason": "Not yet ruled."
+    },
+    {
+      "id": "ca2014:s343",
+      "area": "companies_act",
+      "title": "CA 2014 s343",
+      "status": "deferred",
+      "issue": 214,
+      "reason": "Not yet ruled."
+    },
+    {
+      "id": "ca2014:s347",
+      "area": "companies_act",
+      "title": "CA 2014 s347",
+      "status": "deferred",
+      "issue": 214,
+      "reason": "Not yet ruled."
+    },
+    {
+      "id": "ca2014:s352",
+      "area": "companies_act",
+      "title": "CA 2014 s352",
+      "status": "rule",
+      "ruleKeys": [
+        "company.abridged_filing_exemption"
+      ]
+    },
+    {
+      "id": "ca2014:s358",
+      "area": "companies_act",
+      "title": "CA 2014 s358",
+      "status": "rule",
+      "ruleKeys": [
+        "company.audit_exemption_non_group_gate"
+      ]
+    },
+    {
+      "id": "ca2014:s359",
+      "area": "companies_act",
+      "title": "CA 2014 s359",
+      "status": "rule",
+      "ruleKeys": [
+        "company.audit_exemption_group_gate"
+      ]
+    },
+    {
+      "id": "ca2014:s360",
+      "area": "companies_act",
+      "title": "CA 2014 s360",
+      "status": "rule",
+      "ruleKeys": [
+        "company.audit_exemption"
+      ]
+    },
+    {
+      "id": "ca2014:sch3A",
+      "area": "companies_act",
+      "title": "CA 2014 sch3A",
+      "status": "deferred",
+      "issue": 214,
+      "reason": "Not yet ruled."
+    },
+    {
+      "id": "txn:office-rent",
+      "area": "transaction_type",
+      "title": "office-rent",
+      "status": "rule",
+      "ruleKeys": [
+        "vat.exempt_letting_immovable_goods"
+      ]
+    },
+    {
+      "id": "txn:software-subscription-abroad",
+      "area": "transaction_type",
+      "title": "software-subscription-abroad",
+      "status": "rule",
+      "ruleKeys": [
+        "vat.reverse_charge_services_from_abroad"
+      ]
+    },
+    {
+      "id": "txn:software-subscription-ireland",
+      "area": "transaction_type",
+      "title": "software-subscription-ireland",
+      "status": "rule",
+      "ruleKeys": [
+        "vat.rate_standard_current"
+      ]
+    },
+    {
+      "id": "txn:motor-fuel",
+      "area": "transaction_type",
+      "title": "motor-fuel",
+      "status": "deferred",
+      "issue": 209,
+      "reason": "Deductibility of motor fuel (s.60) not yet ruled."
+    },
+    {
+      "id": "txn:entertainment",
+      "area": "transaction_type",
+      "title": "entertainment",
+      "status": "rule",
+      "ruleKeys": [
+        "vat.deduction_exclusions_entertainment"
+      ]
+    },
+    {
+      "id": "txn:hotel-accommodation",
+      "area": "transaction_type",
+      "title": "hotel-accommodation",
+      "status": "deferred",
+      "issue": 205,
+      "reason": "Current hotel accommodation rate not ruled; only the 2020–2023 9% window and the unmodelled 2026 change are."
+    },
+    {
+      "id": "txn:restaurant-meal",
+      "area": "transaction_type",
+      "title": "restaurant-meal",
+      "status": "rule",
+      "ruleKeys": [
+        "vat.rate_restaurant_catering_reduced_current",
+        "vat.deduction_exclusions_entertainment"
+      ]
+    },
+    {
+      "id": "txn:capital-purchase",
+      "area": "transaction_type",
+      "title": "capital-purchase",
+      "status": "rule",
+      "ruleKeys": [
+        "vat.input_deduction_general",
+        "income_tax.wear_and_tear_allowance_qualifies"
+      ]
+    },
+    {
+      "id": "txn:motor-vehicle-purchase",
+      "area": "transaction_type",
+      "title": "motor-vehicle-purchase",
+      "status": "deferred",
+      "issue": 209,
+      "reason": "Qualifying vehicle deduction (s.62) not yet ruled."
+    },
+    {
+      "id": "txn:grant-received",
+      "area": "transaction_type",
+      "title": "grant-received",
+      "status": "deferred",
+      "issue": 206,
+      "reason": "Grants and subsidies: scope not yet ruled."
+    },
+    {
+      "id": "txn:loan-drawdown-or-repayment",
+      "area": "transaction_type",
+      "title": "loan-drawdown-or-repayment",
+      "status": "rule",
+      "ruleKeys": [
+        "vat.outside_scope_capital_loans_dividends"
+      ]
+    },
+    {
+      "id": "txn:dividend",
+      "area": "transaction_type",
+      "title": "dividend",
+      "status": "rule",
+      "ruleKeys": [
+        "vat.outside_scope_capital_loans_dividends"
+      ]
+    },
+    {
+      "id": "txn:wages",
+      "area": "transaction_type",
+      "title": "wages",
+      "status": "rule",
+      "ruleKeys": [
+        "vat.outside_scope_employment"
+      ]
+    },
+    {
+      "id": "txn:tax-payment",
+      "area": "transaction_type",
+      "title": "tax-payment",
+      "status": "rule",
+      "ruleKeys": [
+        "vat.outside_scope_tax_payment"
+      ]
+    },
+    {
+      "id": "txn:own-account-transfer",
+      "area": "transaction_type",
+      "title": "own-account-transfer",
+      "status": "rule",
+      "ruleKeys": [
+        "vat.outside_scope_own_account_transfer"
+      ]
+    },
+    {
+      "id": "txn:bank-charges",
+      "area": "transaction_type",
+      "title": "bank-charges",
+      "status": "rule",
+      "ruleKeys": [
+        "vat.exempt_bank_account_and_payment_services"
+      ]
+    },
+    {
+      "id": "txn:insurance",
+      "area": "transaction_type",
+      "title": "insurance",
+      "status": "rule",
+      "ruleKeys": [
+        "vat.exempt_insurance"
+      ]
+    },
+    {
+      "id": "txn:passenger-transport",
+      "area": "transaction_type",
+      "title": "passenger-transport",
+      "status": "rule",
+      "ruleKeys": [
+        "vat.exempt_passenger_transport"
+      ]
+    },
+    {
+      "id": "txn:postage",
+      "area": "transaction_type",
+      "title": "postage",
+      "status": "rule",
+      "ruleKeys": [
+        "vat.exempt_postal_universal_service"
+      ]
+    },
+    {
+      "id": "txn:gas-electricity",
+      "area": "transaction_type",
+      "title": "gas-electricity",
+      "status": "rule",
+      "ruleKeys": [
+        "vat.rate_gas_electricity_9pct_current"
+      ]
+    },
+    {
+      "id": "txn:books",
+      "area": "transaction_type",
+      "title": "books",
+      "status": "rule",
+      "ruleKeys": [
+        "vat.zero_rate_printed_books"
+      ]
+    },
+    {
+      "id": "txn:childrens-clothing",
+      "area": "transaction_type",
+      "title": "childrens-clothing",
+      "status": "rule",
+      "ruleKeys": [
+        "vat.zero_rate_childrens_clothing_footwear"
+      ]
+    },
+    {
+      "id": "txn:professional-fees-ireland",
+      "area": "transaction_type",
+      "title": "professional-fees-ireland",
+      "status": "rule",
+      "ruleKeys": [
+        "vat.rate_standard_current"
+      ]
+    },
+    {
+      "id": "txn:telephone-broadband",
+      "area": "transaction_type",
+      "title": "telephone-broadband",
+      "status": "rule",
+      "ruleKeys": [
+        "vat.rate_standard_current"
+      ]
+    },
+    {
+      "id": "txn:subcontractor-construction",
+      "area": "transaction_type",
+      "title": "subcontractor-construction",
+      "status": "deferred",
+      "issue": 208,
+      "reason": "RCT side has rules (#213); the s.16 VAT reverse charge does not."
+    },
+    {
+      "id": "txn:import-of-goods",
+      "area": "transaction_type",
+      "title": "import-of-goods",
+      "status": "deferred",
+      "issue": 207,
+      "reason": "Import VAT and postponed accounting not yet ruled."
+    },
+    {
+      "id": "txn:sale-services-to-eu-business",
+      "area": "transaction_type",
+      "title": "sale-services-to-eu-business",
+      "status": "rule",
+      "ruleKeys": [
+        "vat.place_of_supply_services_to_business_abroad"
+      ]
+    },
+    {
+      "id": "txn:sale-goods-to-eu-business",
+      "area": "transaction_type",
+      "title": "sale-goods-to-eu-business",
+      "status": "rule",
+      "ruleKeys": [
+        "vat.zero_rate_intra_community_goods"
+      ]
+    },
+    {
+      "id": "txn:export-of-goods",
+      "area": "transaction_type",
+      "title": "export-of-goods",
+      "status": "rule",
+      "ruleKeys": [
+        "vat.zero_rate_export_outside_community"
+      ]
+    },
+    {
+      "id": "fa2024:s2",
+      "area": "other_source",
+      "title": "Finance Act 2024 s.2 — USC bands",
+      "status": "rule",
+      "ruleKeys": [
+        "usc.first_band_threshold"
+      ]
+    },
+    {
+      "id": "fa2024:s3",
+      "area": "other_source",
+      "title": "Finance Act 2024 s.3 — income tax standard rate band",
+      "status": "rule",
+      "ruleKeys": [
+        "income_tax.standard_rate_threshold"
+      ]
+    },
+    {
+      "id": "fa2024:s13",
+      "area": "other_source",
+      "title": "Finance Act 2024 s.13 — pension standard fund threshold",
+      "status": "rule",
+      "ruleKeys": [
+        "pension.standard_fund_threshold"
+      ]
+    },
+    {
+      "id": "fa2024:s48",
+      "area": "other_source",
+      "title": "Finance Act 2024 s.48 — film tax credit",
+      "status": "rule",
+      "ruleKeys": [
+        "film.tax_credit_rate"
+      ]
+    },
+    {
+      "id": "fa2024:s78",
+      "area": "other_source",
+      "title": "Finance Act 2024 s.78 — VAT registration thresholds",
+      "status": "rule",
+      "ruleKeys": [
+        "vat.registration_threshold_goods",
+        "vat.registration_threshold_services"
+      ]
+    },
+    {
+      "id": "fa2003:s23",
+      "area": "other_source",
+      "title": "Finance Act 2003 s.23 — wear and tear rate",
+      "status": "rule",
+      "ruleKeys": [
+        "income_tax.wear_and_tear_rate_current"
+      ]
+    },
+    {
+      "id": "si69-2025:reg5",
+      "area": "other_source",
+      "title": "S.I. 69/2025 reg.5 — registration turnover test",
+      "status": "rule",
+      "ruleKeys": [
+        "vat.registration_threshold_turnover_test"
+      ]
+    },
+    {
+      "id": "si69-2025:reg7",
+      "area": "other_source",
+      "title": "S.I. 69/2025 reg.7 — cross-border SME scheme deduction restriction",
+      "status": "rule",
+      "ruleKeys": [
+        "vat.cross_border_sme_scheme_input_deductibility_restriction"
+      ]
+    },
+    {
+      "id": "si69-2025:reg8",
+      "area": "other_source",
+      "title": "S.I. 69/2025 reg.8 — cash accounting thresholds",
+      "status": "rule",
+      "ruleKeys": [
+        "vat.cash_accounting_turnover_threshold",
+        "vat.cash_accounting_supplies_to_unregistered_persons_test"
+      ]
+    },
+    {
+      "id": "si69-2025:reg9",
+      "area": "other_source",
+      "title": "S.I. 69/2025 reg.9 — annual turnover, Union threshold",
+      "status": "rule",
+      "ruleKeys": [
+        "vat.annual_turnover_definition",
+        "vat.cross_border_sme_scheme_union_threshold"
+      ]
+    },
+    {
+      "id": "si639-2010:reg25",
+      "area": "other_source",
+      "title": "S.I. 639/2010 reg.25 — cash accounting authorisation",
+      "status": "rule",
+      "ruleKeys": [
+        "vat.cash_accounting_requires_authorisation"
+      ]
+    },
+    {
+      "id": "si156-2012:reg4",
+      "area": "other_source",
+      "title": "S.I. 156/2012 reg.4 — mandatory electronic filing",
+      "status": "rule",
+      "ruleKeys": [
+        "vat.mandatory_electronic_filing"
+      ]
+    },
+    {
+      "id": "tdm:18-02-04",
+      "area": "other_source",
+      "title": "Revenue TDM 18-02-04 — RCT payment notification",
+      "status": "rule",
+      "ruleKeys": [
+        "rct.payment_notification_required"
+      ]
+    },
+    {
+      "id": "tdm:18-02-05",
+      "area": "other_source",
+      "title": "Revenue TDM 18-02-05 — subcontractor compliance",
+      "status": "rule",
+      "ruleKeys": [
+        "rct.subcontractor_compliance_criteria"
+      ]
+    },
+    {
+      "id": "tdm:38-01-03b",
+      "area": "other_source",
+      "title": "Revenue TDM 38-01-03b — e-filing capacity exclusion",
+      "status": "rule",
+      "ruleKeys": [
+        "vat.mandatory_electronic_filing_capacity_exclusion"
+      ]
+    }
+  ]
+}
