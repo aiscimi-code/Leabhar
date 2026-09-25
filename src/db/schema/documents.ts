@@ -30,6 +30,9 @@ export const documents = sqliteTable('documents', {
     enum: [
       'supplier_invoice', 'sales_invoice', 'receipt', 'bank_statement',
       'credit_note', 'tax_document', 'company_document', 'contract',
+      // A till Z-report or daily takings sheet: the evidence for sales made
+      // without an invoice (issue #203).
+      'sales_record', 'proforma',
       'other', 'unknown',
     ],
   }).notNull().default('unknown'),
@@ -47,6 +50,40 @@ export const documents = sqliteTable('documents', {
   netMinor: integer('net_minor'),
   vatMinor: integer('vat_minor'),
   grossMinor: integer('gross_minor'),
+
+  /**
+   * Everything else the document states (issue #202). Extraction fills these
+   * as a best-effort draft; a person confirms or corrects every one of them
+   * before the document is used for anything (`reviewStatus`).
+   */
+  dueDate: text('due_date'),
+  /** Date the goods or services were supplied, when it differs from the issue date. */
+  supplyDate: text('supply_date'),
+  supplierNameStated: text('supplier_name_stated'),
+  supplierAddress: text('supplier_address'),
+  supplierVatNumber: text('supplier_vat_number'),
+  supplierCountry: text('supplier_country'),
+  customerNameStated: text('customer_name_stated'),
+  customerAddress: text('customer_address'),
+  customerVatNumber: text('customer_vat_number'),
+  customerCountry: text('customer_country'),
+  /** VAT wording printed on the document: "reverse charge", "Article 196", "zero-rated", "exempt"... */
+  vatLegends: text('vat_legends', { mode: 'json' }).$type<string[]>().notNull().default([]),
+  paymentTerms: text('payment_terms'),
+  /** For a credit note: the number of the invoice it credits, as stated. */
+  originalDocumentNumber: text('original_document_number'),
+
+  /**
+   * Human confirmation (issue #202). Extraction is best effort; nothing may use
+   * a document — matching, VAT, suggestions, reports — until a person has
+   * checked it against the page and confirmed it. `rejected` means the person
+   * decided it is not usable evidence (unreadable, not a business document...).
+   */
+  reviewStatus: text('review_status', { enum: ['unreviewed', 'confirmed', 'rejected'] })
+    .notNull().default('unreviewed'),
+  reviewedAt: text('reviewed_at'),
+  reviewedBy: text('reviewed_by'),
+  reviewNote: text('review_note'),
 
   suggestedAccountId: text('suggested_account_id').references(() => accounts.id),
   suggestedVatTreatmentId: text('suggested_vat_treatment_id').references(() => vatTreatments.id),
@@ -109,6 +146,11 @@ export const documentExtractions = sqliteTable('document_extractions', {
     .$type<Record<string, { value: string | number | null; confidence: number; evidence?: string }>>()
     .notNull().default({}),
 
+  /** Line items and per-rate VAT totals as extracted (issue #202) — kept so a
+   *  confirmed correction can always be compared with what was read. */
+  lines: text('lines', { mode: 'json' }).$type<ExtractedLineSnapshot[]>().notNull().default([]),
+  vatTotals: text('vat_totals', { mode: 'json' }).$type<ExtractedVatTotalSnapshot[]>().notNull().default([]),
+
   overallConfidence: integer('overall_confidence').notNull().default(0),
   status: text('status', {
     enum: ['pending', 'running', 'succeeded', 'partial', 'failed'],
@@ -120,6 +162,76 @@ export const documentExtractions = sqliteTable('document_extractions', {
   durationMs: integer('duration_ms'),
   ...timestamps,
 }, (t) => [index('doc_extractions_document_idx').on(t.documentId)]);
+
+/** One line as extracted, before anyone checked it (stored on the extraction run). */
+export interface ExtractedLineSnapshot {
+  description: string | null;
+  quantity: string | null;
+  unitPriceMinor: number | null;
+  netMinor: number | null;
+  vatRateBasisPoints: number | null;
+  vatMinor: number | null;
+  grossMinor: number | null;
+  confidence: number;
+  evidence?: string;
+}
+
+/** One VAT-rate total as extracted. */
+export interface ExtractedVatTotalSnapshot {
+  rateBasisPoints: number | null;
+  label: string | null;
+  netMinor: number | null;
+  vatMinor: number | null;
+  confidence: number;
+  evidence?: string;
+}
+
+/**
+ * A line on a document (issue #202): what was supplied, and the VAT the
+ * supplier charged on it. One invoice can have many lines at different rates,
+ * and it is these lines — never the bank amount — that VAT is taken from
+ * (issue #203). Money is integer minor units; `quantity` is a decimal string
+ * because it is a count, not money. Lines are part of the document's
+ * confirmed content: extraction writes a draft, a person confirms it.
+ */
+export const documentLines = sqliteTable('document_lines', {
+  id: text('id').primaryKey(),
+  companyId: text('company_id').notNull().references(() => companies.id),
+  documentId: text('document_id').notNull().references(() => documents.id),
+  lineNumber: integer('line_number').notNull(),
+  description: text('description').notNull(),
+  quantity: text('quantity'),
+  unitPriceMinor: integer('unit_price_minor'),
+  netMinor: integer('net_minor'),
+  /** Null when the line states no rate (e.g. exempt, or the invoice gives rates only in its totals). */
+  vatRateBasisPoints: integer('vat_rate_basis_points'),
+  vatMinor: integer('vat_minor'),
+  grossMinor: integer('gross_minor'),
+  ...provenance,
+  ...timestamps,
+}, (t) => [
+  unique('document_lines_document_line_unique').on(t.documentId, t.lineNumber),
+  index('document_lines_document_idx').on(t.documentId),
+]);
+
+/**
+ * The VAT analysis a document prints — net and VAT per rate (issue #202).
+ * Many invoices state VAT only here, not per line; it is also the check the
+ * lines are reconciled against before confirmation.
+ */
+export const documentVatTotals = sqliteTable('document_vat_totals', {
+  id: text('id').primaryKey(),
+  companyId: text('company_id').notNull().references(() => companies.id),
+  documentId: text('document_id').notNull().references(() => documents.id),
+  /** Null for a band that states no rate (e.g. "Exempt", "Outside scope"). */
+  rateBasisPoints: integer('rate_basis_points'),
+  /** The band as the document labels it, e.g. "23%", "Exempt". */
+  label: text('label'),
+  netMinor: integer('net_minor'),
+  vatMinor: integer('vat_minor'),
+  ...provenance,
+  ...timestamps,
+}, (t) => [index('document_vat_totals_document_idx').on(t.documentId)]);
 
 /**
  * A scored candidate link between a document and a bank transaction

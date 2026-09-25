@@ -5,7 +5,6 @@ import { join, extname, basename } from 'node:path';
 import type { AppDatabase } from '@/db';
 import { storeDocument, storageRoot } from './storage';
 import { extractDocument } from '../extraction/service';
-import { findMatchesForDocument } from '../matching/service';
 import { LocalExtractionProvider } from '../extraction/localProvider';
 
 /**
@@ -160,9 +159,9 @@ export async function scanWatchFolder(
       storageRootPath: root, providers: [new LocalExtractionProvider()],
       actor: 'auto-watch',
     });
+    // Every extraction is a draft awaiting confirmation; matching happens only
+    // after a person confirms it.
     if (extraction.needsReview) outcome.toReview += 1;
-
-    findMatchesForDocument(db, { companyId: input.companyId, documentId: result.documentId });
 
     // Move the original into processed/ only AFTER the store succeeded, so a
     // failed ingest never loses the user's file. A move failure leaves the

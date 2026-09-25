@@ -47,6 +47,15 @@ export const companies = sqliteTable('companies', {
     enum: ['invoice', 'cash_receipts'],
   }).notNull().default('cash_receipts'),
 
+  /**
+   * How documents are read (issue #202): 'local' — the scripts in this app
+   * (PDF text layer, Tesseract OCR), nothing leaves the machine; 'anthropic' —
+   * an AI model, only if the user chooses it and a key is configured. Either
+   * way every document is confirmed by a person before it is used.
+   */
+  extractionEngine: text('extraction_engine', { enum: ['local', 'anthropic'] })
+    .notNull().default('local'),
+
   vatPeriodFrequency: text('vat_period_frequency', {
     enum: ['monthly', 'bi_monthly', 'four_monthly', 'half_yearly', 'annual', 'custom'],
   }).notNull().default('bi_monthly'),

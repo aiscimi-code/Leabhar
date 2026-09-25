@@ -72,6 +72,12 @@ export interface StoreDocumentInput {
   vatMinor?: number | null;
   grossMinor?: number | null;
   notes?: string | null;
+  /**
+   * Set only when the header values above were entered by a person (a CSV of
+   * their own invoices, say) rather than read from the file. The document is
+   * then recorded as confirmed by them; otherwise it waits for confirmation.
+   */
+  confirmedBy?: string;
   uploadedBy?: string;
   root?: string;
   requestId?: string;
@@ -151,8 +157,12 @@ export function storeDocument(db: AppDatabase, input: StoreDocumentInput): Store
       extractionStatus: isExtractable(mimeType) ? 'pending' : 'skipped',
       isDuplicateOf: existing?.id ?? null,
       notes: input.notes ?? null,
-      source: 'import',
-      provenanceStatus: 'imported',
+      reviewStatus: input.confirmedBy ? 'confirmed' : 'unreviewed',
+      reviewedAt: input.confirmedBy ? timestamp : null,
+      reviewedBy: input.confirmedBy ?? null,
+      reviewNote: input.confirmedBy ? 'Values entered by the user, not read from the file.' : null,
+      source: input.confirmedBy ? 'user' : 'import',
+      provenanceStatus: input.confirmedBy ? 'user_confirmed' : 'imported',
     }).run();
 
     tx.insert(auditEvents).values({

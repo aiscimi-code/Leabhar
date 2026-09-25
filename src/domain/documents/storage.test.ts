@@ -196,10 +196,12 @@ describe('extractDocument', () => {
       providers: [new LocalExtractionProvider()],
     });
 
-    expect(result.applied).toBe(false);
+    // Every extraction is a draft awaiting a person's confirmation; with no
+    // figures to read, the draft carries no total.
     expect(result.needsReview).toBe(true);
 
     const row = db.select().from(documents).where(eq(documents.id, stored.documentId)).get()!;
+    expect(row.reviewStatus).toBe('unreviewed');
     expect(row.grossMinor).toBeNull();
     expect(row.classificationStatus).toBe('needs_review');
 
@@ -261,6 +263,7 @@ describe('extractDocument', () => {
         fields: (await import('../extraction/types')).emptyFields(),
         overallConfidence: 0, status: 'failed' as const,
         errorMessage: 'network down', durationMs: 1, observations: ['network down'],
+        lines: [], vatTotals: [], vatLegends: [],
       }),
     };
     const stored = storeDocument(db, {

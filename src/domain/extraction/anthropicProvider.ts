@@ -127,6 +127,9 @@ export class AnthropicExtractionProvider implements ExtractionProvider {
         textExtractionMethod: method,
         extractedText: text,
         fields,
+        lines: [],
+        vatTotals: [],
+        vatLegends: [],
         overallConfidence: confidence,
         status: confidence >= 50 ? 'succeeded' : 'partial',
         durationMs: Date.now() - started,
@@ -146,7 +149,7 @@ function failure(
   return {
     provider: provider.name, providerVersion: provider.version,
     textExtractionMethod: method, extractedText: text,
-    fields: emptyFields(), overallConfidence: 0, status: 'failed',
+    fields: emptyFields(), lines: [], vatTotals: [], vatLegends: [], overallConfidence: 0, status: 'failed',
     errorMessage: message, durationMs: Date.now() - started,
     observations: [message],
   };

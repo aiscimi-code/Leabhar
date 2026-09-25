@@ -6,6 +6,10 @@ import {
 } from './types';
 import { findVatNumbers, suggestPurchaseTreatment, parseVatNumber } from './vatNumbers';
 import { extractPdfText } from './pdfText';
+import {
+  parseLineItems, parseVatTotals, findVatLegends, findSupplyDate, findPaymentTerms,
+  findOriginalDocumentNumber, findCustomerBlock, findSupplierAddress, countryFromAddress,
+} from './invoiceParser';
 
 /**
  * Deterministic local extractor (README §12).
@@ -21,7 +25,7 @@ import { extractPdfText } from './pdfText';
  */
 export class LocalExtractionProvider implements ExtractionProvider {
   readonly name = 'local';
-  readonly version = '1.0.0';
+  readonly version = '2.0.0';
 
   isAvailable(): boolean { return true; }
 
@@ -50,30 +54,81 @@ export class LocalExtractionProvider implements ExtractionProvider {
         method = 'provided';
       } else if (params.mimeType.startsWith('image/')) {
         observations.push(
-          'This is an image. The local extractor does not perform OCR, so nothing was '
-            + 'read from it. Enter the figures by hand or configure an OCR provider.',
+          'This is an image. Use "Read text from the image (OCR)" on the review screen: the text is '
+            + 'recognised on this computer, then read the same way as a PDF.',
         );
       }
     } catch (error) {
       return {
         provider: this.name, providerVersion: this.version,
         textExtractionMethod: method, extractedText: '',
-        fields: emptyFields(), overallConfidence: 0, status: 'failed',
+        fields: emptyFields(), lines: [], vatTotals: [], vatLegends: [], overallConfidence: 0, status: 'failed',
         errorMessage: (error as Error).message,
         durationMs: Date.now() - started,
         observations: [`Could not read this file: ${(error as Error).message}`],
       };
     }
 
-    const fields = this.extractFields(text, params.context, params.filename, observations);
-    const confidence = overallConfidence(fields);
+    return this.fromText(text, method, params.context, params.filename, observations, started);
+  }
 
+  /**
+   * Read a document from text already obtained — the PDF text layer here, or
+   * OCR text recognised in the browser on the review screen (issue #202). One
+   * path, so a scanned invoice is read exactly as a text PDF would be.
+   */
+  fromText(
+    text: string,
+    method: ExtractionResult['textExtractionMethod'],
+    context: ExtractionContext,
+    filename: string,
+    observations: string[] = [],
+    started: number = Date.now(),
+  ): ExtractionResult {
+    const fields = this.extractFields(text, context, filename, observations);
+    const textLines = text.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+    const currency = fields.currency.value ?? context.baseCurrency;
+    const lines = text.trim() ? parseLineItems(textLines, currency) : [];
+    const vatTotals = text.trim() ? parseVatTotals(textLines, currency) : [];
+    const vatLegends = text.trim() ? findVatLegends(textLines) : [];
+
+    const supply = findSupplyDate(textLines);
+    if (supply) fields.supplyDate = supply;
+    const terms = findPaymentTerms(textLines);
+    if (terms) fields.paymentTerms = terms;
+    const original = findOriginalDocumentNumber(textLines);
+    if (original) fields.originalDocumentNumber = original;
+    const customer = findCustomerBlock(textLines);
+    if (customer) {
+      if (!fields.customerName.value) fields.customerName = customer.name;
+      if (customer.address.value) {
+        fields.customerAddress = customer.address;
+        const country = countryFromAddress(customer.address.value);
+        if (country) fields.customerCountry = { value: country, confidence: 50, evidence: customer.address.value };
+      }
+    }
+    const supplierAddress = findSupplierAddress(textLines, fields.supplierName.value);
+    if (supplierAddress) {
+      fields.supplierAddress = supplierAddress;
+      if (!fields.supplierCountry.value) {
+        const country = countryFromAddress(supplierAddress.value);
+        if (country) fields.supplierCountry = { value: country, confidence: 45, evidence: supplierAddress.value ?? undefined };
+      }
+    }
+    if (text.trim() && lines.length === 0) {
+      observations.push('No line items could be read. Add the lines from the document when you confirm it.');
+    }
+
+    const confidence = overallConfidence(fields);
     return {
       provider: this.name,
       providerVersion: this.version,
       textExtractionMethod: method,
       extractedText: text,
       fields,
+      lines,
+      vatTotals,
+      vatLegends,
       overallConfidence: confidence,
       status: text.trim().length === 0 ? 'failed' : confidence >= 50 ? 'succeeded' : 'partial',
       durationMs: Date.now() - started,
@@ -126,7 +181,17 @@ export class LocalExtractionProvider implements ExtractionProvider {
     if (invoiceNumber) fields.invoiceNumber = invoiceNumber;
 
     // ---- VAT numbers and country ----
-    const vatNumbers = findVatNumbers(haystack, context.companyVatNumber);
+    // A VAT number on a line labelled as the customer's is the customer's.
+    const customerVatLine = lines.find((l) => /\b(?:customer|client|buyer|recipient|bill(?:ed)?\s+to)\b.*\b(?:vat|tax)\b/i.test(l));
+    const customerVat = customerVatLine ? findVatNumbers(customerVatLine, context.companyVatNumber)[0] : undefined;
+    if (customerVat) {
+      fields.customerVatNumber = { value: customerVat.normalised, confidence: 85, evidence: customerVatLine };
+      if (customerVat.countryCode) {
+        fields.customerCountry = { value: customerVat.countryCode, confidence: 80, evidence: customerVatLine };
+      }
+    }
+    const vatNumbers = findVatNumbers(haystack, context.companyVatNumber)
+      .filter((v) => v.normalised !== customerVat?.normalised);
     if (vatNumbers.length > 0) {
       const supplierVat = vatNumbers[0]!;
       fields.supplierVatNumber = {
@@ -168,7 +233,21 @@ export class LocalExtractionProvider implements ExtractionProvider {
     }
 
     // ---- Document type ----
-    fields.documentType = detectDocumentType(haystack, filename);
+    fields.documentType = detectDocumentType(haystack, filename, lines, context);
+    if (fields.documentType.value === 'sales_invoice') {
+      // We issued it: the supplier is this company, and any VAT number other
+      // than ours belongs to the customer, never to a supplier.
+      fields.supplierName = { value: context.companyName, confidence: 80, evidence: 'This company issued the invoice.' };
+      fields.supplierVatNumber = context.companyVatNumber
+        ? { value: context.companyVatNumber, confidence: 80 } : { value: null, confidence: 0 };
+      fields.supplierCountry = { value: null, confidence: 0 };
+      fields.suggestedAccountCode = { value: null, confidence: 0 };
+      fields.suggestedVatTreatment = { value: null, confidence: 0 };
+      if (!fields.customerVatNumber.value && vatNumbers[0]) {
+        fields.customerVatNumber = { value: vatNumbers[0].normalised, confidence: 60, evidence: vatNumbers[0].note };
+        if (vatNumbers[0].countryCode) fields.customerCountry = { value: vatNumbers[0].countryCode, confidence: 60 };
+      }
+    }
 
     // ---- Suggested VAT treatment, where history has not already answered ----
     if (!fields.suggestedVatTreatment.value) {
@@ -395,6 +474,9 @@ function lastAmountIn(line: string, currency: string): number | null {
     const before = start > 0 ? line[start - 1] : '';
     const after = end < line.length ? line[end] : '';
     if (/[A-Za-z]/.test(before ?? '') || /[A-Za-z]/.test(after ?? '')) continue;
+    // Next to a slash it is part of a reference or a date: "2006/112/EC" is a
+    // Directive, "15/01/2025" a date, neither an amount.
+    if (before === '/' || after === '/') continue;
 
     if (!/[.,]/.test(trimmed) && !/[€£$]/.test(trimmed)
         && trimmed.replace(/\D/g, '').length <= 3) continue;
@@ -475,12 +557,27 @@ function findInvoiceNumber(lines: string[]): ExtractedField<string> | null {
   return null;
 }
 
-function detectDocumentType(text: string, filename: string): ExtractedField<string> {
+function detectDocumentType(
+  text: string, filename: string, lines: string[] = [], context?: ExtractionContext,
+): ExtractedField<string> {
   const haystack = `${text}\n${filename}`.toLowerCase();
+  // An invoice whose letterhead is this company's own was issued by us.
+  // Lines addressed to someone ("Billed to: …") name the recipient, not the issuer.
+  const head = lines.slice(0, 6)
+    .filter((l) => !/\b(?:bill(?:ed)?\s+to|invoice\s+to|sold\s+to|ship\s+to|customer|client|to)\b\s*:/i.test(l))
+    .join('\n').toLowerCase();
+  const ownName = context?.companyName.toLowerCase() ?? '';
+  const ownVat = context?.companyVatNumber?.replace(/\s/g, '').toLowerCase() ?? '';
+  const issuedByUs = (ownName.length >= 3 && head.includes(ownName))
+    || (ownVat.length >= 8 && head.replace(/\s/g, '').includes(ownVat));
   const rules: Array<[RegExp, string, number]> = [
-    [/credit\s+note/, 'credit_note', 90],
+    [/credit\s+note|gutschrift|avoir|creditnota|nota\s+di\s+credito/, 'credit_note', 90],
     [/\b(?:statement\s+of\s+account|bank\s+statement|account\s+statement)\b/, 'bank_statement', 85],
+    [/\bpro[\s-]?forma\b/, 'proforma', 85],
+    [/\bsales\s+invoice\b/, 'sales_invoice', 85],
+    ...(issuedByUs ? [[/\binvoice\b/, 'sales_invoice', 70] as [RegExp, string, number]] : []),
     [/\binvoice\b/, 'supplier_invoice', 75],
+    [/\b(?:rechnung|facture|factuur|fattura|factura)\b/, 'supplier_invoice', 70],
     [/\b(?:receipt|payment\s+confirmation|paid\s+in\s+full)\b/, 'receipt', 70],
   ];
   for (const [pattern, type, confidence] of rules) {
@@ -526,6 +623,8 @@ function guessSupplierFromHeading(
     if (/^(invoice|receipt|bill|statement|tax\s+invoice)$/i.test(trimmed)) continue;
     if (/^\d/.test(trimmed)) continue;
     if (!/[a-z]/i.test(trimmed)) continue;
+    // "VAT Number: IE…" or "Invoice Date: …" is a label, not a name.
+    if (/^[^:]{1,30}:\s/.test(trimmed)) continue;
     return {
       value: trimmed, confidence: 35,
       evidence: 'Taken from the top of the document. This is a guess — confirm it.',

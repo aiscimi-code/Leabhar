@@ -21,10 +21,10 @@
  * treatment's supply kind, EU status from a VAT-number prefix) and a reviewer
  * must be able to see which.
  */
-import { and, desc, eq, inArray } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import type { AppDatabase } from '@/db';
 import {
-  bankTransactions, companies, suppliers, customers, documents, documentExtractions,
+  bankTransactions, companies, suppliers, customers, documents,
   vatTreatments, irishTaxRules, irishActProvisions, irishKnowledgeSources,
 } from '@/db/schema';
 import { lookupTransactionRules, type ApplicableRule, type TransactionContext } from './transactionLookup';
@@ -220,20 +220,18 @@ export function transactionFacts(
   if (!tx) return null;
 
   const company = db.select().from(companies).where(eq(companies.id, params.companyId)).get();
+  // Only a confirmed document is evidence. A draft extraction is unchecked OCR
+  // and never feeds a VAT suggestion (the invoice is the proof; a misread one is not).
   const doc = db.select().from(documents)
-    .where(and(eq(documents.companyId, params.companyId), eq(documents.matchedTransactionId, tx.id)))
+    .where(and(
+      eq(documents.companyId, params.companyId),
+      eq(documents.matchedTransactionId, tx.id),
+      eq(documents.reviewStatus, 'confirmed'),
+    ))
     .get();
-  const extraction = doc
-    ? db.select().from(documentExtractions)
-      .where(and(
-        eq(documentExtractions.documentId, doc.id),
-        inArray(documentExtractions.status, ['succeeded', 'partial']),
-      ))
-      .orderBy(desc(documentExtractions.createdAt)).get()
-    : undefined;
-  const field = (name: string): string | null => {
-    const v = extraction?.fields[name]?.value;
-    return v === undefined || v === null || v === '' ? null : String(v);
+  const field = (name: 'supplierVatNumber' | 'customerVatNumber' | 'supplierCountry' | 'customerCountry'): string | null => {
+    const v = doc?.[name];
+    return v === undefined || v === null || v === '' ? null : v;
   };
 
   const direction: TransactionDirection = tx.amountMinor < 0 ? 'purchase' : 'sale';
@@ -260,7 +258,10 @@ export function transactionFacts(
     sources.counterpartyCountry = `${partyLabel} record "${party.name}"`;
   } else if (direction === 'purchase' && field('supplierCountry')) {
     counterpartyCountry = field('supplierCountry')!.toUpperCase();
-    sources.counterpartyCountry = 'matched invoice (extracted supplier country)';
+    sources.counterpartyCountry = 'confirmed invoice (supplier country)';
+  } else if (direction === 'sale' && field('customerCountry')) {
+    counterpartyCountry = field('customerCountry')!.toUpperCase();
+    sources.counterpartyCountry = 'confirmed invoice (customer country)';
   } else if (vatInfo?.countryCode) {
     counterpartyCountry = vatInfo.countryCode;
     sources.counterpartyCountry = `VAT number prefix (${vatInfo.normalised})`;
@@ -298,7 +299,7 @@ export function transactionFacts(
     supplyType,
   };
   sources.vatRegistered = `company VAT registration status (${company?.vatRegistrationStatus ?? 'unknown'})`;
-  sources.invoiceAvailable = doc ? `matched document "${doc.originalFilename}"` : 'no matched document';
+  sources.invoiceAvailable = doc ? `confirmed document "${doc.originalFilename}"` : 'no confirmed matched document';
 
   if (direction === 'purchase') {
     facts.supplierCountry = counterpartyCountry;

@@ -63,7 +63,7 @@ const addDocument = (over: Partial<typeof documents.$inferInsert> = {}) => {
   });
   db.update(documents).set({
     grossMinor: 4217, currency: 'EUR', documentDate: '2025-03-14',
-    documentType: 'supplier_invoice', supplierId: vercelId, ...over,
+    documentType: 'supplier_invoice', supplierId: vercelId, reviewStatus: 'confirmed', ...over,
   }).where(eq(documents.id, stored.documentId)).run();
   return stored.documentId;
 };

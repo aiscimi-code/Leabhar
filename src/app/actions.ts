@@ -252,10 +252,11 @@ export async function uploadDocumentAction(formData: FormData): Promise<ActionRe
           + 'for review rather than overwriting it.',
         );
       }
+      // Extraction writes a draft only. Nothing is matched or posted from it
+      // until a person has checked it against the page and confirmed it.
       await extractDocument(db, {
         companyId: company.id, documentId: result.documentId, actor: 'user',
       });
-      findMatchesForDocument(db, { companyId: company.id, documentId: result.documentId });
     }
 
     revalidatePath('/documents');
@@ -263,7 +264,8 @@ export async function uploadDocumentAction(formData: FormData): Promise<ActionRe
     revalidatePath('/');
     return {
       ok: true,
-      message: `${stored} document${stored === 1 ? '' : 's'} stored and read.`,
+      message: `${stored} document${stored === 1 ? '' : 's'} stored and read. Check and confirm `
+        + `${stored === 1 ? 'it' : 'each one'} before it is used.`,
       warnings: warnings.length > 0 ? warnings : undefined,
     };
   } catch (error) {

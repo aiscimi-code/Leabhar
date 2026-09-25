@@ -315,6 +315,8 @@ export async function importInvoicesFromCsv(
         vatMinor: created.vatMinor,
         grossMinor: created.grossMinor,
         uploadedBy: 'cli',
+        // The row's values are the user's own entry, so the document is confirmed by them.
+        confirmedBy: 'cli',
       });
 
       db.update(invoices).set({ documentId: stored.documentId })

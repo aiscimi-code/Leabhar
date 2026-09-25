@@ -10,6 +10,8 @@ import { readDocument } from '../documents/storage';
 import { LocalExtractionProvider } from './localProvider';
 import { AnthropicExtractionProvider } from './anthropicProvider';
 import type { ExtractionProvider, ExtractionContext, ExtractionResult } from './types';
+import { emptyFields } from './types';
+import { writeDocumentDraft, flagAwaitingConfirmation } from '../documents/review';
 
 /**
  * Extraction service (README §12).
@@ -21,12 +23,17 @@ import type { ExtractionProvider, ExtractionContext, ExtractionResult } from './
  * degrades extraction quality rather than stopping bookkeeping.
  */
 
-export function buildProviders(): ExtractionProvider[] {
-  const configured = (process.env.EXTRACTION_PROVIDER ?? 'local').toLowerCase();
+/**
+ * The providers to try, from the company's own choice of engine (issue #202):
+ * 'local' — this app's scripts, nothing leaves the machine; 'anthropic' — an
+ * AI model, only when the user has chosen it and a key is configured, with the
+ * local scripts as the fallback. Whatever reads the document, a person
+ * confirms it before it is used.
+ */
+export function buildProviders(engine: 'local' | 'anthropic' = 'local'): ExtractionProvider[] {
   const local = new LocalExtractionProvider();
   const anthropic = new AnthropicExtractionProvider();
-
-  if (configured === 'anthropic' && anthropic.isAvailable()) return [anthropic, local];
+  if (engine === 'anthropic' && anthropic.isAvailable()) return [anthropic, local];
   return [local];
 }
 
@@ -84,18 +91,22 @@ export interface ExtractDocumentResult {
   documentId: string;
   extractionId: string;
   result: ExtractionResult;
-  /** True when the result was confident enough to write onto the document. */
+  /** True when the reading was written onto the document as its (unconfirmed) draft. */
   applied: boolean;
+  /** Always true until a person confirms the document (issue #202). */
   needsReview: boolean;
 }
 
 /**
- * Confidence at or above this writes suggested values onto the document.
- * Below it, the document goes to the review queue with the extraction attached
- * but nothing written — README §12 requires uncertain results go to review.
+ * Read a document and record what was read as an UNCONFIRMED draft.
+ *
+ * Nothing written here is treated as fact: the document stays
+ * `reviewStatus: 'unreviewed'` and goes on the review queue, and matching,
+ * VAT, suggestions and reports ignore it until a person has compared the
+ * draft with the page and confirmed it (src/domain/documents/review.ts).
+ * A supplier is suggested only when one already exists by that name — a new
+ * party record is created from confirmed data, never from an unchecked read.
  */
-export const APPLY_THRESHOLD = 60;
-
 export async function extractDocument(
   db: AppDatabase,
   params: {
@@ -111,7 +122,9 @@ export async function extractDocument(
     db, params.companyId, params.documentId, params.storageRootPath,
   );
   const context = buildExtractionContext(db, params.companyId);
-  const providers = params.providers ?? buildProviders();
+  const company = db.select({ extractionEngine: companies.extractionEngine }).from(companies)
+    .where(eq(companies.id, params.companyId)).get();
+  const providers = params.providers ?? buildProviders(company?.extractionEngine ?? 'local');
 
   db.update(documents).set({ extractionStatus: 'extracting' })
     .where(eq(documents.id, params.documentId)).run();
@@ -130,96 +143,148 @@ export async function extractDocument(
   }
 
   // Every provider failed: keep the best attempt so the failure is inspectable.
-  result ??= attempts[0] ?? {
+  const final: ExtractionResult = result ?? attempts[0] ?? {
     provider: 'none', providerVersion: '0', textExtractionMethod: 'none',
-    extractedText: '', fields: (await import('./types')).emptyFields(),
+    extractedText: '', fields: emptyFields(), lines: [], vatTotals: [], vatLegends: [],
     overallConfidence: 0, status: 'failed' as const,
     errorMessage: 'No extraction provider was available.',
     durationMs: 0, observations: ['No extraction provider was available.'],
   };
 
+  return recordExtraction(db, { ...params, document, result: final });
+}
+
+/**
+ * Read a document from text recognised elsewhere — OCR run in the browser on
+ * the review screen (issue #202) — through the same local reader a PDF's text
+ * layer goes through, and record it the same way.
+ */
+export function extractDocumentFromText(
+  db: AppDatabase,
+  params: {
+    companyId: string;
+    documentId: string;
+    text: string;
+    method: 'ocr' | 'provided';
+    actor?: string;
+    requestId?: string;
+  },
+): ExtractDocumentResult {
+  const document = db.select().from(documents)
+    .where(and(eq(documents.id, params.documentId), eq(documents.companyId, params.companyId))).get();
+  if (!document) throw new Error(`Document ${params.documentId} not found.`);
+  const context = buildExtractionContext(db, params.companyId);
+  const observations = params.method === 'ocr'
+    ? ['Read by OCR on this computer. OCR can misread digits and letters — check every figure against the image.']
+    : [];
+  const result = new LocalExtractionProvider()
+    .fromText(params.text, params.method, context, document.originalFilename, observations);
+  return recordExtraction(db, { ...params, document, result });
+}
+
+function recordExtraction(
+  db: AppDatabase,
+  params: {
+    companyId: string;
+    documentId: string;
+    document: typeof documents.$inferSelect;
+    result: ExtractionResult;
+    actor?: string;
+    requestId?: string;
+  },
+): ExtractDocumentResult {
+  const { result, document } = params;
   const extractionId = ids.extraction();
   const timestamp = nowIso();
-  const applied = result.status !== 'failed' && result.overallConfidence >= APPLY_THRESHOLD;
-  const needsReview = !applied || result.observations.length > 0;
+  const confirmed = document.reviewStatus === 'confirmed';
+  const applied = result.status !== 'failed' && !confirmed;
 
   db.transaction((tx) => {
     tx.insert(documentExtractions).values({
       id: extractionId,
       companyId: params.companyId,
       documentId: params.documentId,
-      provider: result!.provider,
-      providerVersion: result!.providerVersion,
-      model: result!.model ?? null,
-      extractedText: result!.extractedText.slice(0, 500_000),
-      textExtractionMethod: result!.textExtractionMethod,
+      provider: result.provider,
+      providerVersion: result.providerVersion,
+      model: result.model ?? null,
+      extractedText: result.extractedText.slice(0, 500_000),
+      textExtractionMethod: result.textExtractionMethod,
       fields: Object.fromEntries(
-        Object.entries(result!.fields).map(([key, field]) => [
+        Object.entries(result.fields).map(([key, field]) => [
           key, { value: field.value, confidence: field.confidence, evidence: field.evidence },
         ]),
       ),
-      overallConfidence: result!.overallConfidence,
-      status: result!.status,
-      errorMessage: result!.errorMessage ?? null,
+      lines: result.lines,
+      vatTotals: result.vatTotals,
+      overallConfidence: result.overallConfidence,
+      status: result.status,
+      errorMessage: result.errorMessage ?? null,
       startedAt: timestamp,
       completedAt: timestamp,
-      durationMs: result!.durationMs,
+      durationMs: result.durationMs,
     }).run();
 
-    const fields = result!.fields;
-    const update: Partial<typeof documents.$inferInsert> = {
-      extractionStatus: result!.status === 'failed' ? 'failed' : 'extracted',
-      classificationStatus: applied ? 'suggested' : 'needs_review',
+    tx.update(documents).set({
+      extractionStatus: result.status === 'failed' ? 'failed' : 'extracted',
       updatedAt: timestamp,
-    };
+    }).where(eq(documents.id, params.documentId)).run();
 
     if (applied) {
-      // Written as SUGGESTIONS. Provenance says so, and nothing downstream
-      // treats these as confirmed until a person confirms them.
-      if (fields.documentDate.value) update.documentDate = fields.documentDate.value;
-      if (fields.invoiceNumber.value) update.invoiceNumber = fields.invoiceNumber.value;
-      if (fields.currency.value) update.currency = fields.currency.value;
-      if (fields.netMinor.value !== null) update.netMinor = fields.netMinor.value;
-      if (fields.vatMinor.value !== null) update.vatMinor = fields.vatMinor.value;
-      if (fields.grossMinor.value !== null) update.grossMinor = fields.grossMinor.value;
-      if (fields.documentType.value && fields.documentType.confidence >= 60) {
-        update.documentType = fields.documentType.value as typeof documents.$inferInsert['documentType'];
-      }
-
-      const supplier = matchSupplierByName(db, params.companyId, fields.supplierName.value);
-      if (supplier) {
-        update.supplierId = supplier;
-      } else if (fields.supplierName.value && fields.supplierName.confidence >= APPLY_THRESHOLD) {
-        // No existing supplier matches the extracted name. Create one so that
-        // document↔bank matching has identity evidence to work with. The new
-        // supplier is an AI proposal (see createSupplierFromExtraction).
-        const country = fields.supplierCountry?.value ?? null;
-        const vat = fields.supplierVatNumber?.value ?? null;
-        const created = createSupplierFromExtraction(db, {
-          companyId: params.companyId,
-          name: fields.supplierName.value,
-          countryCode: country,
-          vatNumber: vat,
-          documentId: params.documentId,
-          actor: params.actor ?? 'system',
-        });
-        update.supplierId = created.supplierId;
-      }
-
-      const accountId = accountIdForCode(db, params.companyId, fields.suggestedAccountCode.value);
-      if (accountId) update.suggestedAccountId = accountId;
-
-      const treatmentId = treatmentIdForCode(
-        db, params.companyId, fields.suggestedVatTreatment.value,
-      );
-      if (treatmentId) update.suggestedVatTreatmentId = treatmentId;
-
-      update.source = result!.provider === 'local' ? 'derived' : 'ai';
-      update.confidence = result!.overallConfidence;
-      update.provenanceStatus = 'ai_suggestion';
+      const f = result.fields;
+      const supplierId = matchSupplierByName(tx, params.companyId, f.supplierName.value);
+      const customerId = matchCustomerByName(tx, params.companyId, f.customerName.value);
+      const typeValue = f.documentType.value && f.documentType.confidence >= 60 && f.documentType.value !== 'unknown'
+        ? f.documentType.value as NonNullable<typeof documents.$inferInsert['documentType']>
+        : undefined;
+      writeDocumentDraft(tx, {
+        companyId: params.companyId,
+        documentId: params.documentId,
+        source: result.provider === 'local' ? 'derived' : 'ai',
+        confidence: result.overallConfidence,
+        values: {
+          documentType: typeValue,
+          invoiceNumber: f.invoiceNumber.value,
+          documentDate: f.documentDate.value,
+          dueDate: f.dueDate.value,
+          supplyDate: f.supplyDate.value,
+          currency: f.currency.value,
+          supplierNameStated: f.supplierName.value,
+          supplierAddress: f.supplierAddress.value,
+          supplierVatNumber: f.supplierVatNumber.value,
+          supplierCountry: f.supplierCountry.value,
+          customerNameStated: f.customerName.value,
+          customerAddress: f.customerAddress.value,
+          customerVatNumber: f.customerVatNumber.value,
+          customerCountry: f.customerCountry.value,
+          vatLegends: result.vatLegends,
+          paymentTerms: f.paymentTerms.value,
+          originalDocumentNumber: f.originalDocumentNumber.value,
+          netMinor: f.netMinor.value,
+          vatMinor: f.vatMinor.value,
+          grossMinor: f.grossMinor.value,
+        },
+        lines: result.lines
+          .filter((l) => (l.description ?? '').trim() !== '')
+          .map((l) => ({
+            description: l.description!, quantity: l.quantity, unitPriceMinor: l.unitPriceMinor,
+            netMinor: l.netMinor, vatRateBasisPoints: l.vatRateBasisPoints, vatMinor: l.vatMinor,
+            grossMinor: l.grossMinor,
+          })),
+        vatTotals: result.vatTotals.map((t) => ({
+          rateBasisPoints: t.rateBasisPoints, label: t.label, netMinor: t.netMinor, vatMinor: t.vatMinor,
+        })),
+      });
+      tx.update(documents).set({
+        ...(supplierId ? { supplierId } : {}),
+        ...(customerId ? { customerId } : {}),
+        suggestedAccountId: accountIdForCode(tx, params.companyId, f.suggestedAccountCode.value),
+        suggestedVatTreatmentId: treatmentIdForCode(tx, params.companyId, f.suggestedVatTreatment.value),
+        classificationStatus: result.status === 'succeeded' ? 'suggested' : 'needs_review',
+        source: result.provider === 'local' ? 'derived' : 'ai',
+        confidence: result.overallConfidence,
+        provenanceStatus: 'ai_suggestion',
+      }).where(eq(documents.id, params.documentId)).run();
     }
-
-    tx.update(documents).set(update).where(eq(documents.id, params.documentId)).run();
 
     tx.insert(auditEvents).values({
       id: ids.audit(),
@@ -227,54 +292,56 @@ export async function extractDocument(
       occurredAt: timestamp,
       entityType: 'document',
       entityId: params.documentId,
-      action: result!.provider === 'local' ? 'updated' : 'ai_suggested',
+      action: result.provider === 'local' ? 'updated' : 'ai_suggested',
       newValue: JSON.stringify({
-        provider: result!.provider, confidence: result!.overallConfidence,
-        status: result!.status, applied,
+        provider: result.provider, method: result.textExtractionMethod,
+        confidence: result.overallConfidence, status: result.status,
+        lines: result.lines.length, vatTotals: result.vatTotals.length, draftWritten: applied,
       }),
-      source: result!.provider === 'local' ? 'derived' : 'ai',
+      source: result.provider === 'local' ? 'derived' : 'ai',
       actor: params.actor ?? 'system',
       requestId: params.requestId ?? null,
     }).run();
 
     // ---- Review items ----
-    if (result!.status === 'failed') {
+    if (result.status === 'failed') {
       upsertReviewItem(tx, {
         companyId: params.companyId,
         kind: 'extraction_failed',
         severity: 'warning',
         title: `Could not read "${document.originalFilename}"`,
-        detail: result!.errorMessage
-          ?? result!.observations.join(' ')
-          ?? 'Nothing could be extracted from this document.',
+        detail: (result.errorMessage
+          ?? result.observations.join(' '))
+          || 'Nothing could be extracted from this document. Enter its details by hand on the review screen.',
         entityType: 'document',
         entityId: params.documentId,
         dedupeKey: `document:${params.documentId}:extraction_failed`,
       });
-    } else if (!applied) {
+    }
+    if (!confirmed) {
+      flagAwaitingConfirmation(tx, {
+        companyId: params.companyId,
+        documentId: params.documentId,
+        filename: document.originalFilename,
+        detail: `Read ${result.status === 'failed' ? 'nothing' : `with ${result.overallConfidence}% confidence`}`
+          + ` (${result.lines.length} line${result.lines.length === 1 ? '' : 's'}). Compare every value with the `
+          + 'document, correct anything wrong, add anything missing, and confirm. Nothing uses this document until you do.',
+      });
+    } else {
       upsertReviewItem(tx, {
         companyId: params.companyId,
-        kind: 'unresolved_ai_suggestion',
-        severity: 'warning',
-        title: `"${document.originalFilename}" needs checking`,
-        detail: `Extraction confidence was ${result!.overallConfidence}%, below the `
-          + `${APPLY_THRESHOLD}% threshold for filling fields automatically. `
-          + 'Enter the details yourself, or confirm the suggestions.',
+        kind: 'other',
+        severity: 'info',
+        title: `"${document.originalFilename}" was read again`,
+        detail: 'This document is already confirmed, so the new reading was stored for comparison and the '
+          + 'confirmed values were left unchanged. Reopen the document if they need correcting.',
         entityType: 'document',
         entityId: params.documentId,
-        dedupeKey: `document:${params.documentId}:low_confidence`,
-        context: {
-          confidence: result!.overallConfidence,
-          fields: Object.fromEntries(
-            Object.entries(result!.fields)
-              .filter(([, f]) => f.value !== null)
-              .map(([k, f]) => [k, { value: f.value, confidence: f.confidence }]),
-          ),
-        },
+        dedupeKey: `document:${params.documentId}:reread:${extractionId}`,
       });
     }
 
-    for (const observation of result!.observations) {
+    for (const observation of result.observations) {
       upsertReviewItem(tx, {
         companyId: params.companyId,
         kind: 'other',
@@ -303,16 +370,26 @@ export async function extractDocument(
     }
   });
 
-  return { documentId: params.documentId, extractionId, result, applied, needsReview };
+  return { documentId: params.documentId, extractionId, result, applied, needsReview: !confirmed };
 }
 
 function matchSupplierByName(
-  db: AppDatabase, companyId: string, name: string | null,
+  db: Tx | AppDatabase, companyId: string, name: string | null,
 ): string | null {
   if (!name) return null;
   const key = normaliseName(name);
   const rows = db.select({ id: suppliers.id, matchKey: suppliers.matchKey })
     .from(suppliers).where(eq(suppliers.companyId, companyId)).all();
+  return rows.find((r) => r.matchKey === key)?.id ?? null;
+}
+
+function matchCustomerByName(
+  db: Tx | AppDatabase, companyId: string, name: string | null,
+): string | null {
+  if (!name) return null;
+  const key = normaliseName(name);
+  const rows = db.select({ id: customers.id, matchKey: customers.matchKey })
+    .from(customers).where(eq(customers.companyId, companyId)).all();
   return rows.find((r) => r.matchKey === key)?.id ?? null;
 }
 
@@ -412,7 +489,7 @@ function linkDocumentSupplier(
     .where(eq(documents.id, params.documentId)).run();
 }
 
-function accountIdForCode(db: AppDatabase, companyId: string, code: string | null): string | null {
+function accountIdForCode(db: Tx | AppDatabase, companyId: string, code: string | null): string | null {
   if (!code) return null;
   return db.select({ id: accounts.id }).from(accounts)
     .where(and(eq(accounts.companyId, companyId), eq(accounts.code, code)))
@@ -420,7 +497,7 @@ function accountIdForCode(db: AppDatabase, companyId: string, code: string | nul
 }
 
 function treatmentIdForCode(
-  db: AppDatabase, companyId: string, code: string | null,
+  db: Tx | AppDatabase, companyId: string, code: string | null,
 ): string | null {
   if (!code) return null;
   return db.select({ id: vatTreatments.id }).from(vatTreatments)

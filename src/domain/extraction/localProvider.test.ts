@@ -174,7 +174,7 @@ describe('LocalExtractionProvider', () => {
       mimeType: 'image/png', filename: 'receipt.png', context,
     });
     expect(result.status).toBe('failed');
-    expect(result.observations.join(' ')).toContain('does not perform OCR');
+    expect(result.observations.join(' ')).toContain('Read text from the image (OCR)');
   });
 
   it('reads a four-digit amount with no thousands separator', async () => {

@@ -6,6 +6,7 @@ import {
 import { ids } from '@/lib/ids';
 import { nowIso, addDays, asIsoDate } from '../dates';
 import { upsertReviewItem } from '../extraction/service';
+import { assertDocumentConfirmed } from '../documents/review';
 import {
   scoreMatch, rankCandidates, MATCH_THRESHOLDS,
   type MatchCandidate, type DocumentForMatching, type TransactionForMatching,
@@ -46,6 +47,9 @@ export function findMatchesForDocument(
     .where(and(eq(documents.id, params.documentId), eq(documents.companyId, params.companyId)))
     .get();
   if (!document) throw new Error(`Document ${params.documentId} not found.`);
+  // An unconfirmed extraction is a draft: its amounts, date and supplier may be
+  // wrong, so it cannot be used to find (let alone apply) a bank match.
+  assertDocumentConfirmed(document, 'matching it to a bank transaction');
 
   const windowDays = params.windowDays ?? 60;
   const supplier = document.supplierId
@@ -235,6 +239,14 @@ export function applyMatchInTransaction(
     actor: string; reason: string; auto: boolean; requestId?: string;
   },
 ): void {
+  const document = tx.select({
+    id: documents.id, reviewStatus: documents.reviewStatus, originalFilename: documents.originalFilename,
+  }).from(documents)
+    .where(and(eq(documents.id, params.documentId), eq(documents.companyId, params.companyId)))
+    .get();
+  if (!document) throw new Error(`Document ${params.documentId} not found.`);
+  assertDocumentConfirmed(document, 'linking it to a bank transaction');
+
   const timestamp = nowIso();
 
   tx.update(documents).set({
@@ -337,6 +349,7 @@ export function linkDocument(
       eq(documents.companyId, params.companyId),
     )).get();
   if (!document) throw new Error(`Document ${params.documentId} not found.`);
+  assertDocumentConfirmed(document, 'linking it to a bank transaction');
 
   const transaction = db.select().from(bankTransactions)
     .where(and(
@@ -502,6 +515,8 @@ export function matchAllUnmatched(
     .where(and(
       eq(documents.companyId, params.companyId),
       eq(documents.archived, false),
+      // Drafts wait for confirmation; they are listed as awaiting it, not matched.
+      eq(documents.reviewStatus, 'confirmed'),
       or(eq(documents.matchStatus, 'unmatched'), eq(documents.matchStatus, 'suggested')),
       isNull(documents.matchedTransactionId),
     )).all();
