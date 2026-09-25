@@ -1,0 +1,26 @@
+# SOURCES — section C
+Retrieved: 2026-09-25
+
+PARTIAL. Not ticked on #218.
+
+Collected (named files only; not a substitute for the full manuals requested):
+- vat-and-payment-services.pdf — Revenue TDM "VAT Treatment of Payment Services"
+  https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part03-taxable-transactions-goods-ica-services/Financial-Services/vat-and-payment-services.pdf
+  This is one Financial-Services chapter, not the whole "VAT treatment of financial services" manual.
+- vat-supply-of-property.pdf — Revenue TDM "VAT Treatment of the Supply of property"
+  https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part11-immovable-goods/supply-of-property/supply-of-property.pdf
+- vat-letting-of-property.pdf — Revenue TDM "VAT – Letting of Property"
+  https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part11-immovable-goods/letting-of-immovable-goods/letting-of-property-20200508103738.pdf
+- immovable-goods-index.html — directory listing only.
+
+NOT collected (no tick):
+- full financial-services TDM (all chapters)
+- full VAT on property TDM (all chapters)
+- reverse charge construction / s.16 TDM
+- postponed accounting guidance
+- VIES statements guidance
+- VAT3 return guide
+- RTD guide
+- cash receipts basis guidance
+- margin schemes TDM
+- vouchers TDM
