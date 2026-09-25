@@ -368,6 +368,16 @@ note. Anything left over is held on account and flagged. **Where the VAT comes
 from** on the bank line then shows the whole chain: the invoice, the confirmed
 document, each line and its rule, the VAT entry, the VAT3 box and the period.
 
+A settlement made against the wrong invoice, or for the wrong amounts, is
+corrected with **Reverse this settlement…** under "Where the VAT comes from". It
+asks for a reason and, optionally, a date. The payment's journal is reversed by
+a new entry, the invoices it settled are open again, any output VAT it released
+on the cash receipts basis is reversed, and the bank line is free to settle
+again. Nothing is deleted: the reversed payment stays on the invoice, struck
+through, with the reason. A reversal is refused in a closed accounting period
+or a locked or filed VAT period (choose a later date), and while the bank line
+is part of a completed bank reconciliation.
+
 A payment with no invoice (bank charges, wages, transfers, or one whose invoice
 you do not have) can still be classified. A purchase classified this way claims
 **no input VAT**: the whole amount is the cost, and it is flagged "no invoice"

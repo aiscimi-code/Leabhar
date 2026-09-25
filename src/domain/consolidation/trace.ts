@@ -1,4 +1,4 @@
-import { and, eq, inArray } from 'drizzle-orm';
+import { and, eq, inArray, isNull, isNotNull } from 'drizzle-orm';
 import type { AppDatabase } from '@/db';
 import {
   bankTransactions, payments, paymentAllocations, invoices, invoiceLines, documents, documentLines,
@@ -63,6 +63,8 @@ export interface TransactionTrace {
   directVatEntries: TraceVatEntry[];
   /** Open review items about this bank line (no invoice, money on account…). */
   flags: string[];
+  /** Earlier settlements of this bank line that were reversed (issue #220). */
+  reversals: Array<{ paymentId: string; reversedAt: string; reversedBy: string | null; reason: string | null }>;
 }
 
 export function transactionTrace(db: AppDatabase, params: { companyId: string; bankTransactionId: string }): TransactionTrace | null {
@@ -86,7 +88,14 @@ export function transactionTrace(db: AppDatabase, params: { companyId: string; b
       eq(reviewItems.entityId, tx.id), eq(reviewItems.status, 'open'),
     )).all().map((r) => r.title);
 
-  const payment = db.select().from(payments).where(eq(payments.bankTransactionId, tx.id)).get();
+  // The live payment; a reversed one stays on file and is listed separately (issue #220).
+  const payment = db.select().from(payments)
+    .where(and(eq(payments.bankTransactionId, tx.id), isNull(payments.reversedAt))).get();
+  const reversals = db.select({
+    paymentId: payments.id, reversedAt: payments.reversedAt, reversedBy: payments.reversedBy, reason: payments.reversalReason,
+  }).from(payments)
+    .where(and(eq(payments.bankTransactionId, tx.id), isNotNull(payments.reversedAt))).all()
+    .map((r) => ({ paymentId: r.paymentId, reversedAt: r.reversedAt!, reversedBy: r.reversedBy, reason: r.reason }));
   const directVatEntries = live(db.select().from(vatEntries)
     .where(and(eq(vatEntries.sourceType, 'bank_transaction'), eq(vatEntries.sourceId, tx.id))).all())
     .map((e) => toEntry(e, 'invoice'));
@@ -94,7 +103,7 @@ export function transactionTrace(db: AppDatabase, params: { companyId: string; b
   if (!payment) {
     return {
       kind: tx.journalEntryId ? 'classified_without_invoice' : 'unposted',
-      payment: null, invoices: [], directVatEntries, flags,
+      payment: null, invoices: [], directVatEntries, flags, reversals,
     };
   }
 
@@ -151,6 +160,6 @@ export function transactionTrace(db: AppDatabase, params: { companyId: string; b
       id: payment.id, amountMinor: payment.amountMinor, currency: payment.currency,
       unallocatedMinor: payment.amountMinor - allocations.reduce((s, a) => s + Math.abs(a.allocatedMinor), 0),
     },
-    invoices: traceInvoices, directVatEntries, flags,
+    invoices: traceInvoices, directVatEntries, flags, reversals,
   };
 }

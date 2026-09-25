@@ -155,6 +155,15 @@ export const payments = sqliteTable('payments', {
   journalEntryId: text('journal_entry_id'),
   reference: text('reference'),
   notes: text('notes'),
+  /**
+   * Set when the payment was reversed (issue #220). A reversed payment stays on
+   * file with its allocations; its journal is reversed by a separate entry and
+   * the invoices it settled are open again. Nothing is deleted.
+   */
+  reversedAt: text('reversed_at'),
+  reversedBy: text('reversed_by'),
+  reversalReason: text('reversal_reason'),
+  reversalJournalEntryId: text('reversal_journal_entry_id'),
   ...provenance,
   ...timestamps,
 }, (t) => [

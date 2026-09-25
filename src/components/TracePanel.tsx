@@ -2,20 +2,25 @@ import Link from 'next/link';
 import { Panel, Badge } from './primitives';
 import { money, date, rate } from '@/lib/format';
 import type { TransactionTrace } from '@/domain/consolidation/trace';
+import { ReversePaymentForm } from './ReversePaymentForm';
 
 /**
  * Where this bank line's VAT came from (issue #203): payment → invoice →
  * confirmed document → line → rule → VAT entry → VAT3 box and period.
  * Renders the stored trace only; it computes nothing.
  */
-export function TracePanel({ trace }: { trace: TransactionTrace }) {
-  if (trace.kind === 'unposted') return null;
+export function TracePanel({ trace, bankTransactionId, paymentDate }: {
+  trace: TransactionTrace; bankTransactionId: string; paymentDate: string;
+}) {
+  if (trace.kind === 'unposted' && trace.reversals.length === 0) return null;
   return (
     <Panel
       title="Where the VAT comes from"
       description={trace.kind === 'settled'
         ? 'This payment settles the invoices below. Their VAT was posted from the confirmed document lines, not from the bank amount.'
-        : 'Posted without an invoice. No input VAT is claimed on a purchase until its invoice is confirmed, posted and settled.'}
+        : trace.kind === 'unposted'
+          ? 'Not posted. Settle it against its invoices below.'
+          : 'Posted without an invoice. No input VAT is claimed on a purchase until its invoice is confirmed, posted and settled.'}
     >
       {trace.flags.length > 0 && (
         <ul className="px-4 py-2 bg-caution-soft border-b border-caution/30 text-[12px] text-caution space-y-0.5">
@@ -74,10 +79,19 @@ export function TracePanel({ trace }: { trace: TransactionTrace }) {
           </table>
         </div>
       ))}
+      {trace.reversals.map((r) => (
+        <p key={r.paymentId} className="px-4 py-2 text-[12px] text-ink-muted border-t border-line">
+          An earlier settlement of this bank line was reversed on {date(r.reversedAt.slice(0, 10))}
+          {r.reversedBy ? ` by ${r.reversedBy}` : ''}{r.reason ? `: ${r.reason}` : ''}.
+        </p>
+      ))}
       {trace.payment && trace.payment.unallocatedMinor > 0 && (
         <p className="px-4 py-2 text-[12px] text-caution">
           {money(trace.payment.unallocatedMinor, trace.payment.currency)} of this payment is on account, not yet allocated to an invoice.
         </p>
+      )}
+      {trace.payment && (
+        <ReversePaymentForm paymentId={trace.payment.id} bankTransactionId={bankTransactionId} paymentDate={paymentDate} />
       )}
     </Panel>
   );
