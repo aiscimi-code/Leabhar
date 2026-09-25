@@ -441,7 +441,7 @@ export default async function TransactionDetailPage({ params }: {
 
           <Panel
             title="Audit history"
-            description="Every change to this transaction, in order."
+            description="Every change to this transaction, its settlement and the documents matched to it, newest first."
           >
             {audit.length === 0 ? (
               <Empty title="Nothing recorded yet" />
@@ -458,6 +458,13 @@ export default async function TransactionDetailPage({ params }: {
                           <Badge tone="neutral">{label(event.action)}</Badge>
                           <span className="text-ink-muted ml-1.5">by {event.actor}</span>
                         </div>
+                        {event.entity !== 'bank_transaction' && (
+                          <div className="text-[12px] mt-0.5">
+                            {event.href
+                              ? <Link href={event.href} className="text-accent hover:underline">{event.subject}</Link>
+                              : event.subject}
+                          </div>
+                        )}
                         {event.reason && (
                           <div className="text-[11.5px] text-ink-muted mt-0.5">{event.reason}</div>
                         )}

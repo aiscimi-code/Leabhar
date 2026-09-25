@@ -11,6 +11,8 @@ import { storeDocument } from '../documents/storage';
 import { confirmDocument, type ReviewedDocumentValues, type ReviewedLine } from '../documents/review';
 import { postDocumentAsInvoice, documentEvidenceLines, ConsolidationError } from './postDocument';
 import { settleBankTransaction, settleInvoiceByDirector, settlementRateNeed, previewSettlement } from './settle';
+import { transactionHistory } from './history';
+import { reversePayment } from '../invoicing/reversal';
 import { trialBalance, accountBalance } from '../accounting/ledger';
 import { makeDate } from '../dates';
 import {
@@ -516,6 +518,52 @@ describe('settling an invoice a director paid personally', () => {
       companyId, officerId, paymentDate: makeDate(2025, 3, 15),
       allocations: [{ invoiceId: inv.invoiceId, amountMinor: 12_300 }],
     })).toThrow(/purchase invoices/);
+  });
+});
+
+// Issue #224: the bank line's history shows the settlement that posted it,
+// the document it linked, and a reversal — who, when and against what.
+describe('transaction history', () => {
+  it('shows the settlement, the document link and a reversal, labelled', async () => {
+    const doc = confirmed({ invoiceNumber: 'MOS-5120', lines: [line('Printer paper', 2_000, 2300, 460)] });
+    const inv = postDocumentAsInvoice(db, { companyId, documentId: doc, coding: [code('6120', 'IE_STD')] });
+    const find = await bank([['20/03/2025', 'MURPHY OFFICE', '-24.60']]);
+    const tx = find('MURPHY OFFICE');
+    expect(transactionHistory(db, { companyId, bankTransactionId: tx.id })).toEqual([]);
+
+    const paid = settleBankTransaction(db, {
+      companyId, bankTransactionId: tx.id, actor: 'Joe Reviewer',
+      allocations: [{ invoiceId: inv.invoiceId, amountMinor: 2_460 }],
+    });
+    const settled = transactionHistory(db, { companyId, bankTransactionId: tx.id });
+    expect(settled).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        entity: 'payment', action: 'created', actor: 'Joe Reviewer',
+        subject: 'Payment: settled MOS-5120', href: `/invoices/${inv.invoiceId}`,
+      }),
+      expect.objectContaining({
+        entity: 'document', action: 'document_matched', actor: 'Joe Reviewer', href: `/documents/${doc}`,
+        reason: 'Settled against its invoice',
+      }),
+    ]));
+
+    reversePayment(db, { companyId, paymentId: paid.paymentId, reason: 'Wrong invoice', actor: 'Joe Reviewer' });
+    const after = transactionHistory(db, { companyId, bankTransactionId: tx.id });
+    expect(after).toEqual(expect.arrayContaining([
+      expect.objectContaining({ entity: 'payment', action: 'reversal_posted', subject: 'Payment: reversed settlement of MOS-5120', reason: 'Wrong invoice' }),
+      expect.objectContaining({ entity: 'bank_transaction', subject: 'This bank line' }),
+    ]));
+    // Newest first.
+    const times = after.map((e) => e.occurredAt);
+    expect([...times].sort().reverse()).toEqual(times);
+  });
+
+  it('does not show another bank line’s events', async () => {
+    const doc = confirmed({ lines: [line('Paper', 1_000, 2300, 230)] });
+    const inv = postDocumentAsInvoice(db, { companyId, documentId: doc, coding: [code('6120', 'IE_STD')] });
+    const find = await bank([['20/03/2025', 'LINE A', '-12.30'], ['21/03/2025', 'LINE B', '-5.00']]);
+    settleBankTransaction(db, { companyId, bankTransactionId: find('LINE A').id, allocations: [{ invoiceId: inv.invoiceId, amountMinor: 1_230 }] });
+    expect(transactionHistory(db, { companyId, bankTransactionId: find('LINE B').id })).toEqual([]);
   });
 });
 
