@@ -112,8 +112,7 @@ export const RULE_TREATMENT_BINDINGS: TreatmentBinding[] = [
   {
     ruleKeys: ['vat.rate_livestock_current'],
     direction: 'either',
-    treatmentCode: () => null,
-    gap: 'The livestock rate (4.8%) has a statutory rule but no VAT treatment is configured for it.',
+    treatmentCode: () => 'IE_LIVESTOCK',
   },
   {
     ruleKeys: [

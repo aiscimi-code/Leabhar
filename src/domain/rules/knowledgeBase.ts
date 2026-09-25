@@ -24,6 +24,7 @@ import type { AppDatabase } from '@/db';
 import { sha256Hex } from '@/lib/hash';
 import { appRoot } from '@/lib/paths';
 import { irishTaxRules } from '@/db/schema';
+import { ensureDefaultVatTreatments } from '../config/setup';
 import { ingestFinanceAct2024, deriveTaxRules } from './irishRules';
 import { ingestVatca2010, deriveVatcaRules } from './vatcaIngestion';
 import { ingestVatcaSchedule, deriveVatcaScheduleRules } from './vatcaScheduleIngestion';
@@ -137,6 +138,9 @@ export function loadStatutoryKnowledgeBase(
   params: { companyId: string; root?: string; ingestVersion?: string },
 ): KnowledgeBaseLoadResult {
   const rulesBefore = countStatutoryRules(db, params.companyId);
+  // A rule can only suggest a treatment the company has: add any seeded since
+  // it was created (issue #205, the livestock treatment).
+  ensureDefaultVatTreatments(db, params.companyId);
   const ingestVersion = params.ingestVersion ?? 'v1';
   for (const source of SOURCES) {
     const markdown = readFileSync(statuteFilePath(source.path, params.root), 'utf8');

@@ -820,7 +820,7 @@ describe('cli reconcile — induction and books (issue #153)', () => {
       const code = await iRun(['ensure-default-accounts']);
       c.restore();
       expect(code).toBe(0);
-      expect(JSON.parse(c.stdout.join(''))).toEqual({ added: ['6180'] });
+      expect(JSON.parse(c.stdout.join(''))).toEqual({ added: ['6180'], addedRates: [], addedTreatments: [] });
     });
 
     it('install-rule-pack posts a salary and a rent line to the right accounts via auto-classify', async () => {

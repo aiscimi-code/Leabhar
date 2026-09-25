@@ -2,7 +2,7 @@ import { and, eq } from 'drizzle-orm';
 import type { AppDatabase } from '@/db';
 import { companies, customers, suppliers } from '@/db/schema';
 import {
-  createCompany, addBankAccount, ensureDefaultAccounts, type CreatedCompany,
+  createCompany, addBankAccount, ensureDefaultAccounts, ensureDefaultVatTreatments, type CreatedCompany,
 } from '@/domain/config/setup';
 import { createAccount, upsertCustomer } from '@/domain/config/mutations';
 import { parseAmount } from '@/domain/money';
@@ -208,8 +208,9 @@ export function listCustomersCli(db: AppDatabase, input: ListPartiesInput) {
  */
 export function ensureDefaultAccountsCli(
   db: AppDatabase, input: EnsureDefaultAccountsInput,
-): { added: string[] } {
-  return ensureDefaultAccounts(db, input.companyId, 'cli');
+): { added: string[]; addedRates: string[]; addedTreatments: string[] } {
+  const { added } = ensureDefaultAccounts(db, input.companyId, 'cli');
+  return { added, ...ensureDefaultVatTreatments(db, input.companyId, 'cli') };
 }
 
 /**

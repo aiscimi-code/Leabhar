@@ -6,6 +6,7 @@ import { resolveTreatment } from '../vat/engine';
 import { parseVatNumber, EU_COUNTRY_CODES } from '../extraction/vatNumbers';
 import { suggestFromFacts, type SuggestionFacts, type VatSuggestion } from '../rules/vatSuggestion';
 import { documentEvidenceLines, type EvidenceLine } from './postDocument';
+import { checkLineRate, type LineRateCheck } from '../rules/lineRateCheck';
 
 /**
  * The choices for coding each line of a confirmed document (issue #203).
@@ -35,6 +36,8 @@ export interface LineChoices {
   accountId: string | null;
   accountReason: string | null;
   statutory: VatSuggestion;
+  /** Whether the rate printed on the line is the rate the rules give (issue #205). */
+  rateCheck: LineRateCheck;
   /** Why a choice is needed, when one is. */
   flags: string[];
 }
@@ -151,8 +154,15 @@ export function documentLineChoices(db: AppDatabase, params: { companyId: string
     }
     if (exemptLegend) offer(treatmentByCode('IE_EXEMPT'), `The invoice states: "${exemptLegend}".`);
 
+    const rateCheck = checkLineRate(db, {
+      companyId: params.companyId, onDate, direction: facts.direction, statutory,
+      chargedRateBasisPoints: line.rateBasisPoints,
+    });
+
     const list = [...options.values()];
     const flags: string[] = [];
+    // The rate charged is checked, never corrected (issue #205).
+    if (rateCheck.outcome !== 'consistent') flags.push(rateCheck.message);
     if (list.length === 0) flags.push('Nothing on the document or in the rules points to a treatment. Choose one.');
     if (list.length > 1) flags.push(`${list.length} treatments are possible. Read the reason for each and choose.`);
     if (statutory.status === 'fallback_only') flags.push('The statutory rules could only fall back to the standard rate; they cannot rule out an exemption.');
@@ -164,7 +174,7 @@ export function documentLineChoices(db: AppDatabase, params: { companyId: string
     const agreed = list.length === 1 && statutory.status !== 'fallback_only' ? list[0]!.treatmentId : null;
     const accountId = party?.defaultAccountId ?? null;
     return {
-      line, options: list, preselectedTreatmentId: agreed, statutory, flags,
+      line, options: list, preselectedTreatmentId: agreed, statutory, rateCheck, flags,
       accountId, accountReason: accountId ? `Previously confirmed for ${party!.name}.` : null,
     };
   });

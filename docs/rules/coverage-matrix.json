@@ -1895,6 +1895,15 @@
       ]
     },
     {
+      "id": "treatment:IE_LIVESTOCK",
+      "area": "vat_treatment",
+      "title": "IE_LIVESTOCK",
+      "status": "rule",
+      "ruleKeys": [
+        "vat.rate_livestock_current"
+      ]
+    },
+    {
       "id": "treatment:IE_EXEMPT",
       "area": "vat_treatment",
       "title": "IE_EXEMPT",
