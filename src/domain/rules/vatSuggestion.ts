@@ -370,10 +370,29 @@ export function suggestVatTreatment(
 ): VatSuggestion | null {
   const gathered = transactionFacts(db, params);
   if (!gathered) return null;
-  const { facts, factSources } = gathered;
+  const booked = db.select({ vatTreatmentId: bankTransactions.vatTreatmentId }).from(bankTransactions)
+    .where(eq(bankTransactions.id, params.bankTransactionId)).get()?.vatTreatmentId ?? null;
+  return suggestFromFacts(db, {
+    companyId: params.companyId, subjectId: params.bankTransactionId, ...gathered, bookedTreatmentId: booked,
+  });
+}
+
+/**
+ * The statutory suggestion for a set of facts — a bank transaction's, or one
+ * line of a confirmed invoice's (issue #203). `subjectId` identifies what the
+ * facts describe; `bookedTreatmentId` is the treatment already on it, if any.
+ */
+export function suggestFromFacts(
+  db: AppDatabase,
+  params: {
+    companyId: string; subjectId: string; facts: SuggestionFacts; factSources: Record<string, string>;
+    bookedTreatmentId: string | null;
+  },
+): VatSuggestion {
+  const { facts, factSources } = params;
 
   const base = {
-    bankTransactionId: params.bankTransactionId,
+    bankTransactionId: params.subjectId,
     treatment: null,
     ruleRateBasisPoints: null,
     configuredRateBasisPoints: null,
@@ -508,11 +527,10 @@ export function suggestVatTreatment(
       + 'keywords, so it cannot rule out an exemption or scope question it has no rule for (issue #200).',
     );
   }
-  const booked = db.select({ vatTreatmentId: bankTransactions.vatTreatmentId }).from(bankTransactions)
-    .where(eq(bankTransactions.id, params.bankTransactionId)).get()?.vatTreatmentId ?? null;
+  const booked = params.bookedTreatmentId;
   const agreesWithBooked = booked ? booked === treatment.id : null;
   if (agreesWithBooked === false) {
-    reviewReasons.push('The treatment already booked on this transaction differs from the statutory suggestion.');
+    reviewReasons.push('The treatment already chosen differs from the statutory suggestion.');
   }
 
   return {

@@ -368,3 +368,69 @@ describe('timing', () => {
     expect(entriesFor(sale.invoiceId).map((e) => [e.taxPointDate, e.vatMinor])).toEqual([['2025-03-14', 23_000]]);
   });
 });
+
+describe('choices for coding each line', () => {
+  it('pre-selects a treatment only when every source agrees', async () => {
+    const { documentLineChoices } = await import('./suggest');
+    const doc = confirmed({ lines: [line('Paper', 2_000, 2300, 460)] });
+    const [choice] = documentLineChoices(db, { companyId, documentId: doc }).lines;
+    expect(choice!.options.map((o) => o.code)).toEqual(['IE_STD']);
+    expect(choice!.options[0]!.reasons.join(' ')).toMatch(/printed at 23%/);
+    expect(choice!.preselectedTreatmentId).toBe(tr['IE_STD']);
+  });
+
+  it('offers every possible treatment with its reason, and pre-selects none, when sources disagree', async () => {
+    const { documentLineChoices } = await import('./suggest');
+    db.update(suppliers).set({ defaultVatTreatmentId: tr['IE_RED'], defaultAccountId: byCode['6150'] })
+      .where(eq(suppliers.id, supplierId)).run();
+    const doc = confirmed({ lines: [line('Paper', 2_000, 2300, 460)] });
+    const [choice] = documentLineChoices(db, { companyId, documentId: doc }).lines;
+    expect(choice!.options.map((o) => o.code).sort()).toEqual(['IE_RED', 'IE_STD']);
+    expect(choice!.options.find((o) => o.code === 'IE_RED')!.reasons.join(' ')).toMatch(/Previously confirmed/);
+    expect(choice!.preselectedTreatmentId).toBeNull();
+    expect(choice!.flags.join(' ')).toMatch(/2 treatments are possible/);
+    expect(choice!.accountId).toBe(byCode['6150']);
+  });
+
+  it('reads reverse-charge wording on the invoice as an option', async () => {
+    const { documentLineChoices } = await import('./suggest');
+    db.update(suppliers).set({ countryCode: 'DE' }).where(eq(suppliers.id, supplierId)).run();
+    const doc = confirmed({ supplierCountry: 'DE', vatLegends: ['Steuerschuldnerschaft des Leistungsempfängers'], lines: [line('Server', 8_900, null, 0)] });
+    const [choice] = documentLineChoices(db, { companyId, documentId: doc }).lines;
+    expect(choice!.options.map((o) => o.code)).toContain('EU_SERVICES_RCV');
+  });
+});
+
+describe('the trace behind a bank line', () => {
+  it('runs from the bank line to each VAT3 box, through the document and its lines', async () => {
+    const { transactionTrace } = await import('./trace');
+    const doc = confirmed({ lines: [line('Stationery', 10_000, 2300, 2_300), line('Labour', 20_000, 1350, 2_700)] });
+    const inv = postDocumentAsInvoice(db, {
+      companyId, documentId: doc,
+      coding: [{ ...code('6120', 'IE_STD'), vatRuleKeys: ['vat.rate_standard_current'] }, code('6150', 'IE_RED')],
+    });
+    const find = await bank([['20/03/2025', 'MURPHY', '-350.00']]);
+    settleBankTransaction(db, { companyId, bankTransactionId: find('MURPHY').id, allocations: [{ invoiceId: inv.invoiceId, amountMinor: 35_000 }] });
+
+    const trace = transactionTrace(db, { companyId, bankTransactionId: find('MURPHY').id })!;
+    expect(trace.kind).toBe('settled');
+    expect(trace.payment!.unallocatedMinor).toBe(0);
+    const [invoice] = trace.invoices;
+    expect(invoice!.document!.id).toBe(doc);
+    expect(invoice!.lines.map((l) => [l.documentLine?.description, l.treatment?.code, l.vatEntries.map((e) => [e.vatBox, e.vatMinor, e.periodName])]))
+      .toEqual([
+        ['Stationery', 'IE_STD', [['T2', 2_300, 'Mar–Apr 2025']]],
+        ['Labour', 'IE_RED', [['T2', 2_700, 'Mar–Apr 2025']]],
+      ]);
+    expect(invoice!.lines[0]!.rules).toEqual([]); // no knowledge base loaded in this test
+  });
+
+  it('says so when a bank line was classified with no invoice', async () => {
+    const { transactionTrace } = await import('./trace');
+    const find = await bank([['20/03/2025', 'CARD', '-12.30']]);
+    classifyTransaction(db, { companyId, bankTransactionId: find('CARD').id, accountId: byCode['6120']!, vatTreatmentId: tr['IE_STD']! });
+    const trace = transactionTrace(db, { companyId, bankTransactionId: find('CARD').id })!;
+    expect(trace.kind).toBe('classified_without_invoice');
+    expect(trace.flags.join(' ')).toMatch(/no input VAT claimed/);
+  });
+});
