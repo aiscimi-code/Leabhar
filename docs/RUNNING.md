@@ -190,6 +190,15 @@ npm run cli -- import --account <id> --file <path>    # import a statement (CSV/
     # Stripe payout's fee breakdown, a loan's capital/interest split (#158)
 npm run cli -- create-supplier --name "..." [--country IE] [--document <id>]
                                                       # create a supplier (ai_suggestion)
+npm run cli -- show-document <id>                     # a document's values, lines, VAT totals, checks
+npm run cli -- confirm-document <id> --confirmed-by "<name>" [--values <json>] [--ack <codes>]
+        [--supplier <id> | --create-supplier]         # record that the NAMED PERSON checked it
+npm run cli -- line-choices <documentId>              # per-line treatment options and reasons
+npm run cli -- post-document <documentId> --coding <json> [--fx <rate>]
+                                                      # post the confirmed document as an invoice
+npm run cli -- settle <transactionId> --allocations <json> [--fx <rate>]
+                                                      # settle a bank line against invoices
+npm run cli -- trace <transactionId>                  # bank line -> invoices -> lines -> VAT3 box
 npm run cli -- match                                  # link documents to bank transactions
 npm run cli -- accept-match --document <id> --transaction <id>   # accept a scored candidate
 npm run cli -- link --document <id> --transaction <id>          # manually link a doc to a txn
@@ -245,8 +254,18 @@ The intended workflow from there is:
    produced low-confidence names, re-extract the documents first (delete and
    re-ingest, or use the web UI's re-extract action) so the supplier names
    are usable.
-3. **Match** documents to bank transactions. Matching links evidence but
-   does **not** classify or post a transaction.
+3. **Confirm, post and settle** (issue #222). Extraction produces a draft,
+   never evidence. For each document: `show-document <id>`; a **person**
+   checks it against the page and it is confirmed with
+   `confirm-document <id> --confirmed-by "<their name>"` (corrections via
+   `--values`, accepted warnings via `--ack`). An agent must never confirm a
+   document on its own judgement. Then `line-choices <id>` shows each line's
+   treatment options and why; `post-document <id> --coding <json>` posts it
+   as an invoice, with the VAT as printed on each line. `match` suggests the
+   bank line for a confirmed document; `settle <transactionId> --allocations
+   <json>` settles it, and `trace <transactionId>` shows the whole chain.
+   Matching and settling read confirmed documents only. Matching links
+   evidence but does **not** classify or post a transaction.
 3a. **Check the statutory VAT suggestion** (issue #200). Run
    `load-statutory-rules` once per company (idempotent; it ingests every
    `docs/statutes` source and derives the statutory rules), then
@@ -267,7 +286,8 @@ The intended workflow from there is:
    customer outside the EU with no recorded status gets no suggestion. A `fallback_only` result
    (only the 23% residual rule matched) is shown but not pre-selected, because
    the knowledge base cannot yet rule out every exemption.
-4. **Classify** transactions. Use `classify` to post a single transaction
+4. **Classify** the bank lines with no invoice. A purchase classified
+   without an invoice claims no input VAT and is flagged. Use `classify` to post a single transaction
    manually (accepting an account code and VAT treatment code from
    `list-chart` / `list-vat-treatments`), `create-rule` + `auto-classify`
    to post in batch from deterministic rules, `record-payment` where a

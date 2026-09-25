@@ -35,6 +35,9 @@ import {
   voidInvoiceCli, reverseJournalCli,
 } from '@/agent/books';
 import { scanAnomaliesCli, listReviewQueueCli } from '@/agent/review';
+import {
+  showDocumentCli, confirmDocumentCli, lineChoicesCli, postDocumentCli, settleCli, traceCli,
+} from '@/agent/consolidate';
 import { suggestVatTreatment } from '@/domain/rules/vatSuggestion';
 import { loadStatutoryKnowledgeBase } from '@/domain/rules/knowledgeBase';
 import {
@@ -178,6 +181,32 @@ Books (once induction is done):
       confirmed supplier invoice, so a "purchases" --vat, or a line debiting
       VAT on purchases, is refused.
 
+Invoice-led workflow (issue #222) — the same domain functions as the web screens:
+  show-document <id>                     The document's values (draft or confirmed, minor
+                                          units), its lines, VAT totals and checks
+  confirm-document <id> --confirmed-by "<name>" [--values <json>] [--ack <codes>]
+      [--supplier <id> | --create-supplier] [--customer <id> | --create-customer]
+      [--note "..."]
+      Records that the NAMED PERSON checked the document against the page.
+      Confirmation is a person's decision: an agent must never confirm on its
+      own judgement. --values corrects the draft (JSON object, minor units;
+      lines/vatTotals replace the whole list). --ack accepts warnings by code.
+  line-choices <documentId>              Per-line VAT treatment options with the reasons
+                                          and rules behind each; a suggestion only
+                                          where every source agrees
+  post-document <documentId> --coding <json> [--fx <rate>] [--declare-in <date>]
+      Posts the confirmed document as an invoice, line by line, with the VAT
+      as printed. --coding: [{"account":"6120","treatment":"IE_STD"}, ...],
+      one per line; a line may omit treatment/account only where line-choices
+      suggested one. --fx: base per 1 unit of the document's currency
+      (1.0842 or 10842/10000).
+  settle <transactionId> --allocations <json> [--fx <rate>] [--declare-in <date>]
+      Settles the bank line against invoices:
+      [{"invoice":"MOS-5120","amount":"24.60"}], amounts in the bank line's
+      currency. A remainder is held on account and flagged.
+  trace <transactionId>                  Bank line -> payment -> invoices -> document lines
+                                          -> rules -> VAT entries -> VAT3 box
+
 Inspect:
   list-transactions [--account <id>] [--unposted] [--unclassified]
   show-invoice <number>                  Full detail incl. lines and payments
@@ -222,10 +251,13 @@ Agent workflow:
      also creates the matchable document create-invoice alone does not;
      create-invoice where a per-row account/vatTreatment is needed instead.
      create suppliers for names that have no supplier yet.
-  4. match documents to bank transactions (evidence linking; does not post)
-  5. classify transactions (manually via classify, auto-classify from rules,
-     or record-payment where a transaction settles an invoice) and journal
-     anything that is not a single-account posting
+  4. for each extracted document: show-document, then a PERSON checks it
+     against the page and it is confirmed (confirm-document --confirmed-by);
+     line-choices, then post-document. match only reads confirmed documents.
+  5. settle bank lines against their invoices (the VAT comes from the
+     invoice); classify the rest (manually via classify, auto-classify from
+     rules — a purchase without an invoice claims no input VAT and is
+     flagged) and journal anything that is not a single-account posting
   6. set-fx on foreign lines that lack a settled base amount
   7. reconcile; --sign-off when reconciled; year-end / vat-return to inspect
   8. scan-anomalies --sync periodically; void-invoice / reverse-journal to
@@ -660,6 +692,59 @@ export async function main(argv: string[], options: CliOptions = {}): Promise<nu
           vat: getFlag(flags, 'vat'),
         });
         print(journalCli(db, parsed), format);
+        return 0;
+      }
+
+      case 'show-document': {
+        print(showDocumentCli(db, { companyId, documentId: positionals[0] ?? requireFlag(flags, 'document') }), format);
+        return 0;
+      }
+
+      case 'confirm-document': {
+        print(confirmDocumentCli(db, {
+          companyId,
+          documentId: positionals[0] ?? requireFlag(flags, 'document'),
+          confirmedBy: requireFlag(flags, 'confirmed-by'),
+          values: getFlag(flags, 'values'),
+          ack: getFlag(flags, 'ack'),
+          supplierId: getFlag(flags, 'supplier'),
+          customerId: getFlag(flags, 'customer'),
+          createSupplier: hasFlag(flags, 'create-supplier'),
+          createCustomer: hasFlag(flags, 'create-customer'),
+          note: getFlag(flags, 'note'),
+        }), format);
+        return 0;
+      }
+
+      case 'line-choices': {
+        print(lineChoicesCli(db, { companyId, documentId: positionals[0] ?? requireFlag(flags, 'document') }), format);
+        return 0;
+      }
+
+      case 'post-document': {
+        print(postDocumentCli(db, {
+          companyId,
+          documentId: positionals[0] ?? requireFlag(flags, 'document'),
+          coding: requireFlag(flags, 'coding'),
+          fx: getFlag(flags, 'fx'),
+          vatDeclarationDate: getFlag(flags, 'declare-in'),
+        }), format);
+        return 0;
+      }
+
+      case 'settle': {
+        print(settleCli(db, {
+          companyId,
+          bankTransactionId: positionals[0] ?? requireFlag(flags, 'transaction'),
+          allocations: requireFlag(flags, 'allocations'),
+          fx: getFlag(flags, 'fx'),
+          vatDeclarationDate: getFlag(flags, 'declare-in'),
+        }), format);
+        return 0;
+      }
+
+      case 'trace': {
+        print(traceCli(db, { companyId, bankTransactionId: positionals[0] ?? requireFlag(flags, 'transaction') }), format);
         return 0;
       }
 

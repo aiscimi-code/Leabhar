@@ -1392,3 +1392,118 @@ describe('cli reconcile — review queue and corrections (issue #155)', () => {
     });
   });
 });
+
+// Issue #222: the invoice-led workflow from the terminal — confirm (by a named
+// person), see the line choices, post, settle and trace — through the same
+// domain functions as the web screens.
+describe('cli reconcile — confirm, post, settle, trace (issue #222)', () => {
+  let root: string;
+  let documentId: string;
+  let transactionId: string;
+
+  const VALUES = {
+    documentType: 'supplier_invoice', invoiceNumber: 'BAS-2025-0044', documentDate: '2025-01-20',
+    dueDate: null, supplyDate: null, currency: 'EUR',
+    supplierNameStated: 'Byrne Accountancy Services Limited', supplierAddress: '14 Fitzwilliam Square, Dublin 2',
+    supplierVatNumber: 'IE9876543W', supplierCountry: 'IE',
+    customerNameStated: 'Acme Ltd', customerAddress: null, customerVatNumber: null, customerCountry: 'IE',
+    vatLegends: [], paymentTerms: null, originalDocumentNumber: null,
+    netMinor: 50_000, vatMinor: 11_500, grossMinor: 61_500,
+    lines: [{
+      description: 'Annual accounts and CT1 preparation', quantity: null, unitPriceMinor: null,
+      netMinor: 50_000, vatRateBasisPoints: 2300, vatMinor: 11_500, grossMinor: 61_500,
+    }],
+    vatTotals: [],
+  };
+
+  const json = async (argv: string[]) => {
+    const c = capture();
+    const code = await run(argv);
+    c.restore();
+    return { code, out: c.stdout.join(''), err: c.stderr.join('') };
+  };
+
+  beforeEach(async () => {
+    root = mkdtempSync(join(tmpdir(), 'cli-222-'));
+    await importStatement(db, {
+      companyId, bankAccountId, filename: 's.csv', content: STATEMENT, fileFormat: 'csv', columnMap: COLUMNS,
+    });
+    transactionId = db.select().from(bankTransactions)
+      .where(eq(bankTransactions.description, 'BYRNE ACCOUNTANCY')).get()!.id;
+    documentId = storeDocument(db, {
+      companyId, filename: 'byrne.pdf', content: Buffer.from('byrne invoice'), root,
+    }).documentId;
+  });
+
+  it('refuses to confirm without the name of the person who checked it', async () => {
+    const r = await json(['confirm-document', documentId, '--values', JSON.stringify(VALUES), '--create-supplier']);
+    expect(r.code).not.toBe(0);
+    expect(r.err).toMatch(/confirmed-by/);
+    expect(db.select().from(documents).where(eq(documents.id, documentId)).get()!.reviewStatus).toBe('unreviewed');
+  });
+
+  it('confirms, posts line by line, settles and traces', async () => {
+    const shown = await json(['show-document', documentId]);
+    expect(shown.code).toBe(0);
+    expect(JSON.parse(shown.out)).toMatchObject({ documentId, reviewStatus: 'unreviewed', invoiceId: null });
+
+    const confirmed = await json([
+      'confirm-document', documentId, '--confirmed-by', 'Joe Reviewer',
+      '--values', JSON.stringify(VALUES), '--create-supplier',
+    ]);
+    expect(confirmed.err).toBe('');
+    expect(confirmed.code).toBe(0);
+    const doc = db.select().from(documents).where(eq(documents.id, documentId)).get()!;
+    expect(doc).toMatchObject({ reviewStatus: 'confirmed', reviewedBy: 'Joe Reviewer', grossMinor: 61_500 });
+
+    const choices = JSON.parse((await json(['line-choices', documentId])).out);
+    expect(choices).toMatchObject({ direction: 'purchase', lines: [{ index: 0, netMinor: 50_000, vatMinor: 11_500 }] });
+
+    // A wrong number of coding entries is refused before anything is posted.
+    expect((await json(['post-document', documentId, '--coding', '[]'])).code).not.toBe(0);
+
+    const posted = await json(['post-document', documentId, '--coding', '[{"account":"6070","treatment":"IE_STD"}]']);
+    expect(posted.err).toBe('');
+    expect(JSON.parse(posted.out)).toMatchObject({ netMinor: 50_000, vatMinor: 11_500, grossMinor: 61_500 });
+
+    const settled = await json([
+      'settle', transactionId, '--allocations', '[{"invoice":"BAS-2025-0044","amount":"615.00"}]',
+    ]);
+    expect(settled.err).toBe('');
+    expect(JSON.parse(settled.out)).toMatchObject({ allocatedMinor: 61_500, unallocatedMinor: 0 });
+    expect(db.select().from(invoices).where(eq(invoices.invoiceNumber, 'BAS-2025-0044')).get()!.status).toBe('paid');
+
+    const trace = JSON.parse((await json(['trace', transactionId])).out);
+    expect(trace.kind).toBe('settled');
+    expect(trace.invoices[0]).toMatchObject({ invoiceNumber: 'BAS-2025-0044' });
+  });
+
+  it('asks for a choice when the sources do not agree, and for an account when none is suggested', async () => {
+    // No VAT printed on the line and no VAT number: nothing settles the treatment.
+    const unclear = {
+      ...VALUES, supplierVatNumber: null, vatMinor: null, grossMinor: 50_000,
+      lines: [{ ...VALUES.lines[0], vatRateBasisPoints: null, vatMinor: null, grossMinor: 50_000 }],
+    };
+    const shown = JSON.parse((await json(['show-document', documentId])).out);
+    expect(shown.reviewStatus).toBe('unreviewed');
+    const { checkDocumentValues } = await import('@/domain/documents/checks');
+    const warnings = checkDocumentValues(unclear as never).filter((c) => c.severity !== 'error').map((c) => c.code);
+    const confirmed = await json([
+      'confirm-document', documentId, '--confirmed-by', 'Joe Reviewer',
+      '--values', JSON.stringify(unclear), '--ack', warnings.join(','), '--create-supplier',
+    ]);
+    expect(confirmed.err).toBe('');
+
+    const line = JSON.parse((await json(['line-choices', documentId])).out).lines[0];
+    expect(line.suggestedTreatment).toBeNull();
+    expect(line.suggestedAccount).toBeNull();
+
+    const noTreatment = await json(['post-document', documentId, '--coding', '[{"account":"6070"}]']);
+    expect(noTreatment.code).not.toBe(0);
+    expect(noTreatment.err).toMatch(/choose one/);
+    const noAccount = await json(['post-document', documentId, '--coding', '[{"treatment":"IE_STD"}]']);
+    expect(noAccount.code).not.toBe(0);
+    expect(noAccount.err).toMatch(/needs an account/);
+    expect(db.select().from(invoices).all()).toHaveLength(0);
+  });
+});
