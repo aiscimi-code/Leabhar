@@ -244,6 +244,18 @@ The intended workflow from there is:
    are usable.
 3. **Match** documents to bank transactions. Matching links evidence but
    does **not** classify or post a transaction.
+3a. **Check the statutory VAT suggestion** (issue #200). Run
+   `load-statutory-rules` once per company (idempotent; it ingests every
+   `docs/statutes` source and derives the statutory rules), then
+   `suggest-vat --transaction <id>` for a line. It returns the suggested
+   treatment, the rule that decided it, and the provision, source file,
+   SHA-256 and quoted text behind it. The transaction screen shows the same
+   thing, links to `/statutes/provision/<id>` (which re-reads the file and
+   re-checks its hash), and pre-selects a specific suggestion in the
+   classification form. It is never posted automatically: every statutory
+   rule is still unapproved. A `fallback_only` result (only the 23% residual
+   rule matched) is shown but not pre-selected, because the knowledge base
+   does not yet hold exemption or outside-the-scope rules.
 4. **Classify** transactions. Use `classify` to post a single transaction
    manually (accepting an account code and VAT treatment code from
    `list-chart` / `list-vat-treatments`), `create-rule` + `auto-classify`

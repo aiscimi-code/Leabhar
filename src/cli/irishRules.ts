@@ -39,6 +39,7 @@ import {
   ingestAllCompaniesAct2014Sections, deriveCompaniesAct2014Rules,
 } from '@/domain/rules/companiesAct2014Ingestion';
 import { syncTaxRatesFromIrishRules } from '@/domain/rules/taxRateSync';
+import { loadStatutoryKnowledgeBase } from '@/domain/rules/knowledgeBase';
 import { lookupTransactionRules, type TransactionContext } from '@/domain/rules/transactionLookup';
 import { setRuleReviewStatus } from '@/domain/rules/review';
 import { generateDefaultTestCases, runTestCases } from '@/domain/rules/testCases';
@@ -63,6 +64,8 @@ Commands:
                                        companies-act-2014 (ingests all eight fetched sections; no --file);
                                        --file overrides
                                        its default path, e.g. to ingest a different revised section)
+  ingest-all                          Ingest every source and derive every rule in one step
+                                       (same as the ingest/extract sequence below; idempotent)
   extract [--source <s>]              Derive irish_tax_rules from ingested provisions
                                        (--source as above, but rct-tca530/rct-fa2011-*/rct-tdm/rct-tdm-05/
                                        rct-tdm-11 all use --source rct, and finance-act-2003-s23 uses --source
@@ -239,6 +242,11 @@ export async function main(argv: string[], options: CliOptions = {}): Promise<nu
           companyId, markdown, ingestVersion: 'v1', localPath: file,
         });
         print(result, format);
+        return 0;
+      }
+
+      case 'ingest-all': {
+        print(loadStatutoryKnowledgeBase(db, { companyId }), format);
         return 0;
       }
 

@@ -35,6 +35,8 @@ import {
   voidInvoiceCli, reverseJournalCli,
 } from '@/agent/books';
 import { scanAnomaliesCli, listReviewQueueCli } from '@/agent/review';
+import { suggestVatTreatment } from '@/domain/rules/vatSuggestion';
+import { loadStatutoryKnowledgeBase } from '@/domain/rules/knowledgeBase';
 import {
   importInput,
   autoClassifyInput,
@@ -181,6 +183,13 @@ Inspect:
   vat-return --period <id-or-name>       VAT3 box figures for one period
   list-suppliers                         Every supplier (id, name, country, VAT no.)
   list-customers                         Every customer (id, name, country, VAT no.)
+
+Statutory VAT rules (issue #200):
+  load-statutory-rules                   Ingest every docs/statutes source and derive the
+                                         statutory rules for this company (idempotent)
+  suggest-vat --transaction <id>         Suggest a VAT treatment for one bank transaction
+      from the statutory rules, with the provision, source file, SHA-256 and
+      quoted text that justify it. A suggestion only: nothing is posted.
 
 Review queue:
   scan-anomalies [--from <date>] [--to <date>] [--sync]
@@ -708,6 +717,19 @@ export async function main(argv: string[], options: CliOptions = {}): Promise<nu
           reason: requireFlag(flags, 'reason'),
         });
         print(reverseJournalCli(db, parsed), format);
+        return 0;
+      }
+
+      case 'load-statutory-rules': {
+        print(loadStatutoryKnowledgeBase(db, { companyId }), format);
+        return 0;
+      }
+
+      case 'suggest-vat': {
+        const bankTransactionId = requireFlag(flags, 'transaction');
+        const suggestion = suggestVatTreatment(db, { companyId, bankTransactionId });
+        if (!suggestion) throw new Error(`Bank transaction ${bankTransactionId} not found.`);
+        print(suggestion, format);
         return 0;
       }
 

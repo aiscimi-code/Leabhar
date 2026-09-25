@@ -35,7 +35,7 @@ interface TreatmentOption {
 export function ClassifyForm({
   transactionId, accounts, treatments, currentAccountId, currentTreatmentId,
   isPosted, amountMinor, currency, baseCurrency, baseAmountMinor, fxRateSource,
-  fxRateNumerator, fxRateDenominator,
+  fxRateNumerator, fxRateDenominator, suggestedTreatmentId,
 }: {
   transactionId: string;
   accounts: AccountOption[];
@@ -50,9 +50,11 @@ export function ClassifyForm({
   fxRateSource?: string | null;
   fxRateNumerator?: number | null;
   fxRateDenominator?: number | null;
+  /** The statutory-rule suggestion (issue #200), pre-selected only when nothing is classified yet. */
+  suggestedTreatmentId?: string | null;
 }) {
   const [accountId, setAccountId] = useState(currentAccountId ?? '');
-  const [treatmentId, setTreatmentId] = useState(currentTreatmentId ?? '');
+  const [treatmentId, setTreatmentId] = useState(currentTreatmentId ?? suggestedTreatmentId ?? '');
   const [reason, setReason] = useState('');
   const [fxRate, setFxRate] = useState('');
   const [result, setResult] = useState<{ ok: boolean; message: string } | null>(null);
@@ -102,7 +104,8 @@ export function ClassifyForm({
             onChange={(event) => {
               setAccountId(event.target.value);
               const account = accounts.find((a) => a.id === event.target.value);
-              if (account?.defaultVatTreatmentId && !currentTreatmentId) {
+              // A statute-backed suggestion outranks an account's default treatment.
+              if (account?.defaultVatTreatmentId && !currentTreatmentId && !suggestedTreatmentId) {
                 setTreatmentId(account.defaultVatTreatmentId);
               }
             }}

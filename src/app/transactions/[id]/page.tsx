@@ -10,7 +10,8 @@ import { ClassifyForm } from '@/components/ClassifyForm';
 import { LinkControls } from '@/components/LinkControls';
 import { CandidateActions } from '@/components/CandidateActions';
 import { linkDocumentAction, unmatchDocumentAction, acceptMatchAction, rejectMatchAction } from '@/app/actions';
-import { chartOfAccounts, treatmentsWithRates } from '@/lib/queries';
+import { chartOfAccounts, treatmentsWithRates, statutoryVatSuggestion } from '@/lib/queries';
+import { StatutorySuggestion } from '@/components/StatutorySuggestion';
 import { asIsoDate } from '@/domain/dates';
 
 export const dynamic = 'force-dynamic';
@@ -41,6 +42,7 @@ export default async function TransactionDetailPage({ params }: {
   // rate configuration rather than from anything hard-coded.
   const treatments = treatmentsWithRates(asIsoDate(t.transactionDate));
   const linkableDocuments = unmatchedDocumentOptions();
+  const vatSuggestion = statutoryVatSuggestion(t.id);
 
   return (
     <Page
@@ -113,6 +115,8 @@ export default async function TransactionDetailPage({ params }: {
             </table>
           </Panel>
 
+          {vatSuggestion && <StatutorySuggestion suggestion={vatSuggestion} />}
+
           <Panel
             title="Accounting classification"
             description={t.journalEntryId
@@ -137,6 +141,7 @@ export default async function TransactionDetailPage({ params }: {
                 fxRateSource={t.fxRateSource}
                 fxRateNumerator={t.fxRateNumerator}
                 fxRateDenominator={t.fxRateDenominator}
+                suggestedTreatmentId={vatSuggestion?.status === 'suggested' ? vatSuggestion.treatment?.id : null}
               />
             </div>
           </Panel>

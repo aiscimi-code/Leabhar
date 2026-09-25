@@ -78,3 +78,5 @@ export function label(value: string | null | undefined): string {
 export function plural(n: number, singular: string, pluralForm?: string): string {
   return n === 1 ? singular : pluralForm ?? `${singular}s`;
 }
+
+export { provisionCitation } from '@/domain/rules/citation';

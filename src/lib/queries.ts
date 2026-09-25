@@ -6,6 +6,7 @@ import {
   journalEntries, journalLines, auditEvents, rules, fixedAssets, taxRates,
   documentMatches, statementImports, companyOfficers, documentExtractions,
   invoices, invoiceLines, payments, paymentAllocations,
+  irishActProvisions, irishKnowledgeSources, irishTaxRules,
 } from '@/db/schema';
 import { trialBalance, balancesBySystemKey, accountBalance } from '@/domain/accounting/ledger';
 import { buildVat3Return, vatPositionSummary } from '@/domain/vat/report';
@@ -16,6 +17,8 @@ import { listAdjustments } from '@/domain/accounting/adjustments';
 import { agedAnalysis } from '@/domain/invoicing/payments';
 import { reconcileBankAccount, reconciliationHistory } from '@/domain/banking/reconciliation';
 import { search } from '@/domain/search/search';
+import { suggestVatTreatment } from '@/domain/rules/vatSuggestion';
+import { verifyStatuteFile } from '@/domain/rules/knowledgeBase';
 import { asIsoDate, today, makeDate, type IsoDate } from '@/domain/dates';
 import { money } from '@/lib/format';
 
@@ -768,4 +771,25 @@ export function supplierDetail(supplierId: string) {
     .orderBy(desc(documents.documentDate)).all();
 
   return { supplier, transactions, invoices: supplierInvoices, documents: supplierDocuments };
+}
+
+/** Statutory VAT treatment suggestion for one transaction (issue #200). */
+export function statutoryVatSuggestion(transactionId: string) {
+  return suggestVatTreatment(getDb(), { companyId: requireCompany().id, bankTransactionId: transactionId });
+}
+
+/** One provision, its source, the rules that cite it, and the source file re-checked (issue #200). */
+export function provisionDetail(provisionId: string) {
+  const db = getDb();
+  const company = requireCompany();
+  const row = db.select({ provision: irishActProvisions, source: irishKnowledgeSources })
+    .from(irishActProvisions)
+    .innerJoin(irishKnowledgeSources, eq(irishActProvisions.sourceId, irishKnowledgeSources.id))
+    .where(eq(irishActProvisions.id, provisionId)).get();
+  if (!row) return null;
+  const rulesCiting = db.select().from(irishTaxRules)
+    .where(and(eq(irishTaxRules.provisionId, provisionId), eq(irishTaxRules.companyId, company.id)))
+    .all();
+  return { ...row, rulesCiting, file: verifyStatuteFile(row.source.localPath, row.source.sha256,
+    row.provision.sourceStart, row.provision.sourceEnd) };
 }
