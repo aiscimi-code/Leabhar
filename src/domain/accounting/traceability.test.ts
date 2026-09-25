@@ -5,14 +5,13 @@
  * reconciliation → reporting.
  */
 import { describe, it, expect, beforeEach } from 'vitest';
-import { createTestDatabase } from '@/db/testing';
+import { createTestDatabase, insertTestBankTransaction } from '@/db/testing';
 import { createCompany, addBankAccount } from '@/domain/config/setup';
 import { postJournalEntry } from './journal';
 import { traceJournalLine, traceBankTransaction } from './traceability';
 import { journalEntries, journalLines, bankTransactions, statementImports } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { makeDate } from '@/domain/dates';
-import { ids } from '@/lib/ids';
 import type { AppDatabase } from '@/db';
 
 let db: AppDatabase;
@@ -50,21 +49,9 @@ beforeEach(() => {
 });
 
 function insertBankTx(description: string, amountMinor: number, fingerprint: string): string {
-  const bankTxId = ids.bankTransaction();
-  db.insert(bankTransactions).values({
-    id: bankTxId,
-    companyId,
-    bankAccountId,
-    transactionDate: '2025-06-15',
-    description,
-    amountMinor,
-    currency: 'EUR',
-    fingerprint,
-    occurrenceIndex: 0,
-    source: 'import',
-    provenanceStatus: 'imported',
-  }).run();
-  return bankTxId;
+  return insertTestBankTransaction(db, {
+    companyId, bankAccountId, transactionDate: '2025-06-15', description, amountMinor, fingerprint,
+  });
 }
 
 describe('traceability — import → posting → ledger', () => {

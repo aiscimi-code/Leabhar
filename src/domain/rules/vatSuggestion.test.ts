@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll } from 'vitest';
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
-import { createTestDatabase } from '@/db/testing';
+import { createTestDatabase, insertTestBankTransaction } from '@/db/testing';
 import { createCompany, addBankAccount } from '../config/setup';
 import { bankTransactions, suppliers, customers } from '@/db/schema';
 import { ids } from '@/lib/ids';
@@ -35,12 +35,9 @@ function party(table: 'supplier' | 'customer', name: string, over: {
 }
 
 function tx(description: string, amountMinor: number, over: Partial<typeof bankTransactions.$inferInsert> = {}): string {
-  const id = ids.bankTransaction();
-  db.insert(bankTransactions).values({
-    id, companyId, bankAccountId, transactionDate: '2025-06-15', description,
-    amountMinor, currency: 'EUR', fingerprint: `fp-${id}`, ...over,
-  }).run();
-  return id;
+  return insertTestBankTransaction(db, {
+    companyId, bankAccountId, transactionDate: '2025-06-15', description, amountMinor, ...over,
+  });
 }
 
 function setup(): void {

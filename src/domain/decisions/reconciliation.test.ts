@@ -14,7 +14,7 @@
  * 4. Opening + movements = closing for a bank account.
  */
 import { describe, it, expect, beforeEach } from 'vitest';
-import { createTestDatabase } from '@/db/testing';
+import { createTestDatabase, insertTestBankTransaction } from '@/db/testing';
 import { createCompany, addBankAccount } from '@/domain/config/setup';
 import { postJournalEntry } from '@/domain/accounting/journal';
 import {
@@ -23,7 +23,6 @@ import {
 import { eq, and, sql, desc, ne } from 'drizzle-orm';
 import { makeDate } from '@/domain/dates';
 import { reconcileBankAccount } from '@/domain/banking/reconciliation';
-import { ids } from '@/lib/ids';
 import type { AppDatabase } from '@/db';
 
 let db: AppDatabase;
@@ -77,21 +76,9 @@ function importAndClassify(
   amount: number, description: string, date: string,
   debitAccount: string, creditAccount: string,
 ): string {
-  const txId = ids.bankTransaction();
-  db.insert(bankTransactions).values({
-    id: txId,
-    companyId,
-    bankAccountId,
-    amountMinor: amount,
-    currency: 'EUR',
-    description,
-    transactionDate: date,
-    balanceAfterMinor: null,
-    fingerprint: 'fp-' + txId,
-    occurrenceIndex: 0,
-    source: 'import',
-    provenanceStatus: 'imported',
-  }).run();
+  const txId = insertTestBankTransaction(db, {
+    companyId, bankAccountId, amountMinor: amount, description, transactionDate: date,
+  });
 
   postJournalEntry(db, {
     companyId,

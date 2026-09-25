@@ -1,11 +1,11 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { eq } from 'drizzle-orm';
-import { createTestDatabase } from '@/db/testing';
+import { createTestDatabase, insertTestBankTransaction } from '@/db/testing';
 import { createCompany, addBankAccount } from '../config/setup';
 import { createVatEntries } from './engine';
 import { buildVat3Return, drillIntoBox, vatPositionSummary } from './report';
 import { validateVatPeriod, transitionVatPeriod } from './periodClose';
-import { vatPeriods, bankTransactions, reviewItems } from '@/db/schema';
+import { vatPeriods, reviewItems } from '@/db/schema';
 import { makeDate } from '../dates';
 import type { AppDatabase } from '@/db';
 
@@ -188,11 +188,10 @@ describe('drill-down', () => {
 
 describe('period validation', () => {
   it('says NOT READY, never that a filing is compliant', () => {
-    db.insert(bankTransactions).values({
+    insertTestBankTransaction(db, {
       id: 'btx_1', companyId, bankAccountId, transactionDate: '2025-03-15',
-      description: 'UNKNOWN', amountMinor: -1000, currency: 'EUR',
-      fingerprint: 'f1', status: 'unclassified',
-    } as never).run();
+      description: 'UNKNOWN', amountMinor: -1000, status: 'unclassified',
+    });
 
     const validation = validateVatPeriod(db, { companyId, vatPeriodId: periodId });
     expect(validation.verdict).toBe('NOT READY');
@@ -215,11 +214,10 @@ describe('period validation', () => {
   });
 
   it('blocks on unclassified transactions', () => {
-    db.insert(bankTransactions).values({
+    insertTestBankTransaction(db, {
       id: 'btx_2', companyId, bankAccountId, transactionDate: '2025-04-01',
-      description: 'MYSTERY', amountMinor: -5000, currency: 'EUR',
-      fingerprint: 'f2', status: 'unclassified',
-    } as never).run();
+      description: 'MYSTERY', amountMinor: -5000, status: 'unclassified',
+    });
 
     const validation = validateVatPeriod(db, { companyId, vatPeriodId: periodId });
     const finding = validation.findings.find((f) => f.code === 'unclassified_transactions')!;
@@ -228,12 +226,11 @@ describe('period validation', () => {
   });
 
   it('blocks on unconfirmed AI suggestions', () => {
-    db.insert(bankTransactions).values({
+    insertTestBankTransaction(db, {
       id: 'btx_3', companyId, bankAccountId, transactionDate: '2025-03-20',
-      description: 'AI GUESS', amountMinor: -5000, currency: 'EUR',
-      fingerprint: 'f3', status: 'suggested', source: 'ai',
+      description: 'AI GUESS', amountMinor: -5000, status: 'suggested', source: 'ai',
       provenanceStatus: 'ai_suggestion',
-    } as never).run();
+    });
 
     const validation = validateVatPeriod(db, { companyId, vatPeriodId: periodId });
     expect(validation.findings.some((f) => f.code === 'unresolved_ai_suggestions')).toBe(true);
@@ -276,11 +273,10 @@ describe('period lifecycle', () => {
   });
 
   it('refuses to mark ready while a blocking issue stands', () => {
-    db.insert(bankTransactions).values({
+    insertTestBankTransaction(db, {
       id: 'btx_4', companyId, bankAccountId, transactionDate: '2025-03-15',
-      description: 'UNCLASSIFIED', amountMinor: -1000, currency: 'EUR',
-      fingerprint: 'f4', status: 'unclassified',
-    } as never).run();
+      description: 'UNCLASSIFIED', amountMinor: -1000, status: 'unclassified',
+    });
 
     transitionVatPeriod(db, { companyId, vatPeriodId: periodId, to: 'review' });
     expect(() => transitionVatPeriod(db, { companyId, vatPeriodId: periodId, to: 'ready' }))
@@ -290,11 +286,10 @@ describe('period lifecycle', () => {
   });
 
   it('writes blocking findings into the review queue', () => {
-    db.insert(bankTransactions).values({
+    insertTestBankTransaction(db, {
       id: 'btx_5', companyId, bankAccountId, transactionDate: '2025-03-15',
-      description: 'UNCLASSIFIED', amountMinor: -1000, currency: 'EUR',
-      fingerprint: 'f5', status: 'unclassified',
-    } as never).run();
+      description: 'UNCLASSIFIED', amountMinor: -1000, status: 'unclassified',
+    });
 
     transitionVatPeriod(db, { companyId, vatPeriodId: periodId, to: 'review' });
     try { transitionVatPeriod(db, { companyId, vatPeriodId: periodId, to: 'ready' }); } catch { /* expected */ }
