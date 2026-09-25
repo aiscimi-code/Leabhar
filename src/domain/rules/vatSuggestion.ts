@@ -33,6 +33,7 @@ import { EU_COUNTRY_CODES, parseVatNumber } from '../extraction/vatNumbers';
 import { resolveTreatment } from '../vat/engine';
 import { asIsoDate } from '../dates';
 import { VAT_SCOPE_CURATED_RULES } from './vatScopeCuration';
+import { VAT_POS_BUSINESS_ABROAD_RULE_KEY, VAT_POS_CONSUMER_RULE_KEY } from './vatPlaceOfSupplyCuration';
 import { provisionCitation } from './citation';
 
 export type TransactionDirection = 'purchase' | 'sale';
@@ -43,9 +44,11 @@ const isEuNotIe = (c: string | null | undefined): boolean => !!c && c !== 'IE' &
 /**
  * Which treatment a matched statutory rule produces (issue #200 step 1).
  *
- * Ordered by precedence: the first binding whose rule matched decides. A
- * deduction block beats everything (it is an exception to the general
- * rules); a reverse charge beats a rate; a specific Schedule 2/3 or 9% rule
+ * Ordered by precedence: the first binding whose rule matched decides.
+ * Outside the scope beats everything (no supply at all); then an exemption;
+ * then a service sold to a business abroad (supplied there, s.34(a)); then a
+ * deduction block (an exception to the general deduction rule); a reverse
+ * charge beats a rate; a specific Schedule 2/3 or 9% rule
  * beats the reduced-rate headline; the standard rate is the residual
  * fallback. A binding whose `treatmentCode` returns null matched a rule the
  * configuration cannot express (livestock: no treatment exists; hospitality
@@ -68,6 +71,12 @@ export const RULE_TREATMENT_BINDINGS: TreatmentBinding[] = [
   { ruleKeys: scopeKeys('OUT_OF_SCOPE'), direction: 'either', treatmentCode: () => 'OUT_OF_SCOPE' },
   // An exempt supply: no VAT, and so no reverse charge or rate either (Schedule 1).
   { ruleKeys: scopeKeys('IE_EXEMPT'), direction: 'either', treatmentCode: () => 'IE_EXEMPT' },
+  // A service sold to a business established abroad is supplied there, not here (s.34(a)).
+  {
+    ruleKeys: [VAT_POS_BUSINESS_ABROAD_RULE_KEY],
+    direction: 'sale',
+    treatmentCode: (f) => (isEuNotIe(f.counterpartyCountry) ? 'EU_SERVICES_SUPPLY' : 'NON_EU_SERVICES_SUPPLY'),
+  },
   {
     ruleKeys: ['vat.deduction_exclusions_entertainment'],
     direction: 'purchase',
@@ -301,6 +310,17 @@ export function transactionFacts(
       facts.customerVatRegisteredEu = vatInfo.structurallyValid && vatInfo.isEu && !vatInfo.isIrish;
       sources.customerVatRegisteredEu = `customer VAT number ${vatInfo.normalised} (structural check only, not VIES)`;
     }
+    // VATCA s.34(a)/(b) turns on whether the customer buys as a taxable person.
+    // A recorded status wins; otherwise an EU VAT number is evidence of it
+    // (282/2011 art.18(1)); a missing number is NOT evidence of a consumer.
+    if (customer?.taxableStatus) {
+      facts.customerIsTaxablePerson = customer.taxableStatus === 'taxable_person';
+      sources.customerIsTaxablePerson = `customer record "${customer.name}" (${customer.taxableStatus})`;
+    } else if (vatInfo?.structurallyValid && vatInfo.isEu) {
+      facts.customerIsTaxablePerson = true;
+      sources.customerIsTaxablePerson = `customer VAT number ${vatInfo.normalised} (EU Reg 282/2011 art.18(1) `
+        + 'evidence; structural check only, not VIES)';
+    }
     if (supplyType === 'goods' && counterpartyCountry && !EU.has(counterpartyCountry)) {
       facts.goodsExportedOutsideEu = true;
       sources.goodsExportedOutsideEu = `derived: goods sale to a customer in ${counterpartyCountry} `
@@ -392,7 +412,17 @@ export function suggestVatTreatment(
   // The domestic standard-rate fallback is never applied to a cross-border
   // counterparty: that case needs a reverse-charge, acquisition, import or
   // supply rule, and when none matched the honest answer is "no rule".
-  if (decision?.rule.ruleKey === 'vat.rate_standard_current'
+  // Except a service sold to a consumer abroad: s.34(b) puts its place of
+  // supply here, so the domestic rate rules do apply (subject to (kc)).
+  const consumerSaleHere = matched.has(VAT_POS_CONSUMER_RULE_KEY);
+  if (consumerSaleHere && facts.counterpartyCountry && facts.counterpartyCountry !== 'IE') {
+    reviewReasons.push(
+      `A service sold to a consumer in ${facts.counterpartyCountry} is supplied in the State (s.34(b)), so Irish VAT `
+      + 'applies — unless it is a telecoms, broadcasting or electronically supplied service, which is taxed where '
+      + 'the consumer is (s.34(kc), One-Stop Shop; not modelled).',
+    );
+  }
+  if (decision?.rule.ruleKey === 'vat.rate_standard_current' && !consumerSaleHere
       && facts.counterpartyCountry && facts.counterpartyCountry !== 'IE') {
     reviewReasons.push(
       `The counterparty is in ${facts.counterpartyCountry}; no curated rule covers this cross-border `

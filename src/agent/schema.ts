@@ -201,6 +201,8 @@ export const addCustomerInput = z.object({
   countryCode: z.string().optional(),
   vatNumber: z.string().optional(),
   defaultAccount: z.string().optional(),
+  /** VATCA s.34(a)/(b): does this customer buy as a business? Decides where a service is supplied. */
+  taxableStatus: z.enum(['taxable_person', 'non_taxable_person']).optional(),
 });
 
 export type InitCompanyInput = z.infer<typeof initCompanyInput>;

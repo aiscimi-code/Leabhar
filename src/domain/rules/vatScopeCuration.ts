@@ -52,7 +52,7 @@ export type VatScopeTreatment = 'IE_EXEMPT' | 'OUT_OF_SCOPE';
 
 export interface CuratedVatScopeRule {
   /** Source citation, as ingested. */
-  citation: '2010 Act 31 Sch.1' | '2010 Act 31 s.2' | '2010 Act 31 s.3';
+  citation: '2010 Act 31 Sch.1' | '2010 Act 31 s.2' | '2010 Act 31 s.3' | '2010 Act 31 s.34';
   /** Schedule paragraph or section number, matched against `irish_act_provisions.section_number`. */
   sectionNumber: string;
   ruleKey: string;
@@ -63,7 +63,9 @@ export interface CuratedVatScopeRule {
   conditions: IrishRuleCondition[];
   exceptions: IrishRuleException[];
   crossReferences: string[];
-  treatment: VatScopeTreatment;
+  /** The treatment the rule decides, or null where vatSuggestion.ts decides it from context
+   *  (place-of-supply rules, vatPlaceOfSupplyCuration.ts). */
+  treatment: VatScopeTreatment | null;
   vatEffect: string;
   accountingEffect: string | null;
   reportingEffect: string | null;

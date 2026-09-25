@@ -17,6 +17,10 @@ import { irishKnowledgeSources, irishActProvisions, irishTaxRules } from '@/db/s
 import { ids } from '@/lib/ids';
 import { nowIso } from '../dates';
 import { VAT_SCOPE_CURATED_RULES } from './vatScopeCuration';
+import { VAT_PLACE_OF_SUPPLY_CURATED_RULES } from './vatPlaceOfSupplyCuration';
+
+/** Every rule this module derives: scope/exemption and place of supply of services. */
+export const VAT_SCOPE_DERIVED_RULES = [...VAT_SCOPE_CURATED_RULES, ...VAT_PLACE_OF_SUPPLY_CURATED_RULES];
 import { upsertReviewItem } from '../extraction/service';
 
 export interface VatScopeDeriveResult {
@@ -36,7 +40,7 @@ export function deriveVatScopeRules(
     created: 0, superseded: 0, unchanged: 0, skippedNoProvision: [], skippedExcerptNotInProvision: [],
   };
 
-  for (const rule of VAT_SCOPE_CURATED_RULES) {
+  for (const rule of VAT_SCOPE_DERIVED_RULES) {
     // The most recently ingested source for this citation: a re-fetched file
     // with new bytes is a new source row, and the rule should cite the latest.
     const source = db.select({ id: irishKnowledgeSources.id }).from(irishKnowledgeSources)
@@ -86,7 +90,7 @@ export function deriveVatScopeRules(
       humanExplanation: rule.interpretationNote,
       numericValue: null,
       unit: null,
-      qualifier: `Treatment: ${rule.treatment}`,
+      qualifier: rule.treatment ? `Treatment: ${rule.treatment}` : 'Treatment decided from context (see vatSuggestion.ts)',
       conditions: rule.conditions,
       exceptions: rule.exceptions,
       crossReferences: rule.crossReferences,

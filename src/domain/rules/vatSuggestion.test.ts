@@ -11,13 +11,18 @@ import { suggestVatTreatment, RULE_TREATMENT_BINDINGS } from './vatSuggestion';
 import { VATCA_REVISED_CURATED_RULES } from './vatcaRevisedCuration';
 import { VATCA_SCHEDULE_CURATED_RULES } from './vatcaScheduleCuration';
 import { VAT_SCOPE_CURATED_RULES } from './vatScopeCuration';
+import { VAT_PLACE_OF_SUPPLY_CURATED_RULES } from './vatPlaceOfSupplyCuration';
+import { lookupTransactionRules } from './transactionLookup';
 
 let db: AppDatabase;
 let companyId: string;
 let bankAccountId: string;
 let tr: Record<string, string>;
 
-function party(table: 'supplier' | 'customer', name: string, over: { countryCode?: string; vatNumber?: string; treatment?: string } = {}): string {
+function party(table: 'supplier' | 'customer', name: string, over: {
+  countryCode?: string; vatNumber?: string; treatment?: string;
+  taxableStatus?: 'taxable_person' | 'non_taxable_person';
+} = {}): string {
   const id = table === 'supplier' ? ids.supplier() : ids.customer();
   const values = {
     id, companyId, name, matchKey: name.toLowerCase(),
@@ -25,7 +30,7 @@ function party(table: 'supplier' | 'customer', name: string, over: { countryCode
     defaultVatTreatmentId: over.treatment ? tr[over.treatment] : null,
   };
   if (table === 'supplier') db.insert(suppliers).values(values).run();
-  else db.insert(customers).values(values).run();
+  else db.insert(customers).values({ ...values, taxableStatus: over.taxableStatus ?? null }).run();
   return id;
 }
 
@@ -65,13 +70,13 @@ describe('suggestVatTreatment', () => {
     setup();
     const first = loadStatutoryKnowledgeBase(db, { companyId });
     expect(first.rulesBefore).toBe(0);
-    expect(first.rulesAfter).toBe(77);
+    expect(first.rulesAfter).toBe(79);
   });
 
   it('loading again is a no-op', () => {
     const again = loadStatutoryKnowledgeBase(db, { companyId });
-    expect(again.rulesBefore).toBe(77);
-    expect(again.rulesAfter).toBe(77);
+    expect(again.rulesBefore).toBe(79);
+    expect(again.rulesAfter).toBe(79);
   });
 
   it('US SaaS purchase → non-EU reverse charge, cited to VATCA s.12 with a verifiable slice', () => {
@@ -221,6 +226,72 @@ describe('exempt and outside-the-scope lines (issue #200)', () => {
   });
 });
 
+describe('services sold abroad — VATCA s.34 (issue #200)', () => {
+  beforeAll(() => {
+    setup();
+    loadStatutoryKnowledgeBase(db, { companyId });
+  });
+
+  it('to an Italian business (EU VAT number) → services supplied to an EU business, cited to revised s.34(a)', () => {
+    const customerId = party('customer', 'Continental Design SRL', {
+      countryCode: 'IT', vatNumber: 'IT12345678901', treatment: 'EU_SERVICES_SUPPLY',
+    });
+    const s = suggestVatTreatment(db, { companyId, bankTransactionId: tx('CONTINENTAL DESIGN SRL', 600_000, { customerId }) })!;
+    expect(s.status).toBe('suggested');
+    expect(s.treatment?.code).toBe('EU_SERVICES_SUPPLY');
+    expect(s.decidingRule?.ruleKey).toBe('vat.place_of_supply_services_to_business_abroad');
+    expect(s.decidingRule?.citation).toBe('2010 Act 31 s.34');
+    expect(s.decidingRule?.localPath).toBe('docs/statutes/vatca-2010-revised/s034.md');
+    expect(s.factSources['customerIsTaxablePerson']).toContain('282/2011 art.18(1)');
+    const file = readFileSync(statuteFilePath(s.decidingRule!.localPath!), 'utf8');
+    expect(file.slice(s.decidingRule!.sourceStart!, s.decidingRule!.sourceEnd!)).toContain(s.decidingRule!.quote!);
+  });
+
+  it('to a US business recorded as a taxable person → services supplied outside the EU', () => {
+    const customerId = party('customer', 'Redwood Analytics Inc', {
+      countryCode: 'US', treatment: 'NON_EU_SERVICES_SUPPLY', taxableStatus: 'taxable_person',
+    });
+    const s = suggestVatTreatment(db, { companyId, bankTransactionId: tx('REDWOOD ANALYTICS', 250_000, { customerId }) })!;
+    expect(s.treatment?.code).toBe('NON_EU_SERVICES_SUPPLY');
+    expect(s.factSources['customerIsTaxablePerson']).toContain('customer record');
+  });
+
+  it('to a US customer whose status nobody has recorded → no suggestion, not the domestic 23%', () => {
+    const customerId = party('customer', 'Unknown US Buyer', { countryCode: 'US', treatment: 'NON_EU_SERVICES_SUPPLY' });
+    const s = suggestVatTreatment(db, { companyId, bankTransactionId: tx('US BUYER', 90_000, { customerId }) })!;
+    expect(s.status).toBe('no_rule');
+    expect(s.unresolvedFields).toContain('customerIsTaxablePerson');
+  });
+
+  it('a recorded status beats the VAT number, and a consumer is never treated as a business', () => {
+    const customerId = party('customer', 'Jean Dupont', {
+      countryCode: 'FR', vatNumber: 'FR40303265045', treatment: 'EU_SERVICES_SUPPLY', taxableStatus: 'non_taxable_person',
+    });
+    const s = suggestVatTreatment(db, { companyId, bankTransactionId: tx('J DUPONT', 20_000, { customerId }) })!;
+    expect(s.facts['customerIsTaxablePerson']).toBe(false);
+    expect(s.treatment?.code).not.toBe('EU_SERVICES_SUPPLY');
+    expect(s.supportingRules.map((r) => r.ruleKey)).toContain('vat.place_of_supply_services_to_consumer');
+    expect(s.reviewReasons.join(' ')).toContain('s.34(kc)');
+  });
+
+  it('s.34(b): a service sold to a consumer abroad is supplied here (lookup level)', () => {
+    const r = lookupTransactionRules(db, { companyId, transaction: {
+      transactionDate: '2025-06-15', amountMinor: 20_000, direction: 'sale', supplyType: 'services',
+      customerCountry: 'FR', customerIsTaxablePerson: false, vatRegistered: true, description: 'Consulting',
+    } });
+    expect(r.applicableRules.map((a) => a.ruleKey)).toContain('vat.place_of_supply_services_to_consumer');
+    expect(r.applicableRules.map((a) => a.ruleKey)).not.toContain('vat.place_of_supply_services_to_business_abroad');
+  });
+
+  it('a domestic business sale is not caught by the "abroad" rule', () => {
+    const customerId = party('customer', 'Mulligan Digital', {
+      countryCode: 'IE', vatNumber: 'IE6543217L', taxableStatus: 'taxable_person',
+    });
+    const s = suggestVatTreatment(db, { companyId, bankTransactionId: tx('MULLIGAN DIGITAL', 430_500, { customerId }) })!;
+    expect(s.decidingRule?.ruleKey).not.toBe('vat.place_of_supply_services_to_business_abroad');
+  });
+});
+
 describe('deriveVatScopeRules verbatim guard', () => {
   it('refuses a rule whose quoted excerpt is not in the provision text', async () => {
     setup();
@@ -235,7 +306,7 @@ describe('deriveVatScopeRules verbatim guard', () => {
     const other = createCompany(db, { legalName: 'Second Ltd', seedYears: [2025] });
     const result = deriveVatScopeRules(db, { companyId: other.companyId });
     expect(result.skippedExcerptNotInProvision).toEqual(['vat.exempt_insurance']);
-    expect(result.created).toBe(VAT_SCOPE_CURATED_RULES.length - 1);
+    expect(result.created).toBe(VAT_SCOPE_CURATED_RULES.length + VAT_PLACE_OF_SUPPLY_CURATED_RULES.length - 1);
   });
 });
 
@@ -246,6 +317,7 @@ describe('RULE_TREATMENT_BINDINGS', () => {
       ...VATCA_REVISED_CURATED_RULES.map((r) => r.ruleKey),
       ...VATCA_SCHEDULE_CURATED_RULES.map((r) => r.ruleKey),
       ...VAT_SCOPE_CURATED_RULES.map((r) => r.ruleKey),
+      'vat.place_of_supply_services_to_business_abroad',
     ];
     expect(rateRules.filter((k) => !bound.has(k))).toEqual([]);
   });

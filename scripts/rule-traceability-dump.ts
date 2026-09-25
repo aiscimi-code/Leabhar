@@ -48,8 +48,8 @@ async function run(): Promise<void> {
   const silence = (): void => { process.stdout.write = (() => true) as typeof process.stdout.write; };
   const runs: string[][] = [
     ...INGEST_SOURCES.map((source) => ['ingest', '--source', source]),
-    // Revised s.2 and s.3 back the outside-the-scope rules (vatScopeCuration.ts).
-    ...['s002', 's003'].map((f) => ['ingest', '--source', 'vatca-2010-revised', '--file', `docs/statutes/vatca-2010-revised/${f}.md`]),
+    // Revised s.2/s.3 back the outside-the-scope rules, s.34 the place-of-supply rules.
+    ...['s002', 's003', 's034'].map((f) => ['ingest', '--source', 'vatca-2010-revised', '--file', `docs/statutes/vatca-2010-revised/${f}.md`]),
     ...EXTRACT_SOURCES.map((source) => ['extract', '--source', source]),
   ];
   {

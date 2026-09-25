@@ -56,6 +56,14 @@ export const customers = sqliteTable('customers', {
   vatNumber: text('vat_number'),
   vatNumberValidated: integer('vat_number_validated', { mode: 'boolean' })
     .notNull().default(false),
+  /**
+   * Whether this customer receives services as a taxable person (a business)
+   * or not (a consumer) — the fact VATCA s.34(a)/(b) turns on for where a
+   * service is supplied (issue #200). Null means nobody has said: for an EU
+   * customer a VAT number is evidence of taxable status, but for a customer
+   * outside the EU there is none unless it is recorded here.
+   */
+  taxableStatus: text('taxable_status', { enum: ['taxable_person', 'non_taxable_person'] }),
   addressLines: text('address_lines'),
   email: text('email'),
   website: text('website'),

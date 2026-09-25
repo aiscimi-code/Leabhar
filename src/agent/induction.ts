@@ -141,6 +141,7 @@ export function addCustomer(db: AppDatabase, input: AddCustomerInput): { custome
     countryCode: input.countryCode ?? null,
     vatNumber: input.vatNumber ?? null,
     defaultAccountId,
+    taxableStatus: input.taxableStatus,
     actor: 'cli',
   });
   return { customerId };

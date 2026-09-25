@@ -30,6 +30,7 @@ import {
 import { parseScheduleFrontMatter } from './vatcaScheduleParser';
 import { VATCA_REVISED_CURATED_RULES } from './vatcaRevisedCuration';
 import { VAT_SCOPE_CURATED_RULES } from './vatScopeCuration';
+import { VAT_PLACE_OF_SUPPLY_CURATED_RULES } from './vatPlaceOfSupplyCuration';
 import { upsertReviewItem } from '../extraction/service';
 
 export { VATCA_REVISED_S046_MD_PATH };
@@ -104,7 +105,7 @@ export function ingestVatcaRevisedSection(
 
     let { relevant, reason } = assessRelevance(parsed.category);
     const curated = VATCA_REVISED_CURATED_RULES.some((r) => r.sectionNumber === parsed.sectionNumber)
-      || VAT_SCOPE_CURATED_RULES.some((r) => r.citation === fm.citation);
+      || [...VAT_SCOPE_CURATED_RULES, ...VAT_PLACE_OF_SUPPLY_CURATED_RULES].some((r) => r.citation === fm.citation);
     if (!relevant && curated) {
       relevant = true;
       reason = `Curated: mapped to a rule in vatcaRevisedCuration.ts, overriding the ${parsed.category} category default.`;

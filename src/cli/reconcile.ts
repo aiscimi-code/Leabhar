@@ -121,6 +121,7 @@ Induction (no company/bank/chart yet):
       fixed_assets|revenue|cost_of_sales|operating_expenses|equity]
       [--vat-applicable=false]
   add-customer --name "..." [--country <IE>] [--default-account <code>]
+      [--taxable-status taxable_person|non_taxable_person]  (VATCA s.34: business or consumer)
   ensure-default-accounts                Add any default chart accounts
       introduced since this company was created (e.g. 6180/6190/5030/2210/
       1020) — a new company gets them all already; this is only for one
@@ -602,6 +603,7 @@ export async function main(argv: string[], options: CliOptions = {}): Promise<nu
           countryCode: getFlag(flags, 'country', 'country-code', 'countryCode'),
           vatNumber: getFlag(flags, 'vat-number', 'vatNumber', 'vat'),
           defaultAccount: getFlag(flags, 'default-account'),
+          taxableStatus: getFlag(flags, 'taxable-status'),
         });
         print(addCustomer(db, parsed), format);
         return 0;

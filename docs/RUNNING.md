@@ -256,7 +256,12 @@ The intended workflow from there is:
    rule is still unapproved. Exempt (Schedule 1: postal, bank account
    services, insurance, letting, passenger transport) and outside-the-scope
    (s.2/s.3: wages, tax payments, capital/loans/dividends, own-account
-   transfers) rules take precedence over any rate. A `fallback_only` result
+   transfers) rules take precedence over any rate. A service sold to a
+   business established abroad is suggested as `EU_SERVICES_SUPPLY` or
+   `NON_EU_SERVICES_SUPPLY` (revised s.34(a)); that turns on whether the
+   customer buys as a business, which comes from an EU VAT number or from
+   `add-customer --taxable-status taxable_person|non_taxable_person` — a
+   customer outside the EU with no recorded status gets no suggestion. A `fallback_only` result
    (only the 23% residual rule matched) is shown but not pre-selected, because
    the knowledge base cannot yet rule out every exemption.
 4. **Classify** transactions. Use `classify` to post a single transaction

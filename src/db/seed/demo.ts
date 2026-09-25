@@ -279,15 +279,16 @@ export async function seedDemoCompany(
     'IE_STD', ['APPLE STORE']);
   const insurance = supplier('Insurance Ireland DAC', 'IE', 'IE4567891K', '6090',
     'IE_EXEMPT', ['INSURANCE IRELAND']);
+  // Passenger transport is exempt (VATCA Sch.1 para 14(3)), not zero-rated.
   const irishRail = supplier('Iarnród Éireann', 'IE', null, '6110',
-    'IE_ZERO', ['IARNROD EIREANN']);
+    'IE_EXEMPT', ['IARNROD EIREANN']);
 
   // ---- Customers ----
   const mulligan = ids.customer();
   db.insert(customers).values({
     id: mulligan, companyId, name: 'Mulligan Digital Limited',
     matchKey: normaliseName('Mulligan Digital Limited'), aliases: ['MULLIGAN DIGITAL'],
-    countryCode: 'IE', vatNumber: 'IE6543217L', defaultCurrency: 'EUR',
+    countryCode: 'IE', vatNumber: 'IE6543217L', taxableStatus: 'taxable_person', defaultCurrency: 'EUR',
     defaultAccountId: byCode['4020'], defaultVatTreatmentId: tr['IE_STD'],
     defaultPaymentTermsDays: 30,
   }).run();
@@ -296,7 +297,7 @@ export async function seedDemoCompany(
   db.insert(customers).values({
     id: continental, companyId, name: 'Continental Design SRL',
     matchKey: normaliseName('Continental Design SRL'), aliases: ['CONTINENTAL DESIGN'],
-    countryCode: 'IT', vatNumber: 'IT12345678901', defaultCurrency: 'EUR',
+    countryCode: 'IT', vatNumber: 'IT12345678901', taxableStatus: 'taxable_person', defaultCurrency: 'EUR',
     defaultAccountId: byCode['4000'], defaultVatTreatmentId: tr['EU_SERVICES_SUPPLY'],
     defaultPaymentTermsDays: 30,
   }).run();
@@ -305,7 +306,7 @@ export async function seedDemoCompany(
   db.insert(customers).values({
     id: usCustomer, companyId, name: 'Redwood Analytics Inc',
     matchKey: normaliseName('Redwood Analytics Inc'), aliases: ['REDWOOD'],
-    countryCode: 'US', defaultCurrency: 'USD',
+    countryCode: 'US', taxableStatus: 'taxable_person', defaultCurrency: 'USD',
     defaultAccountId: byCode['4010'], defaultVatTreatmentId: tr['NON_EU_SERVICES_SUPPLY'],
   }).run();
 
@@ -323,12 +324,13 @@ export async function seedDemoCompany(
     priority: 10, autoApply: true, supplierId: vercel, derivedFromHistory: true,
   });
   createRule(db, {
-    companyId, name: 'Bank charges → outside the scope of VAT',
-    description: 'Bank charges are exempt or outside the scope, and carry no recoverable VAT.',
+    companyId, name: 'Bank charges → exempt',
+    description: 'Charges for operating a bank account and making payments are exempt '
+      + '(VATCA Sch.1 para 6(1)(c)), and carry no recoverable VAT.',
     conditions: [{ field: 'description', operator: 'contains', value: 'BANK CHARGES' }],
     actions: [
       { field: 'accountId', value: byCode['6100']! },
-      { field: 'vatTreatmentId', value: tr['OUT_OF_SCOPE']! },
+      { field: 'vatTreatmentId', value: tr['IE_EXEMPT']! },
     ],
     priority: 20, autoApply: true,
   });
@@ -438,9 +440,9 @@ export async function seedDemoCompany(
   classify('AWS EMEA', '6010', 'EU_SERVICES_RCV', { supplierId: aws });
   classify('HETZNER', '6010', 'EU_SERVICES_RCV', { supplierId: hetzner });
   classify('GITHUB', '6000', 'NON_EU_SERVICES_RCV', { supplierId: github });
-  classify('BANK CHARGES', '6100', 'OUT_OF_SCOPE');
+  classify('BANK CHARGES', '6100', 'IE_EXEMPT');
   classify('INSURANCE IRELAND', '6090', 'IE_EXEMPT', { supplierId: insurance });
-  classify('IARNROD EIREANN', '6110', 'IE_ZERO', { supplierId: irishRail });
+  classify('IARNROD EIREANN', '6110', 'IE_EXEMPT', { supplierId: irishRail });
   classify('MULLIGAN DIGITAL LTD INV-2025-001', '4020', 'IE_STD', { customerId: mulligan });
   classify('MULLIGAN DIGITAL LTD INV-2025-002', '4020', 'IE_STD', { customerId: mulligan });
   classify('CONTINENTAL DESIGN', '4000', 'EU_SERVICES_SUPPLY', { customerId: continental });
