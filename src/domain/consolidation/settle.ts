@@ -1,6 +1,7 @@
 import { and, eq, isNull, ne } from 'drizzle-orm';
 import type { AppDatabase } from '@/db';
-import { bankTransactions, invoices, documents, documentMatches } from '@/db/schema';
+import { bankTransactions, invoices, documents, documentMatches, auditEvents } from '@/db/schema';
+import { ids } from '@/lib/ids';
 import { asIsoDate, type IsoDate } from '../dates';
 import { recordPayment, type RecordedPayment } from '../invoicing/payments';
 import { upsertReviewItem } from '../extraction/service';
@@ -73,8 +74,18 @@ export function settleBankTransaction(db: AppDatabase, input: SettleInput): Reco
     const invoice = db.select({ documentId: invoices.documentId }).from(invoices)
       .where(eq(invoices.id, allocation.invoiceId)).get();
     if (!invoice?.documentId) continue;
-    db.update(documents).set({ matchedTransactionId: tx.id, matchStatus: 'matched' })
+    const linked = db.update(documents).set({ matchedTransactionId: tx.id, matchStatus: 'matched' })
       .where(and(eq(documents.id, invoice.documentId), isNull(documents.matchedTransactionId))).run();
+    if (linked.changes > 0) {
+      // The link is a match decision like any other: recorded, so the bank
+      // line's history shows it (issue #224).
+      db.insert(auditEvents).values({
+        id: ids.audit(), companyId: input.companyId, occurredAt: nowIso(),
+        entityType: 'document', entityId: invoice.documentId, action: 'document_matched',
+        newValue: tx.id, source: 'user', actor: input.actor ?? 'user',
+        reason: 'Settled against its invoice', requestId: input.requestId ?? null,
+      }).run();
+    }
     // Settling is the person's decision on the match: record the scored
     // candidate for this pair as accepted, and the document's other pending
     // candidates as rejected by implication (as acceptMatch does).

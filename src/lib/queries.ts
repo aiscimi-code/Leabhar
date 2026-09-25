@@ -23,6 +23,7 @@ import { documentReviewValues } from '@/domain/documents/review';
 import { transactionTrace } from '@/domain/consolidation/trace';
 import { documentLineChoices } from '@/domain/consolidation/suggest';
 import { asIsoDate, today, makeDate, type IsoDate } from '@/domain/dates';
+import { transactionHistory } from '@/domain/consolidation/history';
 import { money } from '@/lib/format';
 
 /**
@@ -297,11 +298,8 @@ export function transactionDetail(transactionId: string) {
     .where(eq(documentMatches.bankTransactionId, transactionId))
     .orderBy(desc(documentMatches.score)).all();
 
-  const audit = db.select().from(auditEvents)
-    .where(and(
-      eq(auditEvents.entityType, 'bank_transaction'),
-      eq(auditEvents.entityId, transactionId),
-    )).orderBy(desc(auditEvents.occurredAt)).all();
+  // The bank line's own events, its settlement and the match decisions against it (issue #224).
+  const audit = transactionHistory(db, { companyId: transaction.companyId, bankTransactionId: transactionId });
 
   const bankAccount = db.select().from(bankAccounts)
     .where(eq(bankAccounts.id, transaction.bankAccountId)).get();
