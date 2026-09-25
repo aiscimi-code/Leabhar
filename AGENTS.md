@@ -47,6 +47,11 @@ These are enforced by tests. Breaking one is a bug, not a trade-off.
   entries calls `assertVatPeriodWritable` before writing anything. A correction
   goes in an open period — negative entries, never a detached or edited one —
   and a late declaration only when the person names the period (flagged).
+- **A posting path either completes or writes nothing.** A path that posts more
+  than one thing (reverse then re-post, journal then VAT then a row update) runs
+  inside `atomically`, and checks every date's accounting period
+  (`assertAccountingPeriodOpen`) before writing. A new classification is never
+  moved out of a locked period silently.
 - **Invoice amounts are stored as printed.** A credit note's figures are
   positive; its `document_type` carries the sign.
 - **A rule with no conditions matches nothing**, not everything.

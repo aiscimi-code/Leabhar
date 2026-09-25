@@ -1,4 +1,5 @@
 import { and, eq, isNull, ne } from 'drizzle-orm';
+import { atomically } from '../accounting/journal';
 import type { AppDatabase } from '@/db';
 import { bankTransactions, invoices, documents, documentMatches } from '@/db/schema';
 import { asIsoDate, type IsoDate } from '../dates';
@@ -40,7 +41,13 @@ export interface SettleInput {
   requestId?: string;
 }
 
-export function settleBankTransaction(db: AppDatabase, input: SettleInput): RecordedPayment {
+export function settleBankTransaction(
+  db: AppDatabase, input: Parameters<typeof settleBankTransactionSteps>[1],
+): ReturnType<typeof settleBankTransactionSteps> {
+  return atomically(db, () => settleBankTransactionSteps(db, input));
+}
+
+function settleBankTransactionSteps(db: AppDatabase, input: SettleInput): RecordedPayment {
   const tx = db.select().from(bankTransactions)
     .where(and(eq(bankTransactions.id, input.bankTransactionId), eq(bankTransactions.companyId, input.companyId)))
     .get();

@@ -64,6 +64,53 @@ export interface PostedJournal {
 }
 
 /**
+ * Run a posting path's steps as one database transaction (issue #231). A path
+ * that posts a journal, then VAT entries, then updates a row — or reverses one
+ * entry and posts another — either completes or leaves nothing behind: a step
+ * refused after an earlier one posted rolls the earlier one back. Nested calls
+ * (a posting path calling another) become savepoints.
+ */
+export function atomically<T>(db: AppDatabase, steps: () => T): T {
+  return db.transaction(() => steps());
+}
+
+/**
+ * The accounting period covering `date`, refusing a date no period covers and
+ * — unless `overrideLock` — a locked or closed period. The same rule
+ * `postJournalEntry` applies at post time; call it up front on a path that
+ * posts more than one entry, so a later step cannot be refused after an
+ * earlier one has already posted (issue #231).
+ */
+export function assertAccountingPeriodOpen(
+  db: Pick<AppDatabase, 'select'>, companyId: string, date: string,
+  options: { overrideLock?: boolean } = {},
+): typeof accountingPeriods.$inferSelect {
+  const period = db.select().from(accountingPeriods).where(and(
+    eq(accountingPeriods.companyId, companyId),
+    eq(accountingPeriods.kind, 'financial_year'),
+    sql`${accountingPeriods.startDate} <= ${date}`,
+    sql`${accountingPeriods.endDate} >= ${date}`,
+  )).get();
+
+  if (!period) {
+    throw new NoPeriodError(
+      `No accounting period covers ${date}. Create the financial ` +
+        'year before posting into it, rather than letting the entry fall outside the books.',
+      { entryDate: date },
+    );
+  }
+
+  if ((period.status === 'locked' || period.status === 'closed') && !options.overrideLock) {
+    throw new PeriodLockedError(
+      `Accounting period "${period.name}" is ${period.status}. ` +
+        'Post a dated adjustment in an open period instead of altering a closed one.',
+      { periodId: period.id, status: period.status, entryDate: date },
+    );
+  }
+  return period;
+}
+
+/**
  * Post a journal entry.
  *
  * This is the only sanctioned way an accounting entry comes into existence.
@@ -87,28 +134,9 @@ export function postJournalEntry(db: AppDatabase, input: PostJournalInput): Post
     }
 
     // ---- Resolve and validate the period ----
-    const period = tx.select().from(accountingPeriods).where(and(
-      eq(accountingPeriods.companyId, input.companyId),
-      eq(accountingPeriods.kind, 'financial_year'),
-      sql`${accountingPeriods.startDate} <= ${input.entryDate}`,
-      sql`${accountingPeriods.endDate} >= ${input.entryDate}`,
-    )).get();
-
-    if (!period) {
-      throw new NoPeriodError(
-        `No accounting period covers ${input.entryDate}. Create the financial ` +
-          'year before posting into it, rather than letting the entry fall outside the books.',
-        { entryDate: input.entryDate },
-      );
-    }
-
-    if ((period.status === 'locked' || period.status === 'closed') && !input.overrideLock) {
-      throw new PeriodLockedError(
-        `Accounting period "${period.name}" is ${period.status}. ` +
-          'Post a dated adjustment in an open period instead of altering a closed one.',
-        { periodId: period.id, status: period.status, entryDate: input.entryDate },
-      );
-    }
+    const period = assertAccountingPeriodOpen(tx, input.companyId, input.entryDate, {
+      overrideLock: Boolean(input.overrideLock),
+    });
 
     // ---- Validate each line ----
     const prepared = input.lines.map((line, index) => {

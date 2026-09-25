@@ -7,10 +7,12 @@ import {
 import { ids } from '@/lib/ids';
 import { asIsoDate, nowIso, type IsoDate } from '../dates';
 import { asMinor, multiplyRational } from '../money';
-import { postJournalEntry, reverseJournalEntry } from '../accounting/journal';
+import {
+  postJournalEntry, reverseJournalEntry, atomically, assertAccountingPeriodOpen,
+} from '../accounting/journal';
 import { systemAccountId } from '../config/setup';
 import { createVatEntries, resolveTreatment, calculateVat, assertVatPeriodWritable, findVatPeriod } from '../vat/engine';
-import { AccountingError } from '../accounting/errors';
+import { AccountingError, PeriodLockedError } from '../accounting/errors';
 import { upsertReviewItem } from '../extraction/service';
 
 export class ClassificationError extends AccountingError {}
@@ -66,7 +68,13 @@ export interface ClassifyResult {
  * that same figure is the NET, because the supplier charged no VAT. The VAT
  * engine handles that distinction; this function's job is to post the result.
  */
-export function classifyTransaction(db: AppDatabase, input: ClassifyInput): ClassifyResult {
+export function classifyTransaction(
+  db: AppDatabase, input: Parameters<typeof classifyTransactionSteps>[1],
+): ReturnType<typeof classifyTransactionSteps> {
+  return atomically(db, () => classifyTransactionSteps(db, input));
+}
+
+function classifyTransactionSteps(db: AppDatabase, input: ClassifyInput): ClassifyResult {
   const transaction = db.select().from(bankTransactions)
     .where(and(
       eq(bankTransactions.id, input.bankTransactionId),
@@ -444,6 +452,12 @@ export interface BankTransactionJournalResult {
  * updating the row itself as a separate step (issue #158).
  */
 export function postBankTransactionJournal(
+  db: AppDatabase, input: Parameters<typeof postBankTransactionJournalSteps>[1],
+): ReturnType<typeof postBankTransactionJournalSteps> {
+  return atomically(db, () => postBankTransactionJournalSteps(db, input));
+}
+
+function postBankTransactionJournalSteps(
   db: AppDatabase, input: BankTransactionJournalInput,
 ): BankTransactionJournalResult {
   const transaction = db.select().from(bankTransactions)
@@ -596,6 +610,12 @@ function counterpartyCountry(db: AppDatabase, input: ClassifyInput): string | nu
  * the books show what was originally decided, that it was changed, and why.
  */
 export function reclassifyTransaction(
+  db: AppDatabase, input: Parameters<typeof reclassifyTransactionSteps>[1],
+): ReturnType<typeof reclassifyTransactionSteps> {
+  return atomically(db, () => reclassifyTransactionSteps(db, input));
+}
+
+function reclassifyTransactionSteps(
   db: AppDatabase,
   input: ClassifyInput & { reason: string; reversalDate?: IsoDate },
 ): ClassifyResult {
@@ -653,6 +673,23 @@ export function reclassifyTransaction(
   if (newCreatesVat) {
     assertVatPeriodWritable(db, input.companyId, vatDeclarationDate ?? transactionDate,
       `The VAT on "${transaction.description}" under its new treatment`);
+  }
+
+  // Both postings must land in an open accounting period (issue #231): the
+  // reversal at its date, and the new classification at the transaction's own
+  // date — it is never moved to another period silently. A locked period is
+  // unlocked first, or corrected by a dated adjustment in an open one.
+  assertAccountingPeriodOpen(db, input.companyId, reversalDate);
+  try {
+    assertAccountingPeriodOpen(db, input.companyId, transactionDate);
+  } catch (error) {
+    if (!(error instanceof PeriodLockedError)) throw error;
+    throw new ClassificationError(
+      `The new classification posts at the transaction's own date, ${transactionDate}, and that `
+        + `accounting period is locked or closed. Nothing has been changed. Unlock the period to `
+        + 'reclassify, or leave this line as it is and post a dated adjustment in an open period.',
+      { bankTransactionId: transaction.id, transactionDate },
+    );
   }
 
   const reversal = reverseJournalEntry(db, {
@@ -732,6 +769,12 @@ export function reclassifyTransaction(
  * (`settleInvoiceByDirector`); the VAT then comes from the invoice's lines.
  */
 export function recordDirectorPaidExpense(
+  db: AppDatabase, input: Parameters<typeof recordDirectorPaidExpenseSteps>[1],
+): ReturnType<typeof recordDirectorPaidExpenseSteps> {
+  return atomically(db, () => recordDirectorPaidExpenseSteps(db, input));
+}
+
+function recordDirectorPaidExpenseSteps(
   db: AppDatabase,
   params: {
     companyId: string;

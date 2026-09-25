@@ -7,7 +7,7 @@ import {
 import { ids } from '@/lib/ids';
 import { asMinor, multiplyRational } from '../money';
 import { asIsoDate, nowIso, type IsoDate } from '../dates';
-import { postJournalEntry } from '../accounting/journal';
+import { postJournalEntry, atomically } from '../accounting/journal';
 import { systemAccountId } from '../config/setup';
 import { createVatEntries, assertVatPeriodWritable } from '../vat/engine';
 import { InvoicingError } from './invoices';
@@ -80,7 +80,13 @@ export interface RecordedPayment {
   invoiceStatuses: Array<{ invoiceId: string; status: string; outstandingMinor: number }>;
 }
 
-export function recordPayment(db: AppDatabase, input: RecordPaymentInput): RecordedPayment {
+export function recordPayment(
+  db: AppDatabase, input: Parameters<typeof recordPaymentSteps>[1],
+): ReturnType<typeof recordPaymentSteps> {
+  return atomically(db, () => recordPaymentSteps(db, input));
+}
+
+function recordPaymentSteps(db: AppDatabase, input: RecordPaymentInput): RecordedPayment {
   const company = db.select().from(companies).where(eq(companies.id, input.companyId)).get();
   if (!company) throw new InvoicingError(`Company ${input.companyId} not found.`);
 

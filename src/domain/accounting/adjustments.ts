@@ -5,7 +5,7 @@ import {
 } from '@/db/schema';
 import { ids } from '@/lib/ids';
 import { nowIso, type IsoDate } from '../dates';
-import { postJournalEntry, reverseJournalEntry } from './journal';
+import { postJournalEntry, reverseJournalEntry, atomically } from './journal';
 import { createVatEntries, assertVatPeriodWritable } from '../vat/engine';
 import { AccountingError } from './errors';
 
@@ -69,6 +69,12 @@ export interface CreatedAdjustment {
 }
 
 export function createAdjustment(
+  db: AppDatabase, input: Parameters<typeof createAdjustmentSteps>[1],
+): ReturnType<typeof createAdjustmentSteps> {
+  return atomically(db, () => createAdjustmentSteps(db, input));
+}
+
+function createAdjustmentSteps(
   db: AppDatabase, input: CreateAdjustmentInput,
 ): CreatedAdjustment {
   const company = db.select().from(companies).where(eq(companies.id, input.companyId)).get();
@@ -194,6 +200,12 @@ export function createAdjustment(
  * rather than the more generic phrasing.
  */
 export function reverseAdjustment(
+  db: AppDatabase, input: Parameters<typeof reverseAdjustmentSteps>[1],
+): ReturnType<typeof reverseAdjustmentSteps> {
+  return atomically(db, () => reverseAdjustmentSteps(db, input));
+}
+
+function reverseAdjustmentSteps(
   db: AppDatabase,
   params: {
     companyId: string; journalEntryId: string; reversalDate: IsoDate;
