@@ -174,7 +174,9 @@ Books (once induction is done):
       dated at the transaction's own date. --date/--narrative/--reason do
       not apply here. --vat additionally records this transaction's own VAT
       position: {"direction":"sales","treatment":"IE_STD","net":"1744.94",
-      "statedVat":"401.34"}.
+      "statedVat":"401.34"}. Output VAT only: input VAT comes only from a
+      confirmed supplier invoice, so a "purchases" --vat, or a line debiting
+      VAT on purchases, is refused.
 
 Inspect:
   list-transactions [--account <id>] [--unposted] [--unclassified]

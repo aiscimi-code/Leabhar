@@ -163,16 +163,16 @@ describe('a filed VAT return is never changed (invoice basis)', () => {
     expect(buildVat3Return(db, { companyId, vatPeriodId: period('May–Jun 2025').id }).T1.amountMinor).toBe(4_600);
   });
 
-  it('refuses a split journal with VAT, a VAT adjustment and a director-paid expense in the filed period', async () => {
-    const tx = await bankLine('SPLIT', '-123.00', '22/04/2025');
+  it('refuses a split journal with VAT and a VAT adjustment in the filed period', async () => {
+    const tx = await bankLine('SPLIT', '123.00', '22/04/2025');
     expectRefusedUnchanged(() => postBankTransactionJournal(db, {
       companyId, bankTransactionId: tx.id,
       lines: [
-        { accountId: byCode['6120']!, debitMinor: 10_000 },
-        { accountId: acc['vat_on_purchases']!, debitMinor: 2_300 },
-        { accountId: acc['bank_control']!, creditMinor: 12_300 },
+        { accountId: acc['bank_control']!, debitMinor: 12_300 },
+        { accountId: byCode['4000']!, creditMinor: 10_000 },
+        { accountId: acc['vat_on_sales']!, creditMinor: 2_300 },
       ],
-      vat: { direction: 'purchases', treatmentId: tr['IE_STD']!, netMinor: 10_000, statedVatMinor: 2_300 },
+      vat: { direction: 'sales', treatmentId: tr['IE_STD']!, netMinor: 10_000, statedVatMinor: 2_300 },
     }));
     expectRefusedUnchanged(() => createAdjustment(db, {
       companyId, date: asIsoDate('2025-04-30'), description: 'VAT correction', reason: 'Missed VAT',
@@ -182,12 +182,16 @@ describe('a filed VAT return is never changed (invoice basis)', () => {
       ],
       vat: { treatmentId: tr['IE_STD']!, direction: 'purchases', netMinor: 10_000 },
     }));
+  });
+
+  it('records a director-paid expense with no invoice in a filed period: it writes no VAT', () => {
     const officerId = ids.officer();
     db.insert(companyOfficers).values({ id: officerId, companyId, name: 'Joe', role: 'director' }).run();
-    expectRefusedUnchanged(() => recordDirectorPaidExpense(db, {
+    const result = recordDirectorPaidExpense(db, {
       companyId, officerId, date: asIsoDate('2025-04-02'), description: 'Stationery',
       accountId: byCode['6120']!, vatTreatmentId: tr['IE_STD']!, grossMinor: 12_300,
-    }));
+    });
+    expect(result.vatEntryIds).toEqual([]);
   });
 
   it('refuses a locked return too, and says to unlock it', () => {

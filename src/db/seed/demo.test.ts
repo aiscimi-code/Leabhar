@@ -7,7 +7,7 @@ import { createTestDatabase } from '@/db/testing';
 import { seedDemoCompany } from './demo';
 import {
   companies, bankTransactions, documents, vatPeriods, reviewItems,
-  suppliers, fixedAssets, rules, taxDeadlines, journalEntries,
+  suppliers, fixedAssets, rules, taxDeadlines, payments,
 } from '@/db/schema';
 import { trialBalance } from '@/domain/accounting/ledger';
 import { balanceSheet, profitAndLoss } from '@/domain/reports/financial';
@@ -81,10 +81,12 @@ describe('demo data', () => {
   });
 
   it('records a director-paid expense and a capital purchase', () => {
-    const directorEntry = db.select().from(journalEntries)
-      .where(eq(journalEntries.companyId, companyId)).all()
-      .find((e) => e.narrative.includes('paid personally'));
-    expect(directorEntry).toBeTruthy();
+    // Paid on the director's personal card, against its confirmed invoice
+    // (issue #221): the reverse charge is self-assessed from the invoice.
+    const directorPayment = db.select().from(payments)
+      .where(and(eq(payments.companyId, companyId), eq(payments.method, 'director_personal'))).get();
+    expect(directorPayment?.officerId).toBeTruthy();
+    expect(directorPayment?.amountMinor).toBe(8_400);
 
     const assets = db.select().from(fixedAssets)
       .where(eq(fixedAssets.companyId, companyId)).all();

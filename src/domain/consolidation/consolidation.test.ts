@@ -4,17 +4,18 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createTestDatabase } from '@/db/testing';
-import { createCompany, addBankAccount } from '../config/setup';
+import { createCompany, addBankAccount, systemAccountId } from '../config/setup';
 import { importStatement } from '../banking/import';
 import { classifyTransaction, ClassificationError } from '../banking/classify';
 import { storeDocument } from '../documents/storage';
 import { confirmDocument, type ReviewedDocumentValues, type ReviewedLine } from '../documents/review';
 import { postDocumentAsInvoice, documentEvidenceLines, ConsolidationError } from './postDocument';
-import { settleBankTransaction } from './settle';
-import { trialBalance } from '../accounting/ledger';
+import { settleBankTransaction, settleInvoiceByDirector } from './settle';
+import { trialBalance, accountBalance } from '../accounting/ledger';
 import { makeDate } from '../dates';
 import {
   invoices, invoiceLines, vatEntries, bankTransactions, reviewItems, suppliers, customers, documents,
+  companyOfficers, payments,
 } from '@/db/schema';
 import { ids } from '@/lib/ids';
 import type { AppDatabase } from '@/db';
@@ -464,5 +465,56 @@ describe('the trace behind a bank line', () => {
     const trace = transactionTrace(db, { companyId, bankTransactionId: find('CARD').id })!;
     expect(trace.kind).toBe('classified_without_invoice');
     expect(trace.flags.join(' ')).toMatch(/no input VAT claimed/);
+  });
+});
+
+// Issue #221: a director who pays a supplier personally settles the invoice
+// from their current account. The input VAT comes from the invoice's lines.
+describe('settling an invoice a director paid personally', () => {
+  const director = () => {
+    const officerId = ids.officer();
+    db.insert(companyOfficers).values({ id: officerId, companyId, name: 'A. Director', role: 'director' }).run();
+    return officerId;
+  };
+
+  it('credits the director and claims the VAT printed on the invoice', () => {
+    const officerId = director();
+    const doc = confirmed({ lines: [line('Conference ticket', 20_000, 2300, 4_600)] });
+    const inv = postDocumentAsInvoice(db, { companyId, documentId: doc, coding: [code('6140', 'IE_STD')] });
+    const paid = settleInvoiceByDirector(db, {
+      companyId, officerId, paymentDate: makeDate(2025, 3, 15),
+      allocations: [{ invoiceId: inv.invoiceId, amountMinor: 24_600 }],
+    });
+    expect(paid.unallocatedMinor).toBe(0);
+    const payment = db.select().from(payments).where(eq(payments.id, paid.paymentId)).get()!;
+    expect(payment).toMatchObject({ method: 'director_personal', officerId, bankTransactionId: null });
+    expect(db.select().from(invoices).where(eq(invoices.id, inv.invoiceId)).get()!.status).toBe('paid');
+    expect(entriesFor(inv.invoiceId).reduce((s, e) => s + e.recoverableVatMinor, 0)).toBe(4_600);
+    // The company owes the director what they paid; the bank is untouched.
+    expect(accountBalance(db, { companyId, accountId: systemAccountId(db, companyId, 'directors_current_account') }))
+      .toBe(24_600);
+    expect(accountBalance(db, { companyId, accountId: systemAccountId(db, companyId, 'bank_control') })).toBe(0);
+    balanced();
+  });
+
+  it('refuses an invoice with no confirmed document behind it', () => {
+    const officerId = director();
+    const doc = confirmed({ lines: [line('Paper', 1_000, 2300, 230)] });
+    const inv = postDocumentAsInvoice(db, { companyId, documentId: doc, coding: [code('6120', 'IE_STD')] });
+    db.update(documents).set({ reviewStatus: 'unreviewed' }).where(eq(documents.id, doc)).run();
+    expect(() => settleInvoiceByDirector(db, {
+      companyId, officerId, paymentDate: makeDate(2025, 3, 15),
+      allocations: [{ invoiceId: inv.invoiceId, amountMinor: 1_230 }],
+    })).toThrow(ConsolidationError);
+  });
+
+  it('refuses a sales invoice', () => {
+    const officerId = director();
+    const doc = confirmed({ documentType: 'sales_invoice', lines: [line('Consulting', 10_000, 2300, 2_300)] }, 'customer');
+    const inv = postDocumentAsInvoice(db, { companyId, documentId: doc, coding: [code('4000', 'IE_STD')] });
+    expect(() => settleInvoiceByDirector(db, {
+      companyId, officerId, paymentDate: makeDate(2025, 3, 15),
+      allocations: [{ invoiceId: inv.invoiceId, amountMinor: 12_300 }],
+    })).toThrow(/purchase invoices/);
   });
 });

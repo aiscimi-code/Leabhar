@@ -39,8 +39,10 @@ These are enforced by tests. Breaking one is a bug, not a trade-off.
   confirms each one on the review screen. Never match straight after extraction.
 - **Input VAT comes only from a confirmed invoice.** A confirmed document is
   posted as an invoice line by line (`postDocumentAsInvoice`) and the bank line
-  settles it (`settleBankTransaction`). A purchase classified without an invoice
-  claims no input VAT and is flagged; never split a bank amount into net and VAT.
+  settles it (`settleBankTransaction`, or `settleInvoiceByDirector` when a
+  director paid personally). A purchase classified or recorded as
+  director-paid without an invoice claims no input VAT and is flagged; a split
+  journal never debits input VAT; never split a bank amount into net and VAT.
 - **A locked or filed VAT return is never changed.** Every path that writes VAT
   entries calls `assertVatPeriodWritable` before writing anything. A correction
   goes in an open period — negative entries, never a detached or edited one —

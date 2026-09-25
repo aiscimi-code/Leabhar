@@ -375,6 +375,15 @@ claims no input VAT under any VAT-charging treatment (no VAT entry is created)
 and raises a `missing_document` review item. It refuses a bank line matched to
 a confirmed document, which must be posted and settled instead.
 
+The same holds off the bank (issue #221). A director who paid a supplier
+personally settles the posted invoice from their current account
+(`settleInvoiceByDirector`, `payments.method = 'director_personal'`); with no
+invoice, `recordDirectorPaidExpense` posts the whole amount as cost, writes no
+VAT entry (nor any reverse charge) and flags `missing_document`. A split journal
+for a bank line (`postBankTransactionJournal`) may record the line's own output
+VAT, never input VAT: a `purchases` VAT position, or a line debiting VAT on
+purchases, is refused.
+
 Trace: `vat_entries.invoice_line_id` → `invoice_lines.document_line_id` and
 `invoice_lines.vat_rule_keys` → `document_lines` → `documents`
 (`transactionTrace`).

@@ -7,17 +7,17 @@ import {
 import { ids } from '@/lib/ids';
 import { createCompany, addBankAccount, systemAccountId } from '@/domain/config/setup';
 import { importStatement, saveImportProfile } from '@/domain/banking/import';
-import { classifyTransaction, recordDirectorPaidExpense } from '@/domain/banking/classify';
+import { classifyTransaction } from '@/domain/banking/classify';
 import { storeDocument } from '@/domain/documents/storage';
 import { extractDocument } from '@/domain/extraction/service';
 import { LocalExtractionProvider } from '@/domain/extraction/localProvider';
 import { matchAllUnmatched } from '@/domain/matching/service';
 import { documentReviewValues, confirmDocument, checkDocumentValues } from '@/domain/documents/review';
 import { postDocumentAsInvoice, documentEvidenceLines } from '@/domain/consolidation/postDocument';
-import { settleBankTransaction } from '@/domain/consolidation/settle';
+import { settleBankTransaction, settleInvoiceByDirector } from '@/domain/consolidation/settle';
 import { createRule } from '@/domain/rules/engine';
 import { postJournalEntry } from '@/domain/accounting/journal';
-import { makeDate } from '@/domain/dates';
+import { asIsoDate, makeDate } from '@/domain/dates';
 import { normaliseName } from '@/domain/extraction/service';
 
 /**
@@ -159,6 +159,17 @@ const DEMO_DOCUMENTS: Array<{ filename: string; body: string }> = [
     ].join('\n'),
   },
   {
+    // Paid on the director's personal card: settled from their current account.
+    filename: 'namecheap-2025-03.txt',
+    body: [
+      'Namecheap, Inc.', '4600 East Washington Street, Suite 300, Phoenix, AZ 85034, United States',
+      '', 'INVOICE', 'Invoice Number: NC-2025-0306', 'Invoice Date: 06/03/2025',
+      '', 'Domain renewals (3 domains)           84.00',
+      'Total                                  EUR 84.00',
+      '', 'Reverse charge applies. No VAT has been charged.',
+    ].join('\n'),
+  },
+  {
     filename: 'insurance-ireland-2025-03.txt',
     body: [
       'Insurance Ireland DAC', '5 Harbourmaster Place, IFSC, Dublin 1, Ireland',
@@ -275,6 +286,7 @@ export async function seedDemoCompany(
   const vercel = supplier('Vercel Inc', 'US', null, '6010', 'NON_EU_SERVICES_RCV', ['VERCEL']);
   const anthropic = supplier('Anthropic PBC', 'US', null, '6000', 'NON_EU_SERVICES_RCV', ['ANTHROPIC']);
   const github = supplier('GitHub Inc', 'US', null, '6000', 'NON_EU_SERVICES_RCV', ['GITHUB']);
+  const namecheap = supplier('Namecheap Inc', 'US', null, '6020', 'NON_EU_SERVICES_RCV', ['NAMECHEAP']);
   const aws = supplier('Amazon Web Services EMEA SARL', 'LU', 'LU26888617', '6010',
     'EU_SERVICES_RCV', ['AWS EMEA', 'AWS']);
   const hetzner = supplier('Hetzner Online GmbH', 'DE', 'DE812871812', '6010',
@@ -429,7 +441,9 @@ export async function seedDemoCompany(
   // together. VAT comes from the confirmed invoice lines, never the bank amount.
   const DOCUMENT_POSTING: Record<string, {
     party: { supplierId?: string; customerId?: string };
-    account: string; treatment: string; bank: string;
+    account: string; treatment: string;
+    /** 'date|needle' of the bank line that paid it, or the director who paid it personally. */
+    bank?: string; paidByDirectorOn?: string;
   }> = {
     'vercel-2025-01.txt': { party: { supplierId: vercel }, account: '6010', treatment: 'NON_EU_SERVICES_RCV', bank: '2025-01-15|VERCEL' },
     'anthropic-2025-01.txt': { party: { supplierId: anthropic }, account: '6000', treatment: 'NON_EU_SERVICES_RCV', bank: '2025-01-17|ANTHROPIC' },
@@ -439,6 +453,7 @@ export async function seedDemoCompany(
     // Capital purchase: to the asset account, not an expense.
     'apple-store-2025-02.txt': { party: { supplierId: apple }, account: '1500', treatment: 'IE_STD', bank: '2025-02-21|APPLE STORE' },
     'github-2025-03.txt': { party: { supplierId: github }, account: '6000', treatment: 'NON_EU_SERVICES_RCV', bank: '2025-03-05|GITHUB' },
+    'namecheap-2025-03.txt': { party: { supplierId: namecheap }, account: '6020', treatment: 'NON_EU_SERVICES_RCV', paidByDirectorOn: '2025-03-06' },
     'insurance-ireland-2025-03.txt': { party: { supplierId: insurance }, account: '6090', treatment: 'IE_EXEMPT', bank: '2025-03-19|INSURANCE IRELAND' },
     'sales-invoice-2025-001.txt': { party: { customerId: mulligan }, account: '4020', treatment: 'IE_STD', bank: '2025-01-31|MULLIGAN DIGITAL LTD INV-2025-001' },
     'sales-invoice-2025-003.txt': { party: { customerId: continental }, account: '4000', treatment: 'EU_SERVICES_SUPPLY', bank: '2025-03-31|CONTINENTAL DESIGN' },
@@ -448,6 +463,8 @@ export async function seedDemoCompany(
     return transactions.find((t) => t.transactionDate === date && t.description.includes(needle));
   };
 
+  const outstandingOf = (invoiceId: string) => db.select({ o: invoices.outstandingMinor }).from(invoices)
+    .where(eq(invoices.id, invoiceId)).get()!.o;
   let documentCount = 0;
   for (const demo of DEMO_DOCUMENTS) {
     const posting = DOCUMENT_POSTING[demo.filename]!;
@@ -474,7 +491,14 @@ export async function seedDemoCompany(
       companyId, documentId: stored.documentId, actor: 'demo',
       coding: lines.map(() => ({ accountId: byCode[posting.account]!, vatTreatmentId: tr[posting.treatment]! })),
     });
-    const paid = findOn(posting.bank);
+    if (posting.paidByDirectorOn) {
+      settleInvoiceByDirector(db, {
+        companyId, officerId: directorId, paymentDate: asIsoDate(posting.paidByDirectorOn), actor: 'demo',
+        reference: 'Paid on personal card',
+        allocations: [{ invoiceId: invoice.invoiceId, amountMinor: outstandingOf(invoice.invoiceId) }],
+      });
+    }
+    const paid = posting.bank ? findOn(posting.bank) : undefined;
     if (paid) {
       settleBankTransaction(db, {
         companyId, bankTransactionId: paid.id, actor: 'demo',
@@ -555,14 +579,6 @@ export async function seedDemoCompany(
       + 'Confirm the current rate before relying on it.',
     status: 'active', source: 'user', provenanceStatus: 'user_confirmed',
   }).run();
-
-  // ---- Director-paid expense (README §51) ----
-  recordDirectorPaidExpense(db, {
-    companyId, officerId: directorId, date: makeDate(2025, 3, 6),
-    description: 'Domain renewals paid on personal card',
-    accountId: byCode['6020']!, vatTreatmentId: tr['NON_EU_SERVICES_RCV']!,
-    grossMinor: 8_400, actor: 'demo',
-  });
 
   // Nothing left to match: every confirmed document was posted and settled above.
   matchAllUnmatched(db, { companyId });
