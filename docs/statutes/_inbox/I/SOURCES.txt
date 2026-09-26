@@ -1,5 +1,45 @@
 # SOURCES — section I
 Retrieved: 2026-09-25
+Owner confirmation: store official FRC PDFs in the private Google Drive working folder
+(Leabhar/issue-218-inbox). Copyright remains with The Financial Reporting Council Limited.
+These files are a private working copy, not a republication.
 
-NOT collected. FRS 102 and FRS 105 current editions were not downloaded.
-Copyright remains with the FRC. Do not tick.
+Canonical pages:
+- https://www.frc.org.uk/library/standards-codes-policy/accounting-and-reporting/uk-accounting-standards/frs-102/
+- https://www.frc.org.uk/library/standards-codes-policy/accounting-and-reporting/uk-accounting-standards/frs-105/
+Saved as frc-frs-102-index.html and frc-frs-105-index.html.
+
+## Current editions (full official PDFs)
+- FRS_102_September_2024.pdf
+  https://www.frc.org.uk/documents/7668/FRS_102_September_2024_tmKYWO6.pdf
+  FRS 102 The Financial Reporting Standard applicable in the UK and Republic of Ireland
+  (September 2024). Includes Section 1A. Periodic Review 2024 amendments effective
+  1 January 2026. ~2.8 MB, 485 pages.
+- FRS_105_September_2024.pdf
+  https://www.frc.org.uk/documents/7662/FRS_105_September_2024_V7owJHN.pdf
+  FRS 105 The Financial Reporting Standard applicable to the Micro-entities Regime
+  (September 2024). ~1.0 MB, 151 pages.
+
+## Later amendments still current on 2026-09-25
+- Amendments_FRS_102_and_other_FRSs_Periodic_Review_2024.pdf
+  https://www.frc.org.uk/documents/7128/Amendments_to_FRS_102_and_other_FRSs.pdf
+  27 March 2024. Principal effective date 1 January 2026.
+- Amendments_FRS_102_105_Irish_company_size_thresholds_August_2024.pdf
+  https://www.frc.org.uk/documents/7657/Amendments_to_FRS_102_and_FRS_105__Irish_company_size_thresholds_August_2024.pdf
+  30 August 2024.
+- Amendments_FRS_102_105_UK_company_size_thresholds.pdf
+  https://www.frc.org.uk/documents/8125/Amendments_to_FRS_102_and_FRS_105_UK_company_size_thresholds.pdf
+  21 March 2025. Effective 6 April 2025 (UK law).
+- Amendments_FRS_102_105_Adapted_formats_February_2026.pdf
+  https://www.frc.org.uk/documents/9122/Amendments_to_FRS_102_The_Financial_Reporting_Standard_applicable_in_the_UK_and_Republic_of_Ireland_and_FRS_105_The_Financial_9cWQBwA.pdf
+  18 February 2026. Effective 1 January 2027.
+
+Markdown siblings are pdftotext-layout of the same PDFs. Originals kept.
+
+Not pushed to the public GitHub repo in this step — Drive working folder only,
+unless the owner later confirms the same for docs/statutes/_inbox/I/.
+
+## Repository copy
+Pushed to docs/statutes/_inbox by the owner on 2026-09-25 (commit eef768d),
+which confirms they may be stored in this repository (#218 §I).
+Unpacked from leabhar-218-section-I.zip unchanged.

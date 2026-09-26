@@ -1,26 +1,52 @@
 # SOURCES — section C
-Retrieved: 2026-09-25
+Retrieved: 2026-09-25 (second pass — complete official files, not chapter samples)
 
-PARTIAL. Not ticked on #218.
+Revenue does not publish one bound “VAT treatment of financial services” PDF or one bound “VAT on property” PDF. Each is a TDM folder of chapter PDFs. This pass downloaded every current (unsuffixed) chapter PDF listed on the live index pages on 2026-09-25. Dated archive copies on those pages were not kept.
 
-Collected (named files only; not a substitute for the full manuals requested):
-- vat-and-payment-services.pdf — Revenue TDM "VAT Treatment of Payment Services"
-  https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part03-taxable-transactions-goods-ica-services/Financial-Services/vat-and-payment-services.pdf
-  This is one Financial-Services chapter, not the whole "VAT treatment of financial services" manual.
-- vat-supply-of-property.pdf — Revenue TDM "VAT Treatment of the Supply of property"
-  https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part11-immovable-goods/supply-of-property/supply-of-property.pdf
-- vat-letting-of-property.pdf — Revenue TDM "VAT – Letting of Property"
-  https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part11-immovable-goods/letting-of-immovable-goods/letting-of-property-20200508103738.pdf
-- immovable-goods-index.html — directory listing only.
+## VAT treatment of financial services (loan interest / Sch.1 para 6)
+Index: https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part03-taxable-transactions-goods-ica-services/Financial-Services/index.aspx
+Saved under C/financial-services/ (21 current chapter PDFs + index.html).
 
-NOT collected (no tick):
-- full financial-services TDM (all chapters)
-- full VAT on property TDM (all chapters)
-- reverse charge construction / s.16 TDM
-- postponed accounting guidance
-- VIES statements guidance
-- VAT3 return guide
-- RTD guide
-- cash receipts basis guidance
-- margin schemes TDM
-- vouchers TDM
+## VAT on property — full Part 11, all current chapters
+Index: https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part11-immovable-goods/index.aspx
+Saved under C/immovable-goods/ (all current chapter PDFs listed on each chapter page on 2026-09-25).
+
+## VAT reverse charge — construction services / s.16
+Current TDM is “VAT Treatment of construction services” (eBrief 060/24 marked the old reverse-charge-construction TDM as no longer relevant).
+https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part11-immovable-goods/construction-services/construction-servcies.pdf
+(filename spelling is Revenue’s)
+The old folder https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part02-accountable-persons/reverse-charge-construction/index.aspx listed no current PDF on 2026-09-25.
+
+## Postponed accounting for import VAT
+- https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part07-provisions-relating-to-imports-exports/postponed-accounting.pdf
+- https://www.revenue.ie/en/vat/goods-and-services-to-and-from-abroad/imports/postponed-accounting.aspx
+- https://www.revenue.ie/en/tax-professionals/tdm/customs/import-export-policy/customs-manual-on-import-vat.pdf
+
+## VIES statements
+- https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/vat-information-exchange-system-VIES/vies-traders-manual.pdf
+- https://www.revenue.ie/en/vat/goods-and-services-to-and-from-abroad/acquisitions-from-other-eu-member-states/vies-and-intrastat.aspx
+
+## VAT3 return guide and RTD guide
+- VAT3: no standalone TDM titled “VAT3 return guide” was listed under Part 09/return. Official public guide saved:
+  https://www.revenue.ie/en/vat/accounting-for-vat/how-to-account-for-value-added-tax/completing-vat3-return.aspx
+  https://www.revenue.ie/en/vat/accounting-for-vat/how-to-account-for-value-added-tax/index.aspx
+- RTD TDM: https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part09-obligations-accountable-persons/return/VAT-RTD-S76.pdf
+
+## Cash receipts (moneys received) basis
+No standalone TDM titled “cash receipts basis”. Official public section + related TDMs saved:
+- https://www.revenue.ie/en/starting-a-business/paying-your-tax/moneys-received-basis-of-accounting.aspx
+- https://www.revenue.ie/en/vat/accounting-for-vat/accounting-for-vat-on-moneys-received/index.aspx
+- https://www.revenue.ie/en/vat/accounting-for-vat/accounting-for-vat-on-moneys-received/who-can-opt-moneys-received-basis.aspx
+- https://www.revenue.ie/en/vat/accounting-for-vat/accounting-for-vat-on-moneys-received/sums-included-money-received-basis.aspx
+- records TDM cash registers + retailers special schemes (used with cash-receipts traders)
+
+## Margin schemes TDM
+- https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part03-taxable-transactions-goods-ica-services/Goods/goods-second-hand-goods.pdf
+- https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part10-special-schemes/services-auctioneers-margin-scheme/services-auctioneers-margin-scheme.pdf
+- https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part10-special-schemes/travel-agents-margin-scheme/services-travel-agents-margin-scheme.pdf
+
+## Vouchers TDM
+- https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part05-taxable-amount/single-purpose-vouchers-and-multi-purpose-vouchers/single-purpose-vouchers-and-multi-purpose-vouchers.pdf
+- https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part05-taxable-amount/vouchers-excluding-single-purpose-vouchers-and-multi-purpose-vouchers/vat-treatment-of-vouchers.pdf
+
+First-pass sample chapter PDFs left at C/ root (vat-and-payment-services, vat-supply-of-property, vat-letting-of-property) are superseded by the full folders above.

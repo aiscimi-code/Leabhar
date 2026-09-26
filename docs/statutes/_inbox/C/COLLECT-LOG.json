@@ -1,0 +1,792 @@
+[
+  {
+    "folder": "C/financial-services",
+    "url": "https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part03-taxable-transactions-goods-ica-services/Financial-Services/services-hire-purchase-transactions.pdf",
+    "final": "https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part03-taxable-transactions-goods-ica-services/Financial-Services/services-hire-purchase-transactions.pdf",
+    "path": "C/financial-services/services-hire-purchase-transactions.pdf",
+    "sha256": "f913017a7f956451a8b2e1c56c7e8195b92df79480284107fd80ea9c1cb544e3",
+    "bytes": 1650633,
+    "status": "ok",
+    "date": "2026-09-25"
+  },
+  {
+    "folder": "C/financial-services",
+    "url": "https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part03-taxable-transactions-goods-ica-services/Financial-Services/services-management-defined-benefit-pension-schemes.pdf",
+    "final": "https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part03-taxable-transactions-goods-ica-services/Financial-Services/services-management-defined-benefit-pension-schemes.pdf",
+    "path": "C/financial-services/services-management-defined-benefit-pension-schemes.pdf",
+    "sha256": "4e53ed44ca5e065f67e7c7a83ec7ae9f2383f66cfb3b78504bc1b5e3a24029ee",
+    "bytes": 69993,
+    "status": "ok",
+    "date": "2026-09-25"
+  },
+  {
+    "folder": "C/financial-services",
+    "url": "https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part03-taxable-transactions-goods-ica-services/Financial-Services/services-management-of-special-investment-funds.pdf",
+    "final": "https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part03-taxable-transactions-goods-ica-services/Financial-Services/services-management-of-special-investment-funds.pdf",
+    "path": "C/financial-services/services-management-of-special-investment-funds.pdf",
+    "sha256": "d3ed1ef05aa41bede77785acead27f84009cd75bb2b4c220c4a7e483eea2f98d",
+    "bytes": 86405,
+    "status": "ok",
+    "date": "2026-09-25"
+  },
+  {
+    "folder": "C/financial-services",
+    "url": "https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part03-taxable-transactions-goods-ica-services/Financial-Services/services-management-defined-contribution-occupational-pension-scheme.pdf",
+    "final": "https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part03-taxable-transactions-goods-ica-services/Financial-Services/services-management-defined-contribution-occupational-pension-scheme.pdf",
+    "path": "C/financial-services/services-management-defined-contribution-occupational-pension-scheme.pdf",
+    "sha256": "2c41af5b1893ff4765c7215e48752607c17ed0b813c8ece4658890834e2981a6",
+    "bytes": 51120,
+    "status": "ok",
+    "date": "2026-09-25"
+  },
+  {
+    "folder": "C/financial-services",
+    "url": "https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part03-taxable-transactions-goods-ica-services/Financial-Services/services-management-of-self-directed-assurance-bonds.pdf",
+    "final": "https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part03-taxable-transactions-goods-ica-services/Financial-Services/services-management-of-self-directed-assurance-bonds.pdf",
+    "path": "C/financial-services/services-management-of-self-directed-assurance-bonds.pdf",
+    "sha256": "8fbef1cedd794c9864829b83299ae286814a43fe29f9b5fa58a1e280e2a866ef",
+    "bytes": 106750,
+    "status": "ok",
+    "date": "2026-09-25"
+  },
+  {
+    "folder": "C/financial-services",
+    "url": "https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part03-taxable-transactions-goods-ica-services/Financial-Services/services-management-of-a-pension-fund-for-its-employees.pdf",
+    "final": "https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part03-taxable-transactions-goods-ica-services/Financial-Services/services-management-of-a-pension-fund-for-its-employees.pdf",
+    "path": "C/financial-services/services-management-of-a-pension-fund-for-its-employees.pdf",
+    "sha256": "405248780cd394b2f49d6f249ca4132e6d16daccd1ee1909ab70b7738f226fcf",
+    "bytes": 1573541,
+    "status": "ok",
+    "date": "2026-09-25"
+  },
+  {
+    "folder": "C/financial-services",
+    "url": "https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part03-taxable-transactions-goods-ica-services/Financial-Services/vat-and-payment-services.pdf",
+    "final": "https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part03-taxable-transactions-goods-ica-services/Financial-Services/vat-and-payment-services.pdf",
+    "path": "C/financial-services/vat-and-payment-services.pdf",
+    "sha256": "4a7fb54cec8ca2810f7a0ea842b828b4cd55deae2c096d55a1c63c2f628eb80d",
+    "bytes": 105038,
+    "status": "ok",
+    "date": "2026-09-25"
+  },
+  {
+    "folder": "C/financial-services",
+    "url": "https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part03-taxable-transactions-goods-ica-services/Financial-Services/vat-deductibility-for-holding-companies.pdf",
+    "final": "https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part03-taxable-transactions-goods-ica-services/Financial-Services/vat-deductibility-for-holding-companies.pdf",
+    "path": "C/financial-services/vat-deductibility-for-holding-companies.pdf",
+    "sha256": "4d10372eb10c2d55d3b7d2afbdf7d6fa87936d5b8730992a39c0d9ddddc23956",
+    "bytes": 568431,
+    "status": "ok",
+    "date": "2026-09-25"
+  },
+  {
+    "folder": "C/financial-services",
+    "url": "https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part03-taxable-transactions-goods-ica-services/Financial-Services/vat-deductibility-for-insurance-reinsurance.pdf",
+    "final": "https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part03-taxable-transactions-goods-ica-services/Financial-Services/vat-deductibility-for-insurance-reinsurance.pdf",
+    "path": "C/financial-services/vat-deductibility-for-insurance-reinsurance.pdf",
+    "sha256": "32b63c01c42ed3069d7d87a789abe10785d5822786d3a619b3b4ccf920928a0e",
+    "bytes": 3032620,
+    "status": "ok",
+    "date": "2026-09-25"
+  },
+  {
+    "folder": "C/financial-services",
+    "url": "https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part03-taxable-transactions-goods-ica-services/Financial-Services/vat-deductibility-for-life-insurance-companies.pdf",
+    "final": "https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part03-taxable-transactions-goods-ica-services/Financial-Services/vat-deductibility-for-life-insurance-companies.pdf",
+    "path": "C/financial-services/vat-deductibility-for-life-insurance-companies.pdf",
+    "sha256": "5e9de734a9ac206fcfcada303436c0498d686881756d120cc062056d41d4dc06",
+    "bytes": 68555,
+    "status": "ok",
+    "date": "2026-09-25"
+  },
+  {
+    "folder": "C/financial-services",
+    "url": "https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part03-taxable-transactions-goods-ica-services/Financial-Services/vat-deductibility-for-the-funds-industry.pdf",
+    "final": "https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part03-taxable-transactions-goods-ica-services/Financial-Services/vat-deductibility-for-the-funds-industry.pdf",
+    "path": "C/financial-services/vat-deductibility-for-the-funds-industry.pdf",
+    "sha256": "97da6dbcc8552e369c3c1dc44c5b3f9170f7c4b1b8e460446595f8ac131e1187",
+    "bytes": 74692,
+    "status": "ok",
+    "date": "2026-09-25"
+  },
+  {
+    "folder": "C/financial-services",
+    "url": "https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part03-taxable-transactions-goods-ica-services/Financial-Services/services-financial-debt-factoring.pdf",
+    "final": "https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part03-taxable-transactions-goods-ica-services/Financial-Services/services-financial-debt-factoring.pdf",
+    "path": "C/financial-services/services-financial-debt-factoring.pdf",
+    "sha256": "97c11dc2c5fc06723468537103d2fd4dc7e68ab4d3f3719894cd1b82f1d135d6",
+    "bytes": 145992,
+    "status": "ok",
+    "date": "2026-09-25"
+  },
+  {
+    "folder": "C/financial-services",
+    "url": "https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part03-taxable-transactions-goods-ica-services/Financial-Services/vat-treatment-of-depositary-services-and-global-custody-services.pdf",
+    "final": "https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part03-taxable-transactions-goods-ica-services/Financial-Services/vat-treatment-of-depositary-services-and-global-custody-services.pdf",
+    "path": "C/financial-services/vat-treatment-of-depositary-services-and-global-custody-services.pdf",
+    "sha256": "3827f1d102010b888898f395d6bd3b0755d1c4ef54ace0d404301e066b87cfc5",
+    "bytes": 445211,
+    "status": "ok",
+    "date": "2026-09-25"
+  },
+  {
+    "folder": "C/financial-services",
+    "url": "https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part03-taxable-transactions-goods-ica-services/Financial-Services/vat-treatment-of-establishing-and-managing-a-pension-scheme.pdf",
+    "final": "https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part03-taxable-transactions-goods-ica-services/Financial-Services/vat-treatment-of-establishing-and-managing-a-pension-scheme.pdf",
+    "path": "C/financial-services/vat-treatment-of-establishing-and-managing-a-pension-scheme.pdf",
+    "sha256": "46a418712f57068d4fe5568053cb4ed7b2d46c3202c53d5adf330e05341b2294",
+    "bytes": 459368,
+    "status": "ok",
+    "date": "2026-09-25"
+  },
+  {
+    "folder": "C/financial-services",
+    "url": "https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part03-taxable-transactions-goods-ica-services/Financial-Services/vat-treatment-of-extended-warranties.pdf",
+    "final": "https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part03-taxable-transactions-goods-ica-services/Financial-Services/vat-treatment-of-extended-warranties.pdf",
+    "path": "C/financial-services/vat-treatment-of-extended-warranties.pdf",
+    "sha256": "74215ad9b0343e3ded63b0edd2401e61dc61d4167b79c1ed042b67339e0e9793",
+    "bytes": 473201,
+    "status": "ok",
+    "date": "2026-09-25"
+  },
+  {
+    "folder": "C/financial-services",
+    "url": "https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part03-taxable-transactions-goods-ica-services/Financial-Services/vat-treatment-of-negotiation-services.pdf",
+    "final": "https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part03-taxable-transactions-goods-ica-services/Financial-Services/vat-treatment-of-negotiation-services.pdf",
+    "path": "C/financial-services/vat-treatment-of-negotiation-services.pdf",
+    "sha256": "72e2b4daf315e41a094f464a584f82e75b060f6d26b1e040579616e59294aeb0",
+    "bytes": 2330793,
+    "status": "ok",
+    "date": "2026-09-25"
+  },
+  {
+    "folder": "C/financial-services",
+    "url": "https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part03-taxable-transactions-goods-ica-services/Financial-Services/vat-treatment-of-personal-contract-plans.pdf",
+    "final": "https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part03-taxable-transactions-goods-ica-services/Financial-Services/vat-treatment-of-personal-contract-plans.pdf",
+    "path": "C/financial-services/vat-treatment-of-personal-contract-plans.pdf",
+    "sha256": "45a38f4a260d6b21ad2224b182f0e0cd8b6734283856fc31074c8e42fc892821",
+    "bytes": 79263,
+    "status": "ok",
+    "date": "2026-09-25"
+  },
+  {
+    "folder": "C/financial-services",
+    "url": "https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part03-taxable-transactions-goods-ica-services/Financial-Services/services-portfolio-management-services.pdf",
+    "final": "https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part03-taxable-transactions-goods-ica-services/Financial-Services/services-portfolio-management-services.pdf",
+    "path": "C/financial-services/services-portfolio-management-services.pdf",
+    "sha256": "d300b17d4d6d8ec1142bbd0957a552b2d15bfe37dc784af2e6a2ac4ab46d1227",
+    "bytes": 77243,
+    "status": "ok",
+    "date": "2026-09-25"
+  },
+  {
+    "folder": "C/financial-services",
+    "url": "https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part03-taxable-transactions-goods-ica-services/Financial-Services/VAT-treatment-of-share-transactions-and-trading-platforms.pdf",
+    "final": "https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part03-taxable-transactions-goods-ica-services/Financial-Services/VAT-treatment-of-share-transactions-and-trading-platforms.pdf",
+    "path": "C/financial-services/VAT-treatment-of-share-transactions-and-trading-platforms.pdf",
+    "sha256": "76da44f2374bd9944375e5dc29d14f34dc9856d6b6dc646d2df33430438bbef3",
+    "bytes": 455310,
+    "status": "ok",
+    "date": "2026-09-25"
+  },
+  {
+    "folder": "C/financial-services",
+    "url": "https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part03-taxable-transactions-goods-ica-services/Financial-Services/services-stock-exchange-fees.pdf",
+    "final": "https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part03-taxable-transactions-goods-ica-services/Financial-Services/services-stock-exchange-fees.pdf",
+    "path": "C/financial-services/services-stock-exchange-fees.pdf",
+    "sha256": "0c9236e1ebfa2c364e9f0082f7fad448774aa8c914415975f0510199e61febea",
+    "bytes": 125555,
+    "status": "ok",
+    "date": "2026-09-25"
+  },
+  {
+    "folder": "C/financial-services",
+    "url": "https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part03-taxable-transactions-goods-ica-services/Financial-Services/vat-treatment-of-the-management-of-pension-schemes.pdf",
+    "final": "https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part03-taxable-transactions-goods-ica-services/Financial-Services/vat-treatment-of-the-management-of-pension-schemes.pdf",
+    "path": "C/financial-services/vat-treatment-of-the-management-of-pension-schemes.pdf",
+    "sha256": "5870995eaf2b5df0a9065fa4eb002ae4918d208e0b9e9521d6e0d74077a7c2af",
+    "bytes": 481737,
+    "status": "ok",
+    "date": "2026-09-25"
+  },
+  {
+    "folder": "C/immovable-goods",
+    "url": "https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part11-immovable-goods/cancellation-of-a-holiday-home-election/cancellation-of-a-holiday-home-election.pdf",
+    "final": "https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part11-immovable-goods/cancellation-of-a-holiday-home-election/cancellation-of-a-holiday-home-election.pdf",
+    "path": "C/immovable-goods/cancellation-of-a-holiday-home-election.pdf",
+    "sha256": "030003b82559d16505b25e1e45acb77fdaf7f2eba5453650239f44ec01b73dc6",
+    "bytes": 77086,
+    "status": "ok",
+    "date": "2026-09-25"
+  },
+  {
+    "folder": "C/immovable-goods",
+    "url": "https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part11-immovable-goods/cancellation-of-a-holiday-home-election/Cancellation-of-a-holiday-home-election-20201211114649.pdf",
+    "final": "https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part11-immovable-goods/cancellation-of-a-holiday-home-election/Cancellation-of-a-holiday-home-election-20201211114649.pdf",
+    "path": "C/immovable-goods/Cancellation-of-a-holiday-home-election-20201211114649.pdf",
+    "sha256": "fb3646cf5d38429aabf2d4f1964b480fd4c48ad6401e245c24e7d9af26ba7c7c",
+    "bytes": 186232,
+    "status": "ok",
+    "date": "2026-09-25"
+  },
+  {
+    "folder": "C/immovable-goods",
+    "url": "https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part11-immovable-goods/capital-goods-scheme/capital-goods-scheme.pdf",
+    "final": "https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part11-immovable-goods/capital-goods-scheme/capital-goods-scheme.pdf",
+    "path": "C/immovable-goods/capital-goods-scheme.pdf",
+    "sha256": "f3e4e0abec28460cc0d017718f04e60da8c3ec123703948e089f941cc8d41e15",
+    "bytes": 397531,
+    "status": "ok",
+    "date": "2026-09-25"
+  },
+  {
+    "folder": "C/immovable-goods",
+    "url": "https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part11-immovable-goods/capital-goods-scheme/cgs-big-swing-for-transitional-properties-20180726143112.pdf",
+    "final": "https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part11-immovable-goods/capital-goods-scheme/cgs-big-swing-for-transitional-properties-20180726143112.pdf",
+    "path": "C/immovable-goods/cgs-big-swing-for-transitional-properties-20180726143112.pdf",
+    "sha256": "7175264b710374e647a9fa31bcbbe6aacfc93dc6ddc1fac9c9c5a9e2f20e517e",
+    "bytes": 628860,
+    "status": "ok",
+    "date": "2026-09-25"
+  },
+  {
+    "folder": "C/immovable-goods",
+    "url": "https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part11-immovable-goods/construction-services/construction-servcies.pdf",
+    "final": "https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part11-immovable-goods/construction-services/construction-servcies.pdf",
+    "path": "C/immovable-goods/construction-servcies.pdf",
+    "sha256": "a714dc8c0584f578b4ea4b97bc8ef849a28649fdfff18d5e580a48a29054ccc5",
+    "bytes": 2113439,
+    "status": "ok",
+    "date": "2026-09-25"
+  },
+  {
+    "folder": "C/immovable-goods",
+    "url": "https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part11-immovable-goods/fixtures-and-fittings/fixtures-and-fittings.pdf",
+    "final": "https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part11-immovable-goods/fixtures-and-fittings/fixtures-and-fittings.pdf",
+    "path": "C/immovable-goods/fixtures-and-fittings.pdf",
+    "sha256": "db73a90b700db4cf0c564048f942272d896694ab8ff59ba462a20cb0c77f3dfc",
+    "bytes": 487039,
+    "status": "ok",
+    "date": "2026-09-25"
+  },
+  {
+    "folder": "C/immovable-goods",
+    "url": "https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part11-immovable-goods/heat-pump-heating-systems/heat-pump-heating-systems.pdf",
+    "final": "https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part11-immovable-goods/heat-pump-heating-systems/heat-pump-heating-systems.pdf",
+    "path": "C/immovable-goods/heat-pump-heating-systems.pdf",
+    "sha256": "668c850c1c350b958766485a7c73fc835dd5db641c9f47be2751d21f1d74fd9d",
+    "bytes": 439888,
+    "status": "ok",
+    "date": "2026-09-25"
+  },
+  {
+    "folder": "C/immovable-goods",
+    "url": "https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part11-immovable-goods/letting-of-immovable-goods/letting-of-immovable-goods.pdf",
+    "final": "https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part11-immovable-goods/letting-of-immovable-goods/letting-of-immovable-goods.pdf",
+    "path": "C/immovable-goods/letting-of-immovable-goods.pdf",
+    "sha256": "ca68ce0efe4246db0be03bbe83efe8b0b21f02cd1e6f4c51209d52448efd3681",
+    "bytes": 553840,
+    "status": "ok",
+    "date": "2026-09-25"
+  },
+  {
+    "folder": "C/immovable-goods",
+    "url": "https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part11-immovable-goods/letting-of-immovable-goods/letting-of-property-20200508103738.pdf",
+    "final": "https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part11-immovable-goods/letting-of-immovable-goods/letting-of-property-20200508103738.pdf",
+    "path": "C/immovable-goods/letting-of-property-20200508103738.pdf",
+    "sha256": "0124bd44dcd5f76cfba0124e62bb542cbe629794cb69d85e648669ccf710ae20",
+    "bytes": 646913,
+    "status": "ok",
+    "date": "2026-09-25"
+  },
+  {
+    "folder": "C/immovable-goods",
+    "url": "https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part11-immovable-goods/mortgagees-in-possession-and-asset-receivers/mortgagees-in-possession-and-asset-receivers.pdf",
+    "final": "https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part11-immovable-goods/mortgagees-in-possession-and-asset-receivers/mortgagees-in-possession-and-asset-receivers.pdf",
+    "path": "C/immovable-goods/mortgagees-in-possession-and-asset-receivers.pdf",
+    "sha256": "8a910780b5865b978a4672a17a64eddc03d7fbfc2fd63a3267e9bb2f98c92334",
+    "bytes": 140605,
+    "status": "ok",
+    "date": "2026-09-25"
+  },
+  {
+    "folder": "C/immovable-goods",
+    "url": "https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part11-immovable-goods/non-business-use-of-property/non-business-use-of-property.pdf",
+    "final": "https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part11-immovable-goods/non-business-use-of-property/non-business-use-of-property.pdf",
+    "path": "C/immovable-goods/non-business-use-of-property.pdf",
+    "sha256": "65ea786792bbf0811d8243e44fb1d11a383c37d35f91916130b5aa06234c155f",
+    "bytes": 137183,
+    "status": "ok",
+    "date": "2026-09-25"
+  },
+  {
+    "folder": "C/immovable-goods",
+    "url": "https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part11-immovable-goods/property-developers-renting-out-residential-properties/property-developers-renting-out-residential-properties.pdf",
+    "final": "https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part11-immovable-goods/property-developers-renting-out-residential-properties/property-developers-renting-out-residential-properties.pdf",
+    "path": "C/immovable-goods/property-developers-renting-out-residential-properties.pdf",
+    "sha256": "7251cd4232862c2e2ff671805d0e8ecb80671b67e4b281d41ffb62aab2590216",
+    "bytes": 101995,
+    "status": "ok",
+    "date": "2026-09-25"
+  },
+  {
+    "folder": "C/immovable-goods",
+    "url": "https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part11-immovable-goods/rent-to-buy-scheme/rent-to-buy.pdf",
+    "final": "https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part11-immovable-goods/rent-to-buy-scheme/rent-to-buy.pdf",
+    "path": "C/immovable-goods/rent-to-buy.pdf",
+    "sha256": "79715c3af051daf580179387c8e2e7f6876f1c7de60e882d6e788c5ed0fa8a4f",
+    "bytes": 488104,
+    "status": "ok",
+    "date": "2026-09-25"
+  },
+  {
+    "folder": "C/immovable-goods",
+    "url": "https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part11-immovable-goods/supply-of-property/supply-and-construction-of-qualifying-apartments-and-apartment-blocks.pdf",
+    "final": "https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part11-immovable-goods/supply-of-property/supply-and-construction-of-qualifying-apartments-and-apartment-blocks.pdf",
+    "path": "C/immovable-goods/supply-and-construction-of-qualifying-apartments-and-apartment-blocks.pdf",
+    "sha256": "7476479b68f983d68fc3abf416ae8e6d616b2cfede0c613f05f60cff5409c218",
+    "bytes": 570348,
+    "status": "ok",
+    "date": "2026-09-25"
+  },
+  {
+    "folder": "C/immovable-goods",
+    "url": "https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part11-immovable-goods/supply-of-property/supply-of-property.pdf",
+    "final": "https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part11-immovable-goods/supply-of-property/supply-of-property.pdf",
+    "path": "C/immovable-goods/supply-of-property.pdf",
+    "sha256": "c09ba513e73b6391ef2e7d3eab843f3dd688f6ffdf9d43a183be7e825f0b9d6e",
+    "bytes": 576501,
+    "status": "ok",
+    "date": "2026-09-25"
+  },
+  {
+    "folder": "C/immovable-goods",
+    "url": "https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part11-immovable-goods/supply-of-property/vat-rate-for-qualifying-apartments.pdf",
+    "final": "https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part11-immovable-goods/supply-of-property/vat-rate-for-qualifying-apartments.pdf",
+    "path": "C/immovable-goods/vat-rate-for-qualifying-apartments.pdf",
+    "sha256": "b0127dc66e8d00ad136a668c20413ccd2d5b2514dcf610c0f06634f4b19cbb8d",
+    "bytes": 520042,
+    "status": "ok",
+    "date": "2026-09-25"
+  },
+  {
+    "folder": "C/immovable-goods",
+    "url": "https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part11-immovable-goods/transitional-measures/transitional-measures-applying-to-legacy-leases.pdf",
+    "final": "https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part11-immovable-goods/transitional-measures/transitional-measures-applying-to-legacy-leases.pdf",
+    "path": "C/immovable-goods/transitional-measures-applying-to-legacy-leases.pdf",
+    "sha256": "53dfab207deff22512b5e1e95e7e49597fc453836f709d2261c4fdbbdf6847f9",
+    "bytes": 2556181,
+    "status": "ok",
+    "date": "2026-09-25"
+  },
+  {
+    "folder": "C/immovable-goods",
+    "url": "https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part11-immovable-goods/transitional-measures/transitional-properties-freehold-or-freehold-equivalent-interests.pdf",
+    "final": "https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part11-immovable-goods/transitional-measures/transitional-properties-freehold-or-freehold-equivalent-interests.pdf",
+    "path": "C/immovable-goods/transitional-properties-freehold-or-freehold-equivalent-interests.pdf",
+    "sha256": "da955682789d10b20aa4df97b87b249b956d2850cc959bfa56eb7fffa3a8c3af",
+    "bytes": 505582,
+    "status": "ok",
+    "date": "2026-09-25"
+  },
+  {
+    "folder": "C/immovable-goods",
+    "url": "https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part11-immovable-goods/transitional-measures/waiver-of-exemption-transitional-measures.pdf",
+    "final": "https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part11-immovable-goods/transitional-measures/waiver-of-exemption-transitional-measures.pdf",
+    "path": "C/immovable-goods/waiver-of-exemption-transitional-measures.pdf",
+    "sha256": "ea5335f6d5512baed814a583ed63d95a6969ec6930d332d7577b441db904017d",
+    "bytes": 85364,
+    "status": "ok",
+    "date": "2026-09-25"
+  },
+  {
+    "folder": "C/construction-reverse-charge",
+    "url": "https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part11-immovable-goods/construction-services/construction-servcies.pdf",
+    "final": "https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part11-immovable-goods/construction-services/construction-servcies.pdf",
+    "path": "C/construction-reverse-charge/construction-servcies.pdf",
+    "sha256": "a714dc8c0584f578b4ea4b97bc8ef849a28649fdfff18d5e580a48a29054ccc5",
+    "bytes": 2113439,
+    "status": "ok",
+    "date": "2026-09-25"
+  },
+  {
+    "folder": "C/construction-reverse-charge",
+    "url": "https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part11-immovable-goods/construction-services/construction-services.pdf",
+    "status": "not-pdf",
+    "ctype": "text/html; charset=utf-8"
+  },
+  {
+    "folder": "C/postponed-accounting",
+    "url": "https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part07-provisions-relating-to-imports-exports/postponed-accounting.pdf",
+    "final": "https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part07-provisions-relating-to-imports-exports/postponed-accounting.pdf",
+    "path": "C/postponed-accounting/postponed-accounting.pdf",
+    "sha256": "06aee148bcd37bc81569a5eb7095acea71b90564641549de9a7279636d6da9c4",
+    "bytes": 2070188,
+    "status": "ok",
+    "date": "2026-09-25"
+  },
+  {
+    "folder": "C/postponed-accounting",
+    "url": "https://www.revenue.ie/en/tax-professionals/tdm/customs/import-export-policy/customs-manual-on-import-vat.pdf",
+    "final": "https://www.revenue.ie/en/tax-professionals/tdm/customs/import-export-policy/customs-manual-on-import-vat.pdf",
+    "path": "C/postponed-accounting/customs-manual-on-import-vat.pdf",
+    "sha256": "763edff5cb4e380c9bdb8a64c1854925c979d634c2d1fce3d368b0092df6eef0",
+    "bytes": 1380982,
+    "status": "ok",
+    "date": "2026-09-25"
+  },
+  {
+    "folder": "C/vies",
+    "url": "https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/vat-information-exchange-system-VIES/vies-traders-manual.pdf",
+    "final": "https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/vat-information-exchange-system-VIES/vies-traders-manual.pdf",
+    "path": "C/vies/vies-traders-manual.pdf",
+    "sha256": "3b819c57d0f860bc35f5aa1b214fd5f7b7761e7a6b07b9e0d63bc4f0fa0268c3",
+    "bytes": 1766656,
+    "status": "ok",
+    "date": "2026-09-25"
+  },
+  {
+    "folder": "C/vat3-rtd",
+    "url": "https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part09-obligations-accountable-persons/return/VAT-RTD-S76.pdf",
+    "final": "https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part09-obligations-accountable-persons/return/VAT-RTD-S76.pdf",
+    "path": "C/vat3-rtd/VAT-RTD-S76.pdf",
+    "sha256": "2f817bbc57a3b85b1effe1128e70babd2c75413cb4c0a362a1efbf0a5241d91e",
+    "bytes": 683786,
+    "status": "ok",
+    "date": "2026-09-25"
+  },
+  {
+    "folder": "C/cash-receipts",
+    "url": "https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part09-obligations-accountable-persons/records/obligations-records-cash-registers.pdf",
+    "final": "https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part09-obligations-accountable-persons/records/obligations-records-cash-registers.pdf",
+    "path": "C/cash-receipts/obligations-records-cash-registers.pdf",
+    "sha256": "d9dd3f9fcb573ddc151c33fabf4fb01b8f9134fa35d1de50cb4239e085947646",
+    "bytes": 116874,
+    "status": "ok",
+    "date": "2026-09-25"
+  },
+  {
+    "folder": "C/cash-receipts",
+    "url": "https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part03-taxable-transactions-goods-ica-services/Goods/retailers-special-schemes.pdf",
+    "final": "https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part03-taxable-transactions-goods-ica-services/Goods/retailers-special-schemes.pdf",
+    "path": "C/cash-receipts/retailers-special-schemes.pdf",
+    "sha256": "dccaff1e174acb15724839b1eb22538a28c439b818a3705936fea31ee3284e9c",
+    "bytes": 170955,
+    "status": "ok",
+    "date": "2026-09-25"
+  },
+  {
+    "folder": "C/margin-schemes",
+    "url": "https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part03-taxable-transactions-goods-ica-services/Goods/goods-second-hand-goods.pdf",
+    "final": "https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part03-taxable-transactions-goods-ica-services/Goods/goods-second-hand-goods.pdf",
+    "path": "C/margin-schemes/goods-second-hand-goods.pdf",
+    "sha256": "1c97dc66bf177f6bc34060e9896002f523917e767fbb73249a1286409c851d15",
+    "bytes": 2197726,
+    "status": "ok",
+    "date": "2026-09-25"
+  },
+  {
+    "folder": "C/margin-schemes",
+    "url": "https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part10-special-schemes/services-auctioneers-margin-scheme/services-auctioneers-margin-scheme.pdf",
+    "final": "https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part10-special-schemes/services-auctioneers-margin-scheme/services-auctioneers-margin-scheme.pdf",
+    "path": "C/margin-schemes/services-auctioneers-margin-scheme.pdf",
+    "sha256": "57b41de00f3a4948a3c2056e46b93547370303079a276079ffd061518403e3d8",
+    "bytes": 135856,
+    "status": "ok",
+    "date": "2026-09-25"
+  },
+  {
+    "folder": "C/margin-schemes",
+    "url": "https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part10-special-schemes/travel-agents-margin-scheme/travel-agents-margin-scheme.pdf",
+    "status": "not-pdf",
+    "ctype": "text/html; charset=utf-8"
+  },
+  {
+    "folder": "C/vouchers",
+    "url": "https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part05-taxable-amount/single-purpose-vouchers-and-multi-purpose-vouchers/single-purpose-vouchers-and-multi-purpose-vouchers.pdf",
+    "final": "https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part05-taxable-amount/single-purpose-vouchers-and-multi-purpose-vouchers/single-purpose-vouchers-and-multi-purpose-vouchers.pdf",
+    "path": "C/vouchers/single-purpose-vouchers-and-multi-purpose-vouchers.pdf",
+    "sha256": "9d20e9b4b8ea1aba2bb012be5c8d9e243b26ab735cdca7c8e656c1ba6823e593",
+    "bytes": 181593,
+    "status": "ok",
+    "date": "2026-09-25"
+  },
+  {
+    "folder": "C/vouchers",
+    "url": "https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part05-taxable-amount/vouchers-excluding-single-purpose-vouchers-and-multi-purpose-vouchers/vat-treatment-of-vouchers.pdf",
+    "final": "https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part05-taxable-amount/vouchers-excluding-single-purpose-vouchers-and-multi-purpose-vouchers/vat-treatment-of-vouchers.pdf",
+    "path": "C/vouchers/vat-treatment-of-vouchers.pdf",
+    "sha256": "b89fc2b4f06406779d7c63072defd9e8c34bcbb715d1c98eb4038249c73dc726",
+    "bytes": 128049,
+    "status": "ok",
+    "date": "2026-09-25"
+  },
+  {
+    "folder": "G",
+    "url": "https://www.revenue.ie/en/tax-professionals/tdm/income-tax-capital-gains-tax-corporation-tax/part-38/38-02-01.pdf",
+    "final": "https://www.revenue.ie/en/tax-professionals/tdm/income-tax-capital-gains-tax-corporation-tax/part-38/38-02-01.pdf",
+    "path": "G/38-02-01.pdf",
+    "sha256": "410334c1a8744bf5a15844d9367dcd87dd677df0194b8721505ef3441c7af7ef",
+    "bytes": 452959,
+    "status": "ok",
+    "date": "2026-09-25"
+  },
+  {
+    "folder": "G",
+    "url": "https://www.revenue.ie/en/tax-professionals/tdm/income-tax-capital-gains-tax-corporation-tax/part-38/38-02-01J.pdf",
+    "final": "https://www.revenue.ie/en/tax-professionals/tdm/income-tax-capital-gains-tax-corporation-tax/part-38/38-02-01J.pdf",
+    "path": "G/38-02-01J.pdf",
+    "sha256": "a9aa409e1569b76eefa91dbb8b144676854d2a68773a569d01254669a0afb668",
+    "bytes": 1214729,
+    "status": "ok",
+    "date": "2026-09-25"
+  },
+  {
+    "folder": "G",
+    "url": "https://www.revenue.ie/en/tax-professionals/tdm/income-tax-capital-gains-tax-corporation-tax/part-38/38-01-04j.pdf",
+    "final": "https://www.revenue.ie/en/tax-professionals/tdm/income-tax-capital-gains-tax-corporation-tax/part-38/38-01-04j.pdf",
+    "path": "G/38-01-04j.pdf",
+    "sha256": "3613c8db5ea3f6388233cc8483407d5c0401360d2f4aa9d19ace6d01d1656aa6",
+    "bytes": 4804398,
+    "status": "ok",
+    "date": "2026-09-25"
+  },
+  {
+    "folder": "G",
+    "url": "https://www.revenue.ie/en/tax-professionals/tdm/income-tax-capital-gains-tax-corporation-tax/part-38/38-01-04J.pdf",
+    "final": "https://www.revenue.ie/en/tax-professionals/tdm/income-tax-capital-gains-tax-corporation-tax/part-38/38-01-04J.pdf",
+    "path": "G/38-01-04J.pdf",
+    "sha256": "3613c8db5ea3f6388233cc8483407d5c0401360d2f4aa9d19ace6d01d1656aa6",
+    "bytes": 4804398,
+    "status": "ok",
+    "date": "2026-09-25"
+  },
+  {
+    "folder": "G",
+    "url": "https://www.revenue.ie/en/tax-professionals/tdm/income-tax-capital-gains-tax-corporation-tax/part-47/47-06-01.pdf",
+    "final": "https://www.revenue.ie/en/tax-professionals/tdm/income-tax-capital-gains-tax-corporation-tax/part-47/47-06-01.pdf",
+    "path": "G/47-06-01.pdf",
+    "sha256": "3f847903d53ceb6f793f5a4a6de16d015331a4f97139830519887ba2c2482aa1",
+    "bytes": 158375,
+    "status": "ok",
+    "date": "2026-09-25"
+  },
+  {
+    "folder": "G",
+    "url": "https://www.revenue.ie/en/tax-professionals/tdm/income-tax-capital-gains-tax-corporation-tax/part-43/43-00-03.pdf",
+    "final": "https://www.revenue.ie/en/tax-professionals/tdm-wm/income-tax-capital-gains-tax-corporation-tax/part-43/43-00-03.pdf",
+    "path": "G/43-00-03.pdf",
+    "sha256": "94f906cbf20b6e614332835260427e18b4e97f4b27d39f29e58254b9d051f03d",
+    "bytes": 710097,
+    "status": "ok",
+    "date": "2026-09-25"
+  },
+  {
+    "folder": "G",
+    "url": "https://www.revenue.ie/en/tax-professionals/tdm-wm/income-tax-capital-gains-tax-corporation-tax/part-43/43-00-03.pdf",
+    "final": "https://www.revenue.ie/en/tax-professionals/tdm-wm/income-tax-capital-gains-tax-corporation-tax/part-43/43-00-03.pdf",
+    "path": "G/43-00-03.pdf",
+    "sha256": "94f906cbf20b6e614332835260427e18b4e97f4b27d39f29e58254b9d051f03d",
+    "bytes": 710097,
+    "status": "ok",
+    "date": "2026-09-25"
+  },
+  {
+    "folder": "C/cash-receipts",
+    "url": "https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part09-obligations-accountable-persons/records/eu-cross-border-payments-reporting-requirement-for-payment-service-providers.pdf",
+    "final": "https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part09-obligations-accountable-persons/records/eu-cross-border-payments-reporting-requirement-for-payment-service-providers.pdf",
+    "path": "C/cash-receipts/eu-cross-border-payments-reporting-requirement-for-payment-service-providers.pdf",
+    "sha256": "db461b9964462101755bdfee2b93fe6f0ea7c51b2f94d1be44411fa82eeaaffc",
+    "bytes": 475018,
+    "status": "ok",
+    "date": "2026-09-25"
+  },
+  {
+    "folder": "C/cash-receipts",
+    "url": "https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part09-obligations-accountable-persons/records/obligations-records-requirement-to-furnish-certain-information.pdf",
+    "final": "https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part09-obligations-accountable-persons/records/obligations-records-requirement-to-furnish-certain-information.pdf",
+    "path": "C/cash-receipts/obligations-records-requirement-to-furnish-certain-information.pdf",
+    "sha256": "a439a8c84b856627810fb38f5c4502889b55df24ea8bfa80ee5a5a199496bba6",
+    "bytes": 122014,
+    "status": "ok",
+    "date": "2026-09-25"
+  },
+  {
+    "folder": "C/cash-receipts",
+    "url": "https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part09-obligations-accountable-persons/records/preventing-detecting-and-combatting-vat-fraud.pdf",
+    "final": "https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part09-obligations-accountable-persons/records/preventing-detecting-and-combatting-vat-fraud.pdf",
+    "path": "C/cash-receipts/preventing-detecting-and-combatting-vat-fraud.pdf",
+    "sha256": "dcff2290223724986b84977a75f3eeb959e25d235933a41df628fd05465d6405",
+    "bytes": 1580274,
+    "status": "ok",
+    "date": "2026-09-25"
+  },
+  {
+    "folder": "C/cash-receipts",
+    "url": "https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part09-obligations-accountable-persons/records/obligations-records-protect-your-business-from-vat-fraud.pdf",
+    "final": "https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part09-obligations-accountable-persons/records/obligations-records-protect-your-business-from-vat-fraud.pdf",
+    "path": "C/cash-receipts/obligations-records-protect-your-business-from-vat-fraud.pdf",
+    "sha256": "3c1eb223ec5526238a7d6f2fe5c018c547b15c6da680deca31740a2c450894ca",
+    "bytes": 112559,
+    "status": "ok",
+    "date": "2026-09-25"
+  },
+  {
+    "folder": "C/cash-receipts",
+    "url": "https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part09-obligations-accountable-persons/records/obligations-records-requirement-to-issue-a-document.pdf",
+    "final": "https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part09-obligations-accountable-persons/records/obligations-records-requirement-to-issue-a-document.pdf",
+    "path": "C/cash-receipts/obligations-records-requirement-to-issue-a-document.pdf",
+    "sha256": "b91a57718d42827ebbbdd934428db83cef9671505f3a3e1c4901f0918310e0ad",
+    "bytes": 113029,
+    "status": "ok",
+    "date": "2026-09-25"
+  },
+  {
+    "folder": "C/vat3-rtd",
+    "url": "https://www.revenue.ie/en/vat/accounting-for-vat/how-to-account-for-value-added-tax/completing-vat3-return.aspx",
+    "final": "https://www.revenue.ie/en/vat/accounting-for-vat/how-to-account-for-value-added-tax/completing-vat3-return.aspx",
+    "path": "C/vat3-rtd/completing-vat3-return.html",
+    "sha256": "9b3da7b934cdb3b9ad07b99597c972b3841a25af7689a44a88f3445f5fd4a667",
+    "bytes": 68792,
+    "status": "ok",
+    "date": "2026-09-25"
+  },
+  {
+    "folder": "C/vat3-rtd",
+    "url": "https://www.revenue.ie/en/vat/accounting-for-vat/how-to-account-for-value-added-tax/index.aspx",
+    "final": "https://www.revenue.ie/en/vat/accounting-for-vat/how-to-account-for-value-added-tax/index.aspx",
+    "path": "C/vat3-rtd/index.html",
+    "sha256": "5bebc30de6ca38ca0a145de01bdc5d0d431c02559a80713f044d32c93d260f90",
+    "bytes": 63598,
+    "status": "ok",
+    "date": "2026-09-25"
+  },
+  {
+    "folder": "C/cash-receipts",
+    "url": "https://www.revenue.ie/en/starting-a-business/paying-your-tax/moneys-received-basis-of-accounting.aspx",
+    "final": "https://www.revenue.ie/en/starting-a-business/paying-your-tax/moneys-received/index.aspx",
+    "path": "C/cash-receipts/moneys-received-basis-of-accounting.html",
+    "sha256": "deedcfe21737b27f4209a0d2b9f705254bd623dd7a5e5e64d235f0d9a4d6a4ab",
+    "bytes": 60779,
+    "status": "ok",
+    "date": "2026-09-25"
+  },
+  {
+    "folder": "C/cash-receipts",
+    "url": "https://www.revenue.ie/en/vat/accounting-for-vat/accounting-for-vat-on-moneys-received/index.aspx",
+    "final": "https://www.revenue.ie/en/vat/accounting-for-vat/accounting-for-vat-on-moneys-received/index.aspx",
+    "path": "C/cash-receipts/index.html",
+    "sha256": "55bf2ac2644bc1e6a54380019ad21680268c7f07b481f31e4c2ed416898d9475",
+    "bytes": 66164,
+    "status": "ok",
+    "date": "2026-09-25"
+  },
+  {
+    "folder": "C/cash-receipts",
+    "url": "https://www.revenue.ie/en/vat/accounting-for-vat/accounting-for-vat-on-moneys-received/who-can-opt-moneys-received-basis.aspx",
+    "final": "https://www.revenue.ie/en/vat/accounting-for-vat/accounting-for-vat-on-moneys-received/who-can-opt-moneys-received-basis.aspx",
+    "path": "C/cash-receipts/who-can-opt-moneys-received-basis.html",
+    "sha256": "9700e4eae0a1b09b62a833d0b6d2675b09b5b2b31e0763589ace16cdfdf9959b",
+    "bytes": 67545,
+    "status": "ok",
+    "date": "2026-09-25"
+  },
+  {
+    "folder": "C/cash-receipts",
+    "url": "https://www.revenue.ie/en/vat/accounting-for-vat/accounting-for-vat-on-moneys-received/sums-included-money-received-basis.aspx",
+    "final": "https://www.revenue.ie/en/vat/accounting-for-vat/accounting-for-vat-on-moneys-received/sums-included-money-received-basis.aspx",
+    "path": "C/cash-receipts/sums-included-money-received-basis.html",
+    "sha256": "161f981b6f8b1a3bb1319c337badbc4841159980e9f31fbebfa33041780debe1",
+    "bytes": 70911,
+    "status": "ok",
+    "date": "2026-09-25"
+  },
+  {
+    "folder": "C/postponed-accounting",
+    "url": "https://www.revenue.ie/en/vat/goods-and-services-to-and-from-abroad/imports/postponed-accounting.aspx",
+    "final": "https://www.revenue.ie/en/vat/goods-and-services-to-and-from-abroad/imports/postponed-accounting.aspx",
+    "path": "C/postponed-accounting/postponed-accounting.html",
+    "sha256": "dc1fdb049d8a0ef6935786db9ab7fd2aebdaea491de782a10ba4512449dc8c70",
+    "bytes": 68277,
+    "status": "ok",
+    "date": "2026-09-25"
+  },
+  {
+    "folder": "C/vies",
+    "url": "https://www.revenue.ie/en/vat/goods-and-services-to-and-from-abroad/acquisitions-from-other-eu-member-states/vies-and-intrastat.aspx",
+    "final": "https://www.revenue.ie/en/vat/goods-and-services-to-and-from-abroad/acquisitions-from-other-eu-member-states/vies-and-intrastat.aspx",
+    "path": "C/vies/vies-and-intrastat.html",
+    "sha256": "f45fc02534d60dd42c513114ade310e90a9fa533aeabb561a47e924f645c59ce",
+    "bytes": 70131,
+    "status": "ok",
+    "date": "2026-09-25"
+  },
+  {
+    "folder": "C/financial-services",
+    "url": "https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part03-taxable-transactions-goods-ica-services/Financial-Services/index.aspx",
+    "final": "https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part03-taxable-transactions-goods-ica-services/Financial-Services/index.aspx",
+    "path": "C/financial-services/index.html",
+    "sha256": "d19719540fdc0a3090bc7c0df3924be6bb50a7041b30e270ed1eb804b3767548",
+    "bytes": 85532,
+    "status": "ok",
+    "date": "2026-09-25"
+  },
+  {
+    "folder": "C/immovable-goods",
+    "url": "https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part11-immovable-goods/index.aspx",
+    "final": "https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part11-immovable-goods/index.aspx",
+    "path": "C/immovable-goods/index.html",
+    "sha256": "79ab950e6021a36cafc7b58ae17253c9fe23ad090392b476c1fac6fb9b22dfa3",
+    "bytes": 66193,
+    "status": "ok",
+    "date": "2026-09-25"
+  },
+  {
+    "folder": "H/cro",
+    "url": "https://cro.ie/annual-return/annual-return-date/",
+    "status": "fail",
+    "error": "HTTP Error 403: Forbidden"
+  },
+  {
+    "folder": "H/cro",
+    "url": "https://cro.ie/annual-return/annual-return-date/bringing-forward-ard/",
+    "status": "fail",
+    "error": "HTTP Error 403: Forbidden"
+  },
+  {
+    "folder": "H/cro",
+    "url": "https://cro.ie/annual-return/annual-return-date/extending-the-ard/",
+    "status": "fail",
+    "error": "HTTP Error 403: Forbidden"
+  },
+  {
+    "folder": "H/cro",
+    "url": "https://cro.ie/annual-return/financial-year-end-date/",
+    "status": "fail",
+    "error": "HTTP Error 403: Forbidden"
+  },
+  {
+    "folder": "H/cro",
+    "url": "https://cro.ie/annual-return/filing-an-annual-return/common-errors/common-errors-form-b1/",
+    "status": "fail",
+    "error": "HTTP Error 403: Forbidden"
+  },
+  {
+    "folder": "H/cro",
+    "url": "https://cro.ie/annual-return/filing-an-annual-return/peak-filing/",
+    "status": "fail",
+    "error": "HTTP Error 403: Forbidden"
+  },
+  {
+    "folder": "H/cro",
+    "url": "https://cro.ie/wp-content/uploads/2024/06/Info-Leaflet-23.pdf",
+    "status": "fail",
+    "error": "HTTP Error 403: Forbidden"
+  },
+  {
+    "folder": "H/cro",
+    "url": "https://cro.ie/wp-content/uploads/2024/06/Info-Leaflet-16.pdf",
+    "status": "fail",
+    "error": "HTTP Error 403: Forbidden"
+  }
+]
