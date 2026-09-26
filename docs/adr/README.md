@@ -31,3 +31,5 @@ date it was written, not the date the decision was first taken.
 | [0005](0005-effective-dated-configuration.md) | Configuration is effective-dated, never overwritten | Accepted |
 | [0006](0006-local-single-user-auth.md) | Local accounts per install; no workspace concept | Superseded by 0007 |
 | [0007](0007-roles-and-membership-in-a-local-book.md) | Roles and business membership within a local book | Accepted |
+| [0008](0008-journal-lines-snapshot-account-identity.md) | A journal line snapshots the account it was posted to | Accepted |
+| [0009](0009-workflows-own-the-schedule-ledger-owns-the-facts.md) | Engine workflows own the schedule; the ledger owns the facts | Accepted |
