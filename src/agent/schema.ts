@@ -385,3 +385,28 @@ export const installRulePackInput = z.object({
 
 export type EnsureDefaultAccountsInput = z.infer<typeof ensureDefaultAccountsInput>;
 export type InstallRulePackInput = z.infer<typeof installRulePackInput>;
+
+// ---- Users and roles (issue #298) ----
+
+import { ROLES } from '@/domain/auth/permissions';
+
+export const inviteUserInput = z.object({
+  companyId: z.string(),
+  username: z.string().min(2).max(40),
+  role: z.enum(ROLES),
+  displayName: z.string().optional(),
+});
+
+export const userRefInput = z.object({
+  companyId: z.string(),
+  /** A username or a user id. */
+  user: z.string().min(1),
+});
+
+export const setUserRoleInput = userRefInput.extend({
+  role: z.enum(ROLES),
+});
+
+export type InviteUserInput = z.infer<typeof inviteUserInput>;
+export type UserRefInput = z.infer<typeof userRefInput>;
+export type SetUserRoleInput = z.infer<typeof setUserRoleInput>;

@@ -36,6 +36,9 @@ import {
 } from '@/agent/books';
 import { scanAnomaliesCli, listReviewQueueCli } from '@/agent/review';
 import {
+  listUsersCli, listRolesCli, inviteUserCli, removeUserCli, setUserRoleCli, resetUserPasswordCli,
+} from '@/agent/users';
+import {
   showDocumentCli, confirmDocumentCli, lineChoicesCli, postDocumentCli, settleCli, traceCli,
 } from '@/agent/consolidate';
 import { suggestVatTreatment } from '@/domain/rules/vatSuggestion';
@@ -88,6 +91,9 @@ import {
   reverseJournalCliInput,
   scanAnomaliesCliInput,
   listReviewQueueInput,
+  inviteUserInput,
+  userRefInput,
+  setUserRoleInput,
   listPartiesInput,
   ensureDefaultAccountsInput,
   installRulePackInput,
@@ -104,6 +110,14 @@ Commands:
   list-chart                             List chart of accounts (code, name, type)
   list-vat-treatments                    List VAT treatments (code, name, jurisdiction)
   list-reconciliations                   Past reconciliation records
+  list-users                             The book's users and their roles
+  list-roles                             The roles and what each may do
+  invite-user --username <name> --role <role> [--display-name "..."]
+                                         Create a user with a one-time password
+  remove-user (--user <name>)            Remove a user's access to the book
+  set-user-role --user <name> --role <role>
+                                         Change what a user may do
+  reset-user-password --user <name>      Issue a fresh one-time password
   import    --account <id> --file <path> Import a statement (CSV/XLSX)
   auto-classify --account <id>           Classify unclassified txns from rules
   classify --transaction <id>            Manually classify + post a transaction
@@ -430,6 +444,55 @@ export async function main(argv: string[], options: CliOptions = {}): Promise<nu
 
       case 'list-reconciliations': {
         print(listReconciliations(db, companyId), format);
+        return 0;
+      }
+
+      case 'list-users': {
+        print(listUsersCli(db), format);
+        return 0;
+      }
+
+      case 'list-roles': {
+        print(listRolesCli(), format);
+        return 0;
+      }
+
+      case 'invite-user': {
+        const parsed = inviteUserInput.parse({
+          companyId,
+          username: requireFlag(flags, 'username'),
+          role: requireFlag(flags, 'role'),
+          displayName: getFlag(flags, 'display-name'),
+        });
+        print(inviteUserCli(db, parsed), format);
+        return 0;
+      }
+
+      case 'remove-user': {
+        const parsed = userRefInput.parse({
+          companyId,
+          user: requireFlag(flags, 'user', 'username'),
+        });
+        print(removeUserCli(db, parsed), format);
+        return 0;
+      }
+
+      case 'set-user-role': {
+        const parsed = setUserRoleInput.parse({
+          companyId,
+          user: requireFlag(flags, 'user', 'username'),
+          role: requireFlag(flags, 'role'),
+        });
+        print(setUserRoleCli(db, parsed), format);
+        return 0;
+      }
+
+      case 'reset-user-password': {
+        const parsed = userRefInput.parse({
+          companyId,
+          user: requireFlag(flags, 'user', 'username'),
+        });
+        print(resetUserPasswordCli(db, parsed), format);
         return 0;
       }
 
