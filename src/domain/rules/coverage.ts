@@ -157,8 +157,11 @@ export function expectedCoverageRows(params: { root: string; treatmentCodes: str
  * Treatment code -> the rule keys whose binding can produce it. A binding's
  * code can depend on the counterparty's country and on the date (a Schedule
  * 3 rate), so each rule is asked for an EU, a non-EU and an Irish
- * counterparty on dates either side of each rate change.
+ * counterparty on dates either side of each rate change, and with the
+ * customs-entry markers an import binding reads.
  */
+/** Customs-entry markers a binding may read (the import choice, issue #207). */
+const SAMPLE_DESCRIPTIONS = ['', 'IEPOSTPONED', 'B00'];
 const SAMPLE_DATES = ['2021-06-01', '2024-06-01', '2025-06-01', '2025-11-01', '2026-06-01', '2026-09-01', '2031-06-01'];
 
 export function producibleTreatments(): Map<string, Set<string>> {
@@ -166,8 +169,8 @@ export function producibleTreatments(): Map<string, Set<string>> {
   for (const binding of RULE_TREATMENT_BINDINGS) {
     for (const key of binding.ruleKeys) {
       for (const country of ['DE', 'US', 'IE']) {
-        for (const transactionDate of SAMPLE_DATES) {
-          const code = binding.treatmentCode({ counterpartyCountry: country, transactionDate } as never, key);
+        for (const transactionDate of SAMPLE_DATES) for (const description of SAMPLE_DESCRIPTIONS) {
+          const code = binding.treatmentCode({ counterpartyCountry: country, transactionDate, description } as never, key);
           if (!code) continue;
           const keys = out.get(code) ?? new Set<string>();
           keys.add(key);

@@ -38,6 +38,7 @@ import { provisionCitation } from './citation';
 import { VATCA_SCHEDULE_CURATED_RULES } from './vatcaScheduleCuration';
 import { SCHEDULE_RULE_PRECEDENCE } from './vatcaScheduleParagraphRules';
 import { scheduleThreeRate } from './scheduleRates';
+import { CROSS_BORDER_GAPS, ICA_RULE_KEY, IMPORT_RULE_KEY } from './crossBorderCuration';
 import { S46_FAMILY_SCHEDULE_REF } from './vatcaRevisedCuration';
 
 export type TransactionDirection = 'purchase' | 'sale';
@@ -66,6 +67,8 @@ export interface TreatmentBinding {
   treatmentCode: (ctx: SuggestionFacts, ruleKey: string) => string | null;
   /** Why the binding yields no treatment, when `treatmentCode` returns null. */
   gap?: string | ((ctx: SuggestionFacts, ruleKey: string) => string);
+  /** Treatments to offer the person when the binding yields none (the import choice, issue #207). */
+  offer?: string[];
 }
 
 export function bindingGap(binding: TreatmentBinding, ctx: SuggestionFacts, ruleKey: string): string | undefined {
@@ -106,6 +109,24 @@ export const RULE_TREATMENT_BINDINGS: TreatmentBinding[] = [
     gap: 'Whether loan or overdraft interest is exempt cannot be confirmed: Schedule 1 para 6(1) no longer lists '
       + 'granting credit (words deleted by Finance (No. 2) Act 2023 s.63), and where they went is not in the '
       + 'repository. Choose the treatment manually.',
+  },
+  // Cross-border (issue #207): an acquisition is decided; an import from the customs
+  // entry's own markers; the place-of-supply exceptions, distance sales, s.10 and
+  // s.35 are flagged with why, and outrank the general s.34(a) and s.12 rules.
+  { ruleKeys: [ICA_RULE_KEY], direction: 'purchase', treatmentCode: () => 'EU_GOODS_ACQ' },
+  {
+    ruleKeys: [IMPORT_RULE_KEY],
+    direction: 'purchase',
+    treatmentCode: (f) => (/\b(IEPOSTPONED|1A05)\b/i.test(String(f.description ?? '')) ? 'IMPORT_PA'
+      : /\bB00\b/.test(String(f.description ?? '')) ? 'IMPORT_VAT_PAID' : null),
+    gap: CROSS_BORDER_GAPS[IMPORT_RULE_KEY],
+    offer: ['IMPORT_PA', 'IMPORT_VAT_PAID'],
+  },
+  {
+    ruleKeys: Object.keys(CROSS_BORDER_GAPS).filter((k) => k !== IMPORT_RULE_KEY),
+    direction: 'either',
+    treatmentCode: () => null,
+    gap: (_f, key) => CROSS_BORDER_GAPS[key]!,
   },
   // A service sold to a business established abroad is supplied there, not here (s.34(a)).
   {
@@ -236,6 +257,8 @@ export interface VatSuggestion {
   agreesWithBooked: boolean | null;
   /** Always true today: no statutory rule is approved yet. */
   reviewRequired: boolean;
+  /** Treatment codes to offer when the rule matched but the evidence cannot choose between them (the import entry, issue #207). */
+  offeredTreatmentCodes: string[];
   explanation: string;
 }
 
@@ -458,6 +481,7 @@ export function suggestFromFacts(
     facts,
     factSources,
     reviewRequired: true,
+    offeredTreatmentCodes: [] as string[],
   };
 
   if (countStatutoryRules(db, params.companyId) === 0) {
@@ -539,6 +563,7 @@ export function suggestFromFacts(
   if (code === null) {
     return {
       ...base, status: 'no_treatment', ruleRateBasisPoints, decidingRule, supportingRules,
+      offeredTreatmentCodes: decision.binding.offer ?? [],
       unresolvedFields: lookup.unresolvedFields,
       reviewReasons: [...reviewReasons, gap ?? 'No treatment is configured for this rule.'],
       explanation: `Rule "${decidingRule!.ruleName}" (${where}) matched, but it maps to no configured VAT treatment. `
@@ -576,6 +601,13 @@ export function suggestFromFacts(
     );
   }
 
+  if (decision.rule.ruleKey === 'vat.zero_rate_export_outside_community') {
+    reviewReasons.push(
+      'Zero-rating an export needs proof that the goods were transported outside the EU (Sch.2 para 3(1)): the '
+      + 'customs export declaration (its MRN) and the transport documents. The customer\'s country is not proof; '
+      + 'without it the sale is taxable here.',
+    );
+  }
   const fallbackOnly = decision.rule.ruleKey === 'vat.rate_standard_current';
   if (fallbackOnly) {
     reviewReasons.push(

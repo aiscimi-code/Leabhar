@@ -52,7 +52,8 @@ export type VatScopeTreatment = 'IE_EXEMPT' | 'OUT_OF_SCOPE';
 
 export interface CuratedVatScopeRule {
   /** Source citation, as ingested. */
-  citation: '2010 Act 31 Sch.1' | '2010 Act 31 s.2' | '2010 Act 31 s.3' | '2010 Act 31 s.34' | 'VATCA 2010 s.47';
+  citation: '2010 Act 31 Sch.1' | '2010 Act 31 s.2' | '2010 Act 31 s.3' | '2010 Act 31 s.34' | 'VATCA 2010 s.47'
+    | '2010 Act 31 s.9' | '2010 Act 31 s.10' | '2010 Act 31 s.35' | 'VATCA 2010 s.30';
   /** Schedule paragraph or section number, matched against `irish_act_provisions.section_number`. */
   sectionNumber: string;
   ruleKey: string;

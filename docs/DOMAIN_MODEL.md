@@ -496,6 +496,28 @@ is stored as evidence, with the number checked and VIES's consultation number:
 - **Invalid:** removes it as evidence.
 - **Unavailable** (service error, offline): stored as such, never as valid.
 
+### Cross-border supplies
+
+The cross-border rules (`crossBorderCuration.ts`) read two derived facts:
+whether the counterparty is confirmed as established outside the State, and
+whether its country is an EU Member State. Only one of them decides a
+treatment; the others flag the line and say why.
+
+- **Intra-Community acquisition (s.9):** goods from a supplier confirmed as
+  established in another Member State get `EU_GOODS_ACQ`.
+- **Importation (s.3):** the customs import entry decides, not the invoice.
+  "IEPOSTPONED" (code 1A05) means `IMPORT_PA`, and tax type B00 means
+  `IMPORT_VAT_PAID`. Without an entry, both treatments are offered and neither
+  is chosen.
+- **Place-of-supply exceptions (s.34(c), (d), (g), (i), (k), (kc)):**
+  property, passenger transport, events, catering, short-term hire, and
+  e-services to consumers. These outrank s.34(a) and s.12. The line is
+  flagged, because where the thing happened is not on every line.
+- **Also flagged:** distance sales (s.30), s.10 installed goods and energy, and
+  s.35 hire.
+- **Exports:** a zero-rated export always carries a reason asking for proof that
+  the goods left the EU. The customer's country is not that proof.
+
 ### Posting paths are atomic
 
 Every exported posting path — classify, reclassify, split journal,

@@ -140,6 +140,13 @@ export function documentLineChoices(db: AppDatabase, params: { companyId: string
       offer(statutory.treatment, statutory.explanation,
         [statutory.decidingRule?.ruleKey, ...statutory.supportingRules.map((r) => r.ruleKey)].filter((k): k is string => !!k));
     }
+    // 1b. The treatments a matched rule leaves to the evidence (an import: the customs entry decides).
+    if (statutory.status === 'no_treatment') {
+      for (const code of statutory.offeredTreatmentCodes) {
+        offer(treatmentByCode(code), statutory.reviewReasons.at(-1) ?? statutory.explanation,
+          statutory.decidingRule ? [statutory.decidingRule.ruleKey] : []);
+      }
+    }
     // 2. What was confirmed for this party before.
     if (partyDefault) offer(partyDefault, `Previously confirmed for ${party!.name}.`);
     // 3. The rate printed on the line (a domestic rate; a charged rate means VAT was charged).

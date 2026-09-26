@@ -15,6 +15,7 @@
  * for a topic, the result says so — it does not fall back to guessing.
  */
 import { eq, and } from 'drizzle-orm';
+import { EU_COUNTRY_CODES } from '../extraction/vatNumbers';
 import type { AppDatabase } from '@/db';
 import { irishTaxRules, irishActProvisions, irishKnowledgeSources, companies } from '@/db/schema';
 import type { IrishRuleException } from '@/db/schema';
@@ -140,12 +141,23 @@ export function isValidIsoCountryCode(code: string): boolean {
  *    the previous calendar year" turnover test (issue #136 bug 2 / #137) as
  *    a single field the registration-threshold rules can condition on.
  */
+const EU_MEMBER_STATES = new Set<string>(EU_COUNTRY_CODES);
+
 export function normaliseTransactionContext(input: TransactionContext): TransactionContext {
   const supplierCountry = input.supplierCountry && isValidIsoCountryCode(input.supplierCountry)
     ? input.supplierCountry.toUpperCase()
     : (input.supplierCountry ? null : input.supplierCountry);
 
   const supplierEstablishedOutsideStateResolved = input.supplierEstablishedOutsideState ?? null;
+  // The other party's confirmed establishment, and — only once it is
+  // established abroad — whether that is another Member State (issue #207).
+  const direction = input.direction as string | undefined;
+  const counterpartyEstablishedOutsideState = direction === 'purchase' ? supplierEstablishedOutsideStateResolved
+    : direction === 'sale' ? (input.customerEstablishedOutsideState ?? null) : null;
+  const counterpartyCountry = (direction === 'sale' ? input.customerCountry : supplierCountry) as string | null | undefined;
+  const counterpartyInEu = counterpartyCountry
+    ? EU_MEMBER_STATES.has(String(counterpartyCountry).toUpperCase()) && String(counterpartyCountry).toUpperCase() !== 'IE'
+    : null;
 
   const turnoverFigures = [input.annualTurnoverCurrentYearMinor, input.annualTurnoverPreviousYearMinor]
     .filter((v): v is number => typeof v === 'number' && Number.isFinite(v));
@@ -155,6 +167,8 @@ export function normaliseTransactionContext(input: TransactionContext): Transact
     transactionDate: input.transactionDate,
     supplierCountry,
     supplierEstablishedOutsideStateResolved,
+    counterpartyEstablishedOutsideState,
+    counterpartyInEu,
     ...(turnoverFigures.length > 0 ? { annualTurnoverMaxMinor: Math.max(...turnoverFigures) } : {}),
   };
 }
