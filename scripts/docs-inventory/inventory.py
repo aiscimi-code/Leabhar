@@ -69,7 +69,7 @@ for f in files:
     rows.append((f, os.path.getsize(f), cls, why))
 
 with open('docs/docs-inventory.csv', 'w', newline='') as h:
-    w = csv.writer(h)
+    w = csv.writer(h, lineterminator='\n')
     w.writerow(['path', 'bytes', 'class', 'why'])
     w.writerows(rows)
 
