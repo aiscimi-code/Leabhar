@@ -141,6 +141,16 @@ export const INPUT_RECOVERY_CURATED_RULES: CuratedVatScopeRule[] = [
       + 'it, credits another rate, or shows no VAT (creditNoteFindings).',
   }),
   rule({
+    citation: '2010 Act 31 s.61', sectionNumber: '61', ruleKey: 'vat.dual_use_apportionment',
+    name: 'VAT on costs used for both taxable and exempt supplies is deductible in proportion (s.61)',
+    statementExcerpt: 'person in a taxable period shall be calculated on the basis of the ratio which the',
+    conditions: [],
+    crossReferences: ['S.I. 639/2010 reg.17 (review period adjustment)'],
+    vatEffect: 'Deductible only in the proportion of deductible supplies, by default on turnover for the accounting year.',
+    interpretationNote: 'No conditions: citable, never matched. Validating a VAT period computes the turnover proportion '
+      + 'and flags it when the company makes both exempt and taxable supplies (apportionmentFindings).',
+  }),
+  rule({
     citation: 'VATCA 2010 s.69', sectionNumber: '69', ruleKey: 'vat.invoice_tax_stated_in_error',
     name: 'An invoice stating more tax than is due, or a credit note stating less: the issuer is liable for the difference (s.69(1))',
     statementExcerpt: 'invoice stating a greater amount of tax than that properly attributable to the',

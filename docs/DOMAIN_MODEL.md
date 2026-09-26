@@ -673,6 +673,24 @@ Without VAT there is nothing to check. A reverse charge needs no Irish VAT
 number, rate or tax on the invoice. The missing particulars also show on the
 posting screen and in `line-choices`.
 
+### Dual-use inputs (s.61)
+
+Some companies make both deductible supplies (taxable, zero-rated or abroad)
+and exempt ones. For them, VAT on costs used for both is deductible only in
+proportion, by default the turnover basis (s.61(4)):
+
+- deductible turnover over total turnover, VAT-exclusive, for the accounting
+  year;
+- computed from the posted sales;
+- outside-the-scope amounts are in neither figure.
+
+Period validation flags the proportion whenever both kinds of supply occur. In
+the last period of the accounting year it also asks for the review-period
+adjustment (S.I. 639/2010 reg.17(3)).
+
+Which costs are dual-use, and whether another basis reflects use better
+(s.61(5)), is the person's judgement.
+
 ### Credit notes and the time limit for invoices
 
 A credit note is posted in its own period and reduces the deduction by the tax
