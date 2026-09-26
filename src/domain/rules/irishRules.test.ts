@@ -89,7 +89,7 @@ describe('deriveTaxRules', () => {
   it('versions a rule instead of editing it in place when its figure changes', () => {
     deriveTaxRules(db, { companyId });
     const before = db.select().from(irishTaxRules)
-      .where(eq(irishTaxRules.ruleKey, 'usc.first_band_threshold')).all();
+      .where(eq(irishTaxRules.ruleKey, 'usc.medical_card_2pct_threshold')).all();
     expect(before).toHaveLength(1);
     const originalId = before[0]!.id;
 
@@ -101,7 +101,7 @@ describe('deriveTaxRules', () => {
     deriveTaxRules(db, { companyId, sourceId: reingest.sourceId });
 
     const after = db.select().from(irishTaxRules)
-      .where(eq(irishTaxRules.ruleKey, 'usc.first_band_threshold')).all();
+      .where(eq(irishTaxRules.ruleKey, 'usc.medical_card_2pct_threshold')).all();
     expect(after).toHaveLength(2);
     const closed = after.find((r) => r.id === originalId)!;
     const superseding = after.find((r) => r.id !== originalId)!;
@@ -121,7 +121,7 @@ describe('lookupTaxRule / listTaxRulesByTopic / listTaxRulesByCategory', () => {
   });
 
   it('finds a rule by its stable key, carrying source citation and verbatim text', () => {
-    const result = lookupTaxRule(db, { companyId, ruleKey: 'usc.first_band_threshold' });
+    const result = lookupTaxRule(db, { companyId, ruleKey: 'usc.medical_card_2pct_threshold' });
     expect(result).not.toBeNull();
     expect(result!.extractedFact).toBe('€27,382');
     expect(result!.citation).toBe('2024 Act 43');
@@ -136,13 +136,13 @@ describe('lookupTaxRule / listTaxRulesByTopic / listTaxRulesByCategory', () => {
 
   it('resolves the rule in force on a given historical date, not just "today"', () => {
     // USC threshold rule states "year of assessment 2025" -> effectiveFrom 2025-01-01.
-    expect(lookupTaxRule(db, { companyId, ruleKey: 'usc.first_band_threshold', asOfDate: '2024-12-31' })).toBeNull();
-    expect(lookupTaxRule(db, { companyId, ruleKey: 'usc.first_band_threshold', asOfDate: '2025-01-01' })).not.toBeNull();
+    expect(lookupTaxRule(db, { companyId, ruleKey: 'usc.medical_card_2pct_threshold', asOfDate: '2024-12-31' })).toBeNull();
+    expect(lookupTaxRule(db, { companyId, ruleKey: 'usc.medical_card_2pct_threshold', asOfDate: '2025-01-01' })).not.toBeNull();
   });
 
   it('lists rules by topic', () => {
     const uscRules = listTaxRulesByTopic(db, { companyId, topic: 'usc', asOfDate: '2025-06-01' });
-    expect(uscRules.map((r) => r.ruleKey)).toContain('usc.first_band_threshold');
+    expect(uscRules.map((r) => r.ruleKey)).toContain('usc.medical_card_2pct_threshold');
   });
 
   it('lists rules by provision category', () => {

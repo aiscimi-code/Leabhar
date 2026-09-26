@@ -183,7 +183,7 @@ describe('lookupTransactionRules — positive/negative/exception/boundary/effect
       companyId,
       transaction: { transactionDate: '2025-01-01', amountMinor: 100000, transactionType: 'payroll', description: 'monthly salary' },
     });
-    const usc = result.applicableRules.find((r) => r.ruleKey === 'usc.first_band_threshold');
+    const usc = result.applicableRules.find((r) => r.ruleKey === 'usc.medical_card_2pct_threshold');
     expect(usc).toBeDefined();
     expect(usc!.effect.tax).toContain('€27,382');
     expect(usc!.citation.sectionNumber).toBe('2');
@@ -195,8 +195,8 @@ describe('lookupTransactionRules — positive/negative/exception/boundary/effect
       companyId,
       transaction: { transactionDate: '2025-06-01', amountMinor: 500, transactionType: 'office_supplies', description: 'Stationery order' },
     });
-    expect(result.applicableRules.find((r) => r.ruleKey === 'usc.first_band_threshold')).toBeUndefined();
-    expect(result.applicableRules.find((r) => r.ruleKey === 'income_tax.standard_rate_threshold')).toBeUndefined();
+    expect(result.applicableRules.find((r) => r.ruleKey === 'usc.medical_card_2pct_threshold')).toBeUndefined();
+    expect(result.applicableRules.find((r) => r.ruleKey === 'income_tax.second_earner_band_increase_max')).toBeUndefined();
   });
 
   it('exception: a rule with a stated exception is never silently applied — it is flagged for review', () => {
@@ -204,7 +204,7 @@ describe('lookupTransactionRules — positive/negative/exception/boundary/effect
     // does not yet parse exception clauses), so this asserts the *mechanism*:
     // seed one directly and confirm the lookup surfaces it rather than ignoring it.
     const rule = db.select().from(irishTaxRules)
-      .where(eq(irishTaxRules.ruleKey, 'usc.first_band_threshold')).get()!;
+      .where(eq(irishTaxRules.ruleKey, 'usc.medical_card_2pct_threshold')).get()!;
     db.update(irishTaxRules)
       .set({ exceptions: [{ condition: 'medical card holders', effect: 'reduced rate applies instead' }] })
       .where(eq(irishTaxRules.id, rule.id)).run();
@@ -213,7 +213,7 @@ describe('lookupTransactionRules — positive/negative/exception/boundary/effect
       companyId,
       transaction: { transactionDate: '2025-06-01', amountMinor: 100000, transactionType: 'payroll' },
     });
-    const usc = result.applicableRules.find((r) => r.ruleKey === 'usc.first_band_threshold')!;
+    const usc = result.applicableRules.find((r) => r.ruleKey === 'usc.medical_card_2pct_threshold')!;
     expect(usc.exceptions).toHaveLength(1);
     expect(result.reviewRequired).toBe(true);
     expect(result.reviewReasons.join(' ')).toMatch(/exception/);
@@ -228,8 +228,8 @@ describe('lookupTransactionRules — positive/negative/exception/boundary/effect
       companyId,
       transaction: { transactionDate: '2025-01-01', amountMinor: 100000, transactionType: 'payroll' },
     });
-    expect(dayBefore.applicableRules.find((r) => r.ruleKey === 'usc.first_band_threshold')).toBeUndefined();
-    expect(dayOf.applicableRules.find((r) => r.ruleKey === 'usc.first_band_threshold')).toBeDefined();
+    expect(dayBefore.applicableRules.find((r) => r.ruleKey === 'usc.medical_card_2pct_threshold')).toBeUndefined();
+    expect(dayOf.applicableRules.find((r) => r.ruleKey === 'usc.medical_card_2pct_threshold')).toBeDefined();
   });
 
   it('effective-date: a long-past historical transaction resolves against no rule from this Act', () => {
@@ -237,7 +237,7 @@ describe('lookupTransactionRules — positive/negative/exception/boundary/effect
       companyId,
       transaction: { transactionDate: '2010-01-01', amountMinor: 100000, transactionType: 'payroll' },
     });
-    expect(result.applicableRules.find((r) => r.ruleKey === 'usc.first_band_threshold')).toBeUndefined();
+    expect(result.applicableRules.find((r) => r.ruleKey === 'usc.medical_card_2pct_threshold')).toBeUndefined();
   });
 });
 

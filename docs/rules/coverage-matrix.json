@@ -2162,9 +2162,13 @@
       "id": "tca:s15",
       "area": "tca_section",
       "title": "TCA 1997 s15",
-      "status": "deferred",
-      "issue": 212,
-      "reason": "Not yet ruled."
+      "status": "rule",
+      "ruleKeys": [
+        "income_tax.band_single",
+        "income_tax.band_single_parent",
+        "income_tax.band_married",
+        "income_tax.rate_higher"
+      ]
     },
     {
       "id": "tca:s18",
@@ -2380,17 +2384,24 @@
       "id": "tca:s472AB",
       "area": "tca_section",
       "title": "TCA 1997 s472AB",
-      "status": "deferred",
-      "issue": 212,
-      "reason": "Not yet ruled."
+      "status": "rule",
+      "ruleKeys": [
+        "income_tax.earned_income_credit"
+      ]
     },
     {
       "id": "tca:part18D",
       "area": "tca_section",
       "title": "TCA 1997 part18D",
-      "status": "deferred",
-      "issue": 212,
-      "reason": "Not yet ruled."
+      "status": "rule",
+      "ruleKeys": [
+        "usc.band_05pct",
+        "usc.band_2pct",
+        "usc.band_3pct",
+        "usc.rate_top",
+        "usc.exemption_threshold",
+        "usc.surcharge_non_paye"
+      ]
     },
     {
       "id": "tca:part41A",
@@ -3080,7 +3091,7 @@
       "title": "Finance Act 2024 s.2 — USC bands",
       "status": "rule",
       "ruleKeys": [
-        "usc.first_band_threshold"
+        "usc.medical_card_2pct_threshold"
       ]
     },
     {
@@ -3089,7 +3100,18 @@
       "title": "Finance Act 2024 s.3 — income tax standard rate band",
       "status": "rule",
       "ruleKeys": [
-        "income_tax.standard_rate_threshold"
+        "income_tax.second_earner_band_increase_max",
+        "income_tax.personal_credit_single",
+        "income_tax.personal_credit_married"
+      ]
+    },
+    {
+      "id": "swca2005:s21",
+      "area": "other_source",
+      "title": "SWCA 2005 s.21 (LRC revised) — self-employment (Class S) contribution rates",
+      "status": "rule",
+      "ruleKeys": [
+        "prsi.class_s_rate"
       ]
     },
     {

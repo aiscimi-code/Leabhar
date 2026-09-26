@@ -231,7 +231,7 @@ export const irishTaxRules = sqliteTable('irish_tax_rules', {
   taxRateId: text('tax_rate_id').references(() => taxRates.id),
   vatTreatmentId: text('vat_treatment_id').references(() => vatTreatments.id),
 
-  /** Stable key for deterministic lookup, e.g. "usc.first_band_threshold". */
+  /** Stable key for deterministic lookup, e.g. "usc.medical_card_2pct_threshold". */
   ruleKey: text('rule_key').notNull(),
   ruleType: text('rule_type', { enum: IRISH_RULE_TYPES }).notNull().default('other'),
   /** Broad subject the rule speaks to, e.g. "business_expense", "usc". Defaults to the provision's category. */

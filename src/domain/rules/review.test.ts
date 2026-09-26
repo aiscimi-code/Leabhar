@@ -19,7 +19,7 @@ beforeEach(() => {
   ingestFinanceAct2024(db, { companyId, markdown, ingestVersion: 'v1' });
   deriveTaxRules(db, { companyId });
   ruleId = db.select({ id: irishTaxRules.id }).from(irishTaxRules)
-    .where(eq(irishTaxRules.ruleKey, 'usc.first_band_threshold')).get()!.id;
+    .where(eq(irishTaxRules.ruleKey, 'usc.medical_card_2pct_threshold')).get()!.id;
 });
 
 describe('setRuleReviewStatus', () => {
