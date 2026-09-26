@@ -25,6 +25,7 @@ export interface ProfitAndLoss {
   operatingExpenses: Explained;
   operatingProfit: Explained;
   otherIncome: Explained;
+  financeCosts: Explained;
   netProfit: Explained;
 }
 
@@ -110,20 +111,30 @@ export function profitAndLoss(
     method: 'Income not arising from trading, including foreign exchange differences.',
   });
 
+  // Financing costs sit below operating profit (issue #358): the cost of
+  // servicing borrowings is not the cost of running the business, and an
+  // account put here is excluded from operating profit on purpose.
+  const financeCosts = sumExplained({
+    label: 'Finance costs', currency, components: bySection('finance_costs'), asOf: params.to,
+    method: 'The interest and financing charges charged to finance cost accounts in the period.',
+  });
+
   const netProfit = explained({
     label: 'Net profit',
-    valueMinor: operatingProfit.valueMinor + otherIncome.valueMinor,
+    valueMinor: operatingProfit.valueMinor + otherIncome.valueMinor - financeCosts.valueMinor,
     currency, asOf: params.to,
-    method: 'Operating profit plus other income. This is the accounting profit, which '
-      + 'is not the same as taxable profit — see the tax computation for the bridge '
-      + 'between them.',
-    components: [operatingProfit, otherIncome],
+    method: 'Operating profit plus other income, less finance costs. This is the accounting '
+      + 'profit, which is not the same as taxable profit — see the tax computation for the '
+      + 'bridge between them.',
+    components: financeCosts.valueMinor === 0
+      ? [operatingProfit, otherIncome]
+      : [operatingProfit, otherIncome, financeCosts],
   });
 
   return {
     companyId: params.companyId, from: params.from, to: params.to, currency,
     revenue, costOfSales, grossProfit, operatingExpenses, operatingProfit,
-    otherIncome, netProfit,
+    otherIncome, financeCosts, netProfit,
   };
 }
 
@@ -135,6 +146,7 @@ export interface BalanceSheet {
   currentAssets: Explained;
   totalAssets: Explained;
   currentLiabilities: Explained;
+  longTermLiabilities: Explained;
   totalLiabilities: Explained;
   netAssets: Explained;
   shareCapital: Explained;
@@ -207,12 +219,24 @@ export function balanceSheet(
     method: 'Amounts owed to suppliers, VAT, tax, and the director’s current account.',
   });
 
+  // Non-current liabilities (issue #358): term loans and anything else not
+  // payable within twelve months. Before this section existed such accounts
+  // had to be filed under current liabilities to appear at all.
+  const longTermLiabilities = sumExplained({
+    label: 'Non-current liabilities', currency,
+    components: section('long_term_liabilities'), asOf: params.asOf,
+    method: 'Amounts owed that are not payable within the next twelve months, such as '
+      + 'the non-current portion of term loans.',
+  });
+
   const totalLiabilities = explained({
     label: 'Total liabilities',
-    valueMinor: currentLiabilities.valueMinor,
+    valueMinor: currentLiabilities.valueMinor + longTermLiabilities.valueMinor,
     currency, asOf: params.asOf,
-    method: 'Current liabilities.',
-    components: [currentLiabilities],
+    method: 'Current liabilities plus non-current liabilities.',
+    components: longTermLiabilities.valueMinor === 0
+      ? [currentLiabilities]
+      : [currentLiabilities, longTermLiabilities],
   });
 
   const netAssets = explained({
@@ -292,7 +316,7 @@ export function balanceSheet(
   return {
     companyId: params.companyId, asOf: params.asOf, currency,
     fixedAssets, currentAssets, totalAssets,
-    currentLiabilities, totalLiabilities, netAssets,
+    currentLiabilities, longTermLiabilities, totalLiabilities, netAssets,
     shareCapital, retainedEarnings, profitForPeriod, totalEquity,
     differenceMinor,
     balances: differenceMinor === 0,

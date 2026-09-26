@@ -18,6 +18,7 @@ import { agedAnalysis } from '@/domain/invoicing/payments';
 import { reconcileBankAccount, reconciliationHistory } from '@/domain/banking/reconciliation';
 import { search } from '@/domain/search/search';
 import { suggestVatTreatment } from '@/domain/rules/vatSuggestion';
+import { listAccountMappings } from '@/domain/config/accountMappings';
 import { verifyStatuteFile } from '@/domain/rules/knowledgeBase';
 import { documentReviewValues } from '@/domain/documents/review';
 import { transactionTrace } from '@/domain/consolidation/trace';
@@ -425,6 +426,13 @@ export function chartOfAccounts() {
   return db.select().from(accounts)
     .where(eq(accounts.companyId, company.id))
     .orderBy(accounts.code).all();
+}
+
+/** External chart mappings (issue #362), with each account's code and name. */
+export function externalAccountMappings() {
+  const db = getDb();
+  const company = requireCompany();
+  return listAccountMappings(db, { companyId: company.id });
 }
 
 export function taxRateList() {

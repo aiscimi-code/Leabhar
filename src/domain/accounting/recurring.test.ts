@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { and, eq } from 'drizzle-orm';
 import { createTestDatabase } from '@/db/testing';
 import { createCompany } from '../config/setup';
-import { updateAccount } from '../config/mutations';
+import { archiveAccount } from '../config/mutations';
 import {
   createRecurringJournal, updateRecurringJournal, deactivateRecurringJournal,
   postDueRecurringJournals, dueOccurrenceDates, listRecurringJournals,
@@ -87,10 +87,8 @@ describe('createRecurringJournal', () => {
   });
 
   it('refuses an inactive account and an end date before the start', () => {
-    updateAccount(db, {
-      companyId,
-      accountId: byCode['6120']!,
-      changes: { active: false },
+    archiveAccount(db, {
+      companyId, accountId: byCode['6120']!, reason: 'No longer rented',
     });
 
     expect(() => rentTemplate({
@@ -223,8 +221,8 @@ describe('postDueRecurringJournals', () => {
         { accountId: byCode['1010']!, creditMinor: 10_000 },
       ],
     });
-    updateAccount(db, {
-      companyId, accountId: byCode['6120']!, changes: { active: false },
+    archiveAccount(db, {
+      companyId, accountId: byCode['6120']!, reason: 'No longer rented',
     });
 
     expect(() => postDueRecurringJournals(db, {
