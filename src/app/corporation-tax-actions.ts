@@ -3,13 +3,14 @@
 import { revalidatePath } from 'next/cache';
 import { getDb } from '@/db';
 import { requireCompany } from '@/lib/queries';
-import { actorName } from '@/lib/session';
+import { requireActor, actorName } from '@/lib/session';
 import { recordCtDecision, type CtSubjectType } from '@/domain/corporationTax/computation';
 import type { ActionResult } from './settings-actions';
 
 /** A person's choice on a corporation tax treatment the computation only suggested (issue #211). */
 export async function recordCtDecisionAction(formData: FormData): Promise<ActionResult> {
   try {
+    await requireActor('ct.decisions');
     const company = requireCompany();
     const field = (key: string) => String(formData.get(key) ?? '').trim();
     const subjectType = field('subjectType');

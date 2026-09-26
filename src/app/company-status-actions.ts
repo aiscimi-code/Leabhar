@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { getDb } from '@/db';
 import { requireCompany } from '@/lib/queries';
-import { actorName } from '@/lib/session';
+import { requireActor, actorName } from '@/lib/session';
 import { confirmRctPrincipal, recordCashBasisAuthorisation } from '@/domain/config/companyStatus';
 import type { ActionResult } from './settings-actions';
 
@@ -18,6 +18,7 @@ const fail = (error: unknown): ActionResult => ({ ok: false, error: error instan
 
 export async function confirmRctPrincipalAction(formData: FormData): Promise<ActionResult> {
   try {
+    await requireActor('company.manage');
     const company = requireCompany();
     const status = field(formData, 'status');
     if (status !== 'principal' && status !== 'not_principal') return { ok: false, error: 'Choose whether the company is a principal.' };
@@ -34,6 +35,7 @@ export async function confirmRctPrincipalAction(formData: FormData): Promise<Act
 
 export async function recordCashBasisAuthorisationAction(formData: FormData): Promise<ActionResult> {
   try {
+    await requireActor('company.manage');
     const company = requireCompany();
     const eligibility = field(formData, 'eligibility');
     if (eligibility !== 'turnover_threshold' && eligibility !== 'supplies_to_unregistered') {

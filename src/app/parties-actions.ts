@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { getDb } from '@/db';
 import { requireCompany } from '@/lib/queries';
-import { actorName } from '@/lib/session';
+import { requireActor, actorName } from '@/lib/session';
 import {
   confirmEstablishment, confirmCustomerTaxableStatus, checkVatNumberWithVies, type PartyKind,
 } from '@/domain/parties/status';
@@ -22,6 +22,7 @@ const fail = (error: unknown): ActionResult => ({ ok: false, error: error instan
 
 export async function confirmEstablishmentAction(formData: FormData): Promise<ActionResult> {
   try {
+    await requireActor('parties.manage');
     const company = requireCompany();
     const party = kindOf(formData);
     const partyId = field(formData, 'partyId');
@@ -42,6 +43,7 @@ export async function confirmEstablishmentAction(formData: FormData): Promise<Ac
 
 export async function confirmTaxableStatusAction(formData: FormData): Promise<ActionResult> {
   try {
+    await requireActor('parties.manage');
     const company = requireCompany();
     const customerId = field(formData, 'partyId');
     const taxableStatus = field(formData, 'taxableStatus');
@@ -58,6 +60,7 @@ export async function confirmTaxableStatusAction(formData: FormData): Promise<Ac
 
 export async function checkViesAction(formData: FormData): Promise<ActionResult> {
   try {
+    await requireActor('books.read');
     const company = requireCompany();
     const party = kindOf(formData);
     const partyId = field(formData, 'partyId');

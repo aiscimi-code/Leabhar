@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { getDb } from '@/db';
 import { requireCompany } from '@/lib/queries';
-import { actorName } from '@/lib/session';
+import { requireActor, actorName } from '@/lib/session';
 import { parseAmount, parseRate } from '@/domain/money';
 import {
   registerCapitalGood, recordIntervalUse, recordCapitalGoodDisposal, postCapitalGoodAdjustment,
@@ -23,6 +23,7 @@ const done = (message: string): ActionResult => { revalidatePath('/capital-goods
 
 export async function registerCapitalGoodAction(formData: FormData): Promise<ActionResult> {
   try {
+    await requireActor('capital_goods.manage');
     const company = requireCompany();
     const kind = field(formData, 'kind');
     if (kind !== 'acquisition_or_development' && kind !== 'refurbishment') return { ok: false, error: 'Choose what kind of capital good it is.' };
@@ -39,6 +40,7 @@ export async function registerCapitalGoodAction(formData: FormData): Promise<Act
 
 export async function recordIntervalAction(formData: FormData): Promise<ActionResult> {
   try {
+    await requireActor('capital_goods.manage');
     const company = requireCompany();
     const notUsed = field(formData, 'notUsed') === 'on';
     const row = recordIntervalUse(getDb(), {
@@ -51,6 +53,7 @@ export async function recordIntervalAction(formData: FormData): Promise<ActionRe
 
 export async function recordDisposalAction(formData: FormData): Promise<ActionResult> {
   try {
+    await requireActor('capital_goods.manage');
     const company = requireCompany();
     const r = recordCapitalGoodDisposal(getDb(), {
       companyId: company.id, capitalGoodId: field(formData, 'capitalGoodId'), disposedOn: field(formData, 'date'),
@@ -62,6 +65,7 @@ export async function recordDisposalAction(formData: FormData): Promise<ActionRe
 
 export async function postCgsAdjustmentAction(formData: FormData): Promise<ActionResult> {
   try {
+    await requireActor('vat.file');
     const company = requireCompany();
     const accountId = field(formData, 'accountId');
     const postedBy = await actorName();
