@@ -305,6 +305,19 @@ function postDocumentAsInvoiceSteps(db: AppDatabase, input: PostDocumentInput): 
   // not the rate they give (or they cannot say), flagged for review — the
   // invoice figures are kept as printed (issue #205).
   const choices = documentLineChoices(db, { companyId: input.companyId, documentId: doc.id });
+  // What the invoice says against itself or the parties' records (issue #207).
+  for (const conflict of choices.conflicts) {
+    upsertReviewItem(db, {
+      companyId: input.companyId,
+      kind: 'uncertain_vat_treatment',
+      severity: 'warning',
+      title: `"${doc.originalFilename}": ${conflict.code.replace(/_/g, ' ')}`,
+      detail: conflict.message,
+      entityType: 'invoice',
+      entityId: created.invoiceId,
+      dedupeKey: `invoice:${created.invoiceId}:conflict:${conflict.code}`,
+    });
+  }
   for (const choice of choices.lines) {
     const check = choice.rateCheck;
     if (check.outcome === 'consistent') continue;

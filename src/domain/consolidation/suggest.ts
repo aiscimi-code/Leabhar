@@ -8,6 +8,7 @@ import { suggestFromFacts, applyEstablishment, applyCustomerStatus, type Suggest
 import { documentEvidenceLines, type EvidenceLine } from './postDocument';
 import { checkLineRate, type LineRateCheck } from '../rules/lineRateCheck';
 import { applyCompositeSupply } from './compositeSupply';
+import { invoiceConflicts, type InvoiceConflict } from './invoiceConflicts';
 
 /**
  * The choices for coding each line of a confirmed document (issue #203).
@@ -48,6 +49,8 @@ const EU = new Set<string>(EU_COUNTRY_CODES);
 export function documentLineChoices(db: AppDatabase, params: { companyId: string; documentId: string }): {
   direction: 'sales' | 'purchase';
   lines: LineChoices[];
+  /** What the invoice says against itself or the parties' records (issue #207); while any is open nothing is pre-selected. */
+  conflicts: InvoiceConflict[];
 } {
   const { document: doc, direction, lines } = documentEvidenceLines(db, params);
   const company = db.select().from(companies).where(eq(companies.id, params.companyId)).get()!;
@@ -174,6 +177,9 @@ export function documentLineChoices(db: AppDatabase, params: { companyId: string
         : country && country !== 'IE' ? 'NON_EU_SERVICES_RCV' : 'RC_CONSTRUCTION';
       offer(treatmentByCode(code), `The invoice states: "${reverseChargeLegend}".`);
     }
+    // Which reverse charge rests on where the supplier is established, not its country (issue #207).
+    const rcUnconfirmed = !!reverseChargeLegend && !isSale && country !== null && country !== 'IE'
+      && party?.establishment !== 'outside_state';
     if (exemptLegend) offer(treatmentByCode('IE_EXEMPT'), `The invoice states: "${exemptLegend}".`);
 
     const rateCheck = checkLineRate(db, {
@@ -189,6 +195,10 @@ export function documentLineChoices(db: AppDatabase, params: { companyId: string
       flags.push(`No rate is configured on ${onDate} for ${[...missingRates].join(', ')}. Add the historical rate `
         + 'under Rates and treatments before posting a document from that date.');
     }
+    if (rcUnconfirmed) {
+      flags.push(`The reverse charge offered from the invoice wording rests on the ${partyLabel}'s country (${country}); `
+        + 'where it is established has not been confirmed on its record.');
+    }
     if (list.length === 0) flags.push('Nothing on the document or in the rules points to a treatment. Choose one.');
     if (list.length > 1) flags.push(`${list.length} treatments are possible. Read the reason for each and choose.`);
     if (statutory.status === 'fallback_only') flags.push('The statutory rules could only fall back to the standard rate; they cannot rule out an exemption.');
@@ -197,7 +207,7 @@ export function documentLineChoices(db: AppDatabase, params: { companyId: string
       ? 'The document prints no lines, so this line is its VAT analysis for one rate.'
       : 'The document prints no lines or VAT analysis, so this is its header total.');
 
-    const agreed = list.length === 1 && statutory.status !== 'fallback_only' ? list[0]!.treatmentId : null;
+    const agreed = list.length === 1 && statutory.status !== 'fallback_only' && !rcUnconfirmed ? list[0]!.treatmentId : null;
     const accountId = party?.defaultAccountId ?? null;
     return {
       line, options: list, preselectedTreatmentId: agreed, statutory, rateCheck, flags,
@@ -218,5 +228,26 @@ export function documentLineChoices(db: AppDatabase, params: { companyId: string
     }
     return undefined;
   };
-  return { direction, lines: applyCompositeSupply(choices, domesticTreatmentForRate) };
+  // The numbers as printed: the invoice is what is checked.
+  const customerVatNumber = doc.customerVatNumber;
+  const customerVies = isSale && party?.viesStatus && customerVatNumber
+    && party.viesCheckedVatNumber === parseVatNumber(customerVatNumber).normalised ? party.viesStatus : null;
+  const conflicts = invoiceConflicts({
+    direction,
+    documentVatMinor: doc.vatMinor,
+    lineVatMinor: lines.map((l) => l.vatMinor),
+    supplierVatNumber: doc.supplierVatNumber,
+    customerVatNumber,
+    companyVatNumber: company.vatNumber,
+    counterpartyCountry: country,
+    counterpartyEstablishment: party?.establishment ?? null,
+    customerVies,
+    legends: doc.vatLegends,
+  });
+  const coded = applyCompositeSupply(choices, domesticTreatmentForRate);
+  return {
+    direction,
+    conflicts,
+    lines: conflicts.length ? coded.map((c) => ({ ...c, preselectedTreatmentId: null })) : coded,
+  };
 }

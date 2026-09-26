@@ -518,6 +518,25 @@ treatment; the others flag the line and say why.
 - **Exports:** a zero-rated export always carries a reason asking for proof that
   the goods left the EU. The customer's country is not that proof.
 
+A confirmed invoice is checked against itself and the parties' records
+(`invoiceConflicts`). Each conflict is shown on the posting screen and in the
+CLI, and is raised as a review item when the invoice is posted. While any
+conflict is open, no line's treatment is pre-selected. The conflicts are:
+
+- VAT charged under another Member State's VAT number, or by a supplier
+  confirmed abroad without an Irish number. That is not Irish input VAT.
+- A reverse-charge legend with VAT charged.
+- A reverse charge from another Member State that does not show your VAT
+  number.
+- An invoice addressed to someone else's VAT number.
+- An EU supplier that charges no VAT and gives no reason.
+- A zero-VAT sale to another Member State that lacks the customer's VAT number
+  or the reverse-charge/intra-Community wording (SI 639/2010 reg 20(2)(e), (f)),
+  or whose customer number VIES reported invalid.
+
+A reverse charge offered from invoice wording alone is never pre-selected while
+the supplier's establishment is unconfirmed.
+
 ### Posting paths are atomic
 
 Every exported posting path — classify, reclassify, split journal,
