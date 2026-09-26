@@ -152,13 +152,13 @@ describe('registrations', () => {
     })).toThrow(/corporation tax/);
   });
 
-  it('records PAYE as a record-only fact and says so', () => {
+  it('records the PAYE employer registration payroll will run against, with no warning', () => {
     const { registration, warnings } = recordRegistration(db, {
       companyId, registrationType: 'paye', registrationNumber: '654321',
       registeredFrom: '2024-01-01', recordedBy: 'joseph',
     });
     expect(registration.registrationType).toBe('paye');
-    expect(warnings.join(' ')).toMatch(/out of scope/);
+    expect(warnings).toEqual([]);
   });
 
   it('requires a number, except for a named "other" registration', () => {
@@ -284,6 +284,11 @@ describe('closure', () => {
     expect(warnings.join(' ')).toMatch(/replaces that date/);
     const audit = events('trade_ceased_on');
     expect(audit[1]!.previousValue).toContain('2025-09-30');
+
+    // Recording the date again keeps one open item, describing the new date.
+    const open = openReviewItems().filter((r) => r.dedupeKey === `vat_registration_open_after_cease:${companyId}`);
+    expect(open).toHaveLength(1);
+    expect(open[0]!.title).toContain('2025-10-31');
   });
 });
 
@@ -351,13 +356,24 @@ describe('compliance profile', () => {
       companyId, eoriNumber: 'IE1234567A', basis: 'validated on the EU EORI portal', confirmedBy: 'joseph',
     });
     recordEuVatNumber(db, {
-      companyId, vatNumber: 'IE1234567B', registeredFrom: '2024-06-01',
+      companyId, vatNumber: 'IE1234567A', registeredFrom: '2024-06-01',
       basis: 'as issued on ROS', confirmedBy: 'joseph',
     });
     const profile = complianceProfile(db, companyId);
     expect(profile.tradingNames.map((n) => n.name)).toEqual(['Acme Tools']);
-    expect(profile.vat.euVatNumber).toBe('IE1234567B');
+    expect(profile.vat.euVatNumber).toBe('IE1234567A');
+    expect(profile.gaps.map((g) => g.code)).not.toContain('eu_vat_number_mismatch');
     expect(profile.eori).toMatchObject({ number: 'IE1234567A', confirmedBy: 'joseph' });
     expect(profile.entityType).toBe('company');
+  });
+
+  it('flags an EU VAT identification number that is not the registration number with its IE prefix', () => {
+    recordEuVatNumber(db, {
+      companyId, vatNumber: 'IE7654321B', registeredFrom: '2024-06-01',
+      basis: 'as issued on ROS', confirmedBy: 'joseph',
+    });
+    const gap = complianceProfile(db, companyId).gaps.find((g) => g.code === 'eu_vat_number_mismatch');
+    expect(gap).toMatchObject({ kind: 'check' });
+    expect(gap!.message).toContain('IE7654321B');
   });
 });

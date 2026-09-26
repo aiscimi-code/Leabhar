@@ -158,7 +158,7 @@ export function BusinessProfilePanels({ company }: { company: typeof companies.$
         title="Registrations"
         description="Income tax, PAYE, RCT and anything else the business is registered for, each from a
           date. VAT and corporation tax are recorded with the tax settings, because the books turn on
-          them everywhere. PAYE is recorded only: payroll is deliberately out of scope."
+          them everywhere. PAYE is the employer registration payroll will run against."
       >
         {profile.registrations.length === 0 ? (
           <Empty title="No registrations recorded" />

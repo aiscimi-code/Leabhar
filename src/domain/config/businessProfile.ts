@@ -96,6 +96,20 @@ function raise(
     dedupeKey: string; context?: Record<string, unknown>;
   },
 ): void {
+  // One open item per problem: recording the same fact again (a corrected
+  // cessation date, say) must not stack duplicates in the review queue. The
+  // open item is brought up to date instead, so it describes the facts as
+  // they are now recorded.
+  const open = tx.select({ id: reviewItems.id }).from(reviewItems).where(and(
+    eq(reviewItems.companyId, params.companyId), eq(reviewItems.dedupeKey, params.dedupeKey),
+    eq(reviewItems.status, 'open'),
+  )).get();
+  if (open) {
+    tx.update(reviewItems).set({
+      title: params.title, detail: params.detail, severity: params.severity, context: params.context ?? {},
+    }).where(eq(reviewItems.id, open.id)).run();
+    return;
+  }
   tx.insert(reviewItems).values({
     id: ids.reviewItem(), companyId: params.companyId,
     kind: params.kind as typeof reviewItems.$inferInsert.kind,
@@ -300,8 +314,8 @@ export function ceaseTradingActivity(db: AppDatabase, params: {
 
 /**
  * Record a registration the books need to know about: income tax (a sole
- * trader's or partnership's own), PAYE (record only — payroll is deliberately
- * out of scope), RCT, or anything else. VAT and corporation tax are not
+ * trader's or partnership's own), PAYE (the employer registration payroll
+ * runs against, EPIC 20, #315), RCT, or anything else. VAT and corporation tax are not
  * recorded here; they are dated columns on the company because VAT turns on
  * them everywhere.
  */
@@ -353,12 +367,6 @@ export function recordRegistration(db: AppDatabase, params: {
   }
 
   const warnings: string[] = [];
-  if (params.registrationType === 'paye') {
-    warnings.push(
-      'PAYE registration is recorded only. Payroll is deliberately out of scope: this application does not ' +
-      'operate PAYE, calculate it, or file anything for it. Recording it here keeps the business profile complete.',
-    );
-  }
 
   const at = nowIso();
   const registration = db.transaction((tx) => {
@@ -419,10 +427,12 @@ const EORI_PATTERN = /^[A-Z]{2}[A-Z0-9]{1,15}$/;
 
 /**
  * Record the business's VAT identification number for intra-Community
- * transactions (VIES). In Ireland this is the registration number with the
- * extra character Revenue issues for VIES, so it can differ from
- * `vatNumber` — the statement carries this one, not the registration number.
- * A person records it and says what they checked it against.
+ * transactions (VIES): the VAT registration number with its Member State
+ * prefix (`IE1234567T` for an Irish registration). It is kept beside
+ * `vatNumber` because it is what customers in other Member States quote and
+ * what VIES validates; the compliance profile flags it when it does not match
+ * the registration number. A person records it and says what they checked it
+ * against.
  */
 export function recordEuVatNumber(db: AppDatabase, params: {
   companyId: string;
@@ -742,6 +752,19 @@ export function complianceProfile(db: AppDatabase, companyId: string): Complianc
       message: 'The company is recorded as registered for VAT with no VAT number. Returns and the VIES statement ' +
         'are filed against the number.',
     });
+  }
+  const compact = (v: string) => v.replace(/\s+/g, '').toUpperCase();
+  if (company.euVatNumber && company.vatNumber) {
+    const registration = compact(company.vatNumber).replace(/^IE/, '');
+    if (compact(company.euVatNumber) !== `IE${registration}`) {
+      gaps.push({
+        code: 'eu_vat_number_mismatch',
+        kind: 'check',
+        message: `The EU VAT identification number (${company.euVatNumber}) is not the VAT registration number ` +
+          `(${company.vatNumber}) with the IE prefix. Customers in other Member States quote the identification ` +
+          'number and VIES validates it, so check which one is right.',
+      });
+    }
   }
   if (company.tradeCeasedOn && company.vatRegistrationStatus === 'registered') {
     gaps.push({

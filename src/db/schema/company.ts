@@ -263,9 +263,9 @@ export const companyTradingActivities = sqliteTable('company_trading_activities'
 
 /**
  * Tax and Revenue registrations the books need to know about (issue #297):
- * income tax (a sole trader's or partnership's own registration), PAYE
- * (record only — payroll is deliberately out of scope), RCT, and anything
- * else the business is registered for. VAT and corporation tax have their
+ * income tax (a sole trader's or partnership's own registration), PAYE (the
+ * employer registration payroll runs against, EPIC 20, #315), RCT, and
+ * anything else the business is registered for. VAT and corporation tax have their
  * own dated columns on `companies` because VAT turns on them everywhere.
  * Effective-dated like every other registration fact.
  */
