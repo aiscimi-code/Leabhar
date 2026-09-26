@@ -321,19 +321,23 @@ export const DEFAULT_ACCOUNTS: AccountSeed[] = [
 export type ChartKind = 'sm' | 'farm';
 
 /**
- * A flat-rate farmer (VATCA s.86) charges no VAT: the buyer self-accounts the
- * flat-rate addition, which is why farm income accounts default to not
- * VAT-applicable. A VAT-registered farmer turns that back on, and the
- * livestock treatment (IE_LIVESTOCK) is already there for registered sales.
+ * A flat-rate farmer (VATCA s.86) is not registered for VAT and charges none:
+ * the buyer self-accounts the flat-rate addition. So for a farm that is not
+ * VAT-registered, farm sales and contract work default to not VAT-applicable.
+ * A VAT-registered farm charges VAT on both, so those two keep the base
+ * chart's VAT setting (see `farmOverrideFor`); the livestock treatment
+ * (IE_LIVESTOCK) is there for its sales of animals. Scheme payments are
+ * outside the scope of VAT either way.
  */
 export const FARM_ACCOUNT_OVERRIDES: Record<string, Omit<AccountSeed, 'code' | 'type' | 'reportSection'>> = {
   '4000': {
     name: 'Farm sales',
     vatApplicable: false,
     description: 'Milk, livestock, crops and other produce sold. A flat-rate farmer charges '
-      + 'no VAT — the buyer self-accounts the flat-rate addition (VATCA s.86) — so this account '
-      + 'defaults to not VAT-applicable. A VAT-registered farm switches it back on, and uses the '
-      + 'livestock treatment for sales of cattle, sheep, goats, pigs and deer.',
+      + 'no VAT — the buyer self-accounts the flat-rate addition (VATCA s.86) — so for a farm '
+      + 'that is not VAT-registered this account is not VAT-applicable. A VAT-registered farm '
+      + 'charges VAT here, using the livestock treatment for sales of cattle, sheep, goats, pigs '
+      + 'and deer.',
   },
   '4010': {
     name: 'Scheme and support income',
@@ -345,7 +349,8 @@ export const FARM_ACCOUNT_OVERRIDES: Record<string, Omit<AccountSeed, 'code' | '
     name: 'Contract work and services income',
     vatApplicable: false,
     description: 'Hiring out machinery, contract rearing, silage and other services done for '
-      + 'other farmers.',
+      + 'other farmers. Within the flat-rate scheme for a farm that is not VAT-registered; '
+      + 'VAT-applicable for one that is.',
   },
   '5000': {
     name: 'Casual and seasonal labour',
@@ -358,6 +363,24 @@ export const FARM_ACCOUNT_OVERRIDES: Record<string, Omit<AccountSeed, 'code' | '
       + 'contractors, and machinery hired in.',
   },
 };
+
+/** The farm income accounts the flat-rate scheme takes out of VAT, for an unregistered farm only. */
+const FLAT_RATE_ONLY_CODES = new Set(['4000', '4020']);
+
+/**
+ * The farm override for an account code, given whether the farm is registered
+ * for VAT. A registered farm charges VAT on its sales and contract work, so
+ * those two keep the base chart's VAT setting rather than being switched off:
+ * defaulting them to out-of-scope would understate output VAT.
+ */
+export function farmOverrideFor(
+  code: string, vatRegistered: boolean,
+): Omit<AccountSeed, 'code' | 'type' | 'reportSection'> | undefined {
+  const override = FARM_ACCOUNT_OVERRIDES[code];
+  if (!override || !vatRegistered || !FLAT_RATE_ONLY_CODES.has(code)) return override;
+  const { vatApplicable: _flatRateOnly, ...rest } = override;
+  return rest;
+}
 
 /** Accounts the farm chart adds on top of the (renamed) base chart. */
 export const FARM_ACCOUNTS: AccountSeed[] = [

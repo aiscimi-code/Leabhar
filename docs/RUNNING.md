@@ -192,6 +192,20 @@ npm run cli -- list-vat-treatments                    # VAT treatments (code, na
 npm run cli -- list-reconciliations                   # past reconciliation records
 npm run cli -- list-matches [--decision pending]      # document<->bank match candidates
 
+# Users and roles (issue #298 — see docs/ROLES.md for the permission matrix)
+npm run cli -- list-users                             # the book's users and their roles
+npm run cli -- list-roles                             # the roles and what each may do
+npm run cli -- invite-user --username <name> --role <role> [--display-name "..."]
+    # creates a user with a one-time password, printed once. Hand it over out
+    # of band; they must replace it at first login.
+npm run cli -- set-user-role --user <name> --role <role>
+    # changes what a user may do; ends their sessions so it applies immediately
+npm run cli -- reset-user-password --user <name>      # a fresh one-time password
+npm run cli -- remove-user --user <name>              # ends their access completely
+    # the CLI acts as the book's active owner, through the same permission
+    # matrix, guards and audit trail as the web UI.
+
+
 # End-to-end flow
 npm run cli -- import --account <id> --file <path>    # import a statement (CSV/XLSX)
     # a "Notes"/"Narrative"/"Comments" column is auto-detected onto the

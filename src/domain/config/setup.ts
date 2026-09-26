@@ -2,11 +2,13 @@ import { and, eq } from 'drizzle-orm';
 import type { AppDatabase } from '@/db';
 import {
   companies, accounts, taxRates, vatTreatments, accountingPeriods, vatPeriods,
-  bankAccounts, loans, auditEvents, glossaryTerms,
+  bankAccounts, loans, auditEvents, glossaryTerms, companyTradingNames, users, companyMembers,
 } from '@/db/schema';
 import { ids } from '@/lib/ids';
 import { type IsoDate, asIsoDate, nowIso, today } from '../dates';
-import { DEFAULT_ACCOUNTS, FARM_ACCOUNTS, FARM_ACCOUNT_OVERRIDES, type SystemAccountKey, type ChartKind } from './chartOfAccounts';
+import {
+  DEFAULT_ACCOUNTS, FARM_ACCOUNTS, FARM_ACCOUNT_OVERRIDES, farmOverrideFor, type SystemAccountKey, type ChartKind,
+} from './chartOfAccounts';
 import { DEFAULT_TAX_RATES, DEFAULT_VAT_TREATMENTS } from './vatTreatments';
 import { generateVatPeriods, generateFinancialYear, type VatFrequency } from './periods';
 import { GLOSSARY_TERMS } from '../help/glossary';
@@ -105,12 +107,13 @@ function chartSeedFor(
 function chartSeeds(
   entityType: 'company' | 'sole_trader' | 'partnership',
   chartKind: ChartKind,
+  vatRegistered: boolean,
 ): (typeof DEFAULT_ACCOUNTS)[number][] {
   const seeds: (typeof DEFAULT_ACCOUNTS)[number][] = [];
   for (const base of DEFAULT_ACCOUNTS) {
     const seed = chartSeedFor(entityType, base);
     if (!seed) continue;
-    const override = chartKind === 'farm' ? FARM_ACCOUNT_OVERRIDES[seed.code] : undefined;
+    const override = chartKind === 'farm' ? farmOverrideFor(seed.code, vatRegistered) : undefined;
     seeds.push(override ? { ...seed, ...override } : seed);
   }
   if (chartKind === 'farm') seeds.push(...FARM_ACCOUNTS);
@@ -149,6 +152,19 @@ export function createCompany(db: AppDatabase, input: CreateCompanyInput): Creat
       isDemo: input.isDemo ?? false,
     }).run();
 
+    // The trading name given at creation is the first row of its history
+    // (issue #297), dated from the earliest date that is known for the
+    // business, so the names it has traded under are complete from day one.
+    if (input.tradingName) {
+      tx.insert(companyTradingNames).values({
+        id: ids.tradingName(),
+        companyId,
+        name: input.tradingName,
+        effectiveFrom: input.dateIncorporated ?? input.tradeCommencedOn ?? timestamp.slice(0, 10),
+        recordedBy: 'setup',
+      }).run();
+    }
+
     // ---- Chart of accounts ----
     const accountsByKey: Record<string, string> = {};
     const accountsByCode: Record<string, string> = {};
@@ -156,6 +172,7 @@ export function createCompany(db: AppDatabase, input: CreateCompanyInput): Creat
     const vatApplicableByAccount = new Map<string, boolean>();
     for (const [index, seed] of chartSeeds(
       input.entityType ?? 'company', input.chartKind ?? 'sm',
+      input.vatRegistrationStatus === 'registered',
     ).entries()) {
       const id = ids.account();
       tx.insert(accounts).values({
@@ -305,6 +322,15 @@ export function createCompany(db: AppDatabase, input: CreateCompanyInput): Creat
       reason: 'Company created with default configuration',
     }).run();
 
+    // Business membership (issue #298): a new company in the book is open to
+    // every active user of the book. Later users are added per company by
+    // inviteUser, which is also the only path that grants narrower roles.
+    for (const user of tx.select({ id: users.id }).from(users).where(eq(users.active, true)).all()) {
+      tx.insert(companyMembers).values({
+        id: ids.member(), companyId, userId: user.id,
+      }).run();
+    }
+
     return { companyId, accountsByKey, accountsByCode, ratesByCode, treatmentsByCode };
   });
 }
@@ -402,6 +428,8 @@ export function installFarmChart(
     .where(and(eq(vatTreatments.companyId, companyId), eq(vatTreatments.code, 'IE_STD'))).get()?.id;
   const outOfScopeTreatment = db.select({ id: vatTreatments.id }).from(vatTreatments)
     .where(and(eq(vatTreatments.companyId, companyId), eq(vatTreatments.code, 'OUT_OF_SCOPE'))).get()?.id;
+  const vatRegistered = db.select({ status: companies.vatRegistrationStatus }).from(companies)
+    .where(eq(companies.id, companyId)).get()?.status === 'registered';
 
   const added: string[] = [];
   const renamed: string[] = [];
@@ -432,7 +460,8 @@ export function installFarmChart(
     }
 
     const timestamp = nowIso();
-    for (const [code, override] of Object.entries(FARM_ACCOUNT_OVERRIDES)) {
+    for (const code of Object.keys(FARM_ACCOUNT_OVERRIDES)) {
+      const override = farmOverrideFor(code, vatRegistered)!;
       const existing = byCode.get(code);
       const baseSeed = DEFAULT_ACCOUNTS.find((s) => s.code === code);
       if (!existing || !baseSeed) continue;
@@ -447,9 +476,11 @@ export function installFarmChart(
         name: override.name,
         description: override.description ?? existing.description,
         vatApplicable: override.vatApplicable ?? existing.vatApplicable,
+        // Only a rename that turns VAT off rewires the default treatment; any
+        // other keeps the treatment the account already has.
         defaultVatTreatmentId: override.vatApplicable === false
           ? outOfScopeTreatment ?? existing.defaultVatTreatmentId
-          : standardTreatment ?? existing.defaultVatTreatmentId,
+          : existing.defaultVatTreatmentId,
         updatedAt: timestamp,
       }).where(eq(accounts.id, existing.id)).run();
       renamed.push(code);

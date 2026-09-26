@@ -40,6 +40,9 @@ These hold everywhere in the system. Tests enforce each one.
 Company ──┬── BankAccount ──── BankTransaction ──┐
           │                                      │
           ├── CompanyOfficer                     │ evidence of money movement
+          ├── CompanyTradingName                  │
+          ├── CompanyTradingActivity              │
+          ├── CompanyRegistration                 │
           ├── AccountingPeriod                   │
           ├── VatPeriod                          │
           └── TaxDeadline                        │
@@ -734,6 +737,40 @@ classification posts. If the transaction's own period is locked or closed the
 reclassification is refused with nothing changed — the person unlocks the
 period, or leaves the line and posts a dated adjustment in an open period. The
 new classification is never moved to another period.
+
+### The business behind the books
+
+The names a business trades under, the activities it trades in, the
+registrations it holds besides VAT and corporation tax, and its cross-border
+identifiers are all facts a person records — dated, named and audited, never
+inferred (issue #297).
+
+```
+Company ─┬── CompanyTradingName        from a date, until a date; never deleted
+         ├── CompanyTradingActivity   sector (farming, retail, …) + herd number
+         ├── CompanyRegistration     income tax, PAYE, RCT, other — from a date
+         └── (on Company)             EU VAT identification number, EORI, closure, archive
+```
+
+`companies.tradingName` stays as the current name, written in the same
+transaction as the row that set it, so screens read one value while the
+history of names stays complete.
+
+Two lifecycle ends:
+
+- **Closure.** Recording the date the trade ceased does not close anything.
+  Where the date exposes a problem — the VAT registration still open, posted
+  entries dated after it — a review item is raised for a person, never
+  decided. The VAT deregistration date is recorded only when the person
+  supplies it.
+- **Archive.** An archived business leaves the working set (it is not the
+  active company) with nothing deleted and nothing changed; bringing it back
+  is one recorded action. It is storage, not destruction.
+
+The **compliance profile** is one read of all of this: every registration
+recorded, and the gaps named (a sole trader with no income tax registration, a
+company registered for VAT with no number, a farm with no herd number). It
+assembles recorded facts; it does not fill anything in.
 
 ### VAT period lock
 
