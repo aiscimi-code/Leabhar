@@ -33,6 +33,7 @@ export const LETTING_OPTION_RESIDENTIAL_RULE_KEY = 'vat.letting_option_to_tax_re
 export const LETTING_OPTION_LANDLORD_RULE_KEY = 'vat.letting_option_to_tax_landlord';
 export const PROPERTY_SUPPLY_RULE_KEY = 'vat.supply_of_immovable_goods';
 export const JOINT_OPTION_RULE_KEY = 'vat.joint_option_for_taxation';
+export const CAPITAL_GOODS_RULE_KEY = 'vat.capital_goods_scheme';
 
 type Rule = Omit<CuratedVatScopeRule, 'ruleType' | 'topic' | 'crossReferences' | 'accountingEffect' | 'reportingEffect' | 'effectiveFrom' | 'treatment' | 'exceptions'>
   & Partial<Pick<CuratedVatScopeRule, 'crossReferences' | 'accountingEffect' | 'reportingEffect' | 'exceptions'>>;
@@ -98,7 +99,22 @@ export const PROPERTY_CURATED_RULES: CuratedVatScopeRule[] = [
     vatEffect: 'The purchaser accounts for the VAT and, where deductible, reclaims it in the same return.',
     interpretationNote: 'No treatment is configured for this reverse charge; RC_CONSTRUCTION has the same VAT3 effect.',
   }),
+  rule({
+    citation: 'VATCA 2010 s.64', sectionNumber: '64', ruleKey: CAPITAL_GOODS_RULE_KEY,
+    name: 'Property acquired, developed or refurbished: a capital good, adjusted over 20 (or 10) intervals (ss.63-64)',
+    statementExcerpt: 'refurbishment, 10 intervals,',
+    conditions: [is('direction', 'purchase'), desc(`${PROPERTY_SALE}|\\b(refurbishment|development of (the )?(property|premises|site|building))\\b`)],
+    crossReferences: ['VATCA 2010 s.63 (definitions)'],
+    vatEffect: 'The VAT deducted is reviewed at the end of the initial interval and each later interval against the '
+      + 'use of the property for taxable supplies; a change gives VAT payable or deductible (s.64(2)-(4)).',
+    interpretationNote: 'Advisory: register the capital good from its invoices (Capital goods), and record its use '
+      + 'at the end of each interval.',
+  }),
 ];
+
+/** Advisory: the capital goods record the purchase calls for. */
+export const CAPITAL_GOODS_REASON = 'If this is the acquisition, development or refurbishment of a property, it is a '
+  + 'capital good (VATCA ss.63-64): register it from its invoices, and record its use at the end of each interval.';
 
 export const PROPERTY_GAPS: Record<string, string> = {
   [LETTING_OPTION_RESIDENTIAL_RULE_KEY]: 'VAT is charged on the rent of what looks like a residential letting. A '

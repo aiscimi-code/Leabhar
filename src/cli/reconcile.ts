@@ -2,7 +2,7 @@ import { parseArgs, getFlag, hasFlag } from './args';
 import { print, error, type Format } from './format';
 import { getAgentDb, requireCompany } from '@/agent/context';
 import type { AppDatabase } from '@/db';
-import { parseAmount } from '@/domain/money';
+import { parseAmount, parseRate } from '@/domain/money';
 import { pathToFileURL } from 'node:url';
 import {
   listBankAccounts,
@@ -41,6 +41,10 @@ import {
 import { suggestVatTreatment } from '@/domain/rules/vatSuggestion';
 import { confirmEstablishment, confirmCustomerTaxableStatus, checkVatNumberWithVies } from '@/domain/parties/status';
 import { confirmRctPrincipal, recordCashBasisAuthorisation } from '@/domain/config/companyStatus';
+import {
+  registerCapitalGood, recordIntervalUse, recordCapitalGoodDisposal, postCapitalGoodAdjustment,
+  postCapitalGoodDisposalAdjustment, capitalGoodsOverview,
+} from '@/domain/vat/capitalGoods';
 import { eq } from 'drizzle-orm';
 import { companies } from '@/db/schema';
 import { loadStatutoryKnowledgeBase } from '@/domain/rules/knowledgeBase';
@@ -203,6 +207,15 @@ The company's own VAT status (issue #208) — a person's record, never inferred:
   record-cash-basis --eligibility turnover_threshold|supplies_to_unregistered
       --from YYYY-MM-DD --reference "<Revenue reference>" --confirmed-by "<name>"
       Revenue's authorisation for the cash receipts basis (s.80, S.I. 639/2010 reg.25).
+
+Capital goods scheme (VATCA ss.63-64, issue #208) — figures calculated, never typed:
+  capital-goods                                     list each good, its intervals and adjustments
+  register-capital-good --description "<text>" --kind acquisition_or_development|refurbishment
+      --start YYYY-MM-DD --invoices <id,id> --deducted <amount> --registered-by "<name>"
+      The total tax incurred comes from the invoices; --deducted is the part claimed when incurred.
+  record-cgs-interval --good <id> --interval <n> (--use <percent> | --not-used) --recorded-by "<name>"
+  record-cgs-disposal --good <id> --date YYYY-MM-DD --taxable true|false --recorded-by "<name>"
+  post-cgs-adjustment (--interval-record <id> | --good <id> --disposal) --account <code> --posted-by "<name>"
 
 Invoice-led workflow (issue #222) — the same domain functions as the web screens:
   show-document <id>                     The document's values (draft or confirmed, minor
@@ -759,6 +772,57 @@ export async function main(argv: string[], options: CliOptions = {}): Promise<nu
           reference: requireFlag(flags, 'reference'), confirmedBy: requireFlag(flags, 'confirmed-by'),
         });
         print({ ok: true, eligibility }, format);
+        return 0;
+      }
+
+      case 'capital-goods': {
+        print(capitalGoodsOverview(db, { companyId }), format);
+        return 0;
+      }
+
+      case 'register-capital-good': {
+        const kind = requireFlag(flags, 'kind');
+        if (kind !== 'acquisition_or_development' && kind !== 'refurbishment') {
+          throw new Error('--kind must be acquisition_or_development or refurbishment.');
+        }
+        const id = registerCapitalGood(db, {
+          companyId, description: requireFlag(flags, 'description'), kind, initialIntervalStart: requireFlag(flags, 'start'),
+          sourceInvoiceIds: requireFlag(flags, 'invoices').split(',').map((x) => x.trim()).filter(Boolean),
+          deductedMinor: parseAmount(requireFlag(flags, 'deducted'), 'EUR'), registeredBy: requireFlag(flags, 'registered-by'),
+        });
+        print({ ok: true, capitalGoodId: id }, format);
+        return 0;
+      }
+
+      case 'record-cgs-interval': {
+        const notUsed = flags['not-used'] !== undefined;
+        const use = getFlag(flags, 'use');
+        if (!notUsed && use === undefined) throw new Error('Give --use <percent> or --not-used.');
+        const row = recordIntervalUse(db, {
+          companyId, capitalGoodId: requireFlag(flags, 'good'), intervalNumber: Number(requireFlag(flags, 'interval')),
+          proportionBp: notUsed ? undefined : parseRate(use!), notUsed, recordedBy: requireFlag(flags, 'recorded-by'),
+        });
+        print(row, format);
+        return 0;
+      }
+
+      case 'record-cgs-disposal': {
+        const taxable = requireFlag(flags, 'taxable');
+        if (taxable !== 'true' && taxable !== 'false') throw new Error('--taxable must be true or false.');
+        print(recordCapitalGoodDisposal(db, {
+          companyId, capitalGoodId: requireFlag(flags, 'good'), disposedOn: requireFlag(flags, 'date'),
+          taxable: taxable === 'true', recordedBy: requireFlag(flags, 'recorded-by'),
+        }), format);
+        return 0;
+      }
+
+      case 'post-cgs-adjustment': {
+        const accountId = resolveAccountId(db, companyId, requireFlag(flags, 'account'));
+        const postedBy = requireFlag(flags, 'posted-by');
+        const result = flags['disposal'] !== undefined
+          ? postCapitalGoodDisposalAdjustment(db, { companyId, capitalGoodId: requireFlag(flags, 'good'), accountId, postedBy })
+          : postCapitalGoodAdjustment(db, { companyId, intervalId: requireFlag(flags, 'interval-record'), accountId, postedBy });
+        print({ ok: true, ...result }, format);
         return 0;
       }
 

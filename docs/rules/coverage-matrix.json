@@ -549,17 +549,21 @@
       "id": "vatca:s63",
       "area": "vatca_section",
       "title": "s.63 Interpretation and application.",
-      "status": "deferred",
-      "issue": 208,
-      "reason": "Capital goods scheme — interpretation."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.capital_goods_scheme"
+      ],
+      "note": "Definitions used by the capital goods record (base tax amount, reference deduction amount, intervals)."
     },
     {
       "id": "vatca:s64",
       "area": "vatca_section",
       "title": "s.64 Capital goods scheme.",
-      "status": "deferred",
-      "issue": 208,
-      "reason": "Capital goods scheme."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.capital_goods_scheme"
+      ],
+      "note": "The capital goods record (src/domain/vat/capitalGoods.ts) computes the s.64(2), (3), (4) and (6) adjustments; the rule prompts registration of a property purchase or development."
     },
     {
       "id": "vatca:s65",
