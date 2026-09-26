@@ -566,6 +566,28 @@ transaction decides either of them.
   - more than 10% of those sales went to customers with a VAT number (on the
     90% test).
 
+### Property
+
+- **Rent paid without VAT** is the exempt letting (Sch.1 para 11).
+- **Rent invoiced with VAT** means the landlord opted to tax the letting: the
+  invoice is its notification (VATCA s.97(1)(c)(ii)). It is suggested at the
+  standard rate.
+- **VAT on a residential letting** is flagged, because the option cannot apply
+  there (s.97(4)).
+- **Rent received** is flagged as exempt, unless the company opted to tax it.
+- **A sale or purchase of property** is flagged with the questions that decide
+  it:
+  - completion and development in the last 5 years;
+  - occupation after a taxable sale;
+  - a joint option for taxation;
+  - the pre-July-2008 transitional rules (ss.93, 95, 96).
+- **Under a joint option**, the purchaser accounts for the VAT (s.94(6)).
+  `RC_CONSTRUCTION` is offered because it has the same VAT3 effect, but it is
+  not chosen.
+
+Rules that turn on an unrecorded fact are advisory (`advisoryRules.ts`). They
+add a reason and stop pre-selection, but never decide the treatment.
+
 ### Posting paths are atomic
 
 Every exported posting path — classify, reclassify, split journal,
