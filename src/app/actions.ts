@@ -6,7 +6,8 @@ import { getDb, resetDatabase } from '@/db';
 import { reviewItems, documents, bankTransactions, bankAccounts, companies } from '@/db/schema';
 import { requireCompany } from '@/lib/queries';
 import { classifyTransaction, reclassifyTransaction } from '@/domain/banking/classify';
-import { acceptMatch, rejectMatch, findMatchesForDocument, matchAllUnmatched, linkDocument, unmatchDocument } from '@/domain/matching/service';
+import { acceptMatch, rejectMatch, findMatchesForDocument, matchAllUnmatched, linkDocument, unmatchDocument, withdrawMatchRejection } from '@/domain/matching/service';
+import { linkBankTransactionToJournal } from '@/domain/banking/journalLink';
 import { transitionVatPeriod, type VatPeriodStatus } from '@/domain/vat/periodClose';
 import { storeDocument } from '@/domain/documents/storage';
 import { extractDocument, extractDocumentFromText } from '@/domain/extraction/service';
@@ -118,7 +119,7 @@ export async function acceptMatchAction(formData: FormData): Promise<ActionResul
       companyId: company.id,
       documentId: String(formData.get('documentId')),
       bankTransactionId: String(formData.get('bankTransactionId')),
-      actor: 'user',
+      actor: await actorName(),
       reason: formData.get('reason') ? String(formData.get('reason')) : 'Accepted by user',
     });
     revalidatePath('/review');
@@ -138,7 +139,7 @@ export async function rejectMatchAction(formData: FormData): Promise<ActionResul
       companyId: company.id,
       documentId: String(formData.get('documentId')),
       bankTransactionId: String(formData.get('bankTransactionId')),
-      actor: 'user',
+      actor: await actorName(),
       reason: formData.get('reason') ? String(formData.get('reason')) : undefined,
     });
     revalidatePath('/review');
@@ -162,7 +163,7 @@ export async function linkDocumentAction(formData: FormData): Promise<ActionResu
       companyId: company.id,
       documentId,
       bankTransactionId,
-      actor: 'user',
+      actor: await actorName(),
       reason: formData.get('reason') ? String(formData.get('reason')) : undefined,
     });
     revalidatePath('/transactions');
@@ -171,6 +172,48 @@ export async function linkDocumentAction(formData: FormData): Promise<ActionResu
     revalidatePath(`/documents/${documentId}`);
     revalidatePath('/review');
     return { ok: true, message: 'Document linked.' };
+  } catch (error) {
+    return fail(error);
+  }
+}
+
+export async function withdrawMatchRejectionAction(formData: FormData): Promise<ActionResult> {
+  try {
+    await requireActor('documents.review');
+    const company = requireCompany();
+    const documentId = String(formData.get('documentId') ?? '');
+    withdrawMatchRejection(getDb(), {
+      companyId: company.id,
+      documentId,
+      bankTransactionId: String(formData.get('bankTransactionId') ?? ''),
+      actor: await actorName(),
+      reason: String(formData.get('reason') ?? ''),
+    });
+    revalidatePath('/review');
+    revalidatePath('/documents');
+    revalidatePath(`/documents/${documentId}`);
+    return { ok: true, message: 'Rejection withdrawn. The pairing can be suggested again.' };
+  } catch (error) {
+    return fail(error);
+  }
+}
+
+export async function linkJournalAction(formData: FormData): Promise<ActionResult> {
+  try {
+    await requireActor('transactions.classify');
+    const company = requireCompany();
+    const bankTransactionId = String(formData.get('bankTransactionId') ?? '');
+    linkBankTransactionToJournal(getDb(), {
+      companyId: company.id,
+      bankTransactionId,
+      journalEntryId: String(formData.get('journalEntryId') ?? ''),
+      actor: await actorName(),
+      reason: String(formData.get('reason') ?? ''),
+    });
+    revalidatePath('/transactions');
+    revalidatePath(`/transactions/${bankTransactionId}`);
+    revalidatePath('/reconcile');
+    return { ok: true, message: 'Bank line linked to the journal already in the ledger.' };
   } catch (error) {
     return fail(error);
   }
@@ -187,7 +230,7 @@ export async function unmatchDocumentAction(formData: FormData): Promise<ActionR
     unmatchDocument(getDb(), {
       companyId: company.id,
       documentId,
-      actor: 'user',
+      actor: await actorName(),
       reason: formData.get('reason') ? String(formData.get('reason')) : 'Unlinked by user',
     });
     revalidatePath('/transactions');

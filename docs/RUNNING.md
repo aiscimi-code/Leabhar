@@ -94,6 +94,13 @@ npm run cli -- rollback-import --import <id> --reason "..." --actor "Name"
     # Undo an import that went wrong. Refused while any of its lines is
     # classified, matched, posted, reconciled or linked; the lines stay on
     # record as rolled back and the corrected file can then be imported.
+npm run cli -- suggest-journal --transaction <id> [--window-days 7]
+    # Journals this line may already be (e.g. the other side of a transfer).
+npm run cli -- link-journal --transaction <id> --journal <id> --reason "..." --actor "Name"
+    # Mark the line as that journal's evidence; nothing new is posted, so the
+    # transfer is not counted twice.
+npm run cli -- withdraw-rejection --document <id> --transaction <id> --reason "..." --actor "Name"
+    # A rejected match is never proposed again until the rejection is withdrawn.
 npm run cli -- record-manual --account <id> --date <date> --description "..."
     --amount <-12.30> --recorded-by "Name" [--reference ...]
     # A movement with no statement line (petty cash): recorded as manual

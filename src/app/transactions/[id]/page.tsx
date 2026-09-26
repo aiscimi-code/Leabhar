@@ -2,14 +2,17 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { transactionDetail, unmatchedDocumentOptions } from '@/lib/queries';
 import {
-  Page, Panel, Badge, ProvenanceBadge, Help, Figure, LinkButton, Empty,
+  Page, Panel, Badge, ProvenanceBadge, Help, Figure, LinkButton, Empty, Field, Input,
 } from '@/components/primitives';
+import { ActionForm } from '@/components/ActionForm';
 import { StatusBadge } from '@/components/StatusBadge';
 import { money, date, dateTime, label, rate, percent } from '@/lib/format';
 import { ClassifyForm } from '@/components/ClassifyForm';
 import { LinkControls } from '@/components/LinkControls';
 import { CandidateActions } from '@/components/CandidateActions';
-import { linkDocumentAction, unmatchDocumentAction, acceptMatchAction, rejectMatchAction } from '@/app/actions';
+import {
+  linkDocumentAction, unmatchDocumentAction, acceptMatchAction, rejectMatchAction, linkJournalAction,
+} from '@/app/actions';
 import { chartOfAccounts, treatmentsWithRates, statutoryVatSuggestion } from '@/lib/queries';
 import { StatutorySuggestion } from '@/components/StatutorySuggestion';
 import { SettleForm } from '@/components/SettleForm';
@@ -37,7 +40,7 @@ export default async function TransactionDetailPage({ params }: {
   const {
     transaction: t, account, treatment, supplier, customer, entry, lines,
     vatEntries, matchedDocument, candidates, audit, bankAccount, statementImport, company,
-    trace, openInvoices,
+    trace, openInvoices, journalSuggestions,
   } = detail;
   // A confirmed invoice behind this line: it is posted from the invoice and
   // settled, never classified as if the bank amount were the evidence (issue #203).
@@ -124,6 +127,39 @@ export default async function TransactionDetailPage({ params }: {
           {vatSuggestion && <StatutorySuggestion suggestion={vatSuggestion} />}
 
           {trace && <TracePanel trace={trace} bankTransactionId={t.id} paymentDate={t.transactionDate} />}
+
+          {journalSuggestions.length > 0 && (
+            <Panel
+              title="Already in the ledger?"
+              description="Posted journals that move exactly this amount on this account and no statement line evidences yet — usually a transfer classified from your other account. Linking posts nothing new; it marks this line as the evidence for that journal."
+            >
+              <ul className="divide-y divide-line">
+                {journalSuggestions.map((j) => (
+                  <li key={j.journalEntryId} className="px-4 py-3">
+                    <p className="text-[13px]">
+                      Journal #{j.entryNumber} · {date(j.entryDate)} · {money(j.amountMinor, company.baseCurrency)}
+                      {j.dateDifferenceDays > 0 && (
+                        <span className="text-ink-muted"> · {j.dateDifferenceDays} day{j.dateDifferenceDays === 1 ? '' : 's'} apart</span>
+                      )}
+                    </p>
+                    <p className="text-[12px] text-ink-muted">
+                      {j.narrative}
+                      {j.transferFromName && <> · transfer posted from {j.transferFromName}</>}
+                    </p>
+                    <div className="mt-2">
+                      <ActionForm action={linkJournalAction} submit="Link to this journal" inline>
+                        <input type="hidden" name="bankTransactionId" value={t.id} />
+                        <input type="hidden" name="journalEntryId" value={j.journalEntryId} />
+                        <Field label="Why">
+                          <Input name="reason" required placeholder="Transfer from the current account" />
+                        </Field>
+                      </ActionForm>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </Panel>
+          )}
 
           {!t.journalEntryId && (
             <Panel
