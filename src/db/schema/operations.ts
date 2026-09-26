@@ -238,6 +238,7 @@ export const auditEvents = sqliteTable('audit_events', {
       'rule_applied', 'import_completed', 'import_reversed', 'reversal_posted',
       'reconciled', 'backup_created', 'backup_restored', 'settings_changed',
       'user_invited', 'user_removed', 'user_role_changed', 'user_password_changed',
+      'deactivated', 'year_end_closed', 'reversed_early',
     ],
   }).notNull(),
 

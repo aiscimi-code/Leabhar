@@ -42,7 +42,9 @@ export type SystemAccountKey =
   | 'computer_equipment'
   | 'accumulated_depreciation'
   | 'depreciation_expense'
-  | 'disposal_of_assets';
+  | 'disposal_of_assets'
+  | 'accruals'
+  | 'prepayments';
 
 export const DEFAULT_ACCOUNTS: AccountSeed[] = [
   // ---------------- Income ----------------
@@ -158,7 +160,7 @@ export const DEFAULT_ACCOUNTS: AccountSeed[] = [
   },
   { code: '1520', name: 'Office equipment — cost', type: 'asset', subtype: 'fixed_asset', reportSection: 'fixed_assets' },
   { code: '1590', name: 'Other fixed assets', type: 'asset', subtype: 'fixed_asset', reportSection: 'fixed_assets' },
-  { code: '1600', name: 'Prepayments', type: 'asset', subtype: 'current_asset', vatApplicable: false, reportSection: 'current_assets' },
+  { code: '1600', name: 'Prepayments', type: 'asset', subtype: 'current_asset', systemKey: 'prepayments', vatApplicable: false, reportSection: 'current_assets' },
 
   // ---------------- Liabilities ----------------
   {
@@ -195,7 +197,7 @@ export const DEFAULT_ACCOUNTS: AccountSeed[] = [
       + 'split (issue #158’s journal --transaction), not a single expense line — the '
       + 'capital portion reduces this balance and the interest portion is a cost.',
   },
-  { code: '2300', name: 'Accruals', type: 'liability', subtype: 'current_liability', vatApplicable: false, reportSection: 'current_liabilities' },
+  { code: '2300', name: 'Accruals', type: 'liability', subtype: 'current_liability', systemKey: 'accruals', vatApplicable: false, reportSection: 'current_liabilities' },
   { code: '2400', name: 'PAYE/PRSI/USC payable', type: 'liability', subtype: 'current_liability', vatApplicable: false, reportSection: 'current_liabilities' },
   {
     code: '2500', name: 'Director’s current account', type: 'liability',
