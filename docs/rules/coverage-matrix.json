@@ -2311,41 +2311,70 @@
       "id": "tca:s396",
       "area": "tca_section",
       "title": "TCA 1997 s396",
-      "status": "deferred",
-      "issue": 211,
-      "reason": "Not yet ruled."
+      "status": "rule",
+      "ruleKeys": [
+        "ct.loss_carry_forward"
+      ]
     },
     {
       "id": "tca:s396A",
       "area": "tca_section",
       "title": "TCA 1997 s396A",
-      "status": "deferred",
-      "issue": 211,
-      "reason": "Not yet ruled."
+      "status": "rule",
+      "ruleKeys": [
+        "ct.relevant_trading_loss_set_off",
+        "ct.loss_claim_time_limit"
+      ]
+    },
+    {
+      "id": "tca:s396B",
+      "area": "tca_section",
+      "title": "TCA 1997 s396B",
+      "status": "rule",
+      "ruleKeys": [
+        "ct.loss_value_basis"
+      ]
     },
     {
       "id": "tca:s430",
       "area": "tca_section",
       "title": "TCA 1997 s430",
-      "status": "deferred",
-      "issue": 211,
-      "reason": "Not yet ruled."
+      "status": "rule",
+      "ruleKeys": [
+        "ct.close_company_definition"
+      ]
+    },
+    {
+      "id": "tca:s434",
+      "area": "tca_section",
+      "title": "TCA 1997 s434",
+      "status": "rule",
+      "ruleKeys": [
+        "ct.distributable_income",
+        "ct.trading_company_reduction",
+        "ct.distributions_for_period"
+      ]
     },
     {
       "id": "tca:s440",
       "area": "tca_section",
       "title": "TCA 1997 s440",
-      "status": "deferred",
-      "issue": 211,
-      "reason": "Not yet ruled."
+      "status": "rule",
+      "ruleKeys": [
+        "ct.close_company_surcharge",
+        "ct.close_company_surcharge_de_minimis",
+        "ct.surcharge_later_period"
+      ]
     },
     {
       "id": "tca:s441",
       "area": "tca_section",
       "title": "TCA 1997 s441",
-      "status": "deferred",
-      "issue": 211,
-      "reason": "Not yet ruled."
+      "status": "rule",
+      "ruleKeys": [
+        "ct.service_company_definition",
+        "ct.service_company_surcharge"
+      ]
     },
     {
       "id": "tca:s472AB",
@@ -2367,9 +2396,13 @@
       "id": "tca:part41A",
       "area": "tca_section",
       "title": "TCA 1997 part41A",
-      "status": "deferred",
-      "issue": 211,
-      "reason": "Not yet ruled."
+      "status": "rule",
+      "ruleKeys": [
+        "ct.return_filing_date",
+        "ct.small_company_threshold",
+        "ct.preliminary_tax_small",
+        "ct.preliminary_tax_large"
+      ]
     },
     {
       "id": "tca:s840",

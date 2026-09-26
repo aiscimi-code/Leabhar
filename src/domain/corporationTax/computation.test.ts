@@ -2,7 +2,9 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { createTestDatabase } from '@/db/testing';
 import { createCompany } from '../config/setup';
 import { postJournalEntry } from '../accounting/journal';
-import { computeCorporationTax, recordCtDecision, CtDecisionError, capitalAllowances } from './computation';
+import {
+  computeCorporationTax, recordCtDecision, CtDecisionError, capitalAllowances, section440Surcharge, section441Surcharge,
+} from './computation';
 import { fixedAssets, ctDecisions } from '@/db/schema';
 import { asIsoDate } from '../dates';
 import { ids } from '@/lib/ids';
@@ -121,7 +123,8 @@ describe('computeCorporationTax', () => {
     expect(c.tradingProfitMinor).toBe(0);
     expect(c.tradingLossMinor).toBe(200_000);
     expect(c.corporationTaxMinor).toBe(0);
-    expect(c.findings.some((f) => f.includes('s.396'))).toBe(true);
+    expect(c.losses.carriedForwardMinor).toBe(200_000);
+    expect(c.decisions.find((d) => d.subjectType === 'loss_claim')).toMatchObject({ suggested: 'carry_forward', decided: null });
   });
 });
 
@@ -186,5 +189,79 @@ describe('capital allowances', () => {
     expect(r.lines[0]!.citations.map((c) => c.ruleKey)).toContain('ct.accelerated_energy_efficient');
     expect(r.findings.some((f) => f.includes('SEAI'))).toBe(true);
     expect(r.findings.some((f) => f.includes('s.291A'))).toBe(true);
+  });
+});
+
+describe('loss relief', () => {
+  const inYear = (y: number) => computeCorporationTax(db, { companyId, from: asIsoDate(`${y}-01-01`), to: asIsoDate(`${y}-12-31`) });
+
+  it('carries a loss forward against the next period\'s trading profit (s.396(1))', () => {
+    post('6070', 200_000, 'Setup costs', '2025-03-01');
+    post('4020', 500_000, 'Consulting', '2026-03-01');
+    const c = inYear(2026);
+    expect(c.losses.broughtForwardUsedMinor).toBe(200_000);
+    expect(c.tradingProfitMinor).toBe(300_000);
+    expect(c.corporationTaxMinor).toBe(37_500);
+    expect(c.lines.find((l) => l.label.includes('brought forward'))!.citations[0]!.section).toBe('TCA 1997 s.396');
+  });
+
+  it('sets a claimed loss back against the preceding period (s.396A)', () => {
+    post('4020', 300_000, 'Consulting', '2025-03-01');
+    post('6070', 100_000, 'Costs', '2026-03-01');
+    recordCtDecision(db, { companyId, subjectType: 'loss_claim', subjectId: companyId, periodEnd: '2026-12-31', choice: 'claim_396a', decidedBy: 'Director' });
+    expect(inYear(2025)).toMatchObject({ tradingProfitMinor: 200_000, corporationTaxMinor: 25_000, losses: { carriedBackInMinor: 100_000 } });
+    expect(inYear(2026).losses).toMatchObject({ setBackMinor: 100_000, carriedForwardMinor: 0 });
+  });
+
+  it('relieves what is left on a value basis against tax on other income (s.396B)', () => {
+    post('4020', 300_000, 'Consulting', '2025-03-01');
+    post('6070', 700_000, 'Costs', '2026-03-01');
+    post('4090', 100_000, 'Deposit interest', '2026-06-01');
+    recordCtDecision(db, { companyId, subjectType: 'loss_claim', subjectId: companyId, periodEnd: '2026-12-31', choice: 'claim_396a_396b', decidedBy: 'Director' });
+    const c = inYear(2026);
+    // Loss 700,000 (the interest is taken out of trading): 300,000 set back, then 12.5% of the rest against the 25,000 on the interest.
+    expect(c.losses).toMatchObject({ setBackMinor: 300_000, valueBasisCreditMinor: 25_000, carriedForwardMinor: 200_000 });
+    expect(c.corporationTaxMinor).toBe(0);
+  });
+});
+
+describe('close company surcharge', () => {
+  it('matches Revenue\'s s.440 example: 20%, nothing up to €2,000, marginal relief above', () => {
+    expect(section440Surcharge(3_000_000, 0, 200_000)).toBe(600_000);
+    expect(section440Surcharge(3_000_000, 2_850_000, 200_000)).toBe(0);
+    expect(section440Surcharge(3_000_000, 2_760_000, 200_000)).toBe(32_000);
+  });
+
+  it('matches Revenue\'s s.441 example 1 for a service company', () => {
+    expect(section441Surcharge(700_000, 1_000_000, 600_000)).toEqual({ total: 600_000, at20: 100_000, at15: 500_000, surchargeMinor: 95_000 });
+  });
+
+  it('suggests close company status and computes the surcharge on undistributed deposit interest', () => {
+    post('4020', 1_000_000, 'Consulting');
+    post('4090', 800_000, 'Deposit interest');
+    const c = ct();
+    expect(c.decisions.find((d) => d.subjectType === 'company_status')!.suggested).toBe('close_trading');
+    // 800,000 less 25% tax = 600,000, less 7.5% (a trading company) = 555,000; 20% = 111,000.
+    expect(c.surcharge).toMatchObject({ distributableInvestmentIncomeMinor: 555_000, surchargeMinor: 111_000 });
+    recordCtDecision(db, { companyId, subjectType: 'company_status', subjectId: companyId, periodEnd: to, choice: 'not_close', decidedBy: 'Director' });
+    expect(ct().surcharge.surchargeMinor).toBe(0);
+  });
+});
+
+describe('dates', () => {
+  it('gives the CT1 date and one preliminary tax payment for a small company', () => {
+    post('4020', 1_000_000, 'Consulting');
+    const c = ct();
+    expect(c.dates.returnDueDate).toBe('2026-09-23');
+    expect(c.dates.smallCompany).toBe(true);
+    expect(c.dates.preliminaryTax).toEqual([{ dueDate: '2025-11-23', amountMinor: 112_500, basis: '90% of this period\'s tax' }]);
+  });
+
+  it('splits preliminary tax in two once the preceding period\'s tax reached €200,000 (s.959AS)', () => {
+    post('4020', 200_000_000, 'Consulting', '2025-03-01');
+    post('4020', 200_000_000, 'Consulting', '2026-03-01');
+    const c = computeCorporationTax(db, { companyId, from: asIsoDate('2026-01-01'), to: asIsoDate('2026-12-31') });
+    expect(c.dates.smallCompany).toBe(false);
+    expect(c.dates.preliminaryTax.map((p) => [p.dueDate, p.amountMinor])).toEqual([['2026-06-23', 11_250_000], ['2026-11-23', 11_250_000]]);
   });
 });
