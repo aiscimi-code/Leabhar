@@ -1,5 +1,7 @@
 import { DOMESTIC_RC_ADVISORY_RULE_KEYS, DOMESTIC_RC_GAPS, RC_CONSTRUCTION_RULE_KEY } from './domesticReverseChargeCuration';
-import { LETTING_LANDLORD_REASON, LETTING_OPTION_LANDLORD_RULE_KEY } from './propertyCuration';
+import {
+  LETTING_LANDLORD_REASON, LETTING_OPTION_LANDLORD_RULE_KEY, CAPITAL_GOODS_REASON, CAPITAL_GOODS_RULE_KEY,
+} from './propertyCuration';
 
 /**
  * Rules that never decide a treatment (issue #208). Each turns on a fact
@@ -16,6 +18,7 @@ export const ADVISORY_RULES: AdvisoryRule[] = [
     ruleKey, reason: DOMESTIC_RC_GAPS[ruleKey]!, silencedBy: [RC_CONSTRUCTION_RULE_KEY],
   })),
   { ruleKey: LETTING_OPTION_LANDLORD_RULE_KEY, reason: LETTING_LANDLORD_REASON, silencedBy: [] },
+  { ruleKey: CAPITAL_GOODS_RULE_KEY, reason: CAPITAL_GOODS_REASON, silencedBy: [] },
 ];
 
 export const ADVISORY_RULE_KEYS = new Set(ADVISORY_RULES.map((r) => r.ruleKey));

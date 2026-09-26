@@ -8,6 +8,7 @@ import { ids } from '@/lib/ids';
 import { nowIso } from '../dates';
 import { buildVat3Return } from './report';
 import { cashBasisFindings } from './cashBasis';
+import { capitalGoodsFindings } from './capitalGoods';
 
 /**
  * VAT period close (README §24).
@@ -293,6 +294,11 @@ export function validateVatPeriod(
   // ---- The cash receipts basis is authorised and its s.80(1) test still met (issue #208) ----
   for (const f of cashBasisFindings(db, { companyId, periodStart: period.startDate, periodEnd: period.endDate })) {
     findings.push({ ...f, severity: 'warning', count: 1, entityType: 'company', entityIds: [companyId] });
+  }
+
+  // ---- Capital goods scheme: intervals due and adjustments for this period (issue #208) ----
+  for (const f of capitalGoodsFindings(db, { companyId, periodStart: period.startDate, periodEnd: period.endDate })) {
+    findings.push({ ...f, severity: 'warning', count: f.entityIds.length, entityType: 'capital_good' });
   }
 
   const blockingCount = findings.filter((f) => f.severity === 'blocking').length;
