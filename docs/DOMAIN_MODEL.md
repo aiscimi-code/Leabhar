@@ -518,6 +518,116 @@ treatment; the others flag the line and say why.
 - **Exports:** a zero-rated export always carries a reason asking for proof that
   the goods left the EU. The customer's country is not that proof.
 
+A confirmed invoice is checked against itself and the parties' records
+(`invoiceConflicts`). Each conflict is shown on the posting screen and in the
+CLI, and is raised as a review item when the invoice is posted. While any
+conflict is open, no line's treatment is pre-selected. The conflicts are:
+
+- VAT charged under another Member State's VAT number, or by a supplier
+  confirmed abroad without an Irish number. That is not Irish input VAT.
+- A reverse-charge legend with VAT charged.
+- A reverse charge from another Member State that does not show your VAT
+  number.
+- An invoice addressed to someone else's VAT number.
+- An EU supplier that charges no VAT and gives no reason.
+- A zero-VAT sale to another Member State that lacks the customer's VAT number
+  or the reverse-charge/intra-Community wording (SI 639/2010 reg 20(2)(e), (f)),
+  or whose customer number VIES reported invalid.
+
+A reverse charge offered from invoice wording alone is never pre-selected while
+the supplier's establishment is unconfirmed.
+
+### Domestic reverse charges and the cash basis are the company's own facts
+
+Two facts that VAT turns on are recorded on the company profile by a person.
+Each has a date and what it rests on, and each change is audited. No
+transaction decides either of them.
+
+**RCT principal status (TCA 1997 s.530A).**
+- A recorded principal gets `RC_CONSTRUCTION` on construction services it
+  receives from the recorded date (VATCA s.16(3)).
+- While the status is unrecorded, a construction purchase is flagged, and the
+  invoice line is not pre-selected.
+- The other s.16 reverse charges are flagged with why: scrap metal, a connected
+  builder, gas or electricity for resale, energy certificates and emission
+  allowances. Scrap metal is offered `RC_CONSTRUCTION`, which has the same VAT3
+  effect.
+- Construction work sold is flagged, because the customer may be a principal.
+
+**Cash receipts basis (s.80).**
+- `vatAccountingBasis` sets the basis. Only the profile decides it, never a bank
+  narrative.
+- Revenue's authorisation is recorded with its date, its reference and the
+  s.80(1) test relied on.
+- Validating a VAT period warns when:
+  - no authorisation is recorded, or it starts after the period does;
+  - sales in the 12 months to the period end exceed €2,000,000 (on the turnover
+    test);
+  - more than 10% of those sales went to customers with a VAT number (on the
+    90% test).
+
+### Property
+
+- **Rent paid without VAT** is the exempt letting (Sch.1 para 11).
+- **Rent invoiced with VAT** means the landlord opted to tax the letting: the
+  invoice is its notification (VATCA s.97(1)(c)(ii)). It is suggested at the
+  standard rate.
+- **VAT on a residential letting** is flagged, because the option cannot apply
+  there (s.97(4)).
+- **Rent received** is flagged as exempt, unless the company opted to tax it.
+- **A sale or purchase of property** is flagged with the questions that decide
+  it:
+  - completion and development in the last 5 years;
+  - occupation after a taxable sale;
+  - a joint option for taxation;
+  - the pre-July-2008 transitional rules (ss.93, 95, 96).
+- **Under a joint option**, the purchaser accounts for the VAT (s.94(6)).
+  `RC_CONSTRUCTION` is offered because it has the same VAT3 effect, but it is
+  not chosen.
+
+**The capital goods scheme (ss.63-64)** is a record, not a rule, and lives in
+`src/domain/vat/capitalGoods.ts`.
+
+- **Registering a good.** A person registers each property acquired, developed
+  or refurbished from the purchase invoices its VAT is on. The total tax
+  incurred is the sum of those invoices; it is never typed.
+- **Recording use.** At the end of each interval the person records the
+  proportion of deductible use. The adjustment is then calculated
+  (`capitalGoodsMath.ts`):
+  - s.64(2), A - B, at the end of the initial interval;
+  - s.64(3), C - D, for later intervals;
+  - s.64(4), (C - D) x N, for a swing of more than 50 points, which also
+    resets the baseline;
+  - s.64(6), E x N / T or B x N / T, on a supply of the good.
+- **Posting.** The adjustment is posted in the taxable period after the interval
+  (T1 if payable, T2 if deductible) as a VAT adjustment. The account for the
+  other side is named by a person.
+- **Write-once.** Records are written once and in order. The adjustment period
+  ends on a supply.
+- **Period validation** warns when an interval has ended without its use
+  recorded, and when an adjustment belonging to the period is not posted.
+- **Tests.** The arithmetic is tested against Revenue's worked examples in the
+  Tax and Duty Manual.
+
+Rules that turn on an unrecorded fact are advisory (`advisoryRules.ts`). They
+add a reason and stop pre-selection, but never decide the treatment.
+
+### Special schemes, from the buyer's side
+
+- **Margin or auction scheme purchases** (ss.87-89): these invoices never show
+  VAT separately, so there is none to deduct. The line is flagged and
+  `OUT_OF_SCOPE` is offered, but not chosen. An invoice with margin-scheme
+  wording that also shows VAT is flagged as a conflict.
+- **Flat-rate farmers** (s.86): the flat-rate addition shown on the farmer's
+  invoice is 4.5% of the consideration from 1 January 2026. It is flagged,
+  because no treatment models it yet.
+- **Vouchers** (s.43(2)): the price paid for a voucher is disregarded. Buying or
+  selling one is `OUT_OF_SCOPE` until it is redeemed, unless it is bought for
+  resale (s.43(3)).
+
+The company operating one of these schemes itself, as a dealer, travel agent or
+auctioneer, is not modelled.
+
 ### Posting paths are atomic
 
 Every exported posting path — classify, reclassify, split journal,

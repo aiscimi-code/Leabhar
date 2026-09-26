@@ -194,6 +194,15 @@ npm run cli -- confirm-establishment --supplier <id> --establishment outside_sta
         --basis "<what it rests on>" --confirmed-by "<name>"  # where it is established (never a country code)
 npm run cli -- confirm-customer-status --customer <id> --status taxable_person --confirmed-by "<name>"
 npm run cli -- check-vies --customer <id>             # check the VAT number with VIES; the answer is stored
+npm run cli -- confirm-rct-principal --status principal --from <date> \
+        --basis "<what it rests on>" --confirmed-by "<name>"  # s.16(3) construction reverse charge
+npm run cli -- record-cash-basis --eligibility turnover_threshold --from <date> \
+        --reference "<Revenue ref>" --confirmed-by "<name>"   # s.80 authorisation for the cash basis
+npm run cli -- capital-goods                          # capital goods, their intervals and adjustments
+npm run cli -- register-capital-good --description "<text>" --kind acquisition_or_development \
+        --start <date> --invoices <id,id> --deducted <amount> --registered-by "<name>"
+npm run cli -- record-cgs-interval --good <id> --interval <n> --use <percent> --recorded-by "<name>"
+npm run cli -- post-cgs-adjustment --interval-record <id> --account <code> --posted-by "<name>"
 npm run cli -- show-document <id>                     # a document's values, lines, VAT totals, checks
 npm run cli -- confirm-document <id> --confirmed-by "<name>" [--values <json>] [--ack <codes>]
         [--supplier <id> | --create-supplier]         # record that the NAMED PERSON checked it

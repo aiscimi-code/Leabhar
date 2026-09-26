@@ -39,6 +39,15 @@ import { VATCA_SCHEDULE_CURATED_RULES } from './vatcaScheduleCuration';
 import { SCHEDULE_RULE_PRECEDENCE } from './vatcaScheduleParagraphRules';
 import { scheduleThreeRate } from './scheduleRates';
 import { CROSS_BORDER_GAPS, ICA_RULE_KEY, IMPORT_RULE_KEY } from './crossBorderCuration';
+import { DOMESTIC_RC_GAPS, RC_CONSTRUCTION_RULE_KEY } from './domesticReverseChargeCuration';
+import {
+  PROPERTY_GAPS, LETTING_OPTION_RULE_KEY, LETTING_OPTION_RESIDENTIAL_RULE_KEY, JOINT_OPTION_RULE_KEY, PROPERTY_SUPPLY_RULE_KEY,
+} from './propertyCuration';
+import { ADVISORY_RULE_KEYS, advisoryReasons } from './advisoryRules';
+import {
+  SCHEMES_GAPS, MARGIN_SCHEME_RULE_KEY, TRAVEL_MARGIN_RULE_KEY, AUCTION_SCHEME_RULE_KEY, FLAT_RATE_FARMER_RULE_KEY,
+  VOUCHER_RULE_KEY,
+} from './schemesCuration';
 import { S46_FAMILY_SCHEDULE_REF } from './vatcaRevisedCuration';
 
 export type TransactionDirection = 'purchase' | 'sale';
@@ -96,6 +105,51 @@ const scopeKeys = (treatment: 'IE_EXEMPT' | 'OUT_OF_SCOPE'): string[] =>
   VAT_SCOPE_CURATED_RULES.filter((r) => r.treatment === treatment).map((r) => r.ruleKey);
 
 export const RULE_TREATMENT_BINDINGS: TreatmentBinding[] = [
+  // The s.16 domestic reverse charges (issue #208) come first: s.16(3) applies to construction
+  // services a principal receives wherever the subcontractor is established.
+  { ruleKeys: [RC_CONSTRUCTION_RULE_KEY], direction: 'purchase', treatmentCode: () => 'RC_CONSTRUCTION' },
+  // Special schemes (issue #208 part 4): a margin- or auction-scheme purchase has no VAT to deduct;
+  // a flat-rate farmer's addition is flagged; a voucher's price is disregarded (s.43(2)).
+  {
+    ruleKeys: [TRAVEL_MARGIN_RULE_KEY, AUCTION_SCHEME_RULE_KEY, MARGIN_SCHEME_RULE_KEY],
+    direction: 'purchase',
+    treatmentCode: () => null,
+    gap: (_f, key) => SCHEMES_GAPS[key]!,
+    offer: ['OUT_OF_SCOPE'],
+  },
+  { ruleKeys: [FLAT_RATE_FARMER_RULE_KEY], direction: 'purchase', treatmentCode: () => null, gap: SCHEMES_GAPS[FLAT_RATE_FARMER_RULE_KEY] },
+  { ruleKeys: [VOUCHER_RULE_KEY], direction: 'either', treatmentCode: () => 'OUT_OF_SCOPE' },
+  // Property (issue #208 part 2): rent invoiced with VAT is an opted letting (s.97(1)(c)(ii)),
+  // unless it is residential (s.97(4)); a sale of property, or a joint option, is flagged.
+  {
+    ruleKeys: [LETTING_OPTION_RESIDENTIAL_RULE_KEY],
+    direction: 'purchase',
+    treatmentCode: () => null,
+    gap: PROPERTY_GAPS[LETTING_OPTION_RESIDENTIAL_RULE_KEY],
+  },
+  { ruleKeys: [LETTING_OPTION_RULE_KEY], direction: 'purchase', treatmentCode: () => 'IE_STD' },
+  {
+    ruleKeys: [JOINT_OPTION_RULE_KEY],
+    direction: 'purchase',
+    treatmentCode: () => null,
+    gap: PROPERTY_GAPS[JOINT_OPTION_RULE_KEY],
+    offer: ['RC_CONSTRUCTION'],
+  },
+  { ruleKeys: [PROPERTY_SUPPLY_RULE_KEY], direction: 'either', treatmentCode: () => null, gap: PROPERTY_GAPS[PROPERTY_SUPPLY_RULE_KEY] },
+  {
+    ruleKeys: ['vat.domestic_reverse_charge_scrap_metal'],
+    direction: 'purchase',
+    treatmentCode: () => null,
+    gap: DOMESTIC_RC_GAPS['vat.domestic_reverse_charge_scrap_metal'],
+    offer: ['RC_CONSTRUCTION'],
+  },
+  {
+    ruleKeys: Object.keys(DOMESTIC_RC_GAPS).filter((k) => k !== 'vat.domestic_reverse_charge_scrap_metal'
+      && !ADVISORY_RULE_KEYS.has(k)),
+    direction: 'either',
+    treatmentCode: () => null,
+    gap: (_f, key) => DOMESTIC_RC_GAPS[key]!,
+  },
   // Not a supply at all: nothing else about VAT applies (s.2(1), s.3).
   { ruleKeys: scopeKeys('OUT_OF_SCOPE'), direction: 'either', treatmentCode: () => 'OUT_OF_SCOPE' },
   // An exempt supply: no VAT, and so no reverse charge or rate either (Schedule 1).
@@ -504,6 +558,8 @@ export function suggestFromFacts(
   }
 
   const matched = new Map(lookup.applicableRules.map((r) => [r.ruleKey, r]));
+  // Advisory rules (issue #208): a fact they turn on is unrecorded, so they flag, never decide.
+  reviewReasons.push(...advisoryReasons(matched.keys()));
   let decision: { rule: ApplicableRule; binding: TreatmentBinding } | null = null;
   for (const binding of RULE_TREATMENT_BINDINGS) {
     if (binding.direction !== 'either' && binding.direction !== facts.direction) continue;

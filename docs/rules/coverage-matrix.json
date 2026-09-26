@@ -130,9 +130,18 @@
       "id": "vatca:s16",
       "area": "vatca_section",
       "title": "s.16 Reverse charge for certain supplies.",
-      "status": "deferred",
-      "issue": 208,
-      "reason": "Domestic reverse charges (construction, scrap, etc.)."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.domestic_reverse_charge_construction",
+        "vat.domestic_reverse_charge_construction_principal_unrecorded",
+        "vat.domestic_reverse_charge_construction_supplied",
+        "vat.domestic_reverse_charge_scrap_metal",
+        "vat.domestic_reverse_charge_connected_construction",
+        "vat.domestic_reverse_charge_gas_electricity_dealer",
+        "vat.domestic_reverse_charge_energy_certificates",
+        "vat.domestic_reverse_charge_emission_allowances"
+      ],
+      "note": "s.16(1) (NAMA vesting orders) is not modelled: the company is neither NAMA nor a NAMA entity."
     },
     {
       "id": "vatca:s17",
@@ -358,9 +367,10 @@
       "id": "vatca:s43",
       "area": "vatca_section",
       "title": "s.43 Vouchers, etc.",
-      "status": "deferred",
-      "issue": 208,
-      "reason": "Vouchers."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.voucher_consideration_disregarded"
+      ]
     },
     {
       "id": "vatca:s44",
@@ -540,17 +550,21 @@
       "id": "vatca:s63",
       "area": "vatca_section",
       "title": "s.63 Interpretation and application.",
-      "status": "deferred",
-      "issue": 208,
-      "reason": "Capital goods scheme — interpretation."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.capital_goods_scheme"
+      ],
+      "note": "Definitions used by the capital goods record (base tax amount, reference deduction amount, intervals)."
     },
     {
       "id": "vatca:s64",
       "area": "vatca_section",
       "title": "s.64 Capital goods scheme.",
-      "status": "deferred",
-      "issue": 208,
-      "reason": "Capital goods scheme."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.capital_goods_scheme"
+      ],
+      "note": "The capital goods record (src/domain/vat/capitalGoods.ts) computes the s.64(2), (3), (4) and (6) adjustments; the rule prompts registration of a property purchase or development."
     },
     {
       "id": "vatca:s65",
@@ -580,9 +594,11 @@
       "id": "vatca:s68",
       "area": "vatca_section",
       "title": "s.68 Flat-rate farmer invoices and other documents.",
-      "status": "deferred",
-      "issue": 209,
-      "reason": "Invoices and credit notes — validity for deduction."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.flat_rate_farmer_purchase"
+      ],
+      "note": "Prescribes the form of a flat-rate farmer's invoice; the s.86 rule reads that invoice and flags the flat-rate addition."
     },
     {
       "id": "vatca:s69",
@@ -676,9 +692,13 @@
       "id": "vatca:s80",
       "area": "vatca_section",
       "title": "s.80 Tax due on moneys received basis.",
-      "status": "deferred",
-      "issue": 208,
-      "reason": "Moneys received (cash) basis."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.moneys_received_basis_sales",
+        "vat.cash_accounting_turnover_threshold",
+        "vat.cash_accounting_supplies_to_unregistered_persons_test"
+      ],
+      "note": "The basis and its authorisation are on the company profile; validating a VAT period checks the authorisation dates and the s.80(1) test against the books (cashBasisFindings)."
     },
     {
       "id": "vatca:s81",
@@ -725,33 +745,40 @@
       "id": "vatca:s86",
       "area": "vatca_section",
       "title": "s.86 Special provisions for tax invoiced by flat-rate farmers.",
-      "status": "deferred",
-      "issue": 208,
-      "reason": "Flat-rate farmers."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.flat_rate_farmer_purchase"
+      ]
     },
     {
       "id": "vatca:s87",
       "area": "vatca_section",
       "title": "s.87 Margin scheme — taxable dealers.",
-      "status": "deferred",
-      "issue": 208,
-      "reason": "Margin schemes."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.margin_scheme_goods_purchase"
+      ],
+      "note": "The buyer's side: no VAT to deduct. The company operating the margin scheme as a dealer is not modelled."
     },
     {
       "id": "vatca:s88",
       "area": "vatca_section",
       "title": "s.88 Margin scheme — travel agents.",
-      "status": "deferred",
-      "issue": 208,
-      "reason": "Margin schemes."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.margin_scheme_travel_purchase"
+      ],
+      "note": "The traveller's side: no VAT to deduct. The company operating as a travel agent is not modelled."
     },
     {
       "id": "vatca:s89",
       "area": "vatca_section",
       "title": "s.89 Margin scheme — auctioneers.",
-      "status": "deferred",
-      "issue": 208,
-      "reason": "Margin schemes."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.auction_scheme_purchase"
+      ],
+      "note": "The buyer's side: no VAT to deduct. The company operating as an auctioneer is not modelled."
     },
     {
       "id": "vatca:s90",
@@ -781,49 +808,62 @@
       "id": "vatca:s93",
       "area": "vatca_section",
       "title": "s.93 Supply of immovable goods (old rules).",
-      "status": "deferred",
-      "issue": 208,
-      "reason": "Immovable goods."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.supply_of_immovable_goods"
+      ],
+      "note": "Transitional rules for property held before 1 July 2008. Whether an interest pre-dates that is not on any invoice; the s.94 property rule flags every property supply and names ss.93, 95 and 96."
     },
     {
       "id": "vatca:s94",
       "area": "vatca_section",
       "title": "s.94 Supplies of immovable goods (new rules).",
-      "status": "deferred",
-      "issue": 208,
-      "reason": "Immovable goods."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.supply_of_immovable_goods",
+        "vat.joint_option_for_taxation"
+      ]
     },
     {
       "id": "vatca:s95",
       "area": "vatca_section",
       "title": "s.95 Transitional measures for supplies of immovable goods.",
-      "status": "deferred",
-      "issue": 208,
-      "reason": "Immovable goods."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.supply_of_immovable_goods"
+      ],
+      "note": "Transitional rules for property acquired or developed before 1 July 2008; flagged through the s.94 property rule, which names them."
     },
     {
       "id": "vatca:s96",
       "area": "vatca_section",
       "title": "s.96 Waiver of exemption under old rules.",
-      "status": "deferred",
-      "issue": 208,
-      "reason": "Immovable goods."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.supply_of_immovable_goods"
+      ],
+      "note": "Waivers of exemption on lettings made before 1 July 2008 and their cancellation; flagged through the s.94 property rule."
     },
     {
       "id": "vatca:s97",
       "area": "vatca_section",
       "title": "s.97 Option to tax letting of immovable goods.",
-      "status": "deferred",
-      "issue": 208,
-      "reason": "Immovable goods."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.letting_option_to_tax_exercised",
+        "vat.letting_option_to_tax_residential",
+        "vat.letting_option_to_tax_landlord"
+      ]
     },
     {
       "id": "vatca:s98",
       "area": "vatca_section",
       "title": "s.98 Valuation of an interest in immovable goods.",
-      "status": "deferred",
-      "issue": 208,
-      "reason": "Immovable goods."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.supply_of_immovable_goods"
+      ],
+      "note": "Valuation and apportionment of a property supply; the s.94 property rule flags the supply for a person to confirm the consideration from the contract."
     },
     {
       "id": "vatca:s99",
@@ -2077,9 +2117,10 @@
       "id": "treatment:RC_CONSTRUCTION",
       "area": "vat_treatment",
       "title": "RC_CONSTRUCTION",
-      "status": "deferred",
-      "issue": 208,
-      "reason": "No rule produces the s.16 construction reverse charge yet."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.domestic_reverse_charge_construction"
+      ]
     },
     {
       "id": "treatment:NON_DEDUCTIBLE",

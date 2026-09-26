@@ -78,6 +78,20 @@
       "when": 1790407472638,
       "tag": "0010_party_establishment_vies",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "6",
+      "when": 1790409773281,
+      "tag": "0011_company_rct_cash_basis",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "6",
+      "when": 1790424253055,
+      "tag": "0012_capital_goods",
+      "breakpoints": true
     }
   ]
 }

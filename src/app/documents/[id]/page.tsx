@@ -106,6 +106,15 @@ export default async function DocumentDetailPage({ params }: {
           {posting.error ? (
             <p className="px-4 py-3 text-[12px] text-negative">{posting.error}</p>
           ) : posting.choices && (
+            <>
+            {posting.choices.conflicts.length > 0 && (
+              <div className="px-4 py-3 border-b border-line">
+                <p className="text-[12px] font-medium text-caution">The invoice conflicts with itself or with the records. Nothing is pre-selected until you have checked:</p>
+                {posting.choices.conflicts.map((c) => (
+                  <p key={c.code} className="text-[11.5px] text-caution mt-1">{c.message}</p>
+                ))}
+              </div>
+            )}
             <PostInvoiceForm
               documentId={doc.id}
               direction={posting.choices.direction}
@@ -121,6 +130,7 @@ export default async function DocumentDetailPage({ params }: {
               treatments={treatmentsWithRates(asIsoDate(doc.documentDate ?? new Date().toISOString().slice(0, 10)))
                 .map((t) => ({ id: t.id, code: t.code, name: t.name }))}
             />
+            </>
           )}
         </Panel>
       )}

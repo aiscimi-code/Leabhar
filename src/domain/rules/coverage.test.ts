@@ -80,16 +80,22 @@ describe('rule coverage matrix', () => {
     });
 
     it('a treatment is marked covered but no rule can produce it', () => {
+      const producible = producibleTreatments();
+      producible.delete('RC_CONSTRUCTION');
+      const noProducer = validateCoverageMatrix({
+        matrix, expected: expectedCoverageRows({ root: process.cwd(), treatmentCodes }), derivedRuleKeys, producible,
+      });
+      expect(noProducer.errors).toContain('treatment:RC_CONSTRUCTION: marked "rule" but no rule binding can produce RC_CONSTRUCTION');
       const m = withRows((rows) => rows.map((r) => (r.id === 'treatment:RC_CONSTRUCTION'
-        ? { ...r, status: 'rule' as const, ruleKeys: ['vat.rate_standard_current'], issue: undefined, reason: undefined } : r)));
-      expect(check(m).errors).toContain('treatment:RC_CONSTRUCTION: marked "rule" but no rule binding can produce RC_CONSTRUCTION');
+        ? { ...r, ruleKeys: ['vat.rate_standard_current'] } : r)));
+      expect(check(m).errors).toContain('treatment:RC_CONSTRUCTION: rule "vat.rate_standard_current" does not produce RC_CONSTRUCTION');
     });
 
     it('a deferred row names no issue, or a not_applicable row gives no reason', () => {
-      const m = withRows((rows) => rows.map((r) => (r.id === 'vatca:s16' ? { ...r, issue: undefined }
+      const m = withRows((rows) => rows.map((r) => (r.id === 'vatca:s5' ? { ...r, issue: undefined }
         : r.id === 'vatca:s1' ? { ...r, reason: '' } : r)));
       const { errors } = check(m);
-      expect(errors).toContain('vatca:s16: deferred without an issue number');
+      expect(errors).toContain('vatca:s5: deferred without an issue number');
       expect(errors).toContain('vatca:s1: not_applicable without a reason');
     });
   });

@@ -50,6 +50,7 @@ const SECTIONS: Array<{ heading: string; items: Array<{ href: string; label: str
       { href: '/suppliers', label: 'Suppliers' },
       { href: '/customers', label: 'Customers' },
       { href: '/assets', label: 'Fixed assets' },
+      { href: '/capital-goods', label: 'Capital goods' },
       { href: '/rules', label: 'Rules' },
       { href: '/calendar', label: 'Tax calendar' },
     ],

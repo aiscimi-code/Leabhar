@@ -24,6 +24,7 @@ import { transactionTrace } from '@/domain/consolidation/trace';
 import { documentLineChoices } from '@/domain/consolidation/suggest';
 import { asIsoDate, today, makeDate, type IsoDate } from '@/domain/dates';
 import { transactionHistory } from '@/domain/consolidation/history';
+import { capitalGoodsOverview } from '@/domain/vat/capitalGoods';
 import { money } from '@/lib/format';
 
 /**
@@ -859,4 +860,19 @@ export function provisionDetail(provisionId: string) {
     .all();
   return { ...row, rulesCiting, file: verifyStatuteFile(row.source.localPath, row.source.sha256,
     row.provision.sourceStart, row.provision.sourceEnd) };
+}
+
+/** The capital goods record and the purchase invoices a good can be registered from (issue #208). */
+export function capitalGoodsPage() {
+  const db = getDb();
+  const company = requireCompany();
+  const purchaseInvoices = db.select({
+    id: invoices.id, invoiceNumber: invoices.invoiceNumber, invoiceDate: invoices.invoiceDate,
+    baseVatMinor: invoices.baseVatMinor, supplierName: suppliers.name,
+  }).from(invoices)
+    .leftJoin(suppliers, eq(invoices.supplierId, suppliers.id))
+    .where(and(eq(invoices.companyId, company.id), eq(invoices.direction, 'purchase'), ne(invoices.status, 'void')))
+    .orderBy(desc(invoices.invoiceDate)).all()
+    .filter((i) => i.baseVatMinor > 0);
+  return { company, goods: capitalGoodsOverview(db, { companyId: company.id }), purchaseInvoices };
 }

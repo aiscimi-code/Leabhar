@@ -8,3 +8,4 @@ export * from './documents';
 export * from './invoices';
 export * from './operations';
 export * from './irishRules';
+export * from './capitalGoods';

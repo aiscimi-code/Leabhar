@@ -83,7 +83,7 @@ describe('deriveSi639Rules', () => {
     expect(items.length).toBe(SI_639_CURATED_RULES.length);
   });
 
-  it('a cash-basis transaction description routes to the vat topic and surfaces the authorisation rule', () => {
+  it('a cash_receipts company profile routes to the vat topic and surfaces the authorisation rule', () => {
     deriveSi639Rules(db, { companyId });
     const result = lookupTransactionRules(db, {
       companyId,

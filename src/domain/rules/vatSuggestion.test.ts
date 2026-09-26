@@ -73,13 +73,13 @@ describe('suggestVatTreatment', () => {
     setup();
     const first = loadStatutoryKnowledgeBase(db, { companyId });
     expect(first.rulesBefore).toBe(0);
-    expect(first.rulesAfter).toBe(157);
+    expect(first.rulesAfter).toBe(177);
   });
 
   it('loading again is a no-op', () => {
     const again = loadStatutoryKnowledgeBase(db, { companyId });
-    expect(again.rulesBefore).toBe(157);
-    expect(again.rulesAfter).toBe(157);
+    expect(again.rulesBefore).toBe(177);
+    expect(again.rulesAfter).toBe(177);
   });
 
   it('US SaaS purchase → non-EU reverse charge, cited to VATCA s.12 with a verifiable slice', () => {
