@@ -157,6 +157,127 @@ export function recordCtDecision(db: AppDatabase, params: {
   return id;
 }
 
+export interface CapitalAllowancesResult { lines: CtLine[]; findings: string[] }
+
+const daysBetween = (a: string, b: string) => Math.round((Date.parse(b) - Date.parse(a)) / 86_400_000);
+
+/**
+ * Wear and tear (s.284), balancing allowances and charges (s.288) from the
+ * fixed asset register. An asset's configured rate is used; a rate other
+ * than the s.284 standard is flagged, and 100% in one year is treated as a
+ * s.285A claim that needs the SEAI list confirmed.
+ */
+export function capitalAllowances(db: AppDatabase, params: { companyId: string; from: string; to: string }): CapitalAllowancesResult {
+  const { companyId, from, to } = params;
+  const lines: CtLine[] = [];
+  const findings: string[] = [];
+  const standardRate = CORPORATION_TAX_CURATED_RULES.find((r) => r.ruleKey === 'ct.wear_and_tear_rate')!.numericValue!;
+  const smallProceeds = CORPORATION_TAX_CURATED_RULES.find((r) => r.ruleKey === 'ct.balancing_charge_small_proceeds')!.numericValue!;
+  // s.284(2)(b): a period of less than a year gets that fraction of a year's allowance.
+  const yearDays = daysBetween(`${Number(to.slice(0, 4)) - 1}${to.slice(4)}`, to);
+  const periodDays = daysBetween(from, to) + 1;
+  const scale = periodDays < yearDays ? { num: periodDays, den: yearDays } : null;
+  if (scale) findings.push(`The accounting period is ${periodDays} days: wear and tear is scaled by ${periodDays}/${yearDays} (s.284(2)(b)).`);
+
+  const wearAndTear: CtSource[] = [];
+  const balancingAllowances: CtSource[] = [];
+  const balancingCharges: CtSource[] = [];
+  let accelerated = false;
+  const assets = db.select().from(fixedAssets).where(and(eq(fixedAssets.companyId, companyId), lte(fixedAssets.purchaseDate, to))).all();
+  for (const asset of assets) {
+    if (asset.disposalDate && asset.disposalDate < from) continue;
+    if (asset.assetCategory === 'intangible') {
+      findings.push(`${asset.name} is an intangible asset: relief is under s.291A, not wear and tear, and is not computed here.`);
+      continue;
+    }
+    const cost = asset.baseCostMinor;
+    const rate = asset.capitalAllowanceRateBasisPoints;
+    const years = asset.capitalAllowanceYears;
+    const annual = multiplyRational(cost, rate, 10_000);
+    // Claims made in earlier periods (s.292: the amount still unallowed is cost less these).
+    const claimsBefore = Math.max(claimIndex(db, companyId, asset.purchaseDate, to), 0);
+    const madeBefore = Math.min(cost, annual * Math.min(claimsBefore, years));
+    const isMotor = asset.assetCategory === 'motor_vehicles' || /\b(car|van|vehicle|motor)\b/i.test(`${asset.name} ${asset.description ?? ''}`);
+
+    if (asset.disposalDate && asset.disposalDate <= to) {
+      // s.288: a balancing event in this period, and no wear and tear for it (s.284(1)).
+      if (madeBefore === 0) {
+        findings.push(`${asset.name} was bought and disposed of before any allowance was made: no balancing adjustment arises (s.288(1)).`);
+        continue;
+      }
+      if (asset.disposalProceedsMinor === null) {
+        findings.push(`${asset.name} was disposed of on ${asset.disposalDate} but no proceeds are recorded. Record them (nil if `
+          + 'scrapped): the balancing allowance or charge (s.288) cannot be computed without them.');
+        continue;
+      }
+      const proceeds = asset.disposalProceedsMinor;
+      const unallowed = cost - madeBefore;
+      if (proceeds < unallowed) {
+        balancingAllowances.push({ entityType: 'fixed_asset', entityId: asset.id, amountMinor: unallowed - proceeds,
+          label: `${asset.name}: unallowed ${eur(unallowed)} less proceeds ${eur(proceeds)}` });
+      } else if (proceeds > unallowed) {
+        if (proceeds < smallProceeds) {
+          findings.push(`${asset.name}: proceeds of ${eur(proceeds)} are under €2,000, so no balancing charge (s.288(3B)), unless `
+            + 'the buyer is connected with the company. Confirm who bought it.');
+        } else {
+          const charge = Math.min(proceeds - unallowed, madeBefore);
+          balancingCharges.push({ entityType: 'fixed_asset', entityId: asset.id, amountMinor: charge,
+            label: `${asset.name}: proceeds ${eur(proceeds)} less unallowed ${eur(unallowed)}${charge < proceeds - unallowed ? ', limited to allowances made (s.288(4))' : ''}` });
+        }
+      }
+      if (isMotor) findings.push(`${asset.name}: a car's balancing adjustment is restricted where its cost exceeded the limit (TCA Part 11), which is not applied here.`);
+      continue;
+    }
+
+    if (claimsBefore >= years || madeBefore >= cost) continue;
+    let claim = Math.min(annual, cost - madeBefore);
+    if (scale) claim = multiplyRational(claim, scale.num, scale.den);
+    if (claim <= 0) continue;
+    wearAndTear.push({ entityType: 'fixed_asset', entityId: asset.id, amountMinor: claim,
+      label: `${asset.name} (year ${claimsBefore + 1} of ${years}, ${rate / 100}% of ${eur(cost)})` });
+
+    if (rate === 10_000 && years === 1) {
+      accelerated = true;
+      findings.push(`${asset.name} is claimed at 100% in one year: an accelerated allowance (s.285A) is due only for new `
+        + 'equipment named on the SEAI energy-efficient list, bought by 31 December 2030. Confirm it is on the list.');
+    } else if (rate !== standardRate || years !== 8) {
+      findings.push(`${asset.name} is claimed at ${rate / 100}% over ${years} years, not the 12.5% over 8 years of s.284(2)(ad). `
+        + 'Check the basis for the different rate.');
+    }
+    if (isMotor) {
+      findings.push(`${asset.name} looks like a motor vehicle. Allowances on cars are limited by cost and emissions `
+        + '(TCA Part 11, ss.373–380), which is not yet applied: check the claim.');
+    }
+  }
+
+  const total = (xs: CtSource[]) => xs.reduce((s, x) => s + x.amountMinor, 0);
+  if (wearAndTear.length) {
+    lines.push({
+      kind: 'deduction', label: 'Deduct: capital allowances (wear and tear)', amountMinor: -total(wearAndTear),
+      citations: [cite('ct.wear_and_tear_rate'), cite('ct.wear_and_tear_in_use_at_period_end'), cite('ct.allowances_not_exceed_cost'),
+        ...(scale ? [cite('ct.wear_and_tear_short_period')] : []), ...(accelerated ? [cite('ct.accelerated_energy_efficient')] : [])],
+      sources: wearAndTear,
+      explanation: 'Each asset in use at the end of the period, at its rate, for the years it has left, never beyond its cost.',
+    });
+  }
+  if (balancingAllowances.length) {
+    lines.push({
+      kind: 'deduction', label: 'Deduct: balancing allowances', amountMinor: -total(balancingAllowances),
+      citations: [cite('ct.balancing_allowance'), cite('ct.amount_still_unallowed')], sources: balancingAllowances,
+      explanation: 'Assets disposed of for less than their unallowed cost.',
+    });
+  }
+  if (balancingCharges.length) {
+    lines.push({
+      kind: 'add_back', label: 'Add: balancing charges', amountMinor: total(balancingCharges),
+      citations: [cite('ct.balancing_charge'), cite('ct.balancing_charge_limit'), cite('ct.amount_still_unallowed')],
+      sources: balancingCharges,
+      explanation: 'Assets disposed of for more than their unallowed cost, limited to the allowances made.',
+    });
+  }
+  return { lines, findings };
+}
+
 /** Whole accounting years from the end of the year an asset was bought to `to` (0 in the year of purchase). */
 function claimIndex(db: AppDatabase, companyId: string, purchaseDate: string, to: string): number {
   const firstEnd = accountingYearContaining(db, companyId, purchaseDate).end;
@@ -222,8 +343,8 @@ export function computeCorporationTax(db: AppDatabase, params: { companyId: stri
       lines.push({
         kind: 'add_back', label: `Add back: ${r.code} ${r.name}`, amountMinor: r.signedMinor,
         citations: [cite('ct.capital_expenditure_not_deductible')], sources: [accountSource(r)],
-        explanation: 'A loss on disposing of a fixed asset is capital (s.81(2)(f)). Any balancing allowance or charge '
-          + '(s.288) is not yet computed.',
+        explanation: 'A loss on disposing of a fixed asset is capital (s.81(2)(f)); the tax adjustment on the disposal is '
+          + 'the balancing allowance or charge below (s.288).',
       });
     } else if (/corporation tax|income tax/i.test(r.name)) {
       lines.push({
@@ -278,37 +399,10 @@ export function computeCorporationTax(db: AppDatabase, params: { companyId: stri
     });
   }
 
-  // ---- Capital allowances (wear and tear) ----
-  const assets = db.select().from(fixedAssets).where(and(eq(fixedAssets.companyId, companyId), lte(fixedAssets.purchaseDate, to))).all();
-  const caSources: CtSource[] = [];
-  let capitalAllowances = 0;
-  for (const asset of assets) {
-    if (asset.disposalDate && asset.disposalDate < from) continue;
-    if (asset.disposalDate && asset.disposalDate <= to) {
-      findings.push(`${asset.name} was disposed of on ${asset.disposalDate}: no wear and tear for the period; the balancing `
-        + 'allowance or charge (s.288) is not yet computed.');
-      continue;
-    }
-    const n = claimIndex(db, companyId, asset.purchaseDate, to);
-    if (n < 0 || n >= asset.capitalAllowanceYears) continue;
-    const annual = multiplyRational(asset.baseCostMinor, asset.capitalAllowanceRateBasisPoints, 10_000);
-    const claimed = Math.min(annual, asset.baseCostMinor - multiplyRational(asset.baseCostMinor, asset.capitalAllowanceRateBasisPoints * n, 10_000));
-    if (claimed <= 0) continue;
-    capitalAllowances += claimed;
-    caSources.push({ entityType: 'fixed_asset', entityId: asset.id, label: `${asset.name} (year ${n + 1} of ${asset.capitalAllowanceYears})`, amountMinor: claimed });
-    if (/\b(car|van|vehicle|motor)\b/i.test(`${asset.name} ${asset.description ?? ''}`) || asset.assetCategory === 'motor_vehicles') {
-      findings.push(`${asset.name} looks like a motor vehicle. Allowances on cars are limited by cost and emissions `
-        + '(TCA Part 11, ss.373–380), which is not yet applied: check the claim.');
-    }
-  }
-  if (capitalAllowances) {
-    lines.push({
-      kind: 'deduction', label: 'Deduct: capital allowances (wear and tear)', amountMinor: -capitalAllowances,
-      citations: [cite('income_tax.wear_and_tear_allowance_qualifies'), cite('income_tax.wear_and_tear_rate_current')],
-      sources: caSources,
-      explanation: 'Each asset\'s configured rate (12.5% over 8 years for plant and machinery) for the years it has left.',
-    });
-  }
+  // ---- Capital allowances (Part 9) ----
+  const ca = capitalAllowances(db, { companyId, from, to });
+  lines.push(...ca.lines);
+  findings.push(...ca.findings);
 
   // ---- Totals and rates ----
   const adjusted = accountingProfitMinor + lines.reduce((s, l) => s + l.amountMinor, 0);
@@ -329,8 +423,8 @@ export function computeCorporationTax(db: AppDatabase, params: { companyId: stri
   if (pending.length) {
     findings.push(`${pending.length} treatment(s) are suggested, not decided: the figures use the suggestion until a person chooses.`);
   }
-  findings.push('Not yet computed: balancing allowances and charges, motor vehicle limits, loss relief, close company '
-    + 'surcharges and preliminary tax. Chargeable gains are not included.');
+  findings.push('Not yet computed: motor vehicle limits, loss relief, close company surcharges and preliminary tax. '
+    + 'Chargeable gains are not included.');
 
   return {
     companyId, from, to, accountingProfitMinor, lines, tradingProfitMinor, tradingLossMinor,

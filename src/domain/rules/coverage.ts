@@ -78,7 +78,7 @@ export const UNNUMBERED_SCHEDULE_PARAGRAPHS: Array<{ id: string; title: string; 
  * section numbers the issue leaves to be confirmed from the text.
  */
 export const TCA_SECTIONS_IN_SCOPE: string[] = [
-  's3', 's15', 's18', 's21', 's21A', 's65', 's66', 's67', 's76', 's81', 's284', 's288',
+  's3', 's15', 's18', 's21', 's21A', 's65', 's66', 's67', 's76', 's81', 's284', 's285A', 's288', 's291A', 's292',
   'part9-computer-software', 'part9-motor-vehicles',
   's396', 's396A', 's430', 's440', 's441', 's472AB', 'part18D', 'part41A', 's840', 's1007', 's1008',
   's530', ...'ABCDEFGHIJKLMNOPQRSTUV'.split('').map((l) => `s530${l}`),

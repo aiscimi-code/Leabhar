@@ -2244,24 +2244,60 @@
       "title": "TCA 1997 s284",
       "status": "rule",
       "ruleKeys": [
-        "income_tax.wear_and_tear_allowance_qualifies"
+        "income_tax.wear_and_tear_allowance_qualifies",
+        "ct.wear_and_tear_rate",
+        "ct.wear_and_tear_in_use_at_period_end",
+        "ct.wear_and_tear_short_period",
+        "ct.allowances_not_exceed_cost"
+      ]
+    },
+    {
+      "id": "tca:s285A",
+      "area": "tca_section",
+      "title": "TCA 1997 s285A",
+      "status": "rule",
+      "ruleKeys": [
+        "ct.accelerated_energy_efficient"
       ]
     },
     {
       "id": "tca:s288",
       "area": "tca_section",
       "title": "TCA 1997 s288",
-      "status": "deferred",
-      "issue": 211,
-      "reason": "Not yet ruled."
+      "status": "rule",
+      "ruleKeys": [
+        "ct.balancing_allowance",
+        "ct.balancing_charge",
+        "ct.balancing_charge_small_proceeds",
+        "ct.balancing_charge_limit"
+      ]
+    },
+    {
+      "id": "tca:s291A",
+      "area": "tca_section",
+      "title": "TCA 1997 s291A",
+      "status": "rule",
+      "ruleKeys": [
+        "ct.intangible_assets_scheme"
+      ]
+    },
+    {
+      "id": "tca:s292",
+      "area": "tca_section",
+      "title": "TCA 1997 s292",
+      "status": "rule",
+      "ruleKeys": [
+        "ct.amount_still_unallowed"
+      ]
     },
     {
       "id": "tca:part9-computer-software",
       "area": "tca_section",
       "title": "TCA 1997 part9-computer-software",
-      "status": "deferred",
-      "issue": 211,
-      "reason": "Not yet ruled."
+      "status": "rule",
+      "ruleKeys": [
+        "ct.computer_software_plant"
+      ]
     },
     {
       "id": "tca:part9-motor-vehicles",
@@ -2269,7 +2305,7 @@
       "title": "TCA 1997 part9-motor-vehicles",
       "status": "deferred",
       "issue": 211,
-      "reason": "Not yet ruled."
+      "reason": "The cost and emissions limits are in TCA Part 11 (ss.373–380); its Notes for Guidance are not in the collected sources and were requested on #211. Until then a motor vehicle claim is flagged for review."
     },
     {
       "id": "tca:s396",

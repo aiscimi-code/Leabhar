@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { createTestDatabase } from '@/db/testing';
 import { createCompany } from '../config/setup';
 import { postJournalEntry } from '../accounting/journal';
-import { computeCorporationTax, recordCtDecision, CtDecisionError } from './computation';
+import { computeCorporationTax, recordCtDecision, CtDecisionError, capitalAllowances } from './computation';
 import { fixedAssets, ctDecisions } from '@/db/schema';
 import { asIsoDate } from '../dates';
 import { ids } from '@/lib/ids';
@@ -122,5 +122,69 @@ describe('computeCorporationTax', () => {
     expect(c.tradingLossMinor).toBe(200_000);
     expect(c.corporationTaxMinor).toBe(0);
     expect(c.findings.some((f) => f.includes('s.396'))).toBe(true);
+  });
+});
+
+describe('capital allowances', () => {
+  const asset = (over: Partial<typeof fixedAssets.$inferInsert> = {}) => {
+    const id = ids.fixedAsset();
+    db.insert(fixedAssets).values({
+      id, companyId, name: 'Server', assetCategory: 'computer_equipment', purchaseDate: '2025-03-01',
+      costMinor: 800_000, currency: 'EUR', baseCostMinor: 800_000, baseCurrency: 'EUR',
+      capitalAllowanceRateBasisPoints: 1250, capitalAllowanceYears: 8, status: 'active', ...over,
+    }).run();
+    return id;
+  };
+  const in2027 = () => capitalAllowances(db, { companyId, from: '2027-01-01', to: '2027-12-31' });
+  const line = (r: ReturnType<typeof in2027>, label: string) => r.lines.find((l) => l.label.includes(label))?.amountMinor;
+
+  it('gives a balancing allowance for the unallowed cost less the proceeds (s.288(2))', () => {
+    // Two years' allowances made (2025, 2026): 200,000; unallowed 600,000.
+    asset({ disposalDate: '2027-06-01', disposalProceedsMinor: 300_000 });
+    const r = in2027();
+    expect(line(r, 'balancing allowances')).toBe(-300_000);
+    expect(line(r, 'wear and tear')).toBeUndefined();
+  });
+
+  it('charges the excess of proceeds, limited to the allowances made (s.288(3), (4))', () => {
+    asset({ disposalDate: '2027-06-01', disposalProceedsMinor: 700_000 });
+    expect(line(in2027(), 'balancing charges')).toBe(100_000);
+    ({ db } = createTestDatabase());
+    ({ companyId } = createCompany(db, { legalName: 'CT Ltd', vatRegistrationStatus: 'registered', seedYears: [2025] }));
+    asset({ disposalDate: '2027-06-01', disposalProceedsMinor: 900_000 });
+    const r = in2027();
+    expect(line(r, 'balancing charges')).toBe(200_000);
+    expect(r.lines[0]!.sources[0]!.label).toContain('limited to allowances made');
+  });
+
+  it('makes no balancing charge on proceeds under €2,000, and says to check the buyer (s.288(3B))', () => {
+    asset({ baseCostMinor: 10_000, costMinor: 10_000, disposalDate: '2027-06-01', disposalProceedsMinor: 150_000 });
+    const r = in2027();
+    expect(r.lines).toEqual([]);
+    expect(r.findings.some((f) => f.includes('s.288(3B)'))).toBe(true);
+  });
+
+  it('refuses to guess missing proceeds', () => {
+    asset({ disposalDate: '2027-06-01' });
+    const r = in2027();
+    expect(r.lines).toEqual([]);
+    expect(r.findings.some((f) => f.includes('no proceeds are recorded'))).toBe(true);
+  });
+
+  it('scales wear and tear for a short accounting period (s.284(2)(b))', () => {
+    asset({ purchaseDate: '2025-08-01' });
+    const r = capitalAllowances(db, { companyId, from: '2025-07-01', to: '2025-12-31' });
+    // 100,000 x 184/365.
+    expect(line(r, 'wear and tear')).toBe(-50_411);
+  });
+
+  it('flags a 100% claim as needing the SEAI list (s.285A), and leaves intangibles to s.291A', () => {
+    asset({ capitalAllowanceRateBasisPoints: 10_000, capitalAllowanceYears: 1, purchaseDate: '2027-02-01' });
+    asset({ name: 'Brand licence', assetCategory: 'intangible', purchaseDate: '2027-02-01' });
+    const r = in2027();
+    expect(line(r, 'wear and tear')).toBe(-800_000);
+    expect(r.lines[0]!.citations.map((c) => c.ruleKey)).toContain('ct.accelerated_energy_efficient');
+    expect(r.findings.some((f) => f.includes('SEAI'))).toBe(true);
+    expect(r.findings.some((f) => f.includes('s.291A'))).toBe(true);
   });
 });
