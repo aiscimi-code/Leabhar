@@ -174,6 +174,8 @@ export const initCompanyInput = z.object({
   entityType: z.enum(['company', 'sole_trader', 'partnership']).optional(),
   /** When the trade began, for a sole trader or partnership. */
   tradeCommencedOn: isoDate.optional(),
+  /** The SME chart (default) or the farm chart (issue #360). */
+  chartKind: z.enum(['sm', 'farm']).optional(),
 });
 
 export const addBankInput = z.object({
@@ -199,6 +201,22 @@ export const addAccountInput = z.object({
   vatApplicable: z.boolean().optional(),
 });
 
+export const addLoanInput = z.object({
+  companyId: z.string(),
+  lenderName: z.string(),
+  loanName: z.string().optional(),
+  kind: z.enum(['term_loan', 'hire_purchase', 'mortgage', 'credit_line', 'other']).optional(),
+  currency: z.string().optional(),
+  /** Code of an existing liability account (e.g. 2210); omitted = create one. */
+  account: z.string().optional(),
+  /** Decimal string in major units — the principal already drawn down. */
+  principal: z.string().optional(),
+  /** When the drawdown happened; also the date the journal is posted at. */
+  date: isoDate,
+  maturity: isoDate.optional(),
+  notes: z.string().optional(),
+});
+
 export const addCustomerInput = z.object({
   companyId: z.string(),
   name: z.string(),
@@ -212,6 +230,7 @@ export const addCustomerInput = z.object({
 export type InitCompanyInput = z.infer<typeof initCompanyInput>;
 export type AddBankInput = z.infer<typeof addBankInput>;
 export type AddAccountInput = z.infer<typeof addAccountInput>;
+export type AddLoanInput = z.infer<typeof addLoanInput>;
 export type AddCustomerInput = z.infer<typeof addCustomerInput>;
 
 // ---- Books (issue #153) ----
@@ -371,6 +390,54 @@ export type ListPartiesInput = z.infer<typeof listPartiesInput>;
 
 export const ensureDefaultAccountsInput = z.object({
   companyId: z.string(),
+});
+
+/** Archive/restore a chart account (issue #361): a decision with a reason. */
+export const archiveAccountInput = z.object({
+  companyId: z.string(),
+  /** Account code (or id). */
+  account: z.string(),
+  reason: z.string(),
+  /** Defaults to today; closes the account's effective window on this date. */
+  date: isoDate.optional(),
+});
+
+export const restoreAccountInput = z.object({
+  companyId: z.string(),
+  /** Account code (or id). */
+  account: z.string(),
+  reason: z.string(),
+});
+
+// ---- External chart mappings (issue #362) ----
+
+export const mapAccountInput = z.object({
+  companyId: z.string(),
+  /** Account code (or id). */
+  account: z.string(),
+  /** Which external chart this mapping belongs to, e.g. "Accountant 2025". */
+  chartName: z.string(),
+  /** The account's code in that chart. */
+  externalCode: z.string(),
+  externalName: z.string().optional(),
+  notes: z.string().optional(),
+});
+
+export const unmapAccountInput = z.object({
+  companyId: z.string(),
+  account: z.string(),
+  chartName: z.string(),
+});
+
+export const listAccountMappingsInput = z.object({
+  companyId: z.string(),
+  chartName: z.string().optional(),
+});
+
+export const mappedTrialBalanceInput = z.object({
+  companyId: z.string(),
+  chartName: z.string(),
+  asOf: isoDate.optional(),
 });
 
 export const installRulePackInput = z.object({

@@ -94,6 +94,9 @@ export default async function ReportsPage({ searchParams }: {
               {data.profitAndLoss.otherIncome.components.length > 0 && (
                 <SectionRow figure={data.profitAndLoss.otherIncome} currency={currency} to={to} />
               )}
+              {data.profitAndLoss.financeCosts.components.length > 0 && (
+                <SectionRow figure={data.profitAndLoss.financeCosts} currency={currency} to={to} negate />
+              )}
               <TotalRow label="Net profit" figure={data.profitAndLoss.netProfit} currency={currency} strong />
             </tbody>
           </table>
@@ -115,6 +118,9 @@ export default async function ReportsPage({ searchParams }: {
               <SectionRow figure={data.balanceSheet.currentAssets} currency={currency} to={to} />
               <TotalRow label="Total assets" figure={data.balanceSheet.totalAssets} currency={currency} />
               <SectionRow figure={data.balanceSheet.currentLiabilities} currency={currency} to={to} />
+              {data.balanceSheet.longTermLiabilities.components.length > 0 && (
+                <SectionRow figure={data.balanceSheet.longTermLiabilities} currency={currency} to={to} />
+              )}
               <TotalRow label="Net assets" figure={data.balanceSheet.netAssets} currency={currency} strong />
 
               <tr><td colSpan={2} className="pt-3 font-semibold text-ink">Financed by</td></tr>

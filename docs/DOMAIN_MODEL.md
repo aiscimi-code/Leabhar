@@ -164,13 +164,24 @@ Account
 `type` ∈ `asset | liability | equity | income | expense`.
 Normal balance is derived from type: assets and expenses are debit-normal.
 
-An account referenced by a posted journal line can be **deactivated** but never
-deleted (§10). Deactivation prevents new postings; it does not disturb history.
+An account referenced by a posted journal line can be **archived** but never
+deleted (§10). Archiving is a recorded decision: it needs a reason, closes the
+account's effective window (`effective_to`) on the archive date, prevents new
+postings, and flags the account on the review queue if it still carries a
+balance. History is never disturbed.
 
 System accounts that the engine posts to by name, and therefore must always
 exist: bank control, VAT on sales, VAT on purchases, VAT control, debtors,
 creditors, director's current account, share capital, retained earnings,
-suspense, FX gain/loss, rounding difference.
+suspense, FX gain/loss, rounding difference, plus the payroll accounts (PAYE,
+USC, PRSI, net wages, pension deductions) and stock on hand.
+
+The chart installed at company creation varies by entity type (issue #212: a
+company has share capital and dividends; a sole trader a capital account and
+drawings) and by sector (`chartKind: 'farm'`, issue #360). Accounts can also be
+mapped onto a named external chart (`account_mappings`, issue #362) so an
+exported trial balance can be restated in the external codes; a mapping states a
+correspondence and never moves a figure.
 
 ---
 

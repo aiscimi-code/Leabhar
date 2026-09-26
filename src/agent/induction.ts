@@ -1,15 +1,16 @@
 import { and, eq } from 'drizzle-orm';
 import type { AppDatabase } from '@/db';
-import { companies, customers, suppliers } from '@/db/schema';
+import { companies, customers, suppliers, accounts, loans as loansTable } from '@/db/schema';
 import {
-  createCompany, addBankAccount, ensureDefaultAccounts, ensureDefaultVatTreatments, type CreatedCompany,
+  createCompany, addBankAccount, addLoan, ensureDefaultAccounts, ensureDefaultVatTreatments,
+  installFarmChart, type CreatedCompany,
 } from '@/domain/config/setup';
 import { createAccount, upsertCustomer } from '@/domain/config/mutations';
 import { parseAmount } from '@/domain/money';
 import { createRule, type RuleCondition, type RuleAction } from '@/domain/rules/engine';
 import { resolveAccountId, resolveVatTreatmentId } from './reconcile';
 import type {
-  InitCompanyInput, AddBankInput, AddAccountInput, AddCustomerInput, ListPartiesInput,
+  InitCompanyInput, AddBankInput, AddAccountInput, AddLoanInput, AddCustomerInput, ListPartiesInput,
   EnsureDefaultAccountsInput, InstallRulePackInput,
 } from './schema';
 
@@ -50,6 +51,7 @@ export function initCompany(db: AppDatabase, input: InitCompanyInput): CreatedCo
     seedYears,
     entityType: input.entityType,
     tradeCommencedOn: input.tradeCommencedOn,
+    chartKind: input.chartKind,
   });
 }
 
@@ -97,8 +99,9 @@ export function addBank(db: AppDatabase, input: AddBankInput): AddBankResult {
  * domain layer to accept blindly.
  */
 const KNOWN_REPORT_SECTIONS = new Set([
-  'revenue', 'cost_of_sales', 'operating_expenses',
-  'fixed_assets', 'current_assets', 'current_liabilities', 'equity',
+  'revenue', 'cost_of_sales', 'operating_expenses', 'finance_costs',
+  'fixed_assets', 'current_assets', 'current_liabilities', 'long_term_liabilities',
+  'equity',
 ]);
 
 const DEFAULT_REPORT_SECTION_BY_TYPE: Record<AddAccountInput['type'], string> = {
@@ -132,8 +135,7 @@ export function addAccount(db: AppDatabase, input: AddAccountInput): { accountId
   return { accountId };
 }
 
-export function addCustomer(db: AppDatabase, input: AddCustomerInput): { customerId: string } {
-  const defaultAccountId = input.defaultAccount
+export function addCustomer(db: AppDatabase, input: AddCustomerInput): { customerId: string } {  const defaultAccountId = input.defaultAccount
     ? resolveAccountId(db, input.companyId, input.defaultAccount)
     : null;
 
@@ -147,6 +149,64 @@ export function addCustomer(db: AppDatabase, input: AddCustomerInput): { custome
     actor: 'cli',
   });
   return { customerId };
+}
+
+export interface AddLoanResult {
+  loanId: string;
+  accountCode: string;
+  accountCreated: boolean;
+  drawdownPosted: boolean;
+}
+
+/**
+ * Register a loan from the CLI (issue #358). `--principal` is the amount
+ * already drawn down before the first imported statement — when the drawdown
+ * is a statement line of its own, leave it off and classify that line instead,
+ * or the drawdown is counted twice.
+ */
+export function addLoanCli(db: AppDatabase, input: AddLoanInput): AddLoanResult {
+  const company = db.select({ baseCurrency: companies.baseCurrency }).from(companies)
+    .where(eq(companies.id, input.companyId)).get();
+  if (!company) throw new Error(`Company ${input.companyId} not found.`);
+  const currency = (input.currency ?? company.baseCurrency).toUpperCase();
+
+  const principalMinor = input.principal !== undefined
+    ? parseAmount(input.principal, currency)
+    : 0;
+
+  const beforeCodes = new Set(
+    db.select({ code: accounts.code }).from(accounts)
+      .where(eq(accounts.companyId, input.companyId)).all().map((r) => r.code),
+  );
+  const accountId = input.account
+    ? resolveAccountId(db, input.companyId, input.account)
+    : undefined;
+
+  const loanId = addLoan(db, {
+    companyId: input.companyId,
+    lenderName: input.lenderName,
+    loanName: input.loanName,
+    kind: input.kind,
+    currency,
+    accountId,
+    openingPrincipalMinor: principalMinor,
+    openingDate: input.date,
+    maturityDate: input.maturity,
+    notes: input.notes,
+    actor: 'cli',
+  });
+
+  const loan = db.select().from(loansTable)
+    .where(eq(loansTable.id, loanId)).get()!;
+  const afterAccount = db.select({ code: accounts.code }).from(accounts)
+    .where(eq(accounts.id, loan.accountId)).get()!;
+
+  return {
+    loanId,
+    accountCode: afterAccount.code,
+    accountCreated: !beforeCodes.has(afterAccount.code),
+    drawdownPosted: principalMinor !== 0,
+  };
 }
 
 const matchKeyOf = (name: string): string => name.toLowerCase()
@@ -207,12 +267,16 @@ export function listCustomersCli(db: AppDatabase, input: ListPartiesInput) {
  * Materials, 2210 Bank loans, 1020 Bank deposit/saver, for a company
  * induced before those existed. A new company gets them all from
  * `createCompany` already; this is only for one created earlier.
- */
-export function ensureDefaultAccountsCli(
+ */export function ensureDefaultAccountsCli(
   db: AppDatabase, input: EnsureDefaultAccountsInput,
 ): { added: string[]; addedRates: string[]; addedTreatments: string[] } {
   const { added } = ensureDefaultAccounts(db, input.companyId, 'cli');
   return { added, ...ensureDefaultVatTreatments(db, input.companyId, 'cli') };
+}
+
+/** Turn an existing book's chart into the farm chart (issue #360). */
+export function installFarmChartCli(db: AppDatabase, input: EnsureDefaultAccountsInput) {
+  return installFarmChart(db, input.companyId, 'cli');
 }
 
 /**
@@ -233,7 +297,7 @@ export function installRulePackCli(
 
   const wagesAccount = resolveAccountId(db, input.companyId, '6180');
   const employerPrsiAccount = resolveAccountId(db, input.companyId, '6190');
-  const payePayableAccount = resolveAccountId(db, input.companyId, '2400');
+  const payePayableAccount = resolveAccountId(db, input.companyId, '2410');
   const vatPayableAccount = resolveAccountId(db, input.companyId, '2100');
   const rentAccount = resolveAccountId(db, input.companyId, input.rentAccount ?? '6200');
   const secondBankAccount = resolveAccountId(db, input.companyId, input.secondBankAccount ?? '1020');
@@ -285,6 +349,10 @@ export function installRulePackCli(
 
   install({
     name: 'Revenue PAYE remittance',
+    description: 'A single-account approximation (issue #159): the payment settles PAYE, '
+      + 'USC and PRSI together, and a keyword rule can only post one line. It clears the '
+      + 'PAYE withheld account (2410); once the payroll run (EPIC 20) raises the USC and PRSI '
+      + 'liabilities too, post the remittance as a split journal against all three instead.',
     conditions: [
       { field: 'description', operator: 'contains', value: 'REVENUE' },
       { field: 'description', operator: 'contains', value: 'PAYE' },

@@ -137,6 +137,35 @@ export const accounts = sqliteTable('accounts', {
 ]);
 
 /**
+ * Mapping a Leabhar account onto an external chart (issue #362) — the
+ * accountant's own chart, or another package's — so figures exported or
+ * migrated can be restated in the external chart's codes. One mapping per
+ * (account, external chart): the same account can be mapped into several
+ * charts at once, but within one chart an account has one external code.
+ *
+ * The mapping states a correspondence; it never moves figures. Money stays in
+ * the Leabhar account, and the mapped trial balance is a *presentation* of the
+ * same ledger, not a second set of books.
+ */
+export const accountMappings = sqliteTable('account_mappings', {
+  id: text('id').primaryKey(),
+  companyId: text('company_id').notNull().references(() => companies.id),
+  accountId: text('account_id').notNull().references(() => accounts.id),
+  /** Which external chart this mapping belongs to, e.g. "Accountant 2025". */
+  chartName: text('chart_name').notNull(),
+  /** The account's code in that chart. */
+  externalCode: text('external_code').notNull(),
+  /** Its name there, when the chart documents one. */
+  externalName: text('external_name'),
+  notes: text('notes'),
+  ...timestamps,
+}, (t) => [
+  index('account_mappings_company_idx').on(t.companyId),
+  index('account_mappings_chart_idx').on(t.companyId, t.chartName),
+  unique('account_mappings_unique').on(t.companyId, t.accountId, t.chartName),
+]);
+
+/**
  * Accounting periods (README §9), independent from VAT periods.
  * Real date ranges, never derived by a hard-coded quarterly assumption.
  */

@@ -120,6 +120,13 @@
       "when": 1790461166627,
       "tag": "0016_users_roles_permissions",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "6",
+      "when": 1790461809082,
+      "tag": "0017_chart_loans_mappings",
+      "breakpoints": true
     }
   ]
 }
