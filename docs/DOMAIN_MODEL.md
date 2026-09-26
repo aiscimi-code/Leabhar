@@ -465,6 +465,14 @@ Loan and overdraft interest match a rule that suggests no treatment and is
 flagged. Schedule 1 para 6(1)(a)'s credit words were deleted in 2023, and
 where they went is not in the repository.
 
+A line that may be ancillary (delivery, packaging, handling; the s.47 rule
+matched) is compared with the other lines of the same invoice
+(`applyCompositeSupply`). If those lines bear one printed rate, their
+treatment is offered for the line under s.47(1)(a), and the line is flagged:
+the rate is right only if the invoice is one composite supply. If they bear
+different rates, the line is flagged as undecidable from the invoice. Nothing
+is preselected: whether a supply is ancillary is a judgement.
+
 ### Posting paths are atomic
 
 Every exported posting path — classify, reclassify, split journal,

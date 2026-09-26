@@ -7,6 +7,7 @@ import { parseVatNumber, EU_COUNTRY_CODES } from '../extraction/vatNumbers';
 import { suggestFromFacts, type SuggestionFacts, type VatSuggestion } from '../rules/vatSuggestion';
 import { documentEvidenceLines, type EvidenceLine } from './postDocument';
 import { checkLineRate, type LineRateCheck } from '../rules/lineRateCheck';
+import { applyCompositeSupply } from './compositeSupply';
 
 /**
  * The choices for coding each line of a confirmed document (issue #203).
@@ -191,5 +192,18 @@ export function documentLineChoices(db: AppDatabase, params: { companyId: string
     };
   });
 
-  return { direction, lines: choices };
+  // Lines are coded together where one may be ancillary to another (s.47, issue #206).
+  const domesticTreatmentForRate = (rateBasisPoints: number) => {
+    for (const code of ['IE_STD', 'IE_RED', 'IE_SECOND_RED', 'IE_ZERO']) {
+      const t = treatmentByCode(code);
+      if (!t) continue;
+      try {
+        if (resolveTreatment(db, { companyId: params.companyId, treatmentId: t.id, onDate }).rateBasisPoints === rateBasisPoints) {
+          return { treatmentId: t.id, code: t.code, name: t.name };
+        }
+      } catch { /* no rate configured on this date */ }
+    }
+    return undefined;
+  };
+  return { direction, lines: applyCompositeSupply(choices, domesticTreatmentForRate) };
 }

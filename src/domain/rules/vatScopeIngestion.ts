@@ -19,10 +19,13 @@ import { nowIso } from '../dates';
 import { VAT_SCOPE_CURATED_RULES } from './vatScopeCuration';
 import { VAT_PLACE_OF_SUPPLY_CURATED_RULES } from './vatPlaceOfSupplyCuration';
 import { lrcHtmlForSource } from './vatcaScheduleIngestion';
+import { COMPOSITE_SUPPLY_RULES } from './compositeSupplyCuration';
 import { quotedTextWindow } from './lrcAnnotations';
 
 /** Every rule this module derives: scope/exemption and place of supply of services. */
-export const VAT_SCOPE_DERIVED_RULES = [...VAT_SCOPE_CURATED_RULES, ...VAT_PLACE_OF_SUPPLY_CURATED_RULES];
+export const VAT_SCOPE_DERIVED_RULES = [
+  ...VAT_SCOPE_CURATED_RULES, ...VAT_PLACE_OF_SUPPLY_CURATED_RULES, ...COMPOSITE_SUPPLY_RULES,
+];
 import { upsertReviewItem } from '../extraction/service';
 
 export interface VatScopeDeriveResult {

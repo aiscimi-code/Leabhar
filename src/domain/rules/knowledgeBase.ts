@@ -80,6 +80,7 @@ const SOURCES: Array<{ path: string; ingest: IngestFn }> = [
   { path: 'docs/statutes/rct/tdm-18-02-05.md', ingest: ingestRctTdm18_02_05 },
   { path: 'docs/statutes/rct/tdm-18-02-11.md', ingest: ingestRctTdm18_02_11 },
   { path: 'docs/statutes/vatca-2010-revised/s046.md', ingest: ingestVatcaRevisedSection },
+  { path: 'docs/statutes/vatca-2010-revised/s047.md', ingest: ingestVatcaRevisedSection },
   { path: 'docs/statutes/vatca-2010-revised/s002.md', ingest: ingestVatcaRevisedSection },
   { path: 'docs/statutes/vatca-2010-revised/s003.md', ingest: ingestVatcaRevisedSection },
   { path: 'docs/statutes/vatca-2010-revised/s034.md', ingest: ingestVatcaRevisedSection },

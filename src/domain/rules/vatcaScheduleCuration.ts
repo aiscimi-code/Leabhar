@@ -16,6 +16,11 @@
  * Every `statementExcerpt` below is a verbatim substring of the relevant
  * paragraph's own `provisionText`, checked by `vatcaScheduleParser.test.ts`
  * against `vatcaScheduleParser.ts` output — never retyped from memory.
+ * No rule here tests `supplyType` except the cross-border two, where goods
+ * versus services is the test itself: an invoice line only carries it when
+ * the counterparty has a default treatment, so a condition on it left these
+ * rules unmatched on most lines (issue #206). The words matched already say
+ * whether the supply is goods or services.
  * Every rule's `conditions` map the paragraph's legal test onto
  * `TransactionContext` fields as a *description keyword match*, the same
  * imperfect-proxy approach `vatcaCuration.ts`'s
@@ -133,7 +138,6 @@ export const VATCA_SCHEDULE_CURATED_RULES: CuratedVatcaScheduleRule[] = [
     name: 'Zero-rate: printed books, booklets, newspapers and audiobooks',
     statementExcerpt: 'The supply of printed\nbooks and booklets, including',
     conditions: [
-      { field: 'supplyType', operator: 'equals', value: 'goods' },
       {
         field: 'description', operator: 'matches',
         value: '\\b(book|booklet|atlas|newspaper|audiobook)s?\\b',
@@ -167,7 +171,6 @@ export const VATCA_SCHEDULE_CURATED_RULES: CuratedVatcaScheduleRule[] = [
     statementExcerpt: 'The supply of articles of children’s personal clothing of sizes that do not exceed the sizes of those articles appropriate\n'
       + 'to children of average build of 10 years of age, but excluding',
     conditions: [
-      { field: 'supplyType', operator: 'equals', value: 'goods' },
       {
         field: 'description', operator: 'matches',
         value: '\\bchild(ren)?\\W?s?\\b.{0,20}\\b(clothing|clothes|footwear|shoes)\\b',
@@ -203,7 +206,6 @@ export const VATCA_SCHEDULE_CURATED_RULES: CuratedVatcaScheduleRule[] = [
     name: 'Reduced rate: construction/repair work and routine cleaning of private dwellings',
     statementExcerpt: 'Services consisting of the routine cleaning of private dwellings.',
     conditions: [
-      { field: 'supplyType', operator: 'equals', value: 'services' },
       {
         field: 'description', operator: 'matches',
         value: '(private dwelling|\\bhouse\\b|renovat|extension|refurbish|\\bclean(ing)?\\b.{0,20}dwelling)',
@@ -240,7 +242,6 @@ export const VATCA_SCHEDULE_CURATED_RULES: CuratedVatcaScheduleRule[] = [
     name: 'Reduced rate: coal, peat and other solid fuel',
     statementExcerpt: 'The supply of coal, peat and other solid substances offered for sale solely\nas fuel.',
     conditions: [
-      { field: 'supplyType', operator: 'equals', value: 'goods' },
       { field: 'description', operator: 'matches', value: '\\b(coal|peat|turf|briquette|solid fuel)s?\\b' },
     ],
     exceptions: [],
@@ -262,7 +263,6 @@ export const VATCA_SCHEDULE_CURATED_RULES: CuratedVatcaScheduleRule[] = [
     name: 'Reduced rate: repairing or maintaining movable goods',
     statementExcerpt: 'repairing or maintaining movable goods',
     conditions: [
-      { field: 'supplyType', operator: 'equals', value: 'services' },
       { field: 'description', operator: 'matches', value: '\\b(repair|maintain|maintenance|servicing)\\b' },
     ],
     exceptions: [
@@ -294,7 +294,6 @@ export const VATCA_SCHEDULE_CURATED_RULES: CuratedVatcaScheduleRule[] = [
     name: 'Reduced rate: cinema admission',
     statementExcerpt: 'Promotion of, and admission to, showings of cinematographic films.',
     conditions: [
-      { field: 'supplyType', operator: 'equals', value: 'services' },
       { field: 'description', operator: 'matches', value: '\\bcinema\\b|\\bfilm screening\\b' },
     ],
     exceptions: [],

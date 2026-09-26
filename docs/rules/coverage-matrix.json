@@ -394,9 +394,11 @@
       "id": "vatca:s47",
       "area": "vatca_section",
       "title": "s.47 Composite and multiple supplies.",
-      "status": "deferred",
-      "issue": 206,
-      "reason": "Composite and multiple supplies."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.composite_supply_follows_principal"
+      ],
+      "note": "The rule decides no treatment: documentLineChoices compares a possibly ancillary line with the other lines of the same invoice and flags the choice (consolidation/compositeSupply.ts)."
     },
     {
       "id": "vatca:s48",

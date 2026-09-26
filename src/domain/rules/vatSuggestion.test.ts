@@ -67,13 +67,13 @@ describe('suggestVatTreatment', () => {
     setup();
     const first = loadStatutoryKnowledgeBase(db, { companyId });
     expect(first.rulesBefore).toBe(0);
-    expect(first.rulesAfter).toBe(145);
+    expect(first.rulesAfter).toBe(146);
   });
 
   it('loading again is a no-op', () => {
     const again = loadStatutoryKnowledgeBase(db, { companyId });
-    expect(again.rulesBefore).toBe(145);
-    expect(again.rulesAfter).toBe(145);
+    expect(again.rulesBefore).toBe(146);
+    expect(again.rulesAfter).toBe(146);
   });
 
   it('US SaaS purchase → non-EU reverse charge, cited to VATCA s.12 with a verifiable slice', () => {
@@ -296,7 +296,7 @@ describe('deriveVatScopeRules verbatim guard', () => {
     setup();
     const { irishActProvisions, irishKnowledgeSources } = await import('@/db/schema');
     const { eq, and } = await import('drizzle-orm');
-    const { deriveVatScopeRules } = await import('./vatScopeIngestion');
+    const { deriveVatScopeRules, VAT_SCOPE_DERIVED_RULES } = await import('./vatScopeIngestion');
     loadStatutoryKnowledgeBase(db, { companyId });
     const sch1 = db.select().from(irishKnowledgeSources).where(eq(irishKnowledgeSources.citation, '2010 Act 31 Sch.1')).get()!;
     // Simulate a provision whose stored text no longer contains the rule's quote.
@@ -305,7 +305,7 @@ describe('deriveVatScopeRules verbatim guard', () => {
     const other = createCompany(db, { legalName: 'Second Ltd', seedYears: [2025] });
     const result = deriveVatScopeRules(db, { companyId: other.companyId });
     expect(result.skippedExcerptNotInProvision).toEqual(['vat.exempt_insurance']);
-    expect(result.created).toBe(VAT_SCOPE_CURATED_RULES.length + VAT_PLACE_OF_SUPPLY_CURATED_RULES.length - 1);
+    expect(result.created).toBe(VAT_SCOPE_DERIVED_RULES.length - 1);
   });
 });
 
