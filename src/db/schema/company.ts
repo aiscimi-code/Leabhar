@@ -66,6 +66,30 @@ export const companies = sqliteTable('companies', {
 
   baseCurrency: text('base_currency').notNull().default('EUR'),
 
+  /**
+   * Whether the company is a principal for Relevant Contracts Tax (TCA 1997
+   * s.530A), which decides the VAT reverse charge on construction services it
+   * receives (VATCA s.16(3), issue #208). Recorded by a person, from a date,
+   * with what it rests on; never inferred.
+   */
+  rctPrincipal: text('rct_principal', { enum: ['principal', 'not_principal'] }),
+  rctPrincipalFrom: text('rct_principal_from'),
+  rctPrincipalBasis: text('rct_principal_basis'),
+  rctPrincipalConfirmedBy: text('rct_principal_confirmed_by'),
+  rctPrincipalConfirmedAt: text('rct_principal_confirmed_at'),
+
+  /**
+   * Revenue's authorisation to account on the moneys-received basis (VATCA
+   * s.80, S.I. 639/2010 reg.25), and which s.80(1) test the company met.
+   * `vatAccountingBasis` says how the books are kept; these say whether that
+   * basis is authorised, and from when (issue #208).
+   */
+  cashBasisEligibility: text('cash_basis_eligibility', { enum: ['turnover_threshold', 'supplies_to_unregistered'] }),
+  cashBasisAuthorisedFrom: text('cash_basis_authorised_from'),
+  cashBasisAuthorisationReference: text('cash_basis_authorisation_reference'),
+  cashBasisConfirmedBy: text('cash_basis_confirmed_by'),
+  cashBasisConfirmedAt: text('cash_basis_confirmed_at'),
+
   // Demo data must be unmistakable (README §51).
   isDemo: integer('is_demo', { mode: 'boolean' }).notNull().default(false),
 

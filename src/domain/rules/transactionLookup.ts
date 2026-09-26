@@ -14,6 +14,7 @@
  * engine uses (`conditionEval.ts`). Where the knowledge base holds no rule
  * for a topic, the result says so — it does not fall back to guessing.
  */
+import { rctPrincipalOn } from '../config/companyStatus';
 import { eq, and } from 'drizzle-orm';
 import { EU_COUNTRY_CODES } from '../extraction/vatNumbers';
 import type { AppDatabase } from '@/db';
@@ -377,19 +378,22 @@ export function lookupTransactionRules(
     companyType: companies.companyType,
     vatRegistrationStatus: companies.vatRegistrationStatus,
     vatAccountingBasis: companies.vatAccountingBasis,
+    rctPrincipal: companies.rctPrincipal,
+    rctPrincipalFrom: companies.rctPrincipalFrom,
   }).from(companies).where(eq(companies.id, params.companyId)).get();
+  // The company's RCT principal status on the transaction's date, as a person recorded it (s.16(3), issue #208).
+  const rctPrincipal = company ? rctPrincipalOn(company, asOf) : null;
 
   const subject: Record<string, unknown> = {
     ...ctx,
     companyType: company?.companyType ?? null,
     companyVatRegistrationStatus: company?.vatRegistrationStatus ?? null,
     companyVatAccountingBasis: company?.vatAccountingBasis ?? null,
-    // A cash-basis trader's own accounting-basis setting is just as valid a
-    // signal as the transaction description saying "cash basis" — Tony
-    // Cash's cash_receipts company profile should not need every invoice
-    // to spell that out in words.
-    cashBasisIndicated: company?.vatAccountingBasis === 'cash_receipts'
-      || /\b(cash basis|moneys received basis|money received basis)\b/i.test(TEXT_FIELDS(ctx)),
+    companyIsRctPrincipal: rctPrincipal ?? undefined,
+    companyRctPrincipalRecorded: rctPrincipal !== null,
+    // The cash receipts basis is the company's, from its profile (issue #208): a bank
+    // narrative saying "cash basis" is not evidence of an authorisation (s.80, reg.25).
+    cashBasisIndicated: company?.vatAccountingBasis === 'cash_receipts',
   };
 
   const applicableRules: ApplicableRule[] = [];
