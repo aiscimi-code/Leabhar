@@ -185,3 +185,37 @@ export const bankAccounts = sqliteTable('bank_accounts', {
   notes: text('notes'),
   ...timestamps,
 }, (t) => [index('bank_accounts_company_idx').on(t.companyId)]);
+
+/**
+ * Loans (issue #358): the mirror of `bank_accounts` — each borrowing linked to
+ * the liability account that carries its outstanding balance, so a term loan
+ * is posted to its own account rather than every loan folding into one.
+ *
+ * The register records the loan's identity and terms. The balance is never
+ * stored here: the ledger account it points at is the only source of truth for
+ * figures, and a repayment's capital/interest split (issue #158) posts against
+ * that account.
+ *
+ * `accountId` is a plain text column rather than a foreign key, for the same
+ * reason `bank_accounts` left its link untyped: `accounts` references
+ * `companies`, so typing it back would be a circular import.
+ */
+export const loans = sqliteTable('loans', {
+  id: text('id').primaryKey(),
+  companyId: text('company_id').notNull().references(() => companies.id),
+  lenderName: text('lender_name').notNull(),
+  loanName: text('loan_name').notNull(),
+  kind: text('kind', {
+    enum: ['term_loan', 'hire_purchase', 'mortgage', 'credit_line', 'other'],
+  }).notNull().default('term_loan'),
+  currency: text('currency').notNull().default('EUR'),
+  /** The ledger liability account this loan's outstanding balance lives in. */
+  accountId: text('account_id').notNull(),
+  /** The principal as agreed, not the running balance — that is the ledger. */
+  principalMinor: integer('principal_minor').notNull().default(0),
+  drawdownDate: text('drawdown_date'),
+  maturityDate: text('maturity_date'),
+  active: integer('active', { mode: 'boolean' }).notNull().default(true),
+  notes: text('notes'),
+  ...timestamps,
+}, (t) => [index('loans_company_idx').on(t.companyId)]);

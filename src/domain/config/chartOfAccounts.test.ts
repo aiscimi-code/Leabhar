@@ -1,10 +1,10 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { createTestDatabase } from '@/db/testing';
-import { createCompany, ensureDefaultAccounts } from './setup';
+import { createCompany, ensureDefaultAccounts, addLoan } from './setup';
 import { postJournalEntry } from '../accounting/journal';
 import { profitAndLoss, balanceSheet } from '../reports/financial';
 import { DEFAULT_ACCOUNTS, normalBalance, signedBalance } from './chartOfAccounts';
-import { accounts } from '@/db/schema';
+import { accounts, journalEntries, journalLines, loans } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { makeDate, type IsoDate } from '../dates';
 import type { AppDatabase } from '@/db';
@@ -27,13 +27,12 @@ beforeEach(() => {
   byCode = created.accountsByCode;
 });
 
-const post = (lines: Array<{ accountId: string; debitMinor?: number; creditMinor?: number }>,
+const post = (lines: Array<{ accountId: string; debitMinor?: number; creditMinor?: number; memo?: string }>,
               date: IsoDate = makeDate(2025, 6, 15), narrative = 'Test') =>
   postJournalEntry(db, {
     companyId, entryDate: date, narrative, sourceType: 'manual_adjustment',
     baseCurrency: 'EUR', lines,
   });
-
 describe('the default chart (EPIC 04, issues #357, #358, #359)', () => {
   it('gives every account a unique code and a report section a report reads', () => {
     const codes = new Set(DEFAULT_ACCOUNTS.map((a) => a.code));
@@ -170,5 +169,102 @@ describe('normalBalance', () => {
     // An asset in credit is behaving abnormally: negative.
     expect(signedBalance('asset', 0, 100)).toBe(-100);
     expect(signedBalance('liability', 100, 0)).toBe(-100);
+  });
+});
+
+describe('addLoan (issue #358)', () => {
+  it('creates a dedicated liability account and journals a pre-statement drawdown', () => {
+    const loanId = addLoan(db, {
+      companyId,
+      lenderName: 'Bank of Ireland',
+      loanName: 'Term loan',
+      openingPrincipalMinor: 500_000,
+      openingDate: makeDate(2025, 2, 1),
+      actor: 'test',
+    });
+
+    const loan = db.select().from(loans).where(eq(loans.id, loanId)).get()!;
+    expect(loan.lenderName).toBe('Bank of Ireland');
+    expect(loan.kind).toBe('term_loan');
+
+    // The loan's balance account is a liability in its own right, not the
+    // generic 2210.
+    const account = db.select().from(accounts).where(eq(accounts.id, loan.accountId)).get()!;
+    expect(account.code).toBe('2211');
+    expect(account.type).toBe('liability');
+    expect(account.reportSection).toBe('long_term_liabilities');
+
+    // The drawdown is journaled: Dr bank, Cr the loan account.
+    const bankLines = db.select().from(journalLines)
+      .where(eq(journalLines.accountId, acc['bank_control']!)).all();
+    const loanLines = db.select().from(journalLines)
+      .where(eq(journalLines.accountId, loan.accountId)).all();
+    expect(bankLines.length).toBe(1);
+    expect(bankLines[0]!.debitMinor).toBe(500_000);
+    expect(loanLines.length).toBe(1);
+    expect(loanLines[0]!.creditMinor).toBe(500_000);
+  });
+
+  it('takes the next free account code for a second loan', () => {
+    addLoan(db, {
+      companyId, lenderName: 'Bank of Ireland', openingPrincipalMinor: 0,
+      openingDate: makeDate(2025, 2, 1),
+    });
+    addLoan(db, {
+      companyId, lenderName: 'AIB', openingPrincipalMinor: 0,
+      openingDate: makeDate(2025, 3, 1),
+    });
+    const all = db.select().from(loans).where(eq(loans.companyId, companyId)).all();
+    expect(all).toHaveLength(2);
+    const codes = all.map((l) =>
+      db.select({ code: accounts.code }).from(accounts).where(eq(accounts.id, l.accountId)).get()!.code);
+    expect(codes.sort()).toEqual(['2211', '2212']);
+  });
+
+  it('links to an existing liability account when given one', () => {
+    const loanId = addLoan(db, {
+      companyId,
+      lenderName: 'BOI',
+      accountId: byCode['2210']!,
+      openingPrincipalMinor: 300_000,
+      openingDate: makeDate(2025, 2, 1),
+    });
+    const loan = db.select().from(loans).where(eq(loans.id, loanId)).get()!;
+    expect(loan.accountId).toBe(byCode['2210']);
+    const account = db.select().from(accounts).where(eq(accounts.id, loan.accountId)).get()!;
+    expect(account.code).toBe('2210');
+  });
+
+  it('refuses a non-liability account: a loan is money owed', () => {
+    expect(() => addLoan(db, {
+      companyId,
+      lenderName: 'BOI',
+      accountId: byCode['6180']!,
+      openingPrincipalMinor: 0,
+      openingDate: makeDate(2025, 2, 1),
+    })).toThrow(/not a liability/);
+    // And wrote nothing: no loan, no new account.
+    expect(db.select().from(loans).where(eq(loans.companyId, companyId)).all()).toHaveLength(0);
+  });
+
+  it('refuses a foreign-currency drawdown rather than assuming a rate', () => {
+    expect(() => addLoan(db, {
+      companyId,
+      lenderName: 'BOI',
+      currency: 'GBP',
+      openingPrincipalMinor: 100_000,
+      openingDate: makeDate(2025, 2, 1),
+    })).toThrow(/deliberate exchange rate/);
+  });
+
+  it('leaves the ledger untouched when the drawdown comes from the statement feed', () => {
+    const loanId = addLoan(db, {
+      companyId, lenderName: 'BOI', openingPrincipalMinor: 0,
+      openingDate: makeDate(2025, 2, 1),
+    });
+    const loan = db.select().from(loans).where(eq(loans.id, loanId)).get()!;
+    expect(loan.principalMinor).toBe(0);
+    expect(db.select().from(journalEntries).where(eq(journalEntries.companyId, companyId)).all())
+      .toHaveLength(0);
   });
 });

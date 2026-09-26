@@ -27,7 +27,7 @@ import {
 import { createSupplierFromExtraction } from '@/domain/extraction/service';
 import {
   initCompany, addBank, addAccount, addCustomer, listSuppliersCli, listCustomersCli,
-  ensureDefaultAccountsCli, installRulePackCli,
+  ensureDefaultAccountsCli, installRulePackCli, addLoanCli,
 } from '@/agent/induction';
 import {
   createInvoicesFromCsv, importInvoicesFromCsv, recordPaymentCli, journalCli,
@@ -75,6 +75,7 @@ import {
   initCompanyInput,
   addBankInput,
   addAccountInput,
+  addLoanInput,
   addCustomerInput,
   createInvoiceCsvInput,
   importInvoicesCsvInput,
@@ -138,8 +139,19 @@ Induction (no company/bank/chart yet):
       balance (Dr this account / Cr retained earnings) — not just stored.
   add-account --code <code> --name "..." --type asset|liability|equity|income|expense
       [--subtype ...] [--report-section current_assets|current_liabilities|
-      fixed_assets|revenue|cost_of_sales|operating_expenses|equity]
+      fixed_assets|revenue|cost_of_sales|operating_expenses|finance_costs|
+      long_term_liabilities|equity]
       [--vat-applicable=false]
+  add-loan --lender "..." --date <drawdown date>
+      [--loan "Term loan"] [--kind term_loan|hire_purchase|mortgage|
+      credit_line|other] [--account <code>] [--principal <amount>]
+      [--maturity <date>] [--notes "..."]
+      Registers a loan and links it to a liability account — its own account
+      (2211, 2212, ... after the seeded 2210) unless --account names an
+      existing liability. --principal journals the drawdown (Dr bank / Cr the
+      loan account) at --date: give it only when the drawdown predates the
+      first imported statement — a drawdown that is a statement line of its
+      own is classified there instead, and journaling it twice counts it twice.
   add-customer --name "..." [--country <IE>] [--default-account <code>]
       [--taxable-status taxable_person|non_taxable_person]  (VATCA s.34: business or consumer)
   ensure-default-accounts                Add any default chart accounts
@@ -692,6 +704,23 @@ export async function main(argv: string[], options: CliOptions = {}): Promise<nu
           vatApplicable: hasFlag(flags, 'vat-applicable') ? getFlag(flags, 'vat-applicable') !== 'false' : undefined,
         });
         print(addAccount(db, parsed), format);
+        return 0;
+      }
+
+      case 'add-loan': {
+        const parsed = addLoanInput.parse({
+          companyId,
+          lenderName: requireFlag(flags, 'lender'),
+          loanName: getFlag(flags, 'loan', 'loan-name'),
+          kind: getFlag(flags, 'kind'),
+          currency: getFlag(flags, 'currency'),
+          account: getFlag(flags, 'account'),
+          principal: getFlag(flags, 'principal', 'opening'),
+          date: requireFlag(flags, 'date', 'drawdown-date'),
+          maturity: getFlag(flags, 'maturity', 'maturity-date'),
+          notes: getFlag(flags, 'notes'),
+        });
+        print(addLoanCli(db, parsed), format);
         return 0;
       }
 

@@ -2,7 +2,7 @@ import { and, eq } from 'drizzle-orm';
 import type { AppDatabase } from '@/db';
 import {
   companies, accounts, taxRates, vatTreatments, accountingPeriods, vatPeriods,
-  bankAccounts, auditEvents, glossaryTerms,
+  bankAccounts, loans, auditEvents, glossaryTerms,
 } from '@/db/schema';
 import { ids } from '@/lib/ids';
 import { type IsoDate, asIsoDate, nowIso, today } from '../dates';
@@ -11,6 +11,7 @@ import { DEFAULT_TAX_RATES, DEFAULT_VAT_TREATMENTS } from './vatTreatments';
 import { generateVatPeriods, generateFinancialYear, type VatFrequency } from './periods';
 import { GLOSSARY_TERMS } from '../help/glossary';
 import { postJournalEntry } from '../accounting/journal';
+import { createAccount } from './mutations';
 
 export interface CreateCompanyInput {
   legalName: string;
@@ -509,5 +510,158 @@ export function addBankAccount(
     openingDate,
     accountId,
   }).run();
+  return id;
+}
+
+/**
+ * Register a loan and link it to the liability account that carries its
+ * balance (issue #358) — the loan-side mirror of `addBankAccount`.
+ *
+ * With no `accountId` a dedicated account is created (code 2211, 2212, ...
+ * — the first free code after 2210, which the default chart seeds as the
+ * generic Bank loans account), so each loan's balance is visible on its own
+ * line instead of folding every borrowing into one.
+ *
+ * A nonzero `openingPrincipalMinor` is also journaled — Dr the bank account
+ * the drawdown landed in, Cr this loan's account — for exactly the reason
+ * `addBankAccount` journals an opening balance (issue #153): a loan that
+ * existed before the first imported statement otherwise leaves the books
+ * with no entry for where the money came from. Pass 0 when the drawdown
+ * appears on an imported statement line: it is then posted by classifying
+ * (or split-journaling) that line, and journaling it here as well would
+ * count the drawdown twice.
+ */
+export function addLoan(
+  db: AppDatabase,
+  params: {
+    companyId: string;
+    lenderName: string;
+    loanName?: string;
+    kind?: typeof loans.$inferInsert['kind'];
+    currency?: string;
+    /** An existing liability account (e.g. 2210); omitted = create one. */
+    accountId?: string;
+    /** Where the drawdown landed; omitted = the bank control account. */
+    bankAccountId?: string;
+    openingPrincipalMinor?: number;
+    openingDate: IsoDate | string;
+    maturityDate?: IsoDate | string;
+    notes?: string;
+    actor?: string;
+  },
+): string {
+  const id = ids.loan();
+  const currency = (params.currency ?? 'EUR').toUpperCase();
+  const openingPrincipalMinor = params.openingPrincipalMinor ?? 0;
+  const openingDate = asIsoDate(String(params.openingDate));
+  const loanName = params.loanName ?? params.lenderName;
+
+  let accountId = params.accountId;
+  if (accountId) {
+    const existing = db.select().from(accounts)
+      .where(and(eq(accounts.id, accountId), eq(accounts.companyId, params.companyId))).get();
+    if (!existing) {
+      throw new Error(`Account ${accountId} not found for company ${params.companyId}.`);
+    }
+    if (existing.type !== 'liability') {
+      throw new Error(
+        `Account ${existing.code} "${existing.name}" is a ${existing.type}, not a liability. `
+          + 'A loan\'s outstanding balance is money owed, so it is posted to a liability '
+          + 'account — interest, which is a cost, goes to an expense account instead.',
+      );
+    }
+  } else {
+    // The first free code after the seeded 2210 Bank loans.
+    const usedCodes = new Set(
+      db.select({ code: accounts.code }).from(accounts)
+        .where(eq(accounts.companyId, params.companyId)).all().map((r) => r.code),
+    );
+    let code = '2210';
+    for (let n = 1; usedCodes.has(code); n += 1) code = `221${n}`;
+    accountId = createAccount(db, {
+      companyId: params.companyId,
+      code,
+      name: `Loan — ${params.lenderName}`,
+      type: 'liability',
+      subtype: 'non_current_liability',
+      reportSection: 'long_term_liabilities',
+      vatApplicable: false,
+      description: `The outstanding balance of the ${loanName.toLowerCase()} from `
+        + `${params.lenderName}. Repayments are a capital/interest split: the capital part `
+        + 'reduces this account and the interest part is a cost (6710).',
+      actor: params.actor ?? 'user',
+    });
+  }
+
+  if (openingPrincipalMinor !== 0) {
+    const company = db.select({ baseCurrency: companies.baseCurrency }).from(companies)
+      .where(eq(companies.id, params.companyId)).get();
+    if (!company) throw new Error(`Company ${params.companyId} not found.`);
+
+    if (currency !== company.baseCurrency.toUpperCase()) {
+      throw new Error(
+        `This loan is in ${currency} but the company's base currency is `
+          + `${company.baseCurrency}. Posting a foreign-currency drawdown needs a `
+          + 'deliberate exchange rate, which this function does not yet take — post it as a '
+          + 'manual adjustment instead.',
+      );
+    }
+
+    const bankLedgerAccount = params.bankAccountId
+      ? db.select({ accountId: bankAccounts.accountId }).from(bankAccounts)
+        .where(and(eq(bankAccounts.id, params.bankAccountId), eq(bankAccounts.companyId, params.companyId)))
+        .get()?.accountId
+      : systemAccountId(db, params.companyId, 'bank_control');
+
+    // Posted before the loans row exists, in the same order `addBankAccount`
+    // uses: a failed posting (e.g. no open accounting period covers the
+    // drawdown date) must not leave a registered loan whose stated opening
+    // principal was never journaled.
+    postJournalEntry(db, {
+      companyId: params.companyId,
+      entryDate: openingDate,
+      narrative: `Loan drawdown: ${params.lenderName} ${loanName}`,
+      sourceType: 'opening_balance',
+      sourceId: id,
+      baseCurrency: company.baseCurrency,
+      createdBy: params.actor ?? 'user',
+      createdVia: 'user',
+      lines: [
+        { accountId: bankLedgerAccount!, debitMinor: openingPrincipalMinor, memo: 'Loan drawdown' },
+        { accountId, creditMinor: openingPrincipalMinor, memo: 'Loan drawdown' },
+      ],
+    });
+  }
+
+  db.insert(loans).values({
+    id,
+    companyId: params.companyId,
+    lenderName: params.lenderName,
+    loanName,
+    kind: params.kind ?? 'term_loan',
+    currency,
+    accountId,
+    principalMinor: openingPrincipalMinor,
+    drawdownDate: openingDate,
+    maturityDate: params.maturityDate ? asIsoDate(String(params.maturityDate)) : null,
+    notes: params.notes ?? null,
+  }).run();
+
+  db.insert(auditEvents).values({
+    id: ids.audit(),
+    companyId: params.companyId,
+    occurredAt: nowIso(),
+    entityType: 'loan',
+    entityId: id,
+    action: 'created',
+    newValue: JSON.stringify({
+      lenderName: params.lenderName, loanName, accountId,
+      openingPrincipalMinor, drawdownDate: openingDate,
+    }),
+    source: 'user',
+    actor: params.actor ?? 'user',
+    reason: params.notes ?? null,
+  }).run();
+
   return id;
 }

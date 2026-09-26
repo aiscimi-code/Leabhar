@@ -1,15 +1,15 @@
 import { and, eq } from 'drizzle-orm';
 import type { AppDatabase } from '@/db';
-import { companies, customers, suppliers } from '@/db/schema';
+import { companies, customers, suppliers, accounts, loans as loansTable } from '@/db/schema';
 import {
-  createCompany, addBankAccount, ensureDefaultAccounts, ensureDefaultVatTreatments, type CreatedCompany,
+  createCompany, addBankAccount, addLoan, ensureDefaultAccounts, ensureDefaultVatTreatments, type CreatedCompany,
 } from '@/domain/config/setup';
 import { createAccount, upsertCustomer } from '@/domain/config/mutations';
 import { parseAmount } from '@/domain/money';
 import { createRule, type RuleCondition, type RuleAction } from '@/domain/rules/engine';
 import { resolveAccountId, resolveVatTreatmentId } from './reconcile';
 import type {
-  InitCompanyInput, AddBankInput, AddAccountInput, AddCustomerInput, ListPartiesInput,
+  InitCompanyInput, AddBankInput, AddAccountInput, AddLoanInput, AddCustomerInput, ListPartiesInput,
   EnsureDefaultAccountsInput, InstallRulePackInput,
 } from './schema';
 
@@ -133,8 +133,7 @@ export function addAccount(db: AppDatabase, input: AddAccountInput): { accountId
   return { accountId };
 }
 
-export function addCustomer(db: AppDatabase, input: AddCustomerInput): { customerId: string } {
-  const defaultAccountId = input.defaultAccount
+export function addCustomer(db: AppDatabase, input: AddCustomerInput): { customerId: string } {  const defaultAccountId = input.defaultAccount
     ? resolveAccountId(db, input.companyId, input.defaultAccount)
     : null;
 
@@ -148,6 +147,64 @@ export function addCustomer(db: AppDatabase, input: AddCustomerInput): { custome
     actor: 'cli',
   });
   return { customerId };
+}
+
+export interface AddLoanResult {
+  loanId: string;
+  accountCode: string;
+  accountCreated: boolean;
+  drawdownPosted: boolean;
+}
+
+/**
+ * Register a loan from the CLI (issue #358). `--principal` is the amount
+ * already drawn down before the first imported statement — when the drawdown
+ * is a statement line of its own, leave it off and classify that line instead,
+ * or the drawdown is counted twice.
+ */
+export function addLoanCli(db: AppDatabase, input: AddLoanInput): AddLoanResult {
+  const company = db.select({ baseCurrency: companies.baseCurrency }).from(companies)
+    .where(eq(companies.id, input.companyId)).get();
+  if (!company) throw new Error(`Company ${input.companyId} not found.`);
+  const currency = (input.currency ?? company.baseCurrency).toUpperCase();
+
+  const principalMinor = input.principal !== undefined
+    ? parseAmount(input.principal, currency)
+    : 0;
+
+  const beforeCodes = new Set(
+    db.select({ code: accounts.code }).from(accounts)
+      .where(eq(accounts.companyId, input.companyId)).all().map((r) => r.code),
+  );
+  const accountId = input.account
+    ? resolveAccountId(db, input.companyId, input.account)
+    : undefined;
+
+  const loanId = addLoan(db, {
+    companyId: input.companyId,
+    lenderName: input.lenderName,
+    loanName: input.loanName,
+    kind: input.kind,
+    currency,
+    accountId,
+    openingPrincipalMinor: principalMinor,
+    openingDate: input.date,
+    maturityDate: input.maturity,
+    notes: input.notes,
+    actor: 'cli',
+  });
+
+  const loan = db.select().from(loansTable)
+    .where(eq(loansTable.id, loanId)).get()!;
+  const afterAccount = db.select({ code: accounts.code }).from(accounts)
+    .where(eq(accounts.id, loan.accountId)).get()!;
+
+  return {
+    loanId,
+    accountCode: afterAccount.code,
+    accountCreated: !beforeCodes.has(afterAccount.code),
+    drawdownPosted: principalMinor !== 0,
+  };
 }
 
 const matchKeyOf = (name: string): string => name.toLowerCase()
