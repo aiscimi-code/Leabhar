@@ -3,6 +3,7 @@ import { atomically } from '../accounting/journal';
 import type { AppDatabase } from '@/db';
 import { documents, documentLines, documentVatTotals, auditEvents, companies } from '@/db/schema';
 import { missingInvoiceParticulars, describeMissing, type ParticularsInput } from './invoiceParticulars';
+import { findOriginalInvoice, creditNoteFindings } from './creditNotes';
 import { ids } from '@/lib/ids';
 import { nowIso, asIsoDate, type IsoDate } from '../dates';
 import { AccountingError } from '../accounting/errors';
@@ -277,6 +278,12 @@ function postDocumentAsInvoiceSteps(db: AppDatabase, input: PostDocumentInput): 
     };
   });
 
+  // A credit note is linked to the invoice it corrects, found by the number printed on it (s.67, issue #209).
+  const isCredit = doc.documentType === 'credit_note';
+  const original = isCredit
+    ? findOriginalInvoice(db, { companyId: input.companyId, direction, partyId, originalNumber: doc.originalDocumentNumber })
+    : undefined;
+
   const created = createInvoice(db, {
     companyId: input.companyId,
     direction,
@@ -290,7 +297,8 @@ function postDocumentAsInvoiceSteps(db: AppDatabase, input: PostDocumentInput): 
     fxRate: input.fxRate,
     lines: invoiceLines,
     documentId: doc.id,
-    isCreditNote: doc.documentType === 'credit_note',
+    isCreditNote: isCredit,
+    creditNoteOfId: original?.id ?? null,
     vatDeclarationDate: input.vatDeclarationDate,
     actor: input.actor,
     requestId: input.requestId,
@@ -314,6 +322,27 @@ function postDocumentAsInvoiceSteps(db: AppDatabase, input: PostDocumentInput): 
       requestId: input.requestId ?? null,
     }).run();
   });
+
+  if (isCredit) {
+    for (const finding of creditNoteFindings(db, {
+      companyId: input.companyId, originalNumber: doc.originalDocumentNumber, original,
+      creditNetMinor: Math.abs(created.netMinor), creditVatMinor: Math.abs(created.vatMinor),
+      creditRatesBasisPoints: [...new Set(lines.filter((l) => (l.vatMinor ?? 0) !== 0 && l.rateBasisPoints !== null)
+        .map((l) => l.rateBasisPoints!))],
+      excludeInvoiceId: created.invoiceId,
+    })) {
+      upsertReviewItem(db, {
+        companyId: input.companyId,
+        kind: 'uncertain_vat_treatment',
+        severity: 'warning',
+        title: `"${doc.originalFilename}": ${finding.code.replace(/_/g, ' ')}`,
+        detail: finding.message,
+        entityType: 'invoice',
+        entityId: created.invoiceId,
+        dedupeKey: `invoice:${created.invoiceId}:${finding.code}`,
+      });
+    }
+  }
 
   if (mismatch) {
     // Posted anyway (every line is as printed), but never silently: a total

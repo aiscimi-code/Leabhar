@@ -30,6 +30,7 @@ export const BLOCKED_MOTOR_VEHICLE_RULE_KEY = 'vat.blocked_motor_vehicle';
 export const BLOCKED_PETROL_RULE_KEY = 'vat.blocked_petrol';
 export const QUALIFYING_VEHICLE_DISPOSAL_RULE_KEY = 'vat.qualifying_vehicle_disposal';
 export const INVOICE_PARTICULARS_RULE_KEY = 'vat.invoice_prescribed_particulars';
+export const CREDIT_NOTE_RULE_KEY = 'vat.credit_note_reduces_deduction';
 
 /** The s.60(2)(a) blocks: when one matches, the general s.59 deduction does not apply. */
 export const BLOCKED_DEDUCTION_RULE_KEYS = [
@@ -127,6 +128,36 @@ export const INPUT_RECOVERY_CURATED_RULES: CuratedVatScopeRule[] = [
     vatEffect: 'Input VAT is deducted only on an invoice with the prescribed particulars; posting a confirmed purchase '
       + 'invoice checks them (missingInvoiceParticulars) and holds the VAT back when one is missing.',
     interpretationNote: 'Enforced when a confirmed document is posted, not by matching words.',
+  }),
+  rule({
+    citation: 'VATCA 2010 s.67', sectionNumber: '67', ruleKey: CREDIT_NOTE_RULE_KEY,
+    name: 'A credit note received reduces the deduction by the tax shown on it (s.67(1)(b)(ii))',
+    statementExcerpt: 'be reduced by the amount of tax shown on that credit',
+    conditions: [purchase, desc('\\bcredit note\\b')],
+    exceptions: [{ condition: 'the parties agreed the tax stated stays unaltered (s.67(5))', effect: 'the deduction is not reduced' }],
+    crossReferences: ['VATCA 2010 s.69(1)(b)', 'S.I. 639/2010 reg.23 (time limits)'],
+    vatEffect: 'The input VAT is reduced by the tax on the credit note, in the period the credit note is received.',
+    interpretationNote: 'Posting a confirmed credit note links it to its original invoice and flags a credit that exceeds '
+      + 'it, credits another rate, or shows no VAT (creditNoteFindings).',
+  }),
+  rule({
+    citation: 'VATCA 2010 s.69', sectionNumber: '69', ruleKey: 'vat.invoice_tax_stated_in_error',
+    name: 'An invoice stating more tax than is due, or a credit note stating less: the issuer is liable for the difference (s.69(1))',
+    statementExcerpt: 'invoice stating a greater amount of tax than that properly attributable to the',
+    conditions: [],
+    vatEffect: 'The issuer pays the excess stated; the recipient deducts only the tax properly chargeable.',
+    interpretationNote: 'No conditions: citable, never matched. The rate charged on each confirmed line is checked '
+      + '(lineRateCheck) and a VAT figure the rate does not support is held back from recovery.',
+  }),
+  rule({
+    citation: 'VATCA 2010 s.70', sectionNumber: '70', ruleKey: 'vat.invoice_time_limit',
+    name: 'Invoices are issued within 15 days after the end of the month of supply (s.70(1), S.I. 639/2010 reg.23)',
+    statementExcerpt: 'to be issued in accordance with this Chapter shall be issued within such time',
+    conditions: [],
+    vatEffect: 'A sales invoice issued later than 15 days after the month of supply is late; the VAT is still due for the '
+      + 'period of the supply.',
+    interpretationNote: 'No conditions: citable, never matched. A confirmed sales invoice issued late is flagged '
+      + '(invoice_issued_late).',
   }),
 ];
 

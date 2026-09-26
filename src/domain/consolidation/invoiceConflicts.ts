@@ -1,4 +1,5 @@
 import { parseVatNumber, normaliseVatNumber, EU_COUNTRY_CODES } from '../extraction/vatNumbers';
+import { invoiceIssueDeadline } from './creditNotes';
 
 /**
  * What a confirmed invoice says against itself or against the parties' records
@@ -31,6 +32,9 @@ export interface InvoiceConflictInput {
   customerVies: 'valid' | 'invalid' | 'unavailable' | null;
   /** VAT wording printed on the invoice. */
   legends: string[];
+  /** The invoice's date and the date of supply, when printed (the s.70 time limit for a sale). */
+  documentDate?: string | null;
+  supplyDate?: string | null;
 }
 
 const EU = new Set<string>(EU_COUNTRY_CODES);
@@ -135,6 +139,18 @@ export function invoiceConflicts(input: InvoiceConflictInput): InvoiceConflict[]
         code: 'zero_vat_sale_invalid_vat_number',
         message: `VIES reported the customer's VAT number ${normaliseVatNumber(input.customerVatNumber)} as not `
           + 'valid. It is not evidence of a business customer, and the sale may bear Irish VAT.',
+      });
+    }
+  }
+  // An invoice for a sale is issued within 15 days after the end of the month of supply (s.70(1), S.I. 639/2010 reg.23).
+  if (input.direction === 'sales' && input.supplyDate && input.documentDate) {
+    const deadline = invoiceIssueDeadline(input.supplyDate);
+    if (input.documentDate > deadline) {
+      out.push({
+        code: 'invoice_issued_late',
+        message: `The invoice is dated ${input.documentDate} for a supply on ${input.supplyDate}. It was due by ${deadline}: within `
+          + '15 days after the end of the month of supply (VATCA s.70(1), S.I. 639/2010 reg.23). The VAT is still due for the '
+          + 'period of the supply; check that it was declared there.',
       });
     }
   }

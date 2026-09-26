@@ -673,6 +673,24 @@ Without VAT there is nothing to check. A reverse charge needs no Irish VAT
 number, rate or tax on the invoice. The missing particulars also show on the
 posting screen and in `line-choices`.
 
+### Credit notes and the time limit for invoices
+
+A credit note is posted in its own period and reduces the deduction by the tax
+it shows (s.67(1)(b)(ii)). Posting links it to the invoice it names
+(`creditNoteOfId`). The invoice number is matched ignoring spaces and
+punctuation.
+
+Each of these raises a review item; neither document is changed:
+
+- no original is found;
+- the credit is more than is left on the original after earlier credit notes;
+- it credits a rate the original did not charge (s.67(3));
+- it shows no VAT against a VAT-bearing original, which means either s.67(5)
+  (tax left unaltered by agreement) or s.69(1)(b) (too little VAT stated).
+
+A sales invoice dated more than 15 days after the end of the month of supply
+is an invoice conflict (s.70(1), S.I. 639/2010 reg.23).
+
 ### Posting paths are atomic
 
 Every exported posting path — classify, reclassify, split journal,

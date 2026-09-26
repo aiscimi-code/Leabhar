@@ -595,9 +595,10 @@
       "id": "vatca:s67",
       "area": "vatca_section",
       "title": "s.67 Amendments to invoices.",
-      "status": "deferred",
-      "issue": 209,
-      "reason": "Invoices and credit notes — validity for deduction."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.credit_note_reduces_deduction"
+      ]
     },
     {
       "id": "vatca:s68",
@@ -613,17 +614,21 @@
       "id": "vatca:s69",
       "area": "vatca_section",
       "title": "s.69 Invoices or credit notes — errors, etc.",
-      "status": "deferred",
-      "issue": 209,
-      "reason": "Invoices and credit notes — validity for deduction."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.invoice_tax_stated_in_error"
+      ],
+      "note": "Enforced by the line rate check and the held-back recovery of a VAT figure the rate does not support."
     },
     {
       "id": "vatca:s70",
       "area": "vatca_section",
       "title": "s.70 Time limits for issuing invoices, etc.",
-      "status": "deferred",
-      "issue": 209,
-      "reason": "Invoices and credit notes — validity for deduction."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.invoice_time_limit"
+      ],
+      "note": "A confirmed sales invoice issued after the reg.23 limit is an invoice conflict (invoice_issued_late)."
     },
     {
       "id": "vatca:s71",
