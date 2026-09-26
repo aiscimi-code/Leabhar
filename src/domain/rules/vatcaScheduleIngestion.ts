@@ -28,6 +28,10 @@ import {
 import { VATCA_SCHEDULE_CURATED_RULES } from './vatcaScheduleCuration';
 import { VAT_SCOPE_CURATED_RULES } from './vatScopeCuration';
 import { upsertReviewItem } from '../extraction/service';
+import { existsSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { appRoot } from '@/lib/paths';
+import { scheduleParagraphWindows, type ParagraphWindow } from './lrcAnnotations';
 
 /** Schedule 1 (exempt activities) is ingested for the exempt rules in vatScopeCuration.ts (issue #200). */
 export type VatcaScheduleNumber = '1' | '2' | '3';
@@ -192,6 +196,10 @@ export function deriveVatcaScheduleRules(
   let unchanged = 0;
   const skippedNoProvision: string[] = [];
 
+  // Each paragraph's current text took effect on its latest LRC amendment
+  // (issue #205); a rule quoting it is only good from then.
+  const windows = sourceId ? paragraphWindowsForSource(db, sourceId, params.scheduleNumber, provisions) : null;
+
   const curated = VATCA_SCHEDULE_CURATED_RULES.filter((r) => r.scheduleNumber === params.scheduleNumber);
 
   for (const rule of curated) {
@@ -206,10 +214,22 @@ export function deriveVatcaScheduleRules(
         eq(irishTaxRules.active, true),
       )).get();
 
+    const window = windows?.get(rule.sectionNumber);
+    const effectiveFrom = window?.effectiveFrom ?? VATCA_2010_ENACTED_DATE;
+    const windowNote = window
+      ? (window.footnotes.length
+        ? `Effective from ${effectiveFrom}, the latest LRC amendment to this paragraph: `
+          + `${window.footnotes.map((f) => `${f.ref} ${f.text}`).join(' ')}`
+        : `Effective from ${effectiveFrom}: the LRC records no amendment to this paragraph since the Act commenced.`)
+      : `Effective from ${effectiveFrom} (the Act's commencement): the LRC HTML with this paragraph's amendment `
+        + 'history is not beside the source, so its window could not be read.';
+
     if (existing) {
-      if (existing.statement === rule.statementExcerpt) { unchanged++; continue; }
+      if (existing.statement === rule.statementExcerpt && existing.effectiveFrom === effectiveFrom) { unchanged++; continue; }
+      // The earlier row quoted the same text with the wrong window, or different
+      // text: it is retired, not re-dated (it never correctly described any period).
       db.update(irishTaxRules)
-        .set({ effectiveTo: VATCA_2010_ENACTED_DATE, active: false })
+        .set({ effectiveTo: existing.effectiveFrom, active: false })
         .where(eq(irishTaxRules.id, existing.id)).run();
       superseded++;
     }
@@ -242,11 +262,12 @@ export function deriveVatcaScheduleRules(
       ruleVersion: existing ? existing.ruleVersion + 1 : 1,
       supersedesRuleId: existing?.id ?? null,
       priority: 100,
-      effectiveFrom: VATCA_2010_ENACTED_DATE,
+      effectiveFrom,
       source: 'derived',
       confidence: 65,
       provenanceStatus: 'ai_suggestion',
-      sourceNote: `Curated from ${citation} para.${rule.sectionNumber}; not yet human-reviewed. ${rule.interpretationNote}`,
+      sourceNote: `Curated from ${citation} para.${rule.sectionNumber}; not yet human-reviewed. ${windowNote} `
+        + rule.interpretationNote,
       sourceDate: nowIso(),
     }).run();
     created++;
@@ -267,4 +288,28 @@ export function deriveVatcaScheduleRules(
   }
 
   return { created, superseded, unchanged, skippedNoProvision };
+}
+
+/**
+ * Paragraph windows for an ingested schedule source, read from the LRC HTML
+ * kept beside its Markdown (`schedule-3.md` -> `schedule-3.html`). Null when
+ * the HTML is not there, or is not the file the Markdown was converted from.
+ */
+function paragraphWindowsForSource(
+  db: AppDatabase, sourceId: string, scheduleNumber: string,
+  provisions: Array<typeof irishActProvisions.$inferSelect>,
+): Map<string, ParagraphWindow> | null {
+  const source = db.select().from(irishKnowledgeSources).where(eq(irishKnowledgeSources.id, sourceId)).get();
+  if (!source?.localPath?.endsWith('.md')) return null;
+  const mdPath = join(appRoot(), source.localPath);
+  const htmlPath = mdPath.replace(/\.md$/, '.html');
+  if (!existsSync(htmlPath) || !existsSync(mdPath)) return null;
+  const html = readFileSync(htmlPath);
+  const recorded = /source_html_sha256:\s*"([0-9a-f]{64})"/.exec(readFileSync(mdPath, 'utf8'))?.[1];
+  if (!recorded || sha256Hex(html) !== recorded) return null;
+  const paragraphs = provisions
+    .filter((p) => p.sourceId === sourceId)
+    .sort((a, b) => (a.sourceStart ?? 0) - (b.sourceStart ?? 0))
+    .map((p) => p.sectionNumber);
+  return scheduleParagraphWindows(html.toString('utf8'), scheduleNumber, paragraphs);
 }

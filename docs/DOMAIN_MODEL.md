@@ -415,6 +415,16 @@ livestock rate (4.8%, s.46(1)(d)) has its own treatment, `IE_LIVESTOCK`.
 `ensureDefaultVatTreatments` adds a seeded treatment to a company created
 before it existed; loading the statutory rules calls it.
 
+A Schedule 2 or 3 rule quotes the paragraph as it now reads, so it is only
+good from the date that text last changed. Its `effectiveFrom` is the latest
+date among the Law Reform Commission footnotes inside the paragraph
+(`scheduleParagraphWindows`, read from the LRC HTML kept beside each
+schedule's Markdown with a matching SHA-256), or VATCA's commencement when it
+has none. A line dated before that window is `undetermined`, not checked
+against a text that did not yet apply. Re-deriving with a different window
+retires the old rule (`effectiveTo`, inactive) and inserts the new one. A
+document dated before any configured rate is flagged, not refused.
+
 ### Posting paths are atomic
 
 Every exported posting path — classify, reclassify, split journal,

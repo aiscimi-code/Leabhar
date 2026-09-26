@@ -10,7 +10,7 @@ import { confirmDocument, type ReviewedDocumentValues } from '../documents/revie
 import { documentLineChoices } from '../consolidation/suggest';
 import { postDocumentAsInvoice } from '../consolidation/postDocument';
 import { loadStatutoryKnowledgeBase } from './knowledgeBase';
-import { suppliers, vatTreatments, reviewItems, invoiceLines, taxRates } from '@/db/schema';
+import { suppliers, vatTreatments, reviewItems, invoiceLines, taxRates, irishTaxRules, documents } from '@/db/schema';
 import { ids } from '@/lib/ids';
 import type { AppDatabase } from '@/db';
 
@@ -135,5 +135,45 @@ describe('ensureDefaultVatTreatments', () => {
     expect(livestockRate.rateBasisPoints).toBe(480);
     expect(ensureDefaultVatTreatments(d, c)).toEqual({ addedRates: [], addedTreatments: [] });
     expect(d.select().from(taxRates).where(eq(taxRates.id, std.id)).get()).toEqual(std);
+  });
+});
+
+describe('the rule window from the LRC amendment history (issue #205)', () => {
+  it('dates a schedule rule from its paragraph\'s latest amendment, citing it', () => {
+    const rule = db.select().from(irishTaxRules)
+      .where(and(eq(irishTaxRules.companyId, companyId), eq(irishTaxRules.ruleKey, 'vat.reduced_rate_solid_fuel'), eq(irishTaxRules.active, true))).get()!;
+    expect(rule.effectiveFrom).toBe('2017-12-25');
+    expect(rule.sourceNote).toMatch(/F479 Substituted/);
+  });
+
+  it('retires a rule derived with the wrong window instead of keeping it', () => {
+    const rule = db.select().from(irishTaxRules)
+      .where(and(eq(irishTaxRules.companyId, companyId), eq(irishTaxRules.ruleKey, 'vat.reduced_rate_solid_fuel'), eq(irishTaxRules.active, true))).get()!;
+    db.update(irishTaxRules).set({ effectiveFrom: '2010-11-01' }).where(eq(irishTaxRules.id, rule.id)).run();
+    loadStatutoryKnowledgeBase(db, { companyId });
+    const rows = db.select().from(irishTaxRules)
+      .where(and(eq(irishTaxRules.companyId, companyId), eq(irishTaxRules.ruleKey, 'vat.reduced_rate_solid_fuel'))).all();
+    const active = rows.filter((r) => r.active);
+    expect(active).toHaveLength(1);
+    expect(active[0]).toMatchObject({ effectiveFrom: '2017-12-25', supersedesRuleId: rule.id });
+    expect(rows.find((r) => r.id === rule.id)).toMatchObject({ active: false, effectiveTo: '2010-11-01' });
+  });
+
+  it('cannot confirm the rate on a line dated before the paragraph\'s current text took effect', () => {
+    // Sch.2 para 9 (printed books) was last amended 1.01.2024; before that it read differently.
+    const current = confirmedLine('Hardback books for the office library', 10_000, 0, 0);
+    expect(check(current).rateCheck).toMatchObject({ outcome: 'consistent', expected: { ruleKey: 'vat.zero_rate_printed_books' } });
+    const earlier = confirmedLine('Hardback books for the office library', 10_000, 0, 0);
+    db.update(documents).set({ documentDate: '2023-06-01' }).where(eq(documents.id, earlier)).run();
+    const line = check(earlier);
+    expect(line.rateCheck.outcome).toBe('undetermined');
+    expect(line.rateCheck.candidates.map((c) => c.ruleKey)).not.toContain('vat.zero_rate_printed_books');
+  });
+
+  it('flags a document dated before any configured rate instead of failing', () => {
+    const docId = confirmedLine('Bagged coal, 40kg', 10_000, 1350, 1_350);
+    db.update(documents).set({ documentDate: '2016-06-01' }).where(eq(documents.id, docId)).run();
+    const line = check(docId);
+    expect(line.flags.join(' ')).toMatch(/No rate is configured on 2016-06-01/);
   });
 });
