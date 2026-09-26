@@ -17,6 +17,10 @@ export interface CreateCompanyInput {
   tradingName?: string;
   croNumber?: string;
   companyType?: string;
+  /** Company (default), sole trader or partnership (issue #212). */
+  entityType?: 'company' | 'sole_trader' | 'partnership';
+  /** When the trade began (sole traders and partnerships: the income tax basis rules need it). */
+  tradeCommencedOn?: string;
   dateIncorporated?: string;
   registeredOffice?: string;
   vatNumber?: string;
@@ -49,6 +53,43 @@ export interface CreatedCompany {
  * code. The seed values are a starting point the user is expected to review —
  * which is why each carries its source note (README §48).
  */
+const DEFAULT_LEGAL_FORM = {
+  company: 'Private company limited by shares (LTD)',
+  sole_trader: 'Sole trader',
+  partnership: 'Partnership',
+} as const;
+
+/**
+ * The chart differs by entity type only in what the owners' side of the
+ * balance sheet is called and in the company-only accounts (issue #212). A
+ * sole trader's or partner's income tax is theirs, not the business's, and
+ * what they take out is drawings, not salary or dividends.
+ */
+function chartSeedFor(
+  entityType: 'company' | 'sole_trader' | 'partnership', seed: (typeof DEFAULT_ACCOUNTS)[number],
+): (typeof DEFAULT_ACCOUNTS)[number] | null {
+  if (entityType === 'company') return seed;
+  const partnership = entityType === 'partnership';
+  switch (seed.code) {
+    case '2200': // Corporation tax payable
+    case '6160': // Directors remuneration
+      return null;
+    case '2500':
+      return { ...seed, name: partnership ? 'Partners’ current account' : 'Owner’s current account',
+        description: 'Money the business owes its owner, or the owner owes it: typically business costs paid '
+          + 'personally, or cash introduced.' };
+    case '3000':
+      return { ...seed, name: partnership ? 'Partners’ capital' : 'Capital account',
+        description: partnership ? 'Each partner has a capital and a current account of their own under this heading.' : undefined };
+    case '3100':
+      return { ...seed, name: 'Accumulated profits' };
+    case '3200':
+      return { ...seed, name: partnership ? 'Partners’ drawings' : 'Drawings' };
+    default:
+      return seed;
+  }
+}
+
 export function createCompany(db: AppDatabase, input: CreateCompanyInput): CreatedCompany {
   return db.transaction((tx) => {
     const companyId = ids.company();
@@ -63,7 +104,9 @@ export function createCompany(db: AppDatabase, input: CreateCompanyInput): Creat
       legalName: input.legalName,
       tradingName: input.tradingName ?? null,
       croNumber: input.croNumber ?? null,
-      companyType: input.companyType ?? 'Private company limited by shares (LTD)',
+      companyType: input.companyType ?? DEFAULT_LEGAL_FORM[input.entityType ?? 'company'],
+      entityType: input.entityType ?? 'company',
+      tradeCommencedOn: input.tradeCommencedOn ?? null,
       dateIncorporated: input.dateIncorporated ?? null,
       registeredOffice: input.registeredOffice ?? null,
       vatNumber: input.vatNumber ?? null,
@@ -82,7 +125,9 @@ export function createCompany(db: AppDatabase, input: CreateCompanyInput): Creat
     // ---- Chart of accounts ----
     const accountsByKey: Record<string, string> = {};
     const accountsByCode: Record<string, string> = {};
-    for (const [index, seed] of DEFAULT_ACCOUNTS.entries()) {
+    for (const [index, base] of DEFAULT_ACCOUNTS.entries()) {
+      const seed = chartSeedFor(input.entityType ?? 'company', base);
+      if (!seed) continue;
       const id = ids.account();
       tx.insert(accounts).values({
         id,

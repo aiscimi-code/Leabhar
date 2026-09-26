@@ -99,6 +99,13 @@
       "when": 1790441064692,
       "tag": "0013_ct_decisions",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "6",
+      "when": 1790443069704,
+      "tag": "0014_entity_types_partners",
+      "breakpoints": true
     }
   ]
 }

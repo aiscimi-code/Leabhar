@@ -67,7 +67,7 @@ const LINE_PATTERNS: Array<{ pattern: RegExp; suggested: ExpenseChoice; options:
   },
 ];
 
-export type CtSubjectType = 'journal_line' | 'income_account' | 'loss_claim' | 'company_status';
+export type CtSubjectType = 'journal_line' | 'income_account' | 'loss_claim' | 'company_status' | 'personal_status';
 export type LossClaim = 'carry_forward' | 'claim_396a' | 'claim_396a_396b';
 export type CompanyStatus = 'close_trading' | 'close_service' | 'not_close';
 
@@ -88,6 +88,7 @@ const CHOICES: Record<CtSubjectType, string[]> = {
   income_account: Object.keys(INCOME_CASES),
   loss_claim: Object.keys(LOSS_CLAIMS),
   company_status: Object.keys(COMPANY_STATUSES),
+  personal_status: ['single', 'single_parent', 'married_one_income', 'married_two_incomes'],
 };
 
 export interface CtSource { entityType: 'account' | 'journal_line' | 'fixed_asset'; entityId: string; label: string; amountMinor: number }
@@ -183,7 +184,7 @@ const cite = (ruleKey: string): CtCitation => {
 const eur = (minor: number) => (minor / 100).toFixed(2);
 
 /** The decision on record for a subject: the latest one not superseded. */
-function currentDecision(db: AppDatabase, companyId: string, subjectType: CtSubjectType, subjectId: string, periodEnd?: string) {
+export function currentDecision(db: AppDatabase, companyId: string, subjectType: CtSubjectType, subjectId: string, periodEnd?: string) {
   return db.select().from(ctDecisions)
     .where(and(
       eq(ctDecisions.companyId, companyId), eq(ctDecisions.subjectType, subjectType), eq(ctDecisions.subjectId, subjectId),
@@ -346,7 +347,7 @@ function claimIndex(db: AppDatabase, companyId: string, purchaseDate: string, to
   return to.slice(5) >= firstEnd.slice(5) ? years : years - 1;
 }
 
-interface CtBase {
+export interface CtBase {
   accountingProfitMinor: number;
   lines: CtLine[];
   /** Trading result after adjustments and capital allowances; negative for a loss. */
@@ -358,7 +359,7 @@ interface CtBase {
 }
 
 /** Everything before loss relief, rates and surcharges: one period on its own. */
-function computeBase(db: AppDatabase, params: { companyId: string; from: string; to: string }): CtBase {
+export function computeBase(db: AppDatabase, params: { companyId: string; from: string; to: string }): CtBase {
   const { companyId, from, to } = params;
   const company = db.select().from(companies).where(eq(companies.id, companyId)).get();
   if (!company) throw new Error(`Company ${companyId} not found.`);

@@ -9,7 +9,7 @@ import type { CtComputation } from '@/domain/corporationTax/computation';
  * #211), each with its options. Choosing one records it by name; the figures
  * above use the suggestion until then.
  */
-export function CtDecisions({ computation, currency }: { computation: CtComputation; currency: string }) {
+export function CtDecisions({ computation, currency }: { computation: Pick<CtComputation, 'decisions' | 'to'>; currency: string }) {
   if (computation.decisions.length === 0) return null;
   return (
     <Panel

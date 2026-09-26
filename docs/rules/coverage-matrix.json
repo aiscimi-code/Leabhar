@@ -2154,9 +2154,10 @@
       "id": "tca:s3",
       "area": "tca_section",
       "title": "TCA 1997 s3",
-      "status": "deferred",
-      "issue": 211,
-      "reason": "Not yet ruled."
+      "status": "rule",
+      "ruleKeys": [
+        "income_tax.earned_income_trade"
+      ]
     },
     {
       "id": "tca:s15",
@@ -2174,9 +2175,10 @@
       "id": "tca:s18",
       "area": "tca_section",
       "title": "TCA 1997 s18",
-      "status": "deferred",
-      "issue": 212,
-      "reason": "Not yet ruled."
+      "status": "rule",
+      "ruleKeys": [
+        "income_tax.schedule_d_trade"
+      ]
     },
     {
       "id": "tca:s21",
@@ -2200,25 +2202,30 @@
       "id": "tca:s65",
       "area": "tca_section",
       "title": "TCA 1997 s65",
-      "status": "deferred",
-      "issue": 212,
-      "reason": "Not yet ruled."
+      "status": "rule",
+      "ruleKeys": [
+        "income_tax.basis_accounting_period"
+      ]
     },
     {
       "id": "tca:s66",
       "area": "tca_section",
       "title": "TCA 1997 s66",
-      "status": "deferred",
-      "issue": 212,
-      "reason": "Not yet ruled."
+      "status": "rule",
+      "ruleKeys": [
+        "income_tax.basis_first_year",
+        "income_tax.basis_second_year",
+        "income_tax.third_year_excess_relief"
+      ]
     },
     {
       "id": "tca:s67",
       "area": "tca_section",
       "title": "TCA 1997 s67",
-      "status": "deferred",
-      "issue": 212,
-      "reason": "Not yet ruled."
+      "status": "rule",
+      "ruleKeys": [
+        "income_tax.basis_cessation"
+      ]
     },
     {
       "id": "tca:s76",
@@ -2386,7 +2393,8 @@
       "title": "TCA 1997 s472AB",
       "status": "rule",
       "ruleKeys": [
-        "income_tax.earned_income_credit"
+        "income_tax.earned_income_credit",
+        "income_tax.earned_income_credit_percentage"
       ]
     },
     {
@@ -2412,7 +2420,12 @@
         "ct.return_filing_date",
         "ct.small_company_threshold",
         "ct.preliminary_tax_small",
-        "ct.preliminary_tax_large"
+        "ct.preliminary_tax_large",
+        "income_tax.preliminary_tax_date",
+        "income_tax.preliminary_tax_current_year",
+        "income_tax.preliminary_tax_prior_year",
+        "income_tax.preliminary_tax_pre_preceding_year",
+        "income_tax.return_date"
       ]
     },
     {
@@ -2429,17 +2442,20 @@
       "id": "tca:s1007",
       "area": "tca_section",
       "title": "TCA 1997 s1007",
-      "status": "deferred",
-      "issue": 212,
-      "reason": "Not yet ruled."
+      "status": "rule",
+      "ruleKeys": [
+        "income_tax.precedent_partner"
+      ]
     },
     {
       "id": "tca:s1008",
       "area": "tca_section",
       "title": "TCA 1997 s1008",
-      "status": "deferred",
-      "issue": 212,
-      "reason": "Not yet ruled."
+      "status": "rule",
+      "ruleKeys": [
+        "income_tax.partnership_profit_apportioned",
+        "income_tax.partner_several_trade"
+      ]
     },
     {
       "id": "tca:s530",

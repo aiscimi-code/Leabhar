@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { CtDecisions } from '@/components/CtDecisions';
+import { IncomeTaxPanel } from '@/components/IncomeTaxPanel';
 import { getDb } from '@/db';
 import { reportsData, companyContext, fixedAssetList, deadlineList } from '@/lib/queries';
 import { yearEndPack } from '@/domain/reports/yearEnd';
@@ -35,6 +36,7 @@ export default async function YearEndPage({ searchParams }: {
   const from = asIsoDate(year.startDate);
   const to = asIsoDate(year.endDate);
   const pack = yearEndPack(getDb(), { companyId: company.id, from, to });
+  const tc = pack.taxComputation;
   const currency = company.baseCurrency;
 
   return (
@@ -135,6 +137,7 @@ export default async function YearEndPage({ searchParams }: {
         </Panel>
       </div>
 
+      {tc && (<>
       <Panel
         title="Corporation tax computation"
         description="From accounting profit to taxable profit and the tax on it, each adjustment with the
@@ -146,10 +149,10 @@ export default async function YearEndPage({ searchParams }: {
             <tr className="font-medium">
               <td>Accounting profit per the profit and loss account</td>
               <td className="text-right num w-40">
-                {accountingMoney(pack.taxComputation.accountingProfitMinor, currency)}
+                {accountingMoney(tc.accountingProfitMinor, currency)}
               </td>
             </tr>
-            {pack.taxComputation.adjustments.map((adjustment, index) => (
+            {tc.adjustments.map((adjustment, index) => (
               <tr key={index}>
                 <td className="pl-5">
                   {adjustment.label}
@@ -161,51 +164,51 @@ export default async function YearEndPage({ searchParams }: {
             <tr className="font-semibold">
               <td className="border-t border-line-strong">Trading profit (Case I; negative is a loss)</td>
               <td className="text-right num border-t border-line-strong">
-                {accountingMoney(pack.taxComputation.taxAdjustedProfitMinor, currency)}
+                {accountingMoney(tc.taxAdjustedProfitMinor, currency)}
               </td>
             </tr>
             <tr>
               <td className="pl-5">Tax at 12.5% on trading profit (s.21)</td>
-              <td className="text-right num">{accountingMoney(pack.taxComputation.computation.taxAtStandardRateMinor, currency)}</td>
+              <td className="text-right num">{accountingMoney(tc.computation.taxAtStandardRateMinor, currency)}</td>
             </tr>
-            {pack.taxComputation.nonTradingIncomeMinor !== 0 && (
+            {tc.nonTradingIncomeMinor !== 0 && (
               <tr>
                 <td className="pl-5">
-                  Tax at 25% on other income of {accountingMoney(pack.taxComputation.nonTradingIncomeMinor, currency)} (s.21A)
+                  Tax at 25% on other income of {accountingMoney(tc.nonTradingIncomeMinor, currency)} (s.21A)
                 </td>
-                <td className="text-right num">{accountingMoney(pack.taxComputation.computation.taxAtHigherRateMinor, currency)}</td>
+                <td className="text-right num">{accountingMoney(tc.computation.taxAtHigherRateMinor, currency)}</td>
               </tr>
             )}
             <tr className="font-semibold">
               <td className="border-t border-line-strong">Corporation tax</td>
               <td className="text-right num border-t border-line-strong">
-                {accountingMoney(pack.taxComputation.corporationTaxMinor, currency)}
+                {accountingMoney(tc.corporationTaxMinor, currency)}
               </td>
             </tr>
-            {pack.taxComputation.computation.losses.valueBasisCreditMinor !== 0 && (
+            {tc.computation.losses.valueBasisCreditMinor !== 0 && (
               <tr>
                 <td className="pl-5">of which reduced by the s.396B value-basis loss credit</td>
-                <td className="text-right num">{accountingMoney(-pack.taxComputation.computation.losses.valueBasisCreditMinor, currency)}</td>
+                <td className="text-right num">{accountingMoney(-tc.computation.losses.valueBasisCreditMinor, currency)}</td>
               </tr>
             )}
             <tr>
               <td className="pl-5">
                 Losses carried forward (s.396)
               </td>
-              <td className="text-right num">{accountingMoney(pack.taxComputation.computation.losses.carriedForwardMinor, currency)}</td>
+              <td className="text-right num">{accountingMoney(tc.computation.losses.carriedForwardMinor, currency)}</td>
             </tr>
             <tr>
               <td className="pl-5">
                 Close company surcharge, charged for a later period
-                <Help>{pack.taxComputation.computation.surcharge.working}</Help>
+                <Help>{tc.computation.surcharge.working}</Help>
               </td>
-              <td className="text-right num">{accountingMoney(pack.taxComputation.computation.surcharge.surchargeMinor, currency)}</td>
+              <td className="text-right num">{accountingMoney(tc.computation.surcharge.surchargeMinor, currency)}</td>
             </tr>
             <tr>
               <td className="pl-5">CT1 return and balance of tax due</td>
-              <td className="text-right num">{date(pack.taxComputation.computation.dates.returnDueDate)}</td>
+              <td className="text-right num">{date(tc.computation.dates.returnDueDate)}</td>
             </tr>
-            {pack.taxComputation.computation.dates.preliminaryTax.map((p) => (
+            {tc.computation.dates.preliminaryTax.map((p) => (
               <tr key={p.dueDate}>
                 <td className="pl-5">Preliminary tax due {date(p.dueDate)} <Help>{p.basis}</Help></td>
                 <td className="text-right num">{accountingMoney(p.amountMinor, currency)}</td>
@@ -214,11 +217,13 @@ export default async function YearEndPage({ searchParams }: {
           </tbody>
         </table>
         <div className="px-4 py-2.5 border-t border-caution/30 bg-caution-soft text-caution text-[12px] leading-snug">
-          {pack.taxComputation.disclaimer}
+          {tc.disclaimer}
         </div>
       </Panel>
 
-      <CtDecisions computation={pack.taxComputation.computation} currency={currency} />
+      <CtDecisions computation={tc.computation} currency={currency} />
+      </>)}
+      {pack.incomeTax && <IncomeTaxPanel computation={pack.incomeTax} currency={currency} />}
 
       <div className="grid grid-cols-2 gap-4 items-start">
         <Panel title="Fixed asset schedule">

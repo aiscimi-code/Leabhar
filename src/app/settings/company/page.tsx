@@ -6,6 +6,7 @@ import { ActionForm } from '@/components/ActionForm';
 import { DemoLoader } from '@/components/DemoLoader';
 import { ExtractionEngineSetting } from '@/components/ExtractionEngineSetting';
 import { CompanyVatStatus } from '@/components/CompanyVatStatus';
+import { PartnersPanel } from '@/components/PartnersPanel';
 import {
   updateCompanyAction, createCompanyAction,
   addBankAccountAction, updateBankAccountAction,
@@ -266,6 +267,7 @@ export default function CompanySettingsPage() {
         </Panel>
       </div>
 
+      <PartnersPanel company={company} />
       <CompanyVatStatus company={company} />
 
       <Panel

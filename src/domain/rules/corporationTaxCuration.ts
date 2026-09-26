@@ -38,14 +38,17 @@ export const nfgCitation = (part: string) => `${NFG_CITATION_PREFIX} Part ${part
  * or later. A section's note is ingested as a provision only when listed.
  */
 export const NFG_SECTIONS: Record<string, string[]> = {
-  part02: ['21', '21A'],
-  part04: ['76', '81'],
+  part01: ['3'],
+  part02: ['18', '21', '21A'],
+  part04: ['65', '66', '67', '76', '81'],
   part09: ['284', '285A', '288', '291', '291A', '292'],
   part12: ['396', '396A', '396B'],
   part13: ['430', '434', '440', '441'],
+  part15: ['472AB'],
   part18d: ['531AM', '531AN'],
   part36: ['840'],
-  part41a: ['959A', '959I', '959AM', '959AR', '959AS'],
+  part41a: ['959A', '959I', '959AM', '959AO', '959AR', '959AS'],
+  part43: ['1007', '1008'],
 };
 
 /** Commencement of the TCA 1997 itself, for sections in force throughout. */

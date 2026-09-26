@@ -10,6 +10,8 @@ export function newId(prefix: string): string {
 }
 
 export const ids = {
+  partner: () => newId('ptr'),
+  partnerShare: () => newId('pts'),
   ctDecision: () => newId('ctd'),
   company: () => newId('co'),
   officer: () => newId('off'),
