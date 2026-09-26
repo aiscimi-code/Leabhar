@@ -333,7 +333,9 @@ export function findCustomerBlock(textLines: string[]): { name: ExtractedField<s
  */
 export function findSupplierAddress(textLines: string[], supplierName: string | null): ExtractedField<string> | null {
   if (!supplierName) return null;
-  const start = textLines.findIndex((l) => l.toLowerCase().includes(supplierName.toLowerCase()));
+  // Compare without punctuation: the name read as "GitHub Inc" is printed "GitHub, Inc.".
+  const bare = (t: string) => t.toLowerCase().replace(/[^a-z0-9]+/g, '');
+  const start = textLines.findIndex((l) => bare(l).includes(bare(supplierName)));
   if (start < 0 || start > 12) return null;
   const block: string[] = [];
   for (const next of textLines.slice(start + 1, start + 6)) {

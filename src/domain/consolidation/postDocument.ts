@@ -2,6 +2,7 @@ import { and, eq } from 'drizzle-orm';
 import { atomically } from '../accounting/journal';
 import type { AppDatabase } from '@/db';
 import { documents, documentLines, documentVatTotals, auditEvents, companies } from '@/db/schema';
+import { missingInvoiceParticulars, describeMissing, type ParticularsInput } from './invoiceParticulars';
 import { ids } from '@/lib/ids';
 import { nowIso, asIsoDate, type IsoDate } from '../dates';
 import { AccountingError } from '../accounting/errors';
@@ -64,6 +65,12 @@ export interface PostDocumentInput {
    * document whose own period's return is locked or filed (issue #226).
    */
   vatDeclarationDate?: IsoDate;
+  /**
+   * The invoice lacks a particular its VAT deduction depends on (issue #209):
+   * post it anyway with the VAT held back from recovery and a review item,
+   * rather than adding the particular from the page.
+   */
+  holdVatForMissingParticulars?: boolean;
   actor?: string;
   requestId?: string;
 }
@@ -198,6 +205,27 @@ function postDocumentAsInvoiceSteps(db: AppDatabase, input: PostDocumentInput): 
   const invoiceDate = asIsoDate(doc.documentDate);
   const taxPoint = asIsoDate(doc.supplyDate ?? doc.documentDate);
 
+  // Input VAT is deducted only on an invoice with the prescribed particulars (s.59(2)(a), reg.20(2)).
+  let holdReason: string | undefined;
+  if (direction === 'purchase') {
+    const reverseCharge = input.coding.every((c) => resolveTreatment(db, {
+      companyId: input.companyId, treatmentId: c.vatTreatmentId, onDate: taxPoint, rateOverrideId: c.taxRateId,
+    }).treatment.isReverseCharge);
+    const missing = missingInvoiceParticulars(particularsOf(db, doc, reverseCharge));
+    if (missing.length && !input.holdVatForMissingParticulars) {
+      throw new ConsolidationError(
+        `The invoice does not show ${describeMissing(missing)}. Input VAT is deducted only on an invoice with these `
+          + 'particulars (VATCA s.59(2)(a), S.I. 639/2010 reg.20(2)). Reopen the document and add them from the page, '
+          + 'or post it with the VAT held back from recovery until a valid invoice is obtained.',
+        { missing: missing.map((m) => m.code) },
+      );
+    }
+    if (missing.length) {
+      holdReason = `Held back from recovery: the invoice does not show ${describeMissing(missing)}. Deduct the VAT `
+        + 'once a valid invoice is obtained (VATCA s.59(2)(a), S.I. 639/2010 reg.20(2)).';
+    }
+  }
+
   const invoiceLines: InvoiceLineInput[] = lines.map((line, i) => {
     const coding = input.coding[i]!;
     const resolved = resolveTreatment(db, {
@@ -245,6 +273,7 @@ function postDocumentAsInvoiceSteps(db: AppDatabase, input: PostDocumentInput): 
       statedVatMinor: line.vatMinor ?? undefined,
       documentLineId: line.documentLineId,
       vatRuleKeys: coding.vatRuleKeys ?? [],
+      holdRecoveryReason: holdReason,
     };
   });
 
@@ -335,4 +364,20 @@ function postDocumentAsInvoiceSteps(db: AppDatabase, input: PostDocumentInput): 
     });
   }
   return created;
+}
+
+/** A confirmed document's particulars, as the reg.20(2) check reads them (issue #209). */
+export function particularsOf(db: AppDatabase, doc: DocumentRow, reverseCharge: boolean): ParticularsInput {
+  const lines = db.select().from(documentLines).where(eq(documentLines.documentId, doc.id)).all();
+  const totals = db.select().from(documentVatTotals).where(eq(documentVatTotals.documentId, doc.id)).all();
+  return {
+    documentType: doc.documentType, invoiceNumber: doc.invoiceNumber, documentDate: doc.documentDate,
+    supplierNameStated: doc.supplierNameStated, supplierAddress: doc.supplierAddress, supplierVatNumber: doc.supplierVatNumber,
+    customerNameStated: doc.customerNameStated, customerAddress: doc.customerAddress,
+    lines: lines.map((l) => ({ description: l.description, netMinor: l.netMinor, vatRateBasisPoints: l.vatRateBasisPoints, vatMinor: l.vatMinor })),
+    vatTotals: totals.map((t) => ({ rateBasisPoints: t.rateBasisPoints, netMinor: t.netMinor, vatMinor: t.vatMinor })),
+    vatMinor: doc.vatMinor,
+    netMinor: doc.netMinor,
+    reverseCharge,
+  };
 }

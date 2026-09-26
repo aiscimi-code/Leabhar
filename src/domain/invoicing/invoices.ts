@@ -60,6 +60,12 @@ export interface InvoiceLineInput {
   documentLineId?: string | null;
   /** The statutory rules behind the chosen VAT treatment, for the trace. */
   vatRuleKeys?: string[];
+  /**
+   * Hold this purchase line's VAT back from recovery, with the reason: the
+   * VAT is costed and a review item raised (issue #209: an invoice missing a
+   * particular its deduction depends on).
+   */
+  holdRecoveryReason?: string;
 }
 
 export interface CreateInvoiceInput {
@@ -184,7 +190,10 @@ function createInvoiceSteps(db: AppDatabase, input: CreateInvoiceInput): Created
     let vatReviewReason: string | null = null;
     let recoverableOverrideMinor: number | undefined;
     if (!isSales && resolved.treatment.appliesRate) {
-      if (unidentifiedSupplier) {
+      if (line.holdRecoveryReason) {
+        recoverableOverrideMinor = 0;
+        vatReviewReason = line.holdRecoveryReason;
+      } else if (unidentifiedSupplier) {
         // Not knowing who was actually paid undermines even a reverse-charge
         // self-assessment, so this takes priority over — and applies
         // regardless of — the treatment-specific checks below.

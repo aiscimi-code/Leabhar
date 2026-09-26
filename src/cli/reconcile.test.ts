@@ -1406,7 +1406,7 @@ describe('cli reconcile — confirm, post, settle, trace (issue #222)', () => {
     dueDate: null, supplyDate: null, currency: 'EUR',
     supplierNameStated: 'Byrne Accountancy Services Limited', supplierAddress: '14 Fitzwilliam Square, Dublin 2',
     supplierVatNumber: 'IE9876543W', supplierCountry: 'IE',
-    customerNameStated: 'Acme Ltd', customerAddress: null, customerVatNumber: null, customerCountry: 'IE',
+    customerNameStated: 'Acme Ltd', customerAddress: '2 Quay Street, Cork', customerVatNumber: null, customerCountry: 'IE',
     vatLegends: [], paymentTerms: null, originalDocumentNumber: null,
     netMinor: 50_000, vatMinor: 11_500, grossMinor: 61_500,
     lines: [{

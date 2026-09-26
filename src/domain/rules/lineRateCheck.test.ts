@@ -50,8 +50,8 @@ function confirmedLine(description: string, net: number, rate: number | null, va
   const values: ReviewedDocumentValues = {
     documentType: 'supplier_invoice', invoiceNumber: `INV-${Math.random().toString(36).slice(2, 8)}`,
     documentDate: '2025-03-14', dueDate: null, supplyDate: null, currency: 'EUR',
-    supplierNameStated: 'Kerry Fuels', supplierAddress: null, supplierVatNumber: null, supplierCountry: 'IE',
-    customerNameStated: 'Acme Ltd', customerAddress: null, customerVatNumber: null, customerCountry: 'IE',
+    supplierNameStated: 'Kerry Fuels', supplierAddress: '1 Main Street, Tralee', supplierVatNumber: 'IE6388047V', supplierCountry: 'IE',
+    customerNameStated: 'Acme Ltd', customerAddress: '2 Quay Street, Cork', customerVatNumber: null, customerCountry: 'IE',
     vatLegends: [], paymentTerms: null, originalDocumentNumber: null,
     netMinor: net, vatMinor: vat, grossMinor: net + (vat ?? 0), vatTotals: [],
     lines: [{ description, quantity: null, unitPriceMinor: null, netMinor: net, vatRateBasisPoints: rate, vatMinor: vat, grossMinor: net + (vat ?? 0) }],
