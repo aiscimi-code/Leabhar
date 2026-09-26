@@ -158,6 +158,9 @@ npm run cli -- vat-return --period <id-or-name>        # VAT3 box figures for on
 npm run cli -- vat-reconcile --period <id-or-name>     # boxes = entries, VAT accounts = return, excluded items
 npm run cli -- rtd --date 2025-12-31                   # annual return of trading details, by rate
 npm run cli -- vies --month 2025-03 --quarterly        # VIES statement (monthly without --quarterly)
+npm run cli -- ct-computation --from 2025-01-01 --to 2025-12-31   # corporation tax, with open decisions
+npm run cli -- ct-decide --subject-type journal_line --subject <id> --period-end 2025-12-31 \
+  --choice staff_entertainment --by "A. Director"      # record a treatment the computation suggested
 npm run cli -- list-suppliers                          # every supplier (id, name, country, VAT no.)
 npm run cli -- list-customers                          # every customer (id, name, country, VAT no.)
 

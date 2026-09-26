@@ -119,15 +119,22 @@ export async function GET(request: Request): Promise<Response> {
   // ---- Tax computation ----
   const tax = workbook.addWorksheet('Tax computation');
   tax.columns = [{ width: 56 }, { width: 18 }];
-  tax.addRow(['Corporation tax worksheet', '']).font = { bold: true, size: 12 };
+  tax.addRow(['Corporation tax computation', '']).font = { bold: true, size: 12 };
   tax.addRow([]);
   tax.addRow(['Accounting profit', amount(pack.taxComputation.accountingProfitMinor)]).font = { bold: true };
   for (const adjustment of pack.taxComputation.adjustments) {
     tax.addRow([`  ${adjustment.label}`, amount(adjustment.amountMinor)]);
     tax.addRow([`    ${adjustment.explanation}`, '']);
   }
-  tax.addRow(['Tax-adjusted profit', amount(pack.taxComputation.taxAdjustedProfitMinor)])
+  tax.addRow(['Trading profit (Case I; negative is a loss)', amount(pack.taxComputation.taxAdjustedProfitMinor)])
     .font = { bold: true };
+  tax.addRow(['  Tax at 12.5% on trading profit (s.21)', amount(pack.taxComputation.computation.taxAtStandardRateMinor)]);
+  tax.addRow([`  Tax at 25% on other income of ${amount(pack.taxComputation.nonTradingIncomeMinor)} (s.21A)`,
+    amount(pack.taxComputation.computation.taxAtHigherRateMinor)]);
+  tax.addRow(['Corporation tax', amount(pack.taxComputation.corporationTaxMinor)]).font = { bold: true };
+  for (const d of pack.taxComputation.computation.decisions) {
+    tax.addRow([`  ${d.decided ? 'Decided' : 'Suggested'}: ${d.description} → ${d.decided ?? d.suggested}`, amount(d.amountMinor)]);
+  }
   tax.addRow([]);
   const disclaimerRow = tax.addRow([pack.taxComputation.disclaimer, '']);
   disclaimerRow.alignment = { wrapText: true, vertical: 'top' };

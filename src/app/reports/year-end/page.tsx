@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { CtDecisions } from '@/components/CtDecisions';
 import { getDb } from '@/db';
 import { reportsData, companyContext, fixedAssetList, deadlineList } from '@/lib/queries';
 import { yearEndPack } from '@/domain/reports/yearEnd';
@@ -135,9 +136,9 @@ export default async function YearEndPage({ searchParams }: {
       </div>
 
       <Panel
-        title="Corporation tax worksheet"
-        description="The bridge from accounting profit to tax-adjusted profit. This is a
-          worksheet for you and your accountant, not a calculation of what you owe."
+        title="Corporation tax computation"
+        description="From accounting profit to taxable profit and the tax on it, each adjustment with the
+          provision behind it. Check it with your accountant before filing."
         tone="warning"
       >
         <table className="ledger">
@@ -158,9 +159,27 @@ export default async function YearEndPage({ searchParams }: {
               </tr>
             ))}
             <tr className="font-semibold">
-              <td className="border-t border-line-strong">Tax-adjusted profit</td>
+              <td className="border-t border-line-strong">Trading profit (Case I; negative is a loss)</td>
               <td className="text-right num border-t border-line-strong">
                 {accountingMoney(pack.taxComputation.taxAdjustedProfitMinor, currency)}
+              </td>
+            </tr>
+            <tr>
+              <td className="pl-5">Tax at 12.5% on trading profit (s.21)</td>
+              <td className="text-right num">{accountingMoney(pack.taxComputation.computation.taxAtStandardRateMinor, currency)}</td>
+            </tr>
+            {pack.taxComputation.nonTradingIncomeMinor !== 0 && (
+              <tr>
+                <td className="pl-5">
+                  Tax at 25% on other income of {accountingMoney(pack.taxComputation.nonTradingIncomeMinor, currency)} (s.21A)
+                </td>
+                <td className="text-right num">{accountingMoney(pack.taxComputation.computation.taxAtHigherRateMinor, currency)}</td>
+              </tr>
+            )}
+            <tr className="font-semibold">
+              <td className="border-t border-line-strong">Corporation tax</td>
+              <td className="text-right num border-t border-line-strong">
+                {accountingMoney(pack.taxComputation.corporationTaxMinor, currency)}
               </td>
             </tr>
           </tbody>
@@ -169,6 +188,8 @@ export default async function YearEndPage({ searchParams }: {
           {pack.taxComputation.disclaimer}
         </div>
       </Panel>
+
+      <CtDecisions computation={pack.taxComputation.computation} currency={currency} />
 
       <div className="grid grid-cols-2 gap-4 items-start">
         <Panel title="Fixed asset schedule">

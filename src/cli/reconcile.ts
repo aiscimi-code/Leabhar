@@ -50,6 +50,8 @@ import { resolveVatPeriodId } from '@/agent/books';
 import { reconcileVatReturn } from '@/domain/vat/reconcile';
 import { buildRtdReturn } from '@/domain/vat/rtd';
 import { buildViesStatement } from '@/domain/vat/vies';
+import { computeCorporationTax, recordCtDecision } from '@/domain/corporationTax/computation';
+import { asIsoDate } from '@/domain/dates';
 import { companies } from '@/db/schema';
 import { loadStatutoryKnowledgeBase } from '@/domain/rules/knowledgeBase';
 import {
@@ -259,6 +261,12 @@ Inspect:
                                           accounting year containing the date
   vies --month <YYYY-MM> [--quarterly]   VIES statement for the month (or the
                                           quarter ending that month)
+  ct-computation --from <date> --to <date>
+                                         Corporation tax computation for the
+                                          accounting period, with open decisions
+  ct-decide --subject-type <journal_line|income_account> --subject <id>
+            --period-end <date> --choice <choice> --by <name>
+                                         Record a treatment the computation suggested
   list-suppliers                         Every supplier (id, name, country, VAT no.)
   list-customers                         Every customer (id, name, country, VAT no.)
 
@@ -965,6 +973,26 @@ export async function main(argv: string[], options: CliOptions = {}): Promise<nu
         print(buildViesStatement(db, {
           companyId, frequency: hasFlag(flags, 'quarterly') ? 'Q' : 'M', year: Number(m[1]), month: Number(m[2]),
         }), format);
+        return 0;
+      }
+
+      case 'ct-computation': {
+        print(computeCorporationTax(db, {
+          companyId, from: asIsoDate(requireFlag(flags, 'from')), to: asIsoDate(requireFlag(flags, 'to')),
+        }), format);
+        return 0;
+      }
+
+      case 'ct-decide': {
+        const subjectType = requireFlag(flags, 'subject-type');
+        if (subjectType !== 'journal_line' && subjectType !== 'income_account') {
+          throw new Error('--subject-type is journal_line or income_account.');
+        }
+        const id = recordCtDecision(db, {
+          companyId, subjectType, subjectId: requireFlag(flags, 'subject'), periodEnd: requireFlag(flags, 'period-end'),
+          choice: requireFlag(flags, 'choice'), decidedBy: requireFlag(flags, 'by'), note: getFlag(flags, 'note'),
+        });
+        print({ decisionId: id }, format);
         return 0;
       }
 

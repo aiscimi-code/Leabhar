@@ -10,6 +10,7 @@ export function newId(prefix: string): string {
 }
 
 export const ids = {
+  ctDecision: () => newId('ctd'),
   company: () => newId('co'),
   officer: () => newId('off'),
   bankAccount: () => newId('ba'),
