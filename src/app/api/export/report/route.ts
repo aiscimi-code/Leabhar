@@ -1,10 +1,12 @@
 import { reportsData, requireCompany } from '@/lib/queries';
+import { mappedTrialBalance } from '@/domain/config/accountMappings';
 import { asIsoDate } from '@/domain/dates';
 import type { Explained } from '@/domain/reports/explain';
 import {
   newWorkbook, addSheet, addCoverSheet, xlsxResponse, toCsv, csvResponse,
   amountFor, type ExportColumn,
 } from '@/lib/exports';
+import { getDb } from '@/db';
 
 export const dynamic = 'force-dynamic';
 
@@ -79,6 +81,56 @@ export async function GET(request: Request): Promise<Response> {
     { header: `Credit (${currency})`, width: 16, money: true,
       value: (r) => (r.netDebitMinor < 0 ? amountFor(-r.netDebitMinor, currency) : null) },
   ];
+
+  // The trial balance restated in an external chart's codes (issue #362).
+  if (which === 'mapped-trial-balance') {
+    const chartName = url.searchParams.get('chart') ?? '';
+    const tb = mappedTrialBalance(getDb(), { companyId: company.id, chartName, asOf: to });
+    const columns: Array<ExportColumn<(typeof tb.rows)[number]>> = [
+      { header: 'External code', width: 14, value: (r) => r.externalCode ?? '' },
+      { header: 'External name', width: 40, value: (r) => r.externalName ?? r.name },
+      { header: 'Leabhar code', width: 12, value: (r) => r.code },
+      { header: 'Leabhar account', width: 40, value: (r) => r.name },
+      { header: 'Type', width: 12, value: (r) => r.type },
+      { header: `Debit (${currency})`, width: 16, money: true,
+        value: (r) => (r.debitMinor > r.creditMinor ? amountFor(r.debitMinor - r.creditMinor, currency) : null) },
+      { header: `Credit (${currency})`, width: 16, money: true,
+        value: (r) => (r.creditMinor > r.debitMinor ? amountFor(r.creditMinor - r.debitMinor, currency) : null) },
+    ];
+
+    if (format === 'csv') {
+      return csvResponse(`mapped-trial-balance-${chartName || 'chart'}.csv`, toCsv(tb.rows, columns));
+    }
+
+    const workbook = newWorkbook();
+    addCoverSheet(workbook, {
+      title: 'Mapped trial balance',
+      companyName: company.legalName,
+      period: `As at ${to}`,
+      currency,
+      extra: [
+        ['External chart', chartName],
+        ['Balances', tb.totalDebitMinor === tb.totalCreditMinor ? 'Debits equal credits' : 'DOES NOT BALANCE — investigate'],
+        ...tb.unmapped.length > 0
+          ? [[`Accounts with balances but no mapping (${tb.unmapped.length})`,
+              tb.unmapped.map((u) => `${u.code} ${u.name}`).join(', ')] as [string, string]]
+          : [],
+      ],
+    });
+    addSheet(workbook, {
+      name: 'Mapped trial balance',
+      preamble: [['Mapped trial balance'], [`External chart: ${chartName}`], [`As at ${to}`]],
+      columns,
+      rows: tb.rows,
+      footer: [[], [
+        tb.totalDebitMinor === tb.totalCreditMinor ? 'Debits equal credits.' : 'DEBITS DO NOT EQUAL CREDITS.',
+        '', '',
+        amountFor(tb.totalDebitMinor, currency),
+        amountFor(tb.totalCreditMinor, currency),
+      ]],
+    });
+    return xlsxResponse(workbook, `mapped-trial-balance-${to}.xlsx`);
+  }
 
   if (format === 'csv') {
     if (which === 'trial-balance') {

@@ -1,11 +1,12 @@
 import Link from 'next/link';
-import { chartOfAccounts } from '@/lib/queries';
+import { chartOfAccounts, externalAccountMappings } from '@/lib/queries';
 import {
   Page, Panel, Badge, Field, Input, Select, Textarea, Disclosure,
 } from '@/components/primitives';
 import { ActionForm } from '@/components/ActionForm';
 import {
   createAccountAction, updateAccountAction, archiveAccountAction, restoreAccountAction,
+  setAccountMappingAction, clearAccountMappingAction,
 } from '@/app/settings-actions';
 import { label } from '@/lib/format';
 
@@ -16,6 +17,8 @@ export default function AccountsPage() {
   const all = chartOfAccounts();
   const accounts = all.filter((a) => a.active);
   const archived = all.filter((a) => !a.active);
+  const mappings = externalAccountMappings();
+  const chartNames = [...new Set(mappings.map((m) => m.chartName))];
   const types = ['income', 'expense', 'asset', 'liability', 'equity'] as const;
   const sections = [
     'revenue', 'cost_of_sales', 'operating_expenses', 'other_income', 'finance_costs',
@@ -162,6 +165,90 @@ export default function AccountsPage() {
             </div>
           </ActionForm>
         </Disclosure>
+      </Panel>
+
+      <Panel
+        title="External chart mappings"
+        description="How each account is coded in an external chart — the accountant's
+          chart, or another package's — so an exported trial balance can be
+          restated in those codes. The books themselves never change."
+      >
+        <Disclosure summary="Map an account" tone="accent">
+          <ActionForm action={setAccountMappingAction} submit="Save mapping" resetOnSuccess>
+            <div className="grid grid-cols-3 gap-3 max-w-4xl">
+              <Field
+                label="Chart"
+                help="One mapping per account per chart. Name the chart so two
+                  correspondences can never be confused with each other."
+              >
+                <Input name="chartName" required placeholder="Accountant 2025" />
+              </Field>
+              <Field label="This account">
+                <Select name="accountId" defaultValue={accounts[0]?.id}>
+                  {accounts.map((account) => (
+                    <option key={account.id} value={account.id}>
+                      {account.code} {account.name}
+                    </option>
+                  ))}
+                </Select>
+              </Field>
+              <Field label="External code">
+                <Input name="externalCode" required placeholder="400" />
+              </Field>
+              <Field label="External name (optional)">
+                <Input name="externalName" />
+              </Field>
+            </div>
+          </ActionForm>
+        </Disclosure>
+
+        {mappings.length === 0 && (
+          <p className="px-4 py-2.5 text-[12px] text-ink-muted border-t border-line">
+            No mappings yet. An account deliberately left unmapped is simply not mapped —
+            that is the correct state: in the mapped trial balance it appears with a blank
+            external code rather than disappearing.
+          </p>
+        )}
+
+        {chartNames.map((chartName) => {
+            const forChart = mappings.filter((m) => m.chartName === chartName);
+            return (
+              <div key={chartName} className="mb-4">
+                <div className="flex items-baseline justify-between gap-3 mb-1.5">
+                  <h3 className="text-[13px] font-semibold text-ink">{chartName}</h3>
+                  <a
+                    href={`/api/export/report?which=mapped-trial-balance&chart=${encodeURIComponent(chartName)}&to=${new Date().toISOString().slice(0, 10)}`}
+                    className="text-[12px] text-accent hover:underline"
+                  >
+                    Download mapped trial balance
+                  </a>
+                </div>
+                <table className="ledger">
+                  <thead>
+                    <tr>
+                      <th className="w-24">This chart</th>
+                      <th>External code</th>
+                      <th>External name</th>
+                      <th className="w-24"></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {forChart.map((m) => (
+                      <tr key={m.id}>
+                        <td className="num !text-left">{m.code}</td>
+                        <td className="num !text-left">{m.externalCode}</td>
+                        <td className="text-ink-muted">{m.externalName ?? m.name}</td>
+                        <td>
+                          <ActionForm action={clearAccountMappingAction} submit="Remove"
+                            extra={{ accountId: m.accountId, chartName }} />
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            );
+          })}
       </Panel>
 
       {archived.length > 0 && (

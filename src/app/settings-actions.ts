@@ -9,6 +9,9 @@ import {
   generateVatPeriodsForYear, generateFinancialYearPeriod, updateVatPeriod,
   updateBankAccount, upsertSupplier, type CompanyUpdate,
 } from '@/domain/config/mutations';
+import {
+  setAccountMapping, clearAccountMapping,
+} from '@/domain/config/accountMappings';
 import { createCompany as createNewCompany, addBankAccount } from '@/domain/config/setup';
 import { completeReconciliation } from '@/domain/banking/reconciliation';
 import { createAdjustment, reverseAdjustment } from '@/domain/accounting/adjustments';
@@ -755,6 +758,52 @@ export async function recordPaymentAction(formData: FormData): Promise<ActionRes
         + 'was posted.');
     }
     return { ok: true, message: parts.join(' ') };
+  } catch (error) {
+    return fail(error);
+  }
+}
+
+export async function setAccountMappingAction(formData: FormData): Promise<ActionResult> {
+  try {
+    const company = requireCompany();
+    const accountId = text(formData, 'accountId');
+    const chartName = text(formData, 'chartName');
+    const externalCode = text(formData, 'externalCode');
+    if (!accountId || !chartName || !externalCode) {
+      return { ok: false, error: 'Account, chart name and external code are all required.' };
+    }
+    setAccountMapping(getDb(), {
+      companyId: company.id,
+      accountId,
+      chartName,
+      externalCode,
+      externalName: optional(formData, 'externalName'),
+      notes: optional(formData, 'notes'),
+      actor: 'user',
+    });
+    revalidatePath('/settings/accounts');
+    return { ok: true, message: `Mapped to ${externalCode} in "${chartName}".` };
+  } catch (error) {
+    return fail(error);
+  }
+}
+
+export async function clearAccountMappingAction(formData: FormData): Promise<ActionResult> {
+  try {
+    const company = requireCompany();
+    const accountId = text(formData, 'accountId');
+    const chartName = text(formData, 'chartName');
+    if (!accountId || !chartName) {
+      return { ok: false, error: 'Account and chart name are required.' };
+    }
+    clearAccountMapping(getDb(), {
+      companyId: company.id,
+      accountId,
+      chartName,
+      actor: 'user',
+    });
+    revalidatePath('/settings/accounts');
+    return { ok: true, message: 'Mapping removed.' };
   } catch (error) {
     return fail(error);
   }

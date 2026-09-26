@@ -7,7 +7,7 @@ import { importStatement } from '@/domain/banking/import';
 import { storeDocument } from '@/domain/documents/storage';
 import {
   bankTransactions, reconciliations, documents, documentMatches, suppliers, accounts,
-  invoices, companies, loans as loansTable, journalLines,
+  invoices, companies, loans as loansTable, journalLines, accountMappings,
 } from '@/db/schema';
 import { makeDate } from '@/domain/dates';
 import { main } from './reconcile';
@@ -868,6 +868,40 @@ describe('cli reconcile — induction and books (issue #153)', () => {
         .where(and(eq(accounts.companyId, iCompanyId), eq(accounts.code, '6090'))).get()!;
       expect(restored.active).toBe(true);
       expect(restored.effectiveTo).toBeNull();
+    });
+
+    it('map-account and mapped-trial-balance restate the chart in external codes', async () => {
+      let c = iCapture();
+      let code = await iRun(['map-account', '--account', '4000', '--chart', 'Accountant 2025',
+        '--external-code', '400', '--external-name', 'Sales']);
+      c.restore();
+      expect(code).toBe(0);
+      expect(JSON.parse(c.stdout.join('')).externalCode).toBe('400');
+
+      // Replace: one mapping per account per chart, not two.
+      await iRun(['map-account', '--account', '4000', '--chart', 'Accountant 2025',
+        '--external-code', '401']);
+      c = iCapture();
+      await iRun(['list-account-mappings', '--chart', 'Accountant 2025']);
+      c.restore();
+      const mappings = JSON.parse(c.stdout.join(''));
+      expect(mappings).toHaveLength(1);
+      expect(mappings[0].externalCode).toBe('401');
+
+      c = iCapture();
+      code = await iRun(['mapped-trial-balance', '--chart', 'Accountant 2025', '--as-of', '2025-12-31']);
+      c.restore();
+      expect(code).toBe(0);
+      const tb = JSON.parse(c.stdout.join(''));
+      expect(tb.chartName).toBe('Accountant 2025');
+      expect(tb.rows).toEqual([]);
+      expect(tb.unmapped).toEqual([]);
+
+      c = iCapture();
+      code = await iRun(['unmap-account', '--account', '4000', '--chart', 'Accountant 2025']);
+      c.restore();
+      expect(code).toBe(0);
+      expect(iDb.select().from(accountMappings).all()).toHaveLength(0);
     });
 
     it('init-company --chart farm installs the farm chart', async () => {

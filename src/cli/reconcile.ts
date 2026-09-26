@@ -43,6 +43,9 @@ import { confirmEstablishment, confirmCustomerTaxableStatus, checkVatNumberWithV
 import { confirmRctPrincipal, recordCashBasisAuthorisation } from '@/domain/config/companyStatus';
 import { archiveAccount, restoreAccount } from '@/domain/config/mutations';
 import {
+  setAccountMapping, clearAccountMapping, listAccountMappings, mappedTrialBalance,
+} from '@/domain/config/accountMappings';
+import {
   registerCapitalGood, recordIntervalUse, recordCapitalGoodDisposal, postCapitalGoodAdjustment,
   postCapitalGoodDisposalAdjustment, capitalGoodsOverview,
 } from '@/domain/vat/capitalGoods';
@@ -55,7 +58,7 @@ import { computeCorporationTax, recordCtDecision, type CtSubjectType } from '@/d
 import { computeIncomeTax } from '@/domain/incomeTax/computation';
 import { addPartner, setPartnerShare, partnerSharesOn } from '@/domain/config/partners';
 import { partners } from '@/db/schema';
-import { asIsoDate } from '@/domain/dates';
+import { asIsoDate, today } from '@/domain/dates';
 import { companies } from '@/db/schema';
 import { loadStatutoryKnowledgeBase } from '@/domain/rules/knowledgeBase';
 import {
@@ -95,6 +98,10 @@ import {
   installRulePackInput,
   archiveAccountInput,
   restoreAccountInput,
+  mapAccountInput,
+  unmapAccountInput,
+  listAccountMappingsInput,
+  mappedTrialBalanceInput,
   type CreateRuleCliInput,
 } from '@/agent/schema';
 
@@ -174,6 +181,16 @@ Induction (no company/bank/chart yet):
       --date (default today). A live balance is flagged on the review queue.
   restore-account --account <code> --reason "..."
       Reopen an archived account. Both need a reason, both are audited.
+  map-account --account <code> --chart "..." --external-code <code>
+      [--external-name "..."] [--notes "..."]  Record (or replace) how one
+      account is coded in one external chart — the accountant's chart, or
+      another package's. One mapping per account per chart.
+  unmap-account --account <code> --chart "..."  Remove one mapping.
+  list-account-mappings [--chart "..."]  Every mapping, or one chart's.
+  mapped-trial-balance --chart "..." [--as-of <date>]
+      The posted trial balance restated in the external chart's codes.
+      Accounts with balances but no mapping are listed with a blank external
+      code — never dropped silently.
   install-rule-pack [--employee "Name"] [--second-bank-account <code>]
       [--rent-account <code>]            Starter Irish SME bank-narrative
       rules (wages, employer PRSI, a Revenue PAYE remittance, VAT3, rent, an
@@ -1198,6 +1215,67 @@ export async function main(argv: string[], options: CliOptions = {}): Promise<nu
           actor: 'cli',
         });
         print({ account: parsed.account, restored: true }, format);
+        return 0;
+      }
+
+      case 'map-account': {
+        const parsed = mapAccountInput.parse({
+          companyId,
+          account: requireFlag(flags, 'account'),
+          chartName: requireFlag(flags, 'chart', 'chart-name'),
+          externalCode: requireFlag(flags, 'external-code'),
+          externalName: getFlag(flags, 'external-name'),
+          notes: getFlag(flags, 'notes'),
+        });
+        const mapping = setAccountMapping(db, {
+          companyId,
+          accountId: resolveAccountId(db, companyId, parsed.account),
+          chartName: parsed.chartName,
+          externalCode: parsed.externalCode,
+          externalName: parsed.externalName,
+          notes: parsed.notes,
+          actor: 'cli',
+        });
+        print({ ...mapping, account: parsed.account }, format);
+        return 0;
+      }
+
+      case 'unmap-account': {
+        const parsed = unmapAccountInput.parse({
+          companyId,
+          account: requireFlag(flags, 'account'),
+          chartName: requireFlag(flags, 'chart', 'chart-name'),
+        });
+        clearAccountMapping(db, {
+          companyId,
+          accountId: resolveAccountId(db, companyId, parsed.account),
+          chartName: parsed.chartName,
+          actor: 'cli',
+        });
+        print({ account: parsed.account, chartName: parsed.chartName, unmapped: true }, format);
+        return 0;
+      }
+
+      case 'list-account-mappings': {
+        const parsed = listAccountMappingsInput.parse({
+          companyId,
+          chartName: getFlag(flags, 'chart', 'chart-name'),
+        });
+        print(listAccountMappings(db, parsed), format);
+        return 0;
+      }
+
+      case 'mapped-trial-balance': {
+        const parsed = mappedTrialBalanceInput.parse({
+          companyId,
+          chartName: requireFlag(flags, 'chart', 'chart-name'),
+          asOf: getFlag(flags, 'as-of', 'date'),
+        });
+        print(mappedTrialBalance(db, {
+          companyId,
+          chartName: parsed.chartName,
+          asOf: asIsoDate(parsed.asOf ?? today()),
+        }), format);
         return 0;
       }
 

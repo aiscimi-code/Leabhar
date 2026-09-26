@@ -409,6 +409,37 @@ export const restoreAccountInput = z.object({
   reason: z.string(),
 });
 
+// ---- External chart mappings (issue #362) ----
+
+export const mapAccountInput = z.object({
+  companyId: z.string(),
+  /** Account code (or id). */
+  account: z.string(),
+  /** Which external chart this mapping belongs to, e.g. "Accountant 2025". */
+  chartName: z.string(),
+  /** The account's code in that chart. */
+  externalCode: z.string(),
+  externalName: z.string().optional(),
+  notes: z.string().optional(),
+});
+
+export const unmapAccountInput = z.object({
+  companyId: z.string(),
+  account: z.string(),
+  chartName: z.string(),
+});
+
+export const listAccountMappingsInput = z.object({
+  companyId: z.string(),
+  chartName: z.string().optional(),
+});
+
+export const mappedTrialBalanceInput = z.object({
+  companyId: z.string(),
+  chartName: z.string(),
+  asOf: isoDate.optional(),
+});
+
 export const installRulePackInput = z.object({
   companyId: z.string(),
   /** Also match this employee's name in the description, alongside the generic SALARY keyword. */
