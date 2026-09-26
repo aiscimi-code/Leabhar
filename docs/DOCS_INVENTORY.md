@@ -39,7 +39,9 @@ from the tree does not shrink the history.
    followed. `leabhar-218-section-I.zip` in the history holds the same files.
    Removing them from the tree is easy. Removing them from what is published
    takes a history rewrite or a private repository. **This is the most urgent
-   item.**
+   item.** *Update:* the owner decided the FRS files stay in Google Drive only.
+   They were removed from the tree under #293. The history rewrite is still
+   open.
 2. **The installer ships 24 MB it never reads.** `scripts/build-package.mjs`
    copies all of `docs/statutes/` except `_inbox`: 29.8 MB. Of that, 5.3 MB is
    read. The other 23.3 MB is PDF and HTML originals (the Notes for Guidance
@@ -82,7 +84,7 @@ repository carries none of the third-party files.
 | `statutes/_inbox/B` | 1.4 MB | 21 VATCA sections and the Schedule 1–3 HTML are duplicates of `vatca-2010-revised/`: delete them. 15 were never promoted (ss.13, 23, 24, 29, 32, 41, 51, 52, 53, 55, 57, 58, 82, 83, and a different conversion of s.46). Promote them into `vatca-2010-revised/` as the #278 backlog. The Schedule 1–3 `.md` files are an earlier conversion of files that are already promoted: delete them. |
 | `statutes/_inbox/C` | 40.6 MB | Revenue VAT guidance, 9 topics. Promote the 2 cited files into `docs/statutes/<topic>/`. Move the rest to the sources store. |
 | `statutes/_inbox/E, H` | 1.9 MB | RCT S.I.s, TDMs and the Companies Act sections not yet used. Move them to the sources store, or promote them when a rule is written (#206, #276). |
-| `statutes/_inbox/I` | 9.7 MB | Remove (finding 1). |
+| `statutes/_inbox/I` | 9.7 MB | Removed (#293). |
 | `statutes/_inbox/J` | 0.3 MB | Move to `tests/fixtures/` or delete (#237). |
 | `statutes/audit-report.json` | 0.04 MB | Generated on 2026-09-19 and stale. Regenerate it on demand or delete it. `RULES_KB.md` links to it. |
 

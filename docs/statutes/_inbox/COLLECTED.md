@@ -19,5 +19,5 @@ unpacked from its archives unchanged).
 | F | SWCA 2005 Chapter 3 ss.20–23 | complete |
 | G | TDMs 38-02-01, 38-02-01J (CT1 2025), 38-01-04J (Form 11 2025), 43-00-03, 47-06-01 (PDF + MD) | complete — accepted stand-in 43-00-03 for Form 1 (Firms) |
 | H | LRC revised CA 2014: 22 sections and Schedule 3A (HTML + MD) | **CRO ARD / B1 guidance still missing** (cro.ie blocks automated fetches) |
-| I | FRS 102 and FRS 105 (Sept 2024) and four amendments (PDF + MD), FRC index pages | complete |
+| I | FRS 102 and FRS 105 (Sept 2024) and four amendments (PDF + MD), FRC index pages | **removed from this repository (#293)**: FRC copyright, kept in the private Google Drive folder only. `MANIFEST.sha256` keeps their hashes so the Drive copies stay checkable. |
 | J | Regression test packs from earlier E2E runs (not anonymised real invoices) | belongs to #237, not #218 |
