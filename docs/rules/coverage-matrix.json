@@ -377,7 +377,7 @@
       "area": "vatca_section",
       "title": "s.44 Non-business use of immovable goods.",
       "status": "deferred",
-      "issue": 208,
+      "issue": 245,
       "reason": "Non-business use of immovable goods."
     },
     {
@@ -425,7 +425,7 @@
       "area": "vatca_section",
       "title": "s.48 Works of art, etc.",
       "status": "deferred",
-      "issue": 205,
+      "issue": 278,
       "reason": "Works of art rate (Sch.5)."
     },
     {
@@ -449,7 +449,7 @@
       "area": "vatca_section",
       "title": "s.51 Determinations on rates and exemptions.",
       "status": "deferred",
-      "issue": 205,
+      "issue": 278,
       "reason": "Revenue determinations on rates and exemptions."
     },
     {
@@ -637,7 +637,7 @@
       "area": "vatca_section",
       "title": "s.71 Self-billing and outsourcing.",
       "status": "deferred",
-      "issue": 209,
+      "issue": 278,
       "reason": "Invoices and credit notes — validity for deduction."
     },
     {
@@ -645,7 +645,7 @@
       "area": "vatca_section",
       "title": "s.72 Storage of invoices.",
       "status": "deferred",
-      "issue": 209,
+      "issue": 278,
       "reason": "Invoices and credit notes — validity for deduction."
     },
     {
@@ -653,7 +653,7 @@
       "area": "vatca_section",
       "title": "s.73 Requests for particulars in respect of repayment of tax.",
       "status": "deferred",
-      "issue": 210,
+      "issue": 278,
       "reason": "Particulars for repayment claims."
     },
     {
@@ -661,7 +661,7 @@
       "area": "vatca_section",
       "title": "s.74 Tax due on supplies.",
       "status": "deferred",
-      "issue": 210,
+      "issue": 278,
       "reason": "Tax due, returns and remittances."
     },
     {
@@ -669,7 +669,7 @@
       "area": "vatca_section",
       "title": "s.75 Tax due on intra- Community acquisitions.",
       "status": "deferred",
-      "issue": 210,
+      "issue": 278,
       "reason": "Tax due, returns and remittances."
     },
     {
@@ -677,7 +677,7 @@
       "area": "vatca_section",
       "title": "s.76 Returns and remittances.",
       "status": "deferred",
-      "issue": 210,
+      "issue": 278,
       "reason": "Tax due, returns and remittances."
     },
     {
@@ -685,7 +685,7 @@
       "area": "vatca_section",
       "title": "s.77 Authorisations in relation to filing dates.",
       "status": "deferred",
-      "issue": 210,
+      "issue": 278,
       "reason": "Tax due, returns and remittances."
     },
     {
@@ -693,7 +693,7 @@
       "area": "vatca_section",
       "title": "s.78 Electronic remittances and returns.",
       "status": "deferred",
-      "issue": 210,
+      "issue": 278,
       "reason": "Tax due, returns and remittances."
     },
     {
@@ -701,7 +701,7 @@
       "area": "vatca_section",
       "title": "s.79 Special provisions in relation to payment dates.",
       "status": "deferred",
-      "issue": 210,
+      "issue": 278,
       "reason": "Tax due, returns and remittances."
     },
     {
@@ -801,7 +801,7 @@
       "area": "vatca_section",
       "title": "s.90 Investment gold.",
       "status": "deferred",
-      "issue": 208,
+      "issue": 278,
       "reason": "Investment gold."
     },
     {
@@ -809,7 +809,7 @@
       "area": "vatca_section",
       "title": "s.91 Electronic services scheme.",
       "status": "deferred",
-      "issue": 207,
+      "issue": 278,
       "reason": "Electronic services / OSS scheme."
     },
     {
@@ -817,7 +817,7 @@
       "area": "vatca_section",
       "title": "s.92 Suspension arrangements for alcohol products.",
       "status": "deferred",
-      "issue": 207,
+      "issue": 278,
       "reason": "Suspension arrangements for alcohol products."
     },
     {
@@ -1096,7 +1096,7 @@
       "area": "vatca_section",
       "title": "s.91A (inserted)",
       "status": "deferred",
-      "issue": 207,
+      "issue": 278,
       "reason": "OSS / import schemes (inserted)."
     },
     {
@@ -1104,7 +1104,7 @@
       "area": "vatca_section",
       "title": "s.91B (inserted)",
       "status": "deferred",
-      "issue": 207,
+      "issue": 278,
       "reason": "OSS / import schemes (inserted)."
     },
     {
@@ -1112,7 +1112,7 @@
       "area": "vatca_section",
       "title": "s.91C (inserted)",
       "status": "deferred",
-      "issue": 207,
+      "issue": 278,
       "reason": "OSS / import schemes (inserted)."
     },
     {
@@ -1120,7 +1120,7 @@
       "area": "vatca_section",
       "title": "s.91D (inserted)",
       "status": "deferred",
-      "issue": 207,
+      "issue": 278,
       "reason": "OSS / import schemes (inserted)."
     },
     {
@@ -1128,7 +1128,7 @@
       "area": "vatca_section",
       "title": "s.91E (inserted)",
       "status": "deferred",
-      "issue": 207,
+      "issue": 278,
       "reason": "OSS / import schemes (inserted)."
     },
     {
@@ -1136,7 +1136,7 @@
       "area": "vatca_section",
       "title": "s.91F (inserted)",
       "status": "deferred",
-      "issue": 207,
+      "issue": 278,
       "reason": "OSS / import schemes (inserted)."
     },
     {
@@ -1144,7 +1144,7 @@
       "area": "vatca_section",
       "title": "s.91G (inserted)",
       "status": "deferred",
-      "issue": 207,
+      "issue": 278,
       "reason": "OSS / import schemes (inserted)."
     },
     {
@@ -1152,7 +1152,7 @@
       "area": "vatca_section",
       "title": "s.91H (inserted)",
       "status": "deferred",
-      "issue": 207,
+      "issue": 278,
       "reason": "OSS / import schemes (inserted)."
     },
     {
@@ -1160,7 +1160,7 @@
       "area": "vatca_section",
       "title": "s.91I (inserted)",
       "status": "deferred",
-      "issue": 207,
+      "issue": 278,
       "reason": "OSS / import schemes (inserted)."
     },
     {
@@ -1168,7 +1168,7 @@
       "area": "vatca_section",
       "title": "s.91J (inserted)",
       "status": "deferred",
-      "issue": 207,
+      "issue": 278,
       "reason": "OSS / import schemes (inserted)."
     },
     {
@@ -1176,7 +1176,7 @@
       "area": "vatca_section",
       "title": "s.92A (inserted)",
       "status": "deferred",
-      "issue": 208,
+      "issue": 278,
       "reason": "Deposit return scheme."
     },
     {
@@ -1184,7 +1184,7 @@
       "area": "vatca_section",
       "title": "s.92B (inserted)",
       "status": "deferred",
-      "issue": 207,
+      "issue": 278,
       "reason": "SME scheme definitions (S.I. 69/2025)."
     },
     {
@@ -1192,7 +1192,7 @@
       "area": "vatca_section",
       "title": "s.92C (inserted)",
       "status": "deferred",
-      "issue": 207,
+      "issue": 278,
       "reason": "SME scheme (S.I. 69/2025)."
     },
     {
@@ -1200,7 +1200,7 @@
       "area": "vatca_section",
       "title": "s.92D (inserted)",
       "status": "deferred",
-      "issue": 207,
+      "issue": 278,
       "reason": "SME scheme for enterprises not established in the State (S.I. 69/2025)."
     },
     {
@@ -1772,7 +1772,7 @@
       "area": "vatca_schedule",
       "title": "Sch.4 para 1 — ## Part 1 — List of Agricultural Production Activities",
       "status": "deferred",
-      "issue": 208,
+      "issue": 278,
       "reason": "Agricultural production (flat-rate farmers)."
     },
     {
@@ -1780,7 +1780,7 @@
       "area": "vatca_schedule",
       "title": "Sch.4 para 2",
       "status": "deferred",
-      "issue": 208,
+      "issue": 278,
       "reason": "Agricultural production (flat-rate farmers)."
     },
     {
@@ -1788,7 +1788,7 @@
       "area": "vatca_schedule",
       "title": "Sch.4 para 3",
       "status": "deferred",
-      "issue": 208,
+      "issue": 278,
       "reason": "Agricultural production (flat-rate farmers)."
     },
     {
@@ -1796,7 +1796,7 @@
       "area": "vatca_schedule",
       "title": "Sch.4 para 4",
       "status": "deferred",
-      "issue": 208,
+      "issue": 278,
       "reason": "Agricultural production (flat-rate farmers)."
     },
     {
@@ -1804,7 +1804,7 @@
       "area": "vatca_schedule",
       "title": "Sch.4 para 5",
       "status": "deferred",
-      "issue": 208,
+      "issue": 278,
       "reason": "Agricultural production (flat-rate farmers)."
     },
     {
@@ -1812,7 +1812,7 @@
       "area": "vatca_schedule",
       "title": "Sch.5 para 1 — Works of art",
       "status": "deferred",
-      "issue": 205,
+      "issue": 278,
       "reason": "Rate paragraph not yet ruled."
     },
     {
@@ -1820,7 +1820,7 @@
       "area": "vatca_schedule",
       "title": "Sch.5 para 2 — Collectors’ items",
       "status": "deferred",
-      "issue": 205,
+      "issue": 278,
       "reason": "Rate paragraph not yet ruled."
     },
     {
@@ -1828,7 +1828,7 @@
       "area": "vatca_schedule",
       "title": "Sch.5 para 3 — Antiques",
       "status": "deferred",
-      "issue": 205,
+      "issue": 278,
       "reason": "Rate paragraph not yet ruled."
     },
     {
@@ -1950,7 +1950,7 @@
       "area": "vatca_schedule",
       "title": "Sch.9 Part 1",
       "status": "deferred",
-      "issue": 207,
+      "issue": 278,
       "reason": "Northern Ireland protocol provisions."
     },
     {
@@ -1958,7 +1958,7 @@
       "area": "vatca_schedule",
       "title": "Sch.9 Part 2",
       "status": "deferred",
-      "issue": 207,
+      "issue": 278,
       "reason": "Northern Ireland protocol provisions."
     },
     {
@@ -1966,7 +1966,7 @@
       "area": "vatca_schedule",
       "title": "Sch.9 Part 3",
       "status": "deferred",
-      "issue": 207,
+      "issue": 278,
       "reason": "Northern Ireland protocol provisions."
     },
     {
@@ -2875,9 +2875,10 @@
       "id": "txn:motor-fuel",
       "area": "transaction_type",
       "title": "motor-fuel",
-      "status": "deferred",
-      "issue": 209,
-      "reason": "Deductibility of motor fuel (s.60) not yet ruled."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.blocked_petrol"
+      ]
     },
     {
       "id": "txn:entertainment",
@@ -2893,7 +2894,7 @@
       "area": "transaction_type",
       "title": "hotel-accommodation",
       "status": "deferred",
-      "issue": 205,
+      "issue": 278,
       "reason": "Current hotel accommodation rate not ruled; only the 2020–2023 9% window and the unmodelled 2026 change are."
     },
     {
@@ -2920,9 +2921,11 @@
       "id": "txn:motor-vehicle-purchase",
       "area": "transaction_type",
       "title": "motor-vehicle-purchase",
-      "status": "deferred",
-      "issue": 209,
-      "reason": "Qualifying vehicle deduction (s.62) not yet ruled."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.blocked_motor_vehicle",
+        "vat.qualifying_vehicle_disposal"
+      ]
     },
     {
       "id": "txn:grant-received",
@@ -3062,17 +3065,19 @@
       "id": "txn:subcontractor-construction",
       "area": "transaction_type",
       "title": "subcontractor-construction",
-      "status": "deferred",
-      "issue": 208,
-      "reason": "RCT side has rules (#213); the s.16 VAT reverse charge does not."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.domestic_reverse_charge_construction"
+      ]
     },
     {
       "id": "txn:import-of-goods",
       "area": "transaction_type",
       "title": "import-of-goods",
-      "status": "deferred",
-      "issue": 207,
-      "reason": "Import VAT and postponed accounting not yet ruled."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.import_of_goods"
+      ]
     },
     {
       "id": "txn:sale-services-to-eu-business",
