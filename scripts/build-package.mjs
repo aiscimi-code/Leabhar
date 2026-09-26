@@ -25,7 +25,7 @@
 
 import { execSync } from 'node:child_process';
 import { cpSync, existsSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
-import { join, resolve, dirname } from 'node:path';
+import { join, resolve, dirname, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -38,9 +38,9 @@ function run(label, command) {
   execSync(command, { stdio: 'inherit', cwd: ROOT });
 }
 
-function copy(label, src, dest) {
+function copy(label, src, dest, filter) {
   console.log(`  copy ${src} → ${dest}`);
-  cpSync(src, dest, { recursive: true });
+  cpSync(src, dest, { recursive: true, ...(filter ? { filter } : {}) });
 }
 
 // 1. Build
@@ -64,7 +64,11 @@ copy('drizzle migrations', join(ROOT, 'drizzle'), join(STANDALONE, 'drizzle'));
 // 3b. Copy the statute sources the statutory VAT rules cite (issue #200):
 // the knowledge base is loaded from these files and the provision page
 // re-reads them to verify their SHA-256, so they must ship with the app.
-copy('statute sources', join(ROOT, 'docs', 'statutes'), join(STANDALONE, 'docs', 'statutes'));
+// `_inbox` holds collected reference documents (issue #218) that no rule
+// loads yet; they stay out of the installer.
+const INBOX = join(ROOT, 'docs', 'statutes', '_inbox');
+copy('statute sources', join(ROOT, 'docs', 'statutes'), join(STANDALONE, 'docs', 'statutes'),
+  (src) => src !== INBOX && !src.startsWith(INBOX + sep));
 
 // 3c. Copy the OCR and PDF-rendering assets the review screen serves to the
 // browser (issue #202). The list mirrors OCR_ASSETS in src/lib/ocrAssets.ts;
