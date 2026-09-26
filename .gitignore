@@ -19,3 +19,9 @@ backups/
 .DS_Store
 __pycache__/
 docs-reads.log
+
+# FRC standards stay in the private Google Drive folder only (#293)
+docs/statutes/_inbox/I/
+docs/statutes/_inbox/I-FRS-not-collected/
+*FRS_102_*.pdf
+*FRS_105_*.pdf
