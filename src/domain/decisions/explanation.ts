@@ -97,7 +97,7 @@ export interface AISuggestion {
 }
 
 export interface RuleEvaluation {
-  /** Stable rule key, e.g. "vat.input_deduction_general". */
+  /** Stable rule key, e.g. "vat.input_deduction_taxable_use". */
   ruleKey: string;
   /** Human-readable rule name. */
   ruleName: string;

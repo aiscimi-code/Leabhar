@@ -73,13 +73,13 @@ describe('suggestVatTreatment', () => {
     setup();
     const first = loadStatutoryKnowledgeBase(db, { companyId });
     expect(first.rulesBefore).toBe(0);
-    expect(first.rulesAfter).toBe(177);
+    expect(first.rulesAfter).toBe(181);
   });
 
   it('loading again is a no-op', () => {
     const again = loadStatutoryKnowledgeBase(db, { companyId });
-    expect(again.rulesBefore).toBe(177);
-    expect(again.rulesAfter).toBe(177);
+    expect(again.rulesBefore).toBe(181);
+    expect(again.rulesAfter).toBe(181);
   });
 
   it('US SaaS purchase → non-EU reverse charge, cited to VATCA s.12 with a verifiable slice', () => {
@@ -145,7 +145,7 @@ describe('suggestVatTreatment', () => {
     const supplierId = party('supplier', 'The Winding Stair', { countryCode: 'IE' });
     const s = suggestVatTreatment(db, { companyId, bankTransactionId: tx('CLIENT DINNER RESTAURANT', -12_000, { supplierId }) })!;
     expect(s.treatment?.code).toBe('NON_DEDUCTIBLE');
-    expect(s.decidingRule?.ruleKey).toBe('vat.deduction_exclusions_entertainment');
+    expect(s.decidingRule?.ruleKey).toBe('vat.blocked_food_drink_accommodation');
   });
 
   it('a US purchase of unknown supply type gets no rule — never the domestic 23% fallback', () => {

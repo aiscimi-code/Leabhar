@@ -628,6 +628,26 @@ add a reason and stop pre-selection, but never decide the treatment.
 The company operating one of these schemes itself, as a dealer, travel agent or
 auctioneer, is not modelled.
 
+### Input VAT recovery (ss.59-62)
+
+- **Sources.** The rules come from the revised ss.59-62. The as-enacted s.59
+  and s.60 rules are retired: their stored rows get an empty window.
+- **Blocked categories.** s.60(2)(a) is applied exactly as listed, one rule per
+  category, and each decides `NON_DEDUCTIBLE`:
+  - (i) food, drink, accommodation and personal services;
+  - (iii) entertainment;
+  - (iv) cars;
+  - (v) petrol.
+
+  Diesel is not in the list and is not blocked. A van is not a "motor vehicle"
+  here.
+- **Qualifying vehicles.** A qualifying vehicle gives 20% of the VAT
+  (s.59(2)(d)): first registered from 2021 with CO2 under 140g/km, and at least
+  60% business use. This is named on every car line, because the invoice does
+  not show it.
+- **Clawback.** On disposal within two years, or if business use falls below
+  60%, `qualifyingVehicleClawback` computes TD x (4 - N) / 4 (s.62).
+
 ### Posting paths are atomic
 
 Every exported posting path — classify, reclassify, split journal,
