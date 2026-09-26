@@ -518,8 +518,9 @@
       "title": "s.59 Deduction for tax borne or paid.",
       "status": "rule",
       "ruleKeys": [
-        "vat.input_deduction_general"
-      ]
+        "vat.input_deduction_taxable_use"
+      ],
+      "note": "Revised s.59(2). The s.59(2)(d) qualifying-vehicle 20% is named on the s.60 motor-vehicle rule."
     },
     {
       "id": "vatca:s60",
@@ -527,8 +528,12 @@
       "title": "s.60 General limits on deductibility.",
       "status": "rule",
       "ruleKeys": [
-        "vat.deduction_exclusions_entertainment"
-      ]
+        "vat.blocked_food_drink_accommodation",
+        "vat.blocked_entertainment",
+        "vat.blocked_motor_vehicle",
+        "vat.blocked_petrol"
+      ],
+      "note": "s.60(2)(a)(i), (iii), (iv) and (v), each as the statute lists it; diesel is not blocked. (ii) advertising-cost hospitality, (iia) non-business use of property and (vi) contract work are not separately detected."
     },
     {
       "id": "vatca:s61",
@@ -542,9 +547,11 @@
       "id": "vatca:s62",
       "area": "vatca_section",
       "title": "s.62 Reduction of tax deductible in relation to qualifying vehicles.",
-      "status": "deferred",
-      "issue": 209,
-      "reason": "Qualifying vehicles."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.qualifying_vehicle_disposal"
+      ],
+      "note": "The s.62 reduction TD x (4 - N) / 4 is calculated by qualifyingVehicleClawback."
     },
     {
       "id": "vatca:s63",
@@ -578,9 +585,11 @@
       "id": "vatca:s66",
       "area": "vatca_section",
       "title": "s.66 Issue of invoices and other documents.",
-      "status": "deferred",
-      "issue": 209,
-      "reason": "Invoices and credit notes — validity for deduction."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.invoice_prescribed_particulars"
+      ],
+      "note": "The reg.20(2) particulars are checked when a confirmed purchase document is posted (missingInvoiceParticulars); a missing one refuses the posting or holds the VAT back."
     },
     {
       "id": "vatca:s67",
@@ -2128,7 +2137,10 @@
       "title": "NON_DEDUCTIBLE",
       "status": "rule",
       "ruleKeys": [
-        "vat.deduction_exclusions_entertainment"
+        "vat.blocked_food_drink_accommodation",
+        "vat.blocked_entertainment",
+        "vat.blocked_motor_vehicle",
+        "vat.blocked_petrol"
       ]
     },
     {
@@ -2760,7 +2772,7 @@
       "title": "entertainment",
       "status": "rule",
       "ruleKeys": [
-        "vat.deduction_exclusions_entertainment"
+        "vat.blocked_entertainment"
       ]
     },
     {
@@ -2778,7 +2790,7 @@
       "status": "rule",
       "ruleKeys": [
         "vat.rate_hospitality",
-        "vat.deduction_exclusions_entertainment"
+        "vat.blocked_food_drink_accommodation"
       ]
     },
     {
@@ -2787,7 +2799,7 @@
       "title": "capital-purchase",
       "status": "rule",
       "ruleKeys": [
-        "vat.input_deduction_general",
+        "vat.input_deduction_taxable_use",
         "income_tax.wear_and_tear_allowance_qualifies"
       ]
     },

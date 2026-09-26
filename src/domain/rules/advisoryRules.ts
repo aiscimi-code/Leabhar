@@ -1,3 +1,4 @@
+import { INPUT_RECOVERY_REASONS, BLOCKED_MOTOR_VEHICLE_RULE_KEY, QUALIFYING_VEHICLE_DISPOSAL_RULE_KEY } from './inputRecoveryCuration';
 import { DOMESTIC_RC_ADVISORY_RULE_KEYS, DOMESTIC_RC_GAPS, RC_CONSTRUCTION_RULE_KEY } from './domesticReverseChargeCuration';
 import {
   LETTING_LANDLORD_REASON, LETTING_OPTION_LANDLORD_RULE_KEY, CAPITAL_GOODS_REASON, CAPITAL_GOODS_RULE_KEY,
@@ -19,6 +20,9 @@ export const ADVISORY_RULES: AdvisoryRule[] = [
   })),
   { ruleKey: LETTING_OPTION_LANDLORD_RULE_KEY, reason: LETTING_LANDLORD_REASON, silencedBy: [] },
   { ruleKey: CAPITAL_GOODS_RULE_KEY, reason: CAPITAL_GOODS_REASON, silencedBy: [] },
+  // The 20% qualifying-vehicle case turns on the car's registration and use (issue #209).
+  { ruleKey: BLOCKED_MOTOR_VEHICLE_RULE_KEY, reason: INPUT_RECOVERY_REASONS[BLOCKED_MOTOR_VEHICLE_RULE_KEY]!, silencedBy: [] },
+  { ruleKey: QUALIFYING_VEHICLE_DISPOSAL_RULE_KEY, reason: INPUT_RECOVERY_REASONS[QUALIFYING_VEHICLE_DISPOSAL_RULE_KEY]!, silencedBy: [] },
 ];
 
 export const ADVISORY_RULE_KEYS = new Set(ADVISORY_RULES.map((r) => r.ruleKey));

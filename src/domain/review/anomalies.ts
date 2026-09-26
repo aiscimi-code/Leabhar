@@ -558,8 +558,8 @@ function possibleAnnualDuplicatePayments(
  * same document ("Business dinner") do not always share a word. Widened
  * from the original restaurant/catering/takeaway set to also catch
  * dinner/lunch/meal/entertainment — the same vocabulary
- * `vat.deduction_exclusions_entertainment`'s own condition already uses
- * (`vatcaCuration.ts`), since a line worth checking for the reduced rate is
+ * the s.60 blocked-food and entertainment rules' conditions already use
+ * (`inputRecoveryCuration.ts`), since a line worth checking for the reduced rate is
  * also, independently, a section 60 deductibility candidate.
  */
 const HOSPITALITY_KEYWORD_RE =

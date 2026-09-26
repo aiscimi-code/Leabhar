@@ -44,6 +44,7 @@ import {
   PROPERTY_GAPS, LETTING_OPTION_RULE_KEY, LETTING_OPTION_RESIDENTIAL_RULE_KEY, JOINT_OPTION_RULE_KEY, PROPERTY_SUPPLY_RULE_KEY,
 } from './propertyCuration';
 import { ADVISORY_RULE_KEYS, advisoryReasons } from './advisoryRules';
+import { BLOCKED_DEDUCTION_RULE_KEYS } from './inputRecoveryCuration';
 import {
   SCHEMES_GAPS, MARGIN_SCHEME_RULE_KEY, TRAVEL_MARGIN_RULE_KEY, AUCTION_SCHEME_RULE_KEY, FLAT_RATE_FARMER_RULE_KEY,
   VOUCHER_RULE_KEY,
@@ -188,11 +189,8 @@ export const RULE_TREATMENT_BINDINGS: TreatmentBinding[] = [
     direction: 'sale',
     treatmentCode: (f) => (isEuNotIe(f.counterpartyCountry) ? 'EU_SERVICES_SUPPLY' : 'NON_EU_SERVICES_SUPPLY'),
   },
-  {
-    ruleKeys: ['vat.deduction_exclusions_entertainment'],
-    direction: 'purchase',
-    treatmentCode: () => 'NON_DEDUCTIBLE',
-  },
+  // s.60(2)(a): blocked categories, exactly as listed; diesel is not among them (issue #209).
+  { ruleKeys: BLOCKED_DEDUCTION_RULE_KEYS, direction: 'purchase', treatmentCode: () => 'NON_DEDUCTIBLE' },
   {
     ruleKeys: ['vat.reverse_charge_services_from_abroad'],
     direction: 'purchase',

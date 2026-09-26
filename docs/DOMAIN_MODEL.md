@@ -628,6 +628,51 @@ add a reason and stop pre-selection, but never decide the treatment.
 The company operating one of these schemes itself, as a dealer, travel agent or
 auctioneer, is not modelled.
 
+### Input VAT recovery (ss.59-62)
+
+- **Sources.** The rules come from the revised ss.59-62. The as-enacted s.59
+  and s.60 rules are retired: their stored rows get an empty window.
+- **Blocked categories.** s.60(2)(a) is applied exactly as listed, one rule per
+  category, and each decides `NON_DEDUCTIBLE`:
+  - (i) food, drink, accommodation and personal services;
+  - (iii) entertainment;
+  - (iv) cars;
+  - (v) petrol.
+
+  Diesel is not in the list and is not blocked. A van is not a "motor vehicle"
+  here.
+- **Qualifying vehicles.** A qualifying vehicle gives 20% of the VAT
+  (s.59(2)(d)): first registered from 2021 with CO2 under 140g/km, and at least
+  60% business use. This is named on every car line, because the invoice does
+  not show it.
+- **Clawback.** On disposal within two years, or if business use falls below
+  60%, `qualifyingVehicleClawback` computes TD x (4 - N) / 4 (s.62).
+
+### The invoice is checked before its VAT is deducted
+
+Input VAT is deducted only on an invoice that carries the prescribed
+particulars (VATCA s.59(2)(a); S.I. 639/2010 reg.20(2), under s.66(1)).
+Posting a confirmed purchase document checks them with
+`missingInvoiceParticulars`. The particulars are:
+
+- the date and the invoice number;
+- the supplier's name, address and Irish VAT number;
+- your name and address;
+- what was supplied;
+- the rate and the net at each rate;
+- the VAT.
+
+A receipt is not a VAT invoice.
+
+If a particular is missing, posting is refused with the list. The person
+either reopens the document to add it from the page, or posts with the VAT
+held back. Held-back VAT is costed, not recovered, and a review item says what
+is missing.
+
+Without VAT there is nothing to check. A reverse charge needs no Irish VAT
+number, rate or tax on the invoice. The missing particulars also show on the
+posting screen and in `line-choices`.
+
 ### Posting paths are atomic
 
 Every exported posting path — classify, reclassify, split journal,

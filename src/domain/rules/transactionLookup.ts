@@ -603,11 +603,11 @@ function resolveVatRateExclusivity(
 /**
  * Deductibility exclusivity (issue #143 finding D).
  *
- * `vat.input_deduction_general` (s.59) and `vat.deduction_exclusions_entertainment`
- * (s.60(2)(a)) both carry real conditions and can both genuinely match the
+ * The general s.59 deduction and the s.60(2)(a) blocked-category rules
+ * (issue #209: `inputRecoveryCuration.ts`) both carry real conditions and can both genuinely match the
  * same transaction — a client restaurant meal satisfies s.59's own test
  * (VAT-registered, invoiced, business use) *and* falls within the s.60
- * exclusion list. `vat.input_deduction_general`'s own curated `exceptions`
+ * exclusion list. The general rule's own curated `exceptions`
  * array already states the exclusion overrides it ("no deduction
  * regardless of business purpose"); before this function existed,
  * `transactionLookup.ts` only ever surfaced that as review-reason prose —

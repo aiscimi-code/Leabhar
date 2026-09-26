@@ -6,6 +6,7 @@
   "notes": "AGENTS.md invariant #1: money is integer minor units, never a float. A USD invoice of $123 at 23% VAT. Under VATCA s.12, services from a supplier established outside the State are reverse-charged. The journal is posted in the original currency (USD) with the VAT shown as both input and output (netting to zero). The reverse charge and standard rate rules exist in the KB. Review required because rules carry reviewStatus 'ai_extracted'.",
   "inputs": {
     "transaction": {
+      "direction": "purchase",
       "transactionDate": "2025-06-15",
       "amountMinor": 12300,
       "currency": "USD",
@@ -23,7 +24,7 @@
   },
   "expected_classification": {
     "identifiedTopics": ["vat"],
-    "applicableRuleKeys": ["vat.reverse_charge_services_from_abroad", "vat.input_deduction_general", "vat.rate_standard_current"],
+    "applicableRuleKeys": ["vat.reverse_charge_services_from_abroad", "vat.input_deduction_taxable_use", "vat.rate_standard_current"],
     "reviewRequired": true
   },
   "expected_journal": {

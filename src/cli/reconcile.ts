@@ -230,7 +230,7 @@ Invoice-led workflow (issue #222) — the same domain functions as the web scree
   line-choices <documentId>              Per-line VAT treatment options with the reasons
                                           and rules behind each; a suggestion only
                                           where every source agrees
-  post-document <documentId> --coding <json> [--fx <rate>] [--declare-in <date>]
+  post-document <documentId> --coding <json> [--fx <rate>] [--declare-in <date>] [--hold-vat]
       Posts the confirmed document as an invoice, line by line, with the VAT
       as printed. --coding: [{"account":"6120","treatment":"IE_STD"}, ...],
       one per line; a line may omit treatment/account only where line-choices
@@ -877,6 +877,7 @@ export async function main(argv: string[], options: CliOptions = {}): Promise<nu
           coding: requireFlag(flags, 'coding'),
           fx: getFlag(flags, 'fx'),
           vatDeclarationDate: getFlag(flags, 'declare-in'),
+          holdVat: flags['hold-vat'] !== undefined,
         }), format);
         return 0;
       }

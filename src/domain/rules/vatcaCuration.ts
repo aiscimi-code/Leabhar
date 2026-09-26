@@ -42,8 +42,12 @@ import type { IrishRuleCondition, IrishRuleException, IrishRuleType } from '@/db
  * `resolveDeductionExclusivity` (transactionLookup.ts) uses to drop the
  * general rule whenever any exclusion rule below also matched.
  */
-export const VAT_GENERAL_DEDUCTION_RULE_KEY = 'vat.input_deduction_general';
-export const VAT_DEDUCTION_EXCLUSION_RULE_KEYS = ['vat.deduction_exclusions_entertainment'];
+// Issue #209: the as-enacted s.59/s.60 rules were replaced by the revised
+// ones in inputRecoveryCuration.ts, which splits s.60(2)(a) by category.
+export {
+  INPUT_DEDUCTION_RULE_KEY as VAT_GENERAL_DEDUCTION_RULE_KEY,
+  BLOCKED_DEDUCTION_RULE_KEYS as VAT_DEDUCTION_EXCLUSION_RULE_KEYS,
+} from './inputRecoveryCuration';
 
 export interface CuratedVatcaRule {
   sectionNumber: string;
@@ -161,87 +165,5 @@ export const VATCA_CURATED_RULES: CuratedVatcaRule[] = [
       + 'transport, electronically-supplied services to non-taxable persons, and others) — those '
       + 'require reading the transaction description against each paragraph, which is exactly the '
       + 'kind of judgement this system flags for human review rather than silently assumes.',
-  },
-  {
-    sectionNumber: '59',
-    ruleKey: 'vat.input_deduction_general',
-    ruleType: 'deductibility',
-    topic: 'vat',
-    name: 'General deduction for VAT borne or paid',
-    statementExcerpt: 'that person may, in so far as the goods and services are used by him or her '
-      + 'for the purposes of his or her taxable supplies or of any of the qualifying activities, deduct—'
-      + '\n( a ) the tax charged to him or her during the period by other accountable persons by '
-      + 'means of invoices, prepared in the manner prescribed by regulations, in respect of sup-\n'
-      + 'plies of goods or services to him or her',
-    conditions: [
-      { field: 'vatRegistered', operator: 'equals', value: 'true' },
-      { field: 'invoiceAvailable', operator: 'equals', value: 'true' },
-      { field: 'businessUsePercent', operator: 'gt', value: 0 },
-    ],
-    exceptions: [
-      {
-        condition: 'the expenditure is of a kind listed in section 60(2)(a) (food/drink/'
-          + 'accommodation/entertainment, most motor vehicles, petrol)',
-        effect: 'no deduction regardless of business purpose — see vat.deduction_exclusions_entertainment',
-      },
-    ],
-    vatEffect: 'VAT charged by another accountable person, evidenced by an invoice, on goods or '
-      + 'services used for the accountable person’s taxable supplies is deductible as input VAT — '
-      + 'subject to the section 60(2)(a) exclusions.',
-    accountingEffect: null,
-    reportingEffect: 'Deductible input VAT is included in the VAT3 return’s T2 figure for the period.',
-    requiresGuidance: false,
-    interpretationNote: '`invoiceAvailable = true` is a direct textual match ("by means of invoices, '
-      + 'prepared in the manner prescribed by regulations") rather than a proxy. `businessUsePercent > 0` '
-      + 'stands in for "used... for the purposes of his or her taxable supplies", which in reality is '
-      + 'not a simple percentage test (apportionment rules, partial exemption, and the qualifying-'
-      + 'activities list in subsection (1) all bear on it) — treated here as the closest available '
-      + 'TransactionContext field, not as a full restatement of the test.',
-  },
-  {
-    sectionNumber: '60',
-    ruleKey: 'vat.deduction_exclusions_entertainment',
-    ruleType: 'deductibility',
-    topic: 'business_expense',
-    name: 'Deduction excluded: food, drink, accommodation, entertainment, most motor vehicles, petrol',
-    statementExcerpt: '(2) ( a ) Notwithstanding anything in this Chapter, a deduction of\ntax under '
-      + 'this Chapter shall not be made if, and to the\nextent that, the tax relates to—\n(i) '
-      + 'expenditure incurred by the accountable person on\nfood or drink, or accommodation (other '
-      + 'than quali-\nfying accommodation in connection with attendance\nat a qualifying conference), '
-      + 'or other personal\nservices, for the accountable person, the accountable\nperson’s agents '
-      + 'or employees',
-    conditions: [
-      {
-        field: 'description', operator: 'matches',
-        value: '(food|drink|meal|restaurant|catering|entertainment|hospitality|\\bhotel\\b|accommodation|petrol|\\bfuel\\b)',
-      },
-    ],
-    exceptions: [
-      {
-        condition: 'qualifying accommodation in connection with attendance at a qualifying '
-          + 'conference (50+ delegates, as defined in section 60(1))',
-        effect: 'the food/drink/accommodation exclusion in paragraph (a)(i) does not apply to that '
-          + 'qualifying accommodation expenditure',
-      },
-      {
-        condition: 'motor vehicle purchase/hire/acquisition for stock-in-trade, a vehicle-hiring '
-          + 'business, or driving-school instruction (section 60(2)(a)(iv))',
-        effect: 'the motor-vehicle exclusion does not apply; ordinary deduction (or the partial '
-          + 'section 59(2)(d) deduction for qualifying vehicles) may apply instead',
-      },
-    ],
-    vatEffect: 'No VAT deduction is available for expenditure on food, drink, accommodation, other '
-      + 'personal services, entertainment, most motor vehicles, or petrol — even where the general '
-      + 'section 59 test (used for taxable supplies) is otherwise met — unless a listed exception applies.',
-    accountingEffect: 'The VAT element of an excluded expense is a cost, not a recoverable asset — '
-      + 'book the gross (VAT-inclusive) amount as the expense.',
-    reportingEffect: null,
-    requiresGuidance: true,
-    interpretationNote: 'The condition is a keyword match on the transaction description, not a '
-      + 'reading of the actual supply — a transaction merely mentioning "hotel" is not necessarily '
-      + 'within the exclusion (e.g. a hotel booking that IS qualifying-conference accommodation is '
-      + 'excepted), and a transaction that IS within the exclusion may not use any of these words. '
-      + 'This rule flags candidates for review; it does not classify them. requiresGuidance is '
-      + 'always true for this reason.',
   },
 ];

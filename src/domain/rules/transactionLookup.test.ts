@@ -13,6 +13,7 @@ import {
   ingestSi692025Reg5, ingestSi692025Reg8, ingestSi692025Reg9, deriveSi692025Rules, SI_69_2025_MD_PATH,
 } from './si692025Ingestion';
 import { lookupTransactionRules, identifyTopics } from './transactionLookup';
+import { deriveVatScopeRules } from './vatScopeIngestion';
 import { irishTaxRules } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import type { AppDatabase } from '@/db';
@@ -29,6 +30,11 @@ beforeEach(() => {
   deriveTaxRules(db, { companyId });
   ingestVatca2010(db, { companyId, markdown: vatcaMd, ingestVersion: 'v1' });
   deriveVatcaRules(db, { companyId });
+  // The input-recovery rules come from the revised s.59/s.60 (issue #209).
+  for (const n of ['059', '060']) {
+    ingestVatcaRevisedSection(db, { companyId, markdown: readFileSync(`docs/statutes/vatca-2010-revised/s${n}.md`, 'utf8'), ingestVersion: 'v1' });
+  }
+  deriveVatScopeRules(db, { companyId });
 });
 
 describe('identifyTopics', () => {
@@ -103,15 +109,15 @@ describe('lookupTransactionRules — task example scenarios', () => {
         transactionDate: '2026-09-18', amountMinor: 1000, currency: 'EUR',
         entityType: 'Irish_LTD', vatRegistered: true,
         transactionType: 'bank_charge', description: 'REVOLUT bank charge',
-        supplyType: 'services', businessUsePercent: 100, invoiceAvailable: true,
+        supplyType: 'services', businessUsePercent: 100, invoiceAvailable: true, direction: 'purchase',
       },
     });
     expect(result.identifiedTopics).toEqual(expect.arrayContaining(['banking', 'business_expense', 'vat']));
-    expect(result.applicableRules.map((r) => r.ruleKey)).toContain('vat.input_deduction_general');
+    expect(result.applicableRules.map((r) => r.ruleKey)).toContain('vat.input_deduction_taxable_use');
     // Still not authoritative: every VATCA rule here is ai_extracted, unreviewed.
     expect(result.reviewRequired).toBe(true);
     // No entertainment/food/motor-vehicle exclusion (VATCA s.60) fires for a bank charge.
-    expect(result.applicableRules.map((r) => r.ruleKey)).not.toContain('vat.deduction_exclusions_entertainment');
+    expect(result.applicableRules.map((r) => r.ruleKey)).not.toContain('vat.blocked_food_drink_accommodation');
   });
 
   it('an AI SaaS charge from a US supplier: resolves the reverse-charge and place-of-supply rules', () => {
@@ -123,13 +129,14 @@ describe('lookupTransactionRules — task example scenarios', () => {
         supplierCountry: 'US', supplierType: 'software_service', transactionType: 'AI_SaaS',
         supplyType: 'services', businessUsePercent: 100, invoiceAvailable: true,
         supplierEstablishedOutsideState: true, // confirmed on the supplier (issue #207)
+        direction: 'purchase',
       },
     });
     expect(result.identifiedTopics).toContain('vat');
     const keys = result.applicableRules.map((r) => r.ruleKey);
     expect(keys).toContain('vat.reverse_charge_services_from_abroad');
     expect(keys).toContain('vat.place_of_supply_b2b_general');
-    expect(keys).toContain('vat.input_deduction_general');
+    expect(keys).toContain('vat.input_deduction_taxable_use');
     // Still flagged: every VATCA rule is ai_extracted and s.34/s.59 carry exceptions this system does not evaluate.
     expect(result.reviewRequired).toBe(true);
     expect(result.reviewReasons.join(' ')).toMatch(/not yet human-approved/);
@@ -165,7 +172,7 @@ describe('lookupTransactionRules — task example scenarios', () => {
     // conditions); the deductibility rule does NOT — no invoice and 0% business
     // use both fail its conditions — so no deduction is invented for this spend.
     expect(keys).toEqual(['vat.charge_general']);
-    expect(keys).not.toContain('vat.input_deduction_general');
+    expect(keys).not.toContain('vat.input_deduction_taxable_use');
     expect(result.reviewRequired).toBe(true);
   });
 });
@@ -710,14 +717,14 @@ describe('lookupTransactionRules — issue #143 findings D, E, F, G', () => {
       companyId,
       transaction: {
         transactionDate: '2026-09-18', amountMinor: 4500, currency: 'EUR',
-        vatRegistered: true, supplyType: 'services', invoiceAvailable: true, businessUsePercent: 100,
+        vatRegistered: true, supplyType: 'services', invoiceAvailable: true, businessUsePercent: 100, direction: 'purchase',
         description: 'Client restaurant entertainment meal',
       },
     });
     const keys = result.applicableRules.map((r) => r.ruleKey);
-    expect(keys).toContain('vat.deduction_exclusions_entertainment');
-    expect(keys).not.toContain('vat.input_deduction_general');
-    expect(result.reviewReasons.join(' ')).toMatch(/Excluded.*input_deduction_general|overrides the general/i);
+    expect(keys).toContain('vat.blocked_entertainment');
+    expect(keys).not.toContain('vat.input_deduction_taxable_use');
+    expect(result.reviewReasons.join(' ')).toMatch(/overrides the general/i);
   });
 
   it('finding D: petrol also excludes the general input-deduction rule, not alongside it', () => {
@@ -725,13 +732,14 @@ describe('lookupTransactionRules — issue #143 findings D, E, F, G', () => {
       companyId,
       transaction: {
         transactionDate: '2026-09-18', amountMinor: 8000, currency: 'EUR',
-        vatRegistered: true, supplyType: 'goods', invoiceAvailable: true, businessUsePercent: 100,
+        vatRegistered: true, supplyType: 'goods', invoiceAvailable: true, businessUsePercent: 100, direction: 'purchase',
         description: 'Petrol for company car',
       },
     });
     const keys = result.applicableRules.map((r) => r.ruleKey);
-    expect(keys).toContain('vat.deduction_exclusions_entertainment');
-    expect(keys).not.toContain('vat.input_deduction_general');
+    expect(keys).toContain('vat.blocked_petrol');
+    expect(keys).not.toContain('vat.blocked_motor_vehicle');
+    expect(keys).not.toContain('vat.input_deduction_taxable_use');
   });
 
   it('a plain deductible purchase with no exclusion keyword still gets the general deduction rule', () => {
@@ -739,11 +747,11 @@ describe('lookupTransactionRules — issue #143 findings D, E, F, G', () => {
       companyId,
       transaction: {
         transactionDate: '2026-09-18', amountMinor: 20000, currency: 'EUR',
-        vatRegistered: true, supplyType: 'services', invoiceAvailable: true, businessUsePercent: 100,
+        vatRegistered: true, supplyType: 'services', invoiceAvailable: true, businessUsePercent: 100, direction: 'purchase',
         description: 'Office stationery order',
       },
     });
-    expect(result.applicableRules.map((r) => r.ruleKey)).toContain('vat.input_deduction_general');
+    expect(result.applicableRules.map((r) => r.ruleKey)).toContain('vat.input_deduction_taxable_use');
   });
 
   it('finding F: a cash_receipts company profile surfaces the cash-accounting rules without saying "cash basis"', () => {

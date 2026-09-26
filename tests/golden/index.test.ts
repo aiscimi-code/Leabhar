@@ -52,6 +52,7 @@ import {
   deriveTdm3801_03bCapacityExclusionRule,
   TDM_38_01_03B_MD_PATH,
 } from '@/domain/rules/tdm3801_03bIngestion';
+import { deriveVatScopeRules } from '@/domain/rules/vatScopeIngestion';
 import { runGoldenCase } from './runner';
 import type { GoldenCase } from './types';
 import type { AppDatabase } from '@/db';
@@ -94,6 +95,11 @@ beforeEach(() => {
   const s46Md = readFileSync(VATCA_REVISED_S046_MD_PATH, 'utf8');
   ingestVatcaRevisedSection(db, { companyId, markdown: s46Md, ingestVersion: 'v1' });
   deriveVatcaRevisedRules(db, { companyId });
+  // Input VAT recovery comes from the revised s.59/s.60 (issue #209).
+  for (const n of ['059', '060']) {
+    ingestVatcaRevisedSection(db, { companyId, markdown: readFileSync(`docs/statutes/vatca-2010-revised/s${n}.md`, 'utf8'), ingestVersion: 'v1' });
+  }
+  deriveVatScopeRules(db, { companyId });
 
   const sch2Md = readFileSync(VATCA_SCHEDULE_2_MD_PATH, 'utf8');
   const sch3Md = readFileSync(VATCA_SCHEDULE_3_MD_PATH, 'utf8');

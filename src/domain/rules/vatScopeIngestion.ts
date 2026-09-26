@@ -25,11 +25,12 @@ import { DOMESTIC_RC_CURATED_RULES } from './domesticReverseChargeCuration';
 import { CASH_BASIS_CURATED_RULES } from './cashBasisCuration';
 import { PROPERTY_CURATED_RULES } from './propertyCuration';
 import { SCHEMES_CURATED_RULES } from './schemesCuration';
+import { INPUT_RECOVERY_CURATED_RULES, RETIRED_INPUT_RECOVERY_RULE_KEYS } from './inputRecoveryCuration';
 import { quotedTextWindow } from './lrcAnnotations';
 
 /** Every rule this module derives: scope/exemption and place of supply of services. */
 export const VAT_SCOPE_DERIVED_RULES = [
-  ...VAT_SCOPE_CURATED_RULES, ...VAT_PLACE_OF_SUPPLY_CURATED_RULES, ...COMPOSITE_SUPPLY_RULES, ...CROSS_BORDER_CURATED_RULES, ...DOMESTIC_RC_CURATED_RULES, ...CASH_BASIS_CURATED_RULES, ...PROPERTY_CURATED_RULES, ...SCHEMES_CURATED_RULES,
+  ...VAT_SCOPE_CURATED_RULES, ...VAT_PLACE_OF_SUPPLY_CURATED_RULES, ...COMPOSITE_SUPPLY_RULES, ...CROSS_BORDER_CURATED_RULES, ...DOMESTIC_RC_CURATED_RULES, ...CASH_BASIS_CURATED_RULES, ...PROPERTY_CURATED_RULES, ...SCHEMES_CURATED_RULES, ...INPUT_RECOVERY_CURATED_RULES,
 ];
 import { upsertReviewItem } from '../extraction/service';
 
@@ -153,6 +154,15 @@ export function deriveVatScopeRules(
       dedupeKey: `irish_tax_rule:${ruleId}`,
       context: { ruleKey: rule.ruleKey, sectionNumber: rule.sectionNumber },
     });
+  }
+
+  // Rules replaced by better-sourced ones (the as-enacted s.59/s.60, issue #209):
+  // their stored rows are retired with an empty window, never deleted.
+  for (const row of db.select().from(irishTaxRules).where(eq(irishTaxRules.companyId, params.companyId)).all()) {
+    if (RETIRED_INPUT_RECOVERY_RULE_KEYS.includes(row.ruleKey) && row.effectiveTo !== row.effectiveFrom) {
+      db.update(irishTaxRules).set({ effectiveTo: row.effectiveFrom, active: false }).where(eq(irishTaxRules.id, row.id)).run();
+      result.superseded++;
+    }
   }
 
   return result;

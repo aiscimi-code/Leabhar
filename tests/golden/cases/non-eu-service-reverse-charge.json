@@ -2,10 +2,11 @@
   "id": "non-eu-service-reverse-charge",
   "description": "US SaaS service purchased by Irish VAT-registered Ltd (reverse charge)",
   "authority": "LEABHAR_RULE",
-  "references": ["vat.reverse_charge_services_from_abroad", "vat.place_of_supply_b2b_general", "vat.input_deduction_general"],
+  "references": ["vat.reverse_charge_services_from_abroad", "vat.place_of_supply_b2b_general", "vat.input_deduction_taxable_use"],
   "notes": "Under VATCA s.12 and s.34, services received from a supplier established outside the State are subject to the reverse charge mechanism. The Irish purchaser accounts for both input and output VAT on the net amount. The reverse-charge rules and the 23% standard rate exist in the KB. Review required because rules carry reviewStatus 'ai_extracted'.",
   "inputs": {
     "transaction": {
+      "direction": "purchase",
       "transactionDate": "2025-06-15",
       "amountMinor": 12300,
       "currency": "EUR",
@@ -23,7 +24,7 @@
   },
   "expected_classification": {
     "identifiedTopics": ["vat"],
-    "applicableRuleKeys": ["vat.reverse_charge_services_from_abroad", "vat.input_deduction_general", "vat.rate_standard_current"],
+    "applicableRuleKeys": ["vat.reverse_charge_services_from_abroad", "vat.input_deduction_taxable_use", "vat.rate_standard_current"],
     "reviewRequired": true
   },
   "expected_journal": {
