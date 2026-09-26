@@ -126,6 +126,8 @@ export function confirmDocumentCli(db: AppDatabase, input: ConfirmDocumentCliInp
 export interface LineChoicesCliResult {
   documentId: string;
   direction: 'sales' | 'purchase';
+  /** What the invoice says against itself or the parties' records; while any is open nothing is suggested. */
+  conflicts: Array<{ code: string; message: string }>;
   lines: Array<{
     index: number;
     description: string;
@@ -146,6 +148,7 @@ export function lineChoicesCli(db: AppDatabase, input: { companyId: string; docu
   return {
     documentId: input.documentId,
     direction: choices.direction,
+    conflicts: choices.conflicts,
     lines: choices.lines.map((c, index) => ({
       index,
       description: c.line.description,

@@ -40,6 +40,7 @@ import {
 } from '@/agent/consolidate';
 import { suggestVatTreatment } from '@/domain/rules/vatSuggestion';
 import { confirmEstablishment, confirmCustomerTaxableStatus, checkVatNumberWithVies } from '@/domain/parties/status';
+import { confirmRctPrincipal, recordCashBasisAuthorisation } from '@/domain/config/companyStatus';
 import { eq } from 'drizzle-orm';
 import { companies } from '@/db/schema';
 import { loadStatutoryKnowledgeBase } from '@/domain/rules/knowledgeBase';
@@ -193,6 +194,15 @@ Supplier and customer VAT status (issue #207) — never decided from a country c
   check-vies (--supplier <id> | --customer <id>)
       Checks the party's VAT number with VIES and stores the answer; anything
       but a clear yes or no is stored as "unavailable", never as valid.
+
+The company's own VAT status (issue #208) — a person's record, never inferred:
+  confirm-rct-principal --status principal|not_principal [--from YYYY-MM-DD]
+      --basis "<what it rests on>" --confirmed-by "<name>"
+      Whether the company is an RCT principal (TCA 1997 s.530A); from that date,
+      construction services it receives are reverse-charged (VATCA s.16(3)).
+  record-cash-basis --eligibility turnover_threshold|supplies_to_unregistered
+      --from YYYY-MM-DD --reference "<Revenue reference>" --confirmed-by "<name>"
+      Revenue's authorisation for the cash receipts basis (s.80, S.I. 639/2010 reg.25).
 
 Invoice-led workflow (issue #222) — the same domain functions as the web screens:
   show-document <id>                     The document's values (draft or confirmed, minor
@@ -725,6 +735,30 @@ export async function main(argv: string[], options: CliOptions = {}): Promise<nu
           basis: requireFlag(flags, 'basis'), confirmedBy: requireFlag(flags, 'confirmed-by'),
         });
         print({ ok: true, party, establishment }, format);
+        return 0;
+      }
+
+      case 'confirm-rct-principal': {
+        const status = requireFlag(flags, 'status');
+        if (status !== 'principal' && status !== 'not_principal') throw new Error('--status must be principal or not_principal.');
+        confirmRctPrincipal(db, {
+          companyId, status, from: getFlag(flags, 'from') ?? null,
+          basis: requireFlag(flags, 'basis'), confirmedBy: requireFlag(flags, 'confirmed-by'),
+        });
+        print({ ok: true, status }, format);
+        return 0;
+      }
+
+      case 'record-cash-basis': {
+        const eligibility = requireFlag(flags, 'eligibility');
+        if (eligibility !== 'turnover_threshold' && eligibility !== 'supplies_to_unregistered') {
+          throw new Error('--eligibility must be turnover_threshold or supplies_to_unregistered.');
+        }
+        recordCashBasisAuthorisation(db, {
+          companyId, eligibility, authorisedFrom: requireFlag(flags, 'from'),
+          reference: requireFlag(flags, 'reference'), confirmedBy: requireFlag(flags, 'confirmed-by'),
+        });
+        print({ ok: true, eligibility }, format);
         return 0;
       }
 

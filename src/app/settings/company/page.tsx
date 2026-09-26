@@ -5,6 +5,7 @@ import {
 import { ActionForm } from '@/components/ActionForm';
 import { DemoLoader } from '@/components/DemoLoader';
 import { ExtractionEngineSetting } from '@/components/ExtractionEngineSetting';
+import { CompanyVatStatus } from '@/components/CompanyVatStatus';
 import {
   updateCompanyAction, createCompanyAction,
   addBankAccountAction, updateBankAccountAction,
@@ -264,6 +265,8 @@ export default function CompanySettingsPage() {
           </Disclosure>
         </Panel>
       </div>
+
+      <CompanyVatStatus company={company} />
 
       <Panel
         title="Bank accounts"

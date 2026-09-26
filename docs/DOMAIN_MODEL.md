@@ -518,6 +518,54 @@ treatment; the others flag the line and say why.
 - **Exports:** a zero-rated export always carries a reason asking for proof that
   the goods left the EU. The customer's country is not that proof.
 
+A confirmed invoice is checked against itself and the parties' records
+(`invoiceConflicts`). Each conflict is shown on the posting screen and in the
+CLI, and is raised as a review item when the invoice is posted. While any
+conflict is open, no line's treatment is pre-selected. The conflicts are:
+
+- VAT charged under another Member State's VAT number, or by a supplier
+  confirmed abroad without an Irish number. That is not Irish input VAT.
+- A reverse-charge legend with VAT charged.
+- A reverse charge from another Member State that does not show your VAT
+  number.
+- An invoice addressed to someone else's VAT number.
+- An EU supplier that charges no VAT and gives no reason.
+- A zero-VAT sale to another Member State that lacks the customer's VAT number
+  or the reverse-charge/intra-Community wording (SI 639/2010 reg 20(2)(e), (f)),
+  or whose customer number VIES reported invalid.
+
+A reverse charge offered from invoice wording alone is never pre-selected while
+the supplier's establishment is unconfirmed.
+
+### Domestic reverse charges and the cash basis are the company's own facts
+
+Two facts that VAT turns on are recorded on the company profile by a person.
+Each has a date and what it rests on, and each change is audited. No
+transaction decides either of them.
+
+**RCT principal status (TCA 1997 s.530A).**
+- A recorded principal gets `RC_CONSTRUCTION` on construction services it
+  receives from the recorded date (VATCA s.16(3)).
+- While the status is unrecorded, a construction purchase is flagged, and the
+  invoice line is not pre-selected.
+- The other s.16 reverse charges are flagged with why: scrap metal, a connected
+  builder, gas or electricity for resale, energy certificates and emission
+  allowances. Scrap metal is offered `RC_CONSTRUCTION`, which has the same VAT3
+  effect.
+- Construction work sold is flagged, because the customer may be a principal.
+
+**Cash receipts basis (s.80).**
+- `vatAccountingBasis` sets the basis. Only the profile decides it, never a bank
+  narrative.
+- Revenue's authorisation is recorded with its date, its reference and the
+  s.80(1) test relied on.
+- Validating a VAT period warns when:
+  - no authorisation is recorded, or it starts after the period does;
+  - sales in the 12 months to the period end exceed €2,000,000 (on the turnover
+    test);
+  - more than 10% of those sales went to customers with a VAT number (on the
+    90% test).
+
 ### Posting paths are atomic
 
 Every exported posting path — classify, reclassify, split journal,

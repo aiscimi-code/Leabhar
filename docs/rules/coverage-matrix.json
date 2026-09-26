@@ -130,9 +130,18 @@
       "id": "vatca:s16",
       "area": "vatca_section",
       "title": "s.16 Reverse charge for certain supplies.",
-      "status": "deferred",
-      "issue": 208,
-      "reason": "Domestic reverse charges (construction, scrap, etc.)."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.domestic_reverse_charge_construction",
+        "vat.domestic_reverse_charge_construction_principal_unrecorded",
+        "vat.domestic_reverse_charge_construction_supplied",
+        "vat.domestic_reverse_charge_scrap_metal",
+        "vat.domestic_reverse_charge_connected_construction",
+        "vat.domestic_reverse_charge_gas_electricity_dealer",
+        "vat.domestic_reverse_charge_energy_certificates",
+        "vat.domestic_reverse_charge_emission_allowances"
+      ],
+      "note": "s.16(1) (NAMA vesting orders) is not modelled: the company is neither NAMA nor a NAMA entity."
     },
     {
       "id": "vatca:s17",
@@ -676,9 +685,13 @@
       "id": "vatca:s80",
       "area": "vatca_section",
       "title": "s.80 Tax due on moneys received basis.",
-      "status": "deferred",
-      "issue": 208,
-      "reason": "Moneys received (cash) basis."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.moneys_received_basis_sales",
+        "vat.cash_accounting_turnover_threshold",
+        "vat.cash_accounting_supplies_to_unregistered_persons_test"
+      ],
+      "note": "The basis and its authorisation are on the company profile; validating a VAT period checks the authorisation dates and the s.80(1) test against the books (cashBasisFindings)."
     },
     {
       "id": "vatca:s81",
@@ -2077,9 +2090,10 @@
       "id": "treatment:RC_CONSTRUCTION",
       "area": "vat_treatment",
       "title": "RC_CONSTRUCTION",
-      "status": "deferred",
-      "issue": 208,
-      "reason": "No rule produces the s.16 construction reverse charge yet."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.domestic_reverse_charge_construction"
+      ]
     },
     {
       "id": "treatment:NON_DEDUCTIBLE",
