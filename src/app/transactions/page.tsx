@@ -76,7 +76,7 @@ export default async function TransactionsPage({ searchParams }: {
               className="border border-line-strong rounded px-2 py-1 text-[12px]"
             >
               {['all', 'unclassified', 'suggested', 'classified', 'matched', 'posted',
-                'reconciled', 'ignored', 'duplicate'].map((s) => (
+                'reconciled', 'ignored', 'duplicate', 'rolled_back'].map((s) => (
                 <option key={s} value={s}>{s === 'all' ? 'All' : label(s)}</option>
               ))}
             </select>

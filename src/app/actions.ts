@@ -22,7 +22,7 @@ import { parseDecimalRate, parseAmount } from '@/domain/money';
 import { reversePayment } from '@/domain/invoicing/reversal';
 import { asIsoDate } from '@/domain/dates';
 import { scanWatchFolder } from '@/domain/documents/watch';
-import { importStatement, recordManualTransaction } from '@/domain/banking/import';
+import { importStatement, recordManualTransaction, rollbackStatementImport } from '@/domain/banking/import';
 import { detectStatementFormat } from '@/domain/banking/structuredStatements';
 import { seedDemoCompany } from '@/db/seed/demo';
 import { runMigrations } from '@/db/migrate';
@@ -372,6 +372,30 @@ export async function recordManualTransactionAction(formData: FormData): Promise
     revalidatePath('/transactions');
     revalidatePath('/import');
     return { ok: true, message: 'Recorded. Classify it on the Transactions page like any other line.' };
+  } catch (error) {
+    return fail(error);
+  }
+}
+
+/** Undo a statement import that went wrong (issue #379). */
+export async function rollbackImportAction(formData: FormData): Promise<ActionResult> {
+  try {
+    await requireActor('banking.import');
+    const company = requireCompany();
+    const result = rollbackStatementImport(getDb(), {
+      companyId: company.id,
+      importId: String(formData.get('importId') ?? ''),
+      reason: String(formData.get('reason') ?? ''),
+      actor: await actorName(),
+    });
+    revalidatePath('/import');
+    revalidatePath('/transactions');
+    revalidatePath('/reconcile');
+    return {
+      ok: true,
+      message: `Import undone: ${result.linesRolledBack} line${result.linesRolledBack === 1 ? '' : 's'} `
+        + 'taken back out. They stay on record as rolled back; import the corrected file when ready.',
+    };
   } catch (error) {
     return fail(error);
   }

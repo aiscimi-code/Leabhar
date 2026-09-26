@@ -135,6 +135,12 @@ export const bankTransactions = sqliteTable('bank_transactions', {
     enum: [
       'unclassified', 'suggested', 'classified', 'matched',
       'posted', 'reconciled', 'ignored', 'duplicate',
+      /**
+       * Its import was undone (issue #379). The line stays as evidence of
+       * what was imported and taken back out, and is left out of everything
+       * else: classification, matching, reconciliation, reports.
+       */
+      'rolled_back',
     ],
   }).notNull().default('unclassified'),
 

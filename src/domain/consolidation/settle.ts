@@ -53,6 +53,10 @@ function settleBankTransactionSteps(db: AppDatabase, input: SettleInput): Record
     .where(and(eq(bankTransactions.id, input.bankTransactionId), eq(bankTransactions.companyId, input.companyId)))
     .get();
   if (!tx) throw new ConsolidationError(`Bank transaction ${input.bankTransactionId} not found.`);
+  if (tx.status === 'rolled_back') {
+    throw new ConsolidationError('This line\'s statement import was undone, so it cannot settle anything. '
+      + 'Import the corrected statement and settle from that line.');
+  }
   if (input.allocations.length === 0) {
     throw new ConsolidationError('Choose at least one invoice for this payment to settle.');
   }
@@ -252,6 +256,10 @@ export function settlementRateNeed(
     .where(and(eq(bankTransactions.id, input.bankTransactionId), eq(bankTransactions.companyId, input.companyId)))
     .get();
   if (!tx) throw new ConsolidationError(`Bank transaction ${input.bankTransactionId} not found.`);
+  if (tx.status === 'rolled_back') {
+    throw new ConsolidationError('This line\'s statement import was undone, so it cannot settle anything. '
+      + 'Import the corrected statement and settle from that line.');
+  }
   const base = db.select({ c: companies.baseCurrency }).from(companies)
     .where(eq(companies.id, input.companyId)).get()!.c.toUpperCase();
   const paid = tx.currency.toUpperCase();

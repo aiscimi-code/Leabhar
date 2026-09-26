@@ -61,7 +61,7 @@ import { computeCorporationTax, recordCtDecision, type CtSubjectType } from '@/d
 import { computeIncomeTax } from '@/domain/incomeTax/computation';
 import { addPartner, setPartnerShare, partnerSharesOn } from '@/domain/config/partners';
 import { partners, bankAccounts } from '@/db/schema';
-import { recordManualTransaction } from '@/domain/banking/import';
+import { recordManualTransaction, rollbackStatementImport, listStatementImports } from '@/domain/banking/import';
 import { asIsoDate, today } from '@/domain/dates';
 import { companies } from '@/db/schema';
 import { loadStatutoryKnowledgeBase } from '@/domain/rules/knowledgeBase';
@@ -151,6 +151,9 @@ Commands:
             --from <date> --to <date>
   reconcile ... --sign-off               Record the reconciliation
             [--accept-difference "reason"]
+  list-imports                           The import history, newest first
+  rollback-import --import <id> --reason "..." --actor "Name"
+      Undo an import that went wrong; refused while the books rest on a line
   record-manual --account <id> --date <date> --description "..." --amount <-12.30>
       --recorded-by "Name" [--reference ...]  A movement with no statement
       line, e.g. petty cash; negative is money out
@@ -556,6 +559,22 @@ export async function main(argv: string[], options: CliOptions = {}): Promise<nu
           file: requireFlag(flags, 'file'),
         });
         const result = await importStatementFile(db, parsed);
+        print(result, format);
+        return 0;
+      }
+
+      case 'list-imports': {
+        print(listStatementImports(db, companyId), format);
+        return 0;
+      }
+
+      case 'rollback-import': {
+        const result = rollbackStatementImport(db, {
+          companyId,
+          importId: requireFlag(flags, 'import', 'import-id', 'importId'),
+          reason: requireFlag(flags, 'reason'),
+          actor: requireFlag(flags, 'actor'),
+        });
         print(result, format);
         return 0;
       }

@@ -118,6 +118,7 @@ export function validateVatPeriod(
   const duplicates = db.select({ id: bankTransactions.id }).from(bankTransactions)
     .where(and(
       inPeriod,
+      ne(bankTransactions.status, 'rolled_back'),
       sql`${bankTransactions.isDuplicateOf} IS NOT NULL`,
       eq(bankTransactions.duplicateConfirmed, false),
     )).all();
@@ -138,6 +139,7 @@ export function validateVatPeriod(
   const aiPending = db.select({ id: bankTransactions.id }).from(bankTransactions)
     .where(and(
       inPeriod,
+      ne(bankTransactions.status, 'rolled_back'),
       eq(bankTransactions.source, 'ai'),
       eq(bankTransactions.provenanceStatus, 'ai_suggestion'),
     )).all();

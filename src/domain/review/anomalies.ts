@@ -52,7 +52,10 @@ export function scanForAnomalies(
   const company = db.select().from(companies).where(eq(companies.id, params.companyId)).get();
   if (!company) throw new Error(`Company ${params.companyId} not found.`);
 
-  const conditions = [eq(bankTransactions.companyId, params.companyId)];
+  const conditions = [
+    eq(bankTransactions.companyId, params.companyId),
+    ne(bankTransactions.status, 'rolled_back'),
+  ];
   if (params.from) conditions.push(gte(bankTransactions.transactionDate, params.from));
   if (params.to) conditions.push(lte(bankTransactions.transactionDate, params.to));
 

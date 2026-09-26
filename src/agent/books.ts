@@ -574,6 +574,7 @@ export function listTransactionsCli(
     conditions.push(isNull(bankTransactions.journalEntryId));
     conditions.push(ne(bankTransactions.status, 'ignored'));
     conditions.push(ne(bankTransactions.status, 'duplicate'));
+    conditions.push(ne(bankTransactions.status, 'rolled_back'));
   }
 
   return db.select({
