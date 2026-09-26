@@ -127,6 +127,12 @@ export interface ReconciliationResult {
   unexplainedMinor: number;
   reconciled: boolean;
   summary: string;
+  /**
+   * Conditions that make the figures unreliable, for a person to resolve
+   * rather than for the reconciliation to paper over — e.g. another bank
+   * account posting to the same ledger account (issue #376).
+   */
+  warnings: string[];
 
   counts: {
     transactionsInPeriod: number;
@@ -192,6 +198,27 @@ export function reconcileBankAccount(
     ? bankLedgerBalance(db, params.companyId, ledgerAccountId, params.periodEnd)
     : 0;
   const ledgerBalanceMinor = openingBalanceMinor + movementsMinor;
+
+  // A ledger account shared with another bank account mixes both accounts'
+  // movements, so neither reconciles on its own. Books created before each
+  // bank account had a ledger account of its own can be in this state; posted
+  // lines are immutable, so it is named, not repaired (issue #376).
+  const warnings: string[] = [];
+  if (ledgerAccountId) {
+    const sharing = db.select().from(bankAccounts).where(and(
+      eq(bankAccounts.companyId, params.companyId),
+      eq(bankAccounts.accountId, ledgerAccountId),
+      eq(bankAccounts.active, true),
+    )).all().filter((other) => other.id !== account.id);
+    if (sharing.length > 0) {
+      warnings.push(
+        `This account shares its ledger account with ${sharing.map((o) => `${o.bankName} ${o.accountName}`).join(', ')}. `
+          + 'The ledger balance includes their movements too, so the difference below is not this '
+          + 'account\'s alone. Give each bank account its own ledger account from now on; entries '
+          + 'already posted stay where they are.',
+      );
+    }
+  }
 
   const differenceMinor = statementBalanceMinor - ledgerBalanceMinor;
 
@@ -304,6 +331,7 @@ export function reconcileBankAccount(
       unposted: unposted.length, ledgerOnly: ledgerOnly.length,
       statementBalanceSource,
     }),
+    warnings,
     counts: {
       transactionsInPeriod: transactions.length,
       unposted: unposted.length,

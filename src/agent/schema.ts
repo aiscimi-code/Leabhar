@@ -185,7 +185,9 @@ export const addBankInput = z.object({
   iban: z.string().optional(),
   bic: z.string().optional(),
   currency: z.string().optional(),
-  accountType: z.enum(['current', 'deposit', 'savings', 'credit_card', 'loan', 'merchant', 'other']).optional(),
+  accountType: z.enum(['current', 'deposit', 'savings', 'credit_card', 'loan', 'merchant', 'cash', 'other']).optional(),
+  /** For a loan account: the loan in the register it posts to (issue #377). */
+  loanId: z.string().optional(),
   /** Decimal string in major units, e.g. "14250.00" — parsed with parseAmount(), never a float. */
   opening: z.string().optional(),
   openingDate: isoDate.optional(),

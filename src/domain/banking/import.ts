@@ -7,7 +7,7 @@ import {
 } from '@/db/schema';
 import { ids } from '@/lib/ids';
 import { nowIso, asIsoDate } from '../dates';
-import { fileHash, assignOccurrenceIndices } from './fingerprint';
+import { fileHash, assignOccurrenceIndices, transactionFingerprint } from './fingerprint';
 import {
   parseCsv, buildResult, readCsvHeaders, proposeColumnMapping, headerSignature,
   type ParseOptions, type ParseResult, type ParsedTransaction, type ColumnMapping,
@@ -393,4 +393,125 @@ export function findMatchingProfile(
       eq(importProfiles.companyId, companyId),
       eq(importProfiles.headerSignature, signature),
     )).get();
+}
+
+/**
+ * Record a movement on an account that has no statement to import — petty
+ * cash, most often (issue #377) — or one line the bank's file left out.
+ *
+ * It goes through the same bank-transaction evidence path as an imported line,
+ * so it is classified, matched and reconciled the same way, and it traces back
+ * to a `manual` statement import naming who recorded it and when. The person
+ * recording it is the evidence: the line is `manually_entered`, never
+ * `imported`. Two identical entries on the same day are both kept, with their
+ * own occurrence index, exactly as two identical charges on a statement are.
+ */
+export function recordManualTransaction(
+  db: AppDatabase,
+  input: {
+    companyId: string;
+    bankAccountId: string;
+    transactionDate: string;
+    description: string;
+    /** Signed, in the account's currency: negative is money out. */
+    amountMinor: number;
+    reference?: string | null;
+    counterpartyName?: string | null;
+    recordedBy: string;
+    requestId?: string;
+  },
+): { importId: string; transactionId: string } {
+  const recordedBy = input.recordedBy.trim();
+  if (!recordedBy) throw new Error('Say who is recording this: a manual entry rests on a person.');
+  const description = input.description.trim();
+  if (!description) throw new Error('Describe the movement: what was bought, sold or moved.');
+  if (!Number.isInteger(input.amountMinor) || input.amountMinor === 0) {
+    throw new Error('The amount must be a whole number of cents, and not zero.');
+  }
+  const transactionDate = asIsoDate(input.transactionDate);
+
+  const account = db.select().from(bankAccounts)
+    .where(and(
+      eq(bankAccounts.id, input.bankAccountId),
+      eq(bankAccounts.companyId, input.companyId),
+    )).get();
+  if (!account) throw new Error(`Bank account ${input.bankAccountId} not found.`);
+
+  const fingerprint = transactionFingerprint({
+    bankAccountId: account.id,
+    transactionDate,
+    amountMinor: input.amountMinor,
+    currency: account.currency,
+    description,
+    bankReference: input.reference ?? null,
+  });
+  const occurrenceIndex = db.select({ id: bankTransactions.id }).from(bankTransactions)
+    .where(and(
+      eq(bankTransactions.bankAccountId, account.id),
+      eq(bankTransactions.fingerprint, fingerprint),
+    )).all().length;
+
+  const period = db.select().from(accountingPeriods)
+    .where(and(
+      eq(accountingPeriods.companyId, input.companyId),
+      eq(accountingPeriods.kind, 'financial_year'),
+    )).all()
+    .find((p) => transactionDate >= p.startDate && transactionDate <= p.endDate);
+
+  const importId = ids.statementImport();
+  const transactionId = ids.bankTransaction();
+  const timestamp = nowIso();
+
+  db.transaction((tx) => {
+    tx.insert(statementImports).values({
+      id: importId,
+      companyId: input.companyId,
+      bankAccountId: account.id,
+      filename: 'Manual entry',
+      fileHash: fileHash(`manual|${importId}`),
+      fileFormat: 'manual',
+      statementStartDate: transactionDate,
+      statementEndDate: transactionDate,
+      rowsRead: 1,
+      rowsImported: 1,
+      status: 'completed',
+      importedBy: recordedBy,
+    }).run();
+
+    tx.insert(bankTransactions).values({
+      id: transactionId,
+      companyId: input.companyId,
+      bankAccountId: account.id,
+      statementImportId: importId,
+      transactionDate,
+      description,
+      amountMinor: input.amountMinor,
+      currency: account.currency,
+      bankReference: input.reference ?? null,
+      counterpartyName: input.counterpartyName ?? null,
+      transactionType: 'manual',
+      rawData: {},
+      fingerprint,
+      occurrenceIndex,
+      accountingPeriodId: period?.id ?? null,
+      status: 'unclassified',
+      source: 'user',
+      provenanceStatus: 'manually_entered',
+    }).run();
+
+    tx.insert(auditEvents).values({
+      id: ids.audit(),
+      companyId: input.companyId,
+      occurredAt: timestamp,
+      entityType: 'bank_transaction',
+      entityId: transactionId,
+      action: 'created',
+      newValue: JSON.stringify({ transactionDate, description, amountMinor: input.amountMinor }),
+      source: 'user',
+      actor: recordedBy,
+      requestId: input.requestId ?? null,
+    }).run();
+  });
+
+  return { importId, transactionId };
 }

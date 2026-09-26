@@ -800,6 +800,16 @@ imported (immutable) → fingerprinted → deduplicated
 Status: `unclassified | suggested | classified | matched | posted | reconciled |
 ignored | duplicate`.
 
+Each bank account posts to a ledger account of its own (issues #376, #377):
+the seeded 1000 / 1010 / 1020 for the first bank, cash and deposit account,
+then a new account per bank account; a credit card is a current liability and
+a loan the loan's own liability account. Reconciliation compares one statement
+with one ledger account's movements, and names it when an older book has two
+bank accounts on the same ledger account rather than moving posted lines. An
+account with no statement (petty cash) records its lines by hand
+(`recordManualTransaction`): the same evidence path, `manually_entered`, traced
+to a `manual` import under the person's name.
+
 ### Match
 
 ```

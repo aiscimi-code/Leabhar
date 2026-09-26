@@ -12,7 +12,7 @@ import {
 import { DEFAULT_TAX_RATES, DEFAULT_VAT_TREATMENTS } from './vatTreatments';
 import { generateVatPeriods, generateFinancialYear, type VatFrequency } from './periods';
 import { GLOSSARY_TERMS } from '../help/glossary';
-import { postJournalEntry } from '../accounting/journal';
+import { postJournalEntry, atomically } from '../accounting/journal';
 import { createAccount } from './mutations';
 
 export interface CreateCompanyInput {
@@ -594,6 +594,108 @@ export function systemAccountId(
  * came from. `sourceType: 'opening_balance'` exists in the schema for
  * precisely this posting.
  */
+/**
+ * The ledger account a new bank account posts to (issues #376, #377).
+ *
+ * Each bank account gets a ledger account of its own, so its balance is its
+ * own line on the balance sheet and its reconciliation compares its statement
+ * with its own movements only. The seeded account for the type is used while
+ * no bank account has claimed it (1000 for the first bank account, 1010 for
+ * the first cash account, 1020 for the first deposit account); after that a
+ * new account is created in the same range. Money owed is a liability: a
+ * credit card gets a current liability, a loan the loan's own liability
+ * account from the register, or a new non-current one.
+ */
+function bankLedgerAccountFor(
+  db: AppDatabase,
+  params: {
+    companyId: string; bankName: string; accountName: string;
+    accountType?: typeof bankAccounts.$inferInsert['accountType']; loanId?: string; actor?: string;
+  },
+): string {
+  const type = params.accountType ?? 'current';
+  const label = `${params.bankName} ${params.accountName}`.trim();
+
+  if (type === 'loan' && params.loanId) {
+    const loan = db.select().from(loans)
+      .where(and(eq(loans.id, params.loanId), eq(loans.companyId, params.companyId))).get();
+    if (!loan) throw new Error(`Loan ${params.loanId} not found for company ${params.companyId}.`);
+    return loan.accountId;
+  }
+
+  const companyAccounts = db.select().from(accounts)
+    .where(eq(accounts.companyId, params.companyId)).all();
+  const usedCodes = new Set(companyAccounts.map((a) => a.code));
+  const claimed = new Set(
+    db.select({ accountId: bankAccounts.accountId }).from(bankAccounts)
+      .where(eq(bankAccounts.companyId, params.companyId)).all()
+      .map((b) => b.accountId).filter((a): a is string => a !== null),
+  );
+
+  const range: Record<string, {
+    seeded: string; first: number; last: number;
+    type: 'asset' | 'liability'; subtype: string; reportSection: string; name: string;
+    description: string;
+  }> = {
+    bank: {
+      seeded: '1000', first: 1001, last: 1009, type: 'asset', subtype: 'current_asset',
+      reportSection: 'current_assets', name: `Bank — ${label}`,
+      description: `The balance of the ${label} account, as the books see it.`,
+    },
+    cash: {
+      seeded: '1010', first: 1011, last: 1019, type: 'asset', subtype: 'current_asset',
+      reportSection: 'current_assets', name: `Cash — ${label}`,
+      description: `Cash held in ${label}. It has no bank statement: each movement is recorded by hand.`,
+    },
+    deposit: {
+      seeded: '1020', first: 1021, last: 1029, type: 'asset', subtype: 'current_asset',
+      reportSection: 'current_assets', name: `Deposit — ${label}`,
+      description: `The balance of the ${label} deposit or savings account.`,
+    },
+    credit_card: {
+      seeded: '', first: 2150, last: 2159, type: 'liability', subtype: 'current_liability',
+      reportSection: 'current_liabilities', name: `Credit card — ${label}`,
+      description: `What is owed on the ${label} card. Card spending increases it; a payment to `
+        + 'the card reduces it.',
+    },
+    loan: {
+      seeded: '', first: 2211, last: 2219, type: 'liability', subtype: 'non_current_liability',
+      reportSection: 'long_term_liabilities', name: `Loan — ${label}`,
+      description: `The outstanding balance of the ${label} loan. Repayments are a capital/interest `
+        + 'split: the capital part reduces this account and the interest part is a cost (6710).',
+    },
+  };
+  const kind = type === 'cash' ? 'cash'
+    : type === 'deposit' || type === 'savings' ? 'deposit'
+      : type === 'credit_card' ? 'credit_card'
+        : type === 'loan' ? 'loan'
+          : 'bank';
+  const spec = range[kind]!;
+
+  const seeded = spec.seeded ? companyAccounts.find((a) => a.code === spec.seeded) : undefined;
+  if (seeded && !claimed.has(seeded.id)) return seeded.id;
+
+  for (let n = spec.first; n <= spec.last; n += 1) {
+    const code = String(n);
+    if (usedCodes.has(code)) continue;
+    return createAccount(db, {
+      companyId: params.companyId,
+      code,
+      name: spec.name,
+      type: spec.type,
+      subtype: spec.subtype,
+      reportSection: spec.reportSection,
+      vatApplicable: false,
+      description: spec.description,
+      actor: params.actor ?? 'user',
+    });
+  }
+  throw new Error(
+    `There is no free account code between ${spec.first} and ${spec.last} for another `
+      + `${kind.replace('_', ' ')} account. Create a ledger account for it and pass its id.`,
+  );
+}
+
 export function addBankAccount(
   db: AppDatabase,
   params: {
@@ -606,12 +708,22 @@ export function addBankAccount(
     accountType?: typeof bankAccounts.$inferInsert['accountType'];
     openingBalanceMinor?: number;
     openingDate: IsoDate | string;
+    /** Post to this ledger account instead of the one the account type implies. */
     accountId?: string;
+    /** For a `loan` account: the loan in the register whose liability it posts to (#358). */
+    loanId?: string;
     actor?: string;
   },
 ): string {
+  return atomically(db, () => addBankAccountSteps(db, params));
+}
+
+function addBankAccountSteps(
+  db: AppDatabase,
+  params: Parameters<typeof addBankAccount>[1],
+): string {
   const id = ids.bankAccount();
-  const accountId = params.accountId ?? systemAccountId(db, params.companyId, 'bank_control');
+  const accountId = params.accountId ?? bankLedgerAccountFor(db, params);
   const openingBalanceMinor = params.openingBalanceMinor ?? 0;
   const openingDate = asIsoDate(String(params.openingDate));
 
