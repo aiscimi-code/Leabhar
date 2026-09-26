@@ -20,7 +20,7 @@ item. There is no third option, and there is no catch-and-guess.
    transpilation, and carries an optional `detail` record for structured
    context. A module that has user-facing failure modes defines its subclass
    next to the code that throws it (`InvoicingError`,
-   `ClassificationError`, `ConfigurationError`, `DateError`, …).
+   `ClassificationError`, `ConfigurationError`, …).
 
    ```ts
    export class UnbalancedJournalError extends AccountingError {}
@@ -75,6 +75,13 @@ held.
 
 - `catch (e) {}` or `catch { /* ignore */ }` anywhere. If a call can fail, the
   failure is handled or surfaced; if it truly cannot, say why in a comment.
+  The accepted pattern is a catch that names the case it expects, where that
+  case is not an error. The three in the code today are:
+  - `src/domain/extraction/anthropicProvider.ts`: falls through to sending the
+    document itself;
+  - `src/domain/consolidation/suggest.ts`: no rate is configured on that date,
+    so no suggestion is made;
+  - `src/domain/backup/backup.ts`: a database without WAL needs no checkpoint.
 - Turning a domain error into a generic `500` string at an intermediate
   layer. Conversion to a user message happens once, at the boundary.
 - String matching on error messages (`if (e.message.includes('locked'))`).

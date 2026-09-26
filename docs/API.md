@@ -86,7 +86,7 @@ a float.
 
 - Route directories are kebab-case nouns (`/api/export/year-end`);
   dynamic segments are the entity id (`[id]`).
-- Server actions are named `pastTenseNounAction`
+- Server actions are named `verbNounAction`
   (`classifyTransactionAction`, `settleInvoiceByDirectorAction`).
 - Dates in query strings are ISO `YYYY-MM-DD`, parsed with
   `asIsoDate()` (`src/domain/dates.ts`); there is no other date format on
