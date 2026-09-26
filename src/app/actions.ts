@@ -23,6 +23,7 @@ import { reversePayment } from '@/domain/invoicing/reversal';
 import { asIsoDate } from '@/domain/dates';
 import { scanWatchFolder } from '@/domain/documents/watch';
 import { importStatement, recordManualTransaction } from '@/domain/banking/import';
+import { detectStatementFormat } from '@/domain/banking/structuredStatements';
 import { seedDemoCompany } from '@/db/seed/demo';
 import { runMigrations } from '@/db/migrate';
 import { createBackup, restoreBackup, verifyBackup } from '@/domain/backup/backup';
@@ -387,7 +388,7 @@ export async function importStatementAction(formData: FormData): Promise<ActionR
     if (!bankAccountId) return { ok: false, error: 'Choose which bank account this is for.' };
 
     const content = Buffer.from(await file.arrayBuffer());
-    const format = file.name.toLowerCase().endsWith('.xlsx') ? 'xlsx' as const : 'csv' as const;
+    const format = detectStatementFormat(file.name, content);
 
     const result = await importStatement(db, {
       companyId: company.id, bankAccountId, filename: file.name,

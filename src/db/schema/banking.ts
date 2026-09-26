@@ -16,7 +16,7 @@ export const statementImports = sqliteTable('statement_imports', {
   bankAccountId: text('bank_account_id').notNull().references(() => bankAccounts.id),
   filename: text('filename').notNull(),
   fileHash: text('file_hash').notNull(),
-  fileFormat: text('file_format', { enum: ['csv', 'xlsx', 'pdf', 'ofx', 'manual'] }).notNull(),
+  fileFormat: text('file_format', { enum: ['csv', 'xlsx', 'pdf', 'ofx', 'camt053', 'manual'] }).notNull(),
   importProfileId: text('import_profile_id'),
 
   statementStartDate: text('statement_start_date'),

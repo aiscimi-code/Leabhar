@@ -116,6 +116,22 @@ export default function ImportPage() {
               <td>Read into the same pipeline as CSV. The first worksheet is used.</td>
             </tr>
             <tr>
+              <td>OFX</td>
+              <td>
+                The Open Financial Exchange file most banks and card issuers offer (also .qfx).
+                Read as the bank wrote it: no columns to map, the bank&apos;s own transaction id is
+                kept, and its closing balance is used when you reconcile to that date.
+              </td>
+            </tr>
+            <tr>
+              <td>CAMT.053</td>
+              <td>
+                The ISO 20022 XML statement Irish and EU banks offer. Only booked entries are
+                imported (pending ones wait for a later statement), and the opening and closing
+                balances are kept with the import.
+              </td>
+            </tr>
+            <tr>
               <td>PDF</td>
               <td className="text-ink-muted">
                 Not yet supported for statements. Export CSV from your bank instead — it is

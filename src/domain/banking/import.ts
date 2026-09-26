@@ -12,6 +12,7 @@ import {
   parseCsv, buildResult, readCsvHeaders, proposeColumnMapping, headerSignature,
   type ParseOptions, type ParseResult, type ParsedTransaction, type ColumnMapping,
 } from './statementParser';
+import { parseOfx, parseCamt053, type StructuredStatement } from './structuredStatements';
 
 export interface ImportSummary {
   importId: string;
@@ -32,7 +33,8 @@ export interface ImportStatementInput {
   bankAccountId: string;
   filename: string;
   content: Buffer | string;
-  fileFormat: 'csv' | 'xlsx';
+  /** CSV and XLSX are mapped by column; OFX and CAMT.053 are read as the bank wrote them (#378). */
+  fileFormat: 'csv' | 'xlsx' | 'ofx' | 'camt053';
   columnMap?: ColumnMapping;
   importProfileId?: string;
   parseOverrides?: Partial<ParseOptions>;
@@ -107,34 +109,47 @@ export async function importStatement(
     : undefined;
 
   const text = typeof input.content === 'string' ? input.content : input.content.toString('utf8');
-  const headers = input.fileFormat === 'csv'
-    ? readCsvHeaders(text, profile?.skipRows ?? 0, profile?.delimiter)
-    : await readXlsxHeaders(input.content as Buffer);
 
-  const columnMap = input.columnMap
-    ?? (profile?.columnMap as ColumnMapping | undefined)
-    ?? proposeColumnMapping(headers).mapping;
+  let parsed: ParseResult;
+  let structured: StructuredStatement | null = null;
+  if (input.fileFormat === 'ofx' || input.fileFormat === 'camt053') {
+    // Structured formats name their own fields: there is no column mapping
+    // to guess, and the bank's balances come with the file.
+    const options = { bankAccountId: input.bankAccountId, defaultCurrency: account.currency };
+    structured = input.fileFormat === 'ofx' ? parseOfx(text, options) : parseCamt053(text, options);
+    parsed = structured;
+  } else {
+    const headers = input.fileFormat === 'csv'
+      ? readCsvHeaders(text, profile?.skipRows ?? 0, profile?.delimiter)
+      : await readXlsxHeaders(input.content as Buffer);
 
-  const parseOptions: ParseOptions = {
-    bankAccountId: input.bankAccountId,
-    columnMap,
-    defaultCurrency: profile?.defaultCurrency ?? account.currency,
-    dateFormat: profile?.dateFormat ?? 'day_first',
-    decimalSeparator: profile?.decimalSeparator,
-    amountStyle: profile?.amountStyle ?? 'signed',
-    invertAmountSign: profile?.invertAmountSign ?? false,
-    skipRows: profile?.skipRows ?? 0,
-    delimiter: profile?.delimiter,
-    ...input.parseOverrides,
-  };
+    const columnMap = input.columnMap
+      ?? (profile?.columnMap as ColumnMapping | undefined)
+      ?? proposeColumnMapping(headers).mapping;
 
-  const parsed: ParseResult = input.fileFormat === 'csv'
-    ? parseCsv(text, parseOptions)
-    : await parseXlsx(input.content as Buffer, parseOptions);
+    const parseOptions: ParseOptions = {
+      bankAccountId: input.bankAccountId,
+      columnMap,
+      defaultCurrency: profile?.defaultCurrency ?? account.currency,
+      dateFormat: profile?.dateFormat ?? 'day_first',
+      decimalSeparator: profile?.decimalSeparator,
+      amountStyle: profile?.amountStyle ?? 'signed',
+      invertAmountSign: profile?.invertAmountSign ?? false,
+      skipRows: profile?.skipRows ?? 0,
+      delimiter: profile?.delimiter,
+      ...input.parseOverrides,
+    };
+
+    parsed = input.fileFormat === 'csv'
+      ? parseCsv(text, parseOptions)
+      : await parseXlsx(input.content as Buffer, parseOptions);
+  }
 
   const dates = parsed.transactions.map((t) => t.transactionDate).sort();
   const statementStartDate = dates[0] ?? null;
-  const statementEndDate = dates[dates.length - 1] ?? null;
+  // A structured statement says when its closing balance is struck; that,
+  // not the last line's date, is where the statement ends.
+  const statementEndDate = structured?.closingBalanceDate ?? dates[dates.length - 1] ?? null;
 
   const importId = ids.statementImport();
   const timestamp = nowIso();
@@ -178,6 +193,8 @@ export async function importStatement(
       importProfileId: input.importProfileId ?? null,
       statementStartDate,
       statementEndDate,
+      openingBalanceMinor: structured?.openingBalanceMinor ?? null,
+      closingBalanceMinor: structured?.closingBalanceMinor ?? null,
       rowsRead: parsed.rowsRead,
       status: 'pending',
       errors: parsed.errors.map((e) => `Row ${e.rowNumber}: ${e.message}`),
