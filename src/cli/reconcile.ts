@@ -46,6 +46,10 @@ import {
   postCapitalGoodDisposalAdjustment, capitalGoodsOverview,
 } from '@/domain/vat/capitalGoods';
 import { eq } from 'drizzle-orm';
+import { resolveVatPeriodId } from '@/agent/books';
+import { reconcileVatReturn } from '@/domain/vat/reconcile';
+import { buildRtdReturn } from '@/domain/vat/rtd';
+import { buildViesStatement } from '@/domain/vat/vies';
 import { companies } from '@/db/schema';
 import { loadStatutoryKnowledgeBase } from '@/domain/rules/knowledgeBase';
 import {
@@ -249,6 +253,12 @@ Inspect:
   year-end --from <date> --to <date>     P&L, balance sheet, tax worksheet,
                                           fixed assets, VAT periods, issues
   vat-return --period <id-or-name>       VAT3 box figures for one period
+  vat-reconcile --period <id-or-name>    Boxes vs entries, VAT accounts vs return,
+                                          and what the return excludes
+  rtd --date <date>                      Return of trading details for the
+                                          accounting year containing the date
+  vies --month <YYYY-MM> [--quarterly]   VIES statement for the month (or the
+                                          quarter ending that month)
   list-suppliers                         Every supplier (id, name, country, VAT no.)
   list-customers                         Every customer (id, name, country, VAT no.)
 
@@ -934,6 +944,27 @@ export async function main(argv: string[], options: CliOptions = {}): Promise<nu
           period: requireFlag(flags, 'period'),
         });
         print(vatReturnCli(db, parsed), format);
+        return 0;
+      }
+
+      case 'vat-reconcile': {
+        const vatPeriodId = resolveVatPeriodId(db, companyId, requireFlag(flags, 'period'));
+        print(reconcileVatReturn(db, { companyId, vatPeriodId }), format);
+        return 0;
+      }
+
+      case 'rtd': {
+        print(buildRtdReturn(db, { companyId, date: requireFlag(flags, 'date') }), format);
+        return 0;
+      }
+
+      case 'vies': {
+        const month = requireFlag(flags, 'month');
+        const m = /^(\d{4})-(\d{2})$/.exec(month);
+        if (!m) throw new Error('--month takes YYYY-MM.');
+        print(buildViesStatement(db, {
+          companyId, frequency: hasFlag(flags, 'quarterly') ? 'Q' : 'M', year: Number(m[1]), month: Number(m[2]),
+        }), format);
         return 0;
       }
 

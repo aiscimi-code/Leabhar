@@ -155,6 +155,9 @@ npm run cli -- list-transactions [--account <id>] [--unposted] [--unclassified]
 npm run cli -- show-invoice <number>                   # full detail incl. lines and payments
 npm run cli -- year-end --from <date> --to <date>      # P&L, balance sheet, tax worksheet, ...
 npm run cli -- vat-return --period <id-or-name>        # VAT3 box figures for one period
+npm run cli -- vat-reconcile --period <id-or-name>     # boxes = entries, VAT accounts = return, excluded items
+npm run cli -- rtd --date 2025-12-31                   # annual return of trading details, by rate
+npm run cli -- vies --month 2025-03 --quarterly        # VIES statement (monthly without --quarterly)
 npm run cli -- list-suppliers                          # every supplier (id, name, country, VAT no.)
 npm run cli -- list-customers                          # every customer (id, name, country, VAT no.)
 
