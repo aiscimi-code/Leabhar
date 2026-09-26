@@ -29,12 +29,14 @@ export const journalEntries = sqliteTable('journal_entries', {
       'bank_transaction', 'sales_invoice', 'purchase_invoice', 'payment',
       'manual_adjustment', 'opening_balance', 'fixed_asset', 'depreciation',
       'fx_revaluation', 'vat_period_close', 'year_end_close', 'reversal',
+      'recurring', 'accrual', 'prepayment',
     ],
   }).notNull(),
   sourceId: text('source_id'),
 
   entryType: text('entry_type', {
-    enum: ['standard', 'adjustment', 'reversal', 'opening', 'closing'],
+    enum: ['standard', 'adjustment', 'reversal', 'opening', 'closing',
+      'accrual', 'prepayment'],
   }).notNull().default('standard'),
 
   postedAt: text('posted_at'),
@@ -79,6 +81,17 @@ export const journalLines = sqliteTable('journal_lines', {
   companyId: text('company_id').notNull().references(() => companies.id),
   lineNumber: integer('line_number').notNull(),
   accountId: text('account_id').notNull().references(() => accounts.id),
+
+  /**
+   * The account's code and name as they were when this line was posted
+   * (issue #370). Accounts can be renamed after the fact, but a posted line
+   * is evidence: it keeps the identity it was posted with, so a historical
+   * entry reads the same on every later re-run. The live account stays
+   * authoritative for current reports; this is the snapshot that makes the
+   * line self-describing.
+   */
+  accountCode: text('account_code'),
+  accountName: text('account_name'),
 
   /** Amounts as transacted. */
   debitMinor: integer('debit_minor').notNull().default(0),
@@ -189,4 +202,83 @@ export const vatEntries = sqliteTable('vat_entries', {
   index('vat_entries_period_idx').on(t.companyId, t.vatPeriodId),
   index('vat_entries_taxpoint_idx').on(t.companyId, t.taxPointDate),
   index('vat_entries_source_idx').on(t.sourceType, t.sourceId),
+]);
+
+/**
+ * Recurring journal templates (issue #366).
+ *
+ * A template is not an entry: nothing is posted when it is created, and its
+ * lines are editable because no accounting facts exist yet. Occurrences are
+ * posted by `postDueRecurringJournals` as they fall due, each one an ordinary
+ * immutable journal entry with `sourceType = 'recurring'` and
+ * `sourceId = <template id>` — which is what makes re-running the due-post
+ * idempotent: an occurrence is identified by its template and its date.
+ */
+export const recurringJournals = sqliteTable('recurring_journals', {
+  id: text('id').primaryKey(),
+  companyId: text('company_id').notNull().references(() => companies.id),
+  /** The narrative every occurrence carries, e.g. "Office rent". */
+  name: text('name').notNull(),
+  frequency: text('frequency', {
+    enum: ['monthly', 'quarterly', 'yearly'],
+  }).notNull(),
+  /** First occurrence date. Later occurrences step from it by the frequency. */
+  startDate: text('start_date').notNull(),
+  /** Inclusive last occurrence date; null means until deactivated. */
+  endDate: text('end_date'),
+  active: integer('active', { mode: 'boolean' }).notNull().default(true),
+  notes: text('notes'),
+  createdBy: text('created_by').notNull().default('system'),
+  ...timestamps,
+}, (t) => [
+  index('recurring_journals_company_idx').on(t.companyId, t.active),
+]);
+
+/** The template's lines. Validated at creation like journal lines, but never posted as-is. */
+export const recurringJournalLines = sqliteTable('recurring_journal_lines', {
+  id: text('id').primaryKey(),
+  recurringJournalId: text('recurring_journal_id')
+    .notNull().references(() => recurringJournals.id),
+  companyId: text('company_id').notNull().references(() => companies.id),
+  lineNumber: integer('line_number').notNull(),
+  accountId: text('account_id').notNull().references(() => accounts.id),
+  debitMinor: integer('debit_minor').notNull().default(0),
+  creditMinor: integer('credit_minor').notNull().default(0),
+  memo: text('memo'),
+  ...timestamps,
+}, (t) => [
+  index('recurring_journal_lines_template_idx').on(t.recurringJournalId),
+  unique('recurring_journal_lines_number_unique').on(t.recurringJournalId, t.lineNumber),
+]);
+
+/**
+ * Accruals and prepayments (issues #367, #368).
+ *
+ * Both are entries that reverse themselves on a named date: an accrual puts an
+ * expense in now and takes it out when the invoice arrives; a prepayment parks
+ * a prepaid cost in the balance sheet and releases it as the period it belongs
+ * to arrives. The journal entries themselves are ordinary immutable entries;
+ * this table is the workflow record that says when each one comes off.
+ *
+ * The reversal state is NOT copied here — `journal_entries.reversedByEntryId`
+ * is the single source of truth for "reversed", so this table can never
+ * disagree with the books.
+ */
+export const timingAdjustments = sqliteTable('timing_adjustments', {
+  id: text('id').primaryKey(),
+  companyId: text('company_id').notNull().references(() => companies.id),
+  kind: text('kind', { enum: ['accrual', 'prepayment'] }).notNull(),
+  /** The entry that put the amount in. */
+  journalEntryId: text('journal_entry_id').notNull().references(() => journalEntries.id),
+  /** When the reversal is due. */
+  reversalDate: text('reversal_date').notNull(),
+  description: text('description').notNull(),
+  reason: text('reason').notNull(),
+  createdBy: text('created_by').notNull().default('user'),
+  notes: text('notes'),
+  ...provenance,
+  ...timestamps,
+}, (t) => [
+  index('timing_adjustments_company_idx').on(t.companyId, t.kind),
+  index('timing_adjustments_reversal_idx').on(t.companyId, t.reversalDate),
 ]);

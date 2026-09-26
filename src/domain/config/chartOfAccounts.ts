@@ -50,7 +50,10 @@ export type SystemAccountKey =
   | 'net_wages_payable'
   | 'pension_payable'
   /** Inventory (issue #359): the stock valuation account opening/closing stock journals use. */
-  | 'stock_on_hand';
+  | 'stock_on_hand'
+  /** Accruals and prepayments (issues #367, #368): the timing workflow posts to these. */
+  | 'accruals'
+  | 'prepayments';
 
 export const DEFAULT_ACCOUNTS: AccountSeed[] = [
   // ---------------- Income ----------------
@@ -199,7 +202,7 @@ export const DEFAULT_ACCOUNTS: AccountSeed[] = [
   },
   { code: '1520', name: 'Office equipment — cost', type: 'asset', subtype: 'fixed_asset', reportSection: 'fixed_assets' },
   { code: '1590', name: 'Other fixed assets', type: 'asset', subtype: 'fixed_asset', reportSection: 'fixed_assets' },
-  { code: '1600', name: 'Prepayments', type: 'asset', subtype: 'current_asset', vatApplicable: false, reportSection: 'current_assets' },
+  { code: '1600', name: 'Prepayments', type: 'asset', subtype: 'current_asset', systemKey: 'prepayments', vatApplicable: false, reportSection: 'current_assets' },
 
   // ---------------- Liabilities ----------------
   {
@@ -244,7 +247,7 @@ export const DEFAULT_ACCOUNTS: AccountSeed[] = [
       + '(issue #358). Reclassified at each year end — Dr 2210 / Cr this account — so the '
       + 'balance sheet shows what is actually due soon, not the whole term of the loan.',
   },
-  { code: '2300', name: 'Accruals', type: 'liability', subtype: 'current_liability', vatApplicable: false, reportSection: 'current_liabilities' },
+  { code: '2300', name: 'Accruals', type: 'liability', subtype: 'current_liability', systemKey: 'accruals', vatApplicable: false, reportSection: 'current_liabilities' },
   {
     code: '2410', name: 'PAYE (income tax) withheld', type: 'liability', subtype: 'current_liability',
     systemKey: 'paye_payable', vatApplicable: false, reportSection: 'current_liabilities',

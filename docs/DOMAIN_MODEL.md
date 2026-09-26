@@ -131,6 +131,7 @@ JournalEntry
   created_by, created_via          -- user | rule | import | system
 JournalLine
   id, journal_entry_id, line_no, account_id,
+  account_code, account_name,        -- the account as at post time (ADR 0008)
   debit_minor, credit_minor,       -- exactly one is non-zero
   currency, base_debit_minor, base_credit_minor,
   supplier_id, customer_id, memo
@@ -148,6 +149,12 @@ Invariants enforced at post time:
 Reversal is the only correction mechanism. A reversal entry copies the lines
 with debits and credits swapped, sets `reversal_of_id`, and posts at the
 correction date (not the original date) unless the original period is still open.
+
+The engine's scheduled workflows — recurring journals, accruals and
+prepayments, the year-end close — are records *above* this ledger: they own
+the schedule (a template, a reversal date, a year to close), while everything
+they post is an ordinary journal entry identified by `source_type` +
+`source_id`, which is what makes re-running them idempotent (ADR 0009).
 
 ---
 
@@ -173,7 +180,7 @@ balance. History is never disturbed.
 System accounts that the engine posts to by name, and therefore must always
 exist: bank control, VAT on sales, VAT on purchases, VAT control, debtors,
 creditors, director's current account, share capital, retained earnings,
-suspense, FX gain/loss, rounding difference, plus the payroll accounts (PAYE,
+suspense, FX gain/loss, rounding difference, accruals, prepayments, plus the payroll accounts (PAYE,
 USC, PRSI, net wages, pension deductions) and stock on hand.
 
 The chart installed at company creation varies by entity type (issue #212: a

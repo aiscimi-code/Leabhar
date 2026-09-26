@@ -31,7 +31,16 @@ export interface ProfitAndLoss {
 
 export function profitAndLoss(
   db: AppDatabase,
-  params: { companyId: string; from: IsoDate; to: IsoDate },
+  params: {
+    companyId: string; from: IsoDate; to: IsoDate;
+    /**
+     * Count year-end closing entries (issue #369). Off by default: a profit
+     * and loss account reports what was earned and spent, and the close only
+     * moves that result into reserves. The balance sheet turns it on, because
+     * it asks what is still sitting in income and expense accounts.
+     */
+    includeYearEndClose?: boolean;
+  },
 ): ProfitAndLoss {
   const company = db.select().from(companies).where(eq(companies.id, params.companyId)).get();
   if (!company) throw new Error(`Company ${params.companyId} not found.`);
@@ -39,6 +48,7 @@ export function profitAndLoss(
 
   const tb = trialBalance(db, {
     companyId: params.companyId, asOf: params.to, from: params.from, baseCurrency: currency,
+    excludeYearEndClose: !params.includeYearEndClose,
   });
 
   const accountFigure = (row: AccountBalance): Explained => explained({
@@ -258,6 +268,7 @@ export function balanceSheet(
   // in income and expense accounts rather than in reserves.
   const periodPl = profitAndLoss(db, {
     companyId: params.companyId, from: params.financialYearStart, to: params.asOf,
+    includeYearEndClose: true,
   });
 
   const profitForPeriod = explained({
@@ -274,6 +285,7 @@ export function balanceSheet(
   const priorPeriodPl = profitAndLoss(db, {
     companyId: params.companyId, from: '1900-01-01' as IsoDate,
     to: previousDay(params.financialYearStart),
+    includeYearEndClose: true,
   });
 
   const retainedEarnings = explained({

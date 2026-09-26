@@ -73,6 +73,9 @@ export function traceJournalLine(
   if (!line) return null;
 
   // --- Step 2: Account for the line ---
+  // The line carries the account identity it was posted with (issue #370);
+  // the account's current name is only a fallback for rows that predate the
+  // snapshot and were never backfilled.
   const account = db
     .select({ code: accounts.code, name: accounts.name })
     .from(accounts)
@@ -124,8 +127,8 @@ export function traceJournalLine(
       id: line.id,
       entryId: line.journalEntryId,
       accountId: line.accountId,
-      accountCode: account?.code ?? '',
-      accountName: account?.name ?? '',
+      accountCode: line.accountCode ?? account?.code ?? '',
+      accountName: line.accountName ?? account?.name ?? '',
       debitMinor: line.baseDebitMinor,
       creditMinor: line.baseCreditMinor,
     },
