@@ -1,4 +1,4 @@
-import { and, eq, desc, sql, isNull, ne, or, inArray } from 'drizzle-orm';
+import { and, eq, desc, sql, isNull, isNotNull, ne, or, inArray } from 'drizzle-orm';
 import { getDb } from '@/db';
 import {
   companies, bankAccounts, bankTransactions, accounts, vatTreatments, vatPeriods,
@@ -34,9 +34,24 @@ import { money } from '@/lib/format';
  * a page, so a report and the screen showing it can never disagree.
  */
 
+/**
+ * The business the books are for. Archived businesses (issue #297) are not the
+ * working set: they are complete, but a person put them away, so the most
+ * recently created business still being worked on is the active one.
+ */
 export function activeCompany() {
   const db = getDb();
-  return db.select().from(companies).orderBy(desc(companies.createdAt)).get();
+  return db.select().from(companies)
+    .where(isNull(companies.archivedAt))
+    .orderBy(desc(companies.createdAt)).get();
+}
+
+/** Archived businesses: out of the working set, kept complete, able to come back. */
+export function archivedCompanies() {
+  const db = getDb();
+  return db.select().from(companies)
+    .where(isNotNull(companies.archivedAt))
+    .orderBy(desc(companies.archivedAt)).all();
 }
 
 export function requireCompany() {

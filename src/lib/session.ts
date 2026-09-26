@@ -23,17 +23,19 @@ export async function actorName(): Promise<string> {
  *
  * Checks three things, in order: someone is signed in, they have replaced
  * their one-time password (a user still on an invoker's password cannot act),
- * and their role permits this action on this company. The matrix itself lives
+ * and their role permits this action on this company (the active one, or the
+ * one named). The matrix itself lives
  * in src/domain/auth/permissions.ts — this function applies it, it does not
  * decide it. Throws with a message the UI can show as-is.
  */
-export async function requireActor(action: Action): Promise<AuthUser> {
+export async function requireActor(action: Action, companyId?: string): Promise<AuthUser> {
   const user = await currentUser();
   if (!user) throw new Error('Sign in again: your session has expired.');
   if (user.mustChangePassword) {
     throw new Error('Change your password first: you are still on the one-time password your invoker set.');
   }
-  const company = requireCompany();
-  assertMemberAllowed(getDb(), user.id, company.id, action);
+  // The active company, unless the action names another one: bringing an
+  // archived business back acts on a company that is not the active one.
+  assertMemberAllowed(getDb(), user.id, companyId ?? requireCompany().id, action);
   return user;
 }

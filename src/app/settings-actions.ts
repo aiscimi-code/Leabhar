@@ -65,10 +65,13 @@ export async function updateCompanyAction(formData: FormData): Promise<ActionRes
     const company = requireCompany();
     const changes: CompanyUpdate = {};
 
+    // A trading name or an EORI number is not edited here: both carry a date
+    // and a person's confirmation, so they have their own workflows
+    // (src/app/business-profile-actions.ts, issue #297).
     const stringFields = [
-      'legalName', 'tradingName', 'croNumber', 'companyType', 'dateIncorporated',
+      'legalName', 'croNumber', 'companyType', 'dateIncorporated',
       'registeredOffice', 'principalBusinessAddress', 'recordsAddress',
-      'taxReferenceNumber', 'vatNumber', 'vatRegistrationDate', 'eoriNumber', 'notes',
+      'taxReferenceNumber', 'vatNumber', 'vatRegistrationDate', 'notes',
       'documentWatchPath',
     ] as const;
 

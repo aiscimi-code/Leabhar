@@ -27,6 +27,10 @@ export class ConfigurationError extends AccountingError {}
  *    leave the books referring to something that no longer exists.
  *
  * Every change is audited with its before and after values.
+ *
+ * A trading name and the EORI number are not here: both carry a date and a
+ * person's confirmation, so they are recorded through their own workflows in
+ * ./businessProfile (issue #297) rather than as a plain value change.
  */
 
 // ---------------------------------------------------------------------------
@@ -35,7 +39,6 @@ export class ConfigurationError extends AccountingError {}
 
 export type CompanyUpdate = Partial<{
   legalName: string;
-  tradingName: string | null;
   croNumber: string | null;
   companyType: string | null;
   dateIncorporated: string | null;
@@ -46,7 +49,6 @@ export type CompanyUpdate = Partial<{
   vatNumber: string | null;
   vatRegistrationDate: string | null;
   vatRegistrationStatus: 'not_registered' | 'registered' | 'deregistered' | 'pending';
-  eoriNumber: string | null;
   corporationTaxRegistered: boolean;
   vatAccountingBasis: 'invoice' | 'cash_receipts';
   vatPeriodFrequency: VatFrequency | 'custom';

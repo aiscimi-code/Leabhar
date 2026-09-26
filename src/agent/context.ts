@@ -1,4 +1,4 @@
-import { desc } from 'drizzle-orm';
+import { desc, isNull } from 'drizzle-orm';
 import { createDatabase, type AppDatabase } from '@/db';
 import { companies } from '@/db/schema';
 
@@ -15,12 +15,15 @@ export function getAgentDb(): AppDatabase {
 }
 
 /**
- * The most recently created company. Mirrors `activeCompany()` in
- * `src/lib/queries.ts` but against the caller's own DB handle rather than the
- * cached one.
+ * The most recently created company still being worked on. Mirrors
+ * `activeCompany()` in `src/lib/queries.ts` but against the caller's own DB
+ * handle rather than the cached one. Archived businesses (issue #297) are not
+ * the working set.
  */
 export function requireCompany(db: AppDatabase) {
-  const company = db.select().from(companies).orderBy(desc(companies.createdAt)).get();
+  const company = db.select().from(companies)
+    .where(isNull(companies.archivedAt))
+    .orderBy(desc(companies.createdAt)).get();
   if (!company) {
     throw new Error('No company has been set up. Run npm run db:seed first.');
   }
