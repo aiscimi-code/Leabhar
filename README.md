@@ -1,90 +1,245 @@
 # Leabhar
 
-A local-first accounting and tax-preparation system for a small Irish
-limited company. Everything runs on your own machine — the database is a
-local SQLite file, documents are stored on disk, and nothing leaves the
-machine unless you ask it to.
+Local-first bookkeeping and tax preparation for a small Irish business: a
+limited company, a sole trader or a partnership. Everything runs on your own
+machine. The books are a local SQLite file, documents are stored on disk,
+and nothing leaves the machine unless you ask it to.
 
 ![License](https://img.shields.io/badge/license-AGPL--3.0--only-blue)
 ![Node](https://img.shields.io/badge/node-%3E%3D22-green)
 
-Leabhar favours clarity, transparency and deterministic accounting over
-feature quantity. Every figure it produces should be traceable back to the
-original transaction and document. It is designed to hand an accountant a
-clean package of evidence and figures, not to replace one.
+Leabhar keeps double-entry books from your bank statements and invoices, and
+prepares the VAT and tax figures that follow from them. Each figure cites
+the provision of Irish tax law it rests on, and can be traced back to the
+invoice or bank line behind it. Where the treatment is not certain,
+Leabhar does not guess. It flags the item, suggests a treatment, offers the
+alternatives, and records the choice a person makes.
 
-This is not initially intended to be a general-purpose Xero/Sage
-replacement. It is a highly transparent, explainable accounting system
-for one small Irish LTD where bank transactions are imported, invoices
-and receipts are stored and extracted, documents are matched to
-transactions, VAT is summarised, and a year-end pack is produced — all
-inspectable down to the source document.
+It prepares figures and evidence for you and your accountant. It does not
+file anything, and it does not replace professional advice.
 
-## Current state
+## What it does
 
-Leabhar is a working application with a web interface, not a library or a
-prototype. The following are implemented and have deterministic test
-coverage for the financial logic:
+### Books and ledger
 
-- **Company setup** — create a single company with its accounting basis
-  (cash or accruals), VAT frequency and financial year.
-- **Chart of accounts and VAT rates** — effective-dated configuration that
-  historical entries resolve against, so a rate change never rewrites the
-  past.
-- **Bank transaction import** — import bank statements (CSV/Excel), with
-  write-once evidence rows that are never edited after import.
-- **Document repository** — content-addressed storage (SHA-256) for
-  invoices, receipts and statements. Duplicates are flagged, never
-  overwritten; documents are never modified after ingest.
-- **Document extraction** — a deterministic local extractor reads PDF text
-  layers and applies labelled-field patterns. An optional Anthropic
-  provider adds model-based extraction; both write with `ai_suggestion`
-  provenance and their arithmetic is re-checked in code.
-- **Transaction classification and matching** — a rules engine with
-  explainable match factors, plus a review queue for ambiguous items.
-- **Journal entries and ledger** — double-entry journals that balance in
-  base currency, enforced at post time. Posted entries are immutable;
-  corrections are reversing entries.
-- **VAT engine** — period summarisation, T2 (recoverable input VAT),
-  reverse-charge handling, and VAT returns with per-box explainability.
-- **Invoicing** — sales and purchase invoices with multi-line VAT,
-  credit notes, FX, and cash-receipts-basis VAT deferral. Payments
-  allocate to invoices and release deferred VAT proportionally.
-- **Bank reconciliation** — decomposes the difference between statement
-  and ledger into named components, with suspected-duplicate detection.
-- **Depreciation and capital allowances** — straight-line and
-  reducing-balance schedules, idempotent period posting, and disposal
-  with profit/loss. Capital allowances are computed but never posted
-  to the ledger.
-- **Adjustments** — controlled manual journal entries with mandatory
-  reasons, closed-period override, and reversal via reversing entries.
-- **Anomaly detection** — deterministic arithmetic checks for unusual
-  supplier amounts, VAT arithmetic failures, duplicate invoices,
-  suspense balances, director debit balances, and stale debts.
-- **VAT filing pack** — a human-readable pack per VAT period with
-  drill-down, supporting documents, and reconciliation position.
-- **CSV/XLSX exports** — trial balance, P&L, balance sheet, VAT filing
-  pack, and transaction listings. No formulas; every figure is a value.
-- **Global search** — suppliers, customers, invoices, transactions and
-  documents by name, number, or amount.
-- **Financial reports** — trial balance, profit & loss, balance sheet.
-- **Year-end pack** — a worksheet bridging accounting profit to
-  tax-adjusted profit, with the adjustments it does and does not make
-  listed explicitly, plus a verified document bundle.
-- **Backup and restore** — versioned backups with SHA-256 manifests;
-  restore moves the current state aside first, never deletes it.
-- **Demo data** — a fictional company loaded with the awkward cases
-  (reverse charges, exempt supply, capital purchase, director-paid
-  expense, duplicate document, unclassified transaction) so every screen
-  can be exercised.
-- **Prebuilt installer (Windows x64)** — a one-file installer that
-  bundles Node.js, the standalone Next.js server and the database engine.
-  Double-click, app opens in the browser. See
-  [docs/RUNNING.md](docs/RUNNING.md) for details.
+- **Double-entry journals** that must balance in base currency before they
+  post.
+- **Posted entries are never edited.** A correction is a reversing entry.
+- **Chart of accounts** that follows the type of business:
+  - a company has share capital, dividends and a directors' account;
+  - a sole trader has a capital account and drawings;
+  - each partner has their own capital and current accounts.
+- **Effective-dated configuration.** Rates, VAT treatments and profit
+  shares are superseded from a date, never overwritten. Every historical
+  entry resolves the configuration as of its own date and keeps a record
+  of what it used.
+- **Money is held as integer minor units with a currency**, never floats.
+- **Foreign-currency transactions** carry the exchange rate used.
+- **Accounting and VAT periods** with period locks.
+- **Controlled adjustments**, each requiring a reason.
+- **Depreciation schedules and fixed asset register**, including
+  disposals.
+- **Reports:**
+  - trial balance, profit and loss, and balance sheet;
+  - CSV/XLSX exports containing values, not formulas.
 
-What it does not do: file anything with Revenue or the CRO, calculate
-corporation tax, or replace an accountant. It produces a clean, auditable
-package of figures and evidence for one.
+### Bank and documents
+
+- **Bank statement import** from CSV and Excel. Imported bank lines are
+  write-once evidence: classification sits beside them and never edits
+  them.
+- **Bank reconciliation** that breaks any difference down into named
+  causes, and flags suspected duplicates.
+- **Document store.** Invoices, receipts and statements are kept by their
+  SHA-256 hash, never modified, and duplicates are flagged.
+- **Extraction.** A local extractor reads the PDF text layer:
+  - header fields, line items, VAT totals per rate, and invoice wording
+    such as "reverse charge".
+  - An optional Anthropic provider can be switched on as well.
+  - Either way, the arithmetic is re-checked in code.
+- **Review before use.** An extracted document is a draft. Nothing
+  downstream (matching, posting, VAT) uses it until a person has checked
+  it against the page image and confirmed it.
+
+### Invoices and payments
+
+- **Invoice-led posting.** A confirmed purchase or sales invoice is posted
+  line by line with the VAT it states. The bank line then settles it,
+  either directly or as a payment a director made personally.
+- **Input VAT only from a confirmed invoice.** A purchase with no
+  confirmed invoice claims no input VAT and is flagged. A bank amount is
+  never split into net and VAT.
+- **Checks on each invoice:**
+  - Missing particulars required by S.I. 639/2010 reg.20: posting is
+    refused, or the VAT is held back if you choose.
+  - Foreign VAT charged, or a reverse charge shown with VAT on it.
+  - The wrong VAT number, or none.
+  - Late issue.
+  - A credit note that exceeds or doesn't match its original.
+- **Sales invoicing**, including credit notes, part payments and aged
+  debtors.
+- **Matching** of documents to bank lines, scored on explainable factors.
+
+### VAT
+
+- **Treatment suggestions from a statutory rules knowledge base.** Each
+  rule quotes the Act, Schedule or Revenue guidance it comes from. The
+  base covers:
+  - rates, including the Finance Act 2025 changes;
+  - exemptions;
+  - place of supply and reverse charges;
+  - input VAT restrictions;
+  - the property, margin and other schemes.
+  Where more than one treatment is possible, Leabhar offers the options
+  and waits for you to choose.
+- **Facts only you can confirm** are recorded by name before the rules
+  depend on them:
+  - where a supplier or customer is established;
+  - a customer's VAT number, with a VIES check;
+  - whether the company is an RCT principal;
+  - the cash receipts basis authorisation.
+- **The VAT3 return**, on the invoice basis or the cash receipts basis
+  (the cash basis applies to sales only). Every box drills down to its
+  entries. Each box's mapping cites Revenue's definition of that box.
+- **Reconciliation of each return:**
+  - each box equals the sum of its entries;
+  - the VAT accounts agree with the return;
+  - anything not yet classified or confirmed is listed as excluded, with
+    its value.
+- **Returns and statements:**
+  - the annual Return of Trading Details, by rate;
+  - the VIES statement, per customer VAT number.
+- **Capital goods scheme** register, with the s.64 adjustments.
+- **Apportionment** for dual-use inputs, and **cash-basis eligibility**
+  checks.
+- **Locked or filed returns are never changed.** A correction goes into an
+  open period.
+
+### Corporation tax (limited companies)
+
+- A computation from accounting profit to tax, where each adjustment cites
+  its section and lists the ledger lines behind it:
+  - **add-backs:** depreciation, entertainment and gifts, fines, private
+    and capital items, and taxes on income;
+  - **capital allowances:** wear and tear, balancing allowances and
+    charges, short accounting periods, and 100% claims for
+    energy-efficient equipment (flagged for you to check the item is on
+    the SEAI list);
+  - **rates:** 12.5% on trading income and 25% on other income, read from
+    the rules;
+  - **loss relief:** losses carried forward automatically; a s.396A or
+    s.396B claim if you choose one;
+  - **close company surcharge;**
+  - **dates:** preliminary tax and the CT1 filing date.
+- Expense lines that look like entertainment, fines or private costs get a
+  suggested treatment. So do income outside the trading accounts, loss
+  claims and close company status. The figures use the suggestion until
+  you record a choice.
+
+### Income tax (sole traders and partnerships; not PAYE)
+
+- **Basis period for the year,** including the commencement and cessation
+  rules.
+- **Partnership profits** split between partners by the profit shares in
+  force, day by day.
+- **Each person's liability:**
+  - income tax at the bands and credits for their personal status;
+  - USC;
+  - PRSI Class S.
+- **Payment dates:** preliminary tax and the return date.
+
+### Year-end, review and evidence
+
+- **Year-end pack:**
+  - the financial statements;
+  - the tax computation;
+  - a fixed asset schedule;
+  - VAT period summaries;
+  - a document bundle whose hashes can be verified.
+- **Review queue** for:
+  - anomalies, such as unusual amounts, VAT arithmetic failures,
+    duplicates and suspense balances;
+  - rule conflicts;
+  - suggestions no one has confirmed yet.
+- **Audit trail** of who did what and when.
+- **Statute viewer:** every rule links to the exact slice of the source
+  text it quotes, and the file's hash can be re-checked.
+- **Coverage matrix** (`docs/rules/coverage-matrix.json`), checked by a
+  test. It records, for each provision in scope, whether it is ruled,
+  deferred or not applicable.
+- **Backups** with SHA-256 manifests. Restoring moves the current state
+  aside first; nothing is deleted.
+
+## What it does not do
+
+- **It does not file anything.** Nothing is sent to Revenue (ROS) or the
+  CRO. Leabhar produces the figures and evidence; you or your accountant
+  file them.
+- **No payroll or PAYE.**
+- **Rules start unapproved.** Every derived rule starts as unreviewed and
+  says so. Revenue guidance is marked as ranking below the Act it
+  summarises.
+- **Flagged, not computed:**
+  - motor vehicle cost and emissions limits on capital allowances (the
+    source is awaited, #211);
+  - chargeable gains;
+  - charges on income;
+  - group relief;
+  - associated companies' share of the surcharge threshold;
+  - sole trader loss relief (ss.381/382);
+  - a spouse's second income;
+  - other non-trading income of an individual;
+  - PRSI Class S before 25 September 2026 and the €5,000 Class S
+    threshold (the sources don't give them yet).
+- **Not built yet** (open issues):
+  - RCT for principal contractors, including payment notifications and
+    returns (#213);
+  - financial statements in FRS 102 / Section 1A form, and CRO filings
+    (#214);
+  - an accountant pack of tax-ready documents with every flagged item
+    listed (#215);
+  - the VAT taxable amount rules in VATCA ss.36–45 (#245);
+  - the remaining VAT rate and exemption paragraphs (#205, #206).
+- **Scale:** one business per database, one local user. It is not a
+  multi-client practice system.
+
+## How to use it
+
+1. **Set up the business.** Choose company, sole trader or partnership.
+   Enter the year end, VAT registration and basis, and VAT period
+   frequency. For a partnership, add the partners and their profit
+   shares. Record the facts VAT turns on: RCT principal status, and the
+   cash basis authorisation if you use it.
+2. **Load the rules.** The statutory knowledge base loads from
+   `docs/statutes/`. Its rules are suggestions until reviewed.
+3. **Import bank statements** for each account.
+4. **Add documents.** For each invoice and receipt, open it on the review
+   screen, check the extracted fields against the page, and confirm it.
+   Nothing unconfirmed is used.
+5. **Post confirmed invoices,** choosing each line's VAT treatment where
+   more than one is offered. Then settle each bank line against its
+   invoice, or record a director-paid expense.
+6. **Classify everything else** (wages, tax payments, transfers,
+   dividends or drawings) and reconcile each bank account to its
+   statement.
+7. **Work the review queue.** Every flag is a question for a person, not
+   something Leabhar has silently repaired.
+8. **Each VAT period:**
+   - check the reconciliation and that the excluded items list is empty;
+   - review the VAT3;
+   - lock the period once it's filed.
+
+   Each year, also prepare the RTD; prepare VIES statements if you supply
+   other EU businesses.
+9. **At year end:**
+   - make the treatment decisions the computation asks for, such as
+     entertainment, other income, loss claims, close company status and
+     personal status;
+   - then hand the year-end pack to your accountant.
+
+The same steps can be driven from the terminal (see
+[Reconciliation CLI](#reconciliation-cli) below), and both use the same
+domain code, so the web app and the CLI cannot disagree about a figure.
 
 ## Quickstart
 
@@ -92,12 +247,12 @@ package of figures and evidence for one.
 
 Download `Leabhar-Setup-x64.exe` from the
 [releases page](https://github.com/aiscimi-code/Leabhar/releases),
-double-click it, and follow the installer. A desktop shortcut is
-created — double-click "Leabhar" and your browser opens to
-`localhost:3000`. No Node.js, npm or terminal required.
+double-click it, and follow the installer. It creates a desktop shortcut:
+double-click "Leabhar" and your browser opens `localhost:3000`. You don't
+need Node.js, npm or a terminal.
 
-First run shows an empty database. Click "Try the demo" to load the demo
-company, or set up your own.
+The first run shows an empty database. Click "Try the demo" to load a
+fictional company that includes the awkward cases, or set up your own.
 
 ### Option B: From source
 
@@ -114,15 +269,10 @@ npm run db:seed             # optional: load the demo company
 npm run dev                 # http://localhost:3000
 ```
 
-Open `http://localhost:3000`. On first run you are redirected to `/login`
-to create the single local user (display name, username, password). After
-that you can use the app, and optionally load the demo company with
-`npm run db:seed`.
+On first run you are asked to create the single local user.
 
-If `npm run dev` fails with `Could not locate the bindings file`, the
-`better-sqlite3` native binary was not built for your Node version — run
-`npm rebuild better-sqlite3`. See [CONTRIBUTING.md](CONTRIBUTING.md) and
-[docs/RUNNING.md](docs/RUNNING.md) for more.
+If `npm run dev` fails with `Could not locate the bindings file`, run
+`npm rebuild better-sqlite3`.
 
 | Command | What it does |
 |---|---|
@@ -132,70 +282,67 @@ If `npm run dev` fails with `Could not locate the bindings file`, the
 | `npm run typecheck` | Type-check without emitting |
 | `npm run db:migrate` | Apply migrations |
 | `npm run db:seed` | Create the demo company |
-| `npm run cli` | Reconciliation CLI for agents (see below) |
+| `npm run cli` | The bookkeeping CLI (see below) |
+| `npm run cli:rules` | Ingest statutes and derive or audit rules |
 | `npm run build:package` | Build the standalone package (for the installer) |
 | `npm run build:installer` | Compile the NSIS installer (requires `makensis`) |
 
 ### Reconciliation CLI
 
-`npm run cli` is a terminal entry point for agents (or humans) that drives
-the accounting engine end-to-end without the web UI. It opens the same local
-SQLite database directly — the same trust model as `db:migrate` and
-`db:seed`, not a `serve` command — and the web app remains `npm run dev`.
-
-All commands print JSON by default; `--format human` prints a summary. Exit
-codes: `0` on success, `1` on error, `2` on usage error. `npm run cli -- --help`
-lists every command.
+`npm run cli` drives the same accounting engine from the terminal, for
+agents or people. It opens the local SQLite database directly. It prints
+JSON by default; `--format human` gives a summary. Run
+`npm run cli -- --help` for every command.
 
 ```bash
-npm run cli -- list-accounts                          # bank accounts (id, name, currency)
-npm run cli -- import --account <id> --file <path>    # import a statement (CSV/XLSX)
-npm run cli -- create-supplier --name "..." [--country IE]  # seed suppliers for matching
-npm run cli -- match                                  # link documents to bank transactions
-npm run cli -- auto-classify --account <id>           # classify txns from autoApply rules
-npm run cli -- reconcile --account <id> --from <date> --to <date>      # read-only
+npm run cli -- init-company --name "..." --entity-type sole_trader --commenced 2024-01-01
+npm run cli -- import --account <id> --file <path>             # a bank statement
+npm run cli -- confirm-document <id> --confirmed-by "A. Person"   # after checking it
+npm run cli -- post-document <id> --coding <json>             # post a confirmed invoice
+npm run cli -- settle <transactionId> --allocations <json>     # bank line settles invoice
 npm run cli -- reconcile --account <id> --from <date> --to <date> --sign-off
-npm run cli -- run --account <id> [--file <path>] --from <date> --to <date>  # full pipeline
+npm run cli -- vat-return --period "Mar–Apr 2025"              # VAT3 figures
+npm run cli -- vat-reconcile --period "Mar–Apr 2025"           # boxes, ledger, excluded items
+npm run cli -- rtd --date 2025-12-31                           # return of trading details
+npm run cli -- vies --month 2025-03 --quarterly                # VIES statement
+npm run cli -- ct-computation --from 2025-01-01 --to 2025-12-31
+npm run cli -- it-computation --year 2025
 ```
 
-The intended agent workflow is: import (or re-run over already-imported data)
-→ create suppliers for extracted names → match documents to transactions
-→ auto-classify → reconcile → sign off. Matching links evidence but does
-**not** classify or post a transaction; classification posts the journal
-entry the reconciliation then agrees with. See
-[docs/RUNNING.md](docs/RUNNING.md) for the full command reference.
+The full reference and the agent workflow are in
+[docs/RUNNING.md](docs/RUNNING.md).
 
 ## Documentation
 
-- [docs/DOMAIN_MODEL.md](docs/DOMAIN_MODEL.md) — the design document and
-  its invariants. When the code and this document disagree, the code is
+- [docs/DOMAIN_MODEL.md](docs/DOMAIN_MODEL.md): the design and its
+  invariants. When the code and this document disagree, the code is
   wrong.
-- [docs/RUNNING.md](docs/RUNNING.md) — setup, configuration and what the
-  system does and does not do.
-- [docs/SPECIFICATION.md](docs/SPECIFICATION.md) — the original project
-  brief the system was built against.
-- [AGENTS.md](AGENTS.md) — working notes for contributors and AI-assisted
-  development, including the non-negotiable accounting invariants.
-- [CONTRIBUTING.md](CONTRIBUTING.md) — how to contribute, the test gate,
-  and the CLA.
-- [SECURITY.md](SECURITY.md) — how to report a vulnerability.
+- [docs/RUNNING.md](docs/RUNNING.md): setup, configuration and the CLI
+  reference.
+- [docs/RULES_KB.md](docs/RULES_KB.md): the statutory rules knowledge
+  base: sources, curation and review.
+- [docs/statutes/](docs/statutes/): the legislation and Revenue guidance
+  the rules quote, with their hashes.
+- [docs/SPECIFICATION.md](docs/SPECIFICATION.md): the original project
+  brief.
+- [AGENTS.md](AGENTS.md): working notes and the non-negotiable accounting
+  invariants.
+- [CONTRIBUTING.md](CONTRIBUTING.md) and [SECURITY.md](SECURITY.md).
 
 If you are wondering whether the installer is safe to run, read
 [docs/TRUST.md](docs/TRUST.md).
 
 ## Contributing
 
-Contributions are welcome. Before opening a pull request, read
-[CONTRIBUTING.md](CONTRIBUTING.md) — it covers the test gate, the
-accounting invariants, and the contributor licence agreement.
+Contributions are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md) first:
+it covers the test gate, the accounting invariants, and the contributor
+licence agreement.
 
-**Every commit must reference a corresponding GitHub issue.** If there is
-no issue for the work you are doing, create one first. Link the issue in
-your pull request description (e.g. `Closes #42`) so it auto-closes on
-merge. This keeps the change history searchable and ensures every change
-has a stated purpose.
+**Every commit must reference a GitHub issue.** If there is no issue for
+your work, create one first, and link it in the pull request (e.g.
+`Closes #42`).
 
-Financial logic needs a deterministic test — never rely on an LLM for
+Financial logic needs a deterministic test; never rely on an LLM for
 arithmetic. Run the gate before committing:
 
 ```bash
@@ -208,14 +355,12 @@ Certificate of Origin, and tick the CLA checkbox on the PR template.
 ## License
 
 Leabhar is licensed under the GNU Affero General Public License v3.0 only
-(AGPL-3.0-only). See [LICENSE](LICENSE) for the full text. The AGPL's
-§13 network-use clause means that if you modify Leabhar and run it as a
-network service, you must offer your users the source of your modified
-version.
+(AGPL-3.0-only); see [LICENSE](LICENSE). Under the AGPL's §13 network-use
+clause, if you modify Leabhar and run it as a network service, you must
+offer your users the source of your modified version.
 
-A commercial license is available for use cases that cannot comply with
-the AGPL's source-disclosure obligations — see
-[COMMERCIAL.md](COMMERCIAL.md). Contributions are accepted under the
-terms in [CLA.md](CLA.md).
+A commercial licence is available for uses that cannot meet the AGPL's
+source-disclosure obligations; see [COMMERCIAL.md](COMMERCIAL.md).
+Contributions are accepted under the terms in [CLA.md](CLA.md).
 
 Copyright (C) 2026 Intleacht Research Limited.
