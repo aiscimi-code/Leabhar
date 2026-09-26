@@ -83,6 +83,7 @@ export function addBank(db: AppDatabase, input: AddBankInput): AddBankResult {
     bic: input.bic,
     currency,
     accountType: input.accountType,
+    loanId: input.loanId,
     openingBalanceMinor,
     openingDate: input.openingDate ?? '1900-01-01',
     actor: 'cli',

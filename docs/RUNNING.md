@@ -81,9 +81,18 @@ npm run cli -- init-company --name "..."              # company + default chart
     [--vat-basis invoice|cash_receipts] [--vat-frequency bi_monthly]
     [--year-end MM-DD] [--base-currency EUR] [--seed-years "2024,2025"]
 npm run cli -- add-bank --name "..." [--iban ...] [--currency EUR]
-    [--opening <amount> --opening-date <date>]
+    [--account-type current|deposit|savings|credit_card|loan|merchant|cash|other]
+    [--loan <loan id>] [--opening <amount> --opening-date <date>]
+    # Each bank account gets its own ledger account: a bank, deposit or cash
+    # account an asset, a credit card a current liability, a loan its loan's
+    # liability (--loan) or a new non-current one.
     # --opening also journals the balance (Dr this account / Cr retained
-    # earnings) at --opening-date — it is not just stored on the row.
+    # earnings) at --opening-date — it is not just stored on the row. A card
+    # or loan balance owed is negative.
+npm run cli -- record-manual --account <id> --date <date> --description "..."
+    --amount <-12.30> --recorded-by "Name" [--reference ...]
+    # A movement with no statement line (petty cash): recorded as manual
+    # evidence under the person's name, then classified like any other line.
 npm run cli -- add-account --code <code> --name "..."
     --type asset|liability|equity|income|expense [--subtype ...]
     [--report-section current_assets|current_liabilities|fixed_assets|

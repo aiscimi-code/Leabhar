@@ -60,7 +60,8 @@ import { buildViesStatement } from '@/domain/vat/vies';
 import { computeCorporationTax, recordCtDecision, type CtSubjectType } from '@/domain/corporationTax/computation';
 import { computeIncomeTax } from '@/domain/incomeTax/computation';
 import { addPartner, setPartnerShare, partnerSharesOn } from '@/domain/config/partners';
-import { partners } from '@/db/schema';
+import { partners, bankAccounts } from '@/db/schema';
+import { recordManualTransaction } from '@/domain/banking/import';
 import { asIsoDate, today } from '@/domain/dates';
 import { companies } from '@/db/schema';
 import { loadStatutoryKnowledgeBase } from '@/domain/rules/knowledgeBase';
@@ -150,6 +151,9 @@ Commands:
             --from <date> --to <date>
   reconcile ... --sign-off               Record the reconciliation
             [--accept-difference "reason"]
+  record-manual --account <id> --date <date> --description "..." --amount <-12.30>
+      --recorded-by "Name" [--reference ...]  A movement with no statement
+      line, e.g. petty cash; negative is money out
   run --account <id> [--file <path>]     import (optional) -> auto-classify -> reconcile
      --from <date> --to <date>
 
@@ -162,6 +166,9 @@ Induction (no company/bank/chart yet):
       livestock and crops on hand, farm machinery, and the farm cost lines.
   add-bank --name "..."                  Add a bank account
       [--iban ...] [--currency EUR] [--account-type current]
+      Types: current, deposit, savings, credit_card, loan, merchant, cash, other.
+      Each account gets its own ledger account; a card or loan is a liability.
+      [--loan <loan id>]  For a loan account: post to that loan's liability
       [--opening <amount> --opening-date <date>]  Also journals the opening
       balance (Dr this account / Cr retained earnings) — not just stored.
   add-account --code <code> --name "..." --type asset|liability|equity|income|expense
@@ -553,6 +560,23 @@ export async function main(argv: string[], options: CliOptions = {}): Promise<nu
         return 0;
       }
 
+      case 'record-manual': {
+        const account = requireFlag(flags, 'account', 'account-id', 'accountId');
+        const currency = db.select({ currency: bankAccounts.currency }).from(bankAccounts)
+          .where(eq(bankAccounts.id, account)).get()?.currency ?? 'EUR';
+        const result = recordManualTransaction(db, {
+          companyId,
+          bankAccountId: account,
+          transactionDate: requireFlag(flags, 'date'),
+          description: requireFlag(flags, 'description'),
+          amountMinor: parseAmount(requireFlag(flags, 'amount'), currency),
+          reference: getFlag(flags, 'reference'),
+          recordedBy: requireFlag(flags, 'recorded-by'),
+        });
+        print(result, format);
+        return 0;
+      }
+
       case 'auto-classify': {
         const parsed = autoClassifyInput.parse({
           companyId,
@@ -783,6 +807,7 @@ export async function main(argv: string[], options: CliOptions = {}): Promise<nu
           bic: getFlag(flags, 'bic'),
           currency: getFlag(flags, 'currency'),
           accountType: getFlag(flags, 'account-type'),
+          loanId: getFlag(flags, 'loan'),
           opening: getFlag(flags, 'opening'),
           openingDate: getFlag(flags, 'opening-date'),
         });

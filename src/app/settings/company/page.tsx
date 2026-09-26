@@ -343,7 +343,7 @@ export default function CompanySettingsPage() {
               </Field>
               <Field label="Type">
                 <Select name="accountType" defaultValue="current">
-                  {['current', 'deposit', 'savings', 'credit_card', 'loan', 'merchant', 'other']
+                  {['current', 'deposit', 'savings', 'credit_card', 'loan', 'merchant', 'cash', 'other']
                     .map((type) => <option key={type} value={type}>{label(type)}</option>)}
                 </Select>
               </Field>

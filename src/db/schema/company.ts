@@ -194,8 +194,13 @@ export const bankAccounts = sqliteTable('bank_accounts', {
   accountNumber: text('account_number'),
   sortCode: text('sort_code'),
   currency: text('currency').notNull().default('EUR'),
+  /**
+   * What kind of account this is (issue #377). It decides the ledger account a
+   * new bank account posts to: a bank or cash account is an asset, a credit
+   * card or a loan is money owed, a liability.
+   */
   accountType: text('account_type', {
-    enum: ['current', 'deposit', 'savings', 'credit_card', 'loan', 'merchant', 'other'],
+    enum: ['current', 'deposit', 'savings', 'credit_card', 'loan', 'merchant', 'cash', 'other'],
   }).notNull().default('current'),
 
   openingBalanceMinor: integer('opening_balance_minor').notNull().default(0),

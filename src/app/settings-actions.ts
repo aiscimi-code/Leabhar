@@ -465,7 +465,7 @@ export async function addBankAccountAction(formData: FormData): Promise<ActionRe
       iban: text(formData, 'iban'),
       bic: text(formData, 'bic'),
       currency,
-      accountType: (text(formData, 'accountType') ?? 'current') as 'current',
+      accountType: (text(formData, 'accountType') ?? 'current') as NonNullable<Parameters<typeof addBankAccount>[1]['accountType']>,
       openingBalanceMinor: text(formData, 'openingBalance')
         ? parseAmount(text(formData, 'openingBalance')!, currency) : 0,
       openingDate: asIsoDate(text(formData, 'openingDate') ?? '2025-01-01'),

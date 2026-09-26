@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { eq, and } from 'drizzle-orm';
 import { getDb, resetDatabase } from '@/db';
-import { reviewItems, documents, bankTransactions, companies } from '@/db/schema';
+import { reviewItems, documents, bankTransactions, bankAccounts, companies } from '@/db/schema';
 import { requireCompany } from '@/lib/queries';
 import { classifyTransaction, reclassifyTransaction } from '@/domain/banking/classify';
 import { acceptMatch, rejectMatch, findMatchesForDocument, matchAllUnmatched, linkDocument, unmatchDocument } from '@/domain/matching/service';
@@ -18,11 +18,11 @@ import { postDocumentAsInvoice, type LineCoding } from '@/domain/consolidation/p
 import {
   settleBankTransaction, settlementRateNeed, previewSettlement, type SettleAllocation, type SettlementRateNeed,
 } from '@/domain/consolidation/settle';
-import { parseDecimalRate } from '@/domain/money';
+import { parseDecimalRate, parseAmount } from '@/domain/money';
 import { reversePayment } from '@/domain/invoicing/reversal';
 import { asIsoDate } from '@/domain/dates';
 import { scanWatchFolder } from '@/domain/documents/watch';
-import { importStatement } from '@/domain/banking/import';
+import { importStatement, recordManualTransaction } from '@/domain/banking/import';
 import { seedDemoCompany } from '@/db/seed/demo';
 import { runMigrations } from '@/db/migrate';
 import { createBackup, restoreBackup, verifyBackup } from '@/domain/backup/backup';
@@ -339,6 +339,38 @@ export async function scanWatchFolderAction(): Promise<ActionResult> {
 
     const warnings = outcome.notes.length > 0 ? outcome.notes : undefined;
     return { ok: true, message: parts.join(' '), warnings };
+  } catch (error) {
+    return fail(error);
+  }
+}
+
+/**
+ * Record a movement with no statement line behind it — petty cash, most
+ * often (issue #377). The person recording it is the evidence.
+ */
+export async function recordManualTransactionAction(formData: FormData): Promise<ActionResult> {
+  try {
+    await requireActor('banking.import');
+    const db = getDb();
+    const company = requireCompany();
+    const bankAccountId = String(formData.get('bankAccountId') ?? '');
+    const account = db.select().from(bankAccounts)
+      .where(and(eq(bankAccounts.id, bankAccountId), eq(bankAccounts.companyId, company.id))).get();
+    if (!account) return { ok: false, error: 'Choose which account this movement is on.' };
+    const amount = String(formData.get('amount') ?? '').trim();
+    if (!amount) return { ok: false, error: 'Enter the amount: negative for money out, positive for money in.' };
+    recordManualTransaction(db, {
+      companyId: company.id,
+      bankAccountId,
+      transactionDate: String(formData.get('transactionDate') ?? ''),
+      description: String(formData.get('description') ?? ''),
+      amountMinor: parseAmount(amount, account.currency),
+      reference: String(formData.get('reference') ?? '').trim() || null,
+      recordedBy: await actorName(),
+    });
+    revalidatePath('/transactions');
+    revalidatePath('/import');
+    return { ok: true, message: 'Recorded. Classify it on the Transactions page like any other line.' };
   } catch (error) {
     return fail(error);
   }

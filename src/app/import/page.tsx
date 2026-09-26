@@ -1,5 +1,7 @@
 import { bankAccountList } from '@/lib/queries';
-import { Page, Panel, Help, Empty, LinkButton } from '@/components/primitives';
+import { Page, Panel, Help, Empty, LinkButton, Field, Input, Select } from '@/components/primitives';
+import { ActionForm } from '@/components/ActionForm';
+import { recordManualTransactionAction } from '@/app/actions';
 import { ImportForm } from '@/components/ImportForm';
 import { date } from '@/lib/format';
 
@@ -67,6 +69,35 @@ export default function ImportPage() {
           </p>
         </div>
       </Panel>
+
+      {accounts.length > 0 && (
+        <Panel
+          title="Record a movement by hand"
+          description={'For an account with no statement to import — petty cash, most often — '
+            + 'or a line the bank\'s file left out. It is recorded under your name as the '
+            + 'evidence, then classified like any imported line.'}
+        >
+          <div className="px-4 py-3">
+            <ActionForm action={recordManualTransactionAction} submit="Record" resetOnSuccess>
+              <div className="grid grid-cols-3 gap-3">
+                <Field label="Account">
+                  <Select name="bankAccountId" required>
+                    {accounts.map((a) => (
+                      <option key={a.id} value={a.id}>{`${a.bankName} — ${a.accountName}`}</option>
+                    ))}
+                  </Select>
+                </Field>
+                <Field label="Date"><Input name="transactionDate" type="date" required /></Field>
+                <Field label="Amount" hint="Negative for money out">
+                  <Input name="amount" required placeholder="-12.50" />
+                </Field>
+                <Field label="Description"><Input name="description" required /></Field>
+                <Field label="Reference"><Input name="reference" /></Field>
+              </div>
+            </ActionForm>
+          </div>
+        </Panel>
+      )}
 
       <Panel title="Supported formats">
         <table className="ledger">
