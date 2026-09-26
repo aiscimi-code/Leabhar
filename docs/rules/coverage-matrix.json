@@ -26,7 +26,8 @@
         "vat.charge_general",
         "vat.outside_scope_tax_payment",
         "vat.outside_scope_capital_loans_dividends",
-        "vat.outside_scope_own_account_transfer"
+        "vat.outside_scope_own_account_transfer",
+        "vat.import_of_goods"
       ]
     },
     {
@@ -72,25 +73,26 @@
       "id": "vatca:s9",
       "area": "vatca_section",
       "title": "s.9 Intra-Community acquisitions and accountable persons.",
-      "status": "deferred",
-      "issue": 207,
-      "reason": "Cross-border accountable persons."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.intra_community_acquisition_goods"
+      ]
     },
     {
       "id": "vatca:s10",
       "area": "vatca_section",
       "title": "s.10 Certain supplies of goods — supplier not established in the State.",
-      "status": "deferred",
-      "issue": 207,
-      "reason": "Cross-border accountable persons."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.recipient_accountable_goods_installed_or_energy"
+      ]
     },
     {
       "id": "vatca:s11",
       "area": "vatca_section",
       "title": "s.11 Other provisions in relation to goods.",
-      "status": "deferred",
-      "issue": 207,
-      "reason": "Cross-border accountable persons."
+      "status": "not_applicable",
+      "reason": "Relieves only persons who are accountable solely because of a new means of transport, excisable products or a triangulation (s.23): a VAT-registered company is accountable anyway."
     },
     {
       "id": "vatca:s12",
@@ -105,9 +107,8 @@
       "id": "vatca:s13",
       "area": "vatca_section",
       "title": "s.13 Certain supplies of services — supplier not established in the State.",
-      "status": "deferred",
-      "issue": 207,
-      "reason": "Cross-border accountable persons."
+      "status": "not_applicable",
+      "reason": "The section’s text has been deleted (printed as “…”); it provides nothing."
     },
     {
       "id": "vatca:s14",
@@ -185,17 +186,18 @@
       "id": "vatca:s23",
       "area": "vatca_section",
       "title": "s.23 Supply following intra-Community acquisition.",
-      "status": "deferred",
-      "issue": 207,
-      "reason": "Intra-Community acquisitions."
+      "status": "not_applicable",
+      "reason": "Triangulation (goods moving between two other Member States through an intermediary): the company is not the intermediary in any supply its books record. A line of that kind falls to the general rules and is flagged."
     },
     {
       "id": "vatca:s24",
       "area": "vatca_section",
       "title": "s.24 Intra-Community acquisitions of goods.",
-      "status": "deferred",
-      "issue": 207,
-      "reason": "Intra-Community acquisitions."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.intra_community_acquisition_goods"
+      ],
+      "note": "The acquisition rule quotes s.9; s.24 (what counts as an intra-Community acquisition) is its cross-reference."
     },
     {
       "id": "vatca:s25",
@@ -233,41 +235,41 @@
       "id": "vatca:s29",
       "area": "vatca_section",
       "title": "s.29 General rules.",
-      "status": "deferred",
-      "issue": 207,
-      "reason": "Place of supply of goods."
+      "status": "not_applicable",
+      "reason": "The general place-of-supply rule for goods (where the goods are when dispatch begins) leaves domestic supplies with the domestic rules; its cross-border cases are ruled under s.9, s.30, s.32 and imports."
     },
     {
       "id": "vatca:s30",
       "area": "vatca_section",
       "title": "s.30 Goods supplied to non-registered persons.",
-      "status": "deferred",
-      "issue": 207,
-      "reason": "Place of supply of goods."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.distance_sales_goods_eu_consumers"
+      ]
     },
     {
       "id": "vatca:s31",
       "area": "vatca_section",
       "title": "s.31 Gas and electricity supplies.",
-      "status": "deferred",
-      "issue": 207,
-      "reason": "Place of supply of goods."
+      "status": "not_applicable",
+      "reason": "Place of supply of gas and electricity through networks to dealers and consumers: relevant to energy traders, not to a company buying energy, whose purchases are covered by s.10 and Sch.3 para 17."
     },
     {
       "id": "vatca:s32",
       "area": "vatca_section",
       "title": "s.32 Intra-Community acquisitions of goods.",
-      "status": "deferred",
-      "issue": 207,
-      "reason": "Place of supply of goods."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.intra_community_acquisition_goods"
+      ],
+      "note": "The acquisition rule cites s.32: the acquisition is made where the goods arrive."
     },
     {
       "id": "vatca:s33",
       "area": "vatca_section",
       "title": "s.33 Application and interpretation of section 34 .",
-      "status": "deferred",
-      "issue": 207,
-      "reason": "Place of supply of goods."
+      "status": "not_applicable",
+      "reason": "Definitions and application for s.34; applied through the s.34 rules."
     },
     {
       "id": "vatca:s34",
@@ -277,16 +279,24 @@
       "ruleKeys": [
         "vat.place_of_supply_b2b_general",
         "vat.place_of_supply_services_to_business_abroad",
-        "vat.place_of_supply_services_to_consumer"
+        "vat.place_of_supply_services_to_consumer",
+        "vat.place_of_supply_immovable_goods",
+        "vat.place_of_supply_passenger_transport",
+        "vat.place_of_supply_event_admission",
+        "vat.place_of_supply_restaurant_catering",
+        "vat.place_of_supply_short_term_hire",
+        "vat.place_of_supply_electronic_services_consumers"
       ]
     },
     {
       "id": "vatca:s35",
       "area": "vatca_section",
       "title": "s.35 Use and enjoyment provisions.",
-      "status": "deferred",
-      "issue": 207,
-      "reason": "Use and enjoyment."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.use_and_enjoyment_hire_of_goods"
+      ],
+      "note": "Covers s.35(1); the other subsections concern services to non-taxable persons outside the EU and telephone cards."
     },
     {
       "id": "vatca:s36",
@@ -444,49 +454,53 @@
       "id": "vatca:s53",
       "area": "vatca_section",
       "title": "s.53 Imports – general provisions.",
-      "status": "deferred",
-      "issue": 207,
-      "reason": "Imports and exports."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.import_of_goods"
+      ],
+      "note": "The import rule quotes s.3(b) and cites s.53 (value) and s.53A (postponed accounting)."
     },
     {
       "id": "vatca:s54",
       "area": "vatca_section",
       "title": "s.54 Remission or repayment of tax on certain imported goods.",
-      "status": "deferred",
-      "issue": 207,
-      "reason": "Imports and exports."
+      "status": "not_applicable",
+      "reason": "Remission or repayment of VAT on certain imports is granted by Customs at entry; the customs entry records it, and the import rule reads that entry."
     },
     {
       "id": "vatca:s55",
       "area": "vatca_section",
       "title": "s.55 Goods in transit – miscellaneous provisions.",
-      "status": "deferred",
-      "issue": 207,
-      "reason": "Imports and exports."
+      "status": "not_applicable",
+      "reason": "Goods in transit and customs warehousing procedures: administered by Customs; nothing on a supplier’s invoice line settles them."
     },
     {
       "id": "vatca:s56",
       "area": "vatca_section",
       "title": "s.56 Zero-rating scheme for qualifying businesses.",
-      "status": "deferred",
-      "issue": 207,
-      "reason": "Imports and exports."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.zero_rate_s56_authorised_person"
+      ],
+      "note": "s.56 is applied through Sch.2 para 7(7), which the rule quotes."
     },
     {
       "id": "vatca:s57",
       "area": "vatca_section",
       "title": "s.57 Remission of tax on goods exported, etc.",
-      "status": "deferred",
-      "issue": 207,
-      "reason": "Imports and exports."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.zero_rate_export_outside_community",
+        "vat.zero_rate_export_transport"
+      ],
+      "note": "The export rules flag the proof of export s.57 and Sch.2 para 3 require."
     },
     {
       "id": "vatca:s58",
       "area": "vatca_section",
       "title": "s.58 Retail export scheme.",
-      "status": "deferred",
-      "issue": 207,
-      "reason": "Imports and exports."
+      "status": "not_applicable",
+      "reason": "The retail export scheme (tax-free shopping for travellers, Sch.2 para 7(4)): a retailer’s scheme, not a line a company’s purchases or B2B sales carry."
     },
     {
       "id": "vatca:s59",
@@ -677,17 +691,21 @@
       "id": "vatca:s82",
       "area": "vatca_section",
       "title": "s.82 Statement of intra- Community supplies of goods.",
-      "status": "deferred",
-      "issue": 210,
-      "reason": "VIES — goods."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.zero_rate_intra_community_goods"
+      ],
+      "note": "The intra-Community supply rule carries the VIES statement as its reporting effect."
     },
     {
       "id": "vatca:s83",
       "area": "vatca_section",
       "title": "s.83 Statement of intra- Community supplies of taxable services.",
-      "status": "deferred",
-      "issue": 210,
-      "reason": "VIES — services."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.place_of_supply_services_to_business_abroad"
+      ],
+      "note": "The services-to-business-abroad rule carries the VIES statement for EU customers as its reporting effect."
     },
     {
       "id": "vatca:s84",
@@ -1987,9 +2005,10 @@
       "id": "treatment:EU_GOODS_ACQ",
       "area": "vat_treatment",
       "title": "EU_GOODS_ACQ",
-      "status": "deferred",
-      "issue": 207,
-      "reason": "No rule produces intra-Community acquisitions yet."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.intra_community_acquisition_goods"
+      ]
     },
     {
       "id": "treatment:EU_SERVICES_RCV",
@@ -2040,17 +2059,19 @@
       "id": "treatment:IMPORT_PA",
       "area": "vat_treatment",
       "title": "IMPORT_PA",
-      "status": "deferred",
-      "issue": 207,
-      "reason": "No rule produces postponed accounting on imports yet."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.import_of_goods"
+      ]
     },
     {
       "id": "treatment:IMPORT_VAT_PAID",
       "area": "vat_treatment",
       "title": "IMPORT_VAT_PAID",
-      "status": "deferred",
-      "issue": 207,
-      "reason": "No rule produces import VAT paid at entry yet."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.import_of_goods"
+      ]
     },
     {
       "id": "treatment:RC_CONSTRUCTION",
