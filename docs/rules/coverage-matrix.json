@@ -539,9 +539,11 @@
       "id": "vatca:s61",
       "area": "vatca_section",
       "title": "s.61 Apportionment for dual-use inputs.",
-      "status": "deferred",
-      "issue": 209,
-      "reason": "Apportionment for dual-use inputs."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.dual_use_apportionment"
+      ],
+      "note": "The turnover proportion (s.61(4)) is computed from the posted sales and flagged in period validation when the company makes exempt and taxable supplies; which costs are dual-use, and whether another basis applies (s.61(5)), is the person's."
     },
     {
       "id": "vatca:s62",

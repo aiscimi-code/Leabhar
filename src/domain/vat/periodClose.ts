@@ -9,6 +9,7 @@ import { nowIso } from '../dates';
 import { buildVat3Return } from './report';
 import { cashBasisFindings } from './cashBasis';
 import { capitalGoodsFindings } from './capitalGoods';
+import { apportionmentFindings } from './apportionment';
 
 /**
  * VAT period close (README §24).
@@ -299,6 +300,11 @@ export function validateVatPeriod(
   // ---- Capital goods scheme: intervals due and adjustments for this period (issue #208) ----
   for (const f of capitalGoodsFindings(db, { companyId, periodStart: period.startDate, periodEnd: period.endDate })) {
     findings.push({ ...f, severity: 'warning', count: f.entityIds.length, entityType: 'capital_good' });
+  }
+
+  // ---- Dual-use inputs of a company making exempt and taxable supplies (s.61, issue #209) ----
+  for (const f of apportionmentFindings(db, { companyId, periodEnd: period.endDate })) {
+    findings.push({ ...f, severity: 'warning', count: 1, entityType: 'company', entityIds: [companyId] });
   }
 
   const blockingCount = findings.filter((f) => f.severity === 'blocking').length;
