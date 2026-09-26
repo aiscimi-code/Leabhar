@@ -1,10 +1,11 @@
 import { scryptSync, randomBytes, timingSafeEqual } from 'node:crypto';
 import { eq, and, lt } from 'drizzle-orm';
 import type { AppDatabase } from '@/db';
-import { users, sessions } from '@/db/schema';
+import { users, sessions, companyMembers, companies } from '@/db/schema';
 import { ids } from '@/lib/ids';
 import { nowIso } from '../dates';
 import { sessionCookieName } from './constants';
+import type { Role } from './permissions';
 
 export { sessionCookieName };
 
@@ -22,7 +23,9 @@ export interface AuthUser {
   id: string;
   username: string;
   displayName: string;
-  role: 'owner' | 'user' | 'readonly';
+  role: Role;
+  /** True until an invited user replaces their one-time password. */
+  mustChangePassword: boolean;
 }
 
 export interface SessionResult {
@@ -100,6 +103,7 @@ export function verifySession(
     username: user.username,
     displayName: user.displayName,
     role: user.role,
+    mustChangePassword: user.mustChangePassword,
   };
 }
 
@@ -125,17 +129,26 @@ export function createUser(
   const { hash, salt } = hashPassword(input.password);
   const id = ids.user();
 
-  db.insert(users).values({
-    id,
-    username: input.username,
-    displayName: input.displayName ?? input.username,
-    passwordHash: hash,
-    passwordSalt: salt,
-    role: 'owner',
-    active: true,
-  }).run();
+  db.transaction((tx) => {
+    tx.insert(users).values({
+      id,
+      username: input.username,
+      displayName: input.displayName ?? input.username,
+      passwordHash: hash,
+      passwordSalt: salt,
+      role: 'owner',
+      active: true,
+    }).run();
 
-  return { id, username: input.username, displayName: input.displayName ?? input.username, role: 'owner' };
+    // Business membership (issue #298): the first user is the book's owner,
+    // so they are a member of every company already in it (a seeded demo
+    // book, say). Companies created later add them in createCompany.
+    for (const company of tx.select({ id: companies.id }).from(companies).all()) {
+      tx.insert(companyMembers).values({ id: ids.member(), companyId: company.id, userId: id }).run();
+    }
+  });
+
+  return { id, username: input.username, displayName: input.displayName ?? input.username, role: 'owner', mustChangePassword: false };
 }
 
 export function authenticateUser(
@@ -157,6 +170,7 @@ export function authenticateUser(
     username: user.username,
     displayName: user.displayName,
     role: user.role,
+    mustChangePassword: user.mustChangePassword,
   };
 }
 

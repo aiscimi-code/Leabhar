@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { getDb } from '@/db';
 import { requireCompany } from '@/lib/queries';
-import { actorName } from '@/lib/session';
+import { requireActor, actorName } from '@/lib/session';
 import { addPartner, setPartnerShare } from '@/domain/config/partners';
 import type { ActionResult } from './settings-actions';
 
@@ -15,6 +15,7 @@ const fail = (e: unknown): ActionResult => ({ ok: false, error: e instanceof Err
 
 export async function addPartnerAction(formData: FormData): Promise<ActionResult> {
   try {
+    await requireActor('config.manage');
     const company = requireCompany();
     addPartner(getDb(), {
       companyId: company.id, name: field(formData, 'name'), shareBasisPoints: percentToBp(field(formData, 'share')),
@@ -30,6 +31,7 @@ export async function addPartnerAction(formData: FormData): Promise<ActionResult
 
 export async function setPartnerShareAction(formData: FormData): Promise<ActionResult> {
   try {
+    await requireActor('config.manage');
     const company = requireCompany();
     setPartnerShare(getDb(), {
       companyId: company.id, partnerId: field(formData, 'partnerId'), shareBasisPoints: percentToBp(field(formData, 'share')),

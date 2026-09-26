@@ -4,7 +4,7 @@ import { createCompany, ensureDefaultAccounts, addLoan, installFarmChart } from 
 import { postJournalEntry } from '../accounting/journal';
 import { profitAndLoss, balanceSheet } from '../reports/financial';
 import { DEFAULT_ACCOUNTS, normalBalance, signedBalance } from './chartOfAccounts';
-import { accounts, journalEntries, journalLines, loans, vatTreatments } from '@/db/schema';
+import { accounts, companies, journalEntries, journalLines, loans, vatTreatments } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { makeDate, type IsoDate } from '../dates';
 import type { AppDatabase } from '@/db';
@@ -318,6 +318,35 @@ describe('the farm chart (issue #360)', () => {
     expect(sales.treatment).toBe('OUT_OF_SCOPE');
     const vet = rows.find((r) => r.code === '6210')!;
     expect(vet.treatment).toBe('IE_STD');
+  });
+
+  it('keeps farm sales and contract work VAT-applicable for a VAT-registered farm', () => {
+    const farm = createCompany(db, {
+      legalName: 'Registered Farm Ltd', chartKind: 'farm', vatRegistrationStatus: 'registered',
+      seedYears: [2025],
+    });
+    const rows = db.select({
+      code: accounts.code, name: accounts.name, vatApplicable: accounts.vatApplicable,
+      treatment: vatTreatments.code,
+    }).from(accounts)
+      .leftJoin(vatTreatments, eq(accounts.defaultVatTreatmentId, vatTreatments.id))
+      .where(eq(accounts.companyId, farm.companyId)).all();
+    const byRow = new Map(rows.map((r) => [r.code, r]));
+
+    // Renamed for a farm, but a registered farm charges VAT on these.
+    expect(byRow.get('4000')).toMatchObject({ name: 'Farm sales', vatApplicable: true, treatment: 'IE_STD' });
+    expect(byRow.get('4020')).toMatchObject({ vatApplicable: true, treatment: 'IE_STD' });
+    // Scheme payments are outside the scope of VAT either way.
+    expect(byRow.get('4010')).toMatchObject({ vatApplicable: false, treatment: 'OUT_OF_SCOPE' });
+  });
+
+  it('installFarmChart leaves sales VAT-applicable on a VAT-registered book', () => {
+    db.update(companies).set({ vatRegistrationStatus: 'registered' })
+      .where(eq(companies.id, companyId)).run();
+    installFarmChart(db, companyId, 'test');
+    const sales = db.select().from(accounts).where(eq(accounts.id, byCode['4000']!)).get()!;
+    expect(sales.name).toBe('Farm sales');
+    expect(sales.vatApplicable).toBe(true);
   });
 
   it('installFarmChart adds and renames, but never touches a renamed account', () => {

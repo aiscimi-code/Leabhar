@@ -1,8 +1,8 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "a1b92cde-b24e-4bc4-a95f-d462e64f79fe",
-  "prevId": "984c4636-5e4a-4e6b-840a-d72525d20c5c",
+  "id": "ebd57db9-9c6c-43ac-90ef-b74d5b495d1e",
+  "prevId": "49911393-2932-4270-ae4f-4a0895fd21f4",
   "tables": {
     "bank_accounts": {
       "name": "bank_accounts",
@@ -313,6 +313,62 @@
           "notNull": false,
           "autoincrement": false
         },
+        "eori_basis": {
+          "name": "eori_basis",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "eori_confirmed_by": {
+          "name": "eori_confirmed_by",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "eori_confirmed_at": {
+          "name": "eori_confirmed_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "eu_vat_number": {
+          "name": "eu_vat_number",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "eu_vat_registered_from": {
+          "name": "eu_vat_registered_from",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "eu_vat_basis": {
+          "name": "eu_vat_basis",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "eu_vat_confirmed_by": {
+          "name": "eu_vat_confirmed_by",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "eu_vat_confirmed_at": {
+          "name": "eu_vat_confirmed_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
         "revenue_registration_info": {
           "name": "revenue_registration_info",
           "type": "text",
@@ -463,6 +519,27 @@
         },
         "document_watch_path": {
           "name": "document_watch_path",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "archived_at": {
+          "name": "archived_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "archived_by": {
+          "name": "archived_by",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "archive_basis": {
+          "name": "archive_basis",
           "type": "text",
           "primaryKey": false,
           "notNull": false,
@@ -644,8 +721,8 @@
       "uniqueConstraints": {},
       "checkConstraints": {}
     },
-    "loans": {
-      "name": "loans",
+    "company_registrations": {
+      "name": "company_registrations",
       "columns": {
         "id": {
           "name": "id",
@@ -661,78 +738,53 @@
           "notNull": true,
           "autoincrement": false
         },
-        "lender_name": {
-          "name": "lender_name",
+        "registration_type": {
+          "name": "registration_type",
           "type": "text",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
         },
-        "loan_name": {
-          "name": "loan_name",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "kind": {
-          "name": "kind",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "'term_loan'"
-        },
-        "currency": {
-          "name": "currency",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "'EUR'"
-        },
-        "account_id": {
-          "name": "account_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "principal_minor": {
-          "name": "principal_minor",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": 0
-        },
-        "drawdown_date": {
-          "name": "drawdown_date",
+        "label": {
+          "name": "label",
           "type": "text",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
         },
-        "maturity_date": {
-          "name": "maturity_date",
+        "registration_number": {
+          "name": "registration_number",
           "type": "text",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
         },
-        "active": {
-          "name": "active",
-          "type": "integer",
+        "registered_from": {
+          "name": "registered_from",
+          "type": "text",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false,
-          "default": true
+          "autoincrement": false
+        },
+        "deregistered_on": {
+          "name": "deregistered_on",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
         },
         "notes": {
           "name": "notes",
           "type": "text",
           "primaryKey": false,
           "notNull": false,
+          "autoincrement": false
+        },
+        "recorded_by": {
+          "name": "recorded_by",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
           "autoincrement": false
         },
         "created_at": {
@@ -753,8 +805,8 @@
         }
       },
       "indexes": {
-        "loans_company_idx": {
-          "name": "loans_company_idx",
+        "company_registrations_company_idx": {
+          "name": "company_registrations_company_idx",
           "columns": [
             "company_id"
           ],
@@ -762,9 +814,217 @@
         }
       },
       "foreignKeys": {
-        "loans_company_id_companies_id_fk": {
-          "name": "loans_company_id_companies_id_fk",
-          "tableFrom": "loans",
+        "company_registrations_company_id_companies_id_fk": {
+          "name": "company_registrations_company_id_companies_id_fk",
+          "tableFrom": "company_registrations",
+          "tableTo": "companies",
+          "columnsFrom": [
+            "company_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "company_trading_activities": {
+      "name": "company_trading_activities",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "company_id": {
+          "name": "company_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "sector": {
+          "name": "sector",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "commenced_on": {
+          "name": "commenced_on",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "ceased_on": {
+          "name": "ceased_on",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "herd_number": {
+          "name": "herd_number",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "notes": {
+          "name": "notes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "recorded_by": {
+          "name": "recorded_by",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(datetime('now'))"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(datetime('now'))"
+        }
+      },
+      "indexes": {
+        "company_trading_activities_company_idx": {
+          "name": "company_trading_activities_company_idx",
+          "columns": [
+            "company_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "company_trading_activities_company_id_companies_id_fk": {
+          "name": "company_trading_activities_company_id_companies_id_fk",
+          "tableFrom": "company_trading_activities",
+          "tableTo": "companies",
+          "columnsFrom": [
+            "company_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "company_trading_names": {
+      "name": "company_trading_names",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "company_id": {
+          "name": "company_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "effective_from": {
+          "name": "effective_from",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "effective_to": {
+          "name": "effective_to",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "notes": {
+          "name": "notes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "recorded_by": {
+          "name": "recorded_by",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(datetime('now'))"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(datetime('now'))"
+        }
+      },
+      "indexes": {
+        "company_trading_names_company_idx": {
+          "name": "company_trading_names_company_idx",
+          "columns": [
+            "company_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "company_trading_names_company_id_companies_id_fk": {
+          "name": "company_trading_names_company_id_companies_id_fk",
+          "tableFrom": "company_trading_names",
           "tableTo": "companies",
           "columnsFrom": [
             "company_id"
@@ -868,133 +1128,6 @@
           "tableTo": "companies",
           "columnsFrom": [
             "company_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "checkConstraints": {}
-    },
-    "account_mappings": {
-      "name": "account_mappings",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "text",
-          "primaryKey": true,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "company_id": {
-          "name": "company_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "account_id": {
-          "name": "account_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "chart_name": {
-          "name": "chart_name",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "external_code": {
-          "name": "external_code",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "external_name": {
-          "name": "external_name",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "notes": {
-          "name": "notes",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "(datetime('now'))"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "(datetime('now'))"
-        }
-      },
-      "indexes": {
-        "account_mappings_company_idx": {
-          "name": "account_mappings_company_idx",
-          "columns": [
-            "company_id"
-          ],
-          "isUnique": false
-        },
-        "account_mappings_chart_idx": {
-          "name": "account_mappings_chart_idx",
-          "columns": [
-            "company_id",
-            "chart_name"
-          ],
-          "isUnique": false
-        },
-        "account_mappings_unique": {
-          "name": "account_mappings_unique",
-          "columns": [
-            "company_id",
-            "account_id",
-            "chart_name"
-          ],
-          "isUnique": true
-        }
-      },
-      "foreignKeys": {
-        "account_mappings_company_id_companies_id_fk": {
-          "name": "account_mappings_company_id_companies_id_fk",
-          "tableFrom": "account_mappings",
-          "tableTo": "companies",
-          "columnsFrom": [
-            "company_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "account_mappings_account_id_accounts_id_fk": {
-          "name": "account_mappings_account_id_accounts_id_fk",
-          "tableFrom": "account_mappings",
-          "tableTo": "accounts",
-          "columnsFrom": [
-            "account_id"
           ],
           "columnsTo": [
             "id"
@@ -7365,6 +7498,96 @@
       "uniqueConstraints": {},
       "checkConstraints": {}
     },
+    "company_members": {
+      "name": "company_members",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "company_id": {
+          "name": "company_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(datetime('now'))"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(datetime('now'))"
+        }
+      },
+      "indexes": {
+        "company_members_unique_idx": {
+          "name": "company_members_unique_idx",
+          "columns": [
+            "company_id",
+            "user_id"
+          ],
+          "isUnique": true
+        },
+        "company_members_user_idx": {
+          "name": "company_members_user_idx",
+          "columns": [
+            "user_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "company_members_company_id_companies_id_fk": {
+          "name": "company_members_company_id_companies_id_fk",
+          "tableFrom": "company_members",
+          "tableTo": "companies",
+          "columnsFrom": [
+            "company_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "company_members_user_id_users_id_fk": {
+          "name": "company_members_user_id_users_id_fk",
+          "tableFrom": "company_members",
+          "tableTo": "users",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
     "depreciation_charges": {
       "name": "depreciation_charges",
       "columns": {
@@ -8519,6 +8742,14 @@
           "notNull": true,
           "autoincrement": false,
           "default": true
+        },
+        "must_change_password": {
+          "name": "must_change_password",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": false
         },
         "created_at": {
           "name": "created_at",

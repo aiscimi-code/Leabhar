@@ -40,7 +40,26 @@ export const companies = sqliteTable('companies', {
     enum: ['not_registered', 'registered', 'deregistered', 'pending'],
   }).notNull().default('not_registered'),
   vatDeregistrationDate: text('vat_deregistration_date'),
+  /**
+   * The EORI number for customs (issue #297). A person records it and says
+   * what they checked it against; `recordEoriNumber` writes the confirmation
+   * fields beside it.
+   */
   eoriNumber: text('eori_number'),
+  eoriBasis: text('eori_basis'),
+  eoriConfirmedBy: text('eori_confirmed_by'),
+  eoriConfirmedAt: text('eori_confirmed_at'),
+  /**
+   * The VAT identification number used for intra-Community transactions
+   * (issue #297). In Ireland it is the registration number with the extra
+   * character Revenue issues for VIES, so it can differ from `vatNumber`; the
+   * VIES statement carries it, not the registration number.
+   */
+  euVatNumber: text('eu_vat_number'),
+  euVatRegisteredFrom: text('eu_vat_registered_from'),
+  euVatBasis: text('eu_vat_basis'),
+  euVatConfirmedBy: text('eu_vat_confirmed_by'),
+  euVatConfirmedAt: text('eu_vat_confirmed_at'),
   revenueRegistrationInfo: text('revenue_registration_info'),
 
   corporationTaxRegistered: integer('corporation_tax_registered', { mode: 'boolean' })
@@ -110,6 +129,16 @@ export const companies = sqliteTable('companies', {
    * auto-pulled file always knows which books it belongs to.
    */
   documentWatchPath: text('document_watch_path'),
+
+  /**
+   * When the books were archived (issue #297): taken out of the working set
+   * without anything being deleted. An archived business is not the active
+   * one, but it can be brought back, and everything recorded about it is
+   * still there.
+   */
+  archivedAt: text('archived_at'),
+  archivedBy: text('archived_by'),
+  archiveBasis: text('archive_basis'),
 
   notes: text('notes'),
   ...timestamps,
@@ -219,3 +248,74 @@ export const loans = sqliteTable('loans', {
   notes: text('notes'),
   ...timestamps,
 }, (t) => [index('loans_company_idx').on(t.companyId)]);
+
+/**
+ * Trading names (issue #297): a business may trade under more than one name,
+ * and the names it traded under change over time. Rows are effective-dated and
+ * never deleted — a name stops with `effectiveTo`; the `companies.tradingName`
+ * field stays as the current name, updated in the same transaction as the row
+ * that set it, so screens keep working off one value.
+ */
+export const companyTradingNames = sqliteTable('company_trading_names', {
+  id: text('id').primaryKey(),
+  companyId: text('company_id').notNull().references(() => companies.id),
+  name: text('name').notNull(),
+  effectiveFrom: text('effective_from').notNull(),
+  /** null == still trading under this name. */
+  effectiveTo: text('effective_to'),
+  notes: text('notes'),
+  recordedBy: text('recorded_by').notNull(),
+  ...timestamps,
+}, (t) => [index('company_trading_names_company_idx').on(t.companyId)]);
+
+/**
+ * The activities the business trades in (issue #297). A business can run more
+ * than one, and they start and stop on their own dates; the accounts of a sole
+ * trader or partnership are per-activity in places (income averaging, stock
+ * relief), so the activity list is evidence, not decoration. A farm is one
+ * sector among these, with its Department of Agriculture herd number.
+ */
+export const companyTradingActivities = sqliteTable('company_trading_activities', {
+  id: text('id').primaryKey(),
+  companyId: text('company_id').notNull().references(() => companies.id),
+  name: text('name').notNull(),
+  sector: text('sector', {
+    enum: [
+      'farming', 'retail', 'construction', 'professional_services', 'hospitality',
+      'transport', 'manufacturing', 'other',
+    ],
+  }).notNull(),
+  commencedOn: text('commenced_on').notNull(),
+  /** null == still trading. */
+  ceasedOn: text('ceased_on'),
+  /** Department of Agriculture herd number. Recorded for farming only. */
+  herdNumber: text('herd_number'),
+  notes: text('notes'),
+  recordedBy: text('recorded_by').notNull(),
+  ...timestamps,
+}, (t) => [index('company_trading_activities_company_idx').on(t.companyId)]);
+
+/**
+ * Tax and Revenue registrations the books need to know about (issue #297):
+ * income tax (a sole trader's or partnership's own registration), PAYE (the
+ * employer registration payroll runs against, EPIC 20, #315), RCT, and
+ * anything else the business is registered for. VAT and corporation tax have their
+ * own dated columns on `companies` because VAT turns on them everywhere.
+ * Effective-dated like every other registration fact.
+ */
+export const companyRegistrations = sqliteTable('company_registrations', {
+  id: text('id').primaryKey(),
+  companyId: text('company_id').notNull().references(() => companies.id),
+  registrationType: text('registration_type', {
+    enum: ['income_tax', 'paye', 'rct', 'other'],
+  }).notNull(),
+  /** What the registration is, where the type is 'other' (e.g. "DAC7"). */
+  label: text('label'),
+  registrationNumber: text('registration_number'),
+  registeredFrom: text('registered_from').notNull(),
+  /** null == still registered. */
+  deregisteredOn: text('deregistered_on'),
+  notes: text('notes'),
+  recordedBy: text('recorded_by').notNull(),
+  ...timestamps,
+}, (t) => [index('company_registrations_company_idx').on(t.companyId)]);
