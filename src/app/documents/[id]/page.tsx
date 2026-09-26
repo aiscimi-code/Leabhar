@@ -2,8 +2,9 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { documentDetail, unpostedTransactionOptions } from '@/lib/queries';
 import {
-  Page, Panel, Badge, ProvenanceBadge, Help, Empty, LinkButton,
+  Page, Panel, Badge, ProvenanceBadge, Help, Empty, LinkButton, Field, Input, Disclosure,
 } from '@/components/primitives';
+import { ActionForm } from '@/components/ActionForm';
 import { money, date, dateTime, label, percent } from '@/lib/format';
 import { LinkControls } from '@/components/LinkControls';
 import { CandidateActions } from '@/components/CandidateActions';
@@ -11,7 +12,9 @@ import { DocumentReview } from '@/components/DocumentReview';
 import { PostInvoiceForm } from '@/components/PostInvoiceForm';
 import { chartOfAccounts, treatmentsWithRates } from '@/lib/queries';
 import { asIsoDate } from '@/domain/dates';
-import { linkDocumentAction, unmatchDocumentAction, acceptMatchAction, rejectMatchAction } from '@/app/actions';
+import {
+  linkDocumentAction, unmatchDocumentAction, acceptMatchAction, rejectMatchAction, withdrawMatchRejectionAction,
+} from '@/app/actions';
 
 export const dynamic = 'force-dynamic';
 
@@ -270,6 +273,20 @@ export default async function DocumentDetailPage({ params }: {
                       documentId={doc.id}
                       bankTransactionId={match.bankTransactionId}
                     />
+                  )}
+                  {match.decision === 'rejected' && match.provenanceStatus === 'user_rejected'
+                    && match.bankTransactionId && (
+                    <div className="mt-2">
+                      <Disclosure summary="Rejected — matching will not suggest this pairing again. Withdraw?">
+                        <ActionForm action={withdrawMatchRejectionAction} submit="Withdraw the rejection" variant="secondary">
+                          <input type="hidden" name="documentId" value={doc.id} />
+                          <input type="hidden" name="bankTransactionId" value={match.bankTransactionId} />
+                          <Field label="Why">
+                            <Input name="reason" required placeholder="Rejected by mistake" />
+                          </Field>
+                        </ActionForm>
+                      </Disclosure>
+                    </div>
                   )}
                 </div>
               ))

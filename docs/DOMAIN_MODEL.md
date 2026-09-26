@@ -836,6 +836,23 @@ candidate scored → matched | probable | possible | no_match | conflict
 A match is never applied silently below the configured auto-accept threshold
 (§16). Scores and the reasons behind them are stored, not just the outcome.
 
+A rejection sticks (issue #384): once a person rejects a pairing, re-running
+matching does not propose it again, and the outcome lists it under
+`excludedByRejection` so the reason a candidate is missing is visible. The
+rejection is withdrawn only deliberately (`withdrawMatchRejection`, with a
+reason, audited); the row becomes `superseded` and the pairing can be scored
+again.
+
+A statement line whose movement is already in the ledger — the far side of a
+transfer classified from another own account, or a journal entered by hand —
+is linked to that journal rather than posted twice (issue #385).
+`suggestJournalMatches` lists posted, unreversed journals that move exactly the
+line's base amount on its bank account's ledger within a date window and that
+no line on the account already evidences; `linkBankTransactionToJournal` marks
+the line `posted` against it, posting nothing new. It is refused for a rolled
+back or already-posted line, a reversed journal, an amount that differs, or a
+journal another line already evidences.
+
 ### VAT period
 
 ```

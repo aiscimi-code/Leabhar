@@ -38,6 +38,11 @@ export interface MatchOutcome {
   ambiguous: boolean;
   applied: boolean;
   matchRecordIds: string[];
+  /**
+   * Bank lines left out because a person already rejected them for this
+   * document (issue #384). A "no" sticks until it is withdrawn.
+   */
+  excludedByRejection: string[];
 }
 
 export function findMatchesForDocument(
@@ -89,7 +94,16 @@ export function findMatchesForDocument(
     conditions.push(lte(bankTransactions.transactionDate, addDays(date, windowDays)));
   }
 
-  const transactions = db.select().from(bankTransactions).where(and(...conditions)).all();
+  // A pair a person rejected is never proposed again — let alone
+  // auto-accepted — until the rejection is withdrawn (issue #384).
+  const rejected = new Set(db.select({ id: documentMatches.bankTransactionId }).from(documentMatches)
+    .where(and(
+      eq(documentMatches.documentId, document.id),
+      eq(documentMatches.provenanceStatus, 'user_rejected'),
+    )).all().map((r) => r.id).filter((id): id is string => id !== null));
+  const eligible = db.select().from(bankTransactions).where(and(...conditions)).all();
+  const transactions = eligible.filter((t) => !rejected.has(t.id));
+  const excludedByRejection = eligible.filter((t) => rejected.has(t.id)).map((t) => t.id);
 
   const candidates = transactions
     .map((transaction) => scoreMatch(forMatching, toTransaction(transaction)))
@@ -214,6 +228,7 @@ export function findMatchesForDocument(
     ambiguous: ranked.ambiguous,
     applied: canAutoAccept,
     matchRecordIds,
+    excludedByRejection,
   };
 }
 
@@ -573,4 +588,48 @@ export function unmatchedTransactions(
   return db.select().from(bankTransactions)
     .where(and(...conditions))
     .orderBy(bankTransactions.transactionDate).all();
+}
+
+/**
+ * Withdraw a rejection (issue #384): the person who said "not this line" has
+ * changed their mind, so the pair may be proposed again the next time
+ * matching runs. The earlier decision stays in the audit trail.
+ */
+export function withdrawMatchRejection(
+  db: AppDatabase,
+  params: {
+    companyId: string; documentId: string; bankTransactionId: string;
+    actor: string; reason: string;
+  },
+): void {
+  if (!params.reason.trim()) throw new Error('Say why the rejection is being withdrawn.');
+  db.transaction((tx) => {
+    const changed = tx.update(documentMatches).set({
+      decision: 'superseded',
+      provenanceStatus: 'manually_entered',
+      decidedAt: nowIso(),
+      decidedBy: params.actor,
+      decisionReason: `Rejection withdrawn: ${params.reason}`,
+    }).where(and(
+      eq(documentMatches.companyId, params.companyId),
+      eq(documentMatches.documentId, params.documentId),
+      eq(documentMatches.bankTransactionId, params.bankTransactionId),
+      eq(documentMatches.provenanceStatus, 'user_rejected'),
+    )).run().changes;
+    if (changed === 0) throw new Error('That pair has not been rejected, so there is nothing to withdraw.');
+    tx.insert(auditEvents).values({
+      id: ids.audit(),
+      companyId: params.companyId,
+      occurredAt: nowIso(),
+      entityType: 'document',
+      entityId: params.documentId,
+      action: 'settings_changed',
+      field: 'match_rejection',
+      previousValue: params.bankTransactionId,
+      newValue: null,
+      reason: params.reason,
+      source: 'user',
+      actor: params.actor,
+    }).run();
+  });
 }

@@ -1,3 +1,4 @@
+import { suggestJournalMatches } from '@/domain/banking/journalLink';
 import { listStatementImports } from '@/domain/banking/import';
 import { and, eq, desc, sql, isNull, isNotNull, ne, or, inArray } from 'drizzle-orm';
 import { getDb } from '@/db';
@@ -348,10 +349,23 @@ export function transactionDetail(transactionId: string) {
       documentId: r.invoice.documentId,
     }));
 
+  // Issue #385: journals already in the ledger that this line may be the
+  // other side of — typically a transfer classified from another own account.
+  const journalSuggestions = transaction.journalEntryId || transaction.status === 'rolled_back'
+    ? []
+    : suggestJournalMatches(db, { companyId: company.id, bankTransactionId: transaction.id })
+      .map((c) => ({
+        ...c,
+        transferFromName: c.transferFromBankAccount
+          ? db.select({ name: bankAccounts.accountName }).from(bankAccounts)
+            .where(eq(bankAccounts.id, c.transferFromBankAccount)).get()?.name ?? null
+          : null,
+      }));
+
   return {
     transaction, account, treatment, supplier, customer, entry, lines,
     vatEntries: vatRows, matchedDocument, candidates, audit, bankAccount, statementImport,
-    company, trace, openInvoices,
+    company, trace, openInvoices, journalSuggestions,
   };
 }
 

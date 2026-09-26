@@ -53,6 +53,8 @@ import {
   postCapitalGoodDisposalAdjustment, capitalGoodsOverview,
 } from '@/domain/vat/capitalGoods';
 import { eq } from 'drizzle-orm';
+import { suggestJournalMatches, linkBankTransactionToJournal } from '@/domain/banking/journalLink';
+import { withdrawMatchRejection } from '@/domain/matching/service';
 import { resolveVatPeriodId } from '@/agent/books';
 import { reconcileVatReturn } from '@/domain/vat/reconcile';
 import { buildRtdReturn } from '@/domain/vat/rtd';
@@ -146,6 +148,13 @@ Commands:
   link --document <id> --transaction <id>          Manually link a doc to a txn
   reject-match --document <id> --transaction <id>  Reject a scored candidate
   unmatch --document <id> --reason "..."           Remove a link
+  withdraw-rejection --document <id> --transaction <id> --reason "..." --actor "Name"
+      Undo a rejected match, so matching may suggest the pairing again
+  suggest-journal --transaction <id> [--window-days 7]
+      Posted journals this line may already be, e.g. a transfer classified
+      from the other account; nothing is written
+  link-journal --transaction <id> --journal <id> --reason "..." --actor "Name"
+      Mark the line as the evidence for that journal (posts nothing new)
   create-supplier --name "..." [--country <IE>]    Create a supplier (ai_suggestion)
   reconcile --account <id>               Compute reconciliation (read-only)
             --from <date> --to <date>
@@ -794,6 +803,40 @@ export async function main(argv: string[], options: CliOptions = {}): Promise<nu
         });
         unmatchDocumentLink(db, parsed);
         print({ unmatched: true, documentId: parsed.documentId }, format);
+        return 0;
+      }
+
+      case 'withdraw-rejection': {
+        const documentId = requireFlag(flags, 'document', 'document-id', 'documentId');
+        const bankTransactionId = requireFlag(flags, 'transaction', 'transaction-id', 'transactionId', 'bank-transaction-id', 'bankTransactionId');
+        withdrawMatchRejection(db, {
+          companyId, documentId, bankTransactionId,
+          reason: requireFlag(flags, 'reason'),
+          actor: requireFlag(flags, 'actor'),
+        });
+        print({ withdrawn: true, documentId, bankTransactionId }, format);
+        return 0;
+      }
+
+      case 'suggest-journal': {
+        const windowDays = getFlag(flags, 'window-days');
+        print(suggestJournalMatches(db, {
+          companyId,
+          bankTransactionId: requireFlag(flags, 'transaction', 'transaction-id', 'transactionId', 'bank-transaction-id', 'bankTransactionId'),
+          windowDays: windowDays ? Number(windowDays) : undefined,
+        }), format);
+        return 0;
+      }
+
+      case 'link-journal': {
+        const bankTransactionId = requireFlag(flags, 'transaction', 'transaction-id', 'transactionId', 'bank-transaction-id', 'bankTransactionId');
+        const journalEntryId = requireFlag(flags, 'journal', 'journal-id', 'journalEntryId');
+        linkBankTransactionToJournal(db, {
+          companyId, bankTransactionId, journalEntryId,
+          reason: requireFlag(flags, 'reason'),
+          actor: requireFlag(flags, 'actor'),
+        });
+        print({ linked: true, bankTransactionId, journalEntryId }, format);
         return 0;
       }
 

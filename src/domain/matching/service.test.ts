@@ -6,7 +6,7 @@ import { importStatement } from '../banking/import';
 import { storeDocument } from '../documents/storage';
 import {
   findMatchesForDocument, acceptMatch, rejectMatch, unmatchDocument,
-  matchAllUnmatched, unmatchedTransactions,
+  matchAllUnmatched, unmatchedTransactions, withdrawMatchRejection,
 } from './service';
 import {
   documents, bankTransactions, documentMatches, reviewItems, auditEvents, suppliers,
@@ -344,5 +344,36 @@ describe('bulk matching', () => {
     const unmatched = unmatchedTransactions(db, { companyId });
     expect(unmatched).toHaveLength(2);
     expect(unmatched.map((t) => t.description)).not.toContain('VERCEL INC');
+  });
+});
+
+describe('a rejected match stays rejected (#384)', () => {
+  it('is never proposed again, let alone auto-accepted, until the rejection is withdrawn', () => {
+    const documentId = addDocument();
+    const first = findMatchesForDocument(db, { companyId, documentId, autoAcceptThreshold: null });
+    const vercelLine = first.best!.bankTransactionId;
+    rejectMatch(db, { companyId, documentId, bankTransactionId: vercelLine, actor: 'joseph', reason: 'Different invoice' });
+
+    // Re-running with auto-accept on: the high-scoring pair is left out, not applied.
+    const again = findMatchesForDocument(db, { companyId, documentId });
+    expect(again.applied).toBe(false);
+    expect(again.candidates.map((c) => c.bankTransactionId)).not.toContain(vercelLine);
+    expect(again.excludedByRejection).toEqual([vercelLine]);
+    expect(db.select().from(documents).where(eq(documents.id, documentId)).get()!.matchedTransactionId).toBeNull();
+
+    withdrawMatchRejection(db, {
+      companyId, documentId, bankTransactionId: vercelLine, actor: 'joseph', reason: 'It was this invoice after all',
+    });
+    const after = findMatchesForDocument(db, { companyId, documentId });
+    expect(after.excludedByRejection).toEqual([]);
+    expect(after.best!.bankTransactionId).toBe(vercelLine);
+  });
+
+  it('refuses to withdraw a rejection that was never made', () => {
+    const documentId = addDocument();
+    const line = db.select().from(bankTransactions).get()!;
+    expect(() => withdrawMatchRejection(db, {
+      companyId, documentId, bankTransactionId: line.id, actor: 'joseph', reason: 'x',
+    })).toThrow(/nothing to withdraw/);
   });
 });
