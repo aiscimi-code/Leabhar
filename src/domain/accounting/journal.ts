@@ -193,7 +193,8 @@ export function postJournalEntry(db: AppDatabase, input: PostJournalInput): Post
         baseCredit = credit === 0 ? asMinor(0) : multiplyRational(credit, numerator, denominator);
       }
 
-      return { line, index, debit, credit, currency, baseDebit, baseCredit };
+      return { line, index, debit, credit, currency, baseDebit, baseCredit,
+        accountCode: account.code, accountName: account.name };
     });
 
     // ---- The balancing rule ----
@@ -253,6 +254,11 @@ export function postJournalEntry(db: AppDatabase, input: PostJournalInput): Post
         companyId: input.companyId,
         lineNumber: p.index + 1,
         accountId: p.line.accountId,
+        // The account's identity at post time (issue #370). The line is
+        // evidence: it keeps reading the same even if the account is renamed
+        // later.
+        accountCode: p.accountCode,
+        accountName: p.accountName,
         debitMinor: p.debit,
         creditMinor: p.credit,
         currency: p.currency,
