@@ -9,3 +9,4 @@ export * from './invoices';
 export * from './operations';
 export * from './irishRules';
 export * from './capitalGoods';
+export * from './corporationTax';

@@ -9,6 +9,7 @@ import { buildVat3Return } from '../vat/report';
 import { accountBalance } from '../accounting/ledger';
 import { systemAccountId } from '../config/setup';
 import type { IsoDate } from '../dates';
+import { computeCorporationTax, type CtComputation } from '../corporationTax/computation';
 
 /**
  * Year-end pack (README §33, §34).
@@ -16,13 +17,12 @@ import type { IsoDate } from '../dates';
  * The objective is a clean package of evidence and figures an accountant can
  * understand without asking where anything came from.
  *
- * The corporation tax section is deliberately a *worksheet* and not a
- * calculation. README §33 requires that accounting profit and tax-adjusted
- * profit be clearly distinguished and that the final liability not be claimed
- * as correct; §48 forbids inventing Revenue requirements. So this computes the
- * adjustments it can compute from the books — depreciation added back, capital
- * allowances deducted — states each one's basis, and stops. It does not apply a
- * rate or produce a liability.
+ * The corporation tax section is the computation in
+ * `corporationTax/computation.ts` (issue #211): accounting profit adjusted to
+ * taxable profit, each adjustment citing its provision, charged at the rates
+ * the statutory rules state. Treatments the books cannot settle are
+ * suggested and listed for a person to decide, and what is not yet computed
+ * (losses, balancing charges, surcharges) is stated in the findings.
  */
 
 export interface TaxAdjustment {
@@ -34,7 +34,11 @@ export interface TaxAdjustment {
 export interface TaxComputation {
   accountingProfitMinor: number;
   adjustments: TaxAdjustment[];
+  /** Case I: trading profit (negative for a trading loss). */
   taxAdjustedProfitMinor: number;
+  nonTradingIncomeMinor: number;
+  corporationTaxMinor: number;
+  computation: CtComputation;
   disclaimer: string;
 }
 
@@ -107,63 +111,24 @@ export function yearEndPack(
     capitalAllowanceYears: asset.capitalAllowanceYears,
   }));
 
-  // ---- Tax computation worksheet ----
-  const depreciationCharged = accountBalance(db, {
-    companyId: params.companyId,
-    accountId: systemAccountId(db, params.companyId, 'depreciation_expense'),
-    from: params.from,
-    asOf: params.to,
-  });
-
-  const capitalAllowances = assets.reduce((sum, asset) => {
-    // Straight-line wear and tear, as configured per asset. A part-year is not
-    // apportioned here because Irish wear-and-tear is not time-apportioned in
-    // the first year, but the rate and period are the user's to set.
-    if (asset.purchaseDate > params.to) return sum;
-    const annual = Math.round(
-      (asset.costMinor * asset.capitalAllowanceRateBasisPoints) / 10_000,
-    );
-    return sum + annual;
-  }, 0);
-
-  const adjustments: TaxAdjustment[] = [];
-
-  if (depreciationCharged !== 0) {
-    adjustments.push({
-      label: 'Add back: depreciation charged in the accounts',
-      amountMinor: depreciationCharged,
-      explanation: 'Your own depreciation policy is not an allowable deduction for Irish '
-        + 'corporation tax. It is added back here and replaced by capital allowances below.',
-    });
-  }
-
-  if (capitalAllowances !== 0) {
-    adjustments.push({
-      label: 'Deduct: capital allowances (wear and tear)',
-      amountMinor: -capitalAllowances,
-      explanation: 'Calculated from each asset’s configured rate and period, currently '
-        + 'straight line. The rates are configuration, not built into this application, and '
-        + 'you should confirm them against current legislation. Balancing allowances and '
-        + 'charges on disposals are NOT calculated here.',
-    });
-  }
-
-  const taxAdjustedProfitMinor = pl.netProfit.valueMinor
-    + adjustments.reduce((sum, a) => sum + a.amountMinor, 0);
+  // ---- Corporation tax computation (issue #211) ----
+  const ct = computeCorporationTax(db, { companyId: params.companyId, from: params.from, to: params.to });
+  const describe = (c: CtComputation['lines'][number]) => [
+    c.explanation,
+    c.citations.length ? `Authority: ${c.citations.map((x) => [x.section, x.citation].filter(Boolean).join(', ')).join('; ')}.` : '',
+  ].filter(Boolean).join(' ');
 
   const taxComputation: TaxComputation = {
-    accountingProfitMinor: pl.netProfit.valueMinor,
-    adjustments,
-    taxAdjustedProfitMinor,
+    accountingProfitMinor: ct.accountingProfitMinor,
+    adjustments: ct.lines.map((l) => ({ label: l.label, amountMinor: l.amountMinor, explanation: describe(l) })),
+    taxAdjustedProfitMinor: ct.tradingProfitMinor - ct.tradingLossMinor,
+    nonTradingIncomeMinor: ct.nonTradingIncomeMinor,
+    corporationTaxMinor: ct.corporationTaxMinor,
+    computation: ct,
     disclaimer:
-      'This worksheet shows only the adjustments this application can derive from your '
-      + 'books. It is not a corporation tax computation and no tax rate has been applied. '
-      + 'Adjustments it does NOT make include: disallowable entertainment and other '
-      + 'non-deductible expenditure, balancing allowances and charges on asset disposals, '
-      + 'losses brought forward, the distinction between trading and non-trading income and '
-      + 'their different rates, close company surcharges, and any reliefs or credits you may '
-      + 'be entitled to. Give this worksheet to your accountant rather than treating the '
-      + 'tax-adjusted profit as your taxable profit.',
+      'Trading profit is charged at 12.5% (TCA s.21) and other income at 25% (s.21A), as Revenue\'s Notes for Guidance '
+      + 'state them. Treatments the books cannot settle are suggested, not decided, until a person chooses. '
+      + ct.findings.join(' '),
   };
 
   // ---- Director's current account ----
