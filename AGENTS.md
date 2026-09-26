@@ -84,6 +84,13 @@ for the agent workflow.
 
 ```bash
 npm run typecheck && npm test
+npx next build        # also, when a change touches src/app or src/components
 ```
+
+This is the only gate. No CI runs on pull requests, by decision (builds on
+every PR cost more than they caught). Run it in your own workspace before
+opening or updating a PR, and report the result in the PR description. A
+fix-up PR for something the gate would have caught is the failure this rule
+exists to prevent.
 
 Financial logic needs a deterministic test. Never rely on an LLM for arithmetic.
