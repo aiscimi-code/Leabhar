@@ -53,6 +53,7 @@ export const ids = {
   fxRate: () => newId('fx'),
   backup: () => newId('bak'),
   user: () => newId('usr'),
+  member: () => newId('mem'),
   session: () => newId('ses'),
   shareCapital: () => newId('sc'),
   glossary: () => newId('gls'),
