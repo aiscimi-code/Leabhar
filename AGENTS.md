@@ -4,6 +4,18 @@ Local-first Irish accounting system. `docs/DOMAIN_MODEL.md` is the design
 document and states the invariants; `docs/RUNNING.md` covers setup. The
 repository `README.md` is the original specification.
 
+## Scope
+
+The roadmap is the epic index in issue #295. We work through the epics in order.
+
+- **Local-first.** Leabhar is a desktop app: each business is its own SQLite
+  book on the user's machine. A hosted version comes later.
+  - Build nothing that needs a Leabhar server.
+  - Read server-flavoured subtasks locally. For example, "row-level security"
+    means company scoping in the domain layer. Each epic's comment records how.
+- **PAYE is in scope** (payroll and ERR, #315, #316). Revenue submissions go
+  straight from the app, using the employer's own certificate.
+
 ## Non-negotiables
 
 These are enforced by tests. Breaking one is a bug, not a trade-off.
