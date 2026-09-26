@@ -85,6 +85,12 @@ src/lib/        queries and formatting for the UI
 Arithmetic belongs in `src/domain`. Pages render what the domain returns; they
 never recompute a figure, so a report and the screen showing it cannot disagree.
 
+Written conventions live in `docs/`: architecture decisions and their rationale
+in `docs/adr/` (add an ADR for any decision a future contributor would
+re-litigate, never edit an accepted one), API conventions in `docs/API.md`,
+error handling in `docs/ERRORS.md`, feature flags in `docs/FEATURE_FLAGS.md`
+(there are none by design), and testing in `docs/TESTING.md`.
+
 The domain layer is UI-independent: every function takes a plain `AppDatabase`.
 `src/agent/` and `src/cli/` build on that to drive import, matching,
 classification and reconciliation from the terminal without Next.js. The same
