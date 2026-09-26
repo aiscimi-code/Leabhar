@@ -24,7 +24,7 @@
 import { and, eq } from 'drizzle-orm';
 import type { AppDatabase } from '@/db';
 import {
-  bankTransactions, companies, suppliers, customers, documents,
+  bankTransactions, companies, suppliers, customers, documents, documentLines,
   vatTreatments, irishTaxRules, irishActProvisions, irishKnowledgeSources,
 } from '@/db/schema';
 import { lookupTransactionRules, type ApplicableRule, type TransactionContext } from './transactionLookup';
@@ -320,13 +320,26 @@ export function transactionFacts(
     }
   }
 
+  // What was supplied: from the confirmed invoice's own lines and VAT wording
+  // when there is one (issue #206); the bank narrative only when there is not.
+  const docLines = doc
+    ? db.select({ description: documentLines.description }).from(documentLines)
+      .where(eq(documentLines.documentId, doc.id)).all().map((l) => l.description).filter(Boolean)
+    : [];
+  const description = doc && docLines.length
+    ? [...docLines, party?.name, ...(doc.vatLegends ?? [])].filter(Boolean).join(' ')
+    : [tx.description, tx.counterpartyName, party?.name].filter(Boolean).join(' ');
+  sources.description = doc && docLines.length
+    ? `the ${docLines.length} line(s) of confirmed invoice "${doc.originalFilename}"`
+    : 'the bank description (no confirmed invoice with lines)';
+
   const facts: SuggestionFacts = {
     transactionDate: tx.transactionDate,
     amountMinor: Math.abs(tx.amountMinor),
     currency: tx.currency,
     direction,
     counterpartyCountry,
-    description: [tx.description, tx.counterpartyName, party?.name].filter(Boolean).join(' '),
+    description,
     transactionType: tx.transactionType,
     vatRegistered: company ? company.vatRegistrationStatus === 'registered' : null,
     invoiceAvailable: !!doc,
@@ -406,9 +419,17 @@ export function suggestVatTreatment(
   if (!gathered) return null;
   const booked = db.select({ vatTreatmentId: bankTransactions.vatTreatmentId }).from(bankTransactions)
     .where(eq(bankTransactions.id, params.bankTransactionId)).get()?.vatTreatmentId ?? null;
-  return suggestFromFacts(db, {
+  const suggestion = suggestFromFacts(db, {
     companyId: params.companyId, subjectId: params.bankTransactionId, ...gathered, bookedTreatmentId: booked,
   });
+  // A bank line is only ever a pointer to what was bought (issue #206): with a
+  // confirmed invoice, each of its lines is coded on posting; without one, the
+  // bank words are all the rules had, and a person confirms them.
+  const reason = gathered.facts.invoiceAvailable
+    ? `Read from ${gathered.factSources.description}. An invoice with lines at different treatments is coded `
+      + 'line by line when it is posted; this is one suggestion for the whole payment.'
+    : 'No confirmed invoice: this rests on the bank description alone. Confirm it, or attach and confirm the invoice.';
+  return { ...suggestion, reviewRequired: true, reviewReasons: [...suggestion.reviewReasons, reason] };
 }
 
 /**

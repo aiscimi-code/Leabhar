@@ -473,6 +473,13 @@ the rate is right only if the invoice is one composite supply. If they bear
 different rates, the line is flagged as undecidable from the invoice. Nothing
 is preselected: whether a supply is ancillary is a judgement.
 
+A bank line's statutory suggestion reads the matched confirmed invoice's own
+lines and VAT wording when there is one, never the bank narrative. A draft
+invoice is not evidence. Without a confirmed invoice the suggestion rests on
+the bank description alone and says so; bank-only lines (wages, tax,
+transfers) keep their bank-level rules but are always flagged for
+confirmation.
+
 ### Posting paths are atomic
 
 Every exported posting path — classify, reclassify, split journal,
