@@ -16,7 +16,7 @@ Consequences, subtask by subtask:
 
 | Epic subtask | What it means here |
 |---|---|
-| Business membership | A `company_members` row says which users may open which company's books in this database. The first user (the book's owner) and every company created before invites existed are members by construction. |
+| Business membership | A `company_members` row says which users may open which company's books in this database. The first user (the book's owner) is a member of every company, and each new company adds every active user. A book created before membership existed is backfilled by migration 0016: every active user becomes a member of every company already in it, so nobody loses access on upgrade. |
 | Roles (director, accountant, bookkeeper, employee, farm manager, auditor, read-only) | Values on `users.role`, enforced by one matrix in `src/domain/auth/permissions.ts`. |
 | Permission matrix | The table below. `src/domain/auth/permissions.ts` is the only place that decides who may do what; surfaces apply it. |
 | Invite user | Local: `inviteUser` creates the user with a one-time password the invoker hands over out of band. There is no email to send, so there is no invitation to send either. |

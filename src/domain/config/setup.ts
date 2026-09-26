@@ -2,7 +2,7 @@ import { and, eq } from 'drizzle-orm';
 import type { AppDatabase } from '@/db';
 import {
   companies, accounts, taxRates, vatTreatments, accountingPeriods, vatPeriods,
-  bankAccounts, auditEvents, glossaryTerms, users, companyMembers,
+  bankAccounts, auditEvents, glossaryTerms, companyTradingNames, users, companyMembers,
 } from '@/db/schema';
 import { ids } from '@/lib/ids';
 import { type IsoDate, asIsoDate, nowIso, today } from '../dates';
@@ -121,6 +121,19 @@ export function createCompany(db: AppDatabase, input: CreateCompanyInput): Creat
       baseCurrency,
       isDemo: input.isDemo ?? false,
     }).run();
+
+    // The trading name given at creation is the first row of its history
+    // (issue #297), dated from the earliest date that is known for the
+    // business, so the names it has traded under are complete from day one.
+    if (input.tradingName) {
+      tx.insert(companyTradingNames).values({
+        id: ids.tradingName(),
+        companyId,
+        name: input.tradingName,
+        effectiveFrom: input.dateIncorporated ?? input.tradeCommencedOn ?? timestamp.slice(0, 10),
+        recordedBy: 'setup',
+      }).run();
+    }
 
     // ---- Chart of accounts ----
     const accountsByKey: Record<string, string> = {};

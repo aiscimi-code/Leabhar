@@ -17,4 +17,14 @@ ALTER TABLE `users` ADD `must_change_password` integer DEFAULT false NOT NULL;--
  * same person with the same practical access rather than silently gaining or
  * losing it. 'owner' and 'readonly' rows already mean what the new set means.
  */
-UPDATE `users` SET `role` = 'bookkeeper' WHERE `role` = 'user';
+UPDATE `users` SET `role` = 'bookkeeper' WHERE `role` = 'user';--> statement-breakpoint
+/*
+ * Business membership for a book created before it existed: every active user
+ * already had access to every company in the book, so each keeps it. Without
+ * this, an upgraded book's non-owners would be refused every write, and its
+ * owner would be locked out as soon as the first invitation added a row.
+ */
+INSERT INTO `company_members` (`id`, `company_id`, `user_id`)
+  SELECT 'mem_' || lower(hex(randomblob(12))), `companies`.`id`, `users`.`id`
+  FROM `companies` CROSS JOIN `users`
+  WHERE `users`.`active` = 1;
