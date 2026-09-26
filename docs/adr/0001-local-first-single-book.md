@@ -42,3 +42,10 @@ plausible next step — a *local* multi-book, still no server.
 - The `companyId` column is not dead weight: it is load-bearing naming. Any
   "optimisation" that drops it breaks the invariant that every query is
   scoped, and would make the multi-company install harder later.
+
+## Hosted version
+
+The owner decided on 2026-09-26 that the desktop app comes first and a hosted
+version comes later (AGENTS.md "Scope", #295). This ADR governs the desktop
+app. A hosted version would be a new decision with its own ADR (tenancy,
+isolation, where the books live), not a quiet relaxation of this one.

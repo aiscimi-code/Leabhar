@@ -1,4 +1,4 @@
-# 0006. Local single-user accounts; no workspace concept
+# 0006. Local accounts per install; no workspace concept
 
 - **Status:** Accepted
 - **Date:** 2026-09-26 (recorded retroactively; decided at design time)
@@ -42,3 +42,14 @@ what a user may do, not what they may see.
 - `readonly` users can read the books but cannot post; this is enforced in
   the actions layer and should be enforced at the domain boundary when a
   write path is callable from more than one surface.
+
+## Expected to be superseded
+
+EPIC 03 (#298) will replace the three-role model. The owner decided on
+2026-09-26 to add roles within the local book: owner, director, accountant,
+bookkeeper, employee, farm manager, auditor and read-only. It also adds a
+permission matrix enforced in the domain layer, and local invite, remove and
+role-change flows, recorded in `audit_events`. That work gets its own ADR,
+which supersedes this one. Until then, this record describes the current
+code; it is not a reason to avoid building #298. The "no workspace concept"
+part stands: each business is still its own book (ADR-0001).

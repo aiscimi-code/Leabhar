@@ -50,4 +50,5 @@ and it must never affect the arithmetic. If cleared:
    a removal plan is permanent debt.
 5. It never gates an accounting or VAT computation. A figure that depends on
    a flag is a figure that cannot be reproduced from the entries, which
-   violates invariant #8.
+   violates invariant #6 (configuration resolved as of the entry's date and
+   snapshotted, so a historical figure can always be reproduced).
