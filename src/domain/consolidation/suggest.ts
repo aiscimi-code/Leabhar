@@ -9,7 +9,7 @@ import { documentEvidenceLines, type EvidenceLine } from './postDocument';
 import { checkLineRate, type LineRateCheck } from '../rules/lineRateCheck';
 import { applyCompositeSupply } from './compositeSupply';
 import { invoiceConflicts, type InvoiceConflict } from './invoiceConflicts';
-import { DOMESTIC_RC_ADVISORY_RULE_KEYS, DOMESTIC_RC_GAPS, RC_CONSTRUCTION_RULE_KEY } from '../rules/domesticReverseChargeCuration';
+import { advisoryReasons } from '../rules/advisoryRules';
 
 /**
  * The choices for coding each line of a confirmed document (issue #203).
@@ -200,11 +200,9 @@ export function documentLineChoices(db: AppDatabase, params: { companyId: string
       flags.push(`The reverse charge offered from the invoice wording rests on the ${partyLabel}'s country (${country}); `
         + 'where it is established has not been confirmed on its record.');
     }
-    // s.16 advisories (issue #208): the reverse charge may apply, on a fact nobody has recorded.
-    const matchedKeys = [statutory.decidingRule, ...statutory.supportingRules].map((r) => r?.ruleKey);
-    const advisories = matchedKeys.includes(RC_CONSTRUCTION_RULE_KEY) ? []
-      : DOMESTIC_RC_ADVISORY_RULE_KEYS.filter((k) => matchedKeys.includes(k));
-    for (const key of advisories) flags.push(DOMESTIC_RC_GAPS[key]!);
+    // Advisory rules (issue #208): a reverse charge or option may apply, on a fact nobody has recorded.
+    const advisories = advisoryReasons([statutory.decidingRule, ...statutory.supportingRules].map((r) => r?.ruleKey));
+    flags.push(...advisories);
     if (list.length === 0) flags.push('Nothing on the document or in the rules points to a treatment. Choose one.');
     if (list.length > 1) flags.push(`${list.length} treatments are possible. Read the reason for each and choose.`);
     if (statutory.status === 'fallback_only') flags.push('The statutory rules could only fall back to the standard rate; they cannot rule out an exemption.');

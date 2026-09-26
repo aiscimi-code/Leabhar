@@ -566,6 +566,52 @@ transaction decides either of them.
   - more than 10% of those sales went to customers with a VAT number (on the
     90% test).
 
+### Property
+
+- **Rent paid without VAT** is the exempt letting (Sch.1 para 11).
+- **Rent invoiced with VAT** means the landlord opted to tax the letting: the
+  invoice is its notification (VATCA s.97(1)(c)(ii)). It is suggested at the
+  standard rate.
+- **VAT on a residential letting** is flagged, because the option cannot apply
+  there (s.97(4)).
+- **Rent received** is flagged as exempt, unless the company opted to tax it.
+- **A sale or purchase of property** is flagged with the questions that decide
+  it:
+  - completion and development in the last 5 years;
+  - occupation after a taxable sale;
+  - a joint option for taxation;
+  - the pre-July-2008 transitional rules (ss.93, 95, 96).
+- **Under a joint option**, the purchaser accounts for the VAT (s.94(6)).
+  `RC_CONSTRUCTION` is offered because it has the same VAT3 effect, but it is
+  not chosen.
+
+**The capital goods scheme (ss.63-64)** is a record, not a rule, and lives in
+`src/domain/vat/capitalGoods.ts`.
+
+- **Registering a good.** A person registers each property acquired, developed
+  or refurbished from the purchase invoices its VAT is on. The total tax
+  incurred is the sum of those invoices; it is never typed.
+- **Recording use.** At the end of each interval the person records the
+  proportion of deductible use. The adjustment is then calculated
+  (`capitalGoodsMath.ts`):
+  - s.64(2), A - B, at the end of the initial interval;
+  - s.64(3), C - D, for later intervals;
+  - s.64(4), (C - D) x N, for a swing of more than 50 points, which also
+    resets the baseline;
+  - s.64(6), E x N / T or B x N / T, on a supply of the good.
+- **Posting.** The adjustment is posted in the taxable period after the interval
+  (T1 if payable, T2 if deductible) as a VAT adjustment. The account for the
+  other side is named by a person.
+- **Write-once.** Records are written once and in order. The adjustment period
+  ends on a supply.
+- **Period validation** warns when an interval has ended without its use
+  recorded, and when an adjustment belonging to the period is not posted.
+- **Tests.** The arithmetic is tested against Revenue's worked examples in the
+  Tax and Duty Manual.
+
+Rules that turn on an unrecorded fact are advisory (`advisoryRules.ts`). They
+add a reason and stop pre-selection, but never decide the treatment.
+
 ### Posting paths are atomic
 
 Every exported posting path — classify, reclassify, split journal,

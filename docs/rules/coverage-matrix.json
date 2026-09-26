@@ -549,17 +549,21 @@
       "id": "vatca:s63",
       "area": "vatca_section",
       "title": "s.63 Interpretation and application.",
-      "status": "deferred",
-      "issue": 208,
-      "reason": "Capital goods scheme — interpretation."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.capital_goods_scheme"
+      ],
+      "note": "Definitions used by the capital goods record (base tax amount, reference deduction amount, intervals)."
     },
     {
       "id": "vatca:s64",
       "area": "vatca_section",
       "title": "s.64 Capital goods scheme.",
-      "status": "deferred",
-      "issue": 208,
-      "reason": "Capital goods scheme."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.capital_goods_scheme"
+      ],
+      "note": "The capital goods record (src/domain/vat/capitalGoods.ts) computes the s.64(2), (3), (4) and (6) adjustments; the rule prompts registration of a property purchase or development."
     },
     {
       "id": "vatca:s65",
@@ -794,49 +798,62 @@
       "id": "vatca:s93",
       "area": "vatca_section",
       "title": "s.93 Supply of immovable goods (old rules).",
-      "status": "deferred",
-      "issue": 208,
-      "reason": "Immovable goods."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.supply_of_immovable_goods"
+      ],
+      "note": "Transitional rules for property held before 1 July 2008. Whether an interest pre-dates that is not on any invoice; the s.94 property rule flags every property supply and names ss.93, 95 and 96."
     },
     {
       "id": "vatca:s94",
       "area": "vatca_section",
       "title": "s.94 Supplies of immovable goods (new rules).",
-      "status": "deferred",
-      "issue": 208,
-      "reason": "Immovable goods."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.supply_of_immovable_goods",
+        "vat.joint_option_for_taxation"
+      ]
     },
     {
       "id": "vatca:s95",
       "area": "vatca_section",
       "title": "s.95 Transitional measures for supplies of immovable goods.",
-      "status": "deferred",
-      "issue": 208,
-      "reason": "Immovable goods."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.supply_of_immovable_goods"
+      ],
+      "note": "Transitional rules for property acquired or developed before 1 July 2008; flagged through the s.94 property rule, which names them."
     },
     {
       "id": "vatca:s96",
       "area": "vatca_section",
       "title": "s.96 Waiver of exemption under old rules.",
-      "status": "deferred",
-      "issue": 208,
-      "reason": "Immovable goods."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.supply_of_immovable_goods"
+      ],
+      "note": "Waivers of exemption on lettings made before 1 July 2008 and their cancellation; flagged through the s.94 property rule."
     },
     {
       "id": "vatca:s97",
       "area": "vatca_section",
       "title": "s.97 Option to tax letting of immovable goods.",
-      "status": "deferred",
-      "issue": 208,
-      "reason": "Immovable goods."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.letting_option_to_tax_exercised",
+        "vat.letting_option_to_tax_residential",
+        "vat.letting_option_to_tax_landlord"
+      ]
     },
     {
       "id": "vatca:s98",
       "area": "vatca_section",
       "title": "s.98 Valuation of an interest in immovable goods.",
-      "status": "deferred",
-      "issue": 208,
-      "reason": "Immovable goods."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.supply_of_immovable_goods"
+      ],
+      "note": "Valuation and apportionment of a property supply; the s.94 property rule flags the supply for a person to confirm the consideration from the contract."
     },
     {
       "id": "vatca:s99",
