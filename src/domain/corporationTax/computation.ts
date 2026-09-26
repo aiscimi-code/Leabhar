@@ -363,7 +363,10 @@ export function computeBase(db: AppDatabase, params: { companyId: string; from: 
   const { companyId, from, to } = params;
   const company = db.select().from(companies).where(eq(companies.id, companyId)).get();
   if (!company) throw new Error(`Company ${companyId} not found.`);
-  const tb = trialBalance(db, { companyId, asOf: asIsoDate(to), from: asIsoDate(from), baseCurrency: company.baseCurrency });
+  const tb = trialBalance(db, {
+    companyId, asOf: asIsoDate(to), from: asIsoDate(from), baseCurrency: company.baseCurrency,
+    excludeYearEndClose: true,
+  });
   const pl = tb.rows.filter((r) => r.type === 'income' || r.type === 'expense');
   const accountingProfitMinor = pl.reduce((s, r) => s + (r.type === 'income' ? r.signedMinor : -r.signedMinor), 0);
   const accountRows = new Map(db.select().from(accounts).where(eq(accounts.companyId, companyId)).all().map((a) => [a.id, a]));

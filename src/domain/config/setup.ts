@@ -2,15 +2,18 @@ import { and, eq } from 'drizzle-orm';
 import type { AppDatabase } from '@/db';
 import {
   companies, accounts, taxRates, vatTreatments, accountingPeriods, vatPeriods,
-  bankAccounts, auditEvents, glossaryTerms, companyTradingNames, users, companyMembers,
+  bankAccounts, loans, auditEvents, glossaryTerms, companyTradingNames, users, companyMembers,
 } from '@/db/schema';
 import { ids } from '@/lib/ids';
 import { type IsoDate, asIsoDate, nowIso, today } from '../dates';
-import { DEFAULT_ACCOUNTS, type SystemAccountKey } from './chartOfAccounts';
+import {
+  DEFAULT_ACCOUNTS, FARM_ACCOUNTS, FARM_ACCOUNT_OVERRIDES, farmOverrideFor, type SystemAccountKey, type ChartKind,
+} from './chartOfAccounts';
 import { DEFAULT_TAX_RATES, DEFAULT_VAT_TREATMENTS } from './vatTreatments';
 import { generateVatPeriods, generateFinancialYear, type VatFrequency } from './periods';
 import { GLOSSARY_TERMS } from '../help/glossary';
 import { postJournalEntry } from '../accounting/journal';
+import { createAccount } from './mutations';
 
 export interface CreateCompanyInput {
   legalName: string;
@@ -36,6 +39,12 @@ export interface CreateCompanyInput {
   isDemo?: boolean;
   /** Financial years and VAT periods to create up front. */
   seedYears?: number[];
+  /**
+   * Which variant of the default chart to install (issue #360): the SME chart
+   * (default) or the farm chart — the base chart with the trade-specific
+   * slots renamed for a farm and the farm's own accounts added.
+   */
+  chartKind?: ChartKind;
 }
 
 export interface CreatedCompany {
@@ -90,6 +99,27 @@ function chartSeedFor(
   }
 }
 
+/**
+ * The full seed list a company is created with: the base chart, adjusted for
+ * the entity type (issue #212), then for the sector (issue #360). A farm is
+ * usually also a sole trader, and the two adjustments compose.
+ */
+function chartSeeds(
+  entityType: 'company' | 'sole_trader' | 'partnership',
+  chartKind: ChartKind,
+  vatRegistered: boolean,
+): (typeof DEFAULT_ACCOUNTS)[number][] {
+  const seeds: (typeof DEFAULT_ACCOUNTS)[number][] = [];
+  for (const base of DEFAULT_ACCOUNTS) {
+    const seed = chartSeedFor(entityType, base);
+    if (!seed) continue;
+    const override = chartKind === 'farm' ? farmOverrideFor(seed.code, vatRegistered) : undefined;
+    seeds.push(override ? { ...seed, ...override } : seed);
+  }
+  if (chartKind === 'farm') seeds.push(...FARM_ACCOUNTS);
+  return seeds;
+}
+
 export function createCompany(db: AppDatabase, input: CreateCompanyInput): CreatedCompany {
   return db.transaction((tx) => {
     const companyId = ids.company();
@@ -138,9 +168,12 @@ export function createCompany(db: AppDatabase, input: CreateCompanyInput): Creat
     // ---- Chart of accounts ----
     const accountsByKey: Record<string, string> = {};
     const accountsByCode: Record<string, string> = {};
-    for (const [index, base] of DEFAULT_ACCOUNTS.entries()) {
-      const seed = chartSeedFor(input.entityType ?? 'company', base);
-      if (!seed) continue;
+    /** vatApplicable as seeded (after entity/sector adjustment), for wiring default treatments below. */
+    const vatApplicableByAccount = new Map<string, boolean>();
+    for (const [index, seed] of chartSeeds(
+      input.entityType ?? 'company', input.chartKind ?? 'sm',
+      input.vatRegistrationStatus === 'registered',
+    ).entries()) {
       const id = ids.account();
       tx.insert(accounts).values({
         id,
@@ -158,6 +191,7 @@ export function createCompany(db: AppDatabase, input: CreateCompanyInput): Creat
         effectiveFrom: input.dateIncorporated ?? '1900-01-01',
       }).run();
       accountsByCode[seed.code] = id;
+      vatApplicableByAccount.set(id, seed.vatApplicable ?? true);
       if (seed.systemKey) accountsByKey[seed.systemKey] = id;
     }
 
@@ -218,9 +252,8 @@ export function createCompany(db: AppDatabase, input: CreateCompanyInput): Creat
     // Wire sensible default treatments onto expense accounts.
     const standardTreatment = treatmentsByCode['IE_STD'];
     const outOfScope = treatmentsByCode['OUT_OF_SCOPE'];
-    for (const seed of DEFAULT_ACCOUNTS) {
-      const accountId = accountsByCode[seed.code]!;
-      const treatment = seed.vatApplicable === false ? outOfScope : standardTreatment;
+    for (const accountId of Object.values(accountsByCode)) {
+      const treatment = vatApplicableByAccount.get(accountId) === false ? outOfScope : standardTreatment;
       if (treatment) {
         tx.update(accounts).set({ defaultVatTreatmentId: treatment })
           .where(eq(accounts.id, accountId)).run();
@@ -279,7 +312,8 @@ export function createCompany(db: AppDatabase, input: CreateCompanyInput): Creat
       action: 'created',
       newValue: JSON.stringify({
         legalName: input.legalName,
-        accounts: DEFAULT_ACCOUNTS.length,
+        chartKind: input.chartKind ?? 'sm',
+        accounts: vatApplicableByAccount.size,
         taxRates: DEFAULT_TAX_RATES.length,
         vatTreatments: DEFAULT_VAT_TREATMENTS.length,
       }),
@@ -370,11 +404,118 @@ export function ensureDefaultAccounts(
 }
 
 /**
- * Add any seeded tax rate or VAT treatment a company does not yet have — for
- * a company created before it was added to the seed list (issue #205: the
- * livestock treatment). Never touches a row that already exists by code, so
- * it cannot overwrite a rate or treatment the user has edited.
+ * Turn an existing book's chart into the farm chart (issue #360) — for a
+ * company created before `--chart farm` existed, or before this was worth
+ * deciding at creation.
+ *
+ * Two rules keep it safe:
+ *
+ *  - an account is only renamed when its name is still the one the default
+ *    chart seeded. One the user has already renamed is theirs and is left
+ *    alone, reported in `skipped` — the same promise `ensureDefaultAccounts`
+ *    makes about never touching what the user made their own.
+ *  - renames that turn VAT off (`vatApplicable: false`) rewire the account's
+ *    default VAT treatment to out-of-scope, so a flat-rate farmer's sales
+ *    account stops preselecting a standard-rate treatment it must never use.
  */
+export function installFarmChart(
+  db: AppDatabase, companyId: string, actor?: string,
+): { added: string[]; renamed: string[]; skipped: string[] } {
+  const byCode = new Map(db.select().from(accounts)
+    .where(eq(accounts.companyId, companyId)).all().map((a) => [a.code, a]));
+
+  const standardTreatment = db.select({ id: vatTreatments.id }).from(vatTreatments)
+    .where(and(eq(vatTreatments.companyId, companyId), eq(vatTreatments.code, 'IE_STD'))).get()?.id;
+  const outOfScopeTreatment = db.select({ id: vatTreatments.id }).from(vatTreatments)
+    .where(and(eq(vatTreatments.companyId, companyId), eq(vatTreatments.code, 'OUT_OF_SCOPE'))).get()?.id;
+  const vatRegistered = db.select({ status: companies.vatRegistrationStatus }).from(companies)
+    .where(eq(companies.id, companyId)).get()?.status === 'registered';
+
+  const added: string[] = [];
+  const renamed: string[] = [];
+  const skipped: string[] = [];
+
+  db.transaction((tx) => {
+    const startOrder = byCode.size;
+    for (const [offset, seed] of FARM_ACCOUNTS.entries()) {
+      if (byCode.has(seed.code)) continue;
+      const id = ids.account();
+      tx.insert(accounts).values({
+        id,
+        companyId,
+        code: seed.code,
+        name: seed.name,
+        type: seed.type,
+        subtype: seed.subtype ?? null,
+        vatApplicable: seed.vatApplicable ?? true,
+        isSystem: seed.systemKey !== undefined,
+        systemKey: seed.systemKey ?? null,
+        reportSection: seed.reportSection,
+        reportOrder: startOrder + offset,
+        description: seed.description ?? null,
+        effectiveFrom: '1900-01-01',
+        defaultVatTreatmentId: seed.vatApplicable === false ? outOfScopeTreatment ?? null : standardTreatment ?? null,
+      }).run();
+      added.push(seed.code);
+    }
+
+    const timestamp = nowIso();
+    for (const code of Object.keys(FARM_ACCOUNT_OVERRIDES)) {
+      const override = farmOverrideFor(code, vatRegistered)!;
+      const existing = byCode.get(code);
+      const baseSeed = DEFAULT_ACCOUNTS.find((s) => s.code === code);
+      if (!existing || !baseSeed) continue;
+      // Already the farm name: nothing to do. Still the seeded name: apply the
+      // farm rename. Anything else is the user's own name — never touched.
+      if (existing.name === override.name) continue;
+      if (existing.name !== baseSeed.name) {
+        skipped.push(code);
+        continue;
+      }
+      tx.update(accounts).set({
+        name: override.name,
+        description: override.description ?? existing.description,
+        vatApplicable: override.vatApplicable ?? existing.vatApplicable,
+        // Only a rename that turns VAT off rewires the default treatment; any
+        // other keeps the treatment the account already has.
+        defaultVatTreatmentId: override.vatApplicable === false
+          ? outOfScopeTreatment ?? existing.defaultVatTreatmentId
+          : existing.defaultVatTreatmentId,
+        updatedAt: timestamp,
+      }).where(eq(accounts.id, existing.id)).run();
+      renamed.push(code);
+
+      tx.insert(auditEvents).values({
+        id: ids.audit(),
+        companyId,
+        occurredAt: timestamp,
+        entityType: 'account',
+        entityId: existing.id,
+        action: 'updated', field: 'name',
+        previousValue: existing.name,
+        newValue: override.name,
+        source: 'user', actor: actor ?? 'user',
+        reason: 'Farm chart installed',
+      }).run();
+    }
+
+    if (added.length > 0 || renamed.length > 0) {
+      tx.insert(auditEvents).values({
+        id: ids.audit(),
+        companyId,
+        occurredAt: timestamp,
+        entityType: 'company',
+        entityId: companyId,
+        action: 'settings_changed', field: 'chart',
+        newValue: JSON.stringify({ farmChartInstalled: true, added, renamed, skipped }),
+        source: 'user', actor: actor ?? 'user',
+        reason: 'Farm chart installed (issue #360)',
+      }).run();
+    }
+  });
+
+  return { added, renamed, skipped };
+}
 export function ensureDefaultVatTreatments(
   db: AppDatabase, companyId: string, actor?: string,
 ): { addedRates: string[]; addedTreatments: string[] } {
@@ -531,5 +672,158 @@ export function addBankAccount(
     openingDate,
     accountId,
   }).run();
+  return id;
+}
+
+/**
+ * Register a loan and link it to the liability account that carries its
+ * balance (issue #358) — the loan-side mirror of `addBankAccount`.
+ *
+ * With no `accountId` a dedicated account is created (code 2211, 2212, ...
+ * — the first free code after 2210, which the default chart seeds as the
+ * generic Bank loans account), so each loan's balance is visible on its own
+ * line instead of folding every borrowing into one.
+ *
+ * A nonzero `openingPrincipalMinor` is also journaled — Dr the bank account
+ * the drawdown landed in, Cr this loan's account — for exactly the reason
+ * `addBankAccount` journals an opening balance (issue #153): a loan that
+ * existed before the first imported statement otherwise leaves the books
+ * with no entry for where the money came from. Pass 0 when the drawdown
+ * appears on an imported statement line: it is then posted by classifying
+ * (or split-journaling) that line, and journaling it here as well would
+ * count the drawdown twice.
+ */
+export function addLoan(
+  db: AppDatabase,
+  params: {
+    companyId: string;
+    lenderName: string;
+    loanName?: string;
+    kind?: typeof loans.$inferInsert['kind'];
+    currency?: string;
+    /** An existing liability account (e.g. 2210); omitted = create one. */
+    accountId?: string;
+    /** Where the drawdown landed; omitted = the bank control account. */
+    bankAccountId?: string;
+    openingPrincipalMinor?: number;
+    openingDate: IsoDate | string;
+    maturityDate?: IsoDate | string;
+    notes?: string;
+    actor?: string;
+  },
+): string {
+  const id = ids.loan();
+  const currency = (params.currency ?? 'EUR').toUpperCase();
+  const openingPrincipalMinor = params.openingPrincipalMinor ?? 0;
+  const openingDate = asIsoDate(String(params.openingDate));
+  const loanName = params.loanName ?? params.lenderName;
+
+  let accountId = params.accountId;
+  if (accountId) {
+    const existing = db.select().from(accounts)
+      .where(and(eq(accounts.id, accountId), eq(accounts.companyId, params.companyId))).get();
+    if (!existing) {
+      throw new Error(`Account ${accountId} not found for company ${params.companyId}.`);
+    }
+    if (existing.type !== 'liability') {
+      throw new Error(
+        `Account ${existing.code} "${existing.name}" is a ${existing.type}, not a liability. `
+          + 'A loan\'s outstanding balance is money owed, so it is posted to a liability '
+          + 'account — interest, which is a cost, goes to an expense account instead.',
+      );
+    }
+  } else {
+    // The first free code after the seeded 2210 Bank loans.
+    const usedCodes = new Set(
+      db.select({ code: accounts.code }).from(accounts)
+        .where(eq(accounts.companyId, params.companyId)).all().map((r) => r.code),
+    );
+    let code = '2210';
+    for (let n = 1; usedCodes.has(code); n += 1) code = `221${n}`;
+    accountId = createAccount(db, {
+      companyId: params.companyId,
+      code,
+      name: `Loan — ${params.lenderName}`,
+      type: 'liability',
+      subtype: 'non_current_liability',
+      reportSection: 'long_term_liabilities',
+      vatApplicable: false,
+      description: `The outstanding balance of the ${loanName.toLowerCase()} from `
+        + `${params.lenderName}. Repayments are a capital/interest split: the capital part `
+        + 'reduces this account and the interest part is a cost (6710).',
+      actor: params.actor ?? 'user',
+    });
+  }
+
+  if (openingPrincipalMinor !== 0) {
+    const company = db.select({ baseCurrency: companies.baseCurrency }).from(companies)
+      .where(eq(companies.id, params.companyId)).get();
+    if (!company) throw new Error(`Company ${params.companyId} not found.`);
+
+    if (currency !== company.baseCurrency.toUpperCase()) {
+      throw new Error(
+        `This loan is in ${currency} but the company's base currency is `
+          + `${company.baseCurrency}. Posting a foreign-currency drawdown needs a `
+          + 'deliberate exchange rate, which this function does not yet take — post it as a '
+          + 'manual adjustment instead.',
+      );
+    }
+
+    const bankLedgerAccount = params.bankAccountId
+      ? db.select({ accountId: bankAccounts.accountId }).from(bankAccounts)
+        .where(and(eq(bankAccounts.id, params.bankAccountId), eq(bankAccounts.companyId, params.companyId)))
+        .get()?.accountId
+      : systemAccountId(db, params.companyId, 'bank_control');
+
+    // Posted before the loans row exists, in the same order `addBankAccount`
+    // uses: a failed posting (e.g. no open accounting period covers the
+    // drawdown date) must not leave a registered loan whose stated opening
+    // principal was never journaled.
+    postJournalEntry(db, {
+      companyId: params.companyId,
+      entryDate: openingDate,
+      narrative: `Loan drawdown: ${params.lenderName} ${loanName}`,
+      sourceType: 'opening_balance',
+      sourceId: id,
+      baseCurrency: company.baseCurrency,
+      createdBy: params.actor ?? 'user',
+      createdVia: 'user',
+      lines: [
+        { accountId: bankLedgerAccount!, debitMinor: openingPrincipalMinor, memo: 'Loan drawdown' },
+        { accountId, creditMinor: openingPrincipalMinor, memo: 'Loan drawdown' },
+      ],
+    });
+  }
+
+  db.insert(loans).values({
+    id,
+    companyId: params.companyId,
+    lenderName: params.lenderName,
+    loanName,
+    kind: params.kind ?? 'term_loan',
+    currency,
+    accountId,
+    principalMinor: openingPrincipalMinor,
+    drawdownDate: openingDate,
+    maturityDate: params.maturityDate ? asIsoDate(String(params.maturityDate)) : null,
+    notes: params.notes ?? null,
+  }).run();
+
+  db.insert(auditEvents).values({
+    id: ids.audit(),
+    companyId: params.companyId,
+    occurredAt: nowIso(),
+    entityType: 'loan',
+    entityId: id,
+    action: 'created',
+    newValue: JSON.stringify({
+      lenderName: params.lenderName, loanName, accountId,
+      openingPrincipalMinor, drawdownDate: openingDate,
+    }),
+    source: 'user',
+    actor: params.actor ?? 'user',
+    reason: params.notes ?? null,
+  }).run();
+
   return id;
 }

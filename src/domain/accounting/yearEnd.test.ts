@@ -6,6 +6,7 @@ import { closeFinancialYear, getYearEndClose, YearEndError } from './yearEnd';
 import { trialBalance, accountBalance } from './ledger';
 import { postJournalEntry, reverseJournalEntry } from './journal';
 import { profitAndLoss, balanceSheet } from '../reports/financial';
+import { computeCorporationTax } from '../corporationTax/computation';
 import {
   journalEntries, accountingPeriods, auditEvents,
 } from '@/db/schema';
@@ -135,6 +136,37 @@ describe('closeFinancialYear', () => {
     const tb = trialBalance(db, { companyId, asOf: makeDate(2025, 12, 31) });
     expect(tb.rows.filter((r) =>
       (r.type === 'income' || r.type === 'expense') && r.netDebitMinor !== 0)).toEqual([]);
+  });
+
+  it('leaves the closed year\'s profit and loss unchanged: the closing entry is not trading', () => {
+    postAYearsTrading();
+    const year = { companyId, from: makeDate(2025, 1, 1), to: makeDate(2025, 12, 31) };
+    const before = profitAndLoss(db, year);
+    expect(before.netProfit.valueMinor).toBe(383_000);
+
+    const close = closeFinancialYear(db, { companyId, periodId: fy2025 });
+    const after = profitAndLoss(db, year);
+    expect(after.netProfit.valueMinor).toBe(383_000);
+    expect(after.revenue.valueMinor).toBe(before.revenue.valueMinor);
+
+    // Reversing the close, dated in the same year, does not move it either.
+    reverseJournalEntry(db, {
+      companyId, entryId: close.journalEntryId,
+      reversalDate: makeDate(2025, 12, 31), reason: 'Re-run the close',
+    });
+    expect(profitAndLoss(db, year).netProfit.valueMinor).toBe(383_000);
+  });
+
+  it('leaves the closed year\'s corporation tax computation unchanged', () => {
+    postAYearsTrading();
+    const year = { companyId, from: makeDate(2025, 1, 1), to: makeDate(2025, 12, 31) };
+    const before = computeCorporationTax(db, year);
+    expect(before.accountingProfitMinor).toBe(383_000);
+
+    closeFinancialYear(db, { companyId, periodId: fy2025 });
+    const after = computeCorporationTax(db, year);
+    expect(after.accountingProfitMinor).toBe(383_000);
+    expect(after.corporationTaxMinor).toBe(before.corporationTaxMinor);
   });
 
   it('refuses to close the same year twice', () => {

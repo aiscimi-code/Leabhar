@@ -27,7 +27,7 @@ import {
 import { createSupplierFromExtraction } from '@/domain/extraction/service';
 import {
   initCompany, addBank, addAccount, addCustomer, listSuppliersCli, listCustomersCli,
-  ensureDefaultAccountsCli, installRulePackCli,
+  ensureDefaultAccountsCli, installRulePackCli, addLoanCli, installFarmChartCli,
 } from '@/agent/induction';
 import {
   createInvoicesFromCsv, importInvoicesFromCsv, recordPaymentCli, journalCli,
@@ -44,6 +44,10 @@ import {
 import { suggestVatTreatment } from '@/domain/rules/vatSuggestion';
 import { confirmEstablishment, confirmCustomerTaxableStatus, checkVatNumberWithVies } from '@/domain/parties/status';
 import { confirmRctPrincipal, recordCashBasisAuthorisation } from '@/domain/config/companyStatus';
+import { archiveAccount, restoreAccount } from '@/domain/config/mutations';
+import {
+  setAccountMapping, clearAccountMapping, listAccountMappings, mappedTrialBalance,
+} from '@/domain/config/accountMappings';
 import {
   registerCapitalGood, recordIntervalUse, recordCapitalGoodDisposal, postCapitalGoodAdjustment,
   postCapitalGoodDisposalAdjustment, capitalGoodsOverview,
@@ -57,7 +61,7 @@ import { computeCorporationTax, recordCtDecision, type CtSubjectType } from '@/d
 import { computeIncomeTax } from '@/domain/incomeTax/computation';
 import { addPartner, setPartnerShare, partnerSharesOn } from '@/domain/config/partners';
 import { partners } from '@/db/schema';
-import { asIsoDate } from '@/domain/dates';
+import { asIsoDate, today } from '@/domain/dates';
 import { companies } from '@/db/schema';
 import { loadStatutoryKnowledgeBase } from '@/domain/rules/knowledgeBase';
 import {
@@ -78,6 +82,7 @@ import {
   initCompanyInput,
   addBankInput,
   addAccountInput,
+  addLoanInput,
   addCustomerInput,
   createInvoiceCsvInput,
   importInvoicesCsvInput,
@@ -97,6 +102,12 @@ import {
   listPartiesInput,
   ensureDefaultAccountsInput,
   installRulePackInput,
+  archiveAccountInput,
+  restoreAccountInput,
+  mapAccountInput,
+  unmapAccountInput,
+  listAccountMappingsInput,
+  mappedTrialBalanceInput,
   type CreateRuleCliInput,
 } from '@/agent/schema';
 
@@ -146,20 +157,54 @@ Induction (no company/bank/chart yet):
   init-company --name "..."              Create a company + default chart
       [--vat-basis invoice|cash_receipts] [--vat-frequency bi_monthly]
       [--year-end MM-DD] [--base-currency EUR] [--seed-years "2024,2025"]
+      [--chart sm|farm]  Farm installs the farm chart (issue #360): the base
+      chart with farm income accounts (sales, scheme income, contract work),
+      livestock and crops on hand, farm machinery, and the farm cost lines.
   add-bank --name "..."                  Add a bank account
       [--iban ...] [--currency EUR] [--account-type current]
       [--opening <amount> --opening-date <date>]  Also journals the opening
       balance (Dr this account / Cr retained earnings) — not just stored.
   add-account --code <code> --name "..." --type asset|liability|equity|income|expense
       [--subtype ...] [--report-section current_assets|current_liabilities|
-      fixed_assets|revenue|cost_of_sales|operating_expenses|equity]
+      fixed_assets|revenue|cost_of_sales|operating_expenses|finance_costs|
+      long_term_liabilities|equity]
       [--vat-applicable=false]
+  add-loan --lender "..." --date <drawdown date>
+      [--loan "Term loan"] [--kind term_loan|hire_purchase|mortgage|
+      credit_line|other] [--account <code>] [--principal <amount>]
+      [--maturity <date>] [--notes "..."]
+      Registers a loan and links it to a liability account — its own account
+      (2211, 2212, ... after the seeded 2210) unless --account names an
+      existing liability. --principal journals the drawdown (Dr bank / Cr the
+      loan account) at --date: give it only when the drawdown predates the
+      first imported statement — a drawdown that is a statement line of its
+      own is classified there instead, and journaling it twice counts it twice.
   add-customer --name "..." [--country <IE>] [--default-account <code>]
       [--taxable-status taxable_person|non_taxable_person]  (VATCA s.34: business or consumer)
   ensure-default-accounts                Add any default chart accounts
       introduced since this company was created (e.g. 6180/6190/5030/2210/
       1020) — a new company gets them all already; this is only for one
       induced earlier.
+  install-farm-chart                    Turn an existing book's chart into the
+      farm chart: adds the farm accounts and renames the base accounts that
+      are still under their seeded names — one the user has already renamed
+      is theirs and is reported as skipped, never touched.
+  archive-account --account <code> --reason "..."
+      [--date <date>]  Retire an account from the chart: no new postings, not
+      offered when classifying, history untouched, effective window closed on
+      --date (default today). A live balance is flagged on the review queue.
+  restore-account --account <code> --reason "..."
+      Reopen an archived account. Both need a reason, both are audited.
+  map-account --account <code> --chart "..." --external-code <code>
+      [--external-name "..."] [--notes "..."]  Record (or replace) how one
+      account is coded in one external chart — the accountant's chart, or
+      another package's. One mapping per account per chart.
+  unmap-account --account <code> --chart "..."  Remove one mapping.
+  list-account-mappings [--chart "..."]  Every mapping, or one chart's.
+  mapped-trial-balance --chart "..." [--as-of <date>]
+      The posted trial balance restated in the external chart's codes.
+      Accounts with balances but no mapping are listed with a blank external
+      code — never dropped silently.
   install-rule-pack [--employee "Name"] [--second-bank-account <code>]
       [--rent-account <code>]            Starter Irish SME bank-narrative
       rules (wages, employer PRSI, a Revenue PAYE remittance, VAT3, rent, an
@@ -419,6 +464,7 @@ export async function main(argv: string[], options: CliOptions = {}): Promise<nu
         seedYears: getFlag(flags, 'seed-years'),
         entityType: getFlag(flags, 'entity-type'),
         tradeCommencedOn: getFlag(flags, 'commenced'),
+        chartKind: getFlag(flags, 'chart'),
       });
       print(initCompany(db, parsed), format);
       return 0;
@@ -755,6 +801,23 @@ export async function main(argv: string[], options: CliOptions = {}): Promise<nu
           vatApplicable: hasFlag(flags, 'vat-applicable') ? getFlag(flags, 'vat-applicable') !== 'false' : undefined,
         });
         print(addAccount(db, parsed), format);
+        return 0;
+      }
+
+      case 'add-loan': {
+        const parsed = addLoanInput.parse({
+          companyId,
+          lenderName: requireFlag(flags, 'lender'),
+          loanName: getFlag(flags, 'loan', 'loan-name'),
+          kind: getFlag(flags, 'kind'),
+          currency: getFlag(flags, 'currency'),
+          account: getFlag(flags, 'account'),
+          principal: getFlag(flags, 'principal', 'opening'),
+          date: requireFlag(flags, 'date', 'drawdown-date'),
+          maturity: getFlag(flags, 'maturity', 'maturity-date'),
+          notes: getFlag(flags, 'notes'),
+        });
+        print(addLoanCli(db, parsed), format);
         return 0;
       }
 
@@ -1175,6 +1238,107 @@ export async function main(argv: string[], options: CliOptions = {}): Promise<nu
       case 'ensure-default-accounts': {
         const parsed = ensureDefaultAccountsInput.parse({ companyId });
         print(ensureDefaultAccountsCli(db, parsed), format);
+        return 0;
+      }
+
+      case 'install-farm-chart': {
+        const parsed = ensureDefaultAccountsInput.parse({ companyId });
+        print(installFarmChartCli(db, parsed), format);
+        return 0;
+      }
+
+      case 'archive-account': {
+        const parsed = archiveAccountInput.parse({
+          companyId,
+          account: requireFlag(flags, 'account'),
+          reason: requireFlag(flags, 'reason'),
+          date: getFlag(flags, 'date'),
+        });
+        const result = archiveAccount(db, {
+          companyId,
+          accountId: resolveAccountId(db, companyId, parsed.account),
+          reason: parsed.reason,
+          archivedOn: parsed.date ? asIsoDate(parsed.date) : undefined,
+          actor: 'cli',
+        });
+        print({ account: parsed.account, ...result }, format);
+        return 0;
+      }
+
+      case 'restore-account': {
+        const parsed = restoreAccountInput.parse({
+          companyId,
+          account: requireFlag(flags, 'account'),
+          reason: requireFlag(flags, 'reason'),
+        });
+        restoreAccount(db, {
+          companyId,
+          accountId: resolveAccountId(db, companyId, parsed.account),
+          reason: parsed.reason,
+          actor: 'cli',
+        });
+        print({ account: parsed.account, restored: true }, format);
+        return 0;
+      }
+
+      case 'map-account': {
+        const parsed = mapAccountInput.parse({
+          companyId,
+          account: requireFlag(flags, 'account'),
+          chartName: requireFlag(flags, 'chart', 'chart-name'),
+          externalCode: requireFlag(flags, 'external-code'),
+          externalName: getFlag(flags, 'external-name'),
+          notes: getFlag(flags, 'notes'),
+        });
+        const mapping = setAccountMapping(db, {
+          companyId,
+          accountId: resolveAccountId(db, companyId, parsed.account),
+          chartName: parsed.chartName,
+          externalCode: parsed.externalCode,
+          externalName: parsed.externalName,
+          notes: parsed.notes,
+          actor: 'cli',
+        });
+        print({ ...mapping, account: parsed.account }, format);
+        return 0;
+      }
+
+      case 'unmap-account': {
+        const parsed = unmapAccountInput.parse({
+          companyId,
+          account: requireFlag(flags, 'account'),
+          chartName: requireFlag(flags, 'chart', 'chart-name'),
+        });
+        clearAccountMapping(db, {
+          companyId,
+          accountId: resolveAccountId(db, companyId, parsed.account),
+          chartName: parsed.chartName,
+          actor: 'cli',
+        });
+        print({ account: parsed.account, chartName: parsed.chartName, unmapped: true }, format);
+        return 0;
+      }
+
+      case 'list-account-mappings': {
+        const parsed = listAccountMappingsInput.parse({
+          companyId,
+          chartName: getFlag(flags, 'chart', 'chart-name'),
+        });
+        print(listAccountMappings(db, parsed), format);
+        return 0;
+      }
+
+      case 'mapped-trial-balance': {
+        const parsed = mappedTrialBalanceInput.parse({
+          companyId,
+          chartName: requireFlag(flags, 'chart', 'chart-name'),
+          asOf: getFlag(flags, 'as-of', 'date'),
+        });
+        print(mappedTrialBalance(db, {
+          companyId,
+          chartName: parsed.chartName,
+          asOf: asIsoDate(parsed.asOf ?? today()),
+        }), format);
         return 0;
       }
 
