@@ -1,8 +1,8 @@
-import { and, eq, gte, lte, sql, desc, isNull, or, ne, inArray } from 'drizzle-orm';
+import { and, eq, gte, lte, sql, desc, isNull, isNotNull, or, ne, inArray } from 'drizzle-orm';
 import type { AppDatabase } from '@/db';
 import {
   bankTransactions, bankAccounts, journalEntries, journalLines,
-  reconciliations, auditEvents, documents, companies,
+  reconciliations, auditEvents, documents, companies, statementImports,
 } from '@/db/schema';
 import { ids } from '@/lib/ids';
 import { nowIso, type IsoDate } from '../dates';
@@ -101,7 +101,8 @@ export interface ReconciliationResult {
 
   /** What the bank says, from the statement's own running balance. */
   statementBalanceMinor: number;
-  statementBalanceSource: 'statement_running_balance' | 'supplied' | 'derived_from_movements';
+  statementBalanceSource:
+    | 'statement_running_balance' | 'supplied' | 'statement_closing_balance' | 'derived_from_movements';
   /**
    * The account's stated opening balance (`bank_accounts.openingBalanceMinor`),
    * converted to base currency. Named separately (issue #156) so it is visible
@@ -391,6 +392,22 @@ function statementBalance(
     return {
       statementBalanceMinor: toBase(params.statementClosingBalanceMinor),
       statementBalanceSource: 'supplied',
+    };
+  }
+
+  // The bank's own closing balance, from a structured statement (OFX, CAMT)
+  // struck on the reconciliation date (issue #378). A statement for a
+  // different date says nothing about this one, so only an exact match counts.
+  const closing = db.select().from(statementImports).where(and(
+    eq(statementImports.bankAccountId, account.id),
+    eq(statementImports.statementEndDate, params.periodEnd),
+    isNotNull(statementImports.closingBalanceMinor),
+    ne(statementImports.status, 'reversed'),
+  )).orderBy(desc(statementImports.createdAt)).get();
+  if (closing?.closingBalanceMinor !== null && closing?.closingBalanceMinor !== undefined) {
+    return {
+      statementBalanceMinor: toBase(closing.closingBalanceMinor),
+      statementBalanceSource: 'statement_closing_balance',
     };
   }
 

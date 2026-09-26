@@ -810,6 +810,13 @@ account with no statement (petty cash) records its lines by hand
 (`recordManualTransaction`): the same evidence path, `manually_entered`, traced
 to a `manual` import under the person's name.
 
+Statements arrive as CSV or XLSX (mapped by column), or as OFX or CAMT.053
+(issue #378), which are read as the bank wrote them: the bank's own transaction
+id is kept for the fingerprint, only booked CAMT entries are imported, and the
+statement's opening and closing balances are kept on the import. Reconciliation
+uses that closing balance when the statement is struck on the reconciliation
+date (`statement_closing_balance`).
+
 ### Match
 
 ```

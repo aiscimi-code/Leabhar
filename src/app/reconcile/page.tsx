@@ -15,6 +15,9 @@ const SOURCE_NOTE: Record<string, string> = {
   statement_running_balance:
     'Taken from the running balance on the imported statement — the bank’s own figure.',
   supplied: 'The closing balance you typed in from the paper statement.',
+  statement_closing_balance:
+    'The closing balance the bank stated in the imported OFX or CAMT statement for this date — '
+    + 'the bank’s own figure.',
   derived_from_movements:
     'No running balance was imported, so this figure was added up from the transactions '
     + 'themselves. That means it cannot detect a line the statement has and the books do not: '
@@ -113,6 +116,9 @@ export default async function ReconcilePage({ searchParams }: {
         </div>
         <div className="px-4 py-2.5 border-t border-line">
           <p className="text-ink leading-snug">{result.summary}</p>
+          {result.warnings.map((warning) => (
+            <p key={warning} className="text-caution leading-snug mt-1.5">{warning}</p>
+          ))}
           <p className="text-ink-muted text-[11.5px] mt-1.5 leading-snug">
             {SOURCE_NOTE[result.statementBalanceSource]}
           </p>

@@ -49,7 +49,7 @@ export function ImportForm({ accounts }: {
             Statement file
           </label>
           <input
-            type="file" name="file" accept=".csv,.xlsx" required
+            type="file" name="file" accept=".csv,.xlsx,.ofx,.qfx,.xml" required
             className="text-[12px] file:mr-2 file:px-2.5 file:py-1 file:rounded file:border
               file:border-line-strong file:bg-surface file:text-ink file:text-[12px]
               file:font-medium file:cursor-pointer"

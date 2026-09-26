@@ -2,6 +2,7 @@ import { eq, and } from 'drizzle-orm';
 import type { AppDatabase } from '@/db';
 import { bankAccounts, accounts, vatTreatments, bankTransactions, auditEvents, companies } from '@/db/schema';
 import { importStatement, type ImportSummary } from '@/domain/banking/import';
+import { detectStatementFormat } from '@/domain/banking/structuredStatements';
 import {
   reconcileBankAccount,
   completeReconciliation,
@@ -51,8 +52,8 @@ export function listReconciliations(
 export async function importStatementFile(
   db: AppDatabase, input: ImportInput,
 ): Promise<ImportSummary> {
-  const fileFormat = input.file.toLowerCase().endsWith('.xlsx') ? 'xlsx' : 'csv';
   const content = await readContent(input.file);
+  const fileFormat = detectStatementFormat(input.file, content);
   return importStatement(db, {
     companyId: input.companyId,
     bankAccountId: input.accountId,
