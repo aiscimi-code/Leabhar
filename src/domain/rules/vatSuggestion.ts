@@ -97,6 +97,16 @@ export const RULE_TREATMENT_BINDINGS: TreatmentBinding[] = [
   { ruleKeys: scopeKeys('OUT_OF_SCOPE'), direction: 'either', treatmentCode: () => 'OUT_OF_SCOPE' },
   // An exempt supply: no VAT, and so no reverse charge or rate either (Schedule 1).
   { ruleKeys: scopeKeys('IE_EXEMPT'), direction: 'either', treatmentCode: () => 'IE_EXEMPT' },
+  // Loan and overdraft interest: whether granting credit is still exempt cannot be
+  // established from the sources (issue #206), so it is flagged, never rated.
+  {
+    ruleKeys: ['vat.loan_interest_undetermined'],
+    direction: 'either',
+    treatmentCode: () => null,
+    gap: 'Whether loan or overdraft interest is exempt cannot be confirmed: Schedule 1 para 6(1) no longer lists '
+      + 'granting credit (words deleted by Finance (No. 2) Act 2023 s.63), and where they went is not in the '
+      + 'repository. Choose the treatment manually.',
+  },
   // A service sold to a business established abroad is supplied there, not here (s.34(a)).
   {
     ruleKeys: [VAT_POS_BUSINESS_ABROAD_RULE_KEY],

@@ -455,6 +455,16 @@ one before it by `supersedesRuleId`. The families are:
 A period the sources cannot settle has no version, so a line dated in it is
 flagged.
 
+Every Schedule 1 paragraph an invoice line can show has an exemption rule.
+Paragraphs 13 and 15 are exemptions at importation, justified
+`not_applicable`. A Schedule 1 rule is dated from the latest LRC amendment to
+the words it quotes (`quotedTextWindow`), not its whole paragraph. Paragraph 6
+was last amended in December 2025, but its bank-account words not since 2010.
+
+Loan and overdraft interest match a rule that suggests no treatment and is
+flagged. Schedule 1 para 6(1)(a)'s credit words were deleted in 2023, and
+where they went is not in the repository.
+
 ### Posting paths are atomic
 
 Every exported posting path — classify, reclassify, split journal,

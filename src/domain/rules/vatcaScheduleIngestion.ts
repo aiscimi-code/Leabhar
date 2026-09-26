@@ -327,17 +327,29 @@ function paragraphWindowsForSource(
   db: AppDatabase, sourceId: string, scheduleNumber: string,
   provisions: Array<typeof irishActProvisions.$inferSelect>,
 ): Map<string, ParagraphWindow> | null {
+  const html = lrcHtmlForSource(db, sourceId);
+  if (html === null) return null;
+  const paragraphs = provisions
+    .filter((p) => p.sourceId === sourceId)
+    .sort((a, b) => (a.sourceStart ?? 0) - (b.sourceStart ?? 0))
+    .map((p) => p.sectionNumber);
+  return scheduleParagraphWindows(html, scheduleNumber, paragraphs);
+}
+
+/**
+ * The LRC revised HTML kept beside an ingested source's Markdown
+ * (`schedule-1.md` -> `schedule-1.html`), when it is the file the Markdown
+ * was converted from (same SHA-256 as its front matter records); else null.
+ */
+export function lrcHtmlForSource(db: AppDatabase, sourceId: string): string | null {
   const source = db.select().from(irishKnowledgeSources).where(eq(irishKnowledgeSources.id, sourceId)).get();
   if (!source?.localPath?.endsWith('.md')) return null;
-  const mdPath = join(appRoot(), source.localPath);
+  const at = source.localPath.indexOf('docs/statutes/');
+  const mdPath = join(appRoot(), at >= 0 ? source.localPath.slice(at) : source.localPath);
   const htmlPath = mdPath.replace(/\.md$/, '.html');
   if (!existsSync(htmlPath) || !existsSync(mdPath)) return null;
   const html = readFileSync(htmlPath);
   const recorded = /source_html_sha256:\s*"([0-9a-f]{64})"/.exec(readFileSync(mdPath, 'utf8'))?.[1];
   if (!recorded || sha256Hex(html) !== recorded) return null;
-  const paragraphs = provisions
-    .filter((p) => p.sourceId === sourceId)
-    .sort((a, b) => (a.sourceStart ?? 0) - (b.sourceStart ?? 0))
-    .map((p) => p.sectionNumber);
-  return scheduleParagraphWindows(html.toString('utf8'), scheduleNumber, paragraphs);
+  return html.toString('utf8');
 }

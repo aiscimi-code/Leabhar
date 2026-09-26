@@ -1140,33 +1140,37 @@
       "id": "vatca:sch1:p1:2",
       "area": "vatca_schedule",
       "title": "Sch.1 para 2 — Medical and related services.",
-      "status": "deferred",
-      "issue": 206,
-      "reason": "Exemption not yet ruled."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.exempt_medical_care"
+      ]
     },
     {
       "id": "vatca:sch1:p1:3",
       "area": "vatca_schedule",
       "title": "Sch.1 para 3 — Certain independent groups, non-profit making organisations and other bodies.",
-      "status": "deferred",
-      "issue": 206,
-      "reason": "Exemption not yet ruled."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.exempt_nonprofit_membership_and_sport"
+      ]
     },
     {
       "id": "vatca:sch1:p1:4",
       "area": "vatca_schedule",
       "title": "Sch.1 para 4 — Children and education.",
-      "status": "deferred",
-      "issue": 206,
-      "reason": "Exemption not yet ruled."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.exempt_education_childcare"
+      ]
     },
     {
       "id": "vatca:sch1:p1:5",
       "area": "vatca_schedule",
       "title": "Sch.1 para 5 — Other activities.",
-      "status": "deferred",
-      "issue": 206,
-      "reason": "Exemption not yet ruled."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.exempt_live_performances"
+      ]
     },
     {
       "id": "vatca:sch1:p2:6",
@@ -1174,16 +1178,20 @@
       "title": "Sch.1 para 6 — Financial services.",
       "status": "rule",
       "ruleKeys": [
-        "vat.exempt_bank_account_and_payment_services"
+        "vat.exempt_bank_account_and_payment_services",
+        "vat.exempt_securities_and_fund_management",
+        "vat.exempt_card_scheme_services",
+        "vat.loan_interest_undetermined"
       ]
     },
     {
       "id": "vatca:sch1:p2:7",
       "area": "vatca_schedule",
       "title": "Sch.1 para 7 — Agency services.",
-      "status": "deferred",
-      "issue": 206,
-      "reason": "Exemption not yet ruled."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.exempt_financial_agency"
+      ]
     },
     {
       "id": "vatca:sch1:p2:8",
@@ -1198,17 +1206,19 @@
       "id": "vatca:sch1:p2:9",
       "area": "vatca_schedule",
       "title": "Sch.1 para 9 — Supply of investment gold.",
-      "status": "deferred",
-      "issue": 206,
-      "reason": "Exemption not yet ruled."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.exempt_investment_gold"
+      ]
     },
     {
       "id": "vatca:sch1:p2:10",
       "area": "vatca_schedule",
       "title": "Sch.1 para 10 — Gambling and lotteries.",
-      "status": "deferred",
-      "issue": 206,
-      "reason": "Exemption not yet ruled."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.exempt_betting_and_lotteries"
+      ]
     },
     {
       "id": "vatca:sch1:p2:11",
@@ -1223,17 +1233,17 @@
       "id": "vatca:sch1:p2:12",
       "area": "vatca_schedule",
       "title": "Sch.1 para 12 — Other supplies of goods.",
-      "status": "deferred",
-      "issue": 206,
-      "reason": "Exemption not yet ruled."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.exempt_sale_of_non_deductible_goods"
+      ]
     },
     {
       "id": "vatca:sch1:p2:13",
       "area": "vatca_schedule",
       "title": "Sch.1 para 13 — Gas and electricity services etc.",
-      "status": "deferred",
-      "issue": 206,
-      "reason": "Exemption not yet ruled."
+      "status": "not_applicable",
+      "reason": "An exemption at importation (gas, electricity, heat or cooling through a network). Import VAT is accounted at importation, not on a supplier’s invoice line, so no line can carry it."
     },
     {
       "id": "vatca:sch1:p2:14",
@@ -1241,16 +1251,18 @@
       "title": "Sch.1 para 14 — Exemptions by derogation in accordance with Article 371 of the VAT Directive.",
       "status": "rule",
       "ruleKeys": [
-        "vat.exempt_passenger_transport"
+        "vat.exempt_passenger_transport",
+        "vat.exempt_funeral_services",
+        "vat.exempt_public_water",
+        "vat.exempt_sporting_event_admission"
       ]
     },
     {
       "id": "vatca:sch1:p2:15",
       "area": "vatca_schedule",
       "title": "Sch.1 para 15 — Imports by certain international bodies",
-      "status": "deferred",
-      "issue": 206,
-      "reason": "Exemption not yet ruled."
+      "status": "not_applicable",
+      "reason": "An exemption at importation for goods imported by EU institutions, international bodies and foreign armed forces. It is accounted at importation, not on a supplier’s invoice line, and turns on who the importer is."
     },
     {
       "id": "vatca:sch2:p1:1",

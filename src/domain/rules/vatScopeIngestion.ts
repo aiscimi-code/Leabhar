@@ -18,6 +18,8 @@ import { ids } from '@/lib/ids';
 import { nowIso } from '../dates';
 import { VAT_SCOPE_CURATED_RULES } from './vatScopeCuration';
 import { VAT_PLACE_OF_SUPPLY_CURATED_RULES } from './vatPlaceOfSupplyCuration';
+import { lrcHtmlForSource } from './vatcaScheduleIngestion';
+import { quotedTextWindow } from './lrcAnnotations';
 
 /** Every rule this module derives: scope/exemption and place of supply of services. */
 export const VAT_SCOPE_DERIVED_RULES = [...VAT_SCOPE_CURATED_RULES, ...VAT_PLACE_OF_SUPPLY_CURATED_RULES];
@@ -57,6 +59,18 @@ export function deriveVatScopeRules(
       continue;
     }
 
+    // A rule is good only from the last change to the words it relies on
+    // (issue #206), read from the LRC HTML beside the source when it is there.
+    const html = source ? lrcHtmlForSource(db, source.id) : null;
+    const window = html ? quotedTextWindow(html, [rule.statementExcerpt, ...(rule.windowQuotes ?? [])]) : null;
+    const effectiveFrom = window?.effectiveFrom ?? rule.effectiveFrom;
+    const windowNote = window
+      ? (window.footnotes.length
+        ? `Effective from ${effectiveFrom}, the latest LRC amendment to the quoted words: `
+          + `${window.footnotes.map((f) => `${f.ref} ${f.text}`).join(' ')} `
+        : `Effective from ${effectiveFrom}: the LRC records no amendment to the quoted words since the Act commenced. `)
+      : '';
+
     const existing = db.select().from(irishTaxRules)
       .where(and(
         eq(irishTaxRules.companyId, params.companyId),
@@ -66,12 +80,16 @@ export function deriveVatScopeRules(
 
     if (existing) {
       if (existing.provisionId === prov.id && existing.statement === rule.statementExcerpt
-          && JSON.stringify(existing.conditions) === JSON.stringify(rule.conditions)) {
+          && JSON.stringify(existing.conditions) === JSON.stringify(rule.conditions)
+          && existing.effectiveFrom === effectiveFrom) {
         result.unchanged++;
         continue;
       }
+      // The replacement describes the same law better (a corrected window or
+      // proxy), so the old row is retired outright, its window emptied, rather
+      // than left in force until today.
       db.update(irishTaxRules)
-        .set({ effectiveTo: nowIso().slice(0, 10), active: false })
+        .set({ effectiveTo: existing.effectiveFrom, active: false })
         .where(eq(irishTaxRules.id, existing.id)).run();
       result.superseded++;
     }
@@ -104,13 +122,13 @@ export function deriveVatScopeRules(
       ruleVersion: existing ? existing.ruleVersion + 1 : 1,
       supersedesRuleId: existing?.id ?? null,
       priority: 100,
-      effectiveFrom: existing ? nowIso().slice(0, 10) : rule.effectiveFrom,
+      effectiveFrom,
       effectiveTo: null,
       source: 'derived',
       confidence: 60,
       provenanceStatus: 'ai_suggestion',
       sourceNote: `Curated from ${rule.citation} ${rule.citation.includes('Sch.') ? 'para' : 's.'}${rule.sectionNumber} `
-        + `(LRC revised). Not yet human-reviewed. ${rule.interpretationNote}`,
+        + `(LRC revised). Not yet human-reviewed. ${windowNote}${rule.interpretationNote}`,
       sourceDate: nowIso(),
     }).run();
     result.created++;
