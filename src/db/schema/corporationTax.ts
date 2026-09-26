@@ -12,8 +12,11 @@ import { companies } from './company';
 export const ctDecisions = sqliteTable('ct_decisions', {
   id: text('id').primaryKey(),
   companyId: text('company_id').notNull().references(() => companies.id),
-  /** A journal line (an expense) or an income account for one accounting period. */
-  subjectType: text('subject_type', { enum: ['journal_line', 'income_account'] }).notNull(),
+  /**
+   * A journal line (an expense); or, for one accounting period, an income
+   * account, the company's loss claim, or its close company status.
+   */
+  subjectType: text('subject_type', { enum: ['journal_line', 'income_account', 'loss_claim', 'company_status'] }).notNull(),
   subjectId: text('subject_id').notNull(),
   /** The accounting period end the decision is for (income accounts); the line's own period otherwise. */
   periodEnd: text('period_end').notNull(),

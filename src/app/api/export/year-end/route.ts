@@ -132,6 +132,19 @@ export async function GET(request: Request): Promise<Response> {
   tax.addRow([`  Tax at 25% on other income of ${amount(pack.taxComputation.nonTradingIncomeMinor)} (s.21A)`,
     amount(pack.taxComputation.computation.taxAtHigherRateMinor)]);
   tax.addRow(['Corporation tax', amount(pack.taxComputation.corporationTaxMinor)]).font = { bold: true };
+  const ctc = pack.taxComputation.computation;
+  tax.addRow([]);
+  tax.addRow(['Losses', '']).font = { bold: true };
+  tax.addRow(['  Brought forward and used (s.396(1))', amount(ctc.losses.broughtForwardUsedMinor)]);
+  tax.addRow(['  Set back from the next period (s.396A)', amount(ctc.losses.carriedBackInMinor)]);
+  tax.addRow(['  Set back to the preceding period (s.396A)', amount(ctc.losses.setBackMinor)]);
+  tax.addRow(['  Value-basis credit (s.396B)', amount(ctc.losses.valueBasisCreditMinor)]);
+  tax.addRow(['  Carried forward', amount(ctc.losses.carriedForwardMinor)]);
+  tax.addRow([`Close company surcharge (${ctc.surcharge.status})`, amount(ctc.surcharge.surchargeMinor)]).font = { bold: true };
+  tax.addRow([`  ${ctc.surcharge.working}`, '']);
+  tax.addRow([`CT1 return and balance of tax due`, ctc.dates.returnDueDate]);
+  for (const p of ctc.dates.preliminaryTax) tax.addRow([`  Preliminary tax due ${p.dueDate} (${p.basis})`, amount(p.amountMinor)]);
+  tax.addRow([]);
   for (const d of pack.taxComputation.computation.decisions) {
     tax.addRow([`  ${d.decided ? 'Decided' : 'Suggested'}: ${d.description} → ${d.decided ?? d.suggested}`, amount(d.amountMinor)]);
   }

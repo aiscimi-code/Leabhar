@@ -264,7 +264,7 @@ Inspect:
   ct-computation --from <date> --to <date>
                                          Corporation tax computation for the
                                           accounting period, with open decisions
-  ct-decide --subject-type <journal_line|income_account> --subject <id>
+  ct-decide --subject-type <journal_line|income_account|loss_claim|company_status> --subject <id>
             --period-end <date> --choice <choice> --by <name>
                                          Record a treatment the computation suggested
   list-suppliers                         Every supplier (id, name, country, VAT no.)
@@ -985,8 +985,8 @@ export async function main(argv: string[], options: CliOptions = {}): Promise<nu
 
       case 'ct-decide': {
         const subjectType = requireFlag(flags, 'subject-type');
-        if (subjectType !== 'journal_line' && subjectType !== 'income_account') {
-          throw new Error('--subject-type is journal_line or income_account.');
+        if (subjectType !== 'journal_line' && subjectType !== 'income_account' && subjectType !== 'loss_claim' && subjectType !== 'company_status') {
+          throw new Error('--subject-type is journal_line, income_account, loss_claim or company_status.');
         }
         const id = recordCtDecision(db, {
           companyId, subjectType, subjectId: requireFlag(flags, 'subject'), periodEnd: requireFlag(flags, 'period-end'),

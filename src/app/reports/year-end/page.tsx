@@ -182,6 +182,35 @@ export default async function YearEndPage({ searchParams }: {
                 {accountingMoney(pack.taxComputation.corporationTaxMinor, currency)}
               </td>
             </tr>
+            {pack.taxComputation.computation.losses.valueBasisCreditMinor !== 0 && (
+              <tr>
+                <td className="pl-5">of which reduced by the s.396B value-basis loss credit</td>
+                <td className="text-right num">{accountingMoney(-pack.taxComputation.computation.losses.valueBasisCreditMinor, currency)}</td>
+              </tr>
+            )}
+            <tr>
+              <td className="pl-5">
+                Losses carried forward (s.396)
+              </td>
+              <td className="text-right num">{accountingMoney(pack.taxComputation.computation.losses.carriedForwardMinor, currency)}</td>
+            </tr>
+            <tr>
+              <td className="pl-5">
+                Close company surcharge, charged for a later period
+                <Help>{pack.taxComputation.computation.surcharge.working}</Help>
+              </td>
+              <td className="text-right num">{accountingMoney(pack.taxComputation.computation.surcharge.surchargeMinor, currency)}</td>
+            </tr>
+            <tr>
+              <td className="pl-5">CT1 return and balance of tax due</td>
+              <td className="text-right num">{date(pack.taxComputation.computation.dates.returnDueDate)}</td>
+            </tr>
+            {pack.taxComputation.computation.dates.preliminaryTax.map((p) => (
+              <tr key={p.dueDate}>
+                <td className="pl-5">Preliminary tax due {date(p.dueDate)} <Help>{p.basis}</Help></td>
+                <td className="text-right num">{accountingMoney(p.amountMinor, currency)}</td>
+              </tr>
+            ))}
           </tbody>
         </table>
         <div className="px-4 py-2.5 border-t border-caution/30 bg-caution-soft text-caution text-[12px] leading-snug">
