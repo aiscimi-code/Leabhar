@@ -2,7 +2,7 @@ import { and, eq } from 'drizzle-orm';
 import type { AppDatabase } from '@/db';
 import {
   companies, accounts, taxRates, vatTreatments, accountingPeriods, vatPeriods,
-  bankAccounts, auditEvents, glossaryTerms,
+  bankAccounts, auditEvents, glossaryTerms, users, companyMembers,
 } from '@/db/schema';
 import { ids } from '@/lib/ids';
 import { type IsoDate, asIsoDate, nowIso, today } from '../dates';
@@ -274,6 +274,15 @@ export function createCompany(db: AppDatabase, input: CreateCompanyInput): Creat
       actor: 'setup',
       reason: 'Company created with default configuration',
     }).run();
+
+    // Business membership (issue #298): a new company in the book is open to
+    // every active user of the book. Later users are added per company by
+    // inviteUser, which is also the only path that grants narrower roles.
+    for (const user of tx.select({ id: users.id }).from(users).where(eq(users.active, true)).all()) {
+      tx.insert(companyMembers).values({
+        id: ids.member(), companyId, userId: user.id,
+      }).run();
+    }
 
     return { companyId, accountsByKey, accountsByCode, ratesByCode, treatmentsByCode };
   });
