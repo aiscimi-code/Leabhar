@@ -6,6 +6,7 @@ import { resolveTreatment } from '../vat/engine';
 import { parseVatNumber, EU_COUNTRY_CODES } from '../extraction/vatNumbers';
 import { suggestFromFacts, type SuggestionFacts, type VatSuggestion } from '../rules/vatSuggestion';
 import { documentEvidenceLines, type EvidenceLine } from './postDocument';
+import { checkLineRate, type LineRateCheck } from '../rules/lineRateCheck';
 
 /**
  * The choices for coding each line of a confirmed document (issue #203).
@@ -35,6 +36,8 @@ export interface LineChoices {
   accountId: string | null;
   accountReason: string | null;
   statutory: VatSuggestion;
+  /** Whether the rate printed on the line is the rate the rules give (issue #205). */
+  rateCheck: LineRateCheck;
   /** Why a choice is needed, when one is. */
   flags: string[];
 }
@@ -83,6 +86,7 @@ export function documentLineChoices(db: AppDatabase, params: { companyId: string
   const reverseChargeLegend = doc.vatLegends.find((l) => /reverse|autoliquidation|steuerschuldnerschaft|verlegd|inversione|inversi[oó]n|art(icle|\.)?\s*(44|196)/i.test(l));
   const exemptLegend = doc.vatLegends.find((l) => /exempt|befreit|exon[eé]r|vrijgesteld|esente|exento/i.test(l));
 
+  const missingRates = new Set<string>();
   const choices = lines.map((line): LineChoices => {
     const facts: SuggestionFacts = {
       transactionDate: onDate,
@@ -136,7 +140,14 @@ export function documentLineChoices(db: AppDatabase, params: { companyId: string
       for (const code of ['IE_STD', 'IE_RED', 'IE_SECOND_RED', 'IE_ZERO']) {
         const t = treatmentByCode(code);
         if (!t) continue;
-        const rate = resolveTreatment(db, { companyId: params.companyId, treatmentId: t.id, onDate }).rateBasisPoints;
+        let rate: number;
+        try {
+          rate = resolveTreatment(db, { companyId: params.companyId, treatmentId: t.id, onDate }).rateBasisPoints;
+        } catch {
+          // No rate configured for this treatment on the document's date: it cannot be offered.
+          missingRates.add(t.code);
+          continue;
+        }
         if (rate === line.rateBasisPoints && (rate > 0 || code === 'IE_ZERO')) {
           offer(t, `The line is printed at ${line.rateBasisPoints / 100}%.`);
         }
@@ -151,8 +162,19 @@ export function documentLineChoices(db: AppDatabase, params: { companyId: string
     }
     if (exemptLegend) offer(treatmentByCode('IE_EXEMPT'), `The invoice states: "${exemptLegend}".`);
 
+    const rateCheck = checkLineRate(db, {
+      companyId: params.companyId, onDate, direction: facts.direction, statutory,
+      chargedRateBasisPoints: line.rateBasisPoints,
+    });
+
     const list = [...options.values()];
     const flags: string[] = [];
+    // The rate charged is checked, never corrected (issue #205).
+    if (rateCheck.outcome !== 'consistent') flags.push(rateCheck.message);
+    if (missingRates.size) {
+      flags.push(`No rate is configured on ${onDate} for ${[...missingRates].join(', ')}. Add the historical rate `
+        + 'under Rates and treatments before posting a document from that date.');
+    }
     if (list.length === 0) flags.push('Nothing on the document or in the rules points to a treatment. Choose one.');
     if (list.length > 1) flags.push(`${list.length} treatments are possible. Read the reason for each and choose.`);
     if (statutory.status === 'fallback_only') flags.push('The statutory rules could only fall back to the standard rate; they cannot rule out an exemption.');
@@ -164,7 +186,7 @@ export function documentLineChoices(db: AppDatabase, params: { companyId: string
     const agreed = list.length === 1 && statutory.status !== 'fallback_only' ? list[0]!.treatmentId : null;
     const accountId = party?.defaultAccountId ?? null;
     return {
-      line, options: list, preselectedTreatmentId: agreed, statutory, flags,
+      line, options: list, preselectedTreatmentId: agreed, statutory, rateCheck, flags,
       accountId, accountReason: accountId ? `Previously confirmed for ${party!.name}.` : null,
     };
   });

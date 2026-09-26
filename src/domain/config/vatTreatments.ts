@@ -162,6 +162,14 @@ export const DEFAULT_VAT_TREATMENTS: VatTreatmentSeed[] = [
     salesVatBox: 'T1', purchasesVatBox: 'T2',
   },
   {
+    code: 'IE_LIVESTOCK', name: 'Irish livestock rate', isSystem: true,
+    description: 'The supply of livestock (VATCA s.46(1)(d)): cattle, sheep, goats, pigs and deer, and horses '
+      + 'normally intended for foodstuffs or agricultural production (s.2(1)).',
+    jurisdiction: 'IE', direction: 'both', supplyKind: 'goods',
+    appliesRate: true, defaultRateCode: 'VAT_LIVESTOCK',
+    salesVatBox: 'T1', purchasesVatBox: 'T2',
+  },
+  {
     code: 'IE_EXEMPT', name: 'Exempt', isSystem: true,
     description: 'An exempt supply, such as certain financial or insurance services. '
       + 'No VAT arises and, unlike a zero-rated supply, exempt activity can restrict '

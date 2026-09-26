@@ -302,6 +302,62 @@ export function ensureDefaultAccounts(
   return { added };
 }
 
+/**
+ * Add any seeded tax rate or VAT treatment a company does not yet have — for
+ * a company created before it was added to the seed list (issue #205: the
+ * livestock treatment). Never touches a row that already exists by code, so
+ * it cannot overwrite a rate or treatment the user has edited.
+ */
+export function ensureDefaultVatTreatments(
+  db: AppDatabase, companyId: string, actor?: string,
+): { addedRates: string[]; addedTreatments: string[] } {
+  const rateRows = db.select({ id: taxRates.id, code: taxRates.code }).from(taxRates)
+    .where(eq(taxRates.companyId, companyId)).all();
+  const rateIdByCode = new Map(rateRows.map((r) => [r.code, r.id]));
+  const existingTreatments = new Set(db.select({ code: vatTreatments.code }).from(vatTreatments)
+    .where(eq(vatTreatments.companyId, companyId)).all().map((r) => r.code));
+  const missingTreatments = DEFAULT_VAT_TREATMENTS.filter((t) => !existingTreatments.has(t.code));
+  const missingRates = DEFAULT_TAX_RATES.filter((r) => !rateIdByCode.has(r.code)
+    && missingTreatments.some((t) => t.defaultRateCode === r.code));
+  if (missingTreatments.length === 0) return { addedRates: [], addedTreatments: [] };
+
+  db.transaction((tx) => {
+    for (const seed of missingRates) {
+      const id = ids.taxRate();
+      tx.insert(taxRates).values({
+        id, companyId, code: seed.code, name: seed.name, rateBasisPoints: seed.rateBasisPoints,
+        taxType: seed.taxType, jurisdiction: seed.jurisdiction,
+        reportingClassification: seed.reportingClassification ?? null, isDefault: false,
+        notes: seed.notes ?? null, effectiveFrom: seed.effectiveFrom,
+        sourceNote: seed.sourceNote ?? null, sourceDate: today(),
+      }).run();
+      rateIdByCode.set(seed.code, id);
+    }
+    for (const seed of missingTreatments) {
+      tx.insert(vatTreatments).values({
+        id: ids.vatTreatment(), companyId, code: seed.code, name: seed.name, description: seed.description,
+        jurisdiction: seed.jurisdiction, direction: seed.direction, supplyKind: seed.supplyKind,
+        appliesRate: seed.appliesRate, defaultTaxRateId: rateIdByCode.get(seed.defaultRateCode) ?? null,
+        isReverseCharge: seed.isReverseCharge ?? false, isRecoverable: seed.isRecoverable ?? true,
+        recoverableBasisPoints: seed.recoverableBasisPoints ?? 10_000,
+        salesVatBox: seed.salesVatBox ?? null, purchasesVatBox: seed.purchasesVatBox ?? null,
+        netSalesBox: seed.netSalesBox ?? null, netPurchasesBox: seed.netPurchasesBox ?? null,
+        requiresCounterpartyVatNumber: seed.requiresCounterpartyVatNumber ?? false,
+        isDefault: false, isSystem: seed.isSystem ?? false, effectiveFrom: '1900-01-01',
+        sourceNote: seed.sourceNote ?? null, sourceDate: today(),
+      }).run();
+    }
+    tx.insert(auditEvents).values({
+      id: ids.audit(), companyId, occurredAt: nowIso(), entityType: 'vat_treatment', entityId: companyId,
+      action: 'created',
+      newValue: JSON.stringify({ addedRates: missingRates.map((r) => r.code), addedTreatments: missingTreatments.map((t) => t.code) }),
+      source: 'system', actor: actor ?? 'system',
+      reason: 'Added default VAT treatments introduced since this company was created',
+    }).run();
+  });
+  return { addedRates: missingRates.map((r) => r.code), addedTreatments: missingTreatments.map((t) => t.code) };
+}
+
 /** Resolve a system account, failing loudly rather than posting to the wrong place. */
 export function systemAccountId(
   db: AppDatabase, companyId: string, key: SystemAccountKey,

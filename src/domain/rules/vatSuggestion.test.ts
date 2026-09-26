@@ -150,12 +150,14 @@ describe('suggestVatTreatment', () => {
     expect(s.decidingRule?.ruleKey).toBe('vat.zero_rate_intra_community_goods');
   });
 
-  it('livestock matches a statutory rule but no treatment exists for it — reported, not guessed', () => {
+  it('livestock is suggested the livestock treatment at 4.8% (issue #205)', () => {
     const customerId = party('customer', 'Mart Ltd', { countryCode: 'IE' });
     const s = suggestVatTreatment(db, { companyId, bankTransactionId: tx('SALE OF CATTLE', 80_000, { customerId }) })!;
-    expect(s.status).toBe('no_treatment');
+    expect(s.status).toBe('suggested');
     expect(s.decidingRule?.ruleKey).toBe('vat.rate_livestock_current');
-    expect(s.reviewReasons.join(' ')).toContain('no VAT treatment is configured');
+    expect(s.treatment?.code).toBe('IE_LIVESTOCK');
+    expect(s.configuredRateBasisPoints).toBe(480);
+    expect(s.rateAgrees).toBe(true);
   });
 });
 

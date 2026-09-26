@@ -8,6 +8,7 @@ import { AccountingError } from '../accounting/errors';
 import { assertDocumentConfirmed } from '../documents/review';
 import { upsertReviewItem } from '../extraction/service';
 import { resolveTreatment } from '../vat/engine';
+import { documentLineChoices } from './suggest';
 import { createInvoice, type CreatedInvoice, type InvoiceLineInput } from '../invoicing/invoices';
 
 /**
@@ -298,6 +299,26 @@ function postDocumentAsInvoiceSteps(db: AppDatabase, input: PostDocumentInput): 
       entityType: 'invoice',
       entityId: created.invoiceId,
       dedupeKey: `invoice:${created.invoiceId}:total_mismatch`,
+    });
+  }
+  // Each line's rate is checked against the statutory rules and, where it is
+  // not the rate they give (or they cannot say), flagged for review — the
+  // invoice figures are kept as printed (issue #205).
+  const choices = documentLineChoices(db, { companyId: input.companyId, documentId: doc.id });
+  for (const choice of choices.lines) {
+    const check = choice.rateCheck;
+    if (check.outcome === 'consistent') continue;
+    upsertReviewItem(db, {
+      companyId: input.companyId,
+      kind: 'uncertain_vat_treatment',
+      severity: check.outcome === 'inconsistent' ? 'warning' : 'info',
+      title: check.outcome === 'inconsistent'
+        ? `"${doc.originalFilename}" line ${choice.line.number}: rate charged differs from the rules`
+        : `"${doc.originalFilename}" line ${choice.line.number}: rate charged could not be confirmed`,
+      detail: `"${choice.line.description}": ${check.message}`,
+      entityType: 'invoice',
+      entityId: created.invoiceId,
+      dedupeKey: `invoice:${created.invoiceId}:line:${choice.line.number}:rate`,
     });
   }
   return created;
