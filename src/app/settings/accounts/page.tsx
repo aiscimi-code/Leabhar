@@ -4,14 +4,18 @@ import {
   Page, Panel, Badge, Field, Input, Select, Textarea, Disclosure,
 } from '@/components/primitives';
 import { ActionForm } from '@/components/ActionForm';
-import { createAccountAction, updateAccountAction } from '@/app/settings-actions';
+import {
+  createAccountAction, updateAccountAction, archiveAccountAction, restoreAccountAction,
+} from '@/app/settings-actions';
 import { label } from '@/lib/format';
 
 export const dynamic = 'force-dynamic';
 
 /** Chart of accounts (README §10). */
 export default function AccountsPage() {
-  const accounts = chartOfAccounts();
+  const all = chartOfAccounts();
+  const accounts = all.filter((a) => a.active);
+  const archived = all.filter((a) => !a.active);
   const types = ['income', 'expense', 'asset', 'liability', 'equity'] as const;
   const sections = [
     'revenue', 'cost_of_sales', 'operating_expenses', 'other_income', 'finance_costs',
@@ -23,7 +27,7 @@ export default function AccountsPage() {
     <Page
       title="Chart of accounts"
       subtitle="Predefined but editable. An account referenced by a posted entry can be
-        deactivated but never deleted — its history stays intact."
+        archived but never deleted — its history stays intact."
     >
       {types.map((type) => {
         const inType = accounts.filter((a) => a.type === type);
@@ -62,14 +66,11 @@ export default function AccountsPage() {
                         : <span className="text-ink-faint">Not applicable</span>}
                     </td>
                     <td>
-                      <div className="flex gap-1 flex-wrap">
-                        {account.isSystem && (
-                          <Badge tone="accent" title="The posting engine addresses this account by name. It cannot be deleted.">
-                            System
-                          </Badge>
-                        )}
-                        {!account.active && <Badge tone="neutral">Inactive</Badge>}
-                      </div>
+                      {account.isSystem && (
+                        <Badge tone="accent" title="The posting engine addresses this account by name. It cannot be deleted or archived.">
+                          System
+                        </Badge>
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -93,17 +94,29 @@ export default function AccountsPage() {
                       <Textarea name="description" rows={2}
                         defaultValue={account.description ?? ''} />
                     </Field>
-                    <label className="flex items-center gap-2 text-[12px] text-ink mb-3">
-                      <input type="checkbox" name="active" defaultChecked={account.active} />
-                      Offered when classifying
-                    </label>
                     <p className="text-[11.5px] text-ink-muted leading-snug border-t border-line pt-2">
                       There is no delete. An account referenced by a posted entry cannot be
-                      removed without destroying that entry&rsquo;s meaning, so deactivating
-                      it is the only way to retire one.
+                      removed without destroying that entry&rsquo;s meaning, so archiving it
+                      is the only way to retire one — with a reason, recorded.
                     </p>
                   </div>
                 </ActionForm>
+                {!account.isSystem && (
+                  <ActionForm action={archiveAccountAction} submit="Archive this account"
+                    extra={{ accountId: account.id }}>
+                    <div className="max-w-3xl">
+                      <Field
+                        label="Why is it being retired?"
+                        help="Archiving stops new postings and hides the account from
+                          classification, but its history and balance stay exactly as they
+                          are. The reason is recorded in the audit trail; an account that
+                          still carries a balance is put on the review queue."
+                      >
+                        <Input name="reason" required />
+                      </Field>
+                    </div>
+                  </ActionForm>
+                )}
               </Disclosure>
             ))}
           </Panel>
@@ -150,6 +163,50 @@ export default function AccountsPage() {
           </ActionForm>
         </Disclosure>
       </Panel>
+
+      {archived.length > 0 && (
+        <Panel
+          title="Archived accounts"
+          description="Retired from the chart: no new postings, not offered when
+            classifying, history and balance exactly as they were."
+        >
+          <table className="ledger">
+            <thead>
+              <tr>
+                <th className="w-20">Code</th>
+                <th>Name</th>
+                <th className="w-36">Archived from</th>
+              </tr>
+            </thead>
+            <tbody>
+              {archived.map((account) => (
+                <tr key={account.id}>
+                  <td className="num !text-left">{account.code}</td>
+                  <td className="text-ink-muted">{account.name}</td>
+                  <td className="text-ink-muted">{account.effectiveTo ?? '—'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {archived.map((account) => (
+            <Disclosure key={account.id} summary={`Restore ${account.code} ${account.name}`}>
+              <ActionForm action={restoreAccountAction} submit="Restore this account"
+                extra={{ accountId: account.id }}>
+                <div className="max-w-3xl">
+                  <Field
+                    label="Why is it coming back?"
+                    help="Restoring reopens the account: it can take new postings and is
+                      offered when classifying again. The reason is recorded in the audit
+                      trail."
+                  >
+                    <Input name="reason" required />
+                  </Field>
+                </div>
+              </ActionForm>
+            </Disclosure>
+          ))}
+        </Panel>
+      )}
     </Page>
   );
 }

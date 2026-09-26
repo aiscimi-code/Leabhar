@@ -41,6 +41,7 @@ import {
 import { suggestVatTreatment } from '@/domain/rules/vatSuggestion';
 import { confirmEstablishment, confirmCustomerTaxableStatus, checkVatNumberWithVies } from '@/domain/parties/status';
 import { confirmRctPrincipal, recordCashBasisAuthorisation } from '@/domain/config/companyStatus';
+import { archiveAccount, restoreAccount } from '@/domain/config/mutations';
 import {
   registerCapitalGood, recordIntervalUse, recordCapitalGoodDisposal, postCapitalGoodAdjustment,
   postCapitalGoodDisposalAdjustment, capitalGoodsOverview,
@@ -92,6 +93,8 @@ import {
   listPartiesInput,
   ensureDefaultAccountsInput,
   installRulePackInput,
+  archiveAccountInput,
+  restoreAccountInput,
   type CreateRuleCliInput,
 } from '@/agent/schema';
 
@@ -165,6 +168,12 @@ Induction (no company/bank/chart yet):
       farm chart: adds the farm accounts and renames the base accounts that
       are still under their seeded names — one the user has already renamed
       is theirs and is reported as skipped, never touched.
+  archive-account --account <code> --reason "..."
+      [--date <date>]  Retire an account from the chart: no new postings, not
+      offered when classifying, history untouched, effective window closed on
+      --date (default today). A live balance is flagged on the review queue.
+  restore-account --account <code> --reason "..."
+      Reopen an archived account. Both need a reason, both are audited.
   install-rule-pack [--employee "Name"] [--second-bank-account <code>]
       [--rent-account <code>]            Starter Irish SME bank-narrative
       rules (wages, employer PRSI, a Revenue PAYE remittance, VAT3, rent, an
@@ -1155,6 +1164,40 @@ export async function main(argv: string[], options: CliOptions = {}): Promise<nu
       case 'install-farm-chart': {
         const parsed = ensureDefaultAccountsInput.parse({ companyId });
         print(installFarmChartCli(db, parsed), format);
+        return 0;
+      }
+
+      case 'archive-account': {
+        const parsed = archiveAccountInput.parse({
+          companyId,
+          account: requireFlag(flags, 'account'),
+          reason: requireFlag(flags, 'reason'),
+          date: getFlag(flags, 'date'),
+        });
+        const result = archiveAccount(db, {
+          companyId,
+          accountId: resolveAccountId(db, companyId, parsed.account),
+          reason: parsed.reason,
+          archivedOn: parsed.date ? asIsoDate(parsed.date) : undefined,
+          actor: 'cli',
+        });
+        print({ account: parsed.account, ...result }, format);
+        return 0;
+      }
+
+      case 'restore-account': {
+        const parsed = restoreAccountInput.parse({
+          companyId,
+          account: requireFlag(flags, 'account'),
+          reason: requireFlag(flags, 'reason'),
+        });
+        restoreAccount(db, {
+          companyId,
+          accountId: resolveAccountId(db, companyId, parsed.account),
+          reason: parsed.reason,
+          actor: 'cli',
+        });
+        print({ account: parsed.account, restored: true }, format);
         return 0;
       }
 

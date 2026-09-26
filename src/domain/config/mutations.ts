@@ -2,14 +2,16 @@ import { and, eq, sql, desc, ne } from 'drizzle-orm';
 import type { AppDatabase } from '@/db';
 import {
   companies, accounts, taxRates, vatTreatments, vatPeriods, accountingPeriods,
-  bankAccounts, auditEvents, vatEntries, journalLines, invoiceLines,
-  bankTransactions, suppliers, customers, taxDeadlines,
+  bankAccounts, auditEvents, vatEntries, journalEntries, journalLines, invoiceLines,
+  bankTransactions, suppliers, customers, taxDeadlines, reviewItems,
 } from '@/db/schema';
 import { ids } from '@/lib/ids';
-import { asIsoDate, nowIso, addDays, type IsoDate } from '../dates';
+import { asIsoDate, nowIso, today, addDays, type IsoDate } from '../dates';
 import { generateVatPeriods, generateFinancialYear, validatePeriodSequence,
   type VatFrequency } from './periods';
 import { AccountingError } from '../accounting/errors';
+import { signedBalance } from './chartOfAccounts';
+import { upsertReviewItem } from '../extraction/service';
 
 export class ConfigurationError extends AccountingError {}
 
@@ -480,7 +482,7 @@ export function updateAccount(
     companyId: string; accountId: string;
     changes: Partial<{
       name: string; description: string | null; vatApplicable: boolean;
-      defaultVatTreatmentId: string | null; reportSection: string; active: boolean;
+      defaultVatTreatmentId: string | null; reportSection: string;
     }>;
     actor?: string;
   },
@@ -490,26 +492,7 @@ export function updateAccount(
     .get();
   if (!account) throw new ConfigurationError(`Account ${params.accountId} not found.`);
 
-  const usageCount = db.select({ count: sql<number>`COUNT(*)` }).from(journalLines)
-    .where(eq(journalLines.accountId, params.accountId)).get()?.count ?? 0;
-
   const warnings: string[] = [];
-
-  if (params.changes.active === false) {
-    if (account.isSystem) {
-      throw new ConfigurationError(
-        `"${account.name}" is a system account: the posting engine addresses it by name, so `
-          + 'it cannot be deactivated. You can rename it and change its description.',
-      );
-    }
-    if (usageCount > 0) {
-      warnings.push(
-        `${usageCount} journal ${usageCount === 1 ? 'line' : 'lines'} already post to this `
-          + 'account. Its history and balance stay exactly as they are; deactivating only '
-          + 'stops new postings.',
-      );
-    }
-  }
 
   const changed: string[] = [];
   const update: Record<string, unknown> = {};
@@ -543,6 +526,165 @@ export function updateAccount(
   return { changed, warnings };
 }
 
+/** Posted journal lines on an account, and its base-currency balance. */
+function accountUsage(
+  db: AppDatabase, accountId: string,
+): { lineCount: number; balanceMinor: number } {
+  const row = db.select({
+    lines: sql<number>`COUNT(${journalLines.id})`,
+    balance: sql<number>`COALESCE(SUM(${journalLines.baseDebitMinor}), 0) - COALESCE(SUM(${journalLines.baseCreditMinor}), 0)`,
+  }).from(journalLines)
+    .innerJoin(journalEntries, eq(journalLines.journalEntryId, journalEntries.id))
+    .where(and(eq(journalLines.accountId, accountId), eq(journalEntries.isPosted, true)))
+    .get();
+  return { lineCount: row?.lines ?? 0, balanceMinor: row?.balance ?? 0 };
+}
+
+export interface ArchiveAccountResult {
+  journalLineCount: number;
+  /** Signed in the account's natural direction (invariant: figures are signed, never bare). */
+  balanceMinor: number;
+  /** True when the account still carried a balance and a review item was raised. */
+  flagged: boolean;
+}
+
+/**
+ * Archive an account (issue #361): retire it from the chart without deleting
+ * anything, the way "deactivation" was doing informally.
+ *
+ * Archiving is a decision with a reason, not a checkbox:
+ *
+ *  - the account's effective window is closed (`effectiveTo`), per the
+ *    effective-dating invariant — an archived account is configuration that
+ *    stopped applying, on a date, not a row silently flipped;
+ *  - a system account is refused: the posting engine addresses it by name;
+ *  - an account that still carries a balance is not blocked — its history
+ *    and balance stay exactly as they are — but it is flagged on the review
+ *    queue, because an archived account with a live balance is a balance that
+ *    will confuse the next person to read the books.
+ *
+ * An archived account cannot take new postings (`postJournalEntry` refuses
+ * inactive accounts) and is not offered when classifying.
+ */
+export function archiveAccount(
+  db: AppDatabase,
+  params: {
+    companyId: string; accountId: string;
+    reason: string;
+    /** Defaults to today. Closing the window on the date the decision was made. */
+    archivedOn?: IsoDate;
+    actor?: string;
+  },
+): ArchiveAccountResult {
+  const account = db.select().from(accounts)
+    .where(and(eq(accounts.id, params.accountId), eq(accounts.companyId, params.companyId)))
+    .get();
+  if (!account) throw new ConfigurationError(`Account ${params.accountId} not found.`);
+  if (account.isSystem) {
+    throw new ConfigurationError(
+      `"${account.name}" is a system account: the posting engine addresses it by name, so `
+        + 'it cannot be archived. You can rename it and change its description.',
+    );
+  }
+  if (!account.active) {
+    throw new ConfigurationError(
+      `"${account.name}" is already archived. Restore it first if you want to re-archive it `
+        + 'with a different date or reason.',
+    );
+  }
+  const reason = params.reason?.trim();
+  if (!reason) {
+    throw new ConfigurationError('Archiving an account needs a reason, like every other '
+      + 'controlled change. Say what it was for, or why it is being retired.');
+  }
+
+  const { lineCount, balanceMinor } = accountUsage(db, params.accountId);
+  const archivedOn = params.archivedOn ?? today();
+  const timestamp = nowIso();
+  const signed = signedBalance(account.type, balanceMinor, -balanceMinor);
+
+  db.transaction((tx) => {
+    tx.update(accounts).set({ active: false, effectiveTo: archivedOn, updatedAt: timestamp })
+      .where(eq(accounts.id, params.accountId)).run();
+
+    tx.insert(auditEvents).values({
+      id: ids.audit(), companyId: params.companyId, occurredAt: timestamp,
+      entityType: 'account', entityId: params.accountId,
+      action: 'archived',
+      previousValue: JSON.stringify({ active: true, effectiveTo: null }),
+      newValue: JSON.stringify({ active: false, effectiveTo: archivedOn }),
+      source: 'user', actor: params.actor ?? 'user',
+      reason,
+    }).run();
+
+    if (signed !== 0) {
+      upsertReviewItem(tx, {
+        companyId: params.companyId,
+        kind: 'other',
+        severity: 'warning',
+        title: `Archived account ${account.code} "${account.name}" still carries a balance`,
+        detail: `Archived with the reason "${reason}", but ${lineCount} journal `
+          + `${lineCount === 1 ? 'line' : 'lines'} leave a balance on it. History is untouched and `
+          + 'new postings are refused, but a live balance on an archived account will not be '
+          + 'obvious to whoever reads the books next. Move it to a live account with a dated '
+          + 'journal, or restore this account, before it causes confusion.',
+        entityType: 'account',
+        entityId: params.accountId,
+        dedupeKey: `account:${params.accountId}:archived_with_balance`,
+      });
+    }
+  });
+
+  return { journalLineCount: lineCount, balanceMinor: signed, flagged: signed !== 0 };
+}
+
+/** Restore an archived account — the deliberate inverse of archiving it. */
+export function restoreAccount(
+  db: AppDatabase,
+  params: { companyId: string; accountId: string; reason: string; actor?: string },
+): void {
+  const account = db.select().from(accounts)
+    .where(and(eq(accounts.id, params.accountId), eq(accounts.companyId, params.companyId)))
+    .get();
+  if (!account) throw new ConfigurationError(`Account ${params.accountId} not found.`);
+  if (account.active) {
+    throw new ConfigurationError(
+      `"${account.name}" is not archived, so there is nothing to restore.`,
+    );
+  }
+  const reason = params.reason?.trim();
+  if (!reason) {
+    throw new ConfigurationError('Restoring an account needs a reason, like every other '
+      + 'controlled change.');
+  }
+
+  const timestamp = nowIso();
+  db.transaction((tx) => {
+    tx.update(accounts).set({ active: true, effectiveTo: null, updatedAt: timestamp })
+      .where(eq(accounts.id, params.accountId)).run();
+
+    tx.insert(auditEvents).values({
+      id: ids.audit(), companyId: params.companyId, occurredAt: timestamp,
+      entityType: 'account', entityId: params.accountId,
+      action: 'restored',
+      previousValue: JSON.stringify({ active: false, effectiveTo: account.effectiveTo }),
+      newValue: JSON.stringify({ active: true, effectiveTo: null }),
+      source: 'user', actor: params.actor ?? 'user',
+      reason,
+    }).run();
+
+    // The balance flag raised at archive time is answered by the restore.
+    tx.update(reviewItems).set({
+      status: 'resolved', resolvedAt: timestamp, resolvedBy: params.actor ?? 'user',
+      updatedAt: timestamp,
+    }).where(and(
+      eq(reviewItems.companyId, params.companyId),
+      eq(reviewItems.dedupeKey, `account:${params.accountId}:archived_with_balance`),
+      eq(reviewItems.status, 'open'),
+    )).run();
+  });
+}
+
 /** Accounts can never be deleted once used. This says so, rather than failing obscurely. */
 export function deleteAccount(
   db: AppDatabase, params: { companyId: string; accountId: string; actor?: string },
@@ -556,7 +698,7 @@ export function deleteAccount(
   throw new ConfigurationError(
     `Accounts are never deleted. "${account?.name ?? params.accountId}" is referenced by `
       + `${usageCount} journal ${usageCount === 1 ? 'line' : 'lines'}, and removing it would `
-      + 'leave those entries pointing at nothing. Deactivate it instead: the history stays '
+      + 'leave those entries pointing at nothing. Archive it instead: the history stays '
       + 'intact and nothing new can be posted to it.',
   );
 }

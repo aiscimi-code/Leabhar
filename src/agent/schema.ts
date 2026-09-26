@@ -392,6 +392,23 @@ export const ensureDefaultAccountsInput = z.object({
   companyId: z.string(),
 });
 
+/** Archive/restore a chart account (issue #361): a decision with a reason. */
+export const archiveAccountInput = z.object({
+  companyId: z.string(),
+  /** Account code (or id). */
+  account: z.string(),
+  reason: z.string(),
+  /** Defaults to today; closes the account's effective window on this date. */
+  date: isoDate.optional(),
+});
+
+export const restoreAccountInput = z.object({
+  companyId: z.string(),
+  /** Account code (or id). */
+  account: z.string(),
+  reason: z.string(),
+});
+
 export const installRulePackInput = z.object({
   companyId: z.string(),
   /** Also match this employee's name in the description, alongside the generic SALARY keyword. */

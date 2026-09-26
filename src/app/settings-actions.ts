@@ -5,7 +5,7 @@ import { getDb } from '@/db';
 import { requireCompany } from '@/lib/queries';
 import {
   updateCompany, supersedeTaxRate, createTaxRate, deactivateTaxRate,
-  updateVatTreatment, createAccount, updateAccount,
+  updateVatTreatment, createAccount, updateAccount, archiveAccount, restoreAccount,
   generateVatPeriodsForYear, generateFinancialYearPeriod, updateVatPeriod,
   updateBankAccount, upsertSupplier, type CompanyUpdate,
 } from '@/domain/config/mutations';
@@ -310,7 +310,6 @@ export async function updateAccountAction(formData: FormData): Promise<ActionRes
       changes: {
         name: text(formData, 'name'),
         description: optional(formData, 'description'),
-        active: formData.get('active') === 'on',
       },
       actor: 'user',
     });
@@ -320,6 +319,52 @@ export async function updateAccountAction(formData: FormData): Promise<ActionRes
       message: result.changed.length === 0 ? 'Nothing changed.' : 'Saved.',
       warnings: result.warnings,
     };
+  } catch (error) {
+    return fail(error);
+  }
+}
+
+export async function archiveAccountAction(formData: FormData): Promise<ActionResult> {
+  try {
+    const company = requireCompany();
+    const reason = text(formData, 'reason');
+    if (!reason) {
+      return { ok: false, error: 'Archiving an account needs a reason.' };
+    }
+    const result = archiveAccount(getDb(), {
+      companyId: company.id,
+      accountId: String(formData.get('accountId')),
+      reason,
+      actor: 'user',
+    });
+    revalidatePath('/settings/accounts');
+    return {
+      ok: true,
+      message: result.flagged
+        ? 'Archived. It still carries a balance, so it is on the review queue — '
+          + 'move the balance to a live account, or restore it, before it confuses the books.'
+        : 'Archived. Its history stays exactly as it is; nothing new can be posted to it.',
+    };
+  } catch (error) {
+    return fail(error);
+  }
+}
+
+export async function restoreAccountAction(formData: FormData): Promise<ActionResult> {
+  try {
+    const company = requireCompany();
+    const reason = text(formData, 'reason');
+    if (!reason) {
+      return { ok: false, error: 'Restoring an account needs a reason.' };
+    }
+    restoreAccount(getDb(), {
+      companyId: company.id,
+      accountId: String(formData.get('accountId')),
+      reason,
+      actor: 'user',
+    });
+    revalidatePath('/settings/accounts');
+    return { ok: true, message: 'Restored. It can take new postings again.' };
   } catch (error) {
     return fail(error);
   }

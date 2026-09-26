@@ -5,7 +5,10 @@ import { createCompany, addBankAccount } from '@/domain/config/setup';
 import { createRule } from '@/domain/rules/engine';
 import { importStatement } from '@/domain/banking/import';
 import { storeDocument } from '@/domain/documents/storage';
-import { bankTransactions, reconciliations, documents, documentMatches, suppliers, accounts, invoices, companies } from '@/db/schema';
+import {
+  bankTransactions, reconciliations, documents, documentMatches, suppliers, accounts,
+  invoices, companies, loans as loansTable, journalLines,
+} from '@/db/schema';
 import { makeDate } from '@/domain/dates';
 import { main } from './reconcile';
 import { mkdtempSync, writeFileSync } from 'node:fs';
@@ -808,6 +811,80 @@ describe('cli reconcile — induction and books (issue #153)', () => {
       expect(byCode.get('1020')).toBe('Bank deposit / saver account');
       // 6160 stays reserved for actual directors' remuneration, not payroll.
       expect(byCode.get('6160')).toBe('Directors remuneration');
+    });
+
+    it('add-loan registers a loan, journals the drawdown, and the balance sheet carries it', async () => {
+      let c = iCapture();
+      await iRun(['add-bank', '--name', 'AIB Current', '--opening-date', '2025-01-01']);
+      c.restore();
+      await iRun(['add-loan', '--lender', 'AIB', '--loan', 'Term loan',
+        '--principal', '10000.00', '--date', '2025-03-01']);
+
+      const loans = iDb.select().from(loansTable).where(eq(loansTable.companyId, iCompanyId)).all();
+      expect(loans).toHaveLength(1);
+      expect(loans[0]!.lenderName).toBe('AIB');
+
+      const loanAccount = iDb.select().from(accounts)
+        .where(eq(accounts.id, loans[0]!.accountId)).get()!;
+      expect(loanAccount.code).toBe('2211');
+
+      // The drawdown journal exists and balances.
+      const lines = iDb.select().from(journalLines)
+        .where(eq(journalLines.accountId, loans[0]!.accountId)).all();
+      expect(lines).toHaveLength(1);
+      expect(lines[0]!.creditMinor).toBe(1_000_000);
+    });
+
+    it('archive-account retires an account with a reason; restore-account reopens it', async () => {
+      let c = iCapture();
+      let code = await iRun(['archive-account', '--account', '6090',
+        '--reason', 'Covered by 6120 now', '--date', '2025-06-01']);
+      c.restore();
+      expect(code).toBe(0);
+      expect(JSON.parse(c.stdout.join('')).flagged).toBe(false);
+
+      const row = iDb.select().from(accounts)
+        .where(and(eq(accounts.companyId, iCompanyId), eq(accounts.code, '6090'))).get()!;
+      expect(row.active).toBe(false);
+      expect(row.effectiveTo).toBe('2025-06-01');
+
+      // Refuses a second archive and a missing reason.
+      c = iCapture();
+      code = await iRun(['archive-account', '--account', '6090', '--reason', 'again']);
+      c.restore();
+      expect(code).toBe(1);
+      expect(c.stderr.join(' ')).toContain('already archived');
+
+      c = iCapture();
+      code = await iRun(['archive-account', '--account', '6120', '--reason', '']);
+      c.restore();
+      expect(code).toBe(1);
+
+      c = iCapture();
+      code = await iRun(['restore-account', '--account', '6090', '--reason', 'Needed after all']);
+      c.restore();
+      expect(code).toBe(0);
+      const restored = iDb.select().from(accounts)
+        .where(and(eq(accounts.companyId, iCompanyId), eq(accounts.code, '6090'))).get()!;
+      expect(restored.active).toBe(true);
+      expect(restored.effectiveTo).toBeNull();
+    });
+
+    it('init-company --chart farm installs the farm chart', async () => {
+      const fDb = createTestDatabase().db;
+      let c = capture();
+      await main(['init-company', '--name', 'O Brien Farms', '--chart', 'farm',
+        '--seed-years', '2025'], { db: fDb });
+      const farmCompanyId = JSON.parse(c.stdout.join('')).companyId;
+      c.restore();
+
+      const rows = fDb.select().from(accounts).where(eq(accounts.companyId, farmCompanyId)).all();
+      const byCode = new Map(rows.map((a) => [a.code, a.name]));
+      expect(byCode.get('4000')).toBe('Farm sales');
+      expect(byCode.get('4010')).toBe('Scheme and support income');
+      expect(byCode.get('1330')).toBe('Livestock on hand');
+      expect(byCode.get('5040')).toBe('Livestock purchases');
+      expect(byCode.get('6210')).toBe('Veterinary and medicines');
     });
 
     it('ensure-default-accounts adds back a code missing from a company induced earlier', async () => {

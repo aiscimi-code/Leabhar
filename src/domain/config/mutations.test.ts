@@ -5,6 +5,7 @@ import { createCompany, addBankAccount, ensureDefaultAccounts } from './setup';
 import {
   updateCompany, supersedeTaxRate, createTaxRate, deactivateTaxRate,
   updateVatTreatment, createAccount, updateAccount, deleteAccount,
+  archiveAccount, restoreAccount,
   generateVatPeriodsForYear, generateFinancialYearPeriod, updateVatPeriod,
   upsertCustomer, ConfigurationError,
 } from './mutations';
@@ -13,7 +14,7 @@ import { createVatEntries, resolveRate } from '../vat/engine';
 import { accountBalance } from '../accounting/ledger';
 import {
   taxRates, vatTreatments, accounts, vatPeriods, auditEvents, companies, taxDeadlines,
-  journalEntries, customers,
+  journalEntries, journalLines, customers, reviewItems,
 } from '@/db/schema';
 import { makeDate } from '../dates';
 import type { AppDatabase } from '@/db';
@@ -248,10 +249,10 @@ describe('chart of accounts', () => {
     expect(() => deleteAccount(db, { companyId, accountId: byCode['6010']! }))
       .toThrow(/Accounts are never deleted/);
     expect(() => deleteAccount(db, { companyId, accountId: byCode['6010']! }))
-      .toThrow(/Deactivate it instead/);
+      .toThrow(/Archive it instead/);
   });
 
-  it('warns when deactivating an account that has postings', () => {
+  it('flags, but does not block, archiving an account that still has a balance', () => {
     postJournalEntry(db, {
       companyId, entryDate: makeDate(2025, 3, 15), narrative: 'Test',
       sourceType: 'manual_adjustment', baseCurrency: 'EUR',
@@ -261,18 +262,91 @@ describe('chart of accounts', () => {
       ],
     });
 
-    const result = updateAccount(db, {
-      companyId, accountId: byCode['6010']!, changes: { active: false },
+    const result = archiveAccount(db, {
+      companyId, accountId: byCode['6010']!,
+      reason: 'Superseded by 6011', archivedOn: makeDate(2025, 6, 1),
     });
-    expect(result.warnings.join(' ')).toContain('history and balance stay exactly as they are');
-    expect(db.select().from(accounts).where(eq(accounts.id, byCode['6010']!)).get()!.active)
-      .toBe(false);
+    expect(result.flagged).toBe(true);
+    expect(result.journalLineCount).toBe(1);
+
+    const row = db.select().from(accounts).where(eq(accounts.id, byCode['6010']!)).get()!;
+    expect(row.active).toBe(false);
+    // The effective window is closed, per the effective-dating invariant.
+    expect(row.effectiveTo).toBe('2025-06-01');
+
+    const item = db.select().from(reviewItems)
+      .where(eq(reviewItems.dedupeKey, `account:${byCode['6010']}:archived_with_balance`)).get()!;
+    expect(item.status).toBe('open');
+    expect(item.title).toContain('still carries a balance');
+
+    const event = db.select().from(auditEvents)
+      .where(and(eq(auditEvents.entityId, byCode['6010']!), eq(auditEvents.action, 'archived'))).get()!;
+    expect(event.reason).toBe('Superseded by 6011');
   });
 
-  it('refuses to deactivate a system account', () => {
-    expect(() => updateAccount(db, {
-      companyId, accountId: acc['bank_control']!, changes: { active: false },
+  it('archives a clean account without flagging it, and closing the window is recorded', () => {
+    const result = archiveAccount(db, {
+      companyId, accountId: byCode['6010']!,
+      reason: 'Never used', archivedOn: makeDate(2025, 6, 1),
+    });
+    expect(result.flagged).toBe(false);
+    expect(result.balanceMinor).toBe(0);
+    expect(db.select().from(reviewItems).all()).toHaveLength(0);
+  });
+
+  it('refuses to archive a system account or an already archived one, and needs a reason', () => {
+    expect(() => archiveAccount(db, {
+      companyId, accountId: acc['bank_control']!, reason: 'No',
     })).toThrow(/system account/);
+
+    archiveAccount(db, { companyId, accountId: byCode['6010']!, reason: 'Retired' });
+    expect(() => archiveAccount(db, {
+      companyId, accountId: byCode['6010']!, reason: 'Again',
+    })).toThrow(/already archived/);
+
+    expect(() => archiveAccount(db, {
+      companyId, accountId: byCode['6090']!, reason: '   ',
+    })).toThrow(/needs a reason/);
+  });
+
+  it('restores an archived account, resolving the balance flag', () => {
+    postJournalEntry(db, {
+      companyId, entryDate: makeDate(2025, 3, 15), narrative: 'Test',
+      sourceType: 'manual_adjustment', baseCurrency: 'EUR',
+      lines: [
+        { accountId: byCode['6010']!, debitMinor: 1000 },
+        { accountId: acc['bank_control']!, creditMinor: 1000 },
+      ],
+    });
+    archiveAccount(db, {
+      companyId, accountId: byCode['6010']!,
+      reason: 'Superseded', archivedOn: makeDate(2025, 6, 1),
+    });
+
+    restoreAccount(db, { companyId, accountId: byCode['6010']!, reason: 'Archived by mistake' });
+    const row = db.select().from(accounts).where(eq(accounts.id, byCode['6010']!)).get()!;
+    expect(row.active).toBe(true);
+    expect(row.effectiveTo).toBeNull();
+
+    const item = db.select().from(reviewItems)
+      .where(eq(reviewItems.dedupeKey, `account:${byCode['6010']}:archived_with_balance`)).get()!;
+    expect(item.status).toBe('resolved');
+
+    expect(() => restoreAccount(db, {
+      companyId, accountId: byCode['6090']!, reason: 'Not archived',
+    })).toThrow(/nothing to restore/);
+  });
+
+  it('an archived account cannot take new postings', () => {
+    archiveAccount(db, { companyId, accountId: byCode['6010']!, reason: 'Retired' });
+    expect(() => postJournalEntry(db, {
+      companyId, entryDate: makeDate(2025, 3, 15), narrative: 'Test',
+      sourceType: 'manual_adjustment', baseCurrency: 'EUR',
+      lines: [
+        { accountId: byCode['6010']!, debitMinor: 1000 },
+        { accountId: acc['bank_control']!, creditMinor: 1000 },
+      ],
+    })).toThrow(/cannot take new postings/);
   });
 
   it('allows a system account to be renamed', () => {
