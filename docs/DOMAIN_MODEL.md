@@ -798,7 +798,7 @@ imported (immutable) → fingerprinted → deduplicated
 ```
 
 Status: `unclassified | suggested | classified | matched | posted | reconciled |
-ignored | duplicate`.
+ignored | duplicate | rolled_back`.
 
 Each bank account posts to a ledger account of its own (issues #376, #377):
 the seeded 1000 / 1010 / 1020 for the first bank, cash and deposit account,
@@ -816,6 +816,15 @@ id is kept for the fingerprint, only booked CAMT entries are imported, and the
 statement's opening and closing balances are kept on the import. Reconciliation
 uses that closing balance when the statement is struck on the reconciliation
 date (`statement_closing_balance`).
+
+An import that went wrong is undone with `rollbackStatementImport` (issue
+#379), and only while nothing in the books rests on its lines — no line
+classified, matched, posted, reconciled, paid against or linked to a document.
+The import becomes `reversed` and its lines `rolled_back`: they stay as
+evidence of what was imported and taken back out, and are left out of
+classification, matching, reconciliation and the period checks. Their
+occurrence numbers stay held, so the corrected file imports cleanly and a
+second import of it still finds its lines present.
 
 ### Match
 

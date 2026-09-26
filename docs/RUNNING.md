@@ -89,6 +89,11 @@ npm run cli -- add-bank --name "..." [--iban ...] [--currency EUR]
     # --opening also journals the balance (Dr this account / Cr retained
     # earnings) at --opening-date — it is not just stored on the row. A card
     # or loan balance owed is negative.
+npm run cli -- list-imports                           # the import history
+npm run cli -- rollback-import --import <id> --reason "..." --actor "Name"
+    # Undo an import that went wrong. Refused while any of its lines is
+    # classified, matched, posted, reconciled or linked; the lines stay on
+    # record as rolled back and the corrected file can then be imported.
 npm run cli -- record-manual --account <id> --date <date> --description "..."
     --amount <-12.30> --recorded-by "Name" [--reference ...]
     # A movement with no statement line (petty cash): recorded as manual

@@ -75,6 +75,7 @@ export function findMatchesForDocument(
     eq(bankTransactions.companyId, params.companyId),
     ne(bankTransactions.status, 'ignored'),
     ne(bankTransactions.status, 'duplicate'),
+    ne(bankTransactions.status, 'rolled_back'),
     sql`NOT EXISTS (
       SELECT 1 FROM ${documents} d
       WHERE d.matched_transaction_id = ${bankTransactions.id}
@@ -561,6 +562,7 @@ export function unmatchedTransactions(
   const conditions = [
     eq(bankTransactions.companyId, params.companyId),
     ne(bankTransactions.status, 'ignored'),
+    ne(bankTransactions.status, 'rolled_back'),
     sql`NOT EXISTS (
       SELECT 1 FROM ${documents} d WHERE d.matched_transaction_id = ${bankTransactions.id}
     )`,

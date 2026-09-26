@@ -171,6 +171,8 @@ export function reconcileBankAccount(
     eq(bankTransactions.bankAccountId, params.bankAccountId),
     gte(bankTransactions.transactionDate, params.periodStart),
     lte(bankTransactions.transactionDate, params.periodEnd),
+    // A line whose import was undone is not on the statement (#379).
+    ne(bankTransactions.status, 'rolled_back'),
   );
 
   const transactions = db.select().from(bankTransactions)

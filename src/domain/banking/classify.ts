@@ -83,6 +83,13 @@ function classifyTransactionSteps(db: AppDatabase, input: ClassifyInput): Classi
   if (!transaction) {
     throw new ClassificationError(`Bank transaction ${input.bankTransactionId} not found.`);
   }
+  if (transaction.status === 'rolled_back') {
+    throw new ClassificationError(
+      'This line\'s statement import was undone, so it is not part of the books. Import the '
+        + 'corrected statement and classify the line from there.',
+      { bankTransactionId: transaction.id },
+    );
+  }
 
   if (transaction.journalEntryId) {
     throw new ClassificationError(
@@ -467,6 +474,9 @@ function postBankTransactionJournalSteps(
     )).get();
   if (!transaction) {
     throw new ClassificationError(`Bank transaction ${input.bankTransactionId} not found.`);
+  }
+  if (transaction.status === 'rolled_back') {
+    throw new ClassificationError('This line\'s statement import was undone, so it is not part of the books.');
   }
   if (transaction.journalEntryId) {
     throw new ClassificationError(

@@ -1,7 +1,7 @@
-import { bankAccountList } from '@/lib/queries';
-import { Page, Panel, Help, Empty, LinkButton, Field, Input, Select } from '@/components/primitives';
+import { bankAccountList, statementImportHistory } from '@/lib/queries';
+import { Page, Panel, Help, Empty, LinkButton, Field, Input, Select, Disclosure } from '@/components/primitives';
 import { ActionForm } from '@/components/ActionForm';
-import { recordManualTransactionAction } from '@/app/actions';
+import { recordManualTransactionAction, rollbackImportAction } from '@/app/actions';
 import { ImportForm } from '@/components/ImportForm';
 import { date } from '@/lib/format';
 
@@ -17,6 +17,7 @@ export const dynamic = 'force-dynamic';
  */
 export default function ImportPage() {
   const accounts = bankAccountList();
+  const history = statementImportHistory();
 
   return (
     <Page
@@ -96,6 +97,55 @@ export default function ImportPage() {
               </div>
             </ActionForm>
           </div>
+        </Panel>
+      )}
+
+      {history.length > 0 && (
+        <Panel
+          title="Import history"
+          description={'Every statement imported, newest first. An import that went wrong — the '
+            + 'wrong account, the wrong file — can be undone while nothing in the books rests on '
+            + 'its lines yet. Its lines stay on record as rolled back.'}
+        >
+          <table className="ledger">
+            <thead>
+              <tr>
+                <th className="w-28">Imported</th><th>Account</th><th>File</th><th>Covers</th>
+                <th className="num">Imported</th><th className="num">Duplicates</th>
+                <th className="num">Failed</th><th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {history.map((run) => (
+                <tr key={run.id}>
+                  <td className="num !text-left">{date(run.createdAt.slice(0, 10))}</td>
+                  <td>{`${run.bankName} — ${run.accountName}`}</td>
+                  <td>
+                    {run.filename}
+                    <span className="text-ink-muted"> · {run.fileFormat.toUpperCase()} · {run.importedBy}</span>
+                  </td>
+                  <td className="text-ink-muted">
+                    {run.statementStartDate ? `${date(run.statementStartDate)} – ${date(run.statementEndDate ?? run.statementStartDate)}` : '—'}
+                  </td>
+                  <td className="num">{run.rowsImported}</td>
+                  <td className="num">{run.rowsDuplicate}</td>
+                  <td className="num">{run.rowsFailed}</td>
+                  <td>
+                    {run.status === 'reversed' ? <span className="text-ink-muted">Undone</span> : (
+                      <Disclosure summary="Undo">
+                        <ActionForm action={rollbackImportAction} submit="Undo this import">
+                          <input type="hidden" name="importId" value={run.id} />
+                          <Field label="Why">
+                            <Input name="reason" required placeholder="Imported into the wrong account" />
+                          </Field>
+                        </ActionForm>
+                      </Disclosure>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </Panel>
       )}
 

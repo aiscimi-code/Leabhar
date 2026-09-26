@@ -1,9 +1,9 @@
-import { and, eq, inArray } from 'drizzle-orm';
+import { and, desc, eq, inArray, ne } from 'drizzle-orm';
 import ExcelJS from 'exceljs';
 import type { AppDatabase } from '@/db';
 import {
   bankTransactions, statementImports, bankAccounts, accountingPeriods,
-  auditEvents, importProfiles, companies,
+  auditEvents, importProfiles, companies, documents, documentMatches, payments,
 } from '@/db/schema';
 import { ids } from '@/lib/ids';
 import { nowIso, asIsoDate } from '../dates';
@@ -155,7 +155,9 @@ export async function importStatement(
   const timestamp = nowIso();
 
   // ---- Defence 2: per-transaction fingerprints ----
-  const withOccurrences = assignOccurrenceIndices(parsed.transactions);
+  const withOccurrences = skipRolledBackIndices(
+    db, input.bankAccountId, assignOccurrenceIndices(parsed.transactions),
+  );
 
   const existing = new Set<string>();
   if (withOccurrences.length > 0) {
@@ -168,6 +170,8 @@ export async function importStatement(
         .where(and(
           eq(bankTransactions.bankAccountId, input.bankAccountId),
           inArray(bankTransactions.fingerprint, fingerprints.slice(i, i + 400)),
+          // A line whose import was undone does not stop its correction (#379).
+          ne(bankTransactions.status, 'rolled_back'),
         )).all();
       for (const row of rows) existing.add(`${row.fingerprint}#${row.occurrenceIndex}`);
     }
@@ -303,6 +307,46 @@ export async function importStatement(
     statementStartDate,
     statementEndDate,
   };
+}
+
+/**
+ * Occurrence numbers held by lines whose import was undone stay taken — the
+ * rows remain as evidence (issue #379) — so the k-th occurrence of a
+ * fingerprint in a file takes the k-th number not held by a rolled-back line.
+ * Stable for as long as the rolled-back lines are, so importing the corrected
+ * file twice still finds the second run's lines already present.
+ */
+function skipRolledBackIndices<T extends { fingerprint: string; occurrenceIndex: number }>(
+  db: AppDatabase, bankAccountId: string, rows: T[],
+): T[] {
+  if (rows.length === 0) return rows;
+  const held = new Map<string, Set<number>>();
+  const fingerprints = [...new Set(rows.map((r) => r.fingerprint))];
+  for (let i = 0; i < fingerprints.length; i += 400) {
+    for (const row of db.select({
+      fingerprint: bankTransactions.fingerprint, occurrenceIndex: bankTransactions.occurrenceIndex,
+    }).from(bankTransactions).where(and(
+      eq(bankTransactions.bankAccountId, bankAccountId),
+      eq(bankTransactions.status, 'rolled_back'),
+      inArray(bankTransactions.fingerprint, fingerprints.slice(i, i + 400)),
+    )).all()) {
+      const set = held.get(row.fingerprint) ?? new Set<number>();
+      set.add(row.occurrenceIndex);
+      held.set(row.fingerprint, set);
+    }
+  }
+  if (held.size === 0) return rows;
+  return rows.map((row) => {
+    const taken = held.get(row.fingerprint);
+    if (!taken) return row;
+    let free = -1;
+    let index = -1;
+    while (free < row.occurrenceIndex) {
+      index += 1;
+      if (!taken.has(index)) free += 1;
+    }
+    return { ...row, occurrenceIndex: index };
+  });
 }
 
 /** Read an XLSX into rows of strings, then reuse the CSV pipeline. */
@@ -531,4 +575,136 @@ export function recordManualTransaction(
   });
 
   return { importId, transactionId };
+}
+
+export class ImportRollbackError extends Error {}
+
+export interface RollbackResult {
+  importId: string;
+  linesRolledBack: number;
+  /** Match suggestions for the lines that nobody had acted on, now superseded. */
+  suggestionsSuperseded: number;
+}
+
+/**
+ * Undo a statement import that went wrong — the wrong account, the wrong
+ * column mapping, the wrong file (issue #379).
+ *
+ * Refused while anything in the books rests on one of its lines: a line that
+ * has been classified, matched, posted or reconciled, paid against an
+ * invoice, or linked to a document. Undo those first; this never unwinds
+ * postings on the way. Otherwise the import is marked `reversed` and each of
+ * its lines `rolled_back`: the rows stay, as evidence of what was imported
+ * and taken back out, but are left out of everything else, and their
+ * fingerprints no longer stop the corrected file from being imported.
+ */
+export function rollbackStatementImport(
+  db: AppDatabase,
+  params: { companyId: string; importId: string; reason: string; actor: string; requestId?: string },
+): RollbackResult {
+  const reason = params.reason.trim();
+  if (!reason) throw new ImportRollbackError('Say why this import is being undone.');
+  const actor = params.actor.trim();
+  if (!actor) throw new ImportRollbackError('Say who is undoing this import.');
+
+  const run = db.select().from(statementImports)
+    .where(and(eq(statementImports.id, params.importId), eq(statementImports.companyId, params.companyId)))
+    .get();
+  if (!run) throw new ImportRollbackError(`Import ${params.importId} not found.`);
+  if (run.status === 'reversed') throw new ImportRollbackError('This import has already been undone.');
+
+  const lines = db.select().from(bankTransactions)
+    .where(eq(bankTransactions.statementImportId, run.id)).all();
+  const lineIds = lines.map((l) => l.id);
+
+  const blocked: string[] = [];
+  const settled = new Set(['classified', 'matched', 'posted', 'reconciled']);
+  for (const line of lines) {
+    const what = [
+      settled.has(line.status) ? `is ${line.status}` : null,
+      line.journalEntryId ? 'has a journal entry' : null,
+      line.reconciliationId ? 'is in a signed-off reconciliation' : null,
+    ].filter(Boolean);
+    if (what.length > 0) blocked.push(`${line.transactionDate} ${line.description} (${what.join(', ')})`);
+  }
+  for (let i = 0; i < lineIds.length; i += 400) {
+    const chunk = lineIds.slice(i, i + 400);
+    for (const payment of db.select().from(payments).where(inArray(payments.bankTransactionId, chunk)).all()) {
+      blocked.push(`a payment recorded against line ${payment.bankTransactionId}`);
+    }
+    for (const doc of db.select().from(documents).where(inArray(documents.matchedTransactionId, chunk)).all()) {
+      blocked.push(`document "${doc.originalFilename ?? doc.id}" linked to line ${doc.matchedTransactionId}`);
+    }
+    for (const match of db.select().from(documentMatches).where(and(
+      inArray(documentMatches.bankTransactionId, chunk),
+      inArray(documentMatches.decision, ['accepted', 'auto_accepted']),
+    )).all()) {
+      blocked.push(`an accepted document match on line ${match.bankTransactionId}`);
+    }
+  }
+  if (blocked.length > 0) {
+    const shown = blocked.slice(0, 10).join('; ');
+    throw new ImportRollbackError(
+      `The books already rest on ${blocked.length} item${blocked.length === 1 ? '' : 's'} from this import: `
+        + `${shown}${blocked.length > 10 ? '; …' : ''}. Undo those first (reverse the posting, unmatch `
+        + 'the document), then undo the import. Nothing has been changed.',
+    );
+  }
+
+  const timestamp = nowIso();
+  let suggestionsSuperseded = 0;
+  db.transaction((tx) => {
+    for (let i = 0; i < lineIds.length; i += 400) {
+      const chunk = lineIds.slice(i, i + 400);
+      tx.update(bankTransactions).set({ status: 'rolled_back', updatedAt: timestamp })
+        .where(inArray(bankTransactions.id, chunk)).run();
+      suggestionsSuperseded += tx.update(documentMatches).set({
+        decision: 'superseded', decidedAt: timestamp, decidedBy: actor,
+        decisionReason: `The statement import was undone: ${reason}`, updatedAt: timestamp,
+      }).where(and(inArray(documentMatches.bankTransactionId, chunk), eq(documentMatches.decision, 'pending')))
+        .run().changes;
+    }
+    tx.update(statementImports).set({ status: 'reversed', updatedAt: timestamp })
+      .where(eq(statementImports.id, run.id)).run();
+    tx.insert(auditEvents).values({
+      id: ids.audit(),
+      companyId: params.companyId,
+      occurredAt: timestamp,
+      entityType: 'statement_import',
+      entityId: run.id,
+      action: 'import_reversed',
+      previousValue: JSON.stringify({ status: run.status }),
+      newValue: JSON.stringify({ status: 'reversed', linesRolledBack: lines.length }),
+      reason,
+      source: 'user',
+      actor,
+      requestId: params.requestId ?? null,
+    }).run();
+  });
+
+  return { importId: run.id, linesRolledBack: lines.length, suggestionsSuperseded };
+}
+
+/** Every statement import for a company, newest first, with its account (the import history). */
+export function listStatementImports(db: AppDatabase, companyId: string) {
+  return db.select({
+    id: statementImports.id,
+    createdAt: statementImports.createdAt,
+    filename: statementImports.filename,
+    fileFormat: statementImports.fileFormat,
+    status: statementImports.status,
+    statementStartDate: statementImports.statementStartDate,
+    statementEndDate: statementImports.statementEndDate,
+    rowsRead: statementImports.rowsRead,
+    rowsImported: statementImports.rowsImported,
+    rowsDuplicate: statementImports.rowsDuplicate,
+    rowsFailed: statementImports.rowsFailed,
+    importedBy: statementImports.importedBy,
+    bankAccountId: statementImports.bankAccountId,
+    bankName: bankAccounts.bankName,
+    accountName: bankAccounts.accountName,
+  }).from(statementImports)
+    .innerJoin(bankAccounts, eq(bankAccounts.id, statementImports.bankAccountId))
+    .where(eq(statementImports.companyId, companyId))
+    .orderBy(desc(statementImports.createdAt)).all();
 }

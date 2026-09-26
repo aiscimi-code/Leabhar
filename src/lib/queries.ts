@@ -1,3 +1,4 @@
+import { listStatementImports } from '@/domain/banking/import';
 import { and, eq, desc, sql, isNull, isNotNull, ne, or, inArray } from 'drizzle-orm';
 import { getDb } from '@/db';
 import {
@@ -495,6 +496,10 @@ export function officerList() {
     .where(eq(companyOfficers.companyId, company.id)).orderBy(companyOfficers.role).all();
 }
 
+export function statementImportHistory() {
+  return listStatementImports(getDb(), requireCompany().id);
+}
+
 export function bankAccountList() {
   const db = getDb();
   const company = requireCompany();
@@ -539,6 +544,7 @@ export function unpostedTransactionOptions(bankAccountId?: string) {
     eq(bankTransactions.companyId, company.id),
     ne(bankTransactions.status, 'ignored'),
     ne(bankTransactions.status, 'duplicate'),
+    ne(bankTransactions.status, 'rolled_back'),
     isNull(bankTransactions.journalEntryId),
     sql`NOT EXISTS (
       SELECT 1 FROM ${payments} p WHERE p.bank_transaction_id = ${bankTransactions.id}
