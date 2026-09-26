@@ -250,6 +250,8 @@ export function documentLineChoices(db: AppDatabase, params: { companyId: string
     counterpartyEstablishment: party?.establishment ?? null,
     customerVies,
     legends: doc.vatLegends,
+    documentDate: doc.documentDate,
+    supplyDate: doc.supplyDate,
   });
   const missingParticulars = direction === 'purchase'
     ? missingInvoiceParticulars(particularsOf(db, doc, !!reverseChargeLegend)) : [];
