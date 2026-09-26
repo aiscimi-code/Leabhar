@@ -1,18 +1,20 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { readFileSync } from 'node:fs';
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { createTestDatabase } from '@/db/testing';
 import { createCompany } from '../config/setup';
 import { ingestVatcaRevisedSection, deriveVatcaRevisedRules, VATCA_REVISED_S046_MD_PATH } from './vatcaRevisedIngestion';
 import { ingestVatca2010, VATCA_2010_MD_PATH } from './vatcaIngestion';
-import { lookupTaxRule } from './irishRules';
-import { VATCA_REVISED_CURATED_RULES } from './vatcaRevisedCuration';
-import { irishTaxRules, irishKnowledgeSources, reviewItems } from '@/db/schema';
+import { lookupTaxRule, ingestFinanceAct2025, FINANCE_ACT_2025 } from './irishRules';
+import { VATCA_REVISED_CURATED_RULES, S46_FAMILY_SCHEDULE_REF } from './vatcaRevisedCuration';
+import { scheduleThreeRate } from './scheduleRates';
+import { irishTaxRules, irishKnowledgeSources, irishActProvisions, reviewItems } from '@/db/schema';
 import type { AppDatabase } from '@/db';
 
 let db: AppDatabase;
 let companyId: string;
 const s46Markdown = readFileSync(VATCA_REVISED_S046_MD_PATH, 'utf8');
+const FA2025_PATH = new URL(`../../../${FINANCE_ACT_2025.localPath}`, import.meta.url).pathname;
 
 beforeEach(() => {
   ({ db } = createTestDatabase());
@@ -49,25 +51,96 @@ describe('ingestVatcaRevisedSection', () => {
 describe('deriveVatcaRevisedRules', () => {
   beforeEach(() => {
     ingestVatcaRevisedSection(db, { companyId, markdown: s46Markdown, ingestVersion: 'v1' });
+    ingestFinanceAct2025(db, { companyId, markdown: readFileSync(FA2025_PATH, 'utf8'), ingestVersion: 'v1' });
   });
 
-  it('creates one rule per curated revised rate', () => {
+  const rowsFor = (ruleKey: string) => db.select().from(irishTaxRules)
+    .where(and(eq(irishTaxRules.companyId, companyId), eq(irishTaxRules.ruleKey, ruleKey))).all()
+    .sort((a, b) => a.effectiveFrom.localeCompare(b.effectiveFrom));
+  const rateOn = (ruleKey: string, asOfDate: string) => lookupTaxRule(db, { companyId, ruleKey, asOfDate })?.value ?? null;
+
+  it('creates one row per curated version', () => {
     const result = deriveVatcaRevisedRules(db, { companyId });
     expect(result.created).toBe(VATCA_REVISED_CURATED_RULES.length);
     expect(result.skippedNoProvision).toEqual([]);
   });
 
-  it('the standard-rate rule states 23%, never the stale as-enacted 21%', () => {
-    deriveVatcaRevisedRules(db, { companyId });
-    const rule = lookupTaxRule(db, { companyId, ruleKey: 'vat.rate_standard_current' });
-    expect(rule).not.toBeNull();
-    expect(rule!.value).toBe(23);
-    expect(rule!.unit).toBe('percent');
-    expect(rule!.citation).toBe('2010 Act 31 s.46');
-    expect(rule!.effectiveFrom).toBe('2021-03-01');
+  it('skips a whole family when one version\'s source is not ingested, rather than deriving part of it', () => {
+    const { db: other } = createTestDatabase();
+    const { companyId: otherCompany } = createCompany(other, { legalName: 'Other Ltd', seedYears: [2025] });
+    ingestVatcaRevisedSection(other, { companyId: otherCompany, markdown: s46Markdown, ingestVersion: 'v1' });
+    const result = deriveVatcaRevisedRules(other, { companyId: otherCompany });
+    expect(result.skippedNoProvision.sort()).toEqual(['vat.rate_hairdressing', 'vat.rate_hospitality']);
   });
 
-  it('every rule starts unreviewed with ai_suggestion provenance, never automatically authoritative', () => {
+  it('the standard rate is one family: 23% from 2012, 21% for the s.46(1A) period, 23% from March 2021, chained', () => {
+    deriveVatcaRevisedRules(db, { companyId });
+    expect(rateOn('vat.rate_standard_current', '2011-06-01')).toBeNull(); // before F95: not in the repository
+    expect(rateOn('vat.rate_standard_current', '2012-01-01')).toBe(23);
+    expect(rateOn('vat.rate_standard_current', '2020-08-31')).toBe(23);
+    expect(rateOn('vat.rate_standard_current', '2020-09-01')).toBe(21);
+    expect(rateOn('vat.rate_standard_current', '2021-02-28')).toBe(21);
+    expect(rateOn('vat.rate_standard_current', '2021-03-01')).toBe(23);
+    const [v1, v2, v3] = rowsFor('vat.rate_standard_current');
+    expect([v1!.ruleVersion, v2!.ruleVersion, v3!.ruleVersion]).toEqual([1, 2, 3]);
+    expect(v1!.supersedesRuleId).toBeNull();
+    expect(v2!.supersedesRuleId).toBe(v1!.id);
+    expect(v3!.supersedesRuleId).toBe(v2!.id);
+    expect([v1!.active, v2!.active, v3!.active]).toEqual([false, false, true]);
+    expect(lookupTaxRule(db, { companyId, ruleKey: 'vat.rate_standard_current', asOfDate: '2026-01-01' })!.citation)
+      .toBe('2010 Act 31 s.46');
+  });
+
+  it('hospitality: 9% (cb) 2020–2023, nothing 2023–2024, 13.5% 2025 to June 2026, 9% from July 2026 under Finance Act 2025 s.71', () => {
+    deriveVatcaRevisedRules(db, { companyId });
+    expect(rateOn('vat.rate_hospitality', '2019-06-01')).toBeNull();
+    expect(rateOn('vat.rate_hospitality', '2021-06-01')).toBe(9);
+    expect(rateOn('vat.rate_hospitality', '2024-06-01')).toBeNull();
+    expect(rateOn('vat.rate_hospitality', '2025-06-01')).toBe(13.5);
+    expect(rateOn('vat.rate_hospitality', '2026-06-30')).toBe(13.5);
+    expect(rateOn('vat.rate_hospitality', '2026-07-01')).toBe(9);
+    const july = lookupTaxRule(db, { companyId, ruleKey: 'vat.rate_hospitality', asOfDate: '2026-07-01' })!;
+    expect(july.citation).toBe('2025 Act 18');
+    expect(july.sectionNumber).toBe('71');
+    expect(rateOn('vat.rate_hairdressing', '2026-07-01')).toBe(9);
+    expect(rateOn('vat.rate_hairdressing', '2025-03-01')).toBe(13.5);
+  });
+
+  it('every family version agrees with scheduleThreeRate on its first and last day', () => {
+    const bp = { IE_RED: 13.5, IE_SECOND_RED: 9 } as const;
+    for (const [key, ref] of Object.entries(S46_FAMILY_SCHEDULE_REF)) {
+      for (const v of VATCA_REVISED_CURATED_RULES.filter((r) => r.ruleKey === key)) {
+        const last = v.effectiveTo ? new Date(Date.parse(v.effectiveTo) - 86_400_000).toISOString().slice(0, 10) : '2040-01-01';
+        for (const d of [v.effectiveFrom, last]) {
+          const code = scheduleThreeRate(ref, d).code;
+          expect(code ? bp[code] : null, `${key} on ${d}`).toBe(v.numericValue);
+        }
+      }
+    }
+  });
+
+  it('no family has two versions claiming the same date', () => {
+    const byKey = new Map<string, typeof VATCA_REVISED_CURATED_RULES>();
+    for (const r of VATCA_REVISED_CURATED_RULES) byKey.set(r.ruleKey, [...(byKey.get(r.ruleKey) ?? []), r]);
+    for (const [key, versions] of byKey) {
+      const sorted = [...versions].sort((a, b) => a.effectiveFrom.localeCompare(b.effectiveFrom));
+      for (let i = 0; i < sorted.length - 1; i++) {
+        expect(sorted[i]!.effectiveTo, `${key} v${i + 1} must close`).not.toBeNull();
+        expect(sorted[i]!.effectiveTo! <= sorted[i + 1]!.effectiveFrom, `${key} v${i + 1} overlaps v${i + 2}`).toBe(true);
+      }
+    }
+  });
+
+  it('every excerpt is verbatim from the provision it cites', () => {
+    deriveVatcaRevisedRules(db, { companyId });
+    const norm = (t: string) => t.replace(/\s+/g, ' ').trim();
+    for (const row of db.select().from(irishTaxRules).where(eq(irishTaxRules.companyId, companyId)).all()) {
+      const prov = db.select().from(irishActProvisions).where(eq(irishActProvisions.id, row.provisionId)).get()!;
+      expect(norm(prov.provisionText ?? ''), row.name).toContain(norm(row.statement ?? ''));
+    }
+  });
+
+  it('every rule starts unreviewed with ai_suggestion provenance and states a figure', () => {
     deriveVatcaRevisedRules(db, { companyId });
     const rows = db.select().from(irishTaxRules).where(eq(irishTaxRules.companyId, companyId)).all();
     expect(rows.length).toBe(VATCA_REVISED_CURATED_RULES.length);
@@ -75,21 +148,14 @@ describe('deriveVatcaRevisedRules', () => {
       expect(row.humanReviewRequired).toBe(true);
       expect(row.reviewStatus).toBe('ai_extracted');
       expect(row.provenanceStatus).toBe('ai_suggestion');
-      // vat.rate_hospitality_9pct_not_modelled deliberately states no figure
-      // (issue #136 bug 8) — every rule that DOES claim to state a rate has one.
-      if (row.ruleKey !== 'vat.rate_hospitality_9pct_not_modelled') {
-        expect(row.numericValue).not.toBeNull();
-      } else {
-        expect(row.numericValue).toBeNull();
-      }
+      expect(row.numericValue, row.name).not.toBeNull();
     }
   });
 
-  it('is idempotent: re-deriving unchanged curation creates nothing new', () => {
+  it('is idempotent: re-deriving unchanged curation creates, supersedes and retires nothing', () => {
     deriveVatcaRevisedRules(db, { companyId });
     const second = deriveVatcaRevisedRules(db, { companyId });
-    expect(second.created).toBe(0);
-    expect(second.unchanged).toBe(VATCA_REVISED_CURATED_RULES.length);
+    expect(second).toMatchObject({ created: 0, superseded: 0, unchanged: VATCA_REVISED_CURATED_RULES.length });
   });
 
   it('surfaces each new rule in the existing review inbox', () => {
@@ -99,74 +165,43 @@ describe('deriveVatcaRevisedRules', () => {
     expect(items.every((i) => i.entityType === 'irish_tax_rule')).toBe(true);
   });
 
-  describe('issue #129: the five date-boxed 9% second-reduced-rate carve-outs', () => {
-    it('curates a real 9% figure for each carve-out, resolvable on its own effectiveFrom date', () => {
-      deriveVatcaRevisedRules(db, { companyId });
-      const keys = [
-        'vat.rate_periodicals_9pct_current',
-        'vat.rate_sporting_facilities_9pct_current',
-        'vat.rate_heat_pump_installation_9pct_current',
-        'vat.rate_gas_electricity_9pct_current',
-        'vat.rate_social_housing_apartment_9pct_2025_narrow',
-        'vat.rate_social_housing_apartment_9pct_current',
-        'vat.rate_restaurant_catering_9pct_2020_2023',
-        'vat.rate_printed_matter_9pct_2020_2023',
-        'vat.rate_admission_9pct_2020_2023',
-        'vat.rate_hotel_accommodation_9pct_2020_2023',
-        'vat.rate_hairdressing_9pct_2020_2023',
-      ];
-      for (const key of keys) {
-        const curated = VATCA_REVISED_CURATED_RULES.find((r) => r.ruleKey === key)!;
-        // Each window's own opening day, not a shared date — the six windows
-        // here span from 2020 to 2026 and do not all overlap.
-        const rule = lookupTaxRule(db, { companyId, ruleKey: key, asOfDate: curated.effectiveFrom });
-        expect(rule, `${key} should resolve on its own effectiveFrom (${curated.effectiveFrom})`).not.toBeNull();
-        expect(rule!.value, key).toBe(9);
-        expect(rule!.unit, key).toBe('percent');
-      }
-    });
+  it('on a database derived by an earlier release: retires the old keys and re-dates a wrongly dated rule, chained to it', () => {
+    deriveVatcaRevisedRules(db, { companyId });
+    const periodicals = rowsFor('vat.rate_periodicals_9pct_current')[0]!;
+    // As an earlier release left it: the (ca) rule dated from the retrieval day, and a retired key still live.
+    db.update(irishTaxRules).set({ effectiveFrom: '2026-09-20', active: true }).where(eq(irishTaxRules.id, periodicals.id)).run();
+    const { id: _id, ...rest } = periodicals;
+    db.insert(irishTaxRules).values({
+      ...rest, id: 'rule_old_gap', ruleKey: 'vat.rate_hospitality_9pct_not_modelled', numericValue: null,
+      effectiveFrom: '2026-07-01', effectiveTo: null, active: true,
+    }).run();
 
-    it('the restaurant/catering rate never has two rules claiming the same date (no overlap)', () => {
-      // The three restaurant/catering periods (pre-9%-window, the verified
-      // 9% window, post-window) must exactly tile 2010-11-01 onward with no
-      // gap and no overlap — a gap would silently fall back to the 23%
-      // standard rate (see vatcaRevisedCuration.ts's own header), and an
-      // overlap would present two different rates for the same transaction.
-      const restaurantRules = VATCA_REVISED_CURATED_RULES.filter(
-        (r) => r.ruleKey.startsWith('vat.rate_restaurant_catering_') && r.ruleKey !== 'vat.rate_hospitality_9pct_not_modelled',
-      ).sort((a, b) => a.effectiveFrom.localeCompare(b.effectiveFrom));
+    const again = deriveVatcaRevisedRules(db, { companyId });
+    expect(again.created).toBe(1);
+    expect(again.superseded).toBe(2);
+    const old = db.select().from(irishTaxRules).where(eq(irishTaxRules.id, 'rule_old_gap')).get()!;
+    expect(old).toMatchObject({ active: false, effectiveTo: '2026-07-01' }); // an empty window: never in force
+    expect(lookupTaxRule(db, { companyId, ruleKey: 'vat.rate_hospitality_9pct_not_modelled', asOfDate: '2026-08-01' })).toBeNull();
 
-      expect(restaurantRules.map((r) => r.ruleKey)).toEqual([
-        'vat.rate_restaurant_catering_reduced_pre_9pct_window',
-        'vat.rate_restaurant_catering_9pct_2020_2023',
-        'vat.rate_restaurant_catering_reduced_current',
-      ]);
-      expect(restaurantRules[0]!.numericValue).toBe(13.5);
-      expect(restaurantRules[1]!.numericValue).toBe(9);
-      expect(restaurantRules[2]!.numericValue).toBe(13.5);
+    const [retired, current] = rowsFor('vat.rate_periodicals_9pct_current')
+      .sort((a, b) => a.ruleVersion - b.ruleVersion);
+    expect(retired).toMatchObject({ id: periodicals.id, active: false, effectiveTo: '2026-09-20' });
+    expect(current).toMatchObject({ effectiveFrom: '2025-01-01', active: true, supersedesRuleId: periodicals.id, ruleVersion: 2 });
+    expect(rateOn('vat.rate_periodicals_9pct_current', '2025-06-01')).toBe(9);
+  });
 
-      for (let i = 0; i < restaurantRules.length - 1; i++) {
-        // lookupTaxRule's own window test is `effectiveFrom <= asOf &&
-        // (!effectiveTo || effectiveTo > asOf)` — a strict `>` — so a period's
-        // effectiveTo must equal the NEXT period's effectiveFrom exactly
-        // (not a day earlier) for the two to tile with no gap and no overlap.
-        const closes = restaurantRules[i]!.effectiveTo;
-        const nextOpens = restaurantRules[i + 1]!.effectiveFrom;
-        expect(closes, `${restaurantRules[i]!.ruleKey} -> ${restaurantRules[i + 1]!.ruleKey}`).toBe(nextOpens);
-      }
-    });
-
-    it('a 2021 restaurant transaction resolves to the verified 9% COVID-era rate, not the blanket 13.5%', () => {
-      deriveVatcaRevisedRules(db, { companyId });
-      const rule = lookupTaxRule(db, { companyId, ruleKey: 'vat.rate_restaurant_catering_9pct_2020_2023', asOfDate: '2021-06-01' });
-      expect(rule).not.toBeNull();
-      expect(rule!.value).toBe(9);
-
-      // The pre-window and post-window rules must NOT resolve on this date.
-      const pre = lookupTaxRule(db, { companyId, ruleKey: 'vat.rate_restaurant_catering_reduced_pre_9pct_window', asOfDate: '2021-06-01' });
-      const post = lookupTaxRule(db, { companyId, ruleKey: 'vat.rate_restaurant_catering_reduced_current', asOfDate: '2021-06-01' });
-      expect(pre).toBeNull();
-      expect(post).toBeNull();
-    });
+  it('the (ca) categories are 9% from 1 January 2025 (F101), not from the retrieval date', () => {
+    deriveVatcaRevisedRules(db, { companyId });
+    for (const key of ['vat.rate_periodicals_9pct_current', 'vat.rate_sporting_facilities_9pct_current',
+      'vat.rate_heat_pump_installation_9pct_current']) {
+      expect(rateOn(key, '2025-01-01'), key).toBe(9);
+      expect(rateOn(key, '2024-12-31'), key).toBeNull();
+    }
+    for (const key of ['vat.rate_printed_matter_9pct_2020_2023', 'vat.rate_admission_9pct_2020_2023',
+      'vat.rate_hotel_accommodation_9pct_2020_2023', 'vat.rate_gas_electricity_9pct_current',
+      'vat.rate_social_housing_apartment_9pct_2025_narrow', 'vat.rate_social_housing_apartment_9pct_current']) {
+      const curated = VATCA_REVISED_CURATED_RULES.find((r) => r.ruleKey === key)!;
+      expect(rateOn(key, curated.effectiveFrom), key).toBe(9);
+    }
   });
 });

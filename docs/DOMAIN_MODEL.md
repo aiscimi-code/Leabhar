@@ -444,6 +444,17 @@ When a line matches more than one paragraph, the order in
 `SCHEDULE_RULE_PRECEDENCE` decides. A paragraph that excludes another's items
 comes after it; for example, solar panels come before dwelling work.
 
+The s.46 rates are families of dated versions, each window taken from the
+statute text or the LRC's amendment footnotes. Each version is linked to the
+one before it by `supersedesRuleId`. The families are:
+
+- the standard rate: 23%, then 21%, then 23%;
+- hospitality and hairdressing: 9%, 13.5%, then 9% from July 2026 under
+  Finance Act 2025 s.71.
+
+A period the sources cannot settle has no version, so a line dated in it is
+flagged.
+
 ### Posting paths are atomic
 
 Every exported posting path — classify, reclassify, split journal,

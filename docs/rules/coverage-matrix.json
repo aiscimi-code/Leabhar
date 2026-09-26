@@ -377,20 +377,17 @@
         "vat.rate_standard_current",
         "vat.rate_reduced_current",
         "vat.rate_livestock_current",
-        "vat.rate_restaurant_catering_reduced_current",
-        "vat.rate_restaurant_catering_reduced_pre_9pct_window",
-        "vat.rate_hospitality_9pct_not_modelled",
+        "vat.rate_hospitality",
         "vat.rate_periodicals_9pct_current",
         "vat.rate_sporting_facilities_9pct_current",
         "vat.rate_heat_pump_installation_9pct_current",
         "vat.rate_gas_electricity_9pct_current",
         "vat.rate_social_housing_apartment_9pct_2025_narrow",
         "vat.rate_social_housing_apartment_9pct_current",
-        "vat.rate_restaurant_catering_9pct_2020_2023",
         "vat.rate_printed_matter_9pct_2020_2023",
         "vat.rate_admission_9pct_2020_2023",
         "vat.rate_hotel_accommodation_9pct_2020_2023",
-        "vat.rate_hairdressing_9pct_2020_2023"
+        "vat.rate_hairdressing"
       ]
     },
     {
@@ -1900,12 +1897,12 @@
       "status": "rule",
       "ruleKeys": [
         "vat.rate_reduced_current",
-        "vat.rate_restaurant_catering_reduced_current",
-        "vat.rate_restaurant_catering_reduced_pre_9pct_window",
+        "vat.rate_hospitality",
         "vat.reduced_rate_cinema_admission",
         "vat.reduced_rate_dwelling_services",
         "vat.reduced_rate_repair_movable_goods",
-        "vat.reduced_rate_solid_fuel"
+        "vat.reduced_rate_solid_fuel",
+        "vat.rate_hairdressing"
       ]
     },
     {
@@ -1916,12 +1913,12 @@
       "ruleKeys": [
         "vat.rate_admission_9pct_2020_2023",
         "vat.rate_gas_electricity_9pct_current",
-        "vat.rate_hairdressing_9pct_2020_2023",
+        "vat.rate_hairdressing",
         "vat.rate_heat_pump_installation_9pct_current",
         "vat.rate_hotel_accommodation_9pct_2020_2023",
         "vat.rate_periodicals_9pct_current",
         "vat.rate_printed_matter_9pct_2020_2023",
-        "vat.rate_restaurant_catering_9pct_2020_2023",
+        "vat.rate_hospitality",
         "vat.rate_social_housing_apartment_9pct_2025_narrow",
         "vat.rate_social_housing_apartment_9pct_current",
         "vat.rate_sporting_facilities_9pct_current"
@@ -2704,7 +2701,7 @@
       "title": "restaurant-meal",
       "status": "rule",
       "ruleKeys": [
-        "vat.rate_restaurant_catering_reduced_current",
+        "vat.rate_hospitality",
         "vat.deduction_exclusions_entertainment"
       ]
     },
@@ -2947,6 +2944,39 @@
       "ruleKeys": [
         "vat.registration_threshold_goods",
         "vat.registration_threshold_services"
+      ]
+    },
+    {
+      "id": "fa2025:s69",
+      "area": "other_source",
+      "title": "Finance Act 2025 s.69 — (caa) electricity and gas 9% extended to 31 December 2030",
+      "status": "rule",
+      "ruleKeys": [
+        "vat.rate_gas_electricity_9pct_current"
+      ],
+      "note": "The rule quotes (caa) as the LRC revised s.46 now reads it, which includes this amendment."
+    },
+    {
+      "id": "fa2025:s70",
+      "area": "other_source",
+      "title": "Finance Act 2025 s.70 — (cab), (cac) and Sch.3 paras 9A, 9B: apartments at 9%",
+      "status": "rule",
+      "ruleKeys": [
+        "vat.rate_social_housing_apartment_9pct_2025_narrow",
+        "vat.rate_social_housing_apartment_9pct_current",
+        "vat.reduced_rate_social_housing_apartment",
+        "vat.reduced_rate_apartment_development"
+      ],
+      "note": "The rules quote s.46 and Schedule 3 as the LRC revised text now reads them, which includes this amendment."
+    },
+    {
+      "id": "fa2025:s71",
+      "area": "other_source",
+      "title": "Finance Act 2025 s.71 — (cb) food and drink, catering and hairdressing at 9% from 1 July 2026",
+      "status": "rule",
+      "ruleKeys": [
+        "vat.rate_hospitality",
+        "vat.rate_hairdressing"
       ]
     },
     {

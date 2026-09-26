@@ -25,7 +25,7 @@ import { sha256Hex } from '@/lib/hash';
 import { appRoot } from '@/lib/paths';
 import { irishTaxRules } from '@/db/schema';
 import { ensureDefaultVatTreatments } from '../config/setup';
-import { ingestFinanceAct2024, deriveTaxRules } from './irishRules';
+import { ingestFinanceAct2024, ingestFinanceAct2025, deriveTaxRules } from './irishRules';
 import { ingestVatca2010, deriveVatcaRules } from './vatcaIngestion';
 import { ingestVatcaSchedule, deriveVatcaScheduleRules } from './vatcaScheduleIngestion';
 import {
@@ -56,6 +56,7 @@ type IngestFn = (db: AppDatabase, params: IngestParams) => unknown;
  */
 const SOURCES: Array<{ path: string; ingest: IngestFn }> = [
   { path: 'docs/statutes/finance-act-2024/2024-act-43-enacted.md', ingest: ingestFinanceAct2024 },
+  { path: 'docs/statutes/finance-act-2025/2025-act-18-enacted.md', ingest: ingestFinanceAct2025 },
   { path: 'docs/statutes/vatca-2010/vatca-2010-enacted.md', ingest: ingestVatca2010 },
   {
     path: 'docs/statutes/vatca-2010-revised/schedule-1.md',

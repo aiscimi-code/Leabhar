@@ -51,10 +51,9 @@ export interface TaxRateSyncMapping {
  * LRC-revised text (`vatcaRevisedCuration.ts`) are synced. `VAT_SECOND_RED`
  * (the 9% second-reduced rate), corporation tax and every other `tax_rates`
  * row are deliberately excluded: this KB does not yet curate a current,
- * unconditional fact for any of them — see
- * `vat.rate_hospitality_9pct_not_modelled`'s own "not modelled" note for why
- * the second-reduced rate specifically has none. Syncing from an absent
- * source would mean inventing one.
+ * unconditional fact for any of them. The 9% applies only to the Schedule 3
+ * paragraphs and periods s.46 names (`scheduleRates.ts`), so there is no one
+ * figure to sync. Syncing from an absent source would mean inventing one.
  */
 export const TAX_RATE_SYNC_MAP: TaxRateSyncMapping[] = [
   { ruleKey: 'vat.rate_standard_current', taxRateCode: 'VAT_STD' },

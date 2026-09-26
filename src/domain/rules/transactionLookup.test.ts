@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { createTestDatabase } from '@/db/testing';
 import { createCompany } from '../config/setup';
-import { ingestFinanceAct2024, deriveTaxRules, FINANCE_ACT_2024_MD_PATH } from './irishRules';
+import { ingestFinanceAct2024, ingestFinanceAct2025, deriveTaxRules, FINANCE_ACT_2024_MD_PATH, FINANCE_ACT_2025 } from './irishRules';
 import { deriveFinanceAct2024VatThresholds } from './financeAct2024VatThresholdsIngestion';
 import { ingestVatca2010, deriveVatcaRules, VATCA_2010_MD_PATH } from './vatcaIngestion';
 import { ingestVatcaRevisedSection, deriveVatcaRevisedRules, VATCA_REVISED_S046_MD_PATH } from './vatcaRevisedIngestion';
@@ -358,6 +358,10 @@ describe('lookupTransactionRules — issue #136 bugs 1 and 8: VAT rate exclusivi
 
   beforeEach(() => {
     ingestVatcaRevisedSection(db, { companyId, markdown: s46Md, ingestVersion: 'v1' });
+    ingestFinanceAct2025(db, {
+      companyId, ingestVersion: 'v1',
+      markdown: readFileSync(new URL(`../../../${FINANCE_ACT_2025.localPath}`, import.meta.url).pathname, 'utf8'),
+    });
     deriveVatcaRevisedRules(db, { companyId });
     ingestVatcaSchedule(db, { companyId, scheduleNumber: '2', markdown: schedule2Md, ingestVersion: 'v1' });
     ingestVatcaSchedule(db, { companyId, scheduleNumber: '3', markdown: schedule3Md, ingestVersion: 'v1' });
@@ -434,11 +438,11 @@ describe('lookupTransactionRules — issue #136 bugs 1 and 8: VAT rate exclusivi
       .filter((r) => r.topic === 'vat' && r.ruleType === 'rate')
       .map((r) => r.ruleKey);
     // The paragraph rule states no rate of its own; its rate comes from s.46 by date (issue #205).
-    expect(rateKeys).toEqual(['vat.rate_restaurant_catering_reduced_current', 'vat.reduced_rate_restaurant_catering']);
+    expect(rateKeys).toEqual(['vat.rate_hospitality', 'vat.reduced_rate_restaurant_catering']);
     expect(result.possibleTreatment.vat.some((v) => v.includes('13.5%'))).toBe(true);
   });
 
-  it('issue #136 bug 8: a restaurant meal on/after 1 July 2026 flags the unmodelled 9% gap, asserts no rate', () => {
+  it('issue #136 bug 8, now modelled: a restaurant meal on/after 1 July 2026 gets 9% from Finance Act 2025 s.71', () => {
     const result = lookupTransactionRules(db, {
       companyId,
       transaction: {
@@ -446,13 +450,23 @@ describe('lookupTransactionRules — issue #136 bugs 1 and 8: VAT rate exclusivi
         vatRegistered: true, supplyType: 'services', description: 'Restaurant meal with a client',
       },
     });
-    const rateKeys = result.applicableRules
-      .filter((r) => r.topic === 'vat' && r.ruleType === 'rate')
-      .map((r) => r.ruleKey);
-    expect(rateKeys).toEqual(['vat.rate_hospitality_9pct_not_modelled', 'vat.reduced_rate_restaurant_catering']);
+    const rate = result.applicableRules.filter((r) => r.topic === 'vat' && r.ruleType === 'rate');
+    expect(rate.map((r) => r.ruleKey)).toEqual(['vat.rate_hospitality', 'vat.reduced_rate_restaurant_catering']);
+    expect(rate[0]!.citation.citation).toBe('2025 Act 18');
+    expect(result.possibleTreatment.vat.some((v) => v.includes('9%'))).toBe(true);
     expect(result.possibleTreatment.vat.some((v) => v.includes('13.5%') || v.includes('23%'))).toBe(false);
-    expect(result.reviewRequired).toBe(true);
-    expect(result.reviewReasons.join(' ')).toMatch(/not modelled/i);
+  });
+
+  it('a restaurant meal in 2024 matches no s.46 rate version: the (ca) list then is not in the repository', () => {
+    const result = lookupTransactionRules(db, {
+      companyId,
+      transaction: {
+        transactionDate: '2024-06-15', amountMinor: 4500, currency: 'EUR',
+        vatRegistered: true, supplyType: 'services', description: 'Restaurant meal with a client',
+      },
+    });
+    const rateKeys = result.applicableRules.filter((r) => r.topic === 'vat' && r.ruleType === 'rate').map((r) => r.ruleKey);
+    expect(rateKeys).not.toContain('vat.rate_hospitality');
   });
 });
 

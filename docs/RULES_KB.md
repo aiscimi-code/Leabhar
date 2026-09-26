@@ -1776,6 +1776,45 @@ ingestion.
   all. Its "not modelled" stance was correct, not merely pending — left
   unchanged.
 
+### VAT rates by date: Schedules 2 and 3, s.46 versions, Finance Act 2025 (issue #205)
+
+This supersedes the rule keys and gaps described in the two sections above.
+
+- **Every Schedule 2 and 3 paragraph** has a rule (`vatcaScheduleCuration.ts`,
+  `vatcaScheduleParagraphRules.ts`), or a justified `not_applicable` row in
+  `docs/rules/coverage-matrix.json`.
+  - Each rule's window starts on its paragraph's latest LRC amendment
+    (`lrcAnnotations.ts`).
+  - A Schedule 3 rule states no rate. `scheduleThreeRate` gives the rate for
+    its sub-paragraph on the line's date, from the s.46 clauses and Finance
+    Act 2025 s.71.
+- **A rate is a family of dated versions under one key**, chained by
+  `supersedesRuleId`, with only the latest `active`. `deriveVatcaRevisedRules`
+  leaves an unchanged version alone and inserts a new one. A stored row that
+  no version accounts for is retired: its window is emptied and it is marked
+  inactive, never deleted.
+  - `vat.rate_standard_current`: 23% from 1 January 2012 (LRC footnote F95),
+    21% for the s.46(1A) period, then 23% from 1 March 2021.
+  - `vat.rate_hospitality` (Sch.3 3(1), 3(3)) and `vat.rate_hairdressing`
+    (13(3)): 9% under (cb), November 2020 to August 2023; 13.5% from January
+    2025 to June 2026; 9% from 1 July 2026 under Finance Act 2025 s.71, cited
+    from `docs/statutes/finance-act-2025`.
+  - The (ca) categories (periodicals, sporting facilities, heat pumps) start
+    on 1 January 2025 (F101), not the retrieval date.
+- **Retired keys** (`RETIRED_S46_RULE_KEYS`):
+  - `vat.rate_restaurant_catering_reduced_current`
+  - `vat.rate_restaurant_catering_reduced_pre_9pct_window`
+  - `vat.rate_hospitality_9pct_not_modelled`
+  - `vat.rate_restaurant_catering_9pct_2020_2023`
+  - `vat.rate_hairdressing_9pct_2020_2023`
+
+  The 2010–2020 13.5% restaurant window is dropped, not moved: s.46(1)(ca)
+  put hospitality at 9% for part of that period.
+- **Periods the sources cannot settle have no version**, so a line dated in
+  one is flagged, not given a rate. These are Schedule 3 lines before
+  2025, whose (ca) list is not in the repository, and the standard rate
+  before 2012.
+
 ## Next steps
 
 - Curate rule keys for the remaining ~106 relevant provisions (many Finance

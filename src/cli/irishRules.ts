@@ -7,6 +7,7 @@ import type { AppDatabase } from '@/db';
 import {
   ingestFinanceAct2024, deriveTaxRules, lookupTaxRule, listTaxRulesByTopic,
   FINANCE_ACT_2024_MD_PATH,
+  ingestFinanceAct2025, FINANCE_ACT_2025,
 } from '@/domain/rules/irishRules';
 import { ingestVatca2010, deriveVatcaRules, VATCA_2010_MD_PATH } from '@/domain/rules/vatcaIngestion';
 import {
@@ -39,7 +40,7 @@ import {
   ingestAllCompaniesAct2014Sections, deriveCompaniesAct2014Rules,
 } from '@/domain/rules/companiesAct2014Ingestion';
 import { syncTaxRatesFromIrishRules } from '@/domain/rules/taxRateSync';
-import { loadStatutoryKnowledgeBase } from '@/domain/rules/knowledgeBase';
+import { loadStatutoryKnowledgeBase, statuteFilePath } from '@/domain/rules/knowledgeBase';
 import { deriveVatScopeRules } from '@/domain/rules/vatScopeIngestion';
 import { lookupTransactionRules, type TransactionContext } from '@/domain/rules/transactionLookup';
 import { setRuleReviewStatus } from '@/domain/rules/review';
@@ -56,7 +57,7 @@ Usage: npm run cli:rules -- <command> [flags]
 Commands:
   ingest [--source <s>] [--file <path>]
                                        Ingest a source's Markdown (--source: finance-act-2024
-                                       [default] | vatca-2010 | vatca-2010-sch1 | vatca-2010-sch2 | vatca-2010-sch3 |
+                                       [default] | finance-act-2025 | vatca-2010 | vatca-2010-sch1 | vatca-2010-sch2 | vatca-2010-sch3 |
                                        rct-tca530 | rct-fa2011-a | rct-fa2011-e | rct-fa2011-g |
                                        rct-fa2011-h | rct-fa2011-i | rct-tdm | rct-tdm-05 | rct-tdm-11 |
                                        vatca-2010-revised | tca1997-s284 | finance-act-2003-s23 | si639 | si156 |
@@ -236,6 +237,13 @@ export async function main(argv: string[], options: CliOptions = {}): Promise<nu
         if (source === 'companies-act-2014') {
           // No single default file (eight sections, each its own source) — --file is not supported here.
           print(ingestAllCompaniesAct2014Sections(db, { companyId, ingestVersion: 'v1' }), format);
+          return 0;
+        }
+        if (source === 'finance-act-2025') {
+          // Its s.71 is cited by the s.46 hospitality and hairdressing rates: ingest before extracting vatca-2010-revised.
+          const file = getFlag(flags, 'file') ?? statuteFilePath(FINANCE_ACT_2025.localPath!);
+          const markdown = readFileSync(file, 'utf8');
+          print(ingestFinanceAct2025(db, { companyId, markdown, ingestVersion: 'v1', localPath: file }), format);
           return 0;
         }
         if (source !== 'finance-act-2024') throw new Error(`Unknown --source: ${source}`);

@@ -38,6 +38,7 @@ import { provisionCitation } from './citation';
 import { VATCA_SCHEDULE_CURATED_RULES } from './vatcaScheduleCuration';
 import { SCHEDULE_RULE_PRECEDENCE } from './vatcaScheduleParagraphRules';
 import { scheduleThreeRate } from './scheduleRates';
+import { S46_FAMILY_SCHEDULE_REF } from './vatcaRevisedCuration';
 
 export type TransactionDirection = 'purchase' | 'sale';
 
@@ -54,8 +55,8 @@ const isEuNotIe = (c: string | null | undefined): boolean => !!c && c !== 'IE' &
  * charge beats a rate; a specific Schedule 2/3 or 9% rule
  * beats the reduced-rate headline; the standard rate is the residual
  * fallback. A binding whose `treatmentCode` returns null matched a rule the
- * configuration cannot express (livestock: no treatment exists; hospitality
- * from 2026-07-01: rate not modelled) — that stops the search and is
+ * configuration or the sources cannot settle (a Schedule 3 rate on a date
+ * before the s.46(1)(ca) list is known) — that stops the search and is
  * reported, rather than falling through to a rate that is known to be wrong.
  */
 export interface TreatmentBinding {
@@ -129,11 +130,13 @@ export const RULE_TREATMENT_BINDINGS: TreatmentBinding[] = [
     gap: (f, key) => scheduleRate(f, key).gap ?? 'No rate could be determined for this Schedule 3 paragraph.',
   },
   {
-    ruleKeys: ['vat.rate_hospitality_9pct_not_modelled'],
+    // s.46 families whose versions move between 13.5% and 9% (issue #205): the
+    // rate on the line's date, from the same s.46 windows as Schedule 3.
+    ruleKeys: Object.keys(S46_FAMILY_SCHEDULE_REF),
     direction: 'either',
-    treatmentCode: () => null,
-    gap: 'The rate for this category from 1 July 2026 is not modelled in the knowledge base '
-      + '(Finance Act 2025 is not ingested). Choose the treatment manually.',
+    treatmentCode: (f, key) => scheduleThreeRate(S46_FAMILY_SCHEDULE_REF[key]!, f.transactionDate).code,
+    gap: (f, key) => scheduleThreeRate(S46_FAMILY_SCHEDULE_REF[key]!, f.transactionDate).gap
+      ?? 'No rate could be determined for this date.',
   },
   {
     ruleKeys: ['vat.rate_livestock_current'],
@@ -145,16 +148,14 @@ export const RULE_TREATMENT_BINDINGS: TreatmentBinding[] = [
       'vat.rate_periodicals_9pct_current', 'vat.rate_sporting_facilities_9pct_current',
       'vat.rate_heat_pump_installation_9pct_current', 'vat.rate_gas_electricity_9pct_current',
       'vat.rate_social_housing_apartment_9pct_2025_narrow', 'vat.rate_social_housing_apartment_9pct_current',
-      'vat.rate_restaurant_catering_9pct_2020_2023', 'vat.rate_printed_matter_9pct_2020_2023',
+      'vat.rate_printed_matter_9pct_2020_2023',
       'vat.rate_admission_9pct_2020_2023', 'vat.rate_hotel_accommodation_9pct_2020_2023',
-      'vat.rate_hairdressing_9pct_2020_2023',
     ],
     direction: 'either',
     treatmentCode: () => 'IE_SECOND_RED',
   },
   {
     ruleKeys: [
-      'vat.rate_restaurant_catering_reduced_current', 'vat.rate_restaurant_catering_reduced_pre_9pct_window',
       'vat.rate_reduced_current',
     ],
     direction: 'either',

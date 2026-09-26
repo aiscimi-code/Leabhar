@@ -72,8 +72,11 @@ export interface IngestResult {
  * which parser produced the provisions, so a future re-parse with an improved
  * parser is distinguishable from the original.
  */
-export function ingestFinanceAct2024(
+export function ingestEnactedAct(
   db: AppDatabase,
+  act: KnowledgeSourceRef,
+  /** Why a section is relevant despite its category: a curated rule cites it. */
+  curatedReason: (sectionNumber: string) => string | undefined,
   params: {
     companyId?: string | null;
     markdown: string;
@@ -87,7 +90,7 @@ export function ingestFinanceAct2024(
     .select({ id: irishKnowledgeSources.id })
     .from(irishKnowledgeSources)
     .where(and(
-      eq(irishKnowledgeSources.citation, FINANCE_ACT_2024.citation),
+      eq(irishKnowledgeSources.citation, act.citation),
       eq(irishKnowledgeSources.sha256, digest),
     ))
     .get();
@@ -112,18 +115,18 @@ export function ingestFinanceAct2024(
     tx.insert(irishKnowledgeSources).values({
       id: sourceId,
       companyId: params.companyId ?? null,
-      sourceType: FINANCE_ACT_2024.sourceType,
-      title: FINANCE_ACT_2024.title,
-      citation: FINANCE_ACT_2024.citation,
+      sourceType: act.sourceType,
+      title: act.title,
+      citation: act.citation,
       jurisdiction: 'IE',
-      sourceUrl: FINANCE_ACT_2024.sourceUrl,
-      localPath: params.localPath ?? FINANCE_ACT_2024.localPath ?? null,
+      sourceUrl: act.sourceUrl,
+      localPath: params.localPath ?? act.localPath ?? null,
       sha256: digest,
       ingestVersion: params.ingestVersion,
-      publicationDate: FINANCE_ACT_2024.enactedDate,
+      publicationDate: act.enactedDate,
       retrievedAt: nowIso(),
-      effectiveFrom: FINANCE_ACT_2024.enactedDate,
-      sourceNote: `Ingest ${params.ingestVersion} of ${FINANCE_ACT_2024.citation} enacted Markdown.`,
+      effectiveFrom: act.enactedDate,
+      sourceNote: `Ingest ${params.ingestVersion} of ${act.citation} enacted Markdown.`,
       sourceDate: nowIso(),
     }).run();
 
@@ -136,9 +139,10 @@ export function ingestFinanceAct2024(
       // editorial judgement that the section is relevant, made when the key
       // was added — it overrides the mechanical keyword fallback rather than
       // letting an imperfect category guess silently drop a curated rule.
-      if (!relevant && SECTION_RULE_KEYS[p.sectionNumber]) {
+      const curated = curatedReason(p.sectionNumber);
+      if (!relevant && curated) {
         relevant = true;
-        reason = `Curated: mapped to rule key "${SECTION_RULE_KEYS[p.sectionNumber]!.key}" by human editorial judgement, overriding the ${category} category default.`;
+        reason = `${curated}, overriding the ${category} category default.`;
       }
       if (relevant) relevantCount++;
 
@@ -166,6 +170,41 @@ export function ingestFinanceAct2024(
 
     return { sourceId, provisionCount: parsed.length, relevantCount, ingested: true };
   });
+}
+
+export function ingestFinanceAct2024(
+  db: AppDatabase,
+  params: { companyId?: string | null; markdown: string; ingestVersion: string; localPath?: string },
+): IngestResult {
+  return ingestEnactedAct(db, FINANCE_ACT_2024, (n) => (SECTION_RULE_KEYS[n]
+    ? `Curated: mapped to rule key "${SECTION_RULE_KEYS[n]!.key}" by human editorial judgement`
+    : undefined), params);
+}
+
+/**
+ * Finance Act 2025 (2025 Act 18). `enactedDate` is the Act's own long title
+ * ("[23rd December, 2025]" in docs/statutes/finance-act-2025/2025-act-18-enacted.md).
+ * Its VAT rate sections (69-71) are cited by the s.46 rate rules (issue #205).
+ */
+export const FINANCE_ACT_2025: KnowledgeSourceRef = {
+  title: 'Finance Act 2025',
+  citation: '2025 Act 18',
+  sourceType: 'legislation',
+  sourceUrl: 'https://www.irishstatutebook.ie/eli/2025/act/18/enacted/en/pdf',
+  localPath: 'docs/statutes/finance-act-2025/2025-act-18-enacted.md',
+  enactedDate: '2025-12-23',
+};
+
+/** Sections of Finance Act 2025 a curated rule cites; kept relevant whatever their category. */
+export const FINANCE_ACT_2025_CURATED_SECTIONS = new Set(['69', '70', '71']);
+
+export function ingestFinanceAct2025(
+  db: AppDatabase,
+  params: { companyId?: string | null; markdown: string; ingestVersion: string; localPath?: string },
+): IngestResult {
+  return ingestEnactedAct(db, FINANCE_ACT_2025, (n) => (FINANCE_ACT_2025_CURATED_SECTIONS.has(n)
+    ? 'Curated: an s.46 rate rule cites this section (issue #205)'
+    : undefined), params);
 }
 
 export interface DeriveResult {
