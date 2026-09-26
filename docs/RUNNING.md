@@ -190,6 +190,10 @@ npm run cli -- import --account <id> --file <path>    # import a statement (CSV/
     # Stripe payout's fee breakdown, a loan's capital/interest split (#158)
 npm run cli -- create-supplier --name "..." [--country IE] [--document <id>]
                                                       # create a supplier (ai_suggestion)
+npm run cli -- confirm-establishment --supplier <id> --establishment outside_state \
+        --basis "<what it rests on>" --confirmed-by "<name>"  # where it is established (never a country code)
+npm run cli -- confirm-customer-status --customer <id> --status taxable_person --confirmed-by "<name>"
+npm run cli -- check-vies --customer <id>             # check the VAT number with VIES; the answer is stored
 npm run cli -- show-document <id>                     # a document's values, lines, VAT totals, checks
 npm run cli -- confirm-document <id> --confirmed-by "<name>" [--values <json>] [--ack <codes>]
         [--supplier <id> | --create-supplier]         # record that the NAMED PERSON checked it

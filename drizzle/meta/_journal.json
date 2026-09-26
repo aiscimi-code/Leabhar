@@ -71,6 +71,13 @@
       "when": 1790368400535,
       "tag": "0009_payment_reversal",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "6",
+      "when": 1790407472638,
+      "tag": "0010_party_establishment_vies",
+      "breakpoints": true
     }
   ]
 }

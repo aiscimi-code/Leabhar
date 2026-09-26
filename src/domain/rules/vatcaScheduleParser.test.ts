@@ -25,13 +25,21 @@ describe('parseVatcaSchedule', () => {
     expect(numbers).toHaveLength(15);
   });
 
-  it('parses Schedule 3\'s paragraphs, including lettered sub-paragraphs, skipping the repealed 21', () => {
+  it('parses Schedule 3\'s paragraphs, including lettered sub-paragraphs and the unnumbered 21', () => {
     const paras = parseVatcaScheduleFile(VATCA_SCHEDULE_3_MD_PATH);
     const numbers = paras.map((p) => p.paragraphNumber);
     expect(numbers).toContain('3A');
     expect(numbers).toContain('9B');
     expect(numbers).toContain('13B');
-    expect(numbers).not.toContain('21');
+    // The LRC text prints para 21 (substituted, F481) without its number; it
+    // opens after its heading and no longer runs into para 20 (issue #205).
+    expect(numbers.slice(numbers.indexOf('20'), numbers.indexOf('20') + 3)).toEqual(['20', '21', '22']);
+    const p20 = paras.find((p) => p.paragraphNumber === '20')!;
+    const p21 = paras.find((p) => p.paragraphNumber === '21')!;
+    expect(p20.provisionText).not.toContain('care of the human body');
+    expect(p21.heading).toBe('Miscellaneous services.');
+    expect(p21.provisionText).toMatch(/^\(1\) Services consisting of the care of the human body/);
+    expect(p21.provisionText).toContain('by tour guides');
   });
 
   it('records the marginal-note heading for a sampled paragraph', () => {

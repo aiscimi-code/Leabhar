@@ -28,7 +28,7 @@ import {
   parseVatcaRevisedSection, provisionSlug, assessRelevance, VATCA_REVISED_S046_MD_PATH,
 } from './vatcaRevisedSectionParser';
 import { parseScheduleFrontMatter } from './vatcaScheduleParser';
-import { VATCA_REVISED_CURATED_RULES } from './vatcaRevisedCuration';
+import { VATCA_REVISED_CURATED_RULES, RETIRED_S46_RULE_KEYS, type CuratedVatcaRevisedRule } from './vatcaRevisedCuration';
 import { VAT_SCOPE_CURATED_RULES } from './vatScopeCuration';
 import { VAT_PLACE_OF_SUPPLY_CURATED_RULES } from './vatPlaceOfSupplyCuration';
 import { upsertReviewItem } from '../extraction/service';
@@ -143,7 +143,17 @@ export interface VatcaRevisedDeriveResult {
   skippedNoProvision: string[];
 }
 
-/** Derive `irish_tax_rules` rows from `VATCA_REVISED_CURATED_RULES`. */
+/**
+ * Derive `irish_tax_rules` rows from `VATCA_REVISED_CURATED_RULES` (issue #205).
+ *
+ * A ruleKey is a family of dated versions. Each curated version is one row;
+ * a version already stored with the same window, text and figure is left
+ * alone. A new version supersedes the one before it in time
+ * (`supersedesRuleId`), or, when it corrects a stored row it replaces, that
+ * row. A stored row no curated version accounts for (a wrong window, a
+ * retired key) is retired: its window is emptied and it is marked inactive,
+ * never deleted. Only a family's latest version is `active`.
+ */
 export function deriveVatcaRevisedRules(
   db: AppDatabase,
   params: { companyId: string },
@@ -153,84 +163,126 @@ export function deriveVatcaRevisedRules(
   let unchanged = 0;
   const skippedNoProvision: string[] = [];
 
+  const families = new Map<string, CuratedVatcaRevisedRule[]>();
   for (const rule of VATCA_REVISED_CURATED_RULES) {
+    families.set(rule.ruleKey, [...(families.get(rule.ruleKey) ?? []), rule]);
+  }
+
+  const provisionFor = (rule: CuratedVatcaRevisedRule) => {
     const sourceId = db.select({ id: irishKnowledgeSources.id }).from(irishKnowledgeSources)
       .where(eq(irishKnowledgeSources.citation, rule.citation)).get()?.id;
-    const prov = sourceId
+    return sourceId
       ? db.select().from(irishActProvisions)
         .where(and(eq(irishActProvisions.sourceId, sourceId), eq(irishActProvisions.sectionNumber, rule.sectionNumber)))
         .get()
       : undefined;
-    if (!prov) { skippedNoProvision.push(rule.ruleKey); continue; }
-    if (!prov.relevant) { skippedNoProvision.push(rule.ruleKey); continue; }
+  };
+  const storedRows = (ruleKey: string) => db.select().from(irishTaxRules)
+    .where(and(eq(irishTaxRules.companyId, params.companyId), eq(irishTaxRules.ruleKey, ruleKey))).all();
+  const retire = (row: typeof irishTaxRules.$inferSelect) => {
+    if (row.effectiveTo === row.effectiveFrom && !row.active) return false;
+    db.update(irishTaxRules).set({ effectiveTo: row.effectiveFrom, active: false })
+      .where(eq(irishTaxRules.id, row.id)).run();
+    return true;
+  };
 
-    const existing = db.select().from(irishTaxRules)
-      .where(and(
-        eq(irishTaxRules.companyId, params.companyId),
-        eq(irishTaxRules.ruleKey, rule.ruleKey),
-        eq(irishTaxRules.active, true),
-      )).get();
+  for (const [ruleKey, versions] of families) {
+    const ordered = [...versions].sort((a, b) => a.effectiveFrom.localeCompare(b.effectiveFrom));
+    const provisions = ordered.map(provisionFor);
+    if (provisions.some((prov) => !prov || !prov.relevant)) { skippedNoProvision.push(ruleKey); continue; }
 
-    if (existing) {
-      if (existing.statement === rule.statementExcerpt && existing.numericValue === rule.numericValue) {
-        unchanged++; continue;
+    const stored = storedRows(ruleKey);
+    const kept = new Set<string>();
+    let previousId: string | null = null;
+    let nextVersion = stored.reduce((max, r) => Math.max(max, r.ruleVersion), 0) + 1;
+
+    ordered.forEach((rule, i) => {
+      const prov = provisions[i]!;
+      const match = stored.find((r) => !kept.has(r.id)
+        && r.provisionId === prov.id && r.effectiveFrom === rule.effectiveFrom
+        && (r.effectiveTo ?? null) === rule.effectiveTo
+        && r.statement === rule.statementExcerpt && r.numericValue === rule.numericValue);
+      if (match) {
+        kept.add(match.id);
+        previousId = match.id;
+        unchanged++;
+        return;
       }
-      db.update(irishTaxRules)
-        .set({ effectiveTo: rule.effectiveFrom, active: false })
-        .where(eq(irishTaxRules.id, existing.id)).run();
-      superseded++;
-    }
+      // A stored row for the same period that this version corrects.
+      const corrected = stored.find((r) => !kept.has(r.id) && r.effectiveTo !== r.effectiveFrom
+        && r.effectiveFrom < (rule.effectiveTo ?? '9999-12-31')
+        && (r.effectiveTo === null || r.effectiveTo > rule.effectiveFrom));
 
-    const newRuleId = ids.taxRule();
-    db.insert(irishTaxRules).values({
-      id: newRuleId,
-      companyId: params.companyId,
-      provisionId: prov.id,
-      ruleKey: rule.ruleKey,
-      ruleType: rule.ruleType,
-      topic: rule.topic,
-      name: rule.name,
-      statement: rule.statementExcerpt,
-      extractedFact: rule.extractedFact,
-      humanExplanation: rule.interpretationNote,
-      numericValue: rule.numericValue,
-      unit: rule.unit,
-      qualifier: rule.qualifier,
-      conditions: rule.conditions,
-      exceptions: [],
-      crossReferences: [],
-      accountingEffect: null,
-      taxEffect: null,
-      vatEffect: rule.vatEffect,
-      reportingEffect: null,
-      requiresGuidance: true,
-      humanReviewRequired: true,
-      reviewStatus: 'ai_extracted',
-      ruleVersion: existing ? existing.ruleVersion + 1 : 1,
-      supersedesRuleId: existing?.id ?? null,
-      priority: 100,
-      effectiveFrom: rule.effectiveFrom,
-      effectiveTo: rule.effectiveTo,
-      source: 'derived',
-      confidence: 70,
-      provenanceStatus: 'ai_suggestion',
-      sourceNote: `Curated from ${rule.citation} (LRC revised, as retrieved); not yet human-reviewed. ${rule.interpretationNote}`,
-      sourceDate: nowIso(),
-    }).run();
-    created++;
+      const newRuleId = ids.taxRule();
+      db.insert(irishTaxRules).values({
+        id: newRuleId,
+        companyId: params.companyId,
+        provisionId: prov.id,
+        ruleKey: rule.ruleKey,
+        ruleType: rule.ruleType,
+        topic: rule.topic,
+        name: rule.name,
+        statement: rule.statementExcerpt,
+        extractedFact: rule.extractedFact,
+        humanExplanation: rule.interpretationNote,
+        numericValue: rule.numericValue,
+        unit: rule.unit,
+        qualifier: rule.qualifier,
+        conditions: rule.conditions,
+        exceptions: [],
+        crossReferences: [],
+        accountingEffect: null,
+        taxEffect: null,
+        vatEffect: rule.vatEffect,
+        reportingEffect: null,
+        requiresGuidance: true,
+        humanReviewRequired: true,
+        reviewStatus: 'ai_extracted',
+        ruleVersion: nextVersion++,
+        supersedesRuleId: corrected?.id ?? previousId,
+        priority: 100,
+        effectiveFrom: rule.effectiveFrom,
+        effectiveTo: rule.effectiveTo,
+        active: false,
+        source: 'derived',
+        confidence: 70,
+        provenanceStatus: 'ai_suggestion',
+        sourceNote: `Curated from ${rule.citation}${rule.citation.includes('s.') ? '' : ` s.${rule.sectionNumber}`}; `
+          + `not yet human-reviewed. ${rule.interpretationNote}`,
+        sourceDate: nowIso(),
+      }).run();
+      kept.add(newRuleId);
+      previousId = newRuleId;
+      created++;
 
-    upsertReviewItem(db, {
-      companyId: params.companyId,
-      kind: 'unresolved_ai_suggestion',
-      severity: 'info',
-      title: `New Irish VAT rate rule extracted: ${rule.name}`,
-      detail: `${rule.citation} s.${rule.sectionNumber}. ${rule.interpretationNote} `
-        + 'Review against the source text and approve, or reject, before it is treated as authoritative.',
-      entityType: 'irish_tax_rule',
-      entityId: newRuleId,
-      dedupeKey: `irish_tax_rule:${newRuleId}`,
-      context: { ruleKey: rule.ruleKey, sectionNumber: rule.sectionNumber },
+      upsertReviewItem(db, {
+        companyId: params.companyId,
+        kind: 'unresolved_ai_suggestion',
+        severity: 'info',
+        title: `New Irish VAT rate rule extracted: ${rule.name}`,
+        detail: `${rule.citation} s.${rule.sectionNumber}. ${rule.interpretationNote} `
+          + 'Review against the source text and approve, or reject, before it is treated as authoritative.',
+        entityType: 'irish_tax_rule',
+        entityId: newRuleId,
+        dedupeKey: `irish_tax_rule:${newRuleId}`,
+        context: { ruleKey: rule.ruleKey, sectionNumber: rule.sectionNumber },
+      });
     });
+
+    for (const row of stored) {
+      if (!kept.has(row.id) && retire(row)) superseded++;
+    }
+    // Only the family's latest version is active.
+    for (const row of storedRows(ruleKey)) {
+      const shouldBeActive = row.id === previousId;
+      if (row.active !== shouldBeActive && row.effectiveTo !== row.effectiveFrom) {
+        db.update(irishTaxRules).set({ active: shouldBeActive }).where(eq(irishTaxRules.id, row.id)).run();
+      }
+    }
+  }
+
+  for (const ruleKey of RETIRED_S46_RULE_KEYS) {
+    for (const row of storedRows(ruleKey)) if (retire(row)) superseded++;
   }
 
   return { created, superseded, unchanged, skippedNoProvision };

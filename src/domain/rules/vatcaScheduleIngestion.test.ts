@@ -9,7 +9,8 @@ import {
 import { ingestVatca2010, VATCA_2010_MD_PATH } from './vatcaIngestion';
 import { lookupTaxRule } from './irishRules';
 import { VATCA_SCHEDULE_CURATED_RULES } from './vatcaScheduleCuration';
-import { irishTaxRules, irishKnowledgeSources, reviewItems } from '@/db/schema';
+import { irishTaxRules, irishKnowledgeSources, irishActProvisions, reviewItems } from '@/db/schema';
+import { and } from 'drizzle-orm';
 import type { AppDatabase } from '@/db';
 
 let db: AppDatabase;
@@ -56,6 +57,32 @@ describe('ingestVatcaSchedule', () => {
     const citations = new Set(sources.map((s) => s.citation));
     expect(citations.has('2010 Act 31')).toBe(true);
     expect(citations.has('2010 Act 31 Sch.2')).toBe(true);
+  });
+});
+
+describe('ingestVatcaSchedule on a database ingested by an earlier parser (issue #205)', () => {
+  it('adds the paragraphs the parser now finds and marks newly curated ones relevant, without rewriting stored text', () => {
+    const first = ingestVatcaSchedule(db, { companyId, scheduleNumber: '3', markdown: sch3Markdown, ingestVersion: 'v1' });
+    // As an earlier parser left it: no para 21, and para 13A not curated (so irrelevant).
+    db.delete(irishActProvisions).where(and(eq(irishActProvisions.sourceId, first.sourceId), eq(irishActProvisions.sectionNumber, '21'))).run();
+    db.update(irishActProvisions).set({ relevant: false, relevanceReason: 'old' })
+      .where(and(eq(irishActProvisions.sourceId, first.sourceId), eq(irishActProvisions.sectionNumber, '13A'))).run();
+    const para20 = () => db.select().from(irishActProvisions)
+      .where(and(eq(irishActProvisions.sourceId, first.sourceId), eq(irishActProvisions.sectionNumber, '20'))).get()!;
+    const before20 = para20();
+
+    const again = ingestVatcaSchedule(db, { companyId, scheduleNumber: '3', markdown: sch3Markdown, ingestVersion: 'v2' });
+    expect(again).toMatchObject({ ingested: false, sourceId: first.sourceId, paragraphCount: first.paragraphCount });
+    const p21 = db.select().from(irishActProvisions)
+      .where(and(eq(irishActProvisions.sourceId, first.sourceId), eq(irishActProvisions.sectionNumber, '21'))).get();
+    expect(p21?.heading).toBe('Miscellaneous services.');
+    const p13A = db.select().from(irishActProvisions)
+      .where(and(eq(irishActProvisions.sourceId, first.sourceId), eq(irishActProvisions.sectionNumber, '13A'))).get()!;
+    expect(p13A.relevant).toBe(true);
+    expect(para20()).toEqual(before20);
+
+    const derived = deriveVatcaScheduleRules(db, { companyId, scheduleNumber: '3', sourceId: first.sourceId });
+    expect(derived.skippedNoProvision).toEqual([]);
   });
 });
 

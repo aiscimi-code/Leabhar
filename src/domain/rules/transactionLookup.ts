@@ -71,12 +71,13 @@ export interface TransactionContext {
    * "established outside the State" per VATCA s.12/s.34's actual legal test
    * (EU Reg 282/2011 arts.10-11: seat of economic activity / fixed
    * establishment — see docs/statutes/282-2011/articles-10-13b-establishment.md),
-   * as opposed to the crude `supplierCountry != 'IE'` proxy those rules used
-   * before this field existed (issue #136 bug 4 / #138). When supplied, this
-   * takes precedence over the country-code proxy; the multi-factor test
-   * itself is not something this KB can compute from a country code alone.
+   * recorded and confirmed on the supplier (issue #207). It is the only
+   * source: a country code is never taken as establishment, so without it a
+   * rule that needs it is unresolved and the line is flagged.
    */
   supplierEstablishedOutsideState?: boolean | null;
+  /** The same determination for the customer (s.34(a): where the customer's business is established). */
+  customerEstablishedOutsideState?: boolean | null;
   [key: string]: unknown;
 }
 
@@ -127,12 +128,12 @@ export function isValidIsoCountryCode(code: string): boolean {
  *    code is unresolved, not "established outside the State" (issue #136
  *    bug 4).
  *  - `supplierEstablishedOutsideStateResolved` is the caller's own
- *    `supplierEstablishedOutsideState` determination when given (the actual
- *    VATCA s.12/s.34 legal test, EU Reg 282/2011 arts.10-11 — see
- *    docs/statutes/282-2011/articles-10-13b-establishment.md), falling back
- *    to the sanitised `supplierCountry != 'IE'` proxy only when no direct
- *    determination was supplied, and to `null` (unresolved) when neither is
- *    available.
+ *    `supplierEstablishedOutsideState` determination (the actual VATCA
+ *    s.12/s.34 legal test, EU Reg 282/2011 arts.10-11 — see
+ *    docs/statutes/282-2011/articles-10-13b-establishment.md), and `null`
+ *    (unresolved) when none was supplied. The country code is no longer a
+ *    fallback (issue #207): a foreign address does not show where a business
+ *    is established.
  *  - `annualTurnoverMaxMinor` is the greater of `annualTurnoverCurrentYearMinor`
  *    and `annualTurnoverPreviousYearMinor` when at least one is a finite
  *    number — implementing VATCA s.6(1)(c)/(d)'s "current calendar year or
@@ -144,8 +145,7 @@ export function normaliseTransactionContext(input: TransactionContext): Transact
     ? input.supplierCountry.toUpperCase()
     : (input.supplierCountry ? null : input.supplierCountry);
 
-  const supplierEstablishedOutsideStateResolved =
-    input.supplierEstablishedOutsideState ?? (supplierCountry ? supplierCountry !== 'IE' : null);
+  const supplierEstablishedOutsideStateResolved = input.supplierEstablishedOutsideState ?? null;
 
   const turnoverFigures = [input.annualTurnoverCurrentYearMinor, input.annualTurnoverPreviousYearMinor]
     .filter((v): v is number => typeof v === 'number' && Number.isFinite(v));

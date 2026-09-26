@@ -4,9 +4,10 @@ import { companies, suppliers, customers, vatTreatments } from '@/db/schema';
 import { asIsoDate } from '../dates';
 import { resolveTreatment } from '../vat/engine';
 import { parseVatNumber, EU_COUNTRY_CODES } from '../extraction/vatNumbers';
-import { suggestFromFacts, type SuggestionFacts, type VatSuggestion } from '../rules/vatSuggestion';
+import { suggestFromFacts, applyEstablishment, applyCustomerStatus, type SuggestionFacts, type VatSuggestion } from '../rules/vatSuggestion';
 import { documentEvidenceLines, type EvidenceLine } from './postDocument';
 import { checkLineRate, type LineRateCheck } from '../rules/lineRateCheck';
+import { applyCompositeSupply } from './compositeSupply';
 
 /**
  * The choices for coding each line of a confirmed document (issue #203).
@@ -101,14 +102,20 @@ export function documentLineChoices(db: AppDatabase, params: { companyId: string
     };
     if (isSale) {
       facts.customerCountry = country;
-      if (vatInfo) facts.customerVatRegisteredEu = vatInfo.structurallyValid && vatInfo.isEu && !vatInfo.isIrish;
+      if (vatInfo) {
+        const c = party as typeof customers.$inferSelect | undefined;
+        const vies = c?.viesStatus && c.viesCheckedVatNumber === vatInfo.normalised ? c.viesStatus : null;
+        facts.customerVatRegisteredEu = vatInfo.structurallyValid && vatInfo.isEu && !vatInfo.isIrish && vies !== 'invalid';
+      }
       const customer = party as typeof customers.$inferSelect | undefined;
-      if (customer?.taxableStatus) facts.customerIsTaxablePerson = customer.taxableStatus === 'taxable_person';
-      else if (vatInfo?.structurallyValid && vatInfo.isEu) facts.customerIsTaxablePerson = true;
+      applyCustomerStatus(facts, sources, customer ?? (vatNumber ? { name: 'the customer', taxableStatus: null, vatNumber } : undefined), vatInfo);
     } else {
       facts.supplierCountry = country;
     }
     if (line.vatMinor !== null) { facts.vatChargedMinor = Math.abs(line.vatMinor); sources.vatChargedMinor = 'confirmed document line'; }
+    applyEstablishment(facts, sources, isSale
+      ? { customer: party as typeof customers.$inferSelect | undefined }
+      : { supplier: party as typeof suppliers.$inferSelect | undefined });
     sources.invoiceAvailable = `confirmed document "${doc.originalFilename}"`;
 
     const statutory = suggestFromFacts(db, {
@@ -191,5 +198,18 @@ export function documentLineChoices(db: AppDatabase, params: { companyId: string
     };
   });
 
-  return { direction, lines: choices };
+  // Lines are coded together where one may be ancillary to another (s.47, issue #206).
+  const domesticTreatmentForRate = (rateBasisPoints: number) => {
+    for (const code of ['IE_STD', 'IE_RED', 'IE_SECOND_RED', 'IE_ZERO']) {
+      const t = treatmentByCode(code);
+      if (!t) continue;
+      try {
+        if (resolveTreatment(db, { companyId: params.companyId, treatmentId: t.id, onDate }).rateBasisPoints === rateBasisPoints) {
+          return { treatmentId: t.id, code: t.code, name: t.name };
+        }
+      } catch { /* no rate configured on this date */ }
+    }
+    return undefined;
+  };
+  return { direction, lines: applyCompositeSupply(choices, domesticTreatmentForRate) };
 }

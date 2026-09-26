@@ -204,3 +204,69 @@ export function scheduleParagraphWindows(
     footnotes: a.footnotes,
   }]));
 }
+
+/**
+ * The window of specific quoted words (issue #206): from the latest LRC
+ * amendment that touches them, or the Act's commencement.
+ *
+ * The LRC brackets each amended passage and puts its footnote reference just
+ * before it: "[F391] [ (a) [F392] [ … ] transferring … ]". So the notes that
+ * touch a quote are the ones whose bracket encloses any of its characters (a
+ * deletion leaves "…" inside its bracket, so quoting the "…" catches it too).
+ *
+ * This is finer than a paragraph's window, and it is what a rule quoting one
+ * limb of a many-limbed paragraph needs: Schedule 1 para 6 was last amended in
+ * December 2025, but the words of 6(1)(c) (bank accounts) not since 2010.
+ * Matching ignores whitespace, since the Markdown and the HTML break lines
+ * differently. Null when a quote is not in the text: the caller falls back to
+ * the paragraph's window.
+ */
+export function quotedTextWindow(
+  html: string, quotes: string[],
+): { effectiveFrom: string; footnotes: LrcFootnote[] } | null {
+  const notes = parseLrcFootnotes(html);
+  const body = html
+    .replace(/<div class="f-note">[\s\S]*?<\/div>/g, '')
+    .replace(/<div class="e-note">[\s\S]*?<\/div>/g, '')
+    .replace(/<span class="commentary-reference">\s*(F\d+)\s*<\/span>/g, '⟦$1⟧');
+  const text = decode(body.replace(/<[^>]+>/g, ' '));
+
+  // Walk the text: each kept character records the footnotes whose bracket encloses it.
+  let flat = '';
+  const enclosing: string[][] = [];
+  const stack: Array<string | null> = [];
+  let pending: string | null = null;
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i]!;
+    if (ch === '⟦') {
+      const end = text.indexOf('⟧', i);
+      pending = text.slice(i + 1, end);
+      i = end;
+      continue;
+    }
+    if (/\s/.test(ch)) continue;
+    if (ch === '[') { stack.push(pending); pending = null; continue; }
+    if (ch === ']') { stack.pop(); continue; }
+    pending = null;
+    flat += ch;
+    enclosing.push(stack.filter((r): r is string => r !== null));
+  }
+
+  const touched = new Set<string>();
+  for (const quote of quotes) {
+    const needle = quote.replace(/\s+/g, '');
+    let at = flat.indexOf(needle);
+    if (at < 0) return null;
+    while (at >= 0) {
+      for (let i = at; i < at + needle.length; i++) enclosing[i]!.forEach((r) => touched.add(r));
+      at = flat.indexOf(needle, at + 1);
+    }
+  }
+  const footnotes = [...touched].map((ref) => notes.get(ref)
+    ?? { ref, kind: 'unknown', date: null, text: 'Footnote not listed on the page.' });
+  const latest = footnotes.map((f) => f.date).filter((d): d is string => !!d).sort().at(-1);
+  return {
+    effectiveFrom: latest && latest > VATCA_2010_COMMENCEMENT ? latest : VATCA_2010_COMMENCEMENT,
+    footnotes,
+  };
+}

@@ -13,6 +13,7 @@
       "vatRegistered": true,
       "supplyType": "services",
       "supplierCountry": "US",
+      "supplierEstablishedOutsideState": true,
       "supplierType": "software_service",
       "transactionType": "AI_SaaS",
       "description": "Monthly SaaS subscription from US provider",

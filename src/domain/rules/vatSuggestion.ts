@@ -24,7 +24,7 @@
 import { and, eq } from 'drizzle-orm';
 import type { AppDatabase } from '@/db';
 import {
-  bankTransactions, companies, suppliers, customers, documents,
+  bankTransactions, companies, suppliers, customers, documents, documentLines,
   vatTreatments, irishTaxRules, irishActProvisions, irishKnowledgeSources,
 } from '@/db/schema';
 import { lookupTransactionRules, type ApplicableRule, type TransactionContext } from './transactionLookup';
@@ -35,6 +35,10 @@ import { asIsoDate } from '../dates';
 import { VAT_SCOPE_CURATED_RULES } from './vatScopeCuration';
 import { VAT_POS_BUSINESS_ABROAD_RULE_KEY, VAT_POS_CONSUMER_RULE_KEY } from './vatPlaceOfSupplyCuration';
 import { provisionCitation } from './citation';
+import { VATCA_SCHEDULE_CURATED_RULES } from './vatcaScheduleCuration';
+import { SCHEDULE_RULE_PRECEDENCE } from './vatcaScheduleParagraphRules';
+import { scheduleThreeRate } from './scheduleRates';
+import { S46_FAMILY_SCHEDULE_REF } from './vatcaRevisedCuration';
 
 export type TransactionDirection = 'purchase' | 'sale';
 
@@ -51,16 +55,38 @@ const isEuNotIe = (c: string | null | undefined): boolean => !!c && c !== 'IE' &
  * charge beats a rate; a specific Schedule 2/3 or 9% rule
  * beats the reduced-rate headline; the standard rate is the residual
  * fallback. A binding whose `treatmentCode` returns null matched a rule the
- * configuration cannot express (livestock: no treatment exists; hospitality
- * from 2026-07-01: rate not modelled) — that stops the search and is
+ * configuration or the sources cannot settle (a Schedule 3 rate on a date
+ * before the s.46(1)(ca) list is known) — that stops the search and is
  * reported, rather than falling through to a rate that is known to be wrong.
  */
 export interface TreatmentBinding {
   ruleKeys: string[];
   direction: TransactionDirection | 'either';
-  treatmentCode: (ctx: SuggestionFacts) => string | null;
+  /** The treatment for the matched rule `ruleKey`, on the facts (including the date). */
+  treatmentCode: (ctx: SuggestionFacts, ruleKey: string) => string | null;
   /** Why the binding yields no treatment, when `treatmentCode` returns null. */
-  gap?: string;
+  gap?: string | ((ctx: SuggestionFacts, ruleKey: string) => string);
+}
+
+export function bindingGap(binding: TreatmentBinding, ctx: SuggestionFacts, ruleKey: string): string | undefined {
+  return typeof binding.gap === 'function' ? binding.gap(ctx, ruleKey) : binding.gap;
+}
+
+/**
+ * Schedule 2 and 3 paragraph rules (issue #205), in precedence order. A
+ * Schedule 2 rule is zero-rated (s.46(1)(b)); a Schedule 3 rule bears the
+ * rate s.46 gives its sub-paragraphs on the line's date, or none when the
+ * sources cannot say (`scheduleThreeRate`).
+ */
+const SCHEDULE_RULES = new Map(VATCA_SCHEDULE_CURATED_RULES.map((r) => [r.ruleKey, r]));
+const SCHEDULE_BINDING_KEYS = SCHEDULE_RULE_PRECEDENCE.filter((k) => SCHEDULE_RULES.has(k));
+
+function scheduleRate(ctx: SuggestionFacts, ruleKey: string): { code: string | null; provision: string; gap?: string } {
+  const r = SCHEDULE_RULES.get(ruleKey);
+  if (!r || r.scheduleNumber === '2') return { code: 'IE_ZERO' as const, provision: 'VATCA 2010 s.46(1)(b)' };
+  const refs = r.rateRefs ?? [];
+  if (refs.length === 0) return { code: null, provision: 's.46', gap: `Rule ${ruleKey} names no Schedule 3 sub-paragraph.` };
+  return scheduleThreeRate(refs[0]!, ctx.transactionDate);
 }
 
 const scopeKeys = (treatment: 'IE_EXEMPT' | 'OUT_OF_SCOPE'): string[] =>
@@ -71,6 +97,16 @@ export const RULE_TREATMENT_BINDINGS: TreatmentBinding[] = [
   { ruleKeys: scopeKeys('OUT_OF_SCOPE'), direction: 'either', treatmentCode: () => 'OUT_OF_SCOPE' },
   // An exempt supply: no VAT, and so no reverse charge or rate either (Schedule 1).
   { ruleKeys: scopeKeys('IE_EXEMPT'), direction: 'either', treatmentCode: () => 'IE_EXEMPT' },
+  // Loan and overdraft interest: whether granting credit is still exempt cannot be
+  // established from the sources (issue #206), so it is flagged, never rated.
+  {
+    ruleKeys: ['vat.loan_interest_undetermined'],
+    direction: 'either',
+    treatmentCode: () => null,
+    gap: 'Whether loan or overdraft interest is exempt cannot be confirmed: Schedule 1 para 6(1) no longer lists '
+      + 'granting credit (words deleted by Finance (No. 2) Act 2023 s.63), and where they went is not in the '
+      + 'repository. Choose the treatment manually.',
+  },
   // A service sold to a business established abroad is supplied there, not here (s.34(a)).
   {
     ruleKeys: [VAT_POS_BUSINESS_ABROAD_RULE_KEY],
@@ -98,16 +134,19 @@ export const RULE_TREATMENT_BINDINGS: TreatmentBinding[] = [
     treatmentCode: () => 'IE_ZERO',
   },
   {
-    ruleKeys: ['vat.zero_rate_printed_books', 'vat.zero_rate_childrens_clothing_footwear'],
+    ruleKeys: SCHEDULE_BINDING_KEYS,
     direction: 'either',
-    treatmentCode: () => 'IE_ZERO',
+    treatmentCode: (f, key) => scheduleRate(f, key).code,
+    gap: (f, key) => scheduleRate(f, key).gap ?? 'No rate could be determined for this Schedule 3 paragraph.',
   },
   {
-    ruleKeys: ['vat.rate_hospitality_9pct_not_modelled'],
+    // s.46 families whose versions move between 13.5% and 9% (issue #205): the
+    // rate on the line's date, from the same s.46 windows as Schedule 3.
+    ruleKeys: Object.keys(S46_FAMILY_SCHEDULE_REF),
     direction: 'either',
-    treatmentCode: () => null,
-    gap: 'The rate for this category from 1 July 2026 is not modelled in the knowledge base '
-      + '(Finance Act 2025 is not ingested). Choose the treatment manually.',
+    treatmentCode: (f, key) => scheduleThreeRate(S46_FAMILY_SCHEDULE_REF[key]!, f.transactionDate).code,
+    gap: (f, key) => scheduleThreeRate(S46_FAMILY_SCHEDULE_REF[key]!, f.transactionDate).gap
+      ?? 'No rate could be determined for this date.',
   },
   {
     ruleKeys: ['vat.rate_livestock_current'],
@@ -119,18 +158,14 @@ export const RULE_TREATMENT_BINDINGS: TreatmentBinding[] = [
       'vat.rate_periodicals_9pct_current', 'vat.rate_sporting_facilities_9pct_current',
       'vat.rate_heat_pump_installation_9pct_current', 'vat.rate_gas_electricity_9pct_current',
       'vat.rate_social_housing_apartment_9pct_2025_narrow', 'vat.rate_social_housing_apartment_9pct_current',
-      'vat.rate_restaurant_catering_9pct_2020_2023', 'vat.rate_printed_matter_9pct_2020_2023',
+      'vat.rate_printed_matter_9pct_2020_2023',
       'vat.rate_admission_9pct_2020_2023', 'vat.rate_hotel_accommodation_9pct_2020_2023',
-      'vat.rate_hairdressing_9pct_2020_2023',
     ],
     direction: 'either',
     treatmentCode: () => 'IE_SECOND_RED',
   },
   {
     ruleKeys: [
-      'vat.reduced_rate_dwelling_services', 'vat.reduced_rate_solid_fuel',
-      'vat.reduced_rate_repair_movable_goods', 'vat.reduced_rate_cinema_admission',
-      'vat.rate_restaurant_catering_reduced_current', 'vat.rate_restaurant_catering_reduced_pre_9pct_window',
       'vat.rate_reduced_current',
     ],
     direction: 'either',
@@ -285,19 +320,33 @@ export function transactionFacts(
     }
   }
 
+  // What was supplied: from the confirmed invoice's own lines and VAT wording
+  // when there is one (issue #206); the bank narrative only when there is not.
+  const docLines = doc
+    ? db.select({ description: documentLines.description }).from(documentLines)
+      .where(eq(documentLines.documentId, doc.id)).all().map((l) => l.description).filter(Boolean)
+    : [];
+  const description = doc && docLines.length
+    ? [...docLines, party?.name, ...(doc.vatLegends ?? [])].filter(Boolean).join(' ')
+    : [tx.description, tx.counterpartyName, party?.name].filter(Boolean).join(' ');
+  sources.description = doc && docLines.length
+    ? `the ${docLines.length} line(s) of confirmed invoice "${doc.originalFilename}"`
+    : 'the bank description (no confirmed invoice with lines)';
+
   const facts: SuggestionFacts = {
     transactionDate: tx.transactionDate,
     amountMinor: Math.abs(tx.amountMinor),
     currency: tx.currency,
     direction,
     counterpartyCountry,
-    description: [tx.description, tx.counterpartyName, party?.name].filter(Boolean).join(' '),
+    description,
     transactionType: tx.transactionType,
     vatRegistered: company ? company.vatRegistrationStatus === 'registered' : null,
     invoiceAvailable: !!doc,
     supplyType,
   };
   sources.vatRegistered = `company VAT registration status (${company?.vatRegistrationStatus ?? 'unknown'})`;
+  applyEstablishment(facts, sources, { supplier, customer });
   sources.invoiceAvailable = doc ? `confirmed document "${doc.originalFilename}"` : 'no confirmed matched document';
 
   if (direction === 'purchase') {
@@ -307,20 +356,19 @@ export function transactionFacts(
     facts.customerCountry = counterpartyCountry;
     if (counterpartyCountry) sources.customerCountry = sources.counterpartyCountry!;
     if (vatInfo) {
-      facts.customerVatRegisteredEu = vatInfo.structurallyValid && vatInfo.isEu && !vatInfo.isIrish;
-      sources.customerVatRegisteredEu = `customer VAT number ${vatInfo.normalised} (structural check only, not VIES)`;
+      // VIES's answer for this exact number, when there is one (issue #207).
+      const vies = customer?.viesStatus && customer.viesCheckedVatNumber === vatInfo.normalised ? customer.viesStatus : null;
+      facts.customerVatRegisteredEu = vatInfo.structurallyValid && vatInfo.isEu && !vatInfo.isIrish && vies !== 'invalid';
+      sources.customerVatRegisteredEu = vies === 'valid'
+        ? `customer VAT number ${vatInfo.normalised}, confirmed valid by VIES on ${customer!.viesCheckedAt?.slice(0, 10)}`
+        : vies === 'invalid'
+          ? `customer VAT number ${vatInfo.normalised} reported INVALID by VIES on ${customer!.viesCheckedAt?.slice(0, 10)}`
+          : `customer VAT number ${vatInfo.normalised} (structural check only, not checked with VIES)`;
     }
     // VATCA s.34(a)/(b) turns on whether the customer buys as a taxable person.
     // A recorded status wins; otherwise an EU VAT number is evidence of it
     // (282/2011 art.18(1)); a missing number is NOT evidence of a consumer.
-    if (customer?.taxableStatus) {
-      facts.customerIsTaxablePerson = customer.taxableStatus === 'taxable_person';
-      sources.customerIsTaxablePerson = `customer record "${customer.name}" (${customer.taxableStatus})`;
-    } else if (vatInfo?.structurallyValid && vatInfo.isEu) {
-      facts.customerIsTaxablePerson = true;
-      sources.customerIsTaxablePerson = `customer VAT number ${vatInfo.normalised} (EU Reg 282/2011 art.18(1) `
-        + 'evidence; structural check only, not VIES)';
-    }
+    applyCustomerStatus(facts, sources, customer, vatInfo);
     if (supplyType === 'goods' && counterpartyCountry && !EU.has(counterpartyCountry)) {
       facts.goodsExportedOutsideEu = true;
       sources.goodsExportedOutsideEu = `derived: goods sale to a customer in ${counterpartyCountry} `
@@ -371,9 +419,17 @@ export function suggestVatTreatment(
   if (!gathered) return null;
   const booked = db.select({ vatTreatmentId: bankTransactions.vatTreatmentId }).from(bankTransactions)
     .where(eq(bankTransactions.id, params.bankTransactionId)).get()?.vatTreatmentId ?? null;
-  return suggestFromFacts(db, {
+  const suggestion = suggestFromFacts(db, {
     companyId: params.companyId, subjectId: params.bankTransactionId, ...gathered, bookedTreatmentId: booked,
   });
+  // A bank line is only ever a pointer to what was bought (issue #206): with a
+  // confirmed invoice, each of its lines is coded on posting; without one, the
+  // bank words are all the rules had, and a person confirms them.
+  const reason = gathered.facts.invoiceAvailable
+    ? `Read from ${gathered.factSources.description}. An invoice with lines at different treatments is coded `
+      + 'line by line when it is posted; this is one suggestion for the whole payment.'
+    : 'No confirmed invoice: this rests on the bank description alone. Confirm it, or attach and confirm the invoice.';
+  return { ...suggestion, reviewRequired: true, reviewReasons: [...suggestion.reviewReasons, reason] };
 }
 
 /**
@@ -413,10 +469,13 @@ export function suggestFromFacts(
 
   const lookup = lookupTransactionRules(db, { companyId: params.companyId, transaction: facts });
   const reviewReasons = [...lookup.reviewReasons];
-  if (facts.supplierEstablishedOutsideState == null && facts.counterpartyCountry) {
+  const establishmentKnown = facts.direction === 'purchase'
+    ? facts.supplierEstablishedOutsideState != null : facts.customerEstablishedOutsideState != null;
+  if (!establishmentKnown && facts.counterpartyCountry && facts.counterpartyCountry !== 'IE') {
     reviewReasons.push(
-      'Whether the counterparty is "established" outside the State was inferred from its country '
-      + `(${facts.counterpartyCountry}), not the EU Reg 282/2011 arts.10-11 test (issue #199).`,
+      `The ${facts.direction === 'purchase' ? 'supplier' : 'customer'} is in ${facts.counterpartyCountry}, but where it `
+      + 'is established (EU Reg 282/2011 arts.10-11: seat of economic activity or fixed establishment) has not been '
+      + 'confirmed. A country is not an establishment: confirm it on the party\'s record (issue #207).',
     );
   }
 
@@ -468,7 +527,7 @@ export function suggestFromFacts(
     };
   }
 
-  const code = decision.binding.treatmentCode(facts);
+  const code = decision.binding.treatmentCode(facts, decision.rule.ruleKey);
   const ruleRow = db.select({ numericValue: irishTaxRules.numericValue, unit: irishTaxRules.unit })
     .from(irishTaxRules).where(eq(irishTaxRules.id, decision.rule.ruleId)).get();
   const ruleRateBasisPoints = ruleRow?.unit === 'percent' && ruleRow.numericValue != null
@@ -476,13 +535,14 @@ export function suggestFromFacts(
     : (code === 'IE_ZERO' || code === 'EU_GOODS_SUPPLY' ? 0 : null);
 
   const where = provisionCitation(decidingRule!.citation, decidingRule!.sectionNumber);
+  const gap = bindingGap(decision.binding, facts, decision.rule.ruleKey);
   if (code === null) {
     return {
       ...base, status: 'no_treatment', ruleRateBasisPoints, decidingRule, supportingRules,
       unresolvedFields: lookup.unresolvedFields,
-      reviewReasons: [...reviewReasons, decision.binding.gap ?? 'No treatment is configured for this rule.'],
+      reviewReasons: [...reviewReasons, gap ?? 'No treatment is configured for this rule.'],
       explanation: `Rule "${decidingRule!.ruleName}" (${where}) matched, but it maps to no configured VAT treatment. `
-        + (decision.binding.gap ?? ''),
+        + (gap ?? ''),
     };
   }
 
@@ -552,4 +612,68 @@ export function suggestFromFacts(
         + `${facts.direction}. It is a suggestion: the rule is ${decidingRule!.reviewStatus.replace('_', '-')} and `
         + 'has not been approved by a person.',
   };
+}
+
+/**
+ * The establishment a person confirmed on the supplier or customer record
+ * (issue #207), as the facts the place-of-supply and reverse-charge rules
+ * need. Nothing is inferred when it is not recorded.
+ */
+export function applyEstablishment(
+  facts: SuggestionFacts,
+  sources: Record<string, string>,
+  parties: {
+    supplier?: { name: string; establishment: string | null; establishmentConfirmedBy: string | null; establishmentConfirmedAt: string | null };
+    customer?: { name: string; establishment: string | null; establishmentConfirmedBy: string | null; establishmentConfirmedAt: string | null };
+  },
+): void {
+  const describe = (p: { name: string; establishment: string | null; establishmentConfirmedBy: string | null; establishmentConfirmedAt: string | null }) =>
+    `${p.name}: established ${p.establishment === 'outside_state' ? 'outside' : 'in'} the State, confirmed by `
+    + `${p.establishmentConfirmedBy ?? 'unknown'}${p.establishmentConfirmedAt ? ` on ${p.establishmentConfirmedAt.slice(0, 10)}` : ''}`;
+  if (parties.supplier?.establishment) {
+    facts.supplierEstablishedOutsideState = parties.supplier.establishment === 'outside_state';
+    sources.supplierEstablishedOutsideState = describe(parties.supplier);
+  }
+  if (parties.customer?.establishment) {
+    facts.customerEstablishedOutsideState = parties.customer.establishment === 'outside_state';
+    sources.customerEstablishedOutsideState = describe(parties.customer);
+  }
+}
+
+/**
+ * Whether the customer buys as a taxable person (s.34(a)/(b)), from what is
+ * on record (issue #207): a status a person recorded wins; otherwise a
+ * well-formed EU VAT number is evidence of it (EU Reg 282/2011 art.18(1)),
+ * stronger when VIES confirmed that number, and no evidence at all once VIES
+ * has said it is invalid.
+ */
+export function applyCustomerStatus(
+  facts: SuggestionFacts,
+  sources: Record<string, string>,
+  customer: {
+    name: string; taxableStatus: string | null; taxableStatusConfirmedBy?: string | null;
+    vatNumber: string | null; viesStatus?: string | null; viesCheckedVatNumber?: string | null;
+    viesCheckedAt?: string | null; viesRequestIdentifier?: string | null;
+  } | undefined,
+  vatInfo: ReturnType<typeof parseVatNumber> | null,
+): void {
+  if (customer?.taxableStatus) {
+    facts.customerIsTaxablePerson = customer.taxableStatus === 'taxable_person';
+    sources.customerIsTaxablePerson = `customer record "${customer.name}" (${customer.taxableStatus}`
+      + `${customer.taxableStatusConfirmedBy ? `, confirmed by ${customer.taxableStatusConfirmedBy}` : ''})`;
+    return;
+  }
+  if (!vatInfo?.structurallyValid || !vatInfo.isEu) return;
+  const checked = customer?.viesStatus && customer.viesCheckedVatNumber === vatInfo.normalised ? customer.viesStatus : null;
+  if (checked === 'invalid') {
+    sources.customerIsTaxablePerson = `customer VAT number ${vatInfo.normalised} was reported INVALID by VIES on `
+      + `${customer!.viesCheckedAt?.slice(0, 10) ?? 'an earlier check'}; it is not evidence of taxable status`;
+    return;
+  }
+  facts.customerIsTaxablePerson = true;
+  sources.customerIsTaxablePerson = checked === 'valid'
+    ? `customer VAT number ${vatInfo.normalised}, confirmed valid by VIES on ${customer!.viesCheckedAt?.slice(0, 10)}`
+      + `${customer!.viesRequestIdentifier ? ` (consultation ${customer!.viesRequestIdentifier})` : ''} (EU Reg 282/2011 art.18(1))`
+    : `customer VAT number ${vatInfo.normalised} (EU Reg 282/2011 art.18(1) evidence; structural check only, `
+      + 'not checked with VIES)';
 }

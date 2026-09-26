@@ -13,9 +13,10 @@ let db: AppDatabase;
 let companyId: string;
 const s46Markdown = readFileSync(VATCA_REVISED_S046_MD_PATH, 'utf8');
 
+/** Approve the version in force today (a rate is a family of dated versions, issue #205). */
 function approve(ruleKey: string) {
   const row = db.select({ id: irishTaxRules.id }).from(irishTaxRules)
-    .where(and(eq(irishTaxRules.companyId, companyId), eq(irishTaxRules.ruleKey, ruleKey))).get()!;
+    .where(and(eq(irishTaxRules.companyId, companyId), eq(irishTaxRules.ruleKey, ruleKey), eq(irishTaxRules.active, true))).get()!;
   setRuleReviewStatus(db, { ruleId: row.id, status: 'approved', reviewedBy: 'tester' });
 }
 
@@ -68,7 +69,8 @@ describe('syncTaxRatesFromIrishRules', () => {
     expect(after.rateBasisPoints).toBe(2300);
 
     const curatedRow = db.select({ taxRateId: irishTaxRules.taxRateId }).from(irishTaxRules)
-      .where(and(eq(irishTaxRules.companyId, companyId), eq(irishTaxRules.ruleKey, 'vat.rate_standard_current')))
+      .where(and(eq(irishTaxRules.companyId, companyId), eq(irishTaxRules.ruleKey, 'vat.rate_standard_current'),
+        eq(irishTaxRules.active, true)))
       .get()!;
     expect(curatedRow.taxRateId).toBe(before.id);
   });

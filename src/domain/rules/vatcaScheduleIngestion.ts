@@ -76,13 +76,75 @@ export function ingestVatcaSchedule(
       eq(irishKnowledgeSources.sha256, digest),
     )).get();
 
+  const parsed = parseVatcaSchedule(params.markdown);
+  const curatedParagraphs = new Set([
+    ...VATCA_SCHEDULE_CURATED_RULES
+      .filter((r) => r.scheduleNumber === params.scheduleNumber)
+      .map((r) => r.sectionNumber),
+    ...VAT_SCOPE_CURATED_RULES
+      .filter((r) => r.citation === fm.citation)
+      .map((r) => r.sectionNumber),
+  ]);
+  const relevance = (p: (typeof parsed)[number]) => {
+    const assessed = assessRelevance(p.category);
+    return !assessed.relevant && curatedParagraphs.has(p.paragraphNumber)
+      ? { relevant: true, reason: `Curated: mapped to a rule in vatcaScheduleCuration.ts or vatScopeCuration.ts, overriding the ${p.category} category default.` }
+      : assessed;
+  };
+  const provisionRow = (sourceId: string, p: (typeof parsed)[number]) => {
+    const { relevant, reason } = relevance(p);
+    return {
+      id: ids.provision(),
+      companyId: params.companyId ?? null,
+      sourceId,
+      sectionNumber: p.paragraphNumber,
+      part: p.part,
+      slug: provisionSlug(`${params.scheduleNumber}-${p.paragraphNumber}`, p.heading),
+      heading: p.heading || `Schedule ${params.scheduleNumber} paragraph ${p.paragraphNumber}`,
+      principalAct: null,
+      provisionText: p.provisionText,
+      sourceStart: p.sourceStart,
+      sourceEnd: p.sourceEnd,
+      category: p.category,
+      amendsSection: null,
+      effectiveClue: null,
+      citedActs: [],
+      relevant,
+      relevanceReason: reason,
+      source: 'import' as const,
+      provenanceStatus: 'imported' as const,
+    };
+  };
+
   if (existing) {
-    const rows = db.select({ relevant: irishActProvisions.relevant }).from(irishActProvisions)
-      .where(eq(irishActProvisions.sourceId, existing.id)).all();
+    const rows = db.select({ id: irishActProvisions.id, sectionNumber: irishActProvisions.sectionNumber, relevant: irishActProvisions.relevant })
+      .from(irishActProvisions).where(eq(irishActProvisions.sourceId, existing.id)).all();
     if (rows.length > 0) {
+      // Same source bytes, but the parser or the curated set may have moved
+      // on since it was ingested (issue #205: the unnumbered Sch.3 para 21,
+      // and paragraphs newly curated into rules). Add the paragraphs the
+      // parser now finds, and mark newly curated ones relevant; stored text
+      // is never rewritten.
+      db.transaction((tx) => {
+        const bySection = new Map(rows.map((r) => [r.sectionNumber, r]));
+        for (const p of parsed) {
+          const row = bySection.get(p.paragraphNumber);
+          if (!row) {
+            tx.insert(irishActProvisions).values(provisionRow(existing.id, p)).run();
+            continue;
+          }
+          const { relevant, reason } = relevance(p);
+          if (relevant && !row.relevant) {
+            tx.update(irishActProvisions).set({ relevant: true, relevanceReason: reason })
+              .where(eq(irishActProvisions.id, row.id)).run();
+          }
+        }
+      });
+      const now = db.select({ relevant: irishActProvisions.relevant }).from(irishActProvisions)
+        .where(eq(irishActProvisions.sourceId, existing.id)).all();
       return {
-        sourceId: existing.id, scheduleNumber: params.scheduleNumber, paragraphCount: rows.length,
-        relevantCount: rows.filter((r) => r.relevant).length, ingested: false,
+        sourceId: existing.id, scheduleNumber: params.scheduleNumber, paragraphCount: now.length,
+        relevantCount: now.filter((r) => r.relevant).length, ingested: false,
       };
     }
   }
@@ -112,45 +174,11 @@ export function ingestVatcaSchedule(
       sourceDate: nowIso(),
     }).run();
 
-    const parsed = parseVatcaSchedule(params.markdown);
-    const curatedParagraphs = new Set([
-      ...VATCA_SCHEDULE_CURATED_RULES
-        .filter((r) => r.scheduleNumber === params.scheduleNumber)
-        .map((r) => r.sectionNumber),
-      ...VAT_SCOPE_CURATED_RULES
-        .filter((r) => r.citation === fm.citation)
-        .map((r) => r.sectionNumber),
-    ]);
     let relevantCount = 0;
     for (const p of parsed) {
-      let { relevant, reason } = assessRelevance(p.category);
-      if (!relevant && curatedParagraphs.has(p.paragraphNumber)) {
-        relevant = true;
-        reason = `Curated: mapped to a rule in vatcaScheduleCuration.ts or vatScopeCuration.ts, overriding the ${p.category} category default.`;
-      }
-      if (relevant) relevantCount++;
-
-      tx.insert(irishActProvisions).values({
-        id: ids.provision(),
-        companyId: params.companyId ?? null,
-        sourceId,
-        sectionNumber: p.paragraphNumber,
-        part: p.part,
-        slug: provisionSlug(`${params.scheduleNumber}-${p.paragraphNumber}`, p.heading),
-        heading: p.heading || `Schedule ${params.scheduleNumber} paragraph ${p.paragraphNumber}`,
-        principalAct: null,
-        provisionText: p.provisionText,
-        sourceStart: p.sourceStart,
-        sourceEnd: p.sourceEnd,
-        category: p.category,
-        amendsSection: null,
-        effectiveClue: null,
-        citedActs: [],
-        relevant,
-        relevanceReason: reason,
-        source: 'import',
-        provenanceStatus: 'imported',
-      }).run();
+      const row = provisionRow(sourceId, p);
+      if (row.relevant) relevantCount++;
+      tx.insert(irishActProvisions).values(row).run();
     }
 
     return {
@@ -299,17 +327,29 @@ function paragraphWindowsForSource(
   db: AppDatabase, sourceId: string, scheduleNumber: string,
   provisions: Array<typeof irishActProvisions.$inferSelect>,
 ): Map<string, ParagraphWindow> | null {
+  const html = lrcHtmlForSource(db, sourceId);
+  if (html === null) return null;
+  const paragraphs = provisions
+    .filter((p) => p.sourceId === sourceId)
+    .sort((a, b) => (a.sourceStart ?? 0) - (b.sourceStart ?? 0))
+    .map((p) => p.sectionNumber);
+  return scheduleParagraphWindows(html, scheduleNumber, paragraphs);
+}
+
+/**
+ * The LRC revised HTML kept beside an ingested source's Markdown
+ * (`schedule-1.md` -> `schedule-1.html`), when it is the file the Markdown
+ * was converted from (same SHA-256 as its front matter records); else null.
+ */
+export function lrcHtmlForSource(db: AppDatabase, sourceId: string): string | null {
   const source = db.select().from(irishKnowledgeSources).where(eq(irishKnowledgeSources.id, sourceId)).get();
   if (!source?.localPath?.endsWith('.md')) return null;
-  const mdPath = join(appRoot(), source.localPath);
+  const at = source.localPath.indexOf('docs/statutes/');
+  const mdPath = join(appRoot(), at >= 0 ? source.localPath.slice(at) : source.localPath);
   const htmlPath = mdPath.replace(/\.md$/, '.html');
   if (!existsSync(htmlPath) || !existsSync(mdPath)) return null;
   const html = readFileSync(htmlPath);
   const recorded = /source_html_sha256:\s*"([0-9a-f]{64})"/.exec(readFileSync(mdPath, 'utf8'))?.[1];
   if (!recorded || sha256Hex(html) !== recorded) return null;
-  const paragraphs = provisions
-    .filter((p) => p.sourceId === sourceId)
-    .sort((a, b) => (a.sourceStart ?? 0) - (b.sourceStart ?? 0))
-    .map((p) => p.sectionNumber);
-  return scheduleParagraphWindows(html.toString('utf8'), scheduleNumber, paragraphs);
+  return html.toString('utf8');
 }

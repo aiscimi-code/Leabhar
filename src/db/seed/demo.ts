@@ -268,6 +268,14 @@ export async function seedDemoCompany(
     columnMap: COLUMN_MAP, defaultCurrency: 'EUR',
   });
 
+  // Where each demo party is established (issue #207). In real books a person
+  // records this; for the fictional demo it is recorded once, and labelled so.
+  const demoEstablishment = (country: string) => ({
+    establishment: country === 'IE' ? 'in_state' as const : 'outside_state' as const,
+    establishmentBasis: `Demo data: seat of economic activity in ${country}; no fixed establishment elsewhere`,
+    establishmentConfirmedBy: 'demo', establishmentConfirmedAt: '2025-01-01T00:00:00.000Z',
+  });
+
   // ---- Suppliers ----
   const supplier = (
     name: string, country: string, vatNumber: string | null,
@@ -279,6 +287,7 @@ export async function seedDemoCompany(
       countryCode: country, vatNumber, defaultCurrency: 'EUR',
       defaultAccountId: byCode[accountCode], defaultVatTreatmentId: tr[treatmentCode],
       typicalPaymentDays: 0,
+      ...demoEstablishment(country),
     }).run();
     return id;
   };
@@ -307,6 +316,7 @@ export async function seedDemoCompany(
     id: mulligan, companyId, name: 'Mulligan Digital Limited',
     matchKey: normaliseName('Mulligan Digital Limited'), aliases: ['MULLIGAN DIGITAL'],
     countryCode: 'IE', vatNumber: 'IE6543217L', taxableStatus: 'taxable_person', defaultCurrency: 'EUR',
+    ...demoEstablishment('IE'),
     defaultAccountId: byCode['4020'], defaultVatTreatmentId: tr['IE_STD'],
     defaultPaymentTermsDays: 30,
   }).run();
@@ -316,6 +326,7 @@ export async function seedDemoCompany(
     id: continental, companyId, name: 'Continental Design SRL',
     matchKey: normaliseName('Continental Design SRL'), aliases: ['CONTINENTAL DESIGN'],
     countryCode: 'IT', vatNumber: 'IT12345678901', taxableStatus: 'taxable_person', defaultCurrency: 'EUR',
+    ...demoEstablishment('IT'),
     defaultAccountId: byCode['4000'], defaultVatTreatmentId: tr['EU_SERVICES_SUPPLY'],
     defaultPaymentTermsDays: 30,
   }).run();
@@ -325,6 +336,7 @@ export async function seedDemoCompany(
     id: usCustomer, companyId, name: 'Redwood Analytics Inc',
     matchKey: normaliseName('Redwood Analytics Inc'), aliases: ['REDWOOD'],
     countryCode: 'US', taxableStatus: 'taxable_person', defaultCurrency: 'USD',
+    ...demoEstablishment('US'),
     defaultAccountId: byCode['4010'], defaultVatTreatmentId: tr['NON_EU_SERVICES_SUPPLY'],
   }).run();
 

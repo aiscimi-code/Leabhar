@@ -1,0 +1,22 @@
+ALTER TABLE `customers` ADD `establishment` text;--> statement-breakpoint
+ALTER TABLE `customers` ADD `establishment_basis` text;--> statement-breakpoint
+ALTER TABLE `customers` ADD `establishment_confirmed_by` text;--> statement-breakpoint
+ALTER TABLE `customers` ADD `establishment_confirmed_at` text;--> statement-breakpoint
+ALTER TABLE `customers` ADD `vies_status` text;--> statement-breakpoint
+ALTER TABLE `customers` ADD `vies_checked_at` text;--> statement-breakpoint
+ALTER TABLE `customers` ADD `vies_checked_vat_number` text;--> statement-breakpoint
+ALTER TABLE `customers` ADD `vies_name` text;--> statement-breakpoint
+ALTER TABLE `customers` ADD `vies_address` text;--> statement-breakpoint
+ALTER TABLE `customers` ADD `vies_request_identifier` text;--> statement-breakpoint
+ALTER TABLE `customers` ADD `taxable_status_confirmed_by` text;--> statement-breakpoint
+ALTER TABLE `customers` ADD `taxable_status_confirmed_at` text;--> statement-breakpoint
+ALTER TABLE `suppliers` ADD `establishment` text;--> statement-breakpoint
+ALTER TABLE `suppliers` ADD `establishment_basis` text;--> statement-breakpoint
+ALTER TABLE `suppliers` ADD `establishment_confirmed_by` text;--> statement-breakpoint
+ALTER TABLE `suppliers` ADD `establishment_confirmed_at` text;--> statement-breakpoint
+ALTER TABLE `suppliers` ADD `vies_status` text;--> statement-breakpoint
+ALTER TABLE `suppliers` ADD `vies_checked_at` text;--> statement-breakpoint
+ALTER TABLE `suppliers` ADD `vies_checked_vat_number` text;--> statement-breakpoint
+ALTER TABLE `suppliers` ADD `vies_name` text;--> statement-breakpoint
+ALTER TABLE `suppliers` ADD `vies_address` text;--> statement-breakpoint
+ALTER TABLE `suppliers` ADD `vies_request_identifier` text;

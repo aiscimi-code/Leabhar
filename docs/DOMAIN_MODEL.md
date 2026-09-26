@@ -425,6 +425,77 @@ against a text that did not yet apply. Re-deriving with a different window
 retires the old rule (`effectiveTo`, inactive) and inserts the new one. A
 document dated before any configured rate is flagged, not refused.
 
+Every Schedule 2 and 3 paragraph has a rule, or a justified `not_applicable`
+row in the coverage matrix. A Schedule 2 rule is zero-rated. A Schedule 3 rule
+states no rate: it names the sub-paragraphs it covers, and the rate comes from
+s.46 on the line's date (`scheduleThreeRate`):
+
+- 9% where a dated clause lists the paragraph:
+  - (ca) from 2025;
+  - (caa) electricity and gas, 2022–2030;
+  - (cab) and (cac) apartments;
+  - (cb) hospitality, 2020–2023;
+  - Finance Act 2025 s.71: catering, hot food and hairdressing from 1 July 2026.
+- 13.5% otherwise from 2025.
+- No rate before 2025, and the line is flagged. What (ca) listed before
+  2025 is not in the repository.
+
+When a line matches more than one paragraph, the order in
+`SCHEDULE_RULE_PRECEDENCE` decides. A paragraph that excludes another's items
+comes after it; for example, solar panels come before dwelling work.
+
+The s.46 rates are families of dated versions, each window taken from the
+statute text or the LRC's amendment footnotes. Each version is linked to the
+one before it by `supersedesRuleId`. The families are:
+
+- the standard rate: 23%, then 21%, then 23%;
+- hospitality and hairdressing: 9%, 13.5%, then 9% from July 2026 under
+  Finance Act 2025 s.71.
+
+A period the sources cannot settle has no version, so a line dated in it is
+flagged.
+
+Every Schedule 1 paragraph an invoice line can show has an exemption rule.
+Paragraphs 13 and 15 are exemptions at importation, justified
+`not_applicable`. A Schedule 1 rule is dated from the latest LRC amendment to
+the words it quotes (`quotedTextWindow`), not its whole paragraph. Paragraph 6
+was last amended in December 2025, but its bank-account words not since 2010.
+
+Loan and overdraft interest match a rule that suggests no treatment and is
+flagged. Schedule 1 para 6(1)(a)'s credit words were deleted in 2023, and
+where they went is not in the repository.
+
+A line that may be ancillary (delivery, packaging, handling; the s.47 rule
+matched) is compared with the other lines of the same invoice
+(`applyCompositeSupply`). If those lines bear one printed rate, their
+treatment is offered for the line under s.47(1)(a), and the line is flagged:
+the rate is right only if the invoice is one composite supply. If they bear
+different rates, the line is flagged as undecidable from the invoice. Nothing
+is preselected: whether a supply is ancillary is a judgement.
+
+A bank line's statutory suggestion reads the matched confirmed invoice's own
+lines and VAT wording when there is one, never the bank narrative. A draft
+invoice is not evidence. Without a confirmed invoice the suggestion rests on
+the bank description alone and says so; bank-only lines (wages, tax,
+transfers) keep their bank-level rules but are always flagged for
+confirmation.
+
+### Establishment and customer status are recorded, never inferred
+
+Where a supplier or customer is established (EU Reg 282/2011 arts.10-11)
+decides whether a reverse charge applies (s.12) and where a service is
+supplied (s.34(a)). A country code does not settle it. A person records it on
+the supplier or customer, with what it rests on and their name
+(`confirmEstablishment`). Until then the rules that need it are unresolved,
+and the line is flagged. A customer's taxable status is recorded the same way.
+
+A VAT number can be checked with VIES (`checkVatNumberWithVies`). The answer
+is stored as evidence, with the number checked and VIES's consultation number:
+
+- **Valid:** strengthens the number as evidence of a business customer.
+- **Invalid:** removes it as evidence.
+- **Unavailable** (service error, offline): stored as such, never as valid.
+
 ### Posting paths are atomic
 
 Every exported posting path — classify, reclassify, split journal,

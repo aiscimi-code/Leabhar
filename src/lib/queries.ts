@@ -800,6 +800,19 @@ export function invoiceDetail(invoiceId: string) {
   return { invoice, lines, allocations, party, company };
 }
 
+/** One customer with its invoices (README §17). */
+export function customerDetail(customerId: string) {
+  const db = getDb();
+  const company = requireCompany();
+  const customer = db.select().from(customers)
+    .where(and(eq(customers.id, customerId), eq(customers.companyId, company.id))).get();
+  if (!customer) return null;
+  const customerInvoices = db.select().from(invoices)
+    .where(and(eq(invoices.companyId, company.id), eq(invoices.customerId, customerId)))
+    .orderBy(desc(invoices.invoiceDate)).all();
+  return { customer, invoices: customerInvoices };
+}
+
 /** One supplier with everything recorded against them (README §17). */
 export function supplierDetail(supplierId: string) {
   const db = getDb();
