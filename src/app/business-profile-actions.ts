@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { getDb } from '@/db';
 import { requireCompany } from '@/lib/queries';
-import { actorName } from '@/lib/session';
+import { actorName, requireActor } from '@/lib/session';
 import type { ActionResult } from './settings-actions';
 import {
   recordTradingName, endTradingName,
@@ -33,6 +33,7 @@ const fail = (error: unknown): ActionResult =>
 
 export async function recordTradingNameAction(formData: FormData): Promise<ActionResult> {
   try {
+    await requireActor('company.manage');
     const company = requireCompany();
     recordTradingName(getDb(), {
       companyId: company.id,
@@ -51,6 +52,7 @@ export async function recordTradingNameAction(formData: FormData): Promise<Actio
 
 export async function endTradingNameAction(formData: FormData): Promise<ActionResult> {
   try {
+    await requireActor('company.manage');
     const company = requireCompany();
     endTradingName(getDb(), {
       companyId: company.id,
@@ -68,6 +70,7 @@ export async function endTradingNameAction(formData: FormData): Promise<ActionRe
 
 export async function recordTradingActivityAction(formData: FormData): Promise<ActionResult> {
   try {
+    await requireActor('company.manage');
     const company = requireCompany();
     const sector = field(formData, 'sector') as TradingSector;
     if (!TRADING_SECTORS.includes(sector)) return { ok: false, error: 'Choose the sector this activity trades in.' };
@@ -89,6 +92,7 @@ export async function recordTradingActivityAction(formData: FormData): Promise<A
 
 export async function ceaseTradingActivityAction(formData: FormData): Promise<ActionResult> {
   try {
+    await requireActor('company.manage');
     const company = requireCompany();
     ceaseTradingActivity(getDb(), {
       companyId: company.id,
@@ -105,6 +109,7 @@ export async function ceaseTradingActivityAction(formData: FormData): Promise<Ac
 
 export async function recordRegistrationAction(formData: FormData): Promise<ActionResult> {
   try {
+    await requireActor('company.manage');
     const company = requireCompany();
     const registrationType = field(formData, 'registrationType') as RegistrationType;
     if (!REGISTRATION_TYPES.includes(registrationType)) {
@@ -128,6 +133,7 @@ export async function recordRegistrationAction(formData: FormData): Promise<Acti
 
 export async function endRegistrationAction(formData: FormData): Promise<ActionResult> {
   try {
+    await requireActor('company.manage');
     const company = requireCompany();
     endRegistration(getDb(), {
       companyId: company.id,
@@ -144,6 +150,7 @@ export async function endRegistrationAction(formData: FormData): Promise<ActionR
 
 export async function recordEuVatNumberAction(formData: FormData): Promise<ActionResult> {
   try {
+    await requireActor('company.manage');
     const company = requireCompany();
     recordEuVatNumber(getDb(), {
       companyId: company.id,
@@ -161,6 +168,7 @@ export async function recordEuVatNumberAction(formData: FormData): Promise<Actio
 
 export async function recordEoriNumberAction(formData: FormData): Promise<ActionResult> {
   try {
+    await requireActor('company.manage');
     const company = requireCompany();
     recordEoriNumber(getDb(), {
       companyId: company.id,
@@ -177,6 +185,7 @@ export async function recordEoriNumberAction(formData: FormData): Promise<Action
 
 export async function ceaseTradeAction(formData: FormData): Promise<ActionResult> {
   try {
+    await requireActor('company.manage');
     const company = requireCompany();
     const { warnings } = ceaseTrade(getDb(), {
       companyId: company.id,
@@ -195,6 +204,7 @@ export async function ceaseTradeAction(formData: FormData): Promise<ActionResult
 
 export async function archiveCompanyAction(formData: FormData): Promise<ActionResult> {
   try {
+    await requireActor('company.manage');
     const company = requireCompany();
     const { warnings } = archiveCompany(getDb(), {
       companyId: company.id,
@@ -211,6 +221,7 @@ export async function archiveCompanyAction(formData: FormData): Promise<ActionRe
 
 export async function unarchiveCompanyAction(formData: FormData): Promise<ActionResult> {
   try {
+    await requireActor('company.manage', field(formData, 'companyId'));
     unarchiveCompany(getDb(), {
       companyId: field(formData, 'companyId'),
       confirmedBy: await actorName(),

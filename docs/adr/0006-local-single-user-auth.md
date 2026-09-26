@@ -1,6 +1,6 @@
 # 0006. Local accounts per install; no workspace concept
 
-- **Status:** Accepted
+- **Status:** Superseded by ADR-0007
 - **Date:** 2026-09-26 (recorded retroactively; decided at design time)
 
 ## Context

@@ -1,4 +1,4 @@
-import { sqliteTable, text, integer, index } from 'drizzle-orm/sqlite-core';
+import { sqliteTable, text, integer, index, uniqueIndex } from 'drizzle-orm/sqlite-core';
 import { timestamps, provenance } from './_shared';
 import { companies } from './company';
 import { accounts, vatTreatments } from './config';
@@ -237,6 +237,7 @@ export const auditEvents = sqliteTable('audit_events', {
       'adjustment_posted', 'user_confirmed', 'user_rejected', 'ai_suggested',
       'rule_applied', 'import_completed', 'import_reversed', 'reversal_posted',
       'reconciled', 'backup_created', 'backup_restored', 'settings_changed',
+      'user_invited', 'user_removed', 'user_role_changed', 'user_password_changed',
     ],
   }).notNull(),
 
@@ -257,7 +258,13 @@ export const auditEvents = sqliteTable('audit_events', {
   index('audit_request_idx').on(t.requestId),
 ]);
 
-/** Local single-user authentication (README §3). */
+/**
+ * Users of this book (README §3, issue #298).
+ *
+ * Local-first: these are the people who may open this book on this machine —
+ * the owner, their accountant, a bookkeeper, an auditor. There is no server
+ * account; a user row plus an active session is the whole of access.
+ */
 export const users = sqliteTable('users', {
   id: text('id').primaryKey(),
   username: text('username').notNull().unique(),
@@ -265,11 +272,41 @@ export const users = sqliteTable('users', {
   /** scrypt, with the salt and parameters stored alongside the hash. */
   passwordHash: text('password_hash').notNull(),
   passwordSalt: text('password_salt').notNull(),
-  role: text('role', { enum: ['owner', 'user', 'readonly'] }).notNull().default('owner'),
+  /**
+   * What this person may do in the book. The set of actions each role allows
+   * lives in src/domain/auth/permissions.ts, not here — the schema stores the
+   * role, the domain decides what it means.
+   */
+  role: text('role', {
+    enum: ['owner', 'director', 'accountant', 'bookkeeper', 'employee', 'farm_manager', 'auditor', 'readonly'],
+  }).notNull().default('owner'),
   lastLoginAt: text('last_login_at'),
   active: integer('active', { mode: 'boolean' }).notNull().default(true),
+  /**
+   * Set when the user is invited: their password is a one-time password the
+   * invoker generated, and the first thing they must do is replace it. Until
+   * they do, they are acting on a password someone else knows.
+   */
+  mustChangePassword: integer('must_change_password', { mode: 'boolean' })
+    .notNull().default(false),
   ...timestamps,
 });
+
+/**
+ * Business membership (issue #298): which users may open which company's books
+ * in this database. A user without a membership row for a company cannot act
+ * on that company, whatever their role. Under the local-first decision this is
+ * the book's own access list — the local reading of "workspace membership".
+ */
+export const companyMembers = sqliteTable('company_members', {
+  id: text('id').primaryKey(),
+  companyId: text('company_id').notNull().references(() => companies.id),
+  userId: text('user_id').notNull().references(() => users.id),
+  ...timestamps,
+}, (t) => [
+  uniqueIndex('company_members_unique_idx').on(t.companyId, t.userId),
+  index('company_members_user_idx').on(t.userId),
+]);
 
 export const sessions = sqliteTable('sessions', {
   id: text('id').primaryKey(),

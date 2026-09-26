@@ -29,4 +29,5 @@ date it was written, not the date the decision was first taken.
 | [0003](0003-integer-money-rational-fx.md) | Money as integer minor units, FX rates as rationals | Accepted |
 | [0004](0004-immutable-posted-journals.md) | Posted journals are immutable; corrections reverse | Accepted |
 | [0005](0005-effective-dated-configuration.md) | Configuration is effective-dated, never overwritten | Accepted |
-| [0006](0006-local-single-user-auth.md) | Local accounts per install; no workspace concept | Accepted |
+| [0006](0006-local-single-user-auth.md) | Local accounts per install; no workspace concept | Superseded by 0007 |
+| [0007](0007-roles-and-membership-in-a-local-book.md) | Roles and business membership within a local book | Accepted |

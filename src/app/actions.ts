@@ -13,7 +13,7 @@ import { extractDocument, extractDocumentFromText } from '@/domain/extraction/se
 import {
   confirmDocument, rejectDocument, reopenDocument, type ReviewedDocumentValues,
 } from '@/domain/documents/review';
-import { actorName } from '@/lib/session';
+import { requireActor, actorName } from '@/lib/session';
 import { postDocumentAsInvoice, type LineCoding } from '@/domain/consolidation/postDocument';
 import {
   settleBankTransaction, settlementRateNeed, previewSettlement, type SettleAllocation, type SettlementRateNeed,
@@ -45,6 +45,7 @@ function fail(error: unknown): ActionResult {
 
 export async function classifyTransactionAction(formData: FormData): Promise<ActionResult> {
   try {
+    await requireActor('transactions.classify');
     const db = getDb();
     const company = requireCompany();
     const transactionId = String(formData.get('transactionId'));
@@ -110,6 +111,7 @@ export async function classifyTransactionAction(formData: FormData): Promise<Act
 
 export async function acceptMatchAction(formData: FormData): Promise<ActionResult> {
   try {
+    await requireActor('documents.review');
     const company = requireCompany();
     acceptMatch(getDb(), {
       companyId: company.id,
@@ -129,6 +131,7 @@ export async function acceptMatchAction(formData: FormData): Promise<ActionResul
 
 export async function rejectMatchAction(formData: FormData): Promise<ActionResult> {
   try {
+    await requireActor('documents.review');
     const company = requireCompany();
     rejectMatch(getDb(), {
       companyId: company.id,
@@ -147,6 +150,7 @@ export async function rejectMatchAction(formData: FormData): Promise<ActionResul
 
 export async function linkDocumentAction(formData: FormData): Promise<ActionResult> {
   try {
+    await requireActor('documents.review');
     const company = requireCompany();
     const documentId = String(formData.get('documentId'));
     const bankTransactionId = String(formData.get('bankTransactionId'));
@@ -173,6 +177,7 @@ export async function linkDocumentAction(formData: FormData): Promise<ActionResu
 
 export async function unmatchDocumentAction(formData: FormData): Promise<ActionResult> {
   try {
+    await requireActor('documents.review');
     const company = requireCompany();
     const documentId = String(formData.get('documentId'));
     if (!documentId) {
@@ -196,6 +201,7 @@ export async function unmatchDocumentAction(formData: FormData): Promise<ActionR
 
 export async function transitionVatPeriodAction(formData: FormData): Promise<ActionResult> {
   try {
+    await requireActor('vat.file');
     const company = requireCompany();
     const vatPeriodId = String(formData.get('vatPeriodId'));
     const to = String(formData.get('to')) as VatPeriodStatus;
@@ -222,6 +228,7 @@ export async function transitionVatPeriodAction(formData: FormData): Promise<Act
 
 export async function resolveReviewItemAction(formData: FormData): Promise<ActionResult> {
   try {
+    await requireActor('documents.review');
     const db = getDb();
     const company = requireCompany();
     const id = String(formData.get('reviewItemId'));
@@ -246,6 +253,7 @@ export async function resolveReviewItemAction(formData: FormData): Promise<Actio
 
 export async function uploadDocumentAction(formData: FormData): Promise<ActionResult> {
   try {
+    await requireActor('documents.ingest');
     const db = getDb();
     const company = requireCompany();
     const files = formData.getAll('files').filter((f): f is File => f instanceof File);
@@ -289,6 +297,7 @@ export async function uploadDocumentAction(formData: FormData): Promise<ActionRe
 
 export async function scanWatchFolderAction(): Promise<ActionResult> {
   try {
+    await requireActor('documents.ingest');
     const db = getDb();
     const company = requireCompany();
     if (!company.documentWatchPath) {
@@ -337,6 +346,7 @@ export async function scanWatchFolderAction(): Promise<ActionResult> {
 
 export async function importStatementAction(formData: FormData): Promise<ActionResult> {
   try {
+    await requireActor('banking.import');
     const db = getDb();
     const company = requireCompany();
     const file = formData.get('file');
@@ -391,6 +401,7 @@ export interface ConfirmDocumentInput {
  */
 export async function confirmDocumentAction(input: ConfirmDocumentInput): Promise<ActionResult> {
   try {
+    await requireActor('documents.review');
     const db = getDb();
     const company = requireCompany();
     const reviewedBy = await actorName();
@@ -415,6 +426,7 @@ export async function confirmDocumentAction(input: ConfirmDocumentInput): Promis
 
 export async function rejectDocumentAction(documentId: string, reason: string): Promise<ActionResult> {
   try {
+    await requireActor('documents.review');
     const company = requireCompany();
     rejectDocument(getDb(), { companyId: company.id, documentId, reason, reviewedBy: await actorName() });
     revalidatePath(`/documents/${documentId}`);
@@ -428,6 +440,7 @@ export async function rejectDocumentAction(documentId: string, reason: string): 
 
 export async function reopenDocumentAction(documentId: string, reason: string): Promise<ActionResult> {
   try {
+    await requireActor('documents.review');
     const company = requireCompany();
     reopenDocument(getDb(), { companyId: company.id, documentId, reason, reviewedBy: await actorName() });
     revalidatePath(`/documents/${documentId}`);
@@ -446,6 +459,7 @@ export async function reopenDocumentAction(documentId: string, reason: string): 
  */
 export async function readRecognisedTextAction(documentId: string, text: string): Promise<ActionResult> {
   try {
+    await requireActor('documents.ingest');
     if (text.length > 200_000) throw new Error('The recognised text is too long to be one document.');
     const company = requireCompany();
     const result = extractDocumentFromText(getDb(), {
@@ -472,6 +486,7 @@ export async function postDocumentAction(input: {
   documentId: string; coding: LineCoding[]; fxRate?: FxInput; vatDeclarationDate?: string; holdVat?: boolean;
 }): Promise<ActionResult> {
   try {
+    await requireActor('documents.post');
     const company = requireCompany();
     const created = postDocumentAsInvoice(getDb(), {
       companyId: company.id, documentId: input.documentId, coding: input.coding, fxRate: input.fxRate,
@@ -512,6 +527,7 @@ function typedFxRate(text: string | undefined): FxInput | undefined {
 export async function previewSettlementAction(input: {
   bankTransactionId: string; allocations: SettleAllocation[]; fxRateText?: string;
 }): Promise<{ need: SettlementRateNeed; preview: ReturnType<typeof previewSettlement> | null }> {
+  await requireActor('invoices.manage');
   const company = requireCompany();
   const db = getDb();
   const need = settlementRateNeed(db, {
@@ -538,6 +554,7 @@ export async function settleTransactionAction(input: {
   bankTransactionId: string; allocations: SettleAllocation[]; fxRateText?: string; vatDeclarationDate?: string;
 }): Promise<ActionResult> {
   try {
+    await requireActor('invoices.manage');
     const company = requireCompany();
     const payment = settleBankTransaction(getDb(), {
       companyId: company.id, bankTransactionId: input.bankTransactionId, allocations: input.allocations,
@@ -566,6 +583,7 @@ export async function reversePaymentAction(input: {
   paymentId: string; bankTransactionId: string; reason: string; reversalDate?: string;
 }): Promise<ActionResult> {
   try {
+    await requireActor('invoices.manage');
     const company = requireCompany();
     const result = reversePayment(getDb(), {
       companyId: company.id, paymentId: input.paymentId, reason: input.reason,
@@ -590,6 +608,7 @@ export async function reversePaymentAction(input: {
 
 export async function setExtractionEngineAction(engine: 'local' | 'anthropic'): Promise<ActionResult> {
   try {
+    await requireActor('config.manage');
     if (engine !== 'local' && engine !== 'anthropic') throw new Error('Unknown extraction engine.');
     const company = requireCompany();
     getDb().update(companies).set({ extractionEngine: engine, updatedAt: nowIso() })
@@ -608,6 +627,7 @@ export async function setExtractionEngineAction(engine: 'local' | 'anthropic'): 
 
 export async function rematchAllAction(): Promise<ActionResult> {
   try {
+    await requireActor('documents.review');
     const company = requireCompany();
     const result = matchAllUnmatched(getDb(), { companyId: company.id });
     revalidatePath('/review');
@@ -624,6 +644,7 @@ export async function rematchAllAction(): Promise<ActionResult> {
 
 export async function loadDemoDataAction(): Promise<ActionResult> {
   try {
+    await requireActor('company.manage');
     const db = getDb();
     runMigrations(db);
     const existing = db.select({ id: companies.id }).from(companies).all();
@@ -648,6 +669,7 @@ export async function loadDemoDataAction(): Promise<ActionResult> {
 
 export async function createBackupAction(): Promise<ActionResult> {
   try {
+    await requireActor('backup.manage');
     const company = requireCompany();
     const result = await createBackup(getDb(), { companyId: company.id });
     revalidatePath('/settings/backup');
@@ -663,6 +685,7 @@ export async function createBackupAction(): Promise<ActionResult> {
 
 export async function restoreBackupAction(formData: FormData): Promise<ActionResult> {
   try {
+    await requireActor('backup.manage');
     const path = formData.get('path');
     if (typeof path !== 'string' || !path) {
       return { ok: false, error: 'A backup path is required.' };
@@ -703,6 +726,7 @@ export async function restoreBackupAction(formData: FormData): Promise<ActionRes
 /** Load the statutory knowledge base for the current company (issue #200). Idempotent. */
 export async function loadStatutoryRulesAction(): Promise<ActionResult> {
   try {
+    await requireActor('rules.manage');
     const db = getDb();
     const company = requireCompany();
     const result = loadStatutoryKnowledgeBase(db, { companyId: company.id });

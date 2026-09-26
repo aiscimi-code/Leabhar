@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { getDb } from '@/db';
 import { requireCompany } from '@/lib/queries';
+import { requireActor } from '@/lib/session';
 import {
   updateCompany, supersedeTaxRate, createTaxRate, deactivateTaxRate,
   updateVatTreatment, createAccount, updateAccount,
@@ -60,6 +61,7 @@ function parseRateToRational(input: string): { numerator: number; denominator: n
 
 export async function updateCompanyAction(formData: FormData): Promise<ActionResult> {
   try {
+    await requireActor('config.manage');
     const company = requireCompany();
     const changes: CompanyUpdate = {};
 
@@ -124,6 +126,7 @@ export async function updateCompanyAction(formData: FormData): Promise<ActionRes
 
 export async function createCompanyAction(formData: FormData): Promise<ActionResult> {
   try {
+    await requireActor('company.manage');
     const db = getDb();
     const legalName = text(formData, 'legalName');
     if (!legalName) return { ok: false, error: 'A legal company name is required.' };
@@ -178,6 +181,7 @@ export async function createCompanyAction(formData: FormData): Promise<ActionRes
 
 export async function supersedeTaxRateAction(formData: FormData): Promise<ActionResult> {
   try {
+    await requireActor('config.manage');
     const company = requireCompany();
     const rateText = text(formData, 'newRate');
     const effectiveFrom = text(formData, 'effectiveFrom');
@@ -207,6 +211,7 @@ export async function supersedeTaxRateAction(formData: FormData): Promise<Action
 
 export async function createTaxRateAction(formData: FormData): Promise<ActionResult> {
   try {
+    await requireActor('config.manage');
     const company = requireCompany();
     const rateText = text(formData, 'rate');
     if (!rateText) return { ok: false, error: 'A rate is required.' };
@@ -231,6 +236,7 @@ export async function createTaxRateAction(formData: FormData): Promise<ActionRes
 
 export async function deactivateTaxRateAction(formData: FormData): Promise<ActionResult> {
   try {
+    await requireActor('config.manage');
     const company = requireCompany();
     const result = deactivateTaxRate(getDb(), {
       companyId: company.id,
@@ -253,6 +259,7 @@ export async function deactivateTaxRateAction(formData: FormData): Promise<Actio
 
 export async function updateTreatmentAction(formData: FormData): Promise<ActionResult> {
   try {
+    await requireActor('config.manage');
     const company = requireCompany();
     const result = updateVatTreatment(getDb(), {
       companyId: company.id,
@@ -278,6 +285,7 @@ export async function updateTreatmentAction(formData: FormData): Promise<ActionR
 
 export async function createAccountAction(formData: FormData): Promise<ActionResult> {
   try {
+    await requireActor('config.manage');
     const company = requireCompany();
     const code = text(formData, 'code');
     const name = text(formData, 'name');
@@ -306,6 +314,7 @@ export async function createAccountAction(formData: FormData): Promise<ActionRes
 
 export async function updateAccountAction(formData: FormData): Promise<ActionResult> {
   try {
+    await requireActor('config.manage');
     const company = requireCompany();
     const result = updateAccount(getDb(), {
       companyId: company.id,
@@ -330,6 +339,7 @@ export async function updateAccountAction(formData: FormData): Promise<ActionRes
 
 export async function generatePeriodsAction(formData: FormData): Promise<ActionResult> {
   try {
+    await requireActor('config.manage');
     const company = requireCompany();
     const kind = String(formData.get('kind'));
     const year = Number(text(formData, 'year') ?? new Date().getFullYear());
@@ -369,6 +379,7 @@ export async function generatePeriodsAction(formData: FormData): Promise<ActionR
 
 export async function updateVatPeriodAction(formData: FormData): Promise<ActionResult> {
   try {
+    await requireActor('vat.file');
     const company = requireCompany();
     updateVatPeriod(getDb(), {
       companyId: company.id,
@@ -391,6 +402,7 @@ export async function updateVatPeriodAction(formData: FormData): Promise<ActionR
 
 export async function addBankAccountAction(formData: FormData): Promise<ActionResult> {
   try {
+    await requireActor('config.manage');
     const company = requireCompany();
     const bankName = text(formData, 'bankName');
     if (!bankName) return { ok: false, error: 'A bank name is required.' };
@@ -419,6 +431,7 @@ export async function addBankAccountAction(formData: FormData): Promise<ActionRe
 
 export async function updateBankAccountAction(formData: FormData): Promise<ActionResult> {
   try {
+    await requireActor('config.manage');
     const company = requireCompany();
     const currency = text(formData, 'currency') ?? company.baseCurrency;
     const result = updateBankAccount(getDb(), {
@@ -449,6 +462,7 @@ export async function updateBankAccountAction(formData: FormData): Promise<Actio
 
 export async function saveSupplierAction(formData: FormData): Promise<ActionResult> {
   try {
+    await requireActor('parties.manage');
     const company = requireCompany();
     const name = text(formData, 'name');
     if (!name) return { ok: false, error: 'A supplier name is required.' };
@@ -476,6 +490,7 @@ export async function saveSupplierAction(formData: FormData): Promise<ActionResu
 
 export async function reconcileAction(formData: FormData): Promise<ActionResult> {
   try {
+    await requireActor('banking.reconcile');
     const company = requireCompany();
     const currency = text(formData, 'currency') ?? company.baseCurrency;
     const closing = text(formData, 'statementClosingBalance');
@@ -501,6 +516,7 @@ export async function reconcileAction(formData: FormData): Promise<ActionResult>
 
 export async function createAdjustmentAction(formData: FormData): Promise<ActionResult> {
   try {
+    await requireActor('journals.post');
     const company = requireCompany();
     const currency = company.baseCurrency;
 
@@ -553,6 +569,7 @@ export async function createAdjustmentAction(formData: FormData): Promise<Action
 
 export async function reverseAdjustmentAction(formData: FormData): Promise<ActionResult> {
   try {
+    await requireActor('journals.post');
     const company = requireCompany();
     const reason = text(formData, 'reason');
     if (!reason) return { ok: false, error: 'A reason is required to reverse an adjustment.' };
@@ -578,6 +595,7 @@ export async function reverseAdjustmentAction(formData: FormData): Promise<Actio
 
 export async function postDepreciationAction(formData: FormData): Promise<ActionResult> {
   try {
+    await requireActor('journals.post');
     const company = requireCompany();
     const result = postDepreciation(getDb(), {
       companyId: company.id,
@@ -603,6 +621,7 @@ export async function postDepreciationAction(formData: FormData): Promise<Action
 
 export async function scanAnomaliesAction(): Promise<ActionResult> {
   try {
+    await requireActor('audit.read');
     const company = requireCompany();
     const db = getDb();
     const scan = scanForAnomalies(db, { companyId: company.id });
@@ -618,6 +637,7 @@ export async function scanAnomaliesAction(): Promise<ActionResult> {
 
 export async function createInvoiceAction(formData: FormData): Promise<ActionResult> {
   try {
+    await requireActor('invoices.manage');
     const company = requireCompany();
     const currency = (text(formData, 'currency') ?? company.baseCurrency).toUpperCase();
     const direction = String(formData.get('direction')) as 'sales' | 'purchase';
@@ -659,6 +679,7 @@ export async function createInvoiceAction(formData: FormData): Promise<ActionRes
 
 export async function recordPaymentAction(formData: FormData): Promise<ActionResult> {
   try {
+    await requireActor('invoices.manage');
     const company = requireCompany();
     const currency = (text(formData, 'currency') ?? company.baseCurrency).toUpperCase();
     const amountText = text(formData, 'amount');
