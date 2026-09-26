@@ -21,9 +21,9 @@
  * The customer's taxable status comes from `customers.taxable_status` when
  * recorded, else from a structurally valid EU VAT number (EU Reg 282/2011
  * art.18(1) treats one as evidence — not ingested here, and not VIES-checked).
- * "Established abroad" is proxied by the customer's country code, the same
- * proxy #199 records for s.12: the art.10/11 establishment test is not
- * computable from a country. The listed exceptions — (c) immovable goods,
+ * "Established abroad" is the establishment recorded and confirmed on the
+ * customer (282/2011 arts.10-11, issue #207), never its country code; without
+ * it the rule is unresolved and the line is flagged. The listed exceptions — (c) immovable goods,
  * (d) passenger transport, (g) event admission, (i) restaurant and catering,
  * (k) short-term vehicle hire, and for consumers (kc) telecoms/broadcasting/
  * electronically supplied services — are stated, not evaluated.
@@ -51,7 +51,8 @@ export const VAT_PLACE_OF_SUPPLY_CURATED_RULES: CuratedVatScopeRule[] = [
       { field: 'direction', operator: 'equals', value: 'sale' },
       { field: 'supplyType', operator: 'equals', value: 'services' },
       { field: 'customerIsTaxablePerson', operator: 'equals', value: 'true' },
-      { field: 'customerCountry', operator: 'not_equals', value: 'IE' },
+      // Where the customer is established, as confirmed on its record; never its country code (issue #207).
+      { field: 'customerEstablishedOutsideState', operator: 'equals', value: 'true' },
     ],
     exceptions: [
       { condition: 'the service is connected with immovable goods (s.34(c))', effect: 'supplied where the property is — Irish VAT if it is in the State' },
@@ -79,8 +80,8 @@ export const VAT_PLACE_OF_SUPPLY_CURATED_RULES: CuratedVatScopeRule[] = [
       + 'customer\'s VAT number. Non-EU customer: not reported on the VAT3.',
     effectiveFrom: VATCA_COMMENCEMENT,
     interpretationNote: 'customerIsTaxablePerson comes from the customer record or an EU VAT number; '
-      + 'customerCountry≠IE is a PROXY for "the customer\'s business is established outside the State" '
-      + '(282/2011 arts.10-11). The s.34(c)-(k) exceptions are stated, not evaluated. effectiveFrom is the Act\'s '
+      + 'customerEstablishedOutsideState is the establishment confirmed on the customer record (282/2011 '
+      + 'arts.10-11, issue #207), never a country code. The s.34(c)-(k) exceptions are stated, not evaluated. effectiveFrom is the Act\'s '
       + 'commencement applied to the current consolidated text (issue #199).',
   },
   {

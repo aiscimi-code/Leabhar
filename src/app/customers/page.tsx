@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { customerList } from '@/lib/queries';
 import { Page, Panel, Badge, Empty } from '@/components/primitives';
 
@@ -27,7 +28,7 @@ export default function CustomersPage() {
               {customers.map((customer) => (
                 <tr key={customer.id}>
                   <td>
-                    {customer.name}
+                    <Link href={`/customers/${customer.id}`} className="hover:underline">{customer.name}</Link>
                     {customer.aliases.length > 0 && (
                       <div className="text-[11px] text-ink-faint">
                         Also seen as {customer.aliases.join(', ')}

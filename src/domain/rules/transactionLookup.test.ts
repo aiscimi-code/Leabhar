@@ -122,6 +122,7 @@ describe('lookupTransactionRules — task example scenarios', () => {
         entityType: 'Irish_LTD', vatRegistered: true,
         supplierCountry: 'US', supplierType: 'software_service', transactionType: 'AI_SaaS',
         supplyType: 'services', businessUsePercent: 100, invoiceAvailable: true,
+        supplierEstablishedOutsideState: true, // confirmed on the supplier (issue #207)
       },
     });
     expect(result.identifiedTopics).toContain('vat');
@@ -309,7 +310,7 @@ describe('lookupTransactionRules — issue #136 bug 4 / issue #138: supplier est
     expect(result.transactionContext.supplierCountry).toBeNull();
   });
 
-  it('a valid non-Irish ISO code still resolves the reverse-charge rule via the country-code proxy', () => {
+  it('issue #207: a non-Irish country code alone never resolves the reverse-charge rule', () => {
     const result = lookupTransactionRules(db, {
       companyId,
       transaction: {
@@ -318,7 +319,8 @@ describe('lookupTransactionRules — issue #136 bug 4 / issue #138: supplier est
         supplierType: 'software_service', transactionType: 'AI_SaaS',
       },
     });
-    expect(result.applicableRules.map((r) => r.ruleKey)).toContain('vat.reverse_charge_services_from_abroad');
+    expect(result.applicableRules.map((r) => r.ruleKey)).not.toContain('vat.reverse_charge_services_from_abroad');
+    expect(result.unresolvedFields).toContain('supplierEstablishedOutsideStateResolved');
     expect(result.transactionContext.supplierCountry).toBe('US');
   });
 

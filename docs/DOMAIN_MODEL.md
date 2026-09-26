@@ -480,6 +480,22 @@ the bank description alone and says so; bank-only lines (wages, tax,
 transfers) keep their bank-level rules but are always flagged for
 confirmation.
 
+### Establishment and customer status are recorded, never inferred
+
+Where a supplier or customer is established (EU Reg 282/2011 arts.10-11)
+decides whether a reverse charge applies (s.12) and where a service is
+supplied (s.34(a)). A country code does not settle it. A person records it on
+the supplier or customer, with what it rests on and their name
+(`confirmEstablishment`). Until then the rules that need it are unresolved,
+and the line is flagged. A customer's taxable status is recorded the same way.
+
+A VAT number can be checked with VIES (`checkVatNumberWithVies`). The answer
+is stored as evidence, with the number checked and VIES's consultation number:
+
+- **Valid:** strengthens the number as evidence of a business customer.
+- **Invalid:** removes it as evidence.
+- **Unavailable** (service error, offline): stored as such, never as valid.
+
 ### Posting paths are atomic
 
 Every exported posting path — classify, reclassify, split journal,

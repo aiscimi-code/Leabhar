@@ -22,12 +22,18 @@ let tr: Record<string, string>;
 function party(table: 'supplier' | 'customer', name: string, over: {
   countryCode?: string; vatNumber?: string; treatment?: string;
   taxableStatus?: 'taxable_person' | 'non_taxable_person';
+  /** Where the party is established, as a person confirmed it (issue #207). */
+  establishment?: 'in_state' | 'outside_state';
 } = {}): string {
   const id = table === 'supplier' ? ids.supplier() : ids.customer();
   const values = {
     id, companyId, name, matchKey: name.toLowerCase(),
     countryCode: over.countryCode ?? null, vatNumber: over.vatNumber ?? null,
     defaultVatTreatmentId: over.treatment ? tr[over.treatment] : null,
+    ...(over.establishment ? {
+      establishment: over.establishment, establishmentBasis: 'test fixture',
+      establishmentConfirmedBy: 'tester', establishmentConfirmedAt: '2025-06-01T00:00:00Z',
+    } : {}),
   };
   if (table === 'supplier') db.insert(suppliers).values(values).run();
   else db.insert(customers).values({ ...values, taxableStatus: over.taxableStatus ?? null }).run();
@@ -77,7 +83,7 @@ describe('suggestVatTreatment', () => {
   });
 
   it('US SaaS purchase → non-EU reverse charge, cited to VATCA s.12 with a verifiable slice', () => {
-    const supplierId = party('supplier', 'Vercel Inc', { countryCode: 'US', treatment: 'NON_EU_SERVICES_RCV' });
+    const supplierId = party('supplier', 'Vercel Inc', { countryCode: 'US', treatment: 'NON_EU_SERVICES_RCV', establishment: 'outside_state' });
     const s = suggestVatTreatment(db, { companyId, bankTransactionId: tx('VERCEL INC', -2_000, { supplierId }) })!;
 
     expect(s.status).toBe('suggested');
@@ -86,7 +92,7 @@ describe('suggestVatTreatment', () => {
     expect(s.decidingRule?.sectionNumber).toBe('12');
     expect(s.factSources['supplyType']).toContain('supplier default treatment');
     expect(s.reviewRequired).toBe(true);
-    expect(s.reviewReasons.join(' ')).toContain('282/2011');
+    expect(s.factSources['supplierEstablishedOutsideState']).toContain('confirmed by tester');
 
     // The citation is checkable: the file exists, its hash matches, and the
     // offsets slice a region containing the quoted words.
@@ -98,8 +104,16 @@ describe('suggestVatTreatment', () => {
     expect(slice).toContain('receives a service from a supplier established');
   });
 
+  it('a US supplier whose establishment nobody has confirmed: no reverse charge from its country alone, flagged', () => {
+    const supplierId = party('supplier', 'Unconfirmed Inc', { countryCode: 'US', treatment: 'NON_EU_SERVICES_RCV' });
+    const s = suggestVatTreatment(db, { companyId, bankTransactionId: tx('UNCONFIRMED INC', -2_000, { supplierId }) })!;
+    expect(s.decidingRule?.ruleKey).not.toBe('vat.reverse_charge_services_from_abroad');
+    expect(s.treatment?.code).not.toBe('IE_STD');
+    expect(s.reviewReasons.join(' ')).toMatch(/where it is established .* has not been confirmed/);
+  });
+
   it('German services purchase → EU reverse charge', () => {
-    const supplierId = party('supplier', 'Hetzner', { vatNumber: 'DE812871812', treatment: 'EU_SERVICES_RCV' });
+    const supplierId = party('supplier', 'Hetzner', { vatNumber: 'DE812871812', treatment: 'EU_SERVICES_RCV', establishment: 'outside_state' });
     const s = suggestVatTreatment(db, { companyId, bankTransactionId: tx('HETZNER ONLINE', -3_000, { supplierId }) })!;
     expect(s.treatment?.code).toBe('EU_SERVICES_RCV');
     expect(s.facts.counterpartyCountry).toBe('DE');
@@ -119,7 +133,7 @@ describe('suggestVatTreatment', () => {
   });
 
   it('flags a booked treatment that disagrees with the suggestion', () => {
-    const supplierId = party('supplier', 'Stripe US', { countryCode: 'US', treatment: 'NON_EU_SERVICES_RCV' });
+    const supplierId = party('supplier', 'Stripe US', { countryCode: 'US', treatment: 'NON_EU_SERVICES_RCV', establishment: 'outside_state' });
     const s = suggestVatTreatment(db, {
       companyId, bankTransactionId: tx('STRIPE', -1_500, { supplierId, vatTreatmentId: tr['IE_STD'] }),
     })!;
@@ -233,7 +247,7 @@ describe('services sold abroad — VATCA s.34 (issue #200)', () => {
 
   it('to an Italian business (EU VAT number) → services supplied to an EU business, cited to revised s.34(a)', () => {
     const customerId = party('customer', 'Continental Design SRL', {
-      countryCode: 'IT', vatNumber: 'IT12345678901', treatment: 'EU_SERVICES_SUPPLY',
+      countryCode: 'IT', vatNumber: 'IT12345678901', treatment: 'EU_SERVICES_SUPPLY', establishment: 'outside_state',
     });
     const s = suggestVatTreatment(db, { companyId, bankTransactionId: tx('CONTINENTAL DESIGN SRL', 600_000, { customerId }) })!;
     expect(s.status).toBe('suggested');
@@ -248,7 +262,7 @@ describe('services sold abroad — VATCA s.34 (issue #200)', () => {
 
   it('to a US business recorded as a taxable person → services supplied outside the EU', () => {
     const customerId = party('customer', 'Redwood Analytics Inc', {
-      countryCode: 'US', treatment: 'NON_EU_SERVICES_SUPPLY', taxableStatus: 'taxable_person',
+      countryCode: 'US', treatment: 'NON_EU_SERVICES_SUPPLY', taxableStatus: 'taxable_person', establishment: 'outside_state',
     });
     const s = suggestVatTreatment(db, { companyId, bankTransactionId: tx('REDWOOD ANALYTICS', 250_000, { customerId }) })!;
     expect(s.treatment?.code).toBe('NON_EU_SERVICES_SUPPLY');

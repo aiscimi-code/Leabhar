@@ -1507,3 +1507,28 @@ describe('cli reconcile — confirm, post, settle, trace (issue #222)', () => {
     expect(db.select().from(invoices).all()).toHaveLength(0);
   });
 });
+
+describe('supplier and customer VAT status (issue #207)', () => {
+  const json = async (argv: string[]) => {
+    const io = capture();
+    const code = await run([...argv, '--format', 'json']);
+    io.restore();
+    return { code, out: io.stdout.join(''), err: io.stderr.join('') };
+  };
+
+  it('confirm-establishment requires the name of the person, and records it', async () => {
+    const id = 'sup_cli_est';
+    db.insert(suppliers).values({ id, companyId, name: 'Vercel Inc', matchKey: 'vercel inc', countryCode: 'US' }).run();
+    const refused = await json(['confirm-establishment', '--supplier', id, '--establishment', 'outside_state', '--basis', 'US seat']);
+    expect(refused.code).not.toBe(0);
+    expect(refused.err).toMatch(/confirmed-by/);
+    const ok = await json([
+      'confirm-establishment', '--supplier', id, '--establishment', 'outside_state',
+      '--basis', 'Seat in the US; no branch in Ireland', '--confirmed-by', 'Joe Reviewer',
+    ]);
+    expect(ok.code).toBe(0);
+    expect(db.select().from(suppliers).where(eq(suppliers.id, id)).get()).toMatchObject({
+      establishment: 'outside_state', establishmentConfirmedBy: 'Joe Reviewer',
+    });
+  });
+});

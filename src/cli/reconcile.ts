@@ -39,6 +39,9 @@ import {
   showDocumentCli, confirmDocumentCli, lineChoicesCli, postDocumentCli, settleCli, traceCli,
 } from '@/agent/consolidate';
 import { suggestVatTreatment } from '@/domain/rules/vatSuggestion';
+import { confirmEstablishment, confirmCustomerTaxableStatus, checkVatNumberWithVies } from '@/domain/parties/status';
+import { eq } from 'drizzle-orm';
+import { companies } from '@/db/schema';
 import { loadStatutoryKnowledgeBase } from '@/domain/rules/knowledgeBase';
 import {
   importInput,
@@ -180,6 +183,16 @@ Books (once induction is done):
       "statedVat":"401.34"}. Output VAT only: input VAT comes only from a
       confirmed supplier invoice, so a "purchases" --vat, or a line debiting
       VAT on purchases, is refused.
+
+Supplier and customer VAT status (issue #207) — never decided from a country code:
+  confirm-establishment (--supplier <id> | --customer <id>) --establishment outside_state|in_state
+      --basis "<what it rests on>" --confirmed-by "<name>"
+      Records where the business is established (EU Reg 282/2011 arts.10-11).
+      A person's decision: an agent must never confirm it on its own judgement.
+  confirm-customer-status --customer <id> --status taxable_person|non_taxable_person --confirmed-by "<name>"
+  check-vies (--supplier <id> | --customer <id>)
+      Checks the party's VAT number with VIES and stores the answer; anything
+      but a clear yes or no is stored as "unavailable", never as valid.
 
 Invoice-led workflow (issue #222) — the same domain functions as the web screens:
   show-document <id>                     The document's values (draft or confirmed, minor
@@ -697,6 +710,44 @@ export async function main(argv: string[], options: CliOptions = {}): Promise<nu
 
       case 'show-document': {
         print(showDocumentCli(db, { companyId, documentId: positionals[0] ?? requireFlag(flags, 'document') }), format);
+        return 0;
+      }
+
+      case 'confirm-establishment': {
+        const supplierId = getFlag(flags, 'supplier');
+        const party = supplierId ? 'supplier' as const : 'customer' as const;
+        const establishment = requireFlag(flags, 'establishment');
+        if (establishment !== 'outside_state' && establishment !== 'in_state') {
+          throw new Error('--establishment must be outside_state or in_state.');
+        }
+        confirmEstablishment(db, {
+          companyId, party, partyId: supplierId ?? requireFlag(flags, 'customer'), establishment,
+          basis: requireFlag(flags, 'basis'), confirmedBy: requireFlag(flags, 'confirmed-by'),
+        });
+        print({ ok: true, party, establishment }, format);
+        return 0;
+      }
+
+      case 'confirm-customer-status': {
+        const status = requireFlag(flags, 'status');
+        if (status !== 'taxable_person' && status !== 'non_taxable_person') {
+          throw new Error('--status must be taxable_person or non_taxable_person.');
+        }
+        confirmCustomerTaxableStatus(db, {
+          companyId, customerId: requireFlag(flags, 'customer'), taxableStatus: status,
+          confirmedBy: requireFlag(flags, 'confirmed-by'),
+        });
+        print({ ok: true, status }, format);
+        return 0;
+      }
+
+      case 'check-vies': {
+        const supplierId = getFlag(flags, 'supplier');
+        const company = db.select({ vatNumber: companies.vatNumber }).from(companies).where(eq(companies.id, companyId)).get();
+        print(await checkVatNumberWithVies(db, {
+          companyId, party: supplierId ? 'supplier' : 'customer', partyId: supplierId ?? requireFlag(flags, 'customer'),
+          requesterVatNumber: company?.vatNumber ?? null, actor: 'cli',
+        }), format);
         return 0;
       }
 

@@ -7,6 +7,7 @@ import {
 import { ActionForm } from '@/components/ActionForm';
 import { saveSupplierAction } from '@/app/settings-actions';
 import { money, date, label } from '@/lib/format';
+import { PartyVatStatus } from '@/components/PartyVatStatus';
 
 export const dynamic = 'force-dynamic';
 
@@ -53,6 +54,8 @@ export default async function SupplierPage({ params }: { params: Promise<{ id: s
           />
         </div>
       </Panel>
+
+      <PartyVatStatus party={supplier} kind="supplier" />
 
       <Panel title="Profile">
         <table className="ledger">

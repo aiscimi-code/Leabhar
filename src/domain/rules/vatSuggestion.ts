@@ -346,6 +346,7 @@ export function transactionFacts(
     supplyType,
   };
   sources.vatRegistered = `company VAT registration status (${company?.vatRegistrationStatus ?? 'unknown'})`;
+  applyEstablishment(facts, sources, { supplier, customer });
   sources.invoiceAvailable = doc ? `confirmed document "${doc.originalFilename}"` : 'no confirmed matched document';
 
   if (direction === 'purchase') {
@@ -355,20 +356,19 @@ export function transactionFacts(
     facts.customerCountry = counterpartyCountry;
     if (counterpartyCountry) sources.customerCountry = sources.counterpartyCountry!;
     if (vatInfo) {
-      facts.customerVatRegisteredEu = vatInfo.structurallyValid && vatInfo.isEu && !vatInfo.isIrish;
-      sources.customerVatRegisteredEu = `customer VAT number ${vatInfo.normalised} (structural check only, not VIES)`;
+      // VIES's answer for this exact number, when there is one (issue #207).
+      const vies = customer?.viesStatus && customer.viesCheckedVatNumber === vatInfo.normalised ? customer.viesStatus : null;
+      facts.customerVatRegisteredEu = vatInfo.structurallyValid && vatInfo.isEu && !vatInfo.isIrish && vies !== 'invalid';
+      sources.customerVatRegisteredEu = vies === 'valid'
+        ? `customer VAT number ${vatInfo.normalised}, confirmed valid by VIES on ${customer!.viesCheckedAt?.slice(0, 10)}`
+        : vies === 'invalid'
+          ? `customer VAT number ${vatInfo.normalised} reported INVALID by VIES on ${customer!.viesCheckedAt?.slice(0, 10)}`
+          : `customer VAT number ${vatInfo.normalised} (structural check only, not checked with VIES)`;
     }
     // VATCA s.34(a)/(b) turns on whether the customer buys as a taxable person.
     // A recorded status wins; otherwise an EU VAT number is evidence of it
     // (282/2011 art.18(1)); a missing number is NOT evidence of a consumer.
-    if (customer?.taxableStatus) {
-      facts.customerIsTaxablePerson = customer.taxableStatus === 'taxable_person';
-      sources.customerIsTaxablePerson = `customer record "${customer.name}" (${customer.taxableStatus})`;
-    } else if (vatInfo?.structurallyValid && vatInfo.isEu) {
-      facts.customerIsTaxablePerson = true;
-      sources.customerIsTaxablePerson = `customer VAT number ${vatInfo.normalised} (EU Reg 282/2011 art.18(1) `
-        + 'evidence; structural check only, not VIES)';
-    }
+    applyCustomerStatus(facts, sources, customer, vatInfo);
     if (supplyType === 'goods' && counterpartyCountry && !EU.has(counterpartyCountry)) {
       facts.goodsExportedOutsideEu = true;
       sources.goodsExportedOutsideEu = `derived: goods sale to a customer in ${counterpartyCountry} `
@@ -469,10 +469,13 @@ export function suggestFromFacts(
 
   const lookup = lookupTransactionRules(db, { companyId: params.companyId, transaction: facts });
   const reviewReasons = [...lookup.reviewReasons];
-  if (facts.supplierEstablishedOutsideState == null && facts.counterpartyCountry) {
+  const establishmentKnown = facts.direction === 'purchase'
+    ? facts.supplierEstablishedOutsideState != null : facts.customerEstablishedOutsideState != null;
+  if (!establishmentKnown && facts.counterpartyCountry && facts.counterpartyCountry !== 'IE') {
     reviewReasons.push(
-      'Whether the counterparty is "established" outside the State was inferred from its country '
-      + `(${facts.counterpartyCountry}), not the EU Reg 282/2011 arts.10-11 test (issue #199).`,
+      `The ${facts.direction === 'purchase' ? 'supplier' : 'customer'} is in ${facts.counterpartyCountry}, but where it `
+      + 'is established (EU Reg 282/2011 arts.10-11: seat of economic activity or fixed establishment) has not been '
+      + 'confirmed. A country is not an establishment: confirm it on the party\'s record (issue #207).',
     );
   }
 
@@ -609,4 +612,68 @@ export function suggestFromFacts(
         + `${facts.direction}. It is a suggestion: the rule is ${decidingRule!.reviewStatus.replace('_', '-')} and `
         + 'has not been approved by a person.',
   };
+}
+
+/**
+ * The establishment a person confirmed on the supplier or customer record
+ * (issue #207), as the facts the place-of-supply and reverse-charge rules
+ * need. Nothing is inferred when it is not recorded.
+ */
+export function applyEstablishment(
+  facts: SuggestionFacts,
+  sources: Record<string, string>,
+  parties: {
+    supplier?: { name: string; establishment: string | null; establishmentConfirmedBy: string | null; establishmentConfirmedAt: string | null };
+    customer?: { name: string; establishment: string | null; establishmentConfirmedBy: string | null; establishmentConfirmedAt: string | null };
+  },
+): void {
+  const describe = (p: { name: string; establishment: string | null; establishmentConfirmedBy: string | null; establishmentConfirmedAt: string | null }) =>
+    `${p.name}: established ${p.establishment === 'outside_state' ? 'outside' : 'in'} the State, confirmed by `
+    + `${p.establishmentConfirmedBy ?? 'unknown'}${p.establishmentConfirmedAt ? ` on ${p.establishmentConfirmedAt.slice(0, 10)}` : ''}`;
+  if (parties.supplier?.establishment) {
+    facts.supplierEstablishedOutsideState = parties.supplier.establishment === 'outside_state';
+    sources.supplierEstablishedOutsideState = describe(parties.supplier);
+  }
+  if (parties.customer?.establishment) {
+    facts.customerEstablishedOutsideState = parties.customer.establishment === 'outside_state';
+    sources.customerEstablishedOutsideState = describe(parties.customer);
+  }
+}
+
+/**
+ * Whether the customer buys as a taxable person (s.34(a)/(b)), from what is
+ * on record (issue #207): a status a person recorded wins; otherwise a
+ * well-formed EU VAT number is evidence of it (EU Reg 282/2011 art.18(1)),
+ * stronger when VIES confirmed that number, and no evidence at all once VIES
+ * has said it is invalid.
+ */
+export function applyCustomerStatus(
+  facts: SuggestionFacts,
+  sources: Record<string, string>,
+  customer: {
+    name: string; taxableStatus: string | null; taxableStatusConfirmedBy?: string | null;
+    vatNumber: string | null; viesStatus?: string | null; viesCheckedVatNumber?: string | null;
+    viesCheckedAt?: string | null; viesRequestIdentifier?: string | null;
+  } | undefined,
+  vatInfo: ReturnType<typeof parseVatNumber> | null,
+): void {
+  if (customer?.taxableStatus) {
+    facts.customerIsTaxablePerson = customer.taxableStatus === 'taxable_person';
+    sources.customerIsTaxablePerson = `customer record "${customer.name}" (${customer.taxableStatus}`
+      + `${customer.taxableStatusConfirmedBy ? `, confirmed by ${customer.taxableStatusConfirmedBy}` : ''})`;
+    return;
+  }
+  if (!vatInfo?.structurallyValid || !vatInfo.isEu) return;
+  const checked = customer?.viesStatus && customer.viesCheckedVatNumber === vatInfo.normalised ? customer.viesStatus : null;
+  if (checked === 'invalid') {
+    sources.customerIsTaxablePerson = `customer VAT number ${vatInfo.normalised} was reported INVALID by VIES on `
+      + `${customer!.viesCheckedAt?.slice(0, 10) ?? 'an earlier check'}; it is not evidence of taxable status`;
+    return;
+  }
+  facts.customerIsTaxablePerson = true;
+  sources.customerIsTaxablePerson = checked === 'valid'
+    ? `customer VAT number ${vatInfo.normalised}, confirmed valid by VIES on ${customer!.viesCheckedAt?.slice(0, 10)}`
+      + `${customer!.viesRequestIdentifier ? ` (consultation ${customer!.viesRequestIdentifier})` : ''} (EU Reg 282/2011 art.18(1))`
+    : `customer VAT number ${vatInfo.normalised} (EU Reg 282/2011 art.18(1) evidence; structural check only, `
+      + 'not checked with VIES)';
 }
