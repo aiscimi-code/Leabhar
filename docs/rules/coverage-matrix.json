@@ -2178,17 +2178,19 @@
       "id": "tca:s21",
       "area": "tca_section",
       "title": "TCA 1997 s21",
-      "status": "deferred",
-      "issue": 211,
-      "reason": "Not yet ruled."
+      "status": "rule",
+      "ruleKeys": [
+        "ct.rate_standard"
+      ]
     },
     {
       "id": "tca:s21A",
       "area": "tca_section",
       "title": "TCA 1997 s21A",
-      "status": "deferred",
-      "issue": 211,
-      "reason": "Not yet ruled."
+      "status": "rule",
+      "ruleKeys": [
+        "ct.rate_higher_passive"
+      ]
     },
     {
       "id": "tca:s65",
@@ -2218,17 +2220,23 @@
       "id": "tca:s76",
       "area": "tca_section",
       "title": "TCA 1997 s76",
-      "status": "deferred",
-      "issue": 211,
-      "reason": "Not yet ruled."
+      "status": "rule",
+      "ruleKeys": [
+        "ct.income_tax_principles"
+      ]
     },
     {
       "id": "tca:s81",
       "area": "tca_section",
       "title": "TCA 1997 s81",
-      "status": "deferred",
-      "issue": 211,
-      "reason": "Not yet ruled."
+      "status": "rule",
+      "ruleKeys": [
+        "ct.deduction_only_if_authorised",
+        "ct.not_wholly_and_exclusively",
+        "ct.private_or_domestic",
+        "ct.capital_expenditure_not_deductible",
+        "ct.taxes_on_income_not_deductible"
+      ]
     },
     {
       "id": "tca:s284",
@@ -2331,9 +2339,11 @@
       "id": "tca:s840",
       "area": "tca_section",
       "title": "TCA 1997 s840",
-      "status": "deferred",
-      "issue": 211,
-      "reason": "Not yet ruled."
+      "status": "rule",
+      "ruleKeys": [
+        "ct.business_entertainment_not_deductible",
+        "ct.staff_entertainment_deductible"
+      ]
     },
     {
       "id": "tca:s1007",

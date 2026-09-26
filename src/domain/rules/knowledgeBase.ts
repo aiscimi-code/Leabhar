@@ -42,6 +42,8 @@ import {
 import { deriveFinanceAct2024VatThresholds } from './financeAct2024VatThresholdsIngestion';
 import { ingestTdm3801_03bCapacityExclusion, deriveTdm3801_03bCapacityExclusionRule } from './tdm3801_03bIngestion';
 import { deriveVatScopeRules } from './vatScopeIngestion';
+import { ingestTcaNfgPart, deriveCorporationTaxRules, nfgPath } from './tcaNfgIngestion';
+import { NFG_SECTIONS } from './corporationTaxCuration';
 import {
   ingestCompaniesAct2014Section, deriveCompaniesAct2014Rules, COMPANIES_ACT_2014_SECTION_NUMBERS,
 } from './companiesAct2014Ingestion';
@@ -119,6 +121,10 @@ const SOURCES: Array<{ path: string; ingest: IngestFn }> = [
     path: `docs/statutes/companies-act-2014/s${n}.md`,
     ingest: ingestCompaniesAct2014Section as IngestFn,
   })),
+  ...Object.keys(NFG_SECTIONS).map((part) => ({
+    path: nfgPath(part),
+    ingest: ((db, p) => ingestTcaNfgPart(db, { ...p, part })) as IngestFn,
+  })),
 ];
 
 /** Derive steps, in the order the CLI documents them (thresholds after FA 2024 is ingested). */
@@ -137,6 +143,7 @@ const DERIVES: Array<(db: AppDatabase, params: { companyId: string }) => unknown
   deriveTdm3801_03bCapacityExclusionRule,
   deriveCompaniesAct2014Rules,
   deriveVatScopeRules,
+  deriveCorporationTaxRules,
 ];
 
 /** Resolve a repo-relative statute path against the running app's root (the install directory when packaged). */
