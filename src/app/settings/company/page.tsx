@@ -7,6 +7,8 @@ import { DemoLoader } from '@/components/DemoLoader';
 import { ExtractionEngineSetting } from '@/components/ExtractionEngineSetting';
 import { CompanyVatStatus } from '@/components/CompanyVatStatus';
 import { PartnersPanel } from '@/components/PartnersPanel';
+import { BusinessProfilePanels } from '@/components/BusinessProfilePanels';
+import { ArchivedBusinesses } from '@/components/ArchivedBusinesses';
 import {
   updateCompanyAction, createCompanyAction,
   addBankAccountAction, updateBankAccountAction,
@@ -73,6 +75,8 @@ export default function CompanySettingsPage() {
             </div>
           </Panel>
 
+          <ArchivedBusinesses />
+
           <Panel title="Or load demo data" id="demo">
             <div className="px-4 py-3">
               <p className="text-ink-muted mb-3 leading-relaxed">
@@ -120,9 +124,6 @@ export default function CompanySettingsPage() {
               <div className="grid grid-cols-2 gap-3">
                 <Field label="Legal name">
                   <Input name="legalName" defaultValue={company.legalName} required />
-                </Field>
-                <Field label="Trading name">
-                  <Input name="tradingName" defaultValue={company.tradingName ?? ''} />
                 </Field>
                 <Field label="CRO number">
                   <Input name="croNumber" defaultValue={company.croNumber ?? ''} />
@@ -234,9 +235,6 @@ export default function CompanySettingsPage() {
                     ))}
                   </Select>
                 </Field>
-                <Field label="EORI number">
-                  <Input name="eoriNumber" defaultValue={company.eoriNumber ?? ''} />
-                </Field>
                 <Field
                   label="Base currency"
                   help="The currency the books are kept in. It cannot be changed once entries
@@ -269,6 +267,7 @@ export default function CompanySettingsPage() {
 
       <PartnersPanel company={company} />
       <CompanyVatStatus company={company} />
+      <BusinessProfilePanels company={company} />
 
       <Panel
         title="Bank accounts"
