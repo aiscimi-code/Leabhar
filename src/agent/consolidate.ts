@@ -128,6 +128,8 @@ export interface LineChoicesCliResult {
   direction: 'sales' | 'purchase';
   /** What the invoice says against itself or the parties' records; while any is open nothing is suggested. */
   conflicts: Array<{ code: string; message: string }>;
+  /** Particulars the invoice lacks for its VAT to be deducted; post-document then needs --hold-vat (issue #209). */
+  missingParticulars: Array<{ code: string; paragraph: string; what: string }>;
   lines: Array<{
     index: number;
     description: string;
@@ -149,6 +151,7 @@ export function lineChoicesCli(db: AppDatabase, input: { companyId: string; docu
     documentId: input.documentId,
     direction: choices.direction,
     conflicts: choices.conflicts,
+    missingParticulars: choices.missingParticulars,
     lines: choices.lines.map((c, index) => ({
       index,
       description: c.line.description,
@@ -177,6 +180,8 @@ export interface PostDocumentCliInput {
   coding: string;
   fx?: string;
   vatDeclarationDate?: string;
+  /** Post with the VAT held back when the invoice lacks a required particular (issue #209). */
+  holdVat?: boolean;
 }
 
 export function postDocumentCli(db: AppDatabase, input: PostDocumentCliInput): CreatedInvoice {
@@ -209,6 +214,7 @@ export function postDocumentCli(db: AppDatabase, input: PostDocumentCliInput): C
     coding,
     fxRate: parseFxArgument(input.fx),
     vatDeclarationDate: input.vatDeclarationDate ? asIsoDate(input.vatDeclarationDate) : undefined,
+    holdVatForMissingParticulars: input.holdVat,
     actor: 'cli',
   });
 }

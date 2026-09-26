@@ -117,6 +117,7 @@ export default async function DocumentDetailPage({ params }: {
             )}
             <PostInvoiceForm
               documentId={doc.id}
+              missingParticulars={posting.choices.missingParticulars.map((m) => `${m.what} (${m.paragraph})`)}
               direction={posting.choices.direction}
               currency={(doc.currency ?? company.baseCurrency).toUpperCase()}
               baseCurrency={company.baseCurrency}

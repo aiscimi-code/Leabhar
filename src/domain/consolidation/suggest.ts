@@ -5,10 +5,11 @@ import { asIsoDate } from '../dates';
 import { resolveTreatment } from '../vat/engine';
 import { parseVatNumber, EU_COUNTRY_CODES } from '../extraction/vatNumbers';
 import { suggestFromFacts, applyEstablishment, applyCustomerStatus, type SuggestionFacts, type VatSuggestion } from '../rules/vatSuggestion';
-import { documentEvidenceLines, type EvidenceLine } from './postDocument';
+import { documentEvidenceLines, particularsOf, type EvidenceLine } from './postDocument';
 import { checkLineRate, type LineRateCheck } from '../rules/lineRateCheck';
 import { applyCompositeSupply } from './compositeSupply';
 import { invoiceConflicts, type InvoiceConflict } from './invoiceConflicts';
+import { missingInvoiceParticulars, type MissingParticular } from './invoiceParticulars';
 import { advisoryReasons } from '../rules/advisoryRules';
 
 /**
@@ -52,6 +53,8 @@ export function documentLineChoices(db: AppDatabase, params: { companyId: string
   lines: LineChoices[];
   /** What the invoice says against itself or the parties' records (issue #207); while any is open nothing is pre-selected. */
   conflicts: InvoiceConflict[];
+  /** Particulars the purchase invoice lacks for its VAT to be deducted (issue #209); posting needs them or holds the VAT. */
+  missingParticulars: MissingParticular[];
 } {
   const { document: doc, direction, lines } = documentEvidenceLines(db, params);
   const company = db.select().from(companies).where(eq(companies.id, params.companyId)).get()!;
@@ -248,10 +251,13 @@ export function documentLineChoices(db: AppDatabase, params: { companyId: string
     customerVies,
     legends: doc.vatLegends,
   });
+  const missingParticulars = direction === 'purchase'
+    ? missingInvoiceParticulars(particularsOf(db, doc, !!reverseChargeLegend)) : [];
   const coded = applyCompositeSupply(choices, domesticTreatmentForRate);
   return {
     direction,
     conflicts,
+    missingParticulars,
     lines: conflicts.length ? coded.map((c) => ({ ...c, preselectedTreatmentId: null })) : coded,
   };
 }

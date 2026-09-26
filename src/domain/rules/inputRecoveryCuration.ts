@@ -29,6 +29,7 @@ export const BLOCKED_ENTERTAINMENT_RULE_KEY = 'vat.blocked_entertainment';
 export const BLOCKED_MOTOR_VEHICLE_RULE_KEY = 'vat.blocked_motor_vehicle';
 export const BLOCKED_PETROL_RULE_KEY = 'vat.blocked_petrol';
 export const QUALIFYING_VEHICLE_DISPOSAL_RULE_KEY = 'vat.qualifying_vehicle_disposal';
+export const INVOICE_PARTICULARS_RULE_KEY = 'vat.invoice_prescribed_particulars';
 
 /** The s.60(2)(a) blocks: when one matches, the general s.59 deduction does not apply. */
 export const BLOCKED_DEDUCTION_RULE_KEYS = [
@@ -116,6 +117,16 @@ export const INPUT_RECOVERY_CURATED_RULES: CuratedVatScopeRule[] = [
     conditions: [desc('\\b((sale|disposal|trade[- ]?in) of (the )?(car|vehicle|company car))\\b')],
     vatEffect: 'The deduction taken is reduced by TD x (4 - N) / 4, N being the half-years (182 days) held, at most 4.',
     interpretationNote: 'Advisory: applies only where 20% was deducted under s.59(2)(d).',
+  }),
+  rule({
+    citation: '2010 Act 31 s.66', sectionNumber: '66', ruleKey: INVOICE_PARTICULARS_RULE_KEY,
+    name: 'The invoice must carry the particulars specified by regulations (s.66(1), S.I. 639/2010 reg.20(2))',
+    statementExcerpt: 'particulars as may be specified by regulations.',
+    conditions: [purchase, is('invoiceAvailable', 'true')],
+    crossReferences: ['S.I. 639/2010 reg.20(2)', 'VATCA 2010 s.59(2)(a)'],
+    vatEffect: 'Input VAT is deducted only on an invoice with the prescribed particulars; posting a confirmed purchase '
+      + 'invoice checks them (missingInvoiceParticulars) and holds the VAT back when one is missing.',
+    interpretationNote: 'Enforced when a confirmed document is posted, not by matching words.',
   }),
 ];
 

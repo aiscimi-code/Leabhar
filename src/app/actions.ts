@@ -469,13 +469,14 @@ type FxInput = { numerator: number; denominator: number; source: string; date?: 
 
 /** Post a confirmed document as an invoice, from the person's coding of each line. */
 export async function postDocumentAction(input: {
-  documentId: string; coding: LineCoding[]; fxRate?: FxInput; vatDeclarationDate?: string;
+  documentId: string; coding: LineCoding[]; fxRate?: FxInput; vatDeclarationDate?: string; holdVat?: boolean;
 }): Promise<ActionResult> {
   try {
     const company = requireCompany();
     const created = postDocumentAsInvoice(getDb(), {
       companyId: company.id, documentId: input.documentId, coding: input.coding, fxRate: input.fxRate,
       vatDeclarationDate: input.vatDeclarationDate ? asIsoDate(input.vatDeclarationDate) : undefined,
+      holdVatForMissingParticulars: input.holdVat,
       actor: await actorName(),
     });
     revalidatePath(`/documents/${input.documentId}`);

@@ -69,9 +69,9 @@ function confirmed(over: Partial<ReviewedDocumentValues> & { lines?: ReviewedLin
     documentType: 'supplier_invoice', invoiceNumber: `INV-${Math.random().toString(36).slice(2, 7)}`,
     documentDate: '2025-03-14', dueDate: null, supplyDate: null, currency: 'EUR',
     supplierNameStated: party === 'supplier' ? 'Murphy Office Supplies' : 'Acme Ltd',
-    supplierAddress: null, supplierVatNumber: null, supplierCountry: 'IE',
+    supplierAddress: '1 Main Street, Dublin 1', supplierVatNumber: 'IE6388047V', supplierCountry: 'IE',
     customerNameStated: party === 'customer' ? 'Mulligan Digital' : 'Acme Ltd',
-    customerAddress: null, customerVatNumber: null, customerCountry: 'IE', vatLegends: [], paymentTerms: null,
+    customerAddress: '2 Quay Street, Cork', customerVatNumber: null, customerCountry: 'IE', vatLegends: [], paymentTerms: null,
     originalDocumentNumber: null, netMinor: net, vatMinor: vat, grossMinor: net + vat, vatTotals: [],
     ...over, lines,
   };
@@ -186,7 +186,12 @@ describe('posting a confirmed document as an invoice', () => {
     });
     const evidence = documentEvidenceLines(db, { companyId, documentId: doc });
     expect(evidence.lines.map((l) => [l.origin, l.netMinor, l.vatMinor])).toEqual([['vat_total', 10_000, 2_300], ['vat_total', 20_000, 2_700]]);
-    const inv = postDocumentAsInvoice(db, { companyId, documentId: doc, coding: [code('6120', 'IE_STD'), code('6150', 'IE_RED')] });
+    // No lines means no description of what was supplied (reg.20(2)(g)): refused, or posted with the VAT held (#209).
+    expect(() => postDocumentAsInvoice(db, { companyId, documentId: doc, coding: [code('6120', 'IE_STD'), code('6150', 'IE_RED')] }))
+      .toThrow(/what was supplied/);
+    const inv = postDocumentAsInvoice(db, {
+      companyId, documentId: doc, coding: [code('6120', 'IE_STD'), code('6150', 'IE_RED')], holdVatForMissingParticulars: true,
+    });
     expect(inv.vatMinor).toBe(5_000);
   });
 

@@ -77,6 +77,14 @@ const COLUMN_MAP = {
 };
 
 /** Plain-text stand-ins for scanned invoices, so extraction has real input. */
+/** The "Bill to" block under the supplier's heading: the demo company's name and address. */
+function withBillTo(body: string): string {
+  const lines = body.split('\n');
+  const at = lines.indexOf('');
+  lines.splice(at < 0 ? lines.length : at, 0, '', 'Bill to:', 'Acme Software Limited', '27 Pearse Street, Dublin 2, D02 XY45');
+  return lines.join('\n');
+}
+
 const DEMO_DOCUMENTS: Array<{ filename: string; body: string }> = [
   {
     filename: 'vercel-2025-01.txt',
@@ -480,9 +488,11 @@ export async function seedDemoCompany(
   let documentCount = 0;
   for (const demo of DEMO_DOCUMENTS) {
     const posting = DOCUMENT_POSTING[demo.filename]!;
+    // A supplier's invoice is addressed to the demo company (S.I. 639/2010 reg.20(2)(d)).
+    const body = posting.party.supplierId ? withBillTo(demo.body) : demo.body;
     const stored = storeDocument(db, {
       companyId, filename: demo.filename,
-      content: Buffer.from(demo.body, 'utf8'),
+      content: Buffer.from(body, 'utf8'),
       root: options.storageRoot, uploadedBy: 'demo',
     });
     await extractDocument(db, {
@@ -523,7 +533,7 @@ export async function seedDemoCompany(
   // A duplicate document upload (README §51).
   storeDocument(db, {
     companyId, filename: 'vercel-2025-01-copy.txt',
-    content: Buffer.from(DEMO_DOCUMENTS[0]!.body, 'utf8'),
+    content: Buffer.from(withBillTo(DEMO_DOCUMENTS[0]!.body), 'utf8'),
     root: options.storageRoot, uploadedBy: 'demo',
   });
   documentCount += 1;

@@ -95,6 +95,7 @@ const SOURCES: Array<{ path: string; ingest: IngestFn }> = [
   { path: 'docs/statutes/vatca-2010-revised/s060.md', ingest: ingestVatcaRevisedSection },
   { path: 'docs/statutes/vatca-2010-revised/s061.md', ingest: ingestVatcaRevisedSection },
   { path: 'docs/statutes/vatca-2010-revised/s062.md', ingest: ingestVatcaRevisedSection },
+  { path: 'docs/statutes/vatca-2010-revised/s066.md', ingest: ingestVatcaRevisedSection },
   { path: 'docs/statutes/vatca-2010-revised/s086.md', ingest: ingestVatcaRevisedSection },
   { path: 'docs/statutes/vatca-2010-revised/s087.md', ingest: ingestVatcaRevisedSection },
   { path: 'docs/statutes/vatca-2010-revised/s088.md', ingest: ingestVatcaRevisedSection },

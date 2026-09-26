@@ -648,6 +648,31 @@ auctioneer, is not modelled.
 - **Clawback.** On disposal within two years, or if business use falls below
   60%, `qualifyingVehicleClawback` computes TD x (4 - N) / 4 (s.62).
 
+### The invoice is checked before its VAT is deducted
+
+Input VAT is deducted only on an invoice that carries the prescribed
+particulars (VATCA s.59(2)(a); S.I. 639/2010 reg.20(2), under s.66(1)).
+Posting a confirmed purchase document checks them with
+`missingInvoiceParticulars`. The particulars are:
+
+- the date and the invoice number;
+- the supplier's name, address and Irish VAT number;
+- your name and address;
+- what was supplied;
+- the rate and the net at each rate;
+- the VAT.
+
+A receipt is not a VAT invoice.
+
+If a particular is missing, posting is refused with the list. The person
+either reopens the document to add it from the page, or posts with the VAT
+held back. Held-back VAT is costed, not recovered, and a review item says what
+is missing.
+
+Without VAT there is nothing to check. A reverse charge needs no Irish VAT
+number, rate or tax on the invoice. The missing particulars also show on the
+posting screen and in `line-choices`.
+
 ### Posting paths are atomic
 
 Every exported posting path — classify, reclassify, split journal,

@@ -563,8 +563,15 @@ function detectDocumentType(
   const haystack = `${text}\n${filename}`.toLowerCase();
   // An invoice whose letterhead is this company's own was issued by us.
   // Lines addressed to someone ("Billed to: …") name the recipient, not the issuer.
+  // So are the lines under such a heading, up to the next blank line ("Bill to:" / name / address).
+  const RECIPIENT = /\b(?:bill(?:ed)?\s+to|invoice\s+to|sold\s+to|ship\s+to|customer|client|to)\b\s*:/i;
+  let inRecipient = false;
   const head = lines.slice(0, 6)
-    .filter((l) => !/\b(?:bill(?:ed)?\s+to|invoice\s+to|sold\s+to|ship\s+to|customer|client|to)\b\s*:/i.test(l))
+    .filter((l) => {
+      if (RECIPIENT.test(l)) { inRecipient = true; return false; }
+      if (!l.trim()) { inRecipient = false; return true; }
+      return !inRecipient;
+    })
     .join('\n').toLowerCase();
   const ownName = context?.companyName.toLowerCase() ?? '';
   const ownVat = context?.companyVatNumber?.replace(/\s/g, '').toLowerCase() ?? '';

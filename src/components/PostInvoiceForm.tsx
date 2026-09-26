@@ -30,8 +30,10 @@ export interface PostingLine {
 const money = (minor: number | null, currency: string) =>
   minor === null ? '—' : `${(minor / 100).toLocaleString('en-IE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${currency}`;
 
-export function PostInvoiceForm({ documentId, direction, currency, baseCurrency, lines, accounts, treatments }: {
+export function PostInvoiceForm({ documentId, direction, currency, baseCurrency, lines, accounts, treatments, missingParticulars = [] }: {
   documentId: string;
+  /** What the purchase invoice lacks for its VAT to be deducted (issue #209). */
+  missingParticulars?: string[];
   direction: 'sales' | 'purchase';
   currency: string;
   baseCurrency: string;
@@ -44,12 +46,14 @@ export function PostInvoiceForm({ documentId, direction, currency, baseCurrency,
   const [treatmentIds, setTreatmentIds] = useState<Array<string>>(lines.map((l) => l.preselectedTreatmentId ?? ''));
   const [fx, setFx] = useState('');
   const [lateDate, setLateDate] = useState('');
+  const [holdVat, setHoldVat] = useState(false);
   const [result, setResult] = useState<ActionResult | null>(null);
   const [pending, startTransition] = useTransition();
   const foreign = currency !== baseCurrency;
   const relevantAccounts = accounts.filter((a) => (direction === 'sales'
     ? a.type === 'income' : ['expense', 'asset'].includes(a.type)));
-  const complete = accountIds.every(Boolean) && treatmentIds.every(Boolean) && (!foreign || /^\d+(\.\d+)?$/.test(fx.trim()));
+  const complete = accountIds.every(Boolean) && treatmentIds.every(Boolean) && (!foreign || /^\d+(\.\d+)?$/.test(fx.trim()))
+    && (missingParticulars.length === 0 || holdVat);
 
   const post = () => startTransition(async () => {
     let fxRate: { numerator: number; denominator: number; source: string } | undefined;
@@ -67,6 +71,7 @@ export function PostInvoiceForm({ documentId, direction, currency, baseCurrency,
       }),
       fxRate,
       vatDeclarationDate: lateDate || undefined,
+      holdVat: missingParticulars.length > 0 && holdVat,
     });
     setResult(r);
     if (r.ok) router.refresh();
@@ -141,6 +146,19 @@ export function PostInvoiceForm({ documentId, direction, currency, baseCurrency,
             never changed; this is recorded and flagged for your accountant.</span>
         </div>
       </details>
+
+      {missingParticulars.length > 0 && (
+        <div className="border border-caution/50 bg-caution-soft/30 rounded p-3 text-[12px]">
+          <p className="font-medium text-caution">This invoice does not show:</p>
+          <ul className="list-disc ml-5 text-ink-muted">{missingParticulars.map((m) => <li key={m}>{m}</li>)}</ul>
+          <p className="text-ink-muted mt-1">Input VAT is deducted only on an invoice with these particulars (VATCA s.59(2)(a),
+            S.I. 639/2010 reg.20(2)). Reopen the document to add them from the page, or post it with the VAT held back.</p>
+          <label className="flex items-center gap-2 mt-2">
+            <input type="checkbox" checked={holdVat} onChange={(e) => setHoldVat(e.target.checked)} />
+            Post with the VAT held back from recovery until a valid invoice is obtained
+          </label>
+        </div>
+      )}
 
       <div className="flex items-center gap-3">
         <Button variant="primary" disabled={pending || !complete} onClick={post}>

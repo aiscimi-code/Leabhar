@@ -585,9 +585,11 @@
       "id": "vatca:s66",
       "area": "vatca_section",
       "title": "s.66 Issue of invoices and other documents.",
-      "status": "deferred",
-      "issue": 209,
-      "reason": "Invoices and credit notes — validity for deduction."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.invoice_prescribed_particulars"
+      ],
+      "note": "The reg.20(2) particulars are checked when a confirmed purchase document is posted (missingInvoiceParticulars); a missing one refuses the posting or holds the VAT back."
     },
     {
       "id": "vatca:s67",
