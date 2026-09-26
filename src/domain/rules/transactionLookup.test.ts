@@ -422,7 +422,7 @@ describe('lookupTransactionRules — issue #136 bugs 1 and 8: VAT rate exclusivi
     expect(rateKeys).toEqual(['vat.zero_rate_childrens_clothing_footwear']);
   });
 
-  it('a restaurant meal before 1 July 2026 gets only the dated 13.5% restaurant rule', () => {
+  it('a restaurant meal before 1 July 2026 gets the dated 13.5% restaurant rule and the Sch.3 para 3(1) rule', () => {
     const result = lookupTransactionRules(db, {
       companyId,
       transaction: {
@@ -433,7 +433,8 @@ describe('lookupTransactionRules — issue #136 bugs 1 and 8: VAT rate exclusivi
     const rateKeys = result.applicableRules
       .filter((r) => r.topic === 'vat' && r.ruleType === 'rate')
       .map((r) => r.ruleKey);
-    expect(rateKeys).toEqual(['vat.rate_restaurant_catering_reduced_current']);
+    // The paragraph rule states no rate of its own; its rate comes from s.46 by date (issue #205).
+    expect(rateKeys).toEqual(['vat.rate_restaurant_catering_reduced_current', 'vat.reduced_rate_restaurant_catering']);
     expect(result.possibleTreatment.vat.some((v) => v.includes('13.5%'))).toBe(true);
   });
 
@@ -448,7 +449,7 @@ describe('lookupTransactionRules — issue #136 bugs 1 and 8: VAT rate exclusivi
     const rateKeys = result.applicableRules
       .filter((r) => r.topic === 'vat' && r.ruleType === 'rate')
       .map((r) => r.ruleKey);
-    expect(rateKeys).toEqual(['vat.rate_hospitality_9pct_not_modelled']);
+    expect(rateKeys).toEqual(['vat.rate_hospitality_9pct_not_modelled', 'vat.reduced_rate_restaurant_catering']);
     expect(result.possibleTreatment.vat.some((v) => v.includes('13.5%') || v.includes('23%'))).toBe(false);
     expect(result.reviewRequired).toBe(true);
     expect(result.reviewReasons.join(' ')).toMatch(/not modelled/i);

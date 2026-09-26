@@ -1268,9 +1268,10 @@
       "id": "vatca:sch2:p1:2",
       "area": "vatca_schedule",
       "title": "Sch.2 para 2 — Imports.",
-      "status": "deferred",
-      "issue": 205,
-      "reason": "Rate paragraph not yet ruled."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.zero_rate_import_transport"
+      ]
     },
     {
       "id": "vatca:sch2:p1:3",
@@ -1278,48 +1279,50 @@
       "title": "Sch.2 para 3 — Exports.",
       "status": "rule",
       "ruleKeys": [
-        "vat.zero_rate_export_outside_community"
+        "vat.zero_rate_export_outside_community",
+        "vat.zero_rate_export_transport"
       ]
     },
     {
       "id": "vatca:sch2:p1:4",
       "area": "vatca_schedule",
       "title": "Sch.2 para 4 — Services relating to vessels and aircraft.",
-      "status": "deferred",
-      "issue": 205,
-      "reason": "Rate paragraph not yet ruled."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.zero_rate_vessels_aircraft"
+      ]
     },
     {
       "id": "vatca:sch2:p1:5",
       "area": "vatca_schedule",
       "title": "Sch.2 para 5 — Certain transactions treated as exports.",
-      "status": "deferred",
-      "issue": 205,
-      "reason": "Rate paragraph not yet ruled."
+      "status": "not_applicable",
+      "reason": "Zero-rating turns on who the customer is (EU institutions, international bodies, foreign armed forces, the Central Bank), not on what was supplied; the invoice line does not carry that. Such a line matches only the standard-rate fallback and is flagged undetermined."
     },
     {
       "id": "vatca:sch2:p1:6",
       "area": "vatca_schedule",
       "title": "Sch.2 para 6 — Services by intermediaries.",
-      "status": "deferred",
-      "issue": 205,
-      "reason": "Rate paragraph not yet ruled."
+      "status": "not_applicable",
+      "reason": "Zero-rating turns on what an intermediary obtained for its principal (an export, a listed service, a supply outside the Community), which the invoice line does not carry. Such a line matches only the standard-rate fallback and is flagged undetermined."
     },
     {
       "id": "vatca:sch2:p1:7",
       "area": "vatca_schedule",
       "title": "Sch.2 para 7 — International trade, etc.",
-      "status": "deferred",
-      "issue": 205,
-      "reason": "Rate paragraph not yet ruled."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.zero_rate_s56_authorised_person"
+      ]
     },
     {
       "id": "vatca:sch2:p2:8",
       "area": "vatca_schedule",
       "title": "Sch.2 para 8 — Food and drink.",
-      "status": "deferred",
-      "issue": 205,
-      "reason": "Rate paragraph not yet ruled."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.zero_rate_food_and_drink"
+      ]
     },
     {
       "id": "vatca:sch2:p2:9",
@@ -1334,9 +1337,10 @@
       "id": "vatca:sch2:p2:9A",
       "area": "vatca_schedule",
       "title": "Sch.2 para 9A — Certain electronically supplied matter",
-      "status": "deferred",
-      "issue": 205,
-      "reason": "Rate paragraph not yet ruled."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.zero_rate_electronic_books"
+      ]
     },
     {
       "id": "vatca:sch2:p2:10",
@@ -1351,113 +1355,126 @@
       "id": "vatca:sch2:p2:11",
       "area": "vatca_schedule",
       "title": "Sch.2 para 11 — Medicine, medical equipment and appliances .",
-      "status": "deferred",
-      "issue": 205,
-      "reason": "Rate paragraph not yet ruled."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.zero_rate_oral_medicine",
+        "vat.zero_rate_medical_appliances"
+      ]
     },
     {
       "id": "vatca:sch2:p2:12",
       "area": "vatca_schedule",
       "title": "Sch.2 para 12 — Fertilisers, feeding stuffs, certain seeds, etc.",
-      "status": "deferred",
-      "issue": 205,
-      "reason": "Rate paragraph not yet ruled."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.zero_rate_fertiliser_feed_seed"
+      ]
     },
     {
       "id": "vatca:sch2:p2:13",
       "area": "vatca_schedule",
       "title": "Sch.2 para 13 — Other zero-rated goods and services.",
-      "status": "deferred",
-      "issue": 205,
-      "reason": "Rate paragraph not yet ruled."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.zero_rate_menstrual_products",
+        "vat.zero_rate_irish_lights_rnli"
+      ]
     },
     {
       "id": "vatca:sch2:p2:14",
       "area": "vatca_schedule",
       "title": "Sch.2 para 14 — Solar panels",
-      "status": "deferred",
-      "issue": 205,
-      "reason": "Rate paragraph not yet ruled."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.zero_rate_solar_panels"
+      ]
     },
     {
       "id": "vatca:sch3:p1:1",
       "area": "vatca_schedule",
       "title": "Sch.3 para 1 — Definitions — Schedule 3 .",
-      "status": "deferred",
-      "issue": 205,
-      "reason": "Rate paragraph not yet ruled."
+      "status": "not_applicable",
+      "reason": "Definitions for Schedule 3; applied through the paragraph rules that use them."
     },
     {
       "id": "vatca:sch3:p1:2",
       "area": "vatca_schedule",
       "title": "Sch.3 para 2 — Other interpretative provisions.",
-      "status": "deferred",
-      "issue": 205,
-      "reason": "Rate paragraph not yet ruled."
+      "status": "not_applicable",
+      "reason": "Interpretation for Schedule 3 (food and drink, golf); applied through the paragraph rules that use it."
     },
     {
       "id": "vatca:sch3:p2:3",
       "area": "vatca_schedule",
       "title": "Sch.3 para 3 — Food and drink for human consumption.",
-      "status": "deferred",
-      "issue": 205,
-      "reason": "Rate paragraph not yet ruled."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.reduced_rate_restaurant_catering",
+        "vat.reduced_rate_hot_food",
+        "vat.reduced_rate_bakery_products"
+      ]
     },
     {
       "id": "vatca:sch3:p2:3A",
       "area": "vatca_schedule",
       "title": "Sch.3 para 3A — Food supplements.",
-      "status": "deferred",
-      "issue": 205,
-      "reason": "Rate paragraph not yet ruled."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.reduced_rate_food_supplements"
+      ]
     },
     {
       "id": "vatca:sch3:p2:4",
       "area": "vatca_schedule",
       "title": "Sch.3 para 4 — Live animals, animal feeding stuffs.",
-      "status": "deferred",
-      "issue": 205,
-      "reason": "Rate paragraph not yet ruled."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.reduced_rate_greyhound_feed_live_poultry"
+      ]
     },
     {
       "id": "vatca:sch3:p2:5",
       "area": "vatca_schedule",
       "title": "Sch.3 para 5 — Pharmaceutical products.",
-      "status": "deferred",
-      "issue": 205,
-      "reason": "Rate paragraph not yet ruled."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.reduced_rate_non_oral_contraceptives"
+      ]
     },
     {
       "id": "vatca:sch3:p2:5A",
       "area": "vatca_schedule",
       "title": "Sch.3 para 5A",
-      "status": "deferred",
-      "issue": 205,
-      "reason": "Rate paragraph not yet ruled."
+      "status": "not_applicable",
+      "reason": "The paragraph’s text has been deleted (printed as “…”); it specifies no supply."
     },
     {
       "id": "vatca:sch3:p2:6",
       "area": "vatca_schedule",
       "title": "Sch.3 para 6 — Certain safety equipment.",
-      "status": "deferred",
-      "issue": 205,
-      "reason": "Rate paragraph not yet ruled."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.reduced_rate_child_car_seats"
+      ]
     },
     {
       "id": "vatca:sch3:p2:7",
       "area": "vatca_schedule",
       "title": "Sch.3 para 7 — Books, newspapers and other printed matter.",
-      "status": "deferred",
-      "issue": 205,
-      "reason": "Rate paragraph not yet ruled."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.reduced_rate_printed_periodicals",
+        "vat.reduced_rate_brochures_catalogues_maps"
+      ]
     },
     {
       "id": "vatca:sch3:p2:7A",
       "area": "vatca_schedule",
       "title": "Sch.3 para 7A — Certain electronically supplied matter",
-      "status": "deferred",
-      "issue": 205,
-      "reason": "Rate paragraph not yet ruled."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.reduced_rate_electronic_periodicals"
+      ]
     },
     {
       "id": "vatca:sch3:p2:8",
@@ -1465,7 +1482,8 @@
       "title": "Sch.3 para 8 — Shows, exhibitions, cultural facilities, etc.",
       "status": "rule",
       "ruleKeys": [
-        "vat.reduced_rate_cinema_admission"
+        "vat.reduced_rate_cinema_admission",
+        "vat.reduced_rate_admissions"
       ]
     },
     {
@@ -1481,97 +1499,113 @@
       "id": "vatca:sch3:p2:9A",
       "area": "vatca_schedule",
       "title": "Sch.3 para 9A — Housing as part of a social policy.",
-      "status": "deferred",
-      "issue": 205,
-      "reason": "Rate paragraph not yet ruled."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.reduced_rate_social_housing_apartment"
+      ]
     },
     {
       "id": "vatca:sch3:p2:9B",
       "area": "vatca_schedule",
       "title": "Sch.3 para 9B — Supply and construction of housing as part of a social policy.",
-      "status": "deferred",
-      "issue": 205,
-      "reason": "Rate paragraph not yet ruled."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.reduced_rate_apartment_development"
+      ]
     },
     {
       "id": "vatca:sch3:p2:10",
       "area": "vatca_schedule",
       "title": "Sch.3 para 10 — Agricultural goods and services.",
-      "status": "deferred",
-      "issue": 205,
-      "reason": "Rate paragraph not yet ruled."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.reduced_rate_agricultural_services"
+      ]
     },
     {
       "id": "vatca:sch3:p2:11",
       "area": "vatca_schedule",
       "title": "Sch.3 para 11 — Hotel, holiday accommodation.",
-      "status": "deferred",
-      "issue": 205,
-      "reason": "Rate paragraph not yet ruled."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.reduced_rate_holiday_accommodation"
+      ]
     },
     {
       "id": "vatca:sch3:p2:12",
       "area": "vatca_schedule",
       "title": "Sch.3 para 12 — Sporting facilities.",
-      "status": "deferred",
-      "issue": 205,
-      "reason": "Rate paragraph not yet ruled."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.reduced_rate_sporting_facilities"
+      ]
     },
     {
       "id": "vatca:sch3:p2:12A",
       "area": "vatca_schedule",
       "title": "Sch.3 para 12A — Low emissions heat pump heating systems",
-      "status": "deferred",
-      "issue": 205,
-      "reason": "Rate paragraph not yet ruled."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.reduced_rate_heat_pumps"
+      ]
     },
     {
       "id": "vatca:sch3:p2:13",
       "area": "vatca_schedule",
       "title": "Sch.3 para 13 — Other services.",
-      "status": "deferred",
-      "issue": 205,
-      "reason": "Rate paragraph not yet ruled."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.reduced_rate_waste_disposal",
+        "vat.reduced_rate_minor_repairs",
+        "vat.reduced_rate_hairdressing"
+      ]
     },
     {
       "id": "vatca:sch3:p2:13A",
       "area": "vatca_schedule",
       "title": "Sch.3 para 13A — District heating .",
-      "status": "deferred",
-      "issue": 205,
-      "reason": "Rate paragraph not yet ruled."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.reduced_rate_district_heating"
+      ]
     },
     {
       "id": "vatca:sch3:p2:13B",
       "area": "vatca_schedule",
       "title": "Sch.3 para 13B — Horses and greyhounds",
-      "status": "deferred",
-      "issue": 205,
-      "reason": "Rate paragraph not yet ruled."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.reduced_rate_horses_greyhounds"
+      ]
     },
     {
       "id": "vatca:sch3:p3:14",
       "area": "vatca_schedule",
       "title": "Sch.3 para 14 — Housing.",
-      "status": "deferred",
-      "issue": 205,
-      "reason": "Rate paragraph not yet ruled."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.reduced_rate_residential_property"
+      ]
     },
     {
       "id": "vatca:sch3:p4:15",
       "area": "vatca_schedule",
       "title": "Sch.3 para 15 — Non-residential immovable goods.",
-      "status": "deferred",
-      "issue": 205,
-      "reason": "Rate paragraph not yet ruled."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.reduced_rate_non_residential_property",
+        "vat.reduced_rate_construction_services",
+        "vat.reduced_rate_cleaning_services"
+      ]
     },
     {
       "id": "vatca:sch3:p4:16",
       "area": "vatca_schedule",
       "title": "Sch.3 para 16 — Concrete works.",
-      "status": "deferred",
-      "issue": 205,
-      "reason": "Rate paragraph not yet ruled."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.reduced_rate_concrete"
+      ]
     },
     {
       "id": "vatca:sch3:p4:17",
@@ -1579,24 +1613,29 @@
       "title": "Sch.3 para 17 — Energy products and supplies.",
       "status": "rule",
       "ruleKeys": [
-        "vat.reduced_rate_solid_fuel"
+        "vat.reduced_rate_solid_fuel",
+        "vat.reduced_rate_electricity",
+        "vat.reduced_rate_gas",
+        "vat.reduced_rate_heating_oil"
       ]
     },
     {
       "id": "vatca:sch3:p4:18",
       "area": "vatca_schedule",
       "title": "Sch.3 para 18 — Photographic and related supplies.",
-      "status": "deferred",
-      "issue": 205,
-      "reason": "Rate paragraph not yet ruled."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.reduced_rate_photography"
+      ]
     },
     {
       "id": "vatca:sch3:p4:19",
       "area": "vatca_schedule",
       "title": "Sch.3 para 19 — Hiring for short periods.",
-      "status": "deferred",
-      "issue": 205,
-      "reason": "Rate paragraph not yet ruled."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.reduced_rate_short_term_hire"
+      ]
     },
     {
       "id": "vatca:sch3:p4:20",
@@ -1611,33 +1650,37 @@
       "id": "vatca:sch3:p5:22",
       "area": "vatca_schedule",
       "title": "Sch.3 para 22 — Plants and bulbs, etc.",
-      "status": "deferred",
-      "issue": 205,
-      "reason": "Rate paragraph not yet ruled."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.reduced_rate_plants_flowers"
+      ]
     },
     {
       "id": "vatca:sch3:p6:23",
       "area": "vatca_schedule",
       "title": "Sch.3 para 23 — Works of art.",
-      "status": "deferred",
-      "issue": 205,
-      "reason": "Rate paragraph not yet ruled."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.reduced_rate_works_of_art"
+      ]
     },
     {
       "id": "vatca:sch3:p6:24",
       "area": "vatca_schedule",
       "title": "Sch.3 para 24 — Antiques.",
-      "status": "deferred",
-      "issue": 205,
-      "reason": "Rate paragraph not yet ruled."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.reduced_rate_antiques"
+      ]
     },
     {
       "id": "vatca:sch3:p6:25",
       "area": "vatca_schedule",
       "title": "Sch.3 para 25 — Literary manuscripts.",
-      "status": "deferred",
-      "issue": 205,
-      "reason": "Rate paragraph not yet ruled."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.reduced_rate_literary_manuscripts"
+      ]
     },
     {
       "id": "vatca:sch4:1",
@@ -1811,10 +1854,11 @@
       "id": "vatca:sch3:p4:21",
       "area": "vatca_schedule",
       "title": "Sch.3 para 21 — Miscellaneous services",
-      "status": "deferred",
-      "issue": 205,
-      "reason": "Rate paragraph not yet ruled.",
-      "note": "The LRC revised text prints this paragraph (substituted, F481) without its number; it sits between paragraphs 20 and 22 under the heading \"Miscellaneous services\"."
+      "status": "rule",
+      "note": "The LRC revised text prints this paragraph (substituted, F481) without its number; it sits between paragraphs 20 and 22 under the heading \"Miscellaneous services\".",
+      "ruleKeys": [
+        "vat.reduced_rate_miscellaneous_services"
+      ]
     },
     {
       "id": "vatca:sch9:part1",

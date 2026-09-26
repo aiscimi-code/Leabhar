@@ -6,16 +6,12 @@
  * knowledge base's verbatim-only policy (AGENTS.md invariant #8: a rule's
  * authority is the source's own words, never an invention).
  *
- * Both Schedules list dozens of paragraphs (14 in Schedule 2, ~30 in
- * Schedule 3, several of them highly specific — diplomatic supplies,
- * lifeboat services, literary manuscripts). Mirroring `vatcaCuration.ts`'s
- * own selectivity (5 of 125 principal-Act sections), this file curates only
- * the paragraphs most likely to bear on an ordinary small business's
- * day-to-day transactions: cross-border goods movements, and the handful of
- * reduced-rate goods/services (fuel, dwelling repair/cleaning, cinema
- * admission) a bookkeeping system routinely has to classify. The remaining
- * paragraphs are ingested as `irish_act_provisions` (queryable, cited) but
- * deliberately not curated into rules in this pass.
+ * This file holds the first rules curated (cross-border goods, books,
+ * children's clothing, dwellings, solid fuel, repairs, cinema);
+ * `vatcaScheduleParagraphRules.ts` covers every remaining paragraph (issue
+ * #205), and the #204 coverage matrix justifies the few with no rule. A
+ * Schedule 3 rule states no rate: its `rateRefs` are looked up in s.46 by
+ * date (`scheduleRates.ts`).
  *
  * Every `statementExcerpt` below is a verbatim substring of the relevant
  * paragraph's own `provisionText`, checked by `vatcaScheduleParser.test.ts`
@@ -33,6 +29,7 @@
  * before any classification is treated as authoritative.
  */
 import type { IrishRuleCondition, IrishRuleException, IrishRuleType } from '@/db/schema';
+import { VATCA_SCHEDULE_PARAGRAPH_RULES } from './vatcaScheduleParagraphRules';
 
 export interface CuratedVatcaScheduleRule {
   scheduleNumber: '2' | '3';
@@ -50,6 +47,12 @@ export interface CuratedVatcaScheduleRule {
   reportingEffect: string | null;
   requiresGuidance: boolean;
   interpretationNote: string;
+  /**
+   * Schedule 3 only: the sub-paragraphs the rule covers ("8(1)", "17(2)").
+   * The rate they bear on a date comes from s.46 (`scheduleThreeRate`), not
+   * from the rule; every reference in one rule bears the same rate.
+   */
+  rateRefs?: string[];
 }
 
 export const VATCA_SCHEDULE_CURATED_RULES: CuratedVatcaScheduleRule[] = [
@@ -194,6 +197,7 @@ export const VATCA_SCHEDULE_CURATED_RULES: CuratedVatcaScheduleRule[] = [
     scheduleNumber: '3',
     sectionNumber: '9',
     ruleKey: 'vat.reduced_rate_dwelling_services',
+    rateRefs: ['9(1)', '9(2)'],
     ruleType: 'rate',
     topic: 'vat',
     name: 'Reduced rate: construction/repair work and routine cleaning of private dwellings',
@@ -230,6 +234,7 @@ export const VATCA_SCHEDULE_CURATED_RULES: CuratedVatcaScheduleRule[] = [
     scheduleNumber: '3',
     sectionNumber: '17',
     ruleKey: 'vat.reduced_rate_solid_fuel',
+    rateRefs: ['17(1)'],
     ruleType: 'rate',
     topic: 'vat',
     name: 'Reduced rate: coal, peat and other solid fuel',
@@ -251,6 +256,7 @@ export const VATCA_SCHEDULE_CURATED_RULES: CuratedVatcaScheduleRule[] = [
     scheduleNumber: '3',
     sectionNumber: '20',
     ruleKey: 'vat.reduced_rate_repair_movable_goods',
+    rateRefs: ['20'],
     ruleType: 'rate',
     topic: 'vat',
     name: 'Reduced rate: repairing or maintaining movable goods',
@@ -282,6 +288,7 @@ export const VATCA_SCHEDULE_CURATED_RULES: CuratedVatcaScheduleRule[] = [
     scheduleNumber: '3',
     sectionNumber: '8',
     ruleKey: 'vat.reduced_rate_cinema_admission',
+    rateRefs: ['8(1)'],
     ruleType: 'rate',
     topic: 'vat',
     name: 'Reduced rate: cinema admission',
@@ -299,4 +306,6 @@ export const VATCA_SCHEDULE_CURATED_RULES: CuratedVatcaScheduleRule[] = [
       + 'consistent with every other rule in this file — a transaction description is evidence, not proof, '
       + 'of what was actually supplied.',
   },
+  // Every remaining paragraph (issue #205 part 3).
+  ...VATCA_SCHEDULE_PARAGRAPH_RULES,
 ];

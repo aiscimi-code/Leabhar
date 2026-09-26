@@ -25,6 +25,7 @@
  */
 import { readFileSync } from 'node:fs';
 import { categoriseProvision, provisionSlug, type ParsedProvision } from './statuteParser';
+import { UNNUMBERED_PARAGRAPHS } from './lrcAnnotations';
 
 export { categoriseProvision, provisionSlug, assessRelevance } from './statuteParser';
 export type { ParsedProvision, ProvisionCategory } from './statuteParser';
@@ -120,10 +121,28 @@ export function parseVatcaSchedule(source: string): ParsedScheduleParagraph[] {
   const offsets = lineOffsets(source);
   const paragraphs: ParsedScheduleParagraph[] = [];
 
-  const bodyStarts: number[] = [];
+  const starts: Array<{ line: number; number: string }> = [];
   for (let i = 0; i < lines.length; i++) {
-    if (PARA_OPEN_RE.test(lines[i] ?? '')) bodyStarts.push(i);
+    const m = (lines[i] ?? '').match(PARA_OPEN_RE);
+    if (m?.[1]) starts.push({ line: i, number: m[1] });
   }
+  // A paragraph the LRC text prints without its number (Schedule 3 para 21)
+  // opens at the first line after its heading, which sits before paragraph
+  // `before` (issue #205). Without this its text would run into the previous
+  // paragraph's.
+  const scheduleNumber = /Sch\.(\d+)/.exec(parseScheduleFrontMatter(source).citation)?.[1];
+  for (const u of UNNUMBERED_PARAGRAPHS[scheduleNumber ?? ''] ?? []) {
+    if (starts.some((s) => s.number === u.paragraph)) continue;
+    const beforeIdx = starts.findIndex((s) => s.number === u.before);
+    if (beforeIdx <= 0) continue;
+    const from = starts[beforeIdx - 1]!.line;
+    const headingLine = lines.findIndex((l, i) => i > from && i < starts[beforeIdx]!.line && l.trim() === u.heading);
+    if (headingLine < 0) continue;
+    let open = headingLine + 1;
+    while (open < lines.length && (lines[open] ?? '').trim() === '') open++;
+    starts.splice(beforeIdx, 0, { line: open, number: u.paragraph });
+  }
+  const bodyStarts = starts.map((s) => s.line);
 
   let currentPart: string | null = null;
   let partCursor = 0;
@@ -137,9 +156,7 @@ export function parseVatcaSchedule(source: string): ParsedScheduleParagraph[] {
       partCursor++;
     }
 
-    const match = (lines[startLine] ?? '').match(PARA_OPEN_RE);
-    const paragraphNumber = match?.[1];
-    if (!paragraphNumber) continue;
+    const paragraphNumber = starts[s]!.number;
 
     const nextStart = bodyStarts[s + 1];
     const endLine = nextStart !== undefined ? nextStart - 1 : lines.length - 1;

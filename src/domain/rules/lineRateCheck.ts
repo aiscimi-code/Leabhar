@@ -90,7 +90,7 @@ export function checkLineRate(
   for (const rule of rules) {
     const binding = RULE_TREATMENT_BINDINGS.find((b) => b.ruleKeys.includes(rule.ruleKey)
       && (b.direction === 'either' || b.direction === params.direction));
-    const code = binding?.treatmentCode(statutory.facts);
+    const code = binding?.treatmentCode(statutory.facts, rule.ruleKey);
     if (!code) continue;
     const rate = rateFor(code);
     if (rate === null || seen.has(`${code}:${rate}`)) continue;
@@ -129,6 +129,7 @@ export function checkLineRate(
   const why = statutory.status === 'fallback_only'
     ? 'Only the standard-rate fallback matched; the rules cannot rule out an exemption or a reduced rate for this item.'
     : statutory.status === 'kb_empty' ? 'The statutory rules are not loaded for this company.'
+    : statutory.status === 'no_treatment' ? statutory.explanation
     : 'No statutory rule decides the rate for this item.';
   return {
     outcome: 'undetermined', chargedRateBasisPoints: charged, expected: null, candidates,

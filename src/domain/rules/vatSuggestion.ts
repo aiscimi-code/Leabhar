@@ -35,6 +35,9 @@ import { asIsoDate } from '../dates';
 import { VAT_SCOPE_CURATED_RULES } from './vatScopeCuration';
 import { VAT_POS_BUSINESS_ABROAD_RULE_KEY, VAT_POS_CONSUMER_RULE_KEY } from './vatPlaceOfSupplyCuration';
 import { provisionCitation } from './citation';
+import { VATCA_SCHEDULE_CURATED_RULES } from './vatcaScheduleCuration';
+import { SCHEDULE_RULE_PRECEDENCE } from './vatcaScheduleParagraphRules';
+import { scheduleThreeRate } from './scheduleRates';
 
 export type TransactionDirection = 'purchase' | 'sale';
 
@@ -58,9 +61,31 @@ const isEuNotIe = (c: string | null | undefined): boolean => !!c && c !== 'IE' &
 export interface TreatmentBinding {
   ruleKeys: string[];
   direction: TransactionDirection | 'either';
-  treatmentCode: (ctx: SuggestionFacts) => string | null;
+  /** The treatment for the matched rule `ruleKey`, on the facts (including the date). */
+  treatmentCode: (ctx: SuggestionFacts, ruleKey: string) => string | null;
   /** Why the binding yields no treatment, when `treatmentCode` returns null. */
-  gap?: string;
+  gap?: string | ((ctx: SuggestionFacts, ruleKey: string) => string);
+}
+
+export function bindingGap(binding: TreatmentBinding, ctx: SuggestionFacts, ruleKey: string): string | undefined {
+  return typeof binding.gap === 'function' ? binding.gap(ctx, ruleKey) : binding.gap;
+}
+
+/**
+ * Schedule 2 and 3 paragraph rules (issue #205), in precedence order. A
+ * Schedule 2 rule is zero-rated (s.46(1)(b)); a Schedule 3 rule bears the
+ * rate s.46 gives its sub-paragraphs on the line's date, or none when the
+ * sources cannot say (`scheduleThreeRate`).
+ */
+const SCHEDULE_RULES = new Map(VATCA_SCHEDULE_CURATED_RULES.map((r) => [r.ruleKey, r]));
+const SCHEDULE_BINDING_KEYS = SCHEDULE_RULE_PRECEDENCE.filter((k) => SCHEDULE_RULES.has(k));
+
+function scheduleRate(ctx: SuggestionFacts, ruleKey: string): { code: string | null; provision: string; gap?: string } {
+  const r = SCHEDULE_RULES.get(ruleKey);
+  if (!r || r.scheduleNumber === '2') return { code: 'IE_ZERO' as const, provision: 'VATCA 2010 s.46(1)(b)' };
+  const refs = r.rateRefs ?? [];
+  if (refs.length === 0) return { code: null, provision: 's.46', gap: `Rule ${ruleKey} names no Schedule 3 sub-paragraph.` };
+  return scheduleThreeRate(refs[0]!, ctx.transactionDate);
 }
 
 const scopeKeys = (treatment: 'IE_EXEMPT' | 'OUT_OF_SCOPE'): string[] =>
@@ -98,9 +123,10 @@ export const RULE_TREATMENT_BINDINGS: TreatmentBinding[] = [
     treatmentCode: () => 'IE_ZERO',
   },
   {
-    ruleKeys: ['vat.zero_rate_printed_books', 'vat.zero_rate_childrens_clothing_footwear'],
+    ruleKeys: SCHEDULE_BINDING_KEYS,
     direction: 'either',
-    treatmentCode: () => 'IE_ZERO',
+    treatmentCode: (f, key) => scheduleRate(f, key).code,
+    gap: (f, key) => scheduleRate(f, key).gap ?? 'No rate could be determined for this Schedule 3 paragraph.',
   },
   {
     ruleKeys: ['vat.rate_hospitality_9pct_not_modelled'],
@@ -128,8 +154,6 @@ export const RULE_TREATMENT_BINDINGS: TreatmentBinding[] = [
   },
   {
     ruleKeys: [
-      'vat.reduced_rate_dwelling_services', 'vat.reduced_rate_solid_fuel',
-      'vat.reduced_rate_repair_movable_goods', 'vat.reduced_rate_cinema_admission',
       'vat.rate_restaurant_catering_reduced_current', 'vat.rate_restaurant_catering_reduced_pre_9pct_window',
       'vat.rate_reduced_current',
     ],
@@ -468,7 +492,7 @@ export function suggestFromFacts(
     };
   }
 
-  const code = decision.binding.treatmentCode(facts);
+  const code = decision.binding.treatmentCode(facts, decision.rule.ruleKey);
   const ruleRow = db.select({ numericValue: irishTaxRules.numericValue, unit: irishTaxRules.unit })
     .from(irishTaxRules).where(eq(irishTaxRules.id, decision.rule.ruleId)).get();
   const ruleRateBasisPoints = ruleRow?.unit === 'percent' && ruleRow.numericValue != null
@@ -476,13 +500,14 @@ export function suggestFromFacts(
     : (code === 'IE_ZERO' || code === 'EU_GOODS_SUPPLY' ? 0 : null);
 
   const where = provisionCitation(decidingRule!.citation, decidingRule!.sectionNumber);
+  const gap = bindingGap(decision.binding, facts, decision.rule.ruleKey);
   if (code === null) {
     return {
       ...base, status: 'no_treatment', ruleRateBasisPoints, decidingRule, supportingRules,
       unresolvedFields: lookup.unresolvedFields,
-      reviewReasons: [...reviewReasons, decision.binding.gap ?? 'No treatment is configured for this rule.'],
+      reviewReasons: [...reviewReasons, gap ?? 'No treatment is configured for this rule.'],
       explanation: `Rule "${decidingRule!.ruleName}" (${where}) matched, but it maps to no configured VAT treatment. `
-        + (decision.binding.gap ?? ''),
+        + (gap ?? ''),
     };
   }
 

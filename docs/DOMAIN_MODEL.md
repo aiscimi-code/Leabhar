@@ -425,6 +425,25 @@ against a text that did not yet apply. Re-deriving with a different window
 retires the old rule (`effectiveTo`, inactive) and inserts the new one. A
 document dated before any configured rate is flagged, not refused.
 
+Every Schedule 2 and 3 paragraph has a rule, or a justified `not_applicable`
+row in the coverage matrix. A Schedule 2 rule is zero-rated. A Schedule 3 rule
+states no rate: it names the sub-paragraphs it covers, and the rate comes from
+s.46 on the line's date (`scheduleThreeRate`):
+
+- 9% where a dated clause lists the paragraph:
+  - (ca) from 2025;
+  - (caa) electricity and gas, 2022–2030;
+  - (cab) and (cac) apartments;
+  - (cb) hospitality, 2020–2023;
+  - Finance Act 2025 s.71: catering, hot food and hairdressing from 1 July 2026.
+- 13.5% otherwise from 2025.
+- No rate before 2025, and the line is flagged. What (ca) listed before
+  2025 is not in the repository.
+
+When a line matches more than one paragraph, the order in
+`SCHEDULE_RULE_PRECEDENCE` decides. A paragraph that excludes another's items
+comes after it; for example, solar panels come before dwelling work.
+
 ### Posting paths are atomic
 
 Every exported posting path — classify, reclassify, split journal,

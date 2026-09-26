@@ -37,7 +37,9 @@ describe('LRC schedule annotations', () => {
   it('finds every paragraph the Markdown parser finds, and places every footnote', () => {
     for (const n of ['2', '3']) {
       const list = paragraphs(n);
-      for (const u of UNNUMBERED_PARAGRAPHS[n] ?? []) list.splice(list.indexOf(u.before), 0, u.paragraph);
+      for (const u of UNNUMBERED_PARAGRAPHS[n] ?? []) {
+        if (!list.includes(u.paragraph)) list.splice(list.indexOf(u.before), 0, u.paragraph);
+      }
       const startsAt = Object.fromEntries((UNNUMBERED_PARAGRAPHS[n] ?? []).map((u) => [u.paragraph, u.heading]));
       const result = annotateScheduleParagraphs(html(n), list, startsAt);
       const placed = new Set([...result.paragraphs.flatMap((p) => p.footnotes.map((f) => f.ref)), ...result.partFootnotes.map((f) => f.ref)]);
