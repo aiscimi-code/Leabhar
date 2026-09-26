@@ -127,11 +127,15 @@ export interface CuratedRule {
 
 export const SECTION_RULE_KEYS: Record<string, CuratedRule> = {
   '2': {
-    key: 'usc.first_band_threshold', name: 'USC first band ceiling',
+    // s.531AN(3), not a band of the Table (issue #199): a full medical card holder under 70 with aggregate
+    // income up to €60,000 pays USC at no more than 2% on income above this figure.
+    key: 'usc.medical_card_2pct_threshold', name: 'USC: the 2% cap for full medical card holders applies above this income',
     unit: 'eur_minor', kind: 'threshold', topic: 'usc',
   },
   '3': {
-    key: 'income_tax.standard_rate_threshold', name: 'Income tax standard-rate ceiling',
+    // s.15(3)(i), not the standard rate band (issue #199): the most a second income can add to a
+    // married couple's or civil partners' standard rate band.
+    key: 'income_tax.second_earner_band_increase_max', name: 'Income tax: maximum increase in the standard rate band for a second income',
     unit: 'eur_minor', kind: 'threshold', topic: 'income_tax',
   },
   '13': {

@@ -229,6 +229,9 @@ export interface DeriveResult {
  * `supersedesRuleId` — the historical row is never edited in place
  * (AGENTS.md invariant #6).
  */
+/** Replaced by correctly named keys (issue #199): the old names described a different figure. */
+export const RETIRED_FINANCE_ACT_2024_RULE_KEYS = ['usc.first_band_threshold', 'income_tax.standard_rate_threshold'];
+
 export function deriveTaxRules(
   db: AppDatabase,
   params: { companyId: string; sourceId?: string },
@@ -368,6 +371,17 @@ export function deriveTaxRules(
       dedupeKey: `irish_tax_rule:${newRuleId}`,
       context: { ruleKey: curated.key, sectionNumber: prov.sectionNumber, extractedFact: fact.rawValue },
     });
+  }
+
+  // Keys retired because they misnamed the figure they carried (issue #199):
+  // closed, never deleted, so the record of what was stored stays.
+  for (const ruleKey of RETIRED_FINANCE_ACT_2024_RULE_KEYS) {
+    for (const row of db.select().from(irishTaxRules)
+      .where(and(eq(irishTaxRules.companyId, params.companyId), eq(irishTaxRules.ruleKey, ruleKey))).all()) {
+      if (row.effectiveTo === row.effectiveFrom && !row.active) continue;
+      db.update(irishTaxRules).set({ effectiveTo: row.effectiveFrom, active: false }).where(eq(irishTaxRules.id, row.id)).run();
+      superseded++;
+    }
   }
 
   return { created, superseded, unchanged };

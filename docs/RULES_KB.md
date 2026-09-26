@@ -1102,7 +1102,7 @@ Conceptually, a stored rule looks like:
 ```json
 {
   "rule_id": "taxrule_...",
-  "rule_key": "usc.first_band_threshold",
+  "rule_key": "usc.medical_card_2pct_threshold",
   "topic": "usc",
   "rule_type": "threshold",
   "statement": "Finance Act 2024 s.2: (1) Section 531AN of the Principal Act is amended— (a) in subsection (3), by the substitution of “€27,382” for “€25,760”, and ...",

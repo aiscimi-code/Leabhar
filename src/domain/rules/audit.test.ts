@@ -41,7 +41,7 @@ describe('generateAuditReport', () => {
     const report = generateAuditReport(freshDb, { companyId: freshCompanyId });
     expect(report.ruleCount).toBe(0);
     expect(report.provisionsWithoutExtractedRule.length).toBe(4);
-    expect(report.provisionsWithoutExtractedRule.map((p) => p.ruleKey)).toContain('usc.first_band_threshold');
+    expect(report.provisionsWithoutExtractedRule.map((p) => p.ruleKey)).toContain('usc.medical_card_2pct_threshold');
   });
 
   it('finds no duplicate rule keys among active rules', () => {

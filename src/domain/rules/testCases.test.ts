@@ -43,7 +43,7 @@ describe('generateDefaultTestCases / runTestCases', () => {
     // Sabotage: disable a rule after its "positive" test case (expects a
     // match) was generated, so the lookup can no longer find it as a candidate.
     db.update(irishTaxRules).set({ enabled: false })
-      .where(eq(irishTaxRules.ruleKey, 'usc.first_band_threshold')).run();
+      .where(eq(irishTaxRules.ruleKey, 'usc.medical_card_2pct_threshold')).run();
 
     const run = runTestCases(db, { companyId });
     expect(run.failed).toBeGreaterThan(0);

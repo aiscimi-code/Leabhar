@@ -43,6 +43,7 @@ export const NFG_SECTIONS: Record<string, string[]> = {
   part09: ['284', '285A', '288', '291', '291A', '292'],
   part12: ['396', '396A', '396B'],
   part13: ['430', '434', '440', '441'],
+  part18d: ['531AM', '531AN'],
   part36: ['840'],
   part41a: ['959A', '959I', '959AM', '959AR', '959AS'],
 };
