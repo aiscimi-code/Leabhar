@@ -50,6 +50,14 @@ export function trialBalance(
     from?: IsoDate;
     baseCurrency?: string;
     includeZeroBalances?: boolean;
+    /**
+     * Leave out year-end closing entries and their reversals (issue #369).
+     * A profit-and-loss or tax figure for a year asks what was earned and
+     * spent; the close only moves that result into reserves, so counting it
+     * would report every closed year as nil. A balance as at a date keeps the
+     * close — that is where the result now sits.
+     */
+    excludeYearEndClose?: boolean;
   },
 ): TrialBalance {
   const conditions = [
@@ -58,6 +66,11 @@ export function trialBalance(
     eq(journalEntries.isPosted, true),
   ];
   if (params.from) conditions.push(gte(journalEntries.entryDate, params.from));
+  if (params.excludeYearEndClose) {
+    conditions.push(sql`${journalEntries.sourceType} <> 'year_end_close'`);
+    conditions.push(sql`(${journalEntries.reversalOfId} IS NULL OR ${journalEntries.reversalOfId} NOT IN (
+      SELECT closing.id FROM journal_entries AS closing WHERE closing.source_type = 'year_end_close'))`);
+  }
 
   const rows = db
     .select({

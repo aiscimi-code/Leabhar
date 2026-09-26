@@ -70,9 +70,10 @@ UPDATE `journal_lines` SET
  * already, as ordinary accounts. The timing workflow addresses them by system
  * key, so they are promoted in place — same row, same history, same balance —
  * rather than leaving the workflow unable to find them in an upgraded book.
- * Only rows that have not been given a system key are touched.
+ * Only rows that have not been given a system key, and that are still the
+ * asset (1600) or liability (2300) the default chart seeded, are touched.
  */
 UPDATE `accounts` SET `system_key` = 'prepayments', `is_system` = 1
-  WHERE `code` = '1600' AND `system_key` IS NULL;--> statement-breakpoint
+  WHERE `code` = '1600' AND `type` = 'asset' AND `system_key` IS NULL;--> statement-breakpoint
 UPDATE `accounts` SET `system_key` = 'accruals', `is_system` = 1
-  WHERE `code` = '2300' AND `system_key` IS NULL;
+  WHERE `code` = '2300' AND `type` = 'liability' AND `system_key` IS NULL;
