@@ -37,6 +37,7 @@ const EU = new Set<string>(EU_COUNTRY_CODES);
 const REVERSE_CHARGE = /reverse|autoliquidation|steuerschuldnerschaft|verlegd|inversione|inversi[oó]n|art(icle|\.)?\s*(44|196)\b/i;
 const INTRA_COMMUNITY = /intra-?community|innergemeinschaftlich|intracommunautaire|art(icle|\.)?\s*138\b/i;
 const EXEMPT = /exempt|befreit|exon[eé]r|vrijgesteld|esente|exento/i;
+const MARGIN = /\b(margin scheme|auction scheme)\b/i;
 
 export function invoiceConflicts(input: InvoiceConflictInput): InvoiceConflict[] {
   const out: InvoiceConflict[] = [];
@@ -56,6 +57,16 @@ export function invoiceConflicts(input: InvoiceConflictInput): InvoiceConflict[]
       code: 'reverse_charge_with_vat',
       message: `The invoice says "${rcLegend}" but also charges VAT. A reverse-charge invoice carries no VAT: the `
         + 'customer accounts for it. One of the two is wrong; ask the supplier which.',
+    });
+  }
+
+  const marginLegend = input.legends.find((l) => MARGIN.test(l));
+  if (marginLegend && charged) {
+    out.push({
+      code: 'margin_scheme_with_vat',
+      message: `The invoice says "${marginLegend}" but shows VAT. A margin- or auction-scheme invoice never shows VAT `
+        + 'separately (VATCA s.87(9), s.89(5)), and none can be deducted. Either the scheme was not applied or the VAT '
+        + 'is shown in error; ask the supplier which.',
     });
   }
 

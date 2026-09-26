@@ -612,6 +612,22 @@ transaction decides either of them.
 Rules that turn on an unrecorded fact are advisory (`advisoryRules.ts`). They
 add a reason and stop pre-selection, but never decide the treatment.
 
+### Special schemes, from the buyer's side
+
+- **Margin or auction scheme purchases** (ss.87-89): these invoices never show
+  VAT separately, so there is none to deduct. The line is flagged and
+  `OUT_OF_SCOPE` is offered, but not chosen. An invoice with margin-scheme
+  wording that also shows VAT is flagged as a conflict.
+- **Flat-rate farmers** (s.86): the flat-rate addition shown on the farmer's
+  invoice is 4.5% of the consideration from 1 January 2026. It is flagged,
+  because no treatment models it yet.
+- **Vouchers** (s.43(2)): the price paid for a voucher is disregarded. Buying or
+  selling one is `OUT_OF_SCOPE` until it is redeemed, unless it is bought for
+  resale (s.43(3)).
+
+The company operating one of these schemes itself, as a dealer, travel agent or
+auctioneer, is not modelled.
+
 ### Posting paths are atomic
 
 Every exported posting path — classify, reclassify, split journal,

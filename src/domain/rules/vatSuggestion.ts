@@ -44,6 +44,10 @@ import {
   PROPERTY_GAPS, LETTING_OPTION_RULE_KEY, LETTING_OPTION_RESIDENTIAL_RULE_KEY, JOINT_OPTION_RULE_KEY, PROPERTY_SUPPLY_RULE_KEY,
 } from './propertyCuration';
 import { ADVISORY_RULE_KEYS, advisoryReasons } from './advisoryRules';
+import {
+  SCHEMES_GAPS, MARGIN_SCHEME_RULE_KEY, TRAVEL_MARGIN_RULE_KEY, AUCTION_SCHEME_RULE_KEY, FLAT_RATE_FARMER_RULE_KEY,
+  VOUCHER_RULE_KEY,
+} from './schemesCuration';
 import { S46_FAMILY_SCHEDULE_REF } from './vatcaRevisedCuration';
 
 export type TransactionDirection = 'purchase' | 'sale';
@@ -104,6 +108,17 @@ export const RULE_TREATMENT_BINDINGS: TreatmentBinding[] = [
   // The s.16 domestic reverse charges (issue #208) come first: s.16(3) applies to construction
   // services a principal receives wherever the subcontractor is established.
   { ruleKeys: [RC_CONSTRUCTION_RULE_KEY], direction: 'purchase', treatmentCode: () => 'RC_CONSTRUCTION' },
+  // Special schemes (issue #208 part 4): a margin- or auction-scheme purchase has no VAT to deduct;
+  // a flat-rate farmer's addition is flagged; a voucher's price is disregarded (s.43(2)).
+  {
+    ruleKeys: [TRAVEL_MARGIN_RULE_KEY, AUCTION_SCHEME_RULE_KEY, MARGIN_SCHEME_RULE_KEY],
+    direction: 'purchase',
+    treatmentCode: () => null,
+    gap: (_f, key) => SCHEMES_GAPS[key]!,
+    offer: ['OUT_OF_SCOPE'],
+  },
+  { ruleKeys: [FLAT_RATE_FARMER_RULE_KEY], direction: 'purchase', treatmentCode: () => null, gap: SCHEMES_GAPS[FLAT_RATE_FARMER_RULE_KEY] },
+  { ruleKeys: [VOUCHER_RULE_KEY], direction: 'either', treatmentCode: () => 'OUT_OF_SCOPE' },
   // Property (issue #208 part 2): rent invoiced with VAT is an opted letting (s.97(1)(c)(ii)),
   // unless it is residential (s.97(4)); a sale of property, or a joint option, is flagged.
   {

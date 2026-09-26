@@ -367,9 +367,10 @@
       "id": "vatca:s43",
       "area": "vatca_section",
       "title": "s.43 Vouchers, etc.",
-      "status": "deferred",
-      "issue": 208,
-      "reason": "Vouchers."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.voucher_consideration_disregarded"
+      ]
     },
     {
       "id": "vatca:s44",
@@ -593,9 +594,11 @@
       "id": "vatca:s68",
       "area": "vatca_section",
       "title": "s.68 Flat-rate farmer invoices and other documents.",
-      "status": "deferred",
-      "issue": 209,
-      "reason": "Invoices and credit notes — validity for deduction."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.flat_rate_farmer_purchase"
+      ],
+      "note": "Prescribes the form of a flat-rate farmer's invoice; the s.86 rule reads that invoice and flags the flat-rate addition."
     },
     {
       "id": "vatca:s69",
@@ -742,33 +745,40 @@
       "id": "vatca:s86",
       "area": "vatca_section",
       "title": "s.86 Special provisions for tax invoiced by flat-rate farmers.",
-      "status": "deferred",
-      "issue": 208,
-      "reason": "Flat-rate farmers."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.flat_rate_farmer_purchase"
+      ]
     },
     {
       "id": "vatca:s87",
       "area": "vatca_section",
       "title": "s.87 Margin scheme — taxable dealers.",
-      "status": "deferred",
-      "issue": 208,
-      "reason": "Margin schemes."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.margin_scheme_goods_purchase"
+      ],
+      "note": "The buyer's side: no VAT to deduct. The company operating the margin scheme as a dealer is not modelled."
     },
     {
       "id": "vatca:s88",
       "area": "vatca_section",
       "title": "s.88 Margin scheme — travel agents.",
-      "status": "deferred",
-      "issue": 208,
-      "reason": "Margin schemes."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.margin_scheme_travel_purchase"
+      ],
+      "note": "The traveller's side: no VAT to deduct. The company operating as a travel agent is not modelled."
     },
     {
       "id": "vatca:s89",
       "area": "vatca_section",
       "title": "s.89 Margin scheme — auctioneers.",
-      "status": "deferred",
-      "issue": 208,
-      "reason": "Margin schemes."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.auction_scheme_purchase"
+      ],
+      "note": "The buyer's side: no VAT to deduct. The company operating as an auctioneer is not modelled."
     },
     {
       "id": "vatca:s90",

@@ -206,7 +206,6 @@ export function documentLineChoices(db: AppDatabase, params: { companyId: string
     if (list.length === 0) flags.push('Nothing on the document or in the rules points to a treatment. Choose one.');
     if (list.length > 1) flags.push(`${list.length} treatments are possible. Read the reason for each and choose.`);
     if (statutory.status === 'fallback_only') flags.push('The statutory rules could only fall back to the standard rate; they cannot rule out an exemption.');
-    if (legends.includes('margin')) flags.push('The invoice mentions a margin scheme, which this system does not model. Take advice.');
     if (line.origin !== 'line') flags.push(line.origin === 'vat_total'
       ? 'The document prints no lines, so this line is its VAT analysis for one rate.'
       : 'The document prints no lines or VAT analysis, so this is its header total.');

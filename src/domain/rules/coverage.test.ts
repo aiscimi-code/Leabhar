@@ -92,10 +92,10 @@ describe('rule coverage matrix', () => {
     });
 
     it('a deferred row names no issue, or a not_applicable row gives no reason', () => {
-      const m = withRows((rows) => rows.map((r) => (r.id === 'vatca:s43' ? { ...r, issue: undefined }
+      const m = withRows((rows) => rows.map((r) => (r.id === 'vatca:s5' ? { ...r, issue: undefined }
         : r.id === 'vatca:s1' ? { ...r, reason: '' } : r)));
       const { errors } = check(m);
-      expect(errors).toContain('vatca:s43: deferred without an issue number');
+      expect(errors).toContain('vatca:s5: deferred without an issue number');
       expect(errors).toContain('vatca:s1: not_applicable without a reason');
     });
   });
