@@ -27,7 +27,7 @@ import {
 import { createSupplierFromExtraction } from '@/domain/extraction/service';
 import {
   initCompany, addBank, addAccount, addCustomer, listSuppliersCli, listCustomersCli,
-  ensureDefaultAccountsCli, installRulePackCli, addLoanCli,
+  ensureDefaultAccountsCli, installRulePackCli, addLoanCli, installFarmChartCli,
 } from '@/agent/induction';
 import {
   createInvoicesFromCsv, importInvoicesFromCsv, recordPaymentCli, journalCli,
@@ -133,6 +133,9 @@ Induction (no company/bank/chart yet):
   init-company --name "..."              Create a company + default chart
       [--vat-basis invoice|cash_receipts] [--vat-frequency bi_monthly]
       [--year-end MM-DD] [--base-currency EUR] [--seed-years "2024,2025"]
+      [--chart sm|farm]  Farm installs the farm chart (issue #360): the base
+      chart with farm income accounts (sales, scheme income, contract work),
+      livestock and crops on hand, farm machinery, and the farm cost lines.
   add-bank --name "..."                  Add a bank account
       [--iban ...] [--currency EUR] [--account-type current]
       [--opening <amount> --opening-date <date>]  Also journals the opening
@@ -158,6 +161,10 @@ Induction (no company/bank/chart yet):
       introduced since this company was created (e.g. 6180/6190/5030/2210/
       1020) — a new company gets them all already; this is only for one
       induced earlier.
+  install-farm-chart                    Turn an existing book's chart into the
+      farm chart: adds the farm accounts and renames the base accounts that
+      are still under their seeded names — one the user has already renamed
+      is theirs and is reported as skipped, never touched.
   install-rule-pack [--employee "Name"] [--second-bank-account <code>]
       [--rent-account <code>]            Starter Irish SME bank-narrative
       rules (wages, employer PRSI, a Revenue PAYE remittance, VAT3, rent, an
@@ -417,6 +424,7 @@ export async function main(argv: string[], options: CliOptions = {}): Promise<nu
         seedYears: getFlag(flags, 'seed-years'),
         entityType: getFlag(flags, 'entity-type'),
         tradeCommencedOn: getFlag(flags, 'commenced'),
+        chartKind: getFlag(flags, 'chart'),
       });
       print(initCompany(db, parsed), format);
       return 0;
@@ -1141,6 +1149,12 @@ export async function main(argv: string[], options: CliOptions = {}): Promise<nu
       case 'ensure-default-accounts': {
         const parsed = ensureDefaultAccountsInput.parse({ companyId });
         print(ensureDefaultAccountsCli(db, parsed), format);
+        return 0;
+      }
+
+      case 'install-farm-chart': {
+        const parsed = ensureDefaultAccountsInput.parse({ companyId });
+        print(installFarmChartCli(db, parsed), format);
         return 0;
       }
 

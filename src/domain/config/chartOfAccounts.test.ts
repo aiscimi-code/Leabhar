@@ -1,10 +1,10 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { createTestDatabase } from '@/db/testing';
-import { createCompany, ensureDefaultAccounts, addLoan } from './setup';
+import { createCompany, ensureDefaultAccounts, addLoan, installFarmChart } from './setup';
 import { postJournalEntry } from '../accounting/journal';
 import { profitAndLoss, balanceSheet } from '../reports/financial';
 import { DEFAULT_ACCOUNTS, normalBalance, signedBalance } from './chartOfAccounts';
-import { accounts, journalEntries, journalLines, loans } from '@/db/schema';
+import { accounts, journalEntries, journalLines, loans, vatTreatments } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { makeDate, type IsoDate } from '../dates';
 import type { AppDatabase } from '@/db';
@@ -266,5 +266,82 @@ describe('addLoan (issue #358)', () => {
     expect(loan.principalMinor).toBe(0);
     expect(db.select().from(journalEntries).where(eq(journalEntries.companyId, companyId)).all())
       .toHaveLength(0);
+  });
+});
+
+describe('the farm chart (issue #360)', () => {
+  it('seeds the base chart renamed for a farm, plus the farm accounts', () => {
+    const farm = createCompany(db, {
+      legalName: 'O\'Brien Farms', entityType: 'sole_trader', chartKind: 'farm',
+      seedYears: [2025], tradeCommencedOn: '2020-03-01',
+    });
+    const farmAccounts = db.select().from(accounts)
+      .where(eq(accounts.companyId, farm.companyId)).all();
+    const byFarmCode = new Map(farmAccounts.map((a) => [a.code, a]));
+
+    // Every system account the posting engine addresses still exists.
+    for (const key of Object.keys(farm.accountsByKey)) {
+      expect(farm.accountsByKey[key]).toBeTruthy();
+    }
+
+    // Renamed trade slots, not tech-company noise.
+    expect(byFarmCode.get('4000')?.name).toBe('Farm sales');
+    expect(byFarmCode.get('4010')?.name).toBe('Scheme and support income');
+    expect(byFarmCode.get('4020')?.name).toBe('Contract work and services income');
+    expect(byFarmCode.get('5000')?.name).toBe('Casual and seasonal labour');
+    expect(byFarmCode.get('5010')?.name).toBe('Contractor and machinery hire');
+
+    // The farm's own accounts are there.
+    for (const code of ['1330', '1340', '1540', '1545', '5040', '5050', '5060', '5070', '6210', '6220']) {
+      expect(byFarmCode.get(code), `farm account ${code} missing`).toBeTruthy();
+    }
+    // ...with a farm chart that has no duplicate codes.
+    expect(new Set(farmAccounts.map((a) => a.code)).size).toBe(farmAccounts.length);
+
+    // The sole-trader adjustments still compose on top of the farm chart.
+    expect(byFarmCode.get('3000')?.name).toBe('Capital account');
+    expect(byFarmCode.get('2200')).toBeUndefined();
+  });
+
+  it('defaults farm sales accounts to not VAT-applicable with the out-of-scope treatment', () => {
+    const farm = createCompany(db, { legalName: 'Farm Ltd', chartKind: 'farm', seedYears: [2025] });
+    const rows = db.select({
+      code: accounts.code,
+      vatApplicable: accounts.vatApplicable,
+      treatment: vatTreatments.code,
+    }).from(accounts)
+      .leftJoin(vatTreatments, eq(accounts.defaultVatTreatmentId, vatTreatments.id))
+      .where(eq(accounts.companyId, farm.companyId)).all();
+
+    const sales = rows.find((r) => r.code === '4000')!;
+    expect(sales.vatApplicable).toBe(false);
+    expect(sales.treatment).toBe('OUT_OF_SCOPE');
+    const vet = rows.find((r) => r.code === '6210')!;
+    expect(vet.treatment).toBe('IE_STD');
+  });
+
+  it('installFarmChart adds and renames, but never touches a renamed account', () => {
+    // The user renamed 4000 to their own name before installing the farm chart.
+    const userNamed = 'Dairy sales';
+    db.update(accounts).set({ name: userNamed })
+      .where(eq(accounts.id, byCode['4000']!)).run();
+
+    const result = installFarmChart(db, companyId, 'test');
+    expect(result.added.sort()).toEqual(
+      ['1330', '1340', '1540', '1545', '5040', '5050', '5060', '5070', '6210', '6220'].sort(),
+    );
+    expect(result.renamed.sort()).toEqual(['4010', '4020', '5000', '5010'].sort());
+    expect(result.skipped).toEqual(['4000']);
+
+    const rows = db.select().from(accounts).where(eq(accounts.companyId, companyId)).all();
+    const byRowCode = new Map(rows.map((a) => [a.code, a]));
+    expect(byRowCode.get('4000')?.name).toBe(userNamed);
+    expect(byRowCode.get('4010')?.name).toBe('Scheme and support income');
+
+    // Installing twice adds nothing the second time.
+    const again = installFarmChart(db, companyId, 'test');
+    expect(again.added).toEqual([]);
+    // 4000 is still skipped: its name still differs from the seeded one.
+    expect(again.skipped).toEqual(['4000']);
   });
 });

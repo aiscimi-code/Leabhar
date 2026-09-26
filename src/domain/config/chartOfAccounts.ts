@@ -308,6 +308,122 @@ export const DEFAULT_ACCOUNTS: AccountSeed[] = [
   { code: '3200', name: 'Dividends', type: 'equity', subtype: 'equity', vatApplicable: false, reportSection: 'equity' },
 ];
 
+/**
+ * Chart variants installable at company creation (issue #360). The farm chart
+ * is the same base chart — every system account the posting engine addresses
+ * is identical — with the trade-specific slots renamed and the farm's own
+ * accounts added, because a farm is not a software company: "Subscription
+ * revenue" on a dairy farm is noise, and livestock is nowhere to be seen.
+ *
+ * EPIC 24 (#319) and #326 (the farm profile) build on top of this; the farm
+ * chart itself is EPIC 04's to provide.
+ */
+export type ChartKind = 'sm' | 'farm';
+
+/**
+ * A flat-rate farmer (VATCA s.86) charges no VAT: the buyer self-accounts the
+ * flat-rate addition, which is why farm income accounts default to not
+ * VAT-applicable. A VAT-registered farmer turns that back on, and the
+ * livestock treatment (IE_LIVESTOCK) is already there for registered sales.
+ */
+export const FARM_ACCOUNT_OVERRIDES: Record<string, Omit<AccountSeed, 'code' | 'type' | 'reportSection'>> = {
+  '4000': {
+    name: 'Farm sales',
+    vatApplicable: false,
+    description: 'Milk, livestock, crops and other produce sold. A flat-rate farmer charges '
+      + 'no VAT — the buyer self-accounts the flat-rate addition (VATCA s.86) — so this account '
+      + 'defaults to not VAT-applicable. A VAT-registered farm switches it back on, and uses the '
+      + 'livestock treatment for sales of cattle, sheep, goats, pigs and deer.',
+  },
+  '4010': {
+    name: 'Scheme and support income',
+    vatApplicable: false,
+    description: 'BISS and other CAP scheme payments, ACRES, and similar support. Part of '
+      + 'farming profits for tax, and outside the scope of VAT.',
+  },
+  '4020': {
+    name: 'Contract work and services income',
+    vatApplicable: false,
+    description: 'Hiring out machinery, contract rearing, silage and other services done for '
+      + 'other farmers.',
+  },
+  '5000': {
+    name: 'Casual and seasonal labour',
+    description: 'Relief milking, harvest and other casual labour bought in — a direct cost of '
+      + 'the year\'s output, not an overhead. PAYE applies to it like any other wage.',
+  },
+  '5010': {
+    name: 'Contractor and machinery hire',
+    description: 'Silage, slurry spreading, baling and other work done by agricultural '
+      + 'contractors, and machinery hired in.',
+  },
+};
+
+/** Accounts the farm chart adds on top of the (renamed) base chart. */
+export const FARM_ACCOUNTS: AccountSeed[] = [
+  // ---- Stock on the farm: assets ----
+  {
+    code: '1330', name: 'Livestock on hand', type: 'asset', subtype: 'current_asset',
+    vatApplicable: false, reportSection: 'current_assets',
+    description: 'The animals on the farm at the period end, at cost or open-market value. '
+      + 'Livestock is trading stock: what is not sold is not yet a cost, and the opening and '
+      + 'closing herd counts are what move this balance.',
+  },
+  {
+    code: '1340', name: 'Crops and produce on hand', type: 'asset', subtype: 'current_asset',
+    vatApplicable: false, reportSection: 'current_assets',
+    description: 'Silage, grain and other produce in store at the period end, at cost.',
+  },
+
+  // ---- Farm machinery ----
+  {
+    code: '1540', name: 'Farm machinery — cost', type: 'asset', subtype: 'fixed_asset',
+    reportSection: 'fixed_assets',
+    description: 'Tractors, balers, quad bikes and other farm machinery at cost.',
+  },
+  {
+    code: '1545', name: 'Farm machinery — accumulated depreciation', type: 'asset',
+    subtype: 'fixed_asset', vatApplicable: false, reportSection: 'fixed_assets',
+    description: 'Depreciation charged against farm machinery (1540) over the years.',
+  },
+
+  // ---- Farm cost of sales ----
+  {
+    code: '5040', name: 'Livestock purchases', type: 'expense', subtype: 'cost_of_sales',
+    reportSection: 'cost_of_sales',
+    description: 'Animals bought for resale or for the herd. A flat-rate farmer does not '
+      + 'reclaim input VAT — the flat-rate addition exists to compensate for exactly that — '
+      + 'so confirm the treatment before posting one.',
+  },
+  {
+    code: '5050', name: 'Feed and forage', type: 'expense', subtype: 'cost_of_sales',
+    reportSection: 'cost_of_sales',
+    description: 'Meal, nuts, silage additive and bought-in forage.',
+  },
+  {
+    code: '5060', name: 'Fertiliser and lime', type: 'expense', subtype: 'cost_of_sales',
+    reportSection: 'cost_of_sales',
+  },
+  {
+    code: '5070', name: 'Seed, plants and sprays', type: 'expense', subtype: 'cost_of_sales',
+    reportSection: 'cost_of_sales',
+  },
+
+  // ---- Farm operating expenses ----
+  {
+    code: '6210', name: 'Veterinary and medicines', type: 'expense', subtype: 'operating_expense',
+    reportSection: 'operating_expenses',
+    description: 'Vet calls, doses and animal remedies.',
+  },
+  {
+    code: '6220', name: 'Fuel, electricity and water', type: 'expense', subtype: 'operating_expense',
+    reportSection: 'operating_expenses',
+    description: 'Farm diesel, electricity and water. Marked agricultural gas oil is '
+      + 'VAT-liable at the reduced rate for a VAT-registered farm; a flat-rate farmer does not '
+      + 'reclaim it.',
+  },
+];
+
 /** A debit increases assets and expenses; a credit increases the rest. */
 export function normalBalance(type: AccountType): 'debit' | 'credit' {
   return type === 'asset' || type === 'expense' ? 'debit' : 'credit';

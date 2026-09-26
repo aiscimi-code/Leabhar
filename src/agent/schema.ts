@@ -174,6 +174,8 @@ export const initCompanyInput = z.object({
   entityType: z.enum(['company', 'sole_trader', 'partnership']).optional(),
   /** When the trade began, for a sole trader or partnership. */
   tradeCommencedOn: isoDate.optional(),
+  /** The SME chart (default) or the farm chart (issue #360). */
+  chartKind: z.enum(['sm', 'farm']).optional(),
 });
 
 export const addBankInput = z.object({

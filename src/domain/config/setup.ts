@@ -6,7 +6,7 @@ import {
 } from '@/db/schema';
 import { ids } from '@/lib/ids';
 import { type IsoDate, asIsoDate, nowIso, today } from '../dates';
-import { DEFAULT_ACCOUNTS, type SystemAccountKey } from './chartOfAccounts';
+import { DEFAULT_ACCOUNTS, FARM_ACCOUNTS, FARM_ACCOUNT_OVERRIDES, type SystemAccountKey, type ChartKind } from './chartOfAccounts';
 import { DEFAULT_TAX_RATES, DEFAULT_VAT_TREATMENTS } from './vatTreatments';
 import { generateVatPeriods, generateFinancialYear, type VatFrequency } from './periods';
 import { GLOSSARY_TERMS } from '../help/glossary';
@@ -37,6 +37,12 @@ export interface CreateCompanyInput {
   isDemo?: boolean;
   /** Financial years and VAT periods to create up front. */
   seedYears?: number[];
+  /**
+   * Which variant of the default chart to install (issue #360): the SME chart
+   * (default) or the farm chart — the base chart with the trade-specific
+   * slots renamed for a farm and the farm's own accounts added.
+   */
+  chartKind?: ChartKind;
 }
 
 export interface CreatedCompany {
@@ -91,6 +97,26 @@ function chartSeedFor(
   }
 }
 
+/**
+ * The full seed list a company is created with: the base chart, adjusted for
+ * the entity type (issue #212), then for the sector (issue #360). A farm is
+ * usually also a sole trader, and the two adjustments compose.
+ */
+function chartSeeds(
+  entityType: 'company' | 'sole_trader' | 'partnership',
+  chartKind: ChartKind,
+): (typeof DEFAULT_ACCOUNTS)[number][] {
+  const seeds: (typeof DEFAULT_ACCOUNTS)[number][] = [];
+  for (const base of DEFAULT_ACCOUNTS) {
+    const seed = chartSeedFor(entityType, base);
+    if (!seed) continue;
+    const override = chartKind === 'farm' ? FARM_ACCOUNT_OVERRIDES[seed.code] : undefined;
+    seeds.push(override ? { ...seed, ...override } : seed);
+  }
+  if (chartKind === 'farm') seeds.push(...FARM_ACCOUNTS);
+  return seeds;
+}
+
 export function createCompany(db: AppDatabase, input: CreateCompanyInput): CreatedCompany {
   return db.transaction((tx) => {
     const companyId = ids.company();
@@ -126,9 +152,11 @@ export function createCompany(db: AppDatabase, input: CreateCompanyInput): Creat
     // ---- Chart of accounts ----
     const accountsByKey: Record<string, string> = {};
     const accountsByCode: Record<string, string> = {};
-    for (const [index, base] of DEFAULT_ACCOUNTS.entries()) {
-      const seed = chartSeedFor(input.entityType ?? 'company', base);
-      if (!seed) continue;
+    /** vatApplicable as seeded (after entity/sector adjustment), for wiring default treatments below. */
+    const vatApplicableByAccount = new Map<string, boolean>();
+    for (const [index, seed] of chartSeeds(
+      input.entityType ?? 'company', input.chartKind ?? 'sm',
+    ).entries()) {
       const id = ids.account();
       tx.insert(accounts).values({
         id,
@@ -146,6 +174,7 @@ export function createCompany(db: AppDatabase, input: CreateCompanyInput): Creat
         effectiveFrom: input.dateIncorporated ?? '1900-01-01',
       }).run();
       accountsByCode[seed.code] = id;
+      vatApplicableByAccount.set(id, seed.vatApplicable ?? true);
       if (seed.systemKey) accountsByKey[seed.systemKey] = id;
     }
 
@@ -206,9 +235,8 @@ export function createCompany(db: AppDatabase, input: CreateCompanyInput): Creat
     // Wire sensible default treatments onto expense accounts.
     const standardTreatment = treatmentsByCode['IE_STD'];
     const outOfScope = treatmentsByCode['OUT_OF_SCOPE'];
-    for (const seed of DEFAULT_ACCOUNTS) {
-      const accountId = accountsByCode[seed.code]!;
-      const treatment = seed.vatApplicable === false ? outOfScope : standardTreatment;
+    for (const accountId of Object.values(accountsByCode)) {
+      const treatment = vatApplicableByAccount.get(accountId) === false ? outOfScope : standardTreatment;
       if (treatment) {
         tx.update(accounts).set({ defaultVatTreatmentId: treatment })
           .where(eq(accounts.id, accountId)).run();
@@ -267,7 +295,8 @@ export function createCompany(db: AppDatabase, input: CreateCompanyInput): Creat
       action: 'created',
       newValue: JSON.stringify({
         legalName: input.legalName,
-        accounts: DEFAULT_ACCOUNTS.length,
+        chartKind: input.chartKind ?? 'sm',
+        accounts: vatApplicableByAccount.size,
         taxRates: DEFAULT_TAX_RATES.length,
         vatTreatments: DEFAULT_VAT_TREATMENTS.length,
       }),
@@ -349,11 +378,113 @@ export function ensureDefaultAccounts(
 }
 
 /**
- * Add any seeded tax rate or VAT treatment a company does not yet have — for
- * a company created before it was added to the seed list (issue #205: the
- * livestock treatment). Never touches a row that already exists by code, so
- * it cannot overwrite a rate or treatment the user has edited.
+ * Turn an existing book's chart into the farm chart (issue #360) — for a
+ * company created before `--chart farm` existed, or before this was worth
+ * deciding at creation.
+ *
+ * Two rules keep it safe:
+ *
+ *  - an account is only renamed when its name is still the one the default
+ *    chart seeded. One the user has already renamed is theirs and is left
+ *    alone, reported in `skipped` — the same promise `ensureDefaultAccounts`
+ *    makes about never touching what the user made their own.
+ *  - renames that turn VAT off (`vatApplicable: false`) rewire the account's
+ *    default VAT treatment to out-of-scope, so a flat-rate farmer's sales
+ *    account stops preselecting a standard-rate treatment it must never use.
  */
+export function installFarmChart(
+  db: AppDatabase, companyId: string, actor?: string,
+): { added: string[]; renamed: string[]; skipped: string[] } {
+  const byCode = new Map(db.select().from(accounts)
+    .where(eq(accounts.companyId, companyId)).all().map((a) => [a.code, a]));
+
+  const standardTreatment = db.select({ id: vatTreatments.id }).from(vatTreatments)
+    .where(and(eq(vatTreatments.companyId, companyId), eq(vatTreatments.code, 'IE_STD'))).get()?.id;
+  const outOfScopeTreatment = db.select({ id: vatTreatments.id }).from(vatTreatments)
+    .where(and(eq(vatTreatments.companyId, companyId), eq(vatTreatments.code, 'OUT_OF_SCOPE'))).get()?.id;
+
+  const added: string[] = [];
+  const renamed: string[] = [];
+  const skipped: string[] = [];
+
+  db.transaction((tx) => {
+    const startOrder = byCode.size;
+    for (const [offset, seed] of FARM_ACCOUNTS.entries()) {
+      if (byCode.has(seed.code)) continue;
+      const id = ids.account();
+      tx.insert(accounts).values({
+        id,
+        companyId,
+        code: seed.code,
+        name: seed.name,
+        type: seed.type,
+        subtype: seed.subtype ?? null,
+        vatApplicable: seed.vatApplicable ?? true,
+        isSystem: seed.systemKey !== undefined,
+        systemKey: seed.systemKey ?? null,
+        reportSection: seed.reportSection,
+        reportOrder: startOrder + offset,
+        description: seed.description ?? null,
+        effectiveFrom: '1900-01-01',
+        defaultVatTreatmentId: seed.vatApplicable === false ? outOfScopeTreatment ?? null : standardTreatment ?? null,
+      }).run();
+      added.push(seed.code);
+    }
+
+    const timestamp = nowIso();
+    for (const [code, override] of Object.entries(FARM_ACCOUNT_OVERRIDES)) {
+      const existing = byCode.get(code);
+      const baseSeed = DEFAULT_ACCOUNTS.find((s) => s.code === code);
+      if (!existing || !baseSeed) continue;
+      // Already the farm name: nothing to do. Still the seeded name: apply the
+      // farm rename. Anything else is the user's own name — never touched.
+      if (existing.name === override.name) continue;
+      if (existing.name !== baseSeed.name) {
+        skipped.push(code);
+        continue;
+      }
+      tx.update(accounts).set({
+        name: override.name,
+        description: override.description ?? existing.description,
+        vatApplicable: override.vatApplicable ?? existing.vatApplicable,
+        defaultVatTreatmentId: override.vatApplicable === false
+          ? outOfScopeTreatment ?? existing.defaultVatTreatmentId
+          : standardTreatment ?? existing.defaultVatTreatmentId,
+        updatedAt: timestamp,
+      }).where(eq(accounts.id, existing.id)).run();
+      renamed.push(code);
+
+      tx.insert(auditEvents).values({
+        id: ids.audit(),
+        companyId,
+        occurredAt: timestamp,
+        entityType: 'account',
+        entityId: existing.id,
+        action: 'updated', field: 'name',
+        previousValue: existing.name,
+        newValue: override.name,
+        source: 'user', actor: actor ?? 'user',
+        reason: 'Farm chart installed',
+      }).run();
+    }
+
+    if (added.length > 0 || renamed.length > 0) {
+      tx.insert(auditEvents).values({
+        id: ids.audit(),
+        companyId,
+        occurredAt: timestamp,
+        entityType: 'company',
+        entityId: companyId,
+        action: 'settings_changed', field: 'chart',
+        newValue: JSON.stringify({ farmChartInstalled: true, added, renamed, skipped }),
+        source: 'user', actor: actor ?? 'user',
+        reason: 'Farm chart installed (issue #360)',
+      }).run();
+    }
+  });
+
+  return { added, renamed, skipped };
+}
 export function ensureDefaultVatTreatments(
   db: AppDatabase, companyId: string, actor?: string,
 ): { addedRates: string[]; addedTreatments: string[] } {

@@ -2,7 +2,8 @@ import { and, eq } from 'drizzle-orm';
 import type { AppDatabase } from '@/db';
 import { companies, customers, suppliers, accounts, loans as loansTable } from '@/db/schema';
 import {
-  createCompany, addBankAccount, addLoan, ensureDefaultAccounts, ensureDefaultVatTreatments, type CreatedCompany,
+  createCompany, addBankAccount, addLoan, ensureDefaultAccounts, ensureDefaultVatTreatments,
+  installFarmChart, type CreatedCompany,
 } from '@/domain/config/setup';
 import { createAccount, upsertCustomer } from '@/domain/config/mutations';
 import { parseAmount } from '@/domain/money';
@@ -50,6 +51,7 @@ export function initCompany(db: AppDatabase, input: InitCompanyInput): CreatedCo
     seedYears,
     entityType: input.entityType,
     tradeCommencedOn: input.tradeCommencedOn,
+    chartKind: input.chartKind,
   });
 }
 
@@ -265,12 +267,16 @@ export function listCustomersCli(db: AppDatabase, input: ListPartiesInput) {
  * Materials, 2210 Bank loans, 1020 Bank deposit/saver, for a company
  * induced before those existed. A new company gets them all from
  * `createCompany` already; this is only for one created earlier.
- */
-export function ensureDefaultAccountsCli(
+ */export function ensureDefaultAccountsCli(
   db: AppDatabase, input: EnsureDefaultAccountsInput,
 ): { added: string[]; addedRates: string[]; addedTreatments: string[] } {
   const { added } = ensureDefaultAccounts(db, input.companyId, 'cli');
   return { added, ...ensureDefaultVatTreatments(db, input.companyId, 'cli') };
+}
+
+/** Turn an existing book's chart into the farm chart (issue #360). */
+export function installFarmChartCli(db: AppDatabase, input: EnsureDefaultAccountsInput) {
+  return installFarmChart(db, input.companyId, 'cli');
 }
 
 /**
