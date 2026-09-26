@@ -170,6 +170,10 @@ export const initCompanyInput = z.object({
   baseCurrency: z.string().optional(),
   /** Comma-separated years to seed financial/VAT periods for, e.g. "2024,2025". */
   seedYears: z.string().optional(),
+  /** Company (default), sole trader or partnership (issue #212). */
+  entityType: z.enum(['company', 'sole_trader', 'partnership']).optional(),
+  /** When the trade began, for a sole trader or partnership. */
+  tradeCommencedOn: isoDate.optional(),
 });
 
 export const addBankInput = z.object({

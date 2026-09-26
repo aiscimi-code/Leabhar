@@ -10,6 +10,7 @@ import { accountBalance } from '../accounting/ledger';
 import { systemAccountId } from '../config/setup';
 import type { IsoDate } from '../dates';
 import { computeCorporationTax, type CtComputation } from '../corporationTax/computation';
+import { computeIncomeTax, type IncomeTaxComputation } from '../incomeTax/computation';
 
 /**
  * Year-end pack (README §33, §34).
@@ -57,7 +58,10 @@ export interface YearEndPack {
   currency: string;
   profitAndLoss: ReturnType<typeof profitAndLoss>;
   balanceSheet: ReturnType<typeof balanceSheet>;
-  taxComputation: TaxComputation;
+  /** Corporation tax, for a company; null for a sole trader or partnership. */
+  taxComputation: TaxComputation | null;
+  /** Income tax for the year the period ends in, for a sole trader or partnership (issue #212). */
+  incomeTax: IncomeTaxComputation | null;
   fixedAssets: Array<{
     id: string; name: string; purchaseDate: string; supplierName: string | null;
     costMinor: number; accumulatedDepreciationMinor: number; netBookValueMinor: number;
@@ -111,14 +115,16 @@ export function yearEndPack(
     capitalAllowanceYears: asset.capitalAllowanceYears,
   }));
 
-  // ---- Corporation tax computation (issue #211) ----
-  const ct = computeCorporationTax(db, { companyId: params.companyId, from: params.from, to: params.to });
+  // ---- Corporation tax (issue #211), or income tax for a sole trader or partnership (issue #212) ----
+  const isCompany = company.entityType === 'company';
+  const incomeTax = isCompany ? null : computeIncomeTax(db, { companyId: params.companyId, year: Number(params.to.slice(0, 4)) });
+  const ct = isCompany ? computeCorporationTax(db, { companyId: params.companyId, from: params.from, to: params.to }) : null;
   const describe = (c: CtComputation['lines'][number]) => [
     c.explanation,
     c.citations.length ? `Authority: ${c.citations.map((x) => [x.section, x.citation].filter(Boolean).join(', ')).join('; ')}.` : '',
   ].filter(Boolean).join(' ');
 
-  const taxComputation: TaxComputation = {
+  const taxComputation: TaxComputation | null = !ct ? null : {
     accountingProfitMinor: ct.accountingProfitMinor,
     adjustments: ct.lines.map((l) => ({ label: l.label, amountMinor: l.amountMinor, explanation: describe(l) })),
     taxAdjustedProfitMinor: ct.tradingProfitMinor - ct.tradingLossMinor,
@@ -275,6 +281,7 @@ export function yearEndPack(
     profitAndLoss: pl,
     balanceSheet: bs,
     taxComputation,
+    incomeTax,
     fixedAssets: assets,
     directorsAccount: { balanceMinor: directorsBalance, note: directorsNote },
     vatPeriods: vatSummary,

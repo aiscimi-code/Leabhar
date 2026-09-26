@@ -13,12 +13,13 @@ export async function recordCtDecisionAction(formData: FormData): Promise<Action
     const company = requireCompany();
     const field = (key: string) => String(formData.get(key) ?? '').trim();
     const subjectType = field('subjectType');
-    if (!['journal_line', 'income_account', 'loss_claim', 'company_status'].includes(subjectType)) return { ok: false, error: 'Unknown subject.' };
+    if (!['journal_line', 'income_account', 'loss_claim', 'company_status', 'personal_status'].includes(subjectType)) return { ok: false, error: 'Unknown subject.' };
     recordCtDecision(getDb(), {
       companyId: company.id, subjectType: subjectType as CtSubjectType, subjectId: field('subjectId'), periodEnd: field('periodEnd'),
       choice: field('choice'), decidedBy: await actorName(), note: field('note') || undefined,
     });
     revalidatePath('/reports/year-end');
+    revalidatePath('/settings/company');
     return { ok: true, message: 'Treatment recorded.' };
   } catch (error) {
     return { ok: false, error: error instanceof Error ? error.message : String(error) };

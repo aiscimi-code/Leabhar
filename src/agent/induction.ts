@@ -48,6 +48,8 @@ export function initCompany(db: AppDatabase, input: InitCompanyInput): CreatedCo
     financialYearEndMonth,
     baseCurrency: input.baseCurrency,
     seedYears,
+    entityType: input.entityType,
+    tradeCommencedOn: input.tradeCommencedOn,
   });
 }
 

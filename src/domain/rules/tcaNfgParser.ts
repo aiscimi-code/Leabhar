@@ -43,7 +43,7 @@ export function parseNfgSections(markdown: string): NfgSection[] {
     let opensBody = false;
     for (let j = i + 1; j < Math.min(lines.length, i + 9); j++) {
       const t = lines[j]!.replace(/\f/g, '').trim();
-      if (t === 'Summary' || t === 'Details') { opensBody = true; break; }
+      if (t === 'Summary' || t === 'Details' || t === 'Definitions') { opensBody = true; break; }
       // Blank lines and page furniture (a page number, the running header) between heading and body.
       if (t === '' || /^\d+$/.test(t) || t.startsWith('Notes for Guidance')) continue;
       if (HEADING.test(lines[j]!) || wrapped.length === 2) break;

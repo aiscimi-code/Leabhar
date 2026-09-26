@@ -50,7 +50,10 @@ import { resolveVatPeriodId } from '@/agent/books';
 import { reconcileVatReturn } from '@/domain/vat/reconcile';
 import { buildRtdReturn } from '@/domain/vat/rtd';
 import { buildViesStatement } from '@/domain/vat/vies';
-import { computeCorporationTax, recordCtDecision } from '@/domain/corporationTax/computation';
+import { computeCorporationTax, recordCtDecision, type CtSubjectType } from '@/domain/corporationTax/computation';
+import { computeIncomeTax } from '@/domain/incomeTax/computation';
+import { addPartner, setPartnerShare, partnerSharesOn } from '@/domain/config/partners';
+import { partners } from '@/db/schema';
 import { asIsoDate } from '@/domain/dates';
 import { companies } from '@/db/schema';
 import { loadStatutoryKnowledgeBase } from '@/domain/rules/knowledgeBase';
@@ -264,7 +267,12 @@ Inspect:
   ct-computation --from <date> --to <date>
                                          Corporation tax computation for the
                                           accounting period, with open decisions
-  ct-decide --subject-type <journal_line|income_account|loss_claim|company_status> --subject <id>
+  it-computation --year <YYYY>           Income tax, USC and PRSI for a sole trader or
+                                          partnership's year of assessment
+  add-partner --name <n> --share <percent> --joined <date> --by <name> [--precedent] [--ppsn <p>]
+  set-partner-share --partner <id> --share <percent> --from <date> --by <name> [--basis <text>]
+  partners [--on <date>]                 Partners and the shares in force on a date
+  ct-decide --subject-type <journal_line|income_account|loss_claim|company_status|personal_status> --subject <id>
             --period-end <date> --choice <choice> --by <name>
                                          Record a treatment the computation suggested
   list-suppliers                         Every supplier (id, name, country, VAT no.)
@@ -342,7 +350,8 @@ Flags:
   --sign-off          Record the reconciliation (not just compute it)
   --accept-difference  Reason to sign off despite an unexplained difference
   --statement-balance <amount>  Closing balance from the paper statement
-  --vat-basis, --vat-frequency, --year-end, --base-currency, --seed-years  init-company
+  --vat-basis, --vat-frequency, --year-end, --base-currency, --seed-years,
+  --entity-type <company|sole_trader|partnership>, --commenced <date>  init-company
   --opening, --opening-date  Opening balance amount/date (add-bank)
   --code, --type, --subtype, --report-section, --vat-applicable  add-account
   --default-account <code>  Customer's default sales account (add-customer)
@@ -394,6 +403,8 @@ export async function main(argv: string[], options: CliOptions = {}): Promise<nu
         yearEnd: getFlag(flags, 'year-end'),
         baseCurrency: getFlag(flags, 'base-currency'),
         seedYears: getFlag(flags, 'seed-years'),
+        entityType: getFlag(flags, 'entity-type'),
+        tradeCommencedOn: getFlag(flags, 'commenced'),
       });
       print(initCompany(db, parsed), format);
       return 0;
@@ -983,13 +994,46 @@ export async function main(argv: string[], options: CliOptions = {}): Promise<nu
         return 0;
       }
 
+      case 'it-computation': {
+        print(computeIncomeTax(db, { companyId, year: Number(requireFlag(flags, 'year')) }), format);
+        return 0;
+      }
+
+      case 'add-partner': {
+        print(addPartner(db, {
+          companyId, name: requireFlag(flags, 'name'), shareBasisPoints: Math.round(Number(requireFlag(flags, 'share')) * 100),
+          joinedOn: requireFlag(flags, 'joined'), recordedBy: requireFlag(flags, 'by'),
+          isPrecedentPartner: hasFlag(flags, 'precedent'), taxReference: getFlag(flags, 'ppsn') ?? null,
+        }), format);
+        return 0;
+      }
+
+      case 'set-partner-share': {
+        setPartnerShare(db, {
+          companyId, partnerId: requireFlag(flags, 'partner'), shareBasisPoints: Math.round(Number(requireFlag(flags, 'share')) * 100),
+          effectiveFrom: requireFlag(flags, 'from'), recordedBy: requireFlag(flags, 'by'), basis: getFlag(flags, 'basis'),
+        });
+        print({ ok: true }, format);
+        return 0;
+      }
+
+      case 'partners': {
+        const on = getFlag(flags, 'on') ?? new Date().toISOString().slice(0, 10);
+        print({
+          partners: db.select().from(partners).where(eq(partners.companyId, companyId)).all(),
+          sharesOn: on,
+          shares: partnerSharesOn(db, companyId, on).map((s) => ({ partnerId: s.partner.id, name: s.partner.name, sharePercent: s.shareBasisPoints / 100 })),
+        }, format);
+        return 0;
+      }
+
       case 'ct-decide': {
         const subjectType = requireFlag(flags, 'subject-type');
-        if (subjectType !== 'journal_line' && subjectType !== 'income_account' && subjectType !== 'loss_claim' && subjectType !== 'company_status') {
-          throw new Error('--subject-type is journal_line, income_account, loss_claim or company_status.');
+        if (!['journal_line', 'income_account', 'loss_claim', 'company_status', 'personal_status'].includes(subjectType)) {
+          throw new Error('--subject-type is journal_line, income_account, loss_claim, company_status or personal_status.');
         }
         const id = recordCtDecision(db, {
-          companyId, subjectType, subjectId: requireFlag(flags, 'subject'), periodEnd: requireFlag(flags, 'period-end'),
+          companyId, subjectType: subjectType as CtSubjectType, subjectId: requireFlag(flags, 'subject'), periodEnd: requireFlag(flags, 'period-end'),
           choice: requireFlag(flags, 'choice'), decidedBy: requireFlag(flags, 'by'), note: getFlag(flags, 'note'),
         });
         print({ decisionId: id }, format);

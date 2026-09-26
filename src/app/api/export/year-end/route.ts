@@ -116,42 +116,65 @@ export async function GET(request: Request): Promise<Response> {
     tb.addRow(['', 'DOES NOT BALANCE — investigate before relying on these figures', '', '', '']);
   }
 
-  // ---- Tax computation ----
-  const tax = workbook.addWorksheet('Tax computation');
-  tax.columns = [{ width: 56 }, { width: 18 }];
-  tax.addRow(['Corporation tax computation', '']).font = { bold: true, size: 12 };
-  tax.addRow([]);
-  tax.addRow(['Accounting profit', amount(pack.taxComputation.accountingProfitMinor)]).font = { bold: true };
-  for (const adjustment of pack.taxComputation.adjustments) {
-    tax.addRow([`  ${adjustment.label}`, amount(adjustment.amountMinor)]);
-    tax.addRow([`    ${adjustment.explanation}`, '']);
+  // ---- Tax computation: corporation tax for a company, income tax otherwise ----
+  const tc = pack.taxComputation;
+  if (tc) {
+    const tax = workbook.addWorksheet('Tax computation');
+    tax.columns = [{ width: 56 }, { width: 18 }];
+    tax.addRow(['Corporation tax computation', '']).font = { bold: true, size: 12 };
+    tax.addRow([]);
+    tax.addRow(['Accounting profit', amount(tc.accountingProfitMinor)]).font = { bold: true };
+    for (const adjustment of tc.adjustments) {
+      tax.addRow([`  ${adjustment.label}`, amount(adjustment.amountMinor)]);
+      tax.addRow([`    ${adjustment.explanation}`, '']);
+    }
+    tax.addRow(['Trading profit (Case I; negative is a loss)', amount(tc.taxAdjustedProfitMinor)])
+      .font = { bold: true };
+    tax.addRow(['  Tax at 12.5% on trading profit (s.21)', amount(tc.computation.taxAtStandardRateMinor)]);
+    tax.addRow([`  Tax at 25% on other income of ${amount(tc.nonTradingIncomeMinor)} (s.21A)`,
+      amount(tc.computation.taxAtHigherRateMinor)]);
+    tax.addRow(['Corporation tax', amount(tc.corporationTaxMinor)]).font = { bold: true };
+    const ctc = tc.computation;
+    tax.addRow([]);
+    tax.addRow(['Losses', '']).font = { bold: true };
+    tax.addRow(['  Brought forward and used (s.396(1))', amount(ctc.losses.broughtForwardUsedMinor)]);
+    tax.addRow(['  Set back from the next period (s.396A)', amount(ctc.losses.carriedBackInMinor)]);
+    tax.addRow(['  Set back to the preceding period (s.396A)', amount(ctc.losses.setBackMinor)]);
+    tax.addRow(['  Value-basis credit (s.396B)', amount(ctc.losses.valueBasisCreditMinor)]);
+    tax.addRow(['  Carried forward', amount(ctc.losses.carriedForwardMinor)]);
+    tax.addRow([`Close company surcharge (${ctc.surcharge.status})`, amount(ctc.surcharge.surchargeMinor)]).font = { bold: true };
+    tax.addRow([`  ${ctc.surcharge.working}`, '']);
+    tax.addRow([`CT1 return and balance of tax due`, ctc.dates.returnDueDate]);
+    for (const p of ctc.dates.preliminaryTax) tax.addRow([`  Preliminary tax due ${p.dueDate} (${p.basis})`, amount(p.amountMinor)]);
+    tax.addRow([]);
+    for (const d of tc.computation.decisions) {
+      tax.addRow([`  ${d.decided ? 'Decided' : 'Suggested'}: ${d.description} → ${d.decided ?? d.suggested}`, amount(d.amountMinor)]);
+    }
+    tax.addRow([]);
+    const disclaimerRow = tax.addRow([tc.disclaimer, '']);
+    disclaimerRow.alignment = { wrapText: true, vertical: 'top' };
+    disclaimerRow.height = 90;
+  } else if (pack.incomeTax) {
+    const it = pack.incomeTax;
+    const sheet = workbook.addWorksheet('Income tax');
+    sheet.columns = [{ width: 70 }, { width: 18 }];
+    sheet.addRow([`Income tax ${it.year}`, '']).font = { bold: true, size: 12 };
+    sheet.addRow([`Basis period ${it.basis.from} to ${it.basis.to}: ${it.basis.rule}`, '']);
+    if (it.thirdYearReliefMinor) sheet.addRow(['  Less second-year excess (s.66(3))', amount(-it.thirdYearReliefMinor)]);
+    sheet.addRow(['Assessable trading profit', amount(it.assessableProfitMinor)]).font = { bold: true };
+    for (const i of it.individuals) {
+      sheet.addRow([`${i.name} (${i.status})`, amount(i.profitMinor)]).font = { bold: true };
+      for (const l of [...i.incomeTax, ...i.usc]) sheet.addRow([`  ${l.label}`, amount(l.amountMinor)]);
+      sheet.addRow(['  Income tax', amount(i.incomeTaxMinor)]);
+      sheet.addRow(['  USC', amount(i.uscMinor)]);
+      sheet.addRow(['  PRSI Class S', i.prsiMinor === null ? 'not computed' : amount(i.prsiMinor)]);
+      sheet.addRow(['  Total', amount(i.totalMinor)]);
+    }
+    sheet.addRow([`Preliminary tax due ${it.dates.preliminaryTaxDue} (${it.dates.basis})`, amount(it.dates.preliminaryTaxMinor)]);
+    sheet.addRow(['Return and balance due', it.dates.returnDue]);
+    for (const d of it.decisions) sheet.addRow([`${d.decided ? 'Decided' : 'Suggested'}: ${d.description} → ${d.decided ?? d.suggested}`, '']);
+    for (const f of it.findings) sheet.addRow([f, '']).alignment = { wrapText: true };
   }
-  tax.addRow(['Trading profit (Case I; negative is a loss)', amount(pack.taxComputation.taxAdjustedProfitMinor)])
-    .font = { bold: true };
-  tax.addRow(['  Tax at 12.5% on trading profit (s.21)', amount(pack.taxComputation.computation.taxAtStandardRateMinor)]);
-  tax.addRow([`  Tax at 25% on other income of ${amount(pack.taxComputation.nonTradingIncomeMinor)} (s.21A)`,
-    amount(pack.taxComputation.computation.taxAtHigherRateMinor)]);
-  tax.addRow(['Corporation tax', amount(pack.taxComputation.corporationTaxMinor)]).font = { bold: true };
-  const ctc = pack.taxComputation.computation;
-  tax.addRow([]);
-  tax.addRow(['Losses', '']).font = { bold: true };
-  tax.addRow(['  Brought forward and used (s.396(1))', amount(ctc.losses.broughtForwardUsedMinor)]);
-  tax.addRow(['  Set back from the next period (s.396A)', amount(ctc.losses.carriedBackInMinor)]);
-  tax.addRow(['  Set back to the preceding period (s.396A)', amount(ctc.losses.setBackMinor)]);
-  tax.addRow(['  Value-basis credit (s.396B)', amount(ctc.losses.valueBasisCreditMinor)]);
-  tax.addRow(['  Carried forward', amount(ctc.losses.carriedForwardMinor)]);
-  tax.addRow([`Close company surcharge (${ctc.surcharge.status})`, amount(ctc.surcharge.surchargeMinor)]).font = { bold: true };
-  tax.addRow([`  ${ctc.surcharge.working}`, '']);
-  tax.addRow([`CT1 return and balance of tax due`, ctc.dates.returnDueDate]);
-  for (const p of ctc.dates.preliminaryTax) tax.addRow([`  Preliminary tax due ${p.dueDate} (${p.basis})`, amount(p.amountMinor)]);
-  tax.addRow([]);
-  for (const d of pack.taxComputation.computation.decisions) {
-    tax.addRow([`  ${d.decided ? 'Decided' : 'Suggested'}: ${d.description} → ${d.decided ?? d.suggested}`, amount(d.amountMinor)]);
-  }
-  tax.addRow([]);
-  const disclaimerRow = tax.addRow([pack.taxComputation.disclaimer, '']);
-  disclaimerRow.alignment = { wrapText: true, vertical: 'top' };
-  disclaimerRow.height = 90;
 
   // ---- Fixed assets ----
   const assets = workbook.addWorksheet('Fixed assets');

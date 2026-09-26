@@ -35,6 +35,12 @@ const FA2024 = '2024 Act 43';
 const FA2025 = '2025 Act 18';
 export const SWCA_S21_CITATION = 'SWCA 2005 s.21';
 const NFG_18D = 'Revenue NfG TCA 1997 (FA 2025 ed.) Part 18D';
+const NFG_1 = 'Revenue NfG TCA 1997 (FA 2025 ed.) Part 1';
+const NFG_2 = 'Revenue NfG TCA 1997 (FA 2025 ed.) Part 2';
+const NFG_4 = 'Revenue NfG TCA 1997 (FA 2025 ed.) Part 4';
+const NFG_15 = 'Revenue NfG TCA 1997 (FA 2025 ed.) Part 15';
+const NFG_41A = 'Revenue NfG TCA 1997 (FA 2025 ed.) Part 41A';
+const NFG_43 = 'Revenue NfG TCA 1997 (FA 2025 ed.) Part 43';
 
 export const INCOME_TAX_CURATED_RULES: CuratedIncomeTaxRule[] = [
   // ---- Income tax: rates and bands (TCA s.15, as substituted by FA 2024 s.3) ----
@@ -164,5 +170,116 @@ export const INCOME_TAX_CURATED_RULES: CuratedIncomeTaxRule[] = [
     interpretationNote: 'SWCA 2005 s.21(1)(a) as revised on the date it was retrieved (2026-09-25), which is all the '
       + 'window rests on: the revised text does not say when 4.2% took effect, and no earlier rate is recorded. '
       + 'The computation flags any year the rate may have differed in.',
+  },
+  // ---- Basis of assessment, credits, partnerships, payment (Revenue NfG, FA 2025 edition) ----
+  {
+    citation: NFG_4, sectionNumber: '65', ruleKey: 'income_tax.basis_accounting_period', ruleType: 'procedure',
+    name: 'Case I: the 12-month account ending in the year of assessment is its basis',
+    statementExcerpt: 'Where a person makes up accounts for a trade or profession and there is only one',
+    numericValue: null, unit: null, effectiveFrom: '2002-01-01', effectiveTo: null,
+    interpretationNote: 'TCA s.65(2): one 12-month account ending in the year; otherwise the 12 months to the last account date in it.',
+  },
+  {
+    citation: NFG_4, sectionNumber: '66', ruleKey: 'income_tax.basis_first_year', ruleType: 'procedure',
+    name: 'Commencement: the first year is taxed on profits from commencement to 31 December',
+    statementExcerpt: 'In a start-up situation the Case I or II assessment for the first year of assessment is',
+    numericValue: null, unit: null, effectiveFrom: '2002-01-01', effectiveTo: null,
+    interpretationNote: 'TCA s.66(1).',
+  },
+  {
+    citation: NFG_4, sectionNumber: '66', ruleKey: 'income_tax.basis_second_year', ruleType: 'procedure',
+    name: 'Commencement: the second year depends on the accounts ending in it',
+    statementExcerpt: 'If there is only one set of accounts for a period ending in the second year of',
+    numericValue: null, unit: null, effectiveFrom: '2002-01-01', effectiveTo: null,
+    interpretationNote: 'TCA s.66(2): one 12-month account, or 12 months to the end of a longer one; otherwise the actual year.',
+  },
+  {
+    citation: NFG_4, sectionNumber: '66', ruleKey: 'income_tax.third_year_excess_relief', ruleType: 'relief',
+    name: 'Commencement: the second year\'s excess over its actual profits reduces the third year, on election',
+    statementExcerpt: 'A taxpayer may elect to have the assessment for the third year of assessment reduced by any excess',
+    numericValue: null, unit: null, effectiveFrom: '2002-01-01', effectiveTo: null,
+    interpretationNote: 'TCA s.66(3).',
+  },
+  {
+    citation: NFG_4, sectionNumber: '67', ruleKey: 'income_tax.basis_cessation', ruleType: 'procedure',
+    name: 'Cessation: the final year is taxed on profits from 1 January to cessation; the penultimate year may be revised up',
+    statementExcerpt: 'profession is permanently discontinued are those of the period from 1 January in the',
+    numericValue: null, unit: null, effectiveFrom: '2002-01-01', effectiveTo: null,
+    interpretationNote: 'TCA s.67(1)(a).',
+  },
+  {
+    citation: NFG_15, sectionNumber: '472AB', ruleKey: 'income_tax.earned_income_credit_percentage', ruleType: 'rate',
+    name: 'Earned income credit: the lower of €2,000 and 20% of qualifying earned income',
+    statementExcerpt: 'The amount of the tax credit is €2,000 or 20 per cent',
+    numericValue: 2000, unit: 'basis_points', effectiveFrom: '2025-01-01', effectiveTo: null,
+    interpretationNote: 'TCA s.472AB(2)(a): 20% is "the appropriate percentage", the standard rate.',
+  },
+  {
+    citation: NFG_43, sectionNumber: '1008', ruleKey: 'income_tax.partnership_profit_apportioned', ruleType: 'procedure',
+    name: 'Partnership: tax-adjusted profits apportioned by the partnership agreement',
+    statementExcerpt: 'apportioned in accordance with the terms of the partnership agreement relating to the',
+    numericValue: null, unit: null, effectiveFrom: '1997-04-06', effectiveTo: null,
+    interpretationNote: 'TCA s.1008(2)(a)(i).',
+  },
+  {
+    citation: NFG_43, sectionNumber: '1008', ruleKey: 'income_tax.partner_several_trade', ruleType: 'procedure',
+    name: 'Partnership: each partner is taxed as if carrying on a separate trade',
+    statementExcerpt: 'charged, and losses sustained by the partner in the trade are to be relieved, as if they were',
+    numericValue: null, unit: null, effectiveFrom: '1997-04-06', effectiveTo: null,
+    interpretationNote: 'TCA s.1008(1): commencement and cessation rules apply to each partner\'s share.',
+  },
+  {
+    citation: NFG_43, sectionNumber: '1007', ruleKey: 'income_tax.precedent_partner', ruleType: 'definition',
+    name: 'Partnership: the precedent partner',
+    statementExcerpt: 'The definition of “precedent partner” is framed to secure that, in relation to a case in',
+    numericValue: null, unit: null, effectiveFrom: '1997-04-06', effectiveTo: null,
+    interpretationNote: 'TCA s.1007. The precedent partner makes the partnership return.',
+  },
+  {
+    citation: NFG_41A, sectionNumber: '959AO', ruleKey: 'income_tax.preliminary_tax_date', ruleType: 'procedure',
+    name: 'Income tax: preliminary tax due 31 October in the tax year',
+    statementExcerpt: 'This section sets out the due dates for the payment of income tax. Preliminary tax is due by 31',
+    numericValue: null, unit: null, effectiveFrom: '2012-01-01', effectiveTo: null,
+    interpretationNote: 'TCA s.959AO.',
+  },
+  {
+    citation: NFG_41A, sectionNumber: '959AO', ruleKey: 'income_tax.preliminary_tax_current_year', ruleType: 'threshold',
+    name: 'Income tax: enough preliminary tax is 90% of this year\'s liability',
+    statementExcerpt: '90% of current year liability', numericValue: 9000, unit: 'basis_points',
+    effectiveFrom: '2012-01-01', effectiveTo: null, interpretationNote: 'TCA s.959AO: or the least of the three tests.',
+  },
+  {
+    citation: NFG_41A, sectionNumber: '959AO', ruleKey: 'income_tax.preliminary_tax_prior_year', ruleType: 'threshold',
+    name: 'Income tax: or 100% of the prior year\'s liability',
+    statementExcerpt: '100% of prior year liability', numericValue: 10000, unit: 'basis_points',
+    effectiveFrom: '2012-01-01', effectiveTo: null, interpretationNote: 'TCA s.959AO.',
+  },
+  {
+    citation: NFG_41A, sectionNumber: '959AO', ruleKey: 'income_tax.preliminary_tax_pre_preceding_year', ruleType: 'threshold',
+    name: 'Income tax: or 105% of the pre-preceding year\'s liability, by direct debit',
+    statementExcerpt: '105% of the pre-preceding year liability when paying by Direct Debit under', numericValue: 10500,
+    unit: 'basis_points', effectiveFrom: '2012-01-01', effectiveTo: null, interpretationNote: 'TCA s.959AO, s.959AP.',
+  },
+  {
+    citation: NFG_41A, sectionNumber: '959AO', ruleKey: 'income_tax.return_date', ruleType: 'procedure',
+    name: 'Income tax: return and balance due 31 October in the following year',
+    statementExcerpt: 'fined in section 959A as the 31 October in the tax year following the year).',
+    numericValue: null, unit: null, effectiveFrom: '2012-01-01', effectiveTo: null,
+    interpretationNote: 'TCA s.959A and s.959AO. ROS filing can extend it by Revenue announcement each year, which is not recorded here.',
+  },
+  {
+    citation: NFG_2, sectionNumber: '18', ruleKey: 'income_tax.schedule_d_trade', ruleType: 'definition',
+    name: 'Schedule D: the profits of a trade or profession of a person resident in the State',
+    statementExcerpt: 'to any person residing in the State from any trade, profession or employment,',
+    numericValue: null, unit: null, effectiveFrom: '1997-04-06', effectiveTo: null,
+    interpretationNote: 'TCA s.18(1): trading profits are charged under Case I, a profession\'s under Case II.',
+  },
+  {
+    citation: NFG_1, sectionNumber: '3', ruleKey: 'income_tax.earned_income_trade', ruleType: 'definition',
+    name: 'Earned income includes income from a trade or profession',
+    statementExcerpt: 'income from a trade or profession,',
+    numericValue: null, unit: null, effectiveFrom: '1997-04-06', effectiveTo: null,
+    interpretationNote: 'TCA s.3(2): so the earned income credit (s.472AB) applies to a sole trader\'s or active partner\'s profits; '
+      + 'a sleeping partner\'s share is not earned income (s.1008(5)).',
   },
 ];

@@ -16,6 +16,15 @@ export const companies = sqliteTable('companies', {
   tradingName: text('trading_name'),
   croNumber: text('cro_number'),
   companyType: text('company_type'), // LTD, DAC, CLG, ULC, sole trader...
+  /**
+   * Who the books are for (issue #212): a company (corporation tax), a sole
+   * trader or a partnership (income tax on the owners). Chart, tax
+   * computation and deadlines follow it.
+   */
+  entityType: text('entity_type', { enum: ['company', 'sole_trader', 'partnership'] }).notNull().default('company'),
+  /** When the trade began and, if it has, ended: the income tax basis rules turn on them (TCA ss.66, 67). */
+  tradeCommencedOn: text('trade_commenced_on'),
+  tradeCeasedOn: text('trade_ceased_on'),
   dateIncorporated: text('date_incorporated'),
 
   // Addresses
