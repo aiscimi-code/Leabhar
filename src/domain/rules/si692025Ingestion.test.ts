@@ -168,7 +168,7 @@ describe('deriveSi692025Rules', () => {
     expect(items.length).toBe(SI_69_2025_CURATED_RULES.length);
   });
 
-  it('a cash-basis transaction description surfaces both eligibility threshold rules', () => {
+  it('a cash_receipts company profile surfaces both eligibility threshold rules', () => {
     deriveSi692025Rules(db, { companyId });
     const result = lookupTransactionRules(db, {
       companyId,
@@ -182,5 +182,16 @@ describe('deriveSi692025Rules', () => {
     const keys = result.applicableRules.map((r) => r.ruleKey);
     expect(keys).toContain('vat.cash_accounting_turnover_threshold');
     expect(keys).toContain('vat.cash_accounting_supplies_to_unregistered_persons_test');
+  });
+
+  it('a bank narrative saying "cash basis" is not evidence of it: an invoice-basis company surfaces neither rule (#208)', () => {
+    const freshDb = createTestDatabase().db;
+    const { companyId: invoiceCo } = createCompany(freshDb, { legalName: 'Invoice Basis Ltd', vatAccountingBasis: 'invoice', seedYears: [2025] });
+    deriveSi692025Rules(freshDb, { companyId: invoiceCo });
+    const keys = lookupTransactionRules(freshDb, {
+      companyId: invoiceCo,
+      transaction: { transactionDate: '2026-01-15', amountMinor: 50000, description: 'Applying for cash basis VAT accounting' },
+    }).applicableRules.map((r) => r.ruleKey);
+    expect(keys).not.toContain('vat.cash_accounting_turnover_threshold');
   });
 });

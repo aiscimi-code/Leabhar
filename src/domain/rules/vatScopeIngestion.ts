@@ -21,11 +21,13 @@ import { VAT_PLACE_OF_SUPPLY_CURATED_RULES } from './vatPlaceOfSupplyCuration';
 import { lrcHtmlForSource } from './vatcaScheduleIngestion';
 import { COMPOSITE_SUPPLY_RULES } from './compositeSupplyCuration';
 import { CROSS_BORDER_CURATED_RULES } from './crossBorderCuration';
+import { DOMESTIC_RC_CURATED_RULES } from './domesticReverseChargeCuration';
+import { CASH_BASIS_CURATED_RULES } from './cashBasisCuration';
 import { quotedTextWindow } from './lrcAnnotations';
 
 /** Every rule this module derives: scope/exemption and place of supply of services. */
 export const VAT_SCOPE_DERIVED_RULES = [
-  ...VAT_SCOPE_CURATED_RULES, ...VAT_PLACE_OF_SUPPLY_CURATED_RULES, ...COMPOSITE_SUPPLY_RULES, ...CROSS_BORDER_CURATED_RULES,
+  ...VAT_SCOPE_CURATED_RULES, ...VAT_PLACE_OF_SUPPLY_CURATED_RULES, ...COMPOSITE_SUPPLY_RULES, ...CROSS_BORDER_CURATED_RULES, ...DOMESTIC_RC_CURATED_RULES, ...CASH_BASIS_CURATED_RULES,
 ];
 import { upsertReviewItem } from '../extraction/service';
 

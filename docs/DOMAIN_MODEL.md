@@ -537,6 +537,35 @@ conflict is open, no line's treatment is pre-selected. The conflicts are:
 A reverse charge offered from invoice wording alone is never pre-selected while
 the supplier's establishment is unconfirmed.
 
+### Domestic reverse charges and the cash basis are the company's own facts
+
+Two facts that VAT turns on are recorded on the company profile by a person.
+Each has a date and what it rests on, and each change is audited. No
+transaction decides either of them.
+
+**RCT principal status (TCA 1997 s.530A).**
+- A recorded principal gets `RC_CONSTRUCTION` on construction services it
+  receives from the recorded date (VATCA s.16(3)).
+- While the status is unrecorded, a construction purchase is flagged, and the
+  invoice line is not pre-selected.
+- The other s.16 reverse charges are flagged with why: scrap metal, a connected
+  builder, gas or electricity for resale, energy certificates and emission
+  allowances. Scrap metal is offered `RC_CONSTRUCTION`, which has the same VAT3
+  effect.
+- Construction work sold is flagged, because the customer may be a principal.
+
+**Cash receipts basis (s.80).**
+- `vatAccountingBasis` sets the basis. Only the profile decides it, never a bank
+  narrative.
+- Revenue's authorisation is recorded with its date, its reference and the
+  s.80(1) test relied on.
+- Validating a VAT period warns when:
+  - no authorisation is recorded, or it starts after the period does;
+  - sales in the 12 months to the period end exceed €2,000,000 (on the turnover
+    test);
+  - more than 10% of those sales went to customers with a VAT number (on the
+    90% test).
+
 ### Posting paths are atomic
 
 Every exported posting path — classify, reclassify, split journal,

@@ -5,7 +5,7 @@ import { createCompany, addBankAccount } from '@/domain/config/setup';
 import { createRule } from '@/domain/rules/engine';
 import { importStatement } from '@/domain/banking/import';
 import { storeDocument } from '@/domain/documents/storage';
-import { bankTransactions, reconciliations, documents, documentMatches, suppliers, accounts, invoices } from '@/db/schema';
+import { bankTransactions, reconciliations, documents, documentMatches, suppliers, accounts, invoices, companies } from '@/db/schema';
 import { makeDate } from '@/domain/dates';
 import { main } from './reconcile';
 import { mkdtempSync, writeFileSync } from 'node:fs';
@@ -1529,6 +1529,19 @@ describe('supplier and customer VAT status (issue #207)', () => {
     expect(ok.code).toBe(0);
     expect(db.select().from(suppliers).where(eq(suppliers.id, id)).get()).toMatchObject({
       establishment: 'outside_state', establishmentConfirmedBy: 'Joe Reviewer',
+    });
+  });
+
+  it('confirm-rct-principal and record-cash-basis record the company\'s VAT status by name (#208)', async () => {
+    expect((await json(['confirm-rct-principal', '--status', 'principal', '--basis', 'main contractor'])).err).toMatch(/confirmed-by/);
+    expect((await json([
+      'confirm-rct-principal', '--status', 'principal', '--from', '2026-01-01', '--basis', 'main contractor', '--confirmed-by', 'Joe Reviewer',
+    ])).code).toBe(0);
+    expect((await json([
+      'record-cash-basis', '--eligibility', 'turnover_threshold', '--from', '2025-01-01', '--reference', 'ROS 991', '--confirmed-by', 'Joe Reviewer',
+    ])).code).toBe(0);
+    expect(db.select().from(companies).where(eq(companies.id, companyId)).get()).toMatchObject({
+      rctPrincipal: 'principal', rctPrincipalFrom: '2026-01-01', cashBasisAuthorisedFrom: '2025-01-01', cashBasisConfirmedBy: 'Joe Reviewer',
     });
   });
 });
