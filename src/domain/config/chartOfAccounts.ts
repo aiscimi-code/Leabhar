@@ -42,7 +42,15 @@ export type SystemAccountKey =
   | 'computer_equipment'
   | 'accumulated_depreciation'
   | 'depreciation_expense'
-  | 'disposal_of_assets';
+  | 'disposal_of_assets'
+  /** Payroll (issue #357): each statutory deduction the payroll run posts to. */
+  | 'paye_payable'
+  | 'usc_payable'
+  | 'prsi_payable'
+  | 'net_wages_payable'
+  | 'pension_payable'
+  /** Inventory (issue #359): the stock valuation account opening/closing stock journals use. */
+  | 'stock_on_hand';
 
 export const DEFAULT_ACCOUNTS: AccountSeed[] = [
   // ---------------- Income ----------------
@@ -68,6 +76,14 @@ export const DEFAULT_ACCOUNTS: AccountSeed[] = [
   // ---------------- Cost of sales ----------------
   { code: '5000', name: 'Direct service costs', type: 'expense', subtype: 'cost_of_sales', reportSection: 'cost_of_sales' },
   { code: '5010', name: 'Subcontractor costs', type: 'expense', subtype: 'cost_of_sales', reportSection: 'cost_of_sales' },
+  {
+    code: '5020', name: 'Goods for resale', type: 'expense', subtype: 'cost_of_sales',
+    reportSection: 'cost_of_sales',
+    description: 'What was bought in to sell on again (issue #359). Under periodic stock '
+      + 'accounting the purchases stay here all year and the balance moves to Stock on hand '
+      + '(1300) at the period end; the inventory module (EPIC 23) will post to these two '
+      + 'accounts directly.',
+  },
   {
     code: '5030', name: 'Materials', type: 'expense', subtype: 'cost_of_sales',
     reportSection: 'cost_of_sales',
@@ -103,8 +119,17 @@ export const DEFAULT_ACCOUNTS: AccountSeed[] = [
   {
     code: '6180', name: 'Wages and salaries', type: 'expense', subtype: 'operating_expense',
     vatApplicable: false, reportSection: 'operating_expenses',
-    description: 'Employee payroll, distinct from directors’ remuneration (6160) '
-      + '— issue #159: a rule pointed at 6160 mislabels employee pay as directors’ pay.',
+    description: 'Gross employee payroll before deductions, distinct from directors’ '
+      + 'remuneration (6160) — issue #159: a rule pointed at 6160 mislabels employee pay '
+      + 'as directors’ pay. The statutory deductions taken out of it are held in their own '
+      + 'accounts (2410–2450), not netted off here.',
+  },
+  {
+    code: '6185', name: 'Employer pension contributions', type: 'expense',
+    subtype: 'operating_expense', vatApplicable: false, reportSection: 'operating_expenses',
+    description: 'The employer’s own pension contribution for staff (issue #357), kept '
+      + 'separate from wages (6180) and from the employees’ own deductions, which are not a '
+      + 'cost but money held for them in 2450.',
   },
   {
     code: '6190', name: 'Employer PRSI', type: 'expense', subtype: 'operating_expense',
@@ -122,6 +147,14 @@ export const DEFAULT_ACCOUNTS: AccountSeed[] = [
   {
     code: '6950', name: 'Disposal of fixed assets', type: 'expense', subtype: 'operating_expense',
     systemKey: 'disposal_of_assets', vatApplicable: false, reportSection: 'operating_expenses',
+  },
+  {
+    code: '6710', name: 'Loan interest', type: 'expense', subtype: 'finance_cost',
+    vatApplicable: false, reportSection: 'finance_costs',
+    description: 'Interest on borrowings (issue #358), reported below operating profit so '
+      + 'the cost of financing is not mistaken for the cost of running the business. The '
+      + 'capital portion of a repayment reduces the loan account (2210/2215), not this '
+      + 'account — the two are posted together as a split journal.',
   },
 
   // ---------------- Assets ----------------
@@ -146,6 +179,14 @@ export const DEFAULT_ACCOUNTS: AccountSeed[] = [
   {
     code: '1200', name: 'VAT recoverable', type: 'asset', subtype: 'current_asset',
     systemKey: 'vat_on_purchases', vatApplicable: false, reportSection: 'current_assets',
+  },
+  {
+    code: '1300', name: 'Stock on hand', type: 'asset', subtype: 'current_asset',
+    systemKey: 'stock_on_hand', vatApplicable: false, reportSection: 'current_assets',
+    description: 'The cost of stock held but not yet sold (issue #359), valued at cost. '
+      + 'The opening balance journal here and the closing balance against Goods for resale '
+      + '(5020) are what turn purchases into a cost of sales: an account kept in step with a '
+      + 'count of what is actually on the shelf, never with a figure typed in.',
   },
   {
     code: '1500', name: 'Computer equipment — cost', type: 'asset', subtype: 'fixed_asset',
@@ -190,13 +231,55 @@ export const DEFAULT_ACCOUNTS: AccountSeed[] = [
   },
   {
     code: '2210', name: 'Bank loans', type: 'liability', subtype: 'non_current_liability',
-    vatApplicable: false, reportSection: 'current_liabilities',
-    description: 'A term loan’s outstanding balance. Repaying it is a capital/interest '
+    vatApplicable: false, reportSection: 'long_term_liabilities',
+    description: 'A term loan’s outstanding balance (issue #358). Repaying it is a capital/interest '
       + 'split (issue #158’s journal --transaction), not a single expense line — the '
-      + 'capital portion reduces this balance and the interest portion is a cost.',
+      + 'capital portion reduces this balance and the interest portion is a cost (6710). '
+      + 'The part repayable within a year is shown in 2215.',
+  },
+  {
+    code: '2215', name: 'Loans due within one year', type: 'liability', subtype: 'current_liability',
+    vatApplicable: false, reportSection: 'current_liabilities',
+    description: 'The part of the loans (2210) repayable within the next twelve months '
+      + '(issue #358). Reclassified at each year end — Dr 2210 / Cr this account — so the '
+      + 'balance sheet shows what is actually due soon, not the whole term of the loan.',
   },
   { code: '2300', name: 'Accruals', type: 'liability', subtype: 'current_liability', vatApplicable: false, reportSection: 'current_liabilities' },
-  { code: '2400', name: 'PAYE/PRSI/USC payable', type: 'liability', subtype: 'current_liability', vatApplicable: false, reportSection: 'current_liabilities' },
+  {
+    code: '2410', name: 'PAYE (income tax) withheld', type: 'liability', subtype: 'current_liability',
+    systemKey: 'paye_payable', vatApplicable: false, reportSection: 'current_liabilities',
+    description: 'Income tax deducted from employees’ pay and held for Revenue until the '
+      + 'payroll return is settled (issue #357). Credited by the payroll run and debited when '
+      + 'the payment is made, so its balance is what is owed and nothing else.',
+  },
+  {
+    code: '2420', name: 'USC withheld', type: 'liability', subtype: 'current_liability',
+    systemKey: 'usc_payable', vatApplicable: false, reportSection: 'current_liabilities',
+    description: 'Universal Social Charge deducted from employees’ pay and held for Revenue '
+      + 'until the payroll return is settled (issue #357).',
+  },
+  {
+    code: '2430', name: 'PRSI payable (employee and employer)', type: 'liability',
+    subtype: 'current_liability', systemKey: 'prsi_payable', vatApplicable: false,
+    reportSection: 'current_liabilities',
+    description: 'The whole PRSI remitted on a payroll return — the employees’ share '
+      + 'deducted from their pay and the employer’s own contribution (6190), which Revenue '
+      + 'collects as one amount (issue #357).',
+  },
+  {
+    code: '2440', name: 'Net wages payable', type: 'liability', subtype: 'current_liability',
+    systemKey: 'net_wages_payable', vatApplicable: false, reportSection: 'current_liabilities',
+    description: 'What employees are owed between the pay run and the net pay leaving the '
+      + 'bank (issue #357). Gross wages less their statutory deductions and pension. Zero '
+      + 'once wages are paid; a balance that survives a pay date is an exception to resolve.',
+  },
+  {
+    code: '2450', name: 'Pension deductions payable', type: 'liability', subtype: 'current_liability',
+    systemKey: 'pension_payable', vatApplicable: false, reportSection: 'current_liabilities',
+    description: 'Employees’ own pension contributions deducted from their pay and held for '
+      + 'the pension provider (issue #357). Not a cost of the business — the employer’s own '
+      + 'contribution is 6185.',
+  },
   {
     code: '2500', name: 'Director’s current account', type: 'liability',
     subtype: 'current_liability', systemKey: 'directors_current_account',

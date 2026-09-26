@@ -97,8 +97,9 @@ export function addBank(db: AppDatabase, input: AddBankInput): AddBankResult {
  * domain layer to accept blindly.
  */
 const KNOWN_REPORT_SECTIONS = new Set([
-  'revenue', 'cost_of_sales', 'operating_expenses',
-  'fixed_assets', 'current_assets', 'current_liabilities', 'equity',
+  'revenue', 'cost_of_sales', 'operating_expenses', 'finance_costs',
+  'fixed_assets', 'current_assets', 'current_liabilities', 'long_term_liabilities',
+  'equity',
 ]);
 
 const DEFAULT_REPORT_SECTION_BY_TYPE: Record<AddAccountInput['type'], string> = {
@@ -233,7 +234,7 @@ export function installRulePackCli(
 
   const wagesAccount = resolveAccountId(db, input.companyId, '6180');
   const employerPrsiAccount = resolveAccountId(db, input.companyId, '6190');
-  const payePayableAccount = resolveAccountId(db, input.companyId, '2400');
+  const payePayableAccount = resolveAccountId(db, input.companyId, '2410');
   const vatPayableAccount = resolveAccountId(db, input.companyId, '2100');
   const rentAccount = resolveAccountId(db, input.companyId, input.rentAccount ?? '6200');
   const secondBankAccount = resolveAccountId(db, input.companyId, input.secondBankAccount ?? '1020');
@@ -285,6 +286,10 @@ export function installRulePackCli(
 
   install({
     name: 'Revenue PAYE remittance',
+    description: 'A single-account approximation (issue #159): the payment settles PAYE, '
+      + 'USC and PRSI together, and a keyword rule can only post one line. It clears the '
+      + 'PAYE withheld account (2410); once the payroll run (EPIC 20) raises the USC and PRSI '
+      + 'liabilities too, post the remittance as a split journal against all three instead.',
     conditions: [
       { field: 'description', operator: 'contains', value: 'REVENUE' },
       { field: 'description', operator: 'contains', value: 'PAYE' },

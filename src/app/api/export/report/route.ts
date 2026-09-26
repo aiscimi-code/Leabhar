@@ -45,6 +45,7 @@ export async function GET(request: Request): Promise<Response> {
     ...flatten(data.profitAndLoss.operatingExpenses),
     { label: 'Operating profit', amountMinor: data.profitAndLoss.operatingProfit.valueMinor, depth: 0, isTotal: true },
     ...flatten(data.profitAndLoss.otherIncome),
+    ...flatten(data.profitAndLoss.financeCosts),
     { label: 'Net profit', amountMinor: data.profitAndLoss.netProfit.valueMinor, depth: 0, isTotal: true },
   ];
 
@@ -53,6 +54,7 @@ export async function GET(request: Request): Promise<Response> {
     ...flatten(data.balanceSheet.currentAssets),
     { label: 'Total assets', amountMinor: data.balanceSheet.totalAssets.valueMinor, depth: 0, isTotal: true },
     ...flatten(data.balanceSheet.currentLiabilities),
+    ...flatten(data.balanceSheet.longTermLiabilities),
     { label: 'Net assets', amountMinor: data.balanceSheet.netAssets.valueMinor, depth: 0, isTotal: true },
     { label: 'Share capital', amountMinor: data.balanceSheet.shareCapital.valueMinor, depth: 0, isTotal: false },
     { label: 'Retained earnings', amountMinor: data.balanceSheet.retainedEarnings.valueMinor, depth: 0, isTotal: false },
