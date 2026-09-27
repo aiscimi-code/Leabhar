@@ -27,6 +27,12 @@ describe('Notes for Guidance parser', () => {
     expect(extractNfgSection(read('part09'), '291A').provisionText).not.toContain('amount still unallowed” in respect');
   });
 
+  it('reads Part 11 in order, taking its first notes with no Summary marker (issue #313)', () => {
+    expect(parseNfgSections(read('part11')).map((s) => s.sectionNumber))
+      .toEqual(['373', '374', '375', '376', '377', '378', '379', '380']);
+    expect(extractNfgSection(read('part11'), '374').heading).toBe('Capital allowances for cars costing over certain amount');
+  });
+
   it('finds every in-scope section, and each slice is the file between its offsets', () => {
     for (const [part, sections] of Object.entries(NFG_SECTIONS)) {
       const md = read(part);

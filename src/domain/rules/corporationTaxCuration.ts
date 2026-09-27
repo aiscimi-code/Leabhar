@@ -42,12 +42,13 @@ export const NFG_SECTIONS: Record<string, string[]> = {
   part02: ['18', '21', '21A'],
   part04: ['65', '66', '67', '76', '81'],
   part09: ['284', '285A', '288', '291', '291A', '292'],
+  part11: ['373', '374'],
   part12: ['396', '396A', '396B'],
   part13: ['430', '434', '440', '441'],
   part15: ['472AB'],
   part18d: ['531AM', '531AN'],
   part36: ['840'],
-  part41a: ['959A', '959I', '959AM', '959AO', '959AR', '959AS'],
+  part41a: ['959A', '959I', '959AM', '959AN', '959AO', '959AR', '959AS'],
   part43: ['1007', '1008'],
 };
 
@@ -269,6 +270,80 @@ export const CORPORATION_TAX_CURATED_RULES: CuratedCorporationTaxRule[] = [
     interpretationNote: 'TCA s.291A. Not computed here: the claim follows the accounts or a 15-year write-off by election.',
   },
 
+  // ---- Motor cars (Part 11; the specified amounts of s.373(2) restrict the
+  // wear and tear of s.284 and the balancing adjustments of s.288) ----
+  {
+    part: 'part11', sectionNumber: '373', ruleKey: 'ct.motor_car_restrictions_cars_only', ruleType: 'definition',
+    name: 'Part 11 applies to motor cars only; commercial vehicles are excluded',
+    statementExcerpt: 'The vehicles to which this Part applies are, essentially, ordinary motor cars. Excluded, (1)',
+    numericValue: null, unit: null,
+    taxEffect: 'The specified-amount restriction applies to cars. Lorries, delivery vans, buses and other '
+      + 'commercial-type vehicles are not restricted.',
+    effectiveFrom: TCA_COMMENCED,
+    interpretationNote: 'TCA s.373(1). The register does not record whether a motor_vehicles asset is a car or a '
+      + 'commercial vehicle, so the computation asks when it matters.',
+  },
+  {
+    part: 'part11', sectionNumber: '373', ruleKey: 'ct.car_specified_amount_2001', ruleType: 'threshold',
+    name: 'Motor car specified amount: €21,585.55 for expenditure in periods ending in 2001',
+    statementExcerpt: 'January 2001 to 31 December 2001, in the case of all cars (both new and second-hand),\n      '
+      + ' €21,585.55',
+    numericValue: 2_158_555, unit: 'eur_minor',
+    taxEffect: 'A car bought in an accounting period ending in 2001: allowances as if its cost were €21,585.55.',
+    effectiveFrom: '2001-01-01',
+    interpretationNote: 'TCA s.373(2). The amount for the accounting period in which the expenditure was incurred.',
+  },
+  {
+    part: 'part11', sectionNumber: '373', ruleKey: 'ct.car_specified_amount_2002_to_2005', ruleType: 'threshold',
+    name: 'Motor car specified amount: €22,000 for expenditure in periods ending 2002–2005',
+    statementExcerpt: 'January 2002 to 31 December 2005, in the case of all cars (both new and second-hand),\n      '
+      + ' €22,000',
+    numericValue: 2_200_000, unit: 'eur_minor',
+    taxEffect: 'A car bought in an accounting period ending in 2002 to 2005: allowances as if its cost were €22,000.',
+    effectiveFrom: '2002-01-01',
+    interpretationNote: 'TCA s.373(2).',
+  },
+  {
+    part: 'part11', sectionNumber: '373', ruleKey: 'ct.car_specified_amount_2006', ruleType: 'threshold',
+    name: 'Motor car specified amount: €23,000 for expenditure in periods ending in 2006',
+    statementExcerpt: 'January 2006 to 31 December 2006, in the case of all cars (both new and second-hand),\n      '
+      + ' €23,000.',
+    numericValue: 2_300_000, unit: 'eur_minor',
+    taxEffect: 'A car bought in an accounting period ending in 2006: allowances as if its cost were €23,000.',
+    effectiveFrom: '2006-01-01',
+    interpretationNote: 'TCA s.373(2).',
+  },
+  {
+    part: 'part11', sectionNumber: '373', ruleKey: 'ct.car_specified_amount_2007_onwards', ruleType: 'threshold',
+    name: 'Motor car specified amount: €24,000 for expenditure in periods ending from 2007 onwards',
+    statementExcerpt: 'for expenditure incurred in accounting periods or basis periods from 1 January 2007\n      '
+      + ' onwards, in the case of all cars (both new and second-hand), €24,000.',
+    numericValue: 2_400_000, unit: 'eur_minor',
+    taxEffect: 'A car bought in an accounting period ending from 1 January 2007: allowances as if its cost were €24,000.',
+    effectiveFrom: '2007-01-01',
+    interpretationNote: 'TCA s.373(2). The Notes for Guidance state no emissions-based limit, so none is applied.',
+  },
+  {
+    part: 'part11', sectionNumber: '374', ruleKey: 'ct.car_allowances_restricted_to_specified_amount', ruleType: 'other',
+    name: 'A car over the specified amount: allowances, and its balancing adjustments, computed on the specified amount',
+    statementExcerpt: 'on the basis that the original cost of the car was the specified amount.',
+    numericValue: null, unit: null,
+    taxEffect: 'Wear and tear as if the cost were the specified amount, and the "expenditure still unallowed" and the '
+      + 'balancing allowance or charge computed on the same basis.',
+    effectiveFrom: TCA_COMMENCED,
+    interpretationNote: 'TCA s.374(1) and (2).',
+  },
+  {
+    part: 'part11', sectionNumber: '374', ruleKey: 'ct.car_disposal_proceeds_scaled_down', ruleType: 'other',
+    name: 'A restricted car put out of use: sale, insurance, salvage or compensation moneys scaled down',
+    statementExcerpt: 'those moneys are reduced in the proportion which',
+    numericValue: null, unit: null,
+    taxEffect: 'Where a car cost more than the specified amount, its disposal moneys are reduced in the proportion '
+      + 'the specified amount bears to the cost.',
+    effectiveFrom: TCA_COMMENCED,
+    interpretationNote: 'TCA s.374(3).',
+  },
+
   // ---- Losses (Part 12) ----
   {
     part: 'part12', sectionNumber: '396', ruleKey: 'ct.loss_carry_forward', ruleType: 'relief',
@@ -410,6 +485,17 @@ export const CORPORATION_TAX_CURATED_RULES: CuratedCorporationTaxRule[] = [
     interpretationNote: 'TCA s.959AM(4); reduced proportionately for a short period.',
   },
   {
+    part: 'part41a', sectionNumber: '959AN', ruleKey: 'ct.preliminary_tax_first_period_nil', ruleType: 'procedure',
+    name: 'First accounting period with expected tax under €200,000: preliminary tax is nil',
+    statementExcerpt: 'first accounting period, then the appropriate preliminary tax for that company for that period',
+    numericValue: null, unit: null,
+    taxEffect: "A company's first accounting period, with expected tax below the €200,000 limit (proportionately "
+      + 'reduced for a short period, s.959AM(3)): no preliminary tax payment.',
+    effectiveFrom: TCA_COMMENCED,
+    interpretationNote: 'TCA s.959AN(4). "First" means the company\'s first ever accounting period, not the first one '
+      + 'on these books: books started mid-life do not qualify.',
+  },
+  {
     part: 'part41a', sectionNumber: '959AR', ruleKey: 'ct.preliminary_tax_small', ruleType: 'procedure',
     name: 'Small company preliminary tax: one payment 31 days before the period end',
     statementExcerpt: 'Preliminary tax is payable in one instalment and is due 31 days before the',
@@ -432,4 +518,20 @@ export const CORPORATION_TAX_CURATED_RULES: CuratedCorporationTaxRule[] = [
 /** The rate a rule states, in basis points; the computation reads its rates here. */
 export function corporationTaxRateBasisPoints(ruleKey: typeof CT_RATE_TRADING_RULE_KEY | typeof CT_RATE_HIGHER_RULE_KEY): number {
   return CORPORATION_TAX_CURATED_RULES.find((r) => r.ruleKey === ruleKey)!.numericValue!;
+}
+
+/**
+ * The rule key holding the specified amount for a motor car bought in an
+ * accounting period ending on `periodEnd` (TCA s.373(2)). Cars bought in
+ * periods ending before 2001 return null: their specified amounts are the
+ * dated, condition-laden ones of the earlier table (first-registered,
+ * second-hand), which the computation does not guess between.
+ */
+export function carSpecifiedAmountRuleKey(periodEnd: string): string | null {
+  const year = Number(periodEnd.slice(0, 4));
+  if (Number.isNaN(year) || year <= 2000) return null;
+  if (year === 2001) return 'ct.car_specified_amount_2001';
+  if (year <= 2005) return 'ct.car_specified_amount_2002_to_2005';
+  if (year === 2006) return 'ct.car_specified_amount_2006';
+  return 'ct.car_specified_amount_2007_onwards';
 }
