@@ -7,6 +7,7 @@ import { documents, auditEvents } from '@/db/schema';
 import { ids } from '@/lib/ids';
 import { storageRoot as storageRootFromPaths } from '@/lib/paths';
 import { nowIso } from '../dates';
+import { isVaultDocumentType } from './types';
 
 /**
  * Local document repository (README §11).
@@ -131,6 +132,10 @@ export function storeDocument(db: AppDatabase, input: StoreDocumentInput): Store
   const documentId = ids.document();
   const timestamp = nowIso();
   const mimeType = mimeTypeFor(input.filename);
+  // A vault type (contract, grant letter, payslip…) is filed as what the
+  // person says it is: the invoice reader does not apply to it, so it never
+  // enters the extraction pipeline or the review queue.
+  const isVault = input.documentType !== undefined && isVaultDocumentType(input.documentType);
 
   db.transaction((tx) => {
     tx.insert(documents).values({
@@ -154,7 +159,7 @@ export function storeDocument(db: AppDatabase, input: StoreDocumentInput): Store
       netMinor: input.netMinor ?? null,
       vatMinor: input.vatMinor ?? null,
       grossMinor: input.grossMinor ?? null,
-      extractionStatus: isExtractable(mimeType) ? 'pending' : 'skipped',
+      extractionStatus: isVault ? 'skipped' : isExtractable(mimeType) ? 'pending' : 'skipped',
       isDuplicateOf: existing?.id ?? null,
       notes: input.notes ?? null,
       reviewStatus: input.confirmedBy ? 'confirmed' : 'unreviewed',

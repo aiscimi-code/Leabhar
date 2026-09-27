@@ -376,6 +376,25 @@ Lines live in `document_lines`, per-rate VAT in `document_vat_totals`, both with
 provenance. The VAT rate for a purchase comes from these confirmed lines — never
 from a bank amount.
 
+Not every document is evidence of a supply. The vault types (contract, Revenue
+document, grant letter, payslip, company document) are filed as what the person
+says they are: the invoice reader does not run on them, there are no figures to
+confirm, and the declaration is the confirmation (`src/domain/documents/types.ts`).
+
+Every reading of a document is versioned in `document_extractions`; the file
+itself never changes. The screen shows the latest reading expanded and every
+earlier one disclosed, so a confirmed value can always be compared with what
+was read before it.
+
+Retirement is two audited steps (ADR 0010, `src/domain/documents/lifecycle.ts`):
+archive (soft, reversible, refused while the document supports an invoice, a
+linked bank transaction or an accepted match) then, deliberately, delete —
+which removes the file only when no other document shares its bytes. Retention
+(`src/domain/documents/retention.ts`) is an effective-dated policy per type
+(or a default), resolved as of each document's own date; it never disposes of
+anything itself — documents past it are listed on the retention screen for a
+person to archive with a reason.
+
 ### Input VAT without a confirmed invoice (issue #234)
 
 `createInvoice` recovers input VAT on a purchase only when it is posted from a

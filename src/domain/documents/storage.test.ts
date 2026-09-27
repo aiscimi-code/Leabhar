@@ -278,3 +278,36 @@ describe('extractDocument', () => {
     expect(result.applied).toBe(true);
   });
 });
+
+describe('vault document types (issue #427)', () => {
+  it('files a declared vault type as confirmed evidence and skips the invoice reader', () => {
+    const result = storeDocument(db, {
+      companyId, filename: 'lease.pdf', content: Buffer.from('lease terms', 'utf8'),
+      root, documentType: 'contract', confirmedBy: 'joe',
+    });
+    const doc = db.select().from(documents).where(eq(documents.id, result.documentId)).get()!;
+    expect(doc.documentType).toBe('contract');
+    expect(doc.extractionStatus).toBe('skipped');
+    expect(doc.reviewStatus).toBe('confirmed');
+    expect(doc.provenanceStatus).toBe('user_confirmed');
+    // Nothing asks anyone to confirm a contract: the person filing it said what it is.
+    expect(db.select().from(reviewItems).where(eq(reviewItems.entityId, doc.id)).all()).toHaveLength(0);
+  });
+
+  it('does not run the invoice reader on a vault type even without a confirmee', () => {
+    const result = storeDocument(db, {
+      companyId, filename: 'payslip.pdf', content: Buffer.from('payslip', 'utf8'),
+      root, documentType: 'payroll_document',
+    });
+    const doc = db.select().from(documents).where(eq(documents.id, result.documentId)).get()!;
+    expect(doc.extractionStatus).toBe('skipped');
+    expect(doc.reviewStatus).toBe('unreviewed');
+  });
+
+  it('keeps an undeclared upload in the reading pipeline', () => {
+    const result = store('invoice.pdf', 'pretend pdf bytes');
+    const doc = db.select().from(documents).where(eq(documents.id, result.documentId)).get()!;
+    expect(doc.documentType).toBe('unknown');
+    expect(doc.extractionStatus).toBe('pending');
+  });
+});

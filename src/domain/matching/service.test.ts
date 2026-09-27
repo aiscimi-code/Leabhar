@@ -6,7 +6,7 @@ import { importStatement } from '../banking/import';
 import { storeDocument } from '../documents/storage';
 import {
   findMatchesForDocument, acceptMatch, rejectMatch, unmatchDocument,
-  matchAllUnmatched, unmatchedTransactions, withdrawMatchRejection,
+  matchAllUnmatched, unmatchedTransactions, withdrawMatchRejection, MatchError,
 } from './service';
 import {
   documents, bankTransactions, documentMatches, reviewItems, auditEvents, suppliers,
@@ -375,5 +375,18 @@ describe('a rejected match stays rejected (#384)', () => {
     expect(() => withdrawMatchRejection(db, {
       companyId, documentId, bankTransactionId: line.id, actor: 'joseph', reason: 'x',
     })).toThrow(/nothing to withdraw/);
+  });
+});
+
+describe('vault documents (issue #427)', () => {
+  it('are never matched, even confirmed', () => {
+    const documentId = addDocument({ documentType: 'contract', matchStatus: 'unmatched' });
+    expect(() => findMatchesForDocument(db, { companyId, documentId })).toThrow(MatchError);
+  });
+
+  it('are skipped by match-all', () => {
+    addDocument({ documentType: 'contract', matchStatus: 'unmatched' });
+    const outcome = matchAllUnmatched(db, { companyId });
+    expect(outcome.processed).toBe(0);
   });
 });

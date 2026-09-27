@@ -31,6 +31,9 @@ import { suggestVatTreatment } from '@/domain/rules/vatSuggestion';
 import { listAccountMappings } from '@/domain/config/accountMappings';
 import { verifyStatuteFile } from '@/domain/rules/knowledgeBase';
 import { documentReviewValues } from '@/domain/documents/review';
+import { documentEvidence } from '@/domain/documents/evidence';
+import { documentDependencies } from '@/domain/documents/lifecycle';
+import { retentionPolicies, retentionStatus } from '@/domain/documents/retention';
 import { transactionTrace } from '@/domain/consolidation/trace';
 import { documentLineChoices } from '@/domain/consolidation/suggest';
 import { asIsoDate, today, makeDate, type IsoDate } from '@/domain/dates';
@@ -410,19 +413,24 @@ export function vatPeriodDetail(periodId: string) {
   };
 }
 
-export function documentList(filters: { status?: string; review?: string; search?: string } = {}) {
+export function documentList(filters: {
+  status?: string; review?: string; search?: string; type?: string; archived?: boolean;
+} = {}) {
   const db = getDb();
   const company = requireCompany();
 
   const conditions = [
     eq(documents.companyId, company.id),
-    eq(documents.archived, false),
+    eq(documents.archived, filters.archived ?? false),
   ];
   if (filters.status && filters.status !== 'all') {
     conditions.push(eq(documents.matchStatus, filters.status as 'matched'));
   }
   if (filters.review && ['unreviewed', 'confirmed', 'rejected'].includes(filters.review)) {
     conditions.push(eq(documents.reviewStatus, filters.review as 'confirmed'));
+  }
+  if (filters.type && filters.type !== 'all') {
+    conditions.push(eq(documents.documentType, filters.type as 'contract'));
   }
   if (filters.search) {
     const needle = `%${filters.search.toLowerCase()}%`;
@@ -748,9 +756,24 @@ export function documentDetail(documentId: string) {
   const invoice = document.invoiceId
     ? db.select().from(invoices).where(eq(invoices.id, document.invoiceId)).get() : undefined;
 
+  // The evidence chain behind this document (issue #431): what rests on it.
+  const evidence = documentEvidence(db, { companyId: company.id, documentId });
+  // What in the books would be orphaned by retiring it (issue #430).
+  const dependencies = documentDependencies(db, company.id, documentId);
+
   return {
     document, supplier, extractions, matches, matchedTransaction, audit, duplicateOf, company,
-    review, supplierOptions, customerOptions, openItems, posting, invoice,
+    review, supplierOptions, customerOptions, openItems, posting, invoice, evidence, dependencies,
+  };
+}
+
+/** Retention policies and the documents that may be disposed of (issue #429). */
+export function retentionOverview() {
+  const db = getDb();
+  const company = requireCompany();
+  return {
+    policies: retentionPolicies(db, company.id),
+    status: retentionStatus(db, { companyId: company.id }),
   };
 }
 

@@ -72,6 +72,7 @@ export const ids = {
   session: () => newId('ses'),
   shareCapital: () => newId('sc'),
   glossary: () => newId('gls'),
+  retentionPolicy: () => newId('ret'),
   expenseRate: () => newId('exprate'),
   expenseClaim: () => newId('expc'),
   expenseClaimLine: () => newId('expl'),

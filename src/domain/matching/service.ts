@@ -1,4 +1,4 @@
-import { and, eq, gte, lte, ne, isNull, or, sql } from 'drizzle-orm';
+import { and, eq, gte, lte, ne, isNull, notInArray, or, sql } from 'drizzle-orm';
 import type { AppDatabase } from '@/db';
 import {
   documents, bankTransactions, documentMatches, suppliers, auditEvents, reviewItems,
@@ -8,6 +8,8 @@ import { ids } from '@/lib/ids';
 import { nowIso, addDays, asIsoDate } from '../dates';
 import { upsertReviewItem } from '../extraction/service';
 import { assertDocumentConfirmed } from '../documents/review';
+import { isVaultDocumentType, VAULT_DOCUMENT_TYPES } from '../documents/types';
+import { AccountingError } from '../accounting/errors';
 import {
   scoreMatch, rankCandidates, MATCH_THRESHOLDS,
   type MatchCandidate, type DocumentForMatching, type TransactionForMatching,
@@ -21,6 +23,9 @@ import {
  * decision, and an ambiguous best candidate is never applied at all — README §16
  * is explicit that an uncertain match must never be silently forced.
  */
+
+/** A user-facing matching refusal: the document cannot be matched at all. */
+export class MatchError extends AccountingError {}
 
 export interface FindMatchesOptions {
   /** How far either side of the document date to look. */
@@ -56,6 +61,15 @@ export function findMatchesForDocument(
   // An unconfirmed extraction is a draft: its amounts, date and supplier may be
   // wrong, so it cannot be used to find (let alone apply) a bank match.
   assertDocumentConfirmed(document, 'matching it to a bank transaction');
+  // A vault document (a contract, a grant letter, a payslip) is not evidence of
+  // a supply: it has no amount to match, and it is filed as what a person says
+  // it is. It is never matched to a bank line.
+  if (isVaultDocumentType(document.documentType)) {
+    throw new MatchError(
+      `A ${document.documentType.replace(/_/g, ' ')} is not evidence of a supply, so it is never `
+        + 'matched to a bank transaction.',
+    );
+  }
 
   const windowDays = params.windowDays ?? 60;
   const supplier = document.supplierId
@@ -553,6 +567,8 @@ export function matchAllUnmatched(
       eq(documents.archived, false),
       // Drafts wait for confirmation; they are listed as awaiting it, not matched.
       eq(documents.reviewStatus, 'confirmed'),
+      // Vault documents are evidence of nothing to match: no amounts, no supply.
+      notInArray(documents.documentType, [...VAULT_DOCUMENT_TYPES]),
       or(eq(documents.matchStatus, 'unmatched'), eq(documents.matchStatus, 'suggested')),
       isNull(documents.matchedTransactionId),
     )).all();
