@@ -89,7 +89,8 @@ Written conventions live in `docs/`: architecture decisions and their rationale
 in `docs/adr/` (add an ADR for any decision a future contributor would
 re-litigate, never edit an accepted one), API conventions in `docs/API.md`,
 error handling in `docs/ERRORS.md`, feature flags in `docs/FEATURE_FLAGS.md`
-(there are none by design), and testing in `docs/TESTING.md`.
+(there are none by design), testing in `docs/TESTING.md`, and the self-review
+checklist to run before every PR in `docs/REVIEWING.md`.
 
 The domain layer is UI-independent: every function takes a plain `AppDatabase`.
 `src/agent/` and `src/cli/` build on that to drive import, matching,
@@ -104,6 +105,10 @@ for the agent workflow.
 npm run typecheck && npm test
 npx next build        # also, when a change touches src/app or src/components
 ```
+
+Then work through `docs/REVIEWING.md`: merge the latest `main` before
+generating a migration or running the gate, and check the change against the
+list of mistakes review keeps finding.
 
 This is the only gate. No CI runs on pull requests, by decision (builds on
 every PR cost more than they caught). Run it in your own workspace before
