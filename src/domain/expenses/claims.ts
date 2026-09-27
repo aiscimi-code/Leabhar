@@ -662,8 +662,8 @@ function reimburseExpenseClaimSteps(
 
     // Travel and subsistence payments to a director or employee are reportable
     // to Revenue in real time under the Enhanced Reporting Requirements
-    // (Finance Act 2022). The submission itself is EPIC 21 (#316); until it
-    // exists the payment is flagged rather than silently treated as filed.
+    // (Finance Act 2022). EPIC 21 (#532, #533) prepares it; the payment is
+    // flagged until it is, rather than silently treated as filed.
     const reportable = db.select({ id: expenseClaimLines.id }).from(expenseClaimLines)
       .where(and(
         eq(expenseClaimLines.claimId, claim.id),
@@ -677,8 +677,9 @@ function reimburseExpenseClaimSteps(
         title: `Reimbursement of "${claim.title}" is reportable to Revenue (ERR)`,
         detail: 'Travel, mileage and subsistence payments to an employee or director must be reported '
           + 'to Revenue in real time under the Enhanced Reporting Requirements (Finance Act 2022). '
-          + 'Leabhar cannot submit it yet (epic #316), so nothing has been filed: keep this claim '
-          + 'and its receipts until the submission is built.',
+          + 'Prepare its reportable benefits (Payroll → Reportable benefits, or `err-report-claim`), '
+          + 'submit them through ROS and record the reference: nothing is filed for you until Revenue\'s API '
+          + 'is available to Leabhar (#528).',
         entityType: 'expense_claim',
         entityId: claim.id,
         dedupeKey: `expense_claim:${claim.id}:err_reportable`,

@@ -44,7 +44,7 @@ Two guards make the model safe to live in:
 | **bookkeeper** | Day-to-day entry work: import, classify, match, post, reconcile, manage parties and rules. Does not file returns or change configuration. |
 | **employee** | Submits receipts and documents, and reads the books. Changes nothing else. |
 | **farm manager** | The bookkeeper's role, named for the farm case: records the farm's day-to-day transactions. |
-| **auditor** | Reads everything including the audit trail, and exports. Changes nothing — which is what distinguishes it from read-only. |
+| **auditor** | Reads everything including the audit trail and payroll records, and exports. Changes nothing — which is what distinguishes it from read-only. |
 | **read-only** | Views the books. Nothing else. |
 
 ## The permission matrix
@@ -68,6 +68,8 @@ question; `permissions.test.ts` pins every cell.
 | `documents.review` | owner, director, accountant, bookkeeper, farm_manager |
 | `documents.post` | owner, director, accountant, bookkeeper, farm_manager |
 | `invoices.manage` | owner, director, accountant, bookkeeper, farm_manager |
+| `payroll.read` | owner, director, accountant, bookkeeper, auditor |
+| `payroll.run` | owner, director, accountant, bookkeeper |
 | `journals.post` | owner, director, accountant, bookkeeper |
 | `vat.file` | owner, director, accountant |
 | `config.manage` | owner, director, accountant |

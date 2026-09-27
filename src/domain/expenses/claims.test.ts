@@ -431,7 +431,7 @@ describe('reimburseExpenseClaim', () => {
       .toThrow(/must match the claim exactly/);
   });
 
-  it('flags mileage and subsistence payments as reportable to Revenue (ERR) until submission exists', () => {
+  it('flags mileage and subsistence payments as reportable to Revenue (ERR)', () => {
     const claim = approvedClaim();
     const txId = insertTestBankTransaction(db, {
       companyId, bankAccountId, amountMinor: -66_700, transactionDate: '2025-06-02',

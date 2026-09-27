@@ -3407,6 +3407,109 @@
         "eu.usual_residence_definition",
         "eu.immovable_property_definition"
       ]
+    },
+    {
+      "id": "swca2005:s13",
+      "area": "other_source",
+      "title": "SWCA 2005 s.13 (LRC revised) — employment (Class A) contributions and the PRSI credit",
+      "status": "rule",
+      "ruleKeys": [
+        "prsi.class_a_employee_threshold",
+        "prsi.class_a_credit_upper",
+        "prsi.class_a_credit_max"
+      ]
+    },
+    {
+      "id": "swmpa2024:s3",
+      "area": "other_source",
+      "title": "Social Welfare (Miscellaneous Provisions) Act 2024 s.3 — Class A and Class S rates from October 2024 to October 2028",
+      "status": "rule",
+      "ruleKeys": [
+        "prsi.class_a_employee_rate",
+        "prsi.class_a_employer_rate_lower",
+        "prsi.class_a_employer_rate_higher",
+        "prsi.class_s_emoluments_rate"
+      ]
+    },
+    {
+      "id": "swa2024:s2",
+      "area": "other_source",
+      "title": "Social Welfare Act 2024 s.2 — employer PRSI threshold €527 from 2025",
+      "status": "rule",
+      "ruleKeys": [
+        "prsi.class_a_employer_threshold"
+      ]
+    },
+    {
+      "id": "swaerss2025:s2",
+      "area": "other_source",
+      "title": "Social Welfare and Automatic Enrolment Retirement Savings System (Amendment) Act 2025 s.2 — employer PRSI threshold €552 from 2026",
+      "status": "rule",
+      "ruleKeys": [
+        "prsi.class_a_employer_threshold"
+      ]
+    },
+    {
+      "id": "ntf2000:s4",
+      "area": "other_source",
+      "title": "National Training Fund Act 2000 s.4 (LRC revised) — the 1% levy",
+      "status": "rule",
+      "ruleKeys": [
+        "prsi.ntf_levy_rate"
+      ]
+    },
+    {
+      "id": "si345-2018",
+      "area": "other_source",
+      "title": "S.I. 345/2018 Income Tax (Employments) Regulations 2018 — regs.11, 15, 19, 20, 31",
+      "status": "rule",
+      "ruleKeys": [
+        "paye.cumulative_basis",
+        "paye.week53",
+        "paye.emergency_no_ppsn",
+        "paye.emergency_ppsn",
+        "paye.week1_basis",
+        "paye.pension_deduction"
+      ]
+    },
+    {
+      "id": "si510-2018",
+      "area": "other_source",
+      "title": "S.I. 510/2018 Universal Social Charge Regulations 2018 — regs.14, 19",
+      "status": "rule",
+      "ruleKeys": [
+        "usc.payroll_cumulative",
+        "usc.payroll_emergency"
+      ]
+    },
+    {
+      "id": "si1-2024",
+      "area": "other_source",
+      "title": "S.I. 1/2024 Income Tax (Employments) Regulations 2024 — reg.10A reportable benefits (ERR)",
+      "status": "rule",
+      "ruleKeys": [
+        "err.notification_particulars",
+        "err.travel_subsistence_subcategories"
+      ]
+    },
+    {
+      "id": "tdm:38-03-33",
+      "area": "other_source",
+      "title": "Revenue TDM Part 38-03-33 — Enhanced Reporting Requirements",
+      "status": "rule",
+      "ruleKeys": [
+        "err.remote_working_daily_allowance"
+      ]
+    },
+    {
+      "id": "fa2024:s8",
+      "area": "other_source",
+      "title": "Finance Act 2024 s.8 — small benefit exemption (TCA s.112B)",
+      "status": "rule",
+      "ruleKeys": [
+        "small_benefit.max_incentives",
+        "small_benefit.cumulative_limit"
+      ]
     }
   ]
 }

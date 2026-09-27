@@ -53,6 +53,8 @@ const SECTIONS: Array<{ heading: string; items: Array<{ href: string; label: str
       { href: '/purchase-orders', label: 'Purchase orders' },
       { href: '/bills/recurring', label: 'Recurring bills' },
       { href: '/expenses', label: 'Expenses' },
+      { href: '/payroll', label: 'Payroll' },
+      { href: '/payroll/err', label: 'Reportable benefits' },
       { href: '/suppliers', label: 'Suppliers' },
       { href: '/customers', label: 'Customers' },
       { href: '/assets', label: 'Fixed assets' },

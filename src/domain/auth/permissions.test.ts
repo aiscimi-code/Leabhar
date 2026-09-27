@@ -35,6 +35,8 @@ const EXPECTED: Record<Action, readonly Role[]> = {
   'expenses.submit': ['owner', 'director', 'accountant', 'bookkeeper', 'employee', 'farm_manager'],
   'expenses.approve': ['owner', 'director', 'accountant', 'bookkeeper'],
   'expenses.reimburse': ['owner', 'director', 'accountant', 'bookkeeper'],
+  'payroll.read': ['owner', 'director', 'accountant', 'bookkeeper', 'auditor'],
+  'payroll.run': ['owner', 'director', 'accountant', 'bookkeeper'],
   'journals.post': ['owner', 'director', 'accountant', 'bookkeeper'],
   'vat.file': ['owner', 'director', 'accountant'],
   'config.manage': ['owner', 'director', 'accountant'],
@@ -75,9 +77,10 @@ describe('permission matrix', () => {
     }
   });
 
-  it('gives the auditor the books, the audit trail and exports, and nothing else', () => {
+  it('gives the auditor the books, the audit trail, payroll records and exports, and nothing else', () => {
     for (const action of ACTIONS) {
-      const expected = action === 'books.read' || action === 'audit.read' || action === 'reports.export';
+      const expected = action === 'books.read' || action === 'audit.read' || action === 'reports.export'
+        || action === 'payroll.read';
       expect(can('auditor', action), `auditor ${action}`).toBe(expected);
     }
   });
