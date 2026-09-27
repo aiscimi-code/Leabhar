@@ -49,6 +49,7 @@ import { syncTaxRatesFromIrishRules } from '@/domain/rules/taxRateSync';
 import { loadStatutoryKnowledgeBase, statuteFilePath } from '@/domain/rules/knowledgeBase';
 import { deriveVatScopeRules } from '@/domain/rules/vatScopeIngestion';
 import { lookupTransactionRules, type TransactionContext } from '@/domain/rules/transactionLookup';
+import { compareRuleVersions } from '@/domain/rules/versionCompare';
 import { setRuleReviewStatus } from '@/domain/rules/review';
 import { generateDefaultTestCases, runTestCases } from '@/domain/rules/testCases';
 import { generateAuditReport } from '@/domain/rules/audit';
@@ -97,6 +98,9 @@ Commands:
                                        above, before it can supersede live config)
   lookup --json <transactionContextJson>
                                        Run the deterministic transaction lookup
+  versions --rule-key <k>              Compare every version of a rule: what
+                                       changed between each version and the one
+                                       it supersedes, oldest first
   generate-tests                      Write default positive/effective-date test cases
   test                                Run all stored test cases, print pass/fail
   audit                               Print the QC/audit report
@@ -437,6 +441,18 @@ export async function main(argv: string[], options: CliOptions = {}): Promise<nu
           return 0;
         }
         print(resolveAllRuleDependencies(db, { companyId }), format);
+        return 0;
+      }
+
+      case 'versions': {
+        const ruleKey = getFlag(flags, 'rule-key');
+        if (!ruleKey) throw new Error('Usage: versions --rule-key <ruleKey>');
+        const comparison = compareRuleVersions(db, { companyId, ruleKey });
+        if (!comparison) {
+          print({ ruleKey, error: `No rule with key "${ruleKey}" exists for this company.` }, format);
+          return 1;
+        }
+        print(comparison, format);
         return 0;
       }
 

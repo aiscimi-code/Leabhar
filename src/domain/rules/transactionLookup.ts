@@ -665,3 +665,91 @@ export function citationForProvision(db: AppDatabase, provisionId: string) {
     .where(and(eq(irishActProvisions.id, provisionId)))
     .get();
 }
+
+/**
+ * Build a `TransactionContext` from the query params of the rule lookup API
+ * (issue #447: GET /api/rules/lookup). Parsing lives here, in the domain and
+ * beside the lookup it feeds, so the route is a thin shell and the parsing is
+ * deterministically testable without a server.
+ *
+ * `transactionDate` and `amountMinor` are required; everything else is
+ * optional and a rule that needs a field the caller did not supply surfaces
+ * it as an unresolved condition, exactly as the CLI's JSON path does. Money
+ * is integer minor units (AGENTS.md #1): a fractional amount is rejected
+ * rather than rounded, because a rounded lookup would silently answer a
+ * question the caller did not ask.
+ */
+export function transactionContextFromQueryParams(
+  params: Record<string, string>,
+): { ok: true; transaction: TransactionContext } | { ok: false; error: string } {
+  const transactionDate = params.transactionDate?.trim() ?? '';
+  if (!transactionDate) return { ok: false, error: 'transactionDate is required, as an ISO date (YYYY-MM-DD).' };
+  if (!isIsoDate(transactionDate)) {
+    return { ok: false, error: `transactionDate "${transactionDate}" is not an ISO date (YYYY-MM-DD).` };
+  }
+
+  const amountRaw = params.amountMinor?.trim() ?? '';
+  if (!amountRaw) return { ok: false, error: 'amountMinor is required, as a positive integer count of minor units.' };
+  const amountMinor = Number(amountRaw);
+  if (!Number.isInteger(amountMinor) || amountMinor <= 0) {
+    return { ok: false, error: `amountMinor "${amountRaw}" must be a positive integer count of minor units, e.g. 1000 for €10.00.` };
+  }
+
+  const bool = (name: string): boolean | null => {
+    const value = params[name];
+    if (value === undefined) return null;
+    if (value === 'true') return true;
+    if (value === 'false') return false;
+    throw new Error(`${name} must be "true" or "false".`);
+  };
+  const int = (name: string): number | null => {
+    const value = params[name];
+    if (value === undefined) return null;
+    const parsed = Number(value);
+    if (!Number.isFinite(parsed)) throw new Error(`${name} must be a number.`);
+    return parsed;
+  };
+  const minorUnits = (name: string): number | null => {
+    const value = params[name];
+    if (value === undefined) return null;
+    const parsed = Number(value);
+    if (!Number.isInteger(parsed) || parsed < 0) {
+      throw new Error(`${name} must be a non-negative integer count of minor units.`);
+    }
+    return parsed;
+  };
+
+  const supplyType = params.supplyType;
+  if (supplyType !== undefined && supplyType !== 'goods' && supplyType !== 'services') {
+    return { ok: false, error: 'supplyType must be "goods" or "services".' };
+  }
+
+  try {
+    return {
+      ok: true,
+      transaction: {
+        transactionDate,
+        amountMinor,
+        currency: params.currency,
+        entityType: params.entityType ?? null,
+        vatRegistered: bool('vatRegistered'),
+        supplierCountry: params.supplierCountry ?? null,
+        supplierType: params.supplierType ?? null,
+        transactionType: params.transactionType ?? null,
+        description: params.description ?? null,
+        businessUsePercent: int('businessUsePercent'),
+        invoiceAvailable: bool('invoiceAvailable'),
+        supplyType: supplyType ?? null,
+        direction: params.direction ?? null,
+        customerCountry: params.customerCountry ?? null,
+        annualTurnoverCurrentYearMinor: minorUnits('annualTurnoverCurrentYearMinor'),
+        annualTurnoverPreviousYearMinor: minorUnits('annualTurnoverPreviousYearMinor'),
+        goodsShareOfAnnualTurnoverPercent: int('goodsShareOfAnnualTurnoverPercent'),
+        supplierEstablishedOutsideState: bool('supplierEstablishedOutsideState'),
+        customerEstablishedOutsideState: bool('customerEstablishedOutsideState'),
+      },
+    };
+  } catch (error) {
+    return { ok: false, error: error instanceof Error ? error.message : String(error) };
+  }
+}

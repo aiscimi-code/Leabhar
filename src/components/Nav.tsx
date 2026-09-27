@@ -57,6 +57,7 @@ const SECTIONS: Array<{ heading: string; items: Array<{ href: string; label: str
       { href: '/assets', label: 'Fixed assets' },
       { href: '/capital-goods', label: 'Capital goods' },
       { href: '/rules', label: 'Rules' },
+      { href: '/statutes', label: 'Statutes' },
       { href: '/calendar', label: 'Tax calendar' },
     ],
   },

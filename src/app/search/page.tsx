@@ -16,6 +16,9 @@ const TYPE_LABELS: Record<SearchEntityType, string> = {
   journal_entry: 'Journal entry',
   fixed_asset: 'Fixed asset',
   vat_treatment: 'VAT treatment',
+  statutory_provision: 'Statute provision',
+  statutory_rule: 'Statutory rule',
+  knowledge_source: 'Source document',
 };
 
 /** Global search (README §36). */
