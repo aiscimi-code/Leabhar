@@ -57,6 +57,7 @@ const SECTIONS: Array<{ heading: string; items: Array<{ href: string; label: str
       { href: '/payroll/err', label: 'Reportable benefits' },
       { href: '/suppliers', label: 'Suppliers' },
       { href: '/customers', label: 'Customers' },
+      { href: '/inventory', label: 'Inventory' },
       { href: '/assets', label: 'Fixed assets' },
       { href: '/capital-goods', label: 'Capital goods' },
       { href: '/rules', label: 'Rules' },

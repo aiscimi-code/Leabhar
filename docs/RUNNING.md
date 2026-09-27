@@ -386,6 +386,20 @@ npm run cli -- transfer-asset --asset <id> --to-account <id> --date 2026-06-01 -
 npm run cli -- reconcile-assets --as-of 2026-12-31
 ```
 
+Inventory (quantities in the item's unit; `--item` and `--location` take a code):
+
+```bash
+npm run cli -- add-item --code W1 --name Widget --kind stock --unit each --method fifo --by owner
+npm run cli -- add-location --code SHOP --name Shop
+npm run cli -- opening-stock --item W1 --location SHOP --date 2026-01-01 --quantity 10 --unit-cost 4.00 --by owner
+npm run cli -- receive-stock --item W1 --location SHOP --date 2026-02-01 --invoice-line <id> --by owner
+npm run cli -- issue-stock --item W1 --location SHOP --date 2026-03-01 --invoice-line <id> --by owner
+npm run cli -- stocktake --location SHOP --date 2026-06-30 --counted-by Aoife --count "W1=9.5" --by owner
+npm run cli -- stock-valuation --as-of 2026-12-31
+npm run cli -- closing-stock --date 2026-12-31               # the plan: ledger against last booked
+npm run cli -- closing-stock --date 2026-12-31 --post --by owner
+```
+
 ### Agent workflow
 
 `db:seed` only ever loads the Acme demo. To load a real (or synthetic) SME

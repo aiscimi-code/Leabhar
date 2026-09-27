@@ -749,6 +749,66 @@ The group boundaries depend on when the expenditure was incurred:
 A car without emissions recorded keeps the Part 11 cost limit and is
 flagged.
 
+### Inventory (EPIC 23, issues #536–#538)
+
+The ledger keeps stock **periodically**. A purchase of stock is posted to its
+cost-of-sales account (5020 Goods for resale) all year. A closing stock
+journal moves what is on hand to Stock on hand (1300) at a date. Behind it,
+a **perpetual subledger** records every movement of every stock item. See
+ADR 0015.
+
+**Items and locations.** `items` holds each product or service. Only a
+`stock` item is counted. Each stock item has:
+- a unit;
+- a costing method (FIFO or weighted average), fixed once it has moved;
+- a cost-of-sales account (default 5020) and a stock account (default 1300).
+
+`stock_locations` are the warehouses, shops and vans stock is held at.
+
+**Movements.** `stock_movements` is write-once. A mistake is corrected by a
+reversing movement (`reverseStockMovement`). Quantities are thousandths of
+the unit, signed: in is positive, out is negative. Each kind is costed as
+follows:
+
+| Movement | Recorded by | Cost |
+|---|---|---|
+| Opening stock | `recordOpeningStock` | the unit cost given |
+| Purchase | `receivePurchase`, from a posted purchase invoice line | the line's net in base currency; part deliveries share it exactly |
+| Sale | `issueSale`, from a posted sales invoice line | the item's method |
+| Customer return | `recordCustomerReturn`, naming the sale | the cost its sale left at |
+| Supplier return | `recordSupplierReturn`, naming the receipt | the cost it came in at |
+| Damaged, adjustment down | `recordDamagedStock`, `recordStockAdjustment` | the item's method, with a reason |
+| Adjustment up | `recordStockAdjustment` | the unit cost given, with a reason |
+| Transfer | `transferStock` | the cost moves with the goods |
+| Stocktake | `postStocktake` | a count over book at the unit cost given; under book at the method |
+
+**Costing by replay.** Nothing about an issue's cost is stored. `replayItem`
+replays the item's movements in date order, then recording order
+(`sequence`), through one cost pool per location:
+- **FIFO:** issues consume the oldest layers.
+- **Weighted average:** issues take the moving average, and the last unit out
+  takes what is left exactly.
+
+A back-dated movement re-costs everything after it. Every recording path
+replays inside its transaction, so a movement is refused, and nothing is
+written, if it would take a location below nil on its date or on any later
+date.
+
+**Valuation and closing stock.** `valueInventory` gives quantity and value
+by item and location at a date, at cost. FRS 102 s.13 carries inventories at
+the lower of cost and net realisable value. The NRV test is the person's:
+every valuation carries that note (`NRV_NOTE`), and nothing is written down
+automatically.
+
+`postClosingStock` posts one journal. For each (stock account, cost-of-sales
+account) pair, it moves the change in value since the last posted valuation,
+or since the opening stock for the first one.
+- Before posting, each stock account's ledger balance must equal what was
+  last booked there. An entry posted to 1300 by some other route becomes a
+  review item, and nothing is posted.
+- `stock_valuations` records each posting and its lines.
+- No movement or stocktake can be dated on or before a posted valuation.
+
 ### Consolidation (bank ↔ invoice)
 
 ```
