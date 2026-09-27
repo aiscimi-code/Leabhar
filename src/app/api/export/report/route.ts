@@ -1,4 +1,5 @@
 import { reportsData, requireCompany } from '@/lib/queries';
+import { requireApiActor } from '@/lib/apiAuth';
 import { mappedTrialBalance } from '@/domain/config/accountMappings';
 import { asIsoDate } from '@/domain/dates';
 import type { Explained } from '@/domain/reports/explain';
@@ -20,6 +21,9 @@ interface FlatLine { label: string; amountMinor: number; depth: number; isTotal:
  * spreadsheet that recalculates could disagree with the books.
  */
 export async function GET(request: Request): Promise<Response> {
+  const refused = await requireApiActor('reports.export');
+  if (refused) return refused;
+
   const url = new URL(request.url);
   const which = url.searchParams.get('which') ?? 'all';
   const format = url.searchParams.get('format') ?? 'xlsx';
@@ -185,10 +189,13 @@ export async function GET(request: Request): Promise<Response> {
       columns: trialColumns,
       rows: data.trialBalance.rows,
       footer: [[], [
-        data.trialBalance.balanced ? 'Debits equal credits.' : 'DEBITS DO NOT EQUAL CREDITS.',
+        data.trialBalance.balanced ? 'Net debits equal net credits.' : 'NET DEBITS DO NOT EQUAL NET CREDITS.',
         '', '',
-        amountFor(data.trialBalance.rows.reduce((s, r) => s + Math.max(r.netDebitMinor, 0), 0), currency),
-        amountFor(data.trialBalance.rows.reduce((s, r) => s + Math.max(-r.netDebitMinor, 0), 0), currency),
+        amountFor(data.trialBalance.netTotalDebitMinor, currency),
+        amountFor(data.trialBalance.netTotalCreditMinor, currency),
+      ], [
+        `Gross movement: ${amountFor(data.trialBalance.totalDebitMinor, currency)} debited, `
+          + `${amountFor(data.trialBalance.totalCreditMinor, currency)} credited.`,
       ]],
     });
   }

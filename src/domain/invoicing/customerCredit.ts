@@ -136,6 +136,16 @@ export function unapplyCreditNote(
   db.transaction((tx) => {
     for (const allocation of tx.select().from(paymentAllocations).where(eq(paymentAllocations.paymentId, payment.id)).all()) {
       const doc = tx.select().from(invoices).where(eq(invoices.id, allocation.invoiceId)).get()!;
+      // Either document may have been written off since the application
+      // (issue #480): reopening it here would strand the write-off journal
+      // against an invoice that claims to be outstanding again. Reverse the
+      // write-off first, then unapply.
+      if (doc.status === 'written_off') {
+        throw new InvoicingError(
+          `Invoice ${doc.invoiceNumber ?? doc.id} has been written off since this credit note was applied. `
+            + 'Reverse the write-off first, then unapply the credit note.',
+        );
+      }
       const paid = doc.paidMinor - allocation.allocatedMinor;
       const outstanding = doc.grossMinor - paid;
       tx.update(invoices).set({

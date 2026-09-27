@@ -671,7 +671,10 @@ export async function postDepreciationAction(formData: FormData): Promise<Action
 
 export async function scanAnomaliesAction(): Promise<ActionResult> {
   try {
-    await requireActor('audit.read');
+    // The scan writes the review queue, so it is a mutating action, not a
+    // read of the audit trail (issue #496): an auditor reads everything and
+    // changes nothing, while a bookkeeper may run it as day-to-day work.
+    await requireActor('rules.manage');
     const company = requireCompany();
     const db = getDb();
     const scan = scanForAnomalies(db, { companyId: company.id });

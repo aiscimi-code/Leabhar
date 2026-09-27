@@ -18,13 +18,30 @@ import type { InviteUserInput, UserRefInput, SetUserRoleInput } from './schema';
  * terminal; create the first user from the app's login screen.
  */
 
-/** The owner the CLI acts as. */
-function actingOwner(db: AppDatabase): { id: string; username: string } {
-  const owner = db.select().from(users)
-    .where(and(eq(users.active, true), eq(users.role, 'owner'))).all()[0];
-  if (!owner) {
+/**
+ * The owner the CLI acts as (issue #498). The attribution is never a guess:
+ * an explicit `--as <user>` names the acting owner, and a book with more than
+ * one active owner refuses to run without one — otherwise the audit trail
+ * would record whichever owner the query happened to return first.
+ */
+function actingOwner(db: AppDatabase, as?: string): { id: string; username: string } {
+  if (as) {
+    const row = db.select().from(users).where(eq(users.id, resolveUserId(db, as))).get();
+    if (!row || !row.active || row.role !== 'owner') {
+      throw new Error(`--as ${as}: not an active owner of this book. list-users shows the owners.`);
+    }
+    return { id: row.id, username: row.username };
+  }
+  const owners = db.select().from(users)
+    .where(and(eq(users.active, true), eq(users.role, 'owner'))).all();
+  if (owners.length === 0) {
     throw new Error('This book has no active owner, so nobody may administer it from the terminal. Create the first user from the app\'s login screen.');
   }
+  if (owners.length > 1) {
+    const names = owners.map((o) => o.username).join(', ');
+    throw new Error(`This book has ${owners.length} active owners (${names}), so the terminal cannot guess who is acting. Pass --as <username> to name yourself.`);
+  }
+  const owner = owners[0]!;
   return { id: owner.id, username: owner.username };
 }
 
@@ -37,10 +54,11 @@ function resolveUserId(db: AppDatabase, ref: string): string {
   return byId.id;
 }
 
-export function listUsersCli(db: AppDatabase) {
+export function listUsersCli(db: AppDatabase, as?: string) {
+  const acting = actingOwner(db, as);
   const rows = listBookUsers(db);
   return {
-    actingAs: actingOwner(db).username,
+    actingAs: acting.username,
     roleLabels: invitableRoles().reduce<Record<string, string>>((acc, r) => {
       acc[r.role] = r.label; return acc;
     }, {}),
@@ -61,7 +79,7 @@ export function listRolesCli() {
 }
 
 export function inviteUserCli(db: AppDatabase, input: InviteUserInput) {
-  const actor = actingOwner(db);
+  const actor = actingOwner(db, input.as);
   const result = inviteUser(db, {
     companyId: input.companyId,
     actorId: actor.id,
@@ -80,7 +98,7 @@ export function inviteUserCli(db: AppDatabase, input: InviteUserInput) {
 }
 
 export function removeUserCli(db: AppDatabase, input: UserRefInput) {
-  const actor = actingOwner(db);
+  const actor = actingOwner(db, input.as);
   const userId = resolveUserId(db, input.user);
   if (userId === actor.id) {
     throw new Error('You cannot remove yourself. Another owner must remove you.');
@@ -90,7 +108,7 @@ export function removeUserCli(db: AppDatabase, input: UserRefInput) {
 }
 
 export function setUserRoleCli(db: AppDatabase, input: SetUserRoleInput) {
-  const actor = actingOwner(db);
+  const actor = actingOwner(db, input.as);
   const userId = resolveUserId(db, input.user);
   changeUserRole(db, {
     companyId: input.companyId,
@@ -102,7 +120,7 @@ export function setUserRoleCli(db: AppDatabase, input: SetUserRoleInput) {
 }
 
 export function resetUserPasswordCli(db: AppDatabase, input: UserRefInput) {
-  const actor = actingOwner(db);
+  const actor = actingOwner(db, input.as);
   const userId = resolveUserId(db, input.user);
   const oneTimePassword = resetUserPassword(db, {
     companyId: input.companyId, actorId: actor.id, userId,

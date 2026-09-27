@@ -158,14 +158,16 @@ Commands:
   list-chart                             List chart of accounts (code, name, type)
   list-vat-treatments                    List VAT treatments (code, name, jurisdiction)
   list-reconciliations                   Past reconciliation records
-  list-users                             The book's users and their roles
+  list-users [--as <user>]               The book's users and their roles
   list-roles                             The roles and what each may do
-  invite-user --username <name> --role <role> [--display-name "..."]
+  invite-user --username <name> --role <role> [--display-name "..."] [--as <user>]
                                          Create a user with a one-time password
-  remove-user (--user <name>)            Remove a user's access to the book
-  set-user-role --user <name> --role <role>
+  remove-user (--user <name>) [--as <user>]
+                                         Remove a user's access to the book
+  set-user-role --user <name> --role <role> [--as <user>]
                                          Change what a user may do
-  reset-user-password --user <name>      Issue a fresh one-time password
+  reset-user-password --user <name> [--as <user>]
+                                         Issue a fresh one-time password
   import    --account <id> --file <path> Import a statement (CSV/XLSX)
   auto-classify --account <id>           Classify unclassified txns from rules
   classify --transaction <id>            Manually classify + post a transaction
@@ -638,7 +640,7 @@ export async function main(argv: string[], options: CliOptions = {}): Promise<nu
       }
 
       case 'list-users': {
-        print(listUsersCli(db), format);
+        print(listUsersCli(db, getFlag(flags, 'as')), format);
         return 0;
       }
 
@@ -653,6 +655,7 @@ export async function main(argv: string[], options: CliOptions = {}): Promise<nu
           username: requireFlag(flags, 'username'),
           role: requireFlag(flags, 'role'),
           displayName: getFlag(flags, 'display-name'),
+          as: getFlag(flags, 'as'),
         });
         print(inviteUserCli(db, parsed), format);
         return 0;
@@ -662,6 +665,7 @@ export async function main(argv: string[], options: CliOptions = {}): Promise<nu
         const parsed = userRefInput.parse({
           companyId,
           user: requireFlag(flags, 'user', 'username'),
+          as: getFlag(flags, 'as'),
         });
         print(removeUserCli(db, parsed), format);
         return 0;
@@ -672,6 +676,7 @@ export async function main(argv: string[], options: CliOptions = {}): Promise<nu
           companyId,
           user: requireFlag(flags, 'user', 'username'),
           role: requireFlag(flags, 'role'),
+          as: getFlag(flags, 'as'),
         });
         print(setUserRoleCli(db, parsed), format);
         return 0;
@@ -681,6 +686,7 @@ export async function main(argv: string[], options: CliOptions = {}): Promise<nu
         const parsed = userRefInput.parse({
           companyId,
           user: requireFlag(flags, 'user', 'username'),
+          as: getFlag(flags, 'as'),
         });
         print(resetUserPasswordCli(db, parsed), format);
         return 0;

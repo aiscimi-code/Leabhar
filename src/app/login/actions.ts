@@ -39,7 +39,10 @@ export async function loginAction(formData: FormData): Promise<ActionResult> {
     path: '/',
   });
 
-  redirect('/');
+  // A user still on the one-time password their inviter set can do nothing
+  // else until they choose their own (issue #472), so they land on the one
+  // screen that clears it.
+  redirect(user.mustChangePassword ? '/settings/password' : '/');
 }
 
 export async function setupAction(formData: FormData): Promise<ActionResult> {

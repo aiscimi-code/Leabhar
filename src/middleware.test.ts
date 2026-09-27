@@ -9,7 +9,36 @@ function request(path: string, cookie?: string, host = 'localhost:3000'): NextRe
   return req;
 }
 
+/** The request headers the middleware forwards to the app, as Next.js records them on the response. */
+function forwarded(res: Response, name: string): string | null {
+  return res.headers.get(`x-middleware-request-${name}`);
+}
+
 describe('middleware', () => {
+  it('drops a client-sent x-leabhar-public or x-leabhar-portal on an ordinary path (issue #482)', () => {
+    // A stale cookie plus a hand-set header must not skip the root layout's
+    // session check, nor render the app as the portal.
+    const req = request('/reports', 'a-stale-session-token');
+    req.headers.set('x-leabhar-public', '1');
+    req.headers.set('x-leabhar-portal', '1');
+    const res = middleware(req);
+    expect(res.headers.get('location')).toBeNull();
+    expect(forwarded(res, 'x-leabhar-public')).toBeNull();
+    expect(forwarded(res, 'x-leabhar-portal')).toBeNull();
+    // Without an override Next.js forwards the client's own headers untouched,
+    // so the middleware must send an explicit header set, and that set must not
+    // carry either marker.
+    const override = res.headers.get('x-middleware-override-headers');
+    expect(override).not.toBeNull();
+    expect(override).not.toMatch(/x-leabhar-(public|portal)/);
+  });
+
+  it('marks /login public itself, whatever the client sent', () => {
+    const res = middleware(request('/login'));
+    expect(forwarded(res, 'x-leabhar-public')).toBe('1');
+  });
+
+
   it('lets /api/health through with no session cookie (issue #61)', () => {
     // The packaged launcher polls this before any user has ever logged in —
     // gating it behind auth would mean the launcher's readiness check can

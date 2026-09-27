@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import ExcelJS from 'exceljs';
 import { getDb } from '@/db';
 import { requireCompany } from '@/lib/queries';
+import { requireApiActor } from '@/lib/apiAuth';
 import { yearEndPack } from '@/domain/reports/yearEnd';
 import { asIsoDate } from '@/domain/dates';
 import { trialBalance } from '@/domain/accounting/ledger';
@@ -17,6 +18,9 @@ export const dynamic = 'force-dynamic';
  * cell contains a formula that could disagree with the books.
  */
 export async function GET(request: Request): Promise<Response> {
+  const refused = await requireApiActor('reports.export');
+  if (refused) return refused;
+
   const url = new URL(request.url);
   const company = requireCompany();
   const from = asIsoDate(url.searchParams.get('from') ?? `${new Date().getFullYear()}-01-01`);
