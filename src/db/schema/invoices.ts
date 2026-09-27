@@ -149,6 +149,13 @@ export const payments = sqliteTable('payments', {
   }).notNull().default('bank_transfer'),
 
   bankTransactionId: text('bank_transaction_id').references(() => bankTransactions.id),
+  /**
+   * Whose money this is (issue #386): the customer or supplier every invoice it
+   * settles belongs to. Null when it settled several parties or predates the
+   * column; money held on account can only be applied to this party's invoices.
+   */
+  supplierId: text('supplier_id').references(() => suppliers.id),
+  customerId: text('customer_id').references(() => customers.id),
   /** Set when a director paid personally on the company's behalf (§28). */
   officerId: text('officer_id'),
 
@@ -188,6 +195,16 @@ export const paymentAllocations = sqliteTable('payment_allocations', {
   currency: text('currency').notNull(),
   /** FX gain or loss arising because settlement moved against the invoice rate. */
   fxDifferenceMinor: integer('fx_difference_minor').notNull().default(0),
+  /**
+   * What the allocation is (issue #386). `settlement`: cash applied when the
+   * payment was recorded. `on_account`: money the payment held on account,
+   * applied later — no journal, both sides sit on the same control account.
+   * `write_off`: a shortfall the payment did not cover, posted to
+   * `writeOffAccountId` in the payment's journal. Not cash.
+   */
+  allocationType: text('allocation_type', { enum: ['settlement', 'on_account', 'write_off'] })
+    .notNull().default('settlement'),
+  writeOffAccountId: text('write_off_account_id').references(() => accounts.id),
   notes: text('notes'),
   ...timestamps,
 }, (t) => [

@@ -39,7 +39,7 @@ import {
   listUsersCli, listRolesCli, inviteUserCli, removeUserCli, setUserRoleCli, resetUserPasswordCli,
 } from '@/agent/users';
 import {
-  showDocumentCli, confirmDocumentCli, lineChoicesCli, postDocumentCli, settleCli, traceCli,
+  showDocumentCli, confirmDocumentCli, lineChoicesCli, postDocumentCli, settleCli, traceCli, resolveInvoiceId,
 } from '@/agent/consolidate';
 import { suggestVatTreatment } from '@/domain/rules/vatSuggestion';
 import { confirmEstablishment, confirmCustomerTaxableStatus, checkVatNumberWithVies } from '@/domain/parties/status';
@@ -55,6 +55,7 @@ import {
 import { eq } from 'drizzle-orm';
 import { suggestJournalMatches, linkBankTransactionToJournal } from '@/domain/banking/journalLink';
 import { withdrawMatchRejection } from '@/domain/matching/service';
+import { allocatePaymentOnAccount, paymentsOnAccount } from '@/domain/invoicing/onAccount';
 import { resolveVatPeriodId } from '@/agent/books';
 import { reconcileVatReturn } from '@/domain/vat/reconcile';
 import { buildRtdReturn } from '@/domain/vat/rtd';
@@ -62,7 +63,7 @@ import { buildViesStatement } from '@/domain/vat/vies';
 import { computeCorporationTax, recordCtDecision, type CtSubjectType } from '@/domain/corporationTax/computation';
 import { computeIncomeTax } from '@/domain/incomeTax/computation';
 import { addPartner, setPartnerShare, partnerSharesOn } from '@/domain/config/partners';
-import { partners, bankAccounts } from '@/db/schema';
+import { partners, bankAccounts, invoices } from '@/db/schema';
 import { recordManualTransaction, rollbackStatementImport, listStatementImports } from '@/domain/banking/import';
 import { asIsoDate, today } from '@/domain/dates';
 import { companies } from '@/db/schema';
@@ -327,6 +328,14 @@ Invoice-led workflow (issue #222) — the same domain functions as the web scree
       Settles the bank line against invoices:
       [{"invoice":"MOS-5120","amount":"24.60"}], amounts in the bank line's
       currency. A remainder is held on account and flagged.
+      [--write-off-invoice <number|id> --write-off-account <code>
+       --write-off-reason "..."]  Close that invoice by writing off what the
+      line leaves unpaid (e.g. bank charges); VAT is unchanged and flagged.
+  list-on-account [--customer <id>] [--supplier <id>]
+      Payments still holding money on account
+  allocate-on-account --payment <id> --invoice <number|id> --amount <12.30>
+      --actor "Name" [--reason "..."]  Apply money on account to a later
+      invoice of the same party; posts no journal
   trace <transactionId>                  Bank line -> payment -> invoices -> document lines
                                           -> rules -> VAT entries -> VAT3 box
 
@@ -1131,6 +1140,32 @@ export async function main(argv: string[], options: CliOptions = {}): Promise<nu
           allocations: requireFlag(flags, 'allocations'),
           fx: getFlag(flags, 'fx'),
           vatDeclarationDate: getFlag(flags, 'declare-in'),
+          writeOff: getFlag(flags, 'write-off-invoice') ? {
+            invoice: requireFlag(flags, 'write-off-invoice'),
+            account: requireFlag(flags, 'write-off-account'),
+            reason: requireFlag(flags, 'write-off-reason'),
+          } : undefined,
+        }), format);
+        return 0;
+      }
+
+      case 'list-on-account': {
+        print(paymentsOnAccount(db, {
+          companyId, customerId: getFlag(flags, 'customer'), supplierId: getFlag(flags, 'supplier'),
+        }), format);
+        return 0;
+      }
+
+      case 'allocate-on-account': {
+        const invoiceId = resolveInvoiceId(db, companyId, requireFlag(flags, 'invoice'));
+        const currency = db.select({ c: invoices.currency }).from(invoices).where(eq(invoices.id, invoiceId)).get()!.c;
+        print(allocatePaymentOnAccount(db, {
+          companyId,
+          paymentId: requireFlag(flags, 'payment'),
+          invoiceId,
+          amountMinor: parseAmount(requireFlag(flags, 'amount'), currency),
+          actor: requireFlag(flags, 'actor'),
+          reason: getFlag(flags, 'reason'),
         }), format);
         return 0;
       }

@@ -38,6 +38,11 @@ export interface SettleInput {
   fxRate?: { numerator: number; denominator: number; source: string; date?: string };
   /** See `RecordPaymentInput.vatDeclarationDate` (issue #226). */
   vatDeclarationDate?: IsoDate | null;
+  /**
+   * Close one invoice by writing off what this line leaves unpaid, e.g. bank
+   * charges the payer's bank deducted (issue #386). See `RecordPaymentInput.writeOff`.
+   */
+  writeOff?: { invoiceId: string; accountId: string; reason: string } | null;
   actor?: string;
   requestId?: string;
 }
@@ -74,6 +79,7 @@ function settleBankTransactionSteps(db: AppDatabase, input: SettleInput): Record
     method: 'bank_transfer',
     bankTransactionId: tx.id,
     allocations: input.allocations.map((a) => ({ invoiceId: a.invoiceId, allocatedMinor: a.amountMinor })),
+    writeOff: input.writeOff ?? null,
     reference: tx.description.slice(0, 60),
     actor: input.actor,
     requestId: input.requestId,
@@ -116,6 +122,24 @@ function settleBankTransactionSteps(db: AppDatabase, input: SettleInput): Record
     resolveReviewItems(db, input.companyId, `document:${invoice.documentId}:match`,
       `Settled by bank transaction ${tx.id}.`);
     resolveReviewItems(db, input.companyId, `document:${invoice.documentId}:no_match`, 'Settled by a payment.');
+  }
+
+  if (payment.writtenOffMinor !== 0 && input.writeOff) {
+    // VAT was left as invoiced. Right for bank charges; wrong for a price
+    // reduction, which needs a credit note. A person decides which it was.
+    const invoice = db.select().from(invoices).where(eq(invoices.id, input.writeOff.invoiceId)).get()!;
+    upsertReviewItem(db, {
+      companyId: input.companyId,
+      kind: 'uncertain_vat_treatment',
+      severity: 'warning',
+      title: `${(payment.writtenOffMinor / 100).toFixed(2)} written off on invoice ${invoice.invoiceNumber ?? invoice.id}`,
+      detail: `Reason given: ${input.writeOff.reason}. The invoice's VAT was not changed. That is right when the `
+        + 'difference is a bank charge; if the price was reduced, a credit note is needed so the '
+        + (invoice.direction === 'sales' ? 'output VAT falls.' : 'input VAT claimed falls.'),
+      entityType: 'invoice',
+      entityId: invoice.id,
+      dedupeKey: `invoice:${invoice.id}:write_off:${payment.paymentId}`,
+    });
   }
 
   if (payment.unallocatedMinor !== 0) {

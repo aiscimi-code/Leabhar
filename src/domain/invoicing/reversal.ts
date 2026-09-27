@@ -138,12 +138,19 @@ function reversePaymentSteps(db: AppDatabase, input: ReversePaymentInput): Rever
     }
 
     // ---- The invoices are open again for exactly what this payment allocated ----
+    // One payment can hold several allocations to the same invoice (a
+    // settlement and a written-off shortfall, or money applied later from
+    // account — issue #386), so each builds on the last.
+    const paidSoFar = new Map<string, number>();
     for (const { allocation, invoice } of targets) {
-      const paidMinor = invoice.paidMinor - allocation.allocatedMinor;
+      const paidMinor = (paidSoFar.get(invoice.id) ?? invoice.paidMinor) - allocation.allocatedMinor;
+      paidSoFar.set(invoice.id, paidMinor);
       const outstandingMinor = invoice.grossMinor - paidMinor;
       const status = outstandingMinor === 0 ? 'paid' : paidMinor === 0 ? 'issued' : 'part_paid';
       tx.update(invoices).set({ paidMinor, outstandingMinor, status, updatedAt: timestamp })
         .where(eq(invoices.id, invoice.id)).run();
+      const earlier = invoiceStatuses.findIndex((x) => x.invoiceId === invoice.id);
+      if (earlier >= 0) invoiceStatuses.splice(earlier, 1);
       invoiceStatuses.push({ invoiceId: invoice.id, status, outstandingMinor });
     }
 

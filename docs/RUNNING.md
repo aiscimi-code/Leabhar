@@ -255,6 +255,11 @@ npm run cli -- post-document <documentId> --coding <json> [--fx <rate>]
                                                       # post the confirmed document as an invoice
 npm run cli -- settle <transactionId> --allocations <json> [--fx <rate>]
                                                       # settle a bank line against invoices
+    [--write-off-invoice <number|id> --write-off-account <code> --write-off-reason "..."]
+                                                      # close a short-paid invoice (VAT unchanged, flagged)
+npm run cli -- list-on-account [--customer <id>] [--supplier <id>]   # money held on account
+npm run cli -- allocate-on-account --payment <id> --invoice <number|id> --amount <12.30> --actor "Name"
+                                                      # apply it to a later invoice; no journal
 npm run cli -- trace <transactionId>                  # bank line -> invoices -> lines -> VAT3 box
 npm run cli -- match                                  # link documents to bank transactions
 npm run cli -- accept-match --document <id> --transaction <id>   # accept a scored candidate

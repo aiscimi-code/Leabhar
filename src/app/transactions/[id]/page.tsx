@@ -181,6 +181,8 @@ export default async function TransactionDetailPage({ params }: {
                 currency={t.currency}
                 invoices={openInvoices}
                 preselectInvoiceId={confirmedDocument?.invoiceId ?? null}
+                writeOffAccounts={accounts.filter((a) => a.type === 'income' || a.type === 'expense')
+                  .map((a) => ({ id: a.id, code: a.code, name: a.name }))}
               />
             </Panel>
           )}

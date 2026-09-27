@@ -25,12 +25,16 @@ export interface OpenInvoice {
 
 const fmt = (minor: number) => (minor / 100).toFixed(2);
 
-export function SettleForm({ bankTransactionId, amountMinor, currency, invoices, preselectInvoiceId }: {
+export function SettleForm({
+  bankTransactionId, amountMinor, currency, invoices, preselectInvoiceId, writeOffAccounts = [],
+}: {
   bankTransactionId: string;
   amountMinor: number;
   currency: string;
   invoices: OpenInvoice[];
   preselectInvoiceId: string | null;
+  /** Income and expense accounts a shortfall can be written off to (issue #386). */
+  writeOffAccounts?: Array<{ id: string; code: string; name: string }>;
 }) {
   const router = useRouter();
   const cash = Math.abs(amountMinor);
@@ -39,6 +43,9 @@ export function SettleForm({ bankTransactionId, amountMinor, currency, invoices,
     return pre ? { [pre.invoiceId]: fmt(pre.currency !== currency ? cash : Math.min(Math.abs(pre.outstandingMinor), cash)) } : {};
   });
   const [lateDate, setLateDate] = useState('');
+  const [writeOffOn, setWriteOffOn] = useState(false);
+  const [writeOffAccount, setWriteOffAccount] = useState('');
+  const [writeOffReason, setWriteOffReason] = useState('');
   const [fxText, setFxText] = useState('');
   const [check, setCheck] = useState<Awaited<ReturnType<typeof previewSettlementAction>> | null>(null);
   const [result, setResult] = useState<ActionResult | null>(null);
@@ -53,22 +60,35 @@ export function SettleForm({ bankTransactionId, amountMinor, currency, invoices,
   const allocations = chosen.map(({ invoiceId, amountMinor: a }) => ({ invoiceId, amountMinor: a }));
   const allocationKey = JSON.stringify(allocations);
 
+  // A shortfall can be written off when the whole payment goes to one ordinary
+  // invoice in its own currency and leaves some of it unpaid (issue #386).
+  const single = chosen.length === 1 ? invoices.find((i) => i.invoiceId === chosen[0]!.invoiceId) : undefined;
+  const shortfall = single && !single.isCreditNote && single.currency === currency && remainder === 0
+    ? Math.abs(single.outstandingMinor) - chosen[0]!.amountMinor : 0;
+  const writeOff = writeOffOn && shortfall > 0 && single
+    ? { invoiceId: single.invoiceId, accountId: writeOffAccount, reason: writeOffReason }
+    : null;
+  const writeOffKey = JSON.stringify(writeOff && writeOff.accountId && writeOff.reason.trim() ? writeOff : null);
+
   // Ask the domain what this settlement needs and would post; nothing is written.
   useEffect(() => {
     let live = true;
     const timer = setTimeout(() => {
-      previewSettlementAction({ bankTransactionId, allocations: JSON.parse(allocationKey), fxRateText: fxText })
+      previewSettlementAction({
+        bankTransactionId, allocations: JSON.parse(allocationKey), fxRateText: fxText, writeOff: JSON.parse(writeOffKey),
+      })
         .then((r) => { if (live) setCheck(r); })
         .catch(() => { if (live) setCheck(null); });
     }, 250);
     return () => { live = false; clearTimeout(timer); };
-  }, [bankTransactionId, allocationKey, fxText]);
+  }, [bankTransactionId, allocationKey, fxText, writeOffKey]);
 
   const need = check?.need;
   const preview = check?.preview;
   const rateMissing = need?.needed === true && !fxText.trim() && !need.statementRate;
   const invalid = parsed.some((p) => !p.ok) || net > cash || net < 0 || chosen.length === 0
-    || need?.needed === 'unsupported' || rateMissing || preview?.ok === false;
+    || need?.needed === 'unsupported' || rateMissing || preview?.ok === false
+    || (writeOff !== null && (!writeOff.accountId || !writeOff.reason.trim()));
 
   const toggle = (inv: OpenInvoice, on: boolean) => setAmounts((a) => {
     const next = { ...a };
@@ -119,6 +139,31 @@ export function SettleForm({ bankTransactionId, amountMinor, currency, invoices,
         {remainder > 0 && ` · ${fmt(remainder)} left over will be held on account and flagged`}
         {remainder < 0 && ' · more than the payment — reduce an allocation'}
       </p>
+      {shortfall > 0 && writeOffAccounts.length > 0 && (
+        <div className="text-[12px] space-y-1.5">
+          <label className="flex items-center gap-2">
+            <input type="checkbox" checked={writeOffOn} onChange={(e) => setWriteOffOn(e.target.checked)} />
+            <span>Write off the {fmt(shortfall)} {currency} this leaves unpaid, and close the invoice</span>
+          </label>
+          {writeOffOn && (
+            <div className="pl-6 space-y-1.5">
+              <div className="flex items-center gap-2 flex-wrap">
+                <select className="border border-line-strong rounded px-2 py-1 bg-surface" value={writeOffAccount}
+                  onChange={(e) => setWriteOffAccount(e.target.value)} aria-label="Write off to">
+                  <option value="">Write off to…</option>
+                  {writeOffAccounts.map((a) => <option key={a.id} value={a.id}>{a.code} {a.name}</option>)}
+                </select>
+                <Input className="!w-72" value={writeOffReason} placeholder="Bank charges deducted by the payer's bank"
+                  onChange={(e) => setWriteOffReason(e.target.value)} aria-label="Why" />
+              </div>
+              <p className="text-caution">
+                The invoice&apos;s VAT is not changed. That is right for bank charges. If the price was reduced,
+                ask for (or issue) a credit note instead, so the VAT falls. The write-off is flagged for review.
+              </p>
+            </div>
+          )}
+        </div>
+      )}
       {need?.needed === 'unsupported' && <p className="text-[12px] text-negative">{need.reason}</p>}
       {need?.needed === true && (
         <div className="text-[12px] space-y-1">
@@ -158,6 +203,7 @@ export function SettleForm({ bankTransactionId, amountMinor, currency, invoices,
         const r = await settleTransactionAction({
           bankTransactionId, allocations, fxRateText: fxText || undefined,
           vatDeclarationDate: lateDate || undefined,
+          writeOff,
         });
         setResult(r);
         if (r.ok) router.refresh();

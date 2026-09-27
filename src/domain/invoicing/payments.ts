@@ -2,7 +2,7 @@ import { and, eq } from 'drizzle-orm';
 import type { AppDatabase } from '@/db';
 import {
   invoices, invoiceLines, payments, paymentAllocations, companies,
-  bankTransactions, bankAccounts, auditEvents, companyOfficers,
+  bankTransactions, bankAccounts, auditEvents, companyOfficers, accounts,
 } from '@/db/schema';
 import { ids } from '@/lib/ids';
 import { asMinor, multiplyRational } from '../money';
@@ -56,7 +56,21 @@ export interface RecordPaymentInput {
   bankAccountId?: string | null;
   /** Set when a director settled the invoice personally. */
   officerId?: string | null;
+  /**
+   * Whose money this is (issue #386). Defaults to the one customer or supplier
+   * all the allocated invoices belong to; must agree with them when given.
+   */
+  customerId?: string | null;
+  supplierId?: string | null;
   allocations: PaymentAllocationInput[];
+  /**
+   * Close one allocated invoice by writing off what this payment leaves unpaid
+   * (issue #386): bank charges the payer's bank deducted, or a small discount
+   * taken. Posted to `accountId` (an income or expense account) in the same
+   * journal. VAT is not touched — a price reduction that changes VAT needs a
+   * credit note — and the write-off is flagged for review. Base currency only.
+   */
+  writeOff?: { invoiceId: string; accountId: string; reason: string } | null;
   /**
    * Declare the output VAT this receipt releases (cash receipts basis) in the
    * VAT period covering this date, when the receipt's own period is locked or
@@ -77,6 +91,8 @@ export interface RecordedPayment {
   vatReleasedMinor: number;
   vatEntryIds: string[];
   fxDifferenceMinor: number;
+  /** The shortfall written off, when `writeOff` was given. */
+  writtenOffMinor: number;
   invoiceStatuses: Array<{ invoiceId: string; status: string; outstandingMinor: number }>;
 }
 
@@ -213,6 +229,11 @@ function recordPaymentSteps(db: AppDatabase, input: RecordPaymentInput): Recorde
     );
   }
 
+  const party = paymentParty(input, targets.map((t) => t.invoice));
+  const writeOff = input.writeOff
+    ? validateWriteOff(db, input, company, targets, input.amountMinor - allocatedTotal)
+    : null;
+
   const debtors = systemAccountId(db, input.companyId, 'debtors');
   const creditors = systemAccountId(db, input.companyId, 'creditors');
   const vatOnSales = systemAccountId(db, input.companyId, 'vat_on_sales');
@@ -271,6 +292,7 @@ function recordPaymentSteps(db: AppDatabase, input: RecordPaymentInput): Recorde
   const allocationDetails: Array<{
     invoiceId: string; allocatedMinor: number;
     baseAllocatedMinor: number; fxDifferenceMinor: number;
+    allocationType: 'settlement' | 'write_off'; writeOffAccountId?: string; notes?: string;
   }> = [];
 
   for (const { invoice, invoiceAllocatedMinor, signedAllocatedMinor, crossCurrency } of targets) {
@@ -318,6 +340,37 @@ function recordPaymentSteps(db: AppDatabase, input: RecordPaymentInput): Recorde
       allocatedMinor: invoiceAllocatedMinor,
       baseAllocatedMinor: baseAtPaymentRate,
       fxDifferenceMinor: difference,
+      allocationType: 'settlement',
+    });
+  }
+
+  // A shortfall written off (issue #386): the rest of the invoice's control
+  // balance goes to the account chosen, so the invoice closes. Base currency
+  // only, so the amount needs no conversion.
+  if (writeOff) {
+    const isSalesInvoice = writeOff.invoice.direction === 'sales';
+    const control = isSalesInvoice ? debtors : creditors;
+    const memo = `Shortfall on ${writeOff.invoice.invoiceNumber ?? writeOff.invoice.id} written off: ${writeOff.reason}`;
+    journalLines.push({
+      accountId: isSalesInvoice ? writeOff.accountId : control,
+      debitMinor: writeOff.amountMinor, currency: baseCurrency,
+      ...(isSalesInvoice ? {} : { supplierId: writeOff.invoice.supplierId, customerId: writeOff.invoice.customerId }),
+      memo,
+    });
+    journalLines.push({
+      accountId: isSalesInvoice ? control : writeOff.accountId,
+      creditMinor: writeOff.amountMinor, currency: baseCurrency,
+      ...(isSalesInvoice ? { supplierId: writeOff.invoice.supplierId, customerId: writeOff.invoice.customerId } : {}),
+      memo,
+    });
+    allocationDetails.push({
+      invoiceId: writeOff.invoice.id,
+      allocatedMinor: writeOff.amountMinor,
+      baseAllocatedMinor: writeOff.amountMinor,
+      fxDifferenceMinor: 0,
+      allocationType: 'write_off',
+      writeOffAccountId: writeOff.accountId,
+      notes: writeOff.reason,
     });
   }
 
@@ -344,6 +397,7 @@ function recordPaymentSteps(db: AppDatabase, input: RecordPaymentInput): Recorde
       accountId: isReceived ? debtors : creditors,
       ...(isReceived ? { creditMinor: unallocatedMinor } : { debitMinor: unallocatedMinor }),
       currency, fxRate: paymentFx,
+      supplierId: party.supplierId, customerId: party.customerId,
       memo: 'On account, not yet allocated to an invoice',
     });
   }
@@ -456,6 +510,8 @@ function recordPaymentSteps(db: AppDatabase, input: RecordPaymentInput): Recorde
       fxRateDenominator: paymentFx?.denominator ?? null,
       method: input.method ?? (input.officerId ? 'director_personal' : 'bank_transfer'),
       bankTransactionId: input.bankTransactionId ?? null,
+      supplierId: party.supplierId,
+      customerId: party.customerId,
       officerId: input.officerId ?? null,
       journalEntryId: journal.id,
       reference: input.reference ?? null,
@@ -464,6 +520,7 @@ function recordPaymentSteps(db: AppDatabase, input: RecordPaymentInput): Recorde
       provenanceStatus: 'manually_entered',
     }).run();
 
+    const paidSoFar = new Map<string, number>();
     for (const detail of allocationDetails) {
       const target = targets.find((t) => t.invoice.id === detail.invoiceId)!;
       tx.insert(paymentAllocations).values({
@@ -475,10 +532,14 @@ function recordPaymentSteps(db: AppDatabase, input: RecordPaymentInput): Recorde
         baseAllocatedMinor: detail.baseAllocatedMinor,
         currency: target.invoice.currency,
         fxDifferenceMinor: detail.fxDifferenceMinor,
+        allocationType: detail.allocationType,
+        writeOffAccountId: detail.writeOffAccountId ?? null,
+        notes: detail.notes ?? null,
       }).run();
 
       const invoice = target.invoice;
-      const paidMinor = invoice.paidMinor + detail.allocatedMinor;
+      const paidMinor = (paidSoFar.get(invoice.id) ?? invoice.paidMinor) + detail.allocatedMinor;
+      paidSoFar.set(invoice.id, paidMinor);
       const outstandingMinor = invoice.grossMinor - paidMinor;
       const status = outstandingMinor === 0 ? 'paid'
         : paidMinor === 0 ? 'issued' : 'part_paid';
@@ -486,6 +547,8 @@ function recordPaymentSteps(db: AppDatabase, input: RecordPaymentInput): Recorde
       tx.update(invoices).set({ paidMinor, outstandingMinor, status, updatedAt: timestamp })
         .where(eq(invoices.id, detail.invoiceId)).run();
 
+      const earlier = invoiceStatuses.findIndex((s) => s.invoiceId === detail.invoiceId);
+      if (earlier >= 0) invoiceStatuses.splice(earlier, 1);
       invoiceStatuses.push({ invoiceId: detail.invoiceId, status, outstandingMinor });
     }
 
@@ -511,12 +574,15 @@ function recordPaymentSteps(db: AppDatabase, input: RecordPaymentInput): Recorde
         amountMinor: input.amountMinor, currency,
         allocations: allocationDetails.length,
         vatReleasedMinor, fxDifferenceMinor,
+        ...(writeOff ? { writtenOffMinor: writeOff.amountMinor, writeOffAccountId: writeOff.accountId } : {}),
       }),
       source: 'user',
       actor: input.actor ?? 'user',
-      reason: vatReleasedMinor !== 0
-        ? 'VAT became due on receipt under the cash receipts basis'
-        : null,
+      reason: writeOff
+        ? `Shortfall written off: ${writeOff.reason}`
+        : vatReleasedMinor !== 0
+          ? 'VAT became due on receipt under the cash receipts basis'
+          : null,
       requestId: input.requestId ?? null,
     }).run();
   });
@@ -529,8 +595,88 @@ function recordPaymentSteps(db: AppDatabase, input: RecordPaymentInput): Recorde
     vatReleasedMinor,
     vatEntryIds,
     fxDifferenceMinor,
+    writtenOffMinor: writeOff?.amountMinor ?? 0,
     invoiceStatuses,
   };
+}
+
+/** The one customer or supplier a payment's money belongs to, if there is one (issue #386). */
+function paymentParty(
+  input: RecordPaymentInput, allocated: Array<typeof invoices.$inferSelect>,
+): { customerId: string | null; supplierId: string | null } {
+  const customers = new Set(allocated.map((i) => i.customerId));
+  const suppliers = new Set(allocated.map((i) => i.supplierId));
+  const derived = {
+    customerId: customers.size === 1 && suppliers.size === 1 && suppliers.has(null) ? [...customers][0]! : null,
+    supplierId: suppliers.size === 1 && customers.size === 1 && customers.has(null) ? [...suppliers][0]! : null,
+  };
+  if (input.customerId || input.supplierId) {
+    const mismatch = allocated.find((i) =>
+      (input.customerId && i.customerId !== input.customerId)
+      || (input.supplierId && i.supplierId !== input.supplierId));
+    if (mismatch) {
+      throw new InvoicingError(
+        `Invoice ${mismatch.invoiceNumber ?? mismatch.id} belongs to another party than the one this payment is from.`,
+        { invoiceId: mismatch.id },
+      );
+    }
+    return { customerId: input.customerId ?? null, supplierId: input.supplierId ?? null };
+  }
+  return derived;
+}
+
+/**
+ * A shortfall write-off is allowed only when it is plainly what it says:
+ * one ordinary invoice in base currency, the payment fully applied, something
+ * actually left unpaid, an income or expense account to take it, and a reason.
+ * On the cash receipts basis a sales invoice's deferred output VAT would be
+ * stranded, so that case is refused (issue #386).
+ */
+function validateWriteOff(
+  db: AppDatabase,
+  input: RecordPaymentInput,
+  company: typeof companies.$inferSelect,
+  targets: Array<{ invoice: typeof invoices.$inferSelect; invoiceAllocatedMinor: number }>,
+  unallocatedMinor: number,
+): { invoice: typeof invoices.$inferSelect; accountId: string; amountMinor: number; reason: string } {
+  const spec = input.writeOff!;
+  const reason = spec.reason?.trim() ?? '';
+  if (!reason) throw new InvoicingError('Say why the shortfall is written off, e.g. "bank charges deducted by the payer\'s bank".');
+  const target = targets.find((t) => t.invoice.id === spec.invoiceId);
+  if (!target) throw new InvoicingError('The invoice whose shortfall is written off must be one this payment settles.');
+  const invoice = target.invoice;
+  if (invoice.isCreditNote) throw new InvoicingError('A credit note has no shortfall to write off.');
+  const base = company.baseCurrency.toUpperCase();
+  if (invoice.currency.toUpperCase() !== base || (input.currency ?? base).toUpperCase() !== base) {
+    throw new InvoicingError(
+      `Writing off a shortfall is supported in ${base} only for now. For a foreign-currency invoice, `
+        + 'record the difference as a journal and leave the invoice part-paid, or ask for a credit note.',
+    );
+  }
+  if (unallocatedMinor !== 0) {
+    throw new InvoicingError(
+      'Some of this payment is not applied to any invoice. Apply it before writing off a shortfall: '
+        + 'an invoice cannot be both short-paid and have money left over.',
+    );
+  }
+  const amountMinor = Math.abs(invoice.outstandingMinor) - Math.abs(target.invoiceAllocatedMinor);
+  if (amountMinor <= 0) throw new InvoicingError('This payment settles the invoice in full; there is nothing to write off.');
+  if (invoice.direction === 'sales' && invoice.vatMinor !== 0 && company.vatAccountingBasis === 'cash_receipts') {
+    throw new InvoicingError(
+      'On the cash receipts basis the output VAT on this invoice is released as it is paid, so writing off the '
+        + 'shortfall would leave part of it deferred for good. Issue a credit note for the shortfall instead.',
+    );
+  }
+  const account = db.select().from(accounts)
+    .where(and(eq(accounts.id, spec.accountId), eq(accounts.companyId, input.companyId))).get();
+  if (!account) throw new InvoicingError(`Account ${spec.accountId} not found.`);
+  if (account.type !== 'income' && account.type !== 'expense') {
+    throw new InvoicingError(
+      `${account.code} ${account.name} is not an income or expense account. A shortfall written off is a cost `
+        + '(bank charges, discount allowed) or a gain (discount received).',
+    );
+  }
+  return { invoice, accountId: account.id, amountMinor, reason };
 }
 
 interface VatRelease {
