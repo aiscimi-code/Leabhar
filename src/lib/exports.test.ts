@@ -69,7 +69,8 @@ describe('toCsv', () => {
   it('leaves a negative number written by an amount column intact', () => {
     // The amount column emits a number, so it is not treated as text.
     const csv = toCsv([row({ amountMinor: -4217 })], columns);
-    expect(csv).toContain('-42.17');
+    expect(csv).toContain(',-42.17,');
+    expect(csv).not.toContain("'-42.17");
   });
 
   it('uses CRLF line endings', () => {

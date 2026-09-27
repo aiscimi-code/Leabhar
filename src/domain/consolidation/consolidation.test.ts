@@ -656,3 +656,29 @@ describe('settling across currencies', () => {
     expect(settleBankTransaction(db, input).fxDifferenceMinor).toBe(200);
   });
 });
+
+describe('settling a bank line against a receipt (issue #387)', () => {
+  it('posts a confirmed receipt with its VAT held back, and the bank line settles it', async () => {
+    const doc = confirmed({ documentType: 'receipt', lines: [line('Diesel', 5_000, 2300, 1_150)] });
+    // A receipt is not a VAT invoice: posting it with VAT recovered is refused.
+    expect(() => postDocumentAsInvoice(db, { companyId, documentId: doc, coding: [code('6120', 'IE_STD')] }))
+      .toThrow(/receipt is not one/);
+    const inv = postDocumentAsInvoice(db, {
+      companyId, documentId: doc, coding: [code('6120', 'IE_STD')], holdVatForMissingParticulars: true,
+    });
+    const [entry] = entriesFor(inv.invoiceId);
+    expect([entry!.vatMinor, entry!.recoverableVatMinor]).toEqual([1_150, 0]);
+
+    const find = await bank([['16/03/2025', 'MURPHY FUEL', '-61.50']]);
+    const tx = find('MURPHY FUEL');
+    const payment = settleBankTransaction(db, {
+      companyId, bankTransactionId: tx.id, allocations: [{ invoiceId: inv.invoiceId, amountMinor: 6_150 }],
+    });
+    expect(payment.unallocatedMinor).toBe(0);
+    expect(db.select().from(invoices).where(eq(invoices.id, inv.invoiceId)).get()!.status).toBe('paid');
+    expect(db.select().from(bankTransactions).where(eq(bankTransactions.id, tx.id)).get()!.status).toBe('posted');
+    // Nothing further was claimed by settling.
+    expect(entriesFor(inv.invoiceId).reduce((s, e) => s + e.recoverableVatMinor, 0)).toBe(0);
+    balanced();
+  });
+});

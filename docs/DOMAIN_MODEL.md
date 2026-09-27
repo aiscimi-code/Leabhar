@@ -834,6 +834,14 @@ statement's opening and closing balances are kept on the import. Reconciliation
 uses that closing balance when the statement is struck on the reconciliation
 date (`statement_closing_balance`).
 
+The bank reconciliation statement (`reconciliationStatement`, issue #387) is
+what gets filed for an account and period. It starts from the statement
+balance, subtracts the lines not yet in the books, adds the book movements not
+on the statement, and ends at the ledger balance and whatever difference
+nothing explains. Possible duplicates, warnings and the sign-off follow. It only
+arranges `reconcileBankAccount`'s figures. It exports as CSV or XLSX, values
+only (`/api/export/reconciliation`, `reconcile --csv`).
+
 An import that went wrong is undone with `rollbackStatementImport` (issue
 #379), and only while nothing in the books rests on its lines — no line
 classified, matched, posted, reconciled, paid against or linked to a document.
