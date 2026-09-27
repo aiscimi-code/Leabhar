@@ -12,6 +12,7 @@ import { allocatePaymentOnAccount } from '@/domain/invoicing/onAccount';
 import { applyCreditNote, unapplyCreditNote, refundOnAccount } from '@/domain/invoicing/customerCredit';
 import { createInvoice } from '@/domain/invoicing/invoices';
 import { writeOffBadDebt, reverseBadDebtWriteOff } from '@/domain/invoicing/badDebts';
+import { produceReminderLetter } from '@/domain/invoicing/receivables';
 import {
   createRecurringInvoice, postDueRecurringInvoices, deactivateRecurringInvoice,
 } from '@/domain/invoicing/recurringInvoices';
@@ -1136,6 +1137,24 @@ export async function reverseBadDebtAction(formData: FormData): Promise<ActionRe
     revalidatePath(`/invoices/${invoiceId}`);
     revalidatePath('/invoices');
     return { ok: true, message: 'Write-off reversed. The invoice is open again.' };
+  } catch (error) {
+    return fail(error);
+  }
+}
+
+/** Record a payment reminder letter for a customer's overdue invoices (issue #405). */
+export async function produceReminderAction(formData: FormData): Promise<ActionResult> {
+  try {
+    await requireActor('invoices.manage');
+    const company = requireCompany();
+    const customerId = String(formData.get('customerId') ?? '');
+    const result = produceReminderLetter(getDb(), {
+      companyId: company.id, customerId, asOf: asIsoDate(String(formData.get('asOf') ?? '')),
+      level: Number(String(formData.get('level') ?? '1')), actor: await actorName(),
+    });
+    revalidatePath('/receivables');
+    revalidatePath(`/customers/${customerId}`);
+    return { ok: true, message: `Reminder recorded for ${result.invoices} invoice${result.invoices === 1 ? '' : 's'}. Download it from the customer page.` };
   } catch (error) {
     return fail(error);
   }

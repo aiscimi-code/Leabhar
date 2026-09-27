@@ -14,7 +14,7 @@ export default async function CustomerPage({ params }: { params: Promise<{ id: s
   const { id } = await params;
   const detail = customerDetail(id);
   if (!detail) notFound();
-  const { customer, invoices, exposure, contacts, company, credit, banks } = detail;
+  const { customer, invoices, exposure, contacts, company, credit, banks, reminders } = detail;
   const today = new Date().toISOString().slice(0, 10);
   const base = company.baseCurrency;
 
@@ -134,6 +134,33 @@ export default async function CustomerPage({ params }: { params: Promise<{ id: s
             </label>
           </ActionForm>
         </div>
+      </Panel>
+
+      <Panel title="Statement of account" description="Every invoice, credit, payment and write-off in the period, with a running balance.">
+        <form method="get" action={`/api/customers/${customer.id}/statement`} className="px-4 py-3 flex items-end gap-3 flex-wrap">
+          <Field label="From"><Input name="from" type="date" defaultValue={`${today.slice(0, 4)}-01-01`} /></Field>
+          <Field label="To"><Input name="to" type="date" defaultValue={today} /></Field>
+          <Field label="Format">
+            <select name="format" defaultValue="pdf" className="border border-line-strong rounded px-2 py-1 bg-surface text-[12.5px]">
+              <option value="pdf">PDF</option><option value="csv">CSV</option>
+            </select>
+          </Field>
+          <button type="submit" className="px-3 py-1.5 rounded border border-line-strong text-[12.5px] bg-surface hover:bg-surface-sunken">Download</button>
+        </form>
+        {reminders.length > 0 && (
+          <div className="px-4 py-3 border-t border-line text-[12.5px]">
+            <p className="text-ink-muted mb-1">Reminders produced</p>
+            <ul className="space-y-0.5">
+              {reminders.map((r) => (
+                <li key={r.id}>
+                  <a className="text-accent hover:underline" href={`/api/reminders/${r.id}/pdf`}>
+                    {r.level === 3 ? 'Final notice' : r.level === 2 ? 'Second reminder' : 'Reminder'} as at {date(r.asOf)}
+                  </a> <span className="text-ink-muted">· {r.producedBy}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
       </Panel>
 
       <Panel title="Invoices">

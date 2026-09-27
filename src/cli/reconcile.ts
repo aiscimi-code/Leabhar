@@ -60,6 +60,10 @@ import { reconciliationStatement } from '@/domain/banking/reconciliationStatemen
 import { salesInvoiceDocument } from '@/domain/invoicing/invoiceDocument';
 import { createInvoice } from '@/domain/invoicing/invoices';
 import { writeOffBadDebt, reverseBadDebtWriteOff } from '@/domain/invoicing/badDebts';
+import {
+  overdueInvoices, customerStatement, produceReminderLetter, reminderLetter, receivablesSummary,
+} from '@/domain/invoicing/receivables';
+import { renderStatementPdf, renderReminderPdf } from '@/lib/receivablesPdf';
 import { applyCreditNote, unapplyCreditNote, refundOnAccount, customerCredit } from '@/domain/invoicing/customerCredit';
 import { renderInvoicePdf } from '@/lib/invoicePdf';
 import { writeFileSync } from 'node:fs';
@@ -266,6 +270,11 @@ Books (once induction is done):
   create-debit-note --invoice <number|id> --description "..." --net <12.30>
       --account <code> --vat-treatment <code> --actor "Name" [--date <date>]
       An additional charge against that invoice, posted like an invoice
+  overdue [--as-of <date>] [--customer <id>]   Overdue sales invoices, computed on the day
+  receivables [--as-of <date>]           Owed, overdue, on account, top debtors, over limit
+  customer-statement --customer <id> --from <date> --to <date> [--out file.pdf]
+  produce-reminder --customer <id> --actor "Name" [--level 1|2|3] [--as-of <date>] [--out file.pdf]
+      Records a reminder letter for the customer's overdue invoices
   write-off-bad-debt --invoice <number|id> --reason "..." --actor "Name" [--date <date>]
       [--account <expense code>]  Outstanding to bad debts; VAT handled per basis
   reverse-bad-debt --invoice <number|id> --reason "..." --actor "Name" [--date <date>]
@@ -1068,6 +1077,43 @@ export async function main(argv: string[], options: CliOptions = {}): Promise<nu
           }],
           actor: requireFlag(flags, 'actor'),
         }), format);
+        return 0;
+      }
+
+      case 'overdue': {
+        print(overdueInvoices(db, { companyId, asOf: asIsoDate(getFlag(flags, 'as-of') ?? today()), customerId: getFlag(flags, 'customer') }), format);
+        return 0;
+      }
+
+      case 'receivables': {
+        print(receivablesSummary(db, { companyId, asOf: asIsoDate(getFlag(flags, 'as-of') ?? today()) }), format);
+        return 0;
+      }
+
+      case 'customer-statement': {
+        const st = customerStatement(db, {
+          companyId, customerId: requireFlag(flags, 'customer'),
+          from: asIsoDate(requireFlag(flags, 'from')), to: asIsoDate(requireFlag(flags, 'to')),
+        });
+        const out = getFlag(flags, 'out');
+        if (out) {
+          const company = db.select().from(companies).where(eq(companies.id, companyId)).get()!;
+          writeFileSync(out, await renderStatementPdf(st, { name: company.legalName, address: company.principalBusinessAddress ?? company.registeredOffice }));
+          print({ written: out, closingBalanceMinor: st.closingBalanceMinor }, format);
+        } else {
+          print(st, format);
+        }
+        return 0;
+      }
+
+      case 'produce-reminder': {
+        const result = produceReminderLetter(db, {
+          companyId, customerId: requireFlag(flags, 'customer'), asOf: asIsoDate(getFlag(flags, 'as-of') ?? today()),
+          level: Number(getFlag(flags, 'level') ?? '1'), actor: requireFlag(flags, 'actor'),
+        });
+        const out = getFlag(flags, 'out');
+        if (out) writeFileSync(out, await renderReminderPdf(reminderLetter(db, { companyId, letterId: result.letterId })));
+        print({ ...result, ...(out ? { written: out } : {}) }, format);
         return 0;
       }
 

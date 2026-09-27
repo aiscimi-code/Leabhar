@@ -376,6 +376,22 @@ Lines live in `document_lines`, per-rate VAT in `document_vat_totals`, both with
 provenance. The VAT rate for a purchase comes from these confirmed lines — never
 from a bank amount.
 
+### Statements, overdue and reminders (issue #405)
+
+Overdue is computed on the day asked, never stored: a sales invoice is overdue
+when its due date (or, with none, its invoice date) is before `asOf` and
+something is outstanding. `customerStatement` lists a customer's invoices,
+debit notes, credit notes, payments, refunds, reversed payments (dated by the
+reversing journal) and write-offs in date order, in base currency, with a
+running balance; voided documents are left out and an applied credit note is
+not listed twice. Its closing balance is the customer's share of debtors
+(tested against the ledger). A reminder letter (level 1, 2 or 3) is recorded
+in `reminder_letters` with each invoice and what it had outstanding, so it can
+be produced again exactly; sending it is the person's. `receivablesSummary`
+gives owed, overdue, money on account, the largest balances, customers over
+their credit limit and how many overdue invoices have had no reminder in 14
+days.
+
 ### Bad debts (issue #404)
 
 `writeOffBadDebt` takes a sales invoice's outstanding amount out of debtors,

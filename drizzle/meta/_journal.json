@@ -183,6 +183,13 @@
       "when": 1790496461255,
       "tag": "0025_bad_debts",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "6",
+      "when": 1790496872166,
+      "tag": "0026_reminders",
+      "breakpoints": true
     }
   ]
 }

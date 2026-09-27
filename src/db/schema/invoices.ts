@@ -290,3 +290,30 @@ export const paymentAllocations = sqliteTable('payment_allocations', {
   index('payment_allocations_payment_idx').on(t.paymentId),
   index('payment_allocations_invoice_idx').on(t.invoiceId),
 ]);
+
+/**
+ * A payment reminder letter produced for a customer (issue #405): which level
+ * (1 reminder, 2 second reminder, 3 final notice), as at which date, and by
+ * whom. The invoices it covered, with what each had outstanding then, are in
+ * `invoice_reminders`, so the letter can be produced again exactly as it was.
+ * Producing it is recorded; sending it is the person's (email waits on #401).
+ */
+export const reminderLetters = sqliteTable('reminder_letters', {
+  id: text('id').primaryKey(),
+  companyId: text('company_id').notNull().references(() => companies.id),
+  customerId: text('customer_id').notNull().references(() => customers.id),
+  level: integer('level').notNull(),
+  asOf: text('as_of').notNull(),
+  producedBy: text('produced_by').notNull(),
+  ...timestamps,
+}, (t) => [index('reminder_letters_customer_idx').on(t.companyId, t.customerId)]);
+
+export const invoiceReminders = sqliteTable('invoice_reminders', {
+  id: text('id').primaryKey(),
+  companyId: text('company_id').notNull().references(() => companies.id),
+  letterId: text('letter_id').notNull().references(() => reminderLetters.id),
+  invoiceId: text('invoice_id').notNull().references(() => invoices.id),
+  outstandingMinor: integer('outstanding_minor').notNull(),
+  daysOverdue: integer('days_overdue').notNull(),
+  ...timestamps,
+}, (t) => [index('invoice_reminders_invoice_idx').on(t.invoiceId)]);
