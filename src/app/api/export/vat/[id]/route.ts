@@ -1,5 +1,6 @@
 import { getDb } from '@/db';
 import { requireCompany } from '@/lib/queries';
+import { requireApiActor } from '@/lib/apiAuth';
 import { buildFilingPack } from '@/domain/vat/filingPack';
 import type { VatDrillRow } from '@/domain/vat/report';
 import {
@@ -14,6 +15,9 @@ export async function GET(
   request: Request,
   context: { params: Promise<{ id: string }> },
 ): Promise<Response> {
+  const refused = await requireApiActor('reports.export');
+  if (refused) return refused;
+
   const { id } = await context.params;
   const format = new URL(request.url).searchParams.get('format') ?? 'xlsx';
   const company = requireCompany();

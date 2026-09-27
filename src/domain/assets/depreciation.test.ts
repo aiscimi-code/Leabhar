@@ -1,12 +1,12 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { eq } from 'drizzle-orm';
 import { createTestDatabase } from '@/db/testing';
-import { createCompany } from '../config/setup';
+import { createCompany, addBankAccount } from '../config/setup';
 import {
   buildDepreciationSchedule, postDepreciation, capitalAllowancesForYear, disposeAsset,
 } from './depreciation';
 import { trialBalance, accountBalance } from '../accounting/ledger';
-import { fixedAssets, depreciationCharges, journalLines } from '@/db/schema';
+import { fixedAssets, depreciationCharges, journalLines, bankAccounts } from '@/db/schema';
 import { postJournalEntry } from '../accounting/journal';
 import { makeDate, asIsoDate } from '../dates';
 import { ids } from '@/lib/ids';
@@ -220,13 +220,52 @@ describe('capitalAllowancesForYear', () => {
   });
 });
 
+/** A bank account with its own ledger account, the way #380 creates them. */
+const bankAccount = (name: string) => addBankAccount(db, {
+  companyId, bankName: 'AIB', accountName: name, openingDate: '2025-01-01',
+});
+const ledgerAccountOf = (bankAccountId: string) =>
+  db.select().from(bankAccounts).where(eq(bankAccounts.id, bankAccountId)).get()!.accountId!;
+
 describe('disposeAsset', () => {
+  it('refuses proceeds until someone says which bank account received them (issue #381)', () => {
+    const assetId = addAsset();
+    expect(() => disposeAsset(db, {
+      companyId, assetId, disposalDate: makeDate(2026, 1, 15), proceedsMinor: 100_000,
+    })).toThrow(/Say which bank account received the proceeds/);
+    expect(db.select().from(fixedAssets).where(eq(fixedAssets.id, assetId)).get()!.status).toBe('active');
+  });
+
+  it('posts the proceeds to the named bank account\'s own ledger account, not the first one\'s (issue #381)', () => {
+    const assetId = addAsset();
+    postDepreciation(db, { companyId, upTo: makeDate(2025, 12, 31) });
+    // The first bank account claims the seeded bank control ledger account;
+    // the second gets one of its own (#380).
+    const first = bankAccount('Current');
+    const proceedsAccount = bankAccount('Deposit');
+    expect(ledgerAccountOf(proceedsAccount)).not.toBe(ledgerAccountOf(first));
+    const firstBefore = accountBalance(db, { companyId, accountId: ledgerAccountOf(first) });
+
+    const result = disposeAsset(db, {
+      companyId, assetId, disposalDate: makeDate(2026, 1, 15), proceedsMinor: 150_000,
+      bankAccountId: proceedsAccount,
+    });
+
+    expect(result.profitOrLossMinor).toBe(30_000);
+    expect(accountBalance(db, { companyId, accountId: ledgerAccountOf(proceedsAccount) })).toBe(150_000);
+    // The first bank account's ledger account saw none of the money, so its
+    // reconciliation can still match what its statement shows.
+    expect(accountBalance(db, { companyId, accountId: ledgerAccountOf(first) })).toBe(firstBefore);
+    expect(trialBalance(db, { companyId, asOf: makeDate(2026, 12, 31) }).balanced).toBe(true);
+  });
+
   it('removes cost and accumulated depreciation and posts the profit', () => {
     const assetId = addAsset();
     postDepreciation(db, { companyId, upTo: makeDate(2025, 12, 31) });
 
     const result = disposeAsset(db, {
       companyId, assetId, disposalDate: makeDate(2026, 1, 15), proceedsMinor: 150_000,
+      bankAccountId: bankAccount('Current'),
     });
 
     // Cost 2,400.00 less 12 months at 100.00 = net book value 1,200.00.
@@ -242,6 +281,7 @@ describe('disposeAsset', () => {
     postDepreciation(db, { companyId, upTo: makeDate(2025, 12, 31) });
     const result = disposeAsset(db, {
       companyId, assetId, disposalDate: makeDate(2026, 1, 15), proceedsMinor: 50_000,
+      bankAccountId: bankAccount('Current'),
     });
     expect(result.profitOrLossMinor).toBe(-70_000);
     expect(trialBalance(db, { companyId, asOf: makeDate(2026, 12, 31) }).balanced).toBe(true);
@@ -251,6 +291,7 @@ describe('disposeAsset', () => {
     const assetId = addAsset();
     const result = disposeAsset(db, {
       companyId, assetId, disposalDate: makeDate(2026, 1, 15), proceedsMinor: 100_000,
+      bankAccountId: bankAccount('Current'),
     });
     expect(result.taxNote).toContain('balancing allowance or a balancing charge');
     expect(result.taxNote).toContain('does not compute the balancing figure');
@@ -260,9 +301,11 @@ describe('disposeAsset', () => {
     const assetId = addAsset();
     disposeAsset(db, {
       companyId, assetId, disposalDate: makeDate(2026, 1, 15), proceedsMinor: 100_000,
+      bankAccountId: bankAccount('Current'),
     });
     expect(() => disposeAsset(db, {
       companyId, assetId, disposalDate: makeDate(2026, 2, 15), proceedsMinor: 50_000,
+      bankAccountId: bankAccount('Current'),
     })).toThrow(/already been disposed/);
   });
 
@@ -271,6 +314,7 @@ describe('disposeAsset', () => {
     postDepreciation(db, { companyId, upTo: makeDate(2025, 6, 30) });
     disposeAsset(db, {
       companyId, assetId, disposalDate: makeDate(2025, 7, 1), proceedsMinor: 100_000,
+      bankAccountId: bankAccount('Current'),
     });
     const result = postDepreciation(db, { companyId, upTo: makeDate(2025, 12, 31) });
     expect(result.periodsPosted).toBe(0);

@@ -38,6 +38,7 @@ const SECTIONS: Array<{ heading: string; items: Array<{ href: string; label: str
     items: [
       { href: '/reports', label: 'Financial statements' },
       { href: '/reports/trial-balance', label: 'Trial balance' },
+      { href: '/reports/partners', label: 'Partners' },
       { href: '/reports/year-end', label: 'Year-end pack' },
       { href: '/adjustments', label: 'Adjustments' },
       { href: '/audit', label: 'Audit trail' },
@@ -67,6 +68,8 @@ const SECTIONS: Array<{ heading: string; items: Array<{ href: string; label: str
       { href: '/settings/company', label: 'Company' },
       { href: '/settings/accounts', label: 'Chart of accounts' },
       { href: '/settings/periods', label: 'Periods' },
+      { href: '/settings/users', label: 'Users' },
+      { href: '/settings/password', label: 'Change password' },
       { href: '/settings/retention', label: 'Document retention' },
       { href: '/settings/backup', label: 'Backup' },
     ],
@@ -113,9 +116,13 @@ export function Nav({ companyName }: { companyName: string | null }) {
               {section.heading}
             </div>
             {section.items.map((item) => {
-              const active = item.href === '/'
-                ? pathname === '/'
-                : pathname.startsWith(item.href);
+              // Exact match, or the longest matching prefix among this
+              // section's items: a prefix test alone lights "Financial
+              // statements" on every report under /reports (issue #477).
+              const matching = section.items
+                .filter((i) => i.href === '/' ? pathname === '/' : pathname.startsWith(i.href))
+                .sort((a, b) => b.href.length - a.href.length);
+              const active = matching[0]?.href === item.href;
               return (
                 <Link
                   key={item.href}

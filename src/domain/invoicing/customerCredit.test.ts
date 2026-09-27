@@ -6,11 +6,12 @@ import { createInvoice } from './invoices';
 import { recordPayment } from './payments';
 import { reversePayment } from './reversal';
 import { applyCreditNote, unapplyCreditNote, refundOnAccount, customerCredit } from './customerCredit';
+import { writeOffBadDebt } from './badDebts';
 import { settleBankTransaction } from '../consolidation/settle';
 import { importStatement } from '../banking/import';
 import { trialBalance, accountBalance } from '../accounting/ledger';
 import { asIsoDate, makeDate } from '../dates';
-import { invoices, customers, bankTransactions, vatEntries, journalEntries } from '@/db/schema';
+import { invoices, customers, bankTransactions, vatEntries, journalEntries, payments } from '@/db/schema';
 import { ids } from '@/lib/ids';
 import type { AppDatabase } from '@/db';
 
@@ -76,6 +77,31 @@ describe('applying a credit note (#402)', () => {
     expect([row(inv.invoiceId).outstandingMinor, row(cn.invoiceId).outstandingMinor]).toEqual([12_300, -2_460]);
     expect(customerCredit(db, { companyId, customerId }).creditNotes.map((c) => c.remainingMinor)).toEqual([2_460]);
     balanced();
+  });
+
+  it('refuses to unapply once either document has been written off, leaving the books unchanged (issue #480)', () => {
+    const inv = sale(10_000); // 123.00
+    const cn = sale(2_000, { isCreditNote: true, creditNoteOfId: inv.invoiceId }); // 24.60
+    const applied = applyCreditNote(db, {
+      companyId, creditNoteId: cn.invoiceId, invoiceId: inv.invoiceId,
+      amountMinor: 2_460, date: asIsoDate('2025-03-15'), actor: 'Joe',
+    });
+    // The rest of the invoice is written off after the application.
+    writeOffBadDebt(db, {
+      companyId, invoiceId: inv.invoiceId, date: asIsoDate('2025-06-01'),
+      reason: 'Liquidated', actor: 'Joe',
+    });
+    const entries = db.select().from(journalEntries).all().length;
+
+    expect(() => unapplyCreditNote(db, { companyId, paymentId: applied.paymentId, actor: 'Joe', reason: 'Wrong invoice' }))
+      .toThrow(/written off since this credit note was applied/);
+
+    // Nothing moved: the invoice is still written off and no new entry was posted.
+    expect(row(inv.invoiceId).status).toBe('written_off');
+    expect(db.select().from(journalEntries).all()).toHaveLength(entries);
+    expect(accountBalance(db, { companyId, accountId: acc['debtors']! })).toBe(0);
+    const paymentRow = db.select().from(payments).where(eq(payments.id, applied.paymentId)).get();
+    expect(paymentRow?.reversedAt).toBeNull();
   });
 
   it('refuses another customer, more than is left, or two credit notes', () => {

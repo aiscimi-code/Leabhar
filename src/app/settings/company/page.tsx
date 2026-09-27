@@ -64,6 +64,31 @@ export default function CompanySettingsPage() {
                     </Select>
                   </Field>
                 </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <Field
+                    label="VAT period frequency"
+                    hint="How often you file the VAT3. Choose what Revenue registered you
+                      on — the periods are generated from it."
+                  >
+                    <Select name="vatPeriodFrequency" defaultValue="bi_monthly">
+                      {FREQUENCIES.map((frequency) => (
+                        <option key={frequency} value={frequency}>{label(frequency)}</option>
+                      ))}
+                    </Select>
+                  </Field>
+                  <Field
+                    label="Year end"
+                    hint="The financial year end. Accounting periods and the first VAT
+                      periods are generated from it."
+                  >
+                    <div className="grid grid-cols-2 gap-2">
+                      <Input name="financialYearEndDay" type="number" min={1} max={31}
+                        defaultValue={31} aria-label="Year end day" />
+                      <Input name="financialYearEndMonth" type="number" min={1} max={12}
+                        defaultValue={12} aria-label="Year end month" />
+                    </div>
+                  </Field>
+                </div>
                 <Field
                   label="First year to set up"
                   hint="Creates the accounting period and VAT periods for that year. More

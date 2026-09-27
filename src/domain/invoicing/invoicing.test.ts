@@ -488,6 +488,36 @@ describe('cash receipts basis — deferral and release', () => {
     expect(vatFor('Mar–Apr 2025').T1.amountMinor).toBe(23_000);
   });
 
+  // A cross-currency settlement: the invoice is booked in USD, the receipt
+  // arrives in EUR (issue #479). The release must post in the invoice's
+  // currency at the invoice's booking rate, or the deferred-VAT account is
+  // left with a residual that never nets to zero.
+  it('nets deferred VAT to zero on a cross-currency settlement', () => {
+    const invoice = salesInvoice({
+      currency: 'USD',
+      fxRate: { numerator: 9, denominator: 10, source: 'test' },
+    });
+    // The deferral was booked at the invoice's rate: $230 of VAT is €207,
+    // sitting as a credit on the deferred-VAT liability account.
+    expect(accountBalance(db, { companyId, accountId: acc['vat_on_sales_deferred']! })).toBe(20_700);
+
+    const payment = recordPayment(db, {
+      companyId, direction: 'received', paymentDate: makeDate(2025, 3, 10),
+      amountMinor: 110_700, currency: 'EUR',
+      fxRate: { numerator: 10, denominator: 9, source: 'test' },
+      allocations: [{ invoiceId: invoice.invoiceId, allocatedMinor: 110_700 }],
+    });
+    expect(payment.vatReleasedMinor).toBe(23_000);
+
+    // The release relieves the deferral exactly, and the ledger agrees with
+    // the VAT3's base-currency figure.
+    expect(accountBalance(db, { companyId, accountId: acc['vat_on_sales_deferred']! })).toBe(0);
+    expect(accountBalance(db, { companyId, accountId: acc['vat_on_sales']! })).toBe(20_700);
+    expect(accountBalance(db, { companyId, accountId: acc['debtors']! })).toBe(0);
+    expect(vatFor('Mar–Apr 2025').T1.amountMinor).toBe(20_700);
+    expect(trialBalance(db, { companyId, asOf: makeDate(2025, 12, 31) }).balanced).toBe(true);
+  });
+
   it('clears the deferred VAT liability once paid', () => {
     const invoice = salesInvoice();
     recordPayment(db, {

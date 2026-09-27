@@ -63,22 +63,24 @@ export default async function TrialBalancePage({ searchParams }: {
                   </td>
                   <td className="text-ink-muted">{label(row.type)}</td>
                   <td className="text-right num text-ink-faint">{row.lineCount}</td>
+                  {/* An account with activity but a zero net shows €0.00 on
+                      both sides, not a blank mystery (issue #478). */}
                   <td className="text-right num">
-                    {row.netDebitMinor > 0 ? money(row.netDebitMinor, currency) : ''}
+                    {row.netDebitMinor > 0
+                      ? money(row.netDebitMinor, currency)
+                      : row.netDebitMinor === 0 ? money(0, currency) : ''}
                   </td>
                   <td className="text-right num">
-                    {row.netDebitMinor < 0 ? money(-row.netDebitMinor, currency) : ''}
+                    {row.netDebitMinor < 0
+                      ? money(-row.netDebitMinor, currency)
+                      : row.netDebitMinor === 0 ? money(0, currency) : ''}
                   </td>
                 </tr>
               ))}
               <tr className="font-semibold">
-                <td colSpan={4}>Totals</td>
-                <td className="text-right num">
-                  {money(tb.rows.reduce((s, r) => s + Math.max(r.netDebitMinor, 0), 0), currency)}
-                </td>
-                <td className="text-right num">
-                  {money(tb.rows.reduce((s, r) => s + Math.max(-r.netDebitMinor, 0), 0), currency)}
-                </td>
+                <td colSpan={4}>Totals (net balances)</td>
+                <td className="text-right num">{money(tb.netTotalDebitMinor, currency)}</td>
+                <td className="text-right num">{money(tb.netTotalCreditMinor, currency)}</td>
               </tr>
             </tbody>
           </table>
@@ -88,7 +90,9 @@ export default async function TrialBalancePage({ searchParams }: {
           tb.balanced ? 'border-line text-positive'
             : 'bg-negative-soft border-negative/30 text-negative'}`}>
           {tb.balanced
-            ? `✓ Total debits equal total credits (${money(tb.totalDebitMinor, currency)} each).`
+            ? `✓ Net debits equal net credits (${money(tb.netTotalDebitMinor, currency)} each side). `
+              + `Gross movement in the period: ${money(tb.totalDebitMinor, currency)} debited, `
+              + `${money(tb.totalCreditMinor, currency)} credited.`
             : `Debits and credits differ by ${money(tb.differenceMinor, currency)}. `
               + 'There is an error in the underlying entries.'}
         </div>

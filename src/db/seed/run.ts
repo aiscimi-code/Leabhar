@@ -16,6 +16,8 @@ async function main(): Promise<void> {
   console.log(`  Documents:    ${result.counts.documents}`);
   console.log(`  Suppliers:    ${result.counts.suppliers}`);
   console.log(`  Customers:    ${result.counts.customers}`);
+  console.log(`  Statutes:     ${result.knowledgeBase.sourcesProcessed} sources ingested, `
+    + `${result.knowledgeBase.rulesAfter} rules derived (/statutes is populated)`);
   console.log('');
   console.log('This data is labelled as demo data throughout the application.');
 }

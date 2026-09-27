@@ -4,7 +4,7 @@ import { and, eq } from 'drizzle-orm';
 import { createTestDatabase } from '@/db/testing';
 import { auditEvents, sessions, users, companyMembers } from '@/db/schema';
 import type { AppDatabase } from '@/db';
-import { createUser, authenticateUser, createSession } from './auth';
+import { createUser, authenticateUser, createSession, verifySession } from './auth';
 import { createCompany } from '../config/setup';
 import { PermissionError } from './permissions';
 import {
@@ -97,6 +97,19 @@ describe('removeUser', () => {
     const audit = lastAudit();
     expect(audit.action).toBe('user_removed');
     expect(audit.previousValue).toBe('bern');
+  });
+
+  it('a stale cookie no longer verifies once the user is removed (issue #482)', () => {
+    const invited = inviteUser(db, { companyId, actorId: ownerId, username: 'bern', role: 'bookkeeper' });
+    const authed = authenticateUser(db, 'bern', invited.oneTimePassword)!;
+    const token = createSession(db, authed).token;
+    expect(verifySession(db, token)?.id).toBe(authed.id);
+
+    removeUser(db, { companyId, actorId: ownerId, userId: invited.userId });
+    expect(verifySession(db, token)).toBeNull();
+    // A cookie value that never was a session, or belongs to nobody.
+    expect(verifySession(db, 'a-cookie-value-that-was-never-a-session')).toBeNull();
+    expect(verifySession(db, '')).toBeNull();
   });
 
   it('refuses to let a user remove themselves', () => {

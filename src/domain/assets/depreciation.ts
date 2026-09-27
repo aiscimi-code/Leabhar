@@ -1,7 +1,7 @@
 import { and, eq, lte, gte, sql } from 'drizzle-orm';
 import type { AppDatabase } from '@/db';
 import {
-  fixedAssets, depreciationCharges, companies, auditEvents, accounts,
+  fixedAssets, depreciationCharges, companies, auditEvents, accounts, bankAccounts,
 } from '@/db/schema';
 import { ids } from '@/lib/ids';
 import { asMinor, multiplyRational } from '../money';
@@ -407,6 +407,14 @@ function disposeAssetSteps(
     assetId: string;
     disposalDate: IsoDate;
     proceedsMinor: number;
+    /**
+     * The bank account the proceeds were paid into (issue #381): the money
+     * lands on that account's own ledger account, not the first bank
+     * account's. Refused when proceeds are nonzero and no account is named —
+     * guessing which account received the money makes its reconciliation
+     * unable to match the receipt.
+     */
+    bankAccountId?: string;
     notes?: string;
     actor?: string;
   },
@@ -431,13 +439,32 @@ function disposeAssetSteps(
   const accumulatedAccount = asset.accumulatedDepreciationAccountId
     ?? systemAccountId(db, params.companyId, 'accumulated_depreciation');
   const disposalAccount = systemAccountId(db, params.companyId, 'disposal_of_assets');
-  const bankAccount = systemAccountId(db, params.companyId, 'bank_control');
+
+  let proceedsAccount: string | undefined;
+  if (params.proceedsMinor !== 0) {
+    if (!params.bankAccountId) {
+      throw new DepreciationError(
+        'Say which bank account received the proceeds of this disposal. '
+          + 'Guessing the first bank account puts the money on the wrong ledger account, '
+          + 'and that account\'s reconciliation can then never match it.',
+      );
+    }
+    const bankAccount = db.select().from(bankAccounts)
+      .where(and(
+        eq(bankAccounts.id, params.bankAccountId),
+        eq(bankAccounts.companyId, params.companyId),
+      )).get();
+    if (!bankAccount || !bankAccount.accountId) {
+      throw new DepreciationError(`Bank account ${params.bankAccountId} is not one of this company's accounts.`);
+    }
+    proceedsAccount = bankAccount.accountId;
+  }
 
   const lines: Parameters<typeof postJournalEntry>[1]['lines'] = [];
 
   if (params.proceedsMinor !== 0) {
     lines.push({
-      accountId: bankAccount, debitMinor: params.proceedsMinor,
+      accountId: proceedsAccount!, debitMinor: params.proceedsMinor,
       memo: `Proceeds on disposal of ${asset.name}`,
     });
   }

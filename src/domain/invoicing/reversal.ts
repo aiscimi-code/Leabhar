@@ -105,6 +105,16 @@ function reversePaymentSteps(db: AppDatabase, input: ReversePaymentInput): Rever
     if (invoice.status === 'void') {
       throw new InvoicingError(`Invoice ${invoice.invoiceNumber ?? invoice.id} has been voided since this payment.`);
     }
+    // A bad-debt write-off done after this payment owns the rest of the
+    // invoice: reopening it here would strand the write-off journal against
+    // an invoice that claims to be outstanding again (issue #480). Reverse
+    // the write-off first, then the payment.
+    if (invoice.status === 'written_off') {
+      throw new InvoicingError(
+        `Invoice ${invoice.invoiceNumber ?? invoice.id} has been written off since this payment. `
+          + 'Reverse the write-off first, then the payment.',
+      );
+    }
     return { allocation, invoice };
   });
 

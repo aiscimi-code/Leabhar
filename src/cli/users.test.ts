@@ -98,6 +98,29 @@ describe('cli users', () => {
     expect(db.select().from(users).where(eq(users.username, 'owner')).get()!.active).toBe(true);
   });
 
+  it('refuses to guess the acting owner when the book has two, and --as names who ran it (issue #498)', async () => {
+    await capture(async () => run(['invite-user', '--username', 'dee', '--role', 'owner', '--as', 'owner']));
+
+    // Without --as the attribution would be a guess between two owners, so
+    // the command refuses rather than name the wrong person in the audit trail.
+    const code = await run(['invite-user', '--username', 'bern', '--role', 'bookkeeper']);
+    expect(code).toBe(1);
+    expect(db.select().from(users).where(eq(users.username, 'bern')).all()).toHaveLength(0);
+
+    const { stdout } = await capture(async () => run([
+      'invite-user', '--username', 'bern', '--role', 'bookkeeper', '--as', 'dee',
+    ]));
+    expect(JSON.parse(stdout).actingAs).toBe('dee');
+    const audit = db.select().from(auditEvents)
+      .where(eq(auditEvents.action, 'user_invited')).all().at(-1)!;
+    expect(audit.actor).toContain('dee');
+
+    // --as must name an active owner of this book.
+    const refused = await run(['remove-user', '--user', 'bern', '--as', 'bern']);
+    expect(refused).toBe(1);
+    expect(db.select().from(users).where(eq(users.username, 'bern')).get()!.active).toBe(true);
+  });
+
   it('refuses an invite for a role that does not exist', async () => {
     const code = await run(['invite-user', '--username', 'x', '--role', 'wizard']);
     expect(code).toBe(1);

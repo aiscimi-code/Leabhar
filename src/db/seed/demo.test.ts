@@ -7,8 +7,9 @@ import { createTestDatabase } from '@/db/testing';
 import { seedDemoCompany } from './demo';
 import {
   companies, bankTransactions, documents, vatPeriods, reviewItems,
-  suppliers, fixedAssets, rules, taxDeadlines, payments,
+  suppliers, fixedAssets, rules, taxDeadlines, payments, irishActProvisions,
 } from '@/db/schema';
+import { statuteSourceIndex } from '@/domain/search/knowledgeBase';
 import { trialBalance } from '@/domain/accounting/ledger';
 import { balanceSheet, profitAndLoss } from '@/domain/reports/financial';
 import { buildVat3Return } from '@/domain/vat/report';
@@ -165,6 +166,14 @@ describe('demo data', () => {
     expect(rows.every((d) => d.sourceNote !== null)).toBe(true);
     expect(rows.find((d) => d.kind === 'corporation_tax_return')!.sourceNote)
       .toContain('Confirm your own filing deadline');
+  });
+
+  it('ingests the statutes, so /statutes is populated after db:seed (issue #475)', () => {
+    const sources = statuteSourceIndex(db, { companyId });
+    expect(sources.length).toBeGreaterThan(0);
+    const provisions = db.select().from(irishActProvisions)
+      .where(eq(irishActProvisions.companyId, companyId)).all();
+    expect(provisions.length).toBeGreaterThan(0);
   });
 
   it('produces a sensible profit and loss', () => {

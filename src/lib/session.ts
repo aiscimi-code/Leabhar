@@ -32,7 +32,7 @@ export async function requireActor(action: Action, companyId?: string): Promise<
   const user = await currentUser();
   if (!user) throw new Error('Sign in again: your session has expired.');
   if (user.mustChangePassword) {
-    throw new Error('Change your password first: you are still on the one-time password your invoker set.');
+    throw new Error('Change your password first (Setup → Change password): you are still on the one-time password your invoker set.');
   }
   // The active company, unless the action names another one: bringing an
   // archived business back acts on a company that is not the active one.
