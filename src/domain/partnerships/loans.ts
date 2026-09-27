@@ -1,6 +1,6 @@
-import { and, eq } from 'drizzle-orm';
+import { and, eq, gte } from 'drizzle-orm';
 import type { AppDatabase } from '@/db';
-import { accounts, auditEvents, partners } from '@/db/schema';
+import { accounts, auditEvents, partners, journalEntries, journalLines } from '@/db/schema';
 import { ids } from '@/lib/ids';
 import { nowIso, isIsoDate, asIsoDate, type IsoDate } from '../dates';
 import { asMinor } from '../money';
@@ -107,12 +107,19 @@ export function recordPartnerLoan(db: AppDatabase, params: {
   return db.transaction((tx) => {
     const txDb = tx as unknown as AppDatabase;
     const loanAccountId = loanAccount(txDb, params.companyId, partner, date);
-    const outstanding = accountBalance(txDb, {
-      companyId: params.companyId, accountId: loanAccountId, asOf: date,
-    });
+    // A repayment is limited by the lowest the loan stands on or after its
+    // date: a back-dated repayment must not, with repayments already recorded
+    // later, take more back than was ever lent.
+    const laterDates = txDb.select({ d: journalEntries.entryDate }).from(journalLines)
+      .innerJoin(journalEntries, eq(journalLines.journalEntryId, journalEntries.id))
+      .where(and(eq(journalLines.accountId, loanAccountId), gte(journalEntries.entryDate, date))).all()
+      .map((r) => r.d);
+    const outstanding = Math.min(...[date, ...laterDates].map((d) => accountBalance(txDb, {
+      companyId: params.companyId, accountId: loanAccountId, asOf: asIsoDate(d),
+    })));
     if (params.direction === 'repaid' && amount > outstanding) {
       throw new PartnerLoanError(
-        `${partner.name}'s loan account stands at ${(outstanding / 100).toFixed(2)} at ${params.date}, `
+        `${partner.name}'s loan account stands at no more than ${(outstanding / 100).toFixed(2)} from ${params.date} on, `
         + `so ${(amount / 100).toFixed(2)} cannot be repaid. A repayment never exceeds what the firm owes on the loan; `
         + 'record the rest against their current account, or record the loan first.');
     }

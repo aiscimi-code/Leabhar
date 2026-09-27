@@ -31,6 +31,19 @@ beforeEach(() => {
 });
 
 describe('recordPartnerLoan', () => {
+  it('refuses a back-dated repayment that, with later repayments, would repay more than was lent', () => {
+    const loan = (direction: 'advanced' | 'repaid', amountMinor: number, date: string) => recordPartnerLoan(db, {
+      companyId, partnerId: aoife.id, direction, amountMinor, date, recordedBy: 'Aoife',
+    });
+    loan('advanced', 500_000, '2025-03-01');
+    loan('repaid', 400_000, '2025-11-01');
+    // On 2025-06-01 the loan stands at 5,000.00, but after November's repayment only 1,000.00 is left.
+    expect(() => loan('repaid', 300_000, '2025-06-01')).toThrow(/no more than 1000.00/);
+    loan('repaid', 100_000, '2025-06-01');
+    expect(partnerLoanBalance(db, companyId, aoife.id, makeDate(2025, 12, 31))).toBe(0);
+  });
+
+
   it('moves the money through one of the company\'s own asset accounts only', () => {
     const expense = db.select().from(accounts).where(eq(accounts.companyId, companyId)).all().find((a) => a.type === 'expense')!;
     expect(() => recordPartnerLoan(db, {
