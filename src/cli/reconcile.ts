@@ -68,6 +68,7 @@ import { renderStatementPdf, renderReminderPdf } from '@/lib/receivablesPdf';
 import { applyCreditNote, unapplyCreditNote, refundOnAccount, customerCredit } from '@/domain/invoicing/customerCredit';
 import { renderInvoicePdf } from '@/lib/invoicePdf';
 import { renderPurchaseOrderPdf } from '@/lib/purchaseOrderPdf';
+import { supplierStatement, reconcileSupplierStatement } from '@/domain/invoicing/supplierStatements';
 import {
   createPurchaseOrder, listPurchaseOrders, getPurchaseOrder, linkBillToPurchaseOrder, unlinkBillFromPurchaseOrder,
   cancelPurchaseOrder, purchaseOrderDocument,
@@ -312,6 +313,12 @@ Books (once induction is done):
   unlink-bill --invoice <number|id> --actor "Name"
   cancel-purchase-order --purchase-order <PO-n|id> --reason "..." --actor "Name"
   purchase-order-pdf --purchase-order <PO-n|id> --out <file.pdf>
+  supplier-statement --supplier <id> --from <date> --to <date> [--out file.pdf]
+      Our account with a supplier; closes at their share of creditors
+  reconcile-supplier-statement --supplier <id> --as-of <date> --balance <1234.56>
+      --actor "Name" [--invoices "INV-1,INV-2"]  Check their statement against
+      our books: the difference, invoices we do not hold, ours they do not show.
+      Flagged for review; nothing is adjusted
   create-recurring-bill --supplier <id> --name "..." --frequency monthly|quarterly|yearly
       --start <date> --net <1000.00> --actor "Name" [--end <date>]
       [--tolerance-percent 5] [--window-days 10]
@@ -1292,6 +1299,33 @@ export async function main(argv: string[], options: CliOptions = {}): Promise<nu
         const out = requireFlag(flags, 'out');
         writeFileSync(out, await renderPurchaseOrderPdf(docu));
         print({ written: out, number: docu.order.number }, format);
+        return 0;
+      }
+
+      case 'supplier-statement': {
+        const st = supplierStatement(db, {
+          companyId, supplierId: requireFlag(flags, 'supplier'),
+          from: asIsoDate(requireFlag(flags, 'from')), to: asIsoDate(requireFlag(flags, 'to')),
+        });
+        const out = getFlag(flags, 'out');
+        if (out) {
+          const company = db.select().from(companies).where(eq(companies.id, companyId)).get()!;
+          writeFileSync(out, await renderStatementPdf({ ...st, customerName: st.supplierName }, {
+            name: company.legalName, address: company.principalBusinessAddress ?? company.registeredOffice,
+          }, { title: 'Supplier account', balanceLabel: 'Balance owed' }));
+        }
+        print(st, format);
+        return 0;
+      }
+
+      case 'reconcile-supplier-statement': {
+        const base = db.select({ c: companies.baseCurrency }).from(companies).where(eq(companies.id, companyId)).get()!.c;
+        print(reconcileSupplierStatement(db, {
+          companyId, supplierId: requireFlag(flags, 'supplier'), asOf: asIsoDate(requireFlag(flags, 'as-of')),
+          statementBalanceMinor: parseAmount(requireFlag(flags, 'balance'), base),
+          invoiceNumbers: (getFlag(flags, 'invoices') ?? '').split(',').map((n) => n.trim()).filter(Boolean),
+          actor: requireFlag(flags, 'actor'),
+        }), format);
         return 0;
       }
 

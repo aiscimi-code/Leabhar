@@ -14,6 +14,7 @@ import { createInvoice } from '@/domain/invoicing/invoices';
 import { writeOffBadDebt, reverseBadDebtWriteOff } from '@/domain/invoicing/badDebts';
 import { produceReminderLetter } from '@/domain/invoicing/receivables';
 import { setSupplierTerms } from '@/domain/parties/supplierAccount';
+import { reconcileSupplierStatement } from '@/domain/invoicing/supplierStatements';
 import {
   createPurchaseOrder, linkBillToPurchaseOrder, unlinkBillFromPurchaseOrder, cancelPurchaseOrder,
 } from '@/domain/invoicing/purchaseOrders';
@@ -1539,6 +1540,36 @@ export async function deactivateRecurringBillAction(formData: FormData): Promise
     });
     revalidatePath('/bills/recurring');
     return { ok: true, message: 'Stopped. Occurrences already expected are kept.' };
+  } catch (error) {
+    return fail(error);
+  }
+}
+
+/** Check a supplier's statement against our books (issue #413). Nothing is adjusted. */
+export async function reconcileSupplierStatementAction(formData: FormData): Promise<ActionResult> {
+  try {
+    await requireActor('invoices.manage');
+    const company = requireCompany();
+    const supplierId = String(formData.get('supplierId') ?? '');
+    const numbers = String(formData.get('invoiceNumbers') ?? '').split(/[,\n]/).map((n) => n.trim()).filter(Boolean);
+    const r = reconcileSupplierStatement(getDb(), {
+      companyId: company.id, supplierId, asOf: asIsoDate(String(formData.get('asOf') ?? '')),
+      statementBalanceMinor: parseAmount(String(formData.get('balance') ?? ''), company.baseCurrency),
+      invoiceNumbers: numbers, actor: await actorName(),
+    });
+    revalidatePath(`/suppliers/${supplierId}`);
+    revalidatePath('/review');
+    const m = (minor: number) => (minor / 100).toFixed(2);
+    if (r.differenceMinor === 0 && r.theirsNotHeld.length === 0 && r.oursNotOnTheirs.length === 0) {
+      return { ok: true, message: `Agrees: ${m(r.ourBalanceMinor)} owed at ${r.asOf}.` };
+    }
+    return {
+      ok: true,
+      message: `Their ${m(r.theirBalanceMinor)} against our ${m(r.ourBalanceMinor)}: difference ${m(r.differenceMinor)}.`
+        + (r.theirsNotHeld.length ? ` Not held by us: ${r.theirsNotHeld.join(', ')}.` : '')
+        + (r.oursNotOnTheirs.length ? ` Not on theirs: ${r.oursNotOnTheirs.map((o) => o.number ?? o.invoiceId).join(', ')}.` : '')
+        + ' Flagged for review.',
+    };
   } catch (error) {
     return fail(error);
   }

@@ -118,6 +118,10 @@ npm run cli -- link-bill --invoice <number|id> --purchase-order PO-1 --actor "Na
 npm run cli -- purchase-order-pdf --purchase-order PO-1 --out po.pdf
     # an order posts nothing; billing over it is flagged, never refused.
     # Also: list-purchase-orders [--open], unlink-bill, cancel-purchase-order
+npm run cli -- supplier-statement --supplier <id> --from 2025-01-01 --to 2025-12-31 [--out statement.pdf]
+npm run cli -- reconcile-supplier-statement --supplier <id> --as-of 2025-12-31 --balance 1234.56 \
+    --actor "Name" [--invoices "INV-1,INV-2"]
+    # the difference and the invoices on one side only; flagged, never adjusted
 npm run cli -- create-recurring-bill --supplier <id> --name "Office rent" --frequency monthly \
     --start 2025-01-01 --net 1000.00 --actor "Name" [--tolerance-percent 5] [--window-days 10]
 npm run cli -- run-expected-bills --actor "Name" [--as-of <date>]
