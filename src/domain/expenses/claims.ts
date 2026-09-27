@@ -32,6 +32,13 @@ import { resolveExpenseRate, calculateRateAmount } from './rates';
  *
  * A claim is never edited after it is submitted. It is approved, rejected with
  * a reason, or reversed — and a reversal is a reversing journal, not a change.
+ *
+ * The claimant may approve their own claim (issue #425): no statute or Revenue
+ * rule requires a second approver, and a one-director company has only one.
+ * Self-approval is allowed in every book, never refused — but it is always
+ * flagged: the audit event marks the approval self-approved, and a review
+ * item asks someone to check the receipts and the business use. It is a
+ * prompt, not a refusal.
  */
 
 export class ExpenseClaimError extends AccountingError {}
@@ -284,13 +291,18 @@ function createExpenseClaimSteps(
 export function approveExpenseClaim(
   db: AppDatabase, input: {
     companyId: string; claimId: string; actor?: string; requestId?: string;
+    /**
+     * The approving user's id, where the surface knows it (the web app does).
+     * A user's own claim is then recognised by identity, not by name (issue #425).
+     */
+    approverUserId?: string;
   },
 ): { journalEntryId: string; entryNumber: number } {
   return atomically(db, () => approveExpenseClaimSteps(db, input));
 }
 
 function approveExpenseClaimSteps(
-  db: AppDatabase, input: { companyId: string; claimId: string; actor?: string; requestId?: string },
+  db: AppDatabase, input: { companyId: string; claimId: string; actor?: string; requestId?: string; approverUserId?: string },
 ): { journalEntryId: string; entryNumber: number } {
   const claim = loadClaim(db, input.companyId, input.claimId);
   if (claim.status !== 'submitted') {
@@ -311,6 +323,15 @@ function approveExpenseClaimSteps(
 
   const company = db.select().from(companies).where(eq(companies.id, input.companyId)).get()!;
   const claimant = claimantName(db, claim);
+  const actor = input.actor ?? 'user';
+  // Self-approval (issue #425): the approver is the claimant. A user's claim
+  // approved by a known user is compared by identity — two people can share a
+  // display name, and the actor may be a username. An officer is not a user
+  // account, and the CLI knows only a name, so those fall back to the recorded
+  // names. Allowed, but flagged below.
+  const selfApproved = claim.userId && input.approverUserId
+    ? claim.userId === input.approverUserId
+    : actor.trim().length > 0 && actor.trim().toLowerCase() === claimant.trim().toLowerCase();
 
   // ---- Refuse before writing anything (AGENTS.md: a posting path either
   // completes or writes nothing) ----
@@ -388,6 +409,29 @@ function approveExpenseClaimSteps(
       }
     }
 
+    // The claimant approved their own claim (issue #425). Allowed, because a
+    // one-director company has no second approver — but flagged, so the
+    // receipts and the business use get a second look.
+    if (selfApproved) {
+      upsertReviewItem(tx, {
+        companyId: input.companyId,
+        kind: 'other',
+        severity: 'warning',
+        title: `${claimant} approved their own claim "${claim.title}"`,
+        detail: `${claimant} approved their own claim of ${(businessTotal / 100).toFixed(2)} `
+          + `${company.baseCurrency}. No statute or Revenue rule requires a second approver, so the `
+          + 'approval stands, but check the receipts and that each cost was incurred wholly and '
+          + 'exclusively for the business. '
+          + (claim.officerId
+            ? 'A director\'s self-approved reimbursement is where a benefit-in-kind question most '
+              + 'often arises: check the private-use share was recorded correctly.'
+            : 'Another approver or the accountant can clear this item once the receipts are checked.'),
+        entityType: 'expense_claim',
+        entityId: claim.id,
+        dedupeKey: `expense_claim:${claim.id}:self_approved`,
+      });
+    }
+
     tx.insert(auditEvents).values({
       id: ids.audit(),
       companyId: input.companyId,
@@ -399,6 +443,7 @@ function approveExpenseClaimSteps(
       newValue: JSON.stringify({
         status: 'approved', journalEntryId: journal.id,
         businessMinor: businessTotal, privateMinor: privateTotal,
+        ...(selfApproved ? { selfApproved: true } : {}),
       }),
       source: 'user',
       actor: input.actor ?? 'user',
