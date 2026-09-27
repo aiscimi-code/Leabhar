@@ -1,17 +1,22 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { eq } from 'drizzle-orm';
-import { createTestDatabase, insertTestBankTransaction } from '@/db/testing';
+import { createTestDatabase, insertTestBankTransaction, insertConfirmedDocument } from '@/db/testing';
 import { createCompany, addBankAccount } from '../config/setup';
 import { createVatEntries } from './engine';
 import { buildVat3Return, drillIntoBox, vatPositionSummary } from './report';
 import { validateVatPeriod, transitionVatPeriod } from './periodClose';
-import { vatPeriods, reviewItems } from '@/db/schema';
+import { classifyTransaction } from '../banking/classify';
+import { createInvoice } from '../invoicing/invoices';
+import { recordPayment } from '../invoicing/payments';
+import { vatPeriods, reviewItems, rules, customers } from '@/db/schema';
 import { makeDate } from '../dates';
+import { ids } from '@/lib/ids';
 import type { AppDatabase } from '@/db';
 
 let db: AppDatabase;
 let companyId: string;
 let tr: Record<string, string>;
+let byCode: Record<string, string>;
 let periodId: string;
 let bankAccountId: string;
 
@@ -24,6 +29,7 @@ beforeEach(() => {
   });
   companyId = created.companyId;
   tr = created.treatmentsByCode;
+  byCode = created.accountsByCode;
   periodId = db.select().from(vatPeriods)
     .where(eq(vatPeriods.name, 'Mar–Apr 2025')).get()!.id;
   bankAccountId = addBankAccount(db, {
@@ -183,6 +189,208 @@ describe('drill-down', () => {
     const marApr = summary.find((s) => s.name === 'Mar–Apr 2025')!;
     expect(marApr.netPositionMinor).toBe(23_000);
     expect(summary.find((s) => s.name === 'Jan–Feb 2025')!.netPositionMinor).toBe(0);
+  });
+
+  // The chain README §53 demands, end to end: a VAT3 figure back to the
+  // journal entry, the bank line, the rule that classified it and the source
+  // the treatment rests on. Each test walks one real posting path.
+  describe('chain to the evidence', () => {
+    it('carries the journal entry, rule and document behind a bank-classified entry', () => {
+      const txId = insertTestBankTransaction(db, {
+        companyId, bankAccountId, transactionDate: '2025-03-15',
+        description: 'CARD SALES', amountMinor: 12_300, counterpartyName: 'TILL BATCH',
+      });
+      const ruleId = ids.rule();
+      db.insert(rules).values({
+        id: ruleId, companyId, name: 'Card sales are standard-rate sales',
+        conditions: [{ field: 'description', operator: 'contains', value: 'CARD SALES' }],
+        actions: [{ field: 'accountId', value: byCode['4020']! }],
+      }).run();
+
+      const result = classifyTransaction(db, {
+        companyId, bankTransactionId: txId, accountId: byCode['4020']!,
+        vatTreatmentId: tr['IE_STD']!, source: 'rule', appliedRuleId: ruleId,
+      });
+      expect(result.entryNumber).toBe(1);
+
+      // The receipt is matched to its till Z-report afterwards.
+      const documentId = insertConfirmedDocument(db, companyId, {
+        documentType: 'sales_record', matchedTransactionId: txId,
+      });
+
+      const rows = drillIntoBox(db, { companyId, vatPeriodId: periodId, box: 'T1' });
+      expect(rows).toHaveLength(1);
+      const row = rows[0]!;
+      expect(row.journalEntryId).toBe(result.journalEntryId);
+      expect(row.journalEntryNumber).toBe(1);
+      expect(row.journalNarrative).toContain('CARD SALES');
+      expect(row.bankTransactionId).toBe(txId);
+      expect(row.ruleId).toBe(ruleId);
+      expect(row.ruleName).toBe('Card sales are standard-rate sales');
+      expect(row.documentId).toBe(documentId);
+      expect(row.treatmentSourceNote).toContain('Irish standard-rated supply');
+    });
+
+    it('carries the settling bank line behind an invoice-sourced entry', () => {
+      // An invoice-basis book: the tax point is the invoice date, so the VAT
+      // entry belongs to the invoice, and the bank line is the settlement.
+      const invoiceDb = createTestDatabase();
+      const created = createCompany(invoiceDb.db, {
+        legalName: 'Invoice Ltd', vatRegistrationStatus: 'registered',
+        vatAccountingBasis: 'invoice', seedYears: [2025],
+      });
+      const invoiceCompanyId = created.companyId;
+      const invoicePeriodId = invoiceDb.db.select().from(vatPeriods)
+        .where(eq(vatPeriods.name, 'Mar–Apr 2025')).get()!.id;
+      const invoiceBankAccountId = addBankAccount(invoiceDb.db, {
+        companyId: invoiceCompanyId, bankName: 'BOI',
+        accountName: 'Current', openingDate: '2025-01-01',
+      });
+      const customerId = ids.customer();
+      invoiceDb.db.insert(customers).values({
+        id: customerId, companyId: invoiceCompanyId, name: 'Mulligan Digital',
+        matchKey: 'mulligan digital', countryCode: 'IE',
+      }).run();
+
+      const invoice = createInvoice(invoiceDb.db, {
+        companyId: invoiceCompanyId, direction: 'sales',
+        invoiceDate: MAR_APR, invoiceNumber: 'S-1', customerId,
+        lines: [{
+          description: 'Website build', netMinor: 100_000,
+          accountId: created.accountsByCode['4020']!,
+          vatTreatmentId: created.treatmentsByCode['IE_STD']!,
+        }],
+      });
+
+      const receiptId = insertTestBankTransaction(invoiceDb.db, {
+        companyId: invoiceCompanyId, bankAccountId: invoiceBankAccountId,
+        transactionDate: '2025-03-20',
+        description: 'MULLIGAN DIGITAL TRANSFER', amountMinor: 123_000,
+      });
+      recordPayment(invoiceDb.db, {
+        companyId: invoiceCompanyId, direction: 'received',
+        paymentDate: makeDate(2025, 3, 20), amountMinor: 123_000,
+        bankTransactionId: receiptId,
+        allocations: [{ invoiceId: invoice.invoiceId, allocatedMinor: 123_000 }],
+      });
+
+      const rows = drillIntoBox(invoiceDb.db, {
+        companyId: invoiceCompanyId, vatPeriodId: invoicePeriodId, box: 'T1',
+      });
+      expect(rows).toHaveLength(1);
+      const row = rows[0]!;
+      expect(row.sourceType).toBe('sales_invoice');
+      expect(row.invoiceId).toBe(invoice.invoiceId);
+      expect(row.bankTransactionId).toBe(receiptId);
+      expect(row.journalEntryId).toBe(invoice.journalEntryId);
+      expect(row.journalEntryNumber).toBe(1);
+      expect(row.counterpartyName).toBe('Mulligan Digital');
+      // No rule classified anything on this path — an honest null, not a guess.
+      expect(row.ruleId).toBeNull();
+      expect(row.ruleName).toBeNull();
+    });
+
+    it('carries the bank line and invoice behind a cash-receipts payment entry', () => {
+      // A second book on the cash receipts basis: the tax point is the payment.
+      const cash = createTestDatabase();
+      const created = createCompany(cash.db, {
+        legalName: 'Cash Ltd', vatRegistrationStatus: 'registered',
+        vatAccountingBasis: 'cash_receipts', seedYears: [2025],
+      });
+      const cashPeriodId = cash.db.select().from(vatPeriods)
+        .where(eq(vatPeriods.name, 'Mar–Apr 2025')).get()!.id;
+      const cashBankAccountId = addBankAccount(cash.db, {
+        companyId: created.companyId, bankName: 'BOI',
+        accountName: 'Current', openingDate: '2025-01-01',
+      });
+      const customerId = ids.customer();
+      cash.db.insert(customers).values({
+        id: customerId, companyId: created.companyId, name: 'Paris SARL',
+        matchKey: 'paris sarl', countryCode: 'FR',
+      }).run();
+
+      const invoice = createInvoice(cash.db, {
+        companyId: created.companyId, direction: 'sales',
+        invoiceDate: makeDate(2025, 1, 10), invoiceNumber: 'C-1', customerId,
+        lines: [{
+          description: 'Consulting', netMinor: 50_000,
+          accountId: created.accountsByCode['4020']!,
+          vatTreatmentId: created.treatmentsByCode['IE_STD']!,
+        }],
+      });
+      // On the cash basis nothing is recognised until the money arrives.
+      expect(buildVat3Return(cash.db, {
+        companyId: created.companyId, vatPeriodId: cashPeriodId,
+      }).T1.entryCount).toBe(0);
+
+      const receiptId = insertTestBankTransaction(cash.db, {
+        companyId: created.companyId, bankAccountId: cashBankAccountId,
+        transactionDate: '2025-04-01', description: 'PARIS SARL',
+        amountMinor: 61_500,
+      });
+      recordPayment(cash.db, {
+        companyId: created.companyId, direction: 'received',
+        paymentDate: makeDate(2025, 4, 1), amountMinor: 61_500,
+        bankTransactionId: receiptId,
+        allocations: [{ invoiceId: invoice.invoiceId, allocatedMinor: 61_500 }],
+      });
+
+      const rows = drillIntoBox(cash.db, {
+        companyId: created.companyId, vatPeriodId: cashPeriodId, box: 'T1',
+      });
+      expect(rows).toHaveLength(1);
+      const row = rows[0]!;
+      expect(row.sourceType).toBe('payment');
+      expect(row.bankTransactionId).toBe(receiptId);
+      expect(row.invoiceId).toBe(invoice.invoiceId);
+      expect(row.counterpartyName).toBe('Paris SARL');
+      expect(row.journalEntryId).not.toBeNull();
+      expect(row.journalEntryNumber).toBe(2); // invoice journal, then payment journal
+    });
+
+    it('leaves the invoice leg null when a payment settled several invoices', () => {
+      const first = ids.customer();
+      const second = ids.customer();
+      db.insert(customers).values([
+        { id: first, companyId, name: 'One Ltd', matchKey: 'one ltd', countryCode: 'IE' },
+        { id: second, companyId, name: 'Two Ltd', matchKey: 'two ltd', countryCode: 'IE' },
+      ]).run();
+      const invoiceA = createInvoice(db, {
+        companyId, direction: 'sales', invoiceDate: MAR_APR,
+        invoiceNumber: 'S-2', customerId: first,
+        lines: [{
+          description: 'Work', netMinor: 40_000,
+          accountId: byCode['4020']!, vatTreatmentId: tr['IE_STD']!,
+        }],
+      });
+      const invoiceB = createInvoice(db, {
+        companyId, direction: 'sales', invoiceDate: MAR_APR,
+        invoiceNumber: 'S-3', customerId: second,
+        lines: [{
+          description: 'More work', netMinor: 60_000,
+          accountId: byCode['4020']!, vatTreatmentId: tr['IE_STD']!,
+        }],
+      });
+      const lumpId = insertTestBankTransaction(db, {
+        companyId, bankAccountId, transactionDate: '2025-03-25',
+        description: 'BULK RECEIPT', amountMinor: 123_000,
+      });
+      recordPayment(db, {
+        companyId, direction: 'received', paymentDate: makeDate(2025, 3, 25),
+        amountMinor: 123_000, bankTransactionId: lumpId,
+        allocations: [
+          { invoiceId: invoiceA.invoiceId, allocatedMinor: 49_200 },
+          { invoiceId: invoiceB.invoiceId, allocatedMinor: 73_800 },
+        ],
+      });
+
+      // The bank line is still evidence; the invoice it belongs to is not
+      // asserted, because one payment settled two.
+      for (const row of drillIntoBox(db, { companyId, vatPeriodId: periodId, box: 'T1' })) {
+        expect(row.bankTransactionId).toBe(lumpId);
+        expect(row.invoiceId).toBeNull();
+      }
+    });
   });
 });
 

@@ -1,8 +1,9 @@
-import { and, eq, inArray, sql } from 'drizzle-orm';
+import { and, eq, inArray, isNotNull, isNull } from 'drizzle-orm';
 import type { AppDatabase } from '@/db';
 import {
   vatEntries, vatPeriods, vatTreatments, bankTransactions, invoices,
-  documents, suppliers, customers,
+  documents, suppliers, customers, journalEntries, payments, paymentAllocations,
+  rules,
 } from '@/db/schema';
 import type { Vat3Box } from '../config/vatTreatments';
 
@@ -180,6 +181,9 @@ export interface VatDrillRow {
   taxPointDate: string;
   treatmentCode: string;
   treatmentName: string;
+  /** Where the treatment's rate and scope came from (README §48). */
+  treatmentSourceNote: string | null;
+  treatmentSourceDate: string | null;
   rateBasisPoints: number;
   netMinor: number;
   vatMinor: number;
@@ -196,6 +200,16 @@ export interface VatDrillRow {
   documentId: string | null;
   bankTransactionId: string | null;
   invoiceId: string | null;
+  /**
+   * The journal entry behind the VAT entry — the transaction leg of the
+   * chain. A VAT entry always arises from a posting; this is its identity.
+   */
+  journalEntryId: string | null;
+  journalEntryNumber: number | null;
+  journalNarrative: string | null;
+  /** The rule that classified the bank line behind this entry, if one did. */
+  ruleId: string | null;
+  ruleName: string | null;
   notes: string | null;
 }
 
@@ -228,9 +242,14 @@ export function drillIntoEntries(
     entry: vatEntries,
     treatmentCode: vatTreatments.code,
     treatmentName: vatTreatments.name,
+    treatmentSourceNote: vatTreatments.sourceNote,
+    treatmentSourceDate: vatTreatments.sourceDate,
+    journalEntryNumber: journalEntries.entryNumber,
+    journalNarrative: journalEntries.narrative,
   })
     .from(vatEntries)
     .innerJoin(vatTreatments, eq(vatEntries.vatTreatmentId, vatTreatments.id))
+    .leftJoin(journalEntries, eq(vatEntries.journalEntryId, journalEntries.id))
     .where(and(
       eq(vatEntries.companyId, companyId),
       inArray(vatEntries.id, entryIds),
@@ -238,7 +257,10 @@ export function drillIntoEntries(
     .orderBy(vatEntries.taxPointDate)
     .all();
 
-  return rows.map(({ entry, treatmentCode, treatmentName }) => {
+  return rows.map(({
+    entry, treatmentCode, treatmentName, treatmentSourceNote, treatmentSourceDate,
+    journalEntryNumber, journalNarrative,
+  }) => {
     const links = resolveSourceLinks(db, companyId, entry.sourceType, entry.sourceId);
     return {
       entryId: entry.id,
@@ -246,6 +268,8 @@ export function drillIntoEntries(
       taxPointDate: entry.taxPointDate,
       treatmentCode,
       treatmentName,
+      treatmentSourceNote,
+      treatmentSourceDate,
       rateBasisPoints: entry.rateBasisPoints,
       netMinor: entry.netMinor,
       vatMinor: entry.vatMinor,
@@ -257,45 +281,102 @@ export function drillIntoEntries(
       isReverseChargeLeg: entry.isReverseChargeLeg,
       sourceType: entry.sourceType,
       sourceId: entry.sourceId,
+      journalEntryId: entry.journalEntryId,
+      journalEntryNumber: journalEntryNumber ?? null,
+      journalNarrative: journalNarrative ?? null,
       notes: entry.notes,
       ...links,
     };
   });
 }
 
-/** Resolve a VAT entry's source to the evidence behind it. */
+interface SourceLinks {
+  counterpartyName: string | null;
+  documentId: string | null;
+  bankTransactionId: string | null;
+  invoiceId: string | null;
+  ruleId: string | null;
+  ruleName: string | null;
+}
+
+const EMPTY_LINKS: SourceLinks = {
+  counterpartyName: null, documentId: null, bankTransactionId: null,
+  invoiceId: null, ruleId: null, ruleName: null,
+};
+
+/** The rule that classified a bank line, so the drill names its own reasoning. */
+function ruleBehind(
+  db: AppDatabase, ruleId: string | null,
+): Pick<SourceLinks, 'ruleId' | 'ruleName'> {
+  if (!ruleId) return { ruleId: null, ruleName: null };
+  const rule = db.select({ name: rules.name }).from(rules)
+    .where(eq(rules.id, ruleId)).get();
+  return rule ? { ruleId, ruleName: rule.name } : { ruleId, ruleName: null };
+}
+
+/** Counterparty, matched document and applied rule for one bank line. */
+function bankTransactionLinks(
+  db: AppDatabase, bankTransactionId: string,
+): { counterpartyName: string | null; documentId: string | null;
+     bankTransactionId: string; invoiceId: null;
+     ruleId: string | null; ruleName: string | null } {
+  const tx = db.select({
+    description: bankTransactions.description,
+    counterpartyName: bankTransactions.counterpartyName,
+    appliedRuleId: bankTransactions.appliedRuleId,
+  }).from(bankTransactions).where(eq(bankTransactions.id, bankTransactionId)).get();
+
+  const document = db.select({ id: documents.id }).from(documents)
+    .where(eq(documents.matchedTransactionId, bankTransactionId)).get();
+
+  return {
+    counterpartyName: tx?.counterpartyName ?? tx?.description ?? null,
+    documentId: document?.id ?? null,
+    bankTransactionId,
+    invoiceId: null,
+    ...ruleBehind(db, tx?.appliedRuleId ?? null),
+  };
+}
+
+/**
+ * The bank line that settled an invoice, if one has been recorded. Payment
+ * allocations name the payment, the payment names the bank line; a reversed
+ * payment settles nothing.
+ */
+function settlingBankTransactionId(
+  db: AppDatabase, invoiceId: string,
+): string | null {
+  const rows = db.select({ bankTransactionId: payments.bankTransactionId })
+    .from(paymentAllocations)
+    .innerJoin(payments, eq(paymentAllocations.paymentId, payments.id))
+    .where(and(
+      eq(paymentAllocations.invoiceId, invoiceId),
+      isNull(payments.reversedAt),
+      isNotNull(payments.bankTransactionId),
+    ))
+    .orderBy(payments.paymentDate)
+    .all();
+  return rows[0]?.bankTransactionId ?? null;
+}
+
+/**
+ * Resolve a VAT entry's source to the evidence behind it: the full chain
+ * README §53 asks for — transaction, invoice, bank line, rule, document.
+ * A leg that does not exist yet is left null rather than guessed; the UI shows
+ * an honest gap instead of a fabricated link.
+ */
 function resolveSourceLinks(
   db: AppDatabase, companyId: string, sourceType: string, sourceId: string | null,
-): { counterpartyName: string | null; documentId: string | null;
-     bankTransactionId: string | null; invoiceId: string | null } {
-  const empty = {
-    counterpartyName: null, documentId: null, bankTransactionId: null, invoiceId: null,
-  };
-  if (!sourceId) return empty;
+): SourceLinks {
+  if (!sourceId) return EMPTY_LINKS;
 
   if (sourceType === 'bank_transaction') {
-    const tx = db.select({
-      id: bankTransactions.id,
-      description: bankTransactions.description,
-      counterpartyName: bankTransactions.counterpartyName,
-      supplierId: bankTransactions.supplierId,
-    }).from(bankTransactions).where(eq(bankTransactions.id, sourceId)).get();
-    if (!tx) return empty;
-
-    const document = db.select({ id: documents.id }).from(documents)
-      .where(eq(documents.matchedTransactionId, tx.id)).get();
-
-    return {
-      counterpartyName: tx.counterpartyName ?? tx.description,
-      documentId: document?.id ?? null,
-      bankTransactionId: tx.id,
-      invoiceId: null,
-    };
+    return bankTransactionLinks(db, sourceId);
   }
 
   if (sourceType === 'sales_invoice' || sourceType === 'purchase_invoice') {
     const invoice = db.select().from(invoices).where(eq(invoices.id, sourceId)).get();
-    if (!invoice) return empty;
+    if (!invoice) return EMPTY_LINKS;
 
     let counterpartyName: string | null = null;
     if (invoice.supplierId) {
@@ -306,15 +387,59 @@ function resolveSourceLinks(
         .where(eq(customers.id, invoice.customerId)).get()?.name ?? null;
     }
 
+    const bankTransactionId = settlingBankTransactionId(db, invoice.id);
+    const bank = bankTransactionId ? bankTransactionLinks(db, bankTransactionId) : null;
+
     return {
-      counterpartyName,
-      documentId: invoice.documentId,
-      bankTransactionId: null,
+      counterpartyName: counterpartyName ?? bank?.counterpartyName ?? null,
+      documentId: invoice.documentId ?? bank?.documentId ?? null,
+      bankTransactionId,
       invoiceId: invoice.id,
+      ruleId: bank?.ruleId ?? null,
+      ruleName: bank?.ruleName ?? null,
     };
   }
 
-  return empty;
+  if (sourceType === 'payment') {
+    // The cash receipts basis (README §9): output VAT arises from the payment,
+    // so the payment is the source. Its bank line is the evidence leg.
+    const payment = db.select().from(payments).where(eq(payments.id, sourceId)).get();
+    if (!payment) return EMPTY_LINKS;
+
+    const bankTransactionId = payment.bankTransactionId;
+    const bank = bankTransactionId ? bankTransactionLinks(db, bankTransactionId) : null;
+
+    // A payment settling several invoices cannot name one invoice without
+    // guessing, so the invoice leg is linked only when it is unambiguous.
+    const settledInvoices = db.select({ invoiceId: paymentAllocations.invoiceId })
+      .from(paymentAllocations)
+      .where(eq(paymentAllocations.paymentId, payment.id)).all()
+      .map((row) => row.invoiceId);
+    const invoiceId = settledInvoices.length === 1 ? settledInvoices[0]! : null;
+    const invoice = invoiceId
+      ? db.select().from(invoices).where(eq(invoices.id, invoiceId)).get()
+      : null;
+
+    let counterpartyName = bank?.counterpartyName ?? null;
+    if (invoice?.supplierId) {
+      counterpartyName = db.select({ name: suppliers.name }).from(suppliers)
+        .where(eq(suppliers.id, invoice.supplierId)).get()?.name ?? counterpartyName;
+    } else if (invoice?.customerId) {
+      counterpartyName = db.select({ name: customers.name }).from(customers)
+        .where(eq(customers.id, invoice.customerId)).get()?.name ?? counterpartyName;
+    }
+
+    return {
+      counterpartyName,
+      documentId: invoice?.documentId ?? bank?.documentId ?? null,
+      bankTransactionId,
+      invoiceId,
+      ruleId: bank?.ruleId ?? null,
+      ruleName: bank?.ruleName ?? null,
+    };
+  }
+
+  return EMPTY_LINKS;
 }
 
 /** Totals across every period, for the dashboard. */
