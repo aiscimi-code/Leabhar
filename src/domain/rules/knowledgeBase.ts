@@ -108,6 +108,11 @@ const SOURCES: Array<{ path: string; ingest: IngestFn }> = [
   { path: 'docs/statutes/vatca-2010-revised/s089.md', ingest: ingestVatcaRevisedSection },
   { path: 'docs/statutes/vatca-2010-revised/s002.md', ingest: ingestVatcaRevisedSection },
   { path: 'docs/statutes/vatca-2010-revised/s003.md', ingest: ingestVatcaRevisedSection },
+  // Issue #245 (taxable amount) and #278 (returns, deposit return scheme).
+  { path: 'docs/statutes/vatca-2010-revised/s037.md', ingest: ingestVatcaRevisedSection },
+  { path: 'docs/statutes/vatca-2010-revised/s045.md', ingest: ingestVatcaRevisedSection },
+  { path: 'docs/statutes/vatca-2010-revised/s076.md', ingest: ingestVatcaRevisedSection },
+  { path: 'docs/statutes/vatca-2010-revised/s92A.md', ingest: ingestVatcaRevisedSection },
   { path: 'docs/statutes/vatca-2010-revised/s034.md', ingest: ingestVatcaRevisedSection },
   { path: 'docs/statutes/tca-1997/s284.md', ingest: ingestTca1997S284 },
   { path: 'docs/statutes/finance-act-2003/s23.md', ingest: ingestFinanceAct2003S23 },
