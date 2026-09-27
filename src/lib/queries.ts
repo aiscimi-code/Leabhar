@@ -2,6 +2,7 @@ import { suggestJournalMatches } from '@/domain/banking/journalLink';
 import { onAccountForInvoice } from '@/domain/invoicing/onAccount';
 import { customerExposure, listCustomerContacts } from '@/domain/parties/customerAccount';
 import { listRecurringInvoices } from '@/domain/invoicing/recurringInvoices';
+import { listPurchaseOrders, getPurchaseOrder } from '@/domain/invoicing/purchaseOrders';
 import { salesInvoiceDocument } from '@/domain/invoicing/invoiceDocument';
 import { customerCredit } from '@/domain/invoicing/customerCredit';
 import { receivablesSummary, overdueInvoices } from '@/domain/invoicing/receivables';
@@ -967,6 +968,21 @@ export function capitalGoodsPage() {
 }
 
 /** Recurring sales invoice templates with their due state (issue #394). */
+/** Purchase orders (issue #411), newest first. */
+export function purchaseOrderList() {
+  return listPurchaseOrders(getDb(), { companyId: requireCompany().id });
+}
+
+/** The order a bill is linked to, and the supplier's open orders it could be linked to. */
+export function purchaseOrderOptions(bill: { id: string; supplierId: string | null; purchaseOrderId: string | null }) {
+  const db = getDb();
+  const companyId = requireCompany().id;
+  return {
+    linked: bill.purchaseOrderId ? getPurchaseOrder(db, { companyId, purchaseOrderId: bill.purchaseOrderId }) : null,
+    open: bill.supplierId ? listPurchaseOrders(db, { companyId, supplierId: bill.supplierId, openOnly: true }) : [],
+  };
+}
+
 export function recurringInvoiceList() {
   return listRecurringInvoices(getDb(), { companyId: requireCompany().id });
 }

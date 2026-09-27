@@ -1,12 +1,12 @@
 import { notFound } from 'next/navigation';
-import { invoiceDetail, unpostedTransactionOptions, officerList } from '@/lib/queries';
+import { invoiceDetail, unpostedTransactionOptions, officerList, purchaseOrderOptions } from '@/lib/queries';
 import {
-  Page, Panel, Badge, Stat, Empty, Disclosure, ProvenanceBadge, Field, Input,
+  Page, Panel, Badge, Stat, Empty, Disclosure, ProvenanceBadge, Field, Input, Select,
 } from '@/components/primitives';
 import { ActionForm } from '@/components/ActionForm';
 import {
   allocateOnAccountAction, applyCreditNoteAction, unapplyCreditNoteAction, raiseDebitNoteAction,
-  writeOffBadDebtAction, reverseBadDebtAction,
+  writeOffBadDebtAction, reverseBadDebtAction, linkBillToPurchaseOrderAction, unlinkBillFromPurchaseOrderAction,
 } from '@/app/actions';
 import { PaymentForm } from '@/components/PaymentForm';
 import { recordPaymentAction } from '@/app/settings-actions';
@@ -26,6 +26,7 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
   } = detail;
   const today = new Date().toISOString().slice(0, 10);
   const isSales = invoice.direction === 'sales';
+  const orders = !isSales && invoice.status !== 'void' ? purchaseOrderOptions(invoice) : null;
   const deferredVat = isSales && company.vatAccountingBasis === 'cash_receipts'
     && invoice.vatMinor !== 0;
 
@@ -98,6 +99,39 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
           </div>
         )}
       </Panel>
+
+      {orders && (orders.linked || orders.open.length > 0) && (
+        <Panel title="Purchase order"
+          description="The order this bill was raised against. Linking changes nothing in the books; it tracks what has been billed against the order.">
+          <div className="px-4 py-3 flex gap-4 items-end">
+            {orders.linked ? (
+              <>
+                <p className="text-[12.5px]">
+                  Raised against <a href="/purchase-orders" className="underline font-medium">{orders.linked.number}</a>:{' '}
+                  {money(orders.linked.billedMinor, orders.linked.currency)} billed of{' '}
+                  {money(orders.linked.orderedMinor, orders.linked.currency)} ordered.
+                </p>
+                <ActionForm action={unlinkBillFromPurchaseOrderAction} submit="Unlink" variant="secondary"
+                  confirm="Unlink this bill from the order? The bill itself is not changed."
+                  extra={{ invoiceId: invoice.id }} />
+              </>
+            ) : (
+              <ActionForm action={linkBillToPurchaseOrderAction} submit="Link" inline extra={{ invoiceId: invoice.id }}>
+                <Field label="Open order for this supplier">
+                  <Select name="purchaseOrderId" required defaultValue="">
+                    <option value="" disabled>Choose an order</option>
+                    {orders.open.map((o) => (
+                      <option key={o.id} value={o.id}>
+                        {o.number} — {date(o.orderDate)}, {money(o.remainingMinor, o.currency)} remaining
+                      </option>
+                    ))}
+                  </Select>
+                </Field>
+              </ActionForm>
+            )}
+          </div>
+        </Panel>
+      )}
 
       <Panel title="Lines">
         <table className="ledger">

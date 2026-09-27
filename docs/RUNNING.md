@@ -112,6 +112,12 @@ npm run cli -- add-account --code <code> --name "..."
 npm run cli -- add-customer --name "..." [--country IE] [--default-account <code>]
 npm run cli -- set-supplier-terms --supplier <id> --terms-days 30 --actor "Name"
     # bills with no due date of their own are due this long after the invoice date
+npm run cli -- create-purchase-order --supplier <id> --actor "Name" \
+    --lines '[{"description":"Toner","quantity":"2","net":"80.00","account":"6120"}]'
+npm run cli -- link-bill --invoice <number|id> --purchase-order PO-1 --actor "Name"
+npm run cli -- purchase-order-pdf --purchase-order PO-1 --out po.pdf
+    # an order posts nothing; billing over it is flagged, never refused.
+    # Also: list-purchase-orders [--open], unlink-bill, cancel-purchase-order
 npm run cli -- set-customer-terms --customer <id> --actor "Name" [--terms-days 30] [--credit-limit <5000.00|none>]
     # New invoices without a due date get one from the terms; going over the
     # credit limit is flagged for review, never refused.

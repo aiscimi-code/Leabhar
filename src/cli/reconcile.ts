@@ -52,7 +52,7 @@ import {
   registerCapitalGood, recordIntervalUse, recordCapitalGoodDisposal, postCapitalGoodAdjustment,
   postCapitalGoodDisposalAdjustment, capitalGoodsOverview,
 } from '@/domain/vat/capitalGoods';
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { suggestJournalMatches, linkBankTransactionToJournal } from '@/domain/banking/journalLink';
 import { withdrawMatchRejection } from '@/domain/matching/service';
 import { allocatePaymentOnAccount, paymentsOnAccount } from '@/domain/invoicing/onAccount';
@@ -67,6 +67,12 @@ import {
 import { renderStatementPdf, renderReminderPdf } from '@/lib/receivablesPdf';
 import { applyCreditNote, unapplyCreditNote, refundOnAccount, customerCredit } from '@/domain/invoicing/customerCredit';
 import { renderInvoicePdf } from '@/lib/invoicePdf';
+import { renderPurchaseOrderPdf } from '@/lib/purchaseOrderPdf';
+import {
+  createPurchaseOrder, listPurchaseOrders, getPurchaseOrder, linkBillToPurchaseOrder, unlinkBillFromPurchaseOrder,
+  cancelPurchaseOrder, purchaseOrderDocument,
+} from '@/domain/invoicing/purchaseOrders';
+import { purchaseOrders } from '@/db/schema';
 import { writeFileSync } from 'node:fs';
 import {
   createRecurringInvoice, postDueRecurringInvoices, listRecurringInvoices,
@@ -290,6 +296,17 @@ Books (once induction is done):
   invoice-pdf --invoice <number|id> --out <file.pdf>
       The sales invoice or credit note as a PDF; marked DRAFT, with the gaps
       listed, while a reg.20 particular is missing
+  create-purchase-order --supplier <id> --actor "Name" --lines <json>
+      [--date <date>] [--expected <date>] [--notes "..."]
+      [{"description":"Toner","quantity":"2","net":"80.00","account":"6120"}]
+      Posts nothing and claims no VAT; net is the line total excluding VAT
+  list-purchase-orders [--supplier <id>] [--open]
+  link-bill --invoice <number|id> --purchase-order <PO-n|id> --actor "Name"
+      Link a posted bill to the order it was raised against; billing over
+      the order is flagged, never refused
+  unlink-bill --invoice <number|id> --actor "Name"
+  cancel-purchase-order --purchase-order <PO-n|id> --reason "..." --actor "Name"
+  purchase-order-pdf --purchase-order <PO-n|id> --out <file.pdf>
   create-invoice --direction sales|purchase --file <invoices.csv>
       A purchase with no confirmed supplier document holds its input VAT back
       and is flagged (issue #234). [--vat-already-declared "reason"]: migrated
@@ -1201,6 +1218,67 @@ export async function main(argv: string[], options: CliOptions = {}): Promise<nu
         return 0;
       }
 
+      case 'create-purchase-order': {
+        const lines = JSON.parse(requireFlag(flags, 'lines')) as Array<{
+          description: string; quantity?: string; net: string; account?: string;
+        }>;
+        if (!Array.isArray(lines)) throw new Error('--lines must be a JSON array.');
+        const base = db.select({ c: companies.baseCurrency }).from(companies).where(eq(companies.id, companyId)).get()!.c;
+        print(createPurchaseOrder(db, {
+          companyId, supplierId: requireFlag(flags, 'supplier'), actor: requireFlag(flags, 'actor'),
+          orderDate: asIsoDate(getFlag(flags, 'date') ?? new Date().toISOString().slice(0, 10)),
+          expectedDate: getFlag(flags, 'expected') ? asIsoDate(getFlag(flags, 'expected')!) : null,
+          notes: getFlag(flags, 'notes') ?? null,
+          lines: lines.map((line, i) => {
+            const quantityMilli = line.quantity !== undefined ? Math.round(Number(line.quantity) * 1000) : undefined;
+            if (line.quantity !== undefined && Number(line.quantity) * 1000 !== quantityMilli) {
+              throw new Error(`Line ${i + 1}: "${line.quantity}" is not a quantity (up to three decimal places).`);
+            }
+            return {
+              description: line.description, quantityMilli, netMinor: parseAmount(line.net, base),
+              accountId: line.account ? resolveAccountId(db, companyId, line.account) : null,
+            };
+          }),
+        }), format);
+        return 0;
+      }
+
+      case 'list-purchase-orders': {
+        print(listPurchaseOrders(db, { companyId, supplierId: getFlag(flags, 'supplier'), openOnly: hasFlag(flags, 'open') }), format);
+        return 0;
+      }
+
+      case 'link-bill': {
+        print(linkBillToPurchaseOrder(db, {
+          companyId, invoiceId: resolveInvoiceId(db, companyId, requireFlag(flags, 'invoice')),
+          purchaseOrderId: resolvePurchaseOrderId(db, companyId, requireFlag(flags, 'purchase-order')),
+          actor: requireFlag(flags, 'actor'),
+        }), format);
+        return 0;
+      }
+
+      case 'unlink-bill': {
+        print(unlinkBillFromPurchaseOrder(db, {
+          companyId, invoiceId: resolveInvoiceId(db, companyId, requireFlag(flags, 'invoice')), actor: requireFlag(flags, 'actor'),
+        }), format);
+        return 0;
+      }
+
+      case 'cancel-purchase-order': {
+        const purchaseOrderId = resolvePurchaseOrderId(db, companyId, requireFlag(flags, 'purchase-order'));
+        cancelPurchaseOrder(db, { companyId, purchaseOrderId, reason: requireFlag(flags, 'reason'), actor: requireFlag(flags, 'actor') });
+        print(getPurchaseOrder(db, { companyId, purchaseOrderId }), format);
+        return 0;
+      }
+
+      case 'purchase-order-pdf': {
+        const docu = purchaseOrderDocument(db, { companyId, purchaseOrderId: resolvePurchaseOrderId(db, companyId, requireFlag(flags, 'purchase-order')) });
+        const out = requireFlag(flags, 'out');
+        writeFileSync(out, await renderPurchaseOrderPdf(docu));
+        print({ written: out, number: docu.order.number }, format);
+        return 0;
+      }
+
       case 'list-recurring-invoices': {
         print(listRecurringInvoices(db, { companyId }), format);
         return 0;
@@ -1798,4 +1876,14 @@ if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
   main(process.argv.slice(2))
     .then((code) => process.exit(code))
     .catch(() => process.exit(1));
+}
+
+/** A purchase order by its number (PO-3) or its id. */
+function resolvePurchaseOrderId(db: AppDatabase, companyId: string, numberOrId: string): string {
+  const found = db.select({ id: purchaseOrders.id }).from(purchaseOrders).where(and(
+    eq(purchaseOrders.companyId, companyId),
+    numberOrId.startsWith('po_') ? eq(purchaseOrders.id, numberOrId) : eq(purchaseOrders.number, numberOrId.toUpperCase()),
+  )).get();
+  if (!found) throw new Error(`Purchase order "${numberOrId}" not found.`);
+  return found.id;
 }

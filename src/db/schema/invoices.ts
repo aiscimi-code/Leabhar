@@ -78,6 +78,8 @@ export const invoices = sqliteTable('invoices', {
    * (issue #394). Unique together, so an occurrence is raised once however
    * often the due-post runs.
    */
+  /** The purchase order a bill was raised against (issue #411). */
+  purchaseOrderId: text('purchase_order_id'),
   recurringInvoiceId: text('recurring_invoice_id'),
   recurringDate: text('recurring_date'),
 
@@ -317,3 +319,42 @@ export const invoiceReminders = sqliteTable('invoice_reminders', {
   daysOverdue: integer('days_overdue').notNull(),
   ...timestamps,
 }, (t) => [index('invoice_reminders_invoice_idx').on(t.invoiceId)]);
+
+/**
+ * A purchase order (issue #411): what was ordered from a supplier before the
+ * bill arrives. A commitment, not an accounting fact — it posts nothing. Bills
+ * posted from their confirmed documents are linked to it, and its status and
+ * billed amount follow from them.
+ */
+export const purchaseOrders = sqliteTable('purchase_orders', {
+  id: text('id').primaryKey(),
+  companyId: text('company_id').notNull().references(() => companies.id),
+  supplierId: text('supplier_id').notNull().references(() => suppliers.id),
+  /** Sequential per company: PO-1, PO-2… */
+  number: text('number').notNull(),
+  orderDate: text('order_date').notNull(),
+  expectedDate: text('expected_date'),
+  currency: text('currency').notNull(),
+  status: text('status', { enum: ['open', 'part_billed', 'billed', 'cancelled'] }).notNull().default('open'),
+  notes: text('notes'),
+  createdBy: text('created_by').notNull(),
+  cancelledAt: text('cancelled_at'),
+  cancelReason: text('cancel_reason'),
+  ...timestamps,
+}, (t) => [
+  index('purchase_orders_company_idx').on(t.companyId, t.status),
+  uniqueIndex('purchase_orders_number_unique').on(t.companyId, t.number),
+]);
+
+export const purchaseOrderLines = sqliteTable('purchase_order_lines', {
+  id: text('id').primaryKey(),
+  purchaseOrderId: text('purchase_order_id').notNull().references(() => purchaseOrders.id),
+  companyId: text('company_id').notNull().references(() => companies.id),
+  lineNumber: integer('line_number').notNull(),
+  description: text('description').notNull(),
+  quantityMilli: integer('quantity_milli').notNull().default(1000),
+  /** The expected net of the line, excluding VAT. */
+  netMinor: integer('net_minor').notNull(),
+  accountId: text('account_id').references(() => accounts.id),
+  ...timestamps,
+}, (t) => [index('purchase_order_lines_order_idx').on(t.purchaseOrderId)]);
