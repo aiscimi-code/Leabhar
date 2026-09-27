@@ -38,6 +38,7 @@ const EXPECTED: Record<Action, readonly Role[]> = {
   'payroll.read': ['owner', 'director', 'accountant', 'bookkeeper', 'auditor'],
   'payroll.run': ['owner', 'director', 'accountant', 'bookkeeper'],
   'inventory.manage': ['owner', 'director', 'accountant', 'bookkeeper', 'farm_manager'],
+  'farm.manage': ['owner', 'director', 'accountant', 'bookkeeper', 'farm_manager'],
   'journals.post': ['owner', 'director', 'accountant', 'bookkeeper'],
   'vat.file': ['owner', 'director', 'accountant'],
   'config.manage': ['owner', 'director', 'accountant'],

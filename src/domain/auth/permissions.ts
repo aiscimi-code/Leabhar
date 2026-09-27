@@ -57,6 +57,7 @@ export const ACTIONS = [
   'payroll.read',         // see employees, PPSNs, RPNs and payslips (personal data, so narrower than books.read)
   'payroll.run',          // record employees and RPNs, run, post, reverse and pay payroll
   'inventory.manage',     // items, locations, stock movements and stocktakes
+  'farm.manage',          // farm profile, land, enterprises, livestock, crops and allocations
   'journals.post',        // post manual journals and adjustments
   'vat.file',             // close, lock, amend or file a VAT period
   'config.manage',        // chart of accounts, rates, treatments, company settings
@@ -100,6 +101,7 @@ export const PERMISSIONS: Record<Action, readonly Role[]> = {
   'payroll.read': ['owner', 'director', 'accountant', 'bookkeeper', 'auditor'],
   'payroll.run': ['owner', 'director', 'accountant', 'bookkeeper'],
   'inventory.manage': ['owner', 'director', 'accountant', 'bookkeeper', 'farm_manager'],
+  'farm.manage': ['owner', 'director', 'accountant', 'bookkeeper', 'farm_manager'],
   'journals.post': ['owner', 'director', 'accountant', 'bookkeeper'],
   'vat.file': ['owner', 'director', 'accountant'],
   'config.manage': ['owner', 'director', 'accountant'],

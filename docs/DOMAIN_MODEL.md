@@ -809,6 +809,71 @@ or since the opening stock for the first one.
 - `stock_valuations` records each posting and its lines.
 - No movement or stocktake can be dated on or before a posted valuation.
 
+### Farm (EPIC 24, issues #539–#541)
+
+The farm module holds management records on top of the ledger. The ledger
+stays the only source of money. The one path from the farm records into it is
+a livestock valuation. See ADR 0016.
+
+**Setup.**
+- `farm_profiles` holds one profile per book. It links the farming trading
+  activity, which carries the herd number (#326), and records the flock
+  number.
+- `land_parcels` records each parcel held for a period, owned or leased.
+  - Area is whole square metres. `areaFigures` gives hectares and acres
+    exactly (1 acre = 4046.8564224 m², as a rational).
+  - Leased land records who it is leased from and the annual rent.
+  - Periods of one parcel reference never overlap. Land leased and then bought
+    is two periods.
+- `farmedArea` gives the owned and leased area on a date.
+- `farm_enterprises`: dairy, beef, sheep, tillage, horticulture, forestry or
+  other.
+
+**Allocations and gross margins.** `allocateJournalLine` gives an enterprise,
+and optionally a crop planting with an input kind, a share in basis points of
+a posted income or expense line.
+- The line itself is untouched.
+- A line's shares never exceed 100%.
+- A reversing entry's lines take the shares of the lines they reverse.
+
+`enterpriseGrossMargins` works out, for a period:
+- **output:** allocated income, plus the change in livestock value posted for
+  the enterprise's groups;
+- **less** allocated cost of sales;
+- allocated overheads, shown apart;
+- unallocated income, cost of sales and overheads, reported rather than spread.
+
+**Livestock.** `animal_groups` are counted and valued together, each with a
+stock account (1330) and a change-in-value account (5040). `animals` are the
+tagged animals.
+
+`livestock_events` is a write-once register of openings, purchases, sales,
+births, deaths (with their cause), transfers between groups, and reversals.
+Every path replays the register in its transaction:
+- a group never goes below nil on any date;
+- a tagged animal is only sold, lost or moved from the group it is in.
+
+`postLivestockValuation` values each group as head count × the value per head
+the person gives, with its basis.
+- The book computes no deemed-cost percentage.
+- The opening valuation posts nothing, and must equal the opening balance on
+  the stock account.
+- Later valuations post one journal for each group's change since the last
+  one.
+- A stock account that does not hold what was last booked there is a review
+  item, and nothing is posted.
+- No event can be dated on or before a posted valuation.
+
+**Crops.**
+- `crop_plantings`: a crop on a parcel for a harvest year, on no more than the
+  parcel's area.
+- Inputs (seed, fertiliser, chemicals, contractor) and crop sales are
+  allocations of posted lines. No crop cost exists outside the books.
+- `crop_harvests` record the quantity harvested.
+- `cropReport` gives each planting's inputs by kind, sales, margin, margin
+  per hectare, and yield per hectare sown.
+- Crops in store are valued as inventory (stock account 1340).
+
 ### Consolidation (bank ↔ invoice)
 
 ```

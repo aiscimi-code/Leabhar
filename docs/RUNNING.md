@@ -400,6 +400,20 @@ npm run cli -- closing-stock --date 2026-12-31               # the plan: ledger 
 npm run cli -- closing-stock --date 2026-12-31 --post --by owner
 ```
 
+Farm (areas in hectares; `--enterprise` and `--group` take a name):
+
+```bash
+npm run cli -- add-parcel --ref P1 --name "Home farm" --hectares 40.5 --tenure owned --from 2010-01-01 --by owner
+npm run cli -- add-enterprise --name Dairy --kind dairy --from 2020-01-01 --by owner
+npm run cli -- allocate-line --line <journal line id> --enterprise Dairy --percent 70 --by owner
+npm run cli -- add-animal-group --enterprise Dairy --name "Dairy cows" --species cattle --by owner
+npm run cli -- livestock-event --kind birth --group Calves --date 2026-02-10 --head 40 --by owner
+npm run cli -- move-livestock --from Calves --to Weanlings --date 2026-10-01 --head 35 --by owner
+npm run cli -- value-livestock --date 2026-12-31 --value "Dairy cows=1100:Market value;Calves=200:Market value" --post --by owner
+npm run cli -- gross-margins --from 2026-01-01 --to 2026-12-31
+npm run cli -- crop-report --year 2026
+```
+
 ### Agent workflow
 
 `db:seed` only ever loads the Acme demo. To load a real (or synthetic) SME

@@ -39,3 +39,4 @@ date it was written, not the date the decision was first taken.
 | [0013](0013-no-personal-non-trading-income.md) | An individual's non-trading income is never recorded; the return flags it | Accepted |
 | [0014](0014-payroll-figures-rpn-and-rules.md) | Take an employee's figures from the RPN and the statutory figures from the rules | Accepted |
 | [0015](0015-periodic-ledger-perpetual-stock-costed-by-replay.md) | Keep stock periodically in the ledger, perpetually in a subledger costed by replay | Accepted |
+| [0016](0016-farm-analysis-beside-the-ledger.md) | Keep farm enterprise and crop analysis beside the ledger, as allocations of posted lines | Accepted |
