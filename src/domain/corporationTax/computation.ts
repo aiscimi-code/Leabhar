@@ -283,7 +283,17 @@ export function recordCtDecision(db: AppDatabase, params: {
   return id;
 }
 
-export interface CapitalAllowancesResult { lines: CtLine[]; findings: string[] }
+export interface CapitalAllowancesResult {
+  lines: CtLine[];
+  findings: string[];
+  /**
+   * The claims reconstructed from the purchase date for assets whose caller
+   * returned null from `claimsBefore` — bought before the periods the caller
+   * has walked (issue #488). A caller accumulating claims starts each such
+   * asset from here, not from nothing.
+   */
+  openingClaims: Map<string, AssetClaimsMade>;
+}
 
 const daysBetween = (a: string, b: string) => Math.round((Date.parse(b) - Date.parse(a)) / 86_400_000);
 
@@ -330,11 +340,13 @@ function motorCarBasis(
  * against its basis period (s.284(1), (2)(b)), passes `claimsBefore` instead:
  * the allowances actually made in earlier years of assessment, which can
  * differ from the accounting-period count in a commencement, cessation or
- * account-date-change year.
+ * account-date-change year. A caller returns null for an asset it holds no
+ * claims for because the asset predates the periods it walked: those earlier
+ * claims are counted from the purchase date, as a standalone call counts them.
  */
 export function capitalAllowances(
   db: AppDatabase,
-  params: { companyId: string; from: string; to: string; claimsBefore?: (asset: typeof fixedAssets.$inferSelect) => AssetClaimsMade },
+  params: { companyId: string; from: string; to: string; claimsBefore?: (asset: typeof fixedAssets.$inferSelect) => AssetClaimsMade | null },
   figures?: FigureAudit,
 ): CapitalAllowancesResult {
   const { companyId, from, to } = params;
@@ -343,6 +355,7 @@ export function capitalAllowances(
   const ownsAudit = !figures;
   const audit = figures ?? auditRuleFigures(db, { companyId, asOfDate: to, curated: CORPORATION_TAX_CURATED_RULES });
   const lines: CtLine[] = [];
+  const openingClaims = new Map<string, AssetClaimsMade>();
   const findings: string[] = [];
   const standardRate = figureWithCurationFallback(audit, 'ct.wear_and_tear_rate');
   const smallProceeds = figureWithCurationFallback(audit, 'ct.balancing_charge_small_proceeds');
@@ -381,6 +394,7 @@ export function capitalAllowances(
     const madeBefore = madeBeforeIn
       ? Math.min(basisMinor, Math.max(madeBeforeIn.made, 0))
       : Math.min(basisMinor, annual * Math.min(claimsBefore, years));
+    if (params.claimsBefore && !madeBeforeIn) openingClaims.set(asset.id, { claims: claimsBefore, made: madeBefore });
 
     if (car && restrictedBy !== null) {
       carCitations.add('ct.car_allowances_restricted_to_specified_amount');
@@ -485,7 +499,7 @@ export function capitalAllowances(
     });
   }
   if (ownsAudit) findings.push(...audit.findings());
-  return { lines, findings };
+  return { lines, findings, openingClaims };
 }
 
 /**
@@ -534,7 +548,7 @@ export function computeBase(
      * and gets the period's own claims back (issue #488), the way the income
      * tax run does across years of assessment.
      */
-    claimsBefore?: (asset: typeof fixedAssets.$inferSelect) => AssetClaimsMade;
+    claimsBefore?: (asset: typeof fixedAssets.$inferSelect) => AssetClaimsMade | null;
     claimsMade?: Map<string, AssetClaimsMade>;
   },
   figures?: FigureAudit,
@@ -670,7 +684,9 @@ export function computeBase(
       for (const line of ca.lines) {
         for (const source of line.sources) {
           if (source.entityType !== 'fixed_asset') continue;
-          const made = params.claimsMade.get(source.entityId) ?? { claims: 0, made: 0 };
+          const opening = ca.openingClaims.get(source.entityId);
+          const made = params.claimsMade.get(source.entityId)
+            ?? (opening ? { ...opening } : { claims: 0, made: 0 });
           made.claims += 1;
           made.made += line.kind === 'add_back' ? -source.amountMinor : source.amountMinor;
           params.claimsMade.set(source.entityId, made);
@@ -707,13 +723,14 @@ interface PeriodRun { from: string; to: string; base: CtBase; claim: LossClaim; 
  */
 export function computeCorporationTax(db: AppDatabase, params: { companyId: string; from: IsoDate; to: IsoDate }): CtComputation {
   const { companyId, from, to } = params;
-  // TCA s.955 limits an accounting period to 12 months. A longer one is not a
+  // An accounting period ends 12 months from its start at the latest (TCA
+  // s.27(3)(a); s.27 is not among the collected sources). A longer one is not a
   // period to compute — apportioning its threshold to a capped 12 months is
   // not the same figure, and nothing would say the period was malformed
   // (issue #495).
-  if (to > addMonths(from, 12)) {
+  if (to >= addMonths(from, 12)) {
     throw new Error(
-      `The accounting period ${from} to ${to} is longer than the 12 months TCA s.955 permits. `
+      `The accounting period ${from} to ${to} is longer than 12 months: an accounting period ends 12 months from its start at the latest (TCA s.27(3)(a)). `
         + 'Split it into accounting periods of 12 months or less and compute each on its own, rather than '
         + 'computing a period whose thresholds and allowances would be silently capped.',
     );
@@ -753,7 +770,11 @@ export function computeCorporationTax(db: AppDatabase, params: { companyId: stri
   for (const p of periods) {
     const base = computeBase(db, {
       companyId, ...p,
-      claimsBefore: (asset) => assetClaims.get(asset.id) ?? { claims: 0, made: 0 },
+      // An asset bought before the first period walked here was claimed in
+      // periods these books do not hold: null counts those claims from its
+      // purchase date rather than starting it again at year 1.
+      claimsBefore: (asset) => assetClaims.get(asset.id)
+        ?? (asset.purchaseDate < periods[0]!.from ? null : { claims: 0, made: 0 }),
       claimsMade: assetClaims,
     }, figures);
     const profit = Math.max(base.adjustedMinor, 0);
