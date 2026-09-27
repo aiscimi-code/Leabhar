@@ -123,6 +123,9 @@ npm run cli -- post-recurring-invoices --actor "Name" [--up-to <date>]
     # in a locked accounting period or a locked/filed VAT period is skipped and
     # becomes a review item, never moved
 npm run cli -- list-recurring-invoices
+npm run cli -- invoice-pdf --invoice <number|id> --out invoice.pdf
+    # the sales invoice or credit note as a PDF, generated locally; marked
+    # DRAFT with the gaps listed while a reg.20 particular is missing
 npm run cli -- ensure-default-accounts                # add any default chart
     # accounts introduced since this company was created (issue #159, e.g.
     # 6180 Wages and salaries, 6190 Employer PRSI, 5030 Materials, 2210 Bank

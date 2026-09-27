@@ -17,7 +17,7 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
   const detail = invoiceDetail(id);
   if (!detail) notFound();
 
-  const { invoice, lines, allocations, party, company, onAccount } = detail;
+  const { invoice, lines, allocations, party, company, onAccount, missingParticulars } = detail;
   const isSales = invoice.direction === 'sales';
   const deferredVat = isSales && company.vatAccountingBasis === 'cash_receipts'
     && invoice.vatMinor !== 0;
@@ -29,6 +29,12 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
         + (party ? ` — ${party.name}` : '')}
       actions={
         <>
+          {isSales && (
+            <a href={`/api/invoices/${invoice.id}/pdf`}
+              className="px-2.5 py-1 rounded border border-line-strong text-[12px] font-medium bg-surface hover:bg-surface-sunken">
+              PDF{missingParticulars.length > 0 ? ' (draft)' : ''}
+            </a>
+          )}
           <ProvenanceBadge status={invoice.provenanceStatus} source={invoice.source} />
           <Badge tone={invoice.status === 'paid' ? 'positive'
             : invoice.status === 'overdue' ? 'negative'
@@ -38,6 +44,15 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
         </>
       }
     >
+      {missingParticulars.length > 0 && (
+        <Panel tone="warning" title="Not yet a valid VAT invoice"
+          description="The PDF is produced marked as a draft until these are recorded (S.I. 639/2010 reg.20). Nothing is filled in for you.">
+          <ul className="px-4 py-3 list-disc pl-8 text-[12.5px] space-y-0.5">
+            {missingParticulars.map((m) => <li key={m.code}>{m.what} <span className="text-ink-muted">({m.paragraph})</span></li>)}
+          </ul>
+        </Panel>
+      )}
+
       <Panel>
         <div className="grid grid-cols-5 divide-x divide-line">
           <Stat label="Net" value={money(invoice.netMinor, invoice.currency)} />

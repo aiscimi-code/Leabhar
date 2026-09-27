@@ -2,6 +2,7 @@ import { suggestJournalMatches } from '@/domain/banking/journalLink';
 import { onAccountForInvoice } from '@/domain/invoicing/onAccount';
 import { customerExposure, listCustomerContacts } from '@/domain/parties/customerAccount';
 import { listRecurringInvoices } from '@/domain/invoicing/recurringInvoices';
+import { salesInvoiceDocument } from '@/domain/invoicing/invoiceDocument';
 import { listStatementImports } from '@/domain/banking/import';
 import { and, eq, desc, sql, isNull, isNotNull, ne, or, inArray } from 'drizzle-orm';
 import { getDb } from '@/db';
@@ -846,8 +847,11 @@ export function invoiceDetail(invoiceId: string) {
 
   // Money this party's payments still hold on account (issue #386).
   const onAccount = onAccountForInvoice(db, { companyId: company.id, invoiceId });
+  // What a sales invoice's PDF would lack (issue #395).
+  const missingParticulars = invoice.direction === 'sales'
+    ? salesInvoiceDocument(db, { companyId: company.id, invoiceId }).missing : [];
 
-  return { invoice, lines, allocations, party, company, onAccount };
+  return { invoice, lines, allocations, party, company, onAccount, missingParticulars };
 }
 
 /** One customer with its invoices (README §17). */
