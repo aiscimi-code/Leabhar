@@ -92,6 +92,9 @@ export function form11From(computation: IncomeTaxComputation): Form11 {
     note: i.status.startsWith('married') ? 'Jointly assessed; the spouse\'s income is not in these books.' : undefined,
     lines: [
       { label: 'Share of the trading result for the year', amountMinor: i.profitMinor },
+      ...(i.allowancesBroughtForwardUsedMinor
+        ? [{ label: 'Less capital allowances brought forward (s.304)', amountMinor: -i.allowancesBroughtForwardUsedMinor, note: 'Unused allowances of earlier years, carried forward as allowances without the s.392 election.' }]
+        : []),
       ...(i.broughtForwardLossUsedMinor
         ? [{ label: 'Less trading losses brought forward (s.382)', amountMinor: -i.broughtForwardLossUsedMinor, note: 'Losses of earlier years of the same trade, earliest first.' }]
         : []),
@@ -102,7 +105,10 @@ export function form11From(computation: IncomeTaxComputation): Form11 {
       ...(i.lossCarriedForwardMinor
         ? [{ label: 'Loss carried forward against later profits of the trade (s.382)', amountMinor: null, note: `${eur(i.lossCarriedForwardMinor)} carried forward.` }]
         : []),
-      { label: 'Income assessed from the trade', amountMinor: Math.max(i.profitMinor - i.broughtForwardLossUsedMinor, 0) },
+      ...(i.allowancesCarriedForwardMinor
+        ? [{ label: 'Capital allowances carried forward (s.304)', amountMinor: null, note: `${eur(i.allowancesCarriedForwardMinor)} carried forward as allowances.` }]
+        : []),
+      { label: 'Income assessed from the trade', amountMinor: Math.max(i.profitMinor - i.allowancesBroughtForwardUsedMinor - i.broughtForwardLossUsedMinor, 0) },
       ...i.incomeTax.map((l) => ({ label: l.label, amountMinor: l.amountMinor })),
       { label: 'Income tax', amountMinor: i.incomeTaxMinor },
       { label: 'Universal social charge', amountMinor: i.uscMinor },
