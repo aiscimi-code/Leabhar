@@ -34,6 +34,16 @@ export interface ClassifyInput {
   vatDeclarationDate?: IsoDate | null;
   /** Required when the bank account is not in the company's base currency. */
   fxRate?: { numerator: number; denominator: number; source: string; date?: string };
+  /**
+   * Business/private apportionment (issue #306). When less than the whole
+   * payment is a business cost, `businessUseBasisPoints` of it is the expense
+   * and the rest is charged to `privateUseAccountId` — the director's current
+   * account, or drawings — because a private share is owed by the person, not
+   * a cost of the business. Purchases only; the whole amount is business when
+   * unset.
+   */
+  businessUseBasisPoints?: number;
+  privateUseAccountId?: string | null;
   notes?: string | null;
   source?: 'ai' | 'rule' | 'user' | 'import' | 'system' | 'derived';
   confidence?: number;
@@ -170,6 +180,40 @@ function classifyTransactionSteps(db: AppDatabase, input: ClassifyInput): Classi
   const direction = isMoneyOut ? 'purchases' : 'sales';
   const statementAmount = Math.abs(transaction.amountMinor);
 
+  // ---- Business/private apportionment (issue #306) ----
+  const businessBp = input.businessUseBasisPoints ?? 10_000;
+  if (!Number.isInteger(businessBp) || businessBp < 0 || businessBp > 10_000) {
+    throw new ClassificationError(
+      'The business-use share must be between 0% and 100%.',
+      { bankTransactionId: transaction.id, businessUseBasisPoints: input.businessUseBasisPoints },
+    );
+  }
+  const partlyPrivate = businessBp < 10_000;
+  if (partlyPrivate && !isMoneyOut) {
+    throw new ClassificationError(
+      'A business-use share applies to money paid out. A receipt has no private share to charge '
+      + 'back to anyone.',
+      { bankTransactionId: transaction.id },
+    );
+  }
+  if (partlyPrivate && !input.privateUseAccountId) {
+    throw new ClassificationError(
+      'This payment is only partly business, so say where the private share is charged — the '
+      + 'director\'s current account, or drawings. An apportionment without a destination is a '
+      + 'figure the books cannot explain.',
+      { bankTransactionId: transaction.id },
+    );
+  }
+  if (partlyPrivate) {
+    const privateAccount = db.select({ id: accounts.id }).from(accounts)
+      .where(and(
+        eq(accounts.id, input.privateUseAccountId!),
+        eq(accounts.companyId, input.companyId),
+      )).get();
+    if (!privateAccount) throw new ClassificationError(`Account ${input.privateUseAccountId} not found.`);
+  }
+
+
   // The invoice is the only proof of input VAT (issue #203). A payment with no
   // confirmed invoice behind it claims none: the whole amount is the cost, no
   // VAT entry is created, and the missing invoice is flagged. VAT is never
@@ -206,14 +250,34 @@ function classifyTransactionSteps(db: AppDatabase, input: ClassifyInput): Classi
 
   if (isMoneyOut) {
     // Expense (or asset) is debited at net; VAT recoverable is debited; bank credited.
-    lines.push({
-      accountId: input.accountId,
-      debitMinor: calculation.netMinor + (calculation.vatMinor - calculation.recoverableVatMinor),
-      currency: lineCurrency,
-      fxRate,
-      supplierId: input.supplierId ?? transaction.supplierId,
-      memo: narrative,
-    });
+    // A partly-private payment splits the cost: the business share is the
+    // expense, the private share is charged to the account the person owes it
+    // on (issue #306).
+    const costMinor = calculation.netMinor + (calculation.vatMinor - calculation.recoverableVatMinor);
+    const businessCostMinor = partlyPrivate
+      ? multiplyRational(costMinor, businessBp, 10_000)
+      : costMinor;
+    const privateCostMinor = costMinor - businessCostMinor;
+
+    if (businessCostMinor > 0) {
+      lines.push({
+        accountId: input.accountId,
+        debitMinor: businessCostMinor,
+        currency: lineCurrency,
+        fxRate,
+        supplierId: input.supplierId ?? transaction.supplierId,
+        memo: narrative,
+      });
+    }
+    if (privateCostMinor > 0) {
+      lines.push({
+        accountId: input.privateUseAccountId!,
+        debitMinor: privateCostMinor,
+        currency: lineCurrency,
+        fxRate,
+        memo: `Private share of "${narrative}"`,
+      });
+    }
 
     if (calculation.recoverableVatMinor > 0) {
       lines.push({
@@ -332,12 +396,32 @@ function classifyTransactionSteps(db: AppDatabase, input: ClassifyInput): Classi
       fxRateDenominator: resolvedFxRate?.denominator ?? null,
       fxRateSource: resolvedFxRate?.source ?? null,
       appliedRuleId: input.appliedRuleId ?? null,
+      businessUseBasisPoints: partlyPrivate ? businessBp : null,
+      privateUseAccountId: partlyPrivate ? input.privateUseAccountId ?? null : null,
       source: input.source ?? 'user',
       confidence: input.confidence ?? null,
       provenanceStatus: input.provenanceStatus ?? 'manually_entered',
       notes: input.notes ?? transaction.notes,
       updatedAt: nowIso(),
     }).where(eq(bankTransactions.id, transaction.id)).run();
+
+    if (partlyPrivate) {
+      // An apportionment is a judgement, not a fact the bank stated: it is
+      // flagged so the accountant sees the split rather than finding it later.
+      upsertReviewItem(tx, {
+        companyId: input.companyId,
+        kind: 'other',
+        severity: 'info',
+        title: `"${transaction.description}" is apportioned ${Math.round(businessBp / 100)}% business`,
+        detail: `The payment was ${(statementAmount / 100).toFixed(2)} ${currency}; `
+          + `${(multiplyRational(statementAmount, businessBp, 10_000) / 100).toFixed(2)} was posted `
+          + 'as the business cost and the rest charged to the private-use account. Check the '
+          + 'apportionment is defensible — the books now rest on it.',
+        entityType: 'bank_transaction',
+        entityId: transaction.id,
+        dedupeKey: `bank_transaction:${transaction.id}:private_use`,
+      });
+    }
 
     if (withoutInvoice) {
       upsertReviewItem(tx, {
@@ -795,6 +879,14 @@ function recordDirectorPaidExpenseSteps(
     vatTreatmentId: string;
     grossMinor: number;
     currency?: string;
+    /**
+     * Business share of the expense, in basis points (issue #306). When less
+     * than the whole receipt is a business cost, only the business share is
+     * posted and the company owes the director only that: the private share is
+     * the director's own cost, paid by the director, and is not the
+     * company's to record.
+     */
+    businessUseBasisPoints?: number;
     actor?: string;
   },
 ): { journalEntryId: string; vatEntryIds: string[] } {
@@ -802,6 +894,19 @@ function recordDirectorPaidExpenseSteps(
   const currency = (params.currency ?? company.baseCurrency).toUpperCase();
   const amount = asMinor(params.grossMinor);
   if (amount <= 0) throw new ClassificationError('A director-paid expense needs a positive amount.');
+
+  const businessBp = params.businessUseBasisPoints ?? 10_000;
+  if (!Number.isInteger(businessBp) || businessBp < 0 || businessBp > 10_000) {
+    throw new ClassificationError('The business-use share must be between 0% and 100%.');
+  }
+  const businessAmount = businessBp < 10_000
+    ? multiplyRational(amount, businessBp, 10_000)
+    : amount;
+  if (businessAmount === 0) {
+    throw new ClassificationError(
+      'None of this expense is business use, so there is nothing for the company to record. '
+      + 'The director paid a private cost personally.');
+  }
 
   const officer = db.select().from(companyOfficers)
     .where(and(
@@ -822,16 +927,17 @@ function recordDirectorPaidExpenseSteps(
   const journal = postJournalEntry(db, {
     companyId: params.companyId,
     entryDate: params.date,
-    narrative: `${params.description} (paid personally by ${officer.name})`,
+    narrative: `${params.description} (paid personally by ${officer.name}`
+      + (businessBp < 10_000 ? `, ${Math.round(businessBp / 100)}% business use` : '') + ')',
     sourceType: 'manual_adjustment',
     entryType: 'standard',
     baseCurrency: company.baseCurrency,
     createdBy: params.actor ?? 'user',
     createdVia: 'user',
     lines: [
-      { accountId: params.accountId, debitMinor: amount, currency, memo: params.description },
+      { accountId: params.accountId, debitMinor: businessAmount, currency, memo: params.description },
       {
-        accountId: directorsAccount, creditMinor: amount, currency, officerId: officer.id,
+        accountId: directorsAccount, creditMinor: businessAmount, currency, officerId: officer.id,
         memo: `Paid personally by ${officer.name}`,
       },
     ],
@@ -847,7 +953,8 @@ function recordDirectorPaidExpenseSteps(
         ? `Recorded under "${resolved.treatment.name}", but without the supplier's invoice there is no net `
           + 'to self-assess on, so no reverse-charge VAT has been accounted for. Upload and confirm the '
           + 'invoice, post it, and record it as paid by the director; then reverse this entry.'
-        : `Recorded with the full ${(amount / 100).toFixed(2)} as cost. Input VAT can only be reclaimed on `
+        : `Recorded with ${(businessAmount / 100).toFixed(2)} of the ${(amount / 100).toFixed(2)} `
+          + 'paid as cost. Input VAT can only be reclaimed on '
           + 'the supplier\'s invoice. Upload and confirm it, post it, and record it as paid by the director; '
           + 'then reverse this entry.',
       entityType: 'journal_entry',

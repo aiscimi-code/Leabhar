@@ -51,6 +51,9 @@ export const ACTIONS = [
   'documents.review',     // confirm or reject an extraction, match or link
   'documents.post',       // post a confirmed document as an invoice
   'invoices.manage',      // create, void or settle sales and purchase invoices
+  'expenses.submit',      // submit an expense claim for approval
+  'expenses.approve',     // approve, reject or reverse an expense claim
+  'expenses.reimburse',   // pay an approved claim out of the bank
   'journals.post',        // post manual journals and adjustments
   'vat.file',             // close, lock, amend or file a VAT period
   'config.manage',        // chart of accounts, rates, treatments, company settings
@@ -88,6 +91,9 @@ export const PERMISSIONS: Record<Action, readonly Role[]> = {
   'documents.review': ['owner', 'director', 'accountant', 'bookkeeper', 'farm_manager'],
   'documents.post': ['owner', 'director', 'accountant', 'bookkeeper', 'farm_manager'],
   'invoices.manage': ['owner', 'director', 'accountant', 'bookkeeper', 'farm_manager'],
+  'expenses.submit': ['owner', 'director', 'accountant', 'bookkeeper', 'employee', 'farm_manager'],
+  'expenses.approve': ['owner', 'director', 'accountant', 'bookkeeper'],
+  'expenses.reimburse': ['owner', 'director', 'accountant', 'bookkeeper'],
   'journals.post': ['owner', 'director', 'accountant', 'bookkeeper'],
   'vat.file': ['owner', 'director', 'accountant'],
   'config.manage': ['owner', 'director', 'accountant'],

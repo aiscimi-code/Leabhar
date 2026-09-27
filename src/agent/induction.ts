@@ -5,6 +5,7 @@ import {
   createCompany, addBankAccount, addLoan, ensureDefaultAccounts, ensureDefaultVatTreatments,
   installFarmChart, type CreatedCompany,
 } from '@/domain/config/setup';
+import { ensureDefaultExpenseRates } from '@/domain/expenses/rates';
 import { createAccount, upsertCustomer } from '@/domain/config/mutations';
 import { parseAmount } from '@/domain/money';
 import { createRule, type RuleCondition, type RuleAction } from '@/domain/rules/engine';
@@ -265,14 +266,20 @@ export function listCustomersCli(db: AppDatabase, input: ListPartiesInput) {
 /**
  * Add any default chart accounts introduced since a company was created
  * (issue #159) — 6180 Wages and salaries, 6190 Employer PRSI, 5030
- * Materials, 2210 Bank loans, 1020 Bank deposit/saver, for a company
- * induced before those existed. A new company gets them all from
- * `createCompany` already; this is only for one created earlier.
+ * Materials, 2210 Bank loans, 1020 Bank deposit/saver, 2445 Staff expenses
+ * payable — for a company induced before those existed. A new company gets
+ * them all from `createCompany` already; this is only for one created
+ * earlier. Default VAT rates and treatments, and the civil service expense
+ * rates (issue #306), come along for the same reason.
  */export function ensureDefaultAccountsCli(
   db: AppDatabase, input: EnsureDefaultAccountsInput,
-): { added: string[]; addedRates: string[]; addedTreatments: string[] } {
+): { added: string[]; addedRates: string[]; addedTreatments: string[]; addedExpenseRates: string[] } {
   const { added } = ensureDefaultAccounts(db, input.companyId, 'cli');
-  return { added, ...ensureDefaultVatTreatments(db, input.companyId, 'cli') };
+  return {
+    added,
+    ...ensureDefaultVatTreatments(db, input.companyId, 'cli'),
+    addedExpenseRates: ensureDefaultExpenseRates(db, input.companyId, 'cli').added,
+  };
 }
 
 /** Turn an existing book's chart into the farm chart (issue #360). */

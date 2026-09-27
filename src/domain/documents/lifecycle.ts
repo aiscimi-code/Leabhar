@@ -4,7 +4,7 @@ import { and, eq, ne, inArray } from 'drizzle-orm';
 import type { AppDatabase } from '@/db';
 import {
   documents, documentExtractions, documentLines, documentVatTotals, documentMatches,
-  invoices, fixedAssets, auditEvents,
+  invoices, fixedAssets, expenseClaimLines, auditEvents,
 } from '@/db/schema';
 import { ids } from '@/lib/ids';
 import { storageRoot } from './storage';
@@ -76,6 +76,10 @@ export function documentDependencies(
   for (const asset of db.select({ id: fixedAssets.id, name: fixedAssets.name }).from(fixedAssets)
     .where(and(eq(fixedAssets.documentId, documentId), eq(fixedAssets.companyId, companyId))).all()) {
     dependencies.push({ what: 'fixed_asset', detail: `It is the evidence for the fixed asset "${asset.name}".` });
+  }
+  if (db.select({ id: expenseClaimLines.id }).from(expenseClaimLines)
+    .where(and(eq(expenseClaimLines.documentId, documentId), eq(expenseClaimLines.companyId, companyId))).get()) {
+    dependencies.push({ what: 'expense_claim', detail: 'It is the receipt behind an expense claim line.' });
   }
   if (doc.matchedTransactionId) {
     dependencies.push({

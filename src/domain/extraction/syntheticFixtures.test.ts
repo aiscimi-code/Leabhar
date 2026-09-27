@@ -86,30 +86,29 @@ describe('synthetic invoice fixtures (issue #237)', () => {
     }
   });
 
-  it('reads the invoice total correctly on every template except the two known gaps below', async () => {
-    const knownGaps = new Set(['08_cn_groompro_credit.pdf', '11_pi_groompro_565.pdf', '16_pi_vetmed_scan.pdf', '17_pi_topoil_photocopy.pdf']);
+  it('reads the invoice total correctly on every template except the two unreadable scans', async () => {
+    const scanned = new Set(['16_pi_vetmed_scan.pdf', '17_pi_topoil_photocopy.pdf']);
     for (const row of rows) {
-      if (knownGaps.has(row.file)) continue;
+      if (scanned.has(row.file)) continue;
       const result = await extract(row.file);
       expect(result.fields.grossMinor.value, `${row.file} gross`).toBe(toMinor(row.gross));
     }
   });
 
-  it('known gap: a credit note with a "CREDIT (EUR)" total label (no "total"/"due" wording) is not recognised as the total', async () => {
-    // GROSS_LABELS in localProvider.ts has no bare pattern matching a plain
-    // "CREDIT (EUR)" totals-box label, so nothing here reaches the amount at all.
+  it('reads a credit note totalled under a "CREDIT (EUR)" label with no "total"/"due" wording (issue #276)', async () => {
+    // The totals box is the run of short label-amount rows, and a "credit"
+    // label there is the total — as printed, negative on this document.
     const result = await extract('08_cn_groompro_credit.pdf');
     expect(result.fields.documentType.value).toBe('credit_note');
-    expect(result.fields.grossMinor.value).toBeNull();
+    expect(result.fields.grossMinor.value).toBe(toMinor('-96.3'));
   });
 
-  it('known gap: a "balance due" phrase inside a free-text note outranks the real totals-box figure', async () => {
+  it('prefers the totals-box figure over a "balance due" phrase in a free-text note (issue #276)', async () => {
     // The invoice notes mention a running "balance due EUR 469.66" after a
-    // credit note was applied. GROSS_LABELS' strongest pattern matches "balance
-    // due" wherever it appears in the document, so this wins over the correct
-    // "TOTAL (EUR) 565.96" row in the totals box below it.
+    // credit note was applied. The totals box below it carries the real
+    // "TOTAL (EUR) 565.96" row, and a label matched there outranks the same
+    // words appearing in a note.
     const result = await extract('11_pi_groompro_565.pdf');
-    expect(result.fields.grossMinor.value).toBe(46_966);
-    expect(result.fields.grossMinor.value).not.toBe(toMinor('565.96'));
+    expect(result.fields.grossMinor.value).toBe(toMinor('565.96'));
   });
 });

@@ -16,6 +16,7 @@ import {
   documentMatches, statementImports, companyOfficers, documentExtractions,
   invoices, invoiceLines, payments, paymentAllocations, reminderLetters,
   irishActProvisions, irishKnowledgeSources, irishTaxRules,
+  expenseClaims, expenseClaimLines, expenseRates, users, companyMembers,
 } from '@/db/schema';
 import { trialBalance, balancesBySystemKey, accountBalance } from '@/domain/accounting/ledger';
 import { buildVat3Return, vatPositionSummary } from '@/domain/vat/report';
@@ -39,6 +40,7 @@ import { asIsoDate, today, makeDate, type IsoDate } from '@/domain/dates';
 import { transactionHistory } from '@/domain/consolidation/history';
 import { capitalGoodsOverview } from '@/domain/vat/capitalGoods';
 import { money } from '@/lib/format';
+import { expenseRatesActiveOn } from '@/domain/expenses/rates';
 
 /**
  * Read-side queries for the UI.
@@ -1018,5 +1020,73 @@ export function receivablesPage(asOf: IsoDate = today()) {
     summary: receivablesSummary(db, { companyId: company.id, asOf }),
     overdue: overdueInvoices(db, { companyId: company.id, asOf }),
     currency: company.baseCurrency,
+  };
+}
+
+/**
+ * The expenses page (issue #306): every claim with its lines and claimant,
+ * the officers and staff who can claim, and the rates in force today.
+ */
+export function expensesPage(onDate: IsoDate = today()) {
+  const db = getDb();
+  const company = requireCompany();
+
+  const claims = db.select().from(expenseClaims)
+    .where(eq(expenseClaims.companyId, company.id))
+    .orderBy(desc(expenseClaims.createdAt)).all();
+
+  const lines = claims.length > 0
+    ? db.select().from(expenseClaimLines)
+        .where(inArray(expenseClaimLines.claimId, claims.map((c) => c.id)))
+        .orderBy(expenseClaimLines.claimId, expenseClaimLines.lineNumber).all()
+    : [];
+
+  const officerRows = db.select().from(companyOfficers)
+    .where(eq(companyOfficers.companyId, company.id))
+    .orderBy(companyOfficers.role, companyOfficers.name).all();
+
+  // Staff claimants: users with a membership of this book, who are owed on the
+  // staff expenses payable account rather than an officer's current account.
+  const staff = db.select({ id: users.id, displayName: users.displayName, username: users.username })
+    .from(users)
+    .innerJoin(companyMembers, eq(companyMembers.userId, users.id))
+    .where(and(eq(companyMembers.companyId, company.id), eq(users.active, true)))
+    .orderBy(users.displayName).all();
+
+  const rates = expenseRatesActiveOn(db, company.id, onDate);
+
+  // Candidate bank lines for reimbursing a claim: money out, not yet posted,
+  // not undone by a statement rollback.
+  const bankLines = db.select({
+    id: bankTransactions.id,
+    transactionDate: bankTransactions.transactionDate,
+    description: bankTransactions.description,
+    amountMinor: bankTransactions.amountMinor,
+    currency: bankTransactions.currency,
+    bankName: bankAccounts.bankName,
+    accountName: bankAccounts.accountName,
+  }).from(bankTransactions)
+    .innerJoin(bankAccounts, eq(bankTransactions.bankAccountId, bankAccounts.id))
+    .where(and(
+      eq(bankTransactions.companyId, company.id),
+      isNull(bankTransactions.journalEntryId),
+      ne(bankTransactions.status, 'rolled_back'),
+      sql`${bankTransactions.amountMinor} < 0`,
+    ))
+    .orderBy(desc(bankTransactions.transactionDate)).limit(200).all();
+
+  return {
+    currency: company.baseCurrency,
+    claims: claims.map((claim) => ({
+      ...claim,
+      claimantName: claim.officerId
+        ? officerRows.find((o) => o.id === claim.officerId)?.name ?? 'Officer'
+        : staff.find((u) => u.id === claim.userId)?.displayName ?? 'Claimant',
+      lines: lines.filter((line) => line.claimId === claim.id),
+    })),
+    officers: officerRows,
+    staff,
+    rates,
+    bankLines,
   };
 }
