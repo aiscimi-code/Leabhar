@@ -12,7 +12,7 @@ import { trialBalance, accountBalance } from '../accounting/ledger';
 import { makeDate, asIsoDate } from '../dates';
 import {
   invoices, invoiceLines, payments, paymentAllocations, bankTransactions, suppliers, customers,
-  reviewItems, vatEntries, vatPeriods,
+  reviewItems, vatEntries, vatPeriods, journalEntries,
 } from '@/db/schema';
 import { ids } from '@/lib/ids';
 import type { AppDatabase } from '@/db';
@@ -249,6 +249,11 @@ describe('allocatePaymentOnAccount (#386)', () => {
     expect(entries).toHaveLength(1);
     expect(entries[0]!.taxPointDate).toBe('2025-03-20');
     expect(entries[0]!.vatPeriodId).toBe(novDec.id);
+    // The release journal lands in the period that declares it, so the VAT
+    // control account agrees with that return; the filed period is untouched.
+    const releaseJournal = db.select().from(journalEntries)
+      .where(eq(journalEntries.id, entries[0]!.journalEntryId!)).get()!;
+    expect(releaseJournal.entryDate).toBe('2025-11-20');
     const late = db.select().from(reviewItems).where(and(
       eq(reviewItems.kind, 'period_validation'), eq(reviewItems.status, 'open'),
     )).all();

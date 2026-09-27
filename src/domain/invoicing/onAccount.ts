@@ -7,7 +7,7 @@ import { ids } from '@/lib/ids';
 import { asIsoDate, isIsoDate, nowIso } from '../dates';
 import { InvoicingError } from './invoices';
 import { resolveReviewItems } from '../matching/service';
-import { postJournalEntry } from '../accounting/journal';
+import { postJournalEntry, assertAccountingPeriodOpen } from '../accounting/journal';
 import { systemAccountId } from '../config/setup';
 import { createVatEntries, assertVatPeriodWritable } from '../vat/engine';
 import { computeVatReleases } from './payments';
@@ -207,6 +207,11 @@ export function allocatePaymentOnAccount(
     }
     assertVatPeriodWritable(db, params.companyId, asIsoDate(declarationDate ?? payment.paymentDate),
       'The output VAT this receipt released when it arrived');
+    // The release journal is dated where the VAT is declared: at the receipt,
+    // or — a late declaration — in the named period, so the VAT control account
+    // agrees with the return that declares it and a closed receipt year is not
+    // written into. Checked before anything is written.
+    assertAccountingPeriodOpen(db, params.companyId, declarationDate ?? payment.paymentDate);
   }
 
   if (params.amountMinor > invoice.outstandingMinor) {
@@ -234,9 +239,11 @@ export function allocatePaymentOnAccount(
     const txDb = tx as unknown as AppDatabase;
 
     // ---- The VAT the application makes due (cash receipts basis) ----
-    // A release journal of its own, dated at the original receipt: the
-    // payment's own journal is posted and immutable. Its VAT entries carry
-    // the payment as their source, so reversing the payment reverses them.
+    // A release journal of its own (the payment's journal is posted and
+    // immutable), dated at the original receipt — or, for a late declaration,
+    // in the period that declares it, so the control account agrees with that
+    // return. The VAT entries keep the receipt as their tax point either way,
+    // and carry the payment as their source, so reversing the payment reverses them.
     if (releasesSomething) {
       const vatOnSalesDeferred = systemAccountId(txDb, params.companyId, 'vat_on_sales_deferred');
       const vatOnSales = systemAccountId(txDb, params.companyId, 'vat_on_sales');
@@ -244,7 +251,7 @@ export function allocatePaymentOnAccount(
       if (releasedMinor !== 0) {
         const releaseJournal = postJournalEntry(txDb, {
           companyId: params.companyId,
-          entryDate: asIsoDate(payment.paymentDate),
+          entryDate: asIsoDate(declarationDate ?? payment.paymentDate),
           narrative: `Output VAT due on money applied from the receipt of ${payment.paymentDate} `
             + `(${invoice.invoiceNumber ?? invoice.id})`,
           sourceType: 'payment',
