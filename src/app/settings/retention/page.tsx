@@ -4,7 +4,7 @@ import {
   Page, Panel, Badge, Field, Input, Disclosure, Empty,
 } from '@/components/primitives';
 import { ActionForm } from '@/components/ActionForm';
-import { setRetentionPolicyAction, disposeDocumentAction } from '@/app/actions';
+import { setRetentionPolicyAction, disposeDocumentAction, applyDefaultRetentionPoliciesAction } from '@/app/actions';
 import { date, label } from '@/lib/format';
 import { today } from '@/domain/dates';
 import { ALL_DOCUMENT_TYPES } from '@/domain/documents/types';
@@ -32,17 +32,23 @@ export default function RetentionPage() {
       <Panel
         title="Policies"
         description="A policy is in force from its effective date until the policy that supersedes
-          it takes over, so a document always resolves the policy of its own day. The clock
-          runs from the document's own date, or from when it was filed if it states none.
-          No periods are built in: how long to keep each kind of record is this book's own
-          decision (verify against Companies Act 2014 s.881, TCA97 s.886 and Revenue practice
-          for your entity type)."
+          it takes over, so a document always resolves the policy of its own day. The clock runs
+          from the end of the financial year containing the document's own date (or the date it
+          was filed, if it states none). New books start with default policies: 6 years for every
+          type (VATCA 2010 s.84(3); TCA 1997 s.886), and never dispose for company documents and
+          contracts. Each can be superseded here, never silently."
       >
         {policies.length === 0 ? (
-          <Empty
-            title="No retention policy set"
-            detail="Without a policy no document is ever listed as past retention."
-          />
+          <div>
+            <Empty
+              title="No retention policy set"
+              detail="Without a policy no document is ever listed as past retention. This book was created
+                before the default policies were seeded; apply them, then change any that do not fit."
+            />
+            <div className="px-4 pb-3">
+              <ActionForm action={applyDefaultRetentionPoliciesAction} submit="Apply the default policies" />
+            </div>
+          </div>
         ) : (
           <table className="ledger">
             <thead>

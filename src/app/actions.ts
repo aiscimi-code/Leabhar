@@ -47,7 +47,9 @@ import { scanWatchFolder } from '@/domain/documents/watch';
 import {
   archiveDocument, restoreDocument, deleteDocument,
 } from '@/domain/documents/lifecycle';
-import { setRetentionPolicy, retentionEndsOn, RETENTION_EXTENSION_CONDITIONS } from '@/domain/documents/retention';
+import {
+  setRetentionPolicy, retentionEndsOn, seedDefaultRetentionPolicies, RETENTION_EXTENSION_CONDITIONS,
+} from '@/domain/documents/retention';
 import { importStatement, recordManualTransaction, rollbackStatementImport } from '@/domain/banking/import';
 import { detectStatementFormat } from '@/domain/banking/structuredStatements';
 import { seedDemoCompany } from '@/db/seed/demo';
@@ -502,6 +504,26 @@ export async function deleteDocumentAction(formData: FormData): Promise<ActionRe
         ? 'Deleted, and the stored file removed with it.'
         : 'Deleted. The stored file is kept: another document has the same bytes.',
     };
+  } catch (error) {
+    return fail(error);
+  }
+}
+
+/**
+ * Apply the default retention policies to a book created before they were
+ * seeded (issue #432). Refused once the book has any policy of its own: the
+ * defaults are a starting point, never a change to a decision already made.
+ */
+export async function applyDefaultRetentionPoliciesAction(): Promise<ActionResult> {
+  try {
+    await requireActor('config.manage');
+    const company = requireCompany();
+    seedDefaultRetentionPolicies(getDb(), company.id, {
+      effectiveFrom: asIsoDate(company.tradeCommencedOn ?? company.dateIncorporated ?? '1900-01-01'),
+      actor: await actorName(),
+    });
+    revalidatePath('/settings/retention');
+    return { ok: true, message: 'Default policies applied: 6 years for every type, never dispose for company documents and contracts.' };
   } catch (error) {
     return fail(error);
   }

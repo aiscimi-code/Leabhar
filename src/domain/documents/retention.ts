@@ -287,7 +287,15 @@ export const RETENTION_NEVER_DISPOSE_TYPES: DocumentType[] = ['company_document'
  * person can supersede, like any other — never overwritten, never silent.
  */
 export function seedDefaultRetentionPolicies(
-  db: AppDatabase, companyId: string, params: { effectiveFrom: IsoDate },
+  db: AppDatabase, companyId: string, params: {
+    effectiveFrom: IsoDate;
+    /**
+     * Who applied the defaults, when a person does so for an existing book
+     * (issue #432). Each policy is then audited in their name; a new book's
+     * seed, like its chart, is part of creating it.
+     */
+    actor?: string;
+  },
 ): void {
   // A book that already has a policy of its own is never re-seeded: the
   // defaults are a starting point, not something that overwrites a decision.
@@ -321,7 +329,21 @@ export function seedDefaultRetentionPolicies(
       createdBy: 'system', createdAt: timestamp, updatedAt: timestamp,
     })),
   ];
-  for (const row of rows) db.insert(documentRetentionPolicies).values(row).run();
+  for (const row of rows) {
+    db.insert(documentRetentionPolicies).values(params.actor ? { ...row, createdBy: params.actor } : row).run();
+    if (params.actor) {
+      db.insert(auditEvents).values({
+        id: ids.audit(), companyId, occurredAt: timestamp,
+        entityType: 'document_retention_policy', entityId: row.id!, action: 'created',
+        newValue: JSON.stringify({
+          appliesTo: row.appliesTo, retainYears: row.retainYears, neverDispose: row.neverDispose,
+          effectiveFrom: row.effectiveFrom, seededDefault: true,
+        }),
+        source: 'user', actor: params.actor,
+        reason: 'The default retention policies applied to an existing book (issue #432).',
+      }).run();
+    }
+  }
 }
 
 function scopeLabel(scope: RetentionScope): string {

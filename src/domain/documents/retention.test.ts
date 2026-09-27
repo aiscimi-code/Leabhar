@@ -232,4 +232,20 @@ describe('seeded defaults (#432)', () => {
     expect(() => seedDefaultRetentionPolicies(db, companyId, { effectiveFrom: asIsoDate('1900-01-01') }))
       .toThrow(DocumentRetentionError);
   });
+
+  it('applies the defaults to an existing book with none, in the person\'s name and audited', () => {
+    // A book created before the defaults were seeded has no policy at all.
+    clearSeededPolicies();
+    seedDefaultRetentionPolicies(db, companyId, { effectiveFrom: asIsoDate('2020-01-01'), actor: 'Mary' });
+
+    const rows = db.select().from(documentRetentionPolicies)
+      .where(eq(documentRetentionPolicies.companyId, companyId)).all();
+    expect(rows).toHaveLength(3);
+    expect(rows.every((r) => r.createdBy === 'Mary')).toBe(true);
+    const audited = db.select().from(auditEvents).where(and(
+      eq(auditEvents.companyId, companyId), eq(auditEvents.entityType, 'document_retention_policy'),
+      eq(auditEvents.actor, 'Mary'),
+    )).all();
+    expect(audited.map((e) => e.entityId).sort()).toEqual(rows.map((r) => r.id).sort());
+  });
 });
