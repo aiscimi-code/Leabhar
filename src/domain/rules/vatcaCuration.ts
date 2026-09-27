@@ -65,6 +65,13 @@ export interface CuratedVatcaRule {
   interpretationNote: string;
 }
 
+export const CONTRACT_WORK_RULE_KEY = 'vat.rate_contract_work_follows_goods';
+
+/** The s.49 rule never decides a rate: the goods handed over decide it. Surfaced by `advisoryReasons`. */
+export const CONTRACT_WORK_ADVISORY_REASON = 'Contract work is charged at the rate the goods handed over would '
+  + 'carry (VATCA s.49): zero-rated goods make it zero-rated, reduced-rate goods 13.5%, others the standard rate. '
+  + 'Which goods those are is not on the line — pick their schedule rule with your adviser.';
+
 export const VATCA_CURATED_RULES: CuratedVatcaRule[] = [
   {
     sectionNumber: '3',
@@ -165,5 +172,75 @@ export const VATCA_CURATED_RULES: CuratedVatcaRule[] = [
       + 'transport, electronically-supplied services to non-taxable persons, and others) — those '
       + 'require reading the transaction description against each paragraph, which is exactly the '
       + 'kind of judgement this system flags for human review rather than silently assumes.',
+  },
+  {
+    sectionNumber: '48',
+    ruleKey: 'vat.rate_works_of_art_imported',
+    ruleType: 'rate',
+    topic: 'vat',
+    name: 'Works of art, collectors\' items and antiques: charged at the reduced rate (s.48(1), Schedule 5)',
+    statementExcerpt: 'tax shall be charged at the\n'
+      + 'rate specified in section 46(1)(c) of the amount on which tax is\n'
+      + 'chargeable in relation to',
+    conditions: [
+      {
+        field: 'description', operator: 'matches',
+        value: '\\b(work of art|works of art|painting|watercolou?r|sculpture|statue|tapestry|ceramic|enamel|'
+          + "antiques?|collectors?['\\u2019]? items?|first[- ]day covers?|stamp collections?|philatelic|numismatic)\\b",
+      },
+    ],
+    exceptions: [
+      {
+        condition: 'a supply by a taxable dealer (Sch.5 para 1 goods bought and sold in the course of dealing), or a '
+          + 'supply under the margin scheme (s.87)',
+        effect: 'the margin scheme governs instead; no VAT is shown (vat.margin_scheme_goods_purchase)',
+      },
+      {
+        condition: 'the item is not of a kind specified in Schedule 5 (a print that is a mass-produced reproduction, '
+          + 'jewellery, an article under 100 years old claimed as an antique)',
+        effect: 'not within Schedule 5; the standard rate applies',
+      },
+    ],
+    vatEffect: 'The importation, and a supply by the creator or (occasionally) by the importer, of goods specified in '
+      + 'Schedule 5 — works of art, collectors\' items and antiques — is charged at the reduced rate (s.48(1)), '
+      + 'not the standard rate.',
+    accountingEffect: null,
+    reportingEffect: 'Output VAT at the reduced rate lands in the same T1/T2 boxes as any other taxable supply.',
+    requiresGuidance: true,
+    interpretationNote: 'PROXY: art/collectible wording stands in for a Schedule 5 category. Which category the item '
+      + 'falls into (and whether the seller is its creator or importer, s.48(1)(b)–(c)) is not on the line: a '
+      + 'Schedule 3 paragraph 23/24/25 item meets its own rule first (same reduced rate), and the two agree.',
+  },
+  {
+    sectionNumber: '49',
+    ruleKey: CONTRACT_WORK_RULE_KEY,
+    ruleType: 'rate',
+    topic: 'vat',
+    name: 'Contract work: charged at the rate of the goods handed over (s.49(1))',
+    statementExcerpt: 'the rate at which tax is chargeable on a supply of contract work\n'
+      + 'shall be the rate that would be chargeable if that supply of services\n'
+      + 'were a supply of the goods being handed over by the contractor to',
+    conditions: [
+      {
+        field: 'description', operator: 'matches',
+        value: '\\bcontract work\\b|\\b(made|manufactured|built) to (order|specification)\\b',
+      },
+    ],
+    exceptions: [
+      {
+        condition: 'the supply is in the circumstances specified in paragraph (xvi) of the Second Schedule '
+          + '(s.49(2)); immovable goods and construction services are not contract work',
+        effect: 's.49(1) does not apply; the ordinary rate rules govern',
+      },
+    ],
+    vatEffect: 'A supply of contract work is charged at the rate the goods handed over would carry: a joiner making '
+      + 'and fitting zero-rated Sch.2 para 8 goods charges 0%; goods at the reduced rate carry 13.5%; others the '
+      + 'standard rate. The rule flags the line; the goods\' own schedule rule decides the rate.',
+    accountingEffect: null,
+    reportingEffect: null,
+    requiresGuidance: true,
+    interpretationNote: 'PROXY: "contract work" wording stands in for s.49. Which goods are handed over, and so '
+      + 'which rate applies, is not on the line: the person picks the goods\' schedule rule; nothing is decided '
+      + 'automatically (see also the two-thirds rule, s.41).',
   },
 ];
