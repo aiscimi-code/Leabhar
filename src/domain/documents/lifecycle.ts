@@ -73,8 +73,13 @@ export function documentDependencies(
     if (invoice.id === doc.invoiceId) continue;
     dependencies.push({ what: 'invoice', detail: `It is the evidence for invoice ${invoice.number ?? invoice.id}.` });
   }
-  for (const asset of db.select({ id: fixedAssets.id, name: fixedAssets.name }).from(fixedAssets)
+  // An asset still on the register keeps its evidence; one disposed of or
+  // written off has left it (issue #432: never dispose while the asset is
+  // held, VATCA s.84(4)).
+  for (const asset of db.select({ id: fixedAssets.id, name: fixedAssets.name, status: fixedAssets.status })
+    .from(fixedAssets)
     .where(and(eq(fixedAssets.documentId, documentId), eq(fixedAssets.companyId, companyId))).all()) {
+    if (asset.status === 'disposed' || asset.status === 'written_off') continue;
     dependencies.push({ what: 'fixed_asset', detail: `It is the evidence for the fixed asset "${asset.name}".` });
   }
   if (db.select({ id: expenseClaimLines.id }).from(expenseClaimLines)
@@ -187,7 +192,14 @@ export function deleteDocument(
   // statutory minimum is six years, TCA 1997 s.886 and VATCA 2010 s.84).
   // Deleting is refused until it has run out; archiving stays available.
   const retention = retentionEndsOn(db, input.companyId, doc);
-  if (retention && retention.eligibleFrom > today()) {
+  if (retention?.neverDispose) {
+    throw new DocumentLifecycleError(
+      `${doc.originalFilename} is kept for the life it belongs to under a never-dispose policy: `
+        + 'company constitutional documents and contracts for property or capital goods are never deleted '
+        + '(issue #432). Reclassify the document, or supersede the policy, if that is wrong.',
+    );
+  }
+  if (retention?.eligibleFrom && retention.eligibleFrom > today()) {
     throw new DocumentLifecycleError(
       `${doc.originalFilename} is kept under a ${retention.retainYears}-year retention policy until `
       + `${retention.eligibleFrom}. It stays archived until then; it cannot be deleted before.`,

@@ -302,8 +302,14 @@ export const documentRetentionPolicies = sqliteTable('document_retention_policie
    * one, and falls back to `'all'`.
    */
   appliesTo: text('applies_to').notNull(),
-  /** Whole years a document is kept, from its own date. */
+  /** Whole years a document is kept, from the end of the financial year containing its own date. */
   retainYears: integer('retain_years').notNull(),
+  /**
+   * Never dispose (issue #432): the types whose documents are kept for the
+   * life they belong to — company constitutional documents, contracts for
+   * property or capital goods — so no expiry is ever computed for them.
+   */
+  neverDispose: integer('never_dispose', { mode: 'boolean' }).notNull().default(false),
 
   /** In force from this date (inclusive). */
   effectiveFrom: text('effective_from').notNull(),
