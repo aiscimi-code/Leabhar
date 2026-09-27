@@ -113,4 +113,8 @@ export const ids = {
   rctContract: () => newId('rcon'),
   rctPayment: () => newId('rpay'),
   rctReturn: () => newId('rret'),
+  job: () => newId('job'),
+  projectAllocation: () => newId('palloc'),
+  projectBudget: () => newId('pbud'),
+  projectOverheadRate: () => newId('pohr'),
 };

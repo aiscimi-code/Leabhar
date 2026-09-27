@@ -441,6 +441,17 @@ npm run cli -- rct-pay-return --period 2026-03 --bank-transaction <id> --by owne
 npm run cli -- reconcile-rct --as-of 2026-04-30
 ```
 
+Projects and job costing:
+
+```bash
+npm run cli -- add-job --project P1 --code K --name Kitchen --by owner
+npm run cli -- allocate-to-project --line <journal line id> --project P1 --job <id> --category labour --percent 100 --by owner
+npm run cli -- project-budget --project P1 --category income --amount 70000 --from 2026-01-01 --by owner
+npm run cli -- overhead-rate --project P1 --percent 12.5 --from 2026-01-01 --basis "2025 overheads over direct costs" --by owner
+npm run cli -- project-profitability --from 2026-01-01 --to 2026-12-31
+npm run cli -- wip --as-of 2026-12-31
+```
+
 ### Agent workflow
 
 `db:seed` only ever loads the Acme demo. To load a real (or synthetic) SME

@@ -1,8 +1,9 @@
-import { and, eq, gte, inArray, lte } from 'drizzle-orm';
+import { and, eq, gte, lte } from 'drizzle-orm';
 import type { AppDatabase } from '@/db';
 import {
   accounts, auditEvents, cropPlantings, farmAllocations, journalEntries, journalLines, livestockValuations, CROP_INPUT_KINDS,
 } from '@/db/schema';
+import { postedPnlLines, type PostedPnlLine } from '../accounting/postedPnl';
 import { ids } from '@/lib/ids';
 import { nowIso } from '../dates';
 import { multiplyRational } from '../money';
@@ -107,60 +108,22 @@ export interface AllocatedAmount {
   amountMinor: number;
 }
 
-interface PnlLine {
-  id: string; journalEntryId: string; lineNumber: number; accountId: string; entryDate: string; reversalOfId: string | null;
-  sourceType: string; accountType: 'income' | 'expense'; accountSubtype: string | null; amountMinor: number;
-}
-
-/** Posted income and expense lines, optionally in a date range, signed so income earned and cost incurred are positive. */
-function pnlLines(db: AppDatabase, companyId: string, range?: { from: string; to: string }): PnlLine[] {
-  const where = [eq(journalLines.companyId, companyId), eq(journalEntries.isPosted, true), inArray(accounts.type, ['income', 'expense'])];
-  if (range) where.push(gte(journalEntries.entryDate, range.from), lte(journalEntries.entryDate, range.to));
-  return db.select({
-    id: journalLines.id, journalEntryId: journalLines.journalEntryId, lineNumber: journalLines.lineNumber, accountId: journalLines.accountId,
-    entryDate: journalEntries.entryDate, reversalOfId: journalEntries.reversalOfId, sourceType: journalEntries.sourceType,
-    accountType: accounts.type, accountSubtype: accounts.subtype, debit: journalLines.baseDebitMinor, credit: journalLines.baseCreditMinor,
-  }).from(journalLines)
-    .innerJoin(journalEntries, eq(journalLines.journalEntryId, journalEntries.id))
-    .innerJoin(accounts, eq(journalLines.accountId, accounts.id))
-    .where(and(...where)).all()
-    .map((l) => ({
-      ...l, accountType: l.accountType as 'income' | 'expense',
-      amountMinor: l.accountType === 'income' ? l.credit - l.debit : l.debit - l.credit,
-    }));
-}
-
 /**
  * Every allocated amount, in a date range or all time. A reversing entry's
- * line takes the allocations of the line it reverses (same line number and
- * account), so the pair nets to nothing in the analysis as in the ledger.
+ * line takes the allocations of the line it reverses (`postedPnlLines`), so
+ * the pair nets to nothing in the analysis as in the ledger.
  */
 export function allocatedAmounts(db: AppDatabase, companyId: string, range?: { from: string; to: string }): {
-  amounts: AllocatedAmount[]; lines: PnlLine[];
+  amounts: AllocatedAmount[]; lines: PostedPnlLine[];
 } {
-  const lines = pnlLines(db, companyId, range);
+  const lines = postedPnlLines(db, companyId, range);
   const all = db.select().from(farmAllocations).where(eq(farmAllocations.companyId, companyId)).all();
   const byLine = new Map<string, FarmAllocation[]>();
   for (const a of all) byLine.set(a.journalLineId, [...(byLine.get(a.journalLineId) ?? []), a]);
-  // For reversals: the original entry's lines, by line number.
-  const originals = new Map<string, Map<number, { id: string; accountId: string }>>();
-  const reversedIds = [...new Set(lines.filter((l) => l.reversalOfId).map((l) => l.reversalOfId!))];
-  if (reversedIds.length) {
-    for (const o of db.select().from(journalLines).where(inArray(journalLines.journalEntryId, reversedIds)).all()) {
-      const m = originals.get(o.journalEntryId) ?? new Map();
-      m.set(o.lineNumber, { id: o.id, accountId: o.accountId });
-      originals.set(o.journalEntryId, m);
-    }
-  }
   const amounts: AllocatedAmount[] = [];
   for (const l of lines) {
-    let source = l.id;
-    if (l.reversalOfId) {
-      const o = originals.get(l.reversalOfId)?.get(l.lineNumber);
-      if (!o || o.accountId !== l.accountId) continue;
-      source = o.id;
-    }
-    for (const a of byLine.get(source) ?? []) {
+    if (!l.allocationLineId) continue;
+    for (const a of byLine.get(l.allocationLineId) ?? []) {
       amounts.push({
         allocationId: a.id, journalLineId: l.id, entryDate: l.entryDate, enterpriseId: a.enterpriseId, plantingId: a.plantingId,
         inputKind: a.inputKind, accountType: l.accountType, accountSubtype: l.accountSubtype, basisPoints: a.basisPoints,

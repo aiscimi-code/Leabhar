@@ -973,6 +973,42 @@ The RCT TDMs are now stored as exact slices of their committed files, with
 real offsets, and a file that is not the TDM is refused on the TDM path
 (#199).
 
+### Projects and job costing (EPIC 27, issues #550, #551)
+
+Analysis beside the ledger, on the pattern of ADR 0016. Nothing here posts.
+Farm enterprises and projects share `postedPnlLines`
+(`src/domain/accounting/postedPnl.ts`), so a reversing entry takes the
+allocation of the line it reverses in both.
+
+- **Jobs** belong to a project (the projects table is EPIC 26's).
+- **Allocations.** A posted income or expense line is allocated to a
+  project, and optionally a job, in basis points, by category:
+  - `income` (income lines only);
+  - `labour`, `materials`, `contractors`, `other_direct` or `overheads`
+    (expense lines only).
+
+  A line's allocations never exceed 100%, and removing one is audited.
+- **Budgets** are per project and category, effective-dated. A revision is a
+  new row. `budgetOn` gives the latest row on or before a date.
+- **Overhead absorption:** the person's rate per project, as a percentage of
+  direct costs, effective-dated, with the basis they give.
+  - Each direct cost absorbs at the rate in force on its own date.
+  - Where a rate is set, the margin deducts the absorbed overheads instead
+    of the overheads allocated. Both are shown.
+- **`projectResult` / `projectProfitability`:**
+  - income, direct costs, gross margin, overheads charged, net margin and
+    margin %, per project and job, against the budget;
+  - projects ranked by net margin;
+  - the income and costs no project carries, reported rather than spread.
+- **`workInProgress`:** for each active project, direct costs to date less the
+  cost its billings cover at the budgeted cost ratio (budget direct costs ÷
+  budget income).
+  - A project without an income budget is flagged, not valued.
+  - Billing ahead of cost is reported as billings on account, not negative
+    WIP.
+  - Posting WIP and recognising revenue on contracts (FRS 102 s.23) is open
+    question #552.
+
 ### Consolidation (bank ↔ invoice)
 
 ```

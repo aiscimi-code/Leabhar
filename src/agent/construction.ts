@@ -5,8 +5,12 @@ import { parsePercent } from '@/domain/farm';
 import {
   createProject, createSite, listProjects, listSites, registerSubcontractor, recordRctContract, recordContractNotification,
   notifyRctPayment, recordDeductionAuthorisation, payRctPayment, rctPeriod, fileRctReturn, payRctReturn, reconcileRct,
-  listSubcontractors, listRctContracts, listRctPayments,
+  listSubcontractors, listRctContracts, listRctPayments, requireProject,
 } from '@/domain/construction';
+import {
+  createJob, allocateToProject, setProjectBudget, setOverheadRate, projectResult, projectProfitability, workInProgress,
+  type ProjectCategory,
+} from '@/domain/projects';
 
 /** Construction and RCT commands (EPIC 26, issues #548, #549): the same domain functions the construction screen calls. */
 
@@ -26,12 +30,23 @@ Construction and RCT (EPIC 26, issues #548, #549). Revenue's figures (rate, tax,
   rct-return --period <YYYY-MM> --summary <euro> [--amended] --date <date> --by <name>
   rct-pay-return --period <YYYY-MM> (--bank-transaction <id> | --date <date> [--bank-account <id>]) --by <name>
   reconcile-rct --as-of <date>
+
+Project and job costing (EPIC 27, issues #550, #551). --project takes an id or a code:
+  add-job --project <id> --code <code> --name <text> --by <name>
+  allocate-to-project --line <journal line id> --project <id> [--job <id>] --category income|labour|materials|contractors|other_direct|overheads
+           --percent <n> --by <name>
+  project-budget --project <id> --category <category> --amount <euro> --from <date> [--note <text>] --by <name>
+  overhead-rate --project <id> --percent <n> --from <date> --basis <text> --by <name>
+  project-result --project <id> --to <date> [--from <date>]
+  project-profitability --from <date> --to <date>
+  wip --as-of <date>
 `;
 
 export const CONSTRUCTION_COMMANDS = [
   'add-project', 'add-site', 'list-projects', 'list-sites', 'list-subcontractors', 'list-rct-contracts', 'list-rct-payments',
   'add-subcontractor', 'add-rct-contract', 'rct-contract-notified', 'rct-notify-payment', 'rct-deduction-authorisation', 'rct-pay',
   'rct-period', 'rct-return', 'rct-pay-return', 'reconcile-rct',
+  'add-job', 'allocate-to-project', 'project-budget', 'overhead-rate', 'project-result', 'project-profitability', 'wip',
 ] as const;
 
 type Flags = Record<string, string | boolean>;
@@ -91,6 +106,29 @@ export function runConstructionCommand(db: AppDatabase, companyId: string, comma
       });
     case 'reconcile-rct':
       return reconcileRct(db, { companyId, asOf: need(flags, 'as-of') });
+    case 'add-job':
+      return createJob(db, { companyId, projectId: requireProject(db, companyId, need(flags, 'project')).id, code: need(flags, 'code'), name: need(flags, 'name'), recordedBy: need(flags, 'by') });
+    case 'allocate-to-project':
+      return allocateToProject(db, {
+        companyId, journalLineId: need(flags, 'line'), projectId: requireProject(db, companyId, need(flags, 'project')).id, jobId: getFlag(flags, 'job') ?? null,
+        category: need(flags, 'category') as ProjectCategory, basisPoints: parsePercent(need(flags, 'percent')), recordedBy: need(flags, 'by'),
+      });
+    case 'project-budget':
+      return setProjectBudget(db, {
+        companyId, projectId: requireProject(db, companyId, need(flags, 'project')).id, category: need(flags, 'category') as ProjectCategory,
+        amountMinor: eur('amount'), effectiveFrom: need(flags, 'from'), note: getFlag(flags, 'note') ?? null, recordedBy: need(flags, 'by'),
+      });
+    case 'overhead-rate':
+      return setOverheadRate(db, {
+        companyId, projectId: requireProject(db, companyId, need(flags, 'project')).id, rateBasisPoints: parsePercent(need(flags, 'percent')),
+        effectiveFrom: need(flags, 'from'), basis: need(flags, 'basis'), recordedBy: need(flags, 'by'),
+      });
+    case 'project-result':
+      return projectResult(db, { companyId, projectId: requireProject(db, companyId, need(flags, 'project')).id, to: need(flags, 'to'), from: getFlag(flags, 'from') });
+    case 'project-profitability':
+      return projectProfitability(db, { companyId, from: need(flags, 'from'), to: need(flags, 'to') });
+    case 'wip':
+      return workInProgress(db, { companyId, asOf: need(flags, 'as-of') });
     default:
       throw new Error(`Unknown construction command: ${command}`);
   }
