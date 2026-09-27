@@ -90,7 +90,7 @@ import { resolveVatPeriodId } from '@/agent/books';
 import { reconcileVatReturn } from '@/domain/vat/reconcile';
 import { buildRtdReturn } from '@/domain/vat/rtd';
 import { buildViesStatement } from '@/domain/vat/vies';
-import { computeCorporationTax, recordCtDecision, type CtSubjectType } from '@/domain/corporationTax/computation';
+import { computeCorporationTax, recordCtDecision, CT_SUBJECT_TYPES, isCtSubjectType } from '@/domain/corporationTax/computation';
 import { buildCt1Worksheet } from '@/domain/corporationTax/ct1';
 import { computeIncomeTax } from '@/domain/incomeTax/computation';
 import { addPartner, setPartnerShare, partnerSharesOn } from '@/domain/config/partners';
@@ -496,9 +496,13 @@ Inspect:
                                          Partner allocation statement for a period,
                                           with the Form 1 (Firms) figures for the
                                           year it ends in (issue #314)
-  ct-decide --subject-type <journal_line|income_account|loss_claim|company_status|personal_status> --subject <id>
-            --period-end <date> --choice <choice> --by <name>
-                                         Record a treatment the computation suggested
+  ct-decide --subject-type <type> --subject <id> --period-end <date>
+            --choice <choice> --by <name> [--amount <amount>] [--note <text>]
+                                         Record a treatment the computation suggested.
+                                          --amount is the loss set against other
+                                          income for an s.381 claim (issue #521).
+                                          <type> is one of:
+                                            ${CT_SUBJECT_TYPES.join(`\n${' '.repeat(44)}`)}
   list-suppliers                         Every supplier (id, name, country, VAT no.)
   list-customers                         Every customer (id, name, country, VAT no.)
 
@@ -1798,7 +1802,8 @@ export async function main(argv: string[], options: CliOptions = {}): Promise<nu
         }
         const result = recordPartnerLoan(db, {
           companyId, partnerId: requireFlag(flags, 'partner'), direction,
-          amountMinor: Math.round(Number(requireFlag(flags, 'amount')) * 100),
+          amountMinor: parseAmount(requireFlag(flags, 'amount'),
+            db.select({ c: companies.baseCurrency }).from(companies).where(eq(companies.id, companyId)).get()!.c),
           date: requireFlag(flags, 'date'), recordedBy: requireFlag(flags, 'by'),
           narrative: getFlag(flags, 'narrative'),
         });
@@ -1830,12 +1835,16 @@ export async function main(argv: string[], options: CliOptions = {}): Promise<nu
 
       case 'ct-decide': {
         const subjectType = requireFlag(flags, 'subject-type');
-        if (!['journal_line', 'income_account', 'loss_claim', 'company_status', 'personal_status'].includes(subjectType)) {
-          throw new Error('--subject-type is journal_line, income_account, loss_claim, company_status or personal_status.');
+        // The one list the year-end screen uses too (issue #521), so the two cannot drift.
+        if (!isCtSubjectType(subjectType)) {
+          throw new Error(`--subject-type is one of ${CT_SUBJECT_TYPES.join(', ')}.`);
         }
+        const amountRaw = getFlag(flags, 'amount');
+        const base = db.select({ c: companies.baseCurrency }).from(companies).where(eq(companies.id, companyId)).get()!.c;
         const id = recordCtDecision(db, {
-          companyId, subjectType: subjectType as CtSubjectType, subjectId: requireFlag(flags, 'subject'), periodEnd: requireFlag(flags, 'period-end'),
+          companyId, subjectType, subjectId: requireFlag(flags, 'subject'), periodEnd: requireFlag(flags, 'period-end'),
           choice: requireFlag(flags, 'choice'), decidedBy: requireFlag(flags, 'by'), note: getFlag(flags, 'note'),
+          amountMinor: amountRaw === undefined ? undefined : parseAmount(amountRaw, base),
         });
         print({ decisionId: id }, format);
         return 0;
