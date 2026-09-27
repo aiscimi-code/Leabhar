@@ -2,6 +2,7 @@ import { eq } from 'drizzle-orm';
 import type { AppDatabase } from '@/db';
 import { partners, companies, journalEntries } from '@/db/schema';
 import { multiplyRational } from '../money';
+import { asIsoDate } from '../dates';
 import { accountingYearContaining } from '../vat/apportionment';
 import {
   computeBase, currentDecision, capitalAllowances, INCOME_TAX_LOSS_CLAIMS, BASIS_ELECTIONS,
@@ -11,6 +12,7 @@ import {
 import { INCOME_TAX_CURATED_RULES } from '../rules/incomeTaxCuration';
 import { resolveRuleFigure, type ResolvedRuleFigure } from '../rules/ruleFigures';
 import { allocateByShares, partnershipFindings } from '../config/partners';
+import { partnerLoanInterestForPeriod } from '../partnerships/interest';
 
 /**
  * Income tax on a sole trader's or partnership's trading profits for a year
@@ -231,6 +233,16 @@ class IncomeTaxRun {
       return [{ name: this.company.legalName, partnerId: null, share: result }];
     }
     this.findings.push(...partnershipFindings(this.db, this.companyId, from, to));
+    // Interest credited to a partner's loan account over the period (issue
+    // #464): it is the partner's own income, not part of their profit share,
+    // and it is not assessed here — their own Form 11 declares it.
+    for (const interest of partnerLoanInterestForPeriod(this.db, { companyId: this.companyId, from: asIsoDate(from), to: asIsoDate(to) })) {
+      this.findings.push(
+        `${interest.partner.name}: ${eur(interest.amountMinor)} of interest was credited to their loan account in this `
+          + 'period. It is the partner\u2019s own income, not part of their profit share, so it is not assessed here: their '
+          + 'Form 11 declares it as other income, and these books hold only the loan account it was credited to (#458).',
+      );
+    }
     return allocateByShares(this.db, this.companyId, { from, to, amountMinor: result })
       .map((a) => ({ name: a.partner.name, partnerId: a.partner.id, share: a.amountMinor }));
   }

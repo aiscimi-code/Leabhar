@@ -1,6 +1,9 @@
 import { Panel, Badge, Field, Input, Select, Disclosure, Empty } from '@/components/primitives';
 import { ActionForm } from '@/components/ActionForm';
-import { addPartnerAction, setPartnerShareAction, setPartnerActivityStatusAction, recordPartnerLoanAction } from '@/app/partners-actions';
+import {
+  addPartnerAction, setPartnerShareAction, setPartnerActivityStatusAction, recordPartnerLoanAction,
+  recordPartnerLoanInterestAction,
+} from '@/app/partners-actions';
 import { date, money } from '@/lib/format';
 import { asIsoDate } from '@/domain/dates';
 import { getDb } from '@/db';
@@ -105,6 +108,29 @@ export function PartnersPanel({ company }: { company: typeof companies.$inferSel
                   <Field label="Date"><Input name="date" type="date" defaultValue={today} required /></Field>
                   <Field label="Narrative (optional)"><Input name="narrative" /></Field>
                 </div>
+              </ActionForm>
+            </Disclosure>
+          )}
+          {all.length > 0 && (
+            <Disclosure summary="Record loan interest">
+              <ActionForm action={recordPartnerLoanInterestAction} submit="Record interest">
+                <div className="grid grid-cols-5 gap-3 max-w-4xl">
+                  <Field label="Partner">
+                    <Select name="partnerId" required defaultValue="">
+                      <option value="" disabled>Choose…</option>
+                      {all.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+                    </Select>
+                  </Field>
+                  <Field label="Annual rate (%)"><Input name="rate" type="number" step="0.01" min="0.01" required /></Field>
+                  <Field label="From"><Input name="from" type="date" required /></Field>
+                  <Field label="To"><Input name="to" type="date" required /></Field>
+                  <Field label="Narrative (optional)"><Input name="narrative" /></Field>
+                </div>
+                <p className="px-4 py-1 text-[12px] text-ink-faint">
+                  The interest is computed from the loan account over the period and accrued to it.
+                  Whether the firm may deduct it in computing its profits is decided on the year-end
+                  decisions list, not here.
+                </p>
               </ActionForm>
             </Disclosure>
           )}
