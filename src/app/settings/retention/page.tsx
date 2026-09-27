@@ -4,7 +4,7 @@ import {
   Page, Panel, Badge, Field, Input, Disclosure, Empty,
 } from '@/components/primitives';
 import { ActionForm } from '@/components/ActionForm';
-import { setRetentionPolicyAction, disposeDocumentAction } from '@/app/actions';
+import { setRetentionPolicyAction, disposeDocumentAction, applyDefaultRetentionPoliciesAction } from '@/app/actions';
 import { date, label } from '@/lib/format';
 import { today } from '@/domain/dates';
 import { ALL_DOCUMENT_TYPES } from '@/domain/documents/types';
@@ -32,23 +32,29 @@ export default function RetentionPage() {
       <Panel
         title="Policies"
         description="A policy is in force from its effective date until the policy that supersedes
-          it takes over, so a document always resolves the policy of its own day. The clock
-          runs from the document's own date, or from when it was filed if it states none.
-          No periods are built in: how long to keep each kind of record is this book's own
-          decision (verify against Companies Act 2014 s.881, TCA97 s.886 and Revenue practice
-          for your entity type)."
+          it takes over, so a document always resolves the policy of its own day. The clock runs
+          from the end of the financial year containing the document's own date (or the date it
+          was filed, if it states none). New books start with default policies: 6 years for every
+          type (VATCA 2010 s.84(3); TCA 1997 s.886), and never dispose for company documents and
+          contracts. Each can be superseded here, never silently."
       >
         {policies.length === 0 ? (
-          <Empty
-            title="No retention policy set"
-            detail="Without a policy no document is ever listed as past retention."
-          />
+          <div>
+            <Empty
+              title="No retention policy set"
+              detail="Without a policy no document is ever listed as past retention. This book was created
+                before the default policies were seeded; apply them, then change any that do not fit."
+            />
+            <div className="px-4 pb-3">
+              <ActionForm action={applyDefaultRetentionPoliciesAction} submit="Apply the default policies" />
+            </div>
+          </div>
         ) : (
           <table className="ledger">
             <thead>
               <tr>
                 <th className="w-44">Applies to</th>
-                <th className="w-24 text-right">Keep for</th>
+                <th className="w-28 text-right">Keep for</th>
                 <th className="w-28">From</th>
                 <th className="w-28">Until</th>
                 <th>Status</th>
@@ -58,7 +64,14 @@ export default function RetentionPage() {
               {policies.map((policy) => (
                 <tr key={policy.id}>
                   <td>{policy.appliesTo === 'all' ? 'All types without a specific policy' : label(policy.appliesTo)}</td>
-                  <td className="text-right num">{policy.retainYears} {policy.retainYears === 1 ? 'year' : 'years'}</td>
+                  <td className="text-right num">
+                    {policy.neverDispose
+                      ? <Badge tone="caution">Never dispose</Badge>
+                      : <>{policy.retainYears} {policy.retainYears === 1 ? 'year' : 'years'}</>}
+                    {policy.createdBy === 'system' && (
+                      <div className="text-[11px] text-ink-faint mt-0.5">Seeded default</div>
+                    )}
+                  </td>
                   <td className="num !text-left">{date(policy.effectiveFrom)}</td>
                   <td className="num !text-left text-ink-muted">
                     {policy.supersededAt ? date(policy.supersededAt) : 'current'}
@@ -91,6 +104,12 @@ export default function RetentionPage() {
               <Field label="Keep for (years)">
                 <Input name="retainYears" type="number" min="0" step="1" required defaultValue="6" />
               </Field>
+              <Field label="Never dispose">
+                <label className="flex items-center gap-2 text-[12px]">
+                  <input type="checkbox" name="neverDispose" />
+                  Keep for the life they belong to (years ignored)
+                </label>
+              </Field>
               <Field label="In force from">
                 <Input name="effectiveFrom" type="date" required defaultValue={today()} />
               </Field>
@@ -112,6 +131,9 @@ export default function RetentionPage() {
           archive with a reason; the reason joins the audit trail. A disposed document can be
           restored from its own page."
       >
+        <div className="px-4 py-2 text-[12px] text-caution">
+          <Badge tone="caution">Before disposing</Badge> {status.expiryConditions}
+        </div>
         {status.eligible.length === 0 ? (
           <Empty
             title="Nothing to dispose of"
@@ -142,6 +164,13 @@ export default function RetentionPage() {
                   >
                     <Field label="Why may it be disposed of?">
                       <Input name="reason" required placeholder="Retention period has ended" />
+                    </Field>
+                    <Field label="Confirm nothing extends retention">
+                      <label className="flex items-start gap-2 text-[12px]">
+                        <input type="checkbox" name="confirmNoExtension" required className="mt-0.5" />
+                        No Revenue inquiry, investigation, claim or appeal is open (VATCA s.84(4)), and a
+                        return was delivered for every year this record relates to (TCA s.886).
+                      </label>
                     </Field>
                   </ActionForm>
                 </Disclosure>

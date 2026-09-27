@@ -1,0 +1,1 @@
+ALTER TABLE `document_retention_policies` ADD `never_dispose` integer DEFAULT false NOT NULL;

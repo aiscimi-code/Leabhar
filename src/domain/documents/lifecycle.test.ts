@@ -20,8 +20,7 @@ import {
   DocumentLifecycleError,
 } from './lifecycle';
 import {
-  documents, documentExtractions, documentLines, documentMatches, auditEvents, bankTransactions, suppliers,
-} from '@/db/schema';
+  documents, documentExtractions, documentLines, documentMatches, auditEvents, bankTransactions, suppliers, documentRetentionPolicies } from '@/db/schema';
 import type { AppDatabase } from '@/db';
 
 /**
@@ -54,6 +53,10 @@ beforeEach(() => {
     matchKey: 'murphy office supplies', countryCode: 'IE', vatNumber: 'IE8254410U',
   }).run();
   root = mkdtempSync(join(tmpdir(), 'lifecycle-'));
+  // These tests exercise deletion and archiving mechanics, not retention:
+  // remove the seeded default policies (issue #432) so a document is
+  // deletable unless a test sets a policy of its own.
+  db.delete(documentRetentionPolicies).where(eq(documentRetentionPolicies.companyId, companyId)).run();
 });
 afterEach(() => rmSync(root, { recursive: true, force: true }));
 

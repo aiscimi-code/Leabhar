@@ -16,6 +16,7 @@ import { generateVatPeriods, generateFinancialYear, type VatFrequency } from './
 import { GLOSSARY_TERMS } from '../help/glossary';
 import { postJournalEntry, atomically } from '../accounting/journal';
 import { createAccount } from './mutations';
+import { seedDefaultRetentionPolicies } from '../documents/retention';
 
 export interface CreateCompanyInput {
   legalName: string;
@@ -280,6 +281,13 @@ export function createCompany(db: AppDatabase, input: CreateCompanyInput): Creat
         sourceUrl: seed.sourceUrl,
       }).run();
     }
+
+    // ---- Retention defaults (issue #432) ----
+    // Seeded like the chart: effective-dated from the earliest date the book
+    // knows, superseded rather than overwritten when the person changes them.
+    seedDefaultRetentionPolicies(tx as unknown as AppDatabase, companyId, {
+      effectiveFrom: asIsoDate(input.tradeCommencedOn ?? input.dateIncorporated ?? '1900-01-01'),
+    });
 
     // ---- Periods ----
     for (const year of input.seedYears ?? []) {
