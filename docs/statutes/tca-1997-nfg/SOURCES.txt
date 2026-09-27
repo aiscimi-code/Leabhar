@@ -18,3 +18,5 @@ PDF pattern: https://www.revenue.ie/en/tax-professionals/documents/notes-for-gui
 - part36.pdf  contains s.840 Business entertainment (verified by pdftotext)
 - part41a.pdf Part 41A in full
 - part43.pdf  Part 43 in full
+- part11.pdf  Part 11 in full (ss.373–380; the motor car specified amounts of s.373(2)
+              restrict the capital allowances of s.374). Retrieved 2026-09-27 for issue #313.
