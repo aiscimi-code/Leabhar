@@ -147,6 +147,13 @@ function recordPaymentSteps(db: AppDatabase, input: RecordPaymentInput): Recorde
         `Invoice ${invoice.invoiceNumber ?? invoice.id} has been voided and cannot be paid.`,
       );
     }
+    if (invoice.status === 'written_off') {
+      throw new InvoicingError(
+        `Invoice ${invoice.invoiceNumber ?? invoice.id} was written off as a bad debt. If it is being paid after all, `
+          + 'reverse the write-off first (the debt is recovered), then record the payment.',
+        { invoiceId: invoice.id },
+      );
+    }
     const expectedDirection = isReceived ? 'sales' : 'purchase';
     // A credit note reverses the cash flow of its own direction: a sales
     // credit note is settled by a refund going out ('made'), a purchase

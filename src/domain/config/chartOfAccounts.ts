@@ -53,7 +53,9 @@ export type SystemAccountKey =
   | 'stock_on_hand'
   /** Accruals and prepayments (issues #367, #368): the timing workflow posts to these. */
   | 'accruals'
-  | 'prepayments';
+  | 'prepayments'
+  /** Bad debts (issue #404): what a debt written off is charged to. */
+  | 'bad_debts';
 
 export const DEFAULT_ACCOUNTS: AccountSeed[] = [
   // ---------------- Income ----------------
@@ -106,6 +108,11 @@ export const DEFAULT_ACCOUNTS: AccountSeed[] = [
   { code: '6080', name: 'Legal fees', type: 'expense', subtype: 'operating_expense', reportSection: 'operating_expenses' },
   { code: '6090', name: 'Insurance', type: 'expense', subtype: 'operating_expense', vatApplicable: false, reportSection: 'operating_expenses' },
   { code: '6100', name: 'Bank charges', type: 'expense', subtype: 'operating_expense', vatApplicable: false, reportSection: 'operating_expenses' },
+  {
+    code: '6230', name: 'Bad debts', type: 'expense', subtype: 'operating_expense',
+    systemKey: 'bad_debts', vatApplicable: false, reportSection: 'operating_expenses',
+    description: 'Debts written off as irrecoverable (issue #404). A later recovery reverses the write-off.',
+  },
   { code: '6110', name: 'Travel and subsistence', type: 'expense', subtype: 'operating_expense', reportSection: 'operating_expenses' },
   { code: '6120', name: 'Office expenses', type: 'expense', subtype: 'operating_expense', reportSection: 'operating_expenses' },
   { code: '6130', name: 'Equipment (below capitalisation threshold)', type: 'expense', subtype: 'operating_expense', reportSection: 'operating_expenses' },

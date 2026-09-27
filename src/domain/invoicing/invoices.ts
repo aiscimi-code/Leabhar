@@ -692,6 +692,9 @@ function voidInvoiceSteps(db: AppDatabase, input: VoidInvoiceInput): VoidedInvoi
   if (invoice.status === 'void') {
     throw new InvoicingError(`Invoice ${invoice.invoiceNumber ?? invoice.id} is already void.`);
   }
+  if (invoice.status === 'written_off') {
+    throw new InvoicingError('This invoice was written off as a bad debt. Reverse the write-off before voiding it.');
+  }
   if (invoice.paidMinor !== 0) {
     throw new InvoicingError(
       `Invoice ${invoice.invoiceNumber ?? invoice.id} has ${(invoice.paidMinor / 100).toFixed(2)} `

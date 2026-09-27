@@ -125,6 +125,10 @@ npm run cli -- post-recurring-invoices --actor "Name" [--up-to <date>]
 npm run cli -- list-recurring-invoices
 npm run cli -- create-debit-note --invoice <n> --description "..." --net <12.30> --account <code>
     --vat-treatment <code> --actor "Name"             # an additional charge against that invoice
+npm run cli -- write-off-bad-debt --invoice <n> --reason "..." --actor "Name" [--date <date>] [--account <code>]
+    # outstanding to bad debts (6230); on the cash receipts basis the unpaid VAT is
+    # cancelled from deferred VAT; on the invoice basis relief (s.39) is flagged
+npm run cli -- reverse-bad-debt --invoice <n> --reason "..." --actor "Name"   # the debt recovered
 npm run cli -- customer-credit --customer <id>        # open credit notes + money on account
 npm run cli -- apply-credit-note --credit-note <n> --invoice <n> --amount <12.30> --actor "Name"
     # settles the invoice from the credit note; no cash, nothing posted
