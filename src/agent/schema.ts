@@ -468,12 +468,16 @@ export const inviteUserInput = z.object({
   username: z.string().min(2).max(40),
   role: z.enum(ROLES),
   displayName: z.string().optional(),
+  /** The owner the command acts as (issue #498). */
+  as: z.string().optional(),
 });
 
 export const userRefInput = z.object({
   companyId: z.string(),
   /** A username or a user id. */
   user: z.string().min(1),
+  /** The owner the command acts as (issue #498). */
+  as: z.string().optional(),
 });
 
 export const setUserRoleInput = userRefInput.extend({

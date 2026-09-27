@@ -24,10 +24,16 @@ type FigureAudit = ReturnType<typeof auditRuleFigures>;
  */
 function figureWithCurationFallback(audit: FigureAudit, ruleKey: string): number {
   const f = audit.figure(ruleKey);
-  if (f.status === 'rejected') throw new RejectedRuleError(f);
+  // A figure a person rejected or retired on the review screen stops the
+  // computation (issues #451, #484): it is never quietly substituted.
+  if (f.status === 'rejected' || f.status === 'retired') throw new RejectedRuleError(f);
   if (f.numericValue !== null) return f.numericValue;
-  if (f.curatedValue !== null) return f.curatedValue;
-  throw new Error(`No figure for rule "${ruleKey}" from the knowledge base or the shipped curation.`);
+  if (f.curatedValue !== null && f.curatedInForce) return f.curatedValue;
+  // The shipped curation constant either does not exist or its own effective
+  // window does not cover the period (issue #492): fail closed rather than
+  // charge a figure the curation itself says did not apply.
+  throw new Error(`No figure for rule "${ruleKey}" from the knowledge base or the shipped curation`
+    + `${f.curatedValue !== null ? ' (the shipped curation constant does not cover the period)' : ''}.`);
 }
 
 /**
@@ -853,21 +859,33 @@ export function computeCorporationTax(db: AppDatabase, params: { companyId: stri
       + '(s.959AN(4)). "First accounting period" means the company\'s first ever one, not the first one on these books: if the '
       + 'company traded before these books started, preliminary tax is due and this must be paid.');
   } else if (smallCompany) {
-    const amount = precedingPeriodTaxMinor === null ? multiplyRational(current, 9, 10) : Math.min(multiplyRational(current, 9, 10), precedingPeriodTaxMinor);
+    // s.959AR, the percentages read from the rules like every other figure (issue #490).
+    const currentPct = ruleValue('ct.preliminary_tax_small_current');
+    const priorPct = ruleValue('ct.preliminary_tax_small_prior');
+    const atCurrent = multiplyRational(current, currentPct, 10_000);
+    const amount = precedingPeriodTaxMinor === null
+      ? atCurrent
+      : Math.min(atCurrent, multiplyRational(precedingPeriodTaxMinor, priorPct, 10_000));
     preliminaryTax.push({ dueDate: finalDue, amountMinor: amount,
-      basis: precedingPeriodTaxMinor === null ? '90% of this period\'s tax' : 'the lower of 90% of this period\'s tax and 100% of the preceding period\'s' });
+      basis: precedingPeriodTaxMinor === null
+        ? `${currentPct / 100}% of this period's tax`
+        : `the lower of ${currentPct / 100}% of this period's tax and ${priorPct / 100}% of the preceding period's` });
   } else {
     // s.959AS: the first instalment is the lower of 45% of this period's tax and
-    // 50% of the preceding period's — 45% alone for a first period.
+    // 50% of the preceding period's — 45% alone for a first period. The
+    // percentages come from the rules (issue #490).
+    const initialPct = ruleValue('ct.preliminary_tax_large_initial');
+    const initialPriorPct = ruleValue('ct.preliminary_tax_large_initial_prior');
+    const totalPct = ruleValue('ct.preliminary_tax_large_total');
     const first = precedingPeriodTaxMinor === null
-      ? multiplyRational(current, 45, 100)
-      : Math.min(multiplyRational(current, 45, 100), multiplyRational(precedingPeriodTaxMinor, 50, 100));
+      ? multiplyRational(current, initialPct, 10_000)
+      : Math.min(multiplyRational(current, initialPct, 10_000), multiplyRational(precedingPeriodTaxMinor, initialPriorPct, 10_000));
     preliminaryTax.push({ dueDate: byThe23rd(addDays(addMonths(from, 6), -1)), amountMinor: first,
       basis: precedingPeriodTaxMinor === null
-        ? '45% of this period\'s tax: no preceding period, so a large first period pays instalments'
-        : 'the lower of 45% of this period\'s tax and 50% of the preceding period\'s' });
-    preliminaryTax.push({ dueDate: finalDue, amountMinor: Math.max(multiplyRational(current, 9, 10) - first, 0),
-      basis: 'bringing the total to 90% of this period\'s tax' });
+        ? `${initialPct / 100}% of this period's tax: no preceding period, so a large first period pays instalments`
+        : `the lower of ${initialPct / 100}% of this period's tax and ${initialPriorPct / 100}% of the preceding period's` });
+    preliminaryTax.push({ dueDate: finalDue, amountMinor: Math.max(multiplyRational(current, totalPct, 10_000) - first, 0),
+      basis: `bringing the total to ${totalPct / 100}% of this period's tax` });
   }
   const dates: CtDates = {
     returnDueDate: byThe23rd(addMonths(to, 9)), smallCompany, precedingPeriodTaxMinor, preliminaryTax,
@@ -900,14 +918,24 @@ export function computeCorporationTax(db: AppDatabase, params: { companyId: stri
   };
 }
 
-/** s.440(1): 20% of the excess over distributions; nothing up to the threshold; at most 80% of the excess over it. */
-export function section440Surcharge(deii: number, distributions: number, threshold: number, rateBps = 2000): number {
+/**
+ * s.440(1): 20% of the excess over distributions; nothing up to the threshold;
+ * at most 80% of the excess over it (the marginal relief cap). Both rates are
+ * arguments, not defaults (issue #490): a caller must take them from the
+ * rules, and a signature that silently supplies its own has trapped the next
+ * caller before.
+ */
+export function section440Surcharge(
+  deii: number, distributions: number, threshold: number, rateBps: number, marginalReliefCapBps: number,
+): number {
   const excess = Math.max(deii - distributions, 0);
-  return excess <= threshold ? 0 : Math.min(multiplyRational(excess, rateBps, 10_000), multiplyRational(excess - threshold, 8, 10));
+  return excess <= threshold
+    ? 0
+    : Math.min(multiplyRational(excess, rateBps, 10_000), multiplyRational(excess - threshold, marginalReliefCapBps, 10_000));
 }
 
 /** s.441(4): 20% on investment and estate income not distributed, 15% on the rest of (it + half of trading income − distributions). */
-export function section441Surcharge(deii: number, dti: number, distributions: number, higherBps = 2000, lowerBps = 1500) {
+export function section441Surcharge(deii: number, dti: number, distributions: number, higherBps: number, lowerBps: number) {
   const total = Math.max(deii + multiplyRational(dti, 1, 2) - distributions, 0);
   const at20 = Math.min(Math.max(deii - distributions, 0), total);
   const at15 = total - at20;
@@ -1009,7 +1037,8 @@ export function closeCompanySurcharge(db: AppDatabase, params: {
   const periodDays = Math.round((Date.parse(params.to) - Date.parse(params.from)) / 86_400_000) + 1;
   const threshold = multiplyRational(rule('ct.close_company_surcharge_de_minimis'), Math.min(periodDays, yearDays), yearDays);
   const excess = Math.max(deii - distributions, 0);
-  const surchargeMinor = section440Surcharge(deii, distributions, threshold, rule('ct.close_company_surcharge'));
+  const surchargeMinor = section440Surcharge(deii, distributions, threshold,
+    rule('ct.close_company_surcharge'), rule('ct.surcharge_marginal_relief_cap'));
   return {
     status, distributableInvestmentIncomeMinor: deii, distributableTradingIncomeMinor: dti, distributionsMinor: distributions,
     surchargeMinor,

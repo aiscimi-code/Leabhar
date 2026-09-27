@@ -2425,7 +2425,8 @@
       "ruleKeys": [
         "ct.close_company_surcharge",
         "ct.close_company_surcharge_de_minimis",
-        "ct.surcharge_later_period"
+        "ct.surcharge_later_period",
+        "ct.surcharge_marginal_relief_cap"
       ]
     },
     {
@@ -2459,7 +2460,8 @@
         "usc.band_3pct",
         "usc.rate_top",
         "usc.exemption_threshold",
-        "usc.surcharge_non_paye"
+        "usc.surcharge_non_paye",
+        "usc.surcharge_threshold"
       ]
     },
     {
@@ -2477,7 +2479,12 @@
         "income_tax.preliminary_tax_prior_year",
         "income_tax.preliminary_tax_pre_preceding_year",
         "income_tax.return_date",
-        "ct.preliminary_tax_first_period_nil"
+        "ct.preliminary_tax_first_period_nil",
+        "ct.preliminary_tax_small_current",
+        "ct.preliminary_tax_small_prior",
+        "ct.preliminary_tax_large_initial",
+        "ct.preliminary_tax_large_initial_prior",
+        "ct.preliminary_tax_large_total"
       ]
     },
     {
@@ -3189,7 +3196,8 @@
       "title": "SWCA 2005 s.21 (LRC revised) — self-employment (Class S) contribution rates",
       "status": "rule",
       "ruleKeys": [
-        "prsi.class_s_rate"
+        "prsi.class_s_rate",
+        "prsi.class_s_minimum"
       ]
     },
     {

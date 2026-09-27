@@ -34,9 +34,17 @@ export interface CuratedRuleFigure {
   /** Band rules carry their own rate alongside the width (`INCOME_TAX_CURATED_RULES`). */
   rateBasisPoints?: number;
   name?: string;
+  /**
+   * The constant's own effective window (issue #492): a curation constant is a
+   * rule like any other, dated from the Act that set the figure. A fallback
+   * that ignores its own window charges a rate that did not apply — 12.5% on
+   * a 2002 period, say, because `ct.rate_standard` is curated from 2003-01-01.
+   */
+  effectiveFrom?: string;
+  effectiveTo?: string | null;
 }
 
-export type RuleFigureStatus = 'approved' | 'unreviewed' | 'rejected' | 'curation_only';
+export type RuleFigureStatus = 'approved' | 'unreviewed' | 'rejected' | 'retired' | 'curation_only';
 
 export interface ResolvedRuleFigure {
   ruleKey: string;
@@ -53,6 +61,8 @@ export interface ResolvedRuleFigure {
   curatedRateBasisPoints: number | null;
   status: RuleFigureStatus;
   reviewStatus: string | null;
+  /** False when the shipped curation constant's window does not cover the as-of date (issue #492). */
+  curatedInForce: boolean;
   name: string;
   /** One finding per figure, or null when the figure rests on an approved rule. */
   finding: string | null;
@@ -73,6 +83,16 @@ export class RejectedRuleError extends Error {
 
 const REJECTED_FINDING_PREFIX = 'was rejected on the rule review screen';
 
+/** A retired rule's latest row (superseded on the review screen), told apart from a rejection (issue #484). */
+function retiredRule(db: AppDatabase, companyId: string, ruleKey: string) {
+  return db.select().from(irishTaxRules)
+    .where(and(
+      eq(irishTaxRules.companyId, companyId),
+      eq(irishTaxRules.ruleKey, ruleKey),
+      eq(irishTaxRules.reviewStatus, 'superseded'),
+    )).orderBy(desc(irishTaxRules.ruleVersion)).get();
+}
+
 /** A rejected rule's latest row, so a missing lookup can be told apart from a rejection. */
 function rejectedRule(db: AppDatabase, companyId: string, ruleKey: string) {
   return db.select().from(irishTaxRules)
@@ -86,7 +106,11 @@ function rejectedRule(db: AppDatabase, companyId: string, ruleKey: string) {
 }
 
 function statusOf(reviewStatus: string): RuleFigureStatus {
-  return reviewStatus === 'approved' || reviewStatus === 'active' ? 'approved' : 'unreviewed';
+  if (reviewStatus === 'approved' || reviewStatus === 'active') return 'approved';
+  // Defensive: `superseded` rows are filtered out of the lookup, but if one
+  // is ever reached it is retired, never unreviewed (issue #484).
+  if (reviewStatus === 'superseded') return 'retired';
+  return 'unreviewed';
 }
 
 /**
@@ -106,11 +130,16 @@ export function resolveRuleFigure(
     curatedRateBasisPoints,
     name: params.curated.name ?? params.ruleKey,
   };
+  // The shipped constant's own window (issue #492), the same test a stored
+  // rule's effective dates get.
+  const curatedInForce = params.curated.effectiveFrom === undefined
+    || (params.curated.effectiveFrom <= params.asOfDate
+      && (params.curated.effectiveTo == null || params.asOfDate < params.curated.effectiveTo));
 
   if (!isIsoDate(params.asOfDate)) {
     // Fail closed: an invalid date must not open every in-force version.
     return {
-      ...base, numericValue: null, status: 'curation_only', reviewStatus: null,
+      ...base, numericValue: null, status: 'curation_only', reviewStatus: null, curatedInForce: false,
       finding: `"${base.name}" (${params.ruleKey}) was not read from the knowledge base: "${params.asOfDate}" is not a date.`,
     };
   }
@@ -127,10 +156,27 @@ export function resolveRuleFigure(
       rateBasisPoints,
       status,
       reviewStatus: stored.reviewStatus,
+      curatedInForce,
       name: stored.name || base.name,
       finding: status === 'approved' ? null
         : `The figure for "${stored.name || base.name}" (${params.ruleKey}) rests on a rule no person has reviewed yet `
           + `(status ${stored.reviewStatus}).`,
+    };
+  }
+
+  // A rule a person retired on the review screen (superseded) supplies no
+  // figure either (issue #484): retiring it is the opposite of letting it
+  // still stand behind a computation. Distinct from a rejection, so the
+  // finding can say which happened.
+  const retired = retiredRule(db, params.companyId, params.ruleKey);
+  if (retired) {
+    const who = retired.reviewedBy ? ` by ${retired.reviewedBy}` : '';
+    return {
+      ...base, numericValue: null, status: 'retired', reviewStatus: retired.reviewStatus,
+      curatedInForce, name: retired.name || base.name,
+      finding: `Rule "${retired.name || base.name}" (${params.ruleKey}) was retired on the rule review screen`
+        + `${who}${retired.reviewNotes ? ` (${retired.reviewNotes})` : ''}: it supplies no figure. `
+        + 'Restore it on the review screen, or wait for the corrected rule to be derived.',
     };
   }
 
@@ -139,9 +185,21 @@ export function resolveRuleFigure(
     const who = rejected.reviewedBy ? ` by ${rejected.reviewedBy}` : '';
     return {
       ...base, numericValue: null, status: 'rejected', reviewStatus: rejected.reviewStatus,
-      name: rejected.name || base.name,
+      curatedInForce, name: rejected.name || base.name,
       finding: `Rule "${rejected.name || base.name}" (${params.ruleKey}) ${REJECTED_FINDING_PREFIX}${who}`
         + `${rejected.reviewNotes ? ` (${rejected.reviewNotes})` : ''}.`,
+    };
+  }
+
+  if (!curatedInForce) {
+    // Fail closed outside the constant's own window (issue #492): the
+    // curation itself says the figure did not apply on this date.
+    const window = `${params.curated.effectiveFrom} to ${params.curated.effectiveTo ?? 'in force'}`;
+    return {
+      ...base, numericValue: null, status: 'curation_only', reviewStatus: null, curatedInForce: false,
+      finding: `No rule "${params.ruleKey}" is stored in this book's statutory knowledge base, and the shipped `
+        + `curation constant's own effective window (${window}) does not cover ${params.asOfDate}: `
+        + 'there is no figure for that date.',
     };
   }
 
@@ -150,6 +208,7 @@ export function resolveRuleFigure(
     numericValue: params.curated.numericValue,
     status: 'curation_only',
     reviewStatus: null,
+    curatedInForce,
     finding: `No rule "${params.ruleKey}" is stored in this book's statutory knowledge base: the figure comes from the `
       + 'shipped curation constant, which no person has reviewed here.',
   };
@@ -188,7 +247,7 @@ export function auditRuleFigures(
   const findings = () => {
     const out: string[] = [];
     const all = [...byKey.values()];
-    for (const f of all.filter((x) => x.status === 'rejected')) out.push(f.finding!);
+    for (const f of all.filter((x) => x.status === 'rejected' || x.status === 'retired')) out.push(f.finding!);
     const unreviewed = all.filter((x) => x.status === 'unreviewed');
     if (unreviewed.length) {
       const statuses = [...new Set(unreviewed.map((x) => x.reviewStatus))].join(', ');

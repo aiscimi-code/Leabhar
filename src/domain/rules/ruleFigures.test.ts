@@ -93,6 +93,46 @@ describe('figure resolution (issue #282 / #437)', () => {
     expect(resolved.finding).toContain('is not a date');
   });
 
+  it('gives no figure for a rule retired on the review screen, with a finding that says retired, not rejected (issue #484)', () => {
+    const fresh = createCompany(db, { legalName: 'Retired Ltd', entityType: 'company', vatRegistrationStatus: 'registered', seedYears: [2025] });
+    loadStatutoryKnowledgeBase(db, { companyId: fresh.companyId });
+    const rule = inForce(fresh.companyId, 'ct.rate_standard', '2025-12-31')!;
+    setRuleReviewStatus(db, { ruleId: rule.id, status: 'superseded', reviewedBy: 'Accountant', notes: 'corrected version being drafted' });
+    const resolved = resolveRuleFigure(db, {
+      companyId: fresh.companyId, ruleKey: 'ct.rate_standard', asOfDate: '2025-12-31',
+      curated: CORPORATION_TAX_CURATED_RULES.find((r) => r.ruleKey === 'ct.rate_standard')!,
+    });
+    expect(resolved.status).toBe('retired');
+    expect(resolved.numericValue).toBeNull();
+    expect(resolved.finding).toContain('retired on the rule review screen by Accountant');
+    expect(resolved.finding).not.toContain('rejected');
+    // And the CT computation refuses the retired rule rather than using it or
+    // silently substituting the shipped constant.
+    expect(() => computeCorporationTax(db, { companyId: fresh.companyId, from: asIsoDate('2025-01-01'), to: asIsoDate('2025-12-31') }))
+      .toThrow(RejectedRuleError);
+    expect(() => computeCorporationTax(db, { companyId: fresh.companyId, from: asIsoDate('2025-01-01'), to: asIsoDate('2025-12-31') }))
+      .toThrow(/retired on the rule review screen/);
+  });
+
+  it('honours the shipped curation constant\u2019s own effective window: a 2002 period gets no 12.5% (issue #492)', () => {
+    // A book with no stored rules at all: the fallback is the shipped constant,
+    // and ct.rate_standard is curated from 2003-01-01.
+    const old = createCompany(db, { legalName: 'Old Books Ltd', entityType: 'company', vatRegistrationStatus: 'registered', seedYears: [2002, 2003] });
+    const resolved = resolveRuleFigure(db, {
+      companyId: old.companyId, ruleKey: 'ct.rate_standard', asOfDate: '2002-12-31',
+      curated: CORPORATION_TAX_CURATED_RULES.find((r) => r.ruleKey === 'ct.rate_standard')!,
+    });
+    expect(resolved.status).toBe('curation_only');
+    expect(resolved.numericValue).toBeNull();
+    expect(resolved.curatedInForce).toBe(false);
+    expect(resolved.finding).toContain('2003-01-01');
+    expect(resolved.finding).toContain('2002-12-31');
+    // A period the curation does not cover is refused, not charged at the
+    // rate that later applied.
+    expect(() => computeCorporationTax(db, { companyId: old.companyId, from: asIsoDate('2002-01-01'), to: asIsoDate('2002-12-31') }))
+      .toThrow(/ct\.rate_standard/);
+  });
+
   it('consolidates the findings of a computation worth of figures', () => {
     const audit = auditRuleFigures(db, { companyId, asOfDate: '2025-12-31', curated: CORPORATION_TAX_CURATED_RULES });
     audit.figure('ct.rate_standard');
@@ -142,6 +182,35 @@ describe('the computations respect a rule\u2019s review status (issue #282 accep
     expect(issue?.detail).toMatch(/ct\.wear_and_tear_rate/);
   });
 
+  it('preliminary tax follows the rules\u2019 percentages: an edited rule changes the figure, a rejected one stops the part (issue #486)', () => {
+    const book = preliminaryTaxBook();
+    const run = () => computeIncomeTax(db, { companyId: book.companyId, year: 2025 });
+    const prior = () => computeIncomeTax(db, { companyId: book.companyId, year: 2024 }).individuals[0]!.totalMinor;
+
+    // The shipped rules state 90% of this year and 100% of the last: the lower.
+    const first = run();
+    const expected = Math.min(Math.round(first.individuals[0]!.totalMinor * 0.9), prior());
+    expect(first.dates.preliminaryTaxMinor).toBe(expected);
+    expect(first.dates.basis).toContain('90%');
+    expect(first.dates.basis).toContain('100%');
+
+    // A person edits the stored rule on the review screen: the computation
+    // follows the stored value, not the hard-coded percentage.
+    const rule = inForce(book.companyId, 'income_tax.preliminary_tax_current_year', '2025-12-31')!;
+    db.update(irishTaxRules).set({ numericValue: 5000 }).where(eq(irishTaxRules.id, rule.id)).run();
+    const edited = run();
+    expect(edited.dates.preliminaryTaxMinor).toBe(Math.min(Math.round(edited.individuals[0]!.totalMinor * 0.5), prior()));
+    expect(edited.dates.basis).toContain('50%');
+    expect(edited.dates.basis).not.toContain('90%');
+
+    // A rejected rule stops that test entirely: only the prior-year one applies.
+    setRuleReviewStatus(db, { ruleId: rule.id, status: 'rejected', reviewedBy: 'Accountant' });
+    const rejected = run();
+    expect(rejected.dates.preliminaryTaxMinor).toBe(prior());
+    expect(rejected.findings.some((f) => f.includes('income_tax.preliminary_tax_current_year') && f.includes('rejected'))).toBe(true);
+    expect(rejected.dates.basis).not.toContain('90%');
+  });
+
   it('the cash-basis turnover test reports the review state of its threshold rule', () => {
     const book = soleTraderBook();
     const findings = cashBasisFindings(db, {
@@ -152,6 +221,31 @@ describe('the computations respect a rule\u2019s review status (issue #282 accep
     expect(book.companyId).toBeTruthy();
   });
 });
+
+let preliminaryTax: ReturnType<typeof createCompany> | null = null;
+
+/** A sole-trader book with the KB loaded and fee income in 2024 and 2025, so
+ *  both preliminary tax tests have a liability to work with (issue #486). */
+function preliminaryTaxBook() {
+  if (!preliminaryTax) {
+    preliminaryTax = createCompany(db, {
+      legalName: 'Preliminary Tax Ltd', entityType: 'sole_trader', tradeCommencedOn: '2023-01-01',
+      vatRegistrationStatus: 'registered', seedYears: [2023, 2024, 2025, 2026],
+    });
+    loadStatutoryKnowledgeBase(db, { companyId: preliminaryTax.companyId });
+    for (const [date, amount] of [['2024-06-01', 4_000_000], ['2025-06-01', 6_000_000]] as const) {
+      postJournalEntry(db, {
+        companyId: preliminaryTax.companyId, entryDate: asIsoDate(date), narrative: 'Fees', sourceType: 'bank_transaction',
+        sourceId: `fees-${date}`, baseCurrency: 'EUR',
+        lines: [
+          { accountId: preliminaryTax.accountsByKey['bank_control']!, debitMinor: amount },
+          { accountId: preliminaryTax.accountsByCode['4020']!, creditMinor: amount },
+        ],
+      });
+    }
+  }
+  return preliminaryTax;
+}
 
 let soleTrader: ReturnType<typeof createCompany> | null = null;
 let cashBasis: ReturnType<typeof createCompany> | null = null;

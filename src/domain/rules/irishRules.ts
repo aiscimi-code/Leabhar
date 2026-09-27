@@ -9,7 +9,7 @@
  * words — per AGENTS.md invariant #8 ("provenance is mandatory") and the
  * task's "extraction must not silently invent statutory rules".
  */
-import { and, eq, desc } from 'drizzle-orm';
+import { ne, and, eq, desc } from 'drizzle-orm';
 import type { AppDatabase } from '@/db';
 import {
   irishKnowledgeSources, irishActProvisions, irishTaxRules,
@@ -479,6 +479,13 @@ export function lookupTaxRule(
       eq(irishTaxRules.companyId, params.companyId),
       eq(irishTaxRules.ruleKey, params.ruleKey),
       eq(irishTaxRules.enabled, true),
+      // A rule retired on the review screen (superseded) supplies no figure
+      // (issue #484): retiring a rule is the opposite of letting it still
+      // stand behind a computation. This is the REVIEW status, not the
+      // `active` column — version-chaining clears `active` on a superseded
+      // version that remains in force for its own historical window.
+      // Rejected rows are excluded by `enabled` already.
+      ne(irishTaxRules.reviewStatus, 'superseded'),
     ))
     .orderBy(desc(irishTaxRules.ruleVersion))
     .all();

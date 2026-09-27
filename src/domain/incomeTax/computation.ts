@@ -36,11 +36,16 @@ import { allocateByShares, partnershipFindings } from '../config/partners';
  */
 
 export type PersonalStatus = 'single' | 'single_parent' | 'married_one_income' | 'married_two_incomes';
+/**
+ * Descriptions only: the band and credit figures are the rules' to state, so
+ * they are appended from the resolved rules at decision time (issue #490)
+ * rather than frozen into a label that would silently lie when a rule changes.
+ */
 export const PERSONAL_STATUSES: Record<PersonalStatus, string> = {
-  single: 'Single, widowed without children, or assessed as single (band €44,000; credit €2,000)',
-  single_parent: 'Qualifies for the single person child carer credit (band €48,000)',
-  married_one_income: 'Married or civil partners, jointly assessed, one income (band €53,000; credit €4,000)',
-  married_two_incomes: 'Married or civil partners, jointly assessed, two incomes (band up to €88,000)',
+  single: 'Single, widowed without children, or assessed as single',
+  single_parent: 'Qualifies for the single person child carer credit',
+  married_one_income: 'Married or civil partners, jointly assessed, one income',
+  married_two_incomes: 'Married or civil partners, jointly assessed, two incomes',
 };
 
 export interface IncomeTaxLine { label: string; amountMinor: number; ruleKeys: string[] }
@@ -259,7 +264,8 @@ class IncomeTaxRun {
       subjectType: 'personal_status', subjectId, description: `${name}: personal status for ${year}`, amountMinor: 0,
       suggested: 'single', decided: decided ?? null,
       options: (Object.keys(PERSONAL_STATUSES) as PersonalStatus[]).map((c) => ({ choice: c, label: PERSONAL_STATUSES[c] })),
-      reason: 'The standard rate band and personal credit depend on it (s.15 Table, s.461).',
+      reason: 'The standard rate band and personal credit depend on it (s.15 Table, s.461). '
+        + 'The band and credit in force are shown on the computation lines, from the rules that state them.',
     });
     const need = (key: string) => {
       const r = ruleOn(this.db, this.companyId, key, dec31);
@@ -269,7 +275,9 @@ class IncomeTaxRun {
       }
       if (r.finding) this.findings.push(r.finding);
       if (r.numericValue === null) {
-        this.findings.push(`No ${key} rule is available for ${year} (${r.status === 'rejected' ? 'rejected on the review screen' : 'no figure stated'}): `
+        const why = r.status === 'rejected' ? 'rejected on the review screen'
+          : r.status === 'retired' ? 'retired on the review screen' : 'no figure stated';
+        this.findings.push(`No ${key} rule is available for ${year} (${why}): `
           + `that part of ${name}'s liability is not computed.`);
         return null;
       }
@@ -290,7 +298,7 @@ class IncomeTaxRun {
       const atHigher = p - atStandard;
       const eicMinor = Math.min(eic.numericValue!, multiplyRational(p, eicPct.numericValue!, 10_000));
       incomeTax.push(
-        { label: `${eur(atStandard)} at ${band.rateBasisPoints! / 100}%`, amountMinor: multiplyRational(atStandard, band.rateBasisPoints!, 10_000), ruleKeys: [band.ruleKey] },
+        { label: `${eur(atStandard)} of the ${eur(band.numericValue!)} band at ${band.rateBasisPoints! / 100}%`, amountMinor: multiplyRational(atStandard, band.rateBasisPoints!, 10_000), ruleKeys: [band.ruleKey] },
         { label: `${eur(atHigher)} at ${higher.numericValue! / 100}%`, amountMinor: multiplyRational(atHigher, higher.numericValue!, 10_000), ruleKeys: [higher.ruleKey] },
         { label: 'Less personal tax credit', amountMinor: -credit.numericValue!, ruleKeys: [credit.ruleKey] },
         { label: 'Less earned income tax credit', amountMinor: -eicMinor, ruleKeys: [eic.ruleKey, eicPct.ruleKey] },
@@ -298,7 +306,8 @@ class IncomeTaxRun {
       incomeTaxMinor = Math.max(incomeTax.reduce((s, l) => s + l.amountMinor, 0), 0);
     }
     if (status === 'married_two_incomes') {
-      this.findings.push(`${name}: a second income raises the band by up to €35,000 (s.15(3)); the spouse's income is not known here, so the €53,000 band is used.`);
+      this.findings.push(`${name}: a second income can raise the band (s.15(3)); the spouse's income is not `
+        + 'known here, so the married one-income band is used.');
     }
 
     // USC (s.531AN).
@@ -307,6 +316,7 @@ class IncomeTaxRun {
     const bands = ['usc.band_05pct', 'usc.band_2pct', 'usc.band_3pct'].map(need);
     const top = need('usc.rate_top');
     const surcharge = need('usc.surcharge_non_paye');
+    const surchargeThreshold = need('usc.surcharge_threshold');
     if (exemption && top && surcharge && bands.every(Boolean) && p > exemption.numericValue!) {
       let left = p;
       for (const b of bands) {
@@ -315,22 +325,35 @@ class IncomeTaxRun {
         left -= part;
       }
       usc.push({ label: `${eur(left)} at ${top.numericValue! / 100}%`, amountMinor: multiplyRational(left, top.numericValue!, 10_000), ruleKeys: [top.ruleKey] });
-      const over = Math.max(p - 10_000_000, 0);
-      if (over) usc.push({ label: `Surcharge: ${eur(over)} over €100,000 at ${surcharge.numericValue! / 100}%`, amountMinor: multiplyRational(over, surcharge.numericValue!, 10_000), ruleKeys: [surcharge.ruleKey] });
+      const over = surchargeThreshold ? Math.max(p - surchargeThreshold.numericValue!, 0) : 0;
+      if (surchargeThreshold && over) {
+        usc.push({ label: `Surcharge: ${eur(over)} over ${eur(surchargeThreshold.numericValue!)} at ${surcharge.numericValue! / 100}%`, amountMinor: multiplyRational(over, surcharge.numericValue!, 10_000), ruleKeys: [surcharge.ruleKey, surchargeThreshold.ruleKey] });
+      } else if (!surchargeThreshold) {
+        this.findings.push(`No usc.surcharge_threshold rule is available for ${year}: the 3% surcharge's threshold is not applied.`);
+      }
     }
     const uscMinor = usc.reduce((s, l) => s + l.amountMinor, 0);
 
-    // PRSI Class S (SWCA 2005 s.21(1)(a)).
+    // PRSI Class S (SWCA 2005 s.21(1)(a)): the rate and the minimum are rule
+    // figures like every other (#487). The €5,000 disregard is not in the
+    // collected SWCA sections, so it is flagged, never guessed.
     const prsiRule = ruleOn(this.db, this.companyId, 'prsi.class_s_rate', dec31);
     if (prsiRule?.finding) this.findings.push(prsiRule.finding);
     const prsiRate = prsiRule?.numericValue ?? null;
+    const prsiMinimum = need('prsi.class_s_minimum');
     let prsiMinor: number | null = null;
     if (!prsiRate) {
-      this.findings.push(`No PRSI Class S rate is available for ${year} (${prsiRule?.status === 'rejected'
-        ? 'the rule was rejected on the review screen' : 'the revised s.21 text is dated from 2026-09-25'}): PRSI is not computed for that year.`);
+      const why = prsiRule?.status === 'rejected' ? 'the rule was rejected on the review screen'
+        : prsiRule?.status === 'retired' ? 'the rule was retired on the review screen'
+        : 'the revised s.21 text is dated from 2026-09-25';
+      this.findings.push(`No PRSI Class S rate is available for ${year} (${why}): PRSI is not computed for that year.`);
+    } else if (!prsiMinimum) {
+      this.findings.push(`No PRSI Class S minimum (prsi.class_s_minimum) is available for ${year}: PRSI is not computed for that year.`);
     } else if (p > 0) {
-      prsiMinor = Math.max(multiplyRational(p, prsiRate, 10_000), 65_000);
-      this.findings.push(`${name}: PRSI Class S at ${prsiRate / 100}% with the €650 minimum. No Class S is payable on reckonable income under €5,000; that threshold is not in the collected SWCA sections, so check it where income is low.`);
+      prsiMinor = Math.max(multiplyRational(p, prsiRate, 10_000), prsiMinimum.numericValue!);
+      this.findings.push(`${name}: PRSI Class S at ${prsiRate / 100}% with the ${eur(prsiMinimum.numericValue!)} minimum. `
+        + 'No Class S is payable on reckonable income under €5,000; that threshold is not in the collected SWCA '
+        + 'sections, so it cannot be applied here — check it where income is low.');
     }
     return {
       name, partnerId,
@@ -435,24 +458,54 @@ class IncomeTaxRun {
       }));
     }
 
-    // Preliminary tax for the year (s.959AO): the least of 90% of this year, 100% of the last (105% of the one before, by direct debit).
+    // Preliminary tax for the year (s.959AO): the least of 90% of this year,
+    // 100% of the last. The percentages are the rules' to state, read like
+    // every other figure (issue #486): an edited or re-derived rule changes the
+    // computation, a rejected one stops the part.
+    const dec31 = `${year}-12-31`;
+    const pct = (key: string): number | null => {
+      const r = ruleOn(this.db, this.companyId, key, dec31);
+      if (r?.finding) this.findings.push(r.finding);
+      if (!r || r.numericValue === null) {
+        const why = !r ? 'no rule is in force' : r.status === 'rejected' ? 'the rule was rejected on the review screen'
+          : r.status === 'retired' ? 'the rule was retired on the review screen' : 'no figure stated';
+        this.findings.push(`No ${key} rule is available for ${year} (${why}): that preliminary tax test is not applied.`);
+        return null;
+      }
+      return r.numericValue;
+    };
+    const currentYearPct = pct('income_tax.preliminary_tax_current_year');
+    const priorYearPct = pct('income_tax.preliminary_tax_prior_year');
     const liabilityNow = individuals.reduce((s, i) => s + i.incomeTaxMinor + i.uscMinor + (i.prsiMinor ?? 0), 0);
     const priorLiability = year > firstYear ? this.year(year - 1).individuals.reduce((s, i) => s + i.totalMinor, 0) : 0;
-    const ninety = multiplyRational(liabilityNow, 9000, 10_000);
-    const preliminaryTaxMinor = Math.min(ninety, priorLiability);
+    const atCurrent = currentYearPct !== null ? multiplyRational(liabilityNow, currentYearPct, 10_000) : null;
+    const atPrior = priorYearPct !== null ? multiplyRational(priorLiability, priorYearPct, 10_000) : null;
+    const candidates = [atCurrent, atPrior].filter((c): c is NonNullable<typeof c> => c !== null);
+    const preliminaryTaxMinor = candidates.length ? Math.min(...candidates) : 0;
     // s.959AO is each individual's own, against their own prior liability: the
     // Form 11's self-assessment panel asks for it per person.
     const priorTotals = year > firstYear
       ? new Map(this.year(year - 1).individuals.map((i) => [i.partnerId ?? this.companyId, i.totalMinor]))
       : null;
     for (const i of individuals) {
-      i.preliminaryTaxMinor = priorTotals
-        ? Math.min(multiplyRational(i.totalMinor, 9000, 10_000), priorTotals.get(i.partnerId ?? this.companyId) ?? 0)
-        : 0;
+      const ownCurrent = currentYearPct !== null ? multiplyRational(i.totalMinor, currentYearPct, 10_000) : null;
+      const ownPrior = priorTotals && priorYearPct !== null
+        ? multiplyRational(priorTotals.get(i.partnerId ?? this.companyId) ?? 0, priorYearPct, 10_000)
+        : null;
+      const own = [ownCurrent, ownPrior].filter((c): c is NonNullable<typeof c> => c !== null);
+      i.preliminaryTaxMinor = own.length ? Math.min(...own) : 0;
     }
+    const pctText = (value: number) => `${value / 100}%`;
+    const basisParts = [
+      currentYearPct !== null ? `${pctText(currentYearPct)} of this year's liability` : null,
+      priorYearPct !== null ? `${pctText(priorYearPct)} of the last year's` : null,
+    ].filter((part): part is string => part !== null);
     const dates = {
       preliminaryTaxDue: `${year}-10-31`, returnDue: `${year + 1}-10-31`, preliminaryTaxMinor,
-      basis: year > firstYear ? 'the lower of 90% of this year\'s liability and 100% of the last year\'s (s.959AO)'
+      basis: year > firstYear
+        ? basisParts.length
+          ? `the lower of ${basisParts.join(' and ')} (s.959AO)`
+          : 'not computed: no preliminary tax rule is available (s.959AO)'
         : 'nil: there was no liability for a prior year (s.959AO)',
     };
     this.findings.push('Each liability assumes the trade is the individual\'s only income and the credits shown are their only ones.');
