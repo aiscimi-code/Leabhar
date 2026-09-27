@@ -246,11 +246,13 @@ describe('motor cars (TCA Part 11, ss.373 and 374)', () => {
     expect(r.lines[0]!.citations.map((c) => c.ruleKey)).toContain('ct.car_specified_amount_2002_to_2005');
   });
 
-  it('says to check a car bought in a period ending before 2001, whose dated specified amounts are not applied', () => {
+  it('refuses wear and tear for a period the curated rate does not cover, rather than charging 12.5% (issue #492)', () => {
+    // A car bought in 1999: the 12.5%-over-8-years regime is curated from
+    // 4 December 2002, so it did not apply. The old code charged it anyway —
+    // the exact failure the window check exists to end.
     car({ purchaseDate: '1999-03-01', costMinor: 3_000_000, baseCostMinor: 3_000_000 });
-    const r = inYear(1999);
-    expect(line(r, 'wear and tear')).toBe(-375_000);
-    expect(r.findings.some((f) => f.includes('31 December 2000'))).toBe(true);
+    expect(() => inYear(1999)).toThrow(/ct.wear_and_tear_rate/);
+    expect(() => inYear(1999)).toThrow(/does not cover the period/);
   });
   it('flags a car bought from July 2008: its CO2 emissions restriction (Chapter 1A) is not applied', () => {
     car({ costMinor: 2_000_000, baseCostMinor: 2_000_000 });
@@ -300,13 +302,15 @@ describe('loss relief', () => {
 
 describe('close company surcharge', () => {
   it('matches Revenue\'s s.440 example: 20%, nothing up to €2,000, marginal relief above', () => {
-    expect(section440Surcharge(3_000_000, 0, 200_000)).toBe(600_000);
-    expect(section440Surcharge(3_000_000, 2_850_000, 200_000)).toBe(0);
-    expect(section440Surcharge(3_000_000, 2_760_000, 200_000)).toBe(32_000);
+    // The rates are arguments, never defaults (issue #490): 20% and the 80% cap.
+    expect(section440Surcharge(3_000_000, 0, 200_000, 2000, 8000)).toBe(600_000);
+    expect(section440Surcharge(3_000_000, 2_850_000, 200_000, 2000, 8000)).toBe(0);
+    expect(section440Surcharge(3_000_000, 2_760_000, 200_000, 2000, 8000)).toBe(32_000);
   });
 
   it('matches Revenue\'s s.441 example 1 for a service company', () => {
-    expect(section441Surcharge(700_000, 1_000_000, 600_000)).toEqual({ total: 600_000, at20: 100_000, at15: 500_000, surchargeMinor: 95_000 });
+    expect(section441Surcharge(700_000, 1_000_000, 600_000, 2000, 1500))
+      .toEqual({ total: 600_000, at20: 100_000, at15: 500_000, surchargeMinor: 95_000 });
   });
 
   it('suggests close company status and computes the surcharge on undistributed deposit interest', () => {

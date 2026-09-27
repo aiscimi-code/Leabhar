@@ -159,6 +159,15 @@ export const INCOME_TAX_CURATED_RULES: CuratedIncomeTaxRule[] = [
     effectiveFrom: '2025-01-01', effectiveTo: null,
     interpretationNote: 'TCA s.531AN(2): relevant income over €100,000 is charged at 11% (8% + 3%) on the excess.',
   },
+  {
+    citation: NFG_18D, sectionNumber: '531AN', ruleKey: 'usc.surcharge_threshold', ruleType: 'threshold',
+    name: 'USC: the 3% surcharge applies to relevant income over €100,000',
+    statementExcerpt: 'PAYE income) that exceeds €100,000 in a year of assessment.',
+    numericValue: 10_000_000, unit: 'eur_minor',
+    effectiveFrom: '2025-01-01', effectiveTo: null,
+    interpretationNote: 'TCA s.531AN(2): the surcharge applies to the part of relevant income over €100,000. '
+      + 'The threshold is the Notes for Guidance’s own figure, dated from the edition it was quoted in.',
+  },
 
   // ---- PRSI Class S (SWCA 2005 s.21) ----
   {
@@ -170,6 +179,16 @@ export const INCOME_TAX_CURATED_RULES: CuratedIncomeTaxRule[] = [
     interpretationNote: 'SWCA 2005 s.21(1)(a) as revised on the date it was retrieved (2026-09-25), which is all the '
       + 'window rests on: the revised text does not say when 4.2% took effect, and no earlier rate is recorded. '
       + 'The computation flags any year the rate may have differed in.',
+  },
+  {
+    citation: SWCA_S21_CITATION, sectionNumber: '21', ruleKey: 'prsi.class_s_minimum', ruleType: 'threshold',
+    name: 'PRSI Class S: the contribution is at least €650',
+    statementExcerpt: 'the amount of\n\n€\n650',
+    numericValue: 65_000, unit: 'eur_minor',
+    effectiveFrom: '2026-09-25', effectiveTo: null,
+    interpretationNote: 'SWCA 2005 s.21(1)(a): the self-employment contribution is the greater of 4.2% of '
+      + 'reckonable income or €650. The €5,000 disregard below which no Class S is payable is NOT in the '
+      + 'collected s.21 text, so it is not curated here: the computation flags it rather than guessing it.',
   },
   // ---- Basis of assessment, credits, partnerships, payment (Revenue NfG, FA 2025 edition) ----
   {
