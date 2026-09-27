@@ -141,6 +141,13 @@
       "when": 1790465812139,
       "tag": "0019_payment_parties_on_account",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "6",
+      "when": 1790491936304,
+      "tag": "0020_customer_terms_contacts",
+      "breakpoints": true
     }
   ]
 }

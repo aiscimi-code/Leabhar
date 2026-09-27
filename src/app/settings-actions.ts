@@ -721,6 +721,7 @@ export async function createInvoiceAction(formData: FormData): Promise<ActionRes
         ? `Invoice posted. Its VAT is deferred until the customer pays, under the cash `
           + 'receipts basis.'
         : 'Invoice posted.',
+      warnings: result.warnings.length > 0 ? result.warnings : undefined,
     };
   } catch (error) {
     return fail(error);

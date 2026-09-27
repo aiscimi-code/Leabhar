@@ -127,6 +127,12 @@ export const customers = sqliteTable('customers', {
   defaultAccountId: text('default_account_id').references(() => accounts.id),
   defaultVatTreatmentId: text('default_vat_treatment_id').references(() => vatTreatments.id),
   defaultPaymentTermsDays: integer('default_payment_terms_days').notNull().default(0),
+  /**
+   * Credit limit in base currency (issue #392). A credit-control signal, not
+   * an accounting rule: an invoice that takes the customer over it is posted
+   * and flagged, never refused. Null means no limit.
+   */
+  creditLimitMinor: integer('credit_limit_minor'),
 
   typicalPaymentDays: integer('typical_payment_days'),
   paymentBehaviourNotes: text('payment_behaviour_notes'),
@@ -138,3 +144,21 @@ export const customers = sqliteTable('customers', {
   index('customers_company_idx').on(t.companyId),
   index('customers_match_idx').on(t.companyId, t.matchKey),
 ]);
+
+/**
+ * The people at a customer (issue #392). One may be the billing contact, to
+ * whom invoices are addressed. Contacts are not accounting facts: they are
+ * deactivated rather than deleted so an old invoice still says who it went to.
+ */
+export const customerContacts = sqliteTable('customer_contacts', {
+  id: text('id').primaryKey(),
+  companyId: text('company_id').notNull().references(() => companies.id),
+  customerId: text('customer_id').notNull().references(() => customers.id),
+  name: text('name').notNull(),
+  role: text('role'),
+  email: text('email'),
+  phone: text('phone'),
+  isBilling: integer('is_billing', { mode: 'boolean' }).notNull().default(false),
+  active: integer('active', { mode: 'boolean' }).notNull().default(true),
+  ...timestamps,
+}, (t) => [index('customer_contacts_customer_idx').on(t.customerId)]);
