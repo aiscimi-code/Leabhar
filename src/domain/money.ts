@@ -368,3 +368,14 @@ export function assertSameCurrency(a: string, b: string, context: string): void 
     throw new MoneyError(`Currency mismatch in ${context}: ${a} vs ${b}`);
   }
 }
+
+/**
+ * A percentage as typed ("10", "12.5", "7.25") in basis points, exactly (issue
+ * #393). Null when it is not a number with at most two decimal places.
+ */
+export function parsePercentBasisPoints(input: string): number | null {
+  const text = input.trim().replace(/%$/, '').trim();
+  if (!/^\d+(\.\d{1,2})?$/.test(text)) return null;
+  const [whole = '0', frac = ''] = text.split('.');
+  return Number(whole) * 100 + Number(frac.padEnd(2, '0'));
+}

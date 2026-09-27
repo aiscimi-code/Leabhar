@@ -5,7 +5,7 @@ import {
   suppliers, customers, payments, paymentAllocations,
 } from '@/db/schema';
 import { asIsoDate, today } from '@/domain/dates';
-import { parseAmount } from '@/domain/money';
+import { parseAmount, parsePercentBasisPoints } from '@/domain/money';
 import { createInvoice, voidInvoice, type CreatedInvoice, type VoidedInvoice } from '@/domain/invoicing/invoices';
 import { recordPayment, type RecordedPayment } from '@/domain/invoicing/payments';
 import { createAdjustment, type CreatedAdjustment } from '@/domain/accounting/adjustments';
@@ -143,6 +143,7 @@ export async function createInvoicesFromCsv(
           accountId,
           vatTreatmentId,
           statedVatMinor,
+          ...csvDiscount(record, currency, rowNumber),
         }],
         actor: 'cli',
       });
@@ -275,6 +276,7 @@ export async function importInvoicesFromCsv(
         lines: [{
           description: record.description || invoiceNumber || `${input.direction} invoice`,
           netMinor, accountId, vatTreatmentId, statedVatMinor,
+          ...csvDiscount(record, currency, rowNumber),
         }],
         actor: 'cli',
       });
@@ -724,4 +726,19 @@ export function reverseJournalCli(db: AppDatabase, input: ReverseJournalCliInput
     reason: input.reason,
     createdBy: 'cli',
   });
+}
+
+/**
+ * An optional trade discount from an invoice CSV row (issue #393): a
+ * `discountPercent` column ("10", "12.5") or a `discount` amount, not both.
+ */
+function csvDiscount(
+  record: Record<string, string>, currency: string, rowNumber: number,
+): { discountBasisPoints?: number; discountMinor?: number } {
+  if (record.discountPercent) {
+    const bp = parsePercentBasisPoints(record.discountPercent);
+    if (bp === null) throw new Error(`Row ${rowNumber}: "${record.discountPercent}" is not a discount percentage.`);
+    return { discountBasisPoints: bp, ...(record.discount ? { discountMinor: parseAmount(record.discount, currency) } : {}) };
+  }
+  return record.discount ? { discountMinor: parseAmount(record.discount, currency) } : {};
 }

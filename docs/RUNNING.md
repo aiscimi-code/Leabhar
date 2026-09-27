@@ -132,7 +132,9 @@ npm run cli -- install-rule-pack [--employee "Name"] [--second-bank-account <cod
 npm run cli -- create-invoice --direction sales|purchase --file invoices.csv
     # one row per invoice/bill; columns: invoiceNumber, date, party (a
     # customer/supplier name or id), description, net, account, vatTreatment,
-    # and optionally dueDate, supplyDate, statedVat, currency, creditNote, reference
+    # and optionally dueDate, supplyDate, statedVat, currency, creditNote, reference,
+    # and a trade discount as discountPercent ("10") or discount (an amount) —
+    # VAT is charged on the net after it (both CSV commands)
 npm run cli -- import-invoices --direction sales|purchase --file invoices.csv
     --account <code> --vat-treatment <code>
     # the intake version (issue #160): also creates a documents row (a real

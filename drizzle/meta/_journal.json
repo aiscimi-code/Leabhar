@@ -148,6 +148,13 @@
       "when": 1790491936304,
       "tag": "0020_customer_terms_contacts",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "6",
+      "when": 1790492341479,
+      "tag": "0021_invoice_line_discounts",
+      "breakpoints": true
     }
   ]
 }

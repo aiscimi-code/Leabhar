@@ -376,6 +376,17 @@ Lines live in `document_lines`, per-rate VAT in `document_vat_totals`, both with
 provenance. The VAT rate for a purchase comes from these confirmed lines — never
 from a bank amount.
 
+### Line discounts (issue #393)
+
+An invoice line may carry a trade discount, as a percentage (basis points,
+rounded half away from zero) or a fixed amount, never both and never more than
+the line. It comes off the net before VAT: an unconditional discount given at
+the time of supply reduces the consideration, so the line's `net_minor`, its VAT
+and the VAT return all use the discounted figure. `undiscounted_net_minor`,
+`discount_basis_points` and `discount_minor` keep what was discounted so the
+invoice can show it. A prompt-payment (settlement) discount is not this: its VAT
+depends on whether it is taken, and it is not modelled.
+
 ### Customer terms (issue #392)
 
 A customer's payment terms give a sales invoice its due date when none is

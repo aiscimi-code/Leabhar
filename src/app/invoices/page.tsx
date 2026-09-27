@@ -112,6 +112,9 @@ export default async function InvoicesPage({ searchParams }: {
               <Field label="Net amount" hint="Excluding VAT.">
                 <Input name="net" required placeholder="0.00" />
               </Field>
+              <Field label="Discount" hint="An amount, or a percentage like 10%. VAT is on the net after it.">
+                <Input name="discount" placeholder="Optional" />
+              </Field>
               <Field label="Currency">
                 <Input name="currency" defaultValue={currency} maxLength={3} />
               </Field>
