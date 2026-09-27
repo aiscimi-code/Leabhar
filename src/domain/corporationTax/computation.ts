@@ -85,8 +85,9 @@ const LINE_PATTERNS: Array<{ pattern: RegExp; suggested: ExpenseChoice; options:
   },
 ];
 
-export type CtSubjectType = 'journal_line' | 'income_account' | 'loss_claim' | 'company_status' | 'personal_status';
+export type CtSubjectType = 'journal_line' | 'income_account' | 'loss_claim' | 'company_status' | 'personal_status' | 'income_tax_loss_claim';
 export type LossClaim = 'carry_forward' | 'claim_396a' | 'claim_396a_396b';
+export type IncomeTaxLossClaim = 'carry_forward' | 'claim_381';
 export type CompanyStatus = 'close_trading' | 'close_service' | 'not_close';
 
 export const LOSS_CLAIMS: Record<LossClaim, string> = {
@@ -101,12 +102,19 @@ export const COMPANY_STATUSES: Record<CompanyStatus, string> = {
   not_close: 'Not a close company: no surcharge',
 };
 
+/** An individual's claim on their own trading loss (TCA Part 12). */
+export const INCOME_TAX_LOSS_CLAIMS: Record<IncomeTaxLossClaim, string> = {
+  carry_forward: 'Carry the loss forward against later profits of the same trade (s.382), which is done automatically',
+  claim_381: 'Claim it against other income of the same year (s.381); the amount set against it is the person\'s own figure',
+};
+
 const CHOICES: Record<CtSubjectType, string[]> = {
   journal_line: Object.keys(EXPENSE_CHOICES),
   income_account: Object.keys(INCOME_CASES),
   loss_claim: Object.keys(LOSS_CLAIMS),
   company_status: Object.keys(COMPANY_STATUSES),
   personal_status: ['single', 'single_parent', 'married_one_income', 'married_two_incomes'],
+  income_tax_loss_claim: Object.keys(INCOME_TAX_LOSS_CLAIMS),
 };
 
 export interface CtSource { entityType: 'account' | 'journal_line' | 'fixed_asset'; entityId: string; label: string; amountMinor: number }
@@ -132,6 +140,8 @@ export interface CtPendingDecision {
   reason: string;
   /** The decision on record, if any (then this is not pending). */
   decided: string | null;
+  /** The amount recorded with the decision, where the books cannot know it (an s.381 claim). */
+  decidedAmountMinor?: number | null;
 }
 
 export interface CtComputation {
@@ -217,11 +227,26 @@ export class CtDecisionError extends Error {}
 export function recordCtDecision(db: AppDatabase, params: {
   companyId: string; subjectType: CtSubjectType; subjectId: string; periodEnd: string;
   choice: string; decidedBy: string; note?: string;
+  /**
+   * The amount the claim uses, for an income tax loss claimed against other
+   * income (s.381): the person's own figure, as their other income is not in
+   * these books.
+   */
+  amountMinor?: number;
 }): string {
   if (!params.decidedBy.trim()) throw new CtDecisionError('Say who is deciding: a tax treatment choice is a person\'s decision.');
   const allowed = CHOICES[params.subjectType];
   if (!allowed.includes(params.choice)) {
     throw new CtDecisionError(`"${params.choice}" is not a choice here. Choose one of: ${allowed.join(', ')}.`);
+  }
+  let amountMinor = params.amountMinor ?? null;
+  if (params.subjectType === 'income_tax_loss_claim' && params.choice === 'claim_381') {
+    if (amountMinor === null || !Number.isInteger(amountMinor) || amountMinor <= 0) {
+      throw new CtDecisionError('Say how much of the loss is set against other income (s.381): '
+        + 'a whole number of cents, more than zero.');
+    }
+  } else {
+    amountMinor = null;
   }
   const id = ids.ctDecision();
   db.transaction((tx) => {
@@ -230,7 +255,7 @@ export function recordCtDecision(db: AppDatabase, params: {
     tx.insert(ctDecisions).values({
       id, companyId: params.companyId, subjectType: params.subjectType, subjectId: params.subjectId,
       periodEnd: params.periodEnd, choice: params.choice, decidedBy: params.decidedBy, decidedAt: nowIso(),
-      note: params.note ?? null,
+      note: params.note ?? null, amountMinor,
     }).run();
     if (previous) tx.update(ctDecisions).set({ supersededById: id }).where(eq(ctDecisions.id, previous.id)).run();
   });
@@ -241,15 +266,25 @@ export interface CapitalAllowancesResult { lines: CtLine[]; findings: string[] }
 
 const daysBetween = (a: string, b: string) => Math.round((Date.parse(b) - Date.parse(a)) / 86_400_000);
 
+/** The allowances already made for an asset before this period: how many claims, and their total. */
+export interface AssetClaimsMade { claims: number; made: number }
+
 /**
  * Wear and tear (s.284), balancing allowances and charges (s.288) from the
  * fixed asset register. An asset's configured rate is used; a rate other
  * than the s.284 standard is flagged, and 100% in one year is treated as a
  * s.285A claim that needs the SEAI list confirmed.
+ *
+ * Claims are counted in accounting periods, which is how corporation tax
+ * works. Income tax, whose allowances are given for each year of assessment
+ * against its basis period (s.284(1), (2)(b)), passes `claimsBefore` instead:
+ * the allowances actually made in earlier years of assessment, which can
+ * differ from the accounting-period count in a commencement, cessation or
+ * account-date-change year.
  */
 export function capitalAllowances(
   db: AppDatabase,
-  params: { companyId: string; from: string; to: string },
+  params: { companyId: string; from: string; to: string; claimsBefore?: (asset: typeof fixedAssets.$inferSelect) => AssetClaimsMade },
   figures?: FigureAudit,
 ): CapitalAllowancesResult {
   const { companyId, from, to } = params;
@@ -265,7 +300,7 @@ export function capitalAllowances(
   const yearDays = daysBetween(`${Number(to.slice(0, 4)) - 1}${to.slice(4)}`, to);
   const periodDays = daysBetween(from, to) + 1;
   const scale = periodDays < yearDays ? { num: periodDays, den: yearDays } : null;
-  if (scale) findings.push(`The accounting period is ${periodDays} days: wear and tear is scaled by ${periodDays}/${yearDays} (s.284(2)(b)).`);
+  if (scale) findings.push(`The period is ${periodDays} days: wear and tear is scaled by ${periodDays}/${yearDays} (s.284(2)(b)).`);
 
   const wearAndTear: CtSource[] = [];
   const balancingAllowances: CtSource[] = [];
@@ -283,8 +318,10 @@ export function capitalAllowances(
     const years = asset.capitalAllowanceYears;
     const annual = multiplyRational(cost, rate, 10_000);
     // Claims made in earlier periods (s.292: the amount still unallowed is cost less these).
-    const claimsBefore = Math.max(claimIndex(db, companyId, asset.purchaseDate, to), 0);
-    const madeBefore = Math.min(cost, annual * Math.min(claimsBefore, years));
+    // Income tax supplies its own count, in years of assessment (s.284(2)(b)).
+    const madeBeforeIn = params.claimsBefore ? params.claimsBefore(asset) : null;
+    const claimsBefore = madeBeforeIn ? Math.max(madeBeforeIn.claims, 0) : Math.max(claimIndex(db, companyId, asset.purchaseDate, to), 0);
+    const madeBefore = madeBeforeIn ? Math.min(cost, Math.max(madeBeforeIn.made, 0)) : Math.min(cost, annual * Math.min(claimsBefore, years));
     const isMotor = asset.assetCategory === 'motor_vehicles' || /\b(car|van|vehicle|motor)\b/i.test(`${asset.name} ${asset.description ?? ''}`);
 
     if (asset.disposalDate && asset.disposalDate <= to) {
@@ -385,8 +422,19 @@ export interface CtBase {
   findings: string[];
 }
 
-/** Everything before loss relief, rates and surcharges: one period on its own. */
-export function computeBase(db: AppDatabase, params: { companyId: string; from: string; to: string }, figures?: FigureAudit): CtBase {
+/**
+ * Everything before loss relief, rates and surcharges: one period on its own.
+ *
+ * Income tax excludes the capital allowances here (`excludeCapitalAllowances`):
+ * its allowances are given for each year of assessment against its basis
+ * period (s.284(1)), not apportioned with the accounting periods' profits, so
+ * the run deducts them itself after the basis rules have picked the profits.
+ */
+export function computeBase(
+  db: AppDatabase,
+  params: { companyId: string; from: string; to: string; excludeCapitalAllowances?: boolean },
+  figures?: FigureAudit,
+): CtBase {
   const { companyId, from, to } = params;
   const company = db.select().from(companies).where(eq(companies.id, companyId)).get();
   if (!company) throw new Error(`Company ${companyId} not found.`);
@@ -504,9 +552,11 @@ export function computeBase(db: AppDatabase, params: { companyId: string; from: 
   }
 
   // ---- Capital allowances (Part 9) ----
-  const ca = capitalAllowances(db, { companyId, from, to }, figures);
-  lines.push(...ca.lines);
-  findings.push(...ca.findings);
+  if (!params.excludeCapitalAllowances) {
+    const ca = capitalAllowances(db, { companyId, from, to }, figures);
+    lines.push(...ca.lines);
+    findings.push(...ca.findings);
+  }
 
   const adjustedMinor = accountingProfitMinor + lines.reduce((sum, l) => sum + l.amountMinor, 0);
   const nonTradingIncome = [...nonTrading].map(([incomeCase, b]) => ({ incomeCase, ...b }));

@@ -7,8 +7,10 @@ import type { IncomeTaxComputation } from '@/domain/incomeTax/computation';
 /**
  * Income tax on a sole trader's or partnership's trading profits for the year
  * (issue #212): the basis period, the assessable profit, and each person's
- * income tax, USC and PRSI Class S. Figures come from the domain; nothing is
- * recomputed here.
+ * income tax, USC and PRSI Class S. The capital allowances are given for the
+ * year of assessment (issue #285) and losses are carried forward (s.382) or
+ * claimed (s.381) before the tax is charged. Figures come from the domain;
+ * nothing is recomputed here.
  */
 export function IncomeTaxPanel({ computation: c, currency }: { computation: IncomeTaxComputation; currency: string }) {
   return (
@@ -23,20 +25,36 @@ export function IncomeTaxPanel({ computation: c, currency }: { computation: Inco
           <tbody>
             <tr>
               <td>Basis period {date(c.basis.from)} – {date(c.basis.to)} <Help>{c.basis.rule}</Help></td>
-              <td className="text-right num w-40">{accountingMoney(c.assessableProfitMinor + c.thirdYearReliefMinor, currency)}</td>
+              <td className="text-right num w-40">{accountingMoney(c.basisProfitMinor + c.thirdYearReliefMinor, currency)}</td>
             </tr>
             {c.thirdYearReliefMinor !== 0 && (
               <tr><td className="pl-5">Less second-year excess (s.66(3))</td>
                 <td className="text-right num">{accountingMoney(-c.thirdYearReliefMinor, currency)}</td></tr>
             )}
+            {c.capitalAllowancesMinor !== 0 && (
+              <tr>
+                <td className="pl-5">
+                  Capital allowances for the year of assessment (s.284)
+                  <Help>
+                    Given for the year of assessment against its basis period, not apportioned with the profits.
+                    {c.capitalAllowanceLines.map((l) => `${l.label}: ${l.sources.map((s) => s.label).join(', ')}.`).join(' ')}
+                  </Help>
+                </td>
+                <td className="text-right num">{accountingMoney(c.capitalAllowancesMinor, currency)}</td>
+              </tr>
+            )}
             <tr className="font-semibold">
-              <td className="border-t border-line-strong">Assessable trading profit</td>
+              <td className="border-t border-line-strong">{c.tradingLossMinor ? 'Trading loss for the year' : 'Assessable trading profit'}</td>
               <td className="text-right num border-t border-line-strong">{accountingMoney(c.assessableProfitMinor, currency)}</td>
             </tr>
             {c.individuals.map((i) => (
               <tr key={i.partnerId ?? 'owner'}>
                 <td className="pl-5">
-                  {i.name}: profit {accountingMoney(i.profitMinor, currency)}; income tax {accountingMoney(i.incomeTaxMinor, currency)},
+                  {i.name}: profit {accountingMoney(i.profitMinor, currency)}
+                  {i.broughtForwardLossUsedMinor !== 0 && <>; losses brought forward used {accountingMoney(-i.broughtForwardLossUsedMinor, currency)}</>}
+                  {i.claimedAgainstOtherIncomeMinor !== 0 && <>; claimed against other income (s.381) {accountingMoney(-i.claimedAgainstOtherIncomeMinor, currency)}</>}
+                  {i.lossCarriedForwardMinor !== 0 && <>; {accountingMoney(i.lossCarriedForwardMinor, currency)} carried forward (s.382)</>}
+                  ; income tax {accountingMoney(i.incomeTaxMinor, currency)},
                   USC {accountingMoney(i.uscMinor, currency)}, PRSI {i.prsiMinor === null ? 'not computed' : accountingMoney(i.prsiMinor, currency)}
                   <Help>{[...i.incomeTax, ...i.usc].map((l) => `${l.label}: ${accountingMoney(l.amountMinor, currency)}`).join('; ')}</Help>
                 </td>

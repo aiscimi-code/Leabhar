@@ -11,6 +11,7 @@ import { systemAccountId } from '../config/setup';
 import type { IsoDate } from '../dates';
 import { computeCorporationTax, type CtComputation } from '../corporationTax/computation';
 import { computeIncomeTax, type IncomeTaxComputation } from '../incomeTax/computation';
+import { form11From, type Form11 } from '../incomeTax/form11';
 import { RejectedRuleError } from '../rules/ruleFigures';
 
 /**
@@ -63,6 +64,8 @@ export interface YearEndPack {
   taxComputation: TaxComputation | null;
   /** Income tax for the year the period ends in, for a sole trader or partnership (issue #212). */
   incomeTax: IncomeTaxComputation | null;
+  /** Form 11 preparation from that computation: the form layout, the self-assessment reconciliation and the tax provision (issue #312). */
+  form11: Form11 | null;
   fixedAssets: Array<{
     id: string; name: string; purchaseDate: string; supplierName: string | null;
     costMinor: number; accumulatedDepreciationMinor: number; netBookValueMinor: number;
@@ -132,6 +135,8 @@ export function yearEndPack(
   };
   const incomeTax = isCompany ? null
     : unlessRejected(() => computeIncomeTax(db, { companyId: params.companyId, year: Number(params.to.slice(0, 4)) }));
+  // The Form 11 is the same computation laid out as the return asks for it (issue #312).
+  const form11 = incomeTax ? form11From(incomeTax) : null;
   const ct = isCompany ? unlessRejected(() => computeCorporationTax(db, { companyId: params.companyId, from: params.from, to: params.to })) : null;
   const describe = (c: CtComputation['lines'][number]) => [
     c.explanation,
@@ -305,6 +310,7 @@ export function yearEndPack(
     balanceSheet: bs,
     taxComputation,
     incomeTax,
+    form11,
     fixedAssets: assets,
     directorsAccount: { balanceMinor: directorsBalance, note: directorsNote },
     vatPeriods: vatSummary,
