@@ -420,7 +420,7 @@ describe('accounting periods and allowances (#488, #491, #495)', () => {
       disposalDate: '2025-06-01', disposalProceedsMinor: 6_000_000,
     }).run();
     postJournalEntry(db, {
-      companyId: old, entryDate: asIsoDate('2024-01-01'), narrative: 'Opening balances', sourceType: 'manual',
+      companyId: old, entryDate: asIsoDate('2024-01-01'), narrative: 'Opening balances', sourceType: 'opening_balance',
       sourceId: 'opening', baseCurrency: 'EUR',
       lines: [
         { accountId: created.accountsByKey['computer_equipment']!, debitMinor: 8_000_000 },
