@@ -7,13 +7,14 @@ import { irishTaxRules } from '@/db/schema';
 import { asIsoDate } from '../dates';
 import { loadStatutoryKnowledgeBase } from './knowledgeBase';
 import { setRuleReviewStatus } from './review';
-import { auditRuleFigures, resolveRuleFigure } from './ruleFigures';
+import { auditRuleFigures, resolveRuleFigure, RejectedRuleError } from './ruleFigures';
 import { CORPORATION_TAX_CURATED_RULES } from './corporationTaxCuration';
 import { INCOME_TAX_CURATED_RULES } from './incomeTaxCuration';
 import { SI_69_2025_CURATED_RULES } from './si692025Curation';
 import { computeCorporationTax, closeCompanySurcharge } from '../corporationTax/computation';
 import { computeIncomeTax } from '../incomeTax/computation';
 import { cashBasisFindings } from '../vat/cashBasis';
+import { yearEndPack } from '../reports/yearEnd';
 import type { AppDatabase } from '@/db';
 
 let db: AppDatabase;
@@ -117,20 +118,28 @@ describe('the computations respect a rule\u2019s review status (issue #282 accep
     expect(c.findings.some((f) => f.includes('no person has reviewed yet'))).toBe(true);
   });
 
-  it('a rejected capital-allowance rate leaves the CT computation working, flagged, on the shipped curation', () => {
+  it('a rejected capital-allowance rate stops the CT computation: a rejected figure is never used (#451)', () => {
     const rule = inForce(companyId, 'ct.wear_and_tear_rate', '2025-12-31')!;
     setRuleReviewStatus(db, { ruleId: rule.id, status: 'rejected', reviewedBy: 'Accountant' });
-    const c = computeCorporationTax(db, { companyId, from: asIsoDate('2025-01-01'), to: asIsoDate('2025-12-31') });
-    expect(c.findings.some((f) => f.includes('ct.wear_and_tear_rate') && f.includes('rejected'))).toBe(true);
-    // The standard rate's rule was approved, so it reports nothing.
-    expect(c.rates.standardBasisPoints).toBe(1250);
-    expect(c.findings.some((f) => f.includes('ct.rate_standard'))).toBe(false);
-    // The close company surcharge still computes, on its own resolved figures.
+    expect(() => computeCorporationTax(db, { companyId, from: asIsoDate('2025-01-01'), to: asIsoDate('2025-12-31') }))
+      .toThrow(RejectedRuleError);
+    expect(() => computeCorporationTax(db, { companyId, from: asIsoDate('2025-01-01'), to: asIsoDate('2025-12-31') }))
+      .toThrow(/ct\.wear_and_tear_rate.*rejected on the rule review screen by Accountant/);
+    // The close company surcharge does not need that figure, so it still computes.
     const surcharge = closeCompanySurcharge(db, {
       companyId, from: '2025-01-01', to: '2025-12-31', status: 'close_trading',
       base: { adjustedMinor: 1_000_000, nonTradingIncomeMinor: 0 }, higherBps: 2500, standardBps: 1250,
     });
     expect(surcharge.surchargeMinor).toBe(0);
+  });
+
+  it('the year-end pack carries no tax computation after a rejection, and says why', () => {
+    // The wear-and-tear rule is still rejected from the test above.
+    const pack = yearEndPack(db, { companyId, from: asIsoDate('2025-01-01'), to: asIsoDate('2025-12-31') });
+    expect(pack.taxComputation).toBeNull();
+    const issue = pack.issues.find((i) => i.title.includes('corporation tax computation was not produced'));
+    expect(issue?.severity).toBe('blocking');
+    expect(issue?.detail).toMatch(/ct\.wear_and_tear_rate/);
   });
 
   it('the cash-basis turnover test reports the review state of its threshold rule', () => {

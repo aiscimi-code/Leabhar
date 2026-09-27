@@ -10,18 +10,20 @@ import {
   CT_RATE_TRADING_RULE_KEY, CT_RATE_HIGHER_RULE_KEY, CORPORATION_TAX_CURATED_RULES,
   nfgCitation,
 } from '../rules/corporationTaxCuration';
-import { auditRuleFigures } from '../rules/ruleFigures';
+import { auditRuleFigures, RejectedRuleError } from '../rules/ruleFigures';
 
 /** A computation's figure audit (see ruleFigures.ts); shared by the functions one computation calls. */
 type FigureAudit = ReturnType<typeof auditRuleFigures>;
 
 /**
- * A figure with the shipped curation constant as an explicit, flagged fallback:
- * a rejected or never-ingested rule never stops this computation silently —
- * the audit's findings say where the figure came from.
+ * A figure for the computation. A rule a person rejected stops the
+ * computation (issue #451): a figure someone said is wrong is never used. A
+ * rule this book has never ingested falls back on the shipped curation
+ * constant, flagged in the audit's findings.
  */
 function figureWithCurationFallback(audit: FigureAudit, ruleKey: string): number {
   const f = audit.figure(ruleKey);
+  if (f.status === 'rejected') throw new RejectedRuleError(f);
   if (f.numericValue !== null) return f.numericValue;
   if (f.curatedValue !== null) return f.curatedValue;
   throw new Error(`No figure for rule "${ruleKey}" from the knowledge base or the shipped curation.`);

@@ -10,11 +10,10 @@
  *
  *   stored, in force, approved or active → the stored rule's value, no finding;
  *   stored, in force, unreviewed          → the stored rule's value, identified in the output;
- *   rejected by a person                  → no value from the knowledge base (the caller decides
- *                                           whether the part is not computed, as the income tax and
- *                                           cash-basis computations do, or whether the shipped
- *                                           curation constant is used as an explicitly flagged
- *                                           fallback, as the corporation tax computation does);
+ *   rejected by a person                  → no value: the part that needs it is not computed
+ *                                           (issue #451). Income tax and the cash-basis test skip
+ *                                           that part; corporation tax, whose figures all feed one
+ *                                           computation, stops with a RejectedRuleError;
  *   no stored rule at all                 → no value from the knowledge base; the shipped curation
  *                                           constant is exposed for the caller to fall back on,
  *                                           flagged as unreviewed in this book.
@@ -57,6 +56,19 @@ export interface ResolvedRuleFigure {
   name: string;
   /** One finding per figure, or null when the figure rests on an approved rule. */
   finding: string | null;
+}
+
+/**
+ * A figure a computation needs was rejected by a person on the rule review
+ * screen (issue #451). The computation stops rather than use a figure someone
+ * said is wrong: it names the rule so the person can re-derive or restore it.
+ */
+export class RejectedRuleError extends Error {
+  constructor(readonly figure: ResolvedRuleFigure) {
+    super(`${figure.finding ?? `Rule ${figure.ruleKey} was rejected.`} The computation that needs it is not produced `
+      + 'until the rule is re-derived or restored on the rule review screen.');
+    this.name = 'RejectedRuleError';
+  }
 }
 
 const REJECTED_FINDING_PREFIX = 'was rejected on the rule review screen';
