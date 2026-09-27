@@ -3,6 +3,7 @@ import type { AppDatabase } from '@/db';
 import {
   suppliers, customers, companyOfficers, shareCapital, bankTransactions,
   documents, fixedAssets, invoices, vatPeriods, taxDeadlines, accounts,
+  expenseRates,
 } from '@/db/schema';
 import { ids } from '@/lib/ids';
 import { createCompany, addBankAccount, systemAccountId } from '@/domain/config/setup';
@@ -15,6 +16,7 @@ import { matchAllUnmatched } from '@/domain/matching/service';
 import { documentReviewValues, confirmDocument, checkDocumentValues } from '@/domain/documents/review';
 import { postDocumentAsInvoice, documentEvidenceLines } from '@/domain/consolidation/postDocument';
 import { settleBankTransaction, settleInvoiceByDirector } from '@/domain/consolidation/settle';
+import { createExpenseClaim, approveExpenseClaim, reimburseExpenseClaim } from '@/domain/expenses/claims';
 import { createRule } from '@/domain/rules/engine';
 import { postJournalEntry } from '@/domain/accounting/journal';
 import { asIsoDate, makeDate } from '@/domain/dates';
@@ -582,6 +584,54 @@ export async function seedDemoCompany(
 
   // 'UNKNOWN COUNTERPARTY' is deliberately left unclassified and unmatched,
   // so the review queue has something real in it.
+
+  // ---- Expense claims (issue #306) ----
+  // Mileage priced from the seeded civil service rate, one claim approved and
+  // reimbursed by a dated payment, one still awaiting approval. A claim claims
+  // no input VAT: it is the no-invoice counterpart of the invoice workflow.
+  const mileageRate = db.select().from(expenseRates)
+    .where(and(eq(expenseRates.companyId, companyId), eq(expenseRates.code, 'car_upto_1200cc_band1')))
+    .get()!;
+  const travelAccount = byCode['6110']!;
+  const reimbursedClaim = createExpenseClaim(db, {
+    companyId, claimant: { officerId: directorId },
+    title: 'Client visits, February',
+    lines: [
+      {
+        lineType: 'mileage', date: makeDate(2025, 2, 12), description: 'Mullingar client meeting',
+        accountId: travelAccount, rateId: mileageRate.id, units: 164,
+      },
+      {
+        lineType: 'subsistence', date: makeDate(2025, 2, 12), description: 'Full-day absence',
+        accountId: travelAccount,
+        rateId: db.select().from(expenseRates)
+          .where(and(eq(expenseRates.companyId, companyId), eq(expenseRates.code, 'day_10_hours_or_more')))
+          .get()!.id,
+        units: 1,
+      },
+    ],
+    actor: 'demo',
+  });
+  approveExpenseClaim(db, { companyId, claimId: reimbursedClaim.claimId, actor: 'demo' });
+  reimburseExpenseClaim(db, {
+    companyId, claimId: reimbursedClaim.claimId, bankAccountId, date: makeDate(2025, 2, 26), actor: 'demo',
+  });
+
+  createExpenseClaim(db, {
+    companyId, claimant: { officerId: directorId },
+    title: 'Conference, March',
+    lines: [
+      {
+        lineType: 'receipt', date: makeDate(2025, 3, 12), description: 'Conference registration',
+        accountId: byCode['6140']!, amountMinor: 29_500, businessUseBasisPoints: 10_000,
+      },
+      {
+        lineType: 'receipt', date: makeDate(2025, 3, 14), description: 'Home broadband',
+        accountId: byCode['6030']!, amountMinor: 5_500, businessUseBasisPoints: 8_000,
+      },
+    ],
+    actor: 'demo',
+  });
 
   // ---- Fixed asset from the capital purchase ----
   const appleTx = find('APPLE STORE');

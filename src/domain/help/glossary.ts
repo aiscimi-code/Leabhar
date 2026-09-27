@@ -161,6 +161,45 @@ export const GLOSSARY_TERMS: GlossaryTermSeed[] = [
     relatedTerms: ['double-entry', 'trial-balance'],
   },
   {
+    term: 'Mileage allowance', slug: 'mileage-allowance', category: 'Expenses',
+    shortDefinition: 'A per-kilometre rate for business use of a director’s or employee’s own car.',
+    longDefinition: 'The civil service motor travel rates are the ceiling Revenue accepts '
+      + 'as tax-free: a rate per kilometre by engine capacity and annual distance '
+      + 'travelled, with a reduced rate for travel associated with the job rather '
+      + 'than solely for performing it. Reimbursing more makes the excess taxable '
+      + 'pay; reimbursing less is the employer’s choice.',
+    irishContext: 'The rates in force since 1 September 2022 (Circular 16/2022) are '
+      + 'seeded here as effective-dated configuration, with the Revenue page they '
+      + 'came from recorded on each row. A journey’s kilometres accumulate across '
+      + 'the calendar year, so a claim moves between the distance bands as the '
+      + 'year goes on.',
+    relatedTerms: ['subsistence', 'expense-claim'],
+  },
+  {
+    term: 'Subsistence', slug: 'subsistence', category: 'Expenses',
+    shortDefinition: 'An allowance for meals and accommodation when business travel keeps someone away from their normal place of work.',
+    longDefinition: 'A day allowance covers an absence of five hours or more outside '
+      + 'both home and the normal place of work; an overnight allowance covers an '
+      + 'assignment of up to 24 hours at least 100km away. The overnight rate steps '
+      + 'down after 14 nights and again after the next 14.',
+    irishContext: 'The domestic rates in force since 29 January 2025 (Circular 04/2025) '
+      + 'are seeded here as effective-dated configuration. Subsistence is not a '
+      + 'receipt-based reimbursement: it is a flat allowance paid because the '
+      + 'qualifying absence is evidenced, which is why it claims no input VAT.',
+    relatedTerms: ['mileage-allowance', 'expense-claim'],
+  },
+  {
+    term: 'Expense claim', slug: 'expense-claim', category: 'Expenses',
+    shortDefinition: 'Money a director or member of staff spent personally on the business’s behalf, submitted for approval and reimbursement.',
+    longDefinition: 'A claim is for costs with no supplier invoice behind them — '
+      + 'mileage, subsistence, travel, small receipts. A purchase with an invoice '
+      + 'is confirmed, posted as an invoice and settled instead, because the '
+      + 'invoice is the only proof of input VAT. A line that is only partly '
+      + 'business records the business share as the cost and charges the private '
+      + 'share back to the claimant.',
+    relatedTerms: ['mileage-allowance', 'subsistence', 'directors-current-account'],
+  },
+  {
     term: 'Liability', slug: 'liability', category: 'Accounting',
     shortDefinition: 'Something the company owes.',
     relatedTerms: ['asset', 'creditor'],

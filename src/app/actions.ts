@@ -72,6 +72,13 @@ export async function classifyTransactionAction(formData: FormData): Promise<Act
     // Only when the transaction's own VAT return is locked or filed (issue #226):
     // the date of an open period to make the correction in.
     const correctionDate = formData.get('correctionDate') ? asIsoDate(String(formData.get('correctionDate'))) : undefined;
+    // Business/private apportionment (issue #306): unset or 100 means wholly business.
+    const businessPct = formData.get('businessUsePct');
+    const businessUseBasisPoints = businessPct && String(businessPct).trim() !== ''
+      ? Math.round(Number(businessPct) * 100) : undefined;
+    const privateUseAccountId = formData.get('privateUseAccountId')
+      && String(formData.get('privateUseAccountId')).trim() !== ''
+      ? String(formData.get('privateUseAccountId')) : null;
 
     if (!accountId || !vatTreatmentId) {
       return { ok: false, error: 'Choose both an account and a VAT treatment.' };
@@ -104,6 +111,8 @@ export async function classifyTransactionAction(formData: FormData): Promise<Act
       reclassifyTransaction(db, {
         companyId: company.id, bankTransactionId: transactionId,
         accountId, vatTreatmentId, reason, fxRate, reversalDate: correctionDate,
+        businessUseBasisPoints: businessUseBasisPoints,
+        privateUseAccountId: privateUseAccountId,
         source: 'user', provenanceStatus: 'user_confirmed', actor: 'user',
       });
       revalidatePath('/transactions');
@@ -114,6 +123,8 @@ export async function classifyTransactionAction(formData: FormData): Promise<Act
     classifyTransaction(db, {
       companyId: company.id, bankTransactionId: transactionId,
       accountId, vatTreatmentId, fxRate, vatDeclarationDate: correctionDate,
+      businessUseBasisPoints: businessUseBasisPoints,
+      privateUseAccountId: privateUseAccountId,
       source: 'user', provenanceStatus: 'user_confirmed', actor: 'user',
     });
 
