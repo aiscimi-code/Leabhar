@@ -11,6 +11,10 @@ import { systemAccountId } from '../config/setup';
 import type { IsoDate } from '../dates';
 import { computeCorporationTax, type CtComputation } from '../corporationTax/computation';
 import { computeIncomeTax, type IncomeTaxComputation } from '../incomeTax/computation';
+import {
+  partnerAllocationStatement, form1Firms,
+  type PartnerAllocationStatement, type Form1Firms,
+} from '../partnerships/report';
 import { RejectedRuleError } from '../rules/ruleFigures';
 
 /**
@@ -63,6 +67,15 @@ export interface YearEndPack {
   taxComputation: TaxComputation | null;
   /** Income tax for the year the period ends in, for a sole trader or partnership (issue #212). */
   incomeTax: IncomeTaxComputation | null;
+  /**
+   * For a partnership: how the period's result and the partners' balances
+   * stand per partner, and the Form 1 (Firms) statement (issue #314).
+   * Null for a company or sole trader.
+   */
+  partnership: {
+    allocation: PartnerAllocationStatement;
+    form1: Form1Firms | null;
+  } | null;
   fixedAssets: Array<{
     id: string; name: string; purchaseDate: string; supplierName: string | null;
     costMinor: number; accumulatedDepreciationMinor: number; netBookValueMinor: number;
@@ -151,6 +164,14 @@ export function yearEndPack(
       + ct.findings.join(' '),
   };
 
+  // ---- Partnership: the partners' allocation and Form 1 (Firms) (issue #314) ----
+  const partnership = company.entityType === 'partnership'
+    ? {
+      allocation: partnerAllocationStatement(db, { companyId: params.companyId, from: params.from, to: params.to }),
+      form1: unlessRejected(() => form1Firms(db, { companyId: params.companyId, year: Number(params.to.slice(0, 4)) })),
+    }
+    : null;
+
   // ---- Director's current account ----
   const directorsBalance = accountBalance(db, {
     companyId: params.companyId,
@@ -220,6 +241,17 @@ export function yearEndPack(
       detail: taxNotComputed,
       href: '/rules',
     });
+  }
+
+  if (partnership) {
+    for (const finding of partnership.allocation.findings) {
+      issues.push({
+        severity: 'warning',
+        title: 'Partnership record',
+        detail: finding,
+        href: '/settings/company',
+      });
+    }
   }
 
   if (!bs.balances) {
@@ -305,6 +337,7 @@ export function yearEndPack(
     balanceSheet: bs,
     taxComputation,
     incomeTax,
+    partnership,
     fixedAssets: assets,
     directorsAccount: { balanceMinor: directorsBalance, note: directorsNote },
     vatPeriods: vatSummary,

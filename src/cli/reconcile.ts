@@ -93,6 +93,8 @@ import { buildViesStatement } from '@/domain/vat/vies';
 import { computeCorporationTax, recordCtDecision, type CtSubjectType } from '@/domain/corporationTax/computation';
 import { computeIncomeTax } from '@/domain/incomeTax/computation';
 import { addPartner, setPartnerShare, partnerSharesOn } from '@/domain/config/partners';
+import { recordPartnerLoan } from '@/domain/partnerships/loans';
+import { partnerAllocationStatement, form1Firms } from '@/domain/partnerships/report';
 import { partners, bankAccounts, invoices } from '@/db/schema';
 import { recordManualTransaction, rollbackStatementImport, listStatementImports } from '@/domain/banking/import';
 import { asIsoDate, today } from '@/domain/dates';
@@ -459,6 +461,14 @@ Inspect:
   add-partner --name <n> --share <percent> --joined <date> --by <name> [--precedent] [--ppsn <p>]
   set-partner-share --partner <id> --share <percent> --from <date> --by <name> [--basis <text>]
   partners [--on <date>]                 Partners and the shares in force on a date
+  record-partner-loan --partner <id> --amount <euro> --date <date> --by <name>
+            [--direction advanced|repaid] [--narrative <text>]
+                                         Money a partner lends the firm, or the
+                                          firm repaying them (issue #314)
+  partners-report [--from <date>] [--to <date>]
+                                         Partner allocation statement for a period,
+                                          with the Form 1 (Firms) figures for the
+                                          year it ends in (issue #314)
   ct-decide --subject-type <journal_line|income_account|loss_claim|company_status|personal_status> --subject <id>
             --period-end <date> --choice <choice> --by <name>
                                          Record a treatment the computation suggested
@@ -1738,6 +1748,31 @@ export async function main(argv: string[], options: CliOptions = {}): Promise<nu
           partners: db.select().from(partners).where(eq(partners.companyId, companyId)).all(),
           sharesOn: on,
           shares: partnerSharesOn(db, companyId, on).map((s) => ({ partnerId: s.partner.id, name: s.partner.name, sharePercent: s.shareBasisPoints / 100 })),
+        }, format);
+        return 0;
+      }
+
+      case 'record-partner-loan': {
+        const direction = getFlag(flags, 'direction') ?? 'advanced';
+        if (direction !== 'advanced' && direction !== 'repaid') {
+          throw new Error('--direction is advanced (the partner lends the firm) or repaid (the firm repays them).');
+        }
+        const result = recordPartnerLoan(db, {
+          companyId, partnerId: requireFlag(flags, 'partner'), direction,
+          amountMinor: Math.round(Number(requireFlag(flags, 'amount')) * 100),
+          date: requireFlag(flags, 'date'), recordedBy: requireFlag(flags, 'by'),
+          narrative: getFlag(flags, 'narrative'),
+        });
+        print(result, format);
+        return 0;
+      }
+
+      case 'partners-report': {
+        const to = getFlag(flags, 'to') ?? new Date().toISOString().slice(0, 10);
+        const from = getFlag(flags, 'from') ?? `${to.slice(0, 4)}-01-01`;
+        print({
+          allocation: partnerAllocationStatement(db, { companyId, from: asIsoDate(from), to: asIsoDate(to) }),
+          form1: form1Firms(db, { companyId, year: Number(to.slice(0, 4)) }),
         }, format);
         return 0;
       }
