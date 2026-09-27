@@ -75,14 +75,15 @@ describe('suggestVatTreatment', () => {
     expect(first.rulesBefore).toBe(0);
     // Every rule the curated sources derive (issue #277: keep this a count the
     // curation arrays explain — vat3-rtd 15, eBrief 1, EU 282/2011 7 were added
-    // by #439/#440/#441 on top of the 266 on main, 257 plus #434's 9).
-    expect(first.rulesAfter).toBe(289);
+    // by #439/#440/#441 on top of the 266 on main, 257 plus #434's 9; issue #313
+    // added Part 11's 7 motor car rules and s.959AN(4)'s preliminary tax rule).
+    expect(first.rulesAfter).toBe(297);
   });
 
   it('loading again is a no-op', () => {
     const again = loadStatutoryKnowledgeBase(db, { companyId });
-    expect(again.rulesBefore).toBe(289);
-    expect(again.rulesAfter).toBe(289);
+    expect(again.rulesBefore).toBe(297);
+    expect(again.rulesAfter).toBe(297);
   });
 
   it('US SaaS purchase → non-EU reverse charge, cited to VATCA s.12 with a verifiable slice', () => {
