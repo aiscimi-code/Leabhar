@@ -154,6 +154,19 @@ export function resolveRetentionPolicy(
   return null;
 }
 
+/**
+ * The date from which a document may be disposed of under the policy in force
+ * as of its own date, or null when no policy covers it. The clock runs from
+ * the document's own date, or from when it was filed when it states none.
+ */
+export function retentionEndsOn(
+  db: AppDatabase, companyId: string, doc: Pick<typeof documents.$inferSelect, 'documentDate' | 'uploadedAt' | 'documentType'>,
+): { eligibleFrom: IsoDate; retainYears: number } | null {
+  const anchor = (doc.documentDate && isIsoDate(doc.documentDate) ? doc.documentDate : doc.uploadedAt.slice(0, 10)) as IsoDate;
+  const policy = resolveRetentionPolicy(db, { companyId, documentType: doc.documentType, asOf: anchor });
+  return policy ? { eligibleFrom: addYears(anchor, policy.retainYears), retainYears: policy.retainYears } : null;
+}
+
 export interface RetentionStatus {
   asOf: IsoDate;
   /** Documents whose policy has run out, so a person may dispose of them. */

@@ -4,11 +4,12 @@ import { and, eq, ne, inArray } from 'drizzle-orm';
 import type { AppDatabase } from '@/db';
 import {
   documents, documentExtractions, documentLines, documentVatTotals, documentMatches,
-  invoices, auditEvents,
+  invoices, fixedAssets, auditEvents,
 } from '@/db/schema';
 import { ids } from '@/lib/ids';
 import { storageRoot } from './storage';
-import { nowIso } from '../dates';
+import { nowIso, today } from '../dates';
+import { retentionEndsOn } from './retention';
 import { AccountingError } from '../accounting/errors';
 
 /**
@@ -63,6 +64,18 @@ export function documentDependencies(
         ? `Posted as invoice ${invoice.invoiceNumber ?? invoice.id}.`
         : `Posted as invoice ${doc.invoiceId}.`,
     });
+  }
+  // An invoice created with this document as its evidence — how input VAT is
+  // proven (issue #234) — rests on it whether or not the document row
+  // records the invoice back.
+  for (const invoice of db.select({ id: invoices.id, number: invoices.invoiceNumber }).from(invoices)
+    .where(and(eq(invoices.documentId, documentId), eq(invoices.companyId, companyId))).all()) {
+    if (invoice.id === doc.invoiceId) continue;
+    dependencies.push({ what: 'invoice', detail: `It is the evidence for invoice ${invoice.number ?? invoice.id}.` });
+  }
+  for (const asset of db.select({ id: fixedAssets.id, name: fixedAssets.name }).from(fixedAssets)
+    .where(and(eq(fixedAssets.documentId, documentId), eq(fixedAssets.companyId, companyId))).all()) {
+    dependencies.push({ what: 'fixed_asset', detail: `It is the evidence for the fixed asset "${asset.name}".` });
   }
   if (doc.matchedTransactionId) {
     dependencies.push({
@@ -164,6 +177,16 @@ export function deleteDocument(
   if (dependencies.length > 0) {
     throw new DocumentLifecycleError(
       `${doc.originalFilename} cannot be deleted: ${dependencies.map((d) => d.detail).join(' ')}`,
+    );
+  }
+  // Records must be kept for the retention period (the owner's policy; the
+  // statutory minimum is six years, TCA 1997 s.886 and VATCA 2010 s.84).
+  // Deleting is refused until it has run out; archiving stays available.
+  const retention = retentionEndsOn(db, input.companyId, doc);
+  if (retention && retention.eligibleFrom > today()) {
+    throw new DocumentLifecycleError(
+      `${doc.originalFilename} is kept under a ${retention.retainYears}-year retention policy until `
+      + `${retention.eligibleFrom}. It stays archived until then; it cannot be deleted before.`,
     );
   }
   const duplicates = db.select({ id: documents.id }).from(documents)

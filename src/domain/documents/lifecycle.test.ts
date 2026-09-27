@@ -12,6 +12,9 @@ import { confirmDocument, type ReviewedDocumentValues, type ReviewedLine } from 
 import { postDocumentAsInvoice } from '../consolidation/postDocument';
 import { settleBankTransaction } from '../consolidation/settle';
 import { linkDocument } from '../matching/service';
+import { createInvoice } from '../invoicing/invoices';
+import { setRetentionPolicy } from './retention';
+import { asIsoDate } from '../dates';
 import {
   archiveDocument, restoreDocument, deleteDocument, documentDependencies,
   DocumentLifecycleError,
@@ -241,6 +244,32 @@ describe('deleteDocument', () => {
     expect(() => deleteDocument(db, {
       companyId, documentId, actor: 'joe', reason: 'r', storageRootPath: root,
     })).toThrow(/cannot be deleted/);
+  });
+});
+
+describe('evidence recorded elsewhere, and retention', () => {
+  it('refuses to retire the document an invoice was created from', () => {
+    const stored = store('bill.pdf');
+    createInvoice(db, {
+      companyId, direction: 'purchase', invoiceDate: asIsoDate('2025-03-10'), supplierId, documentId: stored.documentId,
+      lines: [{ description: 'Paper', netMinor: 10_000, accountId: byCode['6120']!, vatTreatmentId: tr['IE_STD']! }],
+    });
+    expect(documentDependencies(db, companyId, stored.documentId).map((d) => d.what)).toEqual(['invoice']);
+    expect(() => archiveDocument(db, { companyId, documentId: stored.documentId, actor: 'joe', reason: 'Tidy up' }))
+      .toThrow(/evidence for invoice/);
+  });
+
+  it('refuses to delete a document still inside its retention period, and allows it after', () => {
+    setRetentionPolicy(db, { companyId, appliesTo: 'all', retainYears: 6, effectiveFrom: asIsoDate('2000-01-01'), actor: 'joe' });
+    const kept = store('recent.pdf');
+    archiveDocument(db, { companyId, documentId: kept.documentId, actor: 'joe', reason: 'Filed by mistake' });
+    expect(() => deleteDocument(db, { companyId, documentId: kept.documentId, actor: 'joe', reason: 'Filed by mistake', storageRootPath: root }))
+      .toThrow(/6-year retention policy/);
+    const old = store('old.pdf');
+    db.update(documents).set({ documentDate: '2010-01-01' }).where(eq(documents.id, old.documentId)).run();
+    archiveDocument(db, { companyId, documentId: old.documentId, actor: 'joe', reason: 'Past retention' });
+    expect(deleteDocument(db, { companyId, documentId: old.documentId, actor: 'joe', reason: 'Past retention', storageRootPath: root }).documentId)
+      .toBe(old.documentId);
   });
 });
 

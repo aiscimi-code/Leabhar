@@ -27,7 +27,11 @@ Retirement is two steps, both audited, both with a reason
 2. **Hard delete** (`deleteDocument`) — only on an already-archived document
    that supports nothing and that no other document points at as a duplicate.
    It removes the row and everything read from it, and removes the stored file
-   only when no other row shares the same `storage_path`.
+   only when no other row shares the same `storage_path`. A document still
+   inside the retention period its policy sets (resolved as of its own date)
+   cannot be deleted; it stays archived until the period has run out. The
+   dependencies include an invoice or fixed asset created with the document
+   as its evidence, not only the link recorded on the document row.
 
 Retention (`src/domain/documents/retention.ts`) never deletes anything: it
 resolves an effective-dated policy as of each document's own date and lists
