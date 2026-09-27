@@ -240,6 +240,8 @@ npm run cli -- add-partner --name "A. Byrne" --share 50 --joined 2024-01-01 --by
 npm run cli -- set-partner-share --partner <id> --share 60 --from 2025-07-01 --by "A. Byrne"
 npm run cli -- ct-decide --subject-type journal_line --subject <id> --period-end 2025-12-31 \
   --choice staff_entertainment --by "A. Director"      # record a treatment the computation suggested
+npm run cli -- ct-decide --subject-type income_tax_loss_claim --subject <id> --period-end 2025-12-31 \
+  --choice claim_381 --amount 4,000.00 --by "A. Byrne" # s.381 claim: the amount set against other income
 npm run cli -- list-suppliers                          # every supplier (id, name, country, VAT no.)
 npm run cli -- list-customers                          # every customer (id, name, country, VAT no.)
 

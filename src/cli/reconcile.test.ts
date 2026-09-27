@@ -1745,3 +1745,61 @@ describe('cli supplier statements (#413)', () => {
     expect(JSON.parse(c.stdout.join(''))).toMatchObject({ differenceMinor: 2_700, theirsNotHeld: ['M-9'] });
   });
 });
+
+describe('cli ct-decide (#521)', () => {
+  const decide = async (subjectType: string, choice: string, extra: string[] = []) => {
+    const c = capture();
+    const code = await run(['ct-decide', '--subject-type', subjectType, '--subject', 'subj_1', '--period-end', '2025-12-31',
+      '--choice', choice, '--by', 'Test', ...extra]);
+    c.restore();
+    return { code, stdout: c.stdout.join(''), stderr: c.stderr.join('') };
+  };
+
+  it('records every subject type the year-end screen records', async () => {
+    const { ctDecisions } = await import('@/db/schema');
+    for (const [type, choice] of [
+      ['trading_company', 'trading'], ['basis_election', 'elect'],
+      ['allowance_loss_election', 'decline'], ['income_tax_loss_claim', 'carry_forward'],
+    ] as const) {
+      const result = await decide(type, choice);
+      expect(result.code, result.stderr).toBe(0);
+      const row = db.select().from(ctDecisions).where(eq(ctDecisions.id, JSON.parse(result.stdout).decisionId)).get();
+      expect(row).toMatchObject({ subjectType: type, choice, decidedBy: 'Test' });
+    }
+  });
+
+  it('records the amount of an s.381 claim in minor units, and refuses the claim without one', async () => {
+    const { ctDecisions } = await import('@/db/schema');
+    expect((await decide('income_tax_loss_claim', 'claim_381')).code).not.toBe(0);
+    const result = await decide('income_tax_loss_claim', 'claim_381', ['--amount', '1,234.56']);
+    expect(result.code, result.stderr).toBe(0);
+    const row = db.select().from(ctDecisions).where(eq(ctDecisions.id, JSON.parse(result.stdout).decisionId)).get();
+    expect(row?.amountMinor).toBe(123_456);
+  });
+
+  it('refuses a subject type that does not exist, naming the ones that do', async () => {
+    const result = await decide('vat_treatment', 'x');
+    expect(result.code).not.toBe(0);
+    expect(result.stderr).toContain('allowance_loss_election');
+  });
+});
+
+describe('cli record-partner-loan', () => {
+  it('parses the amount as money, not a float', async () => {
+    const { addPartner } = await import('@/domain/config/partners');
+    const firm = createCompany(db, {
+      legalName: 'Byrne & Walsh', entityType: 'partnership', tradeCommencedOn: '2024-01-01',
+      vatRegistrationStatus: 'registered', seedYears: [2025],
+    });
+    const partnerId = addPartner(db, {
+      companyId: firm.companyId, name: 'Aoife', shareBasisPoints: 10_000, joinedOn: '2024-01-01',
+      recordedBy: 'Aoife', isPrecedentPartner: true,
+    }).id;
+    const c = capture();
+    const code = await main(['record-partner-loan', '--partner', partnerId, '--amount', '1,000.29',
+      '--date', '2025-02-01', '--by', 'Test'], { db, companyId: firm.companyId });
+    c.restore();
+    expect(code, c.stderr.join('')).toBe(0);
+    expect(c.stdout.join('')).toContain('100029');
+  });
+});
