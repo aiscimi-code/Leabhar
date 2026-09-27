@@ -1,0 +1,1 @@
+ALTER TABLE `partners` ADD `loan_account_id` text REFERENCES accounts(id);

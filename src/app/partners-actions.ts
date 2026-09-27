@@ -5,9 +5,13 @@ import { getDb } from '@/db';
 import { requireCompany } from '@/lib/queries';
 import { requireActor, actorName } from '@/lib/session';
 import { addPartner, setPartnerShare } from '@/domain/config/partners';
+import { recordPartnerLoan } from '@/domain/partnerships/loans';
 import type { ActionResult } from './settings-actions';
 
-/** Partners of a partnership and their profit shares (issue #212), recorded by name. */
+/**
+ * Partners of a partnership and their profit shares (issue #212), recorded by
+ * name, and loans between a partner and the firm (issue #314).
+ */
 
 const field = (f: FormData, k: string) => String(f.get(k) ?? '').trim();
 const percentToBp = (v: string) => Math.round(Number(v) * 100);
@@ -39,6 +43,34 @@ export async function setPartnerShareAction(formData: FormData): Promise<ActionR
     });
     revalidatePath('/settings/company');
     return { ok: true, message: 'Share recorded.' };
+  } catch (e) {
+    return fail(e);
+  }
+}
+
+/** Money a partner lends the firm, or the firm repaying them (issue #314). */
+export async function recordPartnerLoanAction(formData: FormData): Promise<ActionResult> {
+  try {
+    await requireActor('config.manage');
+    const company = requireCompany();
+    const direction = field(formData, 'direction') === 'repaid' ? 'repaid' : 'advanced';
+    const amountMinor = Math.round(Number(field(formData, 'amount')) * 100);
+    const result = recordPartnerLoan(getDb(), {
+      companyId: company.id,
+      partnerId: field(formData, 'partnerId'),
+      direction,
+      amountMinor,
+      date: field(formData, 'date'),
+      recordedBy: await actorName(),
+      narrative: field(formData, 'narrative') || undefined,
+    });
+    revalidatePath('/settings/company');
+    return {
+      ok: true,
+      message: direction === 'advanced'
+        ? `Loan recorded: entry ${result.entryNumber}. ${result.partner.name} is now owed ${(result.balanceMinor / 100).toFixed(2)} on their loan account.`
+        : `Repayment recorded: entry ${result.entryNumber}. ${result.partner.name} is now owed ${(result.balanceMinor / 100).toFixed(2)} on their loan account.`,
+    };
   } catch (e) {
     return fail(e);
   }

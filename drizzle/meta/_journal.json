@@ -232,6 +232,13 @@
       "when": 1790511582115,
       "tag": "0032_expected_bills",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "6",
+      "when": 1790513911064,
+      "tag": "0033_partner_loans",
+      "breakpoints": true
     }
   ]
 }
