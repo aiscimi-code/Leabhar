@@ -60,6 +60,7 @@ import { reconciliationStatement } from '@/domain/banking/reconciliationStatemen
 import { salesInvoiceDocument } from '@/domain/invoicing/invoiceDocument';
 import { createInvoice } from '@/domain/invoicing/invoices';
 import { writeOffBadDebt, reverseBadDebtWriteOff } from '@/domain/invoicing/badDebts';
+import { setSupplierTerms } from '@/domain/parties/supplierAccount';
 import {
   overdueInvoices, customerStatement, produceReminderLetter, reminderLetter, receivablesSummary,
 } from '@/domain/invoicing/receivables';
@@ -257,6 +258,8 @@ Books (once induction is done):
   set-customer-terms --customer <id> --actor "Name" [--terms-days 30]
       [--credit-limit <5000.00|none>]  Due dates of new invoices follow the
       terms; going over the limit is flagged, never refused
+  set-supplier-terms --supplier <id> --terms-days <30> --actor "Name"
+      Bills with no due date of their own are due this long after the invoice
   add-contact --customer <id> --name "..." --actor "Name" [--email ...]
       [--role ...] [--phone ...] [--billing]  --billing: invoices go to them
   list-contacts --customer <id>
@@ -1014,6 +1017,15 @@ export async function main(argv: string[], options: CliOptions = {}): Promise<nu
             : parseAmount(limit, db.select({ c: companies.baseCurrency }).from(companies).where(eq(companies.id, companyId)).get()!.c),
         });
         print(customerExposure(db, { companyId, customerId }), format);
+        return 0;
+      }
+
+      case 'set-supplier-terms': {
+        setSupplierTerms(db, {
+          companyId, supplierId: requireFlag(flags, 'supplier'), actor: requireFlag(flags, 'actor'),
+          paymentTermsDays: Number(requireFlag(flags, 'terms-days')), reason: getFlag(flags, 'reason'),
+        });
+        print({ saved: true }, format);
         return 0;
       }
 

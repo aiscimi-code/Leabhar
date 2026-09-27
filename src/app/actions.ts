@@ -13,6 +13,7 @@ import { applyCreditNote, unapplyCreditNote, refundOnAccount } from '@/domain/in
 import { createInvoice } from '@/domain/invoicing/invoices';
 import { writeOffBadDebt, reverseBadDebtWriteOff } from '@/domain/invoicing/badDebts';
 import { produceReminderLetter } from '@/domain/invoicing/receivables';
+import { setSupplierTerms } from '@/domain/parties/supplierAccount';
 import {
   createRecurringInvoice, postDueRecurringInvoices, deactivateRecurringInvoice,
 } from '@/domain/invoicing/recurringInvoices';
@@ -1155,6 +1156,23 @@ export async function produceReminderAction(formData: FormData): Promise<ActionR
     revalidatePath('/receivables');
     revalidatePath(`/customers/${customerId}`);
     return { ok: true, message: `Reminder recorded for ${result.invoices} invoice${result.invoices === 1 ? '' : 's'}. Download it from the customer page.` };
+  } catch (error) {
+    return fail(error);
+  }
+}
+
+/** A supplier's payment terms, for the due date of its bills (issue #410). */
+export async function setSupplierTermsAction(formData: FormData): Promise<ActionResult> {
+  try {
+    await requireActor('parties.manage');
+    const company = requireCompany();
+    const supplierId = String(formData.get('supplierId') ?? '');
+    setSupplierTerms(getDb(), {
+      companyId: company.id, supplierId, actor: await actorName(),
+      paymentTermsDays: Number(String(formData.get('paymentTermsDays') ?? '0')),
+    });
+    revalidatePath(`/suppliers/${supplierId}`);
+    return { ok: true, message: 'Terms saved. They apply to bills posted from now on.' };
   } catch (error) {
     return fail(error);
   }

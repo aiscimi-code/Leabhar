@@ -110,6 +110,8 @@ npm run cli -- add-account --code <code> --name "..."
     [--report-section current_assets|current_liabilities|fixed_assets|
                        revenue|cost_of_sales|operating_expenses|equity]
 npm run cli -- add-customer --name "..." [--country IE] [--default-account <code>]
+npm run cli -- set-supplier-terms --supplier <id> --terms-days 30 --actor "Name"
+    # bills with no due date of their own are due this long after the invoice date
 npm run cli -- set-customer-terms --customer <id> --actor "Name" [--terms-days 30] [--credit-limit <5000.00|none>]
     # New invoices without a due date get one from the terms; going over the
     # credit limit is flagged for review, never refused.

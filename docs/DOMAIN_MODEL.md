@@ -482,6 +482,15 @@ and the VAT return all use the discounted figure. `undiscounted_net_minor`,
 invoice can show it. A prompt-payment (settlement) discount is not this: its VAT
 depends on whether it is taken, and it is not modelled.
 
+### Supplier terms (issue #410)
+
+A supplier's payment terms (`suppliers.default_payment_terms_days`, audited
+when changed) give a bill with no due date of its own one
+(`due_date_source = 'supplier_terms'`); a stated or extracted due date always
+wins. Supplier refunds use the same paths as customers': money we overpaid is
+refunded with `refundOnAccount` on the payment we made (Dr bank / Cr
+creditors), and a supplier credit note is settled by a payment received.
+
 ### Customer terms (issue #392)
 
 A customer's payment terms give a sales invoice its due date when none is

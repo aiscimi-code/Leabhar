@@ -6,6 +6,7 @@ import {
 } from '@/components/primitives';
 import { ActionForm } from '@/components/ActionForm';
 import { saveSupplierAction } from '@/app/settings-actions';
+import { setSupplierTermsAction } from '@/app/actions';
 import { money, date, label } from '@/lib/format';
 import { PartyVatStatus } from '@/components/PartyVatStatus';
 
@@ -56,6 +57,14 @@ export default async function SupplierPage({ params }: { params: Promise<{ id: s
       </Panel>
 
       <PartyVatStatus party={supplier} kind="supplier" />
+
+      <Panel title="Payment terms" description="A bill with no due date of its own is due this many days after its invoice date. 0: none recorded.">
+        <div className="px-4 py-3">
+          <ActionForm action={setSupplierTermsAction} submit="Save terms" inline extra={{ supplierId: supplier.id }}>
+            <Field label="Days"><Input name="paymentTermsDays" type="number" min={0} max={365} defaultValue={supplier.defaultPaymentTermsDays} /></Field>
+          </ActionForm>
+        </div>
+      </Panel>
 
       <Panel title="Profile">
         <table className="ledger">
