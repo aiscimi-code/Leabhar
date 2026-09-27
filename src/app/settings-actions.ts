@@ -787,8 +787,9 @@ export async function recordPaymentAction(formData: FormData): Promise<ActionRes
     revalidatePath('/vat');
 
     const parts = ['Payment recorded.'];
-    if (result.vatReleasedMinor !== 0) {
-      parts.push(`${(result.vatReleasedMinor / 100).toFixed(2)} of VAT became due on this `
+    if (result.vatReleasedBaseMinor !== 0) {
+      // The base-currency release, its currency stated: what the VAT3 shows (issue #503).
+      parts.push(`${(result.vatReleasedBaseMinor / 100).toFixed(2)} ${company.baseCurrency} of VAT became due on this `
         + 'receipt under the cash receipts basis.');
     }
     if (result.fxDifferenceMinor !== 0) {

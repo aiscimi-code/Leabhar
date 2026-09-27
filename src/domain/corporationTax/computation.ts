@@ -239,6 +239,9 @@ export function capitalAllowances(
   const openingClaims = new Map<string, AssetClaimsMade>();
   const findings: string[] = [];
   const standardRate = figureWithCurationFallback(audit, 'ct.wear_and_tear_rate');
+  // The straight-line term follows the rule's rate (issue #490): 12.5% a year
+  // is 8 years, and an edited rule changes both together.
+  const standardYears = 10_000 / standardRate;
   const smallProceeds = figureWithCurationFallback(audit, 'ct.balancing_charge_small_proceeds');
   // s.284(2)(b): a period of less than a year gets that fraction of a year's allowance.
   const yearDays = daysBetween(`${Number(to.slice(0, 4)) - 1}${to.slice(4)}`, to);
@@ -323,7 +326,7 @@ export function capitalAllowances(
           label: `${asset.name}: unallowed ${eur(unallowed)} less proceeds ${eur(proceeds)}${proceeds !== recordedProceeds ? ` (proceeds ${eur(recordedProceeds)} scaled down, s.374(3))` : ''}` });
       } else if (proceeds > unallowed) {
         if (proceeds < smallProceeds) {
-          findings.push(`${asset.name}: proceeds of ${eur(proceeds)} are under €2,000, so no balancing charge (s.288(3B)), unless `
+          findings.push(`${asset.name}: proceeds of ${eur(proceeds)} are under ${eur(smallProceeds)}, so no balancing charge (s.288(3B)), unless `
             + 'the buyer is connected with the company. Confirm who bought it.');
         } else {
           const charge = Math.min(proceeds - unallowed, madeBefore);
@@ -345,8 +348,8 @@ export function capitalAllowances(
       accelerated = true;
       findings.push(`${asset.name} is claimed at 100% in one year: an accelerated allowance (s.285A) is due only for new `
         + 'equipment named on the SEAI energy-efficient list, bought by 31 December 2030. Confirm it is on the list.');
-    } else if (rate !== standardRate || years !== 8) {
-      findings.push(`${asset.name} is claimed at ${rate / 100}% over ${years} years, not the 12.5% over 8 years of s.284(2)(ad). `
+    } else if (rate !== standardRate || years !== standardYears) {
+      findings.push(`${asset.name} is claimed at ${rate / 100}% over ${years} years, not the ${standardRate / 100}% over ${standardYears} years of s.284(2)(ad). `
         + 'Check the basis for the different rate.');
     }
   }
@@ -464,8 +467,9 @@ export function computeBase(
       subjectType: 'income_account', subjectId: r.accountId, description: `${r.code} ${r.name}`, amountMinor: r.signedMinor,
       suggested, decided: decided ?? null,
       options: (Object.keys(INCOME_CASES) as IncomeCase[]).map((c) => ({ choice: c, label: INCOME_CASES[c] })),
-      reason: 'Income outside the trading income accounts: it is trading income taxed at 12.5% only if it arises from '
-        + 'the trade; interest, other miscellaneous income and Irish rents are charged at 25% (s.21A).',
+      reason: 'Income outside the trading income accounts: it is trading income only if it arises from '
+        + 'the trade; interest, other miscellaneous income and Irish rents are charged at the higher rate (s.21A). '
+        + 'The rates print on the computation lines from the rules that state them.',
     });
     if (incomeCase === 'case_i') continue;
     const bucket = nonTrading.get(incomeCase) ?? { amountMinor: 0, sources: [] };
@@ -863,6 +867,8 @@ export function closeCompanySurcharge(db: AppDatabase, params: {
   const investment = Math.max(base.nonTradingIncomeMinor, 0);
   const trading = Math.max(base.adjustedMinor, 0);
   let deii = investment - multiplyRational(investment, params.higherBps, 10_000);
+  // The resolved rates print on the working string, never hard-coded (issue #490).
+  let tradingReductionBps = 0;
   // A trading company — one existing wholly or mainly to trade — gets its
   // distributable investment and estate income reduced (s.434(5A)(b)). That is
   // a facts test, not an income ratio: it is suggested from the split but
@@ -886,7 +892,11 @@ export function closeCompanySurcharge(db: AppDatabase, params: {
       + 'the facts test yet. Whether the company exists wholly or mainly to trade is a facts question one bad trading '
       + 'year can upset: record the choice on the decisions list.');
   }
-  if (tradingCompany) deii -= multiplyRational(deii, rule('ct.trading_company_reduction'), 10_000);
+  if (tradingCompany) {
+    const reduction = rule('ct.trading_company_reduction');
+    deii -= multiplyRational(deii, reduction, 10_000);
+    tradingReductionBps = reduction;
+  }
   const dti = trading - multiplyRational(trading, params.standardBps, 10_000);
   // Distributions are read from the dividends account, resolved by its system
   // key the way every other account the computation addresses is (issue #489).
@@ -921,14 +931,17 @@ export function closeCompanySurcharge(db: AppDatabase, params: {
   if (status === 'not_close') return none('Not a close company: no surcharge.');
 
   if (status === 'close_service') {
-    // s.441(4): 20% on the investment and estate income not distributed, 15% on the rest of the excess.
+    // s.441(4): the surcharge rates print on the working string from the
+    // rules that state them, never hard-coded (issue #490).
+    const surchargeRate = rule('ct.close_company_surcharge');
+    const serviceRate = rule('ct.service_company_surcharge');
     const { total, at20, at15, surchargeMinor } = section441Surcharge(deii, dti, distributions,
-      rule('ct.close_company_surcharge'), rule('ct.service_company_surcharge'));
+      surchargeRate, serviceRate);
     return {
       status, distributableInvestmentIncomeMinor: deii, distributableTradingIncomeMinor: dti, distributionsMinor: distributions,
       surchargeMinor,
       working: `Investment and estate ${eur(deii)} + half of trading ${eur(multiplyRational(dti, 1, 2))} − distributions `
-        + `${eur(distributions)} = ${eur(total)}: ${eur(at20)} at 20% and ${eur(at15)} at 15%.`,
+        + `${eur(distributions)} = ${eur(total)}: ${eur(at20)} at ${surchargeRate / 100}% and ${eur(at15)} at ${serviceRate / 100}%.`,
       citations: [...citations, cite('ct.service_company_definition'), cite('ct.service_company_surcharge'), cite('ct.surcharge_later_period')],
       findings,
     };
@@ -939,14 +952,16 @@ export function closeCompanySurcharge(db: AppDatabase, params: {
   const periodDays = Math.round((Date.parse(params.to) - Date.parse(params.from)) / 86_400_000) + 1;
   const threshold = multiplyRational(rule('ct.close_company_surcharge_de_minimis'), Math.min(periodDays, yearDays), yearDays);
   const excess = Math.max(deii - distributions, 0);
-  const surchargeMinor = section440Surcharge(deii, distributions, threshold,
-    rule('ct.close_company_surcharge'), rule('ct.surcharge_marginal_relief_cap'));
+  const closeRate = rule('ct.close_company_surcharge');
+  const capRate = rule('ct.surcharge_marginal_relief_cap');
+  const surchargeMinor = section440Surcharge(deii, distributions, threshold, closeRate, capRate);
   return {
     status, distributableInvestmentIncomeMinor: deii, distributableTradingIncomeMinor: dti, distributionsMinor: distributions,
     surchargeMinor,
-    working: `Distributable investment and estate income ${eur(deii)}${tradingCompany ? ' (after the 7.5% trading company reduction)' : ''}`
+    working: `Distributable investment and estate income ${eur(deii)}`
+      + `${tradingCompany ? ` (after the ${tradingReductionBps / 100}% trading company reduction)` : ''}`
       + ` − distributions ${eur(distributions)} = ${eur(excess)}; ${excess <= threshold ? `not over ${eur(threshold)}, so no surcharge`
-        : `20%, limited to 80% of the excess over ${eur(threshold)}`}. Charged for the period ending 12 months or more later (s.440(6)).`,
+        : `${closeRate / 100}%, limited to ${capRate / 100}% of the excess over ${eur(threshold)}`}. Charged for the period ending 12 months or more later (s.440(6)).`,
     citations: [...citations, cite('ct.close_company_surcharge'), cite('ct.close_company_surcharge_de_minimis'), cite('ct.surcharge_later_period'),
       ...(tradingCompany ? [cite('ct.trading_company_reduction')] : [])],
     findings,

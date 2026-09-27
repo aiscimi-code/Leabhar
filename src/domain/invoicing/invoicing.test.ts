@@ -483,7 +483,8 @@ describe('cash receipts basis — deferral and release', () => {
       allocations: [{ invoiceId: invoice.invoiceId, allocatedMinor: 123_000 }],
     });
 
-    expect(payment.vatReleasedMinor).toBe(23_000);
+    expect(payment.vatReleasedBaseMinor).toBe(23_000);
+    expect(payment.vatReleasedByCurrency).toEqual([{ currency: 'EUR', minor: 23_000 }]);
     expect(vatFor('Jan–Feb 2025').T1.amountMinor).toBe(0);
     expect(vatFor('Mar–Apr 2025').T1.amountMinor).toBe(23_000);
   });
@@ -507,7 +508,9 @@ describe('cash receipts basis — deferral and release', () => {
       fxRate: { numerator: 10, denominator: 9, source: 'test' },
       allocations: [{ invoiceId: invoice.invoiceId, allocatedMinor: 110_700 }],
     });
-    expect(payment.vatReleasedMinor).toBe(23_000);
+    expect(payment.vatReleasedBaseMinor).toBe(20_700);
+    // The per-currency detail keeps the invoice's own currency.
+    expect(payment.vatReleasedByCurrency).toEqual([{ currency: 'USD', minor: 23_000 }]);
 
     // The release relieves the deferral exactly, and the ledger agrees with
     // the VAT3's base-currency figure.
@@ -515,6 +518,41 @@ describe('cash receipts basis — deferral and release', () => {
     expect(accountBalance(db, { companyId, accountId: acc['vat_on_sales']! })).toBe(20_700);
     expect(accountBalance(db, { companyId, accountId: acc['debtors']! })).toBe(0);
     expect(vatFor('Mar–Apr 2025').T1.amountMinor).toBe(20_700);
+    expect(trialBalance(db, { companyId, asOf: makeDate(2025, 12, 31) }).balanced).toBe(true);
+  });
+
+  // One receipt, two invoice currencies (issue #503): the reported release is
+  // the base-currency VAT the VAT3 shows, never a sum across currencies.
+  it('reports the release in base currency when one receipt settles a USD and an EUR invoice', () => {
+    const dollar = salesInvoice({
+      invoiceNumber: 'INV-2025-002',
+      currency: 'USD',
+      fxRate: { numerator: 9, denominator: 10, source: 'test' },
+    });
+    const euro = salesInvoice({ invoiceNumber: 'INV-2025-003' });
+
+    // $123,000 of gross is €110,700 at the invoice's rate; the payment is
+    // EUR (the base currency), so the USD allocation crosses at 10/9.
+    const payment = recordPayment(db, {
+      companyId, direction: 'received', paymentDate: makeDate(2025, 3, 10),
+      amountMinor: 233_700, currency: 'EUR',
+      fxRate: { numerator: 10, denominator: 9, source: 'test' },
+      allocations: [
+        { invoiceId: dollar.invoiceId, allocatedMinor: 110_700 },
+        { invoiceId: euro.invoiceId, allocatedMinor: 123_000 },
+      ],
+    });
+
+    // $23,000 of VAT is €20,700; the EUR invoice releases €23,000. The base
+    // figure is what the VAT3 shows — not 46,000 of mixed currencies.
+    expect(payment.vatReleasedBaseMinor).toBe(43_700);
+    expect(payment.vatReleasedByCurrency).toEqual([
+      { currency: 'EUR', minor: 23_000 },
+      { currency: 'USD', minor: 23_000 },
+    ]);
+    expect(vatFor('Mar–Apr 2025').T1.amountMinor).toBe(43_700);
+    expect(accountBalance(db, { companyId, accountId: acc['vat_on_sales_deferred']! })).toBe(0);
+    expect(accountBalance(db, { companyId, accountId: acc['vat_on_sales']! })).toBe(43_700);
     expect(trialBalance(db, { companyId, asOf: makeDate(2025, 12, 31) }).balanced).toBe(true);
   });
 
@@ -540,7 +578,7 @@ describe('cash receipts basis — deferral and release', () => {
       amountMinor: 61_500,
       allocations: [{ invoiceId: invoice.invoiceId, allocatedMinor: 61_500 }],
     });
-    expect(first.vatReleasedMinor).toBe(11_500);
+    expect(first.vatReleasedBaseMinor).toBe(11_500);
     expect(first.invoiceStatuses[0]).toMatchObject({
       status: 'part_paid', outstandingMinor: 61_500,
     });
@@ -550,7 +588,7 @@ describe('cash receipts basis — deferral and release', () => {
       amountMinor: 61_500,
       allocations: [{ invoiceId: invoice.invoiceId, allocatedMinor: 61_500 }],
     });
-    expect(second.vatReleasedMinor).toBe(11_500);
+    expect(second.vatReleasedBaseMinor).toBe(11_500);
     expect(second.invoiceStatuses[0]).toMatchObject({ status: 'paid', outstandingMinor: 0 });
 
     // One invoice, two periods, and the halves add back to the whole.
@@ -580,7 +618,7 @@ describe('cash receipts basis — deferral and release', () => {
         amountMinor: part,
         allocations: [{ invoiceId: invoice.invoiceId, allocatedMinor: part }],
       });
-      released += payment.vatReleasedMinor;
+      released += payment.vatReleasedBaseMinor;
       month += 2;
     }
 

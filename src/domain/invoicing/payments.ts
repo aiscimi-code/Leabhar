@@ -88,7 +88,14 @@ export interface RecordedPayment {
   journalEntryId: string;
   allocatedMinor: number;
   unallocatedMinor: number;
-  vatReleasedMinor: number;
+  /**
+   * The output VAT this receipt released, in the base currency: the sum of the
+   * base VAT on the VAT entries the payment creates, which is what the VAT3
+   * shows. Never a sum across invoice currencies (issue #503).
+   */
+  vatReleasedBaseMinor: number;
+  /** The same release per invoice currency: each invoice's VAT stays in its own currency (issue #503). */
+  vatReleasedByCurrency: Array<{ currency: string; minor: number }>;
   vatEntryIds: string[];
   fxDifferenceMinor: number;
   /** The shortfall written off, when `writeOff` was given. */
@@ -424,7 +431,18 @@ function recordPaymentSteps(db: AppDatabase, input: RecordPaymentInput): Recorde
     ? computeVatReleases(db, salesTargets)
     : [];
 
-  const vatReleasedMinor = vatReleases.reduce((s, r) => s + r.vatMinor, 0);
+  // The release is reported per invoice currency, never as a sum across
+  // currencies (issue #503). The base-currency figure — what the VAT3 shows —
+  // is accumulated below from the VAT entries this payment creates.
+  const byCurrency = new Map<string, number>();
+  for (const release of vatReleases) {
+    const invoice = targets.find((t) => t.invoice.id === release.invoiceId)!.invoice;
+    byCurrency.set(invoice.currency, (byCurrency.get(invoice.currency) ?? 0) + release.vatMinor);
+  }
+  const vatReleasedByCurrency = [...byCurrency.entries()]
+    .map(([currency, minor]) => ({ currency, minor }))
+    .sort((a, b) => a.currency.localeCompare(b.currency));
+  let vatReleasedBaseMinor = 0;
 
   // The release journal lines are posted per invoice, in the invoice's own
   // currency at the invoice's booking rate — exactly how the deferral was
@@ -525,6 +543,12 @@ function recordPaymentSteps(db: AppDatabase, input: RecordPaymentInput): Recorde
       notes: `Released by payment on ${input.paymentDate} against invoice ${release.invoiceId}`,
     });
     vatEntryIds.push(...created.entries.map((e) => e.id));
+    // The base-currency release: the sum of the base VAT on the VAT entries
+    // this payment creates (its sales legs), each converted at its own
+    // invoice's booking rate — what the VAT3 shows (issue #503).
+    vatReleasedBaseMinor += created.entries
+      .filter((e) => e.direction === 'sales')
+      .reduce((s, e) => s + e.baseVatMinor, 0);
   }
 
   // ---- Persist ----
@@ -607,15 +631,16 @@ function recordPaymentSteps(db: AppDatabase, input: RecordPaymentInput): Recorde
       newValue: JSON.stringify({
         direction: input.direction, paymentDate: input.paymentDate,
         amountMinor: input.amountMinor, currency,
+        vatReleasedBaseMinor, baseCurrency, vatReleasedByCurrency,
         allocations: allocationDetails.length,
-        vatReleasedMinor, fxDifferenceMinor,
+        fxDifferenceMinor,
         ...(writeOff ? { writtenOffMinor: writeOff.amountMinor, writeOffAccountId: writeOff.accountId } : {}),
       }),
       source: 'user',
       actor: input.actor ?? 'user',
       reason: writeOff
         ? `Shortfall written off: ${writeOff.reason}`
-        : vatReleasedMinor !== 0
+        : vatReleasedByCurrency.some((r) => r.minor !== 0)
           ? 'VAT became due on receipt under the cash receipts basis'
           : null,
       requestId: input.requestId ?? null,
@@ -627,7 +652,8 @@ function recordPaymentSteps(db: AppDatabase, input: RecordPaymentInput): Recorde
     journalEntryId: journal.id,
     allocatedMinor: allocatedTotal,
     unallocatedMinor,
-    vatReleasedMinor,
+    vatReleasedBaseMinor,
+    vatReleasedByCurrency,
     vatEntryIds,
     fxDifferenceMinor,
     writtenOffMinor: writeOff?.amountMinor ?? 0,

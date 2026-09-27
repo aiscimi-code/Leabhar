@@ -211,6 +211,33 @@ describe('the computations respect a rule\u2019s review status (issue #282 accep
     expect(rejected.dates.basis).not.toContain('90%');
   });
 
+  it('the close company surcharge working string follows the rules: an edited rate changes the figure and its label (issue #490)', () => {
+    const book = surchargeTestBook();
+    const compute = (status: 'close_trading' | 'close_service') => closeCompanySurcharge(db, {
+      companyId: book.companyId, from: '2025-01-01', to: '2025-12-31', status,
+      base: { adjustedMinor: 0, nonTradingIncomeMinor: 1_000_000 },
+      higherBps: 2500, standardBps: 1250, distributionsMinor: 0,
+    });
+
+    // The shipped rules state 20% (and 15% for a service company): both the
+    // figure and the working string print them.
+    const first = compute('close_service');
+    expect(first.surchargeMinor).toBe(150_000);
+    expect(first.working).toContain('at 20%');
+    expect(first.working).toContain('at 15%');
+    expect(compute('close_trading').working).toContain('20%, limited to 80%');
+
+    // A person edits the stored rule on the review screen: the surcharge and
+    // its label follow the stored value, not the hard-coded percentage.
+    const rule = inForce(book.companyId, 'ct.close_company_surcharge', '2025-12-31')!;
+    db.update(irishTaxRules).set({ numericValue: 2500 }).where(eq(irishTaxRules.id, rule.id)).run();
+    const edited = compute('close_service');
+    expect(edited.surchargeMinor).toBe(187_500);
+    expect(edited.working).toContain('at 25%');
+    expect(edited.working).not.toContain('at 20%');
+    expect(compute('close_trading').working).toContain('25%, limited to 80%');
+  });
+
   it('the cash-basis turnover test reports the review state of its threshold rule', () => {
     const book = soleTraderBook();
     const findings = cashBasisFindings(db, {
@@ -249,6 +276,18 @@ function preliminaryTaxBook() {
 
 let soleTrader: ReturnType<typeof createCompany> | null = null;
 let cashBasis: ReturnType<typeof createCompany> | null = null;
+let surcharge: ReturnType<typeof createCompany> | null = null;
+
+/** A company book with the KB loaded, for the surcharge labels (issue #490). */
+function surchargeTestBook() {
+  if (!surcharge) {
+    surcharge = createCompany(db, {
+      legalName: 'Surcharge Ltd', entityType: 'company', vatRegistrationStatus: 'registered', seedYears: [2025],
+    });
+    loadStatutoryKnowledgeBase(db, { companyId: surcharge.companyId });
+  }
+  return surcharge;
+}
 
 /** A sole-trader book with the KB loaded and its USC 2% band rejected. */
 function soleTraderBook() {
