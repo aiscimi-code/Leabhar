@@ -376,6 +376,21 @@ Lines live in `document_lines`, per-rate VAT in `document_vat_totals`, both with
 provenance. The VAT rate for a purchase comes from these confirmed lines — never
 from a bank amount.
 
+### Sales invoice document (issue #395)
+
+`salesInvoiceDocument` arranges a posted sales invoice or credit note for
+issue: supplier (the company's name, principal business address or registered
+office, VAT and CRO numbers), customer (with the billing contact), each line
+with any discount, the net and VAT at each rate, and totals — all the posted
+figures, a credit note's stated as printed. It lists the S.I. 639/2010 reg.20
+particulars that are missing (the business's address or VAT number, the
+customer's address, the customer's VAT number for an intra-EU or
+reverse-charge supply, the invoice a credit note credits) and the legend each
+treatment requires. Nothing missing is filled in: the PDF (`renderInvoicePdf`,
+pdf-lib, standard fonts, generated locally) is marked as a draft and lists the
+gaps. The legend wording follows Directive 2006/112/EC Art. 226 and VATCA
+s.16, and should be confirmed by the business's accountant.
+
 ### Recurring sales invoices (issue #394)
 
 A recurring invoice is a template (customer, lines, monthly/quarterly/yearly,

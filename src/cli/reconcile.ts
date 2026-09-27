@@ -57,6 +57,9 @@ import { suggestJournalMatches, linkBankTransactionToJournal } from '@/domain/ba
 import { withdrawMatchRejection } from '@/domain/matching/service';
 import { allocatePaymentOnAccount, paymentsOnAccount } from '@/domain/invoicing/onAccount';
 import { reconciliationStatement } from '@/domain/banking/reconciliationStatement';
+import { salesInvoiceDocument } from '@/domain/invoicing/invoiceDocument';
+import { renderInvoicePdf } from '@/lib/invoicePdf';
+import { writeFileSync } from 'node:fs';
 import {
   createRecurringInvoice, postDueRecurringInvoices, listRecurringInvoices,
 } from '@/domain/invoicing/recurringInvoices';
@@ -257,6 +260,9 @@ Books (once induction is done):
   post-recurring-invoices --actor "Name" [--up-to <date>]
       Raise every due occurrence once; one in a locked period is skipped and flagged
   list-recurring-invoices
+  invoice-pdf --invoice <number|id> --out <file.pdf>
+      The sales invoice or credit note as a PDF; marked DRAFT, with the gaps
+      listed, while a reg.20 particular is missing
   create-invoice --direction sales|purchase --file <invoices.csv>
       One row per invoice/bill. Columns: invoiceNumber, date, party (a
       customer/supplier name or id), description, net, account, vatTreatment,
@@ -1027,6 +1033,14 @@ export async function main(argv: string[], options: CliOptions = {}): Promise<nu
         print(postDueRecurringInvoices(db, {
           companyId, upTo: asIsoDate(getFlag(flags, 'up-to') ?? today()), actor: requireFlag(flags, 'actor'),
         }), format);
+        return 0;
+      }
+
+      case 'invoice-pdf': {
+        const doc = salesInvoiceDocument(db, { companyId, invoiceId: resolveInvoiceId(db, companyId, requireFlag(flags, 'invoice')) });
+        const out = requireFlag(flags, 'out');
+        writeFileSync(out, await renderInvoicePdf(doc));
+        print({ written: out, draft: doc.missing.length > 0, missing: doc.missing }, format);
         return 0;
       }
 
