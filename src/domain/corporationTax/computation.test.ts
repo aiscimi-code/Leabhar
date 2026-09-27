@@ -403,6 +403,38 @@ describe('accounting periods and allowances (#488, #491, #495)', () => {
     expect(charge.sources[0]!.label).toContain('proceeds 60000.00 less unallowed 4958.90');
   });
 
+  it('counts the claims an asset made before the books started, rather than starting it at year 1 (issue #488)', () => {
+    // The machine was bought in 2020; these books start on 1 January 2024.
+    // Allowances for 2020–2024 were made (five years of €10,000), whether or
+    // not these books hold those periods, so disposing of it in 2025 for
+    // €60,000 leaves €30,000 unallowed and a balancing charge of €30,000.
+    // Starting the accumulation at nothing counted only 2024's claim — €70,000
+    // unallowed — and gave a €10,000 balancing ALLOWANCE instead.
+    const created = createCompany(db, { legalName: 'Old Machine Ltd', vatRegistrationStatus: 'registered', seedYears: [2020, 2021, 2022, 2023, 2024, 2025] });
+    const old = created.companyId;
+    db.insert(fixedAssets).values({
+      id: ids.fixedAsset(), companyId: old, name: 'Machine', assetCategory: 'plant_machinery',
+      purchaseDate: '2020-01-01', costMinor: 8_000_000, currency: 'EUR',
+      baseCostMinor: 8_000_000, baseCurrency: 'EUR',
+      capitalAllowanceRateBasisPoints: 1250, capitalAllowanceYears: 8, status: 'active',
+      disposalDate: '2025-06-01', disposalProceedsMinor: 6_000_000,
+    }).run();
+    postJournalEntry(db, {
+      companyId: old, entryDate: asIsoDate('2024-01-01'), narrative: 'Opening balances', sourceType: 'opening_balance',
+      sourceId: 'opening', baseCurrency: 'EUR',
+      lines: [
+        { accountId: created.accountsByKey['computer_equipment']!, debitMinor: 8_000_000 },
+        { accountId: created.accountsByKey['bank_control']!, creditMinor: 8_000_000 },
+      ],
+    });
+
+    const c = computeCorporationTax(db, { companyId: old, from: asIsoDate('2025-01-01'), to: asIsoDate('2025-12-31') });
+    expect(c.lines.find((l) => l.label === 'Deduct: balancing allowances')).toBeUndefined();
+    const charge = c.lines.find((l) => l.label === 'Add: balancing charges')!;
+    expect(charge.amountMinor).toBe(3_000_000);
+    expect(charge.sources[0]!.label).toContain('proceeds 60000.00 less unallowed 30000.00');
+  });
+
   it('counts the purchase-year claim once for a 29 February year end (issue #491)', () => {
     // The purchase period ends 29 February 2024; the next one ends
     // 28 February 2025. Comparing the raw month-day strings put the second
@@ -431,7 +463,10 @@ describe('accounting periods and allowances (#488, #491, #495)', () => {
   it('refuses an accounting period longer than 12 months, rather than capping its thresholds (issue #495)', () => {
     post('4020', 10_000_000, 'Consulting');
     expect(() => computeCorporationTax(db, { companyId, from: asIsoDate('2024-01-01'), to: asIsoDate('2025-03-31') }))
-      .toThrow(/longer than the 12 months TCA s\.955 permits/);
+      .toThrow(/longer than 12 months.*s\.27\(3\)\(a\)/);
+    // One day over is still over: 1 January to 1 January is 12 months and a day.
+    expect(() => computeCorporationTax(db, { companyId, from: asIsoDate('2025-01-01'), to: asIsoDate('2026-01-01') }))
+      .toThrow(/longer than 12 months/);
     // The refusal wrote nothing.
     expect(db.select().from(ctDecisions).all()).toHaveLength(0);
   });
