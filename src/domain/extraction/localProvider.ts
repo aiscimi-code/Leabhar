@@ -154,9 +154,18 @@ export class LocalExtractionProvider implements ExtractionProvider {
     const workingCurrency = currency?.code ?? context.baseCurrency;
 
     // ---- Amounts ----
-    const gross = findLabelledAmount(lines, GROSS_LABELS, workingCurrency);
-    const net = findLabelledAmount(lines, NET_LABELS, workingCurrency);
-    const vat = findLabelledAmount(lines, VAT_LABELS, workingCurrency);
+    // The totals box — the run of short "label amount" rows (Net / VAT /
+    // Total) — is where a document's figures live. A label matched there
+    // outranks the same words appearing anywhere else: a free-text note can
+    // mention a "balance due" without that being the total, and a credit
+    // note totals itself under a label no gross pattern names (issue #276).
+    const totalsBox = findTotalsBox(lines, workingCurrency);
+    const gross = findLabelledAmount(totalsBox, TOTALS_BOX_GROSS_LABELS, workingCurrency)
+      ?? findLabelledAmount(lines, GROSS_LABELS, workingCurrency);
+    const net = findLabelledAmount(totalsBox, NET_LABELS, workingCurrency)
+      ?? findLabelledAmount(lines, NET_LABELS, workingCurrency);
+    const vat = findLabelledAmount(totalsBox, VAT_LABELS, workingCurrency)
+      ?? findLabelledAmount(lines, VAT_LABELS, workingCurrency);
 
     if (gross) fields.grossMinor = gross;
     if (net) fields.netMinor = net;
@@ -332,6 +341,14 @@ const GROSS_LABELS: RegExp[] = [
   /\b(?:total|gesamt|brutto|totaal\s+incl)\b/i,
 ];
 
+/**
+ * A credit note's totals box often carries no "total" wording at all —
+ * "CREDIT (EUR)" is the total. Matched last, only inside the totals box, and
+ * only where the word is not part of "credit note" — elsewhere "credit" is a
+ * card surcharge or credit terms, never the total (issue #276).
+ */
+const TOTALS_BOX_GROSS_LABELS: RegExp[] = [...GROSS_LABELS, /\bcredit\b(?!\s*note)/i];
+
 const NET_LABELS: RegExp[] = [
   /\b(?:sub\s?total|net\s+(?:amount|total)|total\s+(?:excl|ex)[^:]*)\b/i,
   /\b(?:nettobetrag|zwischensumme|netto|montant\s+ht|total\s+ht|subtotaal|imponibile|base\s+imponible)\b/i,
@@ -395,6 +412,33 @@ function detectCurrency(text: string): { code: string; confidence: number; evide
     }
   }
   return null;
+}
+
+/**
+ * The totals box: the last run of consecutive short "label amount" rows —
+ * Net / VAT / Total and their counterparts. A line qualifies when it carries an
+ * amount, some label text and no more than eight words, so a line of the item
+ * table or a free-text note never joins the box. A box needs at least two rows;
+ * a lone total row still matches through the whole-document search, which a
+ * note elsewhere cannot outrank in that case because there is nothing to
+ * outrank it with.
+ */
+function findTotalsBox(lines: string[], currency: string): string[] {
+  const isTotalsRow = (line: string): boolean =>
+    line.split(/\s+/).length <= 8 && /[A-Za-z]/.test(line) && lastAmountIn(line, currency) !== null;
+
+  let best: string[] = [];
+  let run: string[] = [];
+  for (const line of lines) {
+    if (isTotalsRow(line)) {
+      run.push(line);
+    } else {
+      if (run.length >= 2 && run.length >= best.length) best = run;
+      run = [];
+    }
+  }
+  if (run.length >= 2 && run.length >= best.length) best = run;
+  return best;
 }
 
 /** Amounts on the same line as a label, or on the line immediately after it. */

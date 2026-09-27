@@ -56,12 +56,14 @@ export interface CuratedVatScopeRule {
     | '2010 Act 31 s.9' | '2010 Act 31 s.10' | '2010 Act 31 s.35' | 'VATCA 2010 s.30' | '2010 Act 31 s.16' | '2010 Act 31 s.80' | 'VATCA 2010 s.94' | 'VATCA 2010 s.97' | 'VATCA 2010 s.64'
     | 'VATCA 2010 s.43' | 'VATCA 2010 s.87' | 'VATCA 2010 s.88' | 'VATCA 2010 s.89' | '2010 Act 31 s.86'
     | '2010 Act 31 s.59' | '2010 Act 31 s.60' | 'VATCA 2010 s.62' | '2010 Act 31 s.66'
-    | 'VATCA 2010 s.67' | 'VATCA 2010 s.69' | 'VATCA 2010 s.70' | '2010 Act 31 s.61';
+    | 'VATCA 2010 s.67' | 'VATCA 2010 s.69' | 'VATCA 2010 s.70' | '2010 Act 31 s.61'
+    | '2010 Act 31' | '2010 Act 31 s.37' | 'VATCA 2010 s.45' | '2010 Act 31 s.76' | '2010 Act 31 s.92A';
   /** Schedule paragraph or section number, matched against `irish_act_provisions.section_number`. */
   sectionNumber: string;
   ruleKey: string;
   ruleType: IrishRuleType;
-  topic: 'vat_scope';
+  /** `vat_scope` rules surface in every transaction lookup; `vat_return` rules are return-level facts and never do. */
+  topic: 'vat_scope' | 'vat_return';
   name: string;
   statementExcerpt: string;
   conditions: IrishRuleCondition[];
@@ -668,5 +670,37 @@ export const VAT_SCOPE_CURATED_RULES: CuratedVatScopeRule[] = [
     reportingEffect: 'Not reported on the VAT3 return.',
     effectiveFrom: VATCA_COMMENCEMENT,
     interpretationNote: 'PROXY: transfer keywords stand in for the fact that both accounts belong to the company.',
+  },
+  {
+    citation: '2010 Act 31 s.3',
+    sectionNumber: '3',
+    ruleKey: 'vat.outside_scope_grant_subsidy',
+    ruleType: 'other',
+    topic: 'vat_scope',
+    name: 'Outside the scope: grants and subsidies received with no supply in return',
+    statementExcerpt: 'a tax called value-added tax is, subject\nto and in accordance with this Act and regulations, '
+      + 'chargeable, leviable and payable\non the following transactions:',
+    conditions: [
+      {
+        field: 'description', operator: 'matches',
+        value: '\\b(grants?|subsid(y|ies)|subvention)s?\\b|\\b(enterprise ireland|leader|Leader)\\b.{0,30}\\b(funding|grant)\\b',
+      },
+    ],
+    exceptions: [
+      {
+        condition: 'the payment is consideration for goods or services supplied to the payer (a fee dressed as a grant, '
+          + 'or a grant tied to delivering a service)',
+        effect: 'it is a taxable supply and follows the ordinary rules; the agreement decides, not the word "grant"',
+      },
+    ],
+    crossReferences: ['VATCA 2010 s.3(a)–(e)'],
+    treatment: 'OUT_OF_SCOPE',
+    vatEffect: 'A grant or subsidy with no supply of goods or services in return is not consideration within s.3(a), '
+      + 'so no VAT is chargeable on it. It is outside the scope of VAT.',
+    accountingEffect: 'Book to grant income (or against the expenditure it funds); no VAT arises.',
+    reportingEffect: 'Not reported on the VAT3 return.',
+    effectiveFrom: VATCA_COMMENCEMENT,
+    interpretationNote: 'PROXY: grant/subsidy keywords stand in for the s.3 test (nothing was supplied for the '
+      + 'money). Whether anything was supplied in return is not on the line: always confirmed by a person.',
   },
 ];

@@ -3,6 +3,19 @@
 import { useState, useTransition, useRef } from 'react';
 import { uploadDocumentAction, rematchAllAction, scanWatchFolderAction } from '@/app/actions';
 import { Button } from './primitives';
+import { VAULT_DOCUMENT_TYPES, VAULT_TYPE_LABELS } from '@/domain/documents/types';
+
+/**
+ * The upload confirmation. A vault type is filed as what the person says it is
+ * (issue #427); anything else is read and waits for confirmation.
+ */
+function resultText(stored: number, documentType: string): string {
+  if (documentType !== 'auto') {
+    const what = VAULT_TYPE_LABELS[documentType as keyof typeof VAULT_TYPE_LABELS].toLowerCase();
+    return `${stored} ${what} ${stored === 1 ? 'document' : 'documents'} filed.`;
+  }
+  return `${stored} document${stored === 1 ? '' : 's'} stored and read.`;
+}
 
 export function UploadForm() {
   const [pending, startTransition] = useTransition();
@@ -23,6 +36,7 @@ export function UploadForm() {
         }
         // One file per request: a batch sent as a single Server Action body
         // hits the body size limit and fails the whole upload.
+        const documentType = String(formData.get('documentType') ?? 'auto');
         startTransition(async () => {
           let stored = 0;
           const failures: string[] = [];
@@ -31,6 +45,7 @@ export function UploadForm() {
             setProgress(`Reading ${index + 1} of ${files.length}…`);
             const single = new FormData();
             single.append('files', file);
+            if (documentType !== 'auto') single.append('documentType', documentType);
             const result = await uploadDocumentAction(single);
             if (result.ok) {
               stored += 1;
@@ -51,7 +66,7 @@ export function UploadForm() {
           } else {
             setMessage({
               ok: true,
-              text: `${stored} document${stored === 1 ? '' : 's'} stored and read.`,
+              text: resultText(stored, documentType),
             });
           }
         });
@@ -65,6 +80,18 @@ export function UploadForm() {
           file:border-line-strong file:bg-surface file:text-ink file:text-[12px]
           file:font-medium file:cursor-pointer"
       />
+      <label className="flex items-center gap-1.5 text-[12px] text-ink-muted">
+        File as
+        <select
+          name="documentType" defaultValue="auto"
+          className="border border-line-strong rounded px-2 py-1 text-[12px]"
+        >
+          <option value="auto">Read it for me (invoice, receipt, statement…)</option>
+          {VAULT_DOCUMENT_TYPES.map((type) => (
+            <option key={type} value={type}>{VAULT_TYPE_LABELS[type]}</option>
+          ))}
+        </select>
+      </label>
       <Button type="submit" variant="primary" disabled={pending}>
         {pending ? (progress ?? 'Reading…') : 'Upload and read'}
       </Button>

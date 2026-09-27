@@ -58,6 +58,7 @@ question; `permissions.test.ts` pins every cell.
 | `audit.read` | owner, director, accountant, auditor |
 | `reports.export` | owner, director, accountant, bookkeeper, farm_manager, auditor |
 | `documents.ingest` | owner, director, accountant, bookkeeper, employee, farm_manager |
+| `documents.manage` | owner, director, accountant |
 | `banking.import` | owner, director, accountant, bookkeeper, farm_manager |
 | `banking.reconcile` | owner, director, accountant, bookkeeper, farm_manager |
 | `transactions.classify` | owner, director, accountant, bookkeeper, farm_manager |

@@ -179,7 +179,8 @@ export function auditRuleFigures(
     for (const f of all.filter((x) => x.status === 'rejected')) out.push(f.finding!);
     const unreviewed = all.filter((x) => x.status === 'unreviewed');
     if (unreviewed.length) {
-      out.push(`These figures rest on rules no person has reviewed yet (status ${unreviewed[0]!.reviewStatus}): `
+      const statuses = [...new Set(unreviewed.map((x) => x.reviewStatus))].join(', ');
+      out.push(`These figures rest on rules no person has reviewed yet (status ${statuses}): `
         + `${[...new Set(unreviewed.map((x) => x.ruleKey))].join(', ')}.`);
     }
     const curationOnly = all.filter((x) => x.status === 'curation_only');

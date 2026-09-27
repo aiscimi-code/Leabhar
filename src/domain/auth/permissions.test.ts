@@ -22,6 +22,7 @@ const EXPECTED: Record<Action, readonly Role[]> = {
   'audit.read': ['owner', 'director', 'accountant', 'auditor'],
   'reports.export': ['owner', 'director', 'accountant', 'bookkeeper', 'farm_manager', 'auditor'],
   'documents.ingest': ['owner', 'director', 'accountant', 'bookkeeper', 'employee', 'farm_manager'],
+  'documents.manage': ['owner', 'director', 'accountant'],
   'banking.import': ['owner', 'director', 'accountant', 'bookkeeper', 'farm_manager'],
   'banking.reconcile': ['owner', 'director', 'accountant', 'bookkeeper', 'farm_manager'],
   'transactions.classify': ['owner', 'director', 'accountant', 'bookkeeper', 'farm_manager'],
@@ -31,6 +32,9 @@ const EXPECTED: Record<Action, readonly Role[]> = {
   'documents.review': ['owner', 'director', 'accountant', 'bookkeeper', 'farm_manager'],
   'documents.post': ['owner', 'director', 'accountant', 'bookkeeper', 'farm_manager'],
   'invoices.manage': ['owner', 'director', 'accountant', 'bookkeeper', 'farm_manager'],
+  'expenses.submit': ['owner', 'director', 'accountant', 'bookkeeper', 'employee', 'farm_manager'],
+  'expenses.approve': ['owner', 'director', 'accountant', 'bookkeeper'],
+  'expenses.reimburse': ['owner', 'director', 'accountant', 'bookkeeper'],
   'journals.post': ['owner', 'director', 'accountant', 'bookkeeper'],
   'vat.file': ['owner', 'director', 'accountant'],
   'config.manage': ['owner', 'director', 'accountant'],
@@ -78,9 +82,10 @@ describe('permission matrix', () => {
     }
   });
 
-  it('lets an employee submit documents and change nothing else', () => {
+  it('lets an employee submit documents and expense claims and change nothing else', () => {
     for (const action of ACTIONS) {
-      const expected = action === 'books.read' || action === 'documents.ingest';
+      const expected = action === 'books.read' || action === 'documents.ingest'
+        || action === 'expenses.submit';
       expect(can('employee', action), `employee ${action}`).toBe(expected);
     }
   });

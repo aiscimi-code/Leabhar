@@ -120,11 +120,13 @@ export default async function FilingPackPage({ params }: {
             <thead>
               <tr>
                 <th className="w-24">Tax point</th>
+                <th className="w-16">Journal</th>
                 <th>Counterparty</th>
                 <th>Treatment</th>
                 <th className="w-16 text-right">Rate</th>
                 <th className="w-28 text-right">Net</th>
                 <th className="w-28 text-right">VAT</th>
+                <th>Classified by</th>
                 <th className="w-24">Document</th>
               </tr>
             </thead>
@@ -132,6 +134,9 @@ export default async function FilingPackPage({ params }: {
               {section.rows.map((row) => (
                 <tr key={`${section.box}-${row.entryId}`}>
                   <td className="num !text-left">{date(row.taxPointDate)}</td>
+                  <td className="num !text-left" title={row.journalNarrative ?? undefined}>
+                    {row.journalEntryId ? `#${row.journalEntryNumber ?? '—'}` : '—'}
+                  </td>
                   <td>
                     {row.bankTransactionId ? (
                       <Link href={`/transactions/${row.bankTransactionId}`}
@@ -149,7 +154,15 @@ export default async function FilingPackPage({ params }: {
                   <td className="text-right num">
                     {money(section.box === 'T2' ? row.baseRecoverableVatMinor : row.baseVatMinor, currency)}
                   </td>
+                  <td title={row.treatmentSourceNote ?? undefined}>
+                    {row.ruleId ? row.ruleName : <span className="text-ink-faint">No rule</span>}
+                  </td>
                   <td>
+                    {row.invoiceId && (
+                      <Link href={`/invoices/${row.invoiceId}`} className="mr-1.5">
+                        <Badge tone="accent">Invoice</Badge>
+                      </Link>
+                    )}
                     {row.documentId ? (
                       <Link href={`/documents/${row.documentId}`}>
                         <Badge tone="positive">Attached</Badge>

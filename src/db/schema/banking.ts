@@ -151,6 +151,16 @@ export const bankTransactions = sqliteTable('bank_transactions', {
   /** Which rule, if any, produced the current classification. */
   appliedRuleId: text('applied_rule_id'),
 
+  /**
+   * Business/private apportionment (issue #306). Null means the whole amount
+   * is business. When set, `business_use_basis_points` of the cost is the
+   * expense and the rest is charged to `private_use_account_id` — the
+   * director's current account, or drawings for a sole trader — because a
+   * private share is not a cost of the business.
+   */
+  businessUseBasisPoints: integer('business_use_basis_points'),
+  privateUseAccountId: text('private_use_account_id').references(() => accounts.id),
+
   isDuplicateOf: text('is_duplicate_of'),
   duplicateConfirmed: integer('duplicate_confirmed', { mode: 'boolean' })
     .notNull().default(false),

@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { documentList, activeCompany } from '@/lib/queries';
 import { Page, Panel, Badge, ProvenanceBadge, Empty, Figure } from '@/components/primitives';
 import { UploadForm, RematchButton, WatchFolderButton } from '@/components/DocumentActions';
+import { ALL_DOCUMENT_TYPES } from '@/domain/documents/types';
 import { money, date, label } from '@/lib/format';
 
 export const dynamic = 'force-dynamic';
@@ -11,7 +12,11 @@ export default async function DocumentsPage({ searchParams }: {
   searchParams: Promise<Record<string, string | undefined>>;
 }) {
   const params = await searchParams;
-  const rows = documentList({ status: params['status'], review: params['review'], search: params['q'] });
+  const showArchived = params['archived'] === '1';
+  const rows = documentList({
+    status: params['status'], review: params['review'], search: params['q'],
+    type: params['type'], archived: showArchived,
+  });
   const company = activeCompany();
   const hasWatchPath = !!(company?.documentWatchPath);
 
@@ -27,9 +32,10 @@ export default async function DocumentsPage({ searchParams }: {
     >
       <Panel
         title="Add documents"
-        description="Invoices, receipts, credit notes and statements. Each one is read, then waits
-          for you to check the details against the page and confirm them. Nothing is ever written
-          back to the file you upload."
+        description="Invoices, receipts, credit notes and statements are read and wait for you
+          to check the details against the page. Contracts, Revenue documents, grant letters,
+          payslips and company documents are filed as the type you declare. Nothing is ever
+          written back to the file you upload."
       >
         <div className="px-4 py-3 space-y-3">
           <UploadForm />
@@ -62,6 +68,18 @@ export default async function DocumentsPage({ searchParams }: {
           </div>
           <div>
             <label className="block text-[10px] uppercase tracking-wide font-semibold text-ink-faint mb-0.5">
+              Type
+            </label>
+            <select name="type" defaultValue={params['type'] ?? 'all'}
+              className="border border-line-strong rounded px-2 py-1 text-[12px]">
+              <option value="all">All</option>
+              {ALL_DOCUMENT_TYPES.map((type) => (
+                <option key={type} value={type}>{label(type)}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-[10px] uppercase tracking-wide font-semibold text-ink-faint mb-0.5">
               Details
             </label>
             <select name="review" defaultValue={params['review'] ?? 'all'}
@@ -76,6 +94,11 @@ export default async function DocumentsPage({ searchParams }: {
             className="px-2.5 py-1 rounded border border-accent bg-accent text-white text-[12px] font-medium">
             Apply
           </button>
+          {showArchived && <input type="hidden" name="archived" value="1" />}
+          <Link href={showArchived ? '/documents' : '/documents?archived=1'}
+            className="text-[12px] text-ink-muted hover:underline px-1">
+            {showArchived ? 'Working documents' : 'Show archived'}
+          </Link>
           <Link href="/documents" className="text-[12px] text-ink-muted hover:underline px-1">Clear</Link>
         </form>
 

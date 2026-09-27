@@ -33,6 +33,12 @@ export const documents = sqliteTable('documents', {
       // A till Z-report or daily takings sheet: the evidence for sales made
       // without an invoice (issue #203).
       'sales_record', 'proforma',
+      // A grant letter or grant agreement: the evidence for grant income and
+      // for any conditions attached to it.
+      'grant_document',
+      // Payslips, P60s/P45s, the employer's PAYE submissions: the evidence
+      // behind payroll and ERR once those epics land (#315, #316).
+      'payroll_document',
       'other', 'unknown',
     ],
   }).notNull().default('unknown'),
@@ -273,4 +279,41 @@ export const documentMatches = sqliteTable('document_matches', {
   index('doc_matches_document_idx').on(t.documentId),
   index('doc_matches_transaction_idx').on(t.bankTransactionId),
   index('doc_matches_decision_idx').on(t.companyId, t.decision),
+]);
+
+/**
+ * How long each kind of document is kept before it may be disposed of
+ * (issue #429). Effective-dated like every other configuration (§6): a new
+ * policy supersedes the previous one from its date and the superseded row is
+ * kept, so a document always resolves the policy that was in force as of its
+ * own date.
+ *
+ * A policy never disposes of anything on its own (§7). Expiry is surfaced on
+ * the retention screen; a person decides, and disposal is an explicit archive
+ * with a reason.
+ */
+export const documentRetentionPolicies = sqliteTable('document_retention_policies', {
+  id: text('id').primaryKey(),
+  companyId: text('company_id').notNull().references(() => companies.id),
+
+  /**
+   * Which documents the policy applies to: `'all'`, or one `document_type`
+   * value. Resolution picks the type-specific policy in force when there is
+   * one, and falls back to `'all'`.
+   */
+  appliesTo: text('applies_to').notNull(),
+  /** Whole years a document is kept, from its own date. */
+  retainYears: integer('retain_years').notNull(),
+
+  /** In force from this date (inclusive). */
+  effectiveFrom: text('effective_from').notNull(),
+  /** Set on the row a later policy supersedes: in force strictly before this date. */
+  supersededAt: text('superseded_at'),
+  supersededById: text('superseded_by_id'),
+
+  note: text('note'),
+  createdBy: text('created_by').notNull().default('user'),
+  ...timestamps,
+}, (t) => [
+  index('retention_policies_company_idx').on(t.companyId, t.appliesTo, t.effectiveFrom),
 ]);

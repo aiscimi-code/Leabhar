@@ -92,7 +92,10 @@ describe('rule coverage matrix', () => {
     });
 
     it('a deferred row names no issue, or a not_applicable row gives no reason', () => {
-      const m = withRows((rows) => rows.map((r) => (r.id === 'vatca:s5' ? { ...r, issue: undefined }
+      // vatca:s5 is no longer itself deferred (issue #206 closed its row), so
+      // the deferred case is made here from whatever the live status is.
+      const m = withRows((rows) => rows.map((r) => (r.id === 'vatca:s5'
+        ? { ...r, status: 'deferred', reason: 'Test deferral.', issue: undefined }
         : r.id === 'vatca:s1' ? { ...r, reason: '' } : r)));
       const { errors } = check(m);
       expect(errors).toContain('vatca:s5: deferred without an issue number');

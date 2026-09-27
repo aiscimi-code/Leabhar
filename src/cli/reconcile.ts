@@ -230,8 +230,9 @@ Induction (no company/bank/chart yet):
       [--taxable-status taxable_person|non_taxable_person]  (VATCA s.34: business or consumer)
   ensure-default-accounts                Add any default chart accounts
       introduced since this company was created (e.g. 6180/6190/5030/2210/
-      1020) — a new company gets them all already; this is only for one
-      induced earlier.
+      1020/2445), plus any default VAT rates and treatments and the civil
+      service mileage and subsistence expense rates — a new company gets
+      them all already; this is only for one induced earlier.
   install-farm-chart                    Turn an existing book's chart into the
       farm chart: adds the farm accounts and renames the base accounts that
       are still under their seeded names — one the user has already renamed

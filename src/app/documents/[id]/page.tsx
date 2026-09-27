@@ -14,6 +14,7 @@ import { chartOfAccounts, treatmentsWithRates } from '@/lib/queries';
 import { asIsoDate } from '@/domain/dates';
 import {
   linkDocumentAction, unmatchDocumentAction, acceptMatchAction, rejectMatchAction, withdrawMatchRejectionAction,
+  archiveDocumentAction, restoreDocumentAction, deleteDocumentAction,
 } from '@/app/actions';
 
 export const dynamic = 'force-dynamic';
@@ -37,6 +38,47 @@ const FIELD_LABELS: Record<string, string> = {
   suggestedAccountCode: 'Suggested account',
 };
 
+/** One extraction run's fields, as the latest or as a superseded reading. */
+function ExtractionRunTable({
+  run, currency,
+}: { run: { fields: Record<string, { value: string | number | null; confidence: number; evidence?: string }>; status: string }; currency: string }) {
+  return (
+    <table className="ledger">
+      <thead>
+        <tr>
+          <th className="w-44">Field</th>
+          <th>Value</th>
+          <th className="w-24 text-right">Confidence</th>
+          <th>Taken from</th>
+        </tr>
+      </thead>
+      <tbody>
+        {Object.entries(run.fields)
+          .filter(([, field]) => field.value !== null)
+          .map(([key, field]) => (
+            <tr key={key}>
+              <td className="text-ink-faint">{FIELD_LABELS[key] ?? key}</td>
+              <td className="text-ink">
+                {key.endsWith('Minor')
+                  ? <span className="num !text-left">{money(Number(field.value), currency)}</span>
+                  : key === 'vatRateBasisPoints'
+                    ? `${Number(field.value) / 100}%`
+                    : String(field.value)}
+              </td>
+              <td className="text-right">
+                <Badge tone={field.confidence >= 80 ? 'positive'
+                  : field.confidence >= 50 ? 'caution' : 'negative'}>
+                  {percent(field.confidence)}
+                </Badge>
+              </td>
+              <td className="text-ink-muted text-[11.5px]">{field.evidence ?? '—'}</td>
+            </tr>
+          ))}
+      </tbody>
+    </table>
+  );
+}
+
 /**
  * Document detail (README §11, §12, §16).
  *
@@ -52,7 +94,8 @@ export default async function DocumentDetailPage({ params }: {
   if (!detail) notFound();
 
   const { document: doc, supplier, extractions, matches, matchedTransaction,
-          audit, duplicateOf, company, review, supplierOptions, customerOptions, openItems, posting, invoice } = detail;
+          audit, duplicateOf, company, review, supplierOptions, customerOptions, openItems, posting, invoice,
+          evidence, dependencies } = detail;
   const latest = extractions[0];
   const currency = doc.currency ?? company.baseCurrency;
   const linkableTransactions = unpostedTransactionOptions();
@@ -162,43 +205,34 @@ export default async function DocumentDetailPage({ params }: {
             {!latest ? (
               <Empty title="Not yet read" />
             ) : (
-              <table className="ledger">
-                <thead>
-                  <tr>
-                    <th className="w-44">Field</th>
-                    <th>Value</th>
-                    <th className="w-24 text-right">Confidence</th>
-                    <th>Taken from</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {Object.entries(latest.fields)
-                    .filter(([, field]) => field.value !== null)
-                    .map(([key, field]) => (
-                      <tr key={key}>
-                        <td className="text-ink-faint">{FIELD_LABELS[key] ?? key}</td>
-                        <td className="text-ink">
-                          {key.endsWith('Minor')
-                            ? <span className="num !text-left">{money(Number(field.value), currency)}</span>
-                            : key === 'vatRateBasisPoints'
-                              ? `${Number(field.value) / 100}%`
-                              : String(field.value)}
-                        </td>
-                        <td className="text-right">
-                          <Badge tone={field.confidence >= 80 ? 'positive'
-                            : field.confidence >= 50 ? 'caution' : 'negative'}>
-                            {percent(field.confidence)}
-                          </Badge>
-                        </td>
-                        <td className="text-ink-muted text-[11.5px]">{field.evidence ?? '—'}</td>
-                      </tr>
-                    ))}
-                </tbody>
-              </table>
+              <ExtractionRunTable run={latest} currency={currency} />
             )}
             {latest?.status === 'failed' && (
               <div className="px-4 py-2.5 bg-caution-soft border-t border-caution/30 text-caution">
                 {latest.errorMessage ?? 'Nothing could be read from this file.'}
+              </div>
+            )}
+            {extractions.length > 1 && (
+              <div className="px-4 py-3 border-t border-line space-y-2">
+                <p className="text-[11.5px] text-ink-faint">
+                  Every reading is kept (the file itself never changes), so a confirmed
+                  value can always be compared with what was read before it.
+                </p>
+                {extractions.slice(1).map((run) => (
+                  <Disclosure
+                    key={run.id}
+                    summary={`Read by ${run.provider}${run.model ? ` (${run.model})` : ''} `
+                      + `on ${dateTime(run.createdAt)} — ${label(run.status)}, `
+                      + `${percent(run.overallConfidence)} confidence`}
+                  >
+                    <ExtractionRunTable run={run} currency={currency} />
+                    {run.status === 'failed' && (
+                      <p className="text-[11.5px] text-caution mt-1">
+                        {run.errorMessage ?? 'Nothing could be read from this file.'}
+                      </p>
+                    )}
+                  </Disclosure>
+                ))}
               </div>
             )}
           </Panel>
@@ -292,6 +326,114 @@ export default async function DocumentDetailPage({ params }: {
               ))
             )}
           </Panel>
+
+          {evidence && (
+            <Panel
+              title="Evidence chain"
+              description="What rests on this document, assembled from what was posted and never
+                recomputed: the invoice it became, its journal entry and VAT entries, the payments
+                that settled it, the bank lines behind them, and the matches considered along the way."
+            >
+              <div className="px-4 py-3 space-y-3 text-[12px]">
+                {evidence.duplicateOf && (
+                  <p className="text-ink-muted">
+                    Byte-identical to{' '}
+                    <Link href={`/documents/${evidence.duplicateOf.id}`} className="text-accent hover:underline">
+                      {evidence.duplicateOf.filename}
+                    </Link>, which is on file.
+                  </p>
+                )}
+                {evidence.duplicates.length > 0 && (
+                  <p className="text-ink-muted">
+                    {evidence.duplicates.length === 1 ? 'One document is' : `${evidence.duplicates.length} documents are`}{' '}
+                    flagged as duplicates of this one
+                    {evidence.duplicates.map((d) => (
+                      <span key={d.id}>
+                        {' '}
+                        <Link href={`/documents/${d.id}`} className="text-accent hover:underline">{d.filename}</Link>
+                      </span>
+                    ))}.
+                  </p>
+                )}
+                {evidence.linkedTransaction && (
+                  <p className="text-ink-muted">
+                    Linked to bank line{' '}
+                    <Link href={`/transactions/${evidence.linkedTransaction.id}`} className="text-accent hover:underline">
+                      {evidence.linkedTransaction.description}
+                    </Link>{' '}
+                    on {date(evidence.linkedTransaction.transactionDate)} for{' '}
+                    {money(evidence.linkedTransaction.amountMinor, evidence.linkedTransaction.currency)}.
+                  </p>
+                )}
+                {evidence.invoice ? (
+                  <div className="border-t border-line pt-3 space-y-2">
+                    <p className="text-ink">
+                      Posted as{' '}
+                      <Link href={`/invoices/${evidence.invoice.invoiceId}`} className="text-accent hover:underline">
+                        {evidence.invoice.invoiceNumber ?? 'invoice'}
+                      </Link>{' '}
+                      on {date(evidence.invoice.invoiceDate)} ·{' '}
+                      {money(evidence.invoice.grossMinor, evidence.invoice.currency)} · {label(evidence.invoice.status)}.
+                    </p>
+                    {evidence.invoice.journalEntry && (
+                      <p className="text-ink-muted">
+                        Journal #{evidence.invoice.journalEntry.entryNumber} on{' '}
+                        {date(evidence.invoice.journalEntry.entryDate)} — {evidence.invoice.journalEntry.narrative}.
+                      </p>
+                    )}
+                    {evidence.invoice.vatEntries.length > 0 && (
+                      <div>
+                        <p className="text-ink-faint text-[10px] uppercase tracking-wide font-semibold mb-1">
+                          VAT entries
+                        </p>
+                        <ul className="space-y-1">
+                          {evidence.invoice.vatEntries.map((e) => (
+                            <li key={e.id} className="flex flex-wrap gap-1.5 items-center">
+                              <Badge tone="accent">{e.vatBox ?? '—'}</Badge>
+                              {e.netBox && <Badge tone="neutral">{e.netBox}</Badge>}
+                              <span className="num">
+                                {money(e.direction === 'purchases' ? e.recoverableVatMinor : e.vatMinor, currency)}
+                              </span>
+                              <span className="text-ink-faint">
+                                {e.rateBasisPoints / 100}% · {e.periodName ?? date(e.taxPointDate)}
+                              </span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                    {evidence.invoice.payments.length > 0 && (
+                      <div>
+                        <p className="text-ink-faint text-[10px] uppercase tracking-wide font-semibold mb-1">
+                          Settled by
+                        </p>
+                        <ul className="space-y-1">
+                          {evidence.invoice.payments.map((pay) => (
+                            <li key={pay.paymentId} className="text-ink-muted">
+                              {date(pay.paymentDate)} · {money(pay.amountMinor, pay.currency)}
+                              {pay.bankTransaction ? (
+                                <>
+                                  {' · from '}
+                                  <Link href={`/transactions/${pay.bankTransaction.id}`}
+                                    className="text-accent hover:underline">
+                                    {pay.bankTransaction.description}
+                                  </Link>
+                                </>
+                              ) : ' · no bank line'}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-ink-faint">
+                    No invoice has been posted from this document, and nothing in the books rests on it.
+                  </p>
+                )}
+              </div>
+            </Panel>
+          )}
         </div>
 
         <div>
@@ -402,6 +544,55 @@ export default async function DocumentDetailPage({ params }: {
               )}
             </Panel>
           )}
+
+          <Panel
+            title={doc.archived ? 'Archived' : 'Retire this document'}
+            description={doc.archived
+              ? `Out of the working lists. Restore it, or delete it for good — deletion is the
+                 only thing that ever removes a stored file, and only when no other document
+                 shares its bytes.`
+              : `Archiving takes a document out of the working lists and is reversible. It is
+                 refused while anything in the books rests on the document.`}
+          >
+            <div className="px-4 py-3 space-y-3">
+              {doc.archived ? (
+                <>
+                  <ActionForm action={restoreDocumentAction} submit="Restore" variant="secondary" extra={{ documentId: doc.id }}>
+                    <Field label="Why">
+                      <Input name="reason" required placeholder="Archived by mistake" />
+                    </Field>
+                  </ActionForm>
+                  <Disclosure summary="Delete for good — permanent, audited">
+                    <p className="text-[11.5px] text-ink-muted mb-2">
+                      The record, the drafts read from it and — unless another document shares the
+                      same bytes — the stored file are removed. This cannot be undone.
+                    </p>
+                    <ActionForm
+                      action={deleteDocumentAction} submit="Delete for good" variant="danger"
+                      confirm="Delete this document permanently? This cannot be undone."
+                      extra={{ documentId: doc.id }}
+                    >
+                      <Field label="Why">
+                        <Input name="reason" required placeholder="Filed by mistake" />
+                      </Field>
+                    </ActionForm>
+                  </Disclosure>
+                </>
+              ) : dependencies.length > 0 ? (
+                <p className="text-[12px] text-ink-muted">
+                  It cannot be archived yet: {dependencies.map((d) => d.detail).join(' ')}
+                </p>
+              ) : (
+                <Disclosure summary="Archive — out of the working lists, reversible">
+                  <ActionForm action={archiveDocumentAction} submit="Archive" variant="secondary" extra={{ documentId: doc.id }}>
+                    <Field label="Why">
+                      <Input name="reason" required placeholder="Filed by mistake" />
+                    </Field>
+                  </ActionForm>
+                </Disclosure>
+              )}
+            </div>
+          </Panel>
 
           <Panel title="History">
             {audit.length === 0 ? <Empty title="Nothing recorded" /> : (
