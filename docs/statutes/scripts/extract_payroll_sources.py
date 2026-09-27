@@ -55,6 +55,11 @@ TDMS = [
      "https://www.revenue.ie/en/tax-professionals/tdm/income-tax-capital-gains-tax-corporation-tax/part-38/38-03-33.pdf",
      "TDM Part 38-03-33 — Returns by Employers in Relation to Reportable Benefits (Enhanced Reporting Requirements)",
      "Revenue TDM Part 38-03-33"),
+    # EPIC 22 (#466): the 2008-2020 CO2 regime for cars, which the Notes for Guidance on Part 11C no longer set out.
+    ("tdm-11-00-01", "11-00-01",
+     "https://www.revenue.ie/en/tax-professionals/tdm-wm/income-tax-capital-gains-tax-corporation-tax/part-11/11-00-01.pdf",
+     "TDM Part 11-00-01 — Cars: capital allowances and lease/hire payments",
+     "Revenue TDM Part 11-00-01"),
 ]
 
 

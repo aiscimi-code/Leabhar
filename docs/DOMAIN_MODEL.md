@@ -708,6 +708,47 @@ nothing:
 - a benefit submitted late;
 - a year that breaks the small benefit limits.
 
+### Fixed asset register (EPIC 22, issues #534, #466)
+
+**Acquisition.** `registerFixedAsset` records a purchase the ledger already
+holds: an invoice, or a bank line classified to a fixed-asset account.
+- It posts nothing. The purchase's journal is the acquisition.
+- It refuses more cost than the account holds unregistered at the purchase
+  date, and any account that is not a fixed-asset cost account.
+
+**Transfers.** `transferFixedAsset` moves an asset to another fixed-asset
+account from a date.
+- One journal moves its cost, and moves its accumulated depreciation when that
+  account changes too.
+- `fixed_asset_transfers` keeps the history, so the register can say which
+  account held the asset on any date.
+
+**Reconciliation.** `reconcileFixedAssets` compares:
+- each cost account with the cost of the assets it held on the date;
+- each accumulated depreciation account with the depreciation charged on the
+  assets still held.
+
+A difference becomes a review item; nothing is adjusted.
+
+**Cars.** A car's CO2 emissions (g/km, from its registration certificate)
+are the person's entry on the register. From July 2008 they decide its
+capital allowances under TCA Part 11C:
+- **Group 1:** the €24,000 specified amount, whatever the car cost.
+- **Group 2:** the lesser of half that amount or half the cost.
+- **Group 3:** nothing.
+- **Balancing adjustments** are scaled in the same proportion.
+
+The group boundaries depend on when the expenditure was incurred:
+
+| Expenditure | Group 1 | Group 2 | Source |
+|---|---|---|---|
+| July 2008 to 2020 | up to 155g/km | up to 190g/km | TDM 11-00-01 |
+| 2021 to 2026 | up to 140g/km | up to 155g/km | NfG Part 11C |
+| From 2027 | up to 120g/km | up to 140g/km | NfG Part 11C (FA 2024 s.33) |
+
+A car without emissions recorded keeps the Part 11 cost limit and is
+flagged.
+
 ### Consolidation (bank ↔ invoice)
 
 ```

@@ -52,6 +52,9 @@ import { ingestVat3ReturnGuidance, ingestRtdTdm, deriveVat3RtdRules } from './va
 import { ingestEbrief168_25, deriveEbriefRules } from './ebriefIngestion';
 import { ingestEu282Articles, deriveEu282Rules, EU_282_2011_MD_PATH } from './eu282Ingestion';
 import { ingestPayrollSource, derivePayrollRules, PAYROLL_SOURCES } from './payrollIngestion';
+import { ingestSlicedSource } from './slicedSourceIngestion';
+import { deriveCuratedRuleFamilies } from './incomeTaxIngestion';
+import { CAR_EMISSIONS_SOURCES, CAR_EMISSIONS_CURATED_RULES } from './carEmissionsCuration';
 
 type IngestParams = { companyId: string; markdown: string; ingestVersion: string; localPath: string };
 type IngestFn = (db: AppDatabase, params: IngestParams) => unknown;
@@ -141,6 +144,11 @@ const SOURCES: Array<{ path: string; ingest: IngestFn }> = [
   { path: 'docs/statutes/ebriefs/2025/no-168-25.md', ingest: ingestEbrief168_25 },
   { path: EU_282_2011_MD_PATH, ingest: ingestEu282Articles },
   ...PAYROLL_SOURCES.map((s) => ({ path: s.path, ingest: ingestPayrollSource as IngestFn })),
+  ...CAR_EMISSIONS_SOURCES.map((s) => ({
+    path: s.path,
+    ingest: ((db, p) => ingestSlicedSource(db, CAR_EMISSIONS_SOURCES,
+      'Emissions-based limits on capital allowances for cars (TCA Part 11C; issue #466).', p)) as IngestFn,
+  })),
 ];
 
 /** Derive steps, in the order the CLI documents them (thresholds after FA 2024 is ingested). */
@@ -165,6 +173,7 @@ const DERIVES: Array<(db: AppDatabase, params: { companyId: string }) => unknown
   deriveEbriefRules,
   deriveEu282Rules,
   derivePayrollRules,
+  (db, p) => deriveCuratedRuleFamilies(db, { companyId: p.companyId, rules: CAR_EMISSIONS_CURATED_RULES, label: 'capital allowances' }),
 ];
 
 /** Resolve a repo-relative statute path against the running app's root (the install directory when packaged). */

@@ -288,6 +288,20 @@
       "when": 1790541764054,
       "tag": "0040_reportable_benefits",
       "breakpoints": true
+    },
+    {
+      "idx": 41,
+      "version": "6",
+      "when": 1790542886739,
+      "tag": "0041_car_co2_emissions",
+      "breakpoints": true
+    },
+    {
+      "idx": 42,
+      "version": "6",
+      "when": 1790543075974,
+      "tag": "0042_fixed_asset_transfers",
+      "breakpoints": true
     }
   ]
 }

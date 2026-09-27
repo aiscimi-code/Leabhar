@@ -377,6 +377,15 @@ npm run cli -- err-submitted --benefits <id,id> --date 2026-12-15 --reference <R
 npm run cli -- reconcile-err --as-of 2026-12-31
 ```
 
+Fixed assets (register a purchase already posted; a car's CO2 decides its allowances):
+
+```bash
+npm run cli -- register-asset --name "Company car" --category motor_vehicles --account <1590 id> \
+        --date 2026-03-01 --cost 30000 --co2 130 --co2-evidence "Registration certificate" --by owner
+npm run cli -- transfer-asset --asset <id> --to-account <id> --date 2026-06-01 --reason "Reclassified" --by owner
+npm run cli -- reconcile-assets --as-of 2026-12-31
+```
+
 ### Agent workflow
 
 `db:seed` only ever loads the Acme demo. To load a real (or synthetic) SME

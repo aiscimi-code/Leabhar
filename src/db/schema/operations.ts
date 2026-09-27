@@ -117,6 +117,14 @@ export const fixedAssets = sqliteTable('fixed_assets', {
   accumulatedCapitalAllowancesMinor: integer('accumulated_capital_allowances_minor')
     .notNull().default(0),
   capitalAllowanceNotes: text('capital_allowance_notes'),
+  /**
+   * A car's CO2 emissions in grams per km, from its registration certificate
+   * (TCA s.380K; issue #466). The person's entry, never guessed: it decides
+   * the car's Part 11C group, and so its allowances.
+   */
+  co2EmissionsGramsPerKm: integer('co2_emissions_g_km'),
+  /** Where the emissions figure was taken from (the certificate, the VRT record). */
+  co2EmissionsEvidence: text('co2_emissions_evidence'),
 
   disposalDate: text('disposal_date'),
   disposalProceedsMinor: integer('disposal_proceeds_minor'),
@@ -132,6 +140,30 @@ export const fixedAssets = sqliteTable('fixed_assets', {
 }, (t) => [index('fixed_assets_company_idx').on(t.companyId, t.status)]);
 
 /** Depreciation and capital allowance charges, per period, per asset. */
+/**
+ * A fixed asset moved from one fixed-asset account to another from a date
+ * (issue #534): a reclassification. The journal moves the cost (and, where the
+ * accumulated depreciation account changes, the depreciation charged); this
+ * row is the history, so the register can say which account held the asset on
+ * any date.
+ */
+export const fixedAssetTransfers = sqliteTable('fixed_asset_transfers', {
+  id: text('id').primaryKey(),
+  companyId: text('company_id').notNull().references(() => companies.id),
+  fixedAssetId: text('fixed_asset_id').notNull().references(() => fixedAssets.id),
+  transferDate: text('transfer_date').notNull(),
+  fromAccountId: text('from_account_id').notNull().references(() => accounts.id),
+  toAccountId: text('to_account_id').notNull().references(() => accounts.id),
+  fromAccumulatedAccountId: text('from_accumulated_account_id').references(() => accounts.id),
+  toAccumulatedAccountId: text('to_accumulated_account_id').references(() => accounts.id),
+  fromCategory: text('from_category'),
+  toCategory: text('to_category'),
+  journalEntryId: text('journal_entry_id').notNull(),
+  reason: text('reason').notNull(),
+  recordedBy: text('recorded_by').notNull(),
+  ...timestamps,
+}, (t) => [index('fixed_asset_transfers_asset_idx').on(t.fixedAssetId, t.transferDate)]);
+
 export const depreciationCharges = sqliteTable('depreciation_charges', {
   id: text('id').primaryKey(),
   companyId: text('company_id').notNull().references(() => companies.id),
