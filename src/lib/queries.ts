@@ -4,6 +4,7 @@ import { customerExposure, listCustomerContacts } from '@/domain/parties/custome
 import { listRecurringInvoices } from '@/domain/invoicing/recurringInvoices';
 import { salesInvoiceDocument } from '@/domain/invoicing/invoiceDocument';
 import { customerCredit } from '@/domain/invoicing/customerCredit';
+import { receivablesSummary, overdueInvoices } from '@/domain/invoicing/receivables';
 import { listStatementImports } from '@/domain/banking/import';
 import { and, eq, desc, sql, isNull, isNotNull, ne, or, inArray } from 'drizzle-orm';
 import { getDb } from '@/db';
@@ -12,7 +13,7 @@ import {
   documents, reviewItems, suppliers, customers, accountingPeriods, taxDeadlines,
   journalEntries, journalLines, auditEvents, rules, fixedAssets, taxRates,
   documentMatches, statementImports, companyOfficers, documentExtractions,
-  invoices, invoiceLines, payments, paymentAllocations,
+  invoices, invoiceLines, payments, paymentAllocations, reminderLetters,
   irishActProvisions, irishKnowledgeSources, irishTaxRules,
 } from '@/db/schema';
 import { trialBalance, balancesBySystemKey, accountBalance } from '@/domain/accounting/ledger';
@@ -896,7 +897,10 @@ export function customerDetail(customerId: string) {
   const contacts = listCustomerContacts(db, { companyId: company.id, customerId });
   const credit = customerCredit(db, { companyId: company.id, customerId });
   const banks = db.select().from(bankAccounts).where(eq(bankAccounts.companyId, company.id)).all();
-  return { customer, invoices: customerInvoices, exposure, contacts, company, credit, banks };
+  const reminders = db.select().from(reminderLetters)
+    .where(and(eq(reminderLetters.companyId, company.id), eq(reminderLetters.customerId, customerId)))
+    .orderBy(desc(reminderLetters.asOf)).all();
+  return { customer, invoices: customerInvoices, exposure, contacts, company, credit, banks, reminders };
 }
 
 /** One supplier with everything recorded against them (README §17). */
@@ -965,4 +969,15 @@ export function capitalGoodsPage() {
 /** Recurring sales invoice templates with their due state (issue #394). */
 export function recurringInvoiceList() {
   return listRecurringInvoices(getDb(), { companyId: requireCompany().id });
+}
+
+/** The receivables page (issue #405): the summary and every overdue invoice, as at `asOf`. */
+export function receivablesPage(asOf: IsoDate = today()) {
+  const db = getDb();
+  const company = requireCompany();
+  return {
+    summary: receivablesSummary(db, { companyId: company.id, asOf }),
+    overdue: overdueInvoices(db, { companyId: company.id, asOf }),
+    currency: company.baseCurrency,
+  };
 }

@@ -129,6 +129,12 @@ npm run cli -- write-off-bad-debt --invoice <n> --reason "..." --actor "Name" [-
     # outstanding to bad debts (6230); on the cash receipts basis the unpaid VAT is
     # cancelled from deferred VAT; on the invoice basis relief (s.39) is flagged
 npm run cli -- reverse-bad-debt --invoice <n> --reason "..." --actor "Name"   # the debt recovered
+npm run cli -- receivables [--as-of <date>]            # owed, overdue, on account, top debtors
+npm run cli -- overdue [--as-of <date>] [--customer <id>]
+npm run cli -- customer-statement --customer <id> --from <date> --to <date> [--out statement.pdf]
+npm run cli -- produce-reminder --customer <id> --actor "Name" [--level 1|2|3] [--out reminder.pdf]
+    # records the letter (level, date, invoices and what each had outstanding);
+    # sending it is yours — email waits on #401
 npm run cli -- customer-credit --customer <id>        # open credit notes + money on account
 npm run cli -- apply-credit-note --credit-note <n> --invoice <n> --amount <12.30> --actor "Name"
     # settles the invoice from the credit note; no cash, nothing posted
