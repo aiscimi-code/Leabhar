@@ -148,6 +148,7 @@ export function allocatePaymentOnAccount(
   if (!invoice) throw new InvoicingError(`Invoice ${params.invoiceId} not found.`);
   const label = invoice.invoiceNumber ?? invoice.id;
   if (invoice.status === 'void') throw new InvoicingError(`Invoice ${label} has been voided.`);
+  if (invoice.status === 'written_off') throw new InvoicingError(`Invoice ${label} was written off; reverse the write-off first.`);
   if (invoice.isCreditNote) {
     throw new InvoicingError('Money on account is applied to invoices; a credit note adds to what is owed back, not to what was paid.');
   }

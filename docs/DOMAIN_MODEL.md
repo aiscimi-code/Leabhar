@@ -376,6 +376,21 @@ Lines live in `document_lines`, per-rate VAT in `document_vat_totals`, both with
 provenance. The VAT rate for a purchase comes from these confirmed lines — never
 from a bank amount.
 
+### Bad debts (issue #404)
+
+`writeOffBadDebt` takes a sales invoice's outstanding amount out of debtors,
+dated when the debt is judged irrecoverable, to the `bad_debts` system account
+(6230, added to existing books where the code is free) or a chosen expense
+account. The invoice becomes `written_off` with `outstanding_minor` 0 and
+`written_off_minor` set, so gross = paid + written off. VAT follows the basis:
+on the cash receipts basis the unpaid share of the output VAT was never due and
+is cancelled against deferred VAT (only the net is a bad debt); on the invoice
+basis the VAT was declared, relief under VATCA s.39 is a judgement, and nothing
+is claimed — a review item says relief may be available (#278). A written-off
+invoice cannot be paid, voided or given money on account until
+`reverseBadDebtWriteOff` (the debt recovered) reverses the journal and reopens
+it.
+
 ### Debit notes (issue #403)
 
 A debit note is an additional charge against an earlier invoice of the same

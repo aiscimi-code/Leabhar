@@ -4,7 +4,10 @@ import {
   Page, Panel, Badge, Stat, Empty, Disclosure, ProvenanceBadge, Field, Input,
 } from '@/components/primitives';
 import { ActionForm } from '@/components/ActionForm';
-import { allocateOnAccountAction, applyCreditNoteAction, unapplyCreditNoteAction, raiseDebitNoteAction } from '@/app/actions';
+import {
+  allocateOnAccountAction, applyCreditNoteAction, unapplyCreditNoteAction, raiseDebitNoteAction,
+  writeOffBadDebtAction, reverseBadDebtAction,
+} from '@/app/actions';
 import { PaymentForm } from '@/components/PaymentForm';
 import { recordPaymentAction } from '@/app/settings-actions';
 import { money, date, label } from '@/lib/format';
@@ -19,7 +22,7 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
 
   const {
     invoice, lines, allocations, party, company, onAccount, missingParticulars, counterparts,
-    incomeAccounts, treatmentOptions, adjustsNumber,
+    incomeAccounts, treatmentOptions, adjustsNumber, expenseAccounts,
   } = detail;
   const today = new Date().toISOString().slice(0, 10);
   const isSales = invoice.direction === 'sales';
@@ -280,6 +283,48 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
           </Disclosure>
         )}
       </Panel>
+
+      {invoice.status === 'written_off' && (
+        <Panel tone="warning" title="Written off as a bad debt"
+          description={`${money(invoice.writtenOffMinor, invoice.currency)} written off on ${date(invoice.writtenOffAt)}: ${invoice.writeOffReason ?? ''}`}>
+          <div className="px-4 py-3">
+            <Disclosure summary="The customer paid after all? Reverse the write-off">
+              <ActionForm action={reverseBadDebtAction} submit="Reverse write-off" extra={{ invoiceId: invoice.id }}>
+                <Field label="Date"><Input name="date" type="date" defaultValue={today} required /></Field>
+                <Field label="Why"><Input name="reason" required placeholder="Debt recovered" /></Field>
+              </ActionForm>
+            </Disclosure>
+          </div>
+        </Panel>
+      )}
+
+      {isSales && !invoice.isCreditNote && invoice.outstandingMinor > 0
+        && invoice.status !== 'void' && invoice.status !== 'written_off' && (
+        <Panel>
+          <Disclosure summary="Write off as a bad debt">
+            <div className="max-w-3xl">
+              <ActionForm action={writeOffBadDebtAction} submit="Write off" variant="danger"
+                confirm="Write this debt off? It can be reversed later if the customer pays." extra={{ invoiceId: invoice.id }}>
+                <div className="grid grid-cols-3 gap-3">
+                  <Field label="Date"><Input name="date" type="date" defaultValue={today} required /></Field>
+                  <Field label="Why"><Input name="reason" required placeholder="Customer in liquidation" /></Field>
+                  <Field label="Charge to" hint="Blank: Bad debts (6230).">
+                    <select name="accountId" defaultValue="" className="border border-line-strong rounded px-2 py-1 bg-surface text-[12.5px]">
+                      <option value="">Bad debts</option>
+                      {expenseAccounts.map((a) => <option key={a.id} value={a.id}>{a.code} — {a.name}</option>)}
+                    </select>
+                  </Field>
+                </div>
+              </ActionForm>
+              <p className="text-ink-muted mt-2 leading-snug">
+                {company.vatAccountingBasis === 'cash_receipts'
+                  ? 'On the cash receipts basis the unpaid share of this invoice\'s VAT was never due; it is cancelled from deferred VAT and only the net is a bad debt.'
+                  : 'The VAT in it was declared when the invoice was raised. Bad-debt relief may let it be reclaimed; nothing is claimed here, and a review item is raised.'}
+              </p>
+            </div>
+          </Disclosure>
+        </Panel>
+      )}
 
       {!invoice.isCreditNote && !invoice.isDebitNote && invoice.status !== 'void' && (
         <Panel>

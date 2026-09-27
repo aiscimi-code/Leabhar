@@ -59,6 +59,7 @@ import { allocatePaymentOnAccount, paymentsOnAccount } from '@/domain/invoicing/
 import { reconciliationStatement } from '@/domain/banking/reconciliationStatement';
 import { salesInvoiceDocument } from '@/domain/invoicing/invoiceDocument';
 import { createInvoice } from '@/domain/invoicing/invoices';
+import { writeOffBadDebt, reverseBadDebtWriteOff } from '@/domain/invoicing/badDebts';
 import { applyCreditNote, unapplyCreditNote, refundOnAccount, customerCredit } from '@/domain/invoicing/customerCredit';
 import { renderInvoicePdf } from '@/lib/invoicePdf';
 import { writeFileSync } from 'node:fs';
@@ -265,6 +266,9 @@ Books (once induction is done):
   create-debit-note --invoice <number|id> --description "..." --net <12.30>
       --account <code> --vat-treatment <code> --actor "Name" [--date <date>]
       An additional charge against that invoice, posted like an invoice
+  write-off-bad-debt --invoice <number|id> --reason "..." --actor "Name" [--date <date>]
+      [--account <expense code>]  Outstanding to bad debts; VAT handled per basis
+  reverse-bad-debt --invoice <number|id> --reason "..." --actor "Name" [--date <date>]
   apply-credit-note --credit-note <number|id> --invoice <number|id> --amount <12.30>
       --actor "Name" [--date <date>] [--reason ...]  No cash; nothing posted
   unapply-credit-note --payment <id> --actor "Name" --reason "..."
@@ -1062,6 +1066,25 @@ export async function main(argv: string[], options: CliOptions = {}): Promise<nu
             accountId: resolveAccountId(db, companyId, requireFlag(flags, 'account')),
             vatTreatmentId: resolveVatTreatmentId(db, companyId, requireFlag(flags, 'vat-treatment')),
           }],
+          actor: requireFlag(flags, 'actor'),
+        }), format);
+        return 0;
+      }
+
+      case 'write-off-bad-debt': {
+        const account = getFlag(flags, 'account');
+        print(writeOffBadDebt(db, {
+          companyId, invoiceId: resolveInvoiceId(db, companyId, requireFlag(flags, 'invoice')),
+          date: asIsoDate(getFlag(flags, 'date') ?? today()), reason: requireFlag(flags, 'reason'),
+          actor: requireFlag(flags, 'actor'), accountId: account ? resolveAccountId(db, companyId, account) : null,
+        }), format);
+        return 0;
+      }
+
+      case 'reverse-bad-debt': {
+        print(reverseBadDebtWriteOff(db, {
+          companyId, invoiceId: resolveInvoiceId(db, companyId, requireFlag(flags, 'invoice')),
+          date: asIsoDate(getFlag(flags, 'date') ?? today()), reason: requireFlag(flags, 'reason'),
           actor: requireFlag(flags, 'actor'),
         }), format);
         return 0;

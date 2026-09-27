@@ -11,6 +11,7 @@ import { linkBankTransactionToJournal } from '@/domain/banking/journalLink';
 import { allocatePaymentOnAccount } from '@/domain/invoicing/onAccount';
 import { applyCreditNote, unapplyCreditNote, refundOnAccount } from '@/domain/invoicing/customerCredit';
 import { createInvoice } from '@/domain/invoicing/invoices';
+import { writeOffBadDebt, reverseBadDebtWriteOff } from '@/domain/invoicing/badDebts';
 import {
   createRecurringInvoice, postDueRecurringInvoices, deactivateRecurringInvoice,
 } from '@/domain/invoicing/recurringInvoices';
@@ -1092,6 +1093,49 @@ export async function raiseDebitNoteAction(formData: FormData): Promise<ActionRe
     revalidatePath('/invoices');
     revalidatePath(`/invoices/${original.id}`);
     return { ok: true, message: 'Debit note raised.', warnings: result.warnings.length > 0 ? result.warnings : undefined };
+  } catch (error) {
+    return fail(error);
+  }
+}
+
+/** Write a sales invoice off as a bad debt (issue #404). */
+export async function writeOffBadDebtAction(formData: FormData): Promise<ActionResult> {
+  try {
+    await requireActor('invoices.manage');
+    const company = requireCompany();
+    const invoiceId = String(formData.get('invoiceId') ?? '');
+    const accountId = String(formData.get('accountId') ?? '').trim();
+    const result = writeOffBadDebt(getDb(), {
+      companyId: company.id, invoiceId, date: asIsoDate(String(formData.get('date') ?? '')),
+      reason: String(formData.get('reason') ?? ''), actor: await actorName(), accountId: accountId || null,
+    });
+    revalidatePath(`/invoices/${invoiceId}`);
+    revalidatePath('/invoices');
+    revalidatePath('/review');
+    return {
+      ok: true,
+      message: `Written off: ${(result.writtenOffMinor / 100).toFixed(2)}.`,
+      warnings: [result.vatCancelledMinor !== 0
+        ? `${(result.vatCancelledMinor / 100).toFixed(2)} of deferred VAT was never due and has been cancelled.`
+        : 'VAT already declared on it is not reclaimed here: see the review item about bad-debt relief.'],
+    };
+  } catch (error) {
+    return fail(error);
+  }
+}
+
+export async function reverseBadDebtAction(formData: FormData): Promise<ActionResult> {
+  try {
+    await requireActor('invoices.manage');
+    const company = requireCompany();
+    const invoiceId = String(formData.get('invoiceId') ?? '');
+    reverseBadDebtWriteOff(getDb(), {
+      companyId: company.id, invoiceId, date: asIsoDate(String(formData.get('date') ?? '')),
+      reason: String(formData.get('reason') ?? ''), actor: await actorName(),
+    });
+    revalidatePath(`/invoices/${invoiceId}`);
+    revalidatePath('/invoices');
+    return { ok: true, message: 'Write-off reversed. The invoice is open again.' };
   } catch (error) {
     return fail(error);
   }

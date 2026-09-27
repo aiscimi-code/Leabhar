@@ -84,6 +84,16 @@ export const invoices = sqliteTable('invoices', {
   status: text('status', {
     enum: ['draft', 'issued', 'part_paid', 'paid', 'overdue', 'void', 'written_off'],
   }).notNull().default('draft'),
+  /**
+   * A bad debt written off (issue #404): the amount taken out of debtors, the
+   * journal that did it, when and why. `outstanding_minor` is 0 while it
+   * stands, so gross = paid + written off. Reversing the write-off (the debt
+   * recovered) clears these and reopens the invoice.
+   */
+  writtenOffMinor: integer('written_off_minor').notNull().default(0),
+  writtenOffJournalEntryId: text('written_off_journal_entry_id'),
+  writtenOffAt: text('written_off_at'),
+  writeOffReason: text('write_off_reason'),
   voidedAt: text('voided_at'),
   voidReason: text('void_reason'),
 

@@ -873,9 +873,12 @@ export function invoiceDetail(invoiceId: string) {
     ? db.select({ n: invoices.invoiceNumber }).from(invoices).where(eq(invoices.id, invoice.debitNoteOfId)).get()?.n ?? null
     : null;
 
+  const expenseAccounts = db.select().from(accounts)
+    .where(and(eq(accounts.companyId, company.id), eq(accounts.type, 'expense'))).orderBy(accounts.code).all();
+
   return {
     invoice, lines, allocations, party, company, onAccount, missingParticulars, counterparts,
-    incomeAccounts, treatmentOptions, adjustsNumber,
+    incomeAccounts, treatmentOptions, adjustsNumber, expenseAccounts,
   };
 }
 
