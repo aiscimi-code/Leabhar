@@ -12,6 +12,8 @@
  *   No treatment models it: flagged.
  * - The price paid for a voucher is disregarded (s.43(2)): outside the scope
  *   until it is redeemed, unless it is bought for resale (s.43(3)).
+ * - A Deposit Return Scheme deposit is not in the taxable amount (s.92A(2),
+ *   issue #278): VAT is charged on the product's price only. Flagged.
  */
 import type { IrishRuleCondition } from '@/db/schema';
 import type { CuratedVatScopeRule } from './vatScopeCuration';
@@ -25,6 +27,7 @@ export const TRAVEL_MARGIN_RULE_KEY = 'vat.margin_scheme_travel_purchase';
 export const AUCTION_SCHEME_RULE_KEY = 'vat.auction_scheme_purchase';
 export const FLAT_RATE_FARMER_RULE_KEY = 'vat.flat_rate_farmer_purchase';
 export const VOUCHER_RULE_KEY = 'vat.voucher_consideration_disregarded';
+export const DEPOSIT_RETURN_SCHEME_RULE_KEY = 'vat.deposit_return_scheme_deposit_disregarded';
 
 /** The wording a margin- or auction-scheme invoice carries (S.I. 639/2010 reg.20(6), (7)). */
 export const MARGIN_LEGEND = /\b(margin scheme|auction scheme|second[- ]hand goods|works of art|collectors'? items|antiques)\b/i;
@@ -82,6 +85,24 @@ export const SCHEMES_CURATED_RULES: CuratedVatScopeRule[] = [
     vatEffect: 'Outside the scope until the voucher is redeemed; VAT arises on the goods or services it pays for.',
     interpretationNote: 'Read from the description; always confirmed by a person.',
   }),
+  rule({
+    citation: '2010 Act 31 s.92A', sectionNumber: '92A', ruleKey: DEPOSIT_RETURN_SCHEME_RULE_KEY,
+    name: 'Deposit Return Scheme: the deposit part of the price is not in the taxable amount (s.92A(2))',
+    statementExcerpt: 'the taxable amount\nreferable to the deposit shall be deemed to be reduced to nil',
+    conditions: [desc('\\b(deposit return|return scheme|in[- ]scope (containers?|bottles?|products?))\\b'
+      + '|\\bdeposit\\b.{0,25}\\b(cans?|bottles?|containers?|drinks?)\\b')],
+    exceptions: [{
+      condition: 'the deposit is not chargeable under the Deposit Return Scheme Regulations 2021 (S.I. 599/2021) '
+        + '(a security deposit for premises, a reusable crate system)',
+      effect: 's.92A does not apply; the whole price is the taxable amount',
+    }],
+    crossReferences: ['Separate Collection (Deposit Return Scheme) Regulations 2021 (S.I. No. 599 of 2021)'],
+    vatEffect: 'Where an in-scope product is supplied and a deposit is chargeable under the Deposit Return Scheme, '
+      + 'the taxable amount is deemed reduced to nil as referable to the deposit: VAT is charged on the product\'s '
+      + 'price only, never on the deposit.',
+    interpretationNote: 'Read from deposit-return wording on the line. Which containers are in scope under the '
+      + 'Regulations of 2021 is not on the line: always confirmed by a person.',
+  }),
 ];
 
 export const SCHEMES_GAPS: Record<string, string> = {
@@ -93,4 +114,7 @@ export const SCHEMES_GAPS: Record<string, string> = {
     + 'whole amount as a cost with no VAT (OUT_OF_SCOPE).',
   [FLAT_RATE_FARMER_RULE_KEY]: 'Bought from a flat-rate farmer: the flat-rate addition on the invoice (4.5% of the '
     + 'consideration from 1 January 2026, s.86(1)) is deductible. No treatment models it; record it with your adviser.',
+  [DEPOSIT_RETURN_SCHEME_RULE_KEY]: 'A Deposit Return Scheme deposit is not part of the taxable amount (VATCA '
+    + 's.92A(2), S.I. 599/2021): VAT is charged on the product\'s price only. Which containers are in scope is not '
+    + 'on the line — confirm the deposit part of the price with your adviser.',
 };

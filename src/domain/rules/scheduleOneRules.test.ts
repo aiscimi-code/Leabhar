@@ -75,6 +75,7 @@ describe('Schedule 1 rules: what each matches, and each stated exclusion', () =>
       'vat.exempt_passenger_transport', 'vat.exempt_postal_universal_service', 'vat.outside_scope_employment',
       'vat.outside_scope_tax_payment', 'vat.outside_scope_capital_loans_dividends', 'vat.outside_scope_own_account_transfer',
       'vat.exempt_sale_of_non_deductible_goods', // tested below, by direction
+      'vat.outside_scope_grant_subsidy', // tested in taxableAmount.test.ts (issue #206)
     ].includes(k));
     expect(added).toEqual([]);
   });

@@ -41,33 +41,29 @@
       "id": "vatca:s5",
       "area": "vatca_section",
       "title": "s.5 Persons who are, or who may become, accountable persons.",
-      "status": "deferred",
-      "issue": 206,
-      "reason": "Accountable persons and elections."
+      "status": "not_applicable",
+      "reason": "Who is an accountable person is company configuration (vatRegistrationStatus); the registration thresholds are ruled at s.65. The s.9/s.10/s.12 rules cover the persons s.5(1)(b) makes accountable."
     },
     {
       "id": "vatca:s6",
       "area": "vatca_section",
       "title": "s.6 Persons not accountable persons unless they so elect.",
-      "status": "deferred",
-      "issue": 206,
-      "reason": "Accountable persons and elections."
+      "status": "not_applicable",
+      "reason": "Elections not to register (flat-rate farmers and other small traders): whether a supplier is an unregistered flat-rate farmer is read from the invoice's flat-rate addition (vat.flat_rate_farmer_purchase); the seller's own election is configuration."
     },
     {
       "id": "vatca:s7",
       "area": "vatca_section",
       "title": "s.7 Treatment of persons as not accountable.",
-      "status": "deferred",
-      "issue": 206,
-      "reason": "Accountable persons and elections."
+      "status": "not_applicable",
+      "reason": "Treatment as a non-accountable person where Revenue is satisfied the person would not be one: an administrative determination, recorded as configuration."
     },
     {
       "id": "vatca:s8",
       "area": "vatca_section",
       "title": "s.8 Cancellation of election.",
-      "status": "deferred",
-      "issue": 206,
-      "reason": "Accountable persons and elections."
+      "status": "not_applicable",
+      "reason": "Cancellation of an election, by regulation, on payment of a sum: administrative; no classification."
     },
     {
       "id": "vatca:s9",
@@ -114,17 +110,15 @@
       "id": "vatca:s14",
       "area": "vatca_section",
       "title": "s.14 The State and public bodies.",
-      "status": "deferred",
-      "issue": 206,
-      "reason": "Accountable persons: public bodies, VAT groups."
+      "status": "not_applicable",
+      "reason": "The State and public bodies as taxable persons (Annex I activities, Schedule 6): a business book is not a public body."
     },
     {
       "id": "vatca:s15",
       "area": "vatca_section",
       "title": "s.15 VAT groups.",
-      "status": "deferred",
-      "issue": 206,
-      "reason": "Accountable persons: public bodies, VAT groups."
+      "status": "not_applicable",
+      "reason": "VAT groups: each business is its own book, so grouping members are not modelled. Where the user's business is in a VAT group, returns are filed by the representative member - recorded with the adviser, never assumed."
     },
     {
       "id": "vatca:s16",
@@ -147,49 +141,43 @@
       "id": "vatca:s17",
       "area": "vatca_section",
       "title": "s.17 Other provisions in relation to services.",
-      "status": "deferred",
-      "issue": 206,
-      "reason": "Scope of supplies of services / deemed supplies."
+      "status": "not_applicable",
+      "reason": "Premises providers notifying Revenue of mobile traders on their land: an administrative notification; no classification."
     },
     {
       "id": "vatca:s18",
       "area": "vatca_section",
       "title": "s.18 Distortion of competition, deemed taxable supplies, etc.",
-      "status": "deferred",
-      "issue": 206,
-      "reason": "Scope of supplies of services / deemed supplies."
+      "status": "not_applicable",
+      "reason": "Deemed taxable supplies of exempt bodies that distort competition: a determination by an authorised Revenue officer; when made it is recorded as configuration, not classified from a line."
     },
     {
       "id": "vatca:s19",
       "area": "vatca_section",
       "title": "s.19 Meaning of supply of goods.",
-      "status": "deferred",
-      "issue": 206,
-      "reason": "Meaning of supply of goods."
+      "status": "not_applicable",
+      "reason": "Definition of a supply of goods: applied through every rule that classifies one."
     },
     {
       "id": "vatca:s20",
       "area": "vatca_section",
       "title": "s.20 Transfers, etc. deemed not to be supplies.",
-      "status": "deferred",
-      "issue": 206,
-      "reason": "Meaning of supply of goods."
+      "status": "not_applicable",
+      "reason": "Transfers deemed NOT to be supplies (a going-concern transfer, security, an insurer's disposal): no consideration test a bank line can answer. A business or asset sale is classified by a person; nothing is suggested automatically."
     },
     {
       "id": "vatca:s21",
       "area": "vatca_section",
       "title": "s.21 Supplies made free of charge.",
-      "status": "deferred",
-      "issue": 206,
-      "reason": "Meaning of supply of goods."
+      "status": "not_applicable",
+      "reason": "Free-of-charge deemed supplies (business gifts from stock): no bank or invoice line exists. Recorded manually and flagged - VAT applies unless the gift is within the de minimis (regulations) or a sample."
     },
     {
       "id": "vatca:s22",
       "area": "vatca_section",
       "title": "s.22 Special rules in relation to supplies of goods.",
-      "status": "deferred",
-      "issue": 206,
-      "reason": "Meaning of supply of goods."
+      "status": "not_applicable",
+      "reason": "Deemed supplies through agents, enforcement and liquidation: mechanics of agency; the visible line is classified by the substantive supply rules."
     },
     {
       "id": "vatca:s23",
@@ -212,33 +200,29 @@
       "id": "vatca:s25",
       "area": "vatca_section",
       "title": "s.25 Meaning of supply of services.",
-      "status": "deferred",
-      "issue": 206,
-      "reason": "Meaning of supply of services."
+      "status": "not_applicable",
+      "reason": "Definition of a supply of services: applied through every rule that classifies one."
     },
     {
       "id": "vatca:s26",
       "area": "vatca_section",
       "title": "s.26 Transfer of intangible business assets deemed not to be supply of services.",
-      "status": "deferred",
-      "issue": 206,
-      "reason": "Meaning of supply of services."
+      "status": "not_applicable",
+      "reason": "Transfer of intangible business assets (goodwill) deemed not a supply: a business sale is classified by a person; nothing is suggested automatically."
     },
     {
       "id": "vatca:s27",
       "area": "vatca_section",
       "title": "s.27 Self-supply of services.",
-      "status": "deferred",
-      "issue": 206,
-      "reason": "Meaning of supply of services."
+      "status": "not_applicable",
+      "reason": "Self-supply of services (including non-business use of immovable goods): the annual charge is computed with s.44, recorded as a manual entry and flagged; not classifiable from bank or invoice lines."
     },
     {
       "id": "vatca:s28",
       "area": "vatca_section",
       "title": "s.28 Special rules in relation to supplies of services.",
-      "status": "deferred",
-      "issue": 206,
-      "reason": "Meaning of supply of services."
+      "status": "not_applicable",
+      "reason": "Deemed supplies of services through agents, and deemed consideration where moneys are received without entitlement to recover them: mechanics; the substantive supply rules classify the visible line."
     },
     {
       "id": "vatca:s29",
@@ -311,57 +295,56 @@
       "id": "vatca:s36",
       "area": "vatca_section",
       "title": "s.36 Definitions — Chapter 1 .",
-      "status": "deferred",
-      "issue": 245,
-      "reason": "Taxable amount."
+      "status": "not_applicable",
+      "reason": "Chapter 1 definitions (s.36); applied through the rules that use them (ss.37-45)."
     },
     {
       "id": "vatca:s37",
       "area": "vatca_section",
       "title": "s.37 General rules on taxable amount.",
-      "status": "deferred",
-      "issue": 245,
-      "reason": "Taxable amount."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.taxable_amount_general"
+      ]
     },
     {
       "id": "vatca:s38",
       "area": "vatca_section",
       "title": "s.38 Determination that open market value applies.",
-      "status": "deferred",
-      "issue": 245,
-      "reason": "Taxable amount."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.omv_connected_party_low_price"
+      ]
     },
     {
       "id": "vatca:s39",
       "area": "vatca_section",
       "title": "s.39 General provisions on consideration.",
-      "status": "deferred",
-      "issue": 245,
-      "reason": "Taxable amount."
+      "status": "not_applicable",
+      "reason": "The taxable amount follows the consideration actually received; a deficiency is relieved by regulation or adjusted by credit note (s.45, ruled) - no classification test on a bank or invoice line."
     },
     {
       "id": "vatca:s40",
       "area": "vatca_section",
       "title": "s.40 Special consideration rule, triangulation.",
-      "status": "deferred",
-      "issue": 245,
-      "reason": "Taxable amount."
+      "status": "not_applicable",
+      "reason": "Automatic double-taxation relief: where an intra-Community acquisition was taxed in the other Member State under s.32(1), the consideration for the acquisition deemed to take place in the State under s.32(2) is reduced to nil. No separate treatment arises; the s.9/s.10 rules decide which acquisition is charged."
     },
     {
       "id": "vatca:s41",
       "area": "vatca_section",
       "title": "s.41 Two-thirds rule.",
-      "status": "deferred",
-      "issue": 245,
-      "reason": "Two-thirds rule: part of the taxable amount (#245); it also decides the rate (#205)."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.two_thirds_rule_goods_with_services"
+      ]
     },
     {
       "id": "vatca:s42",
       "area": "vatca_section",
       "title": "s.42 Taxable amount for certain supplies.",
-      "status": "deferred",
-      "issue": 245,
-      "reason": "Taxable amount."
+      "status": "not_applicable",
+      "reason": "Taxable amount for deemed supplies (goods applied to non-business use, retention on cancellation): no third-party invoice exists; recorded as a manual journal at cost and flagged for a person. No classification rule."
     },
     {
       "id": "vatca:s43",
@@ -376,17 +359,17 @@
       "id": "vatca:s44",
       "area": "vatca_section",
       "title": "s.44 Non-business use of immovable goods.",
-      "status": "deferred",
-      "issue": 245,
-      "reason": "Non-business use of immovable goods."
+      "status": "not_applicable",
+      "reason": "Annual charge for non-business use of immovable goods (one sixth of one twentieth of the cost): arises on the capital-goods review of a property, recorded as a manual entry and flagged; not classifiable from bank or invoice lines."
     },
     {
       "id": "vatca:s45",
       "area": "vatca_section",
       "title": "s.45 Adjustment and recovery of consideration.",
-      "status": "deferred",
-      "issue": 245,
-      "reason": "Taxable amount."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.consideration_change_credit_note"
+      ]
     },
     {
       "id": "vatca:s46",
@@ -424,41 +407,62 @@
       "id": "vatca:s48",
       "area": "vatca_section",
       "title": "s.48 Works of art, etc.",
-      "status": "deferred",
-      "issue": 278,
-      "reason": "Works of art rate (Sch.5)."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.rate_works_of_art_imported"
+      ],
+      "note": "The importation, a creator's supply and an occasional importer's supply of Schedule 5 goods, at the reduced rate. Schedule 5 paragraphs 1-3 define the goods; Schedule 3 paras 23-25 rate the domestic artist's originals at the same reduced rate (see those rows)."
     },
     {
       "id": "vatca:s49",
       "area": "vatca_section",
       "title": "s.49 Contract work.",
-      "status": "deferred",
-      "issue": 206,
-      "reason": "Contract work and certain supplies."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.rate_contract_work_follows_goods"
+      ],
+      "note": "The supply of contract work is charged at the rate of the goods handed over; the goods' own schedule rule decides the rate, so the line is flagged rather than decided."
     },
     {
       "id": "vatca:s50",
       "area": "vatca_section",
       "title": "s.50 Provisions in relation to certain supplies.",
-      "status": "deferred",
-      "issue": 206,
-      "reason": "Contract work and certain supplies."
+      "status": "not_applicable",
+      "reason": "Special liability on manufacturers (customer-supplied materials; Sch.2 para 8 goods used in taxable services): a computed uplift charge on the manufacturer, recorded manually when it arises - not a line classification."
     },
     {
       "id": "vatca:s51",
       "area": "vatca_section",
       "title": "s.51 Determinations on rates and exemptions.",
-      "status": "deferred",
-      "issue": 278,
-      "reason": "Revenue determinations on rates and exemptions."
+      "status": "not_applicable",
+      "reason": "A Revenue determination under s.51 is an administrative decision on request; when one is made it changes the rate or exemption for the named supply, recorded as effective-dated configuration. No determination is ingested; there is nothing to classify."
     },
     {
       "id": "vatca:s52",
       "area": "vatca_section",
       "title": "s.52 General rule on exempted activity.",
-      "status": "deferred",
-      "issue": 206,
-      "reason": "Exempted activity."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.exempt_bank_account_and_payment_services",
+        "vat.exempt_insurance",
+        "vat.exempt_letting_immovable_goods",
+        "vat.exempt_postal_universal_service",
+        "vat.exempt_passenger_transport",
+        "vat.exempt_medical_care",
+        "vat.exempt_education_childcare",
+        "vat.exempt_nonprofit_membership_and_sport",
+        "vat.exempt_funeral_services",
+        "vat.exempt_investment_gold",
+        "vat.exempt_betting_and_lotteries",
+        "vat.exempt_card_scheme_services",
+        "vat.exempt_financial_agency",
+        "vat.exempt_securities_and_fund_management",
+        "vat.exempt_live_performances",
+        "vat.exempt_sporting_event_admission",
+        "vat.exempt_public_water",
+        "vat.exempt_sale_of_non_deductible_goods"
+      ],
+      "note": "The general rule that no tax is chargeable on an exempted activity: every Schedule 1 exemption rule implements it (the Minister's order power under s.52(2) is not ingested)."
     },
     {
       "id": "vatca:s53",
@@ -579,9 +583,13 @@
       "id": "vatca:s65",
       "area": "vatca_section",
       "title": "s.65 Registration.",
-      "status": "deferred",
-      "issue": 206,
-      "reason": "Registration — who must register."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.registration_threshold_goods",
+        "vat.registration_threshold_services",
+        "vat.registration_threshold_turnover_test"
+      ],
+      "note": "The register of accountable persons. The thresholds (EUR 85,000 goods / EUR 90,000 services, as amended by Finance Act 2024) and the turnover test are ruled; registration itself is company configuration."
     },
     {
       "id": "vatca:s66",
@@ -636,73 +644,71 @@
       "id": "vatca:s71",
       "area": "vatca_section",
       "title": "s.71 Self-billing and outsourcing.",
-      "status": "deferred",
-      "issue": 278,
-      "reason": "Invoices and credit notes — validity for deduction."
+      "status": "not_applicable",
+      "reason": "Self-billing: whether an invoice was issued under a self-billing arrangement cannot be seen on a line. Deduction validity runs through the confirmed-document path (the s.66, 67, 69 and 70 rules)."
     },
     {
       "id": "vatca:s72",
       "area": "vatca_section",
       "title": "s.72 Storage of invoices.",
-      "status": "deferred",
-      "issue": 278,
-      "reason": "Invoices and credit notes — validity for deduction."
+      "status": "not_applicable",
+      "reason": "Storage of invoices: the document vault keeps every document with its SHA-256 re-checkable (invariant 5). A record-keeping requirement, not a transaction classification."
     },
     {
       "id": "vatca:s73",
       "area": "vatca_section",
       "title": "s.73 Requests for particulars in respect of repayment of tax.",
-      "status": "deferred",
-      "issue": 278,
-      "reason": "Particulars for repayment claims."
+      "status": "not_applicable",
+      "reason": "Procedure for particulars on repayment claims (ss.57, 58, 103 and 104); no classification effect."
     },
     {
       "id": "vatca:s74",
       "area": "vatca_section",
       "title": "s.74 Tax due on supplies.",
-      "status": "deferred",
-      "issue": 278,
-      "reason": "Tax due, returns and remittances."
+      "status": "not_applicable",
+      "reason": "When tax falls due (invoice issue, s.69 liability, continuous supplies): the posting records tax at invoice issue on the invoice basis (or on payment on the cash basis, s.80 rules), and the RTD derives the payable from posted entries. Timing only; no classification."
     },
     {
       "id": "vatca:s75",
       "area": "vatca_section",
       "title": "s.75 Tax due on intra- Community acquisitions.",
-      "status": "deferred",
-      "issue": 278,
-      "reason": "Tax due, returns and remittances."
+      "status": "not_applicable",
+      "reason": "When tax on an intra-Community acquisition falls due (the 15th of the following month, or invoice issue): timing only; the acquisition rules (s.9, s.10) already decide the treatment."
     },
     {
       "id": "vatca:s76",
       "area": "vatca_section",
       "title": "s.76 Returns and remittances.",
-      "status": "deferred",
-      "issue": 278,
-      "reason": "Tax due, returns and remittances."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.return_due_within_9_days",
+        "vat.mandatory_electronic_filing"
+      ],
+      "note": "The return is built by src/domain/vat (rtd.ts) from posted entries; s.78(2) extends the 9 days to 13 for electronic filing (S.I. 156/2012, vat.mandatory_electronic_filing)."
     },
     {
       "id": "vatca:s77",
       "area": "vatca_section",
       "title": "s.77 Authorisations in relation to filing dates.",
-      "status": "deferred",
-      "issue": 278,
-      "reason": "Tax due, returns and remittances."
+      "status": "not_applicable",
+      "reason": "Authorisation of accounting periods spanning taxable periods: an administrative authorisation; the standard taxable-period calendar is company configuration."
     },
     {
       "id": "vatca:s78",
       "area": "vatca_section",
       "title": "s.78 Electronic remittances and returns.",
-      "status": "deferred",
-      "issue": 278,
-      "reason": "Tax due, returns and remittances."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.mandatory_electronic_filing"
+      ],
+      "note": "Extends s.76(1) and (2) from 9 days to 13 for electronic returns and remittances; the operative rule is ingested from S.I. 156/2012 (vat.mandatory_electronic_filing)."
     },
     {
       "id": "vatca:s79",
       "area": "vatca_section",
       "title": "s.79 Special provisions in relation to payment dates.",
-      "status": "deferred",
-      "issue": 278,
-      "reason": "Tax due, returns and remittances."
+      "status": "not_applicable",
+      "reason": "Special payment dates for intra-Community acquisitions of new means of transport (vehicle registration tax time): timing only; no classification."
     },
     {
       "id": "vatca:s80",
@@ -800,25 +806,25 @@
       "id": "vatca:s90",
       "area": "vatca_section",
       "title": "s.90 Investment gold.",
-      "status": "deferred",
-      "issue": 278,
-      "reason": "Investment gold."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.exempt_investment_gold"
+      ],
+      "note": "s.90(1) defines investment gold for the Schedule 1 paragraph 9 exemption (vat.exempt_investment_gold, which applies it). The dealer margin-scheme option for investment gold is not curated; the margin-scheme purchase rule (s.87) covers the buyer's side."
     },
     {
       "id": "vatca:s91",
       "area": "vatca_section",
       "title": "s.91 Electronic services scheme.",
-      "status": "deferred",
-      "issue": 278,
-      "reason": "Electronic services / OSS scheme."
+      "status": "not_applicable",
+      "reason": "The electronic services scheme registers suppliers established outside the EU (s.91(1) \"non-established person\"); a business established in the State is outside it. The place of supply of electronic services to consumers is ruled at s.34(kc) (vat.place_of_supply_electronic_services_consumers)."
     },
     {
       "id": "vatca:s92",
       "area": "vatca_section",
       "title": "s.92 Suspension arrangements for alcohol products.",
-      "status": "deferred",
-      "issue": 278,
-      "reason": "Suspension arrangements for alcohol products."
+      "status": "not_applicable",
+      "reason": "Alcohol products supplied under an excise suspension arrangement are deemed not supplies while held under the arrangement; it applies to licensed excise traders. An SME's ordinary purchases from licensed producers show VAT in the normal way."
     },
     {
       "id": "vatca:s93",
@@ -1095,113 +1101,114 @@
       "id": "vatca:s91A",
       "area": "vatca_section",
       "title": "s.91A (inserted)",
-      "status": "deferred",
-      "issue": 278,
-      "reason": "OSS / import schemes (inserted)."
+      "status": "not_applicable",
+      "reason": "Definitions for the OSS chapter (broadcasting, telecommunications and electronic services); applied through the chapter's provisions (ss.91B-91J), each with its own row."
     },
     {
       "id": "vatca:s91B",
       "area": "vatca_section",
       "title": "s.91B (inserted)",
-      "status": "deferred",
-      "issue": 278,
-      "reason": "OSS / import schemes (inserted)."
+      "status": "not_applicable",
+      "reason": "Non-Union One-Stop Shop, where the State is the Member State of identification: an optional registration for suppliers of telecommunications, broadcasting and electronic services to EU consumers established outside the EU. A State-established business is outside it; B2C electronic services keep the s.34(kc) place-of-supply rule. Opting into any OSS is a filing choice recorded with the adviser."
     },
     {
       "id": "vatca:s91C",
       "area": "vatca_section",
       "title": "s.91C (inserted)",
-      "status": "deferred",
-      "issue": 278,
-      "reason": "OSS / import schemes (inserted)."
+      "status": "not_applicable",
+      "reason": "Non-Union One-Stop Shop, where the State is the Member State of consumption: the return and remittance mechanics for supplies declared by a non-EU supplier identified here. No transaction of a State-established business is classified by it."
     },
     {
       "id": "vatca:s91D",
       "area": "vatca_section",
       "title": "s.91D (inserted)",
-      "status": "deferred",
-      "issue": 278,
-      "reason": "OSS / import schemes (inserted)."
+      "status": "not_applicable",
+      "reason": "Union One-Stop Shop, where the State is the Member State of identification: an optional registration a State-established business may choose for its intra-EU B2C distance sales and scheme services. The underlying supplies keep their own rules (s.30 distance sales, s.34(kc)); opting in is a filing choice recorded with the adviser, never assumed."
     },
     {
       "id": "vatca:s91E",
       "area": "vatca_section",
       "title": "s.91E (inserted)",
-      "status": "deferred",
-      "issue": 278,
-      "reason": "OSS / import schemes (inserted)."
+      "status": "not_applicable",
+      "reason": "Union One-Stop Shop, where the State is the Member State of consumption: the return and remittance mechanics for intra-EU B2C distance sales and services declared by a supplier registered elsewhere. The underlying supplies are already ruled (s.30 distance sales, s.34(kc)); opting into the Union OSS is a filing choice recorded with the adviser."
     },
     {
       "id": "vatca:s91F",
       "area": "vatca_section",
       "title": "s.91F (inserted)",
-      "status": "deferred",
-      "issue": 278,
-      "reason": "OSS / import schemes (inserted)."
+      "status": "not_applicable",
+      "reason": "Regulations for the telecommunications, broadcasting and electronic services schemes: administrative machinery; no transaction classification."
     },
     {
       "id": "vatca:s91G",
       "area": "vatca_section",
       "title": "s.91G (inserted)",
-      "status": "deferred",
-      "issue": 278,
-      "reason": "OSS / import schemes (inserted)."
+      "status": "not_applicable",
+      "reason": "Deemed supplies by electronic interfaces (marketplaces) in distance sales of imported goods: applies to interfaces facilitating such sales; the underlying supplies keep the import (s.3) and distance sale (s.30) rules. A business that is itself such an interface is flagged by the adviser; nothing is auto-classified."
     },
     {
       "id": "vatca:s91H",
       "area": "vatca_section",
       "title": "s.91H (inserted)",
-      "status": "deferred",
-      "issue": 278,
-      "reason": "OSS / import schemes (inserted)."
+      "status": "not_applicable",
+      "reason": "Special arrangements for import VAT (the import scheme): payment of import VAT with the importer's IOSS return instead of at customs. An import-filing choice; imports themselves are ruled (vat.import_of_goods, s.3)."
     },
     {
       "id": "vatca:s91I",
       "area": "vatca_section",
       "title": "s.91I (inserted)",
-      "status": "deferred",
-      "issue": 278,
-      "reason": "OSS / import schemes (inserted)."
+      "status": "not_applicable",
+      "reason": "Interpretation and general provisions for the import scheme: definitions and machinery; applied through ss.91J and 91H, which have their own rows."
     },
     {
       "id": "vatca:s91J",
       "area": "vatca_section",
       "title": "s.91J (inserted)",
-      "status": "deferred",
-      "issue": 278,
-      "reason": "OSS / import schemes (inserted)."
+      "status": "not_applicable",
+      "reason": "Import One-Stop Shop, where the State is the Member State of identification: an optional registration for sellers outside the EU declaring import VAT on low-value consignments. A State-established business importing goods pays import VAT in the ordinary way (vat.import_of_goods)."
     },
     {
       "id": "vatca:s92A",
       "area": "vatca_section",
       "title": "s.92A (inserted)",
-      "status": "deferred",
-      "issue": 278,
-      "reason": "Deposit return scheme."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.deposit_return_scheme_deposit_disregarded"
+      ],
+      "note": "The taxable amount is deemed reduced to nil as referable to a Deposit Return Scheme deposit (S.I. 599/2021); VAT is charged on the product's price only."
     },
     {
       "id": "vatca:s92B",
       "area": "vatca_section",
       "title": "s.92B (inserted)",
-      "status": "deferred",
-      "issue": 278,
-      "reason": "SME scheme definitions (S.I. 69/2025)."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.cross_border_sme_scheme_input_deductibility_restriction",
+        "vat.cross_border_sme_scheme_union_threshold"
+      ],
+      "note": "Definitions for the SME scheme (S.I. 69/2025, reg. 5); the scheme's rules derive from the S.I. and s.92C."
     },
     {
       "id": "vatca:s92C",
       "area": "vatca_section",
       "title": "s.92C (inserted)",
-      "status": "deferred",
-      "issue": 278,
-      "reason": "SME scheme (S.I. 69/2025)."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.cross_border_sme_scheme_input_deductibility_restriction",
+        "vat.cross_border_sme_scheme_union_threshold"
+      ],
+      "note": "The special scheme for small enterprises established in the State (S.I. 69/2025): the Union annual turnover threshold and the input-deductibility restriction are both ruled from the S.I."
     },
     {
       "id": "vatca:s92D",
       "area": "vatca_section",
       "title": "s.92D (inserted)",
-      "status": "deferred",
-      "issue": 278,
-      "reason": "SME scheme for enterprises not established in the State (S.I. 69/2025)."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.cross_border_sme_scheme_input_deductibility_restriction",
+        "vat.cross_border_sme_scheme_union_threshold"
+      ],
+      "note": "The SME scheme for enterprises not established in the State: the same threshold and deductibility rules apply to their Irish supplies."
     },
     {
       "id": "vatca:sch1:p1:1",
@@ -1771,169 +1778,159 @@
       "id": "vatca:sch4:1",
       "area": "vatca_schedule",
       "title": "Sch.4 para 1 — ## Part 1 — List of Agricultural Production Activities",
-      "status": "deferred",
-      "issue": 278,
-      "reason": "Agricultural production (flat-rate farmers)."
+      "status": "not_applicable",
+      "reason": "Crop production: a definition of agricultural production feeding the flat-rate addition (s.86, vat.flat_rate_farmer_purchase) and the agricultural-services reduced rate (Sch.3 para 10, vat.reduced_rate_agricultural_services); applied through those rules."
     },
     {
       "id": "vatca:sch4:2",
       "area": "vatca_schedule",
       "title": "Sch.4 para 2",
-      "status": "deferred",
-      "issue": 278,
-      "reason": "Agricultural production (flat-rate farmers)."
+      "status": "not_applicable",
+      "reason": "Stock farming together with cultivation: a definition of agricultural production feeding the flat-rate addition (s.86, vat.flat_rate_farmer_purchase) and the agricultural-services reduced rate (Sch.3 para 10, vat.reduced_rate_agricultural_services); applied through those rules."
     },
     {
       "id": "vatca:sch4:3",
       "area": "vatca_schedule",
       "title": "Sch.4 para 3",
-      "status": "deferred",
-      "issue": 278,
-      "reason": "Agricultural production (flat-rate farmers)."
+      "status": "not_applicable",
+      "reason": "Forestry: a definition of agricultural production feeding the flat-rate addition (s.86, vat.flat_rate_farmer_purchase) and the agricultural-services reduced rate (Sch.3 para 10, vat.reduced_rate_agricultural_services); applied through those rules."
     },
     {
       "id": "vatca:sch4:4",
       "area": "vatca_schedule",
       "title": "Sch.4 para 4",
-      "status": "deferred",
-      "issue": 278,
-      "reason": "Agricultural production (flat-rate farmers)."
+      "status": "not_applicable",
+      "reason": "Fisheries: a definition of agricultural production feeding the flat-rate addition (s.86, vat.flat_rate_farmer_purchase) and the agricultural-services reduced rate (Sch.3 para 10, vat.reduced_rate_agricultural_services); applied through those rules."
     },
     {
       "id": "vatca:sch4:5",
       "area": "vatca_schedule",
       "title": "Sch.4 para 5",
-      "status": "deferred",
-      "issue": 278,
-      "reason": "Agricultural production (flat-rate farmers)."
+      "status": "not_applicable",
+      "reason": "Processing of the farmer's own products: a definition of agricultural production feeding the flat-rate addition (s.86, vat.flat_rate_farmer_purchase) and the agricultural-services reduced rate (Sch.3 para 10, vat.reduced_rate_agricultural_services); applied through those rules."
     },
     {
       "id": "vatca:sch5:1",
       "area": "vatca_schedule",
       "title": "Sch.5 para 1 — Works of art",
-      "status": "deferred",
-      "issue": 278,
-      "reason": "Rate paragraph not yet ruled."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.rate_works_of_art_imported",
+        "vat.reduced_rate_works_of_art"
+      ],
+      "note": "Defines works of art for s.48 (reduced rate) and overlaps Sch.3 para 23 (the domestic artist's originals, also 13.5%)."
     },
     {
       "id": "vatca:sch5:2",
       "area": "vatca_schedule",
       "title": "Sch.5 para 2 — Collectors’ items",
-      "status": "deferred",
-      "issue": 278,
-      "reason": "Rate paragraph not yet ruled."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.rate_works_of_art_imported"
+      ],
+      "note": "Defines collectors' items: rated only through s.48 - there is no Sch.3 paragraph for them, so without this rule a stamp collection would fall to the standard rate."
     },
     {
       "id": "vatca:sch5:3",
       "area": "vatca_schedule",
       "title": "Sch.5 para 3 — Antiques",
-      "status": "deferred",
-      "issue": 278,
-      "reason": "Rate paragraph not yet ruled."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.rate_works_of_art_imported",
+        "vat.reduced_rate_antiques"
+      ],
+      "note": "Defines antiques for s.48 (imported antiques); domestic antiques over 100 years old are Sch.3 para 24."
     },
     {
       "id": "vatca:sch6:1",
       "area": "vatca_schedule",
       "title": "Sch.6 para 1 — Section 14.",
-      "status": "deferred",
-      "issue": 206,
-      "reason": "Annex 1 activities (public bodies as taxable persons)."
+      "status": "not_applicable",
+      "reason": "Telecommunication services: an Annex I activity of the VAT Directive, listed for the State and public bodies (s.14(2)). Applies to public bodies as taxable persons, not to a business book."
     },
     {
       "id": "vatca:sch6:2",
       "area": "vatca_schedule",
       "title": "Sch.6 para 2",
-      "status": "deferred",
-      "issue": 206,
-      "reason": "Annex 1 activities (public bodies as taxable persons)."
+      "status": "not_applicable",
+      "reason": "Supply of water, gas, electricity and thermal energy: an Annex I activity of the VAT Directive, listed for the State and public bodies (s.14(2)). Applies to public bodies as taxable persons, not to a business book."
     },
     {
       "id": "vatca:sch6:3",
       "area": "vatca_schedule",
       "title": "Sch.6 para 3",
-      "status": "deferred",
-      "issue": 206,
-      "reason": "Annex 1 activities (public bodies as taxable persons)."
+      "status": "not_applicable",
+      "reason": "Transport of goods: an Annex I activity of the VAT Directive, listed for the State and public bodies (s.14(2)). Applies to public bodies as taxable persons, not to a business book."
     },
     {
       "id": "vatca:sch6:4",
       "area": "vatca_schedule",
       "title": "Sch.6 para 4",
-      "status": "deferred",
-      "issue": 206,
-      "reason": "Annex 1 activities (public bodies as taxable persons)."
+      "status": "not_applicable",
+      "reason": "Port and airport services: an Annex I activity of the VAT Directive, listed for the State and public bodies (s.14(2)). Applies to public bodies as taxable persons, not to a business book."
     },
     {
       "id": "vatca:sch6:5",
       "area": "vatca_schedule",
       "title": "Sch.6 para 5",
-      "status": "deferred",
-      "issue": 206,
-      "reason": "Annex 1 activities (public bodies as taxable persons)."
+      "status": "not_applicable",
+      "reason": "Passenger transport: an Annex I activity of the VAT Directive, listed for the State and public bodies (s.14(2)). Applies to public bodies as taxable persons, not to a business book."
     },
     {
       "id": "vatca:sch6:6",
       "area": "vatca_schedule",
       "title": "Sch.6 para 6",
-      "status": "deferred",
-      "issue": 206,
-      "reason": "Annex 1 activities (public bodies as taxable persons)."
+      "status": "not_applicable",
+      "reason": "Supply of new goods manufactured for sale: an Annex I activity of the VAT Directive, listed for the State and public bodies (s.14(2)). Applies to public bodies as taxable persons, not to a business book."
     },
     {
       "id": "vatca:sch6:7",
       "area": "vatca_schedule",
       "title": "Sch.6 para 7",
-      "status": "deferred",
-      "issue": 206,
-      "reason": "Annex 1 activities (public bodies as taxable persons)."
+      "status": "not_applicable",
+      "reason": "Agricultural intervention agencies' transactions: an Annex I activity of the VAT Directive, listed for the State and public bodies (s.14(2)). Applies to public bodies as taxable persons, not to a business book."
     },
     {
       "id": "vatca:sch6:8",
       "area": "vatca_schedule",
       "title": "Sch.6 para 8",
-      "status": "deferred",
-      "issue": 206,
-      "reason": "Annex 1 activities (public bodies as taxable persons)."
+      "status": "not_applicable",
+      "reason": "Organisation of trade fairs and exhibitions: an Annex I activity of the VAT Directive, listed for the State and public bodies (s.14(2)). Applies to public bodies as taxable persons, not to a business book."
     },
     {
       "id": "vatca:sch6:9",
       "area": "vatca_schedule",
       "title": "Sch.6 para 9",
-      "status": "deferred",
-      "issue": 206,
-      "reason": "Annex 1 activities (public bodies as taxable persons)."
+      "status": "not_applicable",
+      "reason": "Warehousing: an Annex I activity of the VAT Directive, listed for the State and public bodies (s.14(2)). Applies to public bodies as taxable persons, not to a business book."
     },
     {
       "id": "vatca:sch6:10",
       "area": "vatca_schedule",
       "title": "Sch.6 para 10",
-      "status": "deferred",
-      "issue": 206,
-      "reason": "Annex 1 activities (public bodies as taxable persons)."
+      "status": "not_applicable",
+      "reason": "Activities of commercial publicity bodies: an Annex I activity of the VAT Directive, listed for the State and public bodies (s.14(2)). Applies to public bodies as taxable persons, not to a business book."
     },
     {
       "id": "vatca:sch6:11",
       "area": "vatca_schedule",
       "title": "Sch.6 para 11",
-      "status": "deferred",
-      "issue": 206,
-      "reason": "Annex 1 activities (public bodies as taxable persons)."
+      "status": "not_applicable",
+      "reason": "Activities of travel agents: an Annex I activity of the VAT Directive, listed for the State and public bodies (s.14(2)). Applies to public bodies as taxable persons, not to a business book."
     },
     {
       "id": "vatca:sch6:12",
       "area": "vatca_schedule",
       "title": "Sch.6 para 12",
-      "status": "deferred",
-      "issue": 206,
-      "reason": "Annex 1 activities (public bodies as taxable persons)."
+      "status": "not_applicable",
+      "reason": "Staff shops, cooperatives and industrial canteens: an Annex I activity of the VAT Directive, listed for the State and public bodies (s.14(2)). Applies to public bodies as taxable persons, not to a business book."
     },
     {
       "id": "vatca:sch6:13",
       "area": "vatca_schedule",
       "title": "Sch.6 para 13",
-      "status": "deferred",
-      "issue": 206,
-      "reason": "Annex 1 activities (public bodies as taxable persons)."
+      "status": "not_applicable",
+      "reason": "Radio and television bodies' non-exempt activities: an Annex I activity of the VAT Directive, listed for the State and public bodies (s.14(2)). Applies to public bodies as taxable persons, not to a business book."
     },
     {
       "id": "vatca:sch3:p4:21",
@@ -1949,25 +1946,22 @@
       "id": "vatca:sch9:part1",
       "area": "vatca_schedule",
       "title": "Sch.9 Part 1",
-      "status": "deferred",
-      "issue": 278,
-      "reason": "Northern Ireland protocol provisions."
+      "status": "not_applicable",
+      "reason": "Lists the sections to which s.2(4A) does not apply (consequential on the UK's withdrawal; Part 3 inserted by S.I. 69/2025 reg. 10). No transaction classification: every named section has its own row."
     },
     {
       "id": "vatca:sch9:part2",
       "area": "vatca_schedule",
       "title": "Sch.9 Part 2",
-      "status": "deferred",
-      "issue": 278,
-      "reason": "Northern Ireland protocol provisions."
+      "status": "not_applicable",
+      "reason": "Lists the sections to which s.2(4A) does not apply (consequential on the UK's withdrawal; Part 3 inserted by S.I. 69/2025 reg. 10). No transaction classification: every named section has its own row."
     },
     {
       "id": "vatca:sch9:part3",
       "area": "vatca_schedule",
       "title": "Sch.9 Part 3",
-      "status": "deferred",
-      "issue": 278,
-      "reason": "Northern Ireland protocol provisions."
+      "status": "not_applicable",
+      "reason": "Lists the sections to which s.2(4A) does not apply (consequential on the UK's withdrawal; Part 3 inserted by S.I. 69/2025 reg. 10). No transaction classification: every named section has its own row."
     },
     {
       "id": "treatment:IE_STD",
@@ -2893,9 +2887,12 @@
       "id": "txn:hotel-accommodation",
       "area": "transaction_type",
       "title": "hotel-accommodation",
-      "status": "deferred",
-      "issue": 278,
-      "reason": "Current hotel accommodation rate not ruled; only the 2020–2023 9% window and the unmodelled 2026 change are."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.reduced_rate_holiday_accommodation",
+        "vat.rate_hotel_accommodation_9pct_2020_2023"
+      ],
+      "note": "Holiday and guest accommodation is 13.5% (Sch.3 para 11); the 9% window of 1 November 2020 to 31 August 2023 is ruled separately."
     },
     {
       "id": "txn:restaurant-meal",
@@ -2931,9 +2928,11 @@
       "id": "txn:grant-received",
       "area": "transaction_type",
       "title": "grant-received",
-      "status": "deferred",
-      "issue": 206,
-      "reason": "Grants and subsidies: scope not yet ruled."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.outside_scope_grant_subsidy"
+      ],
+      "note": "A grant or subsidy with no supply in return is outside the scope (s.3); where the payment buys a service it is a taxable supply, and the rule's exception says so."
     },
     {
       "id": "txn:loan-drawdown-or-repayment",
