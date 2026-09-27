@@ -716,13 +716,20 @@ export async function createInvoiceAction(formData: FormData): Promise<ActionRes
 
     revalidatePath('/invoices');
     revalidatePath('/reports');
+    // Issue #234: a purchase typed in has no confirmed invoice behind it.
+    const warnings = [
+      ...result.warnings,
+      ...(direction === 'purchase'
+        ? ['Its input VAT is held back: nothing is reclaimed until the supplier\'s invoice is uploaded, confirmed and posted from the document.']
+        : []),
+    ];
     return {
       ok: true,
       message: result.vatDeferred
         ? `Invoice posted. Its VAT is deferred until the customer pays, under the cash `
           + 'receipts basis.'
         : 'Invoice posted.',
-      warnings: result.warnings.length > 0 ? result.warnings : undefined,
+      warnings: warnings.length > 0 ? warnings : undefined,
     };
   } catch (error) {
     return fail(error);

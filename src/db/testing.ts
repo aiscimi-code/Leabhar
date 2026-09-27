@@ -92,3 +92,23 @@ export function seedTestBook(options: Partial<CreateCompanyInput> = {}): SeededB
     bankAccountId,
   };
 }
+
+/**
+ * A confirmed supplier document for a test purchase invoice (issue #234):
+ * input VAT is recovered only on a purchase posted from one. A bare row, not
+ * a stored file — the tests that use it exercise VAT, not ingest.
+ */
+export function insertConfirmedDocument(
+  db: ReturnType<typeof createTestDatabase>['db'],
+  companyId: string,
+  values: Partial<typeof schema.documents.$inferInsert> = {},
+): string {
+  const id = ids.document();
+  db.insert(schema.documents).values({
+    id, companyId, filename: `${id}.pdf`, originalFilename: `${id}.pdf`, storagePath: `test/${id}.pdf`,
+    mimeType: 'application/pdf', fileSizeBytes: 1, sha256: id.padEnd(64, '0').slice(0, 64),
+    uploadedAt: new Date().toISOString(), documentType: 'supplier_invoice', reviewStatus: 'confirmed',
+    ...values,
+  }).run();
+  return id;
+}

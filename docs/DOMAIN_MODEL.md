@@ -376,6 +376,20 @@ Lines live in `document_lines`, per-rate VAT in `document_vat_totals`, both with
 provenance. The VAT rate for a purchase comes from these confirmed lines — never
 from a bank amount.
 
+### Input VAT without a confirmed invoice (issue #234)
+
+`createInvoice` recovers input VAT on a purchase only when it is posted from a
+confirmed document (`documentId` whose `review_status` is `confirmed`). A
+purchase typed in or imported from a ledger CSV posts with its VAT costed and
+held back from recovery, and each line is flagged; the VAT is recovered by
+uploading, confirming and posting the supplier's invoice. An accountant's
+input VAT adjustment (`createAdjustment` with purchase VAT) is allowed as a
+reasoned correction and raises a review item. An invoice migrated from a
+previous system whose VAT was already declared there is posted with
+`vatAlreadyDeclared: { reason }` (CLI `--vat-already-declared`): information
+only — no VAT entries, no VAT journal lines, the whole gross to the line
+accounts — and the reason is audited.
+
 ### Statements, overdue and reminders (issue #405)
 
 Overdue is computed on the day asked, never stored: a sales invoice is overdue

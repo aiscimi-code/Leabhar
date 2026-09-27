@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { createTestDatabase } from '@/db/testing';
+import { createTestDatabase, insertConfirmedDocument } from '@/db/testing';
 import { createCompany } from '../config/setup';
 import { createInvoice } from '../invoicing/invoices';
 import { buildRtdReturn, RTD_BOXES } from './rtd';
@@ -47,7 +47,7 @@ const post = (direction: 'sales' | 'purchase', code: string, netMinor: number, p
   companyId, direction, invoiceDate: (opts.date ?? makeDate(2025, 3, 10)) as ReturnType<typeof makeDate>, invoiceNumber: `R-${++n}`,
   supplyDate: opts.supplyDate as ReturnType<typeof makeDate> | undefined,
   isCreditNote: opts.isCreditNote,
-  ...(direction === 'sales' ? { customerId: party[partyKey] } : { supplierId: party[partyKey] }),
+  ...(direction === 'sales' ? { customerId: party[partyKey] } : { supplierId: party[partyKey], documentId: insertConfirmedDocument(db, companyId) }),
   lines: [{
     description: `${code} line`, netMinor,
     accountId: byCode[opts.account ?? (direction === 'sales' ? '4020' : '6070')]!, vatTreatmentId: tr[code]!,

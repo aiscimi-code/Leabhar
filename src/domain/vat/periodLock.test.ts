@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { eq, and } from 'drizzle-orm';
-import { createTestDatabase } from '@/db/testing';
+import { createTestDatabase, insertConfirmedDocument } from '@/db/testing';
 import { createCompany, addBankAccount } from '../config/setup';
 import { createInvoice, voidInvoice } from '../invoicing/invoices';
 import { recordPayment } from '../invoicing/payments';
@@ -62,7 +62,7 @@ const setStatus = (name: string, status: 'locked' | 'submitted') =>
   db.update(vatPeriods).set({ status }).where(eq(vatPeriods.id, period(name).id)).run();
 
 const purchase = (date: string, net = 10_000, extra: Partial<Parameters<typeof createInvoice>[1]> = {}) => createInvoice(db, {
-  companyId, direction: 'purchase', invoiceDate: asIsoDate(date), supplierId, invoiceNumber: `P-${date}-${net}`,
+  companyId, direction: 'purchase', documentId: insertConfirmedDocument(db, companyId), invoiceDate: asIsoDate(date), supplierId, invoiceNumber: `P-${date}-${net}`,
   lines: [{ description: 'Goods', netMinor: net, accountId: byCode['6120']!, vatTreatmentId: tr['IE_STD']!, statedVatMinor: Math.round(net * 0.23) }],
   ...extra,
 });

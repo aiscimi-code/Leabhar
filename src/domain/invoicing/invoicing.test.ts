@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { eq, and } from 'drizzle-orm';
-import { createTestDatabase } from '@/db/testing';
+import { createTestDatabase, insertConfirmedDocument } from '@/db/testing';
 import { createCompany, addBankAccount, systemAccountId } from '../config/setup';
 import { createInvoice, voidInvoice, InvoicingError } from './invoices';
 import { recordPayment, outstandingInvoices, agedAnalysis } from './payments';
@@ -147,7 +147,7 @@ describe('purchase invoices', () => {
 
   const purchaseInvoice = (over: Partial<Parameters<typeof createInvoice>[1]> = {}) =>
     createInvoice(db, {
-      companyId, direction: 'purchase', invoiceDate: makeDate(2025, 2, 20),
+      companyId, direction: 'purchase', documentId: insertConfirmedDocument(db, companyId), invoiceDate: makeDate(2025, 2, 20),
       supplierId, invoiceNumber: 'BAS-0044',
       lines: [{
         description: 'Accountancy', netMinor: 50_000,
@@ -403,7 +403,7 @@ describe('voidInvoice', () => {
   it('reverses both legs of a reverse-charge purchase invoice', () => {
     setup('cash_receipts');
     const invoice = createInvoice(db, {
-      companyId, direction: 'purchase', invoiceDate: makeDate(2025, 2, 20), supplierId,
+      companyId, direction: 'purchase', documentId: insertConfirmedDocument(db, companyId), invoiceDate: makeDate(2025, 2, 20), supplierId,
       lines: [{
         description: 'EU hosting', netMinor: 50_000,
         accountId: byCode['6010']!, vatTreatmentId: tr['EU_SERVICES_RCV']!,
@@ -587,7 +587,7 @@ describe('cash receipts basis — deferral and release', () => {
 
   it('does not defer VAT on purchases', () => {
     createInvoice(db, {
-      companyId, direction: 'purchase', invoiceDate: makeDate(2025, 2, 20),
+      companyId, direction: 'purchase', documentId: insertConfirmedDocument(db, companyId), invoiceDate: makeDate(2025, 2, 20),
       supplierId, lines: [{
         description: 'Accountancy', netMinor: 50_000,
         accountId: byCode['6070']!, vatTreatmentId: tr['IE_STD']!,
@@ -603,7 +603,7 @@ describe('payments', () => {
 
   it('settles a supplier invoice', () => {
     const invoice = createInvoice(db, {
-      companyId, direction: 'purchase', invoiceDate: makeDate(2025, 2, 20),
+      companyId, direction: 'purchase', documentId: insertConfirmedDocument(db, companyId), invoiceDate: makeDate(2025, 2, 20),
       supplierId, lines: [{
         description: 'Accountancy', netMinor: 50_000,
         accountId: byCode['6070']!, vatTreatmentId: tr['IE_STD']!,
@@ -641,7 +641,7 @@ describe('payments', () => {
 
   it('refuses a receipt against a purchase invoice', () => {
     const invoice = createInvoice(db, {
-      companyId, direction: 'purchase', invoiceDate: makeDate(2025, 2, 20),
+      companyId, direction: 'purchase', documentId: insertConfirmedDocument(db, companyId), invoiceDate: makeDate(2025, 2, 20),
       supplierId, lines: [{
         description: 'Accountancy', netMinor: 50_000,
         accountId: byCode['6070']!, vatTreatmentId: tr['IE_STD']!,
@@ -726,7 +726,7 @@ describe('payments', () => {
     }).run();
 
     const invoice = createInvoice(db, {
-      companyId, direction: 'purchase', invoiceDate: makeDate(2025, 2, 20),
+      companyId, direction: 'purchase', documentId: insertConfirmedDocument(db, companyId), invoiceDate: makeDate(2025, 2, 20),
       supplierId, lines: [{
         description: 'Accountancy', netMinor: 50_000,
         accountId: byCode['6070']!, vatTreatmentId: tr['IE_STD']!,
@@ -778,7 +778,7 @@ describe('payments — credit notes (issue #157)', () => {
 
   it('settles a purchase credit note with a receipt (supplier refund)', () => {
     const credit = createInvoice(db, {
-      companyId, direction: 'purchase', invoiceDate: makeDate(2025, 2, 20),
+      companyId, direction: 'purchase', documentId: insertConfirmedDocument(db, companyId), invoiceDate: makeDate(2025, 2, 20),
       supplierId, invoiceNumber: 'PCN-0001', isCreditNote: true,
       lines: [{
         description: 'Returned goods', netMinor: 50_000,

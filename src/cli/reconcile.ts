@@ -288,6 +288,10 @@ Books (once induction is done):
       The sales invoice or credit note as a PDF; marked DRAFT, with the gaps
       listed, while a reg.20 particular is missing
   create-invoice --direction sales|purchase --file <invoices.csv>
+      A purchase with no confirmed supplier document holds its input VAT back
+      and is flagged (issue #234). [--vat-already-declared "reason"]: migrated
+      invoices whose VAT was declared in the previous system — information
+      only, no VAT entries (also on import-invoices)
       One row per invoice/bill. Columns: invoiceNumber, date, party (a
       customer/supplier name or id), description, net, account, vatTreatment,
       and optionally dueDate, supplyDate, statedVat, currency, creditNote,
@@ -1195,6 +1199,7 @@ export async function main(argv: string[], options: CliOptions = {}): Promise<nu
           companyId,
           direction: requireFlag(flags, 'direction'),
           file: requireFlag(flags, 'file'),
+          vatAlreadyDeclared: getFlag(flags, 'vat-already-declared'),
         });
         print(await createInvoicesFromCsv(db, parsed), format);
         return 0;
@@ -1207,6 +1212,7 @@ export async function main(argv: string[], options: CliOptions = {}): Promise<nu
           file: requireFlag(flags, 'file'),
           account: requireFlag(flags, 'account', 'account-id', 'accountId'),
           vatTreatment: requireFlag(flags, 'vat-treatment', 'vat-treatment-id', 'vatTreatmentId'),
+          vatAlreadyDeclared: getFlag(flags, 'vat-already-declared'),
         });
         print(await importInvoicesFromCsv(db, parsed), format);
         return 0;
