@@ -4,7 +4,7 @@ import {
   Page, Panel, Badge, Stat, Empty, Disclosure, ProvenanceBadge, Field, Input,
 } from '@/components/primitives';
 import { ActionForm } from '@/components/ActionForm';
-import { allocateOnAccountAction, applyCreditNoteAction, unapplyCreditNoteAction } from '@/app/actions';
+import { allocateOnAccountAction, applyCreditNoteAction, unapplyCreditNoteAction, raiseDebitNoteAction } from '@/app/actions';
 import { PaymentForm } from '@/components/PaymentForm';
 import { recordPaymentAction } from '@/app/settings-actions';
 import { money, date, label } from '@/lib/format';
@@ -17,7 +17,10 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
   const detail = invoiceDetail(id);
   if (!detail) notFound();
 
-  const { invoice, lines, allocations, party, company, onAccount, missingParticulars, counterparts } = detail;
+  const {
+    invoice, lines, allocations, party, company, onAccount, missingParticulars, counterparts,
+    incomeAccounts, treatmentOptions, adjustsNumber,
+  } = detail;
   const today = new Date().toISOString().slice(0, 10);
   const isSales = invoice.direction === 'sales';
   const deferredVat = isSales && company.vatAccountingBasis === 'cash_receipts'
@@ -26,7 +29,8 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
   return (
     <Page
       title={invoice.invoiceNumber ?? `Invoice #${invoice.internalNumber ?? ''}`}
-      subtitle={`${isSales ? 'Sales' : 'Purchase'} invoice dated ${date(invoice.invoiceDate)}`
+      subtitle={`${isSales ? 'Sales' : 'Purchase'} ${invoice.isCreditNote ? 'credit note' : invoice.isDebitNote ? 'debit note' : 'invoice'} dated ${date(invoice.invoiceDate)}`
+        + (adjustsNumber ? `, adding to ${adjustsNumber}` : '')
         + (party ? ` — ${party.name}` : '')}
       actions={
         <>
@@ -276,6 +280,36 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
           </Disclosure>
         )}
       </Panel>
+
+      {!invoice.isCreditNote && !invoice.isDebitNote && invoice.status !== 'void' && (
+        <Panel>
+          <Disclosure summary="Raise a debit note against this invoice">
+            <div className="max-w-4xl">
+              <ActionForm action={raiseDebitNoteAction} submit="Raise debit note" resetOnSuccess extra={{ invoiceId: invoice.id }}>
+                <div className="grid grid-cols-3 gap-3">
+                  <Field label="Date"><Input name="date" type="date" defaultValue={today} required /></Field>
+                  <Field label="Description"><Input name="description" required placeholder="Undercharged hours" /></Field>
+                  <Field label={`Net (${invoice.currency})`}><Input name="net" required placeholder="0.00" /></Field>
+                  <Field label="Account">
+                    <select name="accountId" required className="border border-line-strong rounded px-2 py-1 bg-surface text-[12.5px]">
+                      {incomeAccounts.map((a) => <option key={a.id} value={a.id}>{a.code} — {a.name}</option>)}
+                    </select>
+                  </Field>
+                  <Field label="VAT treatment">
+                    <select name="vatTreatmentId" required defaultValue={lines[0]?.line.vatTreatmentId ?? ''}
+                      className="border border-line-strong rounded px-2 py-1 bg-surface text-[12.5px]">
+                      {treatmentOptions.map((t) => <option key={t.id} value={t.id}>{t.code} — {t.name}</option>)}
+                    </select>
+                  </Field>
+                </div>
+              </ActionForm>
+              <p className="text-ink-muted mt-2 leading-snug">
+                An additional charge: posted and aged like an invoice, with its own number and VAT, and linked to this one.
+              </p>
+            </div>
+          </Disclosure>
+        </Panel>
+      )}
 
       {invoice.journalEntryId && (
         <Panel>

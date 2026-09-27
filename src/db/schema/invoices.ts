@@ -67,6 +67,13 @@ export const invoices = sqliteTable('invoices', {
   isCreditNote: integer('is_credit_note', { mode: 'boolean' }).notNull().default(false),
   creditNoteOfId: text('credit_note_of_id'),
   /**
+   * A debit note (issue #403): an additional charge after an invoice, e.g. an
+   * undercharge corrected. It is an ordinary invoice in every other respect —
+   * its own number, VAT and due date — linked to the invoice it adjusts.
+   */
+  isDebitNote: integer('is_debit_note', { mode: 'boolean' }).notNull().default(false),
+  debitNoteOfId: text('debit_note_of_id'),
+  /**
    * The recurring template and occurrence date this invoice was raised from
    * (issue #394). Unique together, so an occurrence is raised once however
    * often the due-post runs.

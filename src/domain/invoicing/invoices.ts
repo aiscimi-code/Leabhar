@@ -94,6 +94,9 @@ export interface CreateInvoiceInput {
   documentId?: string | null;
   isCreditNote?: boolean;
   creditNoteOfId?: string | null;
+  /** An additional charge against an earlier invoice of the same party (issue #403). */
+  isDebitNote?: boolean;
+  debitNoteOfId?: string | null;
   /** The recurring template and occurrence this invoice is raised for (issue #394). */
   recurring?: { templateId: string; date: IsoDate } | null;
   /**
@@ -166,6 +169,21 @@ function createInvoiceSteps(db: AppDatabase, input: CreateInvoiceInput): Created
     input.fxRate
       ? multiplyRational(asMinor(amount), input.fxRate.numerator, input.fxRate.denominator)
       : amount;
+
+  if (input.isDebitNote) {
+    if (input.isCreditNote) throw new InvoicingError('A document is a credit note or a debit note, not both.');
+    if (!input.debitNoteOfId) throw new InvoicingError('A debit note names the invoice it adjusts.');
+    const original = db.select().from(invoices)
+      .where(and(eq(invoices.id, input.debitNoteOfId), eq(invoices.companyId, input.companyId))).get();
+    if (!original) throw new InvoicingError(`Invoice ${input.debitNoteOfId} not found.`);
+    if (original.isCreditNote || original.direction !== input.direction
+      || (original.customerId ?? null) !== (input.customerId ?? null)
+      || (original.supplierId ?? null) !== (input.supplierId ?? null)) {
+      throw new InvoicingError('A debit note adjusts an invoice of the same party and direction, not a credit note.');
+    }
+  } else if (input.debitNoteOfId) {
+    throw new InvoicingError('Only a debit note names an invoice it adjusts.');
+  }
 
   const sign = input.isCreditNote ? -1 : 1;
   const taxPointBase = input.supplyDate ?? input.invoiceDate;
@@ -488,6 +506,8 @@ function createInvoiceSteps(db: AppDatabase, input: CreateInvoiceInput): Created
       journalEntryId: journal.id,
       isCreditNote: input.isCreditNote ?? false,
       creditNoteOfId: input.creditNoteOfId ?? null,
+      isDebitNote: input.isDebitNote ?? false,
+      debitNoteOfId: input.debitNoteOfId ?? null,
       recurringInvoiceId: input.recurring?.templateId ?? null,
       recurringDate: input.recurring?.date ?? null,
       status: 'issued',
@@ -788,7 +808,7 @@ function buildNarrative(db: AppDatabase, input: CreateInvoiceInput, isSales: boo
     : db.select({ name: suppliers.name }).from(suppliers)
         .where(eq(suppliers.id, input.supplierId!)).get()?.name;
 
-  const kind = input.isCreditNote ? 'Credit note' : isSales ? 'Sales invoice' : 'Purchase invoice';
+  const kind = input.isCreditNote ? 'Credit note' : input.isDebitNote ? 'Debit note' : isSales ? 'Sales invoice' : 'Purchase invoice';
   const number = input.invoiceNumber ? ` ${input.invoiceNumber}` : '';
   return `${kind}${number} — ${party ?? 'unknown party'}`.slice(0, 200);
 }

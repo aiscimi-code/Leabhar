@@ -34,7 +34,7 @@ export interface InvoiceDocumentLine {
 
 export interface InvoiceDocument {
   invoiceId: string;
-  kind: 'invoice' | 'credit_note';
+  kind: 'invoice' | 'credit_note' | 'debit_note';
   number: string | null;
   issueDate: string;
   supplyDate: string | null;
@@ -44,6 +44,8 @@ export interface InvoiceDocument {
   customer: InvoiceParty & { attention: string | null };
   /** For a credit note, the invoice it credits. */
   creditsInvoiceNumber: string | null;
+  /** For a debit note, the invoice it adds to (issue #403). */
+  adjustsInvoiceNumber: string | null;
   lines: InvoiceDocumentLine[];
   /** Net and VAT at each rate (reg.20(2)(j), (k)). */
   rates: Array<{ rateBasisPoints: number; netMinor: number; vatMinor: number }>;
@@ -127,7 +129,7 @@ export function salesInvoiceDocument(
 
   const doc: InvoiceDocument = {
     invoiceId: invoice.id,
-    kind: invoice.isCreditNote ? 'credit_note' : 'invoice',
+    kind: invoice.isCreditNote ? 'credit_note' : invoice.isDebitNote ? 'debit_note' : 'invoice',
     number: invoice.invoiceNumber,
     issueDate: invoice.invoiceDate,
     supplyDate: invoice.supplyDate && invoice.supplyDate !== invoice.invoiceDate ? invoice.supplyDate : null,
@@ -147,6 +149,9 @@ export function salesInvoiceDocument(
       attention: contact?.name ?? null,
     },
     creditsInvoiceNumber,
+    adjustsInvoiceNumber: invoice.debitNoteOfId
+      ? db.select({ n: invoices.invoiceNumber }).from(invoices).where(eq(invoices.id, invoice.debitNoteOfId)).get()?.n ?? null
+      : null,
     lines,
     rates,
     netMinor: invoice.netMinor * sign,
