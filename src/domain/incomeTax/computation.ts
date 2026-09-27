@@ -6,7 +6,7 @@ import { accountingYearContaining } from '../vat/apportionment';
 import { computeBase, currentDecision, type CtBase, type CtPendingDecision } from '../corporationTax/computation';
 import { INCOME_TAX_CURATED_RULES } from '../rules/incomeTaxCuration';
 import { resolveRuleFigure, type ResolvedRuleFigure } from '../rules/ruleFigures';
-import { shareSegments, partnershipFindings } from '../config/partners';
+import { allocateByShares, partnershipFindings } from '../config/partners';
 
 /**
  * Income tax on a sole trader's or partnership's trading profits for a year
@@ -298,17 +298,11 @@ class IncomeTaxRun {
       individuals.push(this.liability(this.company.legalName, null, assessableProfitMinor, year, decisions));
     } else {
       this.findings.push(...partnershipFindings(this.db, this.companyId, basis.from, basis.to));
-      const byPartner = new Map<string, { name: string; profit: number }>();
-      const total = days(basis.from, basis.to);
-      for (const seg of shareSegments(this.db, this.companyId, basis.from, basis.to)) {
-        const segProfit = multiplyRational(assessableProfitMinor, days(seg.from, seg.to), total);
-        for (const s of seg.shares) {
-          const cur = byPartner.get(s.partner.id) ?? { name: s.partner.name, profit: 0 };
-          cur.profit += multiplyRational(segProfit, s.shareBasisPoints, 10_000);
-          byPartner.set(s.partner.id, cur);
-        }
+      for (const a of allocateByShares(this.db, this.companyId, {
+        from: basis.from, to: basis.to, amountMinor: assessableProfitMinor,
+      })) {
+        individuals.push(this.liability(a.partner.name, a.partner.id, a.amountMinor, year, decisions));
       }
-      for (const [partnerId, p] of byPartner) individuals.push(this.liability(p.name, partnerId, p.profit, year, decisions));
     }
 
     // Preliminary tax for the year (s.959AO): the least of 90% of this year, 100% of the last (105% of the one before, by direct debit).
