@@ -67,6 +67,45 @@ describe('LocalExtractionProvider', () => {
     expect(result.fields.suggestedVatTreatment.value).toBe('IE_STD');
   });
 
+  it('prefers a totals-box label over the same words in a free-text note (issue #276)', async () => {
+    const result = await extract([
+      'GroomPro Supplies Ireland VAT IE7145529D',
+      'INVOICE PI-26-133 INVOICE',
+      'Date: 06/05/2026',
+      'Description Qty Unit Net VAT% Gross',
+      'Wahl KM10 clipper (x2) 2 149.00 298.00 23% 366.54',
+      'Net 460.13',
+      'VAT 105.83',
+      'TOTAL (EUR) 565.96',
+      'Credit note CN-PI-26-002 of EUR 96.30 applied to account on 06/05 - balance due EUR 469.66.',
+    ].join('\n'));
+    expect(result.fields.grossMinor.value).toBe(56_596);
+  });
+
+  it('reads a credit note totalled under a bare "CREDIT (EUR)" label (issue #276)', async () => {
+    const result = await extract([
+      'GroomPro Supplies Ireland VAT IE7145529D',
+      'CREDIT NOTE CN-PI-26-002 | 30/04/2026',
+      'Credit - 6 x Wahl ShowPro shampoo 5L 6 -13.05 -78.29 23% -96.30',
+      'Net -78.29',
+      'VAT -18.01',
+      'CREDIT (EUR) (EUR) -96.30',
+    ].join('\n'));
+    expect(result.fields.grossMinor.value).toBe(-9_630);
+  });
+
+  it('never reads a note naming a credit note as the document total (issue #276)', async () => {
+    const result = await extract([
+      'Supplier Ltd VAT IE9876543W',
+      'INVOICE 100 | 01/06/2026',
+      'Net 100.00',
+      'VAT 23.00',
+      'Total 123.00',
+      'Please quote credit note 55 when paying.',
+    ].join('\n'));
+    expect(result.fields.grossMinor.value).toBe(12_300);
+  });
+
   it('never reads the company’s own VAT number as the supplier’s', async () => {
     const result = await extract([
       'Some Supplier Ltd',

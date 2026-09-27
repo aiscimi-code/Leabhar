@@ -3,6 +3,7 @@ import type { AppDatabase } from '@/db';
 import {
   companies, accounts, taxRates, vatTreatments, accountingPeriods, vatPeriods,
   bankAccounts, loans, auditEvents, glossaryTerms, companyTradingNames, users, companyMembers,
+  expenseRates,
 } from '@/db/schema';
 import { ids } from '@/lib/ids';
 import { type IsoDate, asIsoDate, nowIso, today } from '../dates';
@@ -10,6 +11,7 @@ import {
   DEFAULT_ACCOUNTS, FARM_ACCOUNTS, FARM_ACCOUNT_OVERRIDES, farmOverrideFor, type SystemAccountKey, type ChartKind,
 } from './chartOfAccounts';
 import { DEFAULT_TAX_RATES, DEFAULT_VAT_TREATMENTS } from './vatTreatments';
+import { DEFAULT_EXPENSE_RATES } from '../expenses/rates';
 import { generateVatPeriods, generateFinancialYear, type VatFrequency } from './periods';
 import { GLOSSARY_TERMS } from '../help/glossary';
 import { postJournalEntry, atomically } from '../accounting/journal';
@@ -258,6 +260,25 @@ export function createCompany(db: AppDatabase, input: CreateCompanyInput): Creat
         tx.update(accounts).set({ defaultVatTreatmentId: treatment })
           .where(eq(accounts.id, accountId)).run();
       }
+    }
+
+    // ---- Expense rates (issue #306) ----
+    // The civil service mileage and subsistence allowances, effective-dated so
+    // a later revision supersedes rather than overwrites (invariant #6).
+    for (const seed of DEFAULT_EXPENSE_RATES) {
+      tx.insert(expenseRates).values({
+        id: ids.expenseRate(),
+        companyId,
+        category: seed.category,
+        code: seed.code,
+        name: seed.name,
+        unit: seed.unit,
+        amountMinor: seed.amountMinor,
+        perUnits: seed.perUnits,
+        effectiveFrom: seed.effectiveFrom,
+        sourceNote: seed.sourceNote,
+        sourceUrl: seed.sourceUrl,
+      }).run();
     }
 
     // ---- Periods ----

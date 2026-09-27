@@ -247,6 +247,33 @@ export function ClassifyForm({
         </div>
       )}
 
+      {amountMinor < 0 && (
+        <details className="mt-3 text-[12px]">
+          <summary className="cursor-pointer text-ink-muted">Partly private? Apportion the business share</summary>
+          <div className="mt-1.5 flex items-center gap-2 flex-wrap">
+            <input
+              type="number" name="businessUsePct" min="0" max="100" step="1" defaultValue="100"
+              aria-label="Business use, percent"
+              className="w-20 border border-line-strong rounded px-2 py-1 text-[12px]" />
+            <span className="text-ink-faint">percent business, the rest charged to</span>
+            <select
+              name="privateUseAccountId" defaultValue=""
+              aria-label="Private share charged to"
+              className="border border-line-strong rounded px-2 py-1 text-[12px]">
+              <option value="">Choose an account…</option>
+              {accounts.filter((a) => a.type === 'liability' || a.type === 'equity').map((a) => (
+                <option key={a.id} value={a.id}>{a.code} — {a.name}</option>
+              ))}
+            </select>
+          </div>
+          <p className="mt-1.5 text-ink-faint leading-snug">
+            A private share is not a cost of the business: it is charged to the person — the
+            director&rsquo;s current account, or drawings. Leave this closed when the payment is
+            wholly business. The apportionment is flagged for review, because the books rest on it.
+          </p>
+        </details>
+      )}
+
       <details className="mt-3 text-[12px]">
         <summary className="cursor-pointer text-ink-muted">The VAT return for this date is locked or filed?</summary>
         <div className="mt-1.5 flex items-center gap-2 flex-wrap">
