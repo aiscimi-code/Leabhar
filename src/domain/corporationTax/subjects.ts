@@ -17,11 +17,16 @@ export type ExpenseChoice =
   | 'add_back_entertainment' | 'staff_entertainment' | 'add_back_not_wholly_exclusively'
   | 'add_back_private' | 'add_back_capital' | 'deductible';
 
+/**
+ * Descriptions only (issue #490): the rates are the rules' to state, printed
+ * on the computation lines from the resolved figures, not frozen into a
+ * label that would silently lie when a rule changes.
+ */
 export const INCOME_CASES: Record<IncomeCase, string> = {
-  case_i: 'Case I: trading income (12.5%)',
-  case_iii: 'Case III: e.g. deposit interest, foreign income (25%)',
-  case_iv: 'Case IV: e.g. royalties, miscellaneous income (25%)',
-  case_v: 'Case V: rent from land in the State (25%)',
+  case_i: 'Case I: trading income',
+  case_iii: 'Case III: e.g. deposit interest, foreign income',
+  case_iv: 'Case IV: e.g. royalties, miscellaneous income',
+  case_v: 'Case V: rent from land in the State',
 };
 
 export const EXPENSE_CHOICES: Record<ExpenseChoice, { label: string; addBack: boolean; ruleKey: string | null }> = {
@@ -45,7 +50,7 @@ export type TradingCompanyStatus = 'trading' | 'not_trading';
 export const LOSS_CLAIMS: Record<LossClaim, string> = {
   carry_forward: 'Carry the loss forward against later profits of the trade (s.396(1))',
   claim_396a: 'Set it against trading income of this and the preceding period (s.396A), the rest carried forward',
-  claim_396a_396b: 'As s.396A, then the rest against tax on other income at 12.5% (s.396B)',
+  claim_396a_396b: 'As s.396A, then the rest against tax on other income at the loss value basis (s.396B)',
 };
 
 export const COMPANY_STATUSES: Record<CompanyStatus, string> = {
