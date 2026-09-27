@@ -44,6 +44,8 @@ export function nextCode(db: AppDatabase, companyId: string, prefix: string): st
 export function addPartner(db: AppDatabase, params: {
   companyId: string; name: string; shareBasisPoints: number; joinedOn: string; recordedBy: string;
   isPrecedentPartner?: boolean; taxReference?: string | null;
+  /** Active in the firm, or sleeping: a sleeping partner's share is not earned income (issue #493). */
+  activityStatus?: 'active' | 'sleeping' | null;
 }): Partner {
   requirePartnership(db, params.companyId);
   if (!params.recordedBy.trim()) throw new PartnerError('Say who is recording this partner.');
@@ -73,6 +75,7 @@ export function addPartner(db: AppDatabase, params: {
     tx.insert(partners).values({
       id, companyId: params.companyId, name: params.name.trim(), taxReference: params.taxReference ?? null,
       isPrecedentPartner: params.isPrecedentPartner ?? false, joinedOn: params.joinedOn,
+      activityStatus: params.activityStatus ?? null,
       capitalAccountId, currentAccountId, recordedBy: params.recordedBy,
     }).run();
     tx.insert(partnerShares).values({
@@ -81,10 +84,39 @@ export function addPartner(db: AppDatabase, params: {
     }).run();
     tx.insert(auditEvents).values({
       id: ids.audit(), companyId: params.companyId, occurredAt: nowIso(), entityType: 'partner', entityId: id,
-      action: 'created', newValue: JSON.stringify({ name: params.name, shareBasisPoints: params.shareBasisPoints, joinedOn: params.joinedOn }),
+      action: 'created', newValue: JSON.stringify({ name: params.name, shareBasisPoints: params.shareBasisPoints, joinedOn: params.joinedOn, activityStatus: params.activityStatus ?? null }),
       source: 'user', actor: params.recordedBy,
     }).run();
     return tx.select().from(partners).where(eq(partners.id, id)).get()!;
+  });
+}
+
+/**
+ * Record whether a partner is active in the firm or sleeping (issue #493).
+ * A sleeping partner's share is not earned income (TCA s.1008(5)), so no
+ * earned income credit is given on it; unrecorded, the computation flags the
+ * claim rather than guessing either way.
+ */
+export function setPartnerActivityStatus(db: AppDatabase, params: {
+  companyId: string; partnerId: string; activityStatus: 'active' | 'sleeping'; recordedBy: string;
+}): Partner {
+  requirePartnership(db, params.companyId);
+  if (!params.recordedBy.trim()) throw new PartnerError('Say who is recording this.');
+  const partner = db.select().from(partners)
+    .where(and(eq(partners.companyId, params.companyId), eq(partners.id, params.partnerId))).get();
+  if (!partner) throw new PartnerError('No such partner in this partnership.');
+  return db.transaction((tx) => {
+    tx.update(partners)
+      .set({ activityStatus: params.activityStatus, updatedAt: nowIso() })
+      .where(eq(partners.id, params.partnerId)).run();
+    tx.insert(auditEvents).values({
+      id: ids.audit(), companyId: params.companyId, occurredAt: nowIso(), entityType: 'partner',
+      entityId: params.partnerId, action: 'updated', field: 'activity_status',
+      previousValue: partner.activityStatus, newValue: params.activityStatus,
+      source: 'user', actor: params.recordedBy,
+      reason: "A sleeping partner's share is not earned income (TCA s.1008(5)), so no earned income credit is given on it.",
+    }).run();
+    return tx.select().from(partners).where(eq(partners.id, params.partnerId)).get()!;
   });
 }
 

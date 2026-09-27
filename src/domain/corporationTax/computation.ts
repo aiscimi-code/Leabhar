@@ -85,9 +85,12 @@ const LINE_PATTERNS: Array<{ pattern: RegExp; suggested: ExpenseChoice; options:
   },
 ];
 
-export type CtSubjectType = 'journal_line' | 'income_account' | 'loss_claim' | 'company_status' | 'personal_status' | 'income_tax_loss_claim';
+export type CtSubjectType = 'journal_line' | 'income_account' | 'loss_claim' | 'company_status'
+  | 'basis_election' | 'allowance_loss_election' | 'personal_status' | 'income_tax_loss_claim';
 export type LossClaim = 'carry_forward' | 'claim_396a' | 'claim_396a_396b';
 export type IncomeTaxLossClaim = 'carry_forward' | 'claim_381';
+export type BasisElection = 'elect' | 'decline';
+export type AllowanceLossElection = 'elect' | 'decline';
 export type CompanyStatus = 'close_trading' | 'close_service' | 'not_close';
 
 export const LOSS_CLAIMS: Record<LossClaim, string> = {
@@ -108,11 +111,26 @@ export const INCOME_TAX_LOSS_CLAIMS: Record<IncomeTaxLossClaim, string> = {
   claim_381: 'Claim it against other income of the same year (s.381); the amount set against it is the person\'s own figure',
 };
 
+/** The s.66(3) third-year excess relief (issue #485): elective, so a person elects or declines. */
+export const BASIS_ELECTIONS: Record<BasisElection, string> = {
+  elect: 'Elect to reduce the third year’s assessment by the second year’s excess (s.66(3))',
+  decline: 'No election: the third year is assessed without the s.66(3) reduction',
+};
+
+/** The s.392 election (issue #467): whether capital allowances that create or increase a
+ *  loss are treated as a trading loss the person may set against other income. */
+export const ALLOWANCE_LOSS_ELECTIONS: Record<AllowanceLossElection, string> = {
+  elect: 'Elect to treat the allowances as creating or increasing a trading loss (s.392)',
+  decline: 'No election: unused allowances are carried forward as allowances (s.304(2)), not as a loss',
+};
+
 const CHOICES: Record<CtSubjectType, string[]> = {
   journal_line: Object.keys(EXPENSE_CHOICES),
   income_account: Object.keys(INCOME_CASES),
   loss_claim: Object.keys(LOSS_CLAIMS),
   company_status: Object.keys(COMPANY_STATUSES),
+  basis_election: Object.keys(BASIS_ELECTIONS),
+  allowance_loss_election: Object.keys(ALLOWANCE_LOSS_ELECTIONS),
   personal_status: ['single', 'single_parent', 'married_one_income', 'married_two_incomes'],
   income_tax_loss_claim: Object.keys(INCOME_TAX_LOSS_CLAIMS),
 };

@@ -4,7 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { getDb } from '@/db';
 import { requireCompany } from '@/lib/queries';
 import { requireActor, actorName } from '@/lib/session';
-import { addPartner, setPartnerShare } from '@/domain/config/partners';
+import { addPartner, setPartnerShare, setPartnerActivityStatus } from '@/domain/config/partners';
 import { recordPartnerLoan } from '@/domain/partnerships/loans';
 import type { ActionResult } from './settings-actions';
 
@@ -25,9 +25,36 @@ export async function addPartnerAction(formData: FormData): Promise<ActionResult
       companyId: company.id, name: field(formData, 'name'), shareBasisPoints: percentToBp(field(formData, 'share')),
       joinedOn: field(formData, 'joinedOn'), recordedBy: await actorName(),
       isPrecedentPartner: field(formData, 'precedent') === 'on', taxReference: field(formData, 'ppsn') || null,
+      activityStatus: field(formData, 'activityStatus') === 'sleeping' ? 'sleeping'
+        : field(formData, 'activityStatus') === 'active' ? 'active' : null,
     });
     revalidatePath('/settings/company');
     return { ok: true, message: 'Partner recorded.' };
+  } catch (e) {
+    return fail(e);
+  }
+}
+
+/** Record whether a partner is active in the firm or sleeping (issue #493). */
+export async function setPartnerActivityStatusAction(formData: FormData): Promise<ActionResult> {
+  try {
+    await requireActor('config.manage');
+    const company = requireCompany();
+    const status = field(formData, 'activityStatus');
+    if (status !== 'active' && status !== 'sleeping') {
+      return { ok: false, error: 'Say whether the partner is active or sleeping.' };
+    }
+    setPartnerActivityStatus(getDb(), {
+      companyId: company.id, partnerId: field(formData, 'partnerId'),
+      activityStatus: status, recordedBy: await actorName(),
+    });
+    revalidatePath('/settings/company');
+    return {
+      ok: true,
+      message: status === 'sleeping'
+        ? 'Recorded as sleeping: no earned income credit is given on their share (TCA s.1008(5)).'
+        : 'Recorded as active.',
+    };
   } catch (e) {
     return fail(e);
   }

@@ -2,11 +2,11 @@ import { describe, it, expect } from 'vitest';
 import { createTestDatabase } from '@/db/testing';
 import { createCompany } from '../config/setup';
 import { postJournalEntry } from '../accounting/journal';
-import { addPartner, setPartnerShare, PartnerError } from '../config/partners';
+import { setPartnerActivityStatus, addPartner, setPartnerShare, PartnerError } from '../config/partners';
 import { recordCtDecision, CtDecisionError } from '../corporationTax/computation';
-import { computeIncomeTax, IncomeTaxError } from './computation';
+import { computeIncomeTax, IncomeTaxError, type IndividualLiability } from './computation';
 import { asIsoDate } from '../dates';
-import { accounts, fixedAssets } from '@/db/schema';
+import { accounts, fixedAssets, partners } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { ids } from '@/lib/ids';
 import { multiplyRational } from '../money';
@@ -83,17 +83,32 @@ describe('sole trader', () => {
     expect(computeIncomeTax(db, { companyId, year: 2025 })).toMatchObject({ basis: { from: '2025-01-01', to: '2025-12-31' }, assessableProfitMinor: 5_000_000 });
   });
 
-  it('reduces the third year by the second year\'s excess over its actual profits (s.66(3))', () => {
+  it('reduces the third year by the second year\'s excess only when the s.66(3) election is recorded (issue #485)', () => {
     const { db, companyId, income } = setup('sole_trader', '2024-07-01', 6);
     income(12_000_000, '2024-08-01'); // year to 30 June 2025
     income(6_000_000, '2025-08-01');  // year to 30 June 2026
     const second = computeIncomeTax(db, { companyId, year: 2025 });
     expect(second.basis).toMatchObject({ from: '2024-07-01', to: '2025-06-30' });
     expect(second.assessableProfitMinor).toBe(12_000_000);
-    const third = computeIncomeTax(db, { companyId, year: 2026 });
     // Actual 2025: 181/365 of 120,000 + 184/365 of 60,000.
     const actual2025 = Math.round(12_000_000 * 181 / 365) + Math.round(6_000_000 * 184 / 365);
-    expect(third.thirdYearReliefMinor).toBe(Math.min(12_000_000 - actual2025, 6_000_000));
+    const excess = Math.min(12_000_000 - actual2025, 6_000_000);
+
+    // The relief is elective: with no election recorded it is not applied, and
+    // the decision is offered with the excess as its amount.
+    const undec = computeIncomeTax(db, { companyId, year: 2026 });
+    expect(undec.thirdYearReliefMinor).toBe(0);
+    expect(undec.basisProfitMinor).toBe(6_000_000);
+    const pending = undec.decisions.find((d) => d.subjectType === 'basis_election')!;
+    expect(pending.amountMinor).toBe(excess);
+    expect(pending.suggested).toBe('elect');
+    expect(undec.findings.some((f) => f.includes('s.66(3)') && f.includes('No election is recorded'))).toBe(true);
+
+    recordCtDecision(db, { companyId, subjectType: 'basis_election', subjectId: companyId, periodEnd: '2026-12-31', choice: 'elect', decidedBy: 'Trader' });
+    const third = computeIncomeTax(db, { companyId, year: 2026 });
+    expect(third.thirdYearReliefMinor).toBe(excess);
+    expect(third.basisProfitMinor).toBe(6_000_000 - excess);
+    expect(third.findings.some((f) => f.includes('s.66(3) election is recorded'))).toBe(true);
   });
 });
 
@@ -219,6 +234,77 @@ describe('trading losses (ss.381, 382; issue #285)', () => {
     s.income(4_000_000, '2025-06-01');
     const y2025 = computeIncomeTax(s.db, { companyId: s.companyId, year: 2025 });
     expect(y2025.individuals[0]!).toMatchObject({ profitMinor: 4_000_000, broughtForwardLossUsedMinor: 3_000_000 });
+  });
+
+  it('treats an allowance-created loss as a trading loss only under the recorded s.392 election, and caps s.381 without it (issue #467)', () => {
+    const s = setup('sole_trader', '2024-01-01');
+    s.income(200_000, '2025-06-01');
+    s.db.insert(fixedAssets).values({
+      id: ids.fixedAsset(), companyId: s.companyId, name: 'Oven', assetCategory: 'plant_machinery',
+      purchaseDate: '2025-02-01', costMinor: 8_000_000, currency: 'EUR',
+      baseCostMinor: 8_000_000, baseCurrency: 'EUR',
+      capitalAllowanceRateBasisPoints: 1250, capitalAllowanceYears: 8, status: 'active',
+    }).run();
+    // 2025: profit 2,000 less the 10,000 allowance = a loss of 8,000, all of it
+    // created by the allowances.
+    const c = computeIncomeTax(s.db, { companyId: s.companyId, year: 2025 });
+    expect(c).toMatchObject({ lossBeforeAllowancesMinor: 0, allowanceLossMinor: 800_000, tradingLossMinor: 800_000 });
+    // No election recorded: the allowance part is not a trading loss. The
+    // unused allowances are carried forward as allowances (s.304(2)).
+    expect(c.individuals[0]!.lossCarriedForwardMinor).toBe(0);
+    const pending = c.decisions.find((d) => d.subjectType === 'allowance_loss_election')!;
+    expect(pending.amountMinor).toBe(800_000);
+    expect(pending.suggested).toBe('elect');
+    expect(c.findings.some((f) => f.includes('s.392') && f.includes('s.304(2)'))).toBe(true);
+
+    // An s.381 claim cannot reach the allowance-created part without the
+    // election: the recorded claim of 8,000 is capped at the loss before
+    // allowances, which is nil here.
+    recordCtDecision(s.db, {
+      companyId: s.companyId, subjectType: 'income_tax_loss_claim', subjectId: s.companyId,
+      periodEnd: '2025-12-31', choice: 'claim_381', decidedBy: 'Aoife', amountMinor: 800_000,
+    });
+    const capped = computeIncomeTax(s.db, { companyId: s.companyId, year: 2025 });
+    expect(capped.individuals[0]!.claimedAgainstOtherIncomeMinor).toBe(0);
+    expect(capped.findings.some((f) => f.includes('capped at') && f.includes('before capital allowances'))).toBe(true);
+
+    // Electing under s.392 treats the allowances as a trading loss: the same
+    // recorded claim now reaches it.
+    recordCtDecision(s.db, {
+      companyId: s.companyId, subjectType: 'allowance_loss_election', subjectId: s.companyId,
+      periodEnd: '2025-12-31', choice: 'elect', decidedBy: 'Aoife',
+    });
+    const elected = computeIncomeTax(s.db, { companyId: s.companyId, year: 2025 });
+    expect(elected.individuals[0]!).toMatchObject({ claimedAgainstOtherIncomeMinor: 800_000, lossCarriedForwardMinor: 0 });
+  });
+
+  it('gives no earned income credit to a sleeping partner, and flags an unrecorded status (issue #493)', () => {
+    const s = setup('partnership', '2024-01-01');
+    const active = addPartner(s.db, {
+      companyId: s.companyId, name: 'Aoife', shareBasisPoints: 5000, joinedOn: '2024-01-01',
+      recordedBy: 'Aoife', isPrecedentPartner: true, activityStatus: 'active',
+    });
+    const sleeping = addPartner(s.db, {
+      companyId: s.companyId, name: 'Brian', shareBasisPoints: 5000, joinedOn: '2024-01-01',
+      recordedBy: 'Aoife', activityStatus: 'sleeping',
+    });
+    expect(sleeping.activityStatus).toBe('sleeping');
+    s.income(6_000_000, '2025-06-01');
+    const c = computeIncomeTax(s.db, { companyId: s.companyId, year: 2025 });
+    const byName = Object.fromEntries(c.individuals.map((i) => [i.name, i])) as Record<string, IndividualLiability>;
+    // Both taxed on a 30,000 share at the same band and personal credit...
+    expect(byName.Aoife!.incomeTax.some((l) => l.label.includes('earned income tax credit'))).toBe(true);
+    // ...but a sleeping partner's share is not earned income (s.1008(5)): no credit.
+    expect(byName.Brian!.incomeTax.some((l) => l.label.includes('earned income tax credit'))).toBe(false);
+    expect(byName.Brian!.incomeTaxMinor - byName.Aoife!.incomeTaxMinor).toBe(200_000);
+    expect(c.findings.some((f) => f.includes('Brian') && f.includes('s.1008(5)'))).toBe(true);
+
+    // An unrecorded status is flagged, never silently either way.
+    setPartnerActivityStatus(s.db, { companyId: s.companyId, partnerId: sleeping.id, activityStatus: 'active', recordedBy: 'Aoife' });
+    s.db.update(partners).set({ activityStatus: null }).where(eq(partners.id, active.id)).run();
+    const flagged = computeIncomeTax(s.db, { companyId: s.companyId, year: 2025 });
+    expect(flagged.findings.some((f) => f.includes('Aoife') && f.includes('status is not recorded'))).toBe(true);
+    expect(flagged.individuals.find((i) => i.name === 'Aoife')!.incomeTax.some((l) => l.label.includes('earned income tax credit'))).toBe(true);
   });
 
   it('limits an s.381 claim to the year\'s own loss: losses brought forward stay under s.382', () => {

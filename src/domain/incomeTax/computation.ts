@@ -1,10 +1,11 @@
 import { eq } from 'drizzle-orm';
 import type { AppDatabase } from '@/db';
-import { companies, journalEntries } from '@/db/schema';
+import { partners, companies, journalEntries } from '@/db/schema';
 import { multiplyRational } from '../money';
 import { accountingYearContaining } from '../vat/apportionment';
 import {
-  computeBase, currentDecision, capitalAllowances, INCOME_TAX_LOSS_CLAIMS,
+  computeBase, currentDecision, capitalAllowances, INCOME_TAX_LOSS_CLAIMS, BASIS_ELECTIONS,
+  ALLOWANCE_LOSS_ELECTIONS, type BasisElection, type AllowanceLossElection,
   type AssetClaimsMade, type CtBase, type CtLine, type CtPendingDecision, type IncomeTaxLossClaim,
 } from '../corporationTax/computation';
 import { INCOME_TAX_CURATED_RULES } from '../rules/incomeTaxCuration';
@@ -81,6 +82,10 @@ export interface IncomeTaxComputation {
   assessableProfitMinor: number;
   /** The trade's loss for the year, before loss relief. */
   tradingLossMinor: number;
+  /** The part of the year's loss that predates capital allowances: what s.381 can reach without the s.392 election (issue #467). */
+  lossBeforeAllowancesMinor: number;
+  /** The part of the year's loss the capital allowances create: a trading loss only under the s.392 election (issue #467). */
+  allowanceLossMinor: number;
   individuals: IndividualLiability[];
   dates: { preliminaryTaxDue: string; returnDue: string; preliminaryTaxMinor: number; basis: string };
   decisions: CtPendingDecision[];
@@ -277,6 +282,24 @@ class IncomeTaxRun {
     };
     const p = Math.max(taxableMinor, 0);
 
+    // The earned income credit needs earned income (issue #493). A sole
+    // trader's profit is earned income; a partner's share is only if the
+    // partner is active in the firm — a sleeping partner's share is not
+    // (TCA s.1008(5)). Where the status is unrecorded the credit is given and
+    // the claim flagged, never silently either way.
+    const partner = partnerId
+      ? this.db.select().from(partners).where(eq(partners.id, partnerId)).get()
+      : null;
+    const sleeping = partner?.activityStatus === 'sleeping';
+    if (partner && !partner.activityStatus) {
+      this.findings.push(`${name}: this partner's active or sleeping status is not recorded, so the earned income credit is `
+        + 'given on the assumption their share is earned income. A sleeping partner’s share is not (TCA s.1008(5)): '
+        + 'record the status on the partner.');
+    } else if (sleeping) {
+      this.findings.push(`${name}: a sleeping partner's share is not earned income (TCA s.1008(5)), so no earned income `
+        + 'credit is given on it.');
+    }
+
     // Income tax (s.15 Table; credits s.461, s.472AB).
     const band = need(status === 'single' ? 'income_tax.band_single' : status === 'single_parent' ? 'income_tax.band_single_parent' : 'income_tax.band_married');
     const higher = need('income_tax.rate_higher');
@@ -288,13 +311,17 @@ class IncomeTaxRun {
     if (band && higher && credit && eic && eicPct) {
       const atStandard = Math.min(p, band.numericValue!);
       const atHigher = p - atStandard;
-      const eicMinor = Math.min(eic.numericValue!, multiplyRational(p, eicPct.numericValue!, 10_000));
       incomeTax.push(
         { label: `${eur(atStandard)} at ${band.rateBasisPoints! / 100}%`, amountMinor: multiplyRational(atStandard, band.rateBasisPoints!, 10_000), ruleKeys: [band.ruleKey] },
         { label: `${eur(atHigher)} at ${higher.numericValue! / 100}%`, amountMinor: multiplyRational(atHigher, higher.numericValue!, 10_000), ruleKeys: [higher.ruleKey] },
         { label: 'Less personal tax credit', amountMinor: -credit.numericValue!, ruleKeys: [credit.ruleKey] },
-        { label: 'Less earned income tax credit', amountMinor: -eicMinor, ruleKeys: [eic.ruleKey, eicPct.ruleKey] },
       );
+      if (!sleeping) {
+        const eicMinor = Math.min(eic.numericValue!, multiplyRational(p, eicPct.numericValue!, 10_000));
+        incomeTax.push(
+          { label: 'Less earned income tax credit', amountMinor: -eicMinor, ruleKeys: [eic.ruleKey, eicPct.ruleKey] },
+        );
+      }
       incomeTaxMinor = Math.max(incomeTax.reduce((s, l) => s + l.amountMinor, 0), 0);
     }
     if (status === 'married_two_incomes') {
@@ -357,15 +384,36 @@ class IncomeTaxRun {
     const decisions: CtPendingDecision[] = [];
     const basis = this.assessed(year);
 
-    // s.66(3): the second year's excess over its actual profits reduces the third year's (an election).
+    // s.66(3): the second year's excess over its actual profits can reduce the
+    // third year's — but only if the taxpayer elects. The election is a
+    // person's to make: it is offered as a pending decision and applied only
+    // when recorded (issue #485). Until then the statutory default holds and
+    // the third year is assessed without the reduction.
     let thirdYearReliefMinor = 0;
     if (year === firstYear + 2) {
       const second = this.assessed(firstYear + 1);
       const actual = this.profitOf(`${firstYear + 1}-01-01`, `${firstYear + 1}-12-31`);
-      thirdYearReliefMinor = Math.min(Math.max(second.profit - actual, 0), Math.max(basis.profit, 0));
-      if (thirdYearReliefMinor) {
-        this.findings.push(`The second year was assessed on ${eur(second.profit)} against actual profits of ${eur(actual)}: the `
-          + `excess of ${eur(thirdYearReliefMinor)} reduces this year's profit if the election is made (s.66(3)). It is applied here.`);
+      const excessMinor = Math.min(Math.max(second.profit - actual, 0), Math.max(basis.profit, 0));
+      if (excessMinor) {
+        const dec31 = `${year}-12-31`;
+        const decided = currentDecision(this.db, this.companyId, 'basis_election', this.companyId, dec31)?.choice as BasisElection | undefined;
+        decisions.push({
+          subjectType: 'basis_election', subjectId: this.companyId,
+          description: `s.66(3) election: reduce the ${year} assessment by the second year's excess`,
+          amountMinor: excessMinor, suggested: 'elect', decided: decided ?? null,
+          options: (Object.keys(BASIS_ELECTIONS) as BasisElection[]).map((c) => ({ choice: c, label: BASIS_ELECTIONS[c] })),
+          reason: `The second year was assessed on ${eur(second.profit)} against actual profits of ${eur(actual)}, so `
+            + `the excess of ${eur(excessMinor)} can reduce this year's profit — if the taxpayer elects (s.66(3)). `
+            + 'Nothing is assumed: without a recorded election the third year is assessed without the reduction.',
+        });
+        if (decided === 'elect') {
+          thirdYearReliefMinor = excessMinor;
+          this.findings.push(`The s.66(3) election is recorded: the second year's excess of ${eur(excessMinor)} reduces this year's profit.`);
+        } else {
+          this.findings.push(`The second year was assessed on ${eur(second.profit)} against actual profits of ${eur(actual)}: the excess of `
+            + `${eur(excessMinor)} reduces this year's profit only if the taxpayer elects (s.66(3)). `
+            + (decided === 'decline' ? 'The election is declined, so the reduction is not applied.' : 'No election is recorded, so the reduction is not applied.'));
+        }
       }
     }
     if (this.company.tradeCeasedOn?.startsWith(String(year)) && year > firstYear) {
@@ -385,14 +433,20 @@ class IncomeTaxRun {
     this.findings.push(...allowances.findings);
     const assessableProfitMinor = basisProfitMinor + allowances.netMinor;
     const tradingLossMinor = Math.max(-assessableProfitMinor, 0);
-    if (basisProfitMinor >= 0 && assessableProfitMinor < 0) {
-      this.findings.push('Capital allowances turned this year\'s profits into a loss. To use that loss against other income (s.381) '
-        + 'the allowances must be treated as a trading loss by election (s.392); without the election the unused allowances are '
-        + 'carried forward as allowances instead (s.304(2)). The loss here assumes the election is made.');
-    }
+    // The loss splits into the part before capital allowances and the part the
+    // allowances create (issue #467). Only the election under s.392 treats the
+    // allowance part as a trading loss; without it, the unused allowances are
+    // carried forward as allowances (s.304(2)) and an s.381 claim can reach
+    // only the pre-allowance loss. The election is a person's decision,
+    // recorded per individual — never assumed.
+    const lossBeforeAllowancesMinor = Math.max(-basisProfitMinor, 0);
+    const allowanceLossMinor = tradingLossMinor - lossBeforeAllowancesMinor;
 
     // Who is taxed on the result, and the losses set against it (ss.381, 382).
     const individuals: IndividualLiability[] = [];
+    const preAllowanceShares = new Map(
+      this.sharesOf(basisProfitMinor, basis.from, basis.to).map((x) => [x.partnerId ?? this.companyId, x]),
+    );
     for (const s of this.sharesOf(assessableProfitMinor, basis.from, basis.to)) {
       const subjectId = s.partnerId ?? this.companyId;
       const dec31 = `${year}-12-31`;
@@ -401,15 +455,51 @@ class IncomeTaxRun {
       pool -= broughtForwardUsedMinor;
       let claimedAgainstOtherIncomeMinor = 0;
       if (s.share < 0) {
+        const totalLossShare = -s.share;
+        const preAllowanceLossShare = Math.max(-(preAllowanceShares.get(subjectId)?.share ?? 0), 0);
+        const allowanceLossShare = Math.max(totalLossShare - preAllowanceLossShare, 0);
+        // The s.392 election, per individual (issue #467): recorded, never assumed.
+        const election = currentDecision(this.db, this.companyId, 'allowance_loss_election', subjectId, dec31);
+        const elected = (election?.choice as AllowanceLossElection | undefined) === 'elect';
+        if (allowanceLossShare) {
+          decisions.push({
+            subjectType: 'allowance_loss_election', subjectId,
+            description: `${s.name}: treat the allowances creating this year's loss as a trading loss (s.392)`,
+            amountMinor: allowanceLossShare, suggested: 'elect', decided: election?.choice ?? null,
+            options: (Object.keys(ALLOWANCE_LOSS_ELECTIONS) as AllowanceLossElection[])
+              .map((c) => ({ choice: c, label: ALLOWANCE_LOSS_ELECTIONS[c] })),
+            reason: `Capital allowances contribute ${eur(allowanceLossShare)} of ${s.name}'s ${year} loss of `
+              + `${eur(totalLossShare)}. Without the s.392 election that part is not a trading loss: the unused allowances are `
+              + 'carried forward as allowances (s.304(2)), and only the loss before allowances can be set against other income (s.381). '
+              + 'For carry-forward against the same trade (s.382) the two routes give largely the same result.',
+          });
+        }
+        // What is a trading loss, and what an s.381 claim can reach.
+        const tradingLossShare = elected ? totalLossShare : preAllowanceLossShare;
+        const claimableAgainstOtherIncome = elected ? totalLossShare : preAllowanceLossShare;
+        if (allowanceLossShare && !elected) {
+          this.findings.push(`${s.name}: ${eur(allowanceLossShare)} of the ${year} loss is created by capital allowances. No s.392 `
+            + 'election is recorded, so it is not treated as a trading loss: the unused allowances are carried forward as '
+            + `allowances (s.304(2)), and ${eur(preAllowanceLossShare)} is the loss carried forward (s.382). Elect on the `
+            + 'decisions list to treat the allowances as a trading loss.');
+        }
         // s.382: carried forward against later profits of the same trade, automatically.
-        pool += -s.share;
+        pool += tradingLossShare;
         const decision = currentDecision(this.db, this.companyId, 'income_tax_loss_claim', subjectId, dec31);
         const choice = (decision?.choice as IncomeTaxLossClaim | undefined) ?? 'carry_forward';
         const decidedAmount = decision?.amountMinor ?? null;
         if (choice === 'claim_381') {
           // s.381 relieves this year's loss only: losses brought forward from
           // earlier years stay against later profits of the trade (s.382).
-          claimedAgainstOtherIncomeMinor = Math.min(Math.max(decidedAmount ?? 0, 0), -s.share);
+          // Without the s.392 election the claim is capped at the loss before
+          // allowances (issue #467).
+          const wanted = Math.max(decidedAmount ?? 0, 0);
+          claimedAgainstOtherIncomeMinor = Math.min(wanted, claimableAgainstOtherIncome);
+          if (allowanceLossShare && !elected && wanted > claimableAgainstOtherIncome) {
+            this.findings.push(`${s.name}: the s.381 claim of ${eur(wanted)} is capped at `
+              + `${eur(claimableAgainstOtherIncome)}, the loss before capital allowances: without the s.392 election the `
+              + 'allowance-created part cannot be set against other income.');
+          }
           if (!decidedAmount || decidedAmount <= 0) {
             this.findings.push(`${s.name}: the s.381 claim for ${year} records no amount, so the whole loss is carried forward (s.382).`);
           } else {
@@ -421,7 +511,7 @@ class IncomeTaxRun {
         }
         decisions.push({
           subjectType: 'income_tax_loss_claim', subjectId, description: `${s.name}: trading loss for ${year}`,
-          amountMinor: -s.share, suggested: 'carry_forward', decided: decision?.choice ?? null, decidedAmountMinor: decidedAmount,
+          amountMinor: tradingLossShare, suggested: 'carry_forward', decided: decision?.choice ?? null, decidedAmountMinor: decidedAmount,
           options: (Object.keys(INCOME_TAX_LOSS_CLAIMS) as IncomeTaxLossClaim[]).map((c) => ({ choice: c, label: INCOME_TAX_LOSS_CLAIMS[c] })),
           reason: 'Carry-forward against the same trade (s.382) is automatic. Relief against other income (s.381) must be claimed '
             + '(the four years after the end of the year of assessment, s.865), and needs the amount set against income the books do not hold.',
@@ -462,7 +552,8 @@ class IncomeTaxRun {
       basis: { from: basis.from, to: basis.to, rule: basis.rule, ruleKeys: basis.ruleKeys },
       basisProfitMinor, thirdYearReliefMinor,
       capitalAllowancesMinor: allowances.netMinor, capitalAllowanceLines: allowances.lines,
-      assessableProfitMinor, tradingLossMinor, individuals, dates, decisions,
+      assessableProfitMinor, tradingLossMinor, lossBeforeAllowancesMinor, allowanceLossMinor,
+      individuals, dates, decisions,
       findings: [...new Set(this.findings)],
     };
     this.findings = saved;

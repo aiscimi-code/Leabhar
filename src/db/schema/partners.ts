@@ -13,6 +13,13 @@ export const partners = sqliteTable('partners', {
   name: text('name').notNull(),
   /** PPSN, for the partner's own return; optional. */
   taxReference: text('tax_reference'),
+  /**
+   * Whether the partner is active in the firm or sleeping (issue #493). A
+   * sleeping partner's share is not earned income (TCA s.1008(5)), so no earned
+   * income credit is given on it. Null: not recorded — the computation flags
+   * it rather than guessing either way.
+   */
+  activityStatus: text('activity_status', { enum: ['active', 'sleeping'] }),
   isPrecedentPartner: integer('is_precedent_partner', { mode: 'boolean' }).notNull().default(false),
   joinedOn: text('joined_on').notNull(),
   leftOn: text('left_on'),
