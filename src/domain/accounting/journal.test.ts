@@ -238,6 +238,52 @@ describe('immutability and reversal', () => {
     })).toThrow(/already been reversed/);
   });
 
+  // The posting and the marking are one transaction (issue #481): a crash
+  // between them used to leave the reversal posted but the original
+  // unmarked, so a retry doubled the correction.
+  it('leaves nothing behind when the path fails mid-way, so the correction cannot double', () => {
+    const original = post();
+    let transactionCalls = 0;
+    const flaky = new Proxy(db, {
+      get(target, prop) {
+        if (prop === 'transaction') {
+          const real = (target as AppDatabase).transaction.bind(target);
+          return (fn: () => unknown, ...rest: unknown[]) => {
+            transactionCalls += 1;
+            // The second transaction call is the nested posting — the old
+            // code's second top-level commit. It fails, as a crash would.
+            if (transactionCalls === 2) {
+              throw new Error('simulated crash between the posting and the marking');
+            }
+            return real(fn as never, ...(rest as [never]));
+          };
+        }
+        const value = Reflect.get(target, prop) as unknown;
+        return typeof value === 'function' ? (value as (...a: unknown[]) => unknown).bind(target) : value;
+      },
+    }) as AppDatabase;
+
+    expect(() => reverseJournalEntry(flaky, {
+      companyId, entryId: original.id, reversalDate: makeDate(2025, 4, 1), reason: 'Error',
+    })).toThrow(/simulated crash/);
+
+    // Neither the reversal nor the marking survived the failure.
+    expect(db.select().from(journalEntries).all()).toHaveLength(1);
+    expect(db.select().from(journalEntries)
+      .where(eq(journalEntries.id, original.id)).get()!.reversedByEntryId).toBeNull();
+    expect(db.select().from(journalLines).all()).toHaveLength(2);
+
+    // So the retry posts exactly one mirror entry, not two.
+    const reversal = reverseJournalEntry(db, {
+      companyId, entryId: original.id, reversalDate: makeDate(2025, 4, 2), reason: 'Error',
+    });
+    expect(db.select().from(journalEntries).all()).toHaveLength(2);
+    expect(db.select().from(journalEntries)
+      .where(eq(journalEntries.id, original.id)).get()!.reversedByEntryId).toBe(reversal.id);
+    expect(accountBalance(db, { companyId, accountId: byCode['6010']! })).toBe(0);
+    expect(accountBalance(db, { companyId, accountId: acc['bank_control']! })).toBe(0);
+  });
+
   it('dates the reversal at the correction date, not the original date', () => {
     const original = post({ entryDate: makeDate(2025, 1, 10) });
     const reversal = reverseJournalEntry(db, {
