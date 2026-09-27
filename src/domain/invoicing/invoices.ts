@@ -51,6 +51,14 @@ export interface InvoiceLineInput {
   unitPriceMinor?: number;
   /** Supply the line net directly instead of quantity x unit price. */
   netMinor?: number;
+  /**
+   * A trade discount (issue #393), as a percentage in basis points (1000 =
+   * 10%) or a fixed amount in minor units — not both. It comes off the line
+   * net before VAT: an unconditional discount given at the time of supply
+   * reduces the consideration. A prompt-payment discount is not this.
+   */
+  discountBasisPoints?: number;
+  discountMinor?: number;
   accountId: string;
   vatTreatmentId: string;
   taxRateId?: string;
@@ -180,9 +188,11 @@ function createInvoiceSteps(db: AppDatabase, input: CreateInvoiceInput): Created
       rateOverrideId: line.taxRateId,
     });
 
-    const lineNet = line.netMinor !== undefined
+    const undiscountedNet = line.netMinor !== undefined
       ? line.netMinor
       : multiplyRational(asMinor(line.unitPriceMinor ?? 0), line.quantityMilli ?? 1000, 1000);
+    const discount = lineDiscount(undiscountedNet, line, index + 1);
+    const lineNet = undiscountedNet - discount.minor;
 
     // Issue #145 defect 1: a purchase line's input VAT is held back from
     // recovery — flagged for review instead — rather than trusted outright,
@@ -245,7 +255,10 @@ function createInvoiceSteps(db: AppDatabase, input: CreateInvoiceInput): Created
       recoverableOverrideMinor,
     });
 
-    return { line, index, lineId: ids.invoiceLine(), resolved, calculation, recoverableOverrideMinor, vatReviewReason };
+    return {
+      line, index, lineId: ids.invoiceLine(), resolved, calculation, recoverableOverrideMinor, vatReviewReason,
+      undiscountedNet, discount,
+    };
   });
 
   const netMinor = computed.reduce((s, c) => s + c.calculation.netMinor, 0);
@@ -479,7 +492,7 @@ function createInvoiceSteps(db: AppDatabase, input: CreateInvoiceInput): Created
       provenanceStatus: 'manually_entered',
     }).run();
 
-    for (const { line, index, lineId, calculation, resolved } of computed) {
+    for (const { line, index, lineId, calculation, resolved, undiscountedNet, discount } of computed) {
       tx.insert(invoiceLines).values({
         id: lineId,
         companyId: input.companyId,
@@ -488,6 +501,9 @@ function createInvoiceSteps(db: AppDatabase, input: CreateInvoiceInput): Created
         description: line.description,
         quantityMilli: line.quantityMilli ?? 1000,
         unitPriceMinor: line.unitPriceMinor ?? 0,
+        undiscountedNetMinor: discount.minor !== 0 ? undiscountedNet * sign : null,
+        discountBasisPoints: discount.basisPoints,
+        discountMinor: discount.minor * sign,
         accountId: line.accountId,
         vatTreatmentId: line.vatTreatmentId,
         taxRateId: resolved.rate?.id ?? null,
@@ -567,6 +583,36 @@ function createInvoiceSteps(db: AppDatabase, input: CreateInvoiceInput): Created
     dueDate,
     warnings,
   };
+}
+
+/**
+ * The discount on a line (issue #393), in minor units, rounded half away from
+ * zero when given as a percentage. Refused when it is not positive, is both a
+ * percentage and an amount, or is more than the line.
+ */
+export function lineDiscount(
+  undiscountedNetMinor: number,
+  line: Pick<InvoiceLineInput, 'discountBasisPoints' | 'discountMinor'>,
+  lineNumber: number,
+): { minor: number; basisPoints: number | null } {
+  const { discountBasisPoints: bp, discountMinor: amount } = line;
+  if (bp === undefined && amount === undefined) return { minor: 0, basisPoints: null };
+  if (bp !== undefined && amount !== undefined) {
+    throw new InvoicingError(`Line ${lineNumber}: give the discount as a percentage or an amount, not both.`);
+  }
+  if (bp !== undefined) {
+    if (!Number.isInteger(bp) || bp <= 0 || bp > 10_000) {
+      throw new InvoicingError(`Line ${lineNumber}: a discount percentage is more than 0% and at most 100%, in basis points.`);
+    }
+    return { minor: multiplyRational(asMinor(undiscountedNetMinor), bp, 10_000), basisPoints: bp };
+  }
+  if (!Number.isInteger(amount) || amount! <= 0) {
+    throw new InvoicingError(`Line ${lineNumber}: a discount amount is a positive amount in minor units.`);
+  }
+  if (amount! > undiscountedNetMinor) {
+    throw new InvoicingError(`Line ${lineNumber}: the discount (${amount}) is more than the line (${undiscountedNetMinor}).`);
+  }
+  return { minor: amount!, basisPoints: null };
 }
 
 export interface VoidInvoiceInput {

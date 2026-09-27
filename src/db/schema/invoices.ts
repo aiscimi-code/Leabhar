@@ -99,6 +99,15 @@ export const invoiceLines = sqliteTable('invoice_lines', {
   description: text('description').notNull(),
   quantityMilli: integer('quantity_milli').notNull().default(1000), // 1.000 as 1000
   unitPriceMinor: integer('unit_price_minor').notNull().default(0),
+  /**
+   * A trade discount on the line (issue #393): the net before it, the
+   * percentage (basis points) when given as one, and the amount taken off.
+   * `netMinor` is after the discount, and VAT is charged on it. Null / 0 when
+   * the line has no discount.
+   */
+  undiscountedNetMinor: integer('undiscounted_net_minor'),
+  discountBasisPoints: integer('discount_basis_points'),
+  discountMinor: integer('discount_minor').notNull().default(0),
 
   accountId: text('account_id').references(() => accounts.id),
   vatTreatmentId: text('vat_treatment_id').references(() => vatTreatments.id),

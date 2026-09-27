@@ -92,7 +92,16 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
           <tbody>
             {lines.map(({ line, accountCode, accountName, treatmentCode, treatmentName }) => (
               <tr key={line.id}>
-                <td>{line.description}</td>
+                <td>
+                  {line.description}
+                  {line.discountMinor !== 0 && (
+                    <span className="block text-[11.5px] text-ink-muted">
+                      {money(line.undiscountedNetMinor, line.currency)} less{' '}
+                      {line.discountBasisPoints !== null ? `${(line.discountBasisPoints / 100).toFixed(2)}% ` : ''}
+                      discount of {money(line.discountMinor, line.currency)}
+                    </span>
+                  )}
+                </td>
                 <td className="text-ink-muted">
                   {accountCode ? `${accountCode} — ${accountName}` : '—'}
                 </td>

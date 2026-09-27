@@ -21,7 +21,7 @@ import { scanForAnomalies, syncAnomaliesToReviewQueue } from '@/domain/review/an
 import { createInvoice } from '@/domain/invoicing/invoices';
 import { recordPayment } from '@/domain/invoicing/payments';
 import { settleInvoiceByDirector } from '@/domain/consolidation/settle';
-import { parseAmount, parseRate, parseDecimalRate } from '@/domain/money';
+import { parseAmount, parseRate, parseDecimalRate, parsePercentBasisPoints } from '@/domain/money';
 import { asIsoDate } from '@/domain/dates';
 import type { VatFrequency } from '@/domain/config/periods';
 
@@ -709,6 +709,7 @@ export async function createInvoiceAction(formData: FormData): Promise<ActionRes
         netMinor: parseAmount(netText, currency),
         accountId: String(formData.get('accountId')),
         vatTreatmentId: String(formData.get('vatTreatmentId')),
+        ...formDiscount(text(formData, 'discount'), currency),
       }],
       actor: 'user',
     });
@@ -836,4 +837,15 @@ export async function clearAccountMappingAction(formData: FormData): Promise<Act
   } catch (error) {
     return fail(error);
   }
+}
+
+/** "10%" is a percentage; "25.00" is an amount (issue #393). Blank is no discount. */
+function formDiscount(value: string | null | undefined, currency: string): { discountBasisPoints?: number; discountMinor?: number } {
+  if (!value) return {};
+  if (value.trim().endsWith('%')) {
+    const bp = parsePercentBasisPoints(value);
+    if (bp === null) throw new Error(`"${value}" is not a discount percentage.`);
+    return { discountBasisPoints: bp };
+  }
+  return { discountMinor: parseAmount(value, currency) };
 }
