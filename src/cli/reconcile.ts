@@ -434,13 +434,25 @@ Invoice-led workflow (issue #222) — the same domain functions as the web scree
       [{"invoice":"MOS-5120","amount":"24.60"}], amounts in the bank line's
       currency. A remainder is held on account and flagged.
       [--write-off-invoice <number|id> --write-off-account <code>
-       --write-off-reason "..."]  Close that invoice by writing off what the
-      line leaves unpaid (e.g. bank charges); VAT is unchanged and flagged.
+       --write-off-reason bank_charges|discount|bad_debt]
+                                        Close that invoice by writing off what the
+      line leaves unpaid. bank_charges: the customer paid in full, so on the
+      cash receipts basis all the invoice's VAT is released at the receipt;
+      discount is refused (a credit note is needed, VATCA s.67(1)(b), s.80(5));
+      bad_debt is refused (use the bad-debt path, issue #404).
   list-on-account [--customer <id>] [--supplier <id>]
       Payments still holding money on account
   allocate-on-account --payment <id> --invoice <number|id> --amount <12.30>
-      --actor "Name" [--reason "..."]  Apply money on account to a later
-      invoice of the same party; posts no journal
+      --actor "Name" [--reason "..."] [--declare-in <date>]
+                                         Apply money on account to a later
+                                          invoice of the same party; posts no
+                                          journal - unless the books are on the
+                                          cash receipts basis and the invoice
+                                          carries VAT, when its output VAT is
+                                          released dated at the receipt
+                                          (s.80(1), issue #389). --declare-in
+                                          names an open period when the
+                                          receipt's own is locked or filed
   trace <transactionId>                  Bank line -> payment -> invoices -> document lines
                                           -> rules -> VAT entries -> VAT3 box
 
@@ -1655,6 +1667,7 @@ export async function main(argv: string[], options: CliOptions = {}): Promise<nu
           amountMinor: parseAmount(requireFlag(flags, 'amount'), currency),
           actor: requireFlag(flags, 'actor'),
           reason: getFlag(flags, 'reason'),
+          vatDeclarationDate: getFlag(flags, 'declare-in'),
         }), format);
         return 0;
       }

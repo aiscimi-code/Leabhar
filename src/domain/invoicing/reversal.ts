@@ -1,7 +1,8 @@
-import { and, eq, isNull } from 'drizzle-orm';
+import { and, eq, isNull, ne } from 'drizzle-orm';
 import type { AppDatabase } from '@/db';
 import {
   payments, paymentAllocations, invoices, vatEntries, bankTransactions, auditEvents, reviewItems,
+  journalEntries,
 } from '@/db/schema';
 import { ids } from '@/lib/ids';
 import { asIsoDate, nowIso, type IsoDate } from '../dates';
@@ -127,6 +128,33 @@ function reversePaymentSteps(db: AppDatabase, input: ReversePaymentInput): Rever
     createdBy: input.actor ?? 'user',
     requestId: input.requestId,
   });
+
+  // ---- Release journals from money applied on account (issue #389) ----
+  // Applying money on account to a cash-basis sales invoice posted a release
+  // journal of its own, dated at the receipt. The applications are being undone
+  // here, so their releases are undone too: the deferred VAT goes back to
+  // deferred, dated at the reversal, and the negated VAT entries above keep
+  // the register honest. A journal already reversed (its own application was
+  // undone another way) is left alone.
+  const releaseJournals = db.select().from(journalEntries)
+    .where(and(
+      eq(journalEntries.companyId, input.companyId),
+      eq(journalEntries.sourceType, 'payment'),
+      eq(journalEntries.sourceId, payment.id),
+      isNull(journalEntries.reversedByEntryId),
+      ne(journalEntries.id, payment.journalEntryId!),
+    )).all();
+  const reversedReleaseJournalIds: string[] = [];
+  for (const entry of releaseJournals) {
+    reversedReleaseJournalIds.push(reverseJournalEntry(db, {
+      companyId: input.companyId,
+      entryId: entry.id,
+      reversalDate,
+      reason: `${input.reason} (undoing the output VAT released when money from this receipt was applied)`,
+      createdBy: input.actor ?? 'user',
+      requestId: input.requestId,
+    }).id);
+  }
 
   const timestamp = nowIso();
   const reversedVatEntryIds: string[] = [];

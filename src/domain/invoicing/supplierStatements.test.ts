@@ -80,7 +80,9 @@ describe('supplier statement (#413)', () => {
   it('counts a shortfall written off with a payment, and puts it back when the payment is reversed', () => {
     const first = bill('2025-01-10', 'M-1', 10_000);
     const paid = pay('2025-02-01', first.invoiceId, 12_000, {
-      writeOff: { invoiceId: first.invoiceId, accountId: byCode['6120']!, reason: 'Discount taken for early payment' },
+      // A discount is refused (VATCA s.67(1)(b)): the shortfall here is bank
+      // charges deducted from the payment, which is what the reason names.
+      writeOff: { invoiceId: first.invoiceId, accountId: byCode['6120']!, reason: 'bank_charges' },
     });
     expect(statement().closingBalanceMinor).toBe(0);
     expect(creditors()).toBe(0);
@@ -98,7 +100,7 @@ describe('supplier statement (#413)', () => {
     recordPayment(db, {
       companyId, direction: 'received', paymentDate: asIsoDate('2025-02-01'), amountMinor: 12_290,
       allocations: [{ invoiceId: sale.invoiceId, allocatedMinor: 12_290 }],
-      writeOff: { invoiceId: sale.invoiceId, accountId: byCode['6120']!, reason: 'Bank charges deducted' },
+      writeOff: { invoiceId: sale.invoiceId, accountId: byCode['6120']!, reason: 'bank_charges' },
     });
     const st = customerStatement(db, { companyId, customerId, from: asIsoDate('2025-01-01'), to: asIsoDate('2025-12-31') });
     expect(st.entries.map((e) => e.kind).sort()).toEqual(['invoice', 'payment', 'write_off']);

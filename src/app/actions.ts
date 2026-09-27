@@ -40,6 +40,7 @@ import { postDocumentAsInvoice, type LineCoding } from '@/domain/consolidation/p
 import {
   settleBankTransaction, settlementRateNeed, previewSettlement, type SettleAllocation, type SettlementRateNeed,
 } from '@/domain/consolidation/settle';
+import type { PaymentWriteOffReason } from '@/domain/invoicing/payments';
 import { parseDecimalRate, parseAmount, parsePercentBasisPoints } from '@/domain/money';
 import { reversePayment } from '@/domain/invoicing/reversal';
 import { asIsoDate } from '@/domain/dates';
@@ -812,7 +813,7 @@ function typedFxRate(text: string | undefined): FxInput | undefined {
  */
 export async function previewSettlementAction(input: {
   bankTransactionId: string; allocations: SettleAllocation[]; fxRateText?: string;
-  writeOff?: { invoiceId: string; accountId: string; reason: string } | null;
+  writeOff?: { invoiceId: string; accountId: string; reason: PaymentWriteOffReason } | null;
 }): Promise<{ need: SettlementRateNeed; preview: ReturnType<typeof previewSettlement> | null }> {
   await requireActor('invoices.manage');
   const company = requireCompany();
@@ -840,7 +841,7 @@ export async function previewSettlementAction(input: {
 
 export async function settleTransactionAction(input: {
   bankTransactionId: string; allocations: SettleAllocation[]; fxRateText?: string; vatDeclarationDate?: string;
-  writeOff?: { invoiceId: string; accountId: string; reason: string } | null;
+  writeOff?: { invoiceId: string; accountId: string; reason: PaymentWriteOffReason } | null;
 }): Promise<ActionResult> {
   try {
     await requireActor('invoices.manage');
@@ -877,6 +878,7 @@ export async function allocateOnAccountAction(formData: FormData): Promise<Actio
     await requireActor('invoices.manage');
     const company = requireCompany();
     const invoiceId = String(formData.get('invoiceId') ?? '');
+    const vatDeclarationDate = formData.get('vatDeclarationDate') ? String(formData.get('vatDeclarationDate')) : null;
     const result = allocatePaymentOnAccount(getDb(), {
       companyId: company.id,
       paymentId: String(formData.get('paymentId') ?? ''),
@@ -884,13 +886,19 @@ export async function allocateOnAccountAction(formData: FormData): Promise<Actio
       amountMinor: parseAmount(String(formData.get('amount') ?? ''), company.baseCurrency),
       actor: await actorName(),
       reason: formData.get('reason') ? String(formData.get('reason')) : null,
+      vatDeclarationDate,
     });
     revalidatePath(`/invoices/${invoiceId}`);
     revalidatePath('/invoices');
     revalidatePath('/review');
+    const vatPart = result.vatReleasedMinor !== 0
+      ? ` Its output VAT of ${(result.vatReleasedMinor / 100).toFixed(2)} became due, dated at the receipt `
+        + `(s.80(1))${vatDeclarationDate ? ', declared in the period you named and flagged for review' : ''}.`
+      : '';
     return {
       ok: true,
-      message: result.outstandingMinor === 0 ? 'Applied. The invoice is paid.' : 'Applied. The invoice is part-paid.',
+      message: (result.outstandingMinor === 0 ? 'Applied. The invoice is paid.' : 'Applied. The invoice is part-paid.')
+        + vatPart,
     };
   } catch (error) {
     return fail(error);

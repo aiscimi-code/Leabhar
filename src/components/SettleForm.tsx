@@ -45,7 +45,7 @@ export function SettleForm({
   const [lateDate, setLateDate] = useState('');
   const [writeOffOn, setWriteOffOn] = useState(false);
   const [writeOffAccount, setWriteOffAccount] = useState('');
-  const [writeOffReason, setWriteOffReason] = useState('');
+  const [writeOffReason, setWriteOffReason] = useState<'' | 'bank_charges' | 'discount' | 'bad_debt'>('');
   const [fxText, setFxText] = useState('');
   const [check, setCheck] = useState<Awaited<ReturnType<typeof previewSettlementAction>> | null>(null);
   const [result, setResult] = useState<ActionResult | null>(null);
@@ -65,10 +65,10 @@ export function SettleForm({
   const single = chosen.length === 1 ? invoices.find((i) => i.invoiceId === chosen[0]!.invoiceId) : undefined;
   const shortfall = single && !single.isCreditNote && single.currency === currency && remainder === 0
     ? Math.abs(single.outstandingMinor) - chosen[0]!.amountMinor : 0;
-  const writeOff = writeOffOn && shortfall > 0 && single
+  const writeOff = writeOffOn && shortfall > 0 && single && writeOffReason !== ''
     ? { invoiceId: single.invoiceId, accountId: writeOffAccount, reason: writeOffReason }
     : null;
-  const writeOffKey = JSON.stringify(writeOff && writeOff.accountId && writeOff.reason.trim() ? writeOff : null);
+  const writeOffKey = JSON.stringify(writeOff && writeOff.accountId ? writeOff : null);
 
   // Ask the domain what this settlement needs and would post; nothing is written.
   useEffect(() => {
@@ -88,7 +88,7 @@ export function SettleForm({
   const rateMissing = need?.needed === true && !fxText.trim() && !need.statementRate;
   const invalid = parsed.some((p) => !p.ok) || net > cash || net < 0 || chosen.length === 0
     || need?.needed === 'unsupported' || rateMissing || preview?.ok === false
-    || (writeOff !== null && (!writeOff.accountId || !writeOff.reason.trim()));
+    || (writeOff !== null && !writeOff.accountId);
 
   const toggle = (inv: OpenInvoice, on: boolean) => setAmounts((a) => {
     const next = { ...a };
@@ -148,17 +148,33 @@ export function SettleForm({
           {writeOffOn && (
             <div className="pl-6 space-y-1.5">
               <div className="flex items-center gap-2 flex-wrap">
+                <select className="border border-line-strong rounded px-2 py-1 bg-surface" value={writeOffReason}
+                  onChange={(e) => setWriteOffReason(e.target.value as 'bank_charges' | 'discount' | 'bad_debt')}
+                  aria-label="Why is it short">
+                  <option value="">Why is it short?…</option>
+                  <option value="bank_charges">Bank or transfer charges deducted from the payment</option>
+                  <option value="discount">A discount was taken</option>
+                  <option value="bad_debt">It will never be paid</option>
+                </select>
                 <select className="border border-line-strong rounded px-2 py-1 bg-surface" value={writeOffAccount}
                   onChange={(e) => setWriteOffAccount(e.target.value)} aria-label="Write off to">
                   <option value="">Write off to…</option>
                   {writeOffAccounts.map((a) => <option key={a.id} value={a.id}>{a.code} {a.name}</option>)}
                 </select>
-                <Input className="!w-72" value={writeOffReason} placeholder="Bank charges deducted by the payer's bank"
-                  onChange={(e) => setWriteOffReason(e.target.value)} aria-label="Why" />
               </div>
               <p className="text-caution">
-                The invoice&apos;s VAT is not changed. That is right for bank charges. If the price was reduced,
-                ask for (or issue) a credit note instead, so the VAT falls. The write-off is flagged for review.
+                {writeOffReason === 'bank_charges'
+                  ? 'The customer paid the full consideration, so the shortfall is the cost of being paid. On the '
+                    + 'cash receipts basis all the invoice’s deferred VAT is released at the receipt date. The '
+                    + 'collected sources state no Revenue position on it, so the write-off is flagged for review.'
+                  : writeOffReason === 'discount'
+                    ? 'A discount is a reduction of the price: it needs a credit note (VATCA s.67(1)(b)), and on '
+                      + 'the cash receipts basis s.80(5) makes the VAT due anyway if none is issued. Settling with '
+                      + 'this reason will be refused - issue the credit note first.'
+                    : writeOffReason === 'bad_debt'
+                      ? 'Money that was never received is a bad debt, not a shortfall of this payment: settle '
+                        + 'without the write-off and write the invoice off as a bad debt instead.'
+                      : 'Say why the payment is short: each reason has a different treatment.'}
               </p>
             </div>
           )}

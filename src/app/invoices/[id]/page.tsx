@@ -281,6 +281,12 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
                       <Field label="Note (optional)">
                         <Input name="reason" placeholder="Deposit applied to the final invoice" />
                       </Field>
+                      {invoice.direction === 'sales' && invoice.vatMinor !== 0 && (
+                        <Field label="Declare the released VAT in (optional)">
+                          <Input name="vatDeclarationDate" type="date"
+                            placeholder="Only when the receipt's own period is locked or filed" />
+                        </Field>
+                      )}
                     </ActionForm>
                   </div>
                 </li>
@@ -289,6 +295,7 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
             <p className="text-ink-muted mt-2 leading-snug max-w-3xl">
               Applying it posts nothing: the money already sits on {isSales ? 'debtors' : 'creditors'} against
               {party ? ` ${party.name}` : ' this party'}. It records which invoice it pays.
+              {isSales && invoice.vatMinor !== 0 && ' On the cash receipts basis, its output VAT becomes due dated at the receipt (s.80(1)) - name a period above only if the receipt’s own is locked or filed.'}
             </p>
           </Disclosure>
         )}

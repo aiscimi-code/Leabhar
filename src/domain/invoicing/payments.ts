@@ -2,7 +2,7 @@ import { and, eq } from 'drizzle-orm';
 import type { AppDatabase } from '@/db';
 import {
   invoices, invoiceLines, payments, paymentAllocations, companies,
-  bankTransactions, bankAccounts, auditEvents, companyOfficers, accounts,
+  bankTransactions, bankAccounts, auditEvents, companyOfficers, accounts, customers,
 } from '@/db/schema';
 import { ids } from '@/lib/ids';
 import { asMinor, multiplyRational } from '../money';
@@ -10,6 +10,7 @@ import { asIsoDate, nowIso, type IsoDate } from '../dates';
 import { postJournalEntry, atomically } from '../accounting/journal';
 import { systemAccountId } from '../config/setup';
 import { createVatEntries, assertVatPeriodWritable } from '../vat/engine';
+import { upsertReviewItem } from '../extraction/service';
 import { InvoicingError } from './invoices';
 
 /**
@@ -43,6 +44,9 @@ export interface PaymentAllocationInput {
   allocatedMinor: number;
 }
 
+/** Why a short-paid invoice's remainder is written off. Chosen, never free text (issue #389). */
+export type PaymentWriteOffReason = 'bank_charges' | 'discount' | 'bad_debt';
+
 export interface RecordPaymentInput {
   companyId: string;
   direction: 'received' | 'made';
@@ -65,12 +69,23 @@ export interface RecordPaymentInput {
   allocations: PaymentAllocationInput[];
   /**
    * Close one allocated invoice by writing off what this payment leaves unpaid
-   * (issue #386): bank charges the payer's bank deducted, or a small discount
-   * taken. Posted to `accountId` (an income or expense account) in the same
-   * journal. VAT is not touched — a price reduction that changes VAT needs a
-   * credit note — and the write-off is flagged for review. Base currency only.
+   * (issue #386). The reason is chosen, never free text, because each one has
+   * a fixed treatment (issue #389):
+   *
+   * - `bank_charges` — deducted by the payer's or an intermediary bank. The
+   *   customer paid the full consideration, so on the cash receipts basis all
+   *   the invoice's deferred output VAT is released at the receipt date and
+   *   the shortfall is posted to `accountId` (an income or expense account) as
+   *   the business's own cost of being paid, with no VAT in it. Flagged, with
+   *   a finding that the collected sources state no Revenue position on it.
+   * - `discount` — refused: a reduction or discount needs a credit note
+   *   (VATCA s.67(1)(b)), and on the cash receipts basis s.80(5) makes the
+   *   VAT due anyway if none is issued.
+   * - `bad_debt` — refused: money never received is a bad debt, not a
+   *   shortfall of this payment. The bad-debt path clears the deferred VAT
+   *   rather than releasing it (#404).
    */
-  writeOff?: { invoiceId: string; accountId: string; reason: string } | null;
+  writeOff?: { invoiceId: string; accountId: string; reason: PaymentWriteOffReason } | null;
   /**
    * Declare the output VAT this receipt releases (cash receipts basis) in the
    * VAT period covering this date, when the receipt's own period is locked or
@@ -426,7 +441,17 @@ function recordPaymentSteps(db: AppDatabase, input: RecordPaymentInput): Recorde
   // invoice with no VAT at all (an EU or export supply, say) is never deferred:
   // its entry — and the net it reports in ES1/E1 — was created on the invoice,
   // and releasing it again at payment would report the supply twice.
-  const salesTargets = targets.filter((t) => t.invoice.direction === 'sales' && t.invoice.vatMinor !== 0);
+  const salesTargets = targets.filter((t) => t.invoice.direction === 'sales' && t.invoice.vatMinor !== 0)
+    .map((t) => (
+      // Bank charges deducted from the payment (issue #389): the customer
+      // paid the full consideration - the charge is the supplier's own cost
+      // of being paid - so the write-off counts as paid and the whole
+      // invoice's deferred VAT is released at the receipt date, leaving none
+      // stranded.
+      writeOff && writeOff.invoice.id === t.invoice.id
+        ? { ...t, invoiceAllocatedMinor: t.invoiceAllocatedMinor + writeOff.amountMinor }
+        : t
+    ));
   const vatReleases = isReceived && company.vatAccountingBasis === 'cash_receipts' && salesTargets.length > 0
     ? computeVatReleases(db, salesTargets)
     : [];
@@ -530,6 +555,7 @@ function recordPaymentSteps(db: AppDatabase, input: RecordPaymentInput): Recorde
       direction: 'sales',
       treatmentId: release.vatTreatmentId,
       rateOverrideId: release.taxRateId ?? undefined,
+      invoiceLineId: release.invoiceLineId,
       // The tax point is the payment date. This is the whole point of the basis.
       taxPointDate: input.paymentDate,
       declarationDate: input.vatDeclarationDate ?? undefined,
@@ -621,6 +647,27 @@ function recordPaymentSteps(db: AppDatabase, input: RecordPaymentInput): Recorde
       }).where(eq(bankTransactions.id, input.bankTransactionId)).run();
     }
 
+    // Money held on account for a cash-basis trader (issue #389): whether it
+    // was received "in respect of taxable supplies" decides if its VAT was
+    // due the moment it arrived (s.80(1)). The books cannot tell, so it is
+    // flagged the moment it is held, and the item says what to do.
+    if (unallocatedMinor > 0 && isReceived && company.vatAccountingBasis === 'cash_receipts' && party.customerId) {
+      const customerName = db.select({ n: customers.name }).from(customers)
+        .where(eq(customers.id, party.customerId)).get()?.n ?? 'the customer';
+      upsertReviewItem(tx, {
+        companyId: input.companyId,
+        kind: 'uncertain_vat_treatment',
+        severity: 'warning',
+        title: `${(unallocatedMinor / 100).toFixed(2)} received on account from ${customerName} on ${input.paymentDate}`,
+        detail: `On the cash receipts basis, VAT on money received "in respect of taxable supplies" is due in the `
+          + `period it arrived (VATCA s.80(1)), not the period it is applied to an invoice. If this pays for a `
+          + `supply, apply it to the invoice and its output VAT is declared with the tax point of `
+          + `${input.paymentDate}; if it is a genuine overpayment, refund it and no VAT is due. Decide which it is.`,
+        entityType: 'payment', entityId: paymentId,
+        dedupeKey: `payment:${paymentId}:on_account_vat`,
+      });
+    }
+
     tx.insert(auditEvents).values({
       id: ids.audit(),
       companyId: input.companyId,
@@ -689,9 +736,8 @@ function paymentParty(
 /**
  * A shortfall write-off is allowed only when it is plainly what it says:
  * one ordinary invoice in base currency, the payment fully applied, something
- * actually left unpaid, an income or expense account to take it, and a reason.
- * On the cash receipts basis a sales invoice's deferred output VAT would be
- * stranded, so that case is refused (issue #386).
+ * actually left unpaid, an income or expense account to take it, and one of
+ * the three reasons, each with a fixed treatment (issues #386, #389).
  */
 function validateWriteOff(
   db: AppDatabase,
@@ -699,10 +745,35 @@ function validateWriteOff(
   company: typeof companies.$inferSelect,
   targets: Array<{ invoice: typeof invoices.$inferSelect; invoiceAllocatedMinor: number }>,
   unallocatedMinor: number,
-): { invoice: typeof invoices.$inferSelect; accountId: string; amountMinor: number; reason: string } {
+): { invoice: typeof invoices.$inferSelect; accountId: string; amountMinor: number; reason: PaymentWriteOffReason } {
   const spec = input.writeOff!;
-  const reason = spec.reason?.trim() ?? '';
-  if (!reason) throw new InvoicingError('Say why the shortfall is written off, e.g. "bank charges deducted by the payer\'s bank".');
+  const reason = (spec.reason ?? '').trim();
+  if (!reason) {
+    throw new InvoicingError(
+      'Say why the shortfall is written off: bank or transfer charges deducted from the payment, a discount, '
+        + 'or a bad debt. Each has a different treatment.',
+    );
+  }
+  if (reason !== 'bank_charges' && reason !== 'discount' && reason !== 'bad_debt') {
+    throw new InvoicingError(
+      `Unknown write-off reason "${reason}". Say bank_charges, discount or bad_debt (issue #389).`,
+    );
+  }
+  if (reason === 'discount') {
+    throw new InvoicingError(
+      'A discount taken is a reduction of the price, so it needs a credit note (VATCA s.67(1)(b)) - the '
+        + 'supplier cannot simply write the shortfall off. On the cash receipts basis s.80(5) makes the VAT on '
+        + 'the discount due anyway if no credit note is issued. Issue the credit note first, then settle '
+        + 'against it (issue #389).',
+    );
+  }
+  if (reason === 'bad_debt') {
+    throw new InvoicingError(
+      'Money that was never received is a bad debt, not a shortfall of this payment. Record it on the bad-debt '
+        + 'path (write the invoice off as a bad debt), which charges bad debts and, on the cash receipts basis, '
+        + 'clears the deferred VAT rather than releasing it (issue #404, #389).',
+    );
+  }
   const target = targets.find((t) => t.invoice.id === spec.invoiceId);
   if (!target) throw new InvoicingError('The invoice whose shortfall is written off must be one this payment settles.');
   const invoice = target.invoice;
@@ -722,12 +793,6 @@ function validateWriteOff(
   }
   const amountMinor = Math.abs(invoice.outstandingMinor) - Math.abs(target.invoiceAllocatedMinor);
   if (amountMinor <= 0) throw new InvoicingError('This payment settles the invoice in full; there is nothing to write off.');
-  if (invoice.direction === 'sales' && invoice.vatMinor !== 0 && company.vatAccountingBasis === 'cash_receipts') {
-    throw new InvoicingError(
-      'On the cash receipts basis the output VAT on this invoice is released as it is paid, so writing off the '
-        + 'shortfall would leave part of it deferred for good. Issue a credit note for the shortfall instead.',
-    );
-  }
   const account = db.select().from(accounts)
     .where(and(eq(accounts.id, spec.accountId), eq(accounts.companyId, input.companyId))).get();
   if (!account) throw new InvoicingError(`Account ${spec.accountId} not found.`);
@@ -740,8 +805,10 @@ function validateWriteOff(
   return { invoice, accountId: account.id, amountMinor, reason };
 }
 
-interface VatRelease {
+export interface VatRelease {
   invoiceId: string;
+  /** The invoice line the release is proportional to, so the VAT entry traces back to it. */
+  invoiceLineId: string;
   vatTreatmentId: string;
   taxRateId: string | null;
   netMinor: number;
@@ -757,7 +824,7 @@ interface VatRelease {
  * This way the releases always sum to exactly the invoice's VAT once it is
  * fully paid, which is asserted in the tests.
  */
-function computeVatReleases(
+export function computeVatReleases(
   db: AppDatabase,
   targets: Array<{ invoice: typeof invoices.$inferSelect; invoiceAllocatedMinor: number }>,
 ): VatRelease[] {
@@ -786,6 +853,7 @@ function computeVatReleases(
 
       releases.push({
         invoiceId: invoice.id,
+        invoiceLineId: line.id,
         vatTreatmentId: line.vatTreatmentId,
         taxRateId: line.taxRateId,
         netMinor,
