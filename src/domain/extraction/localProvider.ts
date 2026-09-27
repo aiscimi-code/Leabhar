@@ -160,7 +160,7 @@ export class LocalExtractionProvider implements ExtractionProvider {
     // mention a "balance due" without that being the total, and a credit
     // note totals itself under a label no gross pattern names (issue #276).
     const totalsBox = findTotalsBox(lines, workingCurrency);
-    const gross = findLabelledAmount(totalsBox, GROSS_LABELS, workingCurrency)
+    const gross = findLabelledAmount(totalsBox, TOTALS_BOX_GROSS_LABELS, workingCurrency)
       ?? findLabelledAmount(lines, GROSS_LABELS, workingCurrency);
     const net = findLabelledAmount(totalsBox, NET_LABELS, workingCurrency)
       ?? findLabelledAmount(lines, NET_LABELS, workingCurrency);
@@ -339,12 +339,15 @@ const GROSS_LABELS: RegExp[] = [
   /\b(?:amount\s+due|total\s+due|balance\s+due|grand\s+total|invoice\s+total|total\s+amount|total\s+\(inc[^)]*\))\b/i,
   /\b(?:gesamtbetrag|rechnungsbetrag|bruttobetrag|montant\s+total|total\s+ttc|totaal|totale|importe\s+total)\b/i,
   /\b(?:total|gesamt|brutto|totaal\s+incl)\b/i,
-  // A credit note's totals box often carries no "total" wording at all —
-  // "CREDIT (EUR)" is the total. Matched last, and only where the words are
-  // not part of "credit note", so a note naming a credit note never reads
-  // as a total (issue #276).
-  /\bcredit\b(?!\s*note)/i,
 ];
+
+/**
+ * A credit note's totals box often carries no "total" wording at all —
+ * "CREDIT (EUR)" is the total. Matched last, only inside the totals box, and
+ * only where the word is not part of "credit note" — elsewhere "credit" is a
+ * card surcharge or credit terms, never the total (issue #276).
+ */
+const TOTALS_BOX_GROSS_LABELS: RegExp[] = [...GROSS_LABELS, /\bcredit\b(?!\s*note)/i];
 
 const NET_LABELS: RegExp[] = [
   /\b(?:sub\s?total|net\s+(?:amount|total)|total\s+(?:excl|ex)[^:]*)\b/i,

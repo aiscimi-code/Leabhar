@@ -2,7 +2,7 @@ import { and, asc, eq, inArray } from 'drizzle-orm';
 import type { AppDatabase } from '@/db';
 import {
   accounts, auditEvents, bankAccounts, bankTransactions, companies, companyOfficers,
-  documents, expenseClaimLines, expenseClaims, users,
+  documents, expenseClaimLines, expenseClaims, users, companyMembers, journalEntries,
 } from '@/db/schema';
 import { ids } from '@/lib/ids';
 import { asIsoDate, nowIso, today, type IsoDate } from '../dates';
@@ -47,10 +47,11 @@ export interface ClaimLineInput {
   /** Units (km, absences, nights) for a rate-calculated line. */
   units?: number;
   rateId?: string;
-  /** Business share of the line, in basis points. 10000 = wholly business. */
+  /**
+   * Business share of the line, in basis points. 10000 = wholly business. The
+   * private share is the claimant's own cost: it is not posted and not owed.
+   */
   businessUseBasisPoints?: number;
-  /** Overrides where the private share is charged back to. */
-  privateUseAccountId?: string | null;
   /** The receipt behind the line, when there is one. */
   documentId?: string | null;
   notes?: string | null;
@@ -103,6 +104,9 @@ function claimantAccount(
 
   const user = db.select().from(users).where(eq(users.id, input.claimant.userId)).get();
   if (!user) throw new ExpenseClaimError(`User ${input.claimant.userId} not found.`);
+  const member = db.select({ id: companyMembers.id }).from(companyMembers)
+    .where(and(eq(companyMembers.userId, user.id), eq(companyMembers.companyId, input.companyId))).get();
+  if (!member) throw new ExpenseClaimError(`${user.displayName} is not a member of this company.`);
   return {
     name: user.displayName,
     officerId: null,
@@ -214,7 +218,7 @@ function createExpenseClaimSteps(
         rateAmountMinor: rate?.amountMinor ?? null,
         ratePerUnits: rate?.perUnits ?? null,
         businessUseBasisPoints: businessBp,
-        privateUseAccountId: line.privateUseAccountId ?? null,
+        privateUseAccountId: null,
         documentId: line.documentId ?? null,
         notes: line.notes ?? null,
         createdAt: timestamp,
@@ -271,9 +275,11 @@ function createExpenseClaimSteps(
 
 /**
  * Approve a submitted claim: the accounting decision. Posts the journal — each
- * line's business share to its expense account, any private share charged back
- * to the claimant, and the whole claim credited to the claimant — and checks
- * every line's accounting period before writing anything.
+ * line's business share to its expense account and the business total credited
+ * to the claimant — and checks every line's accounting period before writing
+ * anything. A private share is the claimant's own cost, paid with their own
+ * money: the company neither bears it nor owes it, so it is not posted at all
+ * (the same rule as a director-paid expense).
  */
 export function approveExpenseClaim(
   db: AppDatabase, input: {
@@ -296,6 +302,12 @@ function approveExpenseClaimSteps(
   const lines = db.select().from(expenseClaimLines)
     .where(eq(expenseClaimLines.claimId, claim.id)).orderBy(asc(expenseClaimLines.lineNumber)).all();
   if (lines.length === 0) throw new ExpenseClaimError('This claim has no lines to approve.');
+  if (claim.totalMinor - claim.privateMinor <= 0) {
+    throw new ExpenseClaimError(
+      'None of this claim is business use, so there is nothing for the company to record. Reject it instead.',
+      { claimId: claim.id },
+    );
+  }
 
   const company = db.select().from(companies).where(eq(companies.id, input.companyId)).get()!;
   const claimant = claimantName(db, claim);
@@ -324,20 +336,11 @@ function approveExpenseClaimSteps(
         memo: `${line.description} (expense claim by ${claimant})`,
       });
     }
-    if (privateMinor > 0) {
-      journalLines.push({
-        accountId: line.privateUseAccountId ?? claim.payableAccountId,
-        debitMinor: privateMinor,
-        currency: company.baseCurrency,
-        officerId: claim.officerId,
-        memo: `Private share of "${line.description}" charged back to ${claimant}`,
-      });
-    }
   }
 
   journalLines.push({
     accountId: claim.payableAccountId,
-    creditMinor: claim.totalMinor,
+    creditMinor: businessTotal,
     currency: company.baseCurrency,
     officerId: claim.officerId,
     memo: `Expense claim "${claim.title}" owed to ${claimant}`,
@@ -457,8 +460,8 @@ function rejectExpenseClaimSteps(
 
 /**
  * Reimburse an approved claim: the money leaves the bank. The business share
- * (what is actually owed — the private share was already charged back at
- * approval) pays down the claimant's account.
+ * (what is actually owed — the private share was never the company's) pays
+ * down the claimant's account.
  *
  * The payment is evidenced by a bank line wherever there is one: passing
  * `bankTransactionId` posts against that account's ledger and marks the line
@@ -500,7 +503,7 @@ function reimburseExpenseClaimSteps(
   if (owedMinor <= 0) {
     throw new ExpenseClaimError(
       'Nothing is owed on this claim: its private share covers the whole amount, so there is '
-      + 'nothing to reimburse. Reverse the claim instead.',
+      + 'nothing to reimburse.',
       { claimId: claim.id },
     );
   }
@@ -698,10 +701,10 @@ function reverseExpenseClaimSteps(
     );
   }
 
-  const reversalDate = input.reversalDate
-    ?? asIsoDate(db.select({ date: expenseClaimLines.date }).from(expenseClaimLines)
-      .where(eq(expenseClaimLines.claimId, claim.id)).orderBy(asc(expenseClaimLines.date)).get()?.date
-      ?? today());
+  // By default the reversal is dated with the approval journal, never before it.
+  const approval = db.select({ date: journalEntries.entryDate }).from(journalEntries)
+    .where(eq(journalEntries.id, claim.journalEntryId!)).get();
+  const reversalDate = input.reversalDate ?? asIsoDate(approval?.date ?? today());
 
   const reversal = reverseJournalEntry(db, {
     companyId: input.companyId,

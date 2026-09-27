@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { getDb } from '@/db';
 import { requireCompany } from '@/lib/queries';
 import { actorName, requireActor } from '@/lib/session';
+import { can } from '@/domain/auth/permissions';
 import {
   createExpenseClaim, approveExpenseClaim, rejectExpenseClaim, reimburseExpenseClaim,
   reverseExpenseClaim,
@@ -27,7 +28,7 @@ function fail(error: unknown): ActionResult {
 
 export async function createExpenseClaimAction(formData: FormData): Promise<ActionResult> {
   try {
-    await requireActor('expenses.submit');
+    const user = await requireActor('expenses.submit');
     const db = getDb();
     const company = requireCompany();
     const actor = await actorName();
@@ -36,6 +37,11 @@ export async function createExpenseClaimAction(formData: FormData): Promise<Acti
     const claimantId = String(formData.get('claimantId') ?? '');
     const title = String(formData.get('title') ?? '');
     if (!claimantId) return { ok: false, error: 'Choose who this claim is for.' };
+    // Someone who cannot approve claims submits only their own: otherwise a
+    // claim could put money owed on someone else's account.
+    if (!can(user.role, 'expenses.approve') && (claimantType !== 'user' || claimantId !== user.id)) {
+      return { ok: false, error: 'You can submit a claim for yourself only.' };
+    }
     if (!title.trim()) return { ok: false, error: 'Give the claim a title.' };
 
     const lineType = String(formData.get('lineType') ?? 'mileage');

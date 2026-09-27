@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { and, eq } from 'drizzle-orm';
 import { seedTestBook, insertTestBankTransaction } from '@/db/testing';
 import {
-  companyOfficers, expenseClaims, expenseClaimLines, expenseRates, journalLines, reviewItems, users,
+  companyOfficers, expenseClaims, expenseClaimLines, expenseRates, journalLines, reviewItems, users, companyMembers, journalEntries,
 } from '@/db/schema';
 import type { AppDatabase } from '@/db';
 import { ids } from '@/lib/ids';
@@ -39,6 +39,7 @@ beforeEach(() => {
     id: userId, username: `colleague-${userId}`, displayName: 'John O’Sullivan',
     passwordHash: 'x', passwordSalt: 'y',
   }).run();
+  db.insert(companyMembers).values({ id: ids.member(), companyId, userId }).run();
 });
 
 function mileageRate(code = 'car_upto_1200cc_band1'): string {
@@ -118,6 +119,15 @@ describe('createExpenseClaim', () => {
     expect(row.userId).toBe(userId);
   });
 
+  it('refuses a user who is not a member of this company', () => {
+    const outsider = ids.user();
+    db.insert(users).values({ id: outsider, username: `outsider-${outsider}`, displayName: 'Stranger', passwordHash: 'x', passwordSalt: 'y' }).run();
+    expect(() => createExpenseClaim(db, {
+      companyId, claimant: { userId: outsider }, title: 'Not ours',
+      lines: [{ lineType: 'travel', date: asIsoDate('2025-05-05'), description: 'Taxi', amountMinor: 1_000, accountId: travelAccount() }],
+    })).toThrow(/not a member/);
+  });
+
   it('refuses an allowance line without a rate and units, and an amount that is not money', () => {
     expect(() => createExpenseClaim(db, {
       companyId, claimant: { officerId }, title: 'No rate',
@@ -135,7 +145,7 @@ describe('createExpenseClaim', () => {
 });
 
 describe('approveExpenseClaim', () => {
-  it('posts the business share to the expense and owes the claimant the whole claim', () => {
+  it('posts the business share to the expense and owes the claimant only that', () => {
     const claim = createExpenseClaim(db, {
       companyId,
       claimant: { officerId },
@@ -156,9 +166,9 @@ describe('approveExpenseClaim', () => {
 
     expect(accountBalance(db, { companyId, accountId: travelAccount() })).toBe(62_700);
     expect(accountBalance(db, { companyId, accountId: byCode['6030']! })).toBe(40_00);
-    // The claimant is credited with the full 677.00; their private share
-    // (10.00) is charged back against it, so the company owes a net 667.00 —
-    // a credit balance on a credit-normal liability.
+    // The private share (10.00) is the claimant's own cost: not posted, not
+    // owed. The company owes 667.00 — a credit balance on a credit-normal
+    // liability.
     expect(accountBalance(db, { companyId, accountId: acc['directors_current_account']! })).toBe(66_700);
 
     const row = db.select().from(expenseClaims).where(eq(expenseClaims.id, claim.claimId)).get()!;
@@ -170,7 +180,7 @@ describe('approveExpenseClaim', () => {
     const officerLines = db.select().from(journalLines)
       .where(and(eq(journalLines.journalEntryId, approval.journalEntryId), eq(journalLines.officerId, officerId)))
       .all();
-    expect(officerLines.length).toBe(2); // private charge-back and the credit
+    expect(officerLines.length).toBe(1); // the credit for what is owed
   });
 
   it('flags a receipt line with no document, because there is no evidence for it', () => {
@@ -234,6 +244,35 @@ describe('rejectExpenseClaim', () => {
     const row = db.select().from(expenseClaims).where(eq(expenseClaims.id, claim.claimId)).get()!;
     expect(row.status).toBe('rejected');
     expect(row.rejectionReason).toBe('Already claimed in April.');
+  });
+});
+
+describe('a partly-private claim', () => {
+  it('owes only the business share, and leaves nothing on the payable account once reimbursed', () => {
+    const claim = createExpenseClaim(db, {
+      companyId, claimant: { userId }, title: 'Phone',
+      lines: [{
+        lineType: 'receipt', date: asIsoDate('2025-05-02'), description: 'Mobile bill', amountMinor: 50_00,
+        accountId: byCode['6030']!, businessUseBasisPoints: 6_000,
+      }],
+    });
+    approveExpenseClaim(db, { companyId, claimId: claim.claimId });
+    expect(accountBalance(db, { companyId, accountId: byCode['6030']! })).toBe(30_00);
+    expect(accountBalance(db, { companyId, accountId: acc['staff_expenses_payable']! })).toBe(30_00);
+    const paid = reimburseExpenseClaim(db, { companyId, claimId: claim.claimId, bankAccountId, date: asIsoDate('2025-06-02') });
+    expect(paid.amountMinor).toBe(30_00);
+    expect(accountBalance(db, { companyId, accountId: acc['staff_expenses_payable']! })).toBe(0);
+  });
+
+  it('refuses to approve a claim with no business share', () => {
+    const claim = createExpenseClaim(db, {
+      companyId, claimant: { officerId }, title: 'Private',
+      lines: [{
+        lineType: 'receipt', date: asIsoDate('2025-05-02'), description: 'Holiday', amountMinor: 50_00,
+        accountId: byCode['6030']!, businessUseBasisPoints: 0,
+      }],
+    });
+    expect(() => approveExpenseClaim(db, { companyId, claimId: claim.claimId })).toThrow(/nothing for the company/);
   });
 });
 
@@ -345,6 +384,20 @@ describe('reverseExpenseClaim', () => {
     expect(row.status).toBe('reversed');
     expect(row.reversalJournalEntryId).toBe(reversal.reversalJournalEntryId);
     expect(row.journalEntryId).toBe(approval.journalEntryId!); // the original is untouched
+  });
+
+  it('dates the reversal with the approval journal, never before it', () => {
+    const claim = createExpenseClaim(db, {
+      companyId, claimant: { officerId }, title: 'Two trips',
+      lines: [
+        { lineType: 'travel', date: asIsoDate('2025-05-02'), description: 'Taxi', amountMinor: 20_00, accountId: travelAccount() },
+        { lineType: 'travel', date: asIsoDate('2025-05-20'), description: 'Train', amountMinor: 30_00, accountId: travelAccount() },
+      ],
+    });
+    approveExpenseClaim(db, { companyId, claimId: claim.claimId });
+    const reversal = reverseExpenseClaim(db, { companyId, claimId: claim.claimId, reason: 'Claimed twice' });
+    const entry = db.select().from(journalEntries).where(eq(journalEntries.id, reversal.reversalJournalEntryId)).get()!;
+    expect(entry.entryDate).toBe('2025-05-20');
   });
 
   it('refuses to reverse a reimbursed claim: the money has left', () => {

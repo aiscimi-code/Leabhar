@@ -528,10 +528,10 @@ resolved.
 
 The lifecycle is submitted → approved → reimbursed, with rejected and reversed
 as the exits. Approving is the accounting event: the journal is posted there
-(each line's business share debited to its expense account, any private share
-charged back to the claimant on the same payable account, the whole claim
-credited to the claimant — an officer on their own current account, everyone
-else on Staff expenses payable, 2445), after every line's accounting period is
+(each line's business share debited to its expense account and the business
+total credited to the claimant — an officer on their own current account,
+everyone else on Staff expenses payable, 2445; a private share is the
+claimant's own cost and is neither posted nor owed), after every line's accounting period is
 checked. A claim is never edited after submission: it is rejected with a reason,
 or reversed, and a reversal is a reversing journal. Reimbursing pays the net
 owed (the total less the private shares) out of the bank — from a matching,
