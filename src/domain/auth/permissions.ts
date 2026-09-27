@@ -41,6 +41,7 @@ export const ACTIONS = [
   'audit.read',           // read the audit trail
   'reports.export',       // export packs, statements and listings
   'documents.ingest',      // import or scan documents in
+  'documents.manage',     // archive, restore or delete stored documents
   'banking.import',       // import bank statements
   'banking.reconcile',    // reconcile bank accounts
   'transactions.classify', // classify or reclassify a bank transaction
@@ -77,6 +78,7 @@ export const PERMISSIONS: Record<Action, readonly Role[]> = {
   'audit.read': ['owner', 'director', 'accountant', 'auditor'],
   'reports.export': ['owner', 'director', 'accountant', 'bookkeeper', 'farm_manager', 'auditor'],
   'documents.ingest': ['owner', 'director', 'accountant', 'bookkeeper', 'employee', 'farm_manager'],
+  'documents.manage': ['owner', 'director', 'accountant'],
   'banking.import': ['owner', 'director', 'accountant', 'bookkeeper', 'farm_manager'],
   'banking.reconcile': ['owner', 'director', 'accountant', 'bookkeeper', 'farm_manager'],
   'transactions.classify': ['owner', 'director', 'accountant', 'bookkeeper', 'farm_manager'],

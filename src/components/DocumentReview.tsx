@@ -42,7 +42,8 @@ const DOCUMENT_TYPES: Array<[ReviewedDocumentValues['documentType'], string]> = 
   ['supplier_invoice', 'Supplier invoice'], ['receipt', 'Receipt'], ['credit_note', 'Credit note'],
   ['sales_invoice', 'Sales invoice'], ['sales_record', 'Sales record (till/Z report)'],
   ['proforma', 'Pro-forma (not a VAT invoice)'], ['tax_document', 'Revenue / tax document'], ['company_document', 'Company document'],
-  ['contract', 'Contract'], ['bank_statement', 'Bank statement'], ['other', 'Other'], ['unknown', 'Not yet known'],
+  ['contract', 'Contract'], ['grant_document', 'Grant letter or agreement'], ['payroll_document', 'Payroll document'],
+  ['bank_statement', 'Bank statement'], ['other', 'Other'], ['unknown', 'Not yet known'],
 ];
 
 const amountText = (minor: number | null, currency: string) =>

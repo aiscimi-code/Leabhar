@@ -6,7 +6,7 @@ import { getDb, resetDatabase } from '@/db';
 import { reviewItems, documents, bankTransactions, bankAccounts, companies, invoices as invoicesTable } from '@/db/schema';
 import { requireCompany } from '@/lib/queries';
 import { classifyTransaction, reclassifyTransaction } from '@/domain/banking/classify';
-import { acceptMatch, rejectMatch, findMatchesForDocument, matchAllUnmatched, linkDocument, unmatchDocument, withdrawMatchRejection } from '@/domain/matching/service';
+import { acceptMatch, rejectMatch, findMatchesForDocument, matchAllUnmatched, linkDocument, unmatchDocument, withdrawMatchRejection, MatchError } from '@/domain/matching/service';
 import { linkBankTransactionToJournal } from '@/domain/banking/journalLink';
 import { allocatePaymentOnAccount } from '@/domain/invoicing/onAccount';
 import { applyCreditNote, unapplyCreditNote, refundOnAccount } from '@/domain/invoicing/customerCredit';
@@ -25,6 +25,7 @@ import {
 } from '@/domain/parties/customerAccount';
 import { transitionVatPeriod, type VatPeriodStatus } from '@/domain/vat/periodClose';
 import { storeDocument } from '@/domain/documents/storage';
+import { ALL_DOCUMENT_TYPES, isVaultDocumentType, VAULT_TYPE_LABELS } from '@/domain/documents/types';
 import { extractDocument, extractDocumentFromText } from '@/domain/extraction/service';
 import {
   confirmDocument, rejectDocument, reopenDocument, type ReviewedDocumentValues,
@@ -38,6 +39,10 @@ import { parseDecimalRate, parseAmount, parsePercentBasisPoints } from '@/domain
 import { reversePayment } from '@/domain/invoicing/reversal';
 import { asIsoDate } from '@/domain/dates';
 import { scanWatchFolder } from '@/domain/documents/watch';
+import {
+  archiveDocument, restoreDocument, deleteDocument,
+} from '@/domain/documents/lifecycle';
+import { setRetentionPolicy } from '@/domain/documents/retention';
 import { importStatement, recordManualTransaction, rollbackStatementImport } from '@/domain/banking/import';
 import { detectStatementFormat } from '@/domain/banking/structuredStatements';
 import { seedDemoCompany } from '@/db/seed/demo';
@@ -312,11 +317,22 @@ export async function resolveReviewItemAction(formData: FormData): Promise<Actio
 
 export async function uploadDocumentAction(formData: FormData): Promise<ActionResult> {
   try {
-    await requireActor('documents.ingest');
+    const actor = await requireActor('documents.ingest');
     const db = getDb();
     const company = requireCompany();
     const files = formData.getAll('files').filter((f): f is File => f instanceof File);
     if (files.length === 0) return { ok: false, error: 'Choose at least one file.' };
+
+    // "File as" (issue #427): a person may declare the document's type at
+    // upload. Only the vault types (contract, Revenue document, grant letter,
+    // payslip, company document) can be declared here — for those, the
+    // declaration is the confirmation and the invoice reader does not run.
+    // Everything else is read as evidence of a supply and waits for review.
+    const declared = String(formData.get('documentType') ?? 'auto');
+    if (declared !== 'auto' && !(ALL_DOCUMENT_TYPES as string[]).includes(declared)) {
+      return { ok: false, error: `Unknown document type "${declared}".` };
+    }
+    const fileAsVault = declared !== 'auto' && isVaultDocumentType(declared);
 
     let stored = 0;
     const warnings: string[] = [];
@@ -325,6 +341,14 @@ export async function uploadDocumentAction(formData: FormData): Promise<ActionRe
       const content = Buffer.from(await file.arrayBuffer());
       const result = storeDocument(db, {
         companyId: company.id, filename: file.name, content, uploadedBy: 'user',
+        ...(fileAsVault
+          ? {
+            documentType: declared as 'contract',
+            // The person filing it says what it is; there are no figures to
+            // check against the page, so their word is the confirmation.
+            confirmedBy: actor.displayName || actor.username,
+          }
+          : {}),
       });
       stored += 1;
       if (result.isDuplicate) {
@@ -333,6 +357,7 @@ export async function uploadDocumentAction(formData: FormData): Promise<ActionRe
           + 'for review rather than overwriting it.',
         );
       }
+      if (fileAsVault) continue;
       // Extraction writes a draft only. Nothing is matched or posted from it
       // until a person has checked it against the page and confirmed it.
       await extractDocument(db, {
@@ -345,8 +370,11 @@ export async function uploadDocumentAction(formData: FormData): Promise<ActionRe
     revalidatePath('/');
     return {
       ok: true,
-      message: `${stored} document${stored === 1 ? '' : 's'} stored and read. Check and confirm `
-        + `${stored === 1 ? 'it' : 'each one'} before it is used.`,
+      message: fileAsVault
+        ? `${stored} ${VAULT_TYPE_LABELS[declared as 'contract'].toLowerCase()} `
+          + `${stored === 1 ? 'document' : 'documents'} filed.`
+        : `${stored} document${stored === 1 ? '' : 's'} stored and read. Check and confirm `
+          + `${stored === 1 ? 'it' : 'each one'} before it is used.`,
       warnings: warnings.length > 0 ? warnings : undefined,
     };
   } catch (error) {
@@ -398,6 +426,124 @@ export async function scanWatchFolderAction(): Promise<ActionResult> {
 
     const warnings = outcome.notes.length > 0 ? outcome.notes : undefined;
     return { ok: true, message: parts.join(' '), warnings };
+  } catch (error) {
+    return fail(error);
+  }
+}
+
+/**
+ * Retire a stored document (issue #430). Archive takes it out of the working
+ * lists and is reversible; delete is permanent and only possible on an
+ * archived document that supports nothing.
+ */
+export async function archiveDocumentAction(formData: FormData): Promise<ActionResult> {
+  try {
+    await requireActor('documents.manage');
+    const db = getDb();
+    const company = requireCompany();
+    const documentId = String(formData.get('documentId') ?? '');
+    archiveDocument(db, {
+      companyId: company.id, documentId, actor: await actorName(), reason: String(formData.get('reason') ?? ''),
+    });
+    revalidatePath('/documents');
+    revalidatePath(`/documents/${documentId}`);
+    return { ok: true, message: 'Archived. It is out of the working lists and can be restored.' };
+  } catch (error) {
+    return fail(error);
+  }
+}
+
+export async function restoreDocumentAction(formData: FormData): Promise<ActionResult> {
+  try {
+    await requireActor('documents.manage');
+    const db = getDb();
+    const company = requireCompany();
+    const documentId = String(formData.get('documentId') ?? '');
+    restoreDocument(db, {
+      companyId: company.id, documentId, actor: await actorName(), reason: String(formData.get('reason') ?? ''),
+    });
+    revalidatePath('/documents');
+    revalidatePath(`/documents/${documentId}`);
+    return { ok: true, message: 'Restored to the working lists.' };
+  } catch (error) {
+    return fail(error);
+  }
+}
+
+export async function deleteDocumentAction(formData: FormData): Promise<ActionResult> {
+  try {
+    await requireActor('documents.manage');
+    const db = getDb();
+    const company = requireCompany();
+    const documentId = String(formData.get('documentId') ?? '');
+    const result = deleteDocument(db, {
+      companyId: company.id, documentId, actor: await actorName(), reason: String(formData.get('reason') ?? ''),
+    });
+    revalidatePath('/documents');
+    return {
+      ok: true,
+      message: result.removedFile
+        ? 'Deleted, and the stored file removed with it.'
+        : 'Deleted. The stored file is kept: another document has the same bytes.',
+    };
+  } catch (error) {
+    return fail(error);
+  }
+}
+
+/**
+ * Set a retention policy (issue #429). The policy is effective-dated: the one
+ * in force until now is superseded from this date, never overwritten, so a
+ * document dated before the change still resolves the policy of its own day.
+ */
+export async function setRetentionPolicyAction(formData: FormData): Promise<ActionResult> {
+  try {
+    await requireActor('config.manage');
+    const db = getDb();
+    const company = requireCompany();
+    const appliesTo = String(formData.get('appliesTo') ?? 'all');
+    const retainYears = Number(formData.get('retainYears'));
+    const effectiveFrom = asIsoDate(String(formData.get('effectiveFrom') ?? ''));
+    const note = formData.get('note') ? String(formData.get('note')) : null;
+    setRetentionPolicy(db, {
+      companyId: company.id,
+      appliesTo: appliesTo === 'all' ? 'all' : appliesTo as 'contract',
+      retainYears,
+      effectiveFrom,
+      note,
+      actor: await actorName(),
+    });
+    revalidatePath('/settings/retention');
+    revalidatePath('/documents');
+    return {
+      ok: true,
+      message: `Policy set: keep ${appliesTo === 'all' ? 'every type without a specific policy' : appliesTo} `
+        + `for ${retainYears} year${retainYears === 1 ? '' : 's'} from ${effectiveFrom}.`,
+    };
+  } catch (error) {
+    return fail(error);
+  }
+}
+
+/**
+ * Dispose of a document that has passed retention: an explicit, audited
+ * archive with a reason, decided by a person (issue #429).
+ */
+export async function disposeDocumentAction(formData: FormData): Promise<ActionResult> {
+  try {
+    await requireActor('documents.manage');
+    const db = getDb();
+    const company = requireCompany();
+    const documentId = String(formData.get('documentId') ?? '');
+    const reason = String(formData.get('reason') ?? '').trim();
+    if (!reason) return { ok: false, error: 'Say why this document may be disposed of.' };
+    archiveDocument(db, {
+      companyId: company.id, documentId, actor: await actorName(),
+      reason: `Past retention: ${reason}`,
+    });
+    revalidatePath('/settings/retention');
+    revalidatePath('/documents');
+    return { ok: true, message: 'Archived as disposed of. The reason is on the audit trail.' };
   } catch (error) {
     return fail(error);
   }
@@ -521,7 +667,14 @@ export async function confirmDocumentAction(input: ConfirmDocumentInput): Promis
     const company = requireCompany();
     const reviewedBy = await actorName();
     const result = confirmDocument(db, { companyId: company.id, ...input, reviewedBy });
-    const match = findMatchesForDocument(db, { companyId: company.id, documentId: input.documentId });
+    // A vault document (contract, grant letter, payslip…) is evidence of
+    // nothing to match; confirming it is fine, matching it is not even tried.
+    let match: ReturnType<typeof findMatchesForDocument> | null = null;
+    try {
+      match = findMatchesForDocument(db, { companyId: company.id, documentId: input.documentId });
+    } catch (error) {
+      if (!(error instanceof MatchError)) throw error;
+    }
     revalidatePath(`/documents/${input.documentId}`);
     revalidatePath('/documents');
     revalidatePath('/review');
@@ -530,9 +683,11 @@ export async function confirmDocumentAction(input: ConfirmDocumentInput): Promis
     return {
       ok: true,
       message: `Confirmed${corrected ? ` with ${corrected} correction${corrected === 1 ? '' : 's'}` : ''}. `
-        + (match.applied ? 'Matched to its bank transaction.'
-          : match.best ? 'A possible bank match is waiting for your decision.'
-          : 'No bank transaction matches it yet.'),
+        + (match
+          ? match.applied ? 'Matched to its bank transaction.'
+            : match.best ? 'A possible bank match is waiting for your decision.'
+            : 'No bank transaction matches it yet.'
+          : 'It is not evidence of a supply, so it is not matched to anything.'),
     };
   } catch (error) {
     return fail(error);

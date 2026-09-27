@@ -241,7 +241,8 @@ function systemPrompt(context: ExtractionContext): string {
     '   Article 44/196/138, intra-Community supply, exempt, zero-rated, margin',
     '   scheme, outside the scope, postponed accounting, in any language.',
     '9. "documentType": one of supplier_invoice, sales_invoice, receipt, credit_note,',
-    '   proforma, sales_record, statement, other.',
+    '   proforma, sales_record, bank_statement, contract, tax_document,',
+    '   grant_document, payroll_document, company_document, other.',
     '10. Countries are ISO 3166 two-letter codes (IE, DE, GB, US …).',
     '',
     `The company using this system is "${context.companyName}"`
@@ -264,8 +265,12 @@ function userPrompt(filename: string, text: string): string {
     : `Filename: ${filename}\n\nExtract the details from the attached document.`;
 }
 
+// Exactly the values `documents.document_type` can hold (src/db/schema): a
+// type the schema cannot store would silently drift from the enum.
 const DOCUMENT_TYPES = new Set([
-  'supplier_invoice', 'sales_invoice', 'receipt', 'credit_note', 'proforma', 'sales_record', 'statement', 'other',
+  'supplier_invoice', 'sales_invoice', 'receipt', 'credit_note', 'proforma', 'sales_record',
+  'bank_statement', 'contract', 'tax_document', 'grant_document', 'payroll_document',
+  'company_document', 'other',
 ]);
 
 /** A model's self-reported certainty is not evidence, so it is capped below a matched pattern's. */

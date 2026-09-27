@@ -64,6 +64,7 @@ const SECTIONS: Array<{ heading: string; items: Array<{ href: string; label: str
       { href: '/settings/company', label: 'Company' },
       { href: '/settings/accounts', label: 'Chart of accounts' },
       { href: '/settings/periods', label: 'Periods' },
+      { href: '/settings/retention', label: 'Document retention' },
       { href: '/settings/backup', label: 'Backup' },
     ],
   },
