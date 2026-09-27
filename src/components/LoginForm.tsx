@@ -25,7 +25,7 @@ export function LoginForm({ mode, action }: {
     <Page
       title={isSetup ? 'Set up Leabhar' : 'Log in'}
       subtitle={isSetup
-        ? 'Create your local user. This is the only account — Leabhar is single-user, local-first.'
+        ? 'Create the owner\'s account. Leabhar is local-first — one book on this machine — and you can invite more people later from Settings → Users, each with their own role.'
         : 'Log in to access your accounting data.'}
     >
       <Panel title={isSetup ? 'Create the first user' : 'Log in'}>

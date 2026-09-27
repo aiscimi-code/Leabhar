@@ -26,8 +26,17 @@ export interface TrialBalance {
   asOf: IsoDate;
   from: IsoDate | null;
   rows: AccountBalance[];
+  /**
+   * Gross movement: every debit and every credit summed separately, across
+   * all listed accounts. Two different figures from the net columns below —
+   * an account settled to zero still moved money — so a screen that shows
+   * one must say which it means (issue #478).
+   */
   totalDebitMinor: number;
   totalCreditMinor: number;
+  /** Net balances: the column totals a trial balance is read by. */
+  netTotalDebitMinor: number;
+  netTotalCreditMinor: number;
   /** Zero in a correct set of books. Non-zero is a defect, not a rounding artefact. */
   differenceMinor: number;
   balanced: boolean;
@@ -112,6 +121,8 @@ export function trialBalance(
 
   const totalDebitMinor = balances.reduce((s, b) => s + b.debitMinor, 0);
   const totalCreditMinor = balances.reduce((s, b) => s + b.creditMinor, 0);
+  const netTotalDebitMinor = balances.reduce((s, b) => s + Math.max(b.netDebitMinor, 0), 0);
+  const netTotalCreditMinor = balances.reduce((s, b) => s + Math.max(-b.netDebitMinor, 0), 0);
 
   return {
     companyId: params.companyId,
@@ -120,6 +131,8 @@ export function trialBalance(
     rows: balances,
     totalDebitMinor,
     totalCreditMinor,
+    netTotalDebitMinor,
+    netTotalCreditMinor,
     differenceMinor: totalDebitMinor - totalCreditMinor,
     balanced: totalDebitMinor === totalCreditMinor,
     currency: params.baseCurrency ?? 'EUR',

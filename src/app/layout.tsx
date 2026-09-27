@@ -80,10 +80,17 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     <html lang="en-IE">
       <body>
         {company?.isDemo && <DemoBanner />}
-        <div className="flex min-h-screen">
-          <Nav companyName={company?.tradingName ?? company?.legalName ?? null} />
-          <main className="flex-1 min-w-0">{children}</main>
-        </div>
+        {/* The login screen renders without the signed-in chrome (issue
+            #473): a visitor who is not yet a user should not see the book's
+            navigation. The middleware marks the public paths. */}
+        {headerStore.get('x-leabhar-public') === '1' ? (
+          <main className="min-h-screen">{children}</main>
+        ) : (
+          <div className="flex min-h-screen">
+            <Nav companyName={company?.tradingName ?? company?.legalName ?? null} />
+            <main className="flex-1 min-w-0">{children}</main>
+          </div>
+        )}
       </body>
     </html>
   );

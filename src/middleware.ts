@@ -41,6 +41,7 @@ function continueRequest(request: NextRequest, markPortal: boolean, markPublic =
   headers.delete('x-leabhar-portal');
   headers.delete('x-leabhar-public');
   if (markPortal) headers.set('x-leabhar-portal', '1');
+  // Login renders without the signed-in app chrome (issue #473).
   if (markPublic) headers.set('x-leabhar-public', '1');
   return NextResponse.next({ request: { headers } });
 }
