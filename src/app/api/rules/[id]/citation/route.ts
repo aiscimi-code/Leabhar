@@ -1,6 +1,6 @@
 import { getDb } from '@/db';
 import { requireCompany } from '@/lib/queries';
-import { currentUser } from '@/lib/session';
+import { requireActor } from '@/lib/session';
 import { ruleCitation } from '@/domain/rules/ruleInfo';
 
 export const dynamic = 'force-dynamic';
@@ -16,7 +16,13 @@ export async function GET(
   _request: Request,
   { params }: { params: Promise<{ id: string }> },
 ): Promise<Response> {
-  if (!(await currentUser())) return new Response('Not signed in.', { status: 401 });
+  // A member of this company with read access, like every other read route
+  // (#372): being signed in is not enough on its own.
+  try {
+    await requireActor('books.read');
+  } catch (error) {
+    return new Response(error instanceof Error ? error.message : 'Not allowed.', { status: 403 });
+  }
   const { id } = await params;
   const company = requireCompany();
   const citation = ruleCitation(getDb(), { companyId: company.id, ruleId: id });
