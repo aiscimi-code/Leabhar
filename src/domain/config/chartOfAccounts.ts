@@ -57,7 +57,9 @@ export type SystemAccountKey =
   /** Bad debts (issue #404): what a debt written off is charged to. */
   | 'bad_debts'
   /** Expense claims (issue #306): what a staff expense claim is owed against until reimbursed. */
-  | 'staff_expenses_payable';
+  | 'staff_expenses_payable'
+  /** Dividends paid (issue #489): what the close-company surcharge reads distributions from. */
+  | 'dividends_paid';
 
 export const DEFAULT_ACCOUNTS: AccountSeed[] = [
   // ---------------- Income ----------------
@@ -325,7 +327,10 @@ export const DEFAULT_ACCOUNTS: AccountSeed[] = [
     code: '3100', name: 'Retained earnings', type: 'equity', subtype: 'equity',
     systemKey: 'retained_earnings', vatApplicable: false, reportSection: 'equity',
   },
-  { code: '3200', name: 'Dividends', type: 'equity', subtype: 'equity', vatApplicable: false, reportSection: 'equity' },
+  {
+    code: '3200', name: 'Dividends', type: 'equity', subtype: 'equity',
+    systemKey: 'dividends_paid', vatApplicable: false, reportSection: 'equity',
+  },
 ];
 
 /**

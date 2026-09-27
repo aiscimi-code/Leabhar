@@ -17,7 +17,7 @@ export const ctDecisions = sqliteTable('ct_decisions', {
    * account, the company's loss claim, or its close company status. For income
    * tax, a person's loss claim for a year of assessment (ss.381/382).
    */
-  subjectType: text('subject_type', { enum: ['journal_line', 'income_account', 'loss_claim', 'company_status', 'personal_status', 'income_tax_loss_claim'] }).notNull(),
+  subjectType: text('subject_type', { enum: ['journal_line', 'income_account', 'loss_claim', 'company_status', 'trading_company', 'personal_status', 'income_tax_loss_claim'] }).notNull(),
   subjectId: text('subject_id').notNull(),
   /** The accounting period end the decision is for (income accounts); the line's own period otherwise. */
   periodEnd: text('period_end').notNull(),

@@ -5,8 +5,9 @@ import { postJournalEntry } from '../accounting/journal';
 import {
   computeCorporationTax, recordCtDecision, CtDecisionError, capitalAllowances, section440Surcharge, section441Surcharge,
 } from './computation';
-import { fixedAssets, ctDecisions } from '@/db/schema';
+import { fixedAssets, ctDecisions, accounts } from '@/db/schema';
 import { asIsoDate } from '../dates';
+import { eq } from 'drizzle-orm';
 import { ids } from '@/lib/ids';
 import type { AppDatabase } from '@/db';
 
@@ -359,5 +360,133 @@ describe('dates', () => {
     const c = computeCorporationTax(db, { companyId, from: asIsoDate('2026-01-01'), to: asIsoDate('2026-12-31') });
     expect(c.dates.smallCompany).toBe(false);
     expect(c.dates.preliminaryTax.map((p) => [p.dueDate, p.amountMinor])).toEqual([['2026-06-23', 11_250_000], ['2026-11-23', 11_250_000]]);
+  });
+});
+
+describe('accounting periods and allowances (#488, #491, #495)', () => {
+  it('reconstructs nothing: a short first period\'s scaled claim is what later periods build on (issue #488)', () => {
+    // The books start 1 July 2025 (a 184-day first period) and the asset is
+    // disposed of in the ninth period for €60,000. Hand-worked:
+    //   period 1 (184/365 of €10,000)  =      €5,041.10
+    //   periods 2–8 (7 full years)     =     €70,000.00
+    //   made before disposal           =     €75,041.10
+    //   unallowed cost                 =      €4,958.90
+    //   balancing charge = min(60,000 − 4,958.90, 75,041.10) = €55,041.10
+    // The old code reconstructed madeBefore as 8 × €10,000 = the full cost,
+    // leaving nothing unallowed and charging the whole €60,000.
+    const created = createCompany(db, { legalName: 'Short First Ltd', vatRegistrationStatus: 'registered', seedYears: [2025, 2026, 2027, 2028, 2029, 2030, 2031, 2032, 2033] });
+    const short = created.companyId;
+    const assetId = ids.fixedAsset();
+    db.insert(fixedAssets).values({
+      id: assetId, companyId: short, name: 'Machine', assetCategory: 'plant_machinery',
+      purchaseDate: '2025-07-01', costMinor: 8_000_000, currency: 'EUR',
+      baseCostMinor: 8_000_000, baseCurrency: 'EUR',
+      capitalAllowanceRateBasisPoints: 1250, capitalAllowanceYears: 8, status: 'active',
+      disposalDate: '2033-06-01', disposalProceedsMinor: 6_000_000,
+    }).run();
+    postJournalEntry(db, {
+      companyId: short, entryDate: asIsoDate('2025-07-01'), narrative: 'Purchase of machine', sourceType: 'fixed_asset',
+      sourceId: assetId, baseCurrency: 'EUR',
+      lines: [
+        { accountId: created.accountsByKey['computer_equipment']!, debitMinor: 8_000_000 },
+        { accountId: created.accountsByKey['bank_control']!, creditMinor: 8_000_000 },
+      ],
+    });
+
+    const c = computeCorporationTax(db, { companyId: short, from: asIsoDate('2033-01-01'), to: asIsoDate('2033-12-31') });
+    const charge = c.lines.find((l) => l.label === 'Add: balancing charges')!;
+    expect(charge.amountMinor).toBe(5_504_110);
+    expect(charge.sources[0]!.label).toContain('proceeds 60000.00 less unallowed 4958.90');
+  });
+
+  it('counts the purchase-year claim once for a 29 February year end (issue #491)', () => {
+    // The purchase period ends 29 February 2024; the next one ends
+    // 28 February 2025. Comparing the raw month-day strings put the second
+    // period at "year 1 of 8" again — a full year's allowance miscounted.
+    const created = createCompany(db, {
+      legalName: 'Leap Year Ltd', vatRegistrationStatus: 'registered',
+      financialYearEndDay: 29, financialYearEndMonth: 2, seedYears: [2023, 2024, 2025],
+    });
+    const leap = created.companyId;
+    db.insert(fixedAssets).values({
+      id: ids.fixedAsset(), companyId: leap, name: 'Van', assetCategory: 'motor_vehicles',
+      purchaseDate: '2023-07-01', costMinor: 8_000_000, currency: 'EUR',
+      baseCostMinor: 8_000_000, baseCurrency: 'EUR',
+      capitalAllowanceRateBasisPoints: 1250, capitalAllowanceYears: 8, status: 'active',
+    }).run();
+    const r = capitalAllowances(db, { companyId: leap, from: '2024-03-01', to: '2025-02-28' });
+    const line = r.lines.find((l) => l.label.includes('wear and tear'))!;
+    // The second period's claim is year 2, not the purchase year again. The
+    // amount is the annual allowance scaled for the period: the year spanning
+    // 29 February 2024 measures 366 days against this period's 365 (the same
+    // s.284(2)(b) scaling every period gets).
+    expect(line.sources[0]!.label).toContain('year 2 of 8');
+    expect(line.amountMinor).toBe(-997_268);
+  });
+
+  it('refuses an accounting period longer than 12 months, rather than capping its thresholds (issue #495)', () => {
+    post('4020', 10_000_000, 'Consulting');
+    expect(() => computeCorporationTax(db, { companyId, from: asIsoDate('2024-01-01'), to: asIsoDate('2025-03-31') }))
+      .toThrow(/longer than the 12 months TCA s\.955 permits/);
+    // The refusal wrote nothing.
+    expect(db.select().from(ctDecisions).all()).toHaveLength(0);
+  });
+});
+
+describe('the close company surcharge\'s inputs (#489, #494)', () => {
+  it('reads distributions from the dividends account by its system key, whatever its code is (issue #489)', () => {
+    // A migrated chart whose dividends account is not code 3200.
+    db.update(accounts).set({ code: '3900' }).where(eq(accounts.id, byCode['3200']!)).run();
+    post('4090', 10_000_000, 'Deposit interest');
+    postJournalEntry(db, {
+      companyId, entryDate: asIsoDate('2025-06-20'), narrative: 'Dividend paid', sourceType: 'manual_adjustment',
+      sourceId: 'div-1', baseCurrency: 'EUR',
+      lines: [
+        { accountId: byCode['3200']!, debitMinor: 2_000_000 },
+        { accountId: byKey['bank_control']!, creditMinor: 2_000_000 },
+      ],
+    });
+
+    const c = ct();
+    expect(c.surcharge.distributionsMinor).toBe(2_000_000);
+    // The distributions themselves raise no finding — only the (undecided)
+    // trading-company suggestion does, which is #494's to answer.
+    expect(c.surcharge.findings.some((f) => f.includes('dividends'))).toBe(false);
+    // The s.440 working counts the distributions against the distributable
+    // investment income.
+    expect(c.surcharge.working).toContain('− distributions 20000.00');
+  });
+
+  it('says when no dividends account exists instead of silently computing on nil distributions (issue #489)', () => {
+    db.update(accounts)
+      .set({ code: '9999', systemKey: null, isSystem: false })
+      .where(eq(accounts.id, byCode['3200']!)).run();
+    post('4090', 10_000_000, 'Deposit interest');
+    const c = ct();
+    expect(c.surcharge.distributionsMinor).toBe(0);
+    expect(c.findings.some((f) => f.includes('No dividends account') && f.includes('dividends_paid'))).toBe(true);
+  });
+
+  it('offers the trading-company test as a person\'s decision, suggested from the income split (issue #494)', () => {
+    // One large deposit-interest year: the income split reads "not trading",
+    // but a genuine trading company keeps the s.434(5A)(b) reduction once the
+    // person records the facts test.
+    post('4090', 10_000_000, 'Deposit interest');
+    post('4020', 1_000_000, 'Consulting');
+    const suggested = ct();
+    const pending = suggested.decisions.find((d) => d.subjectType === 'trading_company')!;
+    expect(pending.suggested).toBe('not_trading');
+    expect(pending.reason).toContain('facts test');
+    expect(suggested.surcharge.working).not.toContain('trading company reduction');
+    expect(suggested.findings.some((f) => f.includes('s.434(5A)(b)') || f.includes('trading'))).toBe(true);
+
+    recordCtDecision(db, {
+      companyId, subjectType: 'trading_company', subjectId: companyId, periodEnd: to,
+      choice: 'trading', decidedBy: 'Director',
+    });
+    const decided = ct();
+    const decision = decided.decisions.find((d) => d.subjectType === 'trading_company')!;
+    expect(decision.decided).toBe('trading');
+    expect(decided.surcharge.working).toContain('after the 7.5% trading company reduction');
   });
 });
