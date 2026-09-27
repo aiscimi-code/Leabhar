@@ -970,7 +970,7 @@ export function provisionDetail(provisionId: string) {
   const row = db.select({ provision: irishActProvisions, source: irishKnowledgeSources })
     .from(irishActProvisions)
     .innerJoin(irishKnowledgeSources, eq(irishActProvisions.sourceId, irishKnowledgeSources.id))
-    .where(eq(irishActProvisions.id, provisionId)).get();
+    .where(and(eq(irishActProvisions.id, provisionId), eq(irishActProvisions.companyId, company.id))).get();
   if (!row) return null;
   const rulesCiting = db.select().from(irishTaxRules)
     .where(and(eq(irishTaxRules.provisionId, provisionId), eq(irishTaxRules.companyId, company.id)))

@@ -29,10 +29,11 @@ function requestHost(request: NextRequest): string {
   return host.toLowerCase();
 }
 
-function continueRequest(request: NextRequest, markPortal: boolean) {
-  if (!markPortal) return NextResponse.next();
+function continueRequest(request: NextRequest, markPortal: boolean, markPublic = false) {
+  if (!markPortal && !markPublic) return NextResponse.next();
   const headers = new Headers(request.headers);
-  headers.set('x-leabhar-portal', '1');
+  if (markPortal) headers.set('x-leabhar-portal', '1');
+  if (markPublic) headers.set('x-leabhar-public', '1');
   return NextResponse.next({ request: { headers } });
 }
 
@@ -69,13 +70,18 @@ export function middleware(request: NextRequest) {
   // own per-vault password, unrelated to this app's single local-install
   // login, and by design keeps nothing server-side for that login to gate
   // access to in the first place.
+  //
+  // Login and portal requests are also marked `x-leabhar-public`, so the
+  // root layout's session verification (issue #482) knows to let them
+  // render without one — a signed-in user may open /login to switch
+  // accounts, and nobody needs a session to see the login screen itself.
   if (
     PUBLIC_PATHS.includes(pathname)
     || pathname.startsWith('/_next')
     || pathname.startsWith('/favicon')
     || onPortal
   ) {
-    return continueRequest(request, onPortal);
+    return continueRequest(request, onPortal, PUBLIC_PATHS.includes(pathname));
   }
 
   const token = request.cookies.get(sessionCookieName)?.value;

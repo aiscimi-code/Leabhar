@@ -1,11 +1,32 @@
 import { auditTrail } from '@/lib/queries';
+import { requireActor } from '@/lib/session';
 import { Page, Panel, Badge, Empty } from '@/components/primitives';
 import { dateTime, label } from '@/lib/format';
 
 export const dynamic = 'force-dynamic';
 
 /** Audit trail (README §31). Append-only, in order. */
-export default function AuditPage() {
+export default async function AuditPage() {
+  // The matrix restricts the audit trail to owner, director, accountant and
+  // auditor (issue #483): a bookkeeper or read-only login may read the books
+  // but not the trail of who changed what.
+  try {
+    await requireActor('audit.read');
+  } catch (error) {
+    return (
+      <Page
+        title="Audit trail"
+        subtitle="Every significant change, in order. Records are append-only: nothing here can
+          be edited or removed."
+      >
+        <Panel>
+          <Empty title="Not available for your role"
+            detail={error instanceof Error ? error.message : 'Not allowed.'} />
+        </Panel>
+      </Page>
+    );
+  }
+
   const events = auditTrail(300);
 
   return (

@@ -1,4 +1,5 @@
 import { ledgerRows, requireCompany } from '@/lib/queries';
+import { requireApiActor } from '@/lib/apiAuth';
 import {
   newWorkbook, addSheet, addCoverSheet, xlsxResponse, toCsv, csvResponse,
   amountFor, type ExportColumn,
@@ -10,6 +11,9 @@ type Row = ReturnType<typeof ledgerRows>[number];
 
 /** Transaction ledger export (README §38). */
 export async function GET(request: Request): Promise<Response> {
+  const refused = await requireApiActor('reports.export');
+  if (refused) return refused;
+
   const url = new URL(request.url);
   const company = requireCompany();
   const currency = company.baseCurrency;
