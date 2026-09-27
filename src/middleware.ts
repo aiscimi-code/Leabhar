@@ -29,10 +29,19 @@ function requestHost(request: NextRequest): string {
   return host.toLowerCase();
 }
 
-function continueRequest(request: NextRequest, markPortal: boolean) {
-  if (!markPortal) return NextResponse.next();
+/**
+ * The request headers the app acts on — `x-leabhar-portal` (render without the
+ * installed-app chrome) and `x-leabhar-public` (render without a verified
+ * session) — are set here and only here. Every request is forwarded with any
+ * client-sent copy removed first: otherwise a stale cookie plus a hand-set
+ * header would skip the root layout's session check (issue #482).
+ */
+function continueRequest(request: NextRequest, markPortal: boolean, markPublic = false) {
   const headers = new Headers(request.headers);
-  headers.set('x-leabhar-portal', '1');
+  headers.delete('x-leabhar-portal');
+  headers.delete('x-leabhar-public');
+  if (markPortal) headers.set('x-leabhar-portal', '1');
+  if (markPublic) headers.set('x-leabhar-public', '1');
   return NextResponse.next({ request: { headers } });
 }
 
@@ -69,19 +78,24 @@ export function middleware(request: NextRequest) {
   // own per-vault password, unrelated to this app's single local-install
   // login, and by design keeps nothing server-side for that login to gate
   // access to in the first place.
+  //
+  // Login and portal requests are also marked `x-leabhar-public`, so the
+  // root layout's session verification (issue #482) knows to let them
+  // render without one — a signed-in user may open /login to switch
+  // accounts, and nobody needs a session to see the login screen itself.
   if (
     PUBLIC_PATHS.includes(pathname)
     || pathname.startsWith('/_next')
     || pathname.startsWith('/favicon')
     || onPortal
   ) {
-    return continueRequest(request, onPortal);
+    return continueRequest(request, onPortal, PUBLIC_PATHS.includes(pathname));
   }
 
   const token = request.cookies.get(sessionCookieName)?.value;
 
   if (token) {
-    return NextResponse.next();
+    return continueRequest(request, false);
   }
 
   // No session cookie — redirect to login.
