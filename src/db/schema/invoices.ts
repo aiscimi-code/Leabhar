@@ -1,4 +1,4 @@
-import { sqliteTable, text, integer, index } from 'drizzle-orm/sqlite-core';
+import { sqliteTable, text, integer, index, uniqueIndex } from 'drizzle-orm/sqlite-core';
 import { timestamps, provenance } from './_shared';
 import { companies } from './company';
 import { accounts, vatTreatments, taxRates } from './config';
@@ -66,6 +66,13 @@ export const invoices = sqliteTable('invoices', {
 
   isCreditNote: integer('is_credit_note', { mode: 'boolean' }).notNull().default(false),
   creditNoteOfId: text('credit_note_of_id'),
+  /**
+   * The recurring template and occurrence date this invoice was raised from
+   * (issue #394). Unique together, so an occurrence is raised once however
+   * often the due-post runs.
+   */
+  recurringInvoiceId: text('recurring_invoice_id'),
+  recurringDate: text('recurring_date'),
 
   status: text('status', {
     enum: ['draft', 'issued', 'part_paid', 'paid', 'overdue', 'void', 'written_off'],
@@ -83,7 +90,43 @@ export const invoices = sqliteTable('invoices', {
   index('invoices_customer_idx').on(t.companyId, t.customerId),
   index('invoices_status_idx').on(t.companyId, t.status),
   index('invoices_number_idx').on(t.companyId, t.invoiceNumber),
+  uniqueIndex('invoices_recurring_occurrence_unique').on(t.recurringInvoiceId, t.recurringDate),
 ]);
+
+/**
+ * A recurring sales invoice (issue #394): a template, not an invoice. Each
+ * occurrence is raised by `createInvoice` as an ordinary invoice with its own
+ * number, VAT and due date. The template's lines are intent and may change;
+ * invoices already raised do not.
+ */
+export const recurringInvoices = sqliteTable('recurring_invoices', {
+  id: text('id').primaryKey(),
+  companyId: text('company_id').notNull().references(() => companies.id),
+  customerId: text('customer_id').notNull().references(() => customers.id),
+  /** Shown on the list and used as the invoice reference, e.g. "Monthly retainer". */
+  name: text('name').notNull(),
+  frequency: text('frequency', { enum: ['monthly', 'quarterly', 'yearly'] }).notNull(),
+  startDate: text('start_date').notNull(),
+  /** Inclusive last occurrence date; null means until deactivated. */
+  endDate: text('end_date'),
+  active: integer('active', { mode: 'boolean' }).notNull().default(true),
+  notes: text('notes'),
+  createdBy: text('created_by').notNull(),
+  ...timestamps,
+}, (t) => [index('recurring_invoices_company_idx').on(t.companyId, t.active)]);
+
+export const recurringInvoiceLines = sqliteTable('recurring_invoice_lines', {
+  id: text('id').primaryKey(),
+  recurringInvoiceId: text('recurring_invoice_id').notNull().references(() => recurringInvoices.id),
+  companyId: text('company_id').notNull().references(() => companies.id),
+  lineNumber: integer('line_number').notNull(),
+  description: text('description').notNull(),
+  netMinor: integer('net_minor').notNull(),
+  discountBasisPoints: integer('discount_basis_points'),
+  accountId: text('account_id').notNull().references(() => accounts.id),
+  vatTreatmentId: text('vat_treatment_id').notNull().references(() => vatTreatments.id),
+  ...timestamps,
+}, (t) => [index('recurring_invoice_lines_template_idx').on(t.recurringInvoiceId)]);
 
 /**
  * Invoice lines. A single invoice can carry several VAT treatments and rates —

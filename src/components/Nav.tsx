@@ -47,6 +47,7 @@ const SECTIONS: Array<{ heading: string; items: Array<{ href: string; label: str
     heading: 'Records',
     items: [
       { href: '/invoices', label: 'Invoices' },
+      { href: '/invoices/recurring', label: 'Recurring invoices' },
       { href: '/suppliers', label: 'Suppliers' },
       { href: '/customers', label: 'Customers' },
       { href: '/assets', label: 'Fixed assets' },

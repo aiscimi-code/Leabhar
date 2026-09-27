@@ -10,6 +10,9 @@ import { acceptMatch, rejectMatch, findMatchesForDocument, matchAllUnmatched, li
 import { linkBankTransactionToJournal } from '@/domain/banking/journalLink';
 import { allocatePaymentOnAccount } from '@/domain/invoicing/onAccount';
 import {
+  createRecurringInvoice, postDueRecurringInvoices, deactivateRecurringInvoice,
+} from '@/domain/invoicing/recurringInvoices';
+import {
   setCustomerTerms, addCustomerContact, setBillingContact, deactivateCustomerContact,
 } from '@/domain/parties/customerAccount';
 import { transitionVatPeriod, type VatPeriodStatus } from '@/domain/vat/periodClose';
@@ -23,7 +26,7 @@ import { postDocumentAsInvoice, type LineCoding } from '@/domain/consolidation/p
 import {
   settleBankTransaction, settlementRateNeed, previewSettlement, type SettleAllocation, type SettlementRateNeed,
 } from '@/domain/consolidation/settle';
-import { parseDecimalRate, parseAmount } from '@/domain/money';
+import { parseDecimalRate, parseAmount, parsePercentBasisPoints } from '@/domain/money';
 import { reversePayment } from '@/domain/invoicing/reversal';
 import { asIsoDate } from '@/domain/dates';
 import { scanWatchFolder } from '@/domain/documents/watch';
@@ -929,6 +932,74 @@ export async function customerContactAction(formData: FormData): Promise<ActionR
     else deactivateCustomerContact(getDb(), params);
     revalidatePath(`/customers/${String(formData.get('customerId') ?? '')}`);
     return { ok: true, message: formData.get('op') === 'billing' ? 'Billing contact changed.' : 'Contact removed from use.' };
+  } catch (error) {
+    return fail(error);
+  }
+}
+
+/** A recurring sales invoice template with one line (issue #394). */
+export async function createRecurringInvoiceAction(formData: FormData): Promise<ActionResult> {
+  try {
+    await requireActor('invoices.manage');
+    const company = requireCompany();
+    const discountText = String(formData.get('discountPercent') ?? '').trim();
+    const discountBasisPoints = discountText ? parsePercentBasisPoints(discountText) : null;
+    if (discountText && discountBasisPoints === null) return { ok: false, error: `"${discountText}" is not a percentage.` };
+    const endDate = String(formData.get('endDate') ?? '').trim();
+    createRecurringInvoice(getDb(), {
+      companyId: company.id,
+      customerId: String(formData.get('customerId') ?? ''),
+      name: String(formData.get('name') ?? ''),
+      frequency: String(formData.get('frequency') ?? 'monthly') as 'monthly' | 'quarterly' | 'yearly',
+      startDate: asIsoDate(String(formData.get('startDate') ?? '')),
+      endDate: endDate ? asIsoDate(endDate) : null,
+      lines: [{
+        description: String(formData.get('description') ?? ''),
+        netMinor: parseAmount(String(formData.get('net') ?? ''), company.baseCurrency),
+        ...(discountBasisPoints !== null ? { discountBasisPoints } : {}),
+        accountId: String(formData.get('accountId') ?? ''),
+        vatTreatmentId: String(formData.get('vatTreatmentId') ?? ''),
+      }],
+      actor: await actorName(),
+    });
+    revalidatePath('/invoices/recurring');
+    return { ok: true, message: 'Saved. Nothing is raised until you raise the due invoices.' };
+  } catch (error) {
+    return fail(error);
+  }
+}
+
+export async function postDueRecurringInvoicesAction(formData: FormData): Promise<ActionResult> {
+  try {
+    await requireActor('invoices.manage');
+    const company = requireCompany();
+    const result = postDueRecurringInvoices(getDb(), {
+      companyId: company.id, upTo: asIsoDate(String(formData.get('upTo') ?? '')), actor: await actorName(),
+    });
+    revalidatePath('/invoices/recurring');
+    revalidatePath('/invoices');
+    revalidatePath('/review');
+    return {
+      ok: true,
+      message: result.raised.length === 0 ? 'Nothing was due.' : `Raised ${result.raised.length} invoice${result.raised.length === 1 ? '' : 's'}.`,
+      warnings: result.skipped.length > 0
+        ? result.skipped.map((s) => `${s.templateName} for ${s.date} was not raised: ${s.reason}`)
+        : undefined,
+    };
+  } catch (error) {
+    return fail(error);
+  }
+}
+
+export async function deactivateRecurringInvoiceAction(formData: FormData): Promise<ActionResult> {
+  try {
+    await requireActor('invoices.manage');
+    const company = requireCompany();
+    deactivateRecurringInvoice(getDb(), {
+      companyId: company.id, templateId: String(formData.get('templateId') ?? ''), actor: await actorName(),
+    });
+    revalidatePath('/invoices/recurring');
+    return { ok: true, message: 'Stopped. Invoices already raised are unchanged.' };
   } catch (error) {
     return fail(error);
   }

@@ -2,7 +2,7 @@ import { parseArgs, getFlag, hasFlag } from './args';
 import { print, error, type Format } from './format';
 import { getAgentDb, requireCompany } from '@/agent/context';
 import type { AppDatabase } from '@/db';
-import { parseAmount, parseRate } from '@/domain/money';
+import { parseAmount, parseRate, parsePercentBasisPoints } from '@/domain/money';
 import { pathToFileURL } from 'node:url';
 import {
   listBankAccounts,
@@ -57,6 +57,9 @@ import { suggestJournalMatches, linkBankTransactionToJournal } from '@/domain/ba
 import { withdrawMatchRejection } from '@/domain/matching/service';
 import { allocatePaymentOnAccount, paymentsOnAccount } from '@/domain/invoicing/onAccount';
 import { reconciliationStatement } from '@/domain/banking/reconciliationStatement';
+import {
+  createRecurringInvoice, postDueRecurringInvoices, listRecurringInvoices,
+} from '@/domain/invoicing/recurringInvoices';
 import {
   setCustomerTerms, addCustomerContact, listCustomerContacts, customerExposure,
 } from '@/domain/parties/customerAccount';
@@ -247,6 +250,13 @@ Books (once induction is done):
   add-contact --customer <id> --name "..." --actor "Name" [--email ...]
       [--role ...] [--phone ...] [--billing]  --billing: invoices go to them
   list-contacts --customer <id>
+  create-recurring-invoice --customer <id> --name "..." --frequency monthly|quarterly|yearly
+      --start <date> [--end <date>] --actor "Name" --lines <json>
+      [{"description":"Retainer","net":"1000.00","account":"4020","vatTreatment":"IE_STD",
+        "discountPercent":"10"}]  A template; nothing is raised until:
+  post-recurring-invoices --actor "Name" [--up-to <date>]
+      Raise every due occurrence once; one in a locked period is skipped and flagged
+  list-recurring-invoices
   create-invoice --direction sales|purchase --file <invoices.csv>
       One row per invoice/bill. Columns: invoiceNumber, date, party (a
       customer/supplier name or id), description, net, account, vatTreatment,
@@ -984,6 +994,44 @@ export async function main(argv: string[], options: CliOptions = {}): Promise<nu
 
       case 'list-contacts': {
         print(listCustomerContacts(db, { companyId, customerId: requireFlag(flags, 'customer') }), format);
+        return 0;
+      }
+
+      case 'create-recurring-invoice': {
+        const base = db.select({ c: companies.baseCurrency }).from(companies).where(eq(companies.id, companyId)).get()!.c;
+        const lines = JSON.parse(requireFlag(flags, 'lines')) as Array<{
+          description: string; net: string; discountPercent?: string; account: string; vatTreatment: string;
+        }>;
+        if (!Array.isArray(lines)) throw new Error('--lines must be a JSON array.');
+        print(createRecurringInvoice(db, {
+          companyId, customerId: requireFlag(flags, 'customer'), name: requireFlag(flags, 'name'),
+          frequency: requireFlag(flags, 'frequency') as 'monthly' | 'quarterly' | 'yearly',
+          startDate: asIsoDate(requireFlag(flags, 'start')),
+          endDate: getFlag(flags, 'end') ? asIsoDate(getFlag(flags, 'end')!) : null,
+          lines: lines.map((line, i) => {
+            const bp = line.discountPercent ? parsePercentBasisPoints(line.discountPercent) : null;
+            if (line.discountPercent && bp === null) throw new Error(`Line ${i + 1}: "${line.discountPercent}" is not a percentage.`);
+            return {
+              description: line.description, netMinor: parseAmount(line.net, base),
+              ...(bp !== null ? { discountBasisPoints: bp } : {}),
+              accountId: resolveAccountId(db, companyId, line.account),
+              vatTreatmentId: resolveVatTreatmentId(db, companyId, line.vatTreatment),
+            };
+          }),
+          actor: requireFlag(flags, 'actor'),
+        }), format);
+        return 0;
+      }
+
+      case 'post-recurring-invoices': {
+        print(postDueRecurringInvoices(db, {
+          companyId, upTo: asIsoDate(getFlag(flags, 'up-to') ?? today()), actor: requireFlag(flags, 'actor'),
+        }), format);
+        return 0;
+      }
+
+      case 'list-recurring-invoices': {
+        print(listRecurringInvoices(db, { companyId }), format);
         return 0;
       }
 

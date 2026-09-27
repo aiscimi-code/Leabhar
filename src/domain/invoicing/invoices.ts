@@ -94,6 +94,8 @@ export interface CreateInvoiceInput {
   documentId?: string | null;
   isCreditNote?: boolean;
   creditNoteOfId?: string | null;
+  /** The recurring template and occurrence this invoice is raised for (issue #394). */
+  recurring?: { templateId: string; date: IsoDate } | null;
   /**
    * Declare this invoice's VAT in the VAT period covering this date instead of
    * the one covering its tax point — only for a late document whose own
@@ -486,6 +488,8 @@ function createInvoiceSteps(db: AppDatabase, input: CreateInvoiceInput): Created
       journalEntryId: journal.id,
       isCreditNote: input.isCreditNote ?? false,
       creditNoteOfId: input.creditNoteOfId ?? null,
+      recurringInvoiceId: input.recurring?.templateId ?? null,
+      recurringDate: input.recurring?.date ?? null,
       status: 'issued',
       notes: input.notes ?? null,
       source: 'user',
