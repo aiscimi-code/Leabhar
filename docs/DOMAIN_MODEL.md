@@ -376,6 +376,19 @@ Lines live in `document_lines`, per-rate VAT in `document_vat_totals`, both with
 provenance. The VAT rate for a purchase comes from these confirmed lines — never
 from a bank amount.
 
+### Recurring sales invoices (issue #394)
+
+A recurring invoice is a template (customer, lines, monthly/quarterly/yearly,
+start and optional end), not an invoice. Occurrences step from the start date
+and clamp to month-end. `postDueRecurringInvoices` raises each due occurrence
+with `createInvoice` as an ordinary invoice: its own number, VAT, discount and
+due date from the customer's terms. `invoices.recurring_invoice_id` +
+`recurring_date` are unique together, so an occurrence is raised once however
+often the post runs. Every occurrence's accounting and VAT periods are checked
+before anything is raised; one that falls in a locked or filed period is
+skipped, reported and raised as a review item, never moved to another date.
+Templates are in base currency.
+
 ### Line discounts (issue #393)
 
 An invoice line may carry a trade discount, as a percentage (basis points,

@@ -115,6 +115,14 @@ npm run cli -- set-customer-terms --customer <id> --actor "Name" [--terms-days 3
     # credit limit is flagged for review, never refused.
 npm run cli -- add-contact --customer <id> --name "..." --actor "Name" [--email ...] [--billing]
 npm run cli -- list-contacts --customer <id>
+npm run cli -- create-recurring-invoice --customer <id> --name "Monthly retainer" --frequency monthly
+    --start <date> [--end <date>] --actor "Name"
+    --lines '[{"description":"Retainer","net":"1000.00","account":"4020","vatTreatment":"IE_STD"}]'
+npm run cli -- post-recurring-invoices --actor "Name" [--up-to <date>]
+    # raises each due occurrence once, as an ordinary invoice; one whose date is
+    # in a locked accounting period or a locked/filed VAT period is skipped and
+    # becomes a review item, never moved
+npm run cli -- list-recurring-invoices
 npm run cli -- ensure-default-accounts                # add any default chart
     # accounts introduced since this company was created (issue #159, e.g.
     # 6180 Wages and salaries, 6190 Employer PRSI, 5030 Materials, 2210 Bank

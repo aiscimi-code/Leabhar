@@ -1,6 +1,7 @@
 import { suggestJournalMatches } from '@/domain/banking/journalLink';
 import { onAccountForInvoice } from '@/domain/invoicing/onAccount';
 import { customerExposure, listCustomerContacts } from '@/domain/parties/customerAccount';
+import { listRecurringInvoices } from '@/domain/invoicing/recurringInvoices';
 import { listStatementImports } from '@/domain/banking/import';
 import { and, eq, desc, sql, isNull, isNotNull, ne, or, inArray } from 'drizzle-orm';
 import { getDb } from '@/db';
@@ -925,4 +926,9 @@ export function capitalGoodsPage() {
     .orderBy(desc(invoices.invoiceDate)).all()
     .filter((i) => i.baseVatMinor > 0);
   return { company, goods: capitalGoodsOverview(db, { companyId: company.id }), purchaseInvoices };
+}
+
+/** Recurring sales invoice templates with their due state (issue #394). */
+export function recurringInvoiceList() {
+  return listRecurringInvoices(getDb(), { companyId: requireCompany().id });
 }
