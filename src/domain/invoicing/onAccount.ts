@@ -22,6 +22,8 @@ type Payment = typeof payments.$inferSelect;
 
 /** What of a payment is still on account, in its currency (base currency only). */
 export function onAccountMinor(db: AppDatabase, payment: Payment): number {
+  // A refund, or a credit note applied without cash, holds nothing on account itself.
+  if (payment.refundOfPaymentId || payment.method === 'offset') return 0;
   const expected = payment.direction === 'received' ? 'sales' : 'purchase';
   const rows = db.select({ allocation: paymentAllocations, invoice: invoices })
     .from(paymentAllocations)
@@ -36,7 +38,11 @@ export function onAccountMinor(db: AppDatabase, payment: Payment): number {
     const refunded = invoice.isCreditNote && invoice.direction !== expected;
     applied += refunded ? -allocation.baseAllocatedMinor : allocation.baseAllocatedMinor;
   }
-  return payment.baseAmountMinor - applied;
+  // Money on account refunded (issue #402), unless the refund was reversed.
+  const refunded = db.select({ base: payments.baseAmountMinor }).from(payments).where(and(
+    eq(payments.refundOfPaymentId, payment.id), isNull(payments.reversedAt),
+  )).all().reduce((sum, r) => sum + r.base, 0);
+  return payment.baseAmountMinor - applied - refunded;
 }
 
 export interface PaymentOnAccount {

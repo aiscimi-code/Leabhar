@@ -123,6 +123,11 @@ npm run cli -- post-recurring-invoices --actor "Name" [--up-to <date>]
     # in a locked accounting period or a locked/filed VAT period is skipped and
     # becomes a review item, never moved
 npm run cli -- list-recurring-invoices
+npm run cli -- customer-credit --customer <id>        # open credit notes + money on account
+npm run cli -- apply-credit-note --credit-note <n> --invoice <n> --amount <12.30> --actor "Name"
+    # settles the invoice from the credit note; no cash, nothing posted
+npm run cli -- refund-on-account --payment <id> --amount <12.30> --actor "Name" --reason "..."
+    (--transaction <bank line id> | --date <date> --bank-account <id>)
 npm run cli -- invoice-pdf --invoice <number|id> --out invoice.pdf
     # the sales invoice or credit note as a PDF, generated locally; marked
     # DRAFT with the gaps listed while a reg.20 particular is missing

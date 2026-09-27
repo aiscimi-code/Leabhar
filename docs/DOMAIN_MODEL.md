@@ -376,6 +376,20 @@ Lines live in `document_lines`, per-rate VAT in `document_vat_totals`, both with
 provenance. The VAT rate for a purchase comes from these confirmed lines — never
 from a bank amount.
 
+### Customer credit (issue #402)
+
+A customer's credit is its open credit notes plus money its payments hold on
+account. `applyCreditNote` settles an invoice from a credit note of the same
+party without cash: a zero-cash `offset` payment with two allocations, no
+journal (both documents sit on debtors) and no VAT — on the cash receipts
+basis the credited share of the invoice's deferred VAT and the credit note's
+own deferred VAT cancel, and later receipts release only the rest. It is
+undone with `unapplyCreditNote`, never by `reversePayment`.
+`refundOnAccount` pays money on account back (Dr debtors / Cr bank, or the
+mirror for a supplier), from a statement line or on a date, as a payment with
+`refund_of_payment_id`; the original's on-account balance falls, and the
+original cannot be reversed while a refund of it stands.
+
 ### Sales invoice document (issue #395)
 
 `salesInvoiceDocument` arranges a posted sales invoice or credit note for

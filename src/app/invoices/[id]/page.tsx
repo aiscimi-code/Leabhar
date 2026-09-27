@@ -4,7 +4,7 @@ import {
   Page, Panel, Badge, Stat, Empty, Disclosure, ProvenanceBadge, Field, Input,
 } from '@/components/primitives';
 import { ActionForm } from '@/components/ActionForm';
-import { allocateOnAccountAction } from '@/app/actions';
+import { allocateOnAccountAction, applyCreditNoteAction, unapplyCreditNoteAction } from '@/app/actions';
 import { PaymentForm } from '@/components/PaymentForm';
 import { recordPaymentAction } from '@/app/settings-actions';
 import { money, date, label } from '@/lib/format';
@@ -17,7 +17,8 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
   const detail = invoiceDetail(id);
   if (!detail) notFound();
 
-  const { invoice, lines, allocations, party, company, onAccount, missingParticulars } = detail;
+  const { invoice, lines, allocations, party, company, onAccount, missingParticulars, counterparts } = detail;
+  const today = new Date().toISOString().slice(0, 10);
   const isSales = invoice.direction === 'sales';
   const deferredVat = isSales && company.vatAccountingBasis === 'cash_receipts'
     && invoice.vatMinor !== 0;
@@ -167,7 +168,15 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
                       ? `Written off${allocation.notes ? `: ${allocation.notes}` : ''}`
                       : allocation.allocationType === 'on_account'
                         ? 'From money on account'
-                        : label(payment.method)}
+                        : payment.method === 'offset' ? 'Credit note applied' : label(payment.method)}
+                    {payment.method === 'offset' && !payment.reversedAt && (
+                      <Disclosure summary="Unapply">
+                        <ActionForm action={unapplyCreditNoteAction} submit="Unapply" variant="secondary"
+                          extra={{ paymentId: payment.id, invoiceId: invoice.id }}>
+                          <Field label="Why"><Input name="reason" required placeholder="Applied to the wrong invoice" /></Field>
+                        </ActionForm>
+                      </Disclosure>
+                    )}
                   </td>
                   <td className="text-right num">
                     {money(allocation.allocatedMinor, allocation.currency)}
@@ -181,6 +190,34 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
               ))}
             </tbody>
           </table>
+        )}
+
+        {counterparts.length > 0 && (
+          <Disclosure summary={invoice.isCreditNote ? 'Apply this credit note to an invoice' : 'Settle from a credit note'} tone="accent">
+            <div className="max-w-3xl">
+              <ActionForm action={applyCreditNoteAction} submit="Apply" inline>
+                {invoice.isCreditNote
+                  ? <input type="hidden" name="creditNoteId" value={invoice.id} />
+                  : <input type="hidden" name="invoiceId" value={invoice.id} />}
+                <Field label={invoice.isCreditNote ? 'Invoice' : 'Credit note'}>
+                  <select name={invoice.isCreditNote ? 'invoiceId' : 'creditNoteId'} required
+                    className="border border-line-strong rounded px-2 py-1 bg-surface text-[12.5px]">
+                    {counterparts.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.invoiceNumber ?? c.id} · {date(c.invoiceDate)} · {money(Math.abs(c.outstandingMinor), c.currency)} open
+                      </option>
+                    ))}
+                  </select>
+                </Field>
+                <Field label="Amount"><Input name="amount" required defaultValue={(Math.abs(invoice.outstandingMinor) / 100).toFixed(2)} /></Field>
+                <Field label="Date"><Input name="date" type="date" defaultValue={today} required /></Field>
+              </ActionForm>
+              <p className="text-ink-muted mt-2 leading-snug">
+                No cash moves and nothing is posted: the credit note and the invoice both sit on the same control
+                account. It records which invoice the credit settles.
+              </p>
+            </div>
+          </Disclosure>
         )}
 
         {onAccount.length > 0 && invoice.status !== 'void' && (

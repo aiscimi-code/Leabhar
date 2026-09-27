@@ -213,6 +213,11 @@ export const payments = sqliteTable('payments', {
    */
   supplierId: text('supplier_id').references(() => suppliers.id),
   customerId: text('customer_id').references(() => customers.id),
+  /**
+   * A refund of money another payment holds on account (issue #402): the
+   * money goes back the other way and that payment's on-account balance falls.
+   */
+  refundOfPaymentId: text('refund_of_payment_id'),
   /** Set when a director paid personally on the company's behalf (§28). */
   officerId: text('officer_id'),
 

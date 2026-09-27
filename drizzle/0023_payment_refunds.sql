@@ -1,0 +1,1 @@
+ALTER TABLE `payments` ADD `refund_of_payment_id` text;

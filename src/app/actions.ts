@@ -9,6 +9,7 @@ import { classifyTransaction, reclassifyTransaction } from '@/domain/banking/cla
 import { acceptMatch, rejectMatch, findMatchesForDocument, matchAllUnmatched, linkDocument, unmatchDocument, withdrawMatchRejection } from '@/domain/matching/service';
 import { linkBankTransactionToJournal } from '@/domain/banking/journalLink';
 import { allocatePaymentOnAccount } from '@/domain/invoicing/onAccount';
+import { applyCreditNote, unapplyCreditNote, refundOnAccount } from '@/domain/invoicing/customerCredit';
 import {
   createRecurringInvoice, postDueRecurringInvoices, deactivateRecurringInvoice,
 } from '@/domain/invoicing/recurringInvoices';
@@ -1000,6 +1001,65 @@ export async function deactivateRecurringInvoiceAction(formData: FormData): Prom
     });
     revalidatePath('/invoices/recurring');
     return { ok: true, message: 'Stopped. Invoices already raised are unchanged.' };
+  } catch (error) {
+    return fail(error);
+  }
+}
+
+/** Apply a credit note to an invoice of the same party, without cash (issue #402). */
+export async function applyCreditNoteAction(formData: FormData): Promise<ActionResult> {
+  try {
+    await requireActor('invoices.manage');
+    const company = requireCompany();
+    const creditNoteId = String(formData.get('creditNoteId') ?? '');
+    const invoiceId = String(formData.get('invoiceId') ?? '');
+    applyCreditNote(getDb(), {
+      companyId: company.id, creditNoteId, invoiceId,
+      amountMinor: parseAmount(String(formData.get('amount') ?? ''), company.baseCurrency),
+      date: asIsoDate(String(formData.get('date') ?? new Date().toISOString().slice(0, 10))),
+      actor: await actorName(), reason: formData.get('reason') ? String(formData.get('reason')) : null,
+    });
+    for (const id of [creditNoteId, invoiceId]) revalidatePath(`/invoices/${id}`);
+    revalidatePath('/invoices');
+    return { ok: true, message: 'Credit note applied. Nothing was posted: both sit on the same control account.' };
+  } catch (error) {
+    return fail(error);
+  }
+}
+
+export async function unapplyCreditNoteAction(formData: FormData): Promise<ActionResult> {
+  try {
+    await requireActor('invoices.manage');
+    const company = requireCompany();
+    unapplyCreditNote(getDb(), {
+      companyId: company.id, paymentId: String(formData.get('paymentId') ?? ''),
+      actor: await actorName(), reason: String(formData.get('reason') ?? ''),
+    });
+    revalidatePath(`/invoices/${String(formData.get('invoiceId') ?? '')}`);
+    revalidatePath('/invoices');
+    return { ok: true, message: 'Unapplied. Both documents are open again for that amount.' };
+  } catch (error) {
+    return fail(error);
+  }
+}
+
+/** Refund money a customer's payment holds on account (issue #402). */
+export async function refundOnAccountAction(formData: FormData): Promise<ActionResult> {
+  try {
+    await requireActor('invoices.manage');
+    const company = requireCompany();
+    const bankTransactionId = String(formData.get('bankTransactionId') ?? '').trim();
+    refundOnAccount(getDb(), {
+      companyId: company.id, paymentId: String(formData.get('paymentId') ?? ''),
+      amountMinor: parseAmount(String(formData.get('amount') ?? ''), company.baseCurrency),
+      ...(bankTransactionId
+        ? { bankTransactionId }
+        : { date: asIsoDate(String(formData.get('date') ?? '')), bankAccountId: String(formData.get('bankAccountId') ?? '') }),
+      actor: await actorName(), reason: String(formData.get('reason') ?? ''),
+    });
+    revalidatePath(`/customers/${String(formData.get('customerId') ?? '')}`);
+    revalidatePath('/transactions');
+    return { ok: true, message: 'Refund posted.' };
   } catch (error) {
     return fail(error);
   }
