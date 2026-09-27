@@ -16,6 +16,12 @@ import { computeIncomeTax, type IncomeTaxComputation } from './computation';
  * Figures are the domain computation's, taken as given. Where the Form 11 asks
  * for something the books cannot know — the PPS number, the individual's other
  * income — the line says so rather than guessing.
+ *
+ * The boundary is deliberate (issue #458, ADR 0013): an individual's
+ * non-trading income is never recorded, so every panel the return asks for
+ * outside the business is listed as "to be completed by [name]: not in these
+ * books", and the self-assessment is marked partial — it reconciles only the
+ * trade's liability, never the person's total liability.
  */
 
 export interface Form11Line {
@@ -34,6 +40,12 @@ export interface Form11Section {
 /** The Form 11's self-assessment panel: the tax, the payments, the balance. */
 export interface Form11SelfAssessment {
   name: string;
+  /**
+   * Always true in these books (issue #458, ADR 0013): the reconciliation
+   * covers the trade's liability only, because the person's other income is
+   * not recorded. Never presented as the person's total liability.
+   */
+  partial: boolean;
   /** Income tax + USC + PRSI for the year. */
   liabilityMinor: number;
   /** The preliminary tax due for the year (s.959AO), as computed: what was actually paid is not in these books. */
@@ -87,6 +99,23 @@ export function form11From(computation: IncomeTaxComputation): Form11 {
     ],
   };
 
+  // The panels the return asks for that these books cannot answer (issue
+  // #458, ADR 0013). One book is one business: the person's employment,
+  // pensions, rents, investment income and other gains are theirs to enter on
+  // the return, not facts of the trade.
+  const outside: Form11Section[] = c.individuals.map((i) => ({
+    title: `Income outside the business — to be completed by ${i.name}`,
+    note: 'Not in these books (ADR 0001). If any of these exist, the s.381 claim figure and the liability change.',
+    lines: [
+      { label: 'Income from employment (Schedule E)', amountMinor: null, note: 'To be completed by the person: not in these books.' },
+      { label: 'Pensions and annuities', amountMinor: null, note: 'To be completed by the person: not in these books.' },
+      { label: 'Rents from land and premises (Case V)', amountMinor: null, note: 'To be completed by the person: not in these books.' },
+      { label: 'Foreign income and interest (Case III)', amountMinor: null, note: 'To be completed by the person: not in these books.' },
+      { label: 'Investment income: dividends and interest', amountMinor: null, note: 'To be completed by the person: not in these books.' },
+      { label: 'Other income and gains (Case IV)', amountMinor: null, note: 'To be completed by the person: not in these books.' },
+    ],
+  }));
+
   const individuals: Form11Section[] = c.individuals.map((i) => ({
     title: `Tax computation — ${i.name}`,
     note: i.status.startsWith('married') ? 'Jointly assessed; the spouse\'s income is not in these books.' : undefined,
@@ -117,21 +146,28 @@ export function form11From(computation: IncomeTaxComputation): Form11 {
     ],
   }));
 
-  findings.push('The PPS number is not in these books: the form needs it. The return also asks for non-trading income '
-    + '(pensions, rents, interest), which is not known here; if there is any, the s.381 claim figure and the liability change.');
+  findings.push('The PPS number is not in these books: the form needs it.');
+  for (const i of c.individuals) {
+    findings.push(`${i.name}: the return asks for income outside the business — employment, pensions, rents, `
+      + 'investment income, other gains — which these books do not hold and never record (issue #458, ADR 0013). '
+      + `${i.name} completes those panels themselves; the self-assessment here is partial and reconciles only the trade's liability.`);
+  }
   const personal = c.individuals.length > 1
     ? 'Each partner files their own Form 11: their share, their own preliminary tax and their own balance.'
     : undefined;
 
   const selfAssessment: Form11SelfAssessment[] = c.individuals.map((i) => ({
     name: i.name,
+    partial: true,
     liabilityMinor: i.totalMinor,
     preliminaryTaxMinor: i.preliminaryTaxMinor,
     balanceMinor: i.totalMinor - i.preliminaryTaxMinor,
     balanceDueDate: c.dates.returnDue,
     working: `Total liability ${eur(i.totalMinor)} less preliminary tax due ${eur(i.preliminaryTaxMinor)} `
       + `(s.959AO: ${c.dates.basis}): the balance, ${eur(i.totalMinor - i.preliminaryTaxMinor)}, `
-      + `is payable with the return by ${c.dates.returnDue}${i.totalMinor - i.preliminaryTaxMinor < 0 ? ', repayable' : ''}.`,
+      + `is payable with the return by ${c.dates.returnDue}${i.totalMinor - i.preliminaryTaxMinor < 0 ? ', repayable' : ''}. `
+      + 'Partial: it reconciles the trade\u2019s liability only — the person\u2019s other income is not in these books '
+      + '(issue #458, ADR 0013), so this is never their total liability.',
   }));
 
   const provision: Form11Provision[] = c.individuals.map((i) => ({
@@ -151,7 +187,7 @@ export function form11From(computation: IncomeTaxComputation): Form11 {
     companyId: c.companyId,
     year: c.year,
     computation: c,
-    sections: [trade, ...individuals],
+    sections: [trade, ...individuals, ...outside],
     selfAssessment,
     provision,
     findings: [...new Set([...findings, ...(personal ? [personal] : []), ...c.findings])],
