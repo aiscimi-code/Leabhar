@@ -252,6 +252,17 @@ describe('motor cars (TCA Part 11, ss.373 and 374)', () => {
     expect(line(r, 'wear and tear')).toBe(-375_000);
     expect(r.findings.some((f) => f.includes('31 December 2000'))).toBe(true);
   });
+  it('flags a car bought from July 2008: its CO2 emissions restriction (Chapter 1A) is not applied', () => {
+    car({ costMinor: 2_000_000, baseCostMinor: 2_000_000 });
+    expect(inYear(2025).findings.some((f) => f.includes('Chapter 1A'))).toBe(true);
+  });
+
+  it('does not raise the emissions question for a van or a car bought before July 2008', () => {
+    car({ name: 'Delivery van' });
+    car({ purchaseDate: '2005-03-01' });
+    expect(inYear(2005).findings.some((f) => f.includes('Chapter 1A'))).toBe(false);
+    expect(inYear(2025).findings.filter((f) => f.includes('Chapter 1A'))).toEqual([]);
+  });
 });
 
 describe('loss relief', () => {

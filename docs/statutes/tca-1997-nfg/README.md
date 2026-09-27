@@ -17,6 +17,7 @@ Part 11 (ss.373–380, capital allowances and expenses for certain road
 vehicles) was added on 2026-09-27, from the same Finance Act 2025 edition.
 Its s.373(2) specified amounts restrict a motor car's wear and tear and
 balancing adjustments (s.374); the computation applies them in
-`src/domain/corporationTax/computation.ts` (issue #313). The Part's NfG sets
-out cost limits only — it states no emissions-based limit, so none is
-applied.
+`src/domain/corporationTax/computation.ts` (issue #313). This file covers
+ss.373–380 only. The emissions-based restrictions of Chapter 1A (ss.380K–380P,
+Finance Act 2008) are not among the sources and a car's CO2 category is not
+recorded, so they are not applied: a car bought from July 2008 is flagged.

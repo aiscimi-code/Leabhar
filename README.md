@@ -140,12 +140,24 @@ file anything, and it does not replace professional advice.
 
 - **Basis period for the year,** including the commencement and cessation
   rules.
+- **Capital allowances for the year of assessment** (s.284), given against
+  its basis period, not apportioned with the profits: each year of
+  assessment claims from the assets in use at the end of its basis period.
+- **Trading losses:** carried forward against later profits of the same
+  trade (s.382) automatically; a claim against other income of the year
+  (s.381) is a person's decision, with the amount they are setting against
+  income the books do not hold. A partnership's losses are split by the
+  shares, and each partner carries their own forward.
 - **Partnership profits** split between partners by the profit shares in
   force, day by day.
 - **Each person's liability:**
   - income tax at the bands and credits for their personal status;
   - USC;
   - PRSI Class S.
+- **Form 11 preparation:** the computation laid out as the return asks for
+  it, per person for a partnership, with the self-assessment reconciliation
+  (the tax, the preliminary tax paid, the balance) and the tax provision —
+  what to set aside and when, paid from drawings, never a business expense.
 - **Payment dates:** preliminary tax and the return date.
 
 ### Year-end, review and evidence
@@ -186,7 +198,6 @@ file anything, and it does not replace professional advice.
   - charges on income;
   - group relief;
   - associated companies' share of the surcharge threshold;
-  - sole trader loss relief (ss.381/382);
   - a spouse's second income;
   - other non-trading income of an individual;
   - PRSI Class S before 25 September 2026 and the €5,000 Class S

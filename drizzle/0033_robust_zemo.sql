@@ -1,0 +1,1 @@
+ALTER TABLE `ct_decisions` ADD `amount_minor` integer;
