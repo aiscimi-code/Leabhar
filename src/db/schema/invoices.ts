@@ -358,3 +358,59 @@ export const purchaseOrderLines = sqliteTable('purchase_order_lines', {
   accountId: text('account_id').references(() => accounts.id),
   ...timestamps,
 }, (t) => [index('purchase_order_lines_order_idx').on(t.purchaseOrderId)]);
+
+/**
+ * A recurring bill (issue #412): rent, a subscription, a utility — a bill
+ * expected on a schedule. Unlike a recurring sales invoice it raises nothing
+ * in the books: input VAT comes only from the supplier's confirmed invoice, so
+ * each occurrence is an expectation, matched to the real bill when it is
+ * posted and flagged when it does not arrive.
+ */
+export const recurringBills = sqliteTable('recurring_bills', {
+  id: text('id').primaryKey(),
+  companyId: text('company_id').notNull().references(() => companies.id),
+  supplierId: text('supplier_id').notNull().references(() => suppliers.id),
+  name: text('name').notNull(),
+  frequency: text('frequency', { enum: ['monthly', 'quarterly', 'yearly'] }).notNull(),
+  startDate: text('start_date').notNull(),
+  /** Inclusive last occurrence date; null means until deactivated. */
+  endDate: text('end_date'),
+  /** The expected net, excluding VAT, in `currency`. */
+  expectedNetMinor: integer('expected_net_minor').notNull(),
+  currency: text('currency').notNull(),
+  accountId: text('account_id').references(() => accounts.id),
+  /** A bill whose net differs from the expected by more than this is flagged. */
+  toleranceBasisPoints: integer('tolerance_basis_points').notNull().default(500),
+  /** A bill dated this many days either side of the occurrence can match it. */
+  windowDays: integer('window_days').notNull().default(10),
+  active: integer('active', { mode: 'boolean' }).notNull().default(true),
+  notes: text('notes'),
+  createdBy: text('created_by').notNull(),
+  ...timestamps,
+}, (t) => [index('recurring_bills_company_idx').on(t.companyId, t.active)]);
+
+/**
+ * One occurrence of a recurring bill. It posts nothing. `invoice_id` is the
+ * real bill once matched; the expected net is snapshotted from the template
+ * when the occurrence is raised.
+ */
+export const expectedBills = sqliteTable('expected_bills', {
+  id: text('id').primaryKey(),
+  companyId: text('company_id').notNull().references(() => companies.id),
+  recurringBillId: text('recurring_bill_id').notNull().references(() => recurringBills.id),
+  expectedDate: text('expected_date').notNull(),
+  expectedNetMinor: integer('expected_net_minor').notNull(),
+  currency: text('currency').notNull(),
+  status: text('status', { enum: ['expected', 'matched', 'dismissed'] }).notNull().default('expected'),
+  invoiceId: text('invoice_id').references(() => invoices.id),
+  /** The bill's net less the expected net, when matched. */
+  differenceMinor: integer('difference_minor'),
+  matchedAt: text('matched_at'),
+  matchedBy: text('matched_by'),
+  dismissReason: text('dismiss_reason'),
+  ...timestamps,
+}, (t) => [
+  uniqueIndex('expected_bills_occurrence_unique').on(t.recurringBillId, t.expectedDate),
+  uniqueIndex('expected_bills_invoice_unique').on(t.invoiceId),
+  index('expected_bills_company_idx').on(t.companyId, t.status),
+]);

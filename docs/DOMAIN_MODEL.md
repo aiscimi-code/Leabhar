@@ -510,6 +510,23 @@ wins. Supplier refunds use the same paths as customers': money we overpaid is
 refunded with `refundOnAccount` on the payment we made (Dr bank / Cr
 creditors), and a supplier credit note is settled by a payment received.
 
+### Recurring bills (issue #412)
+
+A recurring bill (`recurring_bills`) is rent, a subscription or a utility the
+business expects on a schedule. It is never raised the way a recurring sales
+invoice is: input VAT comes only from the supplier's confirmed invoice (#234),
+so each occurrence (`expected_bills`, unique per template and date, with the
+expected net snapshotted) is an expectation that posts nothing.
+`runExpectedBills` expects what is due, then matches each open occurrence to a
+bill of the same supplier and currency, posted from a confirmed document, dated
+within the template's window and not answering another occurrence. It matches
+only when exactly one bill fits: two candidates are flagged for a person. A bill
+whose net differs from the expected by more than the tolerance is matched and
+flagged; an occurrence with no bill once its window has passed is flagged as
+missing. A person can match by hand, unmatch with a reason, or dismiss an
+occurrence with a reason (a rent-free month); a matched bill that is later
+voided reopens its occurrence.
+
 ### Purchase orders (issue #411)
 
 A purchase order (`purchase_orders`, `purchase_order_lines`, numbered `PO-n`

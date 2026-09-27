@@ -18,6 +18,10 @@ import {
   createPurchaseOrder, linkBillToPurchaseOrder, unlinkBillFromPurchaseOrder, cancelPurchaseOrder,
 } from '@/domain/invoicing/purchaseOrders';
 import {
+  createRecurringBill, runExpectedBills, matchExpectedBill, unmatchExpectedBill, dismissExpectedBill,
+  deactivateRecurringBill,
+} from '@/domain/invoicing/expectedBills';
+import {
   createRecurringInvoice, postDueRecurringInvoices, deactivateRecurringInvoice,
 } from '@/domain/invoicing/recurringInvoices';
 import {
@@ -1428,6 +1432,113 @@ export async function cancelPurchaseOrderAction(formData: FormData): Promise<Act
     });
     revalidatePath('/purchase-orders');
     return { ok: true, message: 'Cancelled. Bills already linked stay linked.' };
+  } catch (error) {
+    return fail(error);
+  }
+}
+
+/** A recurring bill (issue #412): an expectation, never a posting. */
+export async function createRecurringBillAction(formData: FormData): Promise<ActionResult> {
+  try {
+    await requireActor('invoices.manage');
+    const company = requireCompany();
+    const endDate = String(formData.get('endDate') ?? '').trim();
+    const toleranceText = String(formData.get('tolerancePercent') ?? '').trim();
+    const toleranceBasisPoints = toleranceText ? parsePercentBasisPoints(toleranceText) : undefined;
+    if (toleranceText && toleranceBasisPoints === null) return { ok: false, error: `"${toleranceText}" is not a percentage.` };
+    const windowText = String(formData.get('windowDays') ?? '').trim();
+    createRecurringBill(getDb(), {
+      companyId: company.id,
+      supplierId: String(formData.get('supplierId') ?? ''),
+      name: String(formData.get('name') ?? ''),
+      frequency: String(formData.get('frequency') ?? 'monthly') as 'monthly' | 'quarterly' | 'yearly',
+      startDate: asIsoDate(String(formData.get('startDate') ?? '')),
+      endDate: endDate ? asIsoDate(endDate) : null,
+      expectedNetMinor: parseAmount(String(formData.get('net') ?? ''), company.baseCurrency),
+      ...(toleranceBasisPoints != null ? { toleranceBasisPoints } : {}),
+      ...(windowText ? { windowDays: Number(windowText) } : {}),
+      actor: await actorName(),
+    });
+    revalidatePath('/bills/recurring');
+    return { ok: true, message: 'Saved. Each occurrence is expected, never posted: the supplier\'s invoice is the bill.' };
+  } catch (error) {
+    return fail(error);
+  }
+}
+
+export async function runExpectedBillsAction(formData: FormData): Promise<ActionResult> {
+  try {
+    await requireActor('invoices.manage');
+    const company = requireCompany();
+    const result = runExpectedBills(getDb(), {
+      companyId: company.id, asOf: asIsoDate(String(formData.get('asOf') ?? '')), actor: await actorName(),
+    });
+    revalidatePath('/bills/recurring');
+    revalidatePath('/review');
+    return {
+      ok: true,
+      message: `${result.raised.length} expected, ${result.matched.length} matched, ${result.missing.length} missing`
+        + (result.ambiguous.length ? `, ${result.ambiguous.length} with more than one possible bill` : '') + '.',
+    };
+  } catch (error) {
+    return fail(error);
+  }
+}
+
+export async function matchExpectedBillAction(formData: FormData): Promise<ActionResult> {
+  try {
+    await requireActor('invoices.manage');
+    const company = requireCompany();
+    const { differenceMinor } = matchExpectedBill(getDb(), {
+      companyId: company.id, expectedBillId: String(formData.get('expectedBillId') ?? ''),
+      invoiceId: String(formData.get('invoiceId') ?? ''), actor: await actorName(),
+    });
+    revalidatePath('/bills/recurring');
+    return { ok: true, message: differenceMinor === 0 ? 'Matched.' : 'Matched. The bill differs from what was expected.' };
+  } catch (error) {
+    return fail(error);
+  }
+}
+
+export async function unmatchExpectedBillAction(formData: FormData): Promise<ActionResult> {
+  try {
+    await requireActor('invoices.manage');
+    const company = requireCompany();
+    unmatchExpectedBill(getDb(), {
+      companyId: company.id, expectedBillId: String(formData.get('expectedBillId') ?? ''),
+      reason: String(formData.get('reason') ?? ''), actor: await actorName(),
+    });
+    revalidatePath('/bills/recurring');
+    return { ok: true, message: 'Unmatched. The bill itself is unchanged.' };
+  } catch (error) {
+    return fail(error);
+  }
+}
+
+export async function dismissExpectedBillAction(formData: FormData): Promise<ActionResult> {
+  try {
+    await requireActor('invoices.manage');
+    const company = requireCompany();
+    dismissExpectedBill(getDb(), {
+      companyId: company.id, expectedBillId: String(formData.get('expectedBillId') ?? ''),
+      reason: String(formData.get('reason') ?? ''), actor: await actorName(),
+    });
+    revalidatePath('/bills/recurring');
+    return { ok: true, message: 'Dismissed: no bill is due for that occurrence.' };
+  } catch (error) {
+    return fail(error);
+  }
+}
+
+export async function deactivateRecurringBillAction(formData: FormData): Promise<ActionResult> {
+  try {
+    await requireActor('invoices.manage');
+    const company = requireCompany();
+    deactivateRecurringBill(getDb(), {
+      companyId: company.id, recurringBillId: String(formData.get('recurringBillId') ?? ''), actor: await actorName(),
+    });
+    revalidatePath('/bills/recurring');
+    return { ok: true, message: 'Stopped. Occurrences already expected are kept.' };
   } catch (error) {
     return fail(error);
   }

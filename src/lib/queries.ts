@@ -3,6 +3,7 @@ import { onAccountForInvoice } from '@/domain/invoicing/onAccount';
 import { customerExposure, listCustomerContacts } from '@/domain/parties/customerAccount';
 import { listRecurringInvoices } from '@/domain/invoicing/recurringInvoices';
 import { listPurchaseOrders, getPurchaseOrder } from '@/domain/invoicing/purchaseOrders';
+import { listRecurringBills } from '@/domain/invoicing/expectedBills';
 import { salesInvoiceDocument } from '@/domain/invoicing/invoiceDocument';
 import { customerCredit } from '@/domain/invoicing/customerCredit';
 import { receivablesSummary, overdueInvoices } from '@/domain/invoicing/receivables';
@@ -16,7 +17,7 @@ import {
   documentMatches, statementImports, companyOfficers, documentExtractions,
   invoices, invoiceLines, payments, paymentAllocations, reminderLetters,
   irishActProvisions, irishKnowledgeSources, irishTaxRules,
-  expenseClaims, expenseClaimLines, expenseRates, users, companyMembers,
+  expenseClaims, expenseClaimLines, expenseRates, users, companyMembers, expectedBills,
 } from '@/db/schema';
 import { trialBalance, balancesBySystemKey, accountBalance } from '@/domain/accounting/ledger';
 import { buildVat3Return, vatPositionSummary } from '@/domain/vat/report';
@@ -1010,6 +1011,30 @@ export function purchaseOrderOptions(bill: { id: string; supplierId: string | nu
     linked: bill.purchaseOrderId ? getPurchaseOrder(db, { companyId, purchaseOrderId: bill.purchaseOrderId }) : null,
     open: bill.supplierId ? listPurchaseOrders(db, { companyId, supplierId: bill.supplierId, openOnly: true }) : [],
   };
+}
+
+/**
+ * Recurring bills and their occurrences (issue #412), with each supplier's
+ * bills that are not yet matched to an occurrence, for matching by hand.
+ */
+export function recurringBillsPage() {
+  const db = getDb();
+  const company = requireCompany();
+  const templates = listRecurringBills(db, { companyId: company.id, asOf: today() });
+  const matched = new Set(db.select({ id: expectedBills.invoiceId }).from(expectedBills)
+    .where(eq(expectedBills.companyId, company.id)).all().map((r) => r.id).filter(Boolean));
+  const billsBySupplier = new Map<string, Array<{ id: string; number: string | null; invoiceDate: string; netMinor: number }>>();
+  for (const supplierId of new Set(templates.map((t) => t.supplierId))) {
+    billsBySupplier.set(supplierId, db.select({
+      id: invoices.id, number: invoices.invoiceNumber, invoiceDate: invoices.invoiceDate, netMinor: invoices.netMinor,
+      status: invoices.status, isCreditNote: invoices.isCreditNote,
+    }).from(invoices).where(and(
+      eq(invoices.companyId, company.id), eq(invoices.supplierId, supplierId), eq(invoices.direction, 'purchase'),
+    )).orderBy(desc(invoices.invoiceDate)).all()
+      .filter((b) => b.status !== 'void' && !b.isCreditNote && !matched.has(b.id))
+      .map(({ id, number, invoiceDate, netMinor }) => ({ id, number, invoiceDate, netMinor })));
+  }
+  return { templates, billsBySupplier, currency: company.baseCurrency };
 }
 
 export function recurringInvoiceList() {

@@ -118,6 +118,13 @@ npm run cli -- link-bill --invoice <number|id> --purchase-order PO-1 --actor "Na
 npm run cli -- purchase-order-pdf --purchase-order PO-1 --out po.pdf
     # an order posts nothing; billing over it is flagged, never refused.
     # Also: list-purchase-orders [--open], unlink-bill, cancel-purchase-order
+npm run cli -- create-recurring-bill --supplier <id> --name "Office rent" --frequency monthly \
+    --start 2025-01-01 --net 1000.00 --actor "Name" [--tolerance-percent 5] [--window-days 10]
+npm run cli -- run-expected-bills --actor "Name" [--as-of <date>]
+    # posts nothing: expects what is due, matches bills posted from confirmed
+    # documents, flags the missing. Also: list-recurring-bills,
+    # match-expected-bill, unmatch-expected-bill, dismiss-expected-bill,
+    # deactivate-recurring-bill
 npm run cli -- set-customer-terms --customer <id> --actor "Name" [--terms-days 30] [--credit-limit <5000.00|none>]
     # New invoices without a due date get one from the terms; going over the
     # credit limit is flagged for review, never refused.
