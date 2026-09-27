@@ -15,7 +15,7 @@ export async function recordCtDecisionAction(formData: FormData): Promise<Action
     const company = requireCompany();
     const field = (key: string) => String(formData.get(key) ?? '').trim();
     const subjectType = field('subjectType');
-    if (!['journal_line', 'income_account', 'loss_claim', 'company_status', 'personal_status', 'income_tax_loss_claim'].includes(subjectType)) return { ok: false, error: 'Unknown subject.' };
+    if (!['journal_line', 'income_account', 'loss_claim', 'company_status', 'trading_company', 'personal_status', 'income_tax_loss_claim'].includes(subjectType)) return { ok: false, error: 'Unknown subject.' };
     // An s.381 claim sets the loss against other income the books do not hold:
     // the amount is the person's own figure.
     const amount = field('amount');
