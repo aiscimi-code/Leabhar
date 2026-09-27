@@ -29,10 +29,12 @@ function requestHost(request: NextRequest): string {
   return host.toLowerCase();
 }
 
-function continueRequest(request: NextRequest, markPortal: boolean) {
-  if (!markPortal) return NextResponse.next();
+function continueRequest(request: NextRequest, markPortal: boolean, markPublic = false) {
+  if (!markPortal && !markPublic) return NextResponse.next();
   const headers = new Headers(request.headers);
-  headers.set('x-leabhar-portal', '1');
+  if (markPortal) headers.set('x-leabhar-portal', '1');
+  // Login renders without the signed-in app chrome (issue #473).
+  if (markPublic) headers.set('x-leabhar-public', '1');
   return NextResponse.next({ request: { headers } });
 }
 
@@ -75,7 +77,7 @@ export function middleware(request: NextRequest) {
     || pathname.startsWith('/favicon')
     || onPortal
   ) {
-    return continueRequest(request, onPortal);
+    return continueRequest(request, onPortal, PUBLIC_PATHS.includes(pathname));
   }
 
   const token = request.cookies.get(sessionCookieName)?.value;

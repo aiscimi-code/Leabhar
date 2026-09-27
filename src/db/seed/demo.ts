@@ -18,6 +18,7 @@ import { postDocumentAsInvoice, documentEvidenceLines } from '@/domain/consolida
 import { settleBankTransaction, settleInvoiceByDirector } from '@/domain/consolidation/settle';
 import { createExpenseClaim, approveExpenseClaim, reimburseExpenseClaim } from '@/domain/expenses/claims';
 import { createRule } from '@/domain/rules/engine';
+import { loadStatutoryKnowledgeBase } from '@/domain/rules/knowledgeBase';
 import { postJournalEntry } from '@/domain/accounting/journal';
 import { asIsoDate, makeDate } from '@/domain/dates';
 import { normaliseName } from '@/domain/extraction/service';
@@ -38,6 +39,8 @@ import { normaliseName } from '@/domain/extraction/service';
 
 export interface SeedResult {
   companyId: string;
+  /** The statutes ingested for the demo company (issue #475). */
+  knowledgeBase: { sourcesProcessed: number; rulesBefore: number; rulesAfter: number };
   bankAccountId: string;
   counts: Record<string, number>;
 }
@@ -689,6 +692,13 @@ export async function seedDemoCompany(
     sourceNote: 'Based on the company’s annual return date. Confirm with the CRO.',
   }).run();
 
+  // ---- Statutory knowledge base ----
+  // The demo book ships with the statutes ingested (issue #475): a person
+  // following the setup path — migrate, seed, open /statutes — sees the
+  // provisions and the rules that cite them, rather than an empty screen
+  // that says to run a command the setup never mentioned.
+  const knowledgeBase = loadStatutoryKnowledgeBase(db, { companyId });
+
   const counts = {
     transactions: db.select().from(bankTransactions)
       .where(eq(bankTransactions.companyId, companyId)).all().length,
@@ -697,5 +707,5 @@ export async function seedDemoCompany(
     customers: db.select().from(customers).where(eq(customers.companyId, companyId)).all().length,
   };
 
-  return { companyId, bankAccountId, counts };
+  return { companyId, bankAccountId, counts, knowledgeBase };
 }

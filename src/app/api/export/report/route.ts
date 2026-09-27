@@ -185,10 +185,13 @@ export async function GET(request: Request): Promise<Response> {
       columns: trialColumns,
       rows: data.trialBalance.rows,
       footer: [[], [
-        data.trialBalance.balanced ? 'Debits equal credits.' : 'DEBITS DO NOT EQUAL CREDITS.',
+        data.trialBalance.balanced ? 'Net debits equal net credits.' : 'NET DEBITS DO NOT EQUAL NET CREDITS.',
         '', '',
-        amountFor(data.trialBalance.rows.reduce((s, r) => s + Math.max(r.netDebitMinor, 0), 0), currency),
-        amountFor(data.trialBalance.rows.reduce((s, r) => s + Math.max(-r.netDebitMinor, 0), 0), currency),
+        amountFor(data.trialBalance.netTotalDebitMinor, currency),
+        amountFor(data.trialBalance.netTotalCreditMinor, currency),
+      ], [
+        `Gross movement: ${amountFor(data.trialBalance.totalDebitMinor, currency)} debited, `
+          + `${amountFor(data.trialBalance.totalCreditMinor, currency)} credited.`,
       ]],
     });
   }

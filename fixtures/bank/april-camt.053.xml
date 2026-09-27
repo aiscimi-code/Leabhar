@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Document xmlns="urn:iso:std:iso:20022:tech:xsd:camt.053.001.08">
+ <BkToCstmrStmt>
+  <GrpHdr><MsgId>AIB-2025-04-STATEMENT</MsgId><CreDtTm>2025-04-02T06:01:00Z</CreDtTm></GrpHdr>
+  <Stmt>
+   <Id>IE29AIBK93115200000001</Id>
+   <Acct><Id><IBAN>IE29AIBK93115200000001</IBAN></Id><Ccy>EUR</Ccy><Nm>Current account</Nm></Acct>
+   <Bal><Tp><CdOrPrtry><Cd>OPBD</Cd></CdOrPrtry></Tp><Amt Ccy="EUR">3954.55</Amt><CdtDbtInd>DBIT</CdtDbtInd><Dt>2025-03-28</Dt></Bal>
+   <!-- The 28 March entry repeats the OFX statement's AIB-0004 row: the same
+        bank transaction id, so importing this file after march.ofx flags it
+        as a duplicate rather than adding it twice. -->
+   <Ntry>
+    <Amt Ccy="EUR">80.00</Amt><CdtDbtInd>DBIT</CdtDbtInd><Sts><Cd>BOOK</Cd></Sts>
+    <BookgDt><Dt>2025-03-28</Dt></BookgDt><AcctSvcrRef>AIB-0004</AcctSvcrRef>
+    <AddtlNtryInf>SUPERVALU NEWBRIDGE</AddtlNtryInf>
+    <NtryDtls><TxDtls><RltdPties><Cdtr><Pty><Nm>Supervalu Newbridge</Nm></Pty></Cdtr></RltdPties></TxDtls></NtryDtls>
+   </Ntry>
+   <Ntry>
+    <Amt Ccy="EUR">1200.00</Amt><CdtDbtInd>CRDT</CdtDbtInd><Sts><Cd>BOOK</Cd></Sts>
+    <BookgDt><Dt>2025-04-03</Dt></BookgDt><AcctSvcrRef>AIB-0005</AcctSvcrRef>
+    <AddtlNtryInf>CLIENT PAYMENT INV-1081</AddtlNtryInf>
+    <NtryDtls><TxDtls><RltdPties><Dbtr><Pty><Nm>Kelly Design Ltd</Nm></Pty></Dbtr></RltdPties></TxDtls></NtryDtls>
+   </Ntry>
+   <Ntry>
+    <Amt Ccy="EUR">96.40</Amt><CdtDbtInd>DBIT</CdtDbtInd><Sts><Cd>BOOK</Cd></Sts>
+    <BookgDt><Dt>2025-04-09</Dt></BookgDt><AcctSvcrRef>AIB-0006</AcctSvcrRef>
+    <AddtlNtryInf>FBD INSURANCE RENEWAL</AddtlNtryInf>
+    <NtryDtls><TxDtls><RltdPties><Cdtr><Pty><Nm>FBD Insurance</Nm></Pty></Cdtr></RltdPties></TxDtls></NtryDtls>
+   </Ntry>
+   <Ntry>
+    <Amt Ccy="EUR">540.00</Amt><CdtDbtInd>CRDT</CdtDbtInd><Sts><Cd>BOOK</Cd></Sts>
+    <BookgDt><Dt>2025-04-18</Dt></BookgDt><AcctSvcrRef>AIB-0007</AcctSvcrRef>
+    <AddtlNtryInf>CAFE TAKINGS WEEK 16</AddtlNtryInf>
+    <NtryDtls><TxDtls><RltdPties><Dbtr><Pty><Nm>Byrne Cafe</Nm></Pty></Dbtr></RltdPties></TxDtls></NtryDtls>
+   </Ntry>
+   <Bal><Tp><CdOrPrtry><Cd>CLBD</Cd></CdOrPrtry></Tp><Amt Ccy="EUR">5518.15</Amt><CdtDbtInd>CRDT</CdtDbtInd><Dt>2025-04-30</Dt></Bal>
+  </Stmt>
+ </BkToCstmrStmt>
+</Document>
