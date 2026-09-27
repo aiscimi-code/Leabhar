@@ -4,7 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { getDb } from '@/db';
 import { requireCompany } from '@/lib/queries';
 import { requireActor, actorName } from '@/lib/session';
-import { recordCtDecision, type CtSubjectType } from '@/domain/corporationTax/computation';
+import { recordCtDecision, isCtSubjectType, type CtSubjectType } from '@/domain/corporationTax/subjects';
 import { parseAmount } from '@/domain/money';
 import type { ActionResult } from './settings-actions';
 
@@ -15,7 +15,7 @@ export async function recordCtDecisionAction(formData: FormData): Promise<Action
     const company = requireCompany();
     const field = (key: string) => String(formData.get(key) ?? '').trim();
     const subjectType = field('subjectType');
-    if (!['journal_line', 'income_account', 'loss_claim', 'company_status', 'trading_company', 'basis_election', 'allowance_loss_election', 'personal_status', 'income_tax_loss_claim'].includes(subjectType)) return { ok: false, error: 'Unknown subject.' };
+    if (!isCtSubjectType(subjectType)) return { ok: false, error: 'Unknown subject.' };
     // An s.381 claim sets the loss against other income the books do not hold:
     // the amount is the person's own figure.
     const amount = field('amount');
