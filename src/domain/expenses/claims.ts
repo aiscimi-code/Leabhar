@@ -291,13 +291,18 @@ function createExpenseClaimSteps(
 export function approveExpenseClaim(
   db: AppDatabase, input: {
     companyId: string; claimId: string; actor?: string; requestId?: string;
+    /**
+     * The approving user's id, where the surface knows it (the web app does).
+     * A user's own claim is then recognised by identity, not by name (issue #425).
+     */
+    approverUserId?: string;
   },
 ): { journalEntryId: string; entryNumber: number } {
   return atomically(db, () => approveExpenseClaimSteps(db, input));
 }
 
 function approveExpenseClaimSteps(
-  db: AppDatabase, input: { companyId: string; claimId: string; actor?: string; requestId?: string },
+  db: AppDatabase, input: { companyId: string; claimId: string; actor?: string; requestId?: string; approverUserId?: string },
 ): { journalEntryId: string; entryNumber: number } {
   const claim = loadClaim(db, input.companyId, input.claimId);
   if (claim.status !== 'submitted') {
@@ -319,11 +324,14 @@ function approveExpenseClaimSteps(
   const company = db.select().from(companies).where(eq(companies.id, input.companyId)).get()!;
   const claimant = claimantName(db, claim);
   const actor = input.actor ?? 'user';
-  // Self-approval (issue #425): the approver is the claimant. The actor is the
-  // person's name in every surface, and the claimant is an officer or a user,
-  // so the comparison is on the recorded names. Allowed, but flagged below.
-  const selfApproved = actor.trim().length > 0
-    && actor.trim().toLowerCase() === claimant.trim().toLowerCase();
+  // Self-approval (issue #425): the approver is the claimant. A user's claim
+  // approved by a known user is compared by identity — two people can share a
+  // display name, and the actor may be a username. An officer is not a user
+  // account, and the CLI knows only a name, so those fall back to the recorded
+  // names. Allowed, but flagged below.
+  const selfApproved = claim.userId && input.approverUserId
+    ? claim.userId === input.approverUserId
+    : actor.trim().length > 0 && actor.trim().toLowerCase() === claimant.trim().toLowerCase();
 
   // ---- Refuse before writing anything (AGENTS.md: a posting path either
   // completes or writes nothing) ----

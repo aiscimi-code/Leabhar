@@ -279,6 +279,38 @@ describe('approveExpenseClaim', () => {
     expect(items[0]!.detail).not.toContain('benefit-in-kind');
   });
 
+  it('recognises a user\'s own claim by identity, not by name (#425)', () => {
+    const claimFor = (title: string) => createExpenseClaim(db, {
+      companyId, claimant: { userId }, title,
+      lines: [{
+        lineType: 'travel', date: asIsoDate('2025-05-05'), description: 'Bus fare', amountMinor: 5_00,
+        accountId: travelAccount(),
+      }],
+    });
+    const flagged = (claimId: string) => db.select().from(reviewItems)
+      .where(eq(reviewItems.dedupeKey, `expense_claim:${claimId}:self_approved`)).all().length;
+
+    // The same person, recorded under their username rather than their display
+    // name: still their own claim.
+    const own = claimFor('Own claim');
+    approveExpenseClaim(db, {
+      companyId, claimId: own.claimId, actor: `colleague-${userId}`, approverUserId: userId,
+    });
+    expect(flagged(own.claimId)).toBe(1);
+
+    // A different person who happens to share the display name: not self-approval.
+    const namesakeId = ids.user();
+    db.insert(users).values({
+      id: namesakeId, username: `namesake-${namesakeId}`, displayName: 'John O’Sullivan',
+      passwordHash: 'x', passwordSalt: 'y',
+    }).run();
+    const other = claimFor('Namesake approves');
+    approveExpenseClaim(db, {
+      companyId, claimId: other.claimId, actor: 'John O’Sullivan', approverUserId: namesakeId,
+    });
+    expect(flagged(other.claimId)).toBe(0);
+  });
+
   it('raises no self-approval flag when someone else approves (#425)', () => {
     const claim = createExpenseClaim(db, {
       companyId, claimant: { officerId }, title: 'Site visit',

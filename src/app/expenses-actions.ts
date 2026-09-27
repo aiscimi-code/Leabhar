@@ -107,10 +107,10 @@ export async function createExpenseClaimAction(formData: FormData): Promise<Acti
 
 export async function approveExpenseClaimAction(formData: FormData): Promise<ActionResult> {
   try {
-    await requireActor('expenses.approve');
+    const approver = await requireActor('expenses.approve');
     const claimId = String(formData.get('claimId') ?? '');
     const result = approveExpenseClaim(getDb(), {
-      companyId: requireCompany().id, claimId, actor: await actorName(),
+      companyId: requireCompany().id, claimId, actor: await actorName(), approverUserId: approver.id,
     });
     revalidatePath('/expenses');
     return { ok: true, message: `Claim approved and posted as journal entry ${result.entryNumber}.` };
