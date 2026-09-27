@@ -48,7 +48,7 @@ export default function RetentionPage() {
             <thead>
               <tr>
                 <th className="w-44">Applies to</th>
-                <th className="w-24 text-right">Keep for</th>
+                <th className="w-28 text-right">Keep for</th>
                 <th className="w-28">From</th>
                 <th className="w-28">Until</th>
                 <th>Status</th>
@@ -58,7 +58,14 @@ export default function RetentionPage() {
               {policies.map((policy) => (
                 <tr key={policy.id}>
                   <td>{policy.appliesTo === 'all' ? 'All types without a specific policy' : label(policy.appliesTo)}</td>
-                  <td className="text-right num">{policy.retainYears} {policy.retainYears === 1 ? 'year' : 'years'}</td>
+                  <td className="text-right num">
+                    {policy.neverDispose
+                      ? <Badge tone="caution">Never dispose</Badge>
+                      : <>{policy.retainYears} {policy.retainYears === 1 ? 'year' : 'years'}</>}
+                    {policy.createdBy === 'system' && (
+                      <div className="text-[11px] text-ink-faint mt-0.5">Seeded default</div>
+                    )}
+                  </td>
                   <td className="num !text-left">{date(policy.effectiveFrom)}</td>
                   <td className="num !text-left text-ink-muted">
                     {policy.supersededAt ? date(policy.supersededAt) : 'current'}
@@ -91,6 +98,12 @@ export default function RetentionPage() {
               <Field label="Keep for (years)">
                 <Input name="retainYears" type="number" min="0" step="1" required defaultValue="6" />
               </Field>
+              <Field label="Never dispose">
+                <label className="flex items-center gap-2 text-[12px]">
+                  <input type="checkbox" name="neverDispose" />
+                  Keep for the life they belong to (years ignored)
+                </label>
+              </Field>
               <Field label="In force from">
                 <Input name="effectiveFrom" type="date" required defaultValue={today()} />
               </Field>
@@ -112,6 +125,9 @@ export default function RetentionPage() {
           archive with a reason; the reason joins the audit trail. A disposed document can be
           restored from its own page."
       >
+        <div className="px-4 py-2 text-[12px] text-caution">
+          <Badge tone="caution">Before disposing</Badge> {status.expiryConditions}
+        </div>
         {status.eligible.length === 0 ? (
           <Empty
             title="Nothing to dispose of"
@@ -142,6 +158,13 @@ export default function RetentionPage() {
                   >
                     <Field label="Why may it be disposed of?">
                       <Input name="reason" required placeholder="Retention period has ended" />
+                    </Field>
+                    <Field label="Confirm nothing extends retention">
+                      <label className="flex items-start gap-2 text-[12px]">
+                        <input type="checkbox" name="confirmNoExtension" required className="mt-0.5" />
+                        No Revenue inquiry, investigation, claim or appeal is open (VATCA s.84(4)), and a
+                        return was delivered for every year this record relates to (TCA s.886).
+                      </label>
                     </Field>
                   </ActionForm>
                 </Disclosure>

@@ -1,9 +1,10 @@
 import { and, eq, isNull, desc } from 'drizzle-orm';
 import type { AppDatabase } from '@/db';
-import { documents, documentRetentionPolicies, auditEvents } from '@/db/schema';
+import { companies, documents, documentRetentionPolicies, auditEvents } from '@/db/schema';
 import { ids } from '@/lib/ids';
-import { addYears, isIsoDate, nowIso, today, type IsoDate } from '../dates';
+import { addYears, asIsoDate, isIsoDate, nowIso, today, type IsoDate } from '../dates';
 import { AccountingError } from '../accounting/errors';
+import { accountingYearContaining } from '../vat/apportionment';
 import { ALL_DOCUMENT_TYPES, isVaultDocumentType, VAULT_TYPE_LABELS, type DocumentType } from './types';
 
 /**
@@ -20,8 +21,11 @@ import { ALL_DOCUMENT_TYPES, isVaultDocumentType, VAULT_TYPE_LABELS, type Docume
  *    lists those documents for a person to decide. Disposal itself is an
  *    explicit, audited archive (`lifecycle.archiveDocument`).
  *
- * No periods are seeded: whether and for how long to keep each kind of
- * document is the owner's decision (issue #432).
+ * Default policies are seeded for every new book (issue #432): six years for
+ * every type the sources state (VATCA 2010 s.84(3); TCA 1997 s.886), never
+ * dispose for company constitutional documents and for contracts, which
+ * property and capital goods turn on. They are effective-dated policies like
+ * any other: the person can change or supersede them, never silently.
  */
 
 export class DocumentRetentionError extends AccountingError {}
@@ -33,17 +37,21 @@ export interface RetentionPolicy {
   id: string;
   appliesTo: RetentionScope;
   retainYears: number;
+  neverDispose: boolean;
   effectiveFrom: IsoDate;
   supersededAt: IsoDate | null;
   note: string | null;
+  createdBy: string;
   createdAt: string;
 }
 
 export interface SetRetentionPolicyInput {
   companyId: string;
   appliesTo: RetentionScope;
-  /** Whole years, counted from the document's own date. Zero means "no minimum". */
+  /** Whole years, counted from the end of the financial year containing the document's own date. Zero means "no minimum". */
   retainYears: number;
+  /** Keep the documents for the life they belong to: no expiry is ever computed (issue #432). */
+  neverDispose?: boolean;
   effectiveFrom: IsoDate;
   note?: string | null;
   actor: string;
@@ -61,6 +69,11 @@ export function setRetentionPolicy(db: AppDatabase, input: SetRetentionPolicyInp
   }
   if (!Number.isInteger(input.retainYears) || input.retainYears < 0) {
     throw new DocumentRetentionError('Retention is a whole number of years, and cannot be negative.');
+  }
+  if (input.neverDispose && input.retainYears !== 0) {
+    throw new DocumentRetentionError(
+      'A never-dispose policy keeps the documents for the life they belong to, so it states no years. Leave the period at 0.',
+    );
   }
   if (!isIsoDate(input.effectiveFrom)) {
     throw new DocumentRetentionError('The effective date must be a date (YYYY-MM-DD).');
@@ -100,6 +113,7 @@ export function setRetentionPolicy(db: AppDatabase, input: SetRetentionPolicyInp
       companyId: input.companyId,
       appliesTo: input.appliesTo,
       retainYears: input.retainYears,
+      neverDispose: input.neverDispose ?? false,
       effectiveFrom: input.effectiveFrom,
       note: input.note ?? null,
       createdBy: input.actor,
@@ -109,18 +123,22 @@ export function setRetentionPolicy(db: AppDatabase, input: SetRetentionPolicyInp
       id: ids.audit(), companyId: input.companyId, occurredAt: timestamp,
       entityType: 'document_retention_policy', entityId: policyId, action: 'created',
       newValue: JSON.stringify({
-        appliesTo: input.appliesTo, retainYears: input.retainYears, effectiveFrom: input.effectiveFrom,
+        appliesTo: input.appliesTo, retainYears: input.retainYears,
+        neverDispose: input.neverDispose ?? false, effectiveFrom: input.effectiveFrom,
       }),
       source: 'user', actor: input.actor,
-      reason: `Keep ${scopeLabel(input.appliesTo)} for ${input.retainYears} year${input.retainYears === 1 ? '' : 's'}.`,
+      reason: input.neverDispose
+        ? `Keep ${scopeLabel(input.appliesTo)} for the life they belong to: never dispose.`
+        : `Keep ${scopeLabel(input.appliesTo)} for ${input.retainYears} year${input.retainYears === 1 ? '' : 's'}.`,
       requestId: input.requestId ?? null,
     }).run();
   });
 
   return {
     id: policyId, appliesTo: input.appliesTo, retainYears: input.retainYears,
+    neverDispose: input.neverDispose ?? false,
     effectiveFrom: input.effectiveFrom, supersededAt: null,
-    note: input.note ?? null, createdAt: timestamp,
+    note: input.note ?? null, createdBy: input.actor, createdAt: timestamp,
   };
 }
 
@@ -157,18 +175,39 @@ export function resolveRetentionPolicy(
 /**
  * The date from which a document may be disposed of under the policy in force
  * as of its own date, or null when no policy covers it. The clock runs from
- * the document's own date, or from when it was filed when it states none.
+ * the end of the financial year containing the document's own date (or the
+ * date it was filed, when it states none), which is never earlier than the
+ * statutory "latest transaction" the sources name, and one date per year
+ * (issue #432). A never-dispose policy has no expiry at all.
  */
 export function retentionEndsOn(
   db: AppDatabase, companyId: string, doc: Pick<typeof documents.$inferSelect, 'documentDate' | 'uploadedAt' | 'documentType'>,
-): { eligibleFrom: IsoDate; retainYears: number } | null {
+): { eligibleFrom: IsoDate | null; retainYears: number; neverDispose: boolean } | null {
   const anchor = (doc.documentDate && isIsoDate(doc.documentDate) ? doc.documentDate : doc.uploadedAt.slice(0, 10)) as IsoDate;
   const policy = resolveRetentionPolicy(db, { companyId, documentType: doc.documentType, asOf: anchor });
-  return policy ? { eligibleFrom: addYears(anchor, policy.retainYears), retainYears: policy.retainYears } : null;
+  if (!policy) return null;
+  if (policy.neverDispose) return { eligibleFrom: null, retainYears: policy.retainYears, neverDispose: true };
+  return {
+    eligibleFrom: addYears(clockStart(db, companyId, anchor), policy.retainYears),
+    retainYears: policy.retainYears, neverDispose: false,
+  };
+}
+
+/** The end of the financial year containing the date, where the clock starts. */
+function clockStart(db: AppDatabase, companyId: string, anchor: IsoDate): IsoDate {
+  return asIsoDate(accountingYearContaining(db, companyId, anchor).end);
 }
 
 export interface RetentionStatus {
   asOf: IsoDate;
+  /**
+   * The conditions that extend retention past the policy, stated with every
+   * expiry (issue #432): the person confirms none applies before anything is
+   * disposed. A finding is carried until the CA 2014 retention section is
+   * collected, because the 6-year figure for accounting records is
+   * uncorroborated in the repo without it.
+   */
+  expiryConditions: string;
   /** Documents whose policy has run out, so a person may dispose of them. */
   eligible: Array<{
     documentId: string;
@@ -191,7 +230,7 @@ export function retentionStatus(
   params: { companyId: string; asOf?: IsoDate },
 ): RetentionStatus {
   const asOf = params.asOf ?? today();
-  const status: RetentionStatus = { asOf, eligible: [], withoutPolicy: [] };
+  const status: RetentionStatus = { asOf, expiryConditions: RETENTION_EXTENSION_CONDITIONS, eligible: [], withoutPolicy: [] };
 
   for (const doc of db.select().from(documents)
     .where(and(eq(documents.companyId, params.companyId), eq(documents.archived, false))).all()) {
@@ -208,7 +247,10 @@ export function retentionStatus(
       });
       continue;
     }
-    const eligibleFrom = addYears(anchor, policy.retainYears);
+    // A never-dispose policy keeps the document for the life it belongs to,
+    // so it is never listed as past retention (issue #432).
+    if (policy.neverDispose) continue;
+    const eligibleFrom = addYears(clockStart(db, params.companyId, anchor), policy.retainYears);
     if (eligibleFrom <= asOf) {
       status.eligible.push({
         documentId: doc.id, filename: doc.originalFilename, documentType: doc.documentType,
@@ -218,6 +260,68 @@ export function retentionStatus(
   }
   status.eligible.sort((a, b) => a.eligibleFrom.localeCompare(b.eligibleFrom));
   return status;
+}
+
+/**
+ * What can extend retention past the stated period (issue #432). Stated with
+ * every expiry: the person confirms none applies before anything is disposed.
+ */
+export const RETENTION_EXTENSION_CONDITIONS =
+  'Retention extends while a Revenue inquiry, investigation, claim or appeal is open, until it ends '
+  + '(VATCA 2010 s.84(4)), and a year whose return was never delivered is not closed off (TCA 1997 s.886). '
+  + 'Confirm none of these applies before disposing of anything. Finding: the Companies Act 2014 retention '
+  + 'section is not among the collected sources, so the six-year figure for accounting records is '
+  + 'uncorroborated in this repository until it is.';
+
+/** The default every new book is seeded with (issue #432). */
+export const DEFAULT_RETENTION_YEARS = 6;
+
+/** Types whose documents are kept for the life they belong to by default (issue #432). */
+export const RETENTION_NEVER_DISPOSE_TYPES: DocumentType[] = ['company_document', 'contract'];
+
+/**
+ * Seed the default retention policies into a new book (issue #432): six years
+ * for every type (VATCA 2010 s.84(3); TCA 1997 s.886), never dispose for the
+ * company's own constitutional documents and for contracts, which property and
+ * capital goods turn on (VATCA s.84(4)). Each is an effective-dated policy the
+ * person can supersede, like any other — never overwritten, never silent.
+ */
+export function seedDefaultRetentionPolicies(
+  db: AppDatabase, companyId: string, params: { effectiveFrom: IsoDate },
+): void {
+  // A book that already has a policy of its own is never re-seeded: the
+  // defaults are a starting point, not something that overwrites a decision.
+  const existing = db.select({ id: documentRetentionPolicies.id }).from(documentRetentionPolicies)
+    .where(eq(documentRetentionPolicies.companyId, companyId)).limit(1).get();
+  if (existing) {
+    throw new DocumentRetentionError(
+      `This book already has a retention policy, so the defaults are not seeded again (issue #432).`,
+    );
+  }
+  const timestamp = nowIso();
+  const rows: Array<typeof documentRetentionPolicies.$inferInsert> = [
+    {
+      id: ids.retentionPolicy(), companyId, appliesTo: 'all',
+      retainYears: DEFAULT_RETENTION_YEARS, neverDispose: false,
+      effectiveFrom: params.effectiveFrom,
+      note: 'Seeded default (issue #432): VAT records 6 years from the latest transaction (VATCA 2010 '
+        + 's.84(3)); books and records 6 years after the transactions (TCA 1997 s.886). The clock runs from '
+        + 'the end of the financial year containing the document\u2019s own date.',
+      createdBy: 'system', createdAt: timestamp, updatedAt: timestamp,
+    },
+    ...RETENTION_NEVER_DISPOSE_TYPES.map((type) => ({
+      id: ids.retentionPolicy(), companyId, appliesTo: type,
+      retainYears: 0, neverDispose: true,
+      effectiveFrom: params.effectiveFrom,
+      note: 'Seeded default (issue #432): never dispose — '
+        + (type === 'company_document'
+          ? 'company constitutional documents and statutory registers are kept for the company\u2019s life.'
+          : 'contracts for property or capital goods are kept while the asset is held, plus 6 years '
+            + '(VATCA s.84(4)); the books cannot know when the asset leaves the register.'),
+      createdBy: 'system', createdAt: timestamp, updatedAt: timestamp,
+    })),
+  ];
+  for (const row of rows) db.insert(documentRetentionPolicies).values(row).run();
 }
 
 function scopeLabel(scope: RetentionScope): string {
@@ -231,8 +335,9 @@ function labelFor(scope: DocumentType): string {
 function toPolicy(row: typeof documentRetentionPolicies.$inferSelect): RetentionPolicy {
   return {
     id: row.id, appliesTo: row.appliesTo as RetentionScope, retainYears: row.retainYears,
+    neverDispose: row.neverDispose,
     effectiveFrom: row.effectiveFrom as IsoDate, supersededAt: (row.supersededAt as IsoDate) ?? null,
-    note: row.note, createdAt: row.createdAt,
+    note: row.note, createdBy: row.createdBy, createdAt: row.createdAt,
   };
 }
 

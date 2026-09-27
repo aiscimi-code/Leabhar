@@ -6,11 +6,13 @@ import { join } from 'node:path';
 import { createTestDatabase } from '@/db/testing';
 import { createCompany } from '../config/setup';
 import { storeDocument } from './storage';
+import { deleteDocument, archiveDocument } from './lifecycle';
 import {
-  setRetentionPolicy, retentionPolicies, resolveRetentionPolicy, retentionStatus,
-  DocumentRetentionError,
+  setRetentionPolicy, retentionPolicies, resolveRetentionPolicy, retentionStatus, retentionEndsOn,
+  seedDefaultRetentionPolicies, DEFAULT_RETENTION_YEARS, RETENTION_NEVER_DISPOSE_TYPES,
+  RETENTION_EXTENSION_CONDITIONS, DocumentRetentionError,
 } from './retention';
-import { documents, auditEvents } from '@/db/schema';
+import { documents, auditEvents, documentRetentionPolicies } from '@/db/schema';
 import { asIsoDate } from '../dates';
 import type { AppDatabase } from '@/db';
 
@@ -30,6 +32,11 @@ beforeEach(() => {
   root = mkdtempSync(join(tmpdir(), 'retention-'));
 });
 afterEach(() => rmSync(root, { recursive: true, force: true }));
+
+/** The seeded defaults (issue #432) are in force in every new book; tests that
+ * need a book with no policy remove them first. */
+const clearSeededPolicies = () =>
+  db.delete(documentRetentionPolicies).where(eq(documentRetentionPolicies.companyId, companyId)).run();
 
 const store = (name: string, documentDate: string | null) => storeDocument(db, {
   companyId, filename: name, content: Buffer.from(`${name}-${Math.random()}`), root,
@@ -51,7 +58,7 @@ describe('setRetentionPolicy', () => {
   it('supersedes the previous policy for the scope, never overwrites it', () => {
     set('all', 6, '2020-01-01');
     set('all', 3, '2026-01-01');
-    const rows = retentionPolicies(db, companyId).filter((p) => p.appliesTo === 'all');
+    const rows = retentionPolicies(db, companyId).filter((p) => p.appliesTo === 'all' && p.createdBy === 'joe');
     expect(rows).toHaveLength(2);
     const earlier = rows.find((p) => p.effectiveFrom === '2020-01-01')!;
     expect(earlier.supersededAt).toBe('2026-01-01');
@@ -93,6 +100,7 @@ describe('resolveRetentionPolicy', () => {
   });
 
   it('returns nothing when no policy covers the date', () => {
+    clearSeededPolicies();
     expect(resolveRetentionPolicy(db, { companyId, documentType: 'receipt', asOf: asIsoDate('2022-01-01') })).toBeNull();
     set('all', 6, '2020-01-01');
     expect(resolveRetentionPolicy(db, { companyId, documentType: 'receipt', asOf: asIsoDate('2019-12-31') })).toBeNull();
@@ -107,8 +115,10 @@ describe('retentionStatus', () => {
 
     const status = retentionStatus(db, { companyId, asOf: asIsoDate('2026-01-01') });
     expect(status.eligible.map((e) => e.documentId)).toEqual([old.documentId]);
+    // The clock runs from the end of the financial year containing the
+    // document's own date (issue #432), so 2015-03-14 becomes 2021-12-31.
     expect(status.eligible[0]).toMatchObject({
-      documentDate: '2015-03-14', eligibleFrom: '2021-03-14', retainYears: 6,
+      documentDate: '2015-03-14', eligibleFrom: '2021-12-31', retainYears: 6,
     });
     // Nothing changed in the database by looking.
     expect(db.select().from(documents).where(eq(documents.id, old.documentId)).get()!.archived).toBe(false);
@@ -135,6 +145,7 @@ describe('retentionStatus', () => {
   });
 
   it('reports documents with no policy in force instead of guessing one', () => {
+    clearSeededPolicies();
     const doc = store('orphan.pdf', '2020-01-01');
     const status = retentionStatus(db, { companyId, asOf: asIsoDate('2026-01-01') });
     expect(status.eligible).toEqual([]);
@@ -146,5 +157,79 @@ describe('retentionStatus', () => {
     const old = store('disposed.pdf', '2015-03-14');
     db.update(documents).set({ archived: true }).where(eq(documents.id, old.documentId)).run();
     expect(retentionStatus(db, { companyId, asOf: asIsoDate('2026-01-01') }).eligible).toEqual([]);
+  });
+});
+
+describe('seeded defaults (#432)', () => {
+  it('seeds a 6-year default for every type and never-dispose for company documents and contracts', () => {
+    const seeded = retentionPolicies(db, companyId).filter((p) => p.createdBy === 'system');
+    expect(seeded.map((p) => p.appliesTo).sort()).toEqual(['all', 'company_document', 'contract']);
+    const all = seeded.find((p) => p.appliesTo === 'all')!;
+    expect(all.retainYears).toBe(DEFAULT_RETENTION_YEARS);
+    expect(all.neverDispose).toBe(false);
+    expect(all.note).toContain('s.84(3)');
+    expect(all.note).toContain('s.886');
+    for (const type of RETENTION_NEVER_DISPOSE_TYPES) {
+      const never = seeded.find((p) => p.appliesTo === type)!;
+      expect(never.neverDispose).toBe(true);
+      expect(never.retainYears).toBe(0);
+    }
+    // They are in force from the book's earliest date, so an old document resolves one.
+    const contract = storeDocument(db, {
+      companyId, filename: 'old-lease.pdf', content: Buffer.from('lease'),
+      root, documentDate: '2015-06-30', documentType: 'contract',
+    });
+    const row = db.select().from(documents).where(eq(documents.id, contract.documentId)).get()!;
+    const policy = resolveRetentionPolicy(db, { companyId, documentType: 'contract', asOf: asIsoDate('2015-06-30') });
+    expect(policy?.neverDispose).toBe(true);
+    expect(retentionEndsOn(db, companyId, row)).toMatchObject({ eligibleFrom: null, neverDispose: true });
+  });
+
+  it('never lists a never-dispose document as past retention, and never deletes it', () => {
+    const constitution = storeDocument(db, {
+      companyId, filename: 'constitution.pdf', content: Buffer.from('constitution'),
+      root, documentDate: '2000-01-01', documentType: 'company_document',
+    });
+    const status = retentionStatus(db, { companyId, asOf: asIsoDate('2030-01-01') });
+    expect(status.eligible.map((e) => e.documentId)).not.toContain(constitution.documentId);
+    expect(status.withoutPolicy.map((e) => e.documentId)).not.toContain(constitution.documentId);
+
+    // Deletion is the second step of retirement (ADR 0010): archive first.
+    archiveDocument(db, {
+      companyId, documentId: constitution.documentId, actor: 'joe', reason: 'Past retention',
+    });
+    expect(() => deleteDocument(db, {
+      companyId, documentId: constitution.documentId, actor: 'joe',
+      reason: 'Past retention', storageRootPath: root,
+    })).toThrow(/never-dispose/);
+  });
+
+  it('states the conditions that extend retention with every expiry', () => {
+    const status = retentionStatus(db, { companyId, asOf: asIsoDate('2026-01-01') });
+    expect(status.expiryConditions).toBe(RETENTION_EXTENSION_CONDITIONS);
+    expect(status.expiryConditions).toContain('s.84(4)');
+    expect(status.expiryConditions).toContain('s.886');
+    expect(status.expiryConditions).toContain('Companies Act 2014');
+  });
+
+  it('lets a person supersede a seeded default, and refuses a never-dispose policy that states years', () => {
+    setRetentionPolicy(db, {
+      companyId, appliesTo: 'all', retainYears: 3, effectiveFrom: asIsoDate('2026-01-01'), actor: 'joe',
+    });
+    const current = resolveRetentionPolicy(db, { companyId, documentType: 'receipt', asOf: asIsoDate('2026-06-01') });
+    expect(current?.retainYears).toBe(3);
+    expect(current?.createdBy).toBe('joe');
+
+    expect(() => setRetentionPolicy(db, {
+      companyId, appliesTo: 'tax_document', retainYears: 6, neverDispose: true,
+      effectiveFrom: asIsoDate('2026-01-01'), actor: 'joe',
+    })).toThrow(/Leave the period at 0/);
+  });
+
+  it('seedDefaultRetentionPolicies does not duplicate a book that already has policies', () => {
+    // The seed runs inside createCompany; calling it again by hand would be a
+    // mistake. It refuses rather than stack a second set.
+    expect(() => seedDefaultRetentionPolicies(db, companyId, { effectiveFrom: asIsoDate('1900-01-01') }))
+      .toThrow(DocumentRetentionError);
   });
 });
