@@ -12,3 +12,4 @@ export * from './capitalGoods';
 export * from './corporationTax';
 export * from './partners';
 export * from './expenses';
+export * from './payroll';

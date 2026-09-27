@@ -59,7 +59,12 @@ export type SystemAccountKey =
   /** Expense claims (issue #306): what a staff expense claim is owed against until reimbursed. */
   | 'staff_expenses_payable'
   /** Dividends paid (issue #489): what the close-company surcharge reads distributions from. */
-  | 'dividends_paid';
+  | 'dividends_paid'
+  /** Payroll costs (issue #527): what the payroll journal debits. */
+  | 'wages_expense'
+  | 'directors_remuneration'
+  | 'employer_pension_expense'
+  | 'employer_prsi_expense';
 
 export const DEFAULT_ACCOUNTS: AccountSeed[] = [
   // ---------------- Income ----------------
@@ -122,7 +127,10 @@ export const DEFAULT_ACCOUNTS: AccountSeed[] = [
   { code: '6130', name: 'Equipment (below capitalisation threshold)', type: 'expense', subtype: 'operating_expense', reportSection: 'operating_expenses' },
   { code: '6140', name: 'Training and education', type: 'expense', subtype: 'operating_expense', reportSection: 'operating_expenses' },
   { code: '6150', name: 'Repairs and maintenance', type: 'expense', subtype: 'operating_expense', reportSection: 'operating_expenses' },
-  { code: '6160', name: 'Directors remuneration', type: 'expense', subtype: 'operating_expense', vatApplicable: false, reportSection: 'operating_expenses' },
+  {
+    code: '6160', name: 'Directors remuneration', type: 'expense', subtype: 'operating_expense',
+    systemKey: 'directors_remuneration', vatApplicable: false, reportSection: 'operating_expenses',
+  },
   {
     code: '6170', name: 'Depreciation', type: 'expense', subtype: 'operating_expense',
     systemKey: 'depreciation_expense', vatApplicable: false, reportSection: 'operating_expenses',
@@ -132,7 +140,7 @@ export const DEFAULT_ACCOUNTS: AccountSeed[] = [
   },
   {
     code: '6180', name: 'Wages and salaries', type: 'expense', subtype: 'operating_expense',
-    vatApplicable: false, reportSection: 'operating_expenses',
+    systemKey: 'wages_expense', vatApplicable: false, reportSection: 'operating_expenses',
     description: 'Gross employee payroll before deductions, distinct from directors’ '
       + 'remuneration (6160) — issue #159: a rule pointed at 6160 mislabels employee pay '
       + 'as directors’ pay. The statutory deductions taken out of it are held in their own '
@@ -140,14 +148,14 @@ export const DEFAULT_ACCOUNTS: AccountSeed[] = [
   },
   {
     code: '6185', name: 'Employer pension contributions', type: 'expense',
-    subtype: 'operating_expense', vatApplicable: false, reportSection: 'operating_expenses',
+    subtype: 'operating_expense', systemKey: 'employer_pension_expense', vatApplicable: false, reportSection: 'operating_expenses',
     description: 'The employer’s own pension contribution for staff (issue #357), kept '
       + 'separate from wages (6180) and from the employees’ own deductions, which are not a '
       + 'cost but money held for them in 2450.',
   },
   {
     code: '6190', name: 'Employer PRSI', type: 'expense', subtype: 'operating_expense',
-    vatApplicable: false, reportSection: 'operating_expenses',
+    systemKey: 'employer_prsi_expense', vatApplicable: false, reportSection: 'operating_expenses',
     description: 'The employer’s own PRSI contribution, kept separate from wages '
       + '(6180) so each is visible on its own line.',
   },

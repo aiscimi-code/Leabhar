@@ -78,14 +78,17 @@ describe('suggestVatTreatment', () => {
     // by #439/#440/#441 on top of the 266 on main, 257 plus #434's 9; issue #313
     // added Part 11's 7 motor car rules and s.959AN(4)'s preliminary tax rule;
     // the rule-figure batch added 8 (USC surcharge threshold, PRSI Class S
-    // minimum, five CT preliminary-tax percentages, s.440 marginal relief cap).
-    expect(first.rulesAfter).toBe(305);
+    // minimum, five CT preliminary-tax percentages, s.440 marginal relief cap);
+    // EPIC 20's payroll curation added 29 (#526: 3 PRSI thresholds and credit,
+    // 15 dated Class A rate versions, 2 employer thresholds, the NTF levy, and
+    // 8 PAYE and USC procedures).
+    expect(first.rulesAfter).toBe(334);
   });
 
   it('loading again is a no-op', () => {
     const again = loadStatutoryKnowledgeBase(db, { companyId });
-    expect(again.rulesBefore).toBe(305);
-    expect(again.rulesAfter).toBe(305);
+    expect(again.rulesBefore).toBe(334);
+    expect(again.rulesAfter).toBe(334);
   });
 
   it('US SaaS purchase → non-EU reverse charge, cited to VATCA s.12 with a verifiable slice', () => {

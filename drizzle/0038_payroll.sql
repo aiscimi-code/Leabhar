@@ -1,0 +1,190 @@
+CREATE TABLE `employees` (
+	`id` text PRIMARY KEY NOT NULL,
+	`company_id` text NOT NULL,
+	`first_name` text NOT NULL,
+	`last_name` text NOT NULL,
+	`ppsn` text,
+	`date_of_birth` text,
+	`address` text,
+	`email` text,
+	`employer_reference` text NOT NULL,
+	`employment_id` text NOT NULL,
+	`start_date` text NOT NULL,
+	`left_on` text,
+	`pay_frequency` text NOT NULL,
+	`is_director` integer DEFAULT false NOT NULL,
+	`is_proprietary_director` integer DEFAULT false NOT NULL,
+	`officer_id` text,
+	`prsi_class` text DEFAULT 'A' NOT NULL,
+	`recorded_by` text NOT NULL,
+	`notes` text,
+	`created_at` text DEFAULT (datetime('now')) NOT NULL,
+	`updated_at` text DEFAULT (datetime('now')) NOT NULL,
+	FOREIGN KEY (`company_id`) REFERENCES `companies`(`id`) ON UPDATE no action ON DELETE no action,
+	FOREIGN KEY (`officer_id`) REFERENCES `company_officers`(`id`) ON UPDATE no action ON DELETE no action
+);
+--> statement-breakpoint
+CREATE INDEX `employees_company_idx` ON `employees` (`company_id`);--> statement-breakpoint
+CREATE UNIQUE INDEX `employees_employer_reference_unique` ON `employees` (`company_id`,`employer_reference`);--> statement-breakpoint
+CREATE TABLE `employment_terms` (
+	`id` text PRIMARY KEY NOT NULL,
+	`company_id` text NOT NULL,
+	`employee_id` text NOT NULL,
+	`pay_basis` text NOT NULL,
+	`annual_salary_minor` integer,
+	`hourly_rate_minor` integer,
+	`normal_hours_hundredths` integer,
+	`pension_scheme` text DEFAULT 'none' NOT NULL,
+	`pension_employee_basis_points` integer,
+	`pension_employee_fixed_minor` integer,
+	`pension_employer_basis_points` integer,
+	`pension_employer_fixed_minor` integer,
+	`effective_from` text NOT NULL,
+	`effective_to` text,
+	`recorded_by` text NOT NULL,
+	`notes` text,
+	`created_at` text DEFAULT (datetime('now')) NOT NULL,
+	`updated_at` text DEFAULT (datetime('now')) NOT NULL,
+	FOREIGN KEY (`company_id`) REFERENCES `companies`(`id`) ON UPDATE no action ON DELETE no action,
+	FOREIGN KEY (`employee_id`) REFERENCES `employees`(`id`) ON UPDATE no action ON DELETE no action
+);
+--> statement-breakpoint
+CREATE INDEX `employment_terms_employee_idx` ON `employment_terms` (`employee_id`,`effective_from`);--> statement-breakpoint
+CREATE TABLE `pay_runs` (
+	`id` text PRIMARY KEY NOT NULL,
+	`company_id` text NOT NULL,
+	`pay_frequency` text NOT NULL,
+	`tax_year` integer NOT NULL,
+	`period_number` integer NOT NULL,
+	`period_start` text NOT NULL,
+	`period_end` text NOT NULL,
+	`pay_date` text NOT NULL,
+	`insurable_weeks` integer NOT NULL,
+	`status` text DEFAULT 'draft' NOT NULL,
+	`journal_entry_id` text,
+	`posted_by` text,
+	`posted_at` text,
+	`reversal_journal_entry_id` text,
+	`reversal_reason` text,
+	`reversed_by` text,
+	`net_pay_journal_entry_id` text,
+	`net_paid_on` text,
+	`net_pay_bank_transaction_id` text,
+	`created_by` text NOT NULL,
+	`notes` text,
+	`created_at` text DEFAULT (datetime('now')) NOT NULL,
+	`updated_at` text DEFAULT (datetime('now')) NOT NULL,
+	FOREIGN KEY (`company_id`) REFERENCES `companies`(`id`) ON UPDATE no action ON DELETE no action
+);
+--> statement-breakpoint
+CREATE INDEX `pay_runs_company_idx` ON `pay_runs` (`company_id`,`tax_year`,`pay_date`);--> statement-breakpoint
+CREATE TABLE `payroll_remittances` (
+	`id` text PRIMARY KEY NOT NULL,
+	`company_id` text NOT NULL,
+	`month` text NOT NULL,
+	`paye_minor` integer NOT NULL,
+	`usc_minor` integer NOT NULL,
+	`prsi_minor` integer NOT NULL,
+	`paid_on` text NOT NULL,
+	`journal_entry_id` text NOT NULL,
+	`bank_transaction_id` text,
+	`recorded_by` text NOT NULL,
+	`created_at` text DEFAULT (datetime('now')) NOT NULL,
+	`updated_at` text DEFAULT (datetime('now')) NOT NULL,
+	FOREIGN KEY (`company_id`) REFERENCES `companies`(`id`) ON UPDATE no action ON DELETE no action
+);
+--> statement-breakpoint
+CREATE INDEX `payroll_remittances_company_idx` ON `payroll_remittances` (`company_id`,`month`);--> statement-breakpoint
+CREATE TABLE `payslip_lines` (
+	`id` text PRIMARY KEY NOT NULL,
+	`payslip_id` text NOT NULL,
+	`kind` text NOT NULL,
+	`description` text NOT NULL,
+	`quantity_hundredths` integer,
+	`rate_minor` integer,
+	`multiplier_basis_points` integer,
+	`benefit_category` text,
+	`amount_minor` integer NOT NULL,
+	`sort_order` integer DEFAULT 0 NOT NULL,
+	`created_at` text DEFAULT (datetime('now')) NOT NULL,
+	`updated_at` text DEFAULT (datetime('now')) NOT NULL,
+	FOREIGN KEY (`payslip_id`) REFERENCES `payslips`(`id`) ON UPDATE no action ON DELETE no action
+);
+--> statement-breakpoint
+CREATE INDEX `payslip_lines_payslip_idx` ON `payslip_lines` (`payslip_id`);--> statement-breakpoint
+CREATE TABLE `payslips` (
+	`id` text PRIMARY KEY NOT NULL,
+	`company_id` text NOT NULL,
+	`pay_run_id` text NOT NULL,
+	`employee_id` text NOT NULL,
+	`rpn_id` text,
+	`employment_terms_id` text,
+	`tax_basis` text NOT NULL,
+	`usc_basis` text NOT NULL,
+	`period_number` integer NOT NULL,
+	`gross_pay_minor` integer NOT NULL,
+	`notional_pay_minor` integer NOT NULL,
+	`pension_employee_minor` integer NOT NULL,
+	`pension_employer_minor` integer NOT NULL,
+	`pay_for_tax_minor` integer NOT NULL,
+	`tax_minor` integer NOT NULL,
+	`cumulative_pay_for_tax_minor` integer NOT NULL,
+	`cumulative_tax_minor` integer NOT NULL,
+	`cumulative_srcop_minor` integer NOT NULL,
+	`cumulative_credits_minor` integer NOT NULL,
+	`pay_for_usc_minor` integer NOT NULL,
+	`usc_minor` integer NOT NULL,
+	`cumulative_pay_for_usc_minor` integer NOT NULL,
+	`cumulative_usc_minor` integer NOT NULL,
+	`prsi_class` text NOT NULL,
+	`insurable_weeks` integer NOT NULL,
+	`reckonable_earnings_minor` integer NOT NULL,
+	`prsi_employee_minor` integer NOT NULL,
+	`prsi_employer_minor` integer NOT NULL,
+	`ntf_levy_minor` integer NOT NULL,
+	`net_pay_minor` integer NOT NULL,
+	`inputs` text NOT NULL,
+	`rule_figures` text NOT NULL,
+	`working` text NOT NULL,
+	`findings` text NOT NULL,
+	`created_at` text DEFAULT (datetime('now')) NOT NULL,
+	`updated_at` text DEFAULT (datetime('now')) NOT NULL,
+	FOREIGN KEY (`company_id`) REFERENCES `companies`(`id`) ON UPDATE no action ON DELETE no action,
+	FOREIGN KEY (`pay_run_id`) REFERENCES `pay_runs`(`id`) ON UPDATE no action ON DELETE no action,
+	FOREIGN KEY (`employee_id`) REFERENCES `employees`(`id`) ON UPDATE no action ON DELETE no action,
+	FOREIGN KEY (`rpn_id`) REFERENCES `revenue_payroll_notifications`(`id`) ON UPDATE no action ON DELETE no action,
+	FOREIGN KEY (`employment_terms_id`) REFERENCES `employment_terms`(`id`) ON UPDATE no action ON DELETE no action
+);
+--> statement-breakpoint
+CREATE UNIQUE INDEX `payslips_run_employee_unique` ON `payslips` (`pay_run_id`,`employee_id`);--> statement-breakpoint
+CREATE INDEX `payslips_employee_idx` ON `payslips` (`employee_id`);--> statement-breakpoint
+CREATE TABLE `revenue_payroll_notifications` (
+	`id` text PRIMARY KEY NOT NULL,
+	`company_id` text NOT NULL,
+	`employee_id` text NOT NULL,
+	`rpn_number` text NOT NULL,
+	`tax_year` integer NOT NULL,
+	`effective_from` text NOT NULL,
+	`tax_basis` text NOT NULL,
+	`yearly_tax_credits_minor` integer NOT NULL,
+	`yearly_srcop_minor` integer NOT NULL,
+	`usc_status` text NOT NULL,
+	`usc_basis` text NOT NULL,
+	`usc_bands` text NOT NULL,
+	`prsi_exempt` integer DEFAULT false NOT NULL,
+	`previous_pay_minor` integer DEFAULT 0 NOT NULL,
+	`previous_tax_minor` integer DEFAULT 0 NOT NULL,
+	`previous_usc_pay_minor` integer DEFAULT 0 NOT NULL,
+	`previous_usc_minor` integer DEFAULT 0 NOT NULL,
+	`supersedes_rpn_id` text,
+	`recorded_by` text NOT NULL,
+	`source` text DEFAULT 'user' NOT NULL,
+	`confidence` integer,
+	`provenance_status` text DEFAULT 'manually_entered' NOT NULL,
+	`created_at` text DEFAULT (datetime('now')) NOT NULL,
+	`updated_at` text DEFAULT (datetime('now')) NOT NULL,
+	FOREIGN KEY (`company_id`) REFERENCES `companies`(`id`) ON UPDATE no action ON DELETE no action,
+	FOREIGN KEY (`employee_id`) REFERENCES `employees`(`id`) ON UPDATE no action ON DELETE no action
+);
+--> statement-breakpoint
+CREATE INDEX `rpns_employee_idx` ON `revenue_payroll_notifications` (`employee_id`,`tax_year`,`effective_from`);

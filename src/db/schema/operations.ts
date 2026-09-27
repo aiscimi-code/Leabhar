@@ -240,7 +240,7 @@ export const auditEvents = sqliteTable('audit_events', {
       'archived', 'restored', 'mapped', 'unmapped',
       'user_invited', 'user_removed', 'user_role_changed', 'user_password_changed',
       'deactivated', 'year_end_closed', 'reversed_early', 'loan_advanced', 'loan_repaid',
-      'loan_interest_accrued',
+      'loan_interest_accrued', 'payroll_posted', 'payroll_reversed', 'payroll_paid',
     ],
   }).notNull(),
 

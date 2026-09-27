@@ -11,6 +11,13 @@ export function newId(prefix: string): string {
 
 export const ids = {
   partner: () => newId('ptr'),
+  employee: () => newId('emp'),
+  employmentTerms: () => newId('emt'),
+  rpn: () => newId('rpn'),
+  payRun: () => newId('prun'),
+  payslip: () => newId('psl'),
+  payslipLine: () => newId('psll'),
+  payrollRemittance: () => newId('prem'),
   partnerShare: () => newId('pts'),
   ctDecision: () => newId('ctd'),
   company: () => newId('co'),

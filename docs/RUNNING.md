@@ -344,6 +344,28 @@ npm run cli -- run --account <id> [--file <path>] --from <date> --to <date>
 npm run cli -- run ... --sign-off                     # ...and record it
 ```
 
+### Payroll (EPIC 20)
+
+A month for one salaried employee, end to end. `npm run cli -- --help` lists
+every payroll flag.
+
+```bash
+npm run cli -- add-employee --first Aoife --last Byrne --ref E001 --start 2026-01-01 \
+        --frequency monthly --ppsn 1234567T --by owner
+npm run cli -- set-employment-terms --employee <id> --from 2026-01-01 --salary 48000 --by owner
+npm run cli -- record-rpn --employee <id> --rpn 1 --year 2026 --from 2026-01-01 --basis cumulative \
+        --credits 4000 --srcop 44000 --usc-bands "0.5:12012,2:16688,3:41344,8" --by owner
+npm run cli -- create-pay-run --frequency monthly --pay-date 2026-01-30 --weeks 4 --by owner
+npm run cli -- show-pay-run --run <id>                # payslips, working, totals
+npm run cli -- post-pay-run --run <id> --by owner     # posts the payroll journal
+npm run cli -- pay-net-wages --run <id> --bank-transaction <id> --by owner
+npm run cli -- pay-payroll-taxes --month 2026-01 --bank-transaction <id> --by owner
+npm run cli -- reconcile-payroll --as-of 2026-01-31
+```
+
+The RPN is copied by hand from ROS until retrieval is built (#528). Nothing is
+submitted to Revenue yet: the payroll submission is #528.
+
 ### Agent workflow
 
 `db:seed` only ever loads the Acme demo. To load a real (or synthetic) SME
@@ -552,7 +574,8 @@ the disk.
 
 ## What this does not do
 
-- It does not file anything. There is no connection to Revenue or the CRO.
+- It does not file anything. There is no connection to Revenue or the CRO:
+  payroll is computed and posted, but its submissions are not yet sent (#528).
 - It does not tell you that you are compliant. It reports whether its own
   internal checks passed, which is a much narrower claim.
 - It does not calculate your corporation tax. The year-end pack shows the bridge

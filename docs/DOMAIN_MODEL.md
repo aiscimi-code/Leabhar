@@ -613,6 +613,64 @@ posted, returns a warning and raises one review item. Contacts are people at
 the customer; one with an email may be the billing contact. They are
 deactivated, never deleted.
 
+### Payroll (EPIC 20, issues #524–#527)
+
+An employee (`employees`) carries what S.I. 345/2018 reg.17(2) and reg.10(1)
+require: name, PPSN (validated by its check character), employer reference,
+employment identifier, commencement and cessation, pay frequency, and the
+director flags. The terms of the job (`employment_terms`), meaning the salary
+or hourly rate and the pension arrangement, are effective-dated.
+
+A **Revenue payroll notification** (`revenue_payroll_notifications`) carries
+Revenue's figures for the employee and year: credits, SRCOP, the tax and USC
+basis, the USC bands, and previous employments' pay and tax. It is immutable
+and superseded from a date. See ADR 0014: employee figures come from the RPN;
+statutory figures come from the rules.
+
+A **pay run** (`pay_runs`) is one pay date for one frequency:
+
+    draft ──post──▶ posted ──reverse──▶ reversed
+      │ (recompute, set inputs)   └──pay net wages──▶ (net paid)
+
+A draft's payslips are computed and recomputed freely. Posting re-computes
+them and refuses if any reviewed figure changed. It also refuses a run dated
+before an employee's latest posted run. It then posts one journal:
+
+| Debit | Credit |
+|---|---|
+| 6180 wages (6160 for a director) | 2410 PAYE, 2420 USC |
+| 6190 employer PRSI + NTF levy | 2430 PRSI (employee + employer + levy) |
+| 6185 employer pension | 2450 pension (employee + employer) |
+| | 2440 net wages |
+
+A benefit in kind is notional pay. It is taxed and charged to USC and PRSI,
+but never debited as wages or paid.
+
+Each payslip (`payslips`, `payslip_lines`) stores:
+- the lines, and the inputs they came from;
+- the tax basis (cumulative, week 1, or the emergency bases of reg.19);
+- this period's and the cumulative figures;
+- the snapshot of rule figures and the working;
+- findings on what the books cannot know.
+
+A run is corrected only by reversal, latest first. Reversal is refused once
+the net pay or the month's remittance has been paid.
+
+The net pay leaves the bank against one run (`payNetWages`). The month's
+PAYE, USC and PRSI go to Revenue in one payment (`payPayrollLiabilities`,
+`payroll_remittances`). A bank line used for either must match to the cent.
+`reconcilePayroll` compares each control account with the posted runs less
+payroll payments, and each payslip's cumulative pay with the sum of its
+predecessors. A difference becomes a review item; nothing is adjusted.
+
+Not yet built:
+- RPN retrieval and payroll submissions (#528);
+- PRSI classes other than A, which are refused rather than approximated;
+- how the weekly PRSI thresholds convert for monthly pay (#529);
+- BIK valuation;
+- pension relief limits;
+- LPT deductions.
+
 ### Consolidation (bank ↔ invoice)
 
 ```
@@ -1196,7 +1254,7 @@ remembered for each new report.
 ## 13. Deliberately excluded from the MVP
 
 Per §47, no code for: open banking, bank feeds, Revenue/ROS integration, Stripe,
-payroll, multi-company, multi-user, cloud hosting, accountant portal, automated
+multi-company, multi-user, cloud hosting, accountant portal, automated
 filing.
 
 The extension points that keep these possible:

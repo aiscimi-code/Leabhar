@@ -30,7 +30,7 @@ export const journalEntries = sqliteTable('journal_entries', {
       'manual_adjustment', 'opening_balance', 'fixed_asset', 'depreciation',
       'fx_revaluation', 'vat_period_close', 'year_end_close', 'reversal',
       'recurring', 'accrual', 'prepayment', 'expense_claim', 'partner_loan',
-      'partner_loan_interest',
+      'partner_loan_interest', 'payroll_run', 'payroll_payment',
     ],
   }).notNull(),
   sourceId: text('source_id'),

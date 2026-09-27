@@ -37,3 +37,4 @@ date it was written, not the date the decision was first taken.
 | [0011](0011-s381-claim-amount-on-decision.md) | An s.381 claim records the amount; the books cannot know the other income | Accepted |
 | [0012](0012-year-end-close-destination.md) | Where the year-end close puts the result, per entity type | Accepted |
 | [0013](0013-no-personal-non-trading-income.md) | An individual's non-trading income is never recorded; the return flags it | Accepted |
+| [0014](0014-payroll-figures-rpn-and-rules.md) | Take an employee's figures from the RPN and the statutory figures from the rules | Accepted |

@@ -58,9 +58,20 @@ export interface IncomeTaxDeriveResult { created: number; superseded: number; un
 
 /** Derive the curated income tax rules, one dated version per row, chained by `supersedesRuleId`. */
 export function deriveIncomeTaxRules(db: AppDatabase, params: { companyId: string }): IncomeTaxDeriveResult {
+  return deriveCuratedRuleFamilies(db, { companyId: params.companyId, rules: INCOME_TAX_CURATED_RULES, label: 'income tax' });
+}
+
+/**
+ * Derive a list of curated figure rules (income tax, payroll), one dated
+ * version per row, each family chained by `supersedesRuleId`. A rule whose
+ * excerpt is not in its provision's text is skipped and named, never derived.
+ */
+export function deriveCuratedRuleFamilies(
+  db: AppDatabase, params: { companyId: string; rules: CuratedIncomeTaxRule[]; label: string },
+): IncomeTaxDeriveResult {
   const result: IncomeTaxDeriveResult = { created: 0, superseded: 0, unchanged: 0, skippedNoProvision: [] };
   const families = new Map<string, CuratedIncomeTaxRule[]>();
-  for (const r of INCOME_TAX_CURATED_RULES) families.set(r.ruleKey, [...(families.get(r.ruleKey) ?? []), r]);
+  for (const r of params.rules) families.set(r.ruleKey, [...(families.get(r.ruleKey) ?? []), r]);
 
   const provisionFor = (rule: CuratedIncomeTaxRule) => {
     const sources = db.select({ id: irishKnowledgeSources.id }).from(irishKnowledgeSources)
@@ -107,7 +118,7 @@ export function deriveIncomeTaxRules(db: AppDatabase, params: { companyId: strin
       result.created++;
       upsertReviewItem(db, {
         companyId: params.companyId, kind: 'unresolved_ai_suggestion', severity: 'info',
-        title: `New income tax rule extracted: ${rule.name}`,
+        title: `New ${params.label} rule extracted: ${rule.name}`,
         detail: `${rule.citation} s.${rule.sectionNumber}. ${rule.interpretationNote} Review against the source text and approve, `
           + 'or reject, before it is treated as authoritative.',
         entityType: 'irish_tax_rule', entityId: id, dedupeKey: `irish_tax_rule:${id}`, context: { ruleKey },
