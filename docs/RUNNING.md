@@ -280,6 +280,8 @@ npm run cli -- reconcile --account <id> --from <date> --to <date> --sign-off
                                                       # record the reconciliation
 npm run cli -- reconcile ... --sign-off --accept-difference "reason"
                                                       # sign off despite an unexplained difference
+npm run cli -- reconcile --account <id> --from <date> --to <date> --csv > statement.csv
+                                                      # the bank reconciliation statement, for filing
 npm run cli -- run --account <id> [--file <path>] --from <date> --to <date>
                                                       # import (optional) -> auto-classify -> reconcile
 npm run cli -- run ... --sign-off                     # ...and record it

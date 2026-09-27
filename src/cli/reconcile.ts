@@ -56,6 +56,8 @@ import { eq } from 'drizzle-orm';
 import { suggestJournalMatches, linkBankTransactionToJournal } from '@/domain/banking/journalLink';
 import { withdrawMatchRejection } from '@/domain/matching/service';
 import { allocatePaymentOnAccount, paymentsOnAccount } from '@/domain/invoicing/onAccount';
+import { reconciliationStatement } from '@/domain/banking/reconciliationStatement';
+import { toCsv, amountFor } from '@/lib/csv';
 import { resolveVatPeriodId } from '@/agent/books';
 import { reconcileVatReturn } from '@/domain/vat/reconcile';
 import { buildRtdReturn } from '@/domain/vat/rtd';
@@ -160,6 +162,8 @@ Commands:
   reconcile --account <id>               Compute reconciliation (read-only)
             --from <date> --to <date>
   reconcile ... --sign-off               Record the reconciliation
+  reconcile ... --csv                    Print the bank reconciliation statement
+                                         as CSV (statement, items, ledger, sign-off)
             [--accept-difference "reason"]
   list-imports                           The import history, newest first
   rollback-import --import <id> --reason "..." --actor "Name"
@@ -727,6 +731,23 @@ export async function main(argv: string[], options: CliOptions = {}): Promise<nu
           statementClosingBalance: getFlag(flags, 'statement-balance', 'statementBalance'),
         });
 
+        if (hasFlag(flags, 'csv')) {
+          // The bank reconciliation statement as CSV, for filing (issue #387).
+          const statement = reconciliationStatement(db, {
+            companyId, bankAccountId: parsed.bankAccountId,
+            periodStart: asIsoDate(parsed.from), periodEnd: asIsoDate(parsed.to),
+            statementClosingBalanceMinor: parsed.statementClosingBalance,
+          });
+          const currency = statement.result.currency;
+          process.stdout.write(toCsv(statement.rows, [
+            { header: 'Section', value: (r) => r.section },
+            { header: 'Date', value: (r) => r.date },
+            { header: 'Description', value: (r) => r.description },
+            { header: `Amount (${currency})`, money: true, value: (r) => amountFor(r.amountMinor, currency) },
+            { header: 'Explanation', value: (r) => r.explanation },
+          ]));
+          return 0;
+        }
         if (parsed.signOff) {
           print(signOff(db, parsed), format);
         } else {

@@ -87,6 +87,14 @@ export default async function ReconcilePage({ searchParams }: {
             <Input name="to" type="date" defaultValue={to} />
           </div>
           <Button type="submit">Recalculate</Button>
+          <span className="text-[12px] text-ink-muted ml-auto">
+            Statement:{' '}
+            <a className="text-accent hover:underline"
+              href={`/api/export/reconciliation?account=${selected.id}&from=${from}&to=${to}&format=xlsx`}>Excel</a>
+            {' · '}
+            <a className="text-accent hover:underline"
+              href={`/api/export/reconciliation?account=${selected.id}&from=${from}&to=${to}&format=csv`}>CSV</a>
+          </span>
         </form>
       </Panel>
 
