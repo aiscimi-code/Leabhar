@@ -192,6 +192,79 @@ describe('capital allowances', () => {
   });
 });
 
+describe('motor cars (TCA Part 11, ss.373 and 374)', () => {
+  const car = (over: Partial<typeof fixedAssets.$inferInsert> = {}) => {
+    const id = ids.fixedAsset();
+    db.insert(fixedAssets).values({
+      id, companyId, name: 'Director car', assetCategory: 'motor_vehicles', purchaseDate: '2025-03-01',
+      costMinor: 800_000, currency: 'EUR', baseCostMinor: 800_000, baseCurrency: 'EUR',
+      capitalAllowanceRateBasisPoints: 1250, capitalAllowanceYears: 8, status: 'active', ...over,
+    }).run();
+    return id;
+  };
+  const inYear = (y: number) => capitalAllowances(db, { companyId, from: `${y}-01-01`, to: `${y}-12-31` });
+  const line = (r: ReturnType<typeof inYear>, label: string) => r.lines.find((l) => l.label.includes(label))?.amountMinor;
+
+  it('restricts a car over the specified amount to €24,000 of cost (s.373(2), s.374(1))', () => {
+    car({ costMinor: 3_000_000, baseCostMinor: 3_000_000 });
+    const r = inYear(2025);
+    expect(line(r, 'wear and tear')).toBe(-300_000);
+    expect(r.lines[0]!.sources[0]!.label).toContain('24000.00');
+    expect(r.lines[0]!.citations.map((c) => c.ruleKey)).toContain('ct.car_allowances_restricted_to_specified_amount');
+    expect(r.lines[0]!.citations.map((c) => c.section)).toContain('TCA 1997 s.374');
+    expect(r.findings.some((f) => f.includes('specified amount') && f.includes('374(1)'))).toBe(true);
+  });
+
+  it('computes a restricted car\'s balancing adjustment on the specified amount and scaled proceeds (s.374(2), (3))', () => {
+    // Cost €30,000 restricted to €24,000; allowances made 2025–2026: €6,000; disposed of 2027 for €20,000,
+    // scaled to €16,000 (24,000/30,000); unallowed €18,000: a balancing allowance of €2,000.
+    car({ costMinor: 3_000_000, baseCostMinor: 3_000_000, disposalDate: '2027-06-01', disposalProceedsMinor: 2_000_000 });
+    const r = inYear(2027);
+    expect(line(r, 'balancing allowances')).toBe(-200_000);
+    expect(r.lines[0]!.sources[0]!.label).toContain('scaled down, s.374(3)');
+    expect(r.lines[0]!.citations.map((c) => c.ruleKey)).toContain('ct.car_disposal_proceeds_scaled_down');
+  });
+
+  it('gives a car under the specified amount its allowances on cost, with nothing flagged', () => {
+    car({ costMinor: 2_000_000, baseCostMinor: 2_000_000 });
+    const r = inYear(2025);
+    expect(line(r, 'wear and tear')).toBe(-250_000);
+    expect(r.findings.some((f) => f.includes('specified amount') || f.includes('s.373(1)'))).toBe(false);
+  });
+
+  it('leaves a commercial vehicle unrestricted and asks to confirm it is not a car (s.373(1))', () => {
+    car({ name: 'Delivery van', costMinor: 3_000_000, baseCostMinor: 3_000_000 });
+    const r = inYear(2025);
+    expect(line(r, 'wear and tear')).toBe(-375_000);
+    expect(r.findings.some((f) => f.includes('s.373(1)'))).toBe(true);
+  });
+
+  it('uses the €22,000 specified amount for a car bought in an accounting period ending 2002–2005', () => {
+    car({ purchaseDate: '2005-03-01', costMinor: 3_000_000, baseCostMinor: 3_000_000 });
+    const r = inYear(2005);
+    expect(line(r, 'wear and tear')).toBe(-275_000);
+    expect(r.lines[0]!.citations.map((c) => c.ruleKey)).toContain('ct.car_specified_amount_2002_to_2005');
+  });
+
+  it('says to check a car bought in a period ending before 2001, whose dated specified amounts are not applied', () => {
+    car({ purchaseDate: '1999-03-01', costMinor: 3_000_000, baseCostMinor: 3_000_000 });
+    const r = inYear(1999);
+    expect(line(r, 'wear and tear')).toBe(-375_000);
+    expect(r.findings.some((f) => f.includes('31 December 2000'))).toBe(true);
+  });
+  it('flags a car bought from July 2008: its CO2 emissions restriction (Chapter 1A) is not applied', () => {
+    car({ costMinor: 2_000_000, baseCostMinor: 2_000_000 });
+    expect(inYear(2025).findings.some((f) => f.includes('Chapter 1A'))).toBe(true);
+  });
+
+  it('does not raise the emissions question for a van or a car bought before July 2008', () => {
+    car({ name: 'Delivery van' });
+    car({ purchaseDate: '2005-03-01' });
+    expect(inYear(2005).findings.some((f) => f.includes('Chapter 1A'))).toBe(false);
+    expect(inYear(2025).findings.filter((f) => f.includes('Chapter 1A'))).toEqual([]);
+  });
+});
+
 describe('loss relief', () => {
   const inYear = (y: number) => computeCorporationTax(db, { companyId, from: asIsoDate(`${y}-01-01`), to: asIsoDate(`${y}-12-31`) });
 
@@ -250,11 +323,34 @@ describe('close company surcharge', () => {
 
 describe('dates', () => {
   it('gives the CT1 date and one preliminary tax payment for a small company', () => {
-    post('4020', 1_000_000, 'Consulting');
-    const c = ct();
-    expect(c.dates.returnDueDate).toBe('2026-09-23');
+    post('4020', 1_000_000, 'Consulting', '2025-06-15');
+    post('4020', 1_000_000, 'Consulting', '2026-06-15');
+    const c = computeCorporationTax(db, { companyId, from: asIsoDate('2026-01-01'), to: asIsoDate('2026-12-31') });
+    expect(c.dates.returnDueDate).toBe('2027-09-23');
     expect(c.dates.smallCompany).toBe(true);
-    expect(c.dates.preliminaryTax).toEqual([{ dueDate: '2025-11-23', amountMinor: 112_500, basis: '90% of this period\'s tax' }]);
+    expect(c.dates.precedingPeriodTaxMinor).toBe(125_000);
+    expect(c.dates.preliminaryTax).toEqual([{ dueDate: '2026-11-23', amountMinor: 112_500, basis: "the lower of 90% of this period's tax and 100% of the preceding period's" }]);
+  });
+
+  it('gives a first period with tax under €200,000 nil preliminary tax (s.959AN(4), issue #284)', () => {
+    post('4020', 40_000_000, 'Consulting');
+    const c = ct();
+    expect(c.corporationTaxMinor).toBe(5_000_000);
+    expect(c.dates.preliminaryTax).toEqual([{
+      dueDate: '2025-11-23', amountMinor: 0,
+      basis: "nil: the company's first accounting period, with tax of 50000.00 under the 200000.00 limit",
+    }]);
+    expect(c.dates.citations.map((x) => x.ruleKey)).toContain('ct.preliminary_tax_first_period_nil');
+    expect(c.dates.citations.find((x) => x.ruleKey === 'ct.preliminary_tax_first_period_nil')!.section).toBe('TCA 1997 s.959AN');
+    expect(c.findings.some((f) => f.includes('first ever'))).toBe(true);
+  });
+
+  it('treats a first period with tax over €200,000 as large: instalments, not nil (issue #284)', () => {
+    post('4020', 200_000_000, 'Consulting');
+    const c = ct();
+    expect(c.corporationTaxMinor).toBe(25_000_000);
+    expect(c.dates.smallCompany).toBe(false);
+    expect(c.dates.preliminaryTax.map((p) => [p.dueDate, p.amountMinor])).toEqual([['2025-06-23', 11_250_000], ['2025-11-23', 11_250_000]]);
   });
 
   it('splits preliminary tax in two once the preceding period\'s tax reached €200,000 (s.959AS)', () => {

@@ -8,7 +8,7 @@ import { nowIso, asIsoDate, type IsoDate } from '../dates';
 import { accountingYearContaining } from '../vat/apportionment';
 import {
   CT_RATE_TRADING_RULE_KEY, CT_RATE_HIGHER_RULE_KEY, CORPORATION_TAX_CURATED_RULES,
-  nfgCitation,
+  nfgCitation, carSpecifiedAmountRuleKey,
 } from '../rules/corporationTaxCuration';
 import { auditRuleFigures, RejectedRuleError } from '../rules/ruleFigures';
 
@@ -150,6 +150,8 @@ export interface CtComputation {
   to: IsoDate;
   accountingProfitMinor: number;
   lines: CtLine[];
+  /** The trading result after adjustments, before loss relief; negative for a loss. */
+  adjustedTradingResultMinor: number;
   /** Case I: trading profit after adjustments and capital allowances. */
   tradingProfitMinor: number;
   /** A trading loss, when the result is negative (not relieved here). */
@@ -270,6 +272,35 @@ const daysBetween = (a: string, b: string) => Math.round((Date.parse(b) - Date.p
 export interface AssetClaimsMade { claims: number; made: number }
 
 /**
+ * The Part 11 position of a fixed asset (TCA ss.373, 374). A motor car
+ * costing over the specified amount for the accounting period its
+ * expenditure was incurred in is given its allowances, and its balancing
+ * adjustments, as if it had cost the specified amount; on disposal its sale,
+ * insurance, salvage or compensation moneys are scaled down in the proportion
+ * the specified amount bears to its cost (s.374(3)). Commercial-type vehicles
+ * are excluded (s.373(1)), and the register does not record which a vehicle
+ * is, so one that reads like a van is left unrestricted and flagged. Null for
+ * an asset that is not a road vehicle. `ruleKey` null: a commercial vehicle,
+ * or a car bought in a period ending before 2001, whose dated, condition-
+ * specific specified amounts are not applied.
+ */
+function motorCarBasis(
+  db: AppDatabase, companyId: string, asset: typeof fixedAssets.$inferSelect, figures: FigureAudit,
+): { specifiedAmountMinor: number | null; ruleKey: string | null; commercial: boolean; purchasePeriodEnd: string } | null {
+  const text = `${asset.name} ${asset.description ?? ''}`;
+  if (asset.assetCategory !== 'motor_vehicles' && !/\b(car|van|vehicle|motor)\b/i.test(text)) return null;
+  const purchasePeriodEnd = accountingYearContaining(db, companyId, asset.purchaseDate).end;
+  const commercial = /\b(van|lorry|truck|bus|coach|minibus|pickup)\b/i.test(text);
+  const ruleKey = commercial ? null : carSpecifiedAmountRuleKey(purchasePeriodEnd);
+  return {
+    specifiedAmountMinor: ruleKey ? figureWithCurationFallback(figures, ruleKey) : null,
+    ruleKey,
+    commercial,
+    purchasePeriodEnd,
+  };
+}
+
+/**
  * Wear and tear (s.284), balancing allowances and charges (s.288) from the
  * fixed asset register. An asset's configured rate is used; a rate other
  * than the s.284 standard is flagged, and 100% in one year is treated as a
@@ -306,6 +337,7 @@ export function capitalAllowances(
   const balancingAllowances: CtSource[] = [];
   const balancingCharges: CtSource[] = [];
   let accelerated = false;
+  const carCitations = new Set<string>();
   const assets = db.select().from(fixedAssets).where(and(eq(fixedAssets.companyId, companyId), lte(fixedAssets.purchaseDate, to))).all();
   for (const asset of assets) {
     if (asset.disposalDate && asset.disposalDate < from) continue;
@@ -316,13 +348,44 @@ export function capitalAllowances(
     const cost = asset.baseCostMinor;
     const rate = asset.capitalAllowanceRateBasisPoints;
     const years = asset.capitalAllowanceYears;
-    const annual = multiplyRational(cost, rate, 10_000);
+    // TCA s.374(1): a motor car over the specified amount gets its allowances
+    // as if it cost the specified amount.
+    const car = motorCarBasis(db, companyId, asset, audit);
+    const restrictedBy = car?.ruleKey && car.specifiedAmountMinor !== null && cost > car.specifiedAmountMinor
+      ? car.specifiedAmountMinor : null;
+    const basisMinor = restrictedBy ?? cost;
+    const annual = multiplyRational(basisMinor, rate, 10_000);
     // Claims made in earlier periods (s.292: the amount still unallowed is cost less these).
     // Income tax supplies its own count, in years of assessment (s.284(2)(b)).
     const madeBeforeIn = params.claimsBefore ? params.claimsBefore(asset) : null;
     const claimsBefore = madeBeforeIn ? Math.max(madeBeforeIn.claims, 0) : Math.max(claimIndex(db, companyId, asset.purchaseDate, to), 0);
-    const madeBefore = madeBeforeIn ? Math.min(cost, Math.max(madeBeforeIn.made, 0)) : Math.min(cost, annual * Math.min(claimsBefore, years));
-    const isMotor = asset.assetCategory === 'motor_vehicles' || /\b(car|van|vehicle|motor)\b/i.test(`${asset.name} ${asset.description ?? ''}`);
+    const madeBefore = madeBeforeIn
+      ? Math.min(basisMinor, Math.max(madeBeforeIn.made, 0))
+      : Math.min(basisMinor, annual * Math.min(claimsBefore, years));
+
+    if (car && restrictedBy !== null) {
+      carCitations.add('ct.car_allowances_restricted_to_specified_amount');
+      carCitations.add(car.ruleKey!);
+      findings.push(`${asset.name} cost ${eur(cost)}, over the ${eur(restrictedBy)} specified amount for expenditure `
+        + `incurred in the period to ${car.purchasePeriodEnd}: its allowances and its balancing adjustments are `
+        + `computed on ${eur(basisMinor)} (ss.373(2), 374(1) and (2)).`);
+    } else if (car?.commercial) {
+      findings.push(`${asset.name} reads like a commercial vehicle, which s.373(1) excludes from the car restrictions: `
+        + 'its allowances are computed on its full cost. Confirm it is not a motor car.');
+    } else if (car && car.ruleKey === null) {
+      findings.push(`${asset.name} was bought in an accounting period ending on or before 31 December 2000: the `
+        + 'specified amounts for those periods are the dated, condition-specific ones of s.373(2), which are not '
+        + 'applied here. Check the claim against the amount for its period.');
+    }
+    if (car && !car.commercial && asset.purchaseDate >= '2008-07-01') {
+      // Part 11 Chapter 1A (ss.380K-380P, Finance Act 2008) restricts a car's
+      // allowances by its CO2 emissions category. That chapter's notes are not
+      // among the sources, and the register records no emissions category, so
+      // the restriction is not applied: flagged, never assumed away.
+      findings.push(`${asset.name}: allowances on a car bought from July 2008 also depend on its CO2 emissions category `
+        + '(TCA Part 11 Chapter 1A, ss.380K-380P), which can reduce them or deny them for high-emission cars. The '
+        + 'emissions category is not recorded, so that restriction is not applied: check the claim.');
+    }
 
     if (asset.disposalDate && asset.disposalDate <= to) {
       // s.288: a balancing event in this period, and no wear and tear for it (s.284(1)).
@@ -335,11 +398,15 @@ export function capitalAllowances(
           + 'scrapped): the balancing allowance or charge (s.288) cannot be computed without them.');
         continue;
       }
-      const proceeds = asset.disposalProceedsMinor;
-      const unallowed = cost - madeBefore;
+      // s.374(3): a restricted car's sale, insurance, salvage or compensation moneys are
+      // reduced in the proportion the specified amount bears to its cost.
+      const recordedProceeds = asset.disposalProceedsMinor;
+      const proceeds = restrictedBy !== null ? multiplyRational(recordedProceeds, restrictedBy, cost) : recordedProceeds;
+      if (restrictedBy !== null && proceeds !== recordedProceeds) carCitations.add('ct.car_disposal_proceeds_scaled_down');
+      const unallowed = basisMinor - madeBefore;
       if (proceeds < unallowed) {
         balancingAllowances.push({ entityType: 'fixed_asset', entityId: asset.id, amountMinor: unallowed - proceeds,
-          label: `${asset.name}: unallowed ${eur(unallowed)} less proceeds ${eur(proceeds)}` });
+          label: `${asset.name}: unallowed ${eur(unallowed)} less proceeds ${eur(proceeds)}${proceeds !== recordedProceeds ? ` (proceeds ${eur(recordedProceeds)} scaled down, s.374(3))` : ''}` });
       } else if (proceeds > unallowed) {
         if (proceeds < smallProceeds) {
           findings.push(`${asset.name}: proceeds of ${eur(proceeds)} are under €2,000, so no balancing charge (s.288(3B)), unless `
@@ -350,16 +417,15 @@ export function capitalAllowances(
             label: `${asset.name}: proceeds ${eur(proceeds)} less unallowed ${eur(unallowed)}${charge < proceeds - unallowed ? ', limited to allowances made (s.288(4))' : ''}` });
         }
       }
-      if (isMotor) findings.push(`${asset.name}: a car's balancing adjustment is restricted where its cost exceeded the limit (TCA Part 11), which is not applied here.`);
       continue;
     }
 
-    if (claimsBefore >= years || madeBefore >= cost) continue;
-    let claim = Math.min(annual, cost - madeBefore);
+    if (claimsBefore >= years || madeBefore >= basisMinor) continue;
+    let claim = Math.min(annual, basisMinor - madeBefore);
     if (scale) claim = multiplyRational(claim, scale.num, scale.den);
     if (claim <= 0) continue;
     wearAndTear.push({ entityType: 'fixed_asset', entityId: asset.id, amountMinor: claim,
-      label: `${asset.name} (year ${claimsBefore + 1} of ${years}, ${rate / 100}% of ${eur(cost)})` });
+      label: `${asset.name} (year ${claimsBefore + 1} of ${years}, ${rate / 100}% of ${eur(basisMinor)}${restrictedBy !== null ? `, the s.374(1) basis: cost ${eur(cost)}` : ''})` });
 
     if (rate === 10_000 && years === 1) {
       accelerated = true;
@@ -369,10 +435,6 @@ export function capitalAllowances(
       findings.push(`${asset.name} is claimed at ${rate / 100}% over ${years} years, not the 12.5% over 8 years of s.284(2)(ad). `
         + 'Check the basis for the different rate.');
     }
-    if (isMotor) {
-      findings.push(`${asset.name} looks like a motor vehicle. Allowances on cars are limited by cost and emissions `
-        + '(TCA Part 11, ss.373–380), which is not yet applied: check the claim.');
-    }
   }
 
   const total = (xs: CtSource[]) => xs.reduce((s, x) => s + x.amountMinor, 0);
@@ -380,22 +442,25 @@ export function capitalAllowances(
     lines.push({
       kind: 'deduction', label: 'Deduct: capital allowances (wear and tear)', amountMinor: -total(wearAndTear),
       citations: [cite('ct.wear_and_tear_rate'), cite('ct.wear_and_tear_in_use_at_period_end'), cite('ct.allowances_not_exceed_cost'),
-        ...(scale ? [cite('ct.wear_and_tear_short_period')] : []), ...(accelerated ? [cite('ct.accelerated_energy_efficient')] : [])],
+        ...(scale ? [cite('ct.wear_and_tear_short_period')] : []), ...(accelerated ? [cite('ct.accelerated_energy_efficient')] : []),
+        ...[...carCitations].map(cite)],
       sources: wearAndTear,
-      explanation: 'Each asset in use at the end of the period, at its rate, for the years it has left, never beyond its cost.',
+      explanation: 'Each asset in use at the end of the period, at its rate, for the years it has left, never beyond its cost '
+        + '(a motor car over the specified amount, on that amount: s.374(1)).',
     });
   }
   if (balancingAllowances.length) {
     lines.push({
       kind: 'deduction', label: 'Deduct: balancing allowances', amountMinor: -total(balancingAllowances),
-      citations: [cite('ct.balancing_allowance'), cite('ct.amount_still_unallowed')], sources: balancingAllowances,
-      explanation: 'Assets disposed of for less than their unallowed cost.',
+      citations: [cite('ct.balancing_allowance'), cite('ct.amount_still_unallowed'), ...[...carCitations].map(cite)], sources: balancingAllowances,
+      explanation: 'Assets disposed of for less than their unallowed cost (a restricted car, on its scaled-down proceeds: s.374(3)).',
     });
   }
   if (balancingCharges.length) {
     lines.push({
       kind: 'add_back', label: 'Add: balancing charges', amountMinor: total(balancingCharges),
-      citations: [cite('ct.balancing_charge'), cite('ct.balancing_charge_limit'), cite('ct.amount_still_unallowed')],
+      citations: [cite('ct.balancing_charge'), cite('ct.balancing_charge_limit'), cite('ct.amount_still_unallowed'),
+        ...[...carCitations].map(cite)],
       sources: balancingCharges,
       explanation: 'Assets disposed of for more than their unallowed cost, limited to the allowances made.',
     });
@@ -698,29 +763,43 @@ export function computeCorporationTax(db: AppDatabase, params: { companyId: stri
   const periodDays = Math.round((Date.parse(to) - Date.parse(from)) / 86_400_000) + 1;
   const limit = multiplyRational(ruleValue('ct.small_company_threshold'), Math.min(periodDays, yearDays), yearDays);
   const precedingPeriodTaxMinor = prior ? Math.max(prior.taxMinor, 0) : null;
-  const smallCompany = precedingPeriodTaxMinor === null || precedingPeriodTaxMinor < limit;
+  // s.959AM: a company is large when the preceding period's tax was at or over the
+  // limit — or, with no preceding period (a first period), when this period's tax is.
+  const firstPeriod = precedingPeriodTaxMinor === null;
   const current = Math.max(corporationTaxMinor, 0);
+  const smallCompany = firstPeriod ? current < limit : precedingPeriodTaxMinor! < limit;
   const preliminaryTax: CtDates['preliminaryTax'] = [];
   const finalDue = byThe23rd(addDays(to, -31));
-  if (smallCompany) {
+  if (firstPeriod && current < limit) {
+    // s.959AN(4): a company's first accounting period, with expected tax under the
+    // limit, owes no preliminary tax at all.
+    preliminaryTax.push({ dueDate: finalDue, amountMinor: 0,
+      basis: `nil: the company's first accounting period, with tax of ${eur(current)} under the ${eur(limit)} limit` });
+    findings.push(`No preceding period is on the books and this period's tax is under ${eur(limit)}, so preliminary tax is nil `
+      + '(s.959AN(4)). "First accounting period" means the company\'s first ever one, not the first one on these books: if the '
+      + 'company traded before these books started, preliminary tax is due and this must be paid.');
+  } else if (smallCompany) {
     const amount = precedingPeriodTaxMinor === null ? multiplyRational(current, 9, 10) : Math.min(multiplyRational(current, 9, 10), precedingPeriodTaxMinor);
     preliminaryTax.push({ dueDate: finalDue, amountMinor: amount,
       basis: precedingPeriodTaxMinor === null ? '90% of this period\'s tax' : 'the lower of 90% of this period\'s tax and 100% of the preceding period\'s' });
-    if (precedingPeriodTaxMinor === null) {
-      findings.push('No preceding period is on the books, so the company is treated as small for preliminary tax. A company\'s '
-        + 'first period has its own rules: check whether preliminary tax is due at all.');
-    }
   } else {
-    const first = Math.min(multiplyRational(current, 45, 100), multiplyRational(precedingPeriodTaxMinor!, 50, 100));
+    // s.959AS: the first instalment is the lower of 45% of this period's tax and
+    // 50% of the preceding period's — 45% alone for a first period.
+    const first = precedingPeriodTaxMinor === null
+      ? multiplyRational(current, 45, 100)
+      : Math.min(multiplyRational(current, 45, 100), multiplyRational(precedingPeriodTaxMinor, 50, 100));
     preliminaryTax.push({ dueDate: byThe23rd(addDays(addMonths(from, 6), -1)), amountMinor: first,
-      basis: 'the lower of 45% of this period\'s tax and 50% of the preceding period\'s' });
+      basis: precedingPeriodTaxMinor === null
+        ? '45% of this period\'s tax: no preceding period, so a large first period pays instalments'
+        : 'the lower of 45% of this period\'s tax and 50% of the preceding period\'s' });
     preliminaryTax.push({ dueDate: finalDue, amountMinor: Math.max(multiplyRational(current, 9, 10) - first, 0),
       basis: 'bringing the total to 90% of this period\'s tax' });
   }
   const dates: CtDates = {
     returnDueDate: byThe23rd(addMonths(to, 9)), smallCompany, precedingPeriodTaxMinor, preliminaryTax,
     citations: [cite('ct.return_filing_date'), cite('ct.small_company_threshold'),
-      cite(smallCompany ? 'ct.preliminary_tax_small' : 'ct.preliminary_tax_large')],
+      cite(firstPeriod && current < limit ? 'ct.preliminary_tax_first_period_nil'
+        : smallCompany ? 'ct.preliminary_tax_small' : 'ct.preliminary_tax_large')],
   };
 
   const pending = decisions.filter((d) => !d.decided);
@@ -728,11 +807,13 @@ export function computeCorporationTax(db: AppDatabase, params: { companyId: stri
     findings.push(`${pending.length} treatment(s) are suggested, not decided: the figures use the suggestion until a person chooses.`);
   }
   findings.push(...figures.findings());
-  findings.push('Not computed: motor vehicle limits (TCA Part 11), chargeable gains, charges on income, group relief '
+  findings.push('Not computed: chargeable gains, charges on income, group relief '
     + 'and associated companies\' share of the surcharge threshold.');
 
   return {
-    companyId, from, to, accountingProfitMinor: base.accountingProfitMinor, lines, tradingProfitMinor, tradingLossMinor,
+    companyId, from, to, accountingProfitMinor: base.accountingProfitMinor, lines,
+    adjustedTradingResultMinor: base.adjustedMinor,
+    tradingProfitMinor, tradingLossMinor,
     nonTradingIncome: base.nonTradingIncome, nonTradingIncomeMinor: base.nonTradingIncomeMinor,
     taxAtStandardRateMinor, taxAtHigherRateMinor, corporationTaxMinor,
     rates: { standardBasisPoints: standard, higherBasisPoints: higher, citations: [cite(CT_RATE_TRADING_RULE_KEY), cite(CT_RATE_HIGHER_RULE_KEY)] },

@@ -91,6 +91,7 @@ import { reconcileVatReturn } from '@/domain/vat/reconcile';
 import { buildRtdReturn } from '@/domain/vat/rtd';
 import { buildViesStatement } from '@/domain/vat/vies';
 import { computeCorporationTax, recordCtDecision, type CtSubjectType } from '@/domain/corporationTax/computation';
+import { buildCt1Worksheet } from '@/domain/corporationTax/ct1';
 import { computeIncomeTax } from '@/domain/incomeTax/computation';
 import { addPartner, setPartnerShare, partnerSharesOn } from '@/domain/config/partners';
 import { partners, bankAccounts, invoices } from '@/db/schema';
@@ -454,6 +455,11 @@ Inspect:
   ct-computation --from <date> --to <date>
                                          Corporation tax computation for the
                                           accounting period, with open decisions
+  ct1-worksheet --from <date> --to <date>
+                                         CT1 computation worksheet: the tax
+                                         reconciliation from accounting profit to
+                                         the total liability, payment dates and
+                                         what is still open
   it-computation --year <YYYY>           Income tax, USC and PRSI for a sole trader or
                                           partnership's year of assessment
   add-partner --name <n> --share <percent> --joined <date> --by <name> [--precedent] [--ppsn <p>]
@@ -1704,6 +1710,13 @@ export async function main(argv: string[], options: CliOptions = {}): Promise<nu
 
       case 'ct-computation': {
         print(computeCorporationTax(db, {
+          companyId, from: asIsoDate(requireFlag(flags, 'from')), to: asIsoDate(requireFlag(flags, 'to')),
+        }), format);
+        return 0;
+      }
+
+      case 'ct1-worksheet': {
+        print(buildCt1Worksheet(db, {
           companyId, from: asIsoDate(requireFlag(flags, 'from')), to: asIsoDate(requireFlag(flags, 'to')),
         }), format);
         return 0;

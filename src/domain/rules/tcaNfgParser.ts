@@ -50,8 +50,10 @@ export function parseNfgSections(markdown: string): NfgSection[] {
       wrapped.push(t);
     }
     // A note with no Summary or Details (s.292) is taken when it is the next
-    // section along: the same number or a close one.
-    if (!opensBody && !(previous > 0 && number > previous && number - previous <= 5)) continue;
+    // section along: the same number or a close one. The same takes the first
+    // note of a part (Part 11 opens with one, s.373): a left-margin heading
+    // before any note has been taken is a note, not a line of text.
+    if (!opensBody && !((previous === 0) || (number > previous && number - previous <= 5))) continue;
     if (!opensBody) wrapped.length = 0;
     const heading = [m[2]!, ...wrapped].join(' ').replace(/- /g, '').replace(/\s+/g, ' ').trim();
     starts.push({ line: i, sectionNumber: m[1]!, heading });

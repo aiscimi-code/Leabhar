@@ -234,6 +234,7 @@ npm run cli -- vat-reconcile --period <id-or-name>     # boxes = entries, VAT ac
 npm run cli -- rtd --date 2025-12-31                   # annual return of trading details, by rate
 npm run cli -- vies --month 2025-03 --quarterly        # VIES statement (monthly without --quarterly)
 npm run cli -- ct-computation --from 2025-01-01 --to 2025-12-31   # corporation tax, with open decisions
+npm run cli -- ct1-worksheet --from 2025-01-01 --to 2025-12-31    # CT1 worksheet: tax reconciliation, payment dates
 npm run cli -- it-computation --year 2025             # sole trader / partnership: income tax, USC, PRSI
 npm run cli -- add-partner --name "A. Byrne" --share 50 --joined 2024-01-01 --by "A. Byrne" --precedent
 npm run cli -- set-partner-share --partner <id> --share 60 --from 2025-07-01 --by "A. Byrne"
