@@ -55,7 +55,9 @@ export type SystemAccountKey =
   | 'accruals'
   | 'prepayments'
   /** Bad debts (issue #404): what a debt written off is charged to. */
-  | 'bad_debts';
+  | 'bad_debts'
+  /** Expense claims (issue #306): what a staff expense claim is owed against until reimbursed. */
+  | 'staff_expenses_payable';
 
 export const DEFAULT_ACCOUNTS: AccountSeed[] = [
   // ---------------- Income ----------------
@@ -289,6 +291,14 @@ export const DEFAULT_ACCOUNTS: AccountSeed[] = [
     description: 'Employees’ own pension contributions deducted from their pay and held for '
       + 'the pension provider (issue #357). Not a cost of the business — the employer’s own '
       + 'contribution is 6185.',
+  },
+  {
+    code: '2445', name: 'Staff expenses payable', type: 'liability', subtype: 'current_liability',
+    systemKey: 'staff_expenses_payable', vatApplicable: false, reportSection: 'current_liabilities',
+    description: 'Approved expense claims owed to staff until they are reimbursed '
+      + '(issue #306). An officer’s claim is owed on their own current account instead '
+      + '(2500), so this is the balance for everyone else. Zero once claims are paid; '
+      + 'a balance that survives is an exception to resolve.',
   },
   {
     code: '2500', name: 'Director’s current account', type: 'liability',

@@ -506,6 +506,49 @@ order over what was ordered is linked and flagged for review
 remains of an order and keeps the bills already linked; a fully billed order
 has nothing left to cancel. The order prints as a PDF to send the supplier.
 
+### Expense claims, mileage and subsistence (issue #306)
+
+An expense claim (`expense_claims`, `expense_claim_lines`) is money a director
+or a member of staff spent personally on the business's behalf: mileage,
+subsistence, travel or a receipted cost. It is the no-invoice counterpart of the
+director flows of §28 — a purchase with a supplier's invoice is confirmed,
+posted as an invoice and settled (`settleInvoiceByDirector`), never claimed,
+because the invoice is the only proof of input VAT (issue #234). A claim claims
+no input VAT at all; the allowances carry none.
+
+The rates are effective-dated configuration (`expense_rates`), seeded from the
+civil service mileage and subsistence allowances Revenue accepts as the
+tax-free ceiling (motor travel from Circular 16/2022, domestic subsistence
+from Circular 04/2025, with their source URL on every row). A mileage rate is
+fractional cents per kilometre, so it is stored as minor units per 100 km and
+multiplied out with the same rational arithmetic the VAT engine uses. A line
+dated before the rate's window resolves nothing and is refused; a later
+revision supersedes rather than overwrites, and the line snapshots the rate it
+resolved.
+
+The lifecycle is submitted → approved → reimbursed, with rejected and reversed
+as the exits. Approving is the accounting event: the journal is posted there
+(each line's business share debited to its expense account, any private share
+charged back to the claimant on the same payable account, the whole claim
+credited to the claimant — an officer on their own current account, everyone
+else on Staff expenses payable, 2445), after every line's accounting period is
+checked. A claim is never edited after submission: it is rejected with a reason,
+or reversed, and a reversal is a reversing journal. Reimbursing pays the net
+owed (the total less the private shares) out of the bank — from a matching,
+unposted bank line where there is one, or a dated payment where there is not —
+and a mileage, subsistence or travel reimbursement is flagged as reportable to
+Revenue under the Enhanced Reporting Requirements until the submission is built
+(epic #316).
+
+A line's business-use share is a judgement, so it is flagged, never silent. The
+same apportionment exists on the bank path: `classifyTransaction` takes a
+`businessUseBasisPoints` and the account the private share is charged to (the
+director's current account, or drawings), posts the business share as the cost
+and the private share to the person, records both on the bank transaction and
+raises a review item; `recordDirectorPaidExpense` records only the business
+share — the private share of a director's personally-paid cost is not the
+company's to record.
+
 ### Customer terms (issue #392)
 
 A customer's payment terms give a sales invoice its due date when none is

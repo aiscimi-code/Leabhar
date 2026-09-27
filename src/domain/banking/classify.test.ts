@@ -468,6 +468,119 @@ describe('director-paid expenses without an invoice', () => {
   });
 });
 
+// Issue #306: an expense that is only partly business splits the cost, and the
+// private share is charged to the person, not to the business.
+describe('business/private apportionment on classification', () => {
+  it('posts the business share to the account and charges the private share to the director', async () => {
+    const officerId = ids.officer();
+    db.insert(companyOfficers).values({
+      id: officerId, companyId, name: 'A. Director', role: 'director',
+    }).run();
+    const tx = await importOne('EIRCOM BROADBAND', '-50.00');
+
+    classifyTransaction(db, {
+      companyId, bankTransactionId: tx.id,
+      accountId: byCode['6030']!, vatTreatmentId: tr['OUT_OF_SCOPE']!,
+      businessUseBasisPoints: 8_000,
+      privateUseAccountId: acc['directors_current_account']!,
+    });
+
+    const posted = db.select().from(bankTransactions).where(eq(bankTransactions.id, tx.id)).get()!;
+    const lines = db.select().from(journalLines)
+      .where(eq(journalLines.journalEntryId, posted.journalEntryId!))
+      .orderBy(journalLines.lineNumber).all();
+    expect(lines).toHaveLength(3);
+    expect(lines[0]).toMatchObject({ accountId: byCode['6030'], debitMinor: 4_000 });
+    expect(lines[1]).toMatchObject({
+      accountId: acc['directors_current_account'], debitMinor: 1_000, officerId: null,
+    });
+    expect(lines[2]).toMatchObject({ accountId: acc['bank_control'], creditMinor: 5_000 });
+
+    const row = posted;
+    expect(row.businessUseBasisPoints).toBe(8_000);
+    expect(row.privateUseAccountId).toBe(acc['directors_current_account']);
+
+    // The apportionment is a judgement, so it is flagged for review.
+    const flagged = db.select().from(reviewItems)
+      .where(eq(reviewItems.dedupeKey, `bank_transaction:${tx.id}:private_use`)).get();
+    expect(flagged?.title).toMatch(/80% business/);
+
+    expect(trialBalance(db, { companyId, asOf: makeDate(2025, 12, 31) }).balanced).toBe(true);
+  });
+
+  it('refuses an apportionment with no account to charge the private share to, and a split on a receipt', async () => {
+    const out = await importOne('PARTLY PRIVATE', '-50.00');
+    expect(() => classifyTransaction(db, {
+      companyId, bankTransactionId: out.id,
+      accountId: byCode['6030']!, vatTreatmentId: tr['OUT_OF_SCOPE']!,
+      businessUseBasisPoints: 8_000,
+    })).toThrow(/say where the private share is charged/);
+
+    const receipt = await importOne('PARTLY PRIVATE RECEIPT', '50.00');
+    expect(() => classifyTransaction(db, {
+      companyId, bankTransactionId: receipt.id,
+      accountId: byCode['4020']!, vatTreatmentId: tr['IE_STD']!,
+      businessUseBasisPoints: 8_000, privateUseAccountId: acc['directors_current_account']!,
+    })).toThrow(/money paid out/);
+  });
+
+  it('still claims no input VAT on a partly-private payment without an invoice', async () => {
+    const tx = await importOne('PARTLY PRIVATE PURCHASE', '-123.00');
+    const result = classifyTransaction(db, {
+      companyId, bankTransactionId: tx.id,
+      accountId: byCode['6010']!, vatTreatmentId: tr['IE_STD']!,
+      businessUseBasisPoints: 5_000, privateUseAccountId: acc['directors_current_account']!,
+    });
+    expect(result.vatEntryIds).toEqual([]);
+    const lines = db.select().from(journalLines)
+      .where(eq(journalLines.journalEntryId, result.journalEntryId))
+      .orderBy(journalLines.lineNumber).all();
+    expect(lines).toHaveLength(3);
+    expect(lines[0]).toMatchObject({ accountId: byCode['6010'], debitMinor: 6_150 });
+    expect(lines[1]).toMatchObject({ accountId: acc['directors_current_account'], debitMinor: 6_150 });
+    expect(lines[2]).toMatchObject({ accountId: acc['bank_control'], creditMinor: 12_300 });
+    expect(lines.find((l) => l.accountId === acc['vat_on_purchases'])).toBeUndefined();
+  });
+});
+
+// Issue #306: a director-paid expense that is only partly business records
+// only the business share — the private share is the director's own cost.
+describe('a partly-private director-paid expense', () => {
+  const director = () => {
+    const officerId = ids.officer();
+    db.insert(companyOfficers).values({
+      id: officerId, companyId, name: 'A. Director', role: 'director',
+    }).run();
+    return officerId;
+  };
+
+  it('owes the director only the business share', () => {
+    const officerId = director();
+    const result = recordDirectorPaidExpense(db, {
+      companyId, officerId, date: makeDate(2025, 3, 15),
+      description: 'Home office phone', accountId: byCode['6030']!,
+      vatTreatmentId: tr['OUT_OF_SCOPE']!, grossMinor: 4_000,
+      businessUseBasisPoints: 7_500,
+    });
+    const lines = db.select().from(journalLines)
+      .where(eq(journalLines.journalEntryId, result.journalEntryId))
+      .orderBy(journalLines.lineNumber).all();
+    expect(lines[0]).toMatchObject({ accountId: byCode['6030'], debitMinor: 3_000 });
+    expect(lines[1]).toMatchObject({
+      accountId: acc['directors_current_account'], creditMinor: 3_000, officerId,
+    });
+  });
+
+  it('records nothing when the expense is wholly private', () => {
+    expect(() => recordDirectorPaidExpense(db, {
+      companyId, officerId: director(), date: makeDate(2025, 3, 15),
+      description: 'Holiday', accountId: byCode['6030']!,
+      vatTreatmentId: tr['OUT_OF_SCOPE']!, grossMinor: 4_000,
+      businessUseBasisPoints: 0,
+    })).toThrow(/nothing for the company to record/);
+  });
+});
+
 // Issue #158: a Stripe payout net of fees, or a loan repayment's
 // capital/interest split, is one statement amount that needs posting to more
 // than one account. `classifyTransaction` is deliberately one account + one

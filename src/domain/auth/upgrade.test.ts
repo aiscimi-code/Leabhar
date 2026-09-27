@@ -7,7 +7,6 @@ import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
 import { eq } from 'drizzle-orm';
 import { openSqlite } from '@/db';
 import * as schema from '@/db/schema';
-import { createCompany } from '@/domain/config/setup';
 import { hashPassword } from './auth';
 import { assertMemberAllowed } from './permissions';
 import { inviteUser } from './users';
@@ -34,8 +33,15 @@ describe('upgrading a book from before business membership', () => {
       const db = drizzle(sqlite, { schema });
       migrate(db, { migrationsFolder: dir });
 
-      // The old book: one company, its owner and a day-to-day 'user'.
-      const { companyId } = createCompany(db, { legalName: 'Old Book Ltd', seedYears: [2025] });
+      // The old book: one company, its owner and a day-to-day 'user'. The
+      // company is a raw row rather than `createCompany`, because the old
+      // schema predates every table a newer `createCompany` seeds (the civil
+      // service expense rates of 0029 among them) — the upgrade under test is
+      // the users/membership one, not the chart.
+      const companyId = 'co_old_book';
+      sqlite.prepare(
+        `INSERT INTO companies (id, legal_name) VALUES (?, ?)`,
+      ).run(companyId, 'Old Book Ltd');
       const insertUser = sqlite.prepare(
         `INSERT INTO users (id, username, display_name, password_hash, password_salt, role, active)
          VALUES (?, ?, ?, ?, ?, ?, 1)`,
