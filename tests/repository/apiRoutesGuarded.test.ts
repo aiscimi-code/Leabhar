@@ -25,7 +25,13 @@ describe('API routes', () => {
     for (const file of routes()) {
       if (file.endsWith(join('api', 'health', 'route.ts'))) continue;
       const source = readFileSync(file, 'utf8');
-      if (!/requireApiActor\(|requireActor\(|currentUser\(/.test(source)) {
+      // The OCR assets are the allow-listed library files the review screen
+      // loads (no book data), so a verified session is enough there. Every
+      // other route checks membership and permission: currentUser() alone
+      // does not.
+      const sessionOnly = file.endsWith(join('api', 'ocr', '[asset]', 'route.ts'));
+      const guard = sessionOnly ? /currentUser\(/ : /requireApiActor\(|requireActor\(/;
+      if (!guard.test(source)) {
         unguarded.push(relative(join(API, '..'), file));
       }
     }

@@ -29,9 +29,17 @@ function requestHost(request: NextRequest): string {
   return host.toLowerCase();
 }
 
+/**
+ * The request headers the app acts on — `x-leabhar-portal` (render without the
+ * installed-app chrome) and `x-leabhar-public` (render without a verified
+ * session) — are set here and only here. Every request is forwarded with any
+ * client-sent copy removed first: otherwise a stale cookie plus a hand-set
+ * header would skip the root layout's session check (issue #482).
+ */
 function continueRequest(request: NextRequest, markPortal: boolean, markPublic = false) {
-  if (!markPortal && !markPublic) return NextResponse.next();
   const headers = new Headers(request.headers);
+  headers.delete('x-leabhar-portal');
+  headers.delete('x-leabhar-public');
   if (markPortal) headers.set('x-leabhar-portal', '1');
   if (markPublic) headers.set('x-leabhar-public', '1');
   return NextResponse.next({ request: { headers } });
@@ -87,7 +95,7 @@ export function middleware(request: NextRequest) {
   const token = request.cookies.get(sessionCookieName)?.value;
 
   if (token) {
-    return NextResponse.next();
+    return continueRequest(request, false);
   }
 
   // No session cookie — redirect to login.
