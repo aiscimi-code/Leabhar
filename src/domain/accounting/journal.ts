@@ -326,8 +326,28 @@ export function postJournalEntry(db: AppDatabase, input: PostJournalInput): Post
  * new entry with the debits and credits swapped, referencing the original. The
  * reversal is dated at the correction date rather than the original date, so
  * that reversing something in a closed period does not reach back into it.
+ *
+ * The whole path — read, post, mark — runs inside one transaction (issue
+ * #481): if the marking step failed after the reversal had already posted,
+ * the original would be left unmarked and a second call would double the
+ * correction. Either the reversal exists and the original is marked, or
+ * neither happened.
  */
 export function reverseJournalEntry(
+  db: AppDatabase,
+  params: {
+    companyId: string;
+    entryId: string;
+    reversalDate: IsoDate;
+    reason: string;
+    createdBy?: string;
+    requestId?: string;
+  },
+): PostedJournal {
+  return atomically(db, () => reverseJournalEntrySteps(db, params));
+}
+
+function reverseJournalEntrySteps(
   db: AppDatabase,
   params: {
     companyId: string;
@@ -392,32 +412,31 @@ export function reverseJournalEntry(
     })),
   });
 
-  db.transaction((tx) => {
-    // Pointing the original at its reversal is bookkeeping metadata, not a
-    // change to the accounting facts, so it does not violate immutability.
-    tx.update(journalEntries)
-      .set({ reversedByEntryId: reversal.id, reversalReason: params.reason })
-      .where(eq(journalEntries.id, original.id)).run();
+  // Pointing the original at its reversal is bookkeeping metadata, not a
+  // change to the accounting facts, so it does not violate immutability. It
+  // runs in the same transaction as the posting above (issue #481).
+  db.update(journalEntries)
+    .set({ reversedByEntryId: reversal.id, reversalReason: params.reason })
+    .where(eq(journalEntries.id, original.id)).run();
 
-    tx.update(journalEntries)
-      .set({ reversalOfId: original.id })
-      .where(eq(journalEntries.id, reversal.id)).run();
+  db.update(journalEntries)
+    .set({ reversalOfId: original.id })
+    .where(eq(journalEntries.id, reversal.id)).run();
 
-    tx.insert(auditEvents).values({
-      id: ids.audit(),
-      companyId: params.companyId,
-      occurredAt: nowIso(),
-      entityType: 'journal_entry',
-      entityId: original.id,
-      action: 'reversal_posted',
-      previousValue: `entry ${original.entryNumber}`,
-      newValue: `reversed by entry ${reversal.entryNumber}`,
-      source: 'user',
-      actor: params.createdBy ?? 'user',
-      reason: params.reason,
-      requestId: params.requestId ?? null,
-    }).run();
-  });
+  db.insert(auditEvents).values({
+    id: ids.audit(),
+    companyId: params.companyId,
+    occurredAt: nowIso(),
+    entityType: 'journal_entry',
+    entityId: original.id,
+    action: 'reversal_posted',
+    previousValue: `entry ${original.entryNumber}`,
+    newValue: `reversed by entry ${reversal.entryNumber}`,
+    source: 'user',
+    actor: params.createdBy ?? 'user',
+    reason: params.reason,
+    requestId: params.requestId ?? null,
+  }).run();
 
   return reversal;
 }

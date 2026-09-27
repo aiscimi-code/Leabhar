@@ -5,6 +5,7 @@ import { createCompany, addBankAccount } from '../config/setup';
 import { createInvoice } from './invoices';
 import { recordPayment } from './payments';
 import { reversePayment } from './reversal';
+import { writeOffBadDebt } from './badDebts';
 import { importStatement } from '../banking/import';
 import { trialBalance, accountBalance } from '../accounting/ledger';
 import { buildVat3Return } from '../vat/report';
@@ -74,6 +75,33 @@ const balanced = () => expect(trialBalance(db, { companyId, asOf: makeDate(2025,
 const period = (name: string) => db.select().from(vatPeriods).where(and(eq(vatPeriods.companyId, companyId), eq(vatPeriods.name, name))).get()!;
 
 describe('reversePayment', () => {
+
+// A payment followed by a bad-debt write-off of the rest: reversing the
+// payment would reopen the invoice and strand the write-off (issue #480).
+it('refuses to reverse a payment once the invoice has been written off, leaving the books unchanged', () => {
+  const invoice = sale(10_000, '2025-03-01'); // gross 123.00
+  const payment = recordPayment(db, {
+    companyId, direction: 'received', paymentDate: asIsoDate('2025-04-01'), amountMinor: 4_000,
+    allocations: [{ invoiceId: invoice.invoiceId, allocatedMinor: 4_000 }],
+  });
+  writeOffBadDebt(db, {
+    companyId, invoiceId: invoice.invoiceId, date: asIsoDate('2025-06-01'),
+    reason: 'Liquidated', actor: 'Joe',
+  });
+  expect(db.select().from(invoices).where(eq(invoices.id, invoice.invoiceId)).get()!.status).toBe('written_off');
+
+  const entries = db.select().from(journalEntries).all().length;
+  expect(() => reversePayment(db, { companyId, paymentId: payment.paymentId, reason: 'Undo' }))
+    .toThrow(/written off since this payment/);
+
+  // Nothing moved: the invoice is still written off, the write-off journal is
+  // still live, debtors are still relieved, and no new entry was posted.
+  expect(db.select().from(invoices).where(eq(invoices.id, invoice.invoiceId)).get()!.status).toBe('written_off');
+  expect(db.select().from(journalEntries).all()).toHaveLength(entries);
+  expect(accountBalance(db, { companyId, accountId: acc['debtors']! })).toBe(0);
+  expect(db.select().from(payments).where(eq(payments.id, payment.paymentId)).get()!.reversedAt).toBeNull();
+});
+
   it('reverses a payment that settled several invoices, reopening each for what it paid', async () => {
     const a = purchase(10_000); const b = purchase(20_000);
     const tx = await bankLine('MURPHY', '-369.00');

@@ -60,7 +60,9 @@ export async function confirmTaxableStatusAction(formData: FormData): Promise<Ac
 
 export async function checkViesAction(formData: FormData): Promise<ActionResult> {
   try {
-    await requireActor('books.read');
+    // The check persists a VIES status against the party, so it is a write on
+    // the party record, not a read (issue #496) — like confirmEstablishmentAction.
+    await requireActor('parties.manage');
     const company = requireCompany();
     const party = kindOf(formData);
     const partyId = field(formData, 'partyId');

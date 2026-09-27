@@ -425,17 +425,45 @@ function recordPaymentSteps(db: AppDatabase, input: RecordPaymentInput): Recorde
     : [];
 
   const vatReleasedMinor = vatReleases.reduce((s, r) => s + r.vatMinor, 0);
-  if (vatReleasedMinor !== 0) {
+
+  // The release journal lines are posted per invoice, in the invoice's own
+  // currency at the invoice's booking rate — exactly how the deferral was
+  // booked and how the VAT entries below are written (issue #479). Posting
+  // the aggregate in the payment's currency at the payment's rate leaves
+  // the deferred-VAT control account with a residual that never nets to
+  // zero on a cross-currency settlement, and makes the ledger disagree with
+  // the VAT3 by construction.
+  const releasedByInvoice = new Map<string, number>();
+  for (const release of vatReleases) {
+    releasedByInvoice.set(release.invoiceId, (releasedByInvoice.get(release.invoiceId) ?? 0) + release.vatMinor);
+  }
+  for (const [invoiceId, releasedMinor] of releasedByInvoice) {
+    if (releasedMinor === 0) continue;
+    const target = targets.find((t) => t.invoice.id === invoiceId)!;
+    const invoice = target.invoice;
+    const releaseFx = invoice.fxRateNumerator && invoice.fxRateDenominator
+      ? {
+          numerator: invoice.fxRateNumerator,
+          denominator: invoice.fxRateDenominator,
+          source: invoice.fxRateSource ?? 'invoice',
+          date: invoice.fxRateDate ?? undefined,
+        }
+      : undefined;
+    // A credit note's release is negative and releases the opposite way
+    // round, mirroring how its deferral was booked.
+    const releaseLines = releasedMinor >= 0
+      ? { deferred: 'debitMinor' as const, due: 'creditMinor' as const }
+      : { deferred: 'creditMinor' as const, due: 'debitMinor' as const };
     journalLines.push({
       accountId: vatOnSalesDeferred,
-      debitMinor: vatReleasedMinor,
-      currency, fxRate: paymentFx,
+      [releaseLines.deferred]: Math.abs(releasedMinor),
+      currency: invoice.currency, fxRate: releaseFx,
       memo: 'VAT now due following payment (cash receipts basis)',
     });
     journalLines.push({
       accountId: vatOnSales,
-      creditMinor: vatReleasedMinor,
-      currency, fxRate: paymentFx,
+      [releaseLines.due]: Math.abs(releasedMinor),
+      currency: invoice.currency, fxRate: releaseFx,
       memo: 'VAT now due following payment (cash receipts basis)',
     });
   }

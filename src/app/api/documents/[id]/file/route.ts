@@ -4,7 +4,7 @@ import { and, eq } from 'drizzle-orm';
 import { getDb } from '@/db';
 import { documents } from '@/db/schema';
 import { requireCompany } from '@/lib/queries';
-import { currentUser } from '@/lib/session';
+import { requireApiActor } from '@/lib/apiAuth';
 import { storageRoot } from '@/domain/documents/storage';
 
 export const dynamic = 'force-dynamic';
@@ -15,7 +15,9 @@ export const dynamic = 'force-dynamic';
  * hostile PDF or SVG cannot run script in the app's origin.
  */
 export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }): Promise<Response> {
-  if (!(await currentUser())) return new Response('Not signed in.', { status: 401 });
+  // A member of this company with read access, not just a session (#372).
+  const refused = await requireApiActor('books.read');
+  if (refused) return refused;
   const { id } = await params;
   const company = requireCompany();
   const doc = getDb().select().from(documents)
