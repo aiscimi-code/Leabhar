@@ -145,6 +145,7 @@ export async function createInvoicesFromCsv(
           statedVatMinor,
           ...csvDiscount(record, currency, rowNumber),
         }],
+        vatAlreadyDeclared: input.vatAlreadyDeclared ? { reason: input.vatAlreadyDeclared } : null,
         actor: 'cli',
       });
 
@@ -278,6 +279,7 @@ export async function importInvoicesFromCsv(
           netMinor, accountId, vatTreatmentId, statedVatMinor,
           ...csvDiscount(record, currency, rowNumber),
         }],
+        vatAlreadyDeclared: input.vatAlreadyDeclared ? { reason: input.vatAlreadyDeclared } : null,
         actor: 'cli',
       });
 

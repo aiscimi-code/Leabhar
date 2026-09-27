@@ -8,6 +8,7 @@ import { nowIso, type IsoDate } from '../dates';
 import { postJournalEntry, reverseJournalEntry, atomically } from './journal';
 import { createVatEntries, assertVatPeriodWritable } from '../vat/engine';
 import { AccountingError } from './errors';
+import { upsertReviewItem } from '../extraction/service';
 
 export class AdjustmentError extends AccountingError {}
 
@@ -163,6 +164,17 @@ function createAdjustmentSteps(
       notes: input.reason,
     });
     vatEntryIds.push(...created.entries.map((e) => e.id));
+    // Input VAT normally comes only from a confirmed invoice (issue #234). An
+    // accountant's adjustment to it is allowed as a reasoned correction, and
+    // made visible for review.
+    if (input.vat.direction === 'purchases') {
+      upsertReviewItem(db, {
+        companyId: input.companyId, kind: 'uncertain_vat_treatment', severity: 'info',
+        title: `Input VAT adjusted by journal: ${input.description}`.slice(0, 200),
+        detail: `A manual adjustment changed input VAT without a supplier invoice behind it. Reason given: ${input.reason}`,
+        entityType: 'journal_entry', entityId: journal.id, dedupeKey: `journal_entry:${journal.id}:input_vat_adjustment`,
+      });
+    }
   }
 
   db.insert(auditEvents).values({

@@ -1,7 +1,7 @@
 import { and, eq, desc } from 'drizzle-orm';
 import type { AppDatabase } from '@/db';
 import {
-  invoices, invoiceLines, companies, auditEvents, suppliers, customers, vatEntries,
+  invoices, invoiceLines, companies, auditEvents, suppliers, customers, vatEntries, documents,
 } from '@/db/schema';
 import { ids } from '@/lib/ids';
 import { asMinor, multiplyRational } from '../money';
@@ -92,6 +92,14 @@ export interface CreateInvoiceInput {
   fxRate?: { numerator: number; denominator: number; source: string; date?: string };
   lines: InvoiceLineInput[];
   documentId?: string | null;
+  /**
+   * A historic invoice migrated from a previous system whose VAT was already
+   * declared there, in a filed period (issue #234): recorded for its balance
+   * and ageing, information only for VAT. No VAT entries, no VAT journal
+   * lines — the whole gross goes to the line accounts — and the reason is
+   * audited.
+   */
+  vatAlreadyDeclared?: { reason: string } | null;
   isCreditNote?: boolean;
   creditNoteOfId?: string | null;
   /** An additional charge against an earlier invoice of the same party (issue #403). */
@@ -199,6 +207,22 @@ function createInvoiceSteps(db: AppDatabase, input: CreateInvoiceInput): Created
     : null;
   const unidentifiedSupplier = !!supplierDisplayName && UNIDENTIFIED_SUPPLIER_RE.test(supplierDisplayName);
 
+  // Input VAT comes only from a confirmed supplier invoice (issue #234). A
+  // purchase posted without one — typed in, imported from a ledger CSV —
+  // holds its VAT back from recovery and is flagged, until the invoice is
+  // uploaded, confirmed and posted from its document.
+  const historic = input.vatAlreadyDeclared ?? null;
+  if (historic && !historic.reason.trim()) {
+    throw new InvoicingError('Say why this invoice\'s VAT was already declared elsewhere (e.g. "migrated from the previous system; VAT in returns to Dec 2024").');
+  }
+  const evidenced = !input.documentId ? false
+    : db.select({ s: documents.reviewStatus }).from(documents)
+      .where(and(eq(documents.id, input.documentId), eq(documents.companyId, input.companyId))).get()?.s === 'confirmed';
+  const noEvidenceReason = !isSales && !historic && !evidenced
+    ? 'Posted without a confirmed supplier invoice, so its input VAT is held back from recovery. Upload the '
+      + 'invoice, confirm it and post it from the document to recover the VAT.'
+    : undefined;
+
   // ---- Compute each line ----
   const computed = input.lines.map((line, index) => {
     const resolved = resolveTreatment(db, {
@@ -225,9 +249,9 @@ function createInvoiceSteps(db: AppDatabase, input: CreateInvoiceInput): Created
     let vatReviewReason: string | null = null;
     let recoverableOverrideMinor: number | undefined;
     if (!isSales && resolved.treatment.appliesRate) {
-      if (line.holdRecoveryReason) {
+      if (line.holdRecoveryReason || noEvidenceReason) {
         recoverableOverrideMinor = 0;
-        vatReviewReason = line.holdRecoveryReason;
+        vatReviewReason = line.holdRecoveryReason ?? noEvidenceReason!;
       } else if (unidentifiedSupplier) {
         // Not knowing who was actually paid undermines even a reverse-charge
         // self-assessment, so this takes priority over — and applies
@@ -290,7 +314,7 @@ function createInvoiceSteps(db: AppDatabase, input: CreateInvoiceInput): Created
   // held in a separate liability until then. Purchases are unaffected: input
   // VAT is reclaimed by reference to the supplier's invoice date under either
   // basis, which is the asymmetry people get wrong.
-  const vatDeferred = isSales && company.vatAccountingBasis === 'cash_receipts' && vatMinor !== 0;
+  const vatDeferred = !historic && isSales && company.vatAccountingBasis === 'cash_receipts' && vatMinor !== 0;
 
   const debtors = systemAccountId(db, input.companyId, 'debtors');
   const creditors = systemAccountId(db, input.companyId, 'creditors');
@@ -313,16 +337,19 @@ function createInvoiceSteps(db: AppDatabase, input: CreateInvoiceInput): Created
       currency, fxRate, ...counterparty, memo: narrative,
     });
     for (const { line, calculation } of computed) {
-      if (calculation.netMinor === 0) continue;
+      // A historic invoice's VAT was declared in the previous system: its
+      // whole gross is the migrated balance, with no VAT line here.
+      const amount = historic ? calculation.grossMinor : calculation.netMinor;
+      if (amount === 0) continue;
       journalLines.push({
         accountId: line.accountId,
-        ...(calculation.netMinor >= 0
-          ? { creditMinor: calculation.netMinor }
-          : { debitMinor: -calculation.netMinor }),
+        ...(amount >= 0
+          ? { creditMinor: amount }
+          : { debitMinor: -amount }),
         currency, fxRate, ...counterparty, memo: line.description,
       });
     }
-    if (vatMinor !== 0) {
+    if (vatMinor !== 0 && !historic) {
       journalLines.push({
         accountId: vatDeferred ? vatOnSalesDeferred : vatOnSales,
         ...(vatMinor >= 0 ? { creditMinor: vatMinor } : { debitMinor: -vatMinor }),
@@ -335,7 +362,9 @@ function createInvoiceSteps(db: AppDatabase, input: CreateInvoiceInput): Created
   } else {
     for (const { line, calculation } of computed) {
       // Irrecoverable VAT forms part of the cost rather than being reclaimed.
-      const cost = calculation.netMinor + (calculation.vatMinor - calculation.recoverableVatMinor);
+      const cost = historic
+        ? calculation.grossMinor
+        : calculation.netMinor + (calculation.vatMinor - calculation.recoverableVatMinor);
       if (cost !== 0) {
         journalLines.push({
           accountId: line.accountId,
@@ -344,7 +373,7 @@ function createInvoiceSteps(db: AppDatabase, input: CreateInvoiceInput): Created
         });
       }
     }
-    const recoverable = computed.reduce((s, c) => s + c.calculation.recoverableVatMinor, 0);
+    const recoverable = historic ? 0 : computed.reduce((s, c) => s + c.calculation.recoverableVatMinor, 0);
     if (recoverable !== 0) {
       journalLines.push({
         accountId: vatOnPurchases,
@@ -353,7 +382,7 @@ function createInvoiceSteps(db: AppDatabase, input: CreateInvoiceInput): Created
       });
     }
     // Reverse charge: the same invoice creates an output VAT liability too.
-    const reverseChargeVat = computed
+    const reverseChargeVat = historic ? 0 : computed
       .filter((c) => c.resolved.treatment.isReverseCharge)
       .reduce((s, c) => s + c.calculation.vatMinor, 0);
     if (reverseChargeVat !== 0) {
@@ -381,7 +410,7 @@ function createInvoiceSteps(db: AppDatabase, input: CreateInvoiceInput): Created
     supplyDate: input.supplyDate,
     paymentDate: input.invoiceDate,
   }).taxPointDate;
-  const createsVatNow = !vatDeferred
+  const createsVatNow = !vatDeferred && !historic
     && computed.some((c) => c.calculation.vatMinor !== 0 || c.resolved.treatment.appliesRate);
   if (createsVatNow) {
     assertVatPeriodWritable(db, input.companyId, input.vatDeclarationDate ?? vatTaxPoint,
@@ -405,7 +434,7 @@ function createInvoiceSteps(db: AppDatabase, input: CreateInvoiceInput): Created
 
   // ---- VAT entries ----
   const vatEntryIds: string[] = [];
-  if (!vatDeferred) {
+  if (!vatDeferred && !historic) {
     for (const { line, lineId, calculation, resolved, recoverableOverrideMinor } of computed) {
       if (calculation.vatMinor === 0 && !resolved.treatment.appliesRate) continue;
       const taxPoint = determineTaxPoint({
@@ -557,9 +586,11 @@ function createInvoiceSteps(db: AppDatabase, input: CreateInvoiceInput): Created
       }),
       source: 'user',
       actor: input.actor ?? 'user',
-      reason: vatDeferred
-        ? 'Output VAT deferred until payment under the cash receipts basis'
-        : null,
+      reason: historic
+        ? `Migrated; VAT already declared elsewhere, recorded for information only: ${historic.reason.trim()}`
+        : vatDeferred
+          ? 'Output VAT deferred until payment under the cash receipts basis'
+          : null,
       requestId: input.requestId ?? null,
     }).run();
 

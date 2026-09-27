@@ -241,6 +241,8 @@ export const createInvoiceCsvInput = z.object({
   companyId: z.string(),
   direction: z.enum(['sales', 'purchase']),
   file: z.string(),
+  /** Migrated invoices whose VAT was declared in the previous system: information only (issue #234). */
+  vatAlreadyDeclared: z.string().optional(),
 });
 
 // ---- import-invoices (issue #160): invoice + matchable document, in one row ----
@@ -252,6 +254,8 @@ export const importInvoicesCsvInput = z.object({
   /** Every row's single line posts here — the CSV has no per-row account column. */
   account: z.string(),
   vatTreatment: z.string(),
+  /** Migrated invoices whose VAT was declared in the previous system: information only (issue #234). */
+  vatAlreadyDeclared: z.string().optional(),
 });
 
 export type ImportInvoicesCsvInput = z.infer<typeof importInvoicesCsvInput>;
