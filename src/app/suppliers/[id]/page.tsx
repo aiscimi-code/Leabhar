@@ -6,7 +6,7 @@ import {
 } from '@/components/primitives';
 import { ActionForm } from '@/components/ActionForm';
 import { saveSupplierAction } from '@/app/settings-actions';
-import { setSupplierTermsAction } from '@/app/actions';
+import { setSupplierTermsAction, reconcileSupplierStatementAction } from '@/app/actions';
 import { money, date, label } from '@/lib/format';
 import { PartyVatStatus } from '@/components/PartyVatStatus';
 
@@ -63,6 +63,30 @@ export default async function SupplierPage({ params }: { params: Promise<{ id: s
           <ActionForm action={setSupplierTermsAction} submit="Save terms" inline extra={{ supplierId: supplier.id }}>
             <Field label="Days"><Input name="paymentTermsDays" type="number" min={0} max={365} defaultValue={supplier.defaultPaymentTermsDays} /></Field>
           </ActionForm>
+        </div>
+      </Panel>
+
+      <Panel title="Statement"
+        description="Our account with this supplier: bills, credit notes, payments and refunds with a running balance that closes at their share of creditors.">
+        <div className="px-4 py-3 space-y-3">
+          <div className="flex gap-2">
+            <a href={`/api/suppliers/${supplier.id}/statement`}
+              className="px-2.5 py-1 rounded border border-line-strong text-[12px] font-medium bg-surface hover:bg-surface-sunken">PDF (this year)</a>
+            <a href={`/api/suppliers/${supplier.id}/statement?format=csv`}
+              className="px-2.5 py-1 rounded border border-line-strong text-[12px] font-medium bg-surface hover:bg-surface-sunken">CSV</a>
+          </div>
+          <Disclosure summary="Check their statement against our books">
+            <ActionForm action={reconcileSupplierStatementAction} submit="Check" extra={{ supplierId: supplier.id }}>
+              <div className="grid grid-cols-3 gap-3 max-w-3xl">
+                <Field label="Statement date"><Input name="asOf" type="date" required defaultValue={new Date().toISOString().slice(0, 10)} /></Field>
+                <Field label="Their balance"><Input name="balance" required placeholder="0.00" /></Field>
+                <Field label="Invoice numbers on it" hint="Optional, comma or line separated.">
+                  <Textarea name="invoiceNumbers" rows={2} />
+                </Field>
+              </div>
+              <p className="text-[12px] text-ink-muted mt-2">A difference is flagged for review. Nothing is adjusted.</p>
+            </ActionForm>
+          </Disclosure>
         </div>
       </Panel>
 

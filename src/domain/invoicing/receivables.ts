@@ -66,7 +66,7 @@ export interface StatementEntry {
   date: string;
   kind: 'invoice' | 'debit_note' | 'credit_note' | 'payment' | 'refund' | 'payment_reversed' | 'write_off';
   reference: string;
-  /** Positive: the customer owes more. Negative: less. Base currency. */
+  /** Positive: the balance grows (the customer owes more, or we owe the supplier more). Base currency. */
   amountMinor: number;
   balanceMinor: number;
 }
@@ -95,9 +95,34 @@ export function customerStatement(
   if (!customer) throw new InvoicingError(`Customer ${params.customerId} not found.`);
   const base = db.select({ c: companies.baseCurrency }).from(companies).where(eq(companies.id, params.companyId)).get()!.c;
 
+  const { openingBalanceMinor, entries, closingBalanceMinor, ageing } = accountHistory(db, {
+    companyId: params.companyId, side: 'customer', partyId: customer.id, from: params.from, to: params.to,
+  });
+
+  return {
+    customerId: customer.id, customerName: customer.legalName ?? customer.name, address: customer.addressLines,
+    currency: base, from: params.from, to: params.to,
+    openingBalanceMinor, entries, closingBalanceMinor, ageing,
+  };
+}
+
+/**
+ * A party's account in base currency (issues #405, #413): every invoice,
+ * debit note, credit note, payment, refund, shortfall written off, bad debt
+ * written off and reversed payment, in date order with a running balance. Voided
+ * documents are left out. Positive means the balance grows — the customer owes
+ * us more, or we owe the supplier more — so the closing balance is the party's
+ * share of the control account.
+ */
+export function accountHistory(
+  db: AppDatabase,
+  params: { companyId: string; side: 'customer' | 'supplier'; partyId: string; from: IsoDate; to: IsoDate },
+): Pick<CustomerStatement, 'openingBalanceMinor' | 'entries' | 'closingBalanceMinor' | 'ageing'> {
+  const isCustomer = params.side === 'customer';
   const docs = db.select().from(invoices).where(and(
-    eq(invoices.companyId, params.companyId), eq(invoices.customerId, customer.id),
-    eq(invoices.direction, 'sales'), ne(invoices.status, 'void'),
+    eq(invoices.companyId, params.companyId),
+    isCustomer ? eq(invoices.customerId, params.partyId) : eq(invoices.supplierId, params.partyId),
+    eq(invoices.direction, isCustomer ? 'sales' : 'purchase'), ne(invoices.status, 'void'),
   )).all();
   const raw: Array<Omit<StatementEntry, 'balanceMinor'>> = [];
   for (const doc of docs) {
@@ -113,11 +138,14 @@ export function customerStatement(
     }
   }
 
-  // Payments: the customer's own, and — for older payments that record no
-  // party — the part allocated to this customer's invoices.
+  // Payments: the party's own, and — for older payments that record no
+  // party — the part allocated to this party's documents. Money that settles
+  // the account is the direction that reduces it: received from a customer,
+  // made to a supplier.
   const docIds = docs.map((d) => d.id);
   const candidateIds = new Set(db.select({ id: payments.id }).from(payments).where(and(
-    eq(payments.companyId, params.companyId), eq(payments.customerId, customer.id),
+    eq(payments.companyId, params.companyId),
+    isCustomer ? eq(payments.customerId, params.partyId) : eq(payments.supplierId, params.partyId),
   )).all().map((r) => r.id));
   if (docIds.length > 0) {
     for (const r of db.select({ id: paymentAllocations.paymentId }).from(paymentAllocations)
@@ -126,18 +154,24 @@ export function customerStatement(
   for (const id of candidateIds) {
     const payment = db.select().from(payments).where(eq(payments.id, id)).get()!;
     if (payment.method === 'offset') continue; // a credit note applied: the credit note is already a line
-    let amount = payment.baseAmountMinor;
-    if (payment.customerId !== customer.id) {
-      amount = db.select().from(paymentAllocations).where(eq(paymentAllocations.paymentId, payment.id)).all()
-        .filter((a) => docIds.includes(a.invoiceId) && a.allocationType !== 'write_off')
+    const allocations = db.select().from(paymentAllocations).where(eq(paymentAllocations.paymentId, payment.id)).all();
+    const ownParty = isCustomer ? payment.customerId === params.partyId : payment.supplierId === params.partyId;
+    const amount = ownParty ? payment.baseAmountMinor
+      : allocations.filter((a) => docIds.includes(a.invoiceId) && a.allocationType !== 'write_off')
         .reduce((s, a) => s + a.baseAllocatedMinor, 0);
-    }
-    const inbound = payment.direction === 'received';
+    // A shortfall written off with the payment (issue #386) takes the rest of
+    // the invoice out of the control account too.
+    const writtenOff = allocations.filter((a) => docIds.includes(a.invoiceId) && a.allocationType === 'write_off')
+      .reduce((s, a) => s + a.baseAllocatedMinor, 0);
+    const settles = payment.direction === (isCustomer ? 'received' : 'made');
     raw.push({
-      date: payment.paymentDate, kind: inbound ? 'payment' : 'refund',
-      reference: payment.reference ?? (inbound ? 'Payment received' : 'Refund'),
-      amountMinor: inbound ? -amount : amount,
+      date: payment.paymentDate, kind: settles ? 'payment' : 'refund',
+      reference: payment.reference ?? (settles ? (isCustomer ? 'Payment received' : 'Payment made') : 'Refund'),
+      amountMinor: settles ? -amount : amount,
     });
+    if (writtenOff > 0) {
+      raw.push({ date: payment.paymentDate, kind: 'write_off', reference: 'Shortfall written off', amountMinor: -writtenOff });
+    }
     if (payment.reversedAt) {
       // Dated by the reversing journal, which is what moved the balance, not
       // by when the reversal was recorded.
@@ -147,8 +181,8 @@ export function customerStatement(
         : undefined;
       raw.push({
         date: reversalDate ?? payment.reversedAt.slice(0, 10), kind: 'payment_reversed',
-        reference: `${inbound ? 'Payment' : 'Refund'} reversed${payment.reversalReason ? `: ${payment.reversalReason}` : ''}`,
-        amountMinor: inbound ? amount : -amount,
+        reference: `${settles ? 'Payment' : 'Refund'} reversed${payment.reversalReason ? `: ${payment.reversalReason}` : ''}`,
+        amountMinor: (settles ? amount : -amount) + writtenOff,
       });
     }
   }
@@ -167,12 +201,7 @@ export function customerStatement(
     const index = days <= 0 ? 0 : days <= 30 ? 1 : days <= 60 ? 2 : days <= 90 ? 3 : 4;
     ageing[index]!.amountMinor += toBase(doc, doc.outstandingMinor);
   }
-
-  return {
-    customerId: customer.id, customerName: customer.legalName ?? customer.name, address: customer.addressLines,
-    currency: base, from: params.from, to: params.to,
-    openingBalanceMinor, entries, closingBalanceMinor: balance, ageing,
-  };
+  return { openingBalanceMinor, entries, closingBalanceMinor: balance, ageing };
 }
 
 export const REMINDER_LEVELS: Record<number, { title: string; body: string }> = {

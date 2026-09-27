@@ -510,6 +510,23 @@ wins. Supplier refunds use the same paths as customers': money we overpaid is
 refunded with `refundOnAccount` on the payment we made (Dr bank / Cr
 creditors), and a supplier credit note is settled by a payment received.
 
+### Supplier statements (issue #413)
+
+`supplierStatement` is our account with a supplier, built by the same
+`accountHistory` as the customer statement (#405) from the other side: bills
+and debit notes increase what we owe; credit notes, payments made and
+shortfalls written off (#386) reduce it; refunds received and reversed payments
+put it back. It closes at the supplier's share of creditors, and is produced as
+PDF and CSV. (Counting a shortfall written off with a payment also corrected the
+customer statement, which had left it out and so did not close at debtors.)
+
+`reconcileSupplierStatement` checks the supplier's own statement against our
+books as of its date: the difference in balance and, when their invoice numbers
+are given (compared without case, spaces or punctuation), the invoices they show
+that we do not hold — likely missing documents — and our open bills they do not
+show. The check is audited; a difference becomes a review item, and nothing is
+adjusted.
+
 ### Recurring bills (issue #412)
 
 A recurring bill (`recurring_bills`) is rent, a subscription or a utility the
