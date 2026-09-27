@@ -73,13 +73,16 @@ describe('suggestVatTreatment', () => {
     setup();
     const first = loadStatutoryKnowledgeBase(db, { companyId });
     expect(first.rulesBefore).toBe(0);
-    expect(first.rulesAfter).toBe(266);
+    // Every rule the curated sources derive (issue #277: keep this a count the
+    // curation arrays explain — vat3-rtd 15, eBrief 1, EU 282/2011 7 were added
+    // by #439/#440/#441 on top of the 266 on main, 257 plus #434's 9).
+    expect(first.rulesAfter).toBe(289);
   });
 
   it('loading again is a no-op', () => {
     const again = loadStatutoryKnowledgeBase(db, { companyId });
-    expect(again.rulesBefore).toBe(266);
-    expect(again.rulesAfter).toBe(266);
+    expect(again.rulesBefore).toBe(289);
+    expect(again.rulesAfter).toBe(289);
   });
 
   it('US SaaS purchase → non-EU reverse charge, cited to VATCA s.12 with a verifiable slice', () => {

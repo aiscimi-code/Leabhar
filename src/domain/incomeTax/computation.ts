@@ -5,6 +5,7 @@ import { multiplyRational } from '../money';
 import { accountingYearContaining } from '../vat/apportionment';
 import { computeBase, currentDecision, type CtBase, type CtPendingDecision } from '../corporationTax/computation';
 import { INCOME_TAX_CURATED_RULES } from '../rules/incomeTaxCuration';
+import { resolveRuleFigure, type ResolvedRuleFigure } from '../rules/ruleFigures';
 import { shareSegments, partnershipFindings } from '../config/partners';
 
 /**
@@ -67,11 +68,13 @@ const addDays = (d: string, n: number) => new Date(Date.parse(d) + n * day).toIS
 const days = (a: string, b: string) => Math.round((Date.parse(b) - Date.parse(a)) / day) + 1;
 const eur = (minor: number) => (minor / 100).toFixed(2);
 
-/** The rule version in force on a date. */
-function ruleOn(ruleKey: string, date: string) {
-  return INCOME_TAX_CURATED_RULES.filter((r) => r.ruleKey === ruleKey
+/** The figure a rule states on a date: the stored rule a person can review, not the shipped constant (issue #282). */
+function ruleOn(db: AppDatabase, companyId: string, ruleKey: string, date: string): ResolvedRuleFigure | null {
+  const curatedVersion = INCOME_TAX_CURATED_RULES.filter((r) => r.ruleKey === ruleKey
     && r.effectiveFrom <= date && (r.effectiveTo === null || r.effectiveTo > date))
     .sort((a, b) => b.effectiveFrom.localeCompare(a.effectiveFrom))[0];
+  if (!curatedVersion) return null;
+  return resolveRuleFigure(db, { companyId, ruleKey, asOfDate: date, curated: curatedVersion });
 }
 
 interface Period { from: string; to: string }
@@ -178,9 +181,18 @@ class IncomeTaxRun {
       reason: 'The standard rate band and personal credit depend on it (s.15 Table, s.461).',
     });
     const need = (key: string) => {
-      const r = ruleOn(key, dec31);
-      if (!r) this.findings.push(`No ${key} rule is in force for ${year}: that part of ${name}'s liability is not computed.`);
-      return r;
+      const r = ruleOn(this.db, this.companyId, key, dec31);
+      if (!r) {
+        this.findings.push(`No ${key} rule is in force for ${year}: that part of ${name}'s liability is not computed.`);
+        return null;
+      }
+      if (r.finding) this.findings.push(r.finding);
+      if (r.numericValue === null) {
+        this.findings.push(`No ${key} rule is available for ${year} (${r.status === 'rejected' ? 'rejected on the review screen' : 'no figure stated'}): `
+          + `that part of ${name}'s liability is not computed.`);
+        return null;
+      }
+      return { ruleKey: key, name: r.name, numericValue: r.numericValue, rateBasisPoints: r.rateBasisPoints };
     };
     const p = Math.max(profit, 0);
 
@@ -228,13 +240,16 @@ class IncomeTaxRun {
     const uscMinor = usc.reduce((s, l) => s + l.amountMinor, 0);
 
     // PRSI Class S (SWCA 2005 s.21(1)(a)).
-    const prsiRule = ruleOn('prsi.class_s_rate', dec31);
+    const prsiRule = ruleOn(this.db, this.companyId, 'prsi.class_s_rate', dec31);
+    if (prsiRule?.finding) this.findings.push(prsiRule.finding);
+    const prsiRate = prsiRule?.numericValue ?? null;
     let prsiMinor: number | null = null;
-    if (!prsiRule) {
-      this.findings.push(`No PRSI Class S rate is recorded as in force for ${year} (the revised s.21 text is dated from 2026-09-25): PRSI is not computed for that year.`);
+    if (!prsiRate) {
+      this.findings.push(`No PRSI Class S rate is available for ${year} (${prsiRule?.status === 'rejected'
+        ? 'the rule was rejected on the review screen' : 'the revised s.21 text is dated from 2026-09-25'}): PRSI is not computed for that year.`);
     } else if (p > 0) {
-      prsiMinor = Math.max(multiplyRational(p, prsiRule.numericValue!, 10_000), 65_000);
-      this.findings.push(`${name}: PRSI Class S at ${prsiRule.numericValue! / 100}% with the €650 minimum. No Class S is payable on reckonable income under €5,000; that threshold is not in the collected SWCA sections, so check it where income is low.`);
+      prsiMinor = Math.max(multiplyRational(p, prsiRate, 10_000), 65_000);
+      this.findings.push(`${name}: PRSI Class S at ${prsiRate / 100}% with the €650 minimum. No Class S is payable on reckonable income under €5,000; that threshold is not in the collected SWCA sections, so check it where income is low.`);
     }
     return {
       name, partnerId, profitMinor: profit, status, incomeTax, incomeTaxMinor, usc, uscMinor, prsiMinor,

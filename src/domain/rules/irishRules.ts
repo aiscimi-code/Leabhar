@@ -410,6 +410,8 @@ export interface LookupResult {
   requiresGuidance: boolean;
   effectiveFrom: string;
   effectiveTo: string | null;
+  /** Other provisions/Acts this rule's provision depends on (dependencies.ts resolves them). */
+  crossReferences: string[];
   sourceNote: string | null;
   sourceDate: string | null;
   provisionText: string | null;
@@ -440,6 +442,7 @@ const LOOKUP_COLUMNS = {
   requiresGuidance: irishTaxRules.requiresGuidance,
   effectiveFrom: irishTaxRules.effectiveFrom,
   effectiveTo: irishTaxRules.effectiveTo,
+  crossReferences: irishTaxRules.crossReferences,
   sourceNote: irishTaxRules.sourceNote,
   sourceDate: irishTaxRules.sourceDate,
   sectionNumber: irishActProvisions.sectionNumber,

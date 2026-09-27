@@ -30,6 +30,7 @@ import { search } from '@/domain/search/search';
 import { suggestVatTreatment } from '@/domain/rules/vatSuggestion';
 import { listAccountMappings } from '@/domain/config/accountMappings';
 import { verifyStatuteFile } from '@/domain/rules/knowledgeBase';
+import { resolveRuleDependencies } from '@/domain/rules/dependencies';
 import { documentReviewValues } from '@/domain/documents/review';
 import { documentEvidence } from '@/domain/documents/evidence';
 import { documentDependencies } from '@/domain/documents/lifecycle';
@@ -973,7 +974,10 @@ export function provisionDetail(provisionId: string) {
   const rulesCiting = db.select().from(irishTaxRules)
     .where(and(eq(irishTaxRules.provisionId, provisionId), eq(irishTaxRules.companyId, company.id)))
     .all();
-  return { ...row, rulesCiting, file: verifyStatuteFile(row.source.localPath, row.source.sha256,
+  // Each citing rule's cross-references, resolved against what this book holds (issue #438).
+  const dependencies = Object.fromEntries(rulesCiting.map((r) =>
+    [r.id, r.crossReferences.length ? resolveRuleDependencies(db, { ruleId: r.id }) : []]));
+  return { ...row, rulesCiting, dependencies, file: verifyStatuteFile(row.source.localPath, row.source.sha256,
     row.provision.sourceStart, row.provision.sourceEnd) };
 }
 

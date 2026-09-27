@@ -32,6 +32,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { appRoot } from '@/lib/paths';
 import { scheduleParagraphWindows, type ParagraphWindow } from './lrcAnnotations';
+import { crossReferencesFromProvision, sameCrossReferences } from './dependencies';
 
 /** Schedule 1 (exempt activities) is ingested for the exempt rules in vatScopeCuration.ts (issue #200). */
 export type VatcaScheduleNumber = '1' | '2' | '3';
@@ -253,7 +254,8 @@ export function deriveVatcaScheduleRules(
         + 'history is not beside the source, so its window could not be read.';
 
     if (existing) {
-      if (existing.statement === rule.statementExcerpt && existing.effectiveFrom === effectiveFrom) { unchanged++; continue; }
+      if (existing.statement === rule.statementExcerpt && existing.effectiveFrom === effectiveFrom
+        && sameCrossReferences(existing.crossReferences, crossReferencesFromProvision(prov))) { unchanged++; continue; }
       // The earlier row quoted the same text with the wrong window, or different
       // text: it is retired, not re-dated (it never correctly described any period).
       db.update(irishTaxRules)
@@ -279,7 +281,7 @@ export function deriveVatcaScheduleRules(
       qualifier: null,
       conditions: rule.conditions,
       exceptions: rule.exceptions,
-      crossReferences: [],
+      crossReferences: crossReferencesFromProvision(prov),
       accountingEffect: rule.accountingEffect,
       taxEffect: null,
       vatEffect: rule.vatEffect,

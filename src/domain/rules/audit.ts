@@ -13,6 +13,7 @@ import {
   irishKnowledgeSources, irishActProvisions, irishTaxRules, irishTaxRuleTests,
 } from '@/db/schema';
 import { SECTION_RULE_KEYS } from './factExtractor';
+import { resolveAllRuleDependencies } from './dependencies';
 import { VATCA_CURATED_RULES } from './vatcaCuration';
 import { FINANCE_ACT_2024 } from './irishRules';
 import { VATCA_2010 } from './vatcaIngestion';
@@ -34,8 +35,25 @@ export interface AuditReport {
   ambiguousProvisions: Array<{ sectionNumber: string; heading: string; reason: string }>;
   /** amendsSection references that do not resolve to a section number ingested from the same source. */
   unresolvedCrossReferences: Array<{ sectionNumber: string; reference: string }>;
+  /** Rule cross-references resolved against what this book holds (dependencies.ts, issue #438). */
+  ruleDependencies: {
+    total: number;
+    resolved: number;
+    unresolved: Array<{ ruleKey: string; reference: string; reason: string }>;
+  };
   duplicateRuleKeys: string[];
   testSummary: { total: number; passed: number; failed: number; neverRun: number };
+}
+
+/** The dependency summary: how many cross-references resolve, and which do not and why. */
+function ruleDependenciesSummary(db: AppDatabase, params: { companyId: string }): AuditReport['ruleDependencies'] {
+  const all = resolveAllRuleDependencies(db, params);
+  return {
+    total: all.length,
+    resolved: all.filter((d) => d.resolved).length,
+    unresolved: all.filter((d) => !d.resolved)
+      .map((d) => ({ ruleKey: d.ruleKey, reference: d.reference, reason: d.reason ?? 'not resolved' })),
+  };
 }
 
 export function generateAuditReport(db: AppDatabase, params: { companyId: string }): AuditReport {
@@ -127,6 +145,7 @@ export function generateAuditReport(db: AppDatabase, params: { companyId: string
     provisionsWithoutExtractedRule,
     ambiguousProvisions,
     unresolvedCrossReferences,
+    ruleDependencies: ruleDependenciesSummary(db, params),
     duplicateRuleKeys,
     testSummary: {
       total: tests.length,

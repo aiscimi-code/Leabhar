@@ -3286,6 +3286,61 @@
       "ruleKeys": [
         "vat.mandatory_electronic_filing_capacity_exclusion"
       ]
+    },
+    {
+      "id": "revenue:vat3-return-page",
+      "area": "other_source",
+      "title": "Revenue: How do you complete a VAT 3 return? — box definitions",
+      "status": "rule",
+      "ruleKeys": [
+        "vat3.box_t1",
+        "vat3.box_t2",
+        "vat3.box_t3",
+        "vat3.box_t4",
+        "vat3.box_e1",
+        "vat3.box_e2",
+        "vat3.box_es1",
+        "vat3.box_es2",
+        "vat3.box_pa1"
+      ]
+    },
+    {
+      "id": "tdm:vat-rtd-s76",
+      "area": "other_source",
+      "title": "Revenue TDM VAT-RTD-S76 — Return of Trading Details",
+      "status": "rule",
+      "ruleKeys": [
+        "rtd.annual_return_required",
+        "rtd.due_date_23rd",
+        "rtd.section_supplies",
+        "rtd.section_acquisitions",
+        "rtd.section_resale",
+        "rtd.section_other_deductible"
+      ]
+    },
+    {
+      "id": "revenue-ebrief:2025-168",
+      "area": "other_source",
+      "title": "Revenue eBrief No. 168/25 — TDM Part 38-01-03b (VAT registration guidelines) updated",
+      "status": "rule",
+      "ruleKeys": [
+        "vat.registration_guidelines_updated_2025_09"
+      ]
+    },
+    {
+      "id": "eu:282-2011:arts10-13b",
+      "area": "other_source",
+      "title": "Implementing Regulation (EU) No 282/2011 arts. 10-13b — establishment, fixed establishment, permanent address, usual residence, immovable property",
+      "status": "rule",
+      "ruleKeys": [
+        "eu.establishment_place_of_business",
+        "eu.establishment_postal_address_not_sufficient",
+        "eu.fixed_establishment_definition",
+        "eu.fixed_establishment_vat_number_not_sufficient",
+        "eu.permanent_address_definition",
+        "eu.usual_residence_definition",
+        "eu.immovable_property_definition"
+      ]
     }
   ]
 }

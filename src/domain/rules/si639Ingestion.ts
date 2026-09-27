@@ -11,6 +11,7 @@ import { sha256Hex } from '@/lib/hash';
 import { parseSi639, provisionSlug, assessRelevance, SI_639_2010_MD_PATH } from './si639Parser';
 import { SI_639_CURATED_RULES } from './si639Curation';
 import { upsertReviewItem } from '../extraction/service';
+import { crossReferencesFromProvision, sameCrossReferences } from './dependencies';
 
 export { SI_639_2010_MD_PATH };
 
@@ -150,7 +151,8 @@ export function deriveSi639Rules(
       )).get();
 
     if (existing) {
-      if (existing.statement === rule.statementExcerpt) { unchanged++; continue; }
+      if (existing.statement === rule.statementExcerpt
+        && sameCrossReferences(existing.crossReferences, crossReferencesFromProvision(prov))) { unchanged++; continue; }
       db.update(irishTaxRules)
         .set({ effectiveTo: SI_639.effectiveFrom, active: false })
         .where(eq(irishTaxRules.id, existing.id)).run();
@@ -174,7 +176,7 @@ export function deriveSi639Rules(
       qualifier: null,
       conditions: rule.conditions,
       exceptions: rule.exceptions,
-      crossReferences: [],
+      crossReferences: crossReferencesFromProvision(prov),
       accountingEffect: null,
       taxEffect: null,
       vatEffect: rule.vatEffect,

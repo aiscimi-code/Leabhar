@@ -32,6 +32,7 @@ import { VATCA_REVISED_CURATED_RULES, RETIRED_S46_RULE_KEYS, type CuratedVatcaRe
 import { VAT_SCOPE_CURATED_RULES } from './vatScopeCuration';
 import { VAT_PLACE_OF_SUPPLY_CURATED_RULES } from './vatPlaceOfSupplyCuration';
 import { upsertReviewItem } from '../extraction/service';
+import { crossReferencesFromProvision, sameCrossReferences } from './dependencies';
 
 export { VATCA_REVISED_S046_MD_PATH };
 
@@ -201,7 +202,8 @@ export function deriveVatcaRevisedRules(
       const match = stored.find((r) => !kept.has(r.id)
         && r.provisionId === prov.id && r.effectiveFrom === rule.effectiveFrom
         && (r.effectiveTo ?? null) === rule.effectiveTo
-        && r.statement === rule.statementExcerpt && r.numericValue === rule.numericValue);
+        && r.statement === rule.statementExcerpt && r.numericValue === rule.numericValue
+        && sameCrossReferences(r.crossReferences, crossReferencesFromProvision(prov)));
       if (match) {
         kept.add(match.id);
         previousId = match.id;
@@ -230,7 +232,7 @@ export function deriveVatcaRevisedRules(
         qualifier: rule.qualifier,
         conditions: rule.conditions,
         exceptions: [],
-        crossReferences: [],
+        crossReferences: crossReferencesFromProvision(prov),
         accountingEffect: null,
         taxEffect: null,
         vatEffect: rule.vatEffect,

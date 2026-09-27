@@ -50,8 +50,10 @@ describe('the cash receipts basis', () => {
       .toThrow(/Revenue's reference/);
     recordCashBasisAuthorisation(db, { companyId, eligibility: 'turnover_threshold', authorisedFrom: '2026-03-01', reference: 'ROS 12345', confirmedBy: 'joe' });
     expect(db.select().from(auditEvents).where(eq(auditEvents.field, 'cash_basis_authorisation')).all()).toHaveLength(1);
-    expect(codes(cashBasisFindings(db, { companyId, periodStart: '2026-01-01', periodEnd: '2026-02-28' }))).toEqual(['cash_basis_not_authorised']);
-    expect(cashBasisFindings(db, { companyId, periodStart: '2026-03-01', periodEnd: '2026-04-30' })).toEqual([]);
+    expect(codes(cashBasisFindings(db, { companyId, periodStart: '2026-01-01', periodEnd: '2026-02-28' })))
+      .toEqual(['cash_basis_not_authorised', 'cash_basis_threshold_rule_not_approved']);
+    expect(cashBasisFindings(db, { companyId, periodStart: '2026-03-01', periodEnd: '2026-04-30' }))
+      .toEqual(expect.arrayContaining([expect.objectContaining({ code: 'cash_basis_threshold_rule_not_approved' })]));
   });
 
   it('turnover over €2,000,000 in the 12 months to the period end is flagged; credit notes and old sales count correctly', () => {
@@ -66,8 +68,8 @@ describe('the cash receipts basis', () => {
     expect(t).toMatchObject({ from: '2025-05-01', to: '2026-04-30', totalMinor: 205_000_000 });
     expect(t.totalMinor).toBeGreaterThan(CASH_BASIS_TURNOVER_THRESHOLD_MINOR);
     const f = cashBasisFindings(db, { companyId, periodStart: '2026-03-01', periodEnd: '2026-04-30' });
-    expect(codes(f)).toEqual(['cash_basis_turnover_over_threshold']);
-    expect(f[0]!.title).toMatch(/€2,050,000\.00/);
+    expect(codes(f)).toEqual(['cash_basis_threshold_rule_not_approved', 'cash_basis_turnover_over_threshold']);
+    expect(f[1]!.title).toMatch(/€2,050,000\.00/);
   });
 
   it('the 90% test: a large share of sales to customers with a VAT number is flagged', () => {
@@ -76,16 +78,17 @@ describe('the cash receipts basis', () => {
     sale(customer('Shop Customer', null), '2026-01-10', 900_000);
     const trade = customer('Trade Customer Ltd', 'IE6388047V');
     sale(trade, '2026-01-11', 100_000);
-    expect(cashBasisFindings(db, { companyId, periodStart: '2026-01-01', periodEnd: '2026-02-28' })).toEqual([]);
+    const before = cashBasisFindings(db, { companyId, periodStart: '2026-01-01', periodEnd: '2026-02-28' });
+    expect(codes(before)).toEqual(['cash_basis_threshold_rule_not_approved']);
     sale(trade, '2026-02-11', 100_000);
     const f = cashBasisFindings(db, { companyId, periodStart: '2026-01-01', periodEnd: '2026-02-28' });
-    expect(codes(f)).toEqual(['cash_basis_registered_customers_share']);
-    expect(f[0]!.title).toMatch(/^18\.2% of sales/);
+    expect(codes(f)).toEqual(['cash_basis_threshold_rule_not_approved', 'cash_basis_registered_customers_share']);
+    expect(f[1]!.title).toMatch(/^18\.2% of sales/);
   });
 
   it('with nothing recorded, both the authorisation and the s.80(1) test are asked for', () => {
     const { db, companyId } = setup();
     expect(codes(cashBasisFindings(db, { companyId, periodStart: '2026-01-01', periodEnd: '2026-02-28' })))
-      .toEqual(['cash_basis_not_authorised', 'cash_basis_eligibility_unrecorded']);
+      .toEqual(['cash_basis_not_authorised', 'cash_basis_threshold_rule_not_approved', 'cash_basis_eligibility_unrecorded']);
   });
 });
