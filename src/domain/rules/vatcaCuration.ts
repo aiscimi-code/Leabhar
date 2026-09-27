@@ -72,6 +72,19 @@ export const CONTRACT_WORK_ADVISORY_REASON = 'Contract work is charged at the ra
   + 'carry (VATCA s.49): zero-rated goods make it zero-rated, reduced-rate goods 13.5%, others the standard rate. '
   + 'Which goods those are is not on the line — pick their schedule rule with your adviser.';
 
+export const WORKS_OF_ART_RULE_KEY = 'vat.rate_works_of_art_imported';
+
+/**
+ * The s.48 rule never decides a rate: the reduced rate applies to the
+ * importation and to a supply by the creator or the importer, and neither
+ * fact is on a line. A resale by anyone else is standard-rated or under the
+ * margin or auction scheme. Surfaced by `advisoryReasons`.
+ */
+export const WORKS_OF_ART_ADVISORY_REASON = 'The line may be a work of art, collector\'s item or antique (VATCA '
+  + 's.48, Schedule 5): the reduced rate applies only to its importation and to a supply by its creator or '
+  + 'importer. A resale by anyone else is standard-rated, or under the margin or auction scheme. Who is '
+  + 'supplying it is not on the line — confirm the rate with your adviser.';
+
 export const VATCA_CURATED_RULES: CuratedVatcaRule[] = [
   {
     sectionNumber: '3',
@@ -175,7 +188,7 @@ export const VATCA_CURATED_RULES: CuratedVatcaRule[] = [
   },
   {
     sectionNumber: '48',
-    ruleKey: 'vat.rate_works_of_art_imported',
+    ruleKey: WORKS_OF_ART_RULE_KEY,
     ruleType: 'rate',
     topic: 'vat',
     name: 'Works of art, collectors\' items and antiques: charged at the reduced rate (s.48(1), Schedule 5)',
@@ -208,8 +221,9 @@ export const VATCA_CURATED_RULES: CuratedVatcaRule[] = [
     reportingEffect: 'Output VAT at the reduced rate lands in the same T1/T2 boxes as any other taxable supply.',
     requiresGuidance: true,
     interpretationNote: 'PROXY: art/collectible wording stands in for a Schedule 5 category. Which category the item '
-      + 'falls into (and whether the seller is its creator or importer, s.48(1)(b)–(c)) is not on the line: a '
-      + 'Schedule 3 paragraph 23/24/25 item meets its own rule first (same reduced rate), and the two agree.',
+      + 'falls into, and whether the seller is its creator or importer (s.48(1)(b)–(c)), is not on the line, so '
+      + 'the rule flags and never decides: words like "painting" or "ceramic" also describe decorating work and '
+      + 'ordinary goods at the standard rate.',
   },
   {
     sectionNumber: '49',

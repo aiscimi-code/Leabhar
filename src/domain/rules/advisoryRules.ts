@@ -4,7 +4,9 @@ import {
   LETTING_LANDLORD_REASON, LETTING_OPTION_LANDLORD_RULE_KEY, CAPITAL_GOODS_REASON, CAPITAL_GOODS_RULE_KEY,
 } from './propertyCuration';
 import { TAXABLE_AMOUNT_ADVISORY } from './taxableAmountCuration';
-import { CONTRACT_WORK_ADVISORY_REASON, CONTRACT_WORK_RULE_KEY } from './vatcaCuration';
+import {
+  CONTRACT_WORK_ADVISORY_REASON, CONTRACT_WORK_RULE_KEY, WORKS_OF_ART_ADVISORY_REASON, WORKS_OF_ART_RULE_KEY,
+} from './vatcaCuration';
 import { DEPOSIT_RETURN_SCHEME_RULE_KEY, SCHEMES_GAPS } from './schemesCuration';
 
 /**
@@ -29,6 +31,7 @@ export const ADVISORY_RULES: AdvisoryRule[] = [
   // Taxable amount (issue #245) and the s.48/s.49 rate questions (issue #278): each turns on a fact no line carries.
   ...Object.entries(TAXABLE_AMOUNT_ADVISORY).map(([ruleKey, reason]) => ({ ruleKey, reason, silencedBy: [] })),
   { ruleKey: CONTRACT_WORK_RULE_KEY, reason: CONTRACT_WORK_ADVISORY_REASON, silencedBy: [] },
+  { ruleKey: WORKS_OF_ART_RULE_KEY, reason: WORKS_OF_ART_ADVISORY_REASON, silencedBy: [] },
   { ruleKey: DEPOSIT_RETURN_SCHEME_RULE_KEY, reason: SCHEMES_GAPS[DEPOSIT_RETURN_SCHEME_RULE_KEY]!, silencedBy: [] },
 ];
 

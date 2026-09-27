@@ -110,10 +110,16 @@ describe('taxable amount (issue #245)', () => {
 });
 
 describe('works of art, collectors\' items and antiques (s.48, Schedule 5)', () => {
-  it('a collector\'s stamp collection is charged at the reduced rate, not the standard rate', () => {
+  it('a collector\'s item is flagged, never decided: the reduced rate turns on who supplies it', () => {
     const s = suggest('Occasional sale of a stamp collection, imported last year');
-    expect(s.decidingRule?.ruleKey).toBe('vat.rate_works_of_art_imported');
-    expect(s.treatment?.code).toBe('IE_RED');
+    expect(s.decidingRule?.ruleKey).not.toBe('vat.rate_works_of_art_imported');
+    expect(s.reviewReasons.join(' ')).toMatch(/VATCA\s*s\.48/);
+  });
+
+  it('ordinary goods named with art words are not put at the reduced rate', () => {
+    const s = suggest('Sale of ceramic mugs');
+    expect(s.decidingRule?.ruleKey).not.toBe('vat.rate_works_of_art_imported');
+    expect(s.treatment?.code).not.toBe('IE_RED');
   });
 
   it('a painting also meets the Schedule 3 para 23 rule at the same reduced rate', () => {

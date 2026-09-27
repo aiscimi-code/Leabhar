@@ -227,15 +227,6 @@ export const RULE_TREATMENT_BINDINGS: TreatmentBinding[] = [
     treatmentCode: () => 'IE_LIVESTOCK',
   },
   {
-    // Works of art, collectors' items and antiques (s.48, Schedule 5): the
-    // reduced rate wherever they come from (issue #278). Placed after the
-    // Schedule 2/3 bindings, with which it agrees where they overlap
-    // (Sch.3 paras 23–25 are the same 13.5%).
-    ruleKeys: ['vat.rate_works_of_art_imported'],
-    direction: 'either',
-    treatmentCode: () => 'IE_RED',
-  },
-  {
     ruleKeys: [
       'vat.rate_periodicals_9pct_current', 'vat.rate_sporting_facilities_9pct_current',
       'vat.rate_heat_pump_installation_9pct_current', 'vat.rate_gas_electricity_9pct_current',
