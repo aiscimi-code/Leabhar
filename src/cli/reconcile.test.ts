@@ -1682,3 +1682,27 @@ describe('cli purchase orders (#411)', () => {
     expect(JSON.parse(c.stdout.join(''))).toMatchObject({ written: out, number: 'PO-1' });
   });
 });
+
+describe('cli recurring bills (#412)', () => {
+  it('sets one up, expects what is due and matches the bill that arrived', async () => {
+    const supplierId = 'sup_rb_cli';
+    db.insert(suppliers).values({ id: supplierId, companyId, name: 'Quay Properties', matchKey: 'quay properties', countryCode: 'IE' }).run();
+    let c = capture();
+    expect(await run(['create-recurring-bill', '--supplier', supplierId, '--name', 'Office rent', '--frequency', 'monthly',
+      '--start', '2025-01-01', '--end', '2025-01-31', '--net', '1000.00', '--actor', 'Test'])).toBe(0);
+    c.restore();
+    const { createInvoice } = await import('@/domain/invoicing/invoices');
+    const { insertConfirmedDocument } = await import('@/db/testing');
+    const posted = createInvoice(db, {
+      companyId, direction: 'purchase', invoiceDate: '2025-01-03' as never, supplierId, invoiceNumber: 'Q-1',
+      documentId: insertConfirmedDocument(db, companyId),
+      lines: [{ description: 'Rent', netMinor: 100_000, accountId: byCode['6120']!, vatTreatmentId: tr['IE_STD']! }],
+    });
+    c = capture();
+    expect(await run(['run-expected-bills', '--actor', 'Test', '--as-of', '2025-01-20'])).toBe(0);
+    c.restore();
+    const result = JSON.parse(c.stdout.join(''));
+    expect(result.raised).toHaveLength(1);
+    expect(result.matched[0]).toMatchObject({ invoiceId: posted.invoiceId, differenceMinor: 0 });
+  });
+});

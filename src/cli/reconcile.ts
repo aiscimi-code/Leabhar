@@ -73,6 +73,10 @@ import {
   cancelPurchaseOrder, purchaseOrderDocument,
 } from '@/domain/invoicing/purchaseOrders';
 import { purchaseOrders } from '@/db/schema';
+import {
+  createRecurringBill, runExpectedBills, listRecurringBills, matchExpectedBill, unmatchExpectedBill,
+  dismissExpectedBill, deactivateRecurringBill,
+} from '@/domain/invoicing/expectedBills';
 import { writeFileSync } from 'node:fs';
 import {
   createRecurringInvoice, postDueRecurringInvoices, listRecurringInvoices,
@@ -308,6 +312,17 @@ Books (once induction is done):
   unlink-bill --invoice <number|id> --actor "Name"
   cancel-purchase-order --purchase-order <PO-n|id> --reason "..." --actor "Name"
   purchase-order-pdf --purchase-order <PO-n|id> --out <file.pdf>
+  create-recurring-bill --supplier <id> --name "..." --frequency monthly|quarterly|yearly
+      --start <date> --net <1000.00> --actor "Name" [--end <date>]
+      [--tolerance-percent 5] [--window-days 10]
+      A bill expected on a schedule. Nothing is posted: the supplier's invoice is the bill
+  run-expected-bills --actor "Name" [--as-of <date>]
+      Expect what is due, match the bills posted from confirmed documents, flag the missing
+  list-recurring-bills [--as-of <date>]
+  match-expected-bill --expected <id> --invoice <number|id> --actor "Name"
+  unmatch-expected-bill --expected <id> --reason "..." --actor "Name"
+  dismiss-expected-bill --expected <id> --reason "..." --actor "Name"   No bill is due for it
+  deactivate-recurring-bill --recurring-bill <id> --actor "Name"
   create-invoice --direction sales|purchase --file <invoices.csv>
       A purchase with no confirmed supplier document holds its input VAT back
       and is flagged (issue #234). [--vat-already-declared "reason"]: migrated
@@ -1277,6 +1292,67 @@ export async function main(argv: string[], options: CliOptions = {}): Promise<nu
         const out = requireFlag(flags, 'out');
         writeFileSync(out, await renderPurchaseOrderPdf(docu));
         print({ written: out, number: docu.order.number }, format);
+        return 0;
+      }
+
+      case 'create-recurring-bill': {
+        const base = db.select({ c: companies.baseCurrency }).from(companies).where(eq(companies.id, companyId)).get()!.c;
+        const tolerance = getFlag(flags, 'tolerance-percent');
+        const toleranceBasisPoints = tolerance ? parsePercentBasisPoints(tolerance) : undefined;
+        if (tolerance && toleranceBasisPoints === null) throw new Error(`"${tolerance}" is not a percentage.`);
+        print(createRecurringBill(db, {
+          companyId, supplierId: requireFlag(flags, 'supplier'), name: requireFlag(flags, 'name'),
+          frequency: requireFlag(flags, 'frequency') as 'monthly' | 'quarterly' | 'yearly',
+          startDate: asIsoDate(requireFlag(flags, 'start')),
+          endDate: getFlag(flags, 'end') ? asIsoDate(getFlag(flags, 'end')!) : null,
+          expectedNetMinor: parseAmount(requireFlag(flags, 'net'), base),
+          ...(toleranceBasisPoints != null ? { toleranceBasisPoints } : {}),
+          ...(getFlag(flags, 'window-days') ? { windowDays: Number(getFlag(flags, 'window-days')) } : {}),
+          actor: requireFlag(flags, 'actor'),
+        }), format);
+        return 0;
+      }
+
+      case 'run-expected-bills': {
+        print(runExpectedBills(db, {
+          companyId, asOf: asIsoDate(getFlag(flags, 'as-of') ?? new Date().toISOString().slice(0, 10)),
+          actor: requireFlag(flags, 'actor'),
+        }), format);
+        return 0;
+      }
+
+      case 'list-recurring-bills': {
+        print(listRecurringBills(db, { companyId, asOf: asIsoDate(getFlag(flags, 'as-of') ?? new Date().toISOString().slice(0, 10)) }), format);
+        return 0;
+      }
+
+      case 'match-expected-bill': {
+        print(matchExpectedBill(db, {
+          companyId, expectedBillId: requireFlag(flags, 'expected'),
+          invoiceId: resolveInvoiceId(db, companyId, requireFlag(flags, 'invoice')), actor: requireFlag(flags, 'actor'),
+        }), format);
+        return 0;
+      }
+
+      case 'unmatch-expected-bill': {
+        unmatchExpectedBill(db, {
+          companyId, expectedBillId: requireFlag(flags, 'expected'), reason: requireFlag(flags, 'reason'), actor: requireFlag(flags, 'actor'),
+        });
+        print({ unmatched: true }, format);
+        return 0;
+      }
+
+      case 'dismiss-expected-bill': {
+        dismissExpectedBill(db, {
+          companyId, expectedBillId: requireFlag(flags, 'expected'), reason: requireFlag(flags, 'reason'), actor: requireFlag(flags, 'actor'),
+        });
+        print({ dismissed: true }, format);
+        return 0;
+      }
+
+      case 'deactivate-recurring-bill': {
+        deactivateRecurringBill(db, { companyId, recurringBillId: requireFlag(flags, 'recurring-bill'), actor: requireFlag(flags, 'actor') });
+        print({ deactivated: true }, format);
         return 0;
       }
 
