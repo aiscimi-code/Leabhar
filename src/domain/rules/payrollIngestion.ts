@@ -1,46 +1,16 @@
 /**
- * Ingestion for the payroll sources (EPIC 20, issue #526), and the derive
- * step for the curated payroll rules.
- *
- * Each source file becomes one knowledge source. Each provision a rule
- * quotes is an exact slice of that file, between a start marker (the
- * provision's opening words) and an end marker (the next provision's
- * heading, or the end of the operative text). The offsets are the slice's
- * own, so the provision viewer can re-check it against the committed file
- * (AGENTS.md #5), and nothing is normalised or paraphrased.
+ * The payroll sources (EPICs 20 and 21, issues #526, #532), and the derive
+ * step for the curated payroll rules. Each provision is an exact slice of its
+ * committed file (`slicedSourceIngestion.ts`).
  */
-import { and, eq } from 'drizzle-orm';
 import type { AppDatabase } from '@/db';
-import { irishKnowledgeSources, irishActProvisions } from '@/db/schema';
-import { ids } from '@/lib/ids';
-import { nowIso } from '../dates';
-import { sha256Hex } from '@/lib/hash';
-import { parseScheduleFrontMatter } from './vatcaScheduleParser';
-import { provisionSlug } from './statuteParser';
 import { deriveCuratedRuleFamilies, type IncomeTaxDeriveResult } from './incomeTaxIngestion';
 import { PAYROLL_CURATED_RULES } from './payrollCuration';
+import { ingestSlicedSource, sliceProvision, type SlicedSource } from './slicedSourceIngestion';
 
-interface ProvisionSlice {
-  sectionNumber: string;
-  heading: string;
-  /** The provision's first words, where the slice begins. */
-  start: string;
-  /** Where the slice ends (exclusive): the next provision's heading, or null for the end of the file. */
-  end: string | null;
-  category: 'income_tax' | 'usc' | 'procedure';
-}
+export { sliceProvision };
 
-interface PayrollSource {
-  path: string;
-  /** Legislation unless stated: a Revenue manual is guidance, ranked below the law it explains. */
-  sourceType?: 'legislation' | 'revenue_guidance';
-  /** Legislation dated from when it applies; LRC revised text is current law on the day it was retrieved. */
-  effectiveFrom: string;
-  sourceNote: string;
-  provisions: ProvisionSlice[];
-}
-
-export const PAYROLL_SOURCES: PayrollSource[] = [
+export const PAYROLL_SOURCES: SlicedSource[] = [
   {
     path: 'docs/statutes/swca-2005/swca-2005-s13.md',
     effectiveFrom: '2026-09-27',
@@ -134,53 +104,13 @@ export const PAYROLL_SOURCES: PayrollSource[] = [
   },
 ];
 
-/** The exact slice of a source file a provision occupies. Throws if a marker is missing: never a guess. */
-export function sliceProvision(markdown: string, p: ProvisionSlice): { text: string; start: number; end: number } {
-  const start = markdown.indexOf(p.start);
-  if (start < 0) throw new Error(`Payroll source: the opening "${p.start}" of provision ${p.sectionNumber} is not in the file.`);
-  let end = markdown.length;
-  if (p.end !== null) {
-    end = markdown.indexOf(p.end, start + p.start.length);
-    if (end < 0) throw new Error(`Payroll source: the end marker "${p.end}" of provision ${p.sectionNumber} is not in the file.`);
-  }
-  const raw = markdown.slice(start, end);
-  const trimmed = raw.trimEnd();
-  return { text: trimmed, start, end: start + trimmed.length };
-}
-
 /** Ingest one payroll source file. Idempotent by content. */
 export function ingestPayrollSource(
   db: AppDatabase,
   params: { companyId?: string | null; markdown: string; ingestVersion: string; localPath: string },
 ): { sourceId: string; ingested: boolean } {
-  const source = PAYROLL_SOURCES.find((s) => s.path === params.localPath);
-  if (!source) throw new Error(`${params.localPath} is not a payroll source.`);
-  const fm = parseScheduleFrontMatter(params.markdown);
-  const digest = sha256Hex(params.markdown);
-  const existing = db.select({ id: irishKnowledgeSources.id }).from(irishKnowledgeSources)
-    .where(and(eq(irishKnowledgeSources.citation, fm.citation), eq(irishKnowledgeSources.sha256, digest))).get();
-  if (existing) return { sourceId: existing.id, ingested: false };
-  const slices = source.provisions.map((p) => ({ p, ...sliceProvision(params.markdown, p) }));
-  return db.transaction((tx) => {
-    const sourceId = ids.knowledgeSource();
-    tx.insert(irishKnowledgeSources).values({
-      id: sourceId, companyId: params.companyId ?? null, sourceType: source.sourceType ?? 'legislation', title: fm.title, citation: fm.citation,
-      jurisdiction: 'IE', sourceUrl: fm.sourceUrl, localPath: params.localPath, sha256: digest,
-      ingestVersion: params.ingestVersion, publicationDate: null, retrievedAt: nowIso(),
-      effectiveFrom: source.effectiveFrom, sourceNote: source.sourceNote, sourceDate: nowIso(),
-    }).run();
-    for (const { p, text, start, end } of slices) {
-      tx.insert(irishActProvisions).values({
-        id: ids.provision(), companyId: params.companyId ?? null, sourceId, sectionNumber: p.sectionNumber,
-        slug: provisionSlug(`${fm.citation}-${p.sectionNumber}`, p.heading), heading: p.heading, principalAct: null,
-        provisionText: text, sourceStart: start, sourceEnd: end,
-        category: p.category, amendsSection: null, effectiveClue: null, citedActs: [], relevant: true,
-        relevanceReason: 'Payroll: PAYE, USC and PRSI an employer deducts and pays, and the benefits it reports (EPICs 20 and 21).',
-        source: 'import', provenanceStatus: 'imported',
-      }).run();
-    }
-    return { sourceId, ingested: true };
-  });
+  return ingestSlicedSource(db, PAYROLL_SOURCES, 'Payroll: PAYE, USC and PRSI an employer deducts and pays, and the benefits it reports '
+    + '(EPICs 20 and 21).', params);
 }
 
 /** Derive the curated payroll rules, one dated version per row, chained by `supersedesRuleId`. */

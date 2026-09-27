@@ -54,6 +54,7 @@ export const ids = {
   customerContact: () => newId('ccn'),
   rule: () => newId('rule'),
   fixedAsset: () => newId('fa'),
+  fixedAssetTransfer: () => newId('fat'),
   capitalGood: () => newId('cg'),
   capitalGoodInterval: () => newId('cgi'),
   depreciation: () => newId('dep'),

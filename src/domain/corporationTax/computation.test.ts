@@ -255,16 +255,81 @@ describe('motor cars (TCA Part 11, ss.373 and 374)', () => {
     expect(() => inYear(1999)).toThrow(/ct.wear_and_tear_rate/);
     expect(() => inYear(1999)).toThrow(/does not cover the period/);
   });
-  it('flags a car bought from July 2008: its CO2 emissions restriction (Chapter 1A) is not applied', () => {
+  it('flags a car bought from July 2008 whose CO2 emissions are not recorded: Part 11C is not applied', () => {
     car({ costMinor: 2_000_000, baseCostMinor: 2_000_000 });
-    expect(inYear(2025).findings.some((f) => f.includes('Chapter 1A'))).toBe(true);
+    expect(inYear(2025).findings.some((f) => f.includes('Part 11C') && f.includes('not recorded'))).toBe(true);
   });
 
   it('does not raise the emissions question for a van or a car bought before July 2008', () => {
     car({ name: 'Delivery van' });
     car({ purchaseDate: '2005-03-01' });
-    expect(inYear(2005).findings.some((f) => f.includes('Chapter 1A'))).toBe(false);
-    expect(inYear(2025).findings.filter((f) => f.includes('Chapter 1A'))).toEqual([]);
+    expect(inYear(2005).findings.some((f) => f.includes('Part 11C'))).toBe(false);
+    expect(inYear(2025).findings.filter((f) => f.includes('Part 11C'))).toEqual([]);
+  });
+});
+
+describe('cars by CO2 emissions (TCA Part 11C, ss.380K and 380L; issue #466)', () => {
+  const car = (grams: number, costEuro: number, over: Partial<typeof fixedAssets.$inferInsert> = {}) => {
+    const id = ids.fixedAsset();
+    db.insert(fixedAssets).values({
+      id, companyId, name: `Car ${grams}g`, assetCategory: 'motor_vehicles', purchaseDate: '2025-03-01',
+      costMinor: costEuro * 100, currency: 'EUR', baseCostMinor: costEuro * 100, baseCurrency: 'EUR',
+      capitalAllowanceRateBasisPoints: 1250, capitalAllowanceYears: 8, status: 'active', co2EmissionsGramsPerKm: grams, ...over,
+    }).run();
+    return id;
+  };
+  const inYear = (y: number) => capitalAllowances(db, { companyId, from: `${y}-01-01`, to: `${y}-12-31` });
+  const wearAndTear = (r: ReturnType<typeof inYear>) => r.lines.find((l) => l.label.includes('wear and tear'))?.amountMinor ?? 0;
+
+  it('allows categories A and B (up to 140g/km, from 2021) the €24,000 specified amount, whatever the car cost', () => {
+    car(140, 30_000);
+    car(120, 16_000);
+    const r = inYear(2025);
+    // 12.5% of €24,000 each: €3,000 + €3,000, even on the €16,000 car.
+    expect(wearAndTear(r)).toBe(-600_000);
+    expect(r.lines[0]!.citations.map((c) => c.ruleKey)).toEqual(expect.arrayContaining(['car.specified_amount', 'car.co2_group1_max']));
+    expect(r.lines[0]!.citations.find((c) => c.ruleKey === 'car.co2_group1_max')!.section).toBe('TCA 1997 s.380K');
+  });
+
+  it('allows category C (141 to 155g/km) the lesser of €12,000 or half its cost', () => {
+    car(141, 30_000);
+    car(155, 16_000);
+    // €12,000 and €8,000 at 12.5%: €1,500 + €1,000.
+    expect(wearAndTear(inYear(2025))).toBe(-250_000);
+  });
+
+  it('allows a car over 155g/km nothing, and says so', () => {
+    car(156, 30_000);
+    const r = inYear(2025);
+    expect(wearAndTear(r)).toBe(0);
+    expect(r.findings.some((f) => f.includes('allowed nothing'))).toBe(true);
+  });
+
+  it('applies the 2008 scheme to a car bought before 2021: up to 155g/km in full, up to 190g/km half (TDM 11-00-01)', () => {
+    car(155, 30_000, { purchaseDate: '2019-03-01' });
+    car(190, 30_000, { purchaseDate: '2019-03-01' });
+    car(191, 30_000, { purchaseDate: '2019-03-01' });
+    // €24,000 and €12,000 at 12.5%; the 191g/km car nothing.
+    expect(wearAndTear(inYear(2020))).toBe(-450_000);
+  });
+
+  it('applies the FA 2024 scheme to a car bought from 2027: 130g/km is category B, allowed half', () => {
+    car(130, 30_000, { purchaseDate: '2027-02-01' });
+    expect(wearAndTear(inYear(2027))).toBe(-150_000);
+  });
+
+  it('scales a group 1 car\'s disposal proceeds by the specified amount over its cost (s.380L(3))', () => {
+    // Basis €24,000; allowances 2025-2026 €6,000; unallowed €18,000. Proceeds €20,000 × 24/30 = €16,000:
+    // a balancing allowance of €2,000.
+    car(130, 30_000, { disposalDate: '2027-06-01', disposalProceedsMinor: 2_000_000 });
+    expect(inYear(2027).lines.find((l) => l.label.includes('balancing allowances'))!.amountMinor).toBe(-200_000);
+  });
+
+  it('halves a category C car\'s proceeds when it cost under €24,000 (s.380L(3))', () => {
+    // Basis €8,000; allowances 2025-2026 €2,000; unallowed €6,000. Proceeds €10,000 halved to €5,000:
+    // a balancing allowance of €1,000.
+    car(150, 16_000, { disposalDate: '2027-06-01', disposalProceedsMinor: 1_000_000 });
+    expect(inYear(2027).lines.find((l) => l.label.includes('balancing allowances'))!.amountMinor).toBe(-100_000);
   });
 });
 

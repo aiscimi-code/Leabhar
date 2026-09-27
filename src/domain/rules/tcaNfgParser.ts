@@ -22,6 +22,18 @@ export interface NfgSection {
 
 const HEADING = /^ {0,2}(\d+[A-Z]{0,3}) ([A-Z“"].*?)\s*$/;
 
+/**
+ * A lettered section after the one before it (380L after 380K): the same
+ * number, a later suffix. The same section again is a line of text.
+ */
+function laterLetteredSection(section: string, previousSection: string): boolean {
+  const a = /^(\d+)([A-Z]*)$/.exec(section);
+  const b = /^(\d+)([A-Z]*)$/.exec(previousSection);
+  if (!a || !b || a[1] !== b[1]) return false;
+  const [x, y] = [a[2]!, b[2]!];
+  return x.length > y.length || (x.length === y.length && x > y);
+}
+
 /** Every section note in a part, in order. */
 export function parseNfgSections(markdown: string): NfgSection[] {
   const lines = markdown.split('\n');
@@ -31,6 +43,7 @@ export function parseNfgSections(markdown: string): NfgSection[] {
 
   const starts: Array<{ line: number; sectionNumber: string; heading: string }> = [];
   let previous = 0;
+  let previousSection = '';
   for (let i = 0; i < lines.length; i++) {
     const m = HEADING.exec(lines[i]!);
     if (!m) continue;
@@ -53,11 +66,12 @@ export function parseNfgSections(markdown: string): NfgSection[] {
     // section along: the same number or a close one. The same takes the first
     // note of a part (Part 11 opens with one, s.373): a left-margin heading
     // before any note has been taken is a note, not a line of text.
-    if (!opensBody && !((previous === 0) || (number > previous && number - previous <= 5))) continue;
+    if (!opensBody && !((previous === 0) || (number > previous && number - previous <= 5) || (/^\d/.test(lines[i]!) && laterLetteredSection(m[1]!, previousSection)))) continue;
     if (!opensBody) wrapped.length = 0;
     const heading = [m[2]!, ...wrapped].join(' ').replace(/- /g, '').replace(/\s+/g, ' ').trim();
     starts.push({ line: i, sectionNumber: m[1]!, heading });
     previous = number;
+    previousSection = m[1]!;
   }
 
   return starts.map((s, k) => {

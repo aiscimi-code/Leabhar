@@ -3510,6 +3510,30 @@
         "small_benefit.max_incentives",
         "small_benefit.cumulative_limit"
       ]
+    },
+    {
+      "id": "nfg:part11c",
+      "area": "other_source",
+      "title": "Revenue Notes for Guidance TCA 1997 Part 11C (FA 2025 ed.) — ss.380K, 380L emissions-based limits for cars",
+      "status": "rule",
+      "ruleKeys": [
+        "car.specified_amount",
+        "car.co2_group1_max",
+        "car.co2_group2_max",
+        "car.group2_fraction",
+        "car.no_documentation_nil"
+      ]
+    },
+    {
+      "id": "tdm:11-00-01",
+      "area": "other_source",
+      "title": "Revenue TDM Part 11-00-01 — cars: the 2008 CO2 scheme (expenditure from 1 July 2008 to 2020)",
+      "status": "rule",
+      "ruleKeys": [
+        "car.co2_group1_max",
+        "car.co2_group2_max",
+        "car.group2_fraction"
+      ]
     }
   ]
 }

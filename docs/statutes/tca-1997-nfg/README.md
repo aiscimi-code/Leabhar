@@ -18,6 +18,12 @@ vehicles) was added on 2026-09-27, from the same Finance Act 2025 edition.
 Its s.373(2) specified amounts restrict a motor car's wear and tear and
 balancing adjustments (s.374); the computation applies them in
 `src/domain/corporationTax/computation.ts` (issue #313). This file covers
-ss.373–380 only. The emissions-based restrictions of Chapter 1A (ss.380K–380P,
-Finance Act 2008) are not among the sources and a car's CO2 category is not
-recorded, so they are not applied: a car bought from July 2008 is flagged.
+ss.373–380 only.
+
+Part 11C (ss.380K–380P, the emissions-based limits for cars, inserted by Finance
+Act 2008 s.31) was added on 2026-09-27 as `part11c.pdf`/`part11c.md`, from the
+same Finance Act 2025 edition (issue #466). Its notes set out the schemes for
+expenditure from 2021 and from 2027. The 2008 scheme, for expenditure from July
+2008 to 2020, is quoted from Revenue's TDM Part 11-00-01 (`../tdm-11-00-01/`).
+The computation applies the scheme to a car whose CO2 emissions are recorded on
+the fixed asset register; a car without them is flagged.

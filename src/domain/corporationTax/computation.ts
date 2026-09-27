@@ -11,6 +11,7 @@ import {
   nfgCitation, carSpecifiedAmountRuleKey,
 } from '../rules/corporationTaxCuration';
 import { auditRuleFigures, RejectedRuleError } from '../rules/ruleFigures';
+import { CAR_EMISSIONS_CURATED_RULES } from '../rules/carEmissionsCuration';
 import {
   EXPENSE_CHOICES, INCOME_CASES, LOSS_CLAIMS, COMPANY_STATUSES, TRADING_COMPANY_STATUSES, currentDecision,
   type IncomeCase, type ExpenseChoice, type LossClaim, type CompanyStatus, type TradingCompanyStatus,
@@ -211,6 +212,65 @@ function motorCarBasis(
 }
 
 /**
+ * The Part 11C position of a car bought on or after 1 July 2008 whose CO2
+ * emissions are recorded (TCA ss.380K, 380L; issue #466). Its group, by the
+ * scheme in force when the expenditure was incurred, decides the amount its
+ * wear and tear and balancing adjustments are computed on:
+ * - group 1: the specified amount, whatever the car cost;
+ * - group 2: the lesser of half the specified amount and half the cost;
+ * - group 3: nothing.
+ *
+ * On disposal the proceeds are modified in the same proportion (s.380L(3)).
+ * Null when Part 11C does not decide the car (bought before July 2008, a
+ * commercial vehicle, or no emissions recorded).
+ */
+function part11cBasis(
+  db: AppDatabase, companyId: string, asset: typeof fixedAssets.$inferSelect,
+): { group: 1 | 2 | 3; basisMinor: number; proceeds: (recorded: number) => number; citations: CtCitation[]; findings: string[]; label: string } | null {
+  if (asset.co2EmissionsGramsPerKm === null || asset.purchaseDate < '2008-07-01') return null;
+  // The versions in force when the expenditure was incurred: a rule family's
+  // shipped fallback is the one dated for that day, never the first listed.
+  const inForce = CAR_EMISSIONS_CURATED_RULES.filter((r) => r.effectiveFrom <= asset.purchaseDate
+    && (r.effectiveTo === null || asset.purchaseDate < r.effectiveTo));
+  const audit = auditRuleFigures(db, { companyId, asOfDate: asset.purchaseDate, curated: inForce });
+  const specified = figureWithCurationFallback(audit, 'car.specified_amount');
+  const group1Max = figureWithCurationFallback(audit, 'car.co2_group1_max');
+  const group2Max = figureWithCurationFallback(audit, 'car.co2_group2_max');
+  const fraction = figureWithCurationFallback(audit, 'car.group2_fraction');
+  const g = asset.co2EmissionsGramsPerKm;
+  const cost = asset.baseCostMinor;
+  // Cited as the version in force when the expenditure was incurred: the 2008 scheme from Revenue's TDM, later
+  // ones from the Notes for Guidance on the sections themselves.
+  const citeInForce = (ruleKey: string): CtCitation => {
+    const r = inForce.find((x) => x.ruleKey === ruleKey)!;
+    return { ruleKey, citation: r.citation, section: /^\d{3}/.test(r.sectionNumber) ? `TCA 1997 s.${r.sectionNumber}` : `§${r.sectionNumber}` };
+  };
+  const ruleKeys = ['car.specified_amount', 'car.co2_group1_max', 'car.co2_group2_max'];
+  if (g <= group1Max) {
+    return {
+      group: 1, basisMinor: specified, citations: ruleKeys.map(citeInForce), findings: audit.findings(),
+      proceeds: (recorded) => multiplyRational(recorded, specified, cost),
+      label: `${g}g/km, up to ${group1Max}g/km: allowed the specified amount of ${eur(specified)} whatever it cost (s.380L)`,
+    };
+  }
+  if (g <= group2Max) {
+    const half = Math.min(multiplyRational(specified, fraction, 10_000), multiplyRational(cost, fraction, 10_000));
+    return {
+      group: 2, basisMinor: half, citations: [...ruleKeys, 'car.group2_fraction'].map(citeInForce), findings: audit.findings(),
+      proceeds: (recorded) => (cost < specified
+        ? multiplyRational(recorded, fraction, 10_000)
+        : multiplyRational(recorded, multiplyRational(specified, fraction, 10_000), cost)),
+      label: `${g}g/km, over ${group1Max} and up to ${group2Max}g/km: allowed the lesser of half the specified amount or half its `
+        + `cost, ${eur(half)} (s.380L)`,
+    };
+  }
+  return {
+    group: 3, basisMinor: 0, citations: ruleKeys.map(citeInForce), findings: audit.findings(), proceeds: () => 0,
+    label: `${g}g/km, over ${group2Max}g/km: allowed nothing (s.380L)`,
+  };
+}
+
+/**
  * Wear and tear (s.284), balancing allowances and charges (s.288) from the
  * fixed asset register. An asset's configured rate is used; a rate other
  * than the s.284 standard is flagged, and 100% in one year is treated as a
@@ -255,6 +315,7 @@ export function capitalAllowances(
   const balancingCharges: CtSource[] = [];
   let accelerated = false;
   const carCitations = new Set<string>();
+  const part11cCitations = new Map<string, CtCitation>();
   const assets = db.select().from(fixedAssets).where(and(eq(fixedAssets.companyId, companyId), lte(fixedAssets.purchaseDate, to))).all();
   for (const asset of assets) {
     if (asset.disposalDate && asset.disposalDate < from) continue;
@@ -268,9 +329,11 @@ export function capitalAllowances(
     // TCA s.374(1): a motor car over the specified amount gets its allowances
     // as if it cost the specified amount.
     const car = motorCarBasis(db, companyId, asset, audit);
-    const restrictedBy = car?.ruleKey && car.specifiedAmountMinor !== null && cost > car.specifiedAmountMinor
+    // Part 11C (from July 2008) decides a car whose emissions are recorded; Part 11's cost limit does not apply to it.
+    const p11c = car && !car.commercial ? part11cBasis(db, companyId, asset) : null;
+    const restrictedBy = !p11c && car?.ruleKey && car.specifiedAmountMinor !== null && cost > car.specifiedAmountMinor
       ? car.specifiedAmountMinor : null;
-    const basisMinor = restrictedBy ?? cost;
+    const basisMinor = p11c ? p11c.basisMinor : restrictedBy ?? cost;
     const annual = multiplyRational(basisMinor, rate, 10_000);
     // Claims made in earlier periods (s.292: the amount still unallowed is cost less these).
     // Income tax supplies its own count, in years of assessment (s.284(2)(b)).
@@ -295,14 +358,21 @@ export function capitalAllowances(
         + 'specified amounts for those periods are the dated, condition-specific ones of s.373(2), which are not '
         + 'applied here. Check the claim against the amount for its period.');
     }
-    if (car && !car.commercial && asset.purchaseDate >= '2008-07-01') {
-      // Part 11 Chapter 1A (ss.380K-380P, Finance Act 2008) restricts a car's
-      // allowances by its CO2 emissions category. That chapter's notes are not
-      // among the sources, and the register records no emissions category, so
-      // the restriction is not applied: flagged, never assumed away.
-      findings.push(`${asset.name}: allowances on a car bought from July 2008 also depend on its CO2 emissions category `
-        + '(TCA Part 11 Chapter 1A, ss.380K-380P), which can reduce them or deny them for high-emission cars. The '
-        + 'emissions category is not recorded, so that restriction is not applied: check the claim.');
+    if (p11c) {
+      for (const c of p11c.citations) part11cCitations.set(`${c.ruleKey}|${c.citation}`, c);
+      findings.push(`${asset.name} (${eur(cost)}): ${p11c.label}.`, ...p11c.findings);
+      if (p11c.group === 3) {
+        findings.push(`${asset.name} is in the group allowed nothing: no wear and tear, and no balancing allowance or charge on its disposal.`);
+        continue;
+      }
+    } else if (car && !car.commercial && asset.purchaseDate >= '2008-07-01') {
+      // Part 11C (ss.380K-380P, Finance Act 2008) decides a car bought from
+      // July 2008 by its CO2 emissions, which are not recorded for this one:
+      // the restriction is not applied, flagged, never assumed away.
+      findings.push(`${asset.name}: allowances on a car bought from July 2008 depend on its CO2 emissions (TCA Part 11C, `
+        + 'ss.380K-380P), which can halve them or deny them. The emissions are not recorded, so that restriction is not '
+        + 'applied: record the g/km from the registration certificate. Without documentation Revenue treats the car as '
+        + 'allowed nothing (s.380K(3)).');
     }
 
     if (asset.disposalDate && asset.disposalDate <= to) {
@@ -319,7 +389,8 @@ export function capitalAllowances(
       // s.374(3): a restricted car's sale, insurance, salvage or compensation moneys are
       // reduced in the proportion the specified amount bears to its cost.
       const recordedProceeds = asset.disposalProceedsMinor;
-      const proceeds = restrictedBy !== null ? multiplyRational(recordedProceeds, restrictedBy, cost) : recordedProceeds;
+      const proceeds = p11c ? p11c.proceeds(recordedProceeds)
+        : restrictedBy !== null ? multiplyRational(recordedProceeds, restrictedBy, cost) : recordedProceeds;
       if (restrictedBy !== null && proceeds !== recordedProceeds) carCitations.add('ct.car_disposal_proceeds_scaled_down');
       const unallowed = basisMinor - madeBefore;
       if (proceeds < unallowed) {
@@ -361,7 +432,7 @@ export function capitalAllowances(
       kind: 'deduction', label: 'Deduct: capital allowances (wear and tear)', amountMinor: -total(wearAndTear),
       citations: [cite('ct.wear_and_tear_rate'), cite('ct.wear_and_tear_in_use_at_period_end'), cite('ct.allowances_not_exceed_cost'),
         ...(scale ? [cite('ct.wear_and_tear_short_period')] : []), ...(accelerated ? [cite('ct.accelerated_energy_efficient')] : []),
-        ...[...carCitations].map(cite)],
+        ...[...carCitations].map(cite), ...part11cCitations.values()],
       sources: wearAndTear,
       explanation: 'Each asset in use at the end of the period, at its rate, for the years it has left, never beyond its cost '
         + '(a motor car over the specified amount, on that amount: s.374(1)).',
@@ -370,7 +441,7 @@ export function capitalAllowances(
   if (balancingAllowances.length) {
     lines.push({
       kind: 'deduction', label: 'Deduct: balancing allowances', amountMinor: -total(balancingAllowances),
-      citations: [cite('ct.balancing_allowance'), cite('ct.amount_still_unallowed'), ...[...carCitations].map(cite)], sources: balancingAllowances,
+      citations: [cite('ct.balancing_allowance'), cite('ct.amount_still_unallowed'), ...[...carCitations].map(cite), ...part11cCitations.values()], sources: balancingAllowances,
       explanation: 'Assets disposed of for less than their unallowed cost (a restricted car, on its scaled-down proceeds: s.374(3)).',
     });
   }
@@ -378,7 +449,7 @@ export function capitalAllowances(
     lines.push({
       kind: 'add_back', label: 'Add: balancing charges', amountMinor: total(balancingCharges),
       citations: [cite('ct.balancing_charge'), cite('ct.balancing_charge_limit'), cite('ct.amount_still_unallowed'),
-        ...[...carCitations].map(cite)],
+        ...[...carCitations].map(cite), ...part11cCitations.values()],
       sources: balancingCharges,
       explanation: 'Assets disposed of for more than their unallowed cost, limited to the allowances made.',
     });
