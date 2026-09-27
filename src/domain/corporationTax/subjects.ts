@@ -15,7 +15,11 @@ import { nowIso } from '../dates';
 export type IncomeCase = 'case_i' | 'case_iii' | 'case_iv' | 'case_v';
 export type ExpenseChoice =
   | 'add_back_entertainment' | 'staff_entertainment' | 'add_back_not_wholly_exclusively'
-  | 'add_back_private' | 'add_back_capital' | 'deductible';
+  | 'add_back_private' | 'add_back_capital' | 'deductible'
+  // Interest charged on a loan from a partner (issue #464): whether it is a
+  // trading expense or an appropriation of profit is a fact about the loan,
+  // not a general policy, so it is always a decision, never a guess.
+  | 'partner_interest_add_back' | 'partner_interest_deductible';
 
 /**
  * Descriptions only (issue #490): the rates are the rules' to state, printed
@@ -36,6 +40,14 @@ export const EXPENSE_CHOICES: Record<ExpenseChoice, { label: string; addBack: bo
   add_back_private: { label: 'Private or domestic: add back (s.81(2)(b))', addBack: true, ruleKey: 'ct.private_or_domestic' },
   add_back_capital: { label: 'Capital expenditure: add back (s.81(2)(f))', addBack: true, ruleKey: 'ct.capital_expenditure_not_deductible' },
   deductible: { label: 'A deductible trading expense', addBack: false, ruleKey: null },
+  partner_interest_add_back: {
+    label: 'Interest on a partner\u2019s capital or current account: add back (an allocation of profit)',
+    addBack: true, ruleKey: null,
+  },
+  partner_interest_deductible: {
+    label: 'Interest on a genuine partner loan, used wholly and exclusively for the trade: deductible',
+    addBack: false, ruleKey: null,
+  },
 };
 
 export type CtSubjectType = 'journal_line' | 'income_account' | 'loss_claim' | 'company_status'

@@ -48,7 +48,9 @@ import { scanWatchFolder } from '@/domain/documents/watch';
 import {
   archiveDocument, restoreDocument, deleteDocument,
 } from '@/domain/documents/lifecycle';
-import { setRetentionPolicy } from '@/domain/documents/retention';
+import {
+  setRetentionPolicy, retentionEndsOn, seedDefaultRetentionPolicies, RETENTION_EXTENSION_CONDITIONS,
+} from '@/domain/documents/retention';
 import { importStatement, recordManualTransaction, rollbackStatementImport } from '@/domain/banking/import';
 import { detectStatementFormat } from '@/domain/banking/structuredStatements';
 import { seedDemoCompany } from '@/db/seed/demo';
@@ -509,6 +511,26 @@ export async function deleteDocumentAction(formData: FormData): Promise<ActionRe
 }
 
 /**
+ * Apply the default retention policies to a book created before they were
+ * seeded (issue #432). Refused once the book has any policy of its own: the
+ * defaults are a starting point, never a change to a decision already made.
+ */
+export async function applyDefaultRetentionPoliciesAction(): Promise<ActionResult> {
+  try {
+    await requireActor('config.manage');
+    const company = requireCompany();
+    seedDefaultRetentionPolicies(getDb(), company.id, {
+      effectiveFrom: asIsoDate(company.tradeCommencedOn ?? company.dateIncorporated ?? '1900-01-01'),
+      actor: await actorName(),
+    });
+    revalidatePath('/settings/retention');
+    return { ok: true, message: 'Default policies applied: 6 years for every type, never dispose for company documents and contracts.' };
+  } catch (error) {
+    return fail(error);
+  }
+}
+
+/**
  * Set a retention policy (issue #429). The policy is effective-dated: the one
  * in force until now is superseded from this date, never overwritten, so a
  * document dated before the change still resolves the policy of its own day.
@@ -519,13 +541,15 @@ export async function setRetentionPolicyAction(formData: FormData): Promise<Acti
     const db = getDb();
     const company = requireCompany();
     const appliesTo = String(formData.get('appliesTo') ?? 'all');
-    const retainYears = Number(formData.get('retainYears'));
+    const neverDispose = formData.get('neverDispose') === 'on';
+    const retainYears = Number(formData.get('retainYears')) || 0;
     const effectiveFrom = asIsoDate(String(formData.get('effectiveFrom') ?? ''));
     const note = formData.get('note') ? String(formData.get('note')) : null;
     setRetentionPolicy(db, {
       companyId: company.id,
       appliesTo: appliesTo === 'all' ? 'all' : appliesTo as 'contract',
       retainYears,
+      neverDispose,
       effectiveFrom,
       note,
       actor: await actorName(),
@@ -534,8 +558,11 @@ export async function setRetentionPolicyAction(formData: FormData): Promise<Acti
     revalidatePath('/documents');
     return {
       ok: true,
-      message: `Policy set: keep ${appliesTo === 'all' ? 'every type without a specific policy' : appliesTo} `
-        + `for ${retainYears} year${retainYears === 1 ? '' : 's'} from ${effectiveFrom}.`,
+      message: neverDispose
+        ? `Policy set: keep ${appliesTo === 'all' ? 'every type without a specific policy' : appliesTo} `
+          + 'for the life they belong to — never dispose.'
+        : `Policy set: keep ${appliesTo === 'all' ? 'every type without a specific policy' : appliesTo} `
+          + `for ${retainYears} year${retainYears === 1 ? '' : 's'} from ${effectiveFrom}.`,
     };
   } catch (error) {
     return fail(error);
@@ -554,6 +581,22 @@ export async function disposeDocumentAction(formData: FormData): Promise<ActionR
     const documentId = String(formData.get('documentId') ?? '');
     const reason = String(formData.get('reason') ?? '').trim();
     if (!reason) return { ok: false, error: 'Say why this document may be disposed of.' };
+    // The person confirms no condition extends retention before anything is
+    // disposed (issue #432): an open Revenue inquiry, investigation, claim or
+    // appeal (VATCA s.84(4)), or a year whose return was never delivered
+    // (TCA s.886).
+    if (formData.get('confirmNoExtension') !== 'on') {
+      return { ok: false, error: RETENTION_EXTENSION_CONDITIONS };
+    }
+    const doc = db.select().from(documents)
+      .where(and(eq(documents.companyId, company.id), eq(documents.id, documentId))).get();
+    if (doc && retentionEndsOn(db, company.id, doc)?.neverDispose) {
+      return {
+        ok: false,
+        error: 'This type of document is kept for the life it belongs to under a never-dispose policy '
+          + '(issue #432). Reclassify the document, or supersede the policy, if that is wrong.',
+      };
+    }
     archiveDocument(db, {
       companyId: company.id, documentId, actor: await actorName(),
       reason: `Past retention: ${reason}`,

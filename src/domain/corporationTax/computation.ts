@@ -529,7 +529,18 @@ export function computeBase(
     const amount = line.baseDebitMinor - line.baseCreditMinor;
     if (amount === 0) continue;
     const text = `${entry.narrative} ${line.memo ?? ''}`;
-    const match = LINE_PATTERNS.find((p) => p.pattern.test(text));
+    // Interest charged on a loan from a partner (issue #464): which of the two
+    // treatments applies is a fact about the loan the books cannot know, so
+    // the line always raises the decision - unlike the patterns below, it is
+    // never matched by wording alone.
+    const partnerInterest = entry.sourceType === 'partner_loan_interest';
+    const match = partnerInterest
+      ? {
+        suggested: 'partner_interest_add_back' as ExpenseChoice,
+        options: ['partner_interest_add_back', 'partner_interest_deductible'] as ExpenseChoice[],
+        why: '',
+      }
+      : LINE_PATTERNS.find((p) => p.pattern.test(text));
     const decided = currentDecision(db, companyId, 'journal_line', line.id)?.choice as ExpenseChoice | undefined;
     if (!match && !decided) continue;
     const choice = decided ?? match!.suggested;
@@ -538,8 +549,18 @@ export function computeBase(
       subjectType: 'journal_line', subjectId: line.id, description: `${entry.entryDate} ${account.code} ${account.name}: ${text.trim()}`,
       amountMinor: amount, suggested: match?.suggested ?? 'deductible', decided: decided ?? null,
       options: options.map((c) => ({ choice: c, label: EXPENSE_CHOICES[c].label })),
-      reason: match ? `The description ${match.why}.` : 'Decided by a person.',
+      reason: partnerInterest
+        ? 'Interest paid to a partner. On a genuine loan, used wholly and exclusively for the trade, it is a '
+          + 'trading expense; on the partner\u2019s capital or current account it is an allocation of profit, not an '
+          + 'expense of earning it. The books cannot tell which (issue #464).'
+        : match ? `The description ${match.why}.` : 'Decided by a person.',
     });
+    if (partnerInterest && !decided) {
+      findings.push(`${eur(amount)} of interest paid to a partner is added back until the decision is recorded. `
+        + 'Neither s.81 in full nor the partnership provisions are in the collected sources yet, so the treatment '
+        + 'rests on the decision alone: record "deductible" only for a genuine loan used wholly and exclusively '
+        + 'for the trade (issue #464).');
+    }
     if (!EXPENSE_CHOICES[choice].addBack) continue;
     const bucket = byChoice.get(choice) ?? { amountMinor: 0, sources: [] };
     bucket.amountMinor += amount;

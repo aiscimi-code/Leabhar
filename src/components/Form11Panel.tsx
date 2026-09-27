@@ -44,7 +44,10 @@ export function Form11Panel({ form11: f, currency }: { form11: Form11; currency:
         <table className="ledger" key={sa.name}>
           <tbody>
             <tr>
-              <td colSpan={2} className="font-semibold">Self-assessment reconciliation — {sa.name}</td>
+              <td colSpan={2} className="font-semibold">
+                Self-assessment reconciliation — {sa.name}{' '}
+                {sa.partial && <Badge tone="caution">Partial</Badge>}
+              </td>
             </tr>
             <tr><td className="pl-5">Income tax, USC and PRSI for the year</td>
               <td className="text-right num">{accountingMoney(sa.liabilityMinor, currency)}</td></tr>
@@ -54,6 +57,12 @@ export function Form11Panel({ form11: f, currency }: { form11: Form11; currency:
               <td className="border-t border-line-strong">Balance payable with the return by {date(sa.balanceDueDate)}{sa.balanceMinor < 0 ? ' (repayable)' : ''}</td>
               <td className="text-right num border-t border-line-strong">{accountingMoney(sa.balanceMinor, currency)}</td>
             </tr>
+            {sa.partial && (
+              <tr><td colSpan={2} className="text-[11px] text-ink-faint">
+                Partial: it reconciles the trade&apos;s liability only — the person&apos;s other
+                income is not in these books, so this is never their total liability (#458).
+              </td></tr>
+            )}
           </tbody>
         </table>
       ))}

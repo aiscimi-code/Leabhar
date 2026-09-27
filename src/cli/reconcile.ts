@@ -95,6 +95,7 @@ import { buildCt1Worksheet } from '@/domain/corporationTax/ct1';
 import { computeIncomeTax } from '@/domain/incomeTax/computation';
 import { addPartner, setPartnerShare, partnerSharesOn } from '@/domain/config/partners';
 import { recordPartnerLoan } from '@/domain/partnerships/loans';
+import { recordPartnerLoanInterest } from '@/domain/partnerships/interest';
 import { partnerAllocationStatement, form1Firms } from '@/domain/partnerships/report';
 import { partners, bankAccounts, invoices } from '@/db/schema';
 import { recordManualTransaction, rollbackStatementImport, listStatementImports } from '@/domain/banking/import';
@@ -485,6 +486,12 @@ Inspect:
             [--direction advanced|repaid] [--narrative <text>]
                                          Money a partner lends the firm, or the
                                           firm repaying them (issue #314)
+  record-partner-loan-interest --partner <id> --rate <percent> --from <date> --to <date> --by <name>
+            [--narrative <text>]
+                                         Interest accrued on a partner's loan
+                                          over a period (issue #464); computed
+                                          from the loan account, added back in
+                                          the tax computation until decided
   partners-report [--from <date>] [--to <date>]
                                          Partner allocation statement for a period,
                                           with the Form 1 (Firms) figures for the
@@ -1793,6 +1800,18 @@ export async function main(argv: string[], options: CliOptions = {}): Promise<nu
           companyId, partnerId: requireFlag(flags, 'partner'), direction,
           amountMinor: Math.round(Number(requireFlag(flags, 'amount')) * 100),
           date: requireFlag(flags, 'date'), recordedBy: requireFlag(flags, 'by'),
+          narrative: getFlag(flags, 'narrative'),
+        });
+        print(result, format);
+        return 0;
+      }
+
+      case 'record-partner-loan-interest': {
+        const result = recordPartnerLoanInterest(db, {
+          companyId, partnerId: requireFlag(flags, 'partner'),
+          rateBasisPoints: Math.round(Number(requireFlag(flags, 'rate')) * 100),
+          from: requireFlag(flags, 'from'), to: requireFlag(flags, 'to'),
+          recordedBy: requireFlag(flags, 'by'),
           narrative: getFlag(flags, 'narrative'),
         });
         print(result, format);

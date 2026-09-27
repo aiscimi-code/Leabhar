@@ -40,7 +40,7 @@ describe('buildForm11 (epic #312)', () => {
     const mine = f.sections[1]!;
     expect(mine.title).toContain('Aoife Byrne');
     // Income tax 1,120,000 + USC 133,282 + PRSI 252,000.
-    expect(mine.lines.at(-1)).toMatchObject({ label: 'Total liability', amountMinor: 1_505_282 });
+    expect(mine.lines.at(-1)).toMatchObject({ label: 'Liability on the trade\u2019s income', amountMinor: 1_505_282 });
     // The self-assessment reconciliation: 90% of this year (1,354,754) against
     // 100% of the last year's (824,600: income tax 720,000 and USC 104,600; no PRSI rate for 2025).
     expect(f.selfAssessment).toHaveLength(1);
@@ -57,7 +57,18 @@ describe('buildForm11 (epic #312)', () => {
     ]);
     expect(pr.note).toContain('drawings');
     expect(f.findings.some((x) => x.includes('PPS'))).toBe(true);
-    expect(f.findings.some((x) => x.includes('non-trading income'))).toBe(true);
+    // The boundary (#458, ADR 0013): the return's panels outside the business
+    // are listed as the person's to complete, never computed here.
+    const outside = f.sections.filter((x) => x.title.startsWith('Income outside the business'));
+    expect(outside).toHaveLength(1);
+    expect(outside[0]!.title).toContain('to be completed by Aoife Byrne');
+    expect(outside[0]!.lines.every((l) => l.amountMinor === null)).toBe(true);
+    expect(outside[0]!.lines.some((l) => l.label.includes('employment'))).toBe(true);
+    expect(outside[0]!.lines.some((l) => l.label.includes('Rents'))).toBe(true);
+    expect(f.findings.some((x) => x.includes('income outside the business') && x.includes('Aoife Byrne'))).toBe(true);
+    // The self-assessment is partial: the trade's liability only.
+    expect(sa.partial).toBe(true);
+    expect(sa.working).toContain('Partial');
   });
 
   it('reconciles a year with no profits to nothing payable, and no provision', () => {
@@ -85,6 +96,14 @@ describe('buildForm11 (epic #312)', () => {
     expect(f.selfAssessment.every((x) => x.liabilityMinor === f.computation.individuals[0]!.totalMinor)).toBe(true);
     expect(f.selfAssessment.every((x) => x.preliminaryTaxMinor === f.computation.individuals[0]!.preliminaryTaxMinor)).toBe(true);
     expect(f.findings.some((x) => x.includes('their own Form 11'))).toBe(true);
+    // Each partner gets their own outside-the-business panels, and their own
+    // partial reconciliation.
+    const outside = f.sections.filter((x) => x.title.startsWith('Income outside the business'));
+    expect(outside.map((x) => x.title).sort()).toEqual([
+      'Income outside the business — to be completed by Aoife',
+      'Income outside the business — to be completed by Brian',
+    ]);
+    expect(f.selfAssessment.every((x) => x.partial)).toBe(true);
   });
 
   it('carries a loss through the form, with nothing to pay on it', () => {
