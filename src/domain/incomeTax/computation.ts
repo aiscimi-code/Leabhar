@@ -412,7 +412,9 @@ class IncomeTaxRun {
         const choice = (decision?.choice as IncomeTaxLossClaim | undefined) ?? 'carry_forward';
         const decidedAmount = decision?.amountMinor ?? null;
         if (choice === 'claim_381') {
-          claimedAgainstOtherIncomeMinor = Math.min(Math.max(decidedAmount ?? 0, 0), pool);
+          // s.381 relieves this year's loss only: losses brought forward from
+          // earlier years stay against later profits of the trade (s.382).
+          claimedAgainstOtherIncomeMinor = Math.min(Math.max(decidedAmount ?? 0, 0), -s.share);
           if (!decidedAmount || decidedAmount <= 0) {
             this.findings.push(`${s.name}: the s.381 claim for ${year} records no amount, so the whole loss is carried forward (s.382).`);
           } else {

@@ -221,6 +221,22 @@ describe('trading losses (ss.381, 382; issue #285)', () => {
     expect(y2025.individuals[0]!).toMatchObject({ profitMinor: 4_000_000, broughtForwardLossUsedMinor: 3_000_000 });
   });
 
+  it('limits an s.381 claim to the year\'s own loss: losses brought forward stay under s.382', () => {
+    const s = setup('sole_trader', '2024-01-01');
+    s.income(1_000_000, '2024-06-01');
+    expense(s, 6_000_000, '2024-06-02'); // 2024: a loss of 50,000.00
+    s.income(1_000_000, '2025-06-01');
+    expense(s, 2_000_000, '2025-06-02'); // 2025: a loss of 10,000.00
+    recordCtDecision(s.db, {
+      companyId: s.companyId, subjectType: 'income_tax_loss_claim', subjectId: s.companyId,
+      periodEnd: '2025-12-31', choice: 'claim_381', decidedBy: 'Aoife', amountMinor: 3_000_000,
+    });
+    const y2025 = computeIncomeTax(s.db, { companyId: s.companyId, year: 2025 });
+    expect(y2025.individuals[0]!).toMatchObject({
+      profitMinor: -1_000_000, claimedAgainstOtherIncomeMinor: 1_000_000, lossCarriedForwardMinor: 5_000_000,
+    });
+  });
+
   it('splits a partnership loss by the shares and carries each partner\'s own loss forward (ss.381(2), 382)', () => {
     const s = setup('partnership', '2024-01-01');
     addPartner(s.db, { companyId: s.companyId, name: 'Aoife', shareBasisPoints: 5000, joinedOn: '2024-01-01', recordedBy: 'Aoife', isPrecedentPartner: true });

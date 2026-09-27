@@ -36,7 +36,7 @@ export interface Form11SelfAssessment {
   name: string;
   /** Income tax + USC + PRSI for the year. */
   liabilityMinor: number;
-  /** The preliminary tax paid for the year (s.959AO), as computed. */
+  /** The preliminary tax due for the year (s.959AO), as computed: what was actually paid is not in these books. */
   preliminaryTaxMinor: number;
   /** The balance payable with the return; negative is repayable. */
   balanceMinor: number;
@@ -123,7 +123,7 @@ export function form11From(computation: IncomeTaxComputation): Form11 {
     preliminaryTaxMinor: i.preliminaryTaxMinor,
     balanceMinor: i.totalMinor - i.preliminaryTaxMinor,
     balanceDueDate: c.dates.returnDue,
-    working: `Total liability ${eur(i.totalMinor)} less preliminary tax paid ${eur(i.preliminaryTaxMinor)} `
+    working: `Total liability ${eur(i.totalMinor)} less preliminary tax due ${eur(i.preliminaryTaxMinor)} `
       + `(s.959AO: ${c.dates.basis}): the balance, ${eur(i.totalMinor - i.preliminaryTaxMinor)}, `
       + `is payable with the return by ${c.dates.returnDue}${i.totalMinor - i.preliminaryTaxMinor < 0 ? ', repayable' : ''}.`,
   }));
