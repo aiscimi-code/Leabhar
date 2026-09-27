@@ -39,6 +39,9 @@ export async function GET(
     { header: `Reclaimable (${currency})`, width: 16, money: true,
       value: (r) => amountFor(r.baseRecoverableVatMinor, currency) },
     { header: 'Reverse charge', width: 14, value: (r) => (r.isReverseChargeLeg ? 'Yes' : 'No') },
+    { header: 'Journal #', width: 10, value: (r) => (r.journalEntryNumber ? `#${r.journalEntryNumber}` : '') },
+    { header: 'Applied rule', width: 30, value: (r) => r.ruleName ?? '' },
+    { header: 'Treatment source', width: 40, value: (r) => r.treatmentSourceNote ?? '' },
     { header: 'Has document', width: 14, value: (r) => (r.documentId ? 'Yes' : 'No') },
   ];
 

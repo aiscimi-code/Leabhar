@@ -137,6 +137,7 @@ export const DEFAULT_VAT_TREATMENTS: VatTreatmentSeed[] = [
     jurisdiction: 'IE', direction: 'both', supplyKind: 'both',
     appliesRate: true, defaultRateCode: 'VAT_STD',
     salesVatBox: 'T1', purchasesVatBox: 'T2',
+    sourceNote: 'Irish standard-rated supply. Verify the current rate against Revenue guidance before filing.',
   },
   {
     code: 'IE_RED', name: 'Irish reduced rate', isSystem: true,
@@ -144,6 +145,7 @@ export const DEFAULT_VAT_TREATMENTS: VatTreatmentSeed[] = [
     jurisdiction: 'IE', direction: 'both', supplyKind: 'both',
     appliesRate: true, defaultRateCode: 'VAT_RED',
     salesVatBox: 'T1', purchasesVatBox: 'T2',
+    sourceNote: 'Irish reduced-rated supply; applies to specified goods and services only.',
   },
   {
     code: 'IE_SECOND_RED', name: 'Irish second reduced rate', isSystem: true,
@@ -151,6 +153,7 @@ export const DEFAULT_VAT_TREATMENTS: VatTreatmentSeed[] = [
     jurisdiction: 'IE', direction: 'both', supplyKind: 'both',
     appliesRate: true, defaultRateCode: 'VAT_SECOND_RED',
     salesVatBox: 'T1', purchasesVatBox: 'T2',
+    sourceNote: 'Irish second reduced rate; the scope has changed repeatedly in recent years — check before use.',
   },
   {
     code: 'IE_ZERO', name: 'Irish zero-rated', isSystem: true,
@@ -160,6 +163,7 @@ export const DEFAULT_VAT_TREATMENTS: VatTreatmentSeed[] = [
     jurisdiction: 'IE', direction: 'both', supplyKind: 'both',
     appliesRate: true, defaultRateCode: 'VAT_ZERO',
     salesVatBox: 'T1', purchasesVatBox: 'T2',
+    sourceNote: 'Irish zero-rated supply: taxable at 0%, which is not the same as exempt.',
   },
   {
     code: 'IE_LIVESTOCK', name: 'Irish livestock rate', isSystem: true,
@@ -168,6 +172,7 @@ export const DEFAULT_VAT_TREATMENTS: VatTreatmentSeed[] = [
     jurisdiction: 'IE', direction: 'both', supplyKind: 'goods',
     appliesRate: true, defaultRateCode: 'VAT_LIVESTOCK',
     salesVatBox: 'T1', purchasesVatBox: 'T2',
+    sourceNote: 'Livestock rate (VATCA s.46(1)(d)); confirm the animal categories before use.',
   },
   {
     code: 'IE_EXEMPT', name: 'Exempt', isSystem: true,
@@ -177,6 +182,7 @@ export const DEFAULT_VAT_TREATMENTS: VatTreatmentSeed[] = [
     jurisdiction: 'IE', direction: 'both', supplyKind: 'both',
     appliesRate: false, defaultRateCode: 'VAT_NONE',
     isRecoverable: false, recoverableBasisPoints: 0,
+    sourceNote: 'Exempt supply — no VAT arises, and related input VAT recovery may be restricted.',
   },
   {
     code: 'OUT_OF_SCOPE', name: 'Outside the scope of VAT', isSystem: true,
@@ -185,6 +191,7 @@ export const DEFAULT_VAT_TREATMENTS: VatTreatmentSeed[] = [
     jurisdiction: 'IE', direction: 'both', supplyKind: 'both',
     appliesRate: false, defaultRateCode: 'VAT_NONE',
     isRecoverable: false, recoverableBasisPoints: 0,
+    sourceNote: 'Not a VAT transaction; reported nowhere on the VAT3.',
   },
 
   // ---- EU ----
@@ -208,6 +215,7 @@ export const DEFAULT_VAT_TREATMENTS: VatTreatmentSeed[] = [
     appliesRate: true, defaultRateCode: 'VAT_STD',
     isReverseCharge: true, salesVatBox: 'T1', purchasesVatBox: 'T2', netPurchasesBox: 'ES2',
     requiresCounterpartyVatNumber: true,
+    sourceNote: 'Reverse charge on services received from another EU member state (place-of-supply rule); requires the supplier’s VAT number.',
   },
   {
     code: 'EU_GOODS_SUPPLY', name: 'Intra-Community supply of goods', isSystem: true,
@@ -217,6 +225,7 @@ export const DEFAULT_VAT_TREATMENTS: VatTreatmentSeed[] = [
     jurisdiction: 'EU', direction: 'sales', supplyKind: 'goods',
     appliesRate: true, defaultRateCode: 'VAT_ZERO',
     salesVatBox: 'T1', netSalesBox: 'E1', requiresCounterpartyVatNumber: true,
+    sourceNote: 'Intra-Community supply, zero-rated where the conditions are met; the customer’s VAT number must be held and valid.',
   },
   {
     code: 'EU_SERVICES_SUPPLY', name: 'Services supplied to EU business', isSystem: true,
@@ -225,6 +234,7 @@ export const DEFAULT_VAT_TREATMENTS: VatTreatmentSeed[] = [
     jurisdiction: 'EU', direction: 'sales', supplyKind: 'services',
     appliesRate: true, defaultRateCode: 'VAT_ZERO',
     salesVatBox: 'T1', netSalesBox: 'ES1', requiresCounterpartyVatNumber: true,
+    sourceNote: 'Services supplied to an EU business customer; the customer accounts for the VAT under the place-of-supply rule.',
   },
 
   // ---- Non-EU ----
@@ -236,6 +246,7 @@ export const DEFAULT_VAT_TREATMENTS: VatTreatmentSeed[] = [
     jurisdiction: 'NON_EU', direction: 'purchases', supplyKind: 'services',
     appliesRate: true, defaultRateCode: 'VAT_STD',
     isReverseCharge: true, salesVatBox: 'T1', purchasesVatBox: 'T2',
+    sourceNote: 'Reverse charge on services received from outside the EU.',
   },
   {
     code: 'NON_EU_SERVICES_SUPPLY', name: 'Services supplied outside the EU', isSystem: true,
@@ -244,6 +255,7 @@ export const DEFAULT_VAT_TREATMENTS: VatTreatmentSeed[] = [
     jurisdiction: 'NON_EU', direction: 'sales', supplyKind: 'services',
     appliesRate: true, defaultRateCode: 'VAT_ZERO',
     salesVatBox: 'T1',
+    sourceNote: 'Services supplied outside the EU; outside the scope of Irish VAT under the place-of-supply rules.',
   },
   {
     code: 'IMPORT_PA', name: 'Import — postponed accounting', isSystem: true,
@@ -263,6 +275,7 @@ export const DEFAULT_VAT_TREATMENTS: VatTreatmentSeed[] = [
     jurisdiction: 'NON_EU', direction: 'purchases', supplyKind: 'goods',
     appliesRate: true, defaultRateCode: 'VAT_STD',
     purchasesVatBox: 'T2',
+    sourceNote: 'Import VAT paid at the point of entry; reclaimed in T2 against the customs evidence.',
   },
   {
     code: 'RC_CONSTRUCTION', name: 'Domestic reverse charge (construction)', isSystem: true,
