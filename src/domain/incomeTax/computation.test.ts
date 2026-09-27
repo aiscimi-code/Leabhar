@@ -278,6 +278,30 @@ describe('trading losses (ss.381, 382; issue #285)', () => {
     expect(elected.individuals[0]!).toMatchObject({ claimedAgainstOtherIncomeMinor: 800_000, lossCarriedForwardMinor: 0 });
   });
 
+  it('carries the allowances forward as allowances without the s.392 election, so the next year still gets them (issue #467)', () => {
+    const s = setup('sole_trader', '2024-01-01');
+    s.income(200_000, '2025-06-01');
+    s.income(3_000_000, '2026-06-01');
+    s.db.insert(fixedAssets).values({
+      id: ids.fixedAsset(), companyId: s.companyId, name: 'Oven', assetCategory: 'plant_machinery',
+      purchaseDate: '2025-02-01', costMinor: 8_000_000, currency: 'EUR',
+      baseCostMinor: 8_000_000, baseCurrency: 'EUR',
+      capitalAllowanceRateBasisPoints: 1250, capitalAllowanceYears: 8, status: 'active',
+    }).run();
+    // 2025: profit 2,000 less the 10,000 allowance. No election: 8,000 of
+    // allowances are unused, carried forward as allowances — not lost.
+    const y2025 = computeIncomeTax(s.db, { companyId: s.companyId, year: 2025 });
+    expect(y2025.individuals[0]!).toMatchObject({ lossCarriedForwardMinor: 0, allowancesCarriedForwardMinor: 800_000 });
+    // 2026: profit 30,000 less that year's 10,000 allowance = 20,000, less the
+    // 8,000 carried forward = 12,000 taxed.
+    const y2026 = computeIncomeTax(s.db, { companyId: s.companyId, year: 2026 });
+    expect(y2026.individuals[0]!).toMatchObject({
+      profitMinor: 2_000_000, allowancesBroughtForwardUsedMinor: 800_000, allowancesCarriedForwardMinor: 0,
+    });
+    const form = y2026.individuals[0]!;
+    expect(form.incomeTax[0]!.label).toContain('12000.00');
+  });
+
   it('gives no earned income credit to a sleeping partner, and flags an unrecorded status (issue #493)', () => {
     const s = setup('partnership', '2024-01-01');
     const active = addPartner(s.db, {

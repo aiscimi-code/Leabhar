@@ -62,6 +62,14 @@ export interface IndividualLiability {
   claimedAgainstOtherIncomeMinor: number;
   /** The loss left to carry forward against later profits of the same trade (s.382). */
   lossCarriedForwardMinor: number;
+  /**
+   * Capital allowances of earlier years that created a loss without the s.392
+   * election, set against this share before any loss (s.304): unused
+   * allowances are carried forward as allowances, not lost (issue #467).
+   */
+  allowancesBroughtForwardUsedMinor: number;
+  /** Unused capital allowances left to carry forward as allowances (s.304). */
+  allowancesCarriedForwardMinor: number;
   /** The individual's own preliminary tax for the year (s.959AO): the lower of 90% of this year's liability and 100% of the last year's. */
   preliminaryTaxMinor: number;
   status: PersonalStatus;
@@ -128,6 +136,8 @@ class IncomeTaxRun {
   private readonly assetClaims = new Map<string, AssetClaimsMade>();
   /** Losses carried forward against later profits of the same trade, per individual (s.382). */
   private readonly lossPools = new Map<string, number>();
+  /** Unused capital allowances carried forward as allowances, per individual (s.304; issue #467). */
+  private readonly allowancePools = new Map<string, number>();
   private readonly baseFindings: string[] = [];
   private findings: string[] = [];
 
@@ -257,7 +267,8 @@ class IncomeTaxRun {
 
   private liability(params: {
     name: string; partnerId: string | null; shareMinor: number; taxableMinor: number; year: number;
-    losses: { broughtForwardUsedMinor: number; claimedAgainstOtherIncomeMinor: number; carriedForwardMinor: number };
+    losses: { broughtForwardUsedMinor: number; claimedAgainstOtherIncomeMinor: number; carriedForwardMinor: number;
+      allowancesUsedMinor: number; allowancesCarriedForwardMinor: number };
     decisions: CtPendingDecision[];
   }): IndividualLiability {
     const { name, partnerId, shareMinor, taxableMinor, year, losses, decisions } = params;
@@ -388,6 +399,8 @@ class IncomeTaxRun {
       broughtForwardLossUsedMinor: losses.broughtForwardUsedMinor,
       claimedAgainstOtherIncomeMinor: losses.claimedAgainstOtherIncomeMinor,
       lossCarriedForwardMinor: losses.carriedForwardMinor,
+      allowancesBroughtForwardUsedMinor: losses.allowancesUsedMinor,
+      allowancesCarriedForwardMinor: losses.allowancesCarriedForwardMinor,
       status, incomeTax, incomeTaxMinor, usc, uscMinor, prsiMinor,
       preliminaryTaxMinor: 0,
       totalMinor: incomeTaxMinor + uscMinor + (prsiMinor ?? 0),
@@ -474,7 +487,12 @@ class IncomeTaxRun {
       const subjectId = s.partnerId ?? this.companyId;
       const dec31 = `${year}-12-31`;
       let pool = this.lossPools.get(subjectId) ?? 0;
-      const broughtForwardUsedMinor = s.share > 0 ? Math.min(pool, s.share) : 0;
+      // Unused allowances carried forward as allowances come off the profits
+      // first (s.304), then losses brought forward (s.382).
+      let allowancePool = this.allowancePools.get(subjectId) ?? 0;
+      const allowancesUsedMinor = s.share > 0 ? Math.min(allowancePool, s.share) : 0;
+      allowancePool -= allowancesUsedMinor;
+      const broughtForwardUsedMinor = s.share > 0 ? Math.min(pool, s.share - allowancesUsedMinor) : 0;
       pool -= broughtForwardUsedMinor;
       let claimedAgainstOtherIncomeMinor = 0;
       if (s.share < 0) {
@@ -508,6 +526,9 @@ class IncomeTaxRun {
         }
         // s.382: carried forward against later profits of the same trade, automatically.
         pool += tradingLossShare;
+        // Without the election the allowance-created part is not lost: the
+        // unused allowances are carried forward as allowances (s.304).
+        if (!elected) allowancePool += allowanceLossShare;
         const decision = currentDecision(this.db, this.companyId, 'income_tax_loss_claim', subjectId, dec31);
         const choice = (decision?.choice as IncomeTaxLossClaim | undefined) ?? 'carry_forward';
         const decidedAmount = decision?.amountMinor ?? null;
@@ -541,10 +562,14 @@ class IncomeTaxRun {
         });
       }
       this.lossPools.set(subjectId, pool);
+      this.allowancePools.set(subjectId, allowancePool);
       individuals.push(this.liability({
         name: s.name, partnerId: s.partnerId, shareMinor: s.share,
-        taxableMinor: Math.max(s.share - broughtForwardUsedMinor, 0), year, decisions,
-        losses: { broughtForwardUsedMinor, claimedAgainstOtherIncomeMinor, carriedForwardMinor: pool },
+        taxableMinor: Math.max(s.share - allowancesUsedMinor - broughtForwardUsedMinor, 0), year, decisions,
+        losses: {
+          broughtForwardUsedMinor, claimedAgainstOtherIncomeMinor, carriedForwardMinor: pool,
+          allowancesUsedMinor, allowancesCarriedForwardMinor: allowancePool,
+        },
       }));
     }
 

@@ -51,9 +51,11 @@ export function IncomeTaxPanel({ computation: c, currency }: { computation: Inco
               <tr key={i.partnerId ?? 'owner'}>
                 <td className="pl-5">
                   {i.name}: profit {accountingMoney(i.profitMinor, currency)}
+                  {i.allowancesBroughtForwardUsedMinor !== 0 && <>; capital allowances brought forward used {accountingMoney(-i.allowancesBroughtForwardUsedMinor, currency)}</>}
                   {i.broughtForwardLossUsedMinor !== 0 && <>; losses brought forward used {accountingMoney(-i.broughtForwardLossUsedMinor, currency)}</>}
                   {i.claimedAgainstOtherIncomeMinor !== 0 && <>; claimed against other income (s.381) {accountingMoney(-i.claimedAgainstOtherIncomeMinor, currency)}</>}
                   {i.lossCarriedForwardMinor !== 0 && <>; {accountingMoney(i.lossCarriedForwardMinor, currency)} carried forward (s.382)</>}
+                  {i.allowancesCarriedForwardMinor !== 0 && <>; {accountingMoney(i.allowancesCarriedForwardMinor, currency)} of capital allowances carried forward (s.304)</>}
                   ; income tax {accountingMoney(i.incomeTaxMinor, currency)},
                   USC {accountingMoney(i.uscMinor, currency)}, PRSI {i.prsiMinor === null ? 'not computed' : accountingMoney(i.prsiMinor, currency)}
                   <Help>{[...i.incomeTax, ...i.usc].map((l) => `${l.label}: ${accountingMoney(l.amountMinor, currency)}`).join('; ')}</Help>
