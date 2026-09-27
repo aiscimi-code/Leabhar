@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { and, eq } from 'drizzle-orm';
 import { seedTestBook, insertTestBankTransaction } from '@/db/testing';
 import {
-  companyOfficers, expenseClaims, expenseClaimLines, expenseRates, journalLines, reviewItems, users, companyMembers, journalEntries,
+  companyOfficers, expenseClaims, expenseClaimLines, expenseRates, journalLines, reviewItems, users, companyMembers, journalEntries, auditEvents,
 } from '@/db/schema';
 import type { AppDatabase } from '@/db';
 import { ids } from '@/lib/ids';
@@ -225,6 +225,111 @@ describe('approveExpenseClaim', () => {
     approveExpenseClaim(db, { companyId, claimId: claim.claimId });
     expect(() => approveExpenseClaim(db, { companyId, claimId: claim.claimId }))
       .toThrow(ExpenseClaimError);
+  });
+
+  it('allows a claimant to approve their own claim, and marks and flags it (#425)', () => {
+    const claim = createExpenseClaim(db, {
+      companyId, claimant: { officerId }, title: 'Site visit',
+      lines: [{
+        lineType: 'travel', date: asIsoDate('2025-05-14'), description: 'Taxi', amountMinor: 20_00,
+        accountId: travelAccount(),
+      }],
+    });
+    approveExpenseClaim(db, { companyId, claimId: claim.claimId, actor: 'Mary Byrne' });
+
+    // The claim is approved exactly as any other: posted and owed.
+    expect(accountBalance(db, { companyId, accountId: travelAccount() })).toBe(20_00);
+    const row = db.select().from(expenseClaims).where(eq(expenseClaims.id, claim.claimId)).get()!;
+    expect(row.status).toBe('approved');
+    expect(row.approvedBy).toBe('Mary Byrne');
+
+    // The audit event marks the approval self-approved.
+    const event = JSON.parse(db.select().from(auditEvents)
+      .where(and(
+        eq(auditEvents.entityType, 'expense_claim'), eq(auditEvents.entityId, claim.claimId),
+        eq(auditEvents.action, 'user_confirmed'),
+      )).get()!.newValue as string);
+    expect(event.selfApproved).toBe(true);
+
+    // One review item asks for the receipts to be checked.
+    const items = db.select().from(reviewItems)
+      .where(eq(reviewItems.dedupeKey, `expense_claim:${claim.claimId}:self_approved`)).all();
+    expect(items.length).toBe(1);
+    expect(items[0]!.kind).toBe('other');
+    expect(items[0]!.severity).toBe('warning');
+    expect(items[0]!.title).toContain('approved their own claim');
+    expect(items[0]!.detail).toContain('wholly and exclusively');
+    expect(items[0]!.detail).toContain('benefit-in-kind');
+  });
+
+  it('flags a staff claimant the same way as an officer (#425)', () => {
+    const claim = createExpenseClaim(db, {
+      companyId, claimant: { userId }, title: 'Train tickets',
+      lines: [{
+        lineType: 'travel', date: asIsoDate('2025-05-05'), description: 'Dublin–Cork return', amountMinor: 9_999,
+        accountId: travelAccount(),
+      }],
+    });
+    approveExpenseClaim(db, { companyId, claimId: claim.claimId, actor: 'John O’Sullivan' });
+
+    const items = db.select().from(reviewItems)
+      .where(eq(reviewItems.dedupeKey, `expense_claim:${claim.claimId}:self_approved`)).all();
+    expect(items.length).toBe(1);
+    expect(items[0]!.title).toContain('John O’Sullivan');
+    expect(items[0]!.detail).not.toContain('benefit-in-kind');
+  });
+
+  it('recognises a user\'s own claim by identity, not by name (#425)', () => {
+    const claimFor = (title: string) => createExpenseClaim(db, {
+      companyId, claimant: { userId }, title,
+      lines: [{
+        lineType: 'travel', date: asIsoDate('2025-05-05'), description: 'Bus fare', amountMinor: 5_00,
+        accountId: travelAccount(),
+      }],
+    });
+    const flagged = (claimId: string) => db.select().from(reviewItems)
+      .where(eq(reviewItems.dedupeKey, `expense_claim:${claimId}:self_approved`)).all().length;
+
+    // The same person, recorded under their username rather than their display
+    // name: still their own claim.
+    const own = claimFor('Own claim');
+    approveExpenseClaim(db, {
+      companyId, claimId: own.claimId, actor: `colleague-${userId}`, approverUserId: userId,
+    });
+    expect(flagged(own.claimId)).toBe(1);
+
+    // A different person who happens to share the display name: not self-approval.
+    const namesakeId = ids.user();
+    db.insert(users).values({
+      id: namesakeId, username: `namesake-${namesakeId}`, displayName: 'John O’Sullivan',
+      passwordHash: 'x', passwordSalt: 'y',
+    }).run();
+    const other = claimFor('Namesake approves');
+    approveExpenseClaim(db, {
+      companyId, claimId: other.claimId, actor: 'John O’Sullivan', approverUserId: namesakeId,
+    });
+    expect(flagged(other.claimId)).toBe(0);
+  });
+
+  it('raises no self-approval flag when someone else approves (#425)', () => {
+    const claim = createExpenseClaim(db, {
+      companyId, claimant: { officerId }, title: 'Site visit',
+      lines: [{
+        lineType: 'travel', date: asIsoDate('2025-05-14'), description: 'Taxi', amountMinor: 20_00,
+        accountId: travelAccount(),
+      }],
+    });
+    approveExpenseClaim(db, { companyId, claimId: claim.claimId, actor: 'Accountant' });
+
+    const items = db.select().from(reviewItems)
+      .where(eq(reviewItems.dedupeKey, `expense_claim:${claim.claimId}:self_approved`)).all();
+    expect(items.length).toBe(0);
+    const event = JSON.parse(db.select().from(auditEvents)
+      .where(and(
+        eq(auditEvents.entityType, 'expense_claim'), eq(auditEvents.entityId, claim.claimId),
+        eq(auditEvents.action, 'user_confirmed'),
+      )).get()!.newValue as string);
+    expect(event.selfApproved).toBeUndefined();
   });
 });
 
