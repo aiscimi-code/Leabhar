@@ -1,0 +1,1 @@
+ALTER TABLE `irish_act_provisions` ADD `locator` text;

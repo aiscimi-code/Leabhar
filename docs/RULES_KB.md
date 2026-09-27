@@ -49,7 +49,13 @@ transaction to the rules that apply to it. Two sources are ingested:
   just a derive step that had been missed the first time (see "Finance Act
   2024 VAT Registration Thresholds" below);
 - Revenue TDM Part 38-01-03b (Guidelines for VAT Registration), one passage
-  only, from `docs/statutes/tdm-38-01-03b/38-01-03b.md` — Revenue's own
+  only, from `docs/statutes/tdm-38-01-03b/38-01-03b.md`;
+- Revenue's VAT3 and RTD form guidance (issue #439): the nine box passages of
+  `docs/statutes/vat3-rtd/completing-vat3-return.md` and six sections of TDM
+  VAT-RTD-S76 (`docs/statutes/vat3-rtd/VAT-RTD-S76.md`), ingested as their
+  own sources and curated as reporting rules (`vat3.box_*`, `rtd.*`) so a
+  report naming a box can cite the definition behind it. The screens
+  (`src/domain/vat/boxDefinitions.ts`, `rtd.ts`) implement the same mapping — Revenue's own
   guidance on the "capacity" exclusion from mandatory electronic VAT
   filing, closing a gap "S.I. 156/2012 (Mandatory Electronic Filing)" above
   explicitly left open (see "Revenue TDM 38-01-03b (Mandatory E-Filing

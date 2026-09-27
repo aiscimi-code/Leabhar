@@ -142,6 +142,13 @@ export const irishActProvisions = sqliteTable('irish_act_provisions', {
   /** Character offset range within the source document; paired for a verifiable slice. */
   sourceStart: integer('source_start'),
   sourceEnd: integer('source_end'),
+  /**
+   * How the source itself points a reader to this provision (issue #442,
+   * the #293 locator model): a section anchor for an HTML page, a page number
+   * for a PDF, a form box code for a return. Null only where the source states
+   * no locator of its own — never invented here.
+   */
+  locator: text('locator'),
   humanExplanation: text('human_explanation'),
   category: text('category', { enum: IRISH_PROVISION_CATEGORIES }).notNull().default('other'),
   /** Section number(s) this provision amends, e.g. "472BB(3)" — parsed from text. */

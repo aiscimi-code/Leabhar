@@ -48,6 +48,7 @@ import { ingestSwcaSection, deriveIncomeTaxRules, SWCA_SECTIONS, swcaPath } from
 import {
   ingestCompaniesAct2014Section, deriveCompaniesAct2014Rules, COMPANIES_ACT_2014_SECTION_NUMBERS,
 } from './companiesAct2014Ingestion';
+import { ingestVat3ReturnGuidance, ingestRtdTdm, deriveVat3RtdRules } from './vat3RtdIngestion';
 
 type IngestParams = { companyId: string; markdown: string; ingestVersion: string; localPath: string };
 type IngestFn = (db: AppDatabase, params: IngestParams) => unknown;
@@ -127,6 +128,8 @@ const SOURCES: Array<{ path: string; ingest: IngestFn }> = [
     ingest: ((db, p) => ingestTcaNfgPart(db, { ...p, part })) as IngestFn,
   })),
   ...SWCA_SECTIONS.map((n) => ({ path: swcaPath(n), ingest: ingestSwcaSection as IngestFn })),
+  { path: 'docs/statutes/vat3-rtd/completing-vat3-return.md', ingest: ingestVat3ReturnGuidance },
+  { path: 'docs/statutes/vat3-rtd/VAT-RTD-S76.md', ingest: ingestRtdTdm },
 ];
 
 /** Derive steps, in the order the CLI documents them (thresholds after FA 2024 is ingested). */
@@ -147,6 +150,7 @@ const DERIVES: Array<(db: AppDatabase, params: { companyId: string }) => unknown
   deriveVatScopeRules,
   deriveCorporationTaxRules,
   deriveIncomeTaxRules,
+  deriveVat3RtdRules,
 ];
 
 /** Resolve a repo-relative statute path against the running app's root (the install directory when packaged). */

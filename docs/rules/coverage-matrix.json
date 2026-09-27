@@ -3287,6 +3287,37 @@
       "ruleKeys": [
         "vat.mandatory_electronic_filing_capacity_exclusion"
       ]
+    },
+    {
+      "id": "revenue:vat3-return-page",
+      "area": "other_source",
+      "title": "Revenue: How do you complete a VAT 3 return? — box definitions",
+      "status": "rule",
+      "ruleKeys": [
+        "vat3.box_t1",
+        "vat3.box_t2",
+        "vat3.box_t3",
+        "vat3.box_t4",
+        "vat3.box_e1",
+        "vat3.box_e2",
+        "vat3.box_es1",
+        "vat3.box_es2",
+        "vat3.box_pa1"
+      ]
+    },
+    {
+      "id": "tdm:vat-rtd-s76",
+      "area": "other_source",
+      "title": "Revenue TDM VAT-RTD-S76 — Return of Trading Details",
+      "status": "rule",
+      "ruleKeys": [
+        "rtd.annual_return_required",
+        "rtd.due_date_23rd",
+        "rtd.section_supplies",
+        "rtd.section_acquisitions",
+        "rtd.section_resale",
+        "rtd.section_other_deductible"
+      ]
     }
   ]
 }
