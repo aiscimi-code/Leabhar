@@ -51,10 +51,10 @@ export default async function VatBoxPage({ params }: {
       <Panel
         title="Why this number"
         description={box === 'T2'
-          ? 'These are the entries behind the figure. T2 sums what is reclaimable, not what was charged — where a treatment restricts recovery, the difference is a real cost and is excluded.'
+          ? 'These are the entries behind the figure. T2 sums what is reclaimable, not what was charged — where a treatment restricts recovery, the difference is a real cost and is excluded. Each row carries the whole chain behind it: the journal entry, the invoice, the bank line, the rule that classified it and the source the treatment rests on.'
           : box === 'T3' || box === 'T4'
-            ? 'This box is derived from T1 less T2, so everything behind both is listed here.'
-            : 'These are the entries behind the figure. Follow any row to its transaction, and from there to its document.'}
+            ? 'This box is derived from T1 less T2, so everything behind both is listed here. Each row carries the whole chain behind it: the journal entry, the invoice, the bank line, the rule that classified it and the source the treatment rests on.'
+            : 'These are the entries behind the figure. Each row carries the whole chain: the journal entry that posted it, the invoice or bank line it arose from, the rule that classified that line — and the source the VAT treatment rests on.'}
       >
         {rows.length === 0 ? (
           <Empty title="No entries in this box for this period" />
@@ -63,6 +63,7 @@ export default async function VatBoxPage({ params }: {
             <thead>
               <tr>
                 <th className="w-24">Tax point</th>
+                <th className="w-16">Journal</th>
                 <th>Counterparty</th>
                 <th>VAT treatment</th>
                 <th className="w-16">Dir</th>
@@ -70,6 +71,7 @@ export default async function VatBoxPage({ params }: {
                 <th className="w-28 text-right">Net</th>
                 <th className="w-28 text-right">VAT</th>
                 {box === 'T2' && <th className="w-28 text-right">Reclaimable</th>}
+                <th>Classified by</th>
                 <th className="w-24">Evidence</th>
               </tr>
             </thead>
@@ -77,6 +79,9 @@ export default async function VatBoxPage({ params }: {
               {rows.map((row) => (
                 <tr key={row.entryId}>
                   <td className="num !text-left">{date(row.taxPointDate)}</td>
+                  <td className="num !text-left" title={row.journalNarrative ?? undefined}>
+                    {row.journalEntryId ? `#${row.journalEntryNumber ?? '—'}` : '—'}
+                  </td>
                   <td>
                     {row.bankTransactionId ? (
                       <Link href={`/transactions/${row.bankTransactionId}`}
@@ -104,6 +109,28 @@ export default async function VatBoxPage({ params }: {
                     </td>
                   )}
                   <td>
+                    {row.ruleId ? (
+                      <Link href="/rules"
+                        className="text-accent hover:underline" title={row.treatmentSourceNote ?? undefined}>
+                        {row.ruleName}
+                      </Link>
+                    ) : (
+                      <span className="text-ink-faint" title={row.treatmentSourceNote ?? undefined}>
+                        No rule
+                      </span>
+                    )}
+                    {row.treatmentSourceNote && (
+                      <div className="text-[10.5px] text-ink-faint" title={row.treatmentSourceNote}>
+                        {row.treatmentSourceDate ? `Source as at ${date(row.treatmentSourceDate)}` : 'Recorded source'}
+                      </div>
+                    )}
+                  </td>
+                  <td>
+                    {row.invoiceId && (
+                      <Link href={`/invoices/${row.invoiceId}`} className="mr-1.5">
+                        <Badge tone="accent">Invoice</Badge>
+                      </Link>
+                    )}
                     {row.documentId ? (
                       <Link href={`/documents/${row.documentId}`}>
                         <Badge tone="positive">Document</Badge>
@@ -115,11 +142,11 @@ export default async function VatBoxPage({ params }: {
                 </tr>
               ))}
               <tr className="font-semibold">
-                <td colSpan={box === 'T2' ? 7 : 6}>Total in this box</td>
-                <td className="text-right num" colSpan={box === 'T2' ? 1 : 1}>
+                <td colSpan={box === 'T2' ? 8 : 7}>Total in this box</td>
+                <td className="text-right num">
                   {money(total, currency)}
                 </td>
-                <td />
+                <td colSpan={2} />
               </tr>
             </tbody>
           </table>
