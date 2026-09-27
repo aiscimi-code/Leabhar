@@ -84,6 +84,20 @@ export function recordPartnerLoanInterest(db: AppDatabase, params: {
   }
   const loanAccountId = partner.loanAccountId;
 
+  // A period already charged is never charged again: two accruals over the
+  // same days would double the interest in both the loan and the P&L. Periods
+  // are read from the audit trail of earlier accruals; one whose journal has
+  // since been reversed no longer counts.
+  const overlap = interestPeriods(db, params.companyId, partner.id)
+    .find((p) => p.from <= to && from <= p.to);
+  if (overlap) {
+    throw new PartnerLoanInterestError(
+      `Interest on ${partner.name}'s loan is already recorded for ${overlap.from} to ${overlap.to}, `
+        + `which overlaps ${from} to ${to}. Record interest only for days not yet charged, or reverse `
+        + 'the earlier entry first.',
+    );
+  }
+
   // Simple interest on the day-end balance: each day contributes its balance,
   // rounded once at the end so the figure cannot drift from the rate.
   let balanceDays = 0;
@@ -116,7 +130,7 @@ export function recordPartnerLoanInterest(db: AppDatabase, params: {
       companyId: params.companyId,
       entryDate: to,
       narrative: params.narrative?.trim()
-        ?? `Interest on partner loan — ${partner.name}`,
+        || `Interest on partner loan — ${partner.name}`,
       sourceType: 'partner_loan_interest',
       sourceId: partner.id,
       baseCurrency: company.baseCurrency,
@@ -157,6 +171,26 @@ export function recordPartnerLoanInterest(db: AppDatabase, params: {
       }),
     };
   });
+}
+
+/** The periods already charged for a partner's loan, from live (unreversed) accruals. */
+function interestPeriods(
+  db: AppDatabase, companyId: string, partnerId: string,
+): Array<{ from: string; to: string }> {
+  const events = db.select().from(auditEvents).where(and(
+    eq(auditEvents.companyId, companyId), eq(auditEvents.entityType, 'partner'),
+    eq(auditEvents.entityId, partnerId), eq(auditEvents.action, 'loan_interest_accrued'),
+  )).all();
+  const periods: Array<{ from: string; to: string }> = [];
+  for (const event of events) {
+    const value = JSON.parse(event.newValue ?? '{}') as { from?: string; to?: string; journalEntryId?: string };
+    if (!value.from || !value.to || !value.journalEntryId) continue;
+    const entry = db.select({ reversedBy: journalEntries.reversedByEntryId }).from(journalEntries)
+      .where(eq(journalEntries.id, value.journalEntryId)).get();
+    if (!entry || entry.reversedBy) continue;
+    periods.push({ from: value.from, to: value.to });
+  }
+  return periods;
 }
 
 /**

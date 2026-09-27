@@ -4,7 +4,7 @@ import { createTestDatabase } from '@/db/testing';
 import { createCompany } from '../config/setup';
 import { addPartner } from '../config/partners';
 import { recordPartnerLoan, partnerLoanBalance } from './loans';
-import { postJournalEntry } from '../accounting/journal';
+import { postJournalEntry, reverseJournalEntry } from '../accounting/journal';
 import {
   recordPartnerLoanInterest, partnerLoanInterestForPeriod, PartnerLoanInterestError,
 } from './interest';
@@ -108,6 +108,44 @@ describe('recordPartnerLoanInterest (#464)', () => {
       companyId, partnerId, rateBasisPoints: 500, from: '2025-06-01', to: '2025-06-30',
       recordedBy: 'Aoife',
     })).toThrow(/No interest accrues/);
+  });
+
+  it('never charges the same days twice, unless the earlier accrual was reversed', () => {
+    recordPartnerLoan(db, {
+      companyId, partnerId: aoife.id, direction: 'advanced', amountMinor: 10_000_000,
+      date: '2025-01-01', recordedBy: 'Aoife',
+    });
+    const first = recordPartnerLoanInterest(db, {
+      companyId, partnerId: aoife.id, rateBasisPoints: 500,
+      from: '2025-01-01', to: '2025-06-30', recordedBy: 'Aoife',
+    });
+    // The same period again, and a period overlapping it by one day: refused,
+    // with nothing written.
+    const entries = db.select().from(journalEntries).all().length;
+    expect(() => recordPartnerLoanInterest(db, {
+      companyId, partnerId: aoife.id, rateBasisPoints: 500,
+      from: '2025-01-01', to: '2025-06-30', recordedBy: 'Aoife',
+    })).toThrow(/already recorded for 2025-01-01 to 2025-06-30/);
+    expect(() => recordPartnerLoanInterest(db, {
+      companyId, partnerId: aoife.id, rateBasisPoints: 500,
+      from: '2025-06-30', to: '2025-12-31', recordedBy: 'Aoife',
+    })).toThrow(PartnerLoanInterestError);
+    expect(db.select().from(journalEntries).all().length).toBe(entries);
+
+    // The next period, from the day after, is fine.
+    recordPartnerLoanInterest(db, {
+      companyId, partnerId: aoife.id, rateBasisPoints: 500,
+      from: '2025-07-01', to: '2025-12-31', recordedBy: 'Aoife',
+    });
+
+    // Once the first accrual is reversed, its days may be charged again.
+    reverseJournalEntry(db, {
+      companyId, entryId: first.journalEntryId, reversalDate: asIsoDate('2025-12-31'), reason: 'Wrong rate',
+    });
+    expect(() => recordPartnerLoanInterest(db, {
+      companyId, partnerId: aoife.id, rateBasisPoints: 400,
+      from: '2025-01-01', to: '2025-06-30', recordedBy: 'Aoife',
+    })).not.toThrow();
   });
 
   it('refuses a period that ends before it starts, a non-annual rate and an unknown partner', () => {
