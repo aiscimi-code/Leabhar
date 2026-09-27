@@ -2305,12 +2305,69 @@
       ]
     },
     {
-      "id": "tca:part9-motor-vehicles",
+      "id": "tca:s373",
       "area": "tca_section",
-      "title": "TCA 1997 part9-motor-vehicles",
-      "status": "deferred",
-      "issue": 211,
-      "reason": "The cost and emissions limits are in TCA Part 11 (ss.373–380); its Notes for Guidance are not in the collected sources and were requested on #211. Until then a motor vehicle claim is flagged for review."
+      "title": "TCA 1997 s373",
+      "status": "rule",
+      "ruleKeys": [
+        "ct.motor_car_restrictions_cars_only",
+        "ct.car_specified_amount_2001",
+        "ct.car_specified_amount_2002_to_2005",
+        "ct.car_specified_amount_2006",
+        "ct.car_specified_amount_2007_onwards"
+      ]
+    },
+    {
+      "id": "tca:s374",
+      "area": "tca_section",
+      "title": "TCA 1997 s374",
+      "status": "rule",
+      "ruleKeys": [
+        "ct.car_allowances_restricted_to_specified_amount",
+        "ct.car_disposal_proceeds_scaled_down"
+      ]
+    },
+    {
+      "id": "tca:s375",
+      "area": "tca_section",
+      "title": "TCA 1997 s375",
+      "status": "not_applicable",
+      "reason": "Renewals allowances: the register models a car as a purchased fixed asset, not as a renewal replacing one, so no renewals allowance arises on this path."
+    },
+    {
+      "id": "tca:s376",
+      "area": "tca_section",
+      "title": "TCA 1997 s376",
+      "status": "not_applicable",
+      "reason": "Repealed by FA 2002 s.28(1)(c) for expenditure in periods ending on or after 1 January 2002: no restriction of running expenses applies."
+    },
+    {
+      "id": "tca:s377",
+      "area": "tca_section",
+      "title": "TCA 1997 s377",
+      "status": "not_applicable",
+      "reason": "Hire of cars: a hired car is not capital expenditure in the register, so no hire deduction is restricted here."
+    },
+    {
+      "id": "tca:s378",
+      "area": "tca_section",
+      "title": "TCA 1997 s378",
+      "status": "not_applicable",
+      "reason": "Hire-purchase: the register records the car at its cost when the company capitalises it; the premature-termination and capital/interest apportionment rules do not arise on this path."
+    },
+    {
+      "id": "tca:s379",
+      "area": "tca_section",
+      "title": "TCA 1997 s379",
+      "status": "not_applicable",
+      "reason": "A hirer becoming owner: no hire-then-own acquisition is modelled in the register."
+    },
+    {
+      "id": "tca:s380",
+      "area": "tca_section",
+      "title": "TCA 1997 s380",
+      "status": "not_applicable",
+      "reason": "Supplementary provisions: public hire businesses and testing cars are excluded from the restrictions; the register does not identify them, so the restriction is applied and the treatment flagged rather than excluded here."
     },
     {
       "id": "tca:s396",
@@ -2419,7 +2476,8 @@
         "income_tax.preliminary_tax_current_year",
         "income_tax.preliminary_tax_prior_year",
         "income_tax.preliminary_tax_pre_preceding_year",
-        "income_tax.return_date"
+        "income_tax.return_date",
+        "ct.preliminary_tax_first_period_nil"
       ]
     },
     {

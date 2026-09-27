@@ -13,5 +13,11 @@ conversion (`SOURCES.txt` has the URLs; `../_inbox/MANIFEST.sha256` the hashes).
 - `src/domain/rules/corporationTaxCuration.ts` lists the sections ingested
   (`NFG_SECTIONS`) and the rules quoted from them (issue #211).
 
-Not in this set: Part 11 (ss.373–380, road vehicles: the motor vehicle cost
-and emissions limits on capital allowances and lease payments).
+Part 11 (ss.373–380, capital allowances and expenses for certain road
+vehicles) was added on 2026-09-27, from the same Finance Act 2025 edition.
+Its s.373(2) specified amounts restrict a motor car's wear and tear and
+balancing adjustments (s.374); the computation applies them in
+`src/domain/corporationTax/computation.ts` (issue #313). This file covers
+ss.373–380 only. The emissions-based restrictions of Chapter 1A (ss.380K–380P,
+Finance Act 2008) are not among the sources and a car's CO2 category is not
+recorded, so they are not applied: a car bought from July 2008 is flagged.

@@ -1272,6 +1272,24 @@ describe('cli reconcile — induction and books (issue #153)', () => {
           expect(parsed.profitAndLoss.revenue.valueMinor).toBe(100_000);
         });
 
+        it('ct1-worksheet prints the tax reconciliation from accounting profit to the total liability', async () => {
+          const c = iCapture();
+          const code = await iRun(['ct1-worksheet', '--from', '2025-01-01', '--to', '2025-12-31']);
+          c.restore();
+          expect(code).toBe(0);
+          const parsed = JSON.parse(c.stdout.join(''));
+          const labels = parsed.reconciliation.map((s: { label: string }) => s.label);
+          expect(labels).toEqual(expect.arrayContaining([
+            'Accounting profit for the period',
+            'Taxable trading profit (charged at the standard rate)',
+            'Corporation tax for the period',
+            'Total liability for the period',
+          ]));
+          const total = parsed.reconciliation.find((s: { label: string }) => s.label === 'Total liability for the period');
+          expect(total.amountMinor).toBe(parsed.computation.corporationTaxMinor + parsed.computation.surcharge.surchargeMinor);
+          expect(parsed.disclaimer).toContain('not a filed return');
+        });
+
         it('vat-return by period name reports the invoice\'s output VAT', async () => {
           const c = iCapture();
           const code = await iRun(['vat-return', '--period', 'Jan–Feb 2025']);

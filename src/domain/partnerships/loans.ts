@@ -95,6 +95,14 @@ export function recordPartnerLoan(db: AppDatabase, params: {
 
   const moneyAccount = params.moneyAccountId
     ?? systemAccountId(db, params.companyId, 'bank_control');
+  // The money moves through one of this company's own asset accounts (a bank
+  // or cash account): never another company's, and never a cost or income.
+  const money = db.select({ type: accounts.type }).from(accounts)
+    .where(and(eq(accounts.id, moneyAccount), eq(accounts.companyId, params.companyId))).get();
+  if (!money) throw new PartnerLoanError(`Account ${moneyAccount} not found.`);
+  if (money.type !== 'asset') {
+    throw new PartnerLoanError('A partner loan moves money through a bank or cash account: choose an asset account.');
+  }
 
   return db.transaction((tx) => {
     const txDb = tx as unknown as AppDatabase;

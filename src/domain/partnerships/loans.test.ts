@@ -31,6 +31,19 @@ beforeEach(() => {
 });
 
 describe('recordPartnerLoan', () => {
+  it('moves the money through one of the company\'s own asset accounts only', () => {
+    const expense = db.select().from(accounts).where(eq(accounts.companyId, companyId)).all().find((a) => a.type === 'expense')!;
+    expect(() => recordPartnerLoan(db, {
+      companyId, partnerId: aoife.id, direction: 'advanced', amountMinor: 1_000,
+      date: makeDate(2025, 3, 31), recordedBy: 'Aoife', moneyAccountId: expense.id,
+    })).toThrow(/asset account/);
+    expect(() => recordPartnerLoan(db, {
+      companyId, partnerId: aoife.id, direction: 'advanced', amountMinor: 1_000,
+      date: makeDate(2025, 3, 31), recordedBy: 'Aoife', moneyAccountId: 'acct_elsewhere',
+    })).toThrow(/not found/);
+  });
+
+
   it('records an advance against the bank and the partner\'s own loan account', () => {
     const result = recordPartnerLoan(db, {
       companyId, partnerId: aoife.id, direction: 'advanced',

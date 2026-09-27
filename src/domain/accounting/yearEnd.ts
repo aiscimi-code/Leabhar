@@ -32,7 +32,7 @@ export class YearEndError extends AccountingError {}
  * entry and running it again, never by editing it.
  *
  * Where the year's result lands depends on who owns the business. A company
- * keeps it in reserves, and a sole trader in accumulated profits (ADR 0011).
+ * keeps it in reserves, and a sole trader in accumulated profits (ADR 0012).
  * A partnership's result belongs to its partners, so it is allocated to each
  * partner's own current account by the shares in force, day by day through a
  * change (issue #375) — the same allocation the income tax computation uses,

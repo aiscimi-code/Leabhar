@@ -1,8 +1,8 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "b5e1bfbb-ce13-4ea6-a0c9-e75e92f1de09",
-  "prevId": "24555cc1-efbc-4657-bd15-1f265820c5e4",
+  "id": "c7c69707-44e2-455d-82a4-d0199e659437",
+  "prevId": "b5e1bfbb-ce13-4ea6-a0c9-e75e92f1de09",
   "tables": {
     "bank_accounts": {
       "name": "bank_accounts",
@@ -12678,6 +12678,13 @@
           "notNull": false,
           "autoincrement": false
         },
+        "loan_account_id": {
+          "name": "loan_account_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
         "recorded_by": {
           "name": "recorded_by",
           "type": "text",
@@ -12744,6 +12751,19 @@
           "tableTo": "accounts",
           "columnsFrom": [
             "current_account_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "partners_loan_account_id_accounts_id_fk": {
+          "name": "partners_loan_account_id_accounts_id_fk",
+          "tableFrom": "partners",
+          "tableTo": "accounts",
+          "columnsFrom": [
+            "loan_account_id"
           ],
           "columnsTo": [
             "id"

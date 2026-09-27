@@ -72,6 +72,13 @@ describe('partnerAllocationStatement', () => {
     expect(byName.Aoife!.currentBalanceMinor).toBe(0);
   });
 
+  it('never hands a gap in the shares to a partner as a rounding residue', () => {
+    setPartnerShare(db, { companyId, partnerId: brian.id, shareBasisPoints: 4_000, effectiveFrom: '2025-01-01', recordedBy: 'test' });
+    const parts = allocateByShares(db, companyId, { from: '2025-01-01', to: '2025-12-31', amountMinor: 1_000_000 });
+    // 50% + 40%: 90% is allocated as recorded, and the missing 10% stays unallocated.
+    expect(parts.reduce((s, p) => s + p.amountMinor, 0)).toBe(900_000);
+  });
+
   it('allocates day by day through a share change, agreeing with allocateByShares', () => {
     const created = setup();
     income(created, 3_650_000, '2025-03-01');

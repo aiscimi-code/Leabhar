@@ -5,19 +5,24 @@ import { getDb } from '@/db';
 import { requireCompany } from '@/lib/queries';
 import { requireActor, actorName } from '@/lib/session';
 import { recordCtDecision, type CtSubjectType } from '@/domain/corporationTax/computation';
+import { parseAmount } from '@/domain/money';
 import type { ActionResult } from './settings-actions';
 
-/** A person's choice on a corporation tax treatment the computation only suggested (issue #211). */
+/** A person's choice on a tax treatment the computation only suggested (issues #211, #285). */
 export async function recordCtDecisionAction(formData: FormData): Promise<ActionResult> {
   try {
     await requireActor('ct.decisions');
     const company = requireCompany();
     const field = (key: string) => String(formData.get(key) ?? '').trim();
     const subjectType = field('subjectType');
-    if (!['journal_line', 'income_account', 'loss_claim', 'company_status', 'personal_status'].includes(subjectType)) return { ok: false, error: 'Unknown subject.' };
+    if (!['journal_line', 'income_account', 'loss_claim', 'company_status', 'personal_status', 'income_tax_loss_claim'].includes(subjectType)) return { ok: false, error: 'Unknown subject.' };
+    // An s.381 claim sets the loss against other income the books do not hold:
+    // the amount is the person's own figure.
+    const amount = field('amount');
     recordCtDecision(getDb(), {
       companyId: company.id, subjectType: subjectType as CtSubjectType, subjectId: field('subjectId'), periodEnd: field('periodEnd'),
       choice: field('choice'), decidedBy: await actorName(), note: field('note') || undefined,
+      amountMinor: amount ? parseAmount(amount, company.baseCurrency) : undefined,
     });
     revalidatePath('/reports/year-end');
     revalidatePath('/settings/company');

@@ -3,7 +3,10 @@ import type { AppDatabase } from '@/db';
 import { companies, journalEntries } from '@/db/schema';
 import { multiplyRational } from '../money';
 import { accountingYearContaining } from '../vat/apportionment';
-import { computeBase, currentDecision, type CtBase, type CtPendingDecision } from '../corporationTax/computation';
+import {
+  computeBase, currentDecision, capitalAllowances, INCOME_TAX_LOSS_CLAIMS,
+  type AssetClaimsMade, type CtBase, type CtLine, type CtPendingDecision, type IncomeTaxLossClaim,
+} from '../corporationTax/computation';
 import { INCOME_TAX_CURATED_RULES } from '../rules/incomeTaxCuration';
 import { resolveRuleFigure, type ResolvedRuleFigure } from '../rules/ruleFigures';
 import { allocateByShares, partnershipFindings } from '../config/partners';
@@ -13,11 +16,19 @@ import { allocateByShares, partnershipFindings } from '../config/partners';
  * of assessment (issue #212; PAYE is out of scope).
  *
  * The trade's tax-adjusted profit per accounting period is the same
- * computation as for a company (add-backs, capital allowances: `computeBase`),
- * then the basis rules pick the profits of the year (TCA ss.65-67), a
- * partnership's are apportioned to its partners by their shares (s.1008),
- * and each individual's income tax, USC and PRSI Class S is computed at the
- * rates and bands of the year from the statutory rules.
+ * computation as for a company (add-backs: `computeBase`), but its capital
+ * allowances are not apportioned with the profits: they are given for the
+ * year of assessment, from the assets in use at the end of its basis period
+ * (s.284(1), (2)(b); issue #285). The basis rules pick the profits of the
+ * year (TCA ss.65-67), a partnership's are apportioned to its partners by
+ * their shares (s.1008), and each individual's income tax, USC and PRSI
+ * Class S is computed at the rates and bands of the year from the statutory
+ * rules.
+ *
+ * A trading loss is carried forward against later profits of the same trade
+ * (s.382), automatically. Relief against the individual's other income
+ * (s.381) must be claimed: it is a decision, with the amount the person is
+ * setting against income that is not in these books.
  *
  * Each figure is an individual's liability only if the trade is all their
  * income: other income, a spouse's income and other credits are not known
@@ -37,8 +48,16 @@ export interface IncomeTaxLine { label: string; amountMinor: number; ruleKeys: s
 export interface IndividualLiability {
   name: string;
   partnerId: string | null;
-  /** The individual's share of the assessable profit. */
+  /** The individual's share of the trade's result for the year: their share of the assessable profit, or of the loss, negative. */
   profitMinor: number;
+  /** Losses of earlier years set against that share (s.382), applied automatically, earliest first. */
+  broughtForwardLossUsedMinor: number;
+  /** The loss this year the person records as claimed against their other income (s.381). Never assumed. */
+  claimedAgainstOtherIncomeMinor: number;
+  /** The loss left to carry forward against later profits of the same trade (s.382). */
+  lossCarriedForwardMinor: number;
+  /** The individual's own preliminary tax for the year (s.959AO): the lower of 90% of this year's liability and 100% of the last year's. */
+  preliminaryTaxMinor: number;
   status: PersonalStatus;
   incomeTax: IncomeTaxLine[];
   incomeTaxMinor: number;
@@ -52,9 +71,16 @@ export interface IncomeTaxComputation {
   companyId: string;
   year: number;
   basis: { from: string; to: string; rule: string; ruleKeys: string[] };
-  /** The trade's assessable profit for the year, after the basis rules. */
-  assessableProfitMinor: number;
+  /** The trade's profits of the basis period, before capital allowances: the basis rules' figure. */
+  basisProfitMinor: number;
   thirdYearReliefMinor: number;
+  /** Capital allowances for the year of assessment (s.284(1)): net, so a deduction is negative. */
+  capitalAllowancesMinor: number;
+  capitalAllowanceLines: CtLine[];
+  /** The trade's assessable profit for the year, after the basis rules and the year's capital allowances; negative is a loss. */
+  assessableProfitMinor: number;
+  /** The trade's loss for the year, before loss relief. */
+  tradingLossMinor: number;
   individuals: IndividualLiability[];
   dates: { preliminaryTaxDue: string; returnDue: string; preliminaryTaxMinor: number; basis: string };
   decisions: CtPendingDecision[];
@@ -88,6 +114,10 @@ class IncomeTaxRun {
   private readonly commenced: string;
   private readonly bases = new Map<string, CtBase>();
   private readonly years = new Map<number, IncomeTaxComputation>();
+  /** The allowances made for each asset in the years of assessment computed so far (s.292). */
+  private readonly assetClaims = new Map<string, AssetClaimsMade>();
+  /** Losses carried forward against later profits of the same trade, per individual (s.382). */
+  private readonly lossPools = new Map<string, number>();
   private readonly baseFindings: string[] = [];
   private findings: string[] = [];
 
@@ -121,9 +151,12 @@ class IncomeTaxRun {
     return out;
   }
 
+  /** The period's tax-adjusted profit before capital allowances: those are given for the year of assessment (s.284). */
   private adjusted(p: Period): number {
     const key = `${p.from}|${p.to}`;
-    if (!this.bases.has(key)) this.bases.set(key, computeBase(this.db, { companyId: this.companyId, from: p.from, to: p.to }));
+    if (!this.bases.has(key)) this.bases.set(key, computeBase(this.db, {
+      companyId: this.companyId, from: p.from, to: p.to, excludeCapitalAllowances: true,
+    }));
     return this.bases.get(key)!.adjustedMinor;
   }
 
@@ -137,6 +170,49 @@ class IncomeTaxRun {
       total += multiplyRational(this.adjusted(p), days(a, b), days(p.from, p.to));
     }
     return total;
+  }
+
+  /**
+   * Capital allowances for this year of assessment: the assets in use at the
+   * end of its basis period, at their rates, with the claims already made in
+   * earlier years of assessment (issue #285). Allowances are never
+   * apportioned with the profits.
+   */
+  private allowancesFor(from: string, to: string): { netMinor: number; lines: CtLine[]; findings: string[] } {
+    const result = capitalAllowances(this.db, {
+      companyId: this.companyId, from, to,
+      claimsBefore: (asset) => this.assetClaims.get(asset.id) ?? { claims: 0, made: 0 },
+    });
+    // What this year's assessment claims: each asset's allowance counts, at
+    // the amount actually made, so a short basis period's scaled claim (s.284(2)(b))
+    // is not read later as a full year's.
+    for (const line of result.lines) {
+      for (const source of line.sources) {
+        if (source.entityType !== 'fixed_asset') continue;
+        const made = this.assetClaims.get(source.entityId) ?? { claims: 0, made: 0 };
+        made.claims += 1;
+        made.made += line.kind === 'add_back' ? -source.amountMinor : source.amountMinor;
+        this.assetClaims.set(source.entityId, made);
+      }
+    }
+    return {
+      netMinor: result.lines.reduce((sum, line) => sum + line.amountMinor, 0),
+      lines: result.lines, findings: result.findings,
+    };
+  }
+
+  /**
+   * Who is taxed on the result: the owner, or each partner by their shares,
+   * day by day through changes (s.1008) — the one allocation the year-end
+   * close and Form 1 (Firms) also use (`allocateByShares`).
+   */
+  private sharesOf(result: number, from: string, to: string): Array<{ name: string; partnerId: string | null; share: number }> {
+    if (this.company.entityType === 'sole_trader') {
+      return [{ name: this.company.legalName, partnerId: null, share: result }];
+    }
+    this.findings.push(...partnershipFindings(this.db, this.companyId, from, to));
+    return allocateByShares(this.db, this.companyId, { from, to, amountMinor: result })
+      .map((a) => ({ name: a.partner.name, partnerId: a.partner.id, share: a.amountMinor }));
   }
 
   /** The basis period for a year and the profit assessed on it (ss.65-67). */
@@ -169,7 +245,12 @@ class IncomeTaxRun {
     return pick(twelveTo(last.to), last.to, 'The 12 months to the account date in the year (s.65(2)).', ['income_tax.basis_accounting_period']);
   }
 
-  private liability(name: string, partnerId: string | null, profit: number, year: number, decisions: CtPendingDecision[]): IndividualLiability {
+  private liability(params: {
+    name: string; partnerId: string | null; shareMinor: number; taxableMinor: number; year: number;
+    losses: { broughtForwardUsedMinor: number; claimedAgainstOtherIncomeMinor: number; carriedForwardMinor: number };
+    decisions: CtPendingDecision[];
+  }): IndividualLiability {
+    const { name, partnerId, shareMinor, taxableMinor, year, losses, decisions } = params;
     const dec31 = `${year}-12-31`;
     const subjectId = partnerId ?? this.companyId;
     const decided = currentDecision(this.db, this.companyId, 'personal_status', subjectId, dec31)?.choice as PersonalStatus | undefined;
@@ -194,7 +275,7 @@ class IncomeTaxRun {
       }
       return { ruleKey: key, name: r.name, numericValue: r.numericValue, rateBasisPoints: r.rateBasisPoints };
     };
-    const p = Math.max(profit, 0);
+    const p = Math.max(taxableMinor, 0);
 
     // Income tax (s.15 Table; credits s.461, s.472AB).
     const band = need(status === 'single' ? 'income_tax.band_single' : status === 'single_parent' ? 'income_tax.band_single_parent' : 'income_tax.band_married');
@@ -252,16 +333,25 @@ class IncomeTaxRun {
       this.findings.push(`${name}: PRSI Class S at ${prsiRate / 100}% with the €650 minimum. No Class S is payable on reckonable income under €5,000; that threshold is not in the collected SWCA sections, so check it where income is low.`);
     }
     return {
-      name, partnerId, profitMinor: profit, status, incomeTax, incomeTaxMinor, usc, uscMinor, prsiMinor,
+      name, partnerId,
+      profitMinor: shareMinor,
+      broughtForwardLossUsedMinor: losses.broughtForwardUsedMinor,
+      claimedAgainstOtherIncomeMinor: losses.claimedAgainstOtherIncomeMinor,
+      lossCarriedForwardMinor: losses.carriedForwardMinor,
+      status, incomeTax, incomeTaxMinor, usc, uscMinor, prsiMinor,
+      preliminaryTaxMinor: 0,
       totalMinor: incomeTaxMinor + uscMinor + (prsiMinor ?? 0),
     };
   }
 
   year(year: number): IncomeTaxComputation {
-    const cached = this.years.get(year);
-    if (cached) return cached;
     const firstYear = Number(this.commenced.slice(0, 4));
     if (year < firstYear) throw new IncomeTaxError(`The trade commenced in ${firstYear}; there is no ${year} assessment.`);
+    // Losses carried forward (s.382) and allowances claimed (s.292) run from
+    // year of assessment to year of assessment: compute the earlier ones first.
+    for (let y = firstYear; y < year; y++) this.year(y);
+    const cached = this.years.get(year);
+    if (cached) return cached;
     const saved = this.findings;
     this.findings = [...this.baseFindings];
     const decisions: CtPendingDecision[] = [];
@@ -286,23 +376,63 @@ class IncomeTaxRun {
           + `were ${eur(actual)}, so ${year - 1} is revised up by ${eur(actual - prior.profit)} (s.67(1)(a)(ii)).`);
       }
     }
-    const assessableProfitMinor = basis.profit - thirdYearReliefMinor;
-    if (assessableProfitMinor < 0) {
-      this.findings.push(`The trade made a loss of ${eur(-assessableProfitMinor)} for ${year}. Loss relief against other income `
-        + '(s.381) or later profits (s.382) is not computed here.');
+    const basisProfitMinor = basis.profit - thirdYearReliefMinor;
+
+    // Capital allowances are given for this year of assessment by reference to
+    // its basis period (s.284(1), (2)(b)), not apportioned with the profits
+    // (issue #285).
+    const allowances = this.allowancesFor(basis.from, basis.to);
+    this.findings.push(...allowances.findings);
+    const assessableProfitMinor = basisProfitMinor + allowances.netMinor;
+    const tradingLossMinor = Math.max(-assessableProfitMinor, 0);
+    if (basisProfitMinor >= 0 && assessableProfitMinor < 0) {
+      this.findings.push('Capital allowances turned this year\'s profits into a loss. To use that loss against other income (s.381) '
+        + 'the allowances must be treated as a trading loss by election (s.392); without the election the unused allowances are '
+        + 'carried forward as allowances instead (s.304(2)). The loss here assumes the election is made.');
     }
 
-    // Who is taxed on it: the owner, or each partner by their share (s.1008).
+    // Who is taxed on the result, and the losses set against it (ss.381, 382).
     const individuals: IndividualLiability[] = [];
-    if (this.company.entityType === 'sole_trader') {
-      individuals.push(this.liability(this.company.legalName, null, assessableProfitMinor, year, decisions));
-    } else {
-      this.findings.push(...partnershipFindings(this.db, this.companyId, basis.from, basis.to));
-      for (const a of allocateByShares(this.db, this.companyId, {
-        from: basis.from, to: basis.to, amountMinor: assessableProfitMinor,
-      })) {
-        individuals.push(this.liability(a.partner.name, a.partner.id, a.amountMinor, year, decisions));
+    for (const s of this.sharesOf(assessableProfitMinor, basis.from, basis.to)) {
+      const subjectId = s.partnerId ?? this.companyId;
+      const dec31 = `${year}-12-31`;
+      let pool = this.lossPools.get(subjectId) ?? 0;
+      const broughtForwardUsedMinor = s.share > 0 ? Math.min(pool, s.share) : 0;
+      pool -= broughtForwardUsedMinor;
+      let claimedAgainstOtherIncomeMinor = 0;
+      if (s.share < 0) {
+        // s.382: carried forward against later profits of the same trade, automatically.
+        pool += -s.share;
+        const decision = currentDecision(this.db, this.companyId, 'income_tax_loss_claim', subjectId, dec31);
+        const choice = (decision?.choice as IncomeTaxLossClaim | undefined) ?? 'carry_forward';
+        const decidedAmount = decision?.amountMinor ?? null;
+        if (choice === 'claim_381') {
+          // s.381 relieves this year's loss only: losses brought forward from
+          // earlier years stay against later profits of the trade (s.382).
+          claimedAgainstOtherIncomeMinor = Math.min(Math.max(decidedAmount ?? 0, 0), -s.share);
+          if (!decidedAmount || decidedAmount <= 0) {
+            this.findings.push(`${s.name}: the s.381 claim for ${year} records no amount, so the whole loss is carried forward (s.382).`);
+          } else {
+            pool -= claimedAgainstOtherIncomeMinor;
+            this.findings.push(`${s.name}: ${eur(claimedAgainstOtherIncomeMinor)} of the ${year} loss is claimed against other income of `
+              + 'the same year (s.381). That income is not in these books, so the tax it saves is computed on the person\'s own '
+              + 'return, not here.');
+          }
+        }
+        decisions.push({
+          subjectType: 'income_tax_loss_claim', subjectId, description: `${s.name}: trading loss for ${year}`,
+          amountMinor: -s.share, suggested: 'carry_forward', decided: decision?.choice ?? null, decidedAmountMinor: decidedAmount,
+          options: (Object.keys(INCOME_TAX_LOSS_CLAIMS) as IncomeTaxLossClaim[]).map((c) => ({ choice: c, label: INCOME_TAX_LOSS_CLAIMS[c] })),
+          reason: 'Carry-forward against the same trade (s.382) is automatic. Relief against other income (s.381) must be claimed '
+            + '(the four years after the end of the year of assessment, s.865), and needs the amount set against income the books do not hold.',
+        });
       }
+      this.lossPools.set(subjectId, pool);
+      individuals.push(this.liability({
+        name: s.name, partnerId: s.partnerId, shareMinor: s.share,
+        taxableMinor: Math.max(s.share - broughtForwardUsedMinor, 0), year, decisions,
+        losses: { broughtForwardUsedMinor, claimedAgainstOtherIncomeMinor, carriedForwardMinor: pool },
+      }));
     }
 
     // Preliminary tax for the year (s.959AO): the least of 90% of this year, 100% of the last (105% of the one before, by direct debit).
@@ -310,6 +440,16 @@ class IncomeTaxRun {
     const priorLiability = year > firstYear ? this.year(year - 1).individuals.reduce((s, i) => s + i.totalMinor, 0) : 0;
     const ninety = multiplyRational(liabilityNow, 9000, 10_000);
     const preliminaryTaxMinor = Math.min(ninety, priorLiability);
+    // s.959AO is each individual's own, against their own prior liability: the
+    // Form 11's self-assessment panel asks for it per person.
+    const priorTotals = year > firstYear
+      ? new Map(this.year(year - 1).individuals.map((i) => [i.partnerId ?? this.companyId, i.totalMinor]))
+      : null;
+    for (const i of individuals) {
+      i.preliminaryTaxMinor = priorTotals
+        ? Math.min(multiplyRational(i.totalMinor, 9000, 10_000), priorTotals.get(i.partnerId ?? this.companyId) ?? 0)
+        : 0;
+    }
     const dates = {
       preliminaryTaxDue: `${year}-10-31`, returnDue: `${year + 1}-10-31`, preliminaryTaxMinor,
       basis: year > firstYear ? 'the lower of 90% of this year\'s liability and 100% of the last year\'s (s.959AO)'
@@ -320,7 +460,9 @@ class IncomeTaxRun {
     const result: IncomeTaxComputation = {
       companyId: this.companyId, year,
       basis: { from: basis.from, to: basis.to, rule: basis.rule, ruleKeys: basis.ruleKeys },
-      assessableProfitMinor, thirdYearReliefMinor, individuals, dates, decisions,
+      basisProfitMinor, thirdYearReliefMinor,
+      capitalAllowancesMinor: allowances.netMinor, capitalAllowanceLines: allowances.lines,
+      assessableProfitMinor, tradingLossMinor, individuals, dates, decisions,
       findings: [...new Set(this.findings)],
     };
     this.findings = saved;

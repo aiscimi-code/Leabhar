@@ -208,8 +208,11 @@ export function allocateByShares(
       const part = parts.get(p.id)!;
       return { partner: p, amountMinor: part.amountMinor, weightedShareBasisPoints: Math.round(part.shareDays / totalDays) };
     });
+  // Only a rounding residue is placed, and only when the shares add up to
+  // 100% throughout: with a gap, the unallocated part is the gap itself, and
+  // giving it to a partner would be guessing their share.
   const residue = params.amountMinor - rows.reduce((s, r) => s + r.amountMinor, 0);
-  if (rows.length > 0 && residue !== 0) {
+  if (rows.length > 0 && residue !== 0 && shareGaps(db, companyId, params.from, params.to).length === 0) {
     const taker = rows.find((r) => r.partner.isPrecedentPartner && !r.partner.leftOn) ?? rows[0]!;
     taker.amountMinor += residue;
   }

@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { CtDecisions } from '@/components/CtDecisions';
 import { IncomeTaxPanel } from '@/components/IncomeTaxPanel';
 import { PartnerAllocationPanel, Form1FirmsPanel } from '@/components/PartnershipPanels';
+import { Form11Panel } from '@/components/Form11Panel';
 import { getDb } from '@/db';
 import { reportsData, companyContext, fixedAssetList, deadlineList } from '@/lib/queries';
 import { yearEndPack } from '@/domain/reports/yearEnd';
@@ -233,6 +234,7 @@ export default async function YearEndPage({ searchParams }: {
           )}
         </div>
       )}
+      {pack.form11 && <Form11Panel form11={pack.form11} currency={currency} />}
 
       <div className="grid grid-cols-2 gap-4 items-start">
         <Panel title="Fixed asset schedule">

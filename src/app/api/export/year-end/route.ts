@@ -160,10 +160,15 @@ export async function GET(request: Request): Promise<Response> {
     sheet.columns = [{ width: 70 }, { width: 18 }];
     sheet.addRow([`Income tax ${it.year}`, '']).font = { bold: true, size: 12 };
     sheet.addRow([`Basis period ${it.basis.from} to ${it.basis.to}: ${it.basis.rule}`, '']);
+    sheet.addRow(['Profits of the basis period', amount(it.basisProfitMinor + it.thirdYearReliefMinor)]);
     if (it.thirdYearReliefMinor) sheet.addRow(['  Less second-year excess (s.66(3))', amount(-it.thirdYearReliefMinor)]);
-    sheet.addRow(['Assessable trading profit', amount(it.assessableProfitMinor)]).font = { bold: true };
+    if (it.capitalAllowancesMinor) sheet.addRow(['  Less capital allowances for the year of assessment (s.284)', amount(it.capitalAllowancesMinor)]);
+    sheet.addRow([it.tradingLossMinor ? 'Trading loss for the year' : 'Assessable trading profit', amount(it.assessableProfitMinor)]).font = { bold: true };
     for (const i of it.individuals) {
       sheet.addRow([`${i.name} (${i.status})`, amount(i.profitMinor)]).font = { bold: true };
+      if (i.broughtForwardLossUsedMinor) sheet.addRow(['  Less trading losses brought forward (s.382)', amount(-i.broughtForwardLossUsedMinor)]);
+      if (i.claimedAgainstOtherIncomeMinor) sheet.addRow(['  Loss claimed against other income (s.381)', amount(-i.claimedAgainstOtherIncomeMinor)]);
+      if (i.lossCarriedForwardMinor) sheet.addRow([`  Loss carried forward (s.382)`, amount(i.lossCarriedForwardMinor)]);
       for (const l of [...i.incomeTax, ...i.usc]) sheet.addRow([`  ${l.label}`, amount(l.amountMinor)]);
       sheet.addRow(['  Income tax', amount(i.incomeTaxMinor)]);
       sheet.addRow(['  USC', amount(i.uscMinor)]);
@@ -174,6 +179,38 @@ export async function GET(request: Request): Promise<Response> {
     sheet.addRow(['Return and balance due', it.dates.returnDue]);
     for (const d of it.decisions) sheet.addRow([`${d.decided ? 'Decided' : 'Suggested'}: ${d.description} → ${d.decided ?? d.suggested}`, '']);
     for (const f of it.findings) sheet.addRow([f, '']).alignment = { wrapText: true };
+
+    // ---- Form 11 preparation (issue #312) ----
+    if (pack.form11) {
+      const f11 = pack.form11;
+      const form = workbook.addWorksheet('Form 11');
+      form.columns = [{ width: 76 }, { width: 18 }];
+      form.addRow([`Form 11 preparation ${f11.year}`, '']).font = { bold: true, size: 12 };
+      form.addRow(['Prepared, not filed: the figures as the return asks for them.', '']);
+      form.addRow([]);
+      for (const section of f11.sections) {
+        form.addRow([section.title, '']).font = { bold: true };
+        for (const line of section.lines) {
+          form.addRow([`  ${line.label}${line.note ? ` — ${line.note}` : ''}`, line.amountMinor === null ? '' : amount(line.amountMinor)]);
+        }
+        form.addRow([]);
+      }
+      for (const sa of f11.selfAssessment) {
+        form.addRow([`Self-assessment reconciliation — ${sa.name}`, '']).font = { bold: true };
+        form.addRow(['  Income tax, USC and PRSI for the year', amount(sa.liabilityMinor)]);
+        form.addRow(['  Less preliminary tax paid (s.959AO)', amount(-sa.preliminaryTaxMinor)]);
+        form.addRow([`  Balance payable with the return by ${sa.balanceDueDate}`, amount(sa.balanceMinor)]).font = { bold: true };
+        form.addRow([`  ${sa.working}`, '']).alignment = { wrapText: true };
+        form.addRow([]);
+      }
+      for (const p of f11.provision) {
+        form.addRow([`Tax provision — ${p.name}`, '']).font = { bold: true };
+        for (const x of p.payments) form.addRow([`  ${x.description} due ${x.dueDate}`, amount(x.amountMinor)]);
+        form.addRow([`  ${p.note}`, '']).alignment = { wrapText: true };
+        form.addRow([]);
+      }
+      for (const f of f11.findings) form.addRow([f, '']).alignment = { wrapText: true };
+    }
   }
 
   // ---- Partners: the allocation statement and Form 1 (Firms) (issue #314) ----

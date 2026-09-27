@@ -1,4 +1,4 @@
-# 0011. Where the year-end close puts the result, per entity type
+# 0012. Where the year-end close puts the result, per entity type
 
 - **Status:** Accepted
 - **Date:** 2026-09-27
