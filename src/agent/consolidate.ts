@@ -228,6 +228,8 @@ export interface SettleCliInput {
   allocations: string;
   fx?: string;
   vatDeclarationDate?: string;
+  /** Write off what the line leaves unpaid on this invoice (number or id) to this account (code or id), issue #386. */
+  writeOff?: { invoice: string; account: string; reason: string };
 }
 
 export function settleCli(db: AppDatabase, input: SettleCliInput): RecordedPayment {
@@ -240,13 +242,7 @@ export function settleCli(db: AppDatabase, input: SettleCliInput): RecordedPayme
   }
   const allocations = entries.map((entry, i) => {
     if (!entry.invoice || !entry.amount) throw new Error(`Allocation ${i} needs "invoice" and "amount".`);
-    const invoice = db.select({ id: invoices.id }).from(invoices).where(and(
-      eq(invoices.companyId, input.companyId),
-      entry.invoice.startsWith('inv_') ? eq(invoices.id, entry.invoice) : eq(invoices.invoiceNumber, entry.invoice),
-    )).all();
-    if (invoice.length === 0) throw new Error(`Invoice "${entry.invoice}" not found.`);
-    if (invoice.length > 1) throw new Error(`More than one invoice is numbered "${entry.invoice}": use its id.`);
-    return { invoiceId: invoice[0]!.id, amountMinor: parseAmount(String(entry.amount), tx.currency) };
+    return { invoiceId: resolveInvoiceId(db, input.companyId, entry.invoice), amountMinor: parseAmount(String(entry.amount), tx.currency) };
   });
   return settleBankTransaction(db, {
     companyId: input.companyId,
@@ -254,6 +250,11 @@ export function settleCli(db: AppDatabase, input: SettleCliInput): RecordedPayme
     allocations,
     fxRate: parseFxArgument(input.fx),
     vatDeclarationDate: input.vatDeclarationDate ? asIsoDate(input.vatDeclarationDate) : undefined,
+    writeOff: input.writeOff ? {
+      invoiceId: resolveInvoiceId(db, input.companyId, input.writeOff.invoice),
+      accountId: resolveAccountId(db, input.companyId, input.writeOff.account),
+      reason: input.writeOff.reason,
+    } : null,
     actor: 'cli',
   });
 }
@@ -264,4 +265,15 @@ export function traceCli(db: AppDatabase, input: { companyId: string; bankTransa
   const trace = transactionTrace(db, input);
   if (!trace) throw new Error(`Bank transaction ${input.bankTransactionId} not found.`);
   return trace;
+}
+
+/** An invoice by its id or its number; ambiguous numbers are refused. */
+export function resolveInvoiceId(db: AppDatabase, companyId: string, invoiceOrNumber: string): string {
+  const found = db.select({ id: invoices.id }).from(invoices).where(and(
+    eq(invoices.companyId, companyId),
+    invoiceOrNumber.startsWith('inv_') ? eq(invoices.id, invoiceOrNumber) : eq(invoices.invoiceNumber, invoiceOrNumber),
+  )).all();
+  if (found.length === 0) throw new Error(`Invoice "${invoiceOrNumber}" not found.`);
+  if (found.length > 1) throw new Error(`More than one invoice is numbered "${invoiceOrNumber}": use its id.`);
+  return found[0]!.id;
 }

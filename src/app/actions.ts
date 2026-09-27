@@ -8,6 +8,7 @@ import { requireCompany } from '@/lib/queries';
 import { classifyTransaction, reclassifyTransaction } from '@/domain/banking/classify';
 import { acceptMatch, rejectMatch, findMatchesForDocument, matchAllUnmatched, linkDocument, unmatchDocument, withdrawMatchRejection } from '@/domain/matching/service';
 import { linkBankTransactionToJournal } from '@/domain/banking/journalLink';
+import { allocatePaymentOnAccount } from '@/domain/invoicing/onAccount';
 import { transitionVatPeriod, type VatPeriodStatus } from '@/domain/vat/periodClose';
 import { storeDocument } from '@/domain/documents/storage';
 import { extractDocument, extractDocumentFromText } from '@/domain/extraction/service';
@@ -626,6 +627,7 @@ function typedFxRate(text: string | undefined): FxInput | undefined {
  */
 export async function previewSettlementAction(input: {
   bankTransactionId: string; allocations: SettleAllocation[]; fxRateText?: string;
+  writeOff?: { invoiceId: string; accountId: string; reason: string } | null;
 }): Promise<{ need: SettlementRateNeed; preview: ReturnType<typeof previewSettlement> | null }> {
   await requireActor('invoices.manage');
   const company = requireCompany();
@@ -646,12 +648,14 @@ export async function previewSettlementAction(input: {
     need,
     preview: previewSettlement(db, {
       companyId: company.id, bankTransactionId: input.bankTransactionId, allocations: input.allocations, fxRate,
+      writeOff: input.writeOff ?? null,
     }),
   };
 }
 
 export async function settleTransactionAction(input: {
   bankTransactionId: string; allocations: SettleAllocation[]; fxRateText?: string; vatDeclarationDate?: string;
+  writeOff?: { invoiceId: string; accountId: string; reason: string } | null;
 }): Promise<ActionResult> {
   try {
     await requireActor('invoices.manage');
@@ -660,6 +664,7 @@ export async function settleTransactionAction(input: {
       companyId: company.id, bankTransactionId: input.bankTransactionId, allocations: input.allocations,
       fxRate: typedFxRate(input.fxRateText), actor: await actorName(),
       vatDeclarationDate: input.vatDeclarationDate ? asIsoDate(input.vatDeclarationDate) : undefined,
+      writeOff: input.writeOff ?? null,
     });
     revalidatePath(`/transactions/${input.bankTransactionId}`);
     revalidatePath('/transactions');
@@ -669,10 +674,39 @@ export async function settleTransactionAction(input: {
     const parts = [payment.unallocatedMinor
       ? `Settled. ${(payment.unallocatedMinor / 100).toFixed(2)} is held on account and flagged for review.`
       : 'Settled in full.'];
+    if (payment.writtenOffMinor !== 0) {
+      parts.push(`${(payment.writtenOffMinor / 100).toFixed(2)} written off; VAT unchanged and flagged for review.`);
+    }
     if (payment.fxDifferenceMinor !== 0) {
       parts.push(`An exchange difference of ${(payment.fxDifferenceMinor / 100).toFixed(2)} was posted.`);
     }
     return { ok: true, message: parts.join(' ') };
+  } catch (error) {
+    return fail(error);
+  }
+}
+
+/** Apply money a payment holds on account to a later invoice of the same party (issue #386). */
+export async function allocateOnAccountAction(formData: FormData): Promise<ActionResult> {
+  try {
+    await requireActor('invoices.manage');
+    const company = requireCompany();
+    const invoiceId = String(formData.get('invoiceId') ?? '');
+    const result = allocatePaymentOnAccount(getDb(), {
+      companyId: company.id,
+      paymentId: String(formData.get('paymentId') ?? ''),
+      invoiceId,
+      amountMinor: parseAmount(String(formData.get('amount') ?? ''), company.baseCurrency),
+      actor: await actorName(),
+      reason: formData.get('reason') ? String(formData.get('reason')) : null,
+    });
+    revalidatePath(`/invoices/${invoiceId}`);
+    revalidatePath('/invoices');
+    revalidatePath('/review');
+    return {
+      ok: true,
+      message: result.outstandingMinor === 0 ? 'Applied. The invoice is paid.' : 'Applied. The invoice is part-paid.',
+    };
   } catch (error) {
     return fail(error);
   }

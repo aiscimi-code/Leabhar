@@ -391,6 +391,23 @@ by the payment, dated at receipt. One payment may settle several invoices, an
 invoice may be settled in parts, and a credit note allocated in the payment's
 own direction reduces the cash. A remainder is held on account and flagged.
 
+A payment records whose money it is (issue #386): the one customer or supplier
+its invoices belong to, else none. What it holds on account is applied to a
+later invoice of that party with `allocatePaymentOnAccount`. That posts no
+journal, because both balances already sit on the same control account. It
+records an `on_account` allocation, updates the invoice and is audited. It works
+in base currency only, and it is refused for a cash-basis sales invoice with
+VAT until the VAT date is decided (#389).
+
+A short payment can close its invoice by writing off the shortfall
+(`writeOff` on `settleBankTransaction`), for example bank charges the payer's
+bank deducted. The shortfall goes to an income or expense account in the same
+journal and is recorded as a `write_off` allocation. The VAT is left as
+invoiced and the write-off is flagged: a price reduction needs a credit note. It
+works in base currency only, with the payment fully applied, and it is refused
+on the cash receipts basis for a sales invoice with VAT (#389). Reversing the
+payment undoes every allocation it made, including these.
+
 Across currencies a settlement takes one rate (issue #223): when the bank line
 is foreign, it converts the line to base currency (the statement's own rate is
 used unless the person enters one); when the line is in base currency and an

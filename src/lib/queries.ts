@@ -1,4 +1,5 @@
 import { suggestJournalMatches } from '@/domain/banking/journalLink';
+import { onAccountForInvoice } from '@/domain/invoicing/onAccount';
 import { listStatementImports } from '@/domain/banking/import';
 import { and, eq, desc, sql, isNull, isNotNull, ne, or, inArray } from 'drizzle-orm';
 import { getDb } from '@/db';
@@ -841,7 +842,10 @@ export function invoiceDetail(invoiceId: string) {
       ? db.select().from(customers).where(eq(customers.id, invoice.customerId)).get()
       : undefined;
 
-  return { invoice, lines, allocations, party, company };
+  // Money this party's payments still hold on account (issue #386).
+  const onAccount = onAccountForInvoice(db, { companyId: company.id, invoiceId });
+
+  return { invoice, lines, allocations, party, company, onAccount };
 }
 
 /** One customer with its invoices (README §17). */

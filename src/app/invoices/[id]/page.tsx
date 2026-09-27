@@ -1,8 +1,10 @@
 import { notFound } from 'next/navigation';
 import { invoiceDetail, unpostedTransactionOptions, officerList } from '@/lib/queries';
 import {
-  Page, Panel, Badge, Stat, Empty, Disclosure, ProvenanceBadge,
+  Page, Panel, Badge, Stat, Empty, Disclosure, ProvenanceBadge, Field, Input,
 } from '@/components/primitives';
+import { ActionForm } from '@/components/ActionForm';
+import { allocateOnAccountAction } from '@/app/actions';
 import { PaymentForm } from '@/components/PaymentForm';
 import { recordPaymentAction } from '@/app/settings-actions';
 import { money, date, label } from '@/lib/format';
@@ -15,7 +17,7 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
   const detail = invoiceDetail(id);
   if (!detail) notFound();
 
-  const { invoice, lines, allocations, party, company } = detail;
+  const { invoice, lines, allocations, party, company, onAccount } = detail;
   const isSales = invoice.direction === 'sales';
   const deferredVat = isSales && company.vatAccountingBasis === 'cash_receipts'
     && invoice.vatMinor !== 0;
@@ -136,7 +138,13 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
                       </span>
                     )}
                   </td>
-                  <td className="text-ink-muted">{label(payment.method)}</td>
+                  <td className="text-ink-muted">
+                    {allocation.allocationType === 'write_off'
+                      ? `Written off${allocation.notes ? `: ${allocation.notes}` : ''}`
+                      : allocation.allocationType === 'on_account'
+                        ? 'From money on account'
+                        : label(payment.method)}
+                  </td>
                   <td className="text-right num">
                     {money(allocation.allocatedMinor, allocation.currency)}
                   </td>
@@ -149,6 +157,38 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
               ))}
             </tbody>
           </table>
+        )}
+
+        {onAccount.length > 0 && invoice.status !== 'void' && (
+          <Disclosure summary={`${party?.name ?? 'This party'} has money on account — apply it`} tone="accent">
+            <ul className="max-w-3xl divide-y divide-line">
+              {onAccount.map((p) => (
+                <li key={p.paymentId} className="py-2.5">
+                  <p className="text-[12.5px]">
+                    {money(p.onAccountMinor, p.currency)} on account from the payment of {date(p.paymentDate)}
+                    {p.reference && <span className="text-ink-muted"> · {p.reference}</span>}
+                  </p>
+                  <div className="mt-1.5">
+                    <ActionForm action={allocateOnAccountAction} submit="Apply" inline>
+                      <input type="hidden" name="paymentId" value={p.paymentId} />
+                      <input type="hidden" name="invoiceId" value={invoice.id} />
+                      <Field label="Amount">
+                        <Input name="amount" required
+                          defaultValue={(Math.min(p.onAccountMinor, invoice.outstandingMinor) / 100).toFixed(2)} />
+                      </Field>
+                      <Field label="Note (optional)">
+                        <Input name="reason" placeholder="Deposit applied to the final invoice" />
+                      </Field>
+                    </ActionForm>
+                  </div>
+                </li>
+              ))}
+            </ul>
+            <p className="text-ink-muted mt-2 leading-snug max-w-3xl">
+              Applying it posts nothing: the money already sits on {isSales ? 'debtors' : 'creditors'} against
+              {party ? ` ${party.name}` : ' this party'}. It records which invoice it pays.
+            </p>
+          </Disclosure>
         )}
 
         {invoice.outstandingMinor !== 0 && invoice.status !== 'void' && (
