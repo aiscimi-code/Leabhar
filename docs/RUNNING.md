@@ -426,6 +426,21 @@ npm run cli -- ct-decide --subject-type farm_income_averaging --subject <company
 npm run cli -- farm-tax-summary --year 2026
 ```
 
+Construction and RCT (Revenue's figures are entered as issued):
+
+```bash
+npm run cli -- add-subcontractor --supplier <id> --tax-ref 1234567T --evidence "Passport" --checked-by owner --checked-on 2026-01-12 --not-employee
+npm run cli -- add-site --name "Scoil" --address "Main St, Tuam" --eircode H54X2Y3 --by owner
+npm run cli -- add-rct-contract --subcontractor <id> --site <id> --description Plastering --value 50000 --from 2026-01-15 \
+        --notified 2026-01-14 --revenue-id C-991 --by owner
+npm run cli -- rct-notify-payment --contract <id> --invoice <id> --gross 10000 --date 2026-03-02 --by owner
+npm run cli -- rct-deduction-authorisation --payment <id> --number DA-1 --rate 20 --tax 2000
+npm run cli -- rct-pay --payment <id> --bank-transaction <id> --by owner
+npm run cli -- rct-return --period 2026-03 --summary 2000 --date 2026-04-10 --by owner
+npm run cli -- rct-pay-return --period 2026-03 --bank-transaction <id> --by owner
+npm run cli -- reconcile-rct --as-of 2026-04-30
+```
+
 ### Agent workflow
 
 `db:seed` only ever loads the Acme demo. To load a real (or synthetic) SME

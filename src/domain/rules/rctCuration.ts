@@ -243,10 +243,9 @@ export const RCT_CURATED_RULES: CuratedRctRule[] = [
     requiresGuidance: true,
     interpretationNote: 'Same keyword-match caveat as rct.relevant_operations_scope: this flags a candidate '
       + 'RCT payment from its description, it does not verify the payer is actually a registered "principal" '
-      + 'or that a relevant contract exists. Sourced from Revenue guidance (TDM 18-02-04), not the statute '
-      + 'text of s.530C itself, which is not yet ingested (see this file\'s own header) — the TDM\'s '
-      + 'restatement of the section is quoted verbatim, but the underlying legislative wording has not been '
-      + 'independently checked against it.',
+      + 'or that a relevant contract exists. The statutory duty is rct.payment_notification_before_payment, '
+      + 'from the Notes for Guidance on s.530C (issue #213, #199); this rule is the transaction-level flag '
+      + 'Revenue guidance (TDM 18-02-04) gives on it, and never the primary source of the duty.',
   },
   {
     // Re-sourced from TCA 1997 s.530I itself (issue #131) — previously only

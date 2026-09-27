@@ -26,3 +26,5 @@ PDF pattern: https://www.revenue.ie/en/tax-professionals/documents/notes-for-gui
               ss.654, 657, 658, 658A, 665, 666, 667B, 667C, 667D ingested; converted with pdftotext -layout,
               SHA-256 in part23.md's front matter
 - part09.pdf  s.317 (treatment of grants) added to the ingested sections for EPIC 25 (#543)
+- part18.pdf  ss.530–530V (relevant contracts tax) added to the ingested sections for EPIC 26 (#548, #549, #213):
+              the current text as the Notes for Guidance consolidate it to FA 2025

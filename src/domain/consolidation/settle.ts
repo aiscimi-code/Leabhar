@@ -44,6 +44,8 @@ export interface SettleInput {
    * see `RecordPaymentInput.writeOff` (issue #389).
    */
   writeOff?: { invoiceId: string; accountId: string; reason: PaymentWriteOffReason } | null;
+  /** RCT the deduction authorisation specified, deducted from this payment (issue #549; `RecordPaymentInput.rctDeduction`). */
+  rctDeduction?: { invoiceId: string; amountMinor: number } | null;
   actor?: string;
   requestId?: string;
 }
@@ -81,6 +83,7 @@ function settleBankTransactionSteps(db: AppDatabase, input: SettleInput): Record
     bankTransactionId: tx.id,
     allocations: input.allocations.map((a) => ({ invoiceId: a.invoiceId, allocatedMinor: a.amountMinor })),
     writeOff: input.writeOff ?? null,
+    rctDeduction: input.rctDeduction ?? null,
     reference: tx.description.slice(0, 60),
     actor: input.actor,
     requestId: input.requestId,

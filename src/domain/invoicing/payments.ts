@@ -87,6 +87,14 @@ export interface RecordPaymentInput {
    */
   writeOff?: { invoiceId: string; accountId: string; reason: PaymentWriteOffReason } | null;
   /**
+   * Relevant contracts tax deducted from a payment to a subcontractor (issue
+   * #549): the tax Revenue's deduction authorisation specified. It settles
+   * that much more of the purchase invoice than the cash did, and is owed to
+   * the Collector-General instead (Dr creditors, Cr RCT payable). Base
+   * currency only.
+   */
+  rctDeduction?: { invoiceId: string; amountMinor: number } | null;
+  /**
    * Declare the output VAT this receipt releases (cash receipts basis) in the
    * VAT period covering this date, when the receipt's own period is locked or
    * filed (issue #226). Flagged for review.
@@ -262,6 +270,10 @@ function recordPaymentSteps(db: AppDatabase, input: RecordPaymentInput): Recorde
   const writeOff = input.writeOff
     ? validateWriteOff(db, input, company, targets, input.amountMinor - allocatedTotal)
     : null;
+  const rctDeduction = input.rctDeduction ? validateRctDeduction(input, company, targets) : null;
+  if (rctDeduction && writeOff && writeOff.invoice.id === rctDeduction.invoice.id) {
+    throw new InvoicingError('An invoice settled with an RCT deduction has no shortfall to write off as well.');
+  }
 
   const debtors = systemAccountId(db, input.companyId, 'debtors');
   const creditors = systemAccountId(db, input.companyId, 'creditors');
@@ -321,7 +333,7 @@ function recordPaymentSteps(db: AppDatabase, input: RecordPaymentInput): Recorde
   const allocationDetails: Array<{
     invoiceId: string; allocatedMinor: number;
     baseAllocatedMinor: number; fxDifferenceMinor: number;
-    allocationType: 'settlement' | 'write_off'; writeOffAccountId?: string; notes?: string;
+    allocationType: 'settlement' | 'write_off' | 'rct_deduction'; writeOffAccountId?: string; notes?: string;
   }> = [];
 
   for (const { invoice, invoiceAllocatedMinor, signedAllocatedMinor, crossCurrency } of targets) {
@@ -400,6 +412,23 @@ function recordPaymentSteps(db: AppDatabase, input: RecordPaymentInput): Recorde
       allocationType: 'write_off',
       writeOffAccountId: writeOff.accountId,
       notes: writeOff.reason,
+    });
+  }
+
+  // RCT deducted (issue #549): the invoice is settled for the tax too, which is
+  // owed to the Collector-General from now on.
+  if (rctDeduction) {
+    const memo = `RCT deducted from ${rctDeduction.invoice.invoiceNumber ?? rctDeduction.invoice.id}`;
+    journalLines.push({
+      accountId: creditors, debitMinor: rctDeduction.amountMinor, currency: baseCurrency,
+      supplierId: rctDeduction.invoice.supplierId, memo,
+    });
+    journalLines.push({
+      accountId: systemAccountId(db, input.companyId, 'rct_payable'), creditMinor: rctDeduction.amountMinor, currency: baseCurrency, memo,
+    });
+    allocationDetails.push({
+      invoiceId: rctDeduction.invoice.id, allocatedMinor: rctDeduction.amountMinor, baseAllocatedMinor: rctDeduction.amountMinor,
+      fxDifferenceMinor: 0, allocationType: 'rct_deduction', notes: 'RCT deducted (TCA s.530F)',
     });
   }
 
@@ -739,6 +768,33 @@ function paymentParty(
  * actually left unpaid, an income or expense account to take it, and one of
  * the three reasons, each with a fixed treatment (issues #386, #389).
  */
+function validateRctDeduction(
+  input: RecordPaymentInput,
+  company: typeof companies.$inferSelect,
+  targets: Array<{ invoice: typeof invoices.$inferSelect; invoiceAllocatedMinor: number }>,
+): { invoice: typeof invoices.$inferSelect; amountMinor: number } {
+  const spec = input.rctDeduction!;
+  if (input.direction !== 'made') throw new InvoicingError('RCT is deducted from a payment made to a subcontractor.');
+  if (!Number.isInteger(spec.amountMinor) || spec.amountMinor <= 0) {
+    throw new InvoicingError('The RCT deducted is the deduction authorisation\'s figure: a whole number of cent, more than zero.');
+  }
+  const target = targets.find((t) => t.invoice.id === spec.invoiceId);
+  if (!target) throw new InvoicingError('The invoice RCT is deducted from must be one this payment settles.');
+  const invoice = target.invoice;
+  if (invoice.direction !== 'purchase' || invoice.isCreditNote) {
+    throw new InvoicingError('RCT is deducted from a payment of a subcontractor\'s invoice, not a sales invoice or credit note.');
+  }
+  const base = company.baseCurrency.toUpperCase();
+  if (invoice.currency.toUpperCase() !== base || (input.currency ?? base).toUpperCase() !== base) {
+    throw new InvoicingError(`RCT is deducted in ${base}.`);
+  }
+  if (target.invoiceAllocatedMinor + spec.amountMinor > invoice.outstandingMinor) {
+    throw new InvoicingError(`The payment and the RCT together (${target.invoiceAllocatedMinor + spec.amountMinor}) exceed the `
+      + `${invoice.outstandingMinor} outstanding on ${invoice.invoiceNumber ?? invoice.id}.`);
+  }
+  return { invoice, amountMinor: spec.amountMinor };
+}
+
 function validateWriteOff(
   db: AppDatabase,
   input: RecordPaymentInput,

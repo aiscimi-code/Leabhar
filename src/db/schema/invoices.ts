@@ -283,7 +283,7 @@ export const paymentAllocations = sqliteTable('payment_allocations', {
    * `write_off`: a shortfall the payment did not cover, posted to
    * `writeOffAccountId` in the payment's journal. Not cash.
    */
-  allocationType: text('allocation_type', { enum: ['settlement', 'on_account', 'write_off'] })
+  allocationType: text('allocation_type', { enum: ['settlement', 'on_account', 'write_off', 'rct_deduction'] })
     .notNull().default('settlement'),
   writeOffAccountId: text('write_off_account_id').references(() => accounts.id),
   notes: text('notes'),

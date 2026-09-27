@@ -44,7 +44,8 @@ export function onAccountMinor(db: AppDatabase, payment: Payment): number {
     .where(eq(paymentAllocations.paymentId, payment.id)).all();
   let applied = 0;
   for (const { allocation, invoice } of rows) {
-    if (allocation.allocationType === 'write_off') continue;
+    // A shortfall written off, or RCT deducted (issue #549), is not cash the payment applied.
+    if (allocation.allocationType === 'write_off' || allocation.allocationType === 'rct_deduction') continue;
     // baseAllocatedMinor is signed as the invoice moved: negative for a credit
     // note. A credit note netted against the payment reduces the cash applied;
     // one refunded by it (the opposite direction, issue #157) is cash applied.

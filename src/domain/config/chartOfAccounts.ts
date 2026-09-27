@@ -49,6 +49,8 @@ export type SystemAccountKey =
   | 'prsi_payable'
   | 'net_wages_payable'
   | 'pension_payable'
+  /** Relevant contracts tax (issue #549): tax deducted from subcontractors, held for the Collector-General. */
+  | 'rct_payable'
   /** Inventory (issue #359): the stock valuation account opening/closing stock journals use. */
   | 'stock_on_hand'
   /** Accruals and prepayments (issues #367, #368): the timing workflow posts to these. */
@@ -301,6 +303,13 @@ export const DEFAULT_ACCOUNTS: AccountSeed[] = [
     description: 'Employees’ own pension contributions deducted from their pay and held for '
       + 'the pension provider (issue #357). Not a cost of the business — the employer’s own '
       + 'contribution is 6185.',
+  },
+  {
+    code: '2460', name: 'RCT deducted from subcontractors', type: 'liability', subtype: 'current_liability',
+    systemKey: 'rct_payable', vatApplicable: false, reportSection: 'current_liabilities',
+    description: 'Relevant contracts tax a principal deducted from payments to subcontractors, as each '
+      + 'deduction authorisation specified (TCA s.530F; issue #549), held until paid to the '
+      + 'Collector-General for the return period (s.530L). Zero once each period is paid.',
   },
   {
     code: '2445', name: 'Staff expenses payable', type: 'liability', subtype: 'current_liability',

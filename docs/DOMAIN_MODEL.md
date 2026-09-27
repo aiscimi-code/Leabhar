@@ -936,6 +936,43 @@ not measured.
   shares. It posts nothing.
 - `farmTaxSummary` reads the year's figures back from the computations.
 
+### Construction and relevant contracts tax (EPIC 26, issues #548, #549)
+
+The Notes for Guidance on ss.530–530V are ingested, and the RCT duties are
+curated from them (`rct.*` rules in `corporationTaxCuration.ts`). Revenue
+decides every figure; these books record each one as issued.
+
+- **Projects and sites.** A project is the unit EPIC 27 costs. A site is
+  where the work is. Eircodes are validated.
+- **Subcontractors** are suppliers with the identity evidence the principal
+  saw (s.530B(1A)) and the declaration that they are not employees
+  (s.530B(1)(b)). No rate is stored on the subcontractor.
+- **Relevant contracts:** only a confirmed principal (s.530A, #208) records
+  one. It names its site and records its notification: the date, and the
+  contract ID Revenue gave it (s.530B).
+- **A payment** goes through four steps:
+  1. The payment notification (s.530C), for the gross against the
+     subcontractor's invoice.
+  2. Revenue's deduction authorisation (s.530D): its number, the rate (0%,
+     20% or 35%, s.530E) and the tax, as issued. A sum that is not the rate
+     on the gross is recorded, and flagged.
+  3. `payRctPayment`: the net leaves the bank, and the same payment settles
+     the invoice for the gross. The tax is an `rct_deduction` allocation
+     (Dr creditors, Cr RCT payable 2460).
+  4. A reversed payment drops out of its period, with its tax.
+- **The return** (s.530K): Revenue's deduction summary is recorded against
+  the books. A difference that is not an amendment becomes a review item.
+  Paying the return (s.530L) posts Dr RCT payable, Cr bank, to the cent.
+- **`reconcileRct`** checks the RCT payable account against the tax deducted
+  less the returns paid. It also flags each payment to a registered
+  subcontractor made outside the RCT path, with its s.530F(2) penalty
+  exposure (35%, 20%, 10% or 3%, by the last determination). Nothing is
+  posted as though it had been authorised.
+
+The RCT TDMs are now stored as exact slices of their committed files, with
+real offsets, and a file that is not the TDM is refused on the TDM path
+(#199).
+
 ### Consolidation (bank ↔ invoice)
 
 ```

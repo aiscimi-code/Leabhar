@@ -64,7 +64,7 @@ export function overdueInvoices(
 
 export interface StatementEntry {
   date: string;
-  kind: 'invoice' | 'debit_note' | 'credit_note' | 'payment' | 'refund' | 'payment_reversed' | 'write_off';
+  kind: 'invoice' | 'debit_note' | 'credit_note' | 'payment' | 'refund' | 'payment_reversed' | 'write_off' | 'rct_deducted';
   reference: string;
   /** Positive: the balance grows (the customer owes more, or we owe the supplier more). Base currency. */
   amountMinor: number;
@@ -157,8 +157,11 @@ export function accountHistory(
     const allocations = db.select().from(paymentAllocations).where(eq(paymentAllocations.paymentId, payment.id)).all();
     const ownParty = isCustomer ? payment.customerId === params.partyId : payment.supplierId === params.partyId;
     const amount = ownParty ? payment.baseAmountMinor
-      : allocations.filter((a) => docIds.includes(a.invoiceId) && a.allocationType !== 'write_off')
+      : allocations.filter((a) => docIds.includes(a.invoiceId) && a.allocationType !== 'write_off' && a.allocationType !== 'rct_deduction')
         .reduce((s, a) => s + a.baseAllocatedMinor, 0);
+    // RCT deducted from the payment (issue #549) settles the invoice too, and is shown as its own line.
+    const rctDeducted = allocations.filter((a) => docIds.includes(a.invoiceId) && a.allocationType === 'rct_deduction')
+      .reduce((s, a) => s + a.baseAllocatedMinor, 0);
     // A shortfall written off with the payment (issue #386) takes the rest of
     // the invoice out of the control account too.
     const writtenOff = allocations.filter((a) => docIds.includes(a.invoiceId) && a.allocationType === 'write_off')
@@ -172,6 +175,9 @@ export function accountHistory(
     if (writtenOff > 0) {
       raw.push({ date: payment.paymentDate, kind: 'write_off', reference: 'Shortfall written off', amountMinor: -writtenOff });
     }
+    if (rctDeducted > 0) {
+      raw.push({ date: payment.paymentDate, kind: 'rct_deducted', reference: 'RCT deducted', amountMinor: -rctDeducted });
+    }
     if (payment.reversedAt) {
       // Dated by the reversing journal, which is what moved the balance, not
       // by when the reversal was recorded.
@@ -182,7 +188,7 @@ export function accountHistory(
       raw.push({
         date: reversalDate ?? payment.reversedAt.slice(0, 10), kind: 'payment_reversed',
         reference: `${settles ? 'Payment' : 'Refund'} reversed${payment.reversalReason ? `: ${payment.reversalReason}` : ''}`,
-        amountMinor: (settles ? amount : -amount) + writtenOff,
+        amountMinor: (settles ? amount : -amount) + writtenOff + rctDeducted,
       });
     }
   }

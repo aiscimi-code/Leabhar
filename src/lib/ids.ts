@@ -107,4 +107,10 @@ export const ids = {
   grantReceipt: () => newId('grcpt'),
   farmPartnershipRegistration: () => newId('fpreg'),
   shareFarming: () => newId('shfarm'),
+  project: () => newId('proj'),
+  site: () => newId('site'),
+  rctSubcontractor: () => newId('rsub'),
+  rctContract: () => newId('rcon'),
+  rctPayment: () => newId('rpay'),
+  rctReturn: () => newId('rret'),
 };

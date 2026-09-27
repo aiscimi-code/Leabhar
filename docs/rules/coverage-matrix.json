@@ -2538,25 +2538,29 @@
       "id": "tca:s530B",
       "area": "tca_section",
       "title": "TCA 1997 s530B",
-      "status": "deferred",
-      "issue": 213,
-      "reason": "Not yet ruled."
+      "status": "rule",
+      "ruleKeys": [
+        "rct.contract_notification",
+        "rct.subcontractor_identity_evidence"
+      ]
     },
     {
       "id": "tca:s530C",
       "area": "tca_section",
       "title": "TCA 1997 s530C",
-      "status": "deferred",
-      "issue": 213,
-      "reason": "Not yet ruled."
+      "status": "rule",
+      "ruleKeys": [
+        "rct.payment_notification_before_payment"
+      ]
     },
     {
       "id": "tca:s530D",
       "area": "tca_section",
       "title": "TCA 1997 s530D",
-      "status": "deferred",
-      "issue": 213,
-      "reason": "Not yet ruled."
+      "status": "rule",
+      "ruleKeys": [
+        "rct.deduction_authorisation"
+      ]
     },
     {
       "id": "tca:s530E",
@@ -2573,9 +2577,15 @@
       "id": "tca:s530F",
       "area": "tca_section",
       "title": "TCA 1997 s530F",
-      "status": "deferred",
-      "issue": 213,
-      "reason": "Not yet ruled."
+      "status": "rule",
+      "ruleKeys": [
+        "rct.deduct_per_authorisation",
+        "rct.penalty_no_determination",
+        "rct.penalty_higher_rate_sub",
+        "rct.penalty_standard_rate_sub",
+        "rct.penalty_zero_rate_sub",
+        "rct.tax_due_for_payment_period"
+      ]
     },
     {
       "id": "tca:s530G",
@@ -2609,105 +2619,99 @@
       "id": "tca:s530J",
       "area": "tca_section",
       "title": "TCA 1997 s530J",
-      "status": "deferred",
-      "issue": 213,
-      "reason": "Not yet ruled."
+      "status": "not_applicable",
+      "reason": "Revenue's register of principals. The book's own principal status is the person's confirmation (#208, confirmRctPrincipal)."
     },
     {
       "id": "tca:s530K",
       "area": "tca_section",
       "title": "TCA 1997 s530K",
-      "status": "deferred",
-      "issue": 213,
-      "reason": "Not yet ruled."
+      "status": "rule",
+      "ruleKeys": [
+        "rct.return_by_principal",
+        "rct.deduction_summary_deemed_return"
+      ]
     },
     {
       "id": "tca:s530L",
       "area": "tca_section",
       "title": "TCA 1997 s530L",
-      "status": "deferred",
-      "issue": 213,
-      "reason": "Not yet ruled."
+      "status": "rule",
+      "ruleKeys": [
+        "rct.payment_by_due_date"
+      ]
     },
     {
       "id": "tca:s530M",
       "area": "tca_section",
       "title": "TCA 1997 s530M",
-      "status": "deferred",
-      "issue": 213,
-      "reason": "Not yet ruled."
+      "status": "not_applicable",
+      "reason": "A surcharge Revenue raises on a late or amended return. The book records each return and the date it was made; it does not raise surcharges."
     },
     {
       "id": "tca:s530N",
       "area": "tca_section",
       "title": "TCA 1997 s530N",
-      "status": "deferred",
-      "issue": 213,
-      "reason": "Not yet ruled."
+      "status": "not_applicable",
+      "reason": "Revenue's own assessments of a principal. Nothing for the books to compute."
     },
     {
       "id": "tca:s530O",
       "area": "tca_section",
       "title": "TCA 1997 s530O",
-      "status": "deferred",
-      "issue": 213,
-      "reason": "Not yet ruled."
+      "status": "not_applicable",
+      "reason": "A subcontractor's profits are computed on the amount received plus the RCT deducted. The ledger already records the gross invoice as income, so there is nothing to adjust."
     },
     {
       "id": "tca:s530P",
       "area": "tca_section",
       "title": "TCA 1997 s530P",
-      "status": "deferred",
-      "issue": 213,
-      "reason": "Not yet ruled."
+      "status": "rule",
+      "ruleKeys": [
+        "rct.deducted_tax_payment_on_account"
+      ]
     },
     {
       "id": "tca:s530Q",
       "area": "tca_section",
       "title": "TCA 1997 s530Q",
-      "status": "deferred",
-      "issue": 213,
-      "reason": "Not yet ruled."
+      "status": "not_applicable",
+      "reason": "Interest Revenue charges on overdue RCT, measured from the due date. The book records the due date and the payment date only."
     },
     {
       "id": "tca:s530R",
       "area": "tca_section",
       "title": "TCA 1997 s530R",
-      "status": "deferred",
-      "issue": 213,
-      "reason": "Not yet ruled."
+      "status": "not_applicable",
+      "reason": "In a partnership the precedent partner acts for the firm. This is procedural, and the partnership books record who that partner is."
     },
     {
       "id": "tca:s530S",
       "area": "tca_section",
       "title": "TCA 1997 s530S",
-      "status": "deferred",
-      "issue": 213,
-      "reason": "Not yet ruled."
+      "status": "not_applicable",
+      "reason": "The duty to keep records of relevant contracts and payments. The books are those records."
     },
     {
       "id": "tca:s530T",
       "area": "tca_section",
       "title": "TCA 1997 s530T",
-      "status": "deferred",
-      "issue": 213,
-      "reason": "Not yet ruled."
+      "status": "not_applicable",
+      "reason": "Revenue's power to inspect records. Nothing to compute."
     },
     {
       "id": "tca:s530U",
       "area": "tca_section",
       "title": "TCA 1997 s530U",
-      "status": "deferred",
-      "issue": 213,
-      "reason": "Not yet ruled."
+      "status": "not_applicable",
+      "reason": "Civil penalties for other failures. The s.530F penalties are ruled; these are Revenue's to impose."
     },
     {
       "id": "tca:s530V",
       "area": "tca_section",
       "title": "TCA 1997 s530V",
-      "status": "deferred",
-      "issue": 213,
-      "reason": "Not yet ruled."
+      "status": "not_applicable",
+      "reason": "Miscellaneous provisions (liquidators, receivers, regulations). Nothing for the books to compute."
     },
     {
       "id": "ca2014:s280A",

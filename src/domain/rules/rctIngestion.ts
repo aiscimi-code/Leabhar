@@ -148,6 +148,19 @@ function stripFrontMatterAndTitle(markdown: string): { title: string; body: stri
   return { title, body: body.replace(/\n{3,}/g, '\n\n').trim() };
 }
 
+/** Where a TDM's body sits in the committed file: after the front matter and title, trimmed, unaltered. */
+function locateTdmBody(markdown: string): { title: string; start: number; end: number } {
+  const fmMatch = markdown.match(/^---\n([\s\S]*?)\n---\n/);
+  const afterFm = fmMatch ? fmMatch[0].length : 0;
+  const titleMatch = markdown.slice(afterFm).match(/^\s*#\s+(.*)$/m);
+  const title = titleMatch?.[1]?.trim() ?? 'RCT TDM';
+  let start = titleMatch ? afterFm + (titleMatch.index ?? 0) + titleMatch[0].length : afterFm;
+  let end = markdown.length;
+  while (start < end && /\s/.test(markdown[start]!)) start += 1;
+  while (end > start && /\s/.test(markdown[end - 1]!)) end -= 1;
+  return { title, start, end };
+}
+
 export interface RctIngestResult {
   sourceId: string;
   provisionCount: number;
@@ -388,7 +401,18 @@ function ingestRctTdm(
     }
   }
 
-  const { title, body } = stripFrontMatterAndTitle(params.markdown);
+  // Only the TDM itself is ingested as the TDM (issue #199): a statute file,
+  // or another document, handed to this path is refused rather than stored
+  // under the TDM's citation.
+  const frontMatter = params.markdown.match(/^---\n([\s\S]*?)\n---\n/)?.[1] ?? '';
+  const declaredType = frontMatter.match(/^source_type:\s*"?([\w-]+)"?\s*$/m)?.[1];
+  const declaredUrl = frontMatter.match(/^source_url:\s*"?([^"\n]+)"?\s*$/m)?.[1];
+  if (declaredType !== 'revenue_guidance' || declaredUrl !== meta.sourceUrl) {
+    throw new Error(`That file is not ${meta.citation}: its front matter says ${declaredType ?? 'no source_type'} from `
+      + `${declaredUrl ?? 'no source_url'}. Only the TDM itself is ingested as the TDM.`);
+  }
+  const { title, start, end } = locateTdmBody(params.markdown);
+  const body = params.markdown.slice(start, end);
 
   return db.transaction((tx) => {
     const sourceId = ids.knowledgeSource();
@@ -427,9 +451,11 @@ function ingestRctTdm(
       slug: provisionSlug('full', title),
       heading: title,
       principalAct: null,
+      // The text is an exact slice of the committed file, and the offsets
+      // point at it there (issue #199), so every excerpt can be re-checked.
       provisionText: body,
-      sourceStart: 0,
-      sourceEnd: body.length,
+      sourceStart: start,
+      sourceEnd: end,
       category: 'procedure',
       amendsSection: null,
       effectiveClue: null,
