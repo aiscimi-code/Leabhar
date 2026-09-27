@@ -22,7 +22,7 @@ export default async function ProvisionPage({ params, searchParams }: {
   const { rule: highlightRuleId } = await searchParams;
   const detail = provisionDetail(id);
   if (!detail) notFound();
-  const { provision: p, source: s, rulesCiting, file } = detail;
+  const { provision: p, source: s, rulesCiting, dependencies, file } = detail;
   const isGuidance = s.sourceType !== 'legislation' && s.sourceType !== 'eu_source';
 
   return (
@@ -72,6 +72,25 @@ export default async function ProvisionPage({ params, searchParams }: {
                       <td>
                         <ul className="list-disc pl-5 text-[12px]">
                           {r.exceptions.map((e) => <li key={e.condition}>{e.condition} — {e.effect}</li>)}
+                        </ul>
+                      </td>
+                    </tr>
+                  )}
+                  {(dependencies[r.id] ?? []).length > 0 && (
+                    <tr>
+                      <td className="text-ink-faint align-top">
+                        Depends on
+                        <Help>What this rule's provision cross-references, resolved against what this book holds. "Not ingested" is a gap to close, never a guess.</Help>
+                      </td>
+                      <td>
+                        <ul className="text-[12px] space-y-1">
+                          {(dependencies[r.id] ?? []).map((d) => (
+                            <li key={d.reference}>
+                              {d.resolved && d.provision
+                                ? <span>{d.reference} → <Badge tone="positive">{d.provision.citation} s.{d.provision.sectionNumber}</Badge>{d.ruleKeys.length > 0 && <span className="text-ink-faint"> (rules: {d.ruleKeys.join(', ')})</span>}</span>
+                                : <span>{d.reference} → <Badge tone="negative">not ingested</Badge> <span className="text-ink-faint">{d.reason}</span></span>}
+                            </li>
+                          ))}
                         </ul>
                       </td>
                     </tr>

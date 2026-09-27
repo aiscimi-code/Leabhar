@@ -21,6 +21,7 @@ import { ingestTca1997Section, type Tca1997IngestResult } from './tca1997Ingesti
 import { parseTca1997Section, provisionSlug } from './tca1997SectionParser';
 import { CAPITAL_ALLOWANCES_CURATED_RULES } from './capitalAllowancesCuration';
 import { upsertReviewItem } from '../extraction/service';
+import { crossReferencesFromProvision, sameCrossReferences } from './dependencies';
 
 export const TCA_1997_S284_MD_PATH = new URL(
   '../../../docs/statutes/tca-1997/s284.md',
@@ -167,7 +168,8 @@ export function deriveCapitalAllowancesRules(
       )).get();
 
     if (existing) {
-      if (existing.statement === rule.statementExcerpt) { unchanged++; continue; }
+      if (existing.statement === rule.statementExcerpt
+        && sameCrossReferences(existing.crossReferences, crossReferencesFromProvision(prov))) { unchanged++; continue; }
       db.update(irishTaxRules)
         .set({ effectiveTo: rule.effectiveFrom, active: false })
         .where(eq(irishTaxRules.id, existing.id)).run();
@@ -191,7 +193,7 @@ export function deriveCapitalAllowancesRules(
       qualifier: rule.qualifier,
       conditions: rule.conditions,
       exceptions: rule.exceptions,
-      crossReferences: [],
+      crossReferences: crossReferencesFromProvision(prov),
       accountingEffect: rule.accountingEffect,
       taxEffect: rule.taxEffect,
       vatEffect: null,

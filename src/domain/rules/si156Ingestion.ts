@@ -12,6 +12,7 @@ import { sha256Hex } from '@/lib/hash';
 import { parseSi156, provisionSlug, assessRelevance, SI_156_2012_MD_PATH } from './si156Parser';
 import { SI_156_CURATED_RULES } from './si156Curation';
 import { upsertReviewItem } from '../extraction/service';
+import { crossReferencesFromProvision, sameCrossReferences } from './dependencies';
 
 export { SI_156_2012_MD_PATH };
 
@@ -153,7 +154,8 @@ export function deriveSi156Rules(
       )).get();
 
     if (existing) {
-      if (existing.statement === rule.statementExcerpt) { unchanged++; continue; }
+      if (existing.statement === rule.statementExcerpt
+        && sameCrossReferences(existing.crossReferences, crossReferencesFromProvision(prov))) { unchanged++; continue; }
       db.update(irishTaxRules)
         .set({ effectiveTo: SI_156.effectiveFrom, active: false })
         .where(eq(irishTaxRules.id, existing.id)).run();
@@ -177,7 +179,7 @@ export function deriveSi156Rules(
       qualifier: null,
       conditions: rule.conditions,
       exceptions: rule.exceptions,
-      crossReferences: [],
+      crossReferences: crossReferencesFromProvision(prov),
       accountingEffect: null,
       taxEffect: null,
       vatEffect: rule.vatEffect,

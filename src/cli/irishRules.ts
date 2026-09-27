@@ -46,6 +46,7 @@ import { lookupTransactionRules, type TransactionContext } from '@/domain/rules/
 import { setRuleReviewStatus } from '@/domain/rules/review';
 import { generateDefaultTestCases, runTestCases } from '@/domain/rules/testCases';
 import { generateAuditReport } from '@/domain/rules/audit';
+import { resolveRuleDependencies, resolveAllRuleDependencies } from '@/domain/rules/dependencies';
 import { irishActProvisions, irishTaxRules } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 
@@ -383,6 +384,16 @@ export async function main(argv: string[], options: CliOptions = {}): Promise<nu
         const transaction = JSON.parse(json) as TransactionContext;
         const result = lookupTransactionRules(db, { companyId, transaction });
         print(result, format);
+        return 0;
+      }
+
+      case 'dependencies': {
+        const ruleId = getFlag(flags, 'rule');
+        if (ruleId) {
+          print(resolveRuleDependencies(db, { ruleId }), format);
+          return 0;
+        }
+        print(resolveAllRuleDependencies(db, { companyId }), format);
         return 0;
       }
 

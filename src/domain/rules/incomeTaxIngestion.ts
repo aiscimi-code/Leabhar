@@ -16,6 +16,7 @@ import { parseScheduleFrontMatter } from './vatcaScheduleParser';
 import { provisionSlug } from './statuteParser';
 import { INCOME_TAX_CURATED_RULES, type CuratedIncomeTaxRule } from './incomeTaxCuration';
 import { upsertReviewItem } from '../extraction/service';
+import { crossReferencesFromProvision, sameCrossReferences } from './dependencies';
 
 export const SWCA_SECTIONS = ['20', '21', '22', '23'];
 export const swcaPath = (n: string) => `docs/statutes/swca-2005/swca-2005-s${n}.md`;
@@ -83,7 +84,8 @@ export function deriveIncomeTaxRules(db: AppDatabase, params: { companyId: strin
     ordered.forEach((rule, i) => {
       const prov = provisions[i]!;
       const match = stored.find((r) => !kept.has(r.id) && r.provisionId === prov.id && r.effectiveFrom === rule.effectiveFrom
-        && (r.effectiveTo ?? null) === rule.effectiveTo && r.statement === rule.statementExcerpt && r.numericValue === rule.numericValue);
+        && (r.effectiveTo ?? null) === rule.effectiveTo && r.statement === rule.statementExcerpt && r.numericValue === rule.numericValue
+        && sameCrossReferences(r.crossReferences, crossReferencesFromProvision(prov)));
       if (match) { kept.add(match.id); previousId = match.id; result.unchanged++; return; }
       const id = ids.taxRule();
       db.insert(irishTaxRules).values({
@@ -92,7 +94,7 @@ export function deriveIncomeTaxRules(db: AppDatabase, params: { companyId: strin
         extractedFact: rule.numericValue !== null ? String(rule.numericValue) : null, humanExplanation: rule.interpretationNote,
         numericValue: rule.numericValue, unit: rule.unit,
         qualifier: rule.rateBasisPoints !== undefined ? `rate_bp:${rule.rateBasisPoints}` : null,
-        conditions: [], exceptions: [], crossReferences: [], accountingEffect: null, taxEffect: rule.name, vatEffect: null,
+        conditions: [], exceptions: [], crossReferences: crossReferencesFromProvision(prov), accountingEffect: null, taxEffect: rule.name, vatEffect: null,
         reportingEffect: null, requiresGuidance: true, humanReviewRequired: true, reviewStatus: 'ai_extracted',
         ruleVersion: nextVersion++, supersedesRuleId: previousId, priority: 100,
         effectiveFrom: rule.effectiveFrom, effectiveTo: rule.effectiveTo, active: false,

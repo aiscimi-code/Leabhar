@@ -42,6 +42,7 @@ import {
 } from './financeAct2011RctSectionParser';
 import { RCT_CURATED_RULES, type RctSourceKind } from './rctCuration';
 import { upsertReviewItem } from '../extraction/service';
+import { crossReferencesFromProvision, sameCrossReferences } from './dependencies';
 
 export { TCA_1997_S530_MD_PATH };
 export { tca1997RctSectionMdPath };
@@ -522,7 +523,8 @@ export function deriveRctRules(
     const effectiveFrom = effectiveFromFor(rule.source);
 
     if (existing) {
-      if (existing.statement === rule.statementExcerpt) { unchanged++; continue; }
+      if (existing.statement === rule.statementExcerpt
+        && sameCrossReferences(existing.crossReferences, crossReferencesFromProvision(prov))) { unchanged++; continue; }
       db.update(irishTaxRules)
         .set({ effectiveTo: effectiveFrom, active: false })
         .where(eq(irishTaxRules.id, existing.id)).run();
@@ -546,7 +548,7 @@ export function deriveRctRules(
       qualifier: rule.qualifier,
       conditions: rule.conditions,
       exceptions: rule.exceptions,
-      crossReferences: [],
+      crossReferences: crossReferencesFromProvision(prov),
       accountingEffect: rule.accountingEffect,
       taxEffect: rule.taxEffect,
       vatEffect: null,

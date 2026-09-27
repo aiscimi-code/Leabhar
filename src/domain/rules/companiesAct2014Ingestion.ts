@@ -30,6 +30,7 @@ import {
 import { parseScheduleFrontMatter } from './vatcaScheduleParser';
 import { COMPANIES_ACT_2014_CURATED_RULES } from './companiesAct2014Curation';
 import { upsertReviewItem } from '../extraction/service';
+import { crossReferencesFromProvision, sameCrossReferences } from './dependencies';
 
 const SOURCE_TYPE: IrishSourceType = 'legislation';
 
@@ -184,7 +185,8 @@ export function deriveCompaniesAct2014Rules(
       )).get();
 
     if (existing) {
-      if (existing.statement === rule.statementExcerpt && existing.numericValue === rule.numericValue) {
+      if (existing.statement === rule.statementExcerpt && existing.numericValue === rule.numericValue
+        && sameCrossReferences(existing.crossReferences, crossReferencesFromProvision(prov))) {
         unchanged++; continue;
       }
       db.update(irishTaxRules)
@@ -210,7 +212,7 @@ export function deriveCompaniesAct2014Rules(
       qualifier: rule.qualifier,
       conditions: rule.conditions,
       exceptions: rule.exceptions,
-      crossReferences: [],
+      crossReferences: crossReferencesFromProvision(prov),
       accountingEffect: null,
       taxEffect: null,
       vatEffect: null,

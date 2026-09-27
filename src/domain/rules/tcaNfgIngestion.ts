@@ -16,6 +16,7 @@ import { extractNfgSection } from './tcaNfgParser';
 import { CORPORATION_TAX_CURATED_RULES, NFG_SECTIONS, nfgCitation } from './corporationTaxCuration';
 import { provisionSlug } from './statuteParser';
 import { upsertReviewItem } from '../extraction/service';
+import { crossReferencesFromProvision, sameCrossReferences } from './dependencies';
 
 const NFG_URL = 'https://www.revenue.ie/en/tax-professionals/documents/notes-for-guidance/tca/';
 
@@ -107,7 +108,8 @@ export function deriveCorporationTaxRules(db: AppDatabase, params: { companyId: 
       .where(and(eq(irishTaxRules.companyId, params.companyId), eq(irishTaxRules.ruleKey, rule.ruleKey), eq(irishTaxRules.active, true)))
       .get();
     if (existing && existing.statement === rule.statementExcerpt && existing.numericValue === rule.numericValue
-      && existing.provisionId === prov.id) {
+      && existing.provisionId === prov.id
+      && sameCrossReferences(existing.crossReferences, crossReferencesFromProvision(prov))) {
       result.unchanged++;
       continue;
     }
@@ -132,7 +134,7 @@ export function deriveCorporationTaxRules(db: AppDatabase, params: { companyId: 
       qualifier: null,
       conditions: [],
       exceptions: [],
-      crossReferences: [],
+      crossReferences: crossReferencesFromProvision(prov),
       accountingEffect: null,
       taxEffect: rule.taxEffect,
       vatEffect: null,
