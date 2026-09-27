@@ -9,6 +9,8 @@ import {
   createEmployee, recordPpsn, recordCessation, setEmploymentTerms, recordRpn,
   createPayRun, setPayslipInputs, recomputePayRun, removeFromPayRun, postPayRun, reversePayRun, payNetWages,
   payPayrollLiabilities, reconcilePayroll, parseUscBands, type PayInputs,
+  recordSmallBenefit, recordRemoteWorkingAllowance, recordTravelSubsistence, reportExpenseClaim, markBenefitsSubmitted,
+  correctReportableBenefit, reconcileErr,
 } from '@/domain/payroll';
 
 /**
@@ -211,5 +213,75 @@ export async function reconcilePayrollAction(f: FormData): Promise<ActionResult>
     return differences
       ? { ok: true, message: `${differences} difference(s) found and added to the review queue. Nothing was adjusted.`, warnings: [] }
       : { ok: true, message: 'The payroll accounts agree with the posted runs.' };
+  } catch (e) { return fail(e); }
+}
+
+// ---- Enhanced Reporting Requirements (EPIC 21) ----
+
+export async function recordReportableBenefitAction(f: FormData): Promise<ActionResult> {
+  try {
+    await requireActor('payroll.run');
+    const db = getDb();
+    const companyId = requireCompany().id;
+    const recordedBy = await actorName();
+    const kind = text(f, 'kind');
+    const base = { companyId, employeeId: text(f, 'employeeId'), recordedBy };
+    const amountMinor = euro(f, 'amount') ?? 0;
+    if (kind === 'small_benefit') {
+      recordSmallBenefit(db, { ...base, providedOn: text(f, 'date'), amountMinor, description: text(f, 'description') });
+    } else if (kind === 'remote_working_daily_allowance') {
+      recordRemoteWorkingAllowance(db, { ...base, paidOn: text(f, 'date'), amountMinor, daysHundredths: hundredths(f, 'days') ?? 0 });
+    } else {
+      recordTravelSubsistence(db, { ...base, paidOn: text(f, 'date'), amountMinor, subcategory: kind as 'advance', description: text(f, 'description') });
+    }
+    return done('Recorded. Submit it through ROS on or before the date it is provided, then record the reference.', '/payroll/err');
+  } catch (e) { return fail(e); }
+}
+
+export async function reportExpenseClaimAction(f: FormData): Promise<ActionResult> {
+  try {
+    await requireActor('payroll.run');
+    const classifications: Record<string, 'advance'> = {};
+    for (const [k, v] of f.entries()) {
+      if (k.startsWith('classify:') && String(v)) classifications[k.slice('classify:'.length)] = String(v) as 'advance';
+    }
+    const made = reportExpenseClaim(getDb(), {
+      companyId: requireCompany().id, claimId: text(f, 'claimId'), recordedBy: await actorName(),
+      employeeId: opt(f, 'employeeId'), classifications,
+    });
+    return done(`${made.length} reportable benefit(s) prepared from the claim.`, '/payroll/err');
+  } catch (e) { return fail(e); }
+}
+
+export async function markBenefitsSubmittedAction(f: FormData): Promise<ActionResult> {
+  try {
+    await requireActor('payroll.run');
+    const benefitIds = f.getAll('benefitId').map(String).filter(Boolean);
+    if (!benefitIds.length) return { ok: false, error: 'Tick the benefits the ROS submission covered.' };
+    markBenefitsSubmitted(getDb(), {
+      companyId: requireCompany().id, benefitIds, submittedOn: text(f, 'submittedOn'), reference: text(f, 'reference'), submittedBy: await actorName(),
+    });
+    return done(`${benefitIds.length} benefit(s) recorded as submitted.`, '/payroll/err');
+  } catch (e) { return fail(e); }
+}
+
+export async function correctReportableBenefitAction(f: FormData): Promise<ActionResult> {
+  try {
+    await requireActor('payroll.run');
+    correctReportableBenefit(getDb(), {
+      companyId: requireCompany().id, benefitId: text(f, 'benefitId'), reason: text(f, 'reason'), recordedBy: await actorName(),
+      amountMinor: euro(f, 'amount') ?? undefined,
+    });
+    return done('Corrected: the earlier record is superseded. Submit the correction through ROS.', '/payroll/err');
+  } catch (e) { return fail(e); }
+}
+
+export async function reconcileErrAction(f: FormData): Promise<ActionResult> {
+  try {
+    await requireActor('payroll.run');
+    const r = reconcileErr(getDb(), { companyId: requireCompany().id, asOf: text(f, 'asOf') });
+    const n = r.claims.length + r.unsubmitted.length + r.smallBenefitBreaches.length;
+    revalidatePath('/payroll/err');
+    return { ok: true, message: n ? `${n} item(s) need attention; they are in the review queue.` : 'Everything reportable is prepared and submitted.' };
   } catch (e) { return fail(e); }
 }

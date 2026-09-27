@@ -671,6 +671,43 @@ Not yet built:
 - pension relief limits;
 - LPT deductions.
 
+### Reportable benefits: Enhanced Reporting Requirements (EPIC 21, issues #532, #533)
+
+A benefit provided without deducting tax is notified to Revenue on or before
+it is provided (TCA s.897C; S.I. 345/2018 reg.10A, inserted by S.I. 1/2024).
+It is one of three kinds:
+- a **small benefit** (s.112B);
+- the **remote working daily allowance**;
+- a **travel and subsistence** payment, in the reg.2(1) subcategories plus the
+  advance-payment subcategory from TDM 38-03-33.
+
+`reportable_benefits` holds one immutable row for each. A correction
+supersedes the row, and a submission (through ROS, until #528) is recorded
+against the row that was submitted.
+
+- A small benefit qualifies only as the first to fifth in the year, with the
+  year's cumulative value within €1,500 (FA 2024 s.8, for 2025 to 2029). One
+  that breaks either limit is refused, because it is taxable in full: it
+  belongs on a payslip as a benefit in kind.
+- A remote working allowance over €3.20 a day is refused. The excess is
+  taxable pay.
+- A reimbursed expense claim reports the business share of each travel and
+  subsistence line, dated the day it was reimbursed:
+  - mileage, and subsistence at a civil service rate, are unvouched;
+  - receipted travel is vouched;
+  - any other line is the person's to classify;
+  - receipt lines are not reportable.
+
+  The claimant must be linked to a payroll employee (`employees.officerId` or
+  `employees.userId`), for the PPSN and employer reference.
+
+`reconcileErr` reports and raises review items for four cases; it repairs
+nothing:
+- a reimbursed claim not prepared to the cent;
+- a benefit not submitted by its date;
+- a benefit submitted late;
+- a year that breaks the small benefit limits.
+
 ### Consolidation (bank ↔ invoice)
 
 ```

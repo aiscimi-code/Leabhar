@@ -39,12 +39,42 @@ SOURCES = [
     ("si-345-2018", "2018-si-345",
      "https://www.irishstatutebook.ie/eli/2018/si/345/made/en/print",
      "Income Tax (Employments) Regulations 2018 (S.I. No. 345 of 2018)", "S.I. 345/2018"),
+    ("si-1-2024", "2024-si-1",
+     "https://www.irishstatutebook.ie/eli/2024/si/1/made/en/print",
+     "Income Tax (Employments) Regulations 2024 (S.I. No. 1 of 2024)", "S.I. 1/2024"),
     ("si-510-2018", "2018-si-510",
      "https://www.irishstatutebook.ie/eli/2018/si/510/made/en/print",
      "Universal Social Charge Regulations 2018 (S.I. No. 510 of 2018)", "S.I. 510/2018"),
 ]
 
 KEEP_HTML = {"swca-2005-s13", "ntf-2000-s4"}
+
+# Revenue Tax and Duty Manuals (PDF), converted page by page like tdm-38-01-03b.
+TDMS = [
+    ("tdm-38-03-33", "38-03-33",
+     "https://www.revenue.ie/en/tax-professionals/tdm/income-tax-capital-gains-tax-corporation-tax/part-38/38-03-33.pdf",
+     "TDM Part 38-03-33 — Returns by Employers in Relation to Reportable Benefits (Enhanced Reporting Requirements)",
+     "Revenue TDM Part 38-03-33"),
+]
+
+
+def extract_tdm(folder: str, stem: str, url: str, title: str, citation: str) -> None:
+    import hashlib
+    import pdfplumber
+    pdf = ROOT / folder / f"{stem}.pdf"
+    if not pdf.exists():
+        fetch(url, pdf)
+    sha = hashlib.sha256(pdf.read_bytes()).hexdigest()
+    pages = []
+    with pdfplumber.open(pdf) as doc:
+        for i, page in enumerate(doc.pages, 1):
+            pages.append(f"<!-- page {i} -->\n{(page.extract_text() or '').strip()}\n")
+    body = "\n".join(pages)
+    write(ROOT / folder / f"{stem}.md", (
+        f"---\ntitle: \"{title}\"\ncitation: \"{citation}\"\nsource_url: \"{url}\"\n"
+        f"source_type: revenue_guidance\njurisdiction: IE\nconversion: pdfplumber-text\n"
+        f"source_pdf_sha256: \"{sha}\"\n---\n\n# {title}\n\n{body}"
+    ))
 
 
 def main() -> None:
@@ -57,6 +87,8 @@ def main() -> None:
         write(ROOT / folder / f"{stem}.md", html_to_md(html, title, citation, url))
         if stem in KEEP_HTML:
             raw.write_text(html)
+    for tdm in TDMS:
+        extract_tdm(*tdm)
     print("done")
 
 

@@ -3481,6 +3481,35 @@
         "usc.payroll_cumulative",
         "usc.payroll_emergency"
       ]
+    },
+    {
+      "id": "si1-2024",
+      "area": "other_source",
+      "title": "S.I. 1/2024 Income Tax (Employments) Regulations 2024 — reg.10A reportable benefits (ERR)",
+      "status": "rule",
+      "ruleKeys": [
+        "err.notification_particulars",
+        "err.travel_subsistence_subcategories"
+      ]
+    },
+    {
+      "id": "tdm:38-03-33",
+      "area": "other_source",
+      "title": "Revenue TDM Part 38-03-33 — Enhanced Reporting Requirements",
+      "status": "rule",
+      "ruleKeys": [
+        "err.remote_working_daily_allowance"
+      ]
+    },
+    {
+      "id": "fa2024:s8",
+      "area": "other_source",
+      "title": "Finance Act 2024 s.8 — small benefit exemption (TCA s.112B)",
+      "status": "rule",
+      "ruleKeys": [
+        "small_benefit.max_incentives",
+        "small_benefit.cumulative_limit"
+      ]
     }
   ]
 }

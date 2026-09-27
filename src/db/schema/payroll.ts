@@ -1,6 +1,7 @@
 import { sqliteTable, text, integer, index, uniqueIndex } from 'drizzle-orm/sqlite-core';
 import { timestamps, provenance } from './_shared';
 import { companies, companyOfficers } from './company';
+import { users } from './operations';
 
 /**
  * Payroll (EPIC 20, issues #524–#527).
@@ -48,6 +49,8 @@ export const employees = sqliteTable('employees', {
   isProprietaryDirector: integer('is_proprietary_director', { mode: 'boolean' }).notNull().default(false),
   /** The officer record of a director, so their pay posts to directors' remuneration against them. */
   officerId: text('officer_id').references(() => companyOfficers.id),
+  /** The book's login of a member of staff, so their expense claims are reported under this employment (ERR). */
+  userId: text('user_id').references(() => users.id),
   /** PRSI class. Classes A and S are computed; any other class is refused, never approximated. */
   prsiClass: text('prsi_class', { enum: ['A', 'S', 'J', 'M'] }).notNull().default('A'),
   recordedBy: text('recorded_by').notNull(),
@@ -275,3 +278,51 @@ export const payrollRemittances = sqliteTable('payroll_remittances', {
   recordedBy: text('recorded_by').notNull(),
   ...timestamps,
 }, (t) => [index('payroll_remittances_company_idx').on(t.companyId, t.month)]);
+
+export const REPORTABLE_BENEFIT_CATEGORIES = ['small_benefit', 'remote_working_daily_allowance', 'travel_and_subsistence'] as const;
+export const TRAVEL_SUBSISTENCE_SUBCATEGORIES = [
+  'travel_vouched', 'travel_unvouched', 'subsistence_vouched', 'subsistence_unvouched',
+  'site_based', 'emergency_travel', 'eating_on_site', 'advance',
+] as const;
+export type TravelSubsistenceSubcategory = (typeof TRAVEL_SUBSISTENCE_SUBCATEGORIES)[number];
+
+/**
+ * A reportable benefit (EPIC 21, issues #532, #533): a small benefit, a
+ * remote working daily allowance, or a travel and subsistence payment,
+ * provided without deducting tax and notified to Revenue on or before it is
+ * provided (TCA s.897C; S.I. 345/2018 reg.10A).
+ *
+ * A row is never edited: a correction supersedes it with a new row, and the
+ * submission is recorded against the row that was submitted.
+ */
+export const reportableBenefits = sqliteTable('reportable_benefits', {
+  id: text('id').primaryKey(),
+  companyId: text('company_id').notNull().references(() => companies.id),
+  employeeId: text('employee_id').notNull().references(() => employees.id),
+  category: text('category', { enum: REPORTABLE_BENEFIT_CATEGORIES }).notNull(),
+  /** For travel and subsistence: the subcategory (reg.2(1) "relevant particulars"; TDM 38-03-33 §5.3). */
+  subcategory: text('subcategory', { enum: TRAVEL_SUBSISTENCE_SUBCATEGORIES }),
+  /** The date the benefit is provided or the payment made (reg.10A(1)(a)). */
+  providedOn: text('provided_on').notNull(),
+  amountMinor: integer('amount_minor').notNull(),
+  /** For the remote working daily allowance: the days it pays for, in hundredths (part days count). */
+  daysHundredths: integer('days_hundredths'),
+  description: text('description').notNull(),
+  /** Where it came from: an expense claim line reimbursed, or recorded by hand. */
+  sourceType: text('source_type', { enum: ['expense_claim', 'manual'] }).notNull(),
+  sourceId: text('source_id'),
+  sourceLineId: text('source_line_id'),
+  status: text('status', { enum: ['prepared', 'submitted', 'superseded'] }).notNull().default('prepared'),
+  supersedesId: text('supersedes_id'),
+  supersededReason: text('superseded_reason'),
+  submittedOn: text('submitted_on'),
+  submissionReference: text('submission_reference'),
+  submittedBy: text('submitted_by'),
+  recordedBy: text('recorded_by').notNull(),
+  ...provenance,
+  ...timestamps,
+}, (t) => [
+  index('reportable_benefits_company_idx').on(t.companyId, t.providedOn),
+  index('reportable_benefits_employee_idx').on(t.employeeId, t.category),
+  index('reportable_benefits_source_idx').on(t.sourceType, t.sourceId),
+]);

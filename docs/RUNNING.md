@@ -365,6 +365,17 @@ npm run cli -- reconcile-payroll --as-of 2026-01-31
 
 The RPN is copied by hand from ROS until retrieval is built (#528). Nothing is
 submitted to Revenue yet: the payroll submission is #528.
+`payroll-submission --run <id>` lists what to enter on the ROS online form.
+
+Reportable benefits (Enhanced Reporting Requirements):
+
+```bash
+npm run cli -- err-small-benefit --employee <id> --date 2026-12-15 --amount 500 --description "Christmas voucher" --by owner
+npm run cli -- err-report-claim --claim <id> --by owner   # travel and subsistence of a reimbursed claim
+npm run cli -- err-particulars --from 2026-12-01 --to 2026-12-31 --status prepared
+npm run cli -- err-submitted --benefits <id,id> --date 2026-12-15 --reference <ROS ref> --by owner
+npm run cli -- reconcile-err --as-of 2026-12-31
+```
 
 ### Agent workflow
 

@@ -7,6 +7,8 @@ import {
   recordRpn, listRpns, parseUscBands,
   createPayRun, setPayslipInputs, recomputePayRun, postPayRun, reversePayRun, payNetWages, getPayRun, payslipsOfRun, listPayRuns,
   payRunTotals, monthlyPayrollSummary, yearEndSummary, employeeYearToDate, payPayrollLiabilities, reconcilePayroll, payrollSubmissionParticulars,
+  recordSmallBenefit, recordRemoteWorkingAllowance, recordTravelSubsistence, reportExpenseClaim, correctReportableBenefit,
+  markBenefitsSubmitted, errParticulars, reconcileErr,
   type PayInputs,
 } from '@/domain/payroll';
 
@@ -20,7 +22,7 @@ Payroll (EPIC 20, issues #524–#527):
   add-employee --first <name> --last <name> --ref <staff id> --start <date>
             --frequency weekly|fortnightly|monthly --by <name>
             [--ppsn <ppsn>] [--dob <date>] [--address <text>] [--email <text>]
-            [--director] [--proprietary-director] [--officer <id>]
+            [--director] [--proprietary-director] [--officer <id>] [--user <login id>]
                                          Record an employee (S.I. 345/2018 reg.17)
   record-ppsn --employee <id> --ppsn <ppsn> --by <name>
   record-cessation --employee <id> --date <date> --by <name>
@@ -48,6 +50,24 @@ Payroll (EPIC 20, issues #524–#527):
   payroll-report (--month <yyyy-mm> | --year <yyyy> [--employee <id>])
   reconcile-payroll --as-of <date>       Payroll control accounts against the posted runs
   payroll-submission --run <id>          Each payment's reg.10(1) particulars, for the ROS online form (#528)
+
+Enhanced Reporting Requirements (EPIC 21, issues #532, #533):
+  err-small-benefit --employee <id> --date <date> --amount <euro> --description <text> --by <name>
+                                         A voucher or non-cash incentive (TCA s.112B); refused beyond
+                                          the fifth in a year or €1,500 cumulative
+  err-remote-working --employee <id> --date <date> --days <days> --amount <euro> --by <name>
+                                         Remote working daily allowance, at most €3.20 a day
+  err-travel --employee <id> --date <date> --subcategory <sub> --amount <euro> --description <text> --by <name>
+                                         <sub>: travel_vouched, travel_unvouched, subsistence_vouched,
+                                          subsistence_unvouched, site_based, emergency_travel,
+                                          eating_on_site, advance
+  err-report-claim --claim <id> --by <name> [--employee <id>] [--classify <lineId>=<sub>,...]
+                                         The travel and subsistence of a reimbursed expense claim
+  err-correct --benefit <id> --reason <text> --by <name> [--amount <euro>] [--days <days>] [--subcategory <sub>]
+  err-submitted --benefits <id,id> --date <date> --reference <ROS ref> --by <name>
+  err-particulars --from <date> --to <date> [--status prepared|submitted]
+                                         Each benefit's reg.10A particulars, for the ROS online form
+  reconcile-err --as-of <date>           Reimbursed claims, unsubmitted and late benefits, s.112B limits
 `;
 
 export { parseUscBands };
@@ -56,6 +76,8 @@ export const PAYROLL_COMMANDS = [
   'add-employee', 'record-ppsn', 'record-cessation', 'set-employment-terms', 'record-rpn', 'list-employees',
   'create-pay-run', 'set-pay-inputs', 'recompute-pay-run', 'show-pay-run', 'post-pay-run', 'reverse-pay-run',
   'pay-net-wages', 'pay-payroll-taxes', 'payroll-report', 'reconcile-payroll', 'payroll-submission',
+  'err-small-benefit', 'err-remote-working', 'err-travel', 'err-report-claim', 'err-correct', 'err-submitted',
+  'err-particulars', 'reconcile-err',
 ] as const;
 
 type Flags = Record<string, string | boolean>;
@@ -92,6 +114,7 @@ export function runPayrollCommand(db: AppDatabase, companyId: string, command: s
         dateOfBirth: getFlag(flags, 'dob') ?? null, address: getFlag(flags, 'address') ?? null, email: getFlag(flags, 'email') ?? null,
         isDirector: hasFlag(flags, 'director') || hasFlag(flags, 'proprietary-director'),
         isProprietaryDirector: hasFlag(flags, 'proprietary-director'), officerId: getFlag(flags, 'officer') ?? null,
+        userId: getFlag(flags, 'user') ?? null,
       });
     case 'record-ppsn':
       return recordPpsn(db, { companyId, employeeId: need(flags, 'employee'), ppsn: need(flags, 'ppsn'), recordedBy: need(flags, 'by') });
@@ -165,6 +188,47 @@ export function runPayrollCommand(db: AppDatabase, companyId: string, command: s
     }
     case 'payroll-submission':
       return payrollSubmissionParticulars(db, companyId, need(flags, 'run'));
+    case 'err-small-benefit':
+      return recordSmallBenefit(db, {
+        companyId, employeeId: need(flags, 'employee'), providedOn: need(flags, 'date'), amountMinor: euro(need(flags, 'amount')),
+        description: need(flags, 'description'), recordedBy: need(flags, 'by'),
+      });
+    case 'err-remote-working':
+      return recordRemoteWorkingAllowance(db, {
+        companyId, employeeId: need(flags, 'employee'), paidOn: need(flags, 'date'), amountMinor: euro(need(flags, 'amount')),
+        daysHundredths: Math.round(Number(need(flags, 'days')) * 100), recordedBy: need(flags, 'by'),
+      });
+    case 'err-travel':
+      return recordTravelSubsistence(db, {
+        companyId, employeeId: need(flags, 'employee'), paidOn: need(flags, 'date'), subcategory: need(flags, 'subcategory') as 'advance',
+        amountMinor: euro(need(flags, 'amount')), description: need(flags, 'description'), recordedBy: need(flags, 'by'),
+      });
+    case 'err-report-claim': {
+      const classify = getFlag(flags, 'classify');
+      return reportExpenseClaim(db, {
+        companyId, claimId: need(flags, 'claim'), recordedBy: need(flags, 'by'), employeeId: getFlag(flags, 'employee') ?? null,
+        classifications: classify ? Object.fromEntries(classify.split(',').map((p) => p.split('=') as [string, 'advance'])) : undefined,
+      });
+    }
+    case 'err-correct': {
+      const days = getFlag(flags, 'days');
+      return correctReportableBenefit(db, {
+        companyId, benefitId: need(flags, 'benefit'), reason: need(flags, 'reason'), recordedBy: need(flags, 'by'),
+        amountMinor: optEuro(flags, 'amount'), daysHundredths: days ? Math.round(Number(days) * 100) : undefined,
+        subcategory: getFlag(flags, 'subcategory') as 'advance' | undefined,
+      });
+    }
+    case 'err-submitted':
+      return markBenefitsSubmitted(db, {
+        companyId, benefitIds: need(flags, 'benefits').split(','), submittedOn: need(flags, 'date'),
+        reference: need(flags, 'reference'), submittedBy: need(flags, 'by'),
+      });
+    case 'err-particulars':
+      return errParticulars(db, companyId, {
+        from: need(flags, 'from'), to: need(flags, 'to'), status: getFlag(flags, 'status') as 'prepared' | undefined,
+      });
+    case 'reconcile-err':
+      return reconcileErr(db, { companyId, asOf: need(flags, 'as-of') });
     case 'reconcile-payroll':
       return reconcilePayroll(db, { companyId, asOf: need(flags, 'as-of') });
     default:

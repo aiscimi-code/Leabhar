@@ -1,9 +1,9 @@
 import { and, desc, eq, isNull, ne, sql } from 'drizzle-orm';
 import { getDb } from '@/db';
-import { bankAccounts, bankTransactions, payslips } from '@/db/schema';
+import { bankAccounts, bankTransactions, expenseClaimLines, payslips } from '@/db/schema';
 import {
   listEmployees, listTerms, listRpns, listPayRuns, payRunTotals, monthlyPayrollSummary, getPayRun, payslipsOfRun,
-  payrollSubmissionParticulars,
+  payrollSubmissionParticulars, errParticulars, unreportedClaims, subcategoryOfClaimLine,
 } from '@/domain/payroll';
 import { requireCompany } from './queries';
 
@@ -63,4 +63,21 @@ export function payslipPage(payslipId: string) {
   const slip = payslipsOfRun(db, run.id).find((p) => p.id === payslipId)!;
   const employee = listEmployees(db, company.id).find((e) => e.id === row.employeeId)!;
   return { company, run, slip, employee };
+}
+
+export function errPage(year: number) {
+  const db = getDb();
+  const company = requireCompany();
+  const today = new Date().toISOString().slice(0, 10);
+  const claims = unreportedClaims(db, company.id, today).map((c) => ({
+    ...c,
+    lines: db.select().from(expenseClaimLines).where(eq(expenseClaimLines.claimId, c.claimId)).all()
+      .map((l) => ({ ...l, decided: subcategoryOfClaimLine(l) })),
+  }));
+  return {
+    company,
+    employees: listEmployees(db, company.id),
+    benefits: errParticulars(db, company.id, { from: `${year}-01-01`, to: `${year}-12-31` }),
+    claims,
+  };
 }

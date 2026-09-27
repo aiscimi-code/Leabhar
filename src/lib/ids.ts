@@ -18,6 +18,7 @@ export const ids = {
   payslip: () => newId('psl'),
   payslipLine: () => newId('psll'),
   payrollRemittance: () => newId('prem'),
+  reportableBenefit: () => newId('rben'),
   partnerShare: () => newId('pts'),
   ctDecision: () => newId('ctd'),
   company: () => newId('co'),

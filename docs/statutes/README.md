@@ -68,6 +68,8 @@ superseded and what to use instead.
 | `swa-2024/`, `swaerss-2025/` | Social Welfare Act 2024 s.2; Social Welfare and Automatic Enrolment Retirement Savings System (Amendment) Act 2025 s.2 | Deterministic (as enacted) | Employer PRSI threshold €527 (2025) and €552 (2026); ingested for payroll (#526) |
 | `ntf-2000/` | National Training Fund Act 2000 s.4 | Deterministic (LRC revised) | The 1% levy; ingested for payroll (#526) |
 | `si-345-2018/`, `si-510-2018/` | Income Tax (Employments) Regulations 2018; Universal Social Charge Regulations 2018 | Deterministic (regs.11, 15, 19, 20, 31; regs.14, 19) | The PAYE and USC deduction procedures; ingested for payroll (#526) |
+| `si-1-2024/` | Income Tax (Employments) Regulations 2024 (S.I. 1/2024) | Deterministic (reg.3) | Inserts reg.10A (ERR particulars); ingested for reportable benefits (#532) |
+| `tdm-38-03-33/` | Revenue TDM Part 38-03-33 — Enhanced Reporting Requirements | Deterministic (§4, §5; `revenue_guidance`) | The €3.20 remote working allowance and the ERR subcategories (#532) |
 | `frs-102/` | FRS 102 pointer (not the standard text — FRC copyright) | Reference only (`accounting_standard` rank) | Pointer only, by design |
 | `companies-act-2014/` | Companies Act 2014 — records, size thresholds, filing | Reference only, not a source (no hash) | ss. 282, 280A, 280D/280E, 352, 358-360 |
 | `vat-thresholds/` | Revenue: What are the VAT thresholds? | Reference only, not a source (no hash) | Added for issue #137; cross-check for the turnover-test conditions curated from S.I. 69/2025 reg.5 |

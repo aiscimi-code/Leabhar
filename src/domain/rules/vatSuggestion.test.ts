@@ -81,14 +81,15 @@ describe('suggestVatTreatment', () => {
     // minimum, five CT preliminary-tax percentages, s.440 marginal relief cap);
     // EPIC 20's payroll curation added 34 (#526: 3 PRSI thresholds and credit,
     // 15 dated Class A and 5 dated Class S rate versions, 2 employer thresholds, the NTF levy, and
-    // 8 PAYE and USC procedures).
-    expect(first.rulesAfter).toBe(339);
+    // 8 PAYE and USC procedures); EPIC 21 added 5 (#532: ERR particulars and
+    // subcategories, the €3.20 allowance, the small benefit count and limit).
+    expect(first.rulesAfter).toBe(344);
   });
 
   it('loading again is a no-op', () => {
     const again = loadStatutoryKnowledgeBase(db, { companyId });
-    expect(again.rulesBefore).toBe(339);
-    expect(again.rulesAfter).toBe(339);
+    expect(again.rulesBefore).toBe(344);
+    expect(again.rulesAfter).toBe(344);
   });
 
   it('US SaaS purchase → non-EU reverse charge, cited to VATCA s.12 with a verifiable slice', () => {

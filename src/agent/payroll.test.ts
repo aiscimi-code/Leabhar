@@ -46,4 +46,13 @@ describe('payroll from the CLI (EPIC 20)', () => {
     expect(listEmployees(db, companyId)).toHaveLength(1);
     expect(payslipsOfRun(db, listPayRuns(db, companyId)[0]!.id)[0]!.taxMinor).toBe(53_333);
   });
+
+  it('records and lists a reportable benefit (EPIC 21)', async () => {
+    const e = await run(['add-employee', '--first', 'Aoife', '--last', 'Byrne', '--ref', 'E001', '--start', '2025-01-01',
+      '--frequency', 'monthly', '--ppsn', '1234567T', '--by', 'owner']) as { id: string };
+    const b = await run(['err-small-benefit', '--employee', e.id, '--date', '2026-03-01', '--amount', '500', '--description', 'Voucher', '--by', 'owner']) as { id: string };
+    await run(['err-submitted', '--benefits', b.id, '--date', '2026-03-01', '--reference', 'ROS-9', '--by', 'owner']);
+    const list = await run(['err-particulars', '--from', '2026-01-01', '--to', '2026-12-31']) as Array<{ status: string; amountMinor: number }>;
+    expect(list).toEqual([expect.objectContaining({ status: 'submitted', amountMinor: 50_000 })]);
+  });
 });

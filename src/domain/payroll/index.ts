@@ -7,3 +7,4 @@ export * from './rpn';
 export * from './compute';
 export * from './runs';
 export * from './reports';
+export * from './err';

@@ -34,6 +34,9 @@ export const SWAERSS_2025_CITATION = '2025 Act 19 s.2';
 export const NTF_S4_CITATION = 'NTF Act 2000 s.4';
 export const SI_345_2018_CITATION = 'S.I. 345/2018';
 export const SI_510_2018_CITATION = 'S.I. 510/2018';
+export const SI_1_2024_CITATION = 'S.I. 1/2024';
+export const TDM_38_03_33_CITATION = 'Revenue TDM Part 38-03-33';
+const FA2024 = '2024 Act 43';
 
 /** One row of the Table to SWMPA 2024 s.3: a provision and its six successive texts. */
 const tableRow = (provision: string, texts: string[]) =>
@@ -227,5 +230,51 @@ export const PAYROLL_CURATED_RULES: CuratedIncomeTaxRule[] = [
     statementExcerpt: 'deduct USC from all such payments at the highest rate specified in column (2) of Part 1 of the Table to section 531AN of the Act.',
     numericValue: null, unit: null, effectiveFrom: '2019-01-01', effectiveTo: null,
     interpretationNote: 'S.I. 510/2018 reg.19(1). The highest rate is usc.rate_top.',
+  },
+
+  // ---- Enhanced Reporting Requirements (TCA s.897C; S.I. 1/2024; EPIC 21, issue #532) ----
+  {
+    citation: SI_1_2024_CITATION, sectionNumber: '3', ruleKey: 'err.notification_particulars', ruleType: 'procedure',
+    name: 'ERR: each reportable benefit is notified to Revenue on or before it is provided, with its particulars',
+    statementExcerpt: 'On or before the provision of any reportable benefit to an employee, an employer shall send a notification containing the following particulars',
+    numericValue: null, unit: null, effectiveFrom: '2024-01-04', effectiveTo: null,
+    interpretationNote: 'S.I. 345/2018 reg.10A, inserted by S.I. 1/2024 reg.3(c) (in operation when made, 4 January 2024): '
+      + 'the date, name, PPSN (or address and date of birth), employer reference, employment identifier, amount, '
+      + 'category and relevant particulars. TCA s.897C itself applies from 1 January 2024 (S.I. 635/2023).',
+  },
+  {
+    citation: SI_1_2024_CITATION, sectionNumber: '3', ruleKey: 'err.travel_subsistence_subcategories', ruleType: 'definition',
+    name: 'ERR: a travel and subsistence payment is reported by subcategory',
+    statementExcerpt: '(b) in the case of a travel and subsistence payment, the amount of payment in respect of-',
+    numericValue: null, unit: null, effectiveFrom: '2024-01-04', effectiveTo: null,
+    interpretationNote: 'S.I. 345/2018 reg.2(1) "relevant particulars", inserted by S.I. 1/2024 reg.3(a): travel vouched, '
+      + 'travel unvouched, subsistence vouched, subsistence unvouched, site-based employees (including country money), '
+      + 'emergency travel, and eating on site. TDM 38-03-33 §5.3 adds an advance payment subcategory.',
+  },
+  {
+    citation: TDM_38_03_33_CITATION, sectionNumber: '4', ruleKey: 'err.remote_working_daily_allowance', ruleType: 'threshold',
+    name: 'ERR: a remote working daily allowance of up to €3.20 a day is paid without deducting tax',
+    statementExcerpt: 'payments up to €3.20 to employees, for each day worked from home, subject to',
+    numericValue: 320, unit: 'eur_minor', effectiveFrom: '2024-01-01', effectiveTo: null,
+    interpretationNote: 'TDM 38-03-33 §4.1: a Revenue administrative practice, not a statutory figure. Any amount over '
+      + '€3.20 a day is taxable through payroll (§7.1, example 3). The practice predates ERR; the rule is dated from '
+      + 'ERR\'s commencement, when this book first needs it.',
+  },
+  {
+    citation: FA2024, sectionNumber: '8', ruleKey: 'small_benefit.max_incentives', ruleType: 'threshold',
+    name: 'Small benefit exemption: up to five qualifying incentives in a year',
+    statementExcerpt: 'second, third, fourth or fifth relevant incentive given to an employee in',
+    numericValue: 5, unit: 'count', effectiveFrom: '2025-01-01', effectiveTo: '2030-01-01',
+    interpretationNote: 'TCA s.112B(1) "qualifying incentive", as substituted by FA 2024 s.8(1)(a) for 2025 and later '
+      + 'years (s.8(2)); the section ceases for 2030 (s.112B(3)). A small benefit is a reportable benefit (s.897C).',
+  },
+  {
+    citation: FA2024, sectionNumber: '8', ruleKey: 'small_benefit.cumulative_limit', ruleType: 'threshold',
+    name: 'Small benefit exemption: the incentives in a year together do not exceed €1,500',
+    statementExcerpt: 'first, second, third, fourth and fifth relevant incentives does not',
+    numericValue: 150_000, unit: 'eur_minor', effectiveFrom: '2025-01-01', effectiveTo: '2030-01-01',
+    interpretationNote: 'TCA s.112B(1), as substituted by FA 2024 s.8(1)(a): each incentive qualifies only if the '
+      + 'cumulative value with the ones before it does not exceed €1,500. One that breaks the limit is taxable in '
+      + 'full, not only the excess (TDM 38-03-33 §7.2, example 5).',
   },
 ];

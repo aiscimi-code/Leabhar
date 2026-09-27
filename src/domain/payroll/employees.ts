@@ -1,7 +1,7 @@
 import { and, desc, eq, isNull, lte, or, gt } from 'drizzle-orm';
 import type { AppDatabase } from '@/db';
 import {
-  auditEvents, companies, companyOfficers, employees, employmentTerms, payRuns, payslips,
+  auditEvents, companies, companyMembers, companyOfficers, employees, employmentTerms, payRuns, payslips,
   type PayFrequency, PAY_FREQUENCIES,
 } from '@/db/schema';
 import { ids } from '@/lib/ids';
@@ -63,6 +63,8 @@ export interface EmployeeInput {
   isDirector?: boolean;
   isProprietaryDirector?: boolean;
   officerId?: string | null;
+  /** The login of a member of staff, so their expense claims are reported under this employment (ERR). */
+  userId?: string | null;
   prsiClass?: 'A' | 'S' | 'J' | 'M';
   notes?: string | null;
 }
@@ -93,6 +95,11 @@ export function createEmployee(db: AppDatabase, params: EmployeeInput & { compan
     if (!officer) throw new PayrollError(`Officer ${params.officerId} not found in this company.`);
     if (officer.role !== 'director') throw new PayrollError(`${officer.name} is recorded as ${officer.role}, not a director.`);
   }
+  if (params.userId) {
+    const member = db.select({ id: companyMembers.id }).from(companyMembers)
+      .where(and(eq(companyMembers.userId, params.userId), eq(companyMembers.companyId, params.companyId))).get();
+    if (!member) throw new PayrollError(`User ${params.userId} is not a member of this company.`);
+  }
   const reference = params.employerReference.trim();
   const clash = db.select({ id: employees.id }).from(employees)
     .where(and(eq(employees.companyId, params.companyId), eq(employees.employerReference, reference))).get();
@@ -109,6 +116,7 @@ export function createEmployee(db: AppDatabase, params: EmployeeInput & { compan
       employmentId: params.employmentId?.trim() || '1', startDate, leftOn: null,
       payFrequency: params.payFrequency, isDirector: params.isDirector ?? false,
       isProprietaryDirector: params.isProprietaryDirector ?? false, officerId: params.officerId ?? null,
+      userId: params.userId ?? null,
       prsiClass: params.prsiClass ?? 'A', recordedBy: params.recordedBy, notes: params.notes ?? null,
     }).run();
     audit(txDb, params.companyId, id, 'created', params.recordedBy, { employerReference: reference, startDate, payFrequency: params.payFrequency });

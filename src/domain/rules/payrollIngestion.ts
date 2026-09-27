@@ -32,6 +32,8 @@ interface ProvisionSlice {
 
 interface PayrollSource {
   path: string;
+  /** Legislation unless stated: a Revenue manual is guidance, ranked below the law it explains. */
+  sourceType?: 'legislation' | 'revenue_guidance';
   /** Legislation dated from when it applies; LRC revised text is current law on the day it was retrieved. */
   effectiveFrom: string;
   sourceNote: string;
@@ -98,6 +100,28 @@ export const PAYROLL_SOURCES: PayrollSource[] = [
     ],
   },
   {
+    path: 'docs/statutes/si-1-2024/2024-si-1.md',
+    effectiveFrom: '2024-01-04',
+    sourceNote: 'As made; in operation on the date of making, 4 January 2024 (reg.1(2)). Inserts reg.10A (ERR) into S.I. 345/2018.',
+    provisions: [{
+      sectionNumber: '3', heading: 'Amendment of the Income Tax (Employments) Regulations 2018 (reportable benefits)',
+      category: 'procedure', start: '3. The Principal Regulations are amended', end: 'GIVEN under my hand',
+    }],
+  },
+  {
+    path: 'docs/statutes/tdm-38-03-33/38-03-33.md',
+    sourceType: 'revenue_guidance',
+    effectiveFrom: '2024-01-01',
+    sourceNote: 'Revenue Tax and Duty Manual, reviewed September 2026, as retrieved on 2026-09-27: guidance on TCA s.897C, '
+      + 'not law. Converted from the PDF whose SHA-256 is in the front matter.',
+    provisions: [
+      { sectionNumber: '4', heading: 'Reportable Measures', category: 'procedure',
+        start: '4.1. €3.20 remote working daily allowance\nRevenue operates', end: '5. Reporting Requirements\nThe legislation' },
+      { sectionNumber: '5', heading: 'Reporting Requirements', category: 'procedure',
+        start: '5. Reporting Requirements\nThe legislation', end: '6. Reporting Mechanisms\nThere are three' },
+    ],
+  },
+  {
     path: 'docs/statutes/si-510-2018/2018-si-510.md',
     effectiveFrom: '2019-01-01',
     sourceNote: 'As made; in operation from 1 January 2019 for payments made on or after that date (reg.1(2)).',
@@ -140,7 +164,7 @@ export function ingestPayrollSource(
   return db.transaction((tx) => {
     const sourceId = ids.knowledgeSource();
     tx.insert(irishKnowledgeSources).values({
-      id: sourceId, companyId: params.companyId ?? null, sourceType: 'legislation', title: fm.title, citation: fm.citation,
+      id: sourceId, companyId: params.companyId ?? null, sourceType: source.sourceType ?? 'legislation', title: fm.title, citation: fm.citation,
       jurisdiction: 'IE', sourceUrl: fm.sourceUrl, localPath: params.localPath, sha256: digest,
       ingestVersion: params.ingestVersion, publicationDate: null, retrievedAt: nowIso(),
       effectiveFrom: source.effectiveFrom, sourceNote: source.sourceNote, sourceDate: nowIso(),
@@ -151,7 +175,7 @@ export function ingestPayrollSource(
         slug: provisionSlug(`${fm.citation}-${p.sectionNumber}`, p.heading), heading: p.heading, principalAct: null,
         provisionText: text, sourceStart: start, sourceEnd: end,
         category: p.category, amendsSection: null, effectiveClue: null, citedActs: [], relevant: true,
-        relevanceReason: 'Payroll: PAYE, USC and PRSI an employer deducts and pays (EPIC 20, issue #526).',
+        relevanceReason: 'Payroll: PAYE, USC and PRSI an employer deducts and pays, and the benefits it reports (EPICs 20 and 21).',
         source: 'import', provenanceStatus: 'imported',
       }).run();
     }
