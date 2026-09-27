@@ -392,7 +392,9 @@ function resolveSourceLinks(
 
     return {
       counterpartyName: counterpartyName ?? bank?.counterpartyName ?? null,
-      documentId: invoice.documentId ?? bank?.documentId ?? null,
+      // The invoice's own document is its evidence; a document matched to the
+      // bank line that paid it is not, so a missing one stays a gap.
+      documentId: invoice.documentId ?? null,
       bankTransactionId,
       invoiceId: invoice.id,
       ruleId: bank?.ruleId ?? null,
@@ -431,7 +433,9 @@ function resolveSourceLinks(
 
     return {
       counterpartyName,
-      documentId: invoice?.documentId ?? bank?.documentId ?? null,
+      // When the payment settles one invoice, that invoice's document is the
+      // evidence (or the gap); otherwise the bank line's own document.
+      documentId: invoice ? invoice.documentId ?? null : bank?.documentId ?? null,
       bankTransactionId,
       invoiceId,
       ruleId: bank?.ruleId ?? null,

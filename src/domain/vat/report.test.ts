@@ -288,6 +288,15 @@ describe('drill-down', () => {
       // No rule classified anything on this path — an honest null, not a guess.
       expect(row.ruleId).toBeNull();
       expect(row.ruleName).toBeNull();
+      // The invoice has no document of its own. A document matched to the bank
+      // line that paid it is not its evidence: the gap stays a gap.
+      insertConfirmedDocument(invoiceDb.db, invoiceCompanyId, {
+        documentType: 'sales_record', matchedTransactionId: receiptId,
+      });
+      const again = drillIntoBox(invoiceDb.db, {
+        companyId: invoiceCompanyId, vatPeriodId: invoicePeriodId, box: 'T1',
+      });
+      expect(again[0]!.documentId).toBeNull();
     });
 
     it('carries the bank line and invoice behind a cash-receipts payment entry', () => {
