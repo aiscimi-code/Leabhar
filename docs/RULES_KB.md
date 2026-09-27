@@ -162,7 +162,10 @@ changed document is a new row.
 One row per statute section, as parsed. `provisionText` is a normalised
 verbatim extract; `sourceStart`/`sourceEnd` are character offsets into the
 *original* source document, so the exact slice is always recoverable and
-re-checkable — never trusted. `relevant`/`relevanceReason` record an explicit
+re-checkable — never trusted. `locator` records how the source *itself*
+points a reader to the provision (issue #442, the #293 model): a page
+number for a PDF, an anchor or section for an HTML page, a box code for a
+return form, an article for an EU regulation — never invented here. `relevant`/`relevanceReason` record an explicit
 judgement (procedural, repeal-only, penalty and pure-definition provisions
 default to not relevant; everything else defaults to relevant; category
 `other` defaults to not relevant *and* flagged for human review). A curated
@@ -1282,8 +1285,15 @@ five case types the task asks for against real data:
 | Boundary | 2024-12-31 vs 2025-01-01 give different answers |
 | Effective-date | a 2010 transaction resolves against no Finance-Act-2024 rule |
 
-`npm test` (708 tests, whole project) and `npm run typecheck` both pass as of
-this change.
+`provenance.test.ts` proves the provenance every rule claims (issue #442):
+each active rule resolves to a source with a URL, names a section and a
+locator (the source's own reference, or the re-checkable offsets), carries an
+effective date that is never the day the source was fetched (#216), quotes
+text verbatim from the provision as ingested with >=90% token coverage in the
+re-read file slice, and — where it takes part in transaction matching — has a
+stored test case.
+
+`npm test` and `npm run typecheck` both pass as of this change.
 
 Note: `generateDefaultTestCases`'s synthetic positive case only sets `topic`
 and `transactionDate` — for a VATCA rule whose conditions need other fields

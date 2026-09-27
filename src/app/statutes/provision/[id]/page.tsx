@@ -152,6 +152,13 @@ export default async function ProvisionPage({ params, searchParams }: {
                   <td className="text-ink-faint">Offsets</td>
                   <td className="num !text-left">{p.sourceStart ?? '—'}–{p.sourceEnd ?? '—'}</td>
                 </tr>
+                <tr>
+                  <td className="text-ink-faint">
+                    Locator
+                    <Help>How the source itself points a reader here: a page for a PDF, an anchor or section for an HTML page, a box for a return form.</Help>
+                  </td>
+                  <td>{p.locator ?? '—'}</td>
+                </tr>
               </tbody>
             </table>
           </Panel>
