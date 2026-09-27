@@ -40,7 +40,7 @@ describe('buildForm11 (epic #312)', () => {
     const mine = f.sections[1]!;
     expect(mine.title).toContain('Aoife Byrne');
     // Income tax 1,120,000 + USC 133,282 + PRSI 252,000.
-    expect(mine.lines.at(-1)).toMatchObject({ label: 'Total liability', amountMinor: 1_505_282 });
+    expect(mine.lines.at(-1)).toMatchObject({ label: 'Liability on the trade\u2019s income', amountMinor: 1_505_282 });
     // The self-assessment reconciliation: 90% of this year (1,354,754) against
     // 100% of the last year's (824,600: income tax 720,000 and USC 104,600; no PRSI rate for 2025).
     expect(f.selfAssessment).toHaveLength(1);

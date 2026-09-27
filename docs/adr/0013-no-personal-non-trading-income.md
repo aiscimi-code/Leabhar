@@ -42,7 +42,8 @@ review, never computed.**
   (ADR 0011); the finding states that the tax saving is computed on the
   person's own return.
 - The **Form 11** lists every panel for income outside the business —
-  employment, pensions, rents, investment income, other gains — as
+  employment, pensions, rents, investment income, other income, chargeable
+  gains — as
   *to be completed by [name]: not in these books*, and the self-assessment is
   marked **partial**: it reconciles only the trade's liability and is never
   presented as the person's total liability.

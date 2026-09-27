@@ -112,7 +112,9 @@ export function form11From(computation: IncomeTaxComputation): Form11 {
       { label: 'Rents from land and premises (Case V)', amountMinor: null, note: 'To be completed by the person: not in these books.' },
       { label: 'Foreign income and interest (Case III)', amountMinor: null, note: 'To be completed by the person: not in these books.' },
       { label: 'Investment income: dividends and interest', amountMinor: null, note: 'To be completed by the person: not in these books.' },
-      { label: 'Other income and gains (Case IV)', amountMinor: null, note: 'To be completed by the person: not in these books.' },
+      { label: 'Other income (Case IV)', amountMinor: null, note: 'To be completed by the person: not in these books.' },
+      // A chargeable gain is capital gains tax, not Case IV income: its own panel.
+      { label: 'Chargeable gains (capital gains tax)', amountMinor: null, note: 'To be completed by the person: not in these books.' },
     ],
   }));
 
@@ -142,14 +144,15 @@ export function form11From(computation: IncomeTaxComputation): Form11 {
       { label: 'Income tax', amountMinor: i.incomeTaxMinor },
       { label: 'Universal social charge', amountMinor: i.uscMinor },
       { label: 'PRSI (Class S)', amountMinor: i.prsiMinor, note: i.prsiMinor === null ? 'No rate is available for the year.' : undefined },
-      { label: 'Total liability', amountMinor: i.totalMinor },
+      // The liability on the trade's income only: never the person's total (issue #458).
+      { label: 'Liability on the trade\u2019s income', amountMinor: i.totalMinor },
     ],
   }));
 
   findings.push('The PPS number is not in these books: the form needs it.');
   for (const i of c.individuals) {
     findings.push(`${i.name}: the return asks for income outside the business — employment, pensions, rents, `
-      + 'investment income, other gains — which these books do not hold and never record (issue #458, ADR 0013). '
+      + 'investment income, other income, chargeable gains — which these books do not hold and never record (issue #458, ADR 0013). '
       + `${i.name} completes those panels themselves; the self-assessment here is partial and reconciles only the trade's liability.`);
   }
   const personal = c.individuals.length > 1
@@ -163,7 +166,7 @@ export function form11From(computation: IncomeTaxComputation): Form11 {
     preliminaryTaxMinor: i.preliminaryTaxMinor,
     balanceMinor: i.totalMinor - i.preliminaryTaxMinor,
     balanceDueDate: c.dates.returnDue,
-    working: `Total liability ${eur(i.totalMinor)} less preliminary tax due ${eur(i.preliminaryTaxMinor)} `
+    working: `Liability on the trade's income ${eur(i.totalMinor)} less preliminary tax due ${eur(i.preliminaryTaxMinor)} `
       + `(s.959AO: ${c.dates.basis}): the balance, ${eur(i.totalMinor - i.preliminaryTaxMinor)}, `
       + `is payable with the return by ${c.dates.returnDue}${i.totalMinor - i.preliminaryTaxMinor < 0 ? ', repayable' : ''}. `
       + 'Partial: it reconciles the trade\u2019s liability only — the person\u2019s other income is not in these books '
