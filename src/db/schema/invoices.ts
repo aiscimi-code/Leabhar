@@ -36,7 +36,7 @@ export const invoices = sqliteTable('invoices', {
    * Where the due date came from (issue #392): `stated` when given, or
    * `customer_terms` when derived from the customer's payment terms.
    */
-  dueDateSource: text('due_date_source', { enum: ['stated', 'customer_terms'] }),
+  dueDateSource: text('due_date_source', { enum: ['stated', 'customer_terms', 'supplier_terms'] }),
   /**
    * The VAT tax point, which is not always the invoice date. Held explicitly
    * so an unusual case can be recorded rather than inferred.

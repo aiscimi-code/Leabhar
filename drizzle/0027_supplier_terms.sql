@@ -1,0 +1,1 @@
+ALTER TABLE `suppliers` ADD `default_payment_terms_days` integer DEFAULT 0 NOT NULL;

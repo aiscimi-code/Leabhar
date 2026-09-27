@@ -483,10 +483,19 @@ function createInvoiceSteps(db: AppDatabase, input: CreateInvoiceInput): Created
     ? db.select().from(customers).where(and(eq(customers.id, input.customerId!), eq(customers.companyId, input.companyId))).get()
     : undefined;
   let dueDate: IsoDate | null = input.dueDate ?? null;
-  let dueDateSource: 'stated' | 'customer_terms' | null = dueDate ? 'stated' : null;
+  let dueDateSource: 'stated' | 'customer_terms' | 'supplier_terms' | null = dueDate ? 'stated' : null;
   if (!dueDate && customer && customer.defaultPaymentTermsDays > 0) {
     dueDate = addDays(input.invoiceDate, customer.defaultPaymentTermsDays);
     dueDateSource = 'customer_terms';
+  }
+  // A bill with no due date of its own follows its supplier's terms (issue #410).
+  if (!dueDate && !isSales && input.supplierId) {
+    const days = db.select({ d: suppliers.defaultPaymentTermsDays }).from(suppliers)
+      .where(and(eq(suppliers.id, input.supplierId), eq(suppliers.companyId, input.companyId))).get()?.d ?? 0;
+    if (days > 0) {
+      dueDate = addDays(input.invoiceDate, days);
+      dueDateSource = 'supplier_terms';
+    }
   }
   // Over the credit limit is flagged, never refused: it is credit control.
   const warnings: string[] = [];

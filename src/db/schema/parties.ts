@@ -57,6 +57,11 @@ export const suppliers = sqliteTable('suppliers', {
   defaultCurrency: text('default_currency').notNull().default('EUR'),
   defaultAccountId: text('default_account_id').references(() => accounts.id),
   defaultVatTreatmentId: text('default_vat_treatment_id').references(() => vatTreatments.id),
+  /**
+   * The supplier's payment terms in days (issue #410): a bill with no due
+   * date of its own is due this long after its invoice date. 0: none recorded.
+   */
+  defaultPaymentTermsDays: integer('default_payment_terms_days').notNull().default(0),
 
   /** Observed settlement behaviour, used as a matching signal. */
   typicalPaymentDays: integer('typical_payment_days'),
