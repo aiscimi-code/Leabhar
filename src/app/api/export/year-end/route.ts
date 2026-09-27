@@ -213,6 +213,48 @@ export async function GET(request: Request): Promise<Response> {
     }
   }
 
+  // ---- Partners: the allocation statement and Form 1 (Firms) (issue #314) ----
+  if (pack.partnership) {
+    const partners = workbook.addWorksheet('Partners');
+    partners.columns = [
+      { width: 34 }, { width: 18 }, { width: 18 }, { width: 18 }, { width: 18 }, { width: 18 },
+    ];
+    partners.addRow([`Partner allocation ${pack.partnership.allocation.from} to ${pack.partnership.allocation.to}`, '']).font = { bold: true, size: 12 };
+    partners.addRow(['Result for the period', amount(pack.partnership.allocation.resultMinor)]).font = { bold: true };
+    partners.addRow([]);
+    partners.addRow(['Partner', 'Share of period', 'Allocated result', 'Capital', 'Current', 'Loan owed']).font = { bold: true };
+    for (const row of pack.partnership.allocation.rows) {
+      partners.addRow([
+        row.name,
+        row.weightedShareBasisPoints / 100,
+        amount(row.allocatedResultMinor),
+        row.capitalBalanceMinor === null ? '—' : amount(row.capitalBalanceMinor),
+        row.currentBalanceMinor === null ? '—' : amount(row.currentBalanceMinor),
+        row.loanBalanceMinor === null ? '—' : amount(row.loanBalanceMinor),
+      ]);
+    }
+    partners.addRow([]);
+    partners.addRow(['Shares in force', '']).font = { bold: true };
+    for (const seg of pack.partnership.allocation.segments) {
+      partners.addRow([`${seg.from} to ${seg.to}`, seg.shares.map((s) => `${s.name} ${(s.shareBasisPoints / 100).toFixed(2)}%`).join(', ')]);
+    }
+    for (const f of pack.partnership.allocation.findings) partners.addRow([f, '']).alignment = { wrapText: true };
+
+    const form1 = pack.partnership.form1;
+    if (form1) {
+      partners.addRow([]);
+      partners.addRow([`Form 1 (Firms) ${form1.year}`, '']).font = { bold: true, size: 12 };
+      partners.addRow([`Precedent partner: ${form1.precedentPartner?.name ?? 'not recorded'}`, '']);
+      partners.addRow([`Basis period ${form1.basis.from} to ${form1.basis.to}: ${form1.basis.rule}`, '']);
+      partners.addRow(['Firm assessable profit', amount(form1.assessableProfitMinor)]).font = { bold: true };
+      partners.addRow(['Partner', 'PPSN', 'Share', 'Assessable share']);
+      for (const p of form1.partners) {
+        partners.addRow([p.name, p.taxReference ?? '', p.weightedShareBasisPoints / 100, amount(p.profitMinor)]);
+      }
+      partners.addRow([`Return and balance due ${form1.dates.returnDue}; preliminary tax ${form1.dates.preliminaryTaxDue}`, '']);
+    }
+  }
+
   // ---- Fixed assets ----
   const assets = workbook.addWorksheet('Fixed assets');
   assets.columns = [

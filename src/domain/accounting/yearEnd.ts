@@ -2,6 +2,7 @@ import { and, eq } from 'drizzle-orm';
 import type { AppDatabase } from '@/db';
 import {
   accountingPeriods, journalEntries, journalLines, companies, auditEvents,
+  accounts, partners,
 } from '@/db/schema';
 import { ids } from '@/lib/ids';
 import { nowIso, asIsoDate, type IsoDate } from '../dates';
@@ -9,6 +10,7 @@ import { postJournalEntry, atomically } from './journal';
 import { trialBalance, accountBalance } from './ledger';
 import { AccountingError } from './errors';
 import { systemAccountId } from '../config/setup';
+import { allocateByShares, shareGaps, type PartnerAllocation } from '../config/partners';
 import type { AccountBalance } from './ledger';
 
 export class YearEndError extends AccountingError {}
@@ -28,6 +30,13 @@ export class YearEndError extends AccountingError {}
  * other posted entry. It is idempotent per year: a second close of the same
  * year is refused, and a wrong close is corrected by reversing the closing
  * entry and running it again, never by editing it.
+ *
+ * Where the year's result lands depends on who owns the business. A company
+ * keeps it in reserves, and a sole trader in accumulated profits (ADR 0012).
+ * A partnership's result belongs to its partners, so it is allocated to each
+ * partner's own current account by the shares in force, day by day through a
+ * change (issue #375) — the same allocation the income tax computation uses,
+ * so the books and Form 1 (Firms) cannot disagree.
  */
 
 export interface YearEndCloseResult {
@@ -47,6 +56,11 @@ export interface YearEndCloseResult {
   totalExpenseMinor: number;
   /** Profit positive, loss negative. */
   netResultMinor: number;
+  /**
+   * For a partnership: the partners whose current accounts the result was
+   * allocated to, empty for a company or sole trader.
+   */
+  allocation: Array<{ partnerId: string; partnerName: string; amountMinor: number }>;
   /** Retained earnings on the close date, after the close. */
   retainedEarningsBalanceMinor: number;
 }
@@ -63,9 +77,10 @@ export interface YearEndClose {
 
 /**
  * The close recorded for a financial year, or null when none has been run.
- * The profit transferred is read back off the closing entry's retained
- * earnings line, not remembered anywhere, so the query cannot disagree with
- * the books.
+ * The profit transferred is read back off the closing entry's own lines, not
+ * remembered anywhere, so the query cannot disagree with the books: the entry
+ * emptied the income accounts by debit and the expense accounts by credit,
+ * whatever account received the difference.
  */
 export function getYearEndClose(
   db: AppDatabase, params: { companyId: string; periodId: string },
@@ -79,18 +94,21 @@ export function getYearEndClose(
     )).get();
   if (!entry) return null;
 
-  const retainedEarnings = systemAccountId(db, params.companyId, 'retained_earnings');
-  const retainedLine = db.select().from(journalLines)
-    .where(and(
-      eq(journalLines.journalEntryId, entry.id),
-      eq(journalLines.accountId, retainedEarnings),
-    )).get();
+  const closed = db.select({ type: accounts.type, debit: journalLines.baseDebitMinor, credit: journalLines.baseCreditMinor })
+    .from(journalLines)
+    .innerJoin(accounts, eq(journalLines.accountId, accounts.id))
+    .where(eq(journalLines.journalEntryId, entry.id)).all();
+  // Income was closed by a debit (its amount) and expense by a credit (minus
+  // its amount); the difference is the result the entry transferred, whatever
+  // account received it.
+  const netResultMinor = closed.reduce((sum, row) =>
+    (row.type === 'income' || row.type === 'expense') ? sum + row.debit - row.credit : sum, 0);
 
   return {
     journalEntryId: entry.id,
     entryNumber: entry.entryNumber,
     entryDate: asIsoDate(entry.entryDate),
-    netResultMinor: (retainedLine?.baseCreditMinor ?? 0) - (retainedLine?.baseDebitMinor ?? 0),
+    netResultMinor,
     reversed: entry.reversedByEntryId !== null,
   };
 }
@@ -111,7 +129,9 @@ function balancesToClose(
 
 /**
  * Close a financial year: post the single entry that empties every income and
- * expense account standing at the year's end date into retained earnings.
+ * expense account standing at the year's end date, transferring the result to
+ * retained earnings — or, for a partnership, to the partners' current
+ * accounts, each with their share.
  *
  * Refuses to run twice for the same year. If the close was wrong, reverse the
  * closing entry (it is an ordinary entry with an ordinary reversal) and run
@@ -185,6 +205,40 @@ export function closeFinancialYear(
     const totalExpenseMinor = expenseLines.reduce((s, l) => s + l.creditMinor, 0);
     const netResultMinor = totalIncomeMinor - totalExpenseMinor;
 
+    // A partnership's result belongs to its partners: it is allocated to
+    // their current accounts by the shares in force, and the close refuses
+    // rather than guess when the shares do not add up to 100% (issue #375).
+    let allocation: Array<{ partnerId: string; partnerName: string; amountMinor: number }> = [];
+    if (company.entityType === 'partnership') {
+      if (db.select({ id: partners.id }).from(partners)
+        .where(eq(partners.companyId, input.companyId)).limit(1).get() === undefined) {
+        throw new YearEndError(
+          `A partnership's result is allocated to its partners, and none is recorded for ${period.name}. `
+          + 'Record the partners and their shares before closing the year.',
+          { periodId: period.id },
+        );
+      }
+      const gaps = shareGaps(db, input.companyId, asIsoDate(period.startDate), asIsoDate(period.endDate));
+      if (gaps.length > 0) {
+        throw new YearEndError(
+          `The partners' profit shares do not add up to 100% during ${period.name}, so its result cannot be allocated: `
+          + gaps.map((g) => `from ${g.from} to ${g.to} they add up to ${g.totalBasisPoints / 100}%`).join('; ')
+          + ". Record each partner's share and run the close again.",
+          { periodId: period.id, gaps },
+        );
+      }
+      allocation = allocateByShares(db, input.companyId, {
+        from: asIsoDate(period.startDate), to: asIsoDate(period.endDate), amountMinor: netResultMinor,
+      }).map((a: PartnerAllocation) => ({ partnerId: a.partner.id, partnerName: a.partner.name, amountMinor: a.amountMinor }));
+      if (netResultMinor !== 0 && allocation.length === 0) {
+        throw new YearEndError(
+          `A partnership's result is allocated to its partners, and none is recorded for ${period.name}. `
+          + 'Record the partners and their shares before closing the year.',
+          { periodId: period.id },
+        );
+      }
+    }
+
     const lines: Parameters<typeof postJournalEntry>[1]['lines'] = [
       ...incomeLines.map(({ account, debitMinor }) => ({
         accountId: account.accountId,
@@ -198,10 +252,26 @@ export function closeFinancialYear(
       })),
     ];
 
-    // The net result lands in retained earnings. When income exactly equals
-    // expense there is nothing to transfer and the close stands without the
-    // line.
-    if (netResultMinor > 0) {
+    // The net result lands in retained earnings — or, for a partnership, in
+    // the partners' current accounts, each with their share. When income
+    // exactly equals expense there is nothing to transfer and the close
+    // stands without those lines.
+    if (company.entityType === 'partnership') {
+      for (const part of allocation) {
+        if (part.amountMinor === 0) continue;
+        const currentAccount = db.select({ currentAccountId: partners.currentAccountId })
+          .from(partners).where(eq(partners.id, part.partnerId)).get()?.currentAccountId;
+        if (!currentAccount) {
+          throw new YearEndError(
+            `${part.partnerName} has no current account, so their share of ${period.name}'s result cannot be posted.`,
+            { periodId: period.id, partnerId: part.partnerId },
+          );
+        }
+        lines.push(part.amountMinor > 0
+          ? { accountId: currentAccount, creditMinor: part.amountMinor, memo: `Share of profit, ${part.partnerName}` }
+          : { accountId: currentAccount, debitMinor: -part.amountMinor, memo: `Share of loss, ${part.partnerName}` });
+      }
+    } else if (netResultMinor > 0) {
       lines.push({
         accountId: retainedEarnings,
         creditMinor: netResultMinor,
@@ -245,6 +315,7 @@ export function closeFinancialYear(
         totalIncomeMinor,
         totalExpenseMinor,
         netResultMinor,
+        allocation,
       }),
       source: 'user',
       actor: input.actor ?? 'user',
@@ -279,6 +350,7 @@ export function closeFinancialYear(
       totalIncomeMinor,
       totalExpenseMinor,
       netResultMinor,
+      allocation,
       retainedEarningsBalanceMinor,
     };
   });
