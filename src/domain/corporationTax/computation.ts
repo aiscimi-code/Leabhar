@@ -4,6 +4,7 @@ import { accounts, journalLines, journalEntries, fixedAssets, ctDecisions, compa
 import { trialBalance } from '../accounting/ledger';
 import { multiplyRational } from '../money';
 import { ids } from '@/lib/ids';
+import { systemAccountId } from '../config/setup';
 import { nowIso, asIsoDate, type IsoDate } from '../dates';
 import { accountingYearContaining } from '../vat/apportionment';
 import {
@@ -92,12 +93,13 @@ const LINE_PATTERNS: Array<{ pattern: RegExp; suggested: ExpenseChoice; options:
 ];
 
 export type CtSubjectType = 'journal_line' | 'income_account' | 'loss_claim' | 'company_status'
-  | 'basis_election' | 'allowance_loss_election' | 'personal_status' | 'income_tax_loss_claim';
+  | 'trading_company' | 'basis_election' | 'allowance_loss_election' | 'personal_status' | 'income_tax_loss_claim';
 export type LossClaim = 'carry_forward' | 'claim_396a' | 'claim_396a_396b';
 export type IncomeTaxLossClaim = 'carry_forward' | 'claim_381';
 export type BasisElection = 'elect' | 'decline';
 export type AllowanceLossElection = 'elect' | 'decline';
 export type CompanyStatus = 'close_trading' | 'close_service' | 'not_close';
+export type TradingCompanyStatus = 'trading' | 'not_trading';
 
 export const LOSS_CLAIMS: Record<LossClaim, string> = {
   carry_forward: 'Carry the loss forward against later profits of the trade (s.396(1))',
@@ -109,6 +111,13 @@ export const COMPANY_STATUSES: Record<CompanyStatus, string> = {
   close_trading: 'A close company (s.430): surcharge on undistributed investment and estate income (s.440)',
   close_service: 'A close service company (s.441): surcharge also on half of undistributed trading income',
   not_close: 'Not a close company: no surcharge',
+};
+
+/** Whether the company exists wholly or mainly to trade (s.434(5A)(b)): a facts
+ *  test, suggested from the income split but decided by a person (issue #494). */
+export const TRADING_COMPANY_STATUSES: Record<TradingCompanyStatus, string> = {
+  trading: 'A trading company: the s.434(5A)(b) reduction of distributable investment and estate income applies',
+  not_trading: 'Not wholly or mainly a trading company: no s.434(5A)(b) reduction',
 };
 
 /** An individual's claim on their own trading loss (TCA Part 12). */
@@ -135,6 +144,7 @@ const CHOICES: Record<CtSubjectType, string[]> = {
   income_account: Object.keys(INCOME_CASES),
   loss_claim: Object.keys(LOSS_CLAIMS),
   company_status: Object.keys(COMPANY_STATUSES),
+  trading_company: Object.keys(TRADING_COMPANY_STATUSES),
   basis_election: Object.keys(BASIS_ELECTIONS),
   allowance_loss_election: Object.keys(ALLOWANCE_LOSS_ELECTIONS),
   personal_status: ['single', 'single_parent', 'married_one_income', 'married_two_incomes'],
@@ -216,6 +226,8 @@ export interface CtSurcharge {
   surchargeMinor: number;
   working: string;
   citations: CtCitation[];
+  /** What the computation could not settle from the books alone (issue #489). */
+  findings: string[];
 }
 
 export interface CtDates {
@@ -288,7 +300,17 @@ export function recordCtDecision(db: AppDatabase, params: {
   return id;
 }
 
-export interface CapitalAllowancesResult { lines: CtLine[]; findings: string[] }
+export interface CapitalAllowancesResult {
+  lines: CtLine[];
+  findings: string[];
+  /**
+   * The claims reconstructed from the purchase date for assets whose caller
+   * returned null from `claimsBefore` — bought before the periods the caller
+   * has walked (issue #488). A caller accumulating claims starts each such
+   * asset from here, not from nothing.
+   */
+  openingClaims: Map<string, AssetClaimsMade>;
+}
 
 const daysBetween = (a: string, b: string) => Math.round((Date.parse(b) - Date.parse(a)) / 86_400_000);
 
@@ -335,11 +357,13 @@ function motorCarBasis(
  * against its basis period (s.284(1), (2)(b)), passes `claimsBefore` instead:
  * the allowances actually made in earlier years of assessment, which can
  * differ from the accounting-period count in a commencement, cessation or
- * account-date-change year.
+ * account-date-change year. A caller returns null for an asset it holds no
+ * claims for because the asset predates the periods it walked: those earlier
+ * claims are counted from the purchase date, as a standalone call counts them.
  */
 export function capitalAllowances(
   db: AppDatabase,
-  params: { companyId: string; from: string; to: string; claimsBefore?: (asset: typeof fixedAssets.$inferSelect) => AssetClaimsMade },
+  params: { companyId: string; from: string; to: string; claimsBefore?: (asset: typeof fixedAssets.$inferSelect) => AssetClaimsMade | null },
   figures?: FigureAudit,
 ): CapitalAllowancesResult {
   const { companyId, from, to } = params;
@@ -348,6 +372,7 @@ export function capitalAllowances(
   const ownsAudit = !figures;
   const audit = figures ?? auditRuleFigures(db, { companyId, asOfDate: to, curated: CORPORATION_TAX_CURATED_RULES });
   const lines: CtLine[] = [];
+  const openingClaims = new Map<string, AssetClaimsMade>();
   const findings: string[] = [];
   const standardRate = figureWithCurationFallback(audit, 'ct.wear_and_tear_rate');
   const smallProceeds = figureWithCurationFallback(audit, 'ct.balancing_charge_small_proceeds');
@@ -386,6 +411,7 @@ export function capitalAllowances(
     const madeBefore = madeBeforeIn
       ? Math.min(basisMinor, Math.max(madeBeforeIn.made, 0))
       : Math.min(basisMinor, annual * Math.min(claimsBefore, years));
+    if (params.claimsBefore && !madeBeforeIn) openingClaims.set(asset.id, { claims: claimsBefore, made: madeBefore });
 
     if (car && restrictedBy !== null) {
       carCitations.add('ct.car_allowances_restricted_to_specified_amount');
@@ -490,14 +516,24 @@ export function capitalAllowances(
     });
   }
   if (ownsAudit) findings.push(...audit.findings());
-  return { lines, findings };
+  return { lines, findings, openingClaims };
 }
 
-/** Whole accounting years from the end of the year an asset was bought to `to` (0 in the year of purchase). */
+/**
+ * Whole accounting years from the end of the year an asset was bought to `to`
+ * (0 in the year of purchase). The comparison is against the anniversary of
+ * the purchase period's end in `to`'s year, as an actual date — a 29 February
+ * year end ends on 28 February in a common year, and comparing the raw
+ * month-day strings miscounts such a book by a full year, claiming the
+ * purchase-year allowance twice (issue #491).
+ */
 function claimIndex(db: AppDatabase, companyId: string, purchaseDate: string, to: string): number {
   const firstEnd = accountingYearContaining(db, companyId, purchaseDate).end;
   const years = Number(to.slice(0, 4)) - Number(firstEnd.slice(0, 4));
-  return to.slice(5) >= firstEnd.slice(5) ? years : years - 1;
+  const toYear = to.slice(0, 4);
+  const leap = Number(toYear) % 4 === 0 && (Number(toYear) % 100 !== 0 || Number(toYear) % 400 === 0);
+  const monthDay = firstEnd.slice(5) === '02-29' && !leap ? '02-28' : firstEnd.slice(5);
+  return to >= `${toYear}-${monthDay}` ? years : years - 1;
 }
 
 export interface CtBase {
@@ -521,7 +557,17 @@ export interface CtBase {
  */
 export function computeBase(
   db: AppDatabase,
-  params: { companyId: string; from: string; to: string; excludeCapitalAllowances?: boolean },
+  params: {
+    companyId: string; from: string; to: string; excludeCapitalAllowances?: boolean;
+    /**
+     * The allowances already made for each asset, as actually claimed — a
+     * caller walking several periods in time order passes its accumulation in
+     * and gets the period's own claims back (issue #488), the way the income
+     * tax run does across years of assessment.
+     */
+    claimsBefore?: (asset: typeof fixedAssets.$inferSelect) => AssetClaimsMade | null;
+    claimsMade?: Map<string, AssetClaimsMade>;
+  },
   figures?: FigureAudit,
 ): CtBase {
   const { companyId, from, to } = params;
@@ -642,9 +688,28 @@ export function computeBase(
 
   // ---- Capital allowances (Part 9) ----
   if (!params.excludeCapitalAllowances) {
-    const ca = capitalAllowances(db, { companyId, from, to }, figures);
+    const ca = capitalAllowances(db, {
+      companyId, from, to,
+      ...(params.claimsBefore ? { claimsBefore: params.claimsBefore } : {}),
+    }, figures);
     lines.push(...ca.lines);
     findings.push(...ca.findings);
+    // What this period claims, at the amount actually made: a short first
+    // period's scaled claim (s.284(2)(b)) must not be read later as a full
+    // year's (issue #488).
+    if (params.claimsMade) {
+      for (const line of ca.lines) {
+        for (const source of line.sources) {
+          if (source.entityType !== 'fixed_asset') continue;
+          const opening = ca.openingClaims.get(source.entityId);
+          const made = params.claimsMade.get(source.entityId)
+            ?? (opening ? { ...opening } : { claims: 0, made: 0 });
+          made.claims += 1;
+          made.made += line.kind === 'add_back' ? -source.amountMinor : source.amountMinor;
+          params.claimsMade.set(source.entityId, made);
+        }
+      }
+    }
   }
 
   const adjustedMinor = accountingProfitMinor + lines.reduce((sum, l) => sum + l.amountMinor, 0);
@@ -675,6 +740,18 @@ interface PeriodRun { from: string; to: string; base: CtBase; claim: LossClaim; 
  */
 export function computeCorporationTax(db: AppDatabase, params: { companyId: string; from: IsoDate; to: IsoDate }): CtComputation {
   const { companyId, from, to } = params;
+  // An accounting period ends 12 months from its start at the latest (TCA
+  // s.27(3)(a); s.27 is not among the collected sources). A longer one is not a
+  // period to compute — apportioning its threshold to a capped 12 months is
+  // not the same figure, and nothing would say the period was malformed
+  // (issue #495).
+  if (to >= addMonths(from, 12)) {
+    throw new Error(
+      `The accounting period ${from} to ${to} is longer than 12 months: an accounting period ends 12 months from its start at the latest (TCA s.27(3)(a)). `
+        + 'Split it into accounting periods of 12 months or less and compute each on its own, rather than '
+        + 'computing a period whose thresholds and allowances would be silently capped.',
+    );
+  }
   // Every figure this computation reads comes from the stored rule in force on
   // the period's end date, with its review status in the findings (issue #282).
   const figures = auditRuleFigures(db, { companyId, asOfDate: to, curated: CORPORATION_TAX_CURATED_RULES });
@@ -699,10 +776,24 @@ export function computeCorporationTax(db: AppDatabase, params: { companyId: stri
   if (latest && latest >= next.start) periods.push({ from: next.start, to: next.end });
 
   // ---- Loss relief, in time order (s.396, s.396A, s.396B) ----
+  // The periods are walked in time order, so the allowances each one claims
+  // can be accumulated as actually made and handed to the next — instead of
+  // reconstructing them as annual × periods, which ignores the short-period
+  // scaling the same function applies and overstates balancing charges
+  // (issue #488).
+  const assetClaims = new Map<string, AssetClaimsMade>();
   const runs: PeriodRun[] = [];
   let pool = 0;
   for (const p of periods) {
-    const base = computeBase(db, { companyId, ...p }, figures);
+    const base = computeBase(db, {
+      companyId, ...p,
+      // An asset bought before the first period walked here was claimed in
+      // periods these books do not hold: null counts those claims from its
+      // purchase date rather than starting it again at year 1.
+      claimsBefore: (asset) => assetClaims.get(asset.id)
+        ?? (asset.purchaseDate < periods[0]!.from ? null : { claims: 0, made: 0 }),
+      claimsMade: assetClaims,
+    }, figures);
     const profit = Math.max(base.adjustedMinor, 0);
     let loss = Math.max(-base.adjustedMinor, 0);
     const bf = Math.min(pool, profit);
@@ -779,7 +870,10 @@ export function computeCorporationTax(db: AppDatabase, params: { companyId: stri
     reason: 'Most owner-managed companies are close (controlled by five or fewer participators, or by directors). '
       + 'A company carrying on a profession or providing professional services is a service company.',
   });
-  const surcharge = closeCompanySurcharge(db, { companyId, from, to, status, base, higherBps: higher, standardBps: standard }, figures);
+  const surcharge = closeCompanySurcharge(db, {
+    companyId, from, to, status, base, higherBps: higher, standardBps: standard, decisions,
+  }, figures);
+  findings.push(...surcharge.findings);
 
   // ---- Payment and return dates (Part 41A) ----
   const prior = runs[currentIndex - 1];
@@ -894,20 +988,61 @@ export function section441Surcharge(deii: number, dti: number, distributions: nu
 export function closeCompanySurcharge(db: AppDatabase, params: {
   companyId: string; from: string; to: string; status: CompanyStatus; base: Pick<CtBase, 'adjustedMinor' | 'nonTradingIncomeMinor'>;
   higherBps: number; standardBps: number; distributionsMinor?: number;
+  /** The computation's pending-decision list: the trading-company test is a person's to decide (issue #494). */
+  decisions?: CtPendingDecision[];
 }, figures?: FigureAudit): CtSurcharge {
   const { status, base } = params;
   const audit = figures ?? auditRuleFigures(db, { companyId: params.companyId, asOfDate: params.to, curated: CORPORATION_TAX_CURATED_RULES });
   const rule = (key: string) => figureWithCurationFallback(audit, key);
   const citations = [cite('ct.close_company_definition'), cite('ct.distributable_income'), cite('ct.distributions_for_period')];
+  const findings: string[] = [];
   const investment = Math.max(base.nonTradingIncomeMinor, 0);
   const trading = Math.max(base.adjustedMinor, 0);
   let deii = investment - multiplyRational(investment, params.higherBps, 10_000);
-  // A trading company: one existing wholly or mainly to trade (suggested from its income).
-  const tradingCompany = trading >= investment;
+  // A trading company — one existing wholly or mainly to trade — gets its
+  // distributable investment and estate income reduced (s.434(5A)(b)). That is
+  // a facts test, not an income ratio: it is suggested from the split but
+  // decided by a person, and the suggestion is never silent (issue #494).
+  const decided = currentDecision(db, params.companyId, 'trading_company', params.companyId, params.to)?.choice as TradingCompanyStatus | undefined;
+  const suggested: TradingCompanyStatus = trading >= investment ? 'trading' : 'not_trading';
+  const tradingCompany = (decided ?? suggested) === 'trading';
+  params.decisions?.push({
+    subjectType: 'trading_company', subjectId: params.companyId,
+    description: `Wholly or mainly a trading company, for the period to ${params.to}`,
+    amountMinor: 0, suggested, decided: decided ?? null,
+    options: (Object.keys(TRADING_COMPANY_STATUSES) as TradingCompanyStatus[])
+      .map((c) => ({ choice: c, label: TRADING_COMPANY_STATUSES[c] })),
+    reason: 'The s.434(5A)(b) reduction is a facts test — whether the company exists wholly or mainly to '
+      + `trade — suggested here from the period's income split (trading ${eur(trading)}, investment ${eur(investment)}), `
+      + 'which one bad trading year can upset. A genuine trading company should record the choice.',
+  });
+  if (!decided && status !== 'not_close') {
+    findings.push(`The s.434(5A)(b) trading-company reduction is applied on the suggestion "${suggested}" — from this `
+      + `period's income split (trading ${eur(trading)}, investment ${eur(investment)}) — because no person has recorded `
+      + 'the facts test yet. Whether the company exists wholly or mainly to trade is a facts question one bad trading '
+      + 'year can upset: record the choice on the decisions list.');
+  }
   if (tradingCompany) deii -= multiplyRational(deii, rule('ct.trading_company_reduction'), 10_000);
   const dti = trading - multiplyRational(trading, params.standardBps, 10_000);
-  const dividendsAccount = db.select({ id: accounts.id }).from(accounts)
-    .where(and(eq(accounts.companyId, params.companyId), eq(accounts.code, '3200'))).get()?.id;
+  // Distributions are read from the dividends account, resolved by its system
+  // key the way every other account the computation addresses is (issue #489).
+  // A book with no dividends account cannot show its distributions: that is a
+  // finding, never a silent zero.
+  let dividendsAccount: string | undefined;
+  try {
+    dividendsAccount = systemAccountId(db, params.companyId, 'dividends_paid');
+  } catch {
+    dividendsAccount = undefined;
+  }
+  if (params.distributionsMinor !== undefined) {
+    // ok — an explicit figure was supplied
+  } else if (dividendsAccount) {
+    // computed below
+  } else {
+    findings.push('No dividends account (system key dividends_paid) exists in this chart, so distributions for the '
+      + 'period are read as nil. If the company distributed anything, record the dividends account (code 3200 in the '
+      + 'default chart) or enter the distributions directly: the surcharge is computed on undistributed income.');
+  }
   const distributions = params.distributionsMinor ?? (dividendsAccount
     ? db.select({ line: journalLines }).from(journalLines)
       .innerJoin(journalEntries, eq(journalLines.journalEntryId, journalEntries.id))
@@ -917,7 +1052,7 @@ export function closeCompanySurcharge(db: AppDatabase, params: {
 
   const none = (working: string): CtSurcharge => ({
     status, distributableInvestmentIncomeMinor: deii, distributableTradingIncomeMinor: dti, distributionsMinor: distributions,
-    surchargeMinor: 0, working, citations,
+    surchargeMinor: 0, working, citations, findings,
   });
   if (status === 'not_close') return none('Not a close company: no surcharge.');
 
@@ -931,6 +1066,7 @@ export function closeCompanySurcharge(db: AppDatabase, params: {
       working: `Investment and estate ${eur(deii)} + half of trading ${eur(multiplyRational(dti, 1, 2))} − distributions `
         + `${eur(distributions)} = ${eur(total)}: ${eur(at20)} at 20% and ${eur(at15)} at 15%.`,
       citations: [...citations, cite('ct.service_company_definition'), cite('ct.service_company_surcharge'), cite('ct.surcharge_later_period')],
+      findings,
     };
   }
 
@@ -949,5 +1085,6 @@ export function closeCompanySurcharge(db: AppDatabase, params: {
         : `20%, limited to 80% of the excess over ${eur(threshold)}`}. Charged for the period ending 12 months or more later (s.440(6)).`,
     citations: [...citations, cite('ct.close_company_surcharge'), cite('ct.close_company_surcharge_de_minimis'), cite('ct.surcharge_later_period'),
       ...(tradingCompany ? [cite('ct.trading_company_reduction')] : [])],
+    findings,
   };
 }
