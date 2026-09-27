@@ -1656,3 +1656,29 @@ describe('supplier and customer VAT status (issue #207)', () => {
     });
   });
 });
+
+describe('cli purchase orders (#411)', () => {
+  it('raises an order, links a bill by number, and writes the PDF', async () => {
+    const supplierId = 'sup_po_cli';
+    db.insert(suppliers).values({ id: supplierId, companyId, name: 'Murphy', matchKey: 'murphy', countryCode: 'IE' }).run();
+    let c = capture();
+    expect(await run(['create-purchase-order', '--supplier', supplierId, '--actor', 'Test', '--date', '2025-03-01',
+      '--lines', JSON.stringify([{ description: 'Toner', quantity: '2', net: '80.00', account: '6120' }])])).toBe(0);
+    c.restore();
+    expect(JSON.parse(c.stdout.join('')).number).toBe('PO-1');
+    const { createInvoice } = await import('@/domain/invoicing/invoices');
+    createInvoice(db, {
+      companyId, direction: 'purchase', invoiceDate: '2025-03-10' as never, supplierId, invoiceNumber: 'M-77',
+      lines: [{ description: 'Toner', netMinor: 8_000, accountId: byCode['6120']!, vatTreatmentId: tr['IE_STD']! }],
+    });
+    c = capture();
+    expect(await run(['link-bill', '--invoice', 'M-77', '--purchase-order', 'po-1', '--actor', 'Test'])).toBe(0);
+    c.restore();
+    expect(JSON.parse(c.stdout.join(''))).toMatchObject({ status: 'billed', billedMinor: 8_000 });
+    const out = join(mkdtempSync(join(tmpdir(), 'po-')), 'po.pdf');
+    c = capture();
+    expect(await run(['purchase-order-pdf', '--purchase-order', 'PO-1', '--out', out])).toBe(0);
+    c.restore();
+    expect(JSON.parse(c.stdout.join(''))).toMatchObject({ written: out, number: 'PO-1' });
+  });
+});

@@ -15,6 +15,9 @@ import { writeOffBadDebt, reverseBadDebtWriteOff } from '@/domain/invoicing/badD
 import { produceReminderLetter } from '@/domain/invoicing/receivables';
 import { setSupplierTerms } from '@/domain/parties/supplierAccount';
 import {
+  createPurchaseOrder, linkBillToPurchaseOrder, unlinkBillFromPurchaseOrder, cancelPurchaseOrder,
+} from '@/domain/invoicing/purchaseOrders';
+import {
   createRecurringInvoice, postDueRecurringInvoices, deactivateRecurringInvoice,
 } from '@/domain/invoicing/recurringInvoices';
 import {
@@ -1173,6 +1176,92 @@ export async function setSupplierTermsAction(formData: FormData): Promise<Action
     });
     revalidatePath(`/suppliers/${supplierId}`);
     return { ok: true, message: 'Terms saved. They apply to bills posted from now on.' };
+  } catch (error) {
+    return fail(error);
+  }
+}
+
+/**
+ * Raise a purchase order (issue #411). The form sends parallel `description`,
+ * `quantity` and `net` fields, one set per line; blank lines are skipped.
+ */
+export async function createPurchaseOrderAction(formData: FormData): Promise<ActionResult> {
+  try {
+    await requireActor('invoices.manage');
+    const company = requireCompany();
+    const descriptions = formData.getAll('description').map(String);
+    const quantities = formData.getAll('quantity').map(String);
+    const nets = formData.getAll('net').map(String);
+    const lines = descriptions.flatMap((description, i) => {
+      if (!description.trim() && !(nets[i] ?? '').trim()) return [];
+      const qty = (quantities[i] ?? '').trim();
+      const quantityMilli = qty ? Math.round(Number(qty) * 1000) : undefined;
+      if (qty && (!Number.isFinite(Number(qty)) || Number(qty) * 1000 !== quantityMilli)) {
+        throw new Error(`"${qty}" is not a quantity (up to three decimal places).`);
+      }
+      return [{ description, quantityMilli, netMinor: parseAmount(nets[i] ?? '', company.baseCurrency) }];
+    });
+    const expectedDate = String(formData.get('expectedDate') ?? '').trim();
+    const notes = String(formData.get('notes') ?? '').trim();
+    const { number } = createPurchaseOrder(getDb(), {
+      companyId: company.id,
+      supplierId: String(formData.get('supplierId') ?? ''),
+      orderDate: asIsoDate(String(formData.get('orderDate') ?? '')),
+      expectedDate: expectedDate ? asIsoDate(expectedDate) : null,
+      lines, notes: notes || null, actor: await actorName(),
+    });
+    revalidatePath('/purchase-orders');
+    return { ok: true, message: `${number} raised. It posts nothing; link each bill to it as it arrives.` };
+  } catch (error) {
+    return fail(error);
+  }
+}
+
+export async function linkBillToPurchaseOrderAction(formData: FormData): Promise<ActionResult> {
+  try {
+    await requireActor('invoices.manage');
+    const company = requireCompany();
+    const invoiceId = String(formData.get('invoiceId') ?? '');
+    const summary = linkBillToPurchaseOrder(getDb(), {
+      companyId: company.id, invoiceId, purchaseOrderId: String(formData.get('purchaseOrderId') ?? ''), actor: await actorName(),
+    });
+    revalidatePath(`/invoices/${invoiceId}`);
+    revalidatePath('/purchase-orders');
+    return {
+      ok: true,
+      message: summary.billedMinor > summary.orderedMinor
+        ? `Linked. ${summary.number} is now billed over what was ordered; that is flagged for review.`
+        : `Linked to ${summary.number}.`,
+    };
+  } catch (error) {
+    return fail(error);
+  }
+}
+
+export async function unlinkBillFromPurchaseOrderAction(formData: FormData): Promise<ActionResult> {
+  try {
+    await requireActor('invoices.manage');
+    const company = requireCompany();
+    const invoiceId = String(formData.get('invoiceId') ?? '');
+    unlinkBillFromPurchaseOrder(getDb(), { companyId: company.id, invoiceId, actor: await actorName() });
+    revalidatePath(`/invoices/${invoiceId}`);
+    revalidatePath('/purchase-orders');
+    return { ok: true, message: 'Unlinked. The bill itself is unchanged.' };
+  } catch (error) {
+    return fail(error);
+  }
+}
+
+export async function cancelPurchaseOrderAction(formData: FormData): Promise<ActionResult> {
+  try {
+    await requireActor('invoices.manage');
+    const company = requireCompany();
+    cancelPurchaseOrder(getDb(), {
+      companyId: company.id, purchaseOrderId: String(formData.get('purchaseOrderId') ?? ''),
+      reason: String(formData.get('reason') ?? ''), actor: await actorName(),
+    });
+    revalidatePath('/purchase-orders');
+    return { ok: true, message: 'Cancelled. Bills already linked stay linked.' };
   } catch (error) {
     return fail(error);
   }

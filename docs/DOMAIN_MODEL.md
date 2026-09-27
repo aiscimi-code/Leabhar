@@ -491,6 +491,21 @@ wins. Supplier refunds use the same paths as customers': money we overpaid is
 refunded with `refundOnAccount` on the payment we made (Dr bank / Cr
 creditors), and a supplier credit note is settled by a payment received.
 
+### Purchase orders (issue #411)
+
+A purchase order (`purchase_orders`, `purchase_order_lines`, numbered `PO-n`
+per company) records what was asked of a supplier: a net amount per line, no
+VAT. It posts nothing and claims nothing; input VAT still comes only from the
+supplier's confirmed invoice. A posted bill of the same supplier and currency
+is linked to the order it was raised against (`invoices.purchase_order_id`,
+audited). What has been billed is the linked bills' net, a linked credit note
+reducing it and a voided bill dropping out, so the status (open, part billed,
+billed) is derived from the bills and cannot go stale. A bill that takes the
+order over what was ordered is linked and flagged for review
+(`purchase_order:<id>:overbilled`), never refused. Cancelling closes what
+remains of an order and keeps the bills already linked; a fully billed order
+has nothing left to cancel. The order prints as a PDF to send the supplier.
+
 ### Customer terms (issue #392)
 
 A customer's payment terms give a sales invoice its due date when none is
