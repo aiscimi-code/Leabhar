@@ -137,6 +137,16 @@ export const PAYROLL_CURATED_RULES: CuratedIncomeTaxRule[] = [
       + 'Savings System (Amendment) Act 2025 s.2 from 1 January 2026 (s.2(2)).',
   },
 
+  // ---- PRSI Class S on a director's emoluments (SWCA 2005 s.21(1)(c)) ----
+  ...scheduled({
+    ruleKey: 'prsi.class_s_emoluments_rate', provision: '21(1)(c)',
+    texts: ['4', '4.1', '4.2', '4.35', '4.5', '4.7'], basisPoints: [410, 420, 435, 450, 470],
+    name: (pct) => `PRSI Class S: ${pct}% of reckonable emoluments paid through payroll`,
+    note: 'SWCA 2005 s.21(1)(c), as substituted by SWMPA 2024 s.3 (Table, amendment 10): a proprietary director on '
+      + 'Class S pays the contribution on the emoluments the company pays them; there is no employer contribution. '
+      + 'The €650 minimum is the greater-of test for the whole contribution year, settled on the director\'s return.',
+  }),
+
   // ---- National Training Fund levy (NTF Act 2000 s.4) ----
   {
     citation: NTF_S4_CITATION, sectionNumber: '4', ruleKey: 'prsi.ntf_levy_rate', ruleType: 'rate',

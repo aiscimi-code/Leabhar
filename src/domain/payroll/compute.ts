@@ -206,8 +206,8 @@ export function computePayslip(db: AppDatabase, params: {
   const periods = PERIODS_IN_YEAR[run.payFrequency];
   const extra = isExtraPeriod(run.payFrequency, run.periodNumber);
 
-  if (employee.prsiClass !== 'A') {
-    throw new PayrollError(`${name} is recorded on PRSI Class ${employee.prsiClass}. Only Class A is computed; `
+  if (employee.prsiClass !== 'A' && employee.prsiClass !== 'S') {
+    throw new PayrollError(`${name} is recorded on PRSI Class ${employee.prsiClass}. Only Classes A and S are computed; `
       + 'no other class is approximated. Record the payslip outside Leabhar until that class is built.', { employeeId: employee.id });
   }
   const terms = termsOn(db, employee.id, run.payDate);
@@ -372,29 +372,40 @@ export function computePayslip(db: AppDatabase, params: {
     }
   }
 
-  // ---- PRSI Class A (SWCA 2005 s.13; NTF Act 2000 s.4) ----
+  // ---- PRSI: Class A (SWCA 2005 s.13; NTF Act 2000 s.4) or Class S (s.21(1)(c)) ----
   if (rpn?.prsiExempt) {
     throw new PayrollError(`RPN ${rpn.rpnNumber} marks ${name} as exempt from PRSI. The class that applies in its place `
       + '(for example J or M) is not computed; no other class is approximated.', { employeeId: employee.id });
   }
   const reckonable = gross + notional;
-  const prsi = classAPrsi(reckonable, run.insurableWeeks, {
-    employeeThresholdMinor: figures.value('prsi.class_a_employee_threshold'),
-    creditUpperMinor: figures.value('prsi.class_a_credit_upper'),
-    creditMaxMinor: figures.value('prsi.class_a_credit_max'),
-    employeeRateBp: figures.value('prsi.class_a_employee_rate'),
-    employerThresholdMinor: figures.value('prsi.class_a_employer_threshold'),
-    employerLowerRateBp: figures.value('prsi.class_a_employer_rate_lower'),
-    employerHigherRateBp: figures.value('prsi.class_a_employer_rate_higher'),
-    ntfLevyRateBp: figures.value('prsi.ntf_levy_rate'),
-  });
-  working.push(`PRSI Class A on reckonable earnings of ${eur(reckonable)} over ${run.insurableWeeks} insurable week`
-    + `${run.insurableWeeks === 1 ? '' : 's'}: employee ${eur(prsi.employeeMinor)}`
-    + `${prsi.band === 'credit' ? ` (after a PRSI credit of ${eur(prsi.creditMinor)})` : prsi.band === 'nil' ? ' (at or below the threshold)' : ''}; `
-    + `employer ${eur(prsi.employerMinor)}; National Training Fund levy ${eur(prsi.ntfLevyMinor)}.`);
-  if (run.payFrequency === 'monthly') {
-    findings.push(`The PRSI thresholds and credit are applied per insurable week (${run.insurableWeeks} this month). How the `
-      + 'weekly figures convert for monthly pay awaits confirmation (issue #529).');
+  let prsi: ReturnType<typeof classAPrsi>;
+  if (employee.prsiClass === 'S') {
+    // Class S (SWCA 2005 s.21(1)(c)): the rate on all reckonable emoluments; no threshold, credit or employer share.
+    const rate = figures.value('prsi.class_s_emoluments_rate');
+    prsi = { employeeMinor: multiplyRational(reckonable, rate, 10_000), creditMinor: 0, employerMinor: 0, ntfLevyMinor: 0, band: 'full' };
+    working.push(`PRSI Class S on reckonable emoluments of ${eur(reckonable)} at ${pct(rate)} = ${eur(prsi.employeeMinor)}; `
+      + 'no employer contribution and no NTF levy.');
+    findings.push(`${name} is on PRSI Class S. The contribution year's €650 minimum (s.21(1)(a), (c), (f)) is tested on the `
+      + 'director\'s whole income for the year and settled on their own return, not through payroll.');
+  } else {
+    prsi = classAPrsi(reckonable, run.insurableWeeks, {
+      employeeThresholdMinor: figures.value('prsi.class_a_employee_threshold'),
+      creditUpperMinor: figures.value('prsi.class_a_credit_upper'),
+      creditMaxMinor: figures.value('prsi.class_a_credit_max'),
+      employeeRateBp: figures.value('prsi.class_a_employee_rate'),
+      employerThresholdMinor: figures.value('prsi.class_a_employer_threshold'),
+      employerLowerRateBp: figures.value('prsi.class_a_employer_rate_lower'),
+      employerHigherRateBp: figures.value('prsi.class_a_employer_rate_higher'),
+      ntfLevyRateBp: figures.value('prsi.ntf_levy_rate'),
+    });
+    working.push(`PRSI Class A on reckonable earnings of ${eur(reckonable)} over ${run.insurableWeeks} insurable week`
+      + `${run.insurableWeeks === 1 ? '' : 's'}: employee ${eur(prsi.employeeMinor)}`
+      + `${prsi.band === 'credit' ? ` (after a PRSI credit of ${eur(prsi.creditMinor)})` : prsi.band === 'nil' ? ' (at or below the threshold)' : ''}; `
+      + `employer ${eur(prsi.employerMinor)}; National Training Fund levy ${eur(prsi.ntfLevyMinor)}.`);
+    if (run.payFrequency === 'monthly') {
+      findings.push(`The PRSI thresholds and credit are applied per insurable week (${run.insurableWeeks} this month). How the `
+        + 'weekly figures convert for monthly pay awaits confirmation (issue #529).');
+    }
   }
 
   // ---- Net pay ----

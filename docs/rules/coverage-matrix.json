@@ -3422,12 +3422,13 @@
     {
       "id": "swmpa2024:s3",
       "area": "other_source",
-      "title": "Social Welfare (Miscellaneous Provisions) Act 2024 s.3 — Class A rates from October 2024 to October 2028",
+      "title": "Social Welfare (Miscellaneous Provisions) Act 2024 s.3 — Class A and Class S rates from October 2024 to October 2028",
       "status": "rule",
       "ruleKeys": [
         "prsi.class_a_employee_rate",
         "prsi.class_a_employer_rate_lower",
-        "prsi.class_a_employer_rate_higher"
+        "prsi.class_a_employer_rate_higher",
+        "prsi.class_s_emoluments_rate"
       ]
     },
     {

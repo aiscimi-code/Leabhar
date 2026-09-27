@@ -290,3 +290,72 @@ export function reconcilePayroll(db: AppDatabase, params: { companyId: string; a
   }
   return { asOf, accounts, unpaidNetPay, unremittedMonths, cumulativeMismatches };
 }
+
+/** One payment's particulars, as S.I. 345/2018 reg.10(1) and S.I. 510/2018 reg.13(1) list them. */
+export interface SubmissionParticulars {
+  employeeId: string;
+  name: string;
+  /** reg.10(1)(a)-(k) */
+  payDate: string;
+  payFrequency: string;
+  ppsn: string | null;
+  rpnNumber: string | null;
+  /** Given only where no RPN number is (reg.10(2)). */
+  cumulativeSrcopMinor: number | null;
+  cumulativeCreditsMinor: number | null;
+  taxBasis: string;
+  director: 'no' | 'director' | 'proprietary_director';
+  employerReference: string;
+  employmentId: string;
+  /** reg.10(1)(l)-(u) */
+  grossPayMinor: number;
+  payForTaxMinor: number;
+  notionalPayMinor: number;
+  employeePensionMinor: number;
+  employerPensionMinor: number;
+  taxMinor: number;
+  /** S.I. 510/2018 reg.13(1) */
+  payForUscMinor: number;
+  uscMinor: number;
+  uscExempt: boolean;
+  /** TDM 42-04-35A: class, insurable weeks, employee and employer PRSI. */
+  prsiClass: string;
+  insurableWeeks: number;
+  prsiEmployeeMinor: number;
+  prsiEmployerMinor: number;
+}
+
+/**
+ * The particulars a payroll submission reports for each payment on a posted
+ * run (#528): a worksheet for the ROS online form, which Revenue documents as
+ * a route without payroll software. It is not Revenue's file format, which
+ * this book does not produce until #528's specification is obtained.
+ */
+export function payrollSubmissionParticulars(db: AppDatabase, companyId: string, runId: string): SubmissionParticulars[] {
+  const run = db.select().from(payRuns).where(and(eq(payRuns.id, runId), eq(payRuns.companyId, companyId))).get();
+  if (!run) throw new PayrollError(`Pay run ${runId} not found in this company.`);
+  if (run.status !== 'posted') throw new PayrollError(`Only a posted run is submitted; this one is ${run.status}.`);
+  const rows = db.select({ p: payslips, e: employees }).from(payslips)
+    .innerJoin(employees, eq(payslips.employeeId, employees.id))
+    .where(eq(payslips.payRunId, run.id)).orderBy(employees.lastName, employees.firstName).all();
+  return rows.map(({ p, e }) => {
+    const rpnNumber = p.rpnId
+      ? db.select({ n: revenuePayrollNotifications.rpnNumber }).from(revenuePayrollNotifications)
+        .where(eq(revenuePayrollNotifications.id, p.rpnId)).get()?.n ?? null
+      : null;
+    return {
+      employeeId: e.id, name: `${e.firstName} ${e.lastName}`, payDate: run.payDate, payFrequency: run.payFrequency,
+      ppsn: e.ppsn, rpnNumber,
+      cumulativeSrcopMinor: rpnNumber ? null : p.cumulativeSrcopMinor,
+      cumulativeCreditsMinor: rpnNumber ? null : p.cumulativeCreditsMinor,
+      taxBasis: p.taxBasis,
+      director: e.isProprietaryDirector ? 'proprietary_director' : e.isDirector ? 'director' : 'no',
+      employerReference: e.employerReference, employmentId: e.employmentId,
+      grossPayMinor: p.grossPayMinor + p.notionalPayMinor, payForTaxMinor: p.payForTaxMinor, notionalPayMinor: p.notionalPayMinor,
+      employeePensionMinor: p.pensionEmployeeMinor, employerPensionMinor: p.pensionEmployerMinor, taxMinor: p.taxMinor,
+      payForUscMinor: p.payForUscMinor, uscMinor: p.uscMinor, uscExempt: p.uscBasis === 'exempt',
+      prsiClass: p.prsiClass, insurableWeeks: p.insurableWeeks,
+      prsiEmployeeMinor: p.prsiEmployeeMinor, prsiEmployerMinor: p.prsiEmployerMinor + p.ntfLevyMinor,
+    };
+  });
+}

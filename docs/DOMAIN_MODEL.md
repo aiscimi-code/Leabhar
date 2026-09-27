@@ -665,7 +665,7 @@ predecessors. A difference becomes a review item; nothing is adjusted.
 
 Not yet built:
 - RPN retrieval and payroll submissions (#528);
-- PRSI classes other than A, which are refused rather than approximated;
+- PRSI classes other than A and S, which are refused rather than approximated;
 - how the weekly PRSI thresholds convert for monthly pay (#529);
 - BIK valuation;
 - pension relief limits;

@@ -6,7 +6,7 @@ import {
   createEmployee, setEmploymentTerms, recordPpsn, recordCessation, listEmployees, listTerms,
   recordRpn, listRpns, parseUscBands,
   createPayRun, setPayslipInputs, recomputePayRun, postPayRun, reversePayRun, payNetWages, getPayRun, payslipsOfRun, listPayRuns,
-  payRunTotals, monthlyPayrollSummary, yearEndSummary, employeeYearToDate, payPayrollLiabilities, reconcilePayroll,
+  payRunTotals, monthlyPayrollSummary, yearEndSummary, employeeYearToDate, payPayrollLiabilities, reconcilePayroll, payrollSubmissionParticulars,
   type PayInputs,
 } from '@/domain/payroll';
 
@@ -47,6 +47,7 @@ Payroll (EPIC 20, issues #524–#527):
   pay-payroll-taxes --month <yyyy-mm> --by <name> (--bank-transaction <id> | --date <date> [--bank <id>])
   payroll-report (--month <yyyy-mm> | --year <yyyy> [--employee <id>])
   reconcile-payroll --as-of <date>       Payroll control accounts against the posted runs
+  payroll-submission --run <id>          Each payment's reg.10(1) particulars, for the ROS online form (#528)
 `;
 
 export { parseUscBands };
@@ -54,7 +55,7 @@ export { parseUscBands };
 export const PAYROLL_COMMANDS = [
   'add-employee', 'record-ppsn', 'record-cessation', 'set-employment-terms', 'record-rpn', 'list-employees',
   'create-pay-run', 'set-pay-inputs', 'recompute-pay-run', 'show-pay-run', 'post-pay-run', 'reverse-pay-run',
-  'pay-net-wages', 'pay-payroll-taxes', 'payroll-report', 'reconcile-payroll',
+  'pay-net-wages', 'pay-payroll-taxes', 'payroll-report', 'reconcile-payroll', 'payroll-submission',
 ] as const;
 
 type Flags = Record<string, string | boolean>;
@@ -162,6 +163,8 @@ export function runPayrollCommand(db: AppDatabase, companyId: string, command: s
       const employee = getFlag(flags, 'employee');
       return employee ? employeeYearToDate(db, companyId, employee, year) : { year, employees: yearEndSummary(db, companyId, year), runs: listPayRuns(db, companyId, year) };
     }
+    case 'payroll-submission':
+      return payrollSubmissionParticulars(db, companyId, need(flags, 'run'));
     case 'reconcile-payroll':
       return reconcilePayroll(db, { companyId, asOf: need(flags, 'as-of') });
     default:

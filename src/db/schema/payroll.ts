@@ -48,7 +48,7 @@ export const employees = sqliteTable('employees', {
   isProprietaryDirector: integer('is_proprietary_director', { mode: 'boolean' }).notNull().default(false),
   /** The officer record of a director, so their pay posts to directors' remuneration against them. */
   officerId: text('officer_id').references(() => companyOfficers.id),
-  /** PRSI class. Only Class A is computed; any other class is refused, never approximated. */
+  /** PRSI class. Classes A and S are computed; any other class is refused, never approximated. */
   prsiClass: text('prsi_class', { enum: ['A', 'S', 'J', 'M'] }).notNull().default('A'),
   recordedBy: text('recorded_by').notNull(),
   notes: text('notes'),

@@ -12,7 +12,7 @@ import { recordRpn } from './rpn';
 import {
   createPayRun, postPayRun, reversePayRun, payNetWages, payslipsOfRun, recomputePayRun, setPayslipInputs, getPayRun,
 } from './runs';
-import { payPayrollLiabilities, reconcilePayroll, monthlyPayrollSummary, yearEndSummary } from './reports';
+import { payPayrollLiabilities, reconcilePayroll, monthlyPayrollSummary, yearEndSummary, payrollSubmissionParticulars } from './reports';
 import { PayrollError } from './figures';
 
 const USC_2026 = [
@@ -282,9 +282,17 @@ describe('what the engine refuses to guess', () => {
   });
 
   it('refuses a PRSI class it does not compute', () => {
-    const e = salaried({ prsiClass: 'S' });
+    const e = salaried({ prsiClass: 'J' });
     rpnFor(e.id);
-    expect(() => month('2026-01-30')).toThrow(/Only Class A/);
+    expect(() => month('2026-01-30')).toThrow(/Only Classes A and S/);
+  });
+
+  it('charges a proprietary director on Class S 4.2% of all pay, with no employer PRSI or levy (s.21(1)(c))', () => {
+    const e = salaried({ prsiClass: 'S', isDirector: true, isProprietaryDirector: true });
+    rpnFor(e.id);
+    const [slip] = payslipsOfRun(db, month('2026-01-30').id);
+    expect([slip!.prsiEmployeeMinor, slip!.prsiEmployerMinor, slip!.ntfLevyMinor]).toEqual([16_800, 0, 0]);
+    expect(slip!.findings.join(' ')).toMatch(/€650 minimum/);
   });
 
   it('refuses a monthly run without its insurable weeks', () => {
@@ -320,5 +328,20 @@ describe('the year-end summary (issue #527)', () => {
     const [row] = yearEndSummary(db, companyId, 2026);
     expect(row).toMatchObject({ employeeId: e.id, insurableWeeks: 8 });
     expect([row!.totals.payForTaxMinor, row!.totals.taxMinor, row!.totals.payslips]).toEqual([800_000, 106_667, 2]);
+  });
+});
+
+describe('the payroll submission particulars (#528)', () => {
+  it('lists each payment\'s reg.10(1) particulars, with the RPN number in place of the cut-off and credits', () => {
+    const e = salaried();
+    rpnFor(e.id);
+    const draft = month('2026-01-30');
+    expect(() => payrollSubmissionParticulars(db, companyId, draft.id)).toThrow(/Only a posted run/);
+    postPayRun(db, { companyId, runId: draft.id, postedBy: 'owner' });
+    expect(payrollSubmissionParticulars(db, companyId, draft.id)).toEqual([expect.objectContaining({
+      ppsn: '1234567T', rpnNumber: '1', cumulativeSrcopMinor: null, taxBasis: 'cumulative', director: 'no',
+      employerReference: 'E001', grossPayMinor: 400_000, payForTaxMinor: 400_000, taxMinor: 53_333,
+      uscMinor: 8_107, prsiClass: 'A', insurableWeeks: 4, prsiEmployeeMinor: 16_800, prsiEmployerMinor: 45_000,
+    })]);
   });
 });

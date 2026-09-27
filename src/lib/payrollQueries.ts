@@ -3,6 +3,7 @@ import { getDb } from '@/db';
 import { bankAccounts, bankTransactions, payslips } from '@/db/schema';
 import {
   listEmployees, listTerms, listRpns, listPayRuns, payRunTotals, monthlyPayrollSummary, getPayRun, payslipsOfRun,
+  payrollSubmissionParticulars,
 } from '@/domain/payroll';
 import { requireCompany } from './queries';
 
@@ -44,7 +45,10 @@ export function payRunPage(runId: string) {
   const company = requireCompany();
   try {
     const run = getPayRun(db, company.id, runId);
-    return { company, run, totals: payRunTotals(db, run.id), payslips: payslipsOfRun(db, run.id), bankLines: unpostedMoneyOut(company.id) };
+    return {
+      company, run, totals: payRunTotals(db, run.id), payslips: payslipsOfRun(db, run.id), bankLines: unpostedMoneyOut(company.id),
+      particulars: run.status === 'posted' ? payrollSubmissionParticulars(db, company.id, run.id) : [],
+    };
   } catch {
     return null;
   }

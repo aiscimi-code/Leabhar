@@ -24,7 +24,7 @@ export default async function PayRunPage({ params }: { params: Promise<{ id: str
   }
   const detail = payRunPage(id);
   if (!detail) notFound();
-  const { run, totals, payslips, bankLines } = detail;
+  const { run, totals, payslips, bankLines, particulars } = detail;
   const draft = run.status === 'draft';
 
   return (
@@ -74,6 +74,34 @@ export default async function PayRunPage({ params }: { params: Promise<{ id: str
           {run.status === 'reversed' && <span className="text-[12px] text-ink-muted">Reversed: {run.reversalReason}</span>}
         </div>
       </Panel>
+
+      {particulars.length > 0 && (
+        <Panel title="Payroll submission particulars"
+          description="What S.I. 345/2018 reg.10(1) and S.I. 510/2018 reg.13(1) require for each payment, for the ROS online form.
+            Leabhar does not send payroll submissions yet (#528): submit these on or before the pay date.">
+          <table className="ledger">
+            <thead><tr><th>Employee</th><th>PPSN / ref.</th><th>RPN</th><th>Basis</th><th className="text-right">Gross</th>
+              <th className="text-right">Pay for tax</th><th className="text-right">Tax</th><th className="text-right">USC</th>
+              <th>PRSI</th><th className="text-right">Ee / Er PRSI</th></tr></thead>
+            <tbody>
+              {particulars.map((s) => (
+                <tr key={s.employeeId}>
+                  <td>{s.name}{s.director !== 'no' ? ` (${s.director.replace('_', ' ')})` : ''}</td>
+                  <td>{s.ppsn ?? '—'} / {s.employerReference} ({s.employmentId})</td>
+                  <td>{s.rpnNumber ?? `none: cut-off ${eur(s.cumulativeSrcopMinor ?? 0)}, credits ${eur(s.cumulativeCreditsMinor ?? 0)}`}</td>
+                  <td>{s.taxBasis.replace(/_/g, ' ')}</td>
+                  <td className="num">{eur(s.grossPayMinor)}</td>
+                  <td className="num">{eur(s.payForTaxMinor)}</td>
+                  <td className="num">{eur(s.taxMinor)}</td>
+                  <td className="num">{s.uscExempt ? 'exempt' : eur(s.uscMinor)}</td>
+                  <td>Class {s.prsiClass}, {s.insurableWeeks} wk</td>
+                  <td className="num">{eur(s.prsiEmployeeMinor)} / {eur(s.prsiEmployerMinor)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </Panel>
+      )}
 
       {payslips.map((p) => (
         <Panel key={p.id} title={p.employeeName}
