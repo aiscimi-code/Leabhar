@@ -4,8 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { getDb } from '@/db';
 import { requireCompany } from '@/lib/queries';
 import { requireActor, actorName } from '@/lib/session';
-import { recordCtDecision, type CtSubjectType } from '@/domain/corporationTax/computation';
-import { isCtSubjectType } from '@/domain/corporationTax/subjects';
+import { recordCtDecision, isCtSubjectType, type CtSubjectType } from '@/domain/corporationTax/subjects';
 import { parseAmount } from '@/domain/money';
 import type { ActionResult } from './settings-actions';
 

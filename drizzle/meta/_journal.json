@@ -253,6 +253,13 @@
       "when": 1790516523575,
       "tag": "0035_dividends_system_key",
       "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "6",
+      "when": 1790530318966,
+      "tag": "0036_partner_activity_status",
+      "breakpoints": true
     }
   ]
 }

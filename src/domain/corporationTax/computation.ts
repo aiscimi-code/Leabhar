@@ -1,17 +1,26 @@
-import { and, eq, gte, lte, isNull, desc } from 'drizzle-orm';
+import { and, eq, gte, lte, desc } from 'drizzle-orm';
 import type { AppDatabase } from '@/db';
-import { accounts, journalLines, journalEntries, fixedAssets, ctDecisions, companies } from '@/db/schema';
+import { accounts, journalLines, journalEntries, fixedAssets, companies } from '@/db/schema';
 import { trialBalance } from '../accounting/ledger';
 import { multiplyRational } from '../money';
-import { ids } from '@/lib/ids';
 import { systemAccountId } from '../config/setup';
-import { nowIso, asIsoDate, type IsoDate } from '../dates';
+import { asIsoDate, type IsoDate } from '../dates';
 import { accountingYearContaining } from '../vat/apportionment';
 import {
   CT_RATE_TRADING_RULE_KEY, CT_RATE_HIGHER_RULE_KEY, CORPORATION_TAX_CURATED_RULES,
   nfgCitation, carSpecifiedAmountRuleKey,
 } from '../rules/corporationTaxCuration';
 import { auditRuleFigures, RejectedRuleError } from '../rules/ruleFigures';
+import {
+  EXPENSE_CHOICES, INCOME_CASES, LOSS_CLAIMS, COMPANY_STATUSES, TRADING_COMPANY_STATUSES, currentDecision,
+  type IncomeCase, type ExpenseChoice, type LossClaim, type CompanyStatus, type TradingCompanyStatus,
+  type CtPendingDecision,
+} from './subjects';
+
+// The decision subjects, their choices and recording live in subjects.ts (one
+// definition, so the year-end action and the computations cannot disagree);
+// re-exported here for the modules that import them from the computation.
+export * from './subjects';
 
 /** A computation's figure audit (see ruleFigures.ts); shared by the functions one computation calls. */
 type FigureAudit = ReturnType<typeof auditRuleFigures>;
@@ -52,27 +61,6 @@ function figureWithCurationFallback(audit: FigureAudit, ruleKey: string): number
  * what is not yet computed.
  */
 
-export type IncomeCase = 'case_i' | 'case_iii' | 'case_iv' | 'case_v';
-export type ExpenseChoice =
-  | 'add_back_entertainment' | 'staff_entertainment' | 'add_back_not_wholly_exclusively'
-  | 'add_back_private' | 'add_back_capital' | 'deductible';
-
-export const INCOME_CASES: Record<IncomeCase, string> = {
-  case_i: 'Case I: trading income (12.5%)',
-  case_iii: 'Case III: e.g. deposit interest, foreign income (25%)',
-  case_iv: 'Case IV: e.g. royalties, miscellaneous income (25%)',
-  case_v: 'Case V: rent from land in the State (25%)',
-};
-
-export const EXPENSE_CHOICES: Record<ExpenseChoice, { label: string; addBack: boolean; ruleKey: string | null }> = {
-  add_back_entertainment: { label: 'Business entertainment or a gift: add back (s.840)', addBack: true, ruleKey: 'ct.business_entertainment_not_deductible' },
-  staff_entertainment: { label: 'Entertainment for staff only: deductible (s.840(1))', addBack: false, ruleKey: 'ct.staff_entertainment_deductible' },
-  add_back_not_wholly_exclusively: { label: 'Not wholly and exclusively for the trade: add back (s.81(2)(a))', addBack: true, ruleKey: 'ct.not_wholly_and_exclusively' },
-  add_back_private: { label: 'Private or domestic: add back (s.81(2)(b))', addBack: true, ruleKey: 'ct.private_or_domestic' },
-  add_back_capital: { label: 'Capital expenditure: add back (s.81(2)(f))', addBack: true, ruleKey: 'ct.capital_expenditure_not_deductible' },
-  deductible: { label: 'A deductible trading expense', addBack: false, ruleKey: null },
-};
-
 /** Words that suggest an expense line may not be deductible, with the treatment suggested and the options offered. */
 const LINE_PATTERNS: Array<{ pattern: RegExp; suggested: ExpenseChoice; options: ExpenseChoice[]; why: string }> = [
   {
@@ -92,48 +80,6 @@ const LINE_PATTERNS: Array<{ pattern: RegExp; suggested: ExpenseChoice; options:
   },
 ];
 
-export type CtSubjectType = 'journal_line' | 'income_account' | 'loss_claim' | 'company_status'
-  | 'trading_company' | 'personal_status' | 'income_tax_loss_claim';
-export type LossClaim = 'carry_forward' | 'claim_396a' | 'claim_396a_396b';
-export type IncomeTaxLossClaim = 'carry_forward' | 'claim_381';
-export type CompanyStatus = 'close_trading' | 'close_service' | 'not_close';
-export type TradingCompanyStatus = 'trading' | 'not_trading';
-
-export const LOSS_CLAIMS: Record<LossClaim, string> = {
-  carry_forward: 'Carry the loss forward against later profits of the trade (s.396(1))',
-  claim_396a: 'Set it against trading income of this and the preceding period (s.396A), the rest carried forward',
-  claim_396a_396b: 'As s.396A, then the rest against tax on other income at 12.5% (s.396B)',
-};
-
-export const COMPANY_STATUSES: Record<CompanyStatus, string> = {
-  close_trading: 'A close company (s.430): surcharge on undistributed investment and estate income (s.440)',
-  close_service: 'A close service company (s.441): surcharge also on half of undistributed trading income',
-  not_close: 'Not a close company: no surcharge',
-};
-
-/** Whether the company exists wholly or mainly to trade (s.434(5A)(b)): a facts
- *  test, suggested from the income split but decided by a person (issue #494). */
-export const TRADING_COMPANY_STATUSES: Record<TradingCompanyStatus, string> = {
-  trading: 'A trading company: the s.434(5A)(b) reduction of distributable investment and estate income applies',
-  not_trading: 'Not wholly or mainly a trading company: no s.434(5A)(b) reduction',
-};
-
-/** An individual's claim on their own trading loss (TCA Part 12). */
-export const INCOME_TAX_LOSS_CLAIMS: Record<IncomeTaxLossClaim, string> = {
-  carry_forward: 'Carry the loss forward against later profits of the same trade (s.382), which is done automatically',
-  claim_381: 'Claim it against other income of the same year (s.381); the amount set against it is the person\'s own figure',
-};
-
-const CHOICES: Record<CtSubjectType, string[]> = {
-  journal_line: Object.keys(EXPENSE_CHOICES),
-  income_account: Object.keys(INCOME_CASES),
-  loss_claim: Object.keys(LOSS_CLAIMS),
-  company_status: Object.keys(COMPANY_STATUSES),
-  trading_company: Object.keys(TRADING_COMPANY_STATUSES),
-  personal_status: ['single', 'single_parent', 'married_one_income', 'married_two_incomes'],
-  income_tax_loss_claim: Object.keys(INCOME_TAX_LOSS_CLAIMS),
-};
-
 export interface CtSource { entityType: 'account' | 'journal_line' | 'fixed_asset'; entityId: string; label: string; amountMinor: number }
 export interface CtCitation { ruleKey: string; citation: string; section: string }
 
@@ -144,21 +90,6 @@ export interface CtLine {
   citations: CtCitation[];
   sources: CtSource[];
   explanation: string;
-}
-
-export interface CtPendingDecision {
-  subjectType: CtSubjectType;
-  subjectId: string;
-  description: string;
-  amountMinor: number;
-  /** The treatment used until a person decides. */
-  suggested: string;
-  options: Array<{ choice: string; label: string }>;
-  reason: string;
-  /** The decision on record, if any (then this is not pending). */
-  decided: string | null;
-  /** The amount recorded with the decision, where the books cannot know it (an s.381 claim). */
-  decidedAmountMinor?: number | null;
 }
 
 export interface CtComputation {
@@ -232,58 +163,18 @@ const cite = (ruleKey: string): CtCitation => {
 
 const eur = (minor: number) => (minor / 100).toFixed(2);
 
-/** The decision on record for a subject: the latest one not superseded. */
-export function currentDecision(db: AppDatabase, companyId: string, subjectType: CtSubjectType, subjectId: string, periodEnd?: string) {
-  return db.select().from(ctDecisions)
-    .where(and(
-      eq(ctDecisions.companyId, companyId), eq(ctDecisions.subjectType, subjectType), eq(ctDecisions.subjectId, subjectId),
-      isNull(ctDecisions.supersededById),
-      ...(periodEnd ? [eq(ctDecisions.periodEnd, periodEnd)] : []),
-    )).get();
-}
 
-export class CtDecisionError extends Error {}
-
-/** Record a person's choice. Any earlier choice for the same subject is kept and marked superseded. */
-export function recordCtDecision(db: AppDatabase, params: {
-  companyId: string; subjectType: CtSubjectType; subjectId: string; periodEnd: string;
-  choice: string; decidedBy: string; note?: string;
+export interface CapitalAllowancesResult {
+  lines: CtLine[];
+  findings: string[];
   /**
-   * The amount the claim uses, for an income tax loss claimed against other
-   * income (s.381): the person's own figure, as their other income is not in
-   * these books.
+   * The claims reconstructed from the purchase date for assets whose caller
+   * returned null from `claimsBefore` — bought before the periods the caller
+   * has walked (issue #488). A caller accumulating claims starts each such
+   * asset from here, not from nothing.
    */
-  amountMinor?: number;
-}): string {
-  if (!params.decidedBy.trim()) throw new CtDecisionError('Say who is deciding: a tax treatment choice is a person\'s decision.');
-  const allowed = CHOICES[params.subjectType];
-  if (!allowed.includes(params.choice)) {
-    throw new CtDecisionError(`"${params.choice}" is not a choice here. Choose one of: ${allowed.join(', ')}.`);
-  }
-  let amountMinor = params.amountMinor ?? null;
-  if (params.subjectType === 'income_tax_loss_claim' && params.choice === 'claim_381') {
-    if (amountMinor === null || !Number.isInteger(amountMinor) || amountMinor <= 0) {
-      throw new CtDecisionError('Say how much of the loss is set against other income (s.381): '
-        + 'a whole number of cents, more than zero.');
-    }
-  } else {
-    amountMinor = null;
-  }
-  const id = ids.ctDecision();
-  db.transaction((tx) => {
-    const previous = currentDecision(tx as unknown as AppDatabase, params.companyId, params.subjectType, params.subjectId,
-      params.subjectType === 'journal_line' ? undefined : params.periodEnd);
-    tx.insert(ctDecisions).values({
-      id, companyId: params.companyId, subjectType: params.subjectType, subjectId: params.subjectId,
-      periodEnd: params.periodEnd, choice: params.choice, decidedBy: params.decidedBy, decidedAt: nowIso(),
-      note: params.note ?? null, amountMinor,
-    }).run();
-    if (previous) tx.update(ctDecisions).set({ supersededById: id }).where(eq(ctDecisions.id, previous.id)).run();
-  });
-  return id;
+  openingClaims: Map<string, AssetClaimsMade>;
 }
-
-export interface CapitalAllowancesResult { lines: CtLine[]; findings: string[] }
 
 const daysBetween = (a: string, b: string) => Math.round((Date.parse(b) - Date.parse(a)) / 86_400_000);
 
@@ -330,11 +221,13 @@ function motorCarBasis(
  * against its basis period (s.284(1), (2)(b)), passes `claimsBefore` instead:
  * the allowances actually made in earlier years of assessment, which can
  * differ from the accounting-period count in a commencement, cessation or
- * account-date-change year.
+ * account-date-change year. A caller returns null for an asset it holds no
+ * claims for because the asset predates the periods it walked: those earlier
+ * claims are counted from the purchase date, as a standalone call counts them.
  */
 export function capitalAllowances(
   db: AppDatabase,
-  params: { companyId: string; from: string; to: string; claimsBefore?: (asset: typeof fixedAssets.$inferSelect) => AssetClaimsMade },
+  params: { companyId: string; from: string; to: string; claimsBefore?: (asset: typeof fixedAssets.$inferSelect) => AssetClaimsMade | null },
   figures?: FigureAudit,
 ): CapitalAllowancesResult {
   const { companyId, from, to } = params;
@@ -343,6 +236,7 @@ export function capitalAllowances(
   const ownsAudit = !figures;
   const audit = figures ?? auditRuleFigures(db, { companyId, asOfDate: to, curated: CORPORATION_TAX_CURATED_RULES });
   const lines: CtLine[] = [];
+  const openingClaims = new Map<string, AssetClaimsMade>();
   const findings: string[] = [];
   const standardRate = figureWithCurationFallback(audit, 'ct.wear_and_tear_rate');
   const smallProceeds = figureWithCurationFallback(audit, 'ct.balancing_charge_small_proceeds');
@@ -381,6 +275,7 @@ export function capitalAllowances(
     const madeBefore = madeBeforeIn
       ? Math.min(basisMinor, Math.max(madeBeforeIn.made, 0))
       : Math.min(basisMinor, annual * Math.min(claimsBefore, years));
+    if (params.claimsBefore && !madeBeforeIn) openingClaims.set(asset.id, { claims: claimsBefore, made: madeBefore });
 
     if (car && restrictedBy !== null) {
       carCitations.add('ct.car_allowances_restricted_to_specified_amount');
@@ -485,7 +380,7 @@ export function capitalAllowances(
     });
   }
   if (ownsAudit) findings.push(...audit.findings());
-  return { lines, findings };
+  return { lines, findings, openingClaims };
 }
 
 /**
@@ -534,7 +429,7 @@ export function computeBase(
      * and gets the period's own claims back (issue #488), the way the income
      * tax run does across years of assessment.
      */
-    claimsBefore?: (asset: typeof fixedAssets.$inferSelect) => AssetClaimsMade;
+    claimsBefore?: (asset: typeof fixedAssets.$inferSelect) => AssetClaimsMade | null;
     claimsMade?: Map<string, AssetClaimsMade>;
   },
   figures?: FigureAudit,
@@ -670,7 +565,9 @@ export function computeBase(
       for (const line of ca.lines) {
         for (const source of line.sources) {
           if (source.entityType !== 'fixed_asset') continue;
-          const made = params.claimsMade.get(source.entityId) ?? { claims: 0, made: 0 };
+          const opening = ca.openingClaims.get(source.entityId);
+          const made = params.claimsMade.get(source.entityId)
+            ?? (opening ? { ...opening } : { claims: 0, made: 0 });
           made.claims += 1;
           made.made += line.kind === 'add_back' ? -source.amountMinor : source.amountMinor;
           params.claimsMade.set(source.entityId, made);
@@ -707,13 +604,14 @@ interface PeriodRun { from: string; to: string; base: CtBase; claim: LossClaim; 
  */
 export function computeCorporationTax(db: AppDatabase, params: { companyId: string; from: IsoDate; to: IsoDate }): CtComputation {
   const { companyId, from, to } = params;
-  // TCA s.955 limits an accounting period to 12 months. A longer one is not a
+  // An accounting period ends 12 months from its start at the latest (TCA
+  // s.27(3)(a); s.27 is not among the collected sources). A longer one is not a
   // period to compute — apportioning its threshold to a capped 12 months is
   // not the same figure, and nothing would say the period was malformed
   // (issue #495).
-  if (to > addMonths(from, 12)) {
+  if (to >= addMonths(from, 12)) {
     throw new Error(
-      `The accounting period ${from} to ${to} is longer than the 12 months TCA s.955 permits. `
+      `The accounting period ${from} to ${to} is longer than 12 months: an accounting period ends 12 months from its start at the latest (TCA s.27(3)(a)). `
         + 'Split it into accounting periods of 12 months or less and compute each on its own, rather than '
         + 'computing a period whose thresholds and allowances would be silently capped.',
     );
@@ -753,7 +651,11 @@ export function computeCorporationTax(db: AppDatabase, params: { companyId: stri
   for (const p of periods) {
     const base = computeBase(db, {
       companyId, ...p,
-      claimsBefore: (asset) => assetClaims.get(asset.id) ?? { claims: 0, made: 0 },
+      // An asset bought before the first period walked here was claimed in
+      // periods these books do not hold: null counts those claims from its
+      // purchase date rather than starting it again at year 1.
+      claimsBefore: (asset) => assetClaims.get(asset.id)
+        ?? (asset.purchaseDate < periods[0]!.from ? null : { claims: 0, made: 0 }),
       claimsMade: assetClaims,
     }, figures);
     const profit = Math.max(base.adjustedMinor, 0);

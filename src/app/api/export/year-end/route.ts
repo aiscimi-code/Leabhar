@@ -170,9 +170,11 @@ export async function GET(request: Request): Promise<Response> {
     sheet.addRow([it.tradingLossMinor ? 'Trading loss for the year' : 'Assessable trading profit', amount(it.assessableProfitMinor)]).font = { bold: true };
     for (const i of it.individuals) {
       sheet.addRow([`${i.name} (${i.status})`, amount(i.profitMinor)]).font = { bold: true };
+      if (i.allowancesBroughtForwardUsedMinor) sheet.addRow(['  Less capital allowances brought forward (s.304)', amount(-i.allowancesBroughtForwardUsedMinor)]);
       if (i.broughtForwardLossUsedMinor) sheet.addRow(['  Less trading losses brought forward (s.382)', amount(-i.broughtForwardLossUsedMinor)]);
       if (i.claimedAgainstOtherIncomeMinor) sheet.addRow(['  Loss claimed against other income (s.381)', amount(-i.claimedAgainstOtherIncomeMinor)]);
       if (i.lossCarriedForwardMinor) sheet.addRow([`  Loss carried forward (s.382)`, amount(i.lossCarriedForwardMinor)]);
+      if (i.allowancesCarriedForwardMinor) sheet.addRow(['  Capital allowances carried forward (s.304)', amount(i.allowancesCarriedForwardMinor)]);
       for (const l of [...i.incomeTax, ...i.usc]) sheet.addRow([`  ${l.label}`, amount(l.amountMinor)]);
       sheet.addRow(['  Income tax', amount(i.incomeTaxMinor)]);
       sheet.addRow(['  USC', amount(i.uscMinor)]);

@@ -1,6 +1,6 @@
 import { Panel, Badge, Field, Input, Select, Disclosure, Empty } from '@/components/primitives';
 import { ActionForm } from '@/components/ActionForm';
-import { addPartnerAction, setPartnerShareAction, recordPartnerLoanAction } from '@/app/partners-actions';
+import { addPartnerAction, setPartnerShareAction, setPartnerActivityStatusAction, recordPartnerLoanAction } from '@/app/partners-actions';
 import { date, money } from '@/lib/format';
 import { asIsoDate } from '@/domain/dates';
 import { getDb } from '@/db';
@@ -46,7 +46,7 @@ export function PartnersPanel({ company }: { company: typeof companies.$inferSel
               <thead>
                 <tr>
                   <th>Partner</th><th>Joined</th><th className="text-right">Share today</th>
-                  <th className="text-right">Loan owed to them</th><th />
+                  <th className="text-right">Loan owed to them</th><th className="w-40">Status</th><th />
                 </tr>
               </thead>
               <tbody>
@@ -59,6 +59,18 @@ export function PartnersPanel({ company }: { company: typeof companies.$inferSel
                       {p.loanAccountId
                         ? money(partnerLoanBalance(db, company.id, p.id, today) ?? 0, company.baseCurrency)
                         : '—'}
+                    </td>
+                    <td>
+                      {p.activityStatus === 'sleeping' ? <Badge tone="caution">Sleeping</Badge>
+                        : p.activityStatus === 'active' ? <Badge tone="positive">Active</Badge>
+                        : <Badge tone="caution">Not recorded</Badge>}
+                      <ActionForm action={setPartnerActivityStatusAction} submit="Set" inline variant="secondary">
+                        <input type="hidden" name="partnerId" value={p.id} />
+                        <Select name="activityStatus" defaultValue={p.activityStatus ?? 'active'} className="!w-28">
+                          <option value="active">Active</option>
+                          <option value="sleeping">Sleeping</option>
+                        </Select>
+                      </ActionForm>
                     </td>
                     <td className="w-[26rem]">
                       <ActionForm action={setPartnerShareAction} submit="Change share" inline variant="secondary">
@@ -98,13 +110,21 @@ export function PartnersPanel({ company }: { company: typeof companies.$inferSel
           )}
           <Disclosure summary="Add a partner">
             <ActionForm action={addPartnerAction} submit="Add partner">
-              <div className="grid grid-cols-5 gap-3 max-w-4xl">
+              <div className="grid grid-cols-6 gap-3 max-w-5xl">
                 <Field label="Name"><Input name="name" required /></Field>
                 <Field label="Share of profits (%)"><Input name="share" type="number" step="0.01" min="0" max="100" required /></Field>
                 <Field label="Joined"><Input name="joinedOn" type="date" required /></Field>
                 <Field label="PPSN (optional)"><Input name="ppsn" /></Field>
                 <Field label="Precedent partner">
                   <Select name="precedent" defaultValue=""><option value="">No</option><option value="on">Yes</option></Select>
+                </Field>
+                <Field label="Active or sleeping"
+                  help="A sleeping partner's share is not earned income (TCA s.1008(5)), so no earned income credit is given on it.">
+                  <Select name="activityStatus" defaultValue="">
+                    <option value="">Not recorded</option>
+                    <option value="active">Active</option>
+                    <option value="sleeping">Sleeping</option>
+                  </Select>
                 </Field>
               </div>
             </ActionForm>
