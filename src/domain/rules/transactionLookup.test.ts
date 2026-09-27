@@ -12,7 +12,7 @@ import {
 import {
   ingestSi692025Reg5, ingestSi692025Reg8, ingestSi692025Reg9, deriveSi692025Rules, SI_69_2025_MD_PATH,
 } from './si692025Ingestion';
-import { lookupTransactionRules, identifyTopics } from './transactionLookup';
+import { lookupTransactionRules, identifyTopics, transactionContextFromQueryParams } from './transactionLookup';
 import { deriveVatScopeRules } from './vatScopeIngestion';
 import { irishTaxRules } from '@/db/schema';
 import { eq } from 'drizzle-orm';
@@ -787,5 +787,76 @@ describe('lookupTransactionRules — issue #143 findings D, E, F, G', () => {
     const keys = result.applicableRules.map((r) => r.ruleKey);
     expect(keys).not.toContain('vat.rate_hospitality_9pct_not_modelled');
     expect(keys).not.toContain('vat.rate_restaurant_catering_reduced_current');
+  });
+});
+
+describe('transactionContextFromQueryParams (issue #447: the lookup API parser)', () => {
+  it('parses a full context from query params', () => {
+    const parsed = transactionContextFromQueryParams({
+      transactionDate: '2026-09-18',
+      amountMinor: '1000',
+      currency: 'EUR',
+      vatRegistered: 'true',
+      supplierCountry: 'US',
+      supplyType: 'services',
+      description: 'Claude API usage',
+      businessUsePercent: '100',
+      invoiceAvailable: 'true',
+      annualTurnoverCurrentYearMinor: '500000',
+    });
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) return;
+    expect(parsed.transaction.transactionDate).toBe('2026-09-18');
+    expect(parsed.transaction.amountMinor).toBe(1000);
+    expect(parsed.transaction.currency).toBe('EUR');
+    expect(parsed.transaction.vatRegistered).toBe(true);
+    expect(parsed.transaction.supplyType).toBe('services');
+    expect(parsed.transaction.businessUsePercent).toBe(100);
+    expect(parsed.transaction.annualTurnoverCurrentYearMinor).toBe(500000);
+  });
+
+  it('rejects a missing or malformed transactionDate', () => {
+    expect(transactionContextFromQueryParams({ amountMinor: '1000' }).ok).toBe(false);
+    expect(transactionContextFromQueryParams({ transactionDate: '18/09/2026', amountMinor: '1000' }).ok).toBe(false);
+  });
+
+  it('rejects a missing, zero, negative or fractional amount rather than rounding it', () => {
+    expect(transactionContextFromQueryParams({ transactionDate: '2026-09-18' }).ok).toBe(false);
+    const fractional = transactionContextFromQueryParams({ transactionDate: '2026-09-18', amountMinor: '10.50' });
+    expect(fractional.ok).toBe(false);
+    if (fractional.ok) return;
+    expect(fractional.error).toContain('integer');
+    expect(transactionContextFromQueryParams({ transactionDate: '2026-09-18', amountMinor: '0' }).ok).toBe(false);
+    expect(transactionContextFromQueryParams({ transactionDate: '2026-09-18', amountMinor: '-5' }).ok).toBe(false);
+  });
+
+  it('rejects a bad supplyType or boolean and keeps turnover in integer minor units', () => {
+    expect(transactionContextFromQueryParams({
+      transactionDate: '2026-09-18', amountMinor: '1000', supplyType: 'supplies',
+    }).ok).toBe(false);
+    expect(transactionContextFromQueryParams({
+      transactionDate: '2026-09-18', amountMinor: '1000', vatRegistered: 'yes',
+    }).ok).toBe(false);
+    expect(transactionContextFromQueryParams({
+      transactionDate: '2026-09-18', amountMinor: '1000', annualTurnoverCurrentYearMinor: '50000.5',
+    }).ok).toBe(false);
+  });
+
+  it('round-trips a parsed context through the lookup itself', () => {
+    const parsed = transactionContextFromQueryParams({
+      transactionDate: '2026-09-18', amountMinor: '1230',
+      supplierCountry: 'US', transactionType: 'AI_SaaS', supplierType: 'software_service',
+      vatRegistered: 'true', invoiceAvailable: 'true', businessUsePercent: '100',
+    });
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) return;
+    const result = lookupTransactionRules(db, { companyId, transaction: parsed.transaction });
+    expect(result.identifiedTopics).toContain('vat');
+    expect(result.applicableRules.length).toBeGreaterThan(0);
+    // Every applicable rule carries the citation the API promises.
+    for (const rule of result.applicableRules) {
+      expect(rule.citation.citation).toBeTruthy();
+      expect(rule.citation.sourceUrl).toMatch(/^https:/);
+    }
   });
 });

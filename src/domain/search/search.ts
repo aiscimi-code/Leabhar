@@ -6,6 +6,9 @@ import {
 } from '@/db/schema';
 import { parseAmount, MoneyError } from '../money';
 import { normaliseDescription } from '../banking/fingerprint';
+import {
+  searchProvisions, searchStatutoryRules, searchKnowledgeSources,
+} from './knowledgeBase';
 
 /**
  * Global search (README §36).
@@ -23,7 +26,8 @@ import { normaliseDescription } from '../banking/fingerprint';
 
 export type SearchEntityType =
   | 'bank_transaction' | 'document' | 'supplier' | 'customer'
-  | 'invoice' | 'account' | 'rule' | 'journal_entry' | 'fixed_asset' | 'vat_treatment';
+  | 'invoice' | 'account' | 'rule' | 'journal_entry' | 'fixed_asset' | 'vat_treatment'
+  | 'statutory_provision' | 'statutory_rule' | 'knowledge_source';
 
 export interface SearchResult {
   type: SearchEntityType;
@@ -328,6 +332,45 @@ export function search(
       matchedOn: 'VAT treatment',
       href: '/settings/rates',
       score: 55,
+    });
+  }
+
+  // ---- Statutory knowledge base (issue #445) ----
+  // Provisions, the rules derived from them and the source documents, so a
+  // phrase from a statute is findable from the same box as everything else.
+  for (const hit of searchProvisions(db, { companyId: params.companyId, query: raw })) {
+    results.push({
+      type: 'statutory_provision',
+      id: hit.provisionId,
+      title: `${hit.citation} — ${hit.heading}`,
+      subtitle: hit.sourceTitle,
+      matchedOn: hit.matchedOn,
+      href: `/statutes/provision/${hit.provisionId}`,
+      score: 62,
+    });
+  }
+
+  for (const hit of searchStatutoryRules(db, { companyId: params.companyId, query: raw })) {
+    results.push({
+      type: 'statutory_rule',
+      id: hit.ruleId,
+      title: hit.ruleName,
+      subtitle: `${hit.ruleKey} · ${hit.citation}`,
+      matchedOn: hit.matchedOn,
+      href: `/statutes/provision/${hit.provisionId}?rule=${hit.ruleId}`,
+      score: 68,
+    });
+  }
+
+  for (const hit of searchKnowledgeSources(db, { companyId: params.companyId, query: raw })) {
+    results.push({
+      type: 'knowledge_source',
+      id: hit.sourceId,
+      title: hit.title,
+      subtitle: hit.citation,
+      matchedOn: hit.matchedOn,
+      href: `/statutes?source=${hit.sourceId}`,
+      score: 58,
     });
   }
 
