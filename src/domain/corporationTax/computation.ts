@@ -8,8 +8,24 @@ import { nowIso, asIsoDate, type IsoDate } from '../dates';
 import { accountingYearContaining } from '../vat/apportionment';
 import {
   CT_RATE_TRADING_RULE_KEY, CT_RATE_HIGHER_RULE_KEY, CORPORATION_TAX_CURATED_RULES,
-  corporationTaxRateBasisPoints, nfgCitation,
+  nfgCitation,
 } from '../rules/corporationTaxCuration';
+import { auditRuleFigures } from '../rules/ruleFigures';
+
+/** A computation's figure audit (see ruleFigures.ts); shared by the functions one computation calls. */
+type FigureAudit = ReturnType<typeof auditRuleFigures>;
+
+/**
+ * A figure with the shipped curation constant as an explicit, flagged fallback:
+ * a rejected or never-ingested rule never stops this computation silently —
+ * the audit's findings say where the figure came from.
+ */
+function figureWithCurationFallback(audit: FigureAudit, ruleKey: string): number {
+  const f = audit.figure(ruleKey);
+  if (f.numericValue !== null) return f.numericValue;
+  if (f.curatedValue !== null) return f.curatedValue;
+  throw new Error(`No figure for rule "${ruleKey}" from the knowledge base or the shipped curation.`);
+}
 
 /**
  * The corporation tax computation for an accounting period (issue #211).
@@ -229,12 +245,20 @@ const daysBetween = (a: string, b: string) => Math.round((Date.parse(b) - Date.p
  * than the s.284 standard is flagged, and 100% in one year is treated as a
  * s.285A claim that needs the SEAI list confirmed.
  */
-export function capitalAllowances(db: AppDatabase, params: { companyId: string; from: string; to: string }): CapitalAllowancesResult {
+export function capitalAllowances(
+  db: AppDatabase,
+  params: { companyId: string; from: string; to: string },
+  figures?: FigureAudit,
+): CapitalAllowancesResult {
   const { companyId, from, to } = params;
+  // The audit is shared with the computation calling this, so its findings are
+  // reported once, by the caller; standalone callers get their own audit.
+  const ownsAudit = !figures;
+  const audit = figures ?? auditRuleFigures(db, { companyId, asOfDate: to, curated: CORPORATION_TAX_CURATED_RULES });
   const lines: CtLine[] = [];
   const findings: string[] = [];
-  const standardRate = CORPORATION_TAX_CURATED_RULES.find((r) => r.ruleKey === 'ct.wear_and_tear_rate')!.numericValue!;
-  const smallProceeds = CORPORATION_TAX_CURATED_RULES.find((r) => r.ruleKey === 'ct.balancing_charge_small_proceeds')!.numericValue!;
+  const standardRate = figureWithCurationFallback(audit, 'ct.wear_and_tear_rate');
+  const smallProceeds = figureWithCurationFallback(audit, 'ct.balancing_charge_small_proceeds');
   // s.284(2)(b): a period of less than a year gets that fraction of a year's allowance.
   const yearDays = daysBetween(`${Number(to.slice(0, 4)) - 1}${to.slice(4)}`, to);
   const periodDays = daysBetween(from, to) + 1;
@@ -337,6 +361,7 @@ export function capitalAllowances(db: AppDatabase, params: { companyId: string; 
       explanation: 'Assets disposed of for more than their unallowed cost, limited to the allowances made.',
     });
   }
+  if (ownsAudit) findings.push(...audit.findings());
   return { lines, findings };
 }
 
@@ -359,7 +384,7 @@ export interface CtBase {
 }
 
 /** Everything before loss relief, rates and surcharges: one period on its own. */
-export function computeBase(db: AppDatabase, params: { companyId: string; from: string; to: string }): CtBase {
+export function computeBase(db: AppDatabase, params: { companyId: string; from: string; to: string }, figures?: FigureAudit): CtBase {
   const { companyId, from, to } = params;
   const company = db.select().from(companies).where(eq(companies.id, companyId)).get();
   if (!company) throw new Error(`Company ${companyId} not found.`);
@@ -477,7 +502,7 @@ export function computeBase(db: AppDatabase, params: { companyId: string; from: 
   }
 
   // ---- Capital allowances (Part 9) ----
-  const ca = capitalAllowances(db, { companyId, from, to });
+  const ca = capitalAllowances(db, { companyId, from, to }, figures);
   lines.push(...ca.lines);
   findings.push(...ca.findings);
 
@@ -509,9 +534,12 @@ interface PeriodRun { from: string; to: string; base: CtBase; claim: LossClaim; 
  */
 export function computeCorporationTax(db: AppDatabase, params: { companyId: string; from: IsoDate; to: IsoDate }): CtComputation {
   const { companyId, from, to } = params;
-  const standard = corporationTaxRateBasisPoints(CT_RATE_TRADING_RULE_KEY);
-  const higher = corporationTaxRateBasisPoints(CT_RATE_HIGHER_RULE_KEY);
-  const ruleValue = (key: string) => CORPORATION_TAX_CURATED_RULES.find((r) => r.ruleKey === key)!.numericValue!;
+  // Every figure this computation reads comes from the stored rule in force on
+  // the period's end date, with its review status in the findings (issue #282).
+  const figures = auditRuleFigures(db, { companyId, asOfDate: to, curated: CORPORATION_TAX_CURATED_RULES });
+  const standard = figureWithCurationFallback(figures, CT_RATE_TRADING_RULE_KEY);
+  const higher = figureWithCurationFallback(figures, CT_RATE_HIGHER_RULE_KEY);
+  const ruleValue = (key: string) => figureWithCurationFallback(figures, key);
 
   // ---- The periods loss relief reaches: every earlier year with entries, and the next one ----
   const earliest = db.select({ d: journalEntries.entryDate }).from(journalEntries)
@@ -533,7 +561,7 @@ export function computeCorporationTax(db: AppDatabase, params: { companyId: stri
   const runs: PeriodRun[] = [];
   let pool = 0;
   for (const p of periods) {
-    const base = computeBase(db, { companyId, ...p });
+    const base = computeBase(db, { companyId, ...p }, figures);
     const profit = Math.max(base.adjustedMinor, 0);
     let loss = Math.max(-base.adjustedMinor, 0);
     const bf = Math.min(pool, profit);
@@ -610,7 +638,7 @@ export function computeCorporationTax(db: AppDatabase, params: { companyId: stri
     reason: 'Most owner-managed companies are close (controlled by five or fewer participators, or by directors). '
       + 'A company carrying on a profession or providing professional services is a service company.',
   });
-  const surcharge = closeCompanySurcharge(db, { companyId, from, to, status, base, higherBps: higher, standardBps: standard });
+  const surcharge = closeCompanySurcharge(db, { companyId, from, to, status, base, higherBps: higher, standardBps: standard }, figures);
 
   // ---- Payment and return dates (Part 41A) ----
   const prior = runs[currentIndex - 1];
@@ -647,6 +675,7 @@ export function computeCorporationTax(db: AppDatabase, params: { companyId: stri
   if (pending.length) {
     findings.push(`${pending.length} treatment(s) are suggested, not decided: the figures use the suggestion until a person chooses.`);
   }
+  findings.push(...figures.findings());
   findings.push('Not computed: motor vehicle limits (TCA Part 11), chargeable gains, charges on income, group relief '
     + 'and associated companies\' share of the surcharge threshold.');
 
@@ -686,9 +715,10 @@ export function section441Surcharge(deii: number, dti: number, distributions: nu
 export function closeCompanySurcharge(db: AppDatabase, params: {
   companyId: string; from: string; to: string; status: CompanyStatus; base: Pick<CtBase, 'adjustedMinor' | 'nonTradingIncomeMinor'>;
   higherBps: number; standardBps: number; distributionsMinor?: number;
-}): CtSurcharge {
+}, figures?: FigureAudit): CtSurcharge {
   const { status, base } = params;
-  const rule = (key: string) => CORPORATION_TAX_CURATED_RULES.find((r) => r.ruleKey === key)!.numericValue!;
+  const audit = figures ?? auditRuleFigures(db, { companyId: params.companyId, asOfDate: params.to, curated: CORPORATION_TAX_CURATED_RULES });
+  const rule = (key: string) => figureWithCurationFallback(audit, key);
   const citations = [cite('ct.close_company_definition'), cite('ct.distributable_income'), cite('ct.distributions_for_period')];
   const investment = Math.max(base.nonTradingIncomeMinor, 0);
   const trading = Math.max(base.adjustedMinor, 0);

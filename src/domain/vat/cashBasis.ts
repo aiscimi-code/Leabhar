@@ -2,6 +2,7 @@ import { and, eq, gte, lte, notInArray } from 'drizzle-orm';
 import type { AppDatabase } from '@/db';
 import { companies, invoices, customers } from '@/db/schema';
 import { SI_69_2025_CURATED_RULES } from '../rules/si692025Curation';
+import { resolveRuleFigure, type ResolvedRuleFigure } from '../rules/ruleFigures';
 import { addDays, addMonths, asIsoDate } from '../dates';
 
 /**
@@ -16,7 +17,7 @@ import { addDays, addMonths, asIsoDate } from '../dates';
 
 export interface CashBasisFinding {
   code: 'cash_basis_not_authorised' | 'cash_basis_turnover_over_threshold' | 'cash_basis_registered_customers_share'
-    | 'cash_basis_eligibility_unrecorded';
+    | 'cash_basis_eligibility_unrecorded' | 'cash_basis_threshold_rule_rejected' | 'cash_basis_threshold_rule_not_approved';
   title: string;
   detail: string;
 }
@@ -26,6 +27,21 @@ export const CASH_BASIS_TURNOVER_THRESHOLD_MINOR: number = SI_69_2025_CURATED_RU
   .find((r) => r.ruleKey === 'vat.cash_accounting_turnover_threshold')!.numericValue!;
 
 const eur = (minor: number) => `€${(minor / 100).toLocaleString('en-IE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+/**
+ * The s.80(1)(b) turnover threshold for this period, read from the stored rule
+ * in force on the period's start date (issue #282). A rejected or absent rule
+ * means the test cannot run, which is itself reported — never silently skipped.
+ */
+function turnoverThresholdFor(db: AppDatabase, params: { companyId: string; periodStart: string })
+  : ResolvedRuleFigure | null {
+  const curated = SI_69_2025_CURATED_RULES.find((r) => r.ruleKey === 'vat.cash_accounting_turnover_threshold');
+  if (!curated) return null;
+  return resolveRuleFigure(db, {
+    companyId: params.companyId, ruleKey: 'vat.cash_accounting_turnover_threshold',
+    asOfDate: params.periodStart, curated,
+  });
+}
 
 /**
  * Sales turnover (VAT-exclusive, base currency) in the 12 months ending on a
@@ -81,19 +97,32 @@ export function cashBasisFindings(db: AppDatabase, params: {
   }
 
   const turnover = salesTurnoverTwelveMonths(db, { companyId: params.companyId, endDate: params.periodEnd });
+  const threshold = turnoverThresholdFor(db, params);
+  const thresholdMinor = threshold?.numericValue ?? null;
+  if (threshold?.finding) {
+    findings.push({
+      code: threshold.status === 'rejected' ? 'cash_basis_threshold_rule_rejected' : 'cash_basis_threshold_rule_not_approved',
+      title: 'The s.80(1)(b) turnover threshold is not from an approved rule in this book',
+      detail: `${threshold.finding} ${threshold.status === 'rejected'
+        ? 'The turnover test cannot run until the rule is re-derived or the threshold restored: this check is not applied this period. '
+          + 'The shipped curation constant (€2,000,000, S.I. 69/2025 reg.8) is shown for reference only.'
+        : 'The figure below is the one that rule states.'}`,
+    });
+  }
   if (!company.cashBasisEligibility) {
     findings.push({
       code: 'cash_basis_eligibility_unrecorded',
       title: 'Which s.80(1) test the company meets is not recorded',
       detail: 'The cash receipts basis is available on turnover of no more than '
-        + `${eur(CASH_BASIS_TURNOVER_THRESHOLD_MINOR)} (s.80(1)(b)), or where at least 90% of turnover is to customers `
+        + `${eur(thresholdMinor ?? CASH_BASIS_TURNOVER_THRESHOLD_MINOR)} (s.80(1)(b)), or where at least 90% of turnover is to customers `
         + 'who are not VAT-registered (s.80(1)(a)). Record which one the authorisation rests on.',
     });
   }
-  if (company.cashBasisEligibility !== 'supplies_to_unregistered' && turnover.totalMinor > CASH_BASIS_TURNOVER_THRESHOLD_MINOR) {
+  if (thresholdMinor !== null && company.cashBasisEligibility !== 'supplies_to_unregistered'
+      && turnover.totalMinor > thresholdMinor) {
     findings.push({
       code: 'cash_basis_turnover_over_threshold',
-      title: `Sales of ${eur(turnover.totalMinor)} in the 12 months to ${turnover.to} exceed ${eur(CASH_BASIS_TURNOVER_THRESHOLD_MINOR)}`,
+      title: `Sales of ${eur(turnover.totalMinor)} in the 12 months to ${turnover.to} exceed ${eur(thresholdMinor)}`,
       detail: `Issued sales invoices less credit notes, ${turnover.from} to ${turnover.to}, VAT-exclusive. Above the `
         + 's.80(1)(b) threshold the cash receipts basis is not available on turnover; Revenue may cancel the '
         + 'authorisation (s.80(4)). Check with your adviser.',
