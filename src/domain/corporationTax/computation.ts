@@ -240,8 +240,9 @@ export function capitalAllowances(
   const findings: string[] = [];
   const standardRate = figureWithCurationFallback(audit, 'ct.wear_and_tear_rate');
   // The straight-line term follows the rule's rate (issue #490): 12.5% a year
-  // is 8 years, and an edited rule changes both together.
-  const standardYears = 10_000 / standardRate;
+  // is 8 years, and an edited rule changes both together. A rate that does not
+  // divide 100% evenly still runs a whole number of years (15%: into a seventh).
+  const standardYears = Math.ceil(10_000 / standardRate);
   const smallProceeds = figureWithCurationFallback(audit, 'ct.balancing_charge_small_proceeds');
   // s.284(2)(b): a period of less than a year gets that fraction of a year's allowance.
   const yearDays = daysBetween(`${Number(to.slice(0, 4)) - 1}${to.slice(4)}`, to);
