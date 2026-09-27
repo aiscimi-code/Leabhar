@@ -1,9 +1,9 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { customerDetail } from '@/lib/queries';
-import { Page, Panel, Badge, Empty, Field, Input, Stat } from '@/components/primitives';
+import { Page, Panel, Badge, Empty, Field, Input, Stat, Disclosure } from '@/components/primitives';
 import { ActionForm } from '@/components/ActionForm';
-import { setCustomerTermsAction, addCustomerContactAction, customerContactAction } from '@/app/actions';
+import { setCustomerTermsAction, addCustomerContactAction, customerContactAction, refundOnAccountAction } from '@/app/actions';
 import { PartyVatStatus } from '@/components/PartyVatStatus';
 import { money, date } from '@/lib/format';
 
@@ -14,7 +14,8 @@ export default async function CustomerPage({ params }: { params: Promise<{ id: s
   const { id } = await params;
   const detail = customerDetail(id);
   if (!detail) notFound();
-  const { customer, invoices, exposure, contacts, company } = detail;
+  const { customer, invoices, exposure, contacts, company, credit, banks } = detail;
+  const today = new Date().toISOString().slice(0, 10);
   const base = company.baseCurrency;
 
   return (
@@ -50,6 +51,50 @@ export default async function CustomerPage({ params }: { params: Promise<{ id: s
           </ActionForm>
         </div>
       </Panel>
+
+      {credit.totalMinor > 0 && (
+        <Panel title={`Credit in hand: ${money(credit.totalMinor, base)}`}
+          description="Open credit notes and money received on account. Apply a credit note from its invoice page; refund money on account here.">
+          <table className="ledger">
+            <thead><tr><th>What</th><th className="w-28">Date</th><th className="w-32 text-right">Amount</th><th className="w-72" /></tr></thead>
+            <tbody>
+              {credit.creditNotes.map((c) => (
+                <tr key={c.invoiceId}>
+                  <td><Link href={`/invoices/${c.invoiceId}`} className="hover:underline">Credit note {c.number}</Link></td>
+                  <td>{date(c.date)}</td>
+                  <td className="num">{money(c.remainingMinor, base)}</td>
+                  <td />
+                </tr>
+              ))}
+              {credit.onAccount.map((p) => (
+                <tr key={p.paymentId}>
+                  <td>On account{p.reference ? ` · ${p.reference}` : ''}</td>
+                  <td>{date(p.paymentDate)}</td>
+                  <td className="num">{money(p.onAccountMinor, base)}</td>
+                  <td>
+                    <Disclosure summary="Refund">
+                      <ActionForm action={refundOnAccountAction} submit="Refund"
+                        extra={{ paymentId: p.paymentId, customerId: customer.id }}>
+                        <Field label="Amount"><Input name="amount" required defaultValue={(p.onAccountMinor / 100).toFixed(2)} /></Field>
+                        <Field label="Bank line id (optional)" hint="The statement line the refund left by; or give a date and account below.">
+                          <Input name="bankTransactionId" />
+                        </Field>
+                        <Field label="Date"><Input name="date" type="date" defaultValue={today} /></Field>
+                        <Field label="From account">
+                          <select name="bankAccountId" className="border border-line-strong rounded px-2 py-1 bg-surface text-[12.5px]">
+                            {banks.map((b) => <option key={b.id} value={b.id}>{b.bankName} — {b.accountName}</option>)}
+                          </select>
+                        </Field>
+                        <Field label="Why"><Input name="reason" required placeholder="Overpaid" /></Field>
+                      </ActionForm>
+                    </Disclosure>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </Panel>
+      )}
 
       <Panel title="Contacts" description="The billing contact is who invoices are addressed to.">
         {contacts.length === 0 ? <Empty title="No contacts yet" /> : (

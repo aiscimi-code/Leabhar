@@ -3,6 +3,7 @@ import { onAccountForInvoice } from '@/domain/invoicing/onAccount';
 import { customerExposure, listCustomerContacts } from '@/domain/parties/customerAccount';
 import { listRecurringInvoices } from '@/domain/invoicing/recurringInvoices';
 import { salesInvoiceDocument } from '@/domain/invoicing/invoiceDocument';
+import { customerCredit } from '@/domain/invoicing/customerCredit';
 import { listStatementImports } from '@/domain/banking/import';
 import { and, eq, desc, sql, isNull, isNotNull, ne, or, inArray } from 'drizzle-orm';
 import { getDb } from '@/db';
@@ -851,7 +852,17 @@ export function invoiceDetail(invoiceId: string) {
   const missingParticulars = invoice.direction === 'sales'
     ? salesInvoiceDocument(db, { companyId: company.id, invoiceId }).missing : [];
 
-  return { invoice, lines, allocations, party, company, onAccount, missingParticulars };
+  // Credit notes this invoice could take, or invoices this credit note could
+  // be applied to: same party and direction, open, base currency (issue #402).
+  const counterparts = invoice.status === 'void' || invoice.outstandingMinor === 0
+    || invoice.currency !== company.baseCurrency ? [] : db.select().from(invoices).where(and(
+      eq(invoices.companyId, company.id), eq(invoices.direction, invoice.direction),
+      eq(invoices.isCreditNote, !invoice.isCreditNote), ne(invoices.status, 'void'), ne(invoices.status, 'written_off'),
+      ne(invoices.outstandingMinor, 0), eq(invoices.currency, company.baseCurrency),
+      invoice.customerId ? eq(invoices.customerId, invoice.customerId) : eq(invoices.supplierId, invoice.supplierId ?? ''),
+    )).orderBy(invoices.invoiceDate).all();
+
+  return { invoice, lines, allocations, party, company, onAccount, missingParticulars, counterparts };
 }
 
 /** One customer with its invoices (README §17). */
@@ -866,7 +877,9 @@ export function customerDetail(customerId: string) {
     .orderBy(desc(invoices.invoiceDate)).all();
   const exposure = customerExposure(db, { companyId: company.id, customerId });
   const contacts = listCustomerContacts(db, { companyId: company.id, customerId });
-  return { customer, invoices: customerInvoices, exposure, contacts, company };
+  const credit = customerCredit(db, { companyId: company.id, customerId });
+  const banks = db.select().from(bankAccounts).where(eq(bankAccounts.companyId, company.id)).all();
+  return { customer, invoices: customerInvoices, exposure, contacts, company, credit, banks };
 }
 
 /** One supplier with everything recorded against them (README §17). */

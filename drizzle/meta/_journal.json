@@ -162,6 +162,13 @@
       "when": 1790492670572,
       "tag": "0022_recurring_invoices",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "6",
+      "when": 1790495493500,
+      "tag": "0023_payment_refunds",
+      "breakpoints": true
     }
   ]
 }

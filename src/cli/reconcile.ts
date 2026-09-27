@@ -58,6 +58,7 @@ import { withdrawMatchRejection } from '@/domain/matching/service';
 import { allocatePaymentOnAccount, paymentsOnAccount } from '@/domain/invoicing/onAccount';
 import { reconciliationStatement } from '@/domain/banking/reconciliationStatement';
 import { salesInvoiceDocument } from '@/domain/invoicing/invoiceDocument';
+import { applyCreditNote, unapplyCreditNote, refundOnAccount, customerCredit } from '@/domain/invoicing/customerCredit';
 import { renderInvoicePdf } from '@/lib/invoicePdf';
 import { writeFileSync } from 'node:fs';
 import {
@@ -260,6 +261,12 @@ Books (once induction is done):
   post-recurring-invoices --actor "Name" [--up-to <date>]
       Raise every due occurrence once; one in a locked period is skipped and flagged
   list-recurring-invoices
+  apply-credit-note --credit-note <number|id> --invoice <number|id> --amount <12.30>
+      --actor "Name" [--date <date>] [--reason ...]  No cash; nothing posted
+  unapply-credit-note --payment <id> --actor "Name" --reason "..."
+  refund-on-account --payment <id> --amount <12.30> --actor "Name" --reason "..."
+      (--transaction <bank line id> | --date <date> --bank-account <id>)
+  customer-credit --customer <id>        Open credit notes and money on account
   invoice-pdf --invoice <number|id> --out <file.pdf>
       The sales invoice or credit note as a PDF; marked DRAFT, with the gaps
       listed, while a reg.20 particular is missing
@@ -1033,6 +1040,47 @@ export async function main(argv: string[], options: CliOptions = {}): Promise<nu
         print(postDueRecurringInvoices(db, {
           companyId, upTo: asIsoDate(getFlag(flags, 'up-to') ?? today()), actor: requireFlag(flags, 'actor'),
         }), format);
+        return 0;
+      }
+
+      case 'apply-credit-note': {
+        const base = db.select({ c: companies.baseCurrency }).from(companies).where(eq(companies.id, companyId)).get()!.c;
+        print(applyCreditNote(db, {
+          companyId,
+          creditNoteId: resolveInvoiceId(db, companyId, requireFlag(flags, 'credit-note')),
+          invoiceId: resolveInvoiceId(db, companyId, requireFlag(flags, 'invoice')),
+          amountMinor: parseAmount(requireFlag(flags, 'amount'), base),
+          date: asIsoDate(getFlag(flags, 'date') ?? today()),
+          actor: requireFlag(flags, 'actor'), reason: getFlag(flags, 'reason'),
+        }), format);
+        return 0;
+      }
+
+      case 'unapply-credit-note': {
+        unapplyCreditNote(db, {
+          companyId, paymentId: requireFlag(flags, 'payment'),
+          actor: requireFlag(flags, 'actor'), reason: requireFlag(flags, 'reason'),
+        });
+        print({ unapplied: true }, format);
+        return 0;
+      }
+
+      case 'refund-on-account': {
+        const base = db.select({ c: companies.baseCurrency }).from(companies).where(eq(companies.id, companyId)).get()!.c;
+        const line = getFlag(flags, 'transaction');
+        print(refundOnAccount(db, {
+          companyId, paymentId: requireFlag(flags, 'payment'),
+          amountMinor: parseAmount(requireFlag(flags, 'amount'), base),
+          ...(line ? { bankTransactionId: line } : {
+            date: asIsoDate(requireFlag(flags, 'date')), bankAccountId: requireFlag(flags, 'bank-account'),
+          }),
+          actor: requireFlag(flags, 'actor'), reason: requireFlag(flags, 'reason'),
+        }), format);
+        return 0;
+      }
+
+      case 'customer-credit': {
+        print(customerCredit(db, { companyId, customerId: requireFlag(flags, 'customer') }), format);
         return 0;
       }
 

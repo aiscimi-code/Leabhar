@@ -1,4 +1,4 @@
-import { and, eq } from 'drizzle-orm';
+import { and, eq, isNull } from 'drizzle-orm';
 import type { AppDatabase } from '@/db';
 import {
   payments, paymentAllocations, invoices, vatEntries, bankTransactions, auditEvents, reviewItems,
@@ -60,8 +60,21 @@ function reversePaymentSteps(db: AppDatabase, input: ReversePaymentInput): Rever
   if (payment.reversedAt) {
     throw new InvoicingError('This payment has already been reversed.', { paymentId: payment.id });
   }
+  if (payment.method === 'offset') {
+    throw new InvoicingError('This is a credit note applied to an invoice, not a payment. Unapply the credit note instead.',
+      { paymentId: payment.id });
+  }
   if (!payment.journalEntryId) {
     throw new InvoicingError('This payment has no journal entry to reverse.', { paymentId: payment.id });
+  }
+  // Money on account that was refunded (issue #402) cannot be un-received
+  // while the refund stands: reverse the refund first.
+  const standingRefund = db.select({ id: payments.id }).from(payments).where(and(
+    eq(payments.refundOfPaymentId, payment.id), isNull(payments.reversedAt),
+  )).get();
+  if (standingRefund) {
+    throw new InvoicingError('Some of this payment was refunded. Reverse the refund first.',
+      { paymentId: payment.id, refundPaymentId: standingRefund.id });
   }
 
   const bankTransaction = payment.bankTransactionId
