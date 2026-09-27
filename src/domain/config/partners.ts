@@ -3,6 +3,7 @@ import type { AppDatabase } from '@/db';
 import { companies, partners, partnerShares, accounts, auditEvents } from '@/db/schema';
 import { ids } from '@/lib/ids';
 import { nowIso, isIsoDate } from '../dates';
+import { multiplyRational } from '../money';
 
 /**
  * The partners of a partnership and their profit shares (issue #212).
@@ -14,9 +15,9 @@ import { nowIso, isIsoDate } from '../dates';
 
 export class PartnerError extends Error {}
 
-type Partner = typeof partners.$inferSelect;
+export type Partner = typeof partners.$inferSelect;
 
-function requirePartnership(db: AppDatabase, companyId: string) {
+export function requirePartnership(db: AppDatabase, companyId: string) {
   const company = db.select().from(companies).where(eq(companies.id, companyId)).get();
   if (!company) throw new PartnerError(`Company ${companyId} not found.`);
   if (company.entityType !== 'partnership') {
@@ -30,7 +31,7 @@ const checkShare = (bp: number) => {
   if (!Number.isInteger(bp) || bp < 0 || bp > 10_000) throw new PartnerError('A share is between 0% and 100%, in basis points.');
 };
 
-function nextCode(db: AppDatabase, companyId: string, prefix: string): string {
+export function nextCode(db: AppDatabase, companyId: string, prefix: string): string {
   const used = new Set(db.select({ code: accounts.code }).from(accounts)
     .where(and(eq(accounts.companyId, companyId), like(accounts.code, `${prefix}%`))).all().map((a) => a.code));
   for (let n = 1; n < 50; n++) {
@@ -142,19 +143,78 @@ export function shareSegments(db: AppDatabase, companyId: string, from: string, 
   });
 }
 
+/** The stretches of [from, to] over which the partners' shares do not add up to 100%. */
+export function shareGaps(
+  db: AppDatabase, companyId: string, from: string, to: string,
+): Array<{ from: string; to: string; totalBasisPoints: number }> {
+  return shareSegments(db, companyId, from, to)
+    .map((seg) => ({ seg, total: seg.shares.reduce((s, x) => s + x.shareBasisPoints, 0) }))
+    .filter((s) => s.total !== 10_000)
+    .map((s) => ({ from: s.seg.from, to: s.seg.to, totalBasisPoints: s.total }));
+}
+
 /** What is wrong with the partnership's record for a period. */
 export function partnershipFindings(db: AppDatabase, companyId: string, from: string, to: string): string[] {
-  const findings: string[] = [];
-  for (const seg of shareSegments(db, companyId, from, to)) {
-    const total = seg.shares.reduce((s, x) => s + x.shareBasisPoints, 0);
-    if (total !== 10_000) {
-      findings.push(`From ${seg.from} to ${seg.to} the partners' shares add up to ${total / 100}%, not 100%. `
-        + 'Record each partner\'s share so the profit can be allocated.');
-    }
-  }
+  const findings = shareGaps(db, companyId, from, to).map((gap) =>
+    `From ${gap.from} to ${gap.to} the partners' shares add up to ${gap.totalBasisPoints / 100}%, not 100%. `
+    + 'Record each partner\'s share so the profit can be allocated.');
   const all = db.select().from(partners).where(eq(partners.companyId, companyId)).all();
   if (!all.some((p) => p.isPrecedentPartner && (!p.leftOn || p.leftOn > to))) {
     findings.push('No precedent partner is recorded. The precedent partner makes the partnership return (Form 1 (Firms), TCA s.1007).');
   }
   return findings;
+}
+
+export interface PartnerAllocation {
+  partner: Partner;
+  amountMinor: number;
+  /** The partner's share of the period, weighted by days through share changes. */
+  weightedShareBasisPoints: number;
+}
+
+/**
+ * Allocate an amount over [from, to] between the partners by the shares in
+ * force, day by day through a change (s.1008) — the one allocation the
+ * year-end close and the income tax computation both use, so the books and
+ * the tax return cannot disagree. Rounding can leave the parts a cent off the
+ * whole; that residue goes to the precedent partner, or the partner who
+ * joined first, so the parts always add up to the amount exactly.
+ *
+ * Shares that do not add up to 100% are allocated as recorded and the gap is
+ * reported by `shareGaps`; the allocation never guesses a missing share.
+ */
+export function allocateByShares(
+  db: AppDatabase, companyId: string, params: { from: string; to: string; amountMinor: number },
+): PartnerAllocation[] {
+  const totalDays = Math.round((Date.parse(params.to) - Date.parse(params.from)) / 86_400_000) + 1;
+  const partnersById = new Map(db.select().from(partners)
+    .where(eq(partners.companyId, companyId)).all()
+    .sort((a, b) => a.joinedOn.localeCompare(b.joinedOn) || a.name.localeCompare(b.name))
+    .map((p) => [p.id, p]));
+  const parts = new Map<string, { amountMinor: number; shareDays: number }>();
+  for (const seg of shareSegments(db, companyId, params.from, params.to)) {
+    const segDays = Math.round((Date.parse(seg.to) - Date.parse(seg.from)) / 86_400_000) + 1;
+    const segAmount = multiplyRational(params.amountMinor, segDays, totalDays);
+    for (const s of seg.shares) {
+      const cur = parts.get(s.partner.id) ?? { amountMinor: 0, shareDays: 0 };
+      cur.amountMinor += multiplyRational(segAmount, s.shareBasisPoints, 10_000);
+      cur.shareDays += s.shareBasisPoints * segDays;
+      parts.set(s.partner.id, cur);
+    }
+  }
+  const rows: PartnerAllocation[] = [...partnersById.values()]
+    .filter((p) => parts.has(p.id))
+    .map((p) => {
+      const part = parts.get(p.id)!;
+      return { partner: p, amountMinor: part.amountMinor, weightedShareBasisPoints: Math.round(part.shareDays / totalDays) };
+    });
+  // Only a rounding residue is placed, and only when the shares add up to
+  // 100% throughout: with a gap, the unallocated part is the gap itself, and
+  // giving it to a partner would be guessing their share.
+  const residue = params.amountMinor - rows.reduce((s, r) => s + r.amountMinor, 0);
+  if (rows.length > 0 && residue !== 0 && shareGaps(db, companyId, params.from, params.to).length === 0) {
+    const taker = rows.find((r) => r.partner.isPrecedentPartner && !r.partner.leftOn) ?? rows[0]!;
+    taker.amountMinor += residue;
+  }
+  return rows;
 }

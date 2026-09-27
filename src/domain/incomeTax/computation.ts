@@ -9,7 +9,7 @@ import {
 } from '../corporationTax/computation';
 import { INCOME_TAX_CURATED_RULES } from '../rules/incomeTaxCuration';
 import { resolveRuleFigure, type ResolvedRuleFigure } from '../rules/ruleFigures';
-import { shareSegments, partnershipFindings } from '../config/partners';
+import { allocateByShares, partnershipFindings } from '../config/partners';
 
 /**
  * Income tax on a sole trader's or partnership's trading profits for a year
@@ -201,23 +201,18 @@ class IncomeTaxRun {
     };
   }
 
-  /** Who is taxed on the result: the owner, or each partner by their shares, day by day through changes (s.1008). */
+  /**
+   * Who is taxed on the result: the owner, or each partner by their shares,
+   * day by day through changes (s.1008) — the one allocation the year-end
+   * close and Form 1 (Firms) also use (`allocateByShares`).
+   */
   private sharesOf(result: number, from: string, to: string): Array<{ name: string; partnerId: string | null; share: number }> {
     if (this.company.entityType === 'sole_trader') {
       return [{ name: this.company.legalName, partnerId: null, share: result }];
     }
     this.findings.push(...partnershipFindings(this.db, this.companyId, from, to));
-    const byPartner = new Map<string, { name: string; profit: number }>();
-    const total = days(from, to);
-    for (const seg of shareSegments(this.db, this.companyId, from, to)) {
-      const segProfit = multiplyRational(result, days(seg.from, seg.to), total);
-      for (const s of seg.shares) {
-        const cur = byPartner.get(s.partner.id) ?? { name: s.partner.name, profit: 0 };
-        cur.profit += multiplyRational(segProfit, s.shareBasisPoints, 10_000);
-        byPartner.set(s.partner.id, cur);
-      }
-    }
-    return [...byPartner].map(([partnerId, p]) => ({ name: p.name, partnerId, share: p.profit }));
+    return allocateByShares(this.db, this.companyId, { from, to, amountMinor: result })
+      .map((a) => ({ name: a.partner.name, partnerId: a.partner.id, share: a.amountMinor }));
   }
 
   /** The basis period for a year and the profit assessed on it (ss.65-67). */

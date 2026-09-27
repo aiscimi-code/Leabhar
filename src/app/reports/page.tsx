@@ -42,6 +42,9 @@ export default async function ReportsPage({ searchParams }: {
           </a>
           <LinkButton href="/reports/trial-balance">Trial balance</LinkButton>
           <LinkButton href="/reports/year-end">Year-end pack</LinkButton>
+          {company.entityType === 'partnership' && (
+            <LinkButton href="/reports/partners">Partners</LinkButton>
+          )}
         </>
       }
     >

@@ -239,6 +239,13 @@
       "when": 1790512472886,
       "tag": "0033_robust_zemo",
       "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "6",
+      "when": 1790516522575,
+      "tag": "0034_partner_loans",
+      "breakpoints": true
     }
   ]
 }

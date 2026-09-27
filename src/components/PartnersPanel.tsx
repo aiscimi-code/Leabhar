@@ -1,11 +1,13 @@
 import { Panel, Badge, Field, Input, Select, Disclosure, Empty } from '@/components/primitives';
 import { ActionForm } from '@/components/ActionForm';
-import { addPartnerAction, setPartnerShareAction } from '@/app/partners-actions';
-import { date } from '@/lib/format';
+import { addPartnerAction, setPartnerShareAction, recordPartnerLoanAction } from '@/app/partners-actions';
+import { date, money } from '@/lib/format';
+import { asIsoDate } from '@/domain/dates';
 import { getDb } from '@/db';
 import { partners } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { partnerSharesOn, partnershipFindings } from '@/domain/config/partners';
+import { partnerLoanBalance } from '@/domain/partnerships/loans';
 import type { companies } from '@/db/schema';
 
 /**
@@ -15,7 +17,7 @@ import type { companies } from '@/db/schema';
  */
 export function PartnersPanel({ company }: { company: typeof companies.$inferSelect }) {
   const kind = company.entityType === 'sole_trader' ? 'Sole trader' : company.entityType === 'partnership' ? 'Partnership' : 'Company';
-  const today = new Date().toISOString().slice(0, 10);
+  const today = asIsoDate(new Date().toISOString().slice(0, 10));
   const db = getDb();
   const all = company.entityType === 'partnership'
     ? db.select().from(partners).where(eq(partners.companyId, company.id)).all() : [];
@@ -41,13 +43,23 @@ export function PartnersPanel({ company }: { company: typeof companies.$inferSel
         <>
           {all.length === 0 ? <Empty title="No partners recorded" /> : (
             <table className="ledger">
-              <thead><tr><th>Partner</th><th>Joined</th><th className="text-right">Share today</th><th /></tr></thead>
+              <thead>
+                <tr>
+                  <th>Partner</th><th>Joined</th><th className="text-right">Share today</th>
+                  <th className="text-right">Loan owed to them</th><th />
+                </tr>
+              </thead>
               <tbody>
                 {all.map((p) => (
                   <tr key={p.id}>
                     <td>{p.name} {p.isPrecedentPartner && <Badge tone="positive">Precedent partner</Badge>}</td>
                     <td>{date(p.joinedOn)}</td>
                     <td className="text-right num">{((shares.get(p.id) ?? 0) / 100).toFixed(2)}%</td>
+                    <td className="text-right num">
+                      {p.loanAccountId
+                        ? money(partnerLoanBalance(db, company.id, p.id, today) ?? 0, company.baseCurrency)
+                        : '—'}
+                    </td>
                     <td className="w-[26rem]">
                       <ActionForm action={setPartnerShareAction} submit="Change share" inline variant="secondary">
                         <input type="hidden" name="partnerId" value={p.id} />
@@ -61,6 +73,29 @@ export function PartnersPanel({ company }: { company: typeof companies.$inferSel
             </table>
           )}
           {findings.map((f, i) => <div key={i} className="px-4 py-1 text-[12px] text-caution"><Badge tone="caution">Check</Badge> {f}</div>)}
+          {all.length > 0 && (
+            <Disclosure summary="Record a partner loan">
+              <ActionForm action={recordPartnerLoanAction} submit="Record loan">
+                <div className="grid grid-cols-5 gap-3 max-w-4xl">
+                  <Field label="Partner">
+                    <Select name="partnerId" required defaultValue="">
+                      <option value="" disabled>Choose…</option>
+                      {all.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+                    </Select>
+                  </Field>
+                  <Field label="Direction">
+                    <Select name="direction" defaultValue="advanced">
+                      <option value="advanced">Partner lends the firm</option>
+                      <option value="repaid">Firm repays the partner</option>
+                    </Select>
+                  </Field>
+                  <Field label="Amount"><Input name="amount" type="number" step="0.01" min="0.01" required /></Field>
+                  <Field label="Date"><Input name="date" type="date" defaultValue={today} required /></Field>
+                  <Field label="Narrative (optional)"><Input name="narrative" /></Field>
+                </div>
+              </ActionForm>
+            </Disclosure>
+          )}
           <Disclosure summary="Add a partner">
             <ActionForm action={addPartnerAction} submit="Add partner">
               <div className="grid grid-cols-5 gap-3 max-w-4xl">

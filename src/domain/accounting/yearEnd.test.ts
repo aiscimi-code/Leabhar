@@ -10,6 +10,7 @@ import { computeCorporationTax } from '../corporationTax/computation';
 import {
   journalEntries, accountingPeriods, auditEvents,
 } from '@/db/schema';
+import { addPartner, setPartnerShare, allocateByShares } from '../config/partners';
 import { makeDate } from '../dates';
 import type { AppDatabase } from '@/db';
 
@@ -252,5 +253,154 @@ describe('closeFinancialYear', () => {
       companyId, from: makeDate(2026, 1, 1), to: makeDate(2026, 12, 31),
     });
     expect(pl2026.netProfit.valueMinor).toBe(400_000);
+  });
+});
+
+describe('closeFinancialYear for a partnership (issue #375)', () => {
+  let db: AppDatabase;
+  let companyId: string;
+  let byCode: Record<string, string>;
+  let acc: Record<string, string>;
+  let fy2025: string;
+  let aoife: { id: string; currentAccountId: string | null };
+  let brian: { id: string; currentAccountId: string | null };
+
+  beforeEach(() => {
+    ({ db } = createTestDatabase());
+    const created = createCompany(db, {
+      legalName: 'Byrne & Walsh', entityType: 'partnership', tradeCommencedOn: '2024-01-01',
+      vatRegistrationStatus: 'registered', seedYears: [2025, 2026],
+    });
+    companyId = created.companyId;
+    byCode = created.accountsByCode;
+    acc = created.accountsByKey;
+    fy2025 = db.select().from(accountingPeriods)
+      .where(and(
+        eq(accountingPeriods.companyId, companyId),
+        eq(accountingPeriods.kind, 'financial_year'),
+        eq(accountingPeriods.name, 'FY 2025'),
+      )).get()!.id;
+    aoife = addPartner(db, {
+      companyId, name: 'Aoife', shareBasisPoints: 5_000, joinedOn: '2024-01-01',
+      recordedBy: 'Aoife', isPrecedentPartner: true,
+    });
+    brian = addPartner(db, { companyId, name: 'Brian', shareBasisPoints: 5_000, joinedOn: '2024-01-01', recordedBy: 'Aoife' });
+  });
+
+  /** A year with 10,000.00 of sales and 5,000.00 of costs: a 5,000.00 result. */
+  const postAYearsTrading = () => {
+    postJournalEntry(db, {
+      companyId, entryDate: makeDate(2025, 3, 31), narrative: 'Sales for the first quarter',
+      sourceType: 'sales_invoice', baseCurrency: 'EUR',
+      lines: [
+        { accountId: acc['bank_control']!, debitMinor: 1_000_000 },
+        { accountId: byCode['4000']!, creditMinor: 1_000_000 },
+      ],
+    });
+    postJournalEntry(db, {
+      companyId, entryDate: makeDate(2025, 9, 30), narrative: 'Costs for the year',
+      sourceType: 'purchase_invoice', baseCurrency: 'EUR',
+      lines: [
+        { accountId: byCode['6000']!, debitMinor: 500_000 },
+        { accountId: acc['bank_control']!, creditMinor: 500_000 },
+      ],
+    });
+  };
+
+  it("allocates the year's result to the partners' current accounts, not to reserves", () => {
+    postAYearsTrading();
+    const close = closeFinancialYear(db, { companyId, periodId: fy2025 });
+
+    expect(close.netResultMinor).toBe(500_000);
+    expect(close.allocation).toEqual([
+      { partnerId: aoife.id, partnerName: 'Aoife', amountMinor: 250_000 },
+      { partnerId: brian.id, partnerName: 'Brian', amountMinor: 250_000 },
+    ]);
+    // Each partner's own current account carries their share; reserves do not.
+    expect(accountBalance(db, { companyId, accountId: aoife.currentAccountId!, asOf: makeDate(2025, 12, 31) })).toBe(250_000);
+    expect(accountBalance(db, { companyId, accountId: brian.currentAccountId!, asOf: makeDate(2025, 12, 31) })).toBe(250_000);
+    expect(accountBalance(db, { companyId, accountId: acc['retained_earnings']!, asOf: makeDate(2025, 12, 31) })).toBe(0);
+
+    const tb = trialBalance(db, { companyId, asOf: makeDate(2025, 12, 31) });
+    expect(tb.balanced).toBe(true);
+    expect(getYearEndClose(db, { companyId, periodId: fy2025 })).toMatchObject({
+      netResultMinor: 500_000,
+      reversed: false,
+    });
+  });
+
+  it('allocates day by day through a share change, and the parts add up exactly', () => {
+    postAYearsTrading();
+    setPartnerShare(db, { companyId, partnerId: aoife.id, shareBasisPoints: 7_000, effectiveFrom: '2025-07-02', recordedBy: 'Aoife' });
+    setPartnerShare(db, { companyId, partnerId: brian.id, shareBasisPoints: 3_000, effectiveFrom: '2025-07-02', recordedBy: 'Aoife' });
+
+    const close = closeFinancialYear(db, { companyId, periodId: fy2025 });
+
+    // 182 days at 50/50, 183 days at 70/30 of 5,000: day-weighted shares,
+    // with the rounding residue (a cent or two) going to the precedent partner.
+    const seg1 = Math.round(500_000 * 182 / 365);
+    const seg2 = Math.round(500_000 * 183 / 365);
+    const aoifeExpected = Math.round(seg1 * 0.5) + Math.round(seg2 * 0.7);
+    const brianExpected = Math.round(seg1 * 0.5) + Math.round(seg2 * 0.3);
+    const byName = Object.fromEntries(close.allocation.map((a) => [a.partnerName, a.amountMinor]));
+    expect(close.allocation.reduce((s, a) => s + a.amountMinor, 0)).toBe(500_000);
+    expect(Math.abs(byName.Aoife! - aoifeExpected)).toBeLessThanOrEqual(2);
+    expect(Math.abs(byName.Brian! - brianExpected)).toBeLessThanOrEqual(2);
+
+    // The books carry exactly what the one allocation function computed, so
+    // the close and the Form 1 (Firms) statement cannot disagree.
+    expect(close.allocation).toEqual(allocateByShares(db, companyId, {
+      from: '2025-01-01', to: '2025-12-31', amountMinor: 500_000,
+    }).map((a) => ({ partnerId: a.partner.id, partnerName: a.partner.name, amountMinor: a.amountMinor })));
+  });
+
+  it('refuses to close when the partners\' shares do not add up to 100%', () => {
+    postAYearsTrading();
+    setPartnerShare(db, { companyId, partnerId: aoife.id, shareBasisPoints: 6_000, effectiveFrom: '2025-01-01', recordedBy: 'Aoife' });
+    // Aoife 6,000 and Brian 5,000: 110%.
+    expect(() => closeFinancialYear(db, { companyId, periodId: fy2025 }))
+      .toThrow(/do not add up to 100%/);
+    // And nothing was posted.
+    expect(accountBalance(db, { companyId, accountId: aoife.currentAccountId!, asOf: makeDate(2025, 12, 31) })).toBe(0);
+    expect(accountBalance(db, { companyId, accountId: byCode['4000']!, asOf: makeDate(2025, 12, 31) })).toBe(1_000_000);
+  });
+
+  it('allocates a loss to the partners\' current accounts by debit', () => {
+    postJournalEntry(db, {
+      companyId, entryDate: makeDate(2025, 6, 30), narrative: 'A bad year',
+      sourceType: 'manual_adjustment', baseCurrency: 'EUR',
+      lines: [
+        { accountId: byCode['6000']!, debitMinor: 800_000 },
+        { accountId: acc['bank_control']!, creditMinor: 800_000 },
+      ],
+    });
+    const close = closeFinancialYear(db, { companyId, periodId: fy2025 });
+    expect(close.netResultMinor).toBe(-800_000);
+    expect(close.allocation.map((a) => a.amountMinor)).toEqual([-400_000, -400_000]);
+    expect(accountBalance(db, { companyId, accountId: aoife.currentAccountId!, asOf: makeDate(2025, 12, 31) })).toBe(-400_000);
+  });
+
+  it('refuses to close a partnership with no partners recorded', () => {
+    const { db: emptyDb } = createTestDatabase();
+    const created = createCompany(emptyDb, {
+      legalName: 'Nobody & Co', entityType: 'partnership', tradeCommencedOn: '2024-01-01',
+      vatRegistrationStatus: 'registered', seedYears: [2025],
+    });
+    const fy = emptyDb.select().from(accountingPeriods)
+      .where(and(
+        eq(accountingPeriods.companyId, created.companyId),
+        eq(accountingPeriods.kind, 'financial_year'),
+        eq(accountingPeriods.name, 'FY 2025'),
+      )).get()!.id;
+    postJournalEntry(emptyDb, {
+      companyId: created.companyId, entryDate: makeDate(2025, 3, 31), narrative: 'Sales',
+      sourceType: 'sales_invoice', baseCurrency: 'EUR',
+      lines: [
+        { accountId: created.accountsByKey['bank_control']!, debitMinor: 1_000_000 },
+        { accountId: created.accountsByCode['4000']!, creditMinor: 1_000_000 },
+      ],
+    });
+    expect(() => closeFinancialYear(emptyDb, { companyId: created.companyId, periodId: fy }))
+      .toThrow(/none is recorded/);
   });
 });

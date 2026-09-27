@@ -18,6 +18,12 @@ export const partners = sqliteTable('partners', {
   leftOn: text('left_on'),
   capitalAccountId: text('capital_account_id').references(() => accounts.id),
   currentAccountId: text('current_account_id').references(() => accounts.id),
+  /**
+   * Money the partner has lent the firm (issue #314). A loan is a liability of
+   * the partnership, not capital: it sits in its own account, created on the
+   * first loan, so a partner who is owed both ways can be read apart.
+   */
+  loanAccountId: text('loan_account_id').references(() => accounts.id),
   recordedBy: text('recorded_by').notNull(),
   ...timestamps,
 }, (t) => [index('partners_company_idx').on(t.companyId)]);
