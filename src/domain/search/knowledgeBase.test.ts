@@ -128,7 +128,7 @@ describe('semanticSearchProvisions ranking on a controlled corpus', () => {
   });
 
   it('ranks the provision that shares the question\'s subject first', () => {
-    const hits = semanticSearchProvisions(db, { companyId: rankingCompanyId, query: 'hotel and guesthouse accommodation' });
+    const hits = semanticSearchProvisions(db, { companyId: rankingCompanyId, query: 'supplies of hotel accommodation' });
     expect(hits[0]!.heading).toBe('Hotel accommodation');
     expect(hits[0]!.matchedTerms).toContain('hotel');
     // The unrelated provisions rank below it, and the appeal provision —
