@@ -58,6 +58,7 @@ import { withdrawMatchRejection } from '@/domain/matching/service';
 import { allocatePaymentOnAccount, paymentsOnAccount } from '@/domain/invoicing/onAccount';
 import { reconciliationStatement } from '@/domain/banking/reconciliationStatement';
 import { salesInvoiceDocument } from '@/domain/invoicing/invoiceDocument';
+import { createInvoice } from '@/domain/invoicing/invoices';
 import { applyCreditNote, unapplyCreditNote, refundOnAccount, customerCredit } from '@/domain/invoicing/customerCredit';
 import { renderInvoicePdf } from '@/lib/invoicePdf';
 import { writeFileSync } from 'node:fs';
@@ -261,6 +262,9 @@ Books (once induction is done):
   post-recurring-invoices --actor "Name" [--up-to <date>]
       Raise every due occurrence once; one in a locked period is skipped and flagged
   list-recurring-invoices
+  create-debit-note --invoice <number|id> --description "..." --net <12.30>
+      --account <code> --vat-treatment <code> --actor "Name" [--date <date>]
+      An additional charge against that invoice, posted like an invoice
   apply-credit-note --credit-note <number|id> --invoice <number|id> --amount <12.30>
       --actor "Name" [--date <date>] [--reason ...]  No cash; nothing posted
   unapply-credit-note --payment <id> --actor "Name" --reason "..."
@@ -1039,6 +1043,26 @@ export async function main(argv: string[], options: CliOptions = {}): Promise<nu
       case 'post-recurring-invoices': {
         print(postDueRecurringInvoices(db, {
           companyId, upTo: asIsoDate(getFlag(flags, 'up-to') ?? today()), actor: requireFlag(flags, 'actor'),
+        }), format);
+        return 0;
+      }
+
+      case 'create-debit-note': {
+        const originalId = resolveInvoiceId(db, companyId, requireFlag(flags, 'invoice'));
+        const original = db.select().from(invoices).where(eq(invoices.id, originalId)).get()!;
+        const base = db.select({ c: companies.baseCurrency }).from(companies).where(eq(companies.id, companyId)).get()!.c;
+        print(createInvoice(db, {
+          companyId, direction: original.direction, invoiceDate: asIsoDate(getFlag(flags, 'date') ?? today()),
+          customerId: original.customerId, supplierId: original.supplierId,
+          currency: original.currency !== base ? original.currency : undefined,
+          isDebitNote: true, debitNoteOfId: original.id,
+          lines: [{
+            description: requireFlag(flags, 'description'),
+            netMinor: parseAmount(requireFlag(flags, 'net'), original.currency),
+            accountId: resolveAccountId(db, companyId, requireFlag(flags, 'account')),
+            vatTreatmentId: resolveVatTreatmentId(db, companyId, requireFlag(flags, 'vat-treatment')),
+          }],
+          actor: requireFlag(flags, 'actor'),
         }), format);
         return 0;
       }

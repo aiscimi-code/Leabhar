@@ -123,6 +123,8 @@ npm run cli -- post-recurring-invoices --actor "Name" [--up-to <date>]
     # in a locked accounting period or a locked/filed VAT period is skipped and
     # becomes a review item, never moved
 npm run cli -- list-recurring-invoices
+npm run cli -- create-debit-note --invoice <n> --description "..." --net <12.30> --account <code>
+    --vat-treatment <code> --actor "Name"             # an additional charge against that invoice
 npm run cli -- customer-credit --customer <id>        # open credit notes + money on account
 npm run cli -- apply-credit-note --credit-note <n> --invoice <n> --amount <12.30> --actor "Name"
     # settles the invoice from the credit note; no cash, nothing posted

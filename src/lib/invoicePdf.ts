@@ -43,7 +43,7 @@ export async function renderInvoicePdf(doc: InvoiceDocument): Promise<Uint8Array
   const pdf = await PDFDocument.create();
   const regular = await pdf.embedFont(StandardFonts.Helvetica);
   const bold = await pdf.embedFont(StandardFonts.HelveticaBold);
-  const title = doc.kind === 'credit_note' ? 'Credit note' : 'Invoice';
+  const title = doc.kind === 'credit_note' ? 'Credit note' : doc.kind === 'debit_note' ? 'Debit note' : 'Invoice';
   pdf.setTitle(`${title} ${doc.number ?? ''}`.trim());
   pdf.setProducer('Leabhar');
   pdf.setCreator('Leabhar');
@@ -84,8 +84,9 @@ export async function renderInvoicePdf(doc: InvoiceDocument): Promise<Uint8Array
     [`${title} no.`, doc.number ?? '—'],
     ['Date of issue', date(doc.issueDate)],
     ...(doc.supplyDate ? [['Date of supply', date(doc.supplyDate)] as [string, string]] : []),
-    ...(doc.dueDate && doc.kind === 'invoice' ? [['Due', date(doc.dueDate)] as [string, string]] : []),
+    ...(doc.dueDate && doc.kind !== 'credit_note' ? [['Due', date(doc.dueDate)] as [string, string]] : []),
     ...(doc.creditsInvoiceNumber ? [['Credits invoice', doc.creditsInvoiceNumber] as [string, string]] : []),
+    ...(doc.adjustsInvoiceNumber ? [['Adds to invoice', doc.adjustsInvoiceNumber] as [string, string]] : []),
   ];
   const headerRows = Math.max(supplierLines.length, meta.length);
   for (let i = 0; i < headerRows; i++) {

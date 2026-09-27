@@ -169,6 +169,13 @@
       "when": 1790495493500,
       "tag": "0023_payment_refunds",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "6",
+      "when": 1790496127236,
+      "tag": "0024_debit_notes",
+      "breakpoints": true
     }
   ]
 }

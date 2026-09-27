@@ -376,6 +376,14 @@ Lines live in `document_lines`, per-rate VAT in `document_vat_totals`, both with
 provenance. The VAT rate for a purchase comes from these confirmed lines — never
 from a bank amount.
 
+### Debit notes (issue #403)
+
+A debit note is an additional charge against an earlier invoice of the same
+party and direction (an undercharge corrected): `is_debit_note` and
+`debit_note_of_id` on the invoice. In every other respect it is an invoice — its
+own number, VAT, due date and ageing — and its PDF is titled "Debit note" and
+names the invoice it adds to.
+
 ### Customer credit (issue #402)
 
 A customer's credit is its open credit notes plus money its payments hold on

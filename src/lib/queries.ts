@@ -862,7 +862,21 @@ export function invoiceDetail(invoiceId: string) {
       invoice.customerId ? eq(invoices.customerId, invoice.customerId) : eq(invoices.supplierId, invoice.supplierId ?? ''),
     )).orderBy(invoices.invoiceDate).all();
 
-  return { invoice, lines, allocations, party, company, onAccount, missingParticulars, counterparts };
+  // For raising a debit note against this invoice (issue #403).
+  const incomeAccounts = db.select().from(accounts).where(and(
+    eq(accounts.companyId, company.id), eq(accounts.type, invoice.direction === 'sales' ? 'income' : 'expense'),
+  )).orderBy(accounts.code).all();
+  const treatmentOptions = db.select().from(vatTreatments).where(and(
+    eq(vatTreatments.companyId, company.id), ne(vatTreatments.direction, invoice.direction === 'sales' ? 'purchases' : 'sales'),
+  )).orderBy(vatTreatments.code).all();
+  const adjustsNumber = invoice.debitNoteOfId
+    ? db.select({ n: invoices.invoiceNumber }).from(invoices).where(eq(invoices.id, invoice.debitNoteOfId)).get()?.n ?? null
+    : null;
+
+  return {
+    invoice, lines, allocations, party, company, onAccount, missingParticulars, counterparts,
+    incomeAccounts, treatmentOptions, adjustsNumber,
+  };
 }
 
 /** One customer with its invoices (README §17). */

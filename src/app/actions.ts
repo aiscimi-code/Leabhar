@@ -3,13 +3,14 @@
 import { revalidatePath } from 'next/cache';
 import { eq, and } from 'drizzle-orm';
 import { getDb, resetDatabase } from '@/db';
-import { reviewItems, documents, bankTransactions, bankAccounts, companies } from '@/db/schema';
+import { reviewItems, documents, bankTransactions, bankAccounts, companies, invoices as invoicesTable } from '@/db/schema';
 import { requireCompany } from '@/lib/queries';
 import { classifyTransaction, reclassifyTransaction } from '@/domain/banking/classify';
 import { acceptMatch, rejectMatch, findMatchesForDocument, matchAllUnmatched, linkDocument, unmatchDocument, withdrawMatchRejection } from '@/domain/matching/service';
 import { linkBankTransactionToJournal } from '@/domain/banking/journalLink';
 import { allocatePaymentOnAccount } from '@/domain/invoicing/onAccount';
 import { applyCreditNote, unapplyCreditNote, refundOnAccount } from '@/domain/invoicing/customerCredit';
+import { createInvoice } from '@/domain/invoicing/invoices';
 import {
   createRecurringInvoice, postDueRecurringInvoices, deactivateRecurringInvoice,
 } from '@/domain/invoicing/recurringInvoices';
@@ -1060,6 +1061,37 @@ export async function refundOnAccountAction(formData: FormData): Promise<ActionR
     revalidatePath(`/customers/${String(formData.get('customerId') ?? '')}`);
     revalidatePath('/transactions');
     return { ok: true, message: 'Refund posted.' };
+  } catch (error) {
+    return fail(error);
+  }
+}
+
+/** A debit note: an additional charge against an earlier invoice (issue #403). One line. */
+export async function raiseDebitNoteAction(formData: FormData): Promise<ActionResult> {
+  try {
+    await requireActor('invoices.manage');
+    const company = requireCompany();
+    const db = getDb();
+    const originalId = String(formData.get('invoiceId') ?? '');
+    const original = db.select().from(invoicesTable).where(eq(invoicesTable.id, originalId)).get();
+    if (!original || original.companyId !== company.id) return { ok: false, error: 'Invoice not found.' };
+    const result = createInvoice(db, {
+      companyId: company.id, direction: original.direction,
+      invoiceDate: asIsoDate(String(formData.get('date') ?? new Date().toISOString().slice(0, 10))),
+      customerId: original.customerId, supplierId: original.supplierId,
+      currency: original.currency !== company.baseCurrency ? original.currency : undefined,
+      isDebitNote: true, debitNoteOfId: original.id,
+      lines: [{
+        description: String(formData.get('description') ?? ''),
+        netMinor: parseAmount(String(formData.get('net') ?? ''), original.currency),
+        accountId: String(formData.get('accountId') ?? ''),
+        vatTreatmentId: String(formData.get('vatTreatmentId') ?? ''),
+      }],
+      actor: await actorName(),
+    });
+    revalidatePath('/invoices');
+    revalidatePath(`/invoices/${original.id}`);
+    return { ok: true, message: 'Debit note raised.', warnings: result.warnings.length > 0 ? result.warnings : undefined };
   } catch (error) {
     return fail(error);
   }
