@@ -376,6 +376,17 @@ Lines live in `document_lines`, per-rate VAT in `document_vat_totals`, both with
 provenance. The VAT rate for a purchase comes from these confirmed lines — never
 from a bank amount.
 
+### Customer terms (issue #392)
+
+A customer's payment terms give a sales invoice its due date when none is
+stated (`due_date_source = 'customer_terms'`); a stated date always wins, and
+terms of 0 days mean none recorded. A credit limit, in base currency, is a
+credit-control signal: an invoice that takes the customer's outstanding balance
+(each open invoice at its own rate, money on account not netted) over it is
+posted, returns a warning and raises one review item. Contacts are people at
+the customer; one with an email may be the billing contact. They are
+deactivated, never deleted.
+
 ### Consolidation (bank ↔ invoice)
 
 ```

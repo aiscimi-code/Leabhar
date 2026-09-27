@@ -1,5 +1,6 @@
 import { suggestJournalMatches } from '@/domain/banking/journalLink';
 import { onAccountForInvoice } from '@/domain/invoicing/onAccount';
+import { customerExposure, listCustomerContacts } from '@/domain/parties/customerAccount';
 import { listStatementImports } from '@/domain/banking/import';
 import { and, eq, desc, sql, isNull, isNotNull, ne, or, inArray } from 'drizzle-orm';
 import { getDb } from '@/db';
@@ -858,7 +859,9 @@ export function customerDetail(customerId: string) {
   const customerInvoices = db.select().from(invoices)
     .where(and(eq(invoices.companyId, company.id), eq(invoices.customerId, customerId)))
     .orderBy(desc(invoices.invoiceDate)).all();
-  return { customer, invoices: customerInvoices };
+  const exposure = customerExposure(db, { companyId: company.id, customerId });
+  const contacts = listCustomerContacts(db, { companyId: company.id, customerId });
+  return { customer, invoices: customerInvoices, exposure, contacts, company };
 }
 
 /** One supplier with everything recorded against them (README §17). */

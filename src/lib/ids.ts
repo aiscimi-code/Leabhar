@@ -43,6 +43,7 @@ export const ids = {
   allocation: () => newId('alloc'),
   supplier: () => newId('sup'),
   customer: () => newId('cus'),
+  customerContact: () => newId('ccn'),
   rule: () => newId('rule'),
   fixedAsset: () => newId('fa'),
   capitalGood: () => newId('cg'),

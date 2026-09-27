@@ -57,6 +57,9 @@ import { suggestJournalMatches, linkBankTransactionToJournal } from '@/domain/ba
 import { withdrawMatchRejection } from '@/domain/matching/service';
 import { allocatePaymentOnAccount, paymentsOnAccount } from '@/domain/invoicing/onAccount';
 import { reconciliationStatement } from '@/domain/banking/reconciliationStatement';
+import {
+  setCustomerTerms, addCustomerContact, listCustomerContacts, customerExposure,
+} from '@/domain/parties/customerAccount';
 import { toCsv, amountFor } from '@/lib/csv';
 import { resolveVatPeriodId } from '@/agent/books';
 import { reconcileVatReturn } from '@/domain/vat/reconcile';
@@ -238,6 +241,12 @@ Induction (no company/bank/chart yet):
       not something a single-account rule can point at.
 
 Books (once induction is done):
+  set-customer-terms --customer <id> --actor "Name" [--terms-days 30]
+      [--credit-limit <5000.00|none>]  Due dates of new invoices follow the
+      terms; going over the limit is flagged, never refused
+  add-contact --customer <id> --name "..." --actor "Name" [--email ...]
+      [--role ...] [--phone ...] [--billing]  --billing: invoices go to them
+  list-contacts --customer <id>
   create-invoice --direction sales|purchase --file <invoices.csv>
       One row per invoice/bill. Columns: invoiceNumber, date, party (a
       customer/supplier name or id), description, net, account, vatTreatment,
@@ -948,6 +957,33 @@ export async function main(argv: string[], options: CliOptions = {}): Promise<nu
           taxableStatus: getFlag(flags, 'taxable-status'),
         });
         print(addCustomer(db, parsed), format);
+        return 0;
+      }
+
+      case 'set-customer-terms': {
+        const customerId = requireFlag(flags, 'customer');
+        const limit = getFlag(flags, 'credit-limit');
+        setCustomerTerms(db, {
+          companyId, customerId, actor: requireFlag(flags, 'actor'), reason: getFlag(flags, 'reason'),
+          paymentTermsDays: getFlag(flags, 'terms-days') !== undefined ? Number(getFlag(flags, 'terms-days')) : undefined,
+          creditLimitMinor: limit === undefined ? undefined : limit === 'none' ? null
+            : parseAmount(limit, db.select({ c: companies.baseCurrency }).from(companies).where(eq(companies.id, companyId)).get()!.c),
+        });
+        print(customerExposure(db, { companyId, customerId }), format);
+        return 0;
+      }
+
+      case 'add-contact': {
+        print(addCustomerContact(db, {
+          companyId, customerId: requireFlag(flags, 'customer'), name: requireFlag(flags, 'name'),
+          role: getFlag(flags, 'role'), email: getFlag(flags, 'email'), phone: getFlag(flags, 'phone'),
+          isBilling: hasFlag(flags, 'billing'), actor: requireFlag(flags, 'actor'),
+        }), format);
+        return 0;
+      }
+
+      case 'list-contacts': {
+        print(listCustomerContacts(db, { companyId, customerId: requireFlag(flags, 'customer') }), format);
         return 0;
       }
 

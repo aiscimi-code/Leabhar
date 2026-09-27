@@ -9,6 +9,9 @@ import { classifyTransaction, reclassifyTransaction } from '@/domain/banking/cla
 import { acceptMatch, rejectMatch, findMatchesForDocument, matchAllUnmatched, linkDocument, unmatchDocument, withdrawMatchRejection } from '@/domain/matching/service';
 import { linkBankTransactionToJournal } from '@/domain/banking/journalLink';
 import { allocatePaymentOnAccount } from '@/domain/invoicing/onAccount';
+import {
+  setCustomerTerms, addCustomerContact, setBillingContact, deactivateCustomerContact,
+} from '@/domain/parties/customerAccount';
 import { transitionVatPeriod, type VatPeriodStatus } from '@/domain/vat/periodClose';
 import { storeDocument } from '@/domain/documents/storage';
 import { extractDocument, extractDocumentFromText } from '@/domain/extraction/service';
@@ -872,5 +875,61 @@ export async function loadStatutoryRulesAction(): Promise<ActionResult> {
     };
   } catch (err) {
     return fail(err);
+  }
+}
+
+/** A customer's payment terms and credit limit (issue #392). A blank limit removes it. */
+export async function setCustomerTermsAction(formData: FormData): Promise<ActionResult> {
+  try {
+    await requireActor('parties.manage');
+    const company = requireCompany();
+    const customerId = String(formData.get('customerId') ?? '');
+    const limitText = String(formData.get('creditLimit') ?? '').trim();
+    setCustomerTerms(getDb(), {
+      companyId: company.id, customerId, actor: await actorName(),
+      paymentTermsDays: Number(String(formData.get('paymentTermsDays') ?? '0')),
+      creditLimitMinor: limitText ? parseAmount(limitText, company.baseCurrency) : null,
+      reason: formData.get('reason') ? String(formData.get('reason')) : null,
+    });
+    revalidatePath(`/customers/${customerId}`);
+    revalidatePath('/customers');
+    return { ok: true, message: 'Terms saved. They apply to invoices from now on.' };
+  } catch (error) {
+    return fail(error);
+  }
+}
+
+export async function addCustomerContactAction(formData: FormData): Promise<ActionResult> {
+  try {
+    await requireActor('parties.manage');
+    const company = requireCompany();
+    const customerId = String(formData.get('customerId') ?? '');
+    addCustomerContact(getDb(), {
+      companyId: company.id, customerId, actor: await actorName(),
+      name: String(formData.get('name') ?? ''),
+      role: formData.get('role') ? String(formData.get('role')) : null,
+      email: formData.get('email') ? String(formData.get('email')) : null,
+      phone: formData.get('phone') ? String(formData.get('phone')) : null,
+      isBilling: formData.get('isBilling') === 'on',
+    });
+    revalidatePath(`/customers/${customerId}`);
+    return { ok: true, message: 'Contact added.' };
+  } catch (error) {
+    return fail(error);
+  }
+}
+
+export async function customerContactAction(formData: FormData): Promise<ActionResult> {
+  try {
+    await requireActor('parties.manage');
+    const company = requireCompany();
+    const contactId = String(formData.get('contactId') ?? '');
+    const params = { companyId: company.id, contactId, actor: await actorName() };
+    if (formData.get('op') === 'billing') setBillingContact(getDb(), params);
+    else deactivateCustomerContact(getDb(), params);
+    revalidatePath(`/customers/${String(formData.get('customerId') ?? '')}`);
+    return { ok: true, message: formData.get('op') === 'billing' ? 'Billing contact changed.' : 'Contact removed from use.' };
+  } catch (error) {
+    return fail(error);
   }
 }

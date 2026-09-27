@@ -5,7 +5,8 @@ import {
 } from '@/db/schema';
 import { ids } from '@/lib/ids';
 import { asMinor, multiplyRational } from '../money';
-import { nowIso, type IsoDate } from '../dates';
+import { nowIso, addDays, type IsoDate } from '../dates';
+import { customerExposure } from '../parties/customerAccount';
 import { postJournalEntry, reverseJournalEntry, atomically } from '../accounting/journal';
 import { systemAccountId } from '../config/setup';
 import {
@@ -106,6 +107,10 @@ export interface CreatedInvoice {
   vatEntryIds: string[];
   /** True when output VAT was deferred pending payment. */
   vatDeferred: boolean;
+  /** The due date recorded, stated or derived from the customer's terms (issue #392). */
+  dueDate: IsoDate | null;
+  /** Things a person should know that did not stop the invoice, e.g. a credit limit exceeded. */
+  warnings: string[];
 }
 
 /**
@@ -409,6 +414,31 @@ function createInvoiceSteps(db: AppDatabase, input: CreateInvoiceInput): Created
     }
   }
 
+  // ---- Due date and credit limit (issue #392) ----
+  // A sales invoice with no due date takes one from its customer's terms; a
+  // stated one always wins. Terms of 0 days mean none recorded, not "on receipt".
+  const customer = isSales
+    ? db.select().from(customers).where(and(eq(customers.id, input.customerId!), eq(customers.companyId, input.companyId))).get()
+    : undefined;
+  let dueDate: IsoDate | null = input.dueDate ?? null;
+  let dueDateSource: 'stated' | 'customer_terms' | null = dueDate ? 'stated' : null;
+  if (!dueDate && customer && customer.defaultPaymentTermsDays > 0) {
+    dueDate = addDays(input.invoiceDate, customer.defaultPaymentTermsDays);
+    dueDateSource = 'customer_terms';
+  }
+  // Over the credit limit is flagged, never refused: it is credit control.
+  const warnings: string[] = [];
+  let overLimit: { outstanding: number; limit: number } | null = null;
+  if (customer && !input.isCreditNote && customer.creditLimitMinor !== null) {
+    const outstanding = customerExposure(db, { companyId: input.companyId, customerId: customer.id }).outstandingBaseMinor
+      + toBase(grossMinor);
+    if (outstanding > customer.creditLimitMinor) {
+      overLimit = { outstanding, limit: customer.creditLimitMinor };
+      warnings.push(`${customer.name} now owes ${(outstanding / 100).toFixed(2)} ${baseCurrency}, over the `
+        + `credit limit of ${(customer.creditLimitMinor / 100).toFixed(2)}. The invoice is posted and flagged.`);
+    }
+  }
+
   // ---- Persist ----
   const internalNumber = isSales ? nextInvoiceNumber(db, input.companyId) : null;
   const timestamp = nowIso();
@@ -424,7 +454,8 @@ function createInvoiceSteps(db: AppDatabase, input: CreateInvoiceInput): Created
       supplierId: input.supplierId ?? null,
       customerId: input.customerId ?? null,
       invoiceDate: input.invoiceDate,
-      dueDate: input.dueDate ?? null,
+      dueDate,
+      dueDateSource,
       supplyDate: input.supplyDate ?? null,
       currency,
       netMinor, vatMinor, grossMinor,
@@ -510,6 +541,20 @@ function createInvoiceSteps(db: AppDatabase, input: CreateInvoiceInput): Created
         context: { lineNumber, invoiceId },
       });
     }
+
+    if (overLimit && customer) {
+      upsertReviewItem(tx, {
+        companyId: input.companyId,
+        kind: 'other',
+        severity: 'warning',
+        title: `${customer.name} is over its credit limit`,
+        detail: warnings[0]!,
+        entityType: 'customer',
+        entityId: customer.id,
+        dedupeKey: `customer:${customer.id}:over_credit_limit`,
+        context: { invoiceId, outstandingMinor: overLimit.outstanding, creditLimitMinor: overLimit.limit },
+      });
+    }
   });
 
   return {
@@ -519,6 +564,8 @@ function createInvoiceSteps(db: AppDatabase, input: CreateInvoiceInput): Created
     netMinor, vatMinor, grossMinor,
     vatEntryIds,
     vatDeferred,
+    dueDate,
+    warnings,
   };
 }
 
