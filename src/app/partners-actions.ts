@@ -6,6 +6,7 @@ import { requireCompany } from '@/lib/queries';
 import { requireActor, actorName } from '@/lib/session';
 import { addPartner, setPartnerShare, setPartnerActivityStatus } from '@/domain/config/partners';
 import { recordPartnerLoan } from '@/domain/partnerships/loans';
+import { recordPartnerLoanInterest } from '@/domain/partnerships/interest';
 import type { ActionResult } from './settings-actions';
 
 /**
@@ -97,6 +98,39 @@ export async function recordPartnerLoanAction(formData: FormData): Promise<Actio
       message: direction === 'advanced'
         ? `Loan recorded: entry ${result.entryNumber}. ${result.partner.name} is now owed ${(result.balanceMinor / 100).toFixed(2)} on their loan account.`
         : `Repayment recorded: entry ${result.entryNumber}. ${result.partner.name} is now owed ${(result.balanceMinor / 100).toFixed(2)} on their loan account.`,
+    };
+  } catch (e) {
+    return fail(e);
+  }
+}
+
+/**
+ * Interest accrued on a partner's loan over a period (issue #464). The amount
+ * is computed from the loan account, never typed in; whether the firm may
+ * deduct it in computing its profits is a decision, raised on the year-end
+ * decisions list, not a policy of this book.
+ */
+export async function recordPartnerLoanInterestAction(formData: FormData): Promise<ActionResult> {
+  try {
+    await requireActor('config.manage');
+    const company = requireCompany();
+    const rateBasisPoints = percentToBp(field(formData, 'rate'));
+    const result = recordPartnerLoanInterest(getDb(), {
+      companyId: company.id,
+      partnerId: field(formData, 'partnerId'),
+      rateBasisPoints,
+      from: field(formData, 'from'),
+      to: field(formData, 'to'),
+      recordedBy: await actorName(),
+      narrative: field(formData, 'narrative') || undefined,
+    });
+    revalidatePath('/settings/company');
+    return {
+      ok: true,
+      message: `Interest recorded: entry ${result.entryNumber}. ${(result.amountMinor / 100).toFixed(2)} accrued to `
+        + `${result.partner.name} at ${(rateBasisPoints / 100).toFixed(2)}%, who is now owed `
+        + `${(result.balanceMinor / 100).toFixed(2)} on their loan account. Whether the firm may deduct it is `
+        + 'decided on the year-end decisions list.',
     };
   } catch (e) {
     return fail(e);
