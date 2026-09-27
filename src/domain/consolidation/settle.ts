@@ -4,7 +4,7 @@ import type { AppDatabase } from '@/db';
 import { bankTransactions, invoices, documents, documentMatches, auditEvents, companies } from '@/db/schema';
 import { ids } from '@/lib/ids';
 import { asIsoDate, type IsoDate } from '../dates';
-import { recordPayment, type RecordedPayment } from '../invoicing/payments';
+import { recordPayment, type RecordedPayment, type PaymentWriteOffReason } from '../invoicing/payments';
 import { upsertReviewItem } from '../extraction/service';
 import { ConsolidationError } from './postDocument';
 import { resolveReviewItems } from '../matching/service';
@@ -39,10 +39,11 @@ export interface SettleInput {
   /** See `RecordPaymentInput.vatDeclarationDate` (issue #226). */
   vatDeclarationDate?: IsoDate | null;
   /**
-   * Close one invoice by writing off what this line leaves unpaid, e.g. bank
-   * charges the payer's bank deducted (issue #386). See `RecordPaymentInput.writeOff`.
+   * Close one invoice by writing off what this line leaves unpaid (issue #386).
+   * The reason is one of the three fixed choices, each with its own treatment:
+   * see `RecordPaymentInput.writeOff` (issue #389).
    */
-  writeOff?: { invoiceId: string; accountId: string; reason: string } | null;
+  writeOff?: { invoiceId: string; accountId: string; reason: PaymentWriteOffReason } | null;
   actor?: string;
   requestId?: string;
 }
@@ -125,17 +126,29 @@ function settleBankTransactionSteps(db: AppDatabase, input: SettleInput): Record
   }
 
   if (payment.writtenOffMinor !== 0 && input.writeOff) {
-    // VAT was left as invoiced. Right for bank charges; wrong for a price
-    // reduction, which needs a credit note. A person decides which it was.
+    // Bank charges deducted from the payment (issue #389): the customer paid
+    // the full consideration, so the shortfall is the business's own cost of
+    // being paid. On the cash receipts basis the whole invoice's deferred
+    // output VAT was released at the receipt date; on the invoice basis the
+    // VAT was left as invoiced. Either way it is flagged, and the collected
+    // sources state no Revenue position on it, so the flag says so too.
     const invoice = db.select().from(invoices).where(eq(invoices.id, input.writeOff.invoiceId)).get()!;
+    const released = payment.vatReleasedBaseMinor !== 0;
     upsertReviewItem(db, {
       companyId: input.companyId,
       kind: 'uncertain_vat_treatment',
       severity: 'warning',
-      title: `${(payment.writtenOffMinor / 100).toFixed(2)} written off on invoice ${invoice.invoiceNumber ?? invoice.id}`,
-      detail: `Reason given: ${input.writeOff.reason}. The invoice's VAT was not changed. That is right when the `
-        + 'difference is a bank charge; if the price was reduced, a credit note is needed so the '
-        + (invoice.direction === 'sales' ? 'output VAT falls.' : 'input VAT claimed falls.'),
+      title: `${(payment.writtenOffMinor / 100).toFixed(2)} of bank charges written off on invoice ${invoice.invoiceNumber ?? invoice.id}`,
+      detail: released
+        ? `The customer paid the full consideration, so all the invoice's output VAT was released at the `
+          + `receipt date (${(payment.vatReleasedBaseMinor / 100).toFixed(2)}) and the shortfall is posted to `
+          + 'the account chosen as the cost of being paid, with no VAT in it. Finding: the collected sources '
+          + 'state no Revenue position on bank charges deducted from a payment, so confirm this treatment '
+          + 'before the return is filed (issue #389).'
+        : `The invoice's VAT was not changed, which is right for bank charges: the customer paid the full `
+          + 'consideration, so the shortfall is the cost of being paid, not a reduction of the price. Finding: '
+          + 'the collected sources state no Revenue position on bank charges deducted from a payment, so '
+          + 'confirm this treatment (issue #389).',
       entityType: 'invoice',
       entityId: invoice.id,
       dedupeKey: `invoice:${invoice.id}:write_off:${payment.paymentId}`,

@@ -229,7 +229,21 @@ export interface SettleCliInput {
   fx?: string;
   vatDeclarationDate?: string;
   /** Write off what the line leaves unpaid on this invoice (number or id) to this account (code or id), issue #386. */
+  /** One of bank_charges, discount, bad_debt (issue #389); each has a fixed treatment. */
   writeOff?: { invoice: string; account: string; reason: string };
+}
+
+/** The CLI takes the reason as text; the domain takes one of the three fixed choices (issue #389). */
+function parseWriteOffReason(reason: string): 'bank_charges' | 'discount' | 'bad_debt' {
+  const trimmed = (reason ?? '').trim();
+  if (trimmed !== 'bank_charges' && trimmed !== 'discount' && trimmed !== 'bad_debt') {
+    throw new Error(
+      `--write-off-reason must be bank_charges, discount or bad_debt, not "${trimmed}". `
+        + 'Bank charges deducted from the payment release the invoice\u2019s VAT on the cash receipts basis; a '
+        + 'discount needs a credit note first (VATCA s.67(1)(b)); an unpaid remainder is a bad debt (#404).',
+    );
+  }
+  return trimmed;
 }
 
 export function settleCli(db: AppDatabase, input: SettleCliInput): RecordedPayment {
@@ -253,7 +267,7 @@ export function settleCli(db: AppDatabase, input: SettleCliInput): RecordedPayme
     writeOff: input.writeOff ? {
       invoiceId: resolveInvoiceId(db, input.companyId, input.writeOff.invoice),
       accountId: resolveAccountId(db, input.companyId, input.writeOff.account),
-      reason: input.writeOff.reason,
+      reason: parseWriteOffReason(input.writeOff.reason),
     } : null,
     actor: 'cli',
   });

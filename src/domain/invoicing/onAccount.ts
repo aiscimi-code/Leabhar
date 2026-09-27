@@ -4,9 +4,13 @@ import {
   payments, paymentAllocations, invoices, companies, auditEvents, customers, suppliers,
 } from '@/db/schema';
 import { ids } from '@/lib/ids';
-import { nowIso } from '../dates';
+import { asIsoDate, isIsoDate, nowIso } from '../dates';
 import { InvoicingError } from './invoices';
 import { resolveReviewItems } from '../matching/service';
+import { postJournalEntry, assertAccountingPeriodOpen } from '../accounting/journal';
+import { systemAccountId } from '../config/setup';
+import { createVatEntries, assertVatPeriodWritable } from '../vat/engine';
+import { computeVatReleases } from './payments';
 
 /**
  * Money held on account (issue #386).
@@ -16,6 +20,15 @@ import { resolveReviewItems } from '../matching/service';
  * supplier. Applying it to a later invoice of the same party moves nothing in
  * the ledger — both balances already sit on that control account — so it
  * posts no journal. It records an allocation and updates the invoice, audited.
+ *
+ * One exception, the cash receipts basis (issue #389): output VAT on a sales
+ * invoice is due on the money, and the tax point is the day the money arrived
+ * (VATCA s.80(1)), not the day it is applied. Applying money on account to a
+ * cash-basis sales invoice with VAT therefore releases the deferred VAT on
+ * the applied share, dated at the original receipt. If that date's VAT period
+ * is locked or filed, nothing is written into it and nothing is silently moved
+ * to the application date: the person names an open period to declare it in
+ * (`vatDeclarationDate`, a late declaration, flagged), or the path refuses.
  */
 
 type Payment = typeof payments.$inferSelect;
@@ -100,6 +113,10 @@ export interface OnAccountAllocation {
   onAccountMinor: number;
   invoiceStatus: string;
   outstandingMinor: number;
+  /** The output VAT this application released (cash receipts basis), in base minor units. */
+  vatReleasedMinor: number;
+  /** The VAT entries the release created, when it released any. */
+  vatEntryIds: string[];
 }
 
 /**
@@ -107,15 +124,25 @@ export interface OnAccountAllocation {
  * Refused unless the payment stands, is in base currency and names its party;
  * the invoice is an ordinary open invoice of that party in base currency and
  * the payment's direction; and the amount is no more than what is on account
- * or outstanding. On the cash receipts basis a sales invoice with VAT is
- * refused: applying the receipt would make its VAT due, and on what date is a
- * decision this does not take (see issue #389).
+ * or outstanding.
+ *
+ * On the cash receipts basis a sales invoice with VAT releases its deferred
+ * output VAT on the applied share, with the tax point of the original receipt
+ * (s.80(1), issue #389). The receipt's period must be writable for that to
+ * happen; if it is locked or filed, the person names an open period to declare
+ * it in (`vatDeclarationDate`) — a late declaration, flagged, never a silent
+ * move to the application date — and without one the path refuses.
  */
 export function allocatePaymentOnAccount(
   db: AppDatabase,
   params: {
     companyId: string; paymentId: string; invoiceId: string; amountMinor: number;
     actor: string; reason?: string | null; requestId?: string;
+    /**
+     * Declare the released output VAT in the VAT period covering this date,
+     * when the receipt's own period is locked or filed (issue #389). Flagged.
+     */
+    vatDeclarationDate?: string | null;
   },
 ): OnAccountAllocation {
   const actor = params.actor.trim();
@@ -163,12 +190,30 @@ export function allocatePaymentOnAccount(
   if (invoice.currency.toUpperCase() !== base) {
     throw new InvoicingError(`Invoice ${label} is in ${invoice.currency}; money on account can be applied in ${base} only for now.`);
   }
-  if (invoice.direction === 'sales' && invoice.vatMinor !== 0 && company.vatAccountingBasis === 'cash_receipts') {
-    throw new InvoicingError(
-      'On the cash receipts basis applying a receipt to this invoice makes its output VAT due, and that is not '
-        + 'yet supported for money held on account. Reverse the payment and settle it against this invoice instead.',
-    );
+  // ---- Cash-basis VAT release (issue #389) ----
+  // The tax point is the original receipt date (s.80(1)), never the
+  // application date. Computed before anything is written; the writability of
+  // the period is checked before that too, so a refusal leaves nothing behind.
+  const releasesCashBasisVat = invoice.direction === 'sales'
+    && invoice.vatMinor !== 0 && company.vatAccountingBasis === 'cash_receipts';
+  const vatReleases = releasesCashBasisVat
+    ? computeVatReleases(db, [{ invoice, invoiceAllocatedMinor: params.amountMinor }])
+    : [];
+  const releasesSomething = vatReleases.some((r) => r.netMinor !== 0 || r.vatMinor !== 0);
+  const declarationDate = params.vatDeclarationDate?.trim() || null;
+  if (releasesSomething) {
+    if (declarationDate && !isIsoDate(declarationDate)) {
+      throw new InvoicingError('The VAT declaration date must be a date (YYYY-MM-DD).');
+    }
+    assertVatPeriodWritable(db, params.companyId, asIsoDate(declarationDate ?? payment.paymentDate),
+      'The output VAT this receipt released when it arrived');
+    // The release journal is dated where the VAT is declared: at the receipt,
+    // or — a late declaration — in the named period, so the VAT control account
+    // agrees with the return that declares it and a closed receipt year is not
+    // written into. Checked before anything is written.
+    assertAccountingPeriodOpen(db, params.companyId, declarationDate ?? payment.paymentDate);
   }
+
   if (params.amountMinor > invoice.outstandingMinor) {
     throw new InvoicingError(
       `Invoice ${label} has ${invoice.outstandingMinor} outstanding; ${params.amountMinor} would overpay it.`,
@@ -186,7 +231,81 @@ export function allocatePaymentOnAccount(
   const status = outstandingMinor === 0 ? 'paid' : 'part_paid';
   const remaining = available - params.amountMinor;
 
+  let vatReleasedMinor = 0;
+  const vatEntryIds: string[] = [];
+  let releaseJournalId: string | null = null;
+
   db.transaction((tx) => {
+    const txDb = tx as unknown as AppDatabase;
+
+    // ---- The VAT the application makes due (cash receipts basis) ----
+    // A release journal of its own (the payment's journal is posted and
+    // immutable), dated at the original receipt — or, for a late declaration,
+    // in the period that declares it, so the control account agrees with that
+    // return. The VAT entries keep the receipt as their tax point either way,
+    // and carry the payment as their source, so reversing the payment reverses them.
+    if (releasesSomething) {
+      const vatOnSalesDeferred = systemAccountId(txDb, params.companyId, 'vat_on_sales_deferred');
+      const vatOnSales = systemAccountId(txDb, params.companyId, 'vat_on_sales');
+      const releasedMinor = vatReleases.reduce((sum, r) => sum + r.vatMinor, 0);
+      if (releasedMinor !== 0) {
+        const releaseJournal = postJournalEntry(txDb, {
+          companyId: params.companyId,
+          entryDate: asIsoDate(declarationDate ?? payment.paymentDate),
+          narrative: `Output VAT due on money applied from the receipt of ${payment.paymentDate} `
+            + `(${invoice.invoiceNumber ?? invoice.id})`,
+          sourceType: 'payment',
+          sourceId: payment.id,
+          baseCurrency: base,
+          createdBy: actor,
+          createdVia: 'user',
+          requestId: params.requestId,
+          lines: releasedMinor >= 0
+            ? [
+              { accountId: vatOnSalesDeferred, debitMinor: Math.abs(releasedMinor), memo: 'VAT now due following application of the receipt (cash receipts basis)' },
+              { accountId: vatOnSales, creditMinor: Math.abs(releasedMinor), memo: 'VAT now due following application of the receipt (cash receipts basis)' },
+            ]
+            : [
+              { accountId: vatOnSalesDeferred, creditMinor: Math.abs(releasedMinor), memo: 'VAT now due following application of the receipt (cash receipts basis)' },
+              { accountId: vatOnSales, debitMinor: Math.abs(releasedMinor), memo: 'VAT now due following application of the receipt (cash receipts basis)' },
+            ],
+        });
+        releaseJournalId = releaseJournal.id;
+      }
+      for (const release of vatReleases) {
+        if (release.netMinor === 0 && release.vatMinor === 0) continue;
+        const created = createVatEntries(txDb, {
+          companyId: params.companyId,
+          journalEntryId: releaseJournalId!,
+          sourceType: 'payment',
+          sourceId: payment.id,
+          direction: 'sales',
+          treatmentId: release.vatTreatmentId,
+          rateOverrideId: release.taxRateId ?? undefined,
+          invoiceLineId: release.invoiceLineId,
+          // The tax point is the day the money arrived (s.80(1)), not the day
+          // it was applied. This is the whole point of the basis.
+          taxPointDate: asIsoDate(payment.paymentDate),
+          declarationDate: declarationDate ? asIsoDate(declarationDate) : undefined,
+          netMinor: release.netMinor,
+          statedVatMinor: release.vatMinor,
+          currency: invoice.currency,
+          baseCurrency: base,
+          fxRate: invoice.fxRateNumerator && invoice.fxRateDenominator
+            ? { numerator: invoice.fxRateNumerator, denominator: invoice.fxRateDenominator }
+            : undefined,
+          source: 'user',
+          provenanceStatus: 'manually_entered',
+          notes: `Released by applying money received on ${payment.paymentDate} to invoice ${invoice.id} `
+            + `(tax point s.80(1): the receipt date, not the application date)`,
+        });
+        vatEntryIds.push(...created.entries.map((e) => e.id));
+        vatReleasedMinor += created.entries
+          .filter((e) => e.direction === 'sales')
+          .reduce((sum, e) => sum + e.baseVatMinor, 0);
+      }
+    }
+
     tx.insert(paymentAllocations).values({
       id: allocationId,
       companyId: params.companyId,
@@ -205,8 +324,16 @@ export function allocatePaymentOnAccount(
       id: ids.audit(), companyId: params.companyId, occurredAt: timestamp,
       entityType: 'payment', entityId: payment.id, action: 'updated', field: 'on_account_allocation',
       previousValue: String(available),
-      newValue: JSON.stringify({ invoiceId: invoice.id, amountMinor: params.amountMinor, onAccountMinor: remaining }),
-      source: 'user', actor, reason: params.reason?.trim() || 'Money on account applied to a later invoice',
+      newValue: JSON.stringify({
+        invoiceId: invoice.id, amountMinor: params.amountMinor, onAccountMinor: remaining,
+        ...(releasesSomething
+          ? { vatReleasedMinor, vatEntryIds, releaseJournalId, taxPointDate: payment.paymentDate }
+          : {}),
+      }),
+      source: 'user', actor,
+      reason: params.reason?.trim() || (releasesSomething
+        ? 'Money on account applied to a later invoice; its output VAT became due, dated at the receipt (s.80(1))'
+        : 'Money on account applied to a later invoice'),
       requestId: params.requestId ?? null,
     }).run();
   });
@@ -215,7 +342,11 @@ export function allocatePaymentOnAccount(
     resolveReviewItems(db, params.companyId, `bank_transaction:${payment.bankTransactionId}:unallocated`,
       `Money on account applied to invoice ${label}.`);
   }
-  return { allocationId, onAccountMinor: remaining, invoiceStatus: status, outstandingMinor };
+  if (remaining === 0) {
+    resolveReviewItems(db, params.companyId, `payment:${payment.id}:on_account_vat`,
+      `All the money held on account from the receipt of ${payment.paymentDate} is now applied or refunded.`);
+  }
+  return { allocationId, onAccountMinor: remaining, invoiceStatus: status, outstandingMinor, vatReleasedMinor, vatEntryIds };
 }
 
 /** Standing payments of this invoice's party with money on account. */

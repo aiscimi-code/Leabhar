@@ -265,6 +265,12 @@ export function refundOnAccount(
       resolveReviewItems(db, params.companyId, `bank_transaction:${original.bankTransactionId}:unallocated`,
         'The money held on account was refunded.');
     }
+    if (remaining === 0) {
+      // The on-account VAT question (issue #389) is settled too: the money is
+      // no longer held, so no VAT can become due on it.
+      resolveReviewItems(db, params.companyId, `payment:${original.id}:on_account_vat`,
+        'The money held on account was refunded, so no VAT is due on it.');
+    }
     return { refundPaymentId, journalEntryId: journal.id, onAccountMinor: remaining };
   });
 }
