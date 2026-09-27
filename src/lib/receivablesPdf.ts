@@ -72,10 +72,11 @@ function header(w: Writer, supplierName: string, supplierAddress: string | null,
 }
 
 export async function renderStatementPdf(
-  st: CustomerStatement, supplier: { name: string; address: string | null },
+  st: Omit<CustomerStatement, 'customerId'>, supplier: { name: string; address: string | null },
+  options: { title?: string; balanceLabel?: string } = {},
 ): Promise<Uint8Array> {
   const w = await start(`Statement ${st.customerName} ${st.to}`);
-  header(w, supplier.name, supplier.address, 'Statement of account', { name: st.customerName, address: st.address },
+  header(w, supplier.name, supplier.address, options.title ?? 'Statement of account', { name: st.customerName, address: st.address },
     [['Period', `${date(st.from)} – ${date(st.to)}`], ['Currency', st.currency]]);
   const col = { ref: M + 70, kind: M + 260, amount: M + 400, balance: A4[0] - M };
   const head = () => {
@@ -105,7 +106,7 @@ export async function renderStatementPdf(
     w.y -= 13;
   }
   w.y -= 4;
-  right(w, 'Balance due', col.amount, 10, w.bold);
+  right(w, options.balanceLabel ?? 'Balance due', col.amount, 10, w.bold);
   right(w, money(st.closingBalanceMinor, st.currency), col.balance, 10, w.bold);
   w.y -= 24;
   ensure(w, 40);

@@ -1706,3 +1706,24 @@ describe('cli recurring bills (#412)', () => {
     expect(result.matched[0]).toMatchObject({ invoiceId: posted.invoiceId, differenceMinor: 0 });
   });
 });
+
+describe('cli supplier statements (#413)', () => {
+  it('prints the statement and reconciles the supplier\'s balance', async () => {
+    const supplierId = 'sup_st_cli';
+    db.insert(suppliers).values({ id: supplierId, companyId, name: 'Murphy', matchKey: 'murphy', countryCode: 'IE' }).run();
+    const { createInvoice } = await import('@/domain/invoicing/invoices');
+    createInvoice(db, {
+      companyId, direction: 'purchase', invoiceDate: '2025-01-10' as never, supplierId, invoiceNumber: 'M-1',
+      lines: [{ description: 'Stock', netMinor: 10_000, accountId: byCode['6120']!, vatTreatmentId: tr['IE_STD']! }],
+    });
+    let c = capture();
+    expect(await run(['supplier-statement', '--supplier', supplierId, '--from', '2025-01-01', '--to', '2025-12-31'])).toBe(0);
+    c.restore();
+    expect(JSON.parse(c.stdout.join('')).closingBalanceMinor).toBe(12_300);
+    c = capture();
+    expect(await run(['reconcile-supplier-statement', '--supplier', supplierId, '--as-of', '2025-01-31',
+      '--balance', '150.00', '--invoices', 'M-1,M-9', '--actor', 'Test'])).toBe(0);
+    c.restore();
+    expect(JSON.parse(c.stdout.join(''))).toMatchObject({ differenceMinor: 2_700, theirsNotHeld: ['M-9'] });
+  });
+});
