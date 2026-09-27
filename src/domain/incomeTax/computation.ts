@@ -13,6 +13,10 @@ import { INCOME_TAX_CURATED_RULES } from '../rules/incomeTaxCuration';
 import { resolveRuleFigure, type ResolvedRuleFigure } from '../rules/ruleFigures';
 import { allocateByShares, partnershipFindings } from '../config/partners';
 import { partnerLoanInterestForPeriod } from '../partnerships/interest';
+import { FARM_INCOME_AVERAGING, FARM_STOCK_RELIEF_CLAIMS, type FarmIncomeAveraging, type FarmStockReliefClaim } from '../corporationTax/subjects';
+import {
+  averagedProfit, farmFigure, isFarmingTrade, stockRelief, type AveragingResult, type StockReliefResult,
+} from '../farmTax/reliefs';
 
 /**
  * Income tax on a sole trader's or partnership's trading profits for a year
@@ -103,8 +107,20 @@ export interface IncomeTaxComputation {
   allowanceLossMinor: number;
   individuals: IndividualLiability[];
   dates: { preliminaryTaxDue: string; returnDue: string; preliminaryTaxMinor: number; basis: string };
+  /**
+   * A farming trade's reliefs (EPIC 25, issue #544): stock relief taken off
+   * the year's profit, and income averaging where elected. `chargedBasisMinor`
+   * is the profit before capital allowances that is charged after them.
+   */
+  farm: FarmReliefs | null;
   decisions: CtPendingDecision[];
   findings: string[];
+}
+
+export interface FarmReliefs {
+  stockRelief: StockReliefResult | null;
+  averaging: (AveragingResult & { applied: boolean }) | null;
+  chargedBasisMinor: number;
 }
 
 export class IncomeTaxError extends Error {}
@@ -140,6 +156,8 @@ class IncomeTaxRun {
   private readonly lossPools = new Map<string, number>();
   /** Unused capital allowances carried forward as allowances, per individual (s.304; issue #467). */
   private readonly allowancePools = new Map<string, number>();
+  /** A farming trade's profit for each year after stock relief, before averaging and allowances (s.657). */
+  private readonly farmProfits = new Map<number, number>();
   private readonly baseFindings: string[] = [];
   private findings: string[] = [];
 
@@ -419,6 +437,102 @@ class IncomeTaxRun {
     };
   }
 
+  /**
+   * A farming trade's reliefs for a year (EPIC 25, issue #544). Stock relief
+   * (ss.666, 667B, 667C) comes off the year's profit, limited so it creates
+   * no loss; averaging (s.657) then charges one fifth of that profit and the
+   * 4 years' before it. Both are the person's claims, offered as pending
+   * decisions and applied only when recorded.
+   */
+  private farmReliefs(
+    year: number, basis: { from: string; to: string }, basisProfitMinor: number, allowancesNetMinor: number,
+    decisions: CtPendingDecision[],
+  ): FarmReliefs | null {
+    if (!isFarmingTrade(this.db, this.companyId, basis.from, basis.to)) return null;
+    const dec31 = `${year}-12-31`;
+    const claim = currentDecision(this.db, this.companyId, 'farm_stock_relief', this.companyId, dec31)?.choice as FarmStockReliefClaim | undefined;
+    let relief: StockReliefResult | null = null;
+    const priorYoungTrained = [1, 2, 3, 4, 5, 6].map((n) => year - n)
+      .filter((y) => currentDecision(this.db, this.companyId, 'farm_stock_relief', this.companyId, `${y}-12-31`)?.choice === 'young_trained').length;
+    const preview = stockRelief(this.db, {
+      companyId: this.companyId, from: basis.from, to: basis.to, category: claim && claim !== 'none' ? claim : 'general',
+      profitAfterAllowancesMinor: basisProfitMinor + allowancesNetMinor, priorYoungTrainedYears: priorYoungTrained,
+    });
+    decisions.push({
+      subjectType: 'farm_stock_relief', subjectId: this.companyId, description: `Stock relief for ${year}`,
+      amountMinor: preview.reliefMinor, suggested: 'none', decided: claim ?? null,
+      options: (Object.keys(FARM_STOCK_RELIEF_CLAIMS) as FarmStockReliefClaim[]).map((c) => ({ choice: c, label: FARM_STOCK_RELIEF_CLAIMS[c] })),
+      reason: `Trading stock went from ${eur(preview.openingStockMinor)} to ${eur(preview.closingStockMinor)}. Stock relief is a claim `
+        + '(s.666(5)), and the higher rates depend on facts only the person can state (s.667B, s.667C): nothing is claimed until recorded.',
+    });
+    if (claim && claim !== 'none') {
+      relief = preview;
+      this.findings.push(...relief.findings);
+      if (relief.reliefMinor > 0) {
+        this.findings.push(`Stock relief of ${eur(relief.reliefMinor)} (${relief.rateBasisPoints / 100}% of the ${eur(relief.increaseMinor)} `
+          + 'increase in trading stock) is deducted from the farming profit.');
+      }
+    }
+    const afterRelief = basisProfitMinor - (relief?.reliefMinor ?? 0);
+    this.farmProfits.set(year, afterRelief);
+
+    const averagingChoice = currentDecision(this.db, this.companyId, 'farm_income_averaging', this.companyId, dec31)?.choice as FarmIncomeAveraging | undefined;
+    const lastChoice = currentDecision(this.db, this.companyId, 'farm_income_averaging', this.companyId, `${year - 1}-12-31`)?.choice;
+    decisions.push({
+      subjectType: 'farm_income_averaging', subjectId: this.companyId, description: `Income averaging for ${year}`, amountMinor: afterRelief,
+      suggested: lastChoice === 'averaging' || lastChoice === 'step_out' ? 'averaging' : 'normal', decided: averagingChoice ?? null,
+      options: (Object.keys(FARM_INCOME_AVERAGING) as FarmIncomeAveraging[]).map((c) => ({ choice: c, label: FARM_INCOME_AVERAGING[c] })),
+      reason: 'A farmer may elect to be charged on the average of five years\' farming profits (s.657). The election, and a '
+        + 'single-year step-out (s.657(6A)), are the person\'s: nothing is assumed.',
+    });
+    let averaging: FarmReliefs['averaging'] = null;
+    let charged = afterRelief;
+    if (averagingChoice === 'averaging' || averagingChoice === 'step_out') {
+      if (this.company.entityType !== 'sole_trader') {
+        this.findings.push('Income averaging is each partner\'s own election on their share (s.657): it is not applied to the firm\'s profit here.');
+      } else {
+        const firstYear = Number(this.commenced.slice(0, 4));
+        const result = averagedProfit(this.db, {
+          companyId: this.companyId, year,
+          profitOf: (y) => {
+            if (y >= firstYear && this.farmProfits.has(y)) return { profitMinor: this.farmProfits.get(y)!, source: 'books' };
+            const recorded = currentDecision(this.db, this.companyId, 'farm_prior_profit', this.companyId, `${y}-12-31`);
+            return recorded?.amountMinor !== null && recorded?.amountMinor !== undefined ? { profitMinor: recorded.amountMinor, source: 'recorded' } : null;
+          },
+        });
+        if ('missing' in result) {
+          this.findings.push(`Income averaging needs the farming profits of ${result.missing.join(', ')}, which are not in these books: `
+            + 'record each year\'s profit before capital allowances, from its return. Until then the year is charged on its own profit.');
+        } else {
+          let stepOut = averagingChoice === 'step_out';
+          if (stepOut) {
+            const interval = farmFigure(this.db, this.companyId, 'farm.averaging_step_out_interval', dec31);
+            const earlier = Array.from({ length: interval - 1 }, (_, i) => year - 1 - i)
+              .find((y) => currentDecision(this.db, this.companyId, 'farm_income_averaging', this.companyId, `${y}-12-31`)?.choice === 'step_out');
+            if (earlier) {
+              this.findings.push(`A step-out from averaging is allowed once every ${interval} years (s.657(6A)); there was one in ${earlier}, `
+                + 'so averaging applies.');
+              stepOut = false;
+            } else {
+              this.findings.push('Stepping out of averaging for this year: the tax deferred (the averaged tax less this year\'s) is payable '
+                + 'in instalments over the next 4 years (s.657(6A)). These books do not compute it.');
+            }
+          }
+          averaging = { ...result, applied: !stepOut };
+          if (!stepOut) {
+            charged = result.averageMinor;
+            this.findings.push(`Income averaging: charged on ${eur(result.averageMinor)}, one fifth of the farming profits of `
+              + `${result.years[0]!.year} to ${year} (s.657(5)), before capital allowances.`);
+          }
+        }
+      }
+    } else if (lastChoice === 'averaging' || lastChoice === 'step_out') {
+      this.findings.push('Averaging applied last year and no choice is recorded for this one: an election continues until the farmer '
+        + 'leaves it (s.657(6)), and leaving reviews the 4 years before (s.657(7)). Record the choice.');
+    }
+    return { stockRelief: relief, averaging, chargedBasisMinor: charged };
+  }
+
   year(year: number): IncomeTaxComputation {
     const firstYear = Number(this.commenced.slice(0, 4));
     if (year < firstYear) throw new IncomeTaxError(`The trade commenced in ${firstYear}; there is no ${year} assessment.`);
@@ -479,7 +593,9 @@ class IncomeTaxRun {
     // (issue #285).
     const allowances = this.allowancesFor(basis.from, basis.to);
     this.findings.push(...allowances.findings);
-    const assessableProfitMinor = basisProfitMinor + allowances.netMinor;
+    const farm = this.farmReliefs(year, basis, basisProfitMinor, allowances.netMinor, decisions);
+    const chargedBasisMinor = farm ? farm.chargedBasisMinor : basisProfitMinor;
+    const assessableProfitMinor = chargedBasisMinor + allowances.netMinor;
     const tradingLossMinor = Math.max(-assessableProfitMinor, 0);
     // The loss splits into the part before capital allowances and the part the
     // allowances create (issue #467). Only the election under s.392 treats the
@@ -487,13 +603,13 @@ class IncomeTaxRun {
     // carried forward as allowances (s.304(2)) and an s.381 claim can reach
     // only the pre-allowance loss. The election is a person's decision,
     // recorded per individual — never assumed.
-    const lossBeforeAllowancesMinor = Math.max(-basisProfitMinor, 0);
+    const lossBeforeAllowancesMinor = Math.max(-chargedBasisMinor, 0);
     const allowanceLossMinor = tradingLossMinor - lossBeforeAllowancesMinor;
 
     // Who is taxed on the result, and the losses set against it (ss.381, 382).
     const individuals: IndividualLiability[] = [];
     const preAllowanceShares = new Map(
-      this.sharesOf(basisProfitMinor, basis.from, basis.to).map((x) => [x.partnerId ?? this.companyId, x]),
+      this.sharesOf(chargedBasisMinor, basis.from, basis.to).map((x) => [x.partnerId ?? this.companyId, x]),
     );
     for (const s of this.sharesOf(assessableProfitMinor, basis.from, basis.to)) {
       const subjectId = s.partnerId ?? this.companyId;
@@ -643,7 +759,7 @@ class IncomeTaxRun {
       basisProfitMinor, thirdYearReliefMinor,
       capitalAllowancesMinor: allowances.netMinor, capitalAllowanceLines: allowances.lines,
       assessableProfitMinor, tradingLossMinor, lossBeforeAllowancesMinor, allowanceLossMinor,
-      individuals, dates, decisions,
+      individuals, dates, farm, decisions,
       findings: [...new Set(this.findings)],
     };
     this.findings = saved;

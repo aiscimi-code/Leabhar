@@ -59,6 +59,7 @@ const SECTIONS: Array<{ heading: string; items: Array<{ href: string; label: str
       { href: '/customers', label: 'Customers' },
       { href: '/inventory', label: 'Inventory' },
       { href: '/farm', label: 'Farm' },
+      { href: '/farm/tax', label: 'Farm tax and grants' },
       { href: '/assets', label: 'Fixed assets' },
       { href: '/capital-goods', label: 'Capital goods' },
       { href: '/rules', label: 'Rules' },

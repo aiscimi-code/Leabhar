@@ -414,6 +414,18 @@ npm run cli -- gross-margins --from 2026-01-01 --to 2026-12-31
 npm run cli -- crop-report --year 2026
 ```
 
+Farm tax and grants (claims are decisions; the tax computations apply them):
+
+```bash
+npm run cli -- add-grant --scheme TAMS --payer DAFM --kind capital --awarded 40000 --date 2026-02-01 --asset <id> --by owner
+npm run cli -- link-grant-receipt --grant <id> --line <journal line id> --by owner
+npm run cli -- reconcile-grants --as-of 2026-12-31
+npm run cli -- ct-decide --subject-type farm_stock_relief --subject <company id> --period-end 2026-12-31 --choice general --by owner
+npm run cli -- record-farm-profit --year 2022 --profit 18000 --source "2022 Form 11" --by owner
+npm run cli -- ct-decide --subject-type farm_income_averaging --subject <company id> --period-end 2026-12-31 --choice averaging --by owner
+npm run cli -- farm-tax-summary --year 2026
+```
+
 ### Agent workflow
 
 `db:seed` only ever loads the Acme demo. To load a real (or synthetic) SME

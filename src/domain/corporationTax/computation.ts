@@ -12,9 +12,11 @@ import {
 } from '../rules/corporationTaxCuration';
 import { auditRuleFigures, RejectedRuleError } from '../rules/ruleFigures';
 import { CAR_EMISSIONS_CURATED_RULES } from '../rules/carEmissionsCuration';
+import { capitalGrantsReceivedFor } from '../farmTax/grants';
+import { isFarmingTrade, stockRelief, type StockReliefResult } from '../farmTax/reliefs';
 import {
-  EXPENSE_CHOICES, INCOME_CASES, LOSS_CLAIMS, COMPANY_STATUSES, TRADING_COMPANY_STATUSES, currentDecision,
-  type IncomeCase, type ExpenseChoice, type LossClaim, type CompanyStatus, type TradingCompanyStatus,
+  EXPENSE_CHOICES, INCOME_CASES, LOSS_CLAIMS, COMPANY_STATUSES, TRADING_COMPANY_STATUSES, FARM_STOCK_RELIEF_CLAIMS, currentDecision,
+  type FarmStockReliefClaim, type IncomeCase, type ExpenseChoice, type LossClaim, type CompanyStatus, type TradingCompanyStatus,
   type CtPendingDecision,
 } from './subjects';
 
@@ -271,6 +273,37 @@ function part11cBasis(
 }
 
 /**
+ * The rate and term for a farm building or slurry storage asset (EPIC 25,
+ * issue #545), from the rules: s.658 writes farm buildings off at 15% a year
+ * with the 10% balance in year 7; s.658A accelerates qualifying slurry
+ * storage to 50% over 2 years for expenditure in its relevant period, and
+ * outside it the asset is a farm building.
+ */
+function farmBuildingBasis(asset: typeof fixedAssets.$inferSelect, audit: FigureAudit): {
+  rate: number; years: number; ruleKeys: string[]; finding: string | null;
+} | null {
+  if (asset.assetCategory !== 'farm_buildings' && asset.assetCategory !== 'slurry_storage') return null;
+  const buildings = {
+    rate: figureWithCurationFallback(audit, 'farm.buildings_rate'), years: figureWithCurationFallback(audit, 'farm.buildings_years'),
+    ruleKeys: ['farm.buildings_rate', 'farm.buildings_years', 'farm.buildings_net_of_grants'], finding: null as string | null,
+  };
+  if (asset.assetCategory === 'farm_buildings') return buildings;
+  const year = Number(asset.purchaseDate.slice(0, 4));
+  const last = figureWithCurationFallback(audit, 'farm.slurry_last_year');
+  if (asset.purchaseDate < '2023-01-01' || year > last) {
+    return { ...buildings, finding: `slurry storage bought on ${asset.purchaseDate}, outside the s.658A period (2023 to ${last}): `
+      + 'it gets the ordinary farm buildings allowance.' };
+  }
+  const rate = figureWithCurationFallback(audit, 'farm.slurry_rate');
+  return {
+    rate, years: Math.ceil(10_000 / rate), ruleKeys: ['farm.slurry_rate', 'farm.slurry_last_year', 'farm.buildings_net_of_grants'],
+    finding: `accelerated at ${rate / 100}% a year (s.658A). The tax saved by the acceleration is limited to `
+      + `${eur(figureWithCurationFallback(audit, 'farm.slurry_relief_cap'))} for the undertaking (s.658A(5)), which these books `
+      + 'do not measure: check it once the claims come near it.',
+  };
+}
+
+/**
  * Wear and tear (s.284), balancing allowances and charges (s.288) from the
  * fixed asset register. An asset's configured rate is used; a rate other
  * than the s.284 standard is flagged, and 100% in one year is treated as a
@@ -314,6 +347,8 @@ export function capitalAllowances(
   const balancingAllowances: CtSource[] = [];
   const balancingCharges: CtSource[] = [];
   let accelerated = false;
+  let grantCitations = false;
+  const farmCitations = new Set<string>();
   const carCitations = new Set<string>();
   const part11cCitations = new Map<string, CtCitation>();
   const assets = db.select().from(fixedAssets).where(and(eq(fixedAssets.companyId, companyId), lte(fixedAssets.purchaseDate, to))).all();
@@ -323,9 +358,26 @@ export function capitalAllowances(
       findings.push(`${asset.name} is an intangible asset: relief is under s.291A, not wear and tear, and is not computed here.`);
       continue;
     }
-    const cost = asset.baseCostMinor;
-    const rate = asset.capitalAllowanceRateBasisPoints;
-    const years = asset.capitalAllowanceYears;
+    // s.317(2), s.658(13): allowances are computed on the expenditure net of grants received towards it.
+    const grant = capitalGrantsReceivedFor(db, asset.id, to);
+    const cost = asset.baseCostMinor - Math.min(grant.receivedMinor, asset.baseCostMinor);
+    if (grant.receivedMinor > 0) {
+      grantCitations = true;
+      findings.push(`${asset.name}: ${eur(grant.receivedMinor)} of capital grants received is taken off its cost of `
+        + `${eur(asset.baseCostMinor)}: allowances are computed on ${eur(cost)} (s.317(2)).`);
+    }
+    if (grant.awardedMinor > grant.receivedMinor) {
+      findings.push(`${asset.name}: ${eur(grant.awardedMinor - grant.receivedMinor)} of capital grants awarded is not yet received. `
+        + 'When it is, link the receipt to the grant: it reduces the expenditure too, and later allowances follow.');
+    }
+    // Farm buildings (s.658) and slurry storage (s.658A) have their own rates and terms, from the rules.
+    const farm = farmBuildingBasis(asset, audit);
+    const rate = farm ? farm.rate : asset.capitalAllowanceRateBasisPoints;
+    const years = farm ? farm.years : asset.capitalAllowanceYears;
+    if (farm) {
+      farm.ruleKeys.forEach((k) => farmCitations.add(k));
+      if (farm.finding) findings.push(`${asset.name}: ${farm.finding}`);
+    }
     // TCA s.374(1): a motor car over the specified amount gets its allowances
     // as if it cost the specified amount.
     const car = motorCarBasis(db, companyId, asset, audit);
@@ -420,7 +472,7 @@ export function capitalAllowances(
       accelerated = true;
       findings.push(`${asset.name} is claimed at 100% in one year: an accelerated allowance (s.285A) is due only for new `
         + 'equipment named on the SEAI energy-efficient list, bought by 31 December 2030. Confirm it is on the list.');
-    } else if (rate !== standardRate || years !== standardYears) {
+    } else if (!farm && (rate !== standardRate || years !== standardYears)) {
       findings.push(`${asset.name} is claimed at ${rate / 100}% over ${years} years, not the ${standardRate / 100}% over ${standardYears} years of s.284(2)(ad). `
         + 'Check the basis for the different rate.');
     }
@@ -432,7 +484,8 @@ export function capitalAllowances(
       kind: 'deduction', label: 'Deduct: capital allowances (wear and tear)', amountMinor: -total(wearAndTear),
       citations: [cite('ct.wear_and_tear_rate'), cite('ct.wear_and_tear_in_use_at_period_end'), cite('ct.allowances_not_exceed_cost'),
         ...(scale ? [cite('ct.wear_and_tear_short_period')] : []), ...(accelerated ? [cite('ct.accelerated_energy_efficient')] : []),
-        ...[...carCitations].map(cite), ...part11cCitations.values()],
+        ...[...carCitations].map(cite), ...part11cCitations.values(), ...[...farmCitations].map(cite),
+        ...(grantCitations ? [cite('ct.allowances_net_of_grants')] : [])],
       sources: wearAndTear,
       explanation: 'Each asset in use at the end of the period, at its rate, for the years it has left, never beyond its cost '
         + '(a motor car over the specified amount, on that amount: s.374(1)).',
@@ -692,7 +745,8 @@ const addMonths = (date: string, months: number) => {
 const byThe23rd = (date: string) => (Number(date.slice(8)) > 23 ? `${date.slice(0, 8)}23` : date);
 
 interface PeriodRun { from: string; to: string; base: CtBase; claim: LossClaim; taxableTradingMinor: number; setBackMinor: number;
-  carriedBackInMinor: number; broughtForwardUsedMinor: number; creditMinor: number; lossLeftMinor: number; taxMinor: number }
+  carriedBackInMinor: number; broughtForwardUsedMinor: number; creditMinor: number; lossLeftMinor: number; taxMinor: number;
+  stockRelief: StockReliefResult | null; stockReliefClaim: FarmStockReliefClaim | null }
 
 /**
  * The corporation tax computation for an accounting period: the period's own
@@ -778,9 +832,20 @@ export function computeCorporationTax(db: AppDatabase, params: { companyId: stri
       }
     }
     pool += loss;
-    const taxableTradingMinor = profit - bf;
+    // Stock relief for a farming company (s.666; issue #544): a claim, limited to the trading income after capital
+    // allowances and losses, so it creates no loss (s.666(2)(a)).
+    const farming = isFarmingTrade(db, companyId, p.from, p.to);
+    const stockClaim = farming
+      ? (currentDecision(db, companyId, 'farm_stock_relief', companyId, p.to)?.choice as FarmStockReliefClaim | undefined) ?? null
+      : null;
+    const stock = farming
+      ? stockRelief(db, { companyId, from: p.from, to: p.to, category: 'general', profitAfterAllowancesMinor: profit - bf })
+      : null;
+    const stockReliefMinor = stockClaim === 'general' && stock ? stock.reliefMinor : 0;
+    const taxableTradingMinor = profit - bf - stockReliefMinor;
     runs.push({
       ...p, base, claim, taxableTradingMinor, setBackMinor: setBack, carriedBackInMinor: 0, broughtForwardUsedMinor: bf,
+      stockRelief: stock, stockReliefClaim: stockClaim,
       creditMinor: credit, lossLeftMinor: pool,
       taxMinor: multiplyRational(taxableTradingMinor, standard, 10_000) + higherTax - credit,
     });
@@ -804,6 +869,31 @@ export function computeCorporationTax(db: AppDatabase, params: { companyId: stri
       citations: [cite('ct.relevant_trading_loss_set_off')], sources: [],
       explanation: 'Claimed for the following period: its trading loss is set against this period\'s trading income.',
     });
+  }
+  if (run.stockRelief) {
+    const claim = run.stockReliefClaim;
+    decisions.push({
+      subjectType: 'farm_stock_relief', subjectId: companyId, description: `Stock relief for the period to ${to}`,
+      amountMinor: run.stockRelief.reliefMinor, suggested: 'none', decided: claim,
+      options: (['none', 'general'] as FarmStockReliefClaim[]).map((c) => ({ choice: c, label: FARM_STOCK_RELIEF_CLAIMS[c] })),
+      reason: `Trading stock went from ${eur(run.stockRelief.openingStockMinor)} to ${eur(run.stockRelief.closingStockMinor)}. `
+        + 'Stock relief is claimed in writing by the return date (s.666(5)): nothing is claimed until recorded.',
+    });
+    if (claim === 'young_trained' || claim === 'registered_partnership') {
+      findings.push('The 100% and 50% stock relief rates are for individual farmers (s.667B) and partners (s.667C), not a company: '
+        + 'no stock relief is given on that claim. Record the general rate to claim it.');
+    }
+    if (claim === 'general') {
+      findings.push(...run.stockRelief.findings);
+      if (run.stockRelief.reliefMinor) {
+        lines.push({
+          kind: 'deduction', label: 'Deduct: stock relief', amountMinor: -run.stockRelief.reliefMinor,
+          citations: run.stockRelief.ruleKeys.map(cite), sources: [],
+          explanation: `${run.stockRelief.rateBasisPoints / 100}% of the ${eur(run.stockRelief.increaseMinor)} increase in trading stock `
+            + 'over the period, never more than the trading income it reduces.',
+        });
+      }
+    }
   }
   const tradingLossMinor = Math.max(-base.adjustedMinor, 0);
   if (tradingLossMinor) {

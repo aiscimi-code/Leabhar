@@ -113,7 +113,7 @@ export default function AssetsPage() {
               <Field label="Name"><Input name="name" required /></Field>
               <Field label="Category">
                 <Select name="assetCategory" defaultValue="computer_equipment">
-                  {['computer_equipment', 'office_equipment', 'furniture_fittings', 'motor_vehicles', 'plant_machinery', 'other']
+                  {['computer_equipment', 'office_equipment', 'furniture_fittings', 'motor_vehicles', 'plant_machinery', 'farm_buildings', 'slurry_storage', 'other']
                     .map((c) => <option key={c} value={c}>{label(c)}</option>)}
                 </Select>
               </Field>

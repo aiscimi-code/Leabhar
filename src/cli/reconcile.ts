@@ -39,6 +39,7 @@ import { PAYROLL_COMMANDS, PAYROLL_USAGE, runPayrollCommand } from '@/agent/payr
 import { ASSET_COMMANDS, ASSET_USAGE, runAssetCommand } from '@/agent/assets';
 import { INVENTORY_COMMANDS, INVENTORY_USAGE, runInventoryCommand } from '@/agent/inventory';
 import { FARM_COMMANDS, FARM_USAGE, runFarmCommand } from '@/agent/farm';
+import { FARM_TAX_COMMANDS, FARM_TAX_USAGE, runFarmTaxCommand } from '@/agent/farmTax';
 import {
   listUsersCli, listRolesCli, inviteUserCli, removeUserCli, setUserRoleCli, resetUserPasswordCli,
 } from '@/agent/users';
@@ -509,7 +510,7 @@ Inspect:
                                             ${CT_SUBJECT_TYPES.join(`\n${' '.repeat(44)}`)}
   list-suppliers                         Every supplier (id, name, country, VAT no.)
   list-customers                         Every customer (id, name, country, VAT no.)
-${PAYROLL_USAGE}${ASSET_USAGE}${INVENTORY_USAGE}${FARM_USAGE}
+${PAYROLL_USAGE}${ASSET_USAGE}${INVENTORY_USAGE}${FARM_USAGE}${FARM_TAX_USAGE}
 Statutory VAT rules (issue #200):
   load-statutory-rules                   Ingest every docs/statutes source and derive the
                                          statutory rules for this company (idempotent)
@@ -659,6 +660,10 @@ export async function main(argv: string[], options: CliOptions = {}): Promise<nu
     }
     if ((FARM_COMMANDS as readonly string[]).includes(command)) {
       print(runFarmCommand(db, companyId, command, flags), format);
+      return 0;
+    }
+    if ((FARM_TAX_COMMANDS as readonly string[]).includes(command)) {
+      print(runFarmTaxCommand(db, companyId, command, flags), format);
       return 0;
     }
 

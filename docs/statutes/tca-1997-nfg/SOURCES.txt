@@ -22,3 +22,7 @@ PDF pattern: https://www.revenue.ie/en/tax-professionals/documents/notes-for-gui
               restrict the capital allowances of s.374). Retrieved 2026-09-27 for issue #313.
 - part11c.pdf Part 11C in full (ss.380K–380P), added 2026-09-27 for issue #466;
   converted with pdftotext -layout, SHA-256 in part11c.md's front matter
+- part23.pdf  Part 23 in full (farming and market gardening, ss.654–669O), added 2026-09-27 for EPIC 25 (#320):
+              ss.654, 657, 658, 658A, 665, 666, 667B, 667C, 667D ingested; converted with pdftotext -layout,
+              SHA-256 in part23.md's front matter
+- part09.pdf  s.317 (treatment of grants) added to the ingested sections for EPIC 25 (#543)

@@ -76,6 +76,8 @@ export const fixedAssets = sqliteTable('fixed_assets', {
     enum: [
       'computer_equipment', 'office_equipment', 'furniture_fittings',
       'motor_vehicles', 'plant_machinery', 'intangible', 'other',
+      // EPIC 25 (#545): allowed under TCA s.658 and s.658A, not s.284.
+      'farm_buildings', 'slurry_storage',
     ],
   }).notNull().default('computer_equipment'),
 

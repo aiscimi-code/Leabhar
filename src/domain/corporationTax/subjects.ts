@@ -51,13 +51,15 @@ export const EXPENSE_CHOICES: Record<ExpenseChoice, { label: string; addBack: bo
 };
 
 export type CtSubjectType = 'journal_line' | 'income_account' | 'loss_claim' | 'company_status'
-  | 'trading_company' | 'basis_election' | 'allowance_loss_election' | 'personal_status' | 'income_tax_loss_claim';
+  | 'trading_company' | 'basis_election' | 'allowance_loss_election' | 'personal_status' | 'income_tax_loss_claim' | 'farm_stock_relief' | 'farm_income_averaging' | 'farm_prior_profit';
 export type LossClaim = 'carry_forward' | 'claim_396a' | 'claim_396a_396b';
 export type IncomeTaxLossClaim = 'carry_forward' | 'claim_381';
 export type BasisElection = 'elect' | 'decline';
 export type AllowanceLossElection = 'elect' | 'decline';
 export type CompanyStatus = 'close_trading' | 'close_service' | 'not_close';
 export type TradingCompanyStatus = 'trading' | 'not_trading';
+export type FarmStockReliefClaim = 'none' | 'general' | 'young_trained' | 'registered_partnership';
+export type FarmIncomeAveraging = 'normal' | 'averaging' | 'step_out';
 
 export const LOSS_CLAIMS: Record<LossClaim, string> = {
   carry_forward: 'Carry the loss forward against later profits of the trade (s.396(1))',
@@ -97,6 +99,21 @@ export const ALLOWANCE_LOSS_ELECTIONS: Record<AllowanceLossElection, string> = {
   decline: 'No election: unused allowances are carried forward as allowances (s.304(2)), not as a loss',
 };
 
+/** Stock relief for a farming trade (TCA ss.666, 667B, 667C; issue #544): the rate a person claims under. */
+export const FARM_STOCK_RELIEF_CLAIMS: Record<FarmStockReliefClaim, string> = {
+  none: 'No stock relief claimed',
+  general: 'Stock relief at the general rate (s.666)',
+  young_trained: 'A qualifying young trained farmer, in the qualifying year or the 3 after (s.667B)',
+  registered_partnership: 'A partner in a registered farm partnership (s.667C)',
+};
+
+/** Income averaging of farm profits (TCA s.657; issue #544): elective, and each year recorded. */
+export const FARM_INCOME_AVERAGING: Record<FarmIncomeAveraging, string> = {
+  normal: 'Taxed on the year\'s own farming profits',
+  averaging: 'Taxed on the average of the farming profits of the year and the 4 before it (s.657(5))',
+  step_out: 'Averaging elected, but stepping out for this year only (s.657(6A))',
+};
+
 export const SUBJECT_CHOICES: Record<CtSubjectType, string[]> = {
   journal_line: Object.keys(EXPENSE_CHOICES),
   income_account: Object.keys(INCOME_CASES),
@@ -107,6 +124,10 @@ export const SUBJECT_CHOICES: Record<CtSubjectType, string[]> = {
   allowance_loss_election: Object.keys(ALLOWANCE_LOSS_ELECTIONS),
   personal_status: ['single', 'single_parent', 'married_one_income', 'married_two_incomes'],
   income_tax_loss_claim: Object.keys(INCOME_TAX_LOSS_CLAIMS),
+  farm_stock_relief: Object.keys(FARM_STOCK_RELIEF_CLAIMS),
+  farm_income_averaging: Object.keys(FARM_INCOME_AVERAGING),
+  // A farming profit before capital allowances for a year before these books, recorded with its amount (s.657).
+  farm_prior_profit: ['recorded'],
 };
 
 /** Every subject the year-end action may record. Derived from SUBJECT_CHOICES so a new type cannot be omitted. */
@@ -165,6 +186,12 @@ export function recordCtDecision(db: AppDatabase, params: {
       throw new CtDecisionError('Say how much of the loss is set against other income (s.381): '
         + 'a whole number of cents, more than zero.');
     }
+  } else if (params.subjectType === 'farm_prior_profit') {
+    // A year before these books (s.657): the person's figure, a loss negative, with its source in the note.
+    if (amountMinor === null || !Number.isInteger(amountMinor)) {
+      throw new CtDecisionError('Give the farming profit before capital allowances for the year, in cents (a loss negative).');
+    }
+    if (!params.note?.trim()) throw new CtDecisionError('Say where the figure comes from (the return or accounts for the year).');
   } else {
     amountMinor = null;
   }

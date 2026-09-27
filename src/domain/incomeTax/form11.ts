@@ -91,6 +91,15 @@ export function form11From(computation: IncomeTaxComputation): Form11 {
       ...(c.thirdYearReliefMinor
         ? [{ label: 'Less the second year\'s excess over its actual profits (s.66(3))', amountMinor: -c.thirdYearReliefMinor, note: 'An election; applied in the computation.' }]
         : []),
+      ...(c.farm?.stockRelief?.reliefMinor
+        ? [{ label: 'Less stock relief (s.666)', amountMinor: -c.farm.stockRelief.reliefMinor,
+             note: `${c.farm.stockRelief.rateBasisPoints / 100}% of the increase in trading stock; a claim, applied in the computation.` }]
+        : []),
+      ...(c.farm?.averaging?.applied
+        ? [{ label: 'Income averaging: adjustment to the average of five years (s.657)',
+             amountMinor: c.farm.chargedBasisMinor - (c.basisProfitMinor - (c.farm.stockRelief?.reliefMinor ?? 0)),
+             note: 'An election; the farming profits of the year and the 4 before it, before capital allowances.' }]
+        : []),
       ...(c.capitalAllowancesMinor
         ? [{ label: 'Less capital allowances for the year of assessment (s.284)', amountMinor: c.capitalAllowancesMinor,
              note: 'Given for the year of assessment against its basis period, not apportioned with the profits.' }]

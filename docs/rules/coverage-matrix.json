@@ -3534,6 +3534,40 @@
         "car.co2_group2_max",
         "car.group2_fraction"
       ]
+    },
+    {
+      "id": "nfg:part23",
+      "area": "other_source",
+      "title": "Revenue Notes for Guidance, TCA 1997 Part 23 — farming: farm buildings and slurry storage allowances, stock relief, income averaging, succession farm partnerships",
+      "status": "rule",
+      "ruleKeys": [
+        "farm.buildings_rate",
+        "farm.buildings_years",
+        "farm.buildings_net_of_grants",
+        "farm.slurry_rate",
+        "farm.slurry_last_year",
+        "farm.slurry_relief_cap",
+        "farm.stock_relief_rate",
+        "farm.stock_relief_no_loss",
+        "farm.stock_relief_last_year",
+        "farm.stock_relief_rate_young_trained",
+        "farm.young_trained_further_years",
+        "farm.young_trained_annual_cap",
+        "farm.stock_relief_rate_partnership",
+        "farm.partnership_relief_cap",
+        "farm.succession_credit",
+        "farm.averaging_years",
+        "farm.averaging_step_out_interval"
+      ]
+    },
+    {
+      "id": "nfg:part09:s317",
+      "area": "other_source",
+      "title": "Revenue Notes for Guidance, TCA 1997 s.317 — capital allowances net of grants",
+      "status": "rule",
+      "ruleKeys": [
+        "ct.allowances_net_of_grants"
+      ]
     }
   ]
 }

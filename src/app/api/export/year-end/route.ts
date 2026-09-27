@@ -166,6 +166,11 @@ export async function GET(request: Request): Promise<Response> {
     sheet.addRow([`Basis period ${it.basis.from} to ${it.basis.to}: ${it.basis.rule}`, '']);
     sheet.addRow(['Profits of the basis period', amount(it.basisProfitMinor + it.thirdYearReliefMinor)]);
     if (it.thirdYearReliefMinor) sheet.addRow(['  Less second-year excess (s.66(3))', amount(-it.thirdYearReliefMinor)]);
+    if (it.farm?.stockRelief?.reliefMinor) sheet.addRow(['  Less stock relief (s.666)', amount(-it.farm.stockRelief.reliefMinor)]);
+    if (it.farm?.averaging?.applied) {
+      sheet.addRow(['  Income averaging adjustment (s.657)',
+        amount(it.farm.chargedBasisMinor - (it.basisProfitMinor - (it.farm.stockRelief?.reliefMinor ?? 0)))]);
+    }
     if (it.capitalAllowancesMinor) sheet.addRow(['  Less capital allowances for the year of assessment (s.284)', amount(it.capitalAllowancesMinor)]);
     sheet.addRow([it.tradingLossMinor ? 'Trading loss for the year' : 'Assessable trading profit', amount(it.assessableProfitMinor)]).font = { bold: true };
     for (const i of it.individuals) {

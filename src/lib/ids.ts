@@ -103,4 +103,8 @@ export const ids = {
   animal: () => newId('anml'),
   livestockEvent: () => newId('lev'),
   livestockValuation: () => newId('lval'),
+  grant: () => newId('grant'),
+  grantReceipt: () => newId('grcpt'),
+  farmPartnershipRegistration: () => newId('fpreg'),
+  shareFarming: () => newId('shfarm'),
 };

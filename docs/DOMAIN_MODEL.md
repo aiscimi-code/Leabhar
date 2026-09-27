@@ -874,6 +874,68 @@ the person gives, with its basis.
   per hectare, and yield per hectare sown.
 - Crops in store are valued as inventory (stock account 1340).
 
+### Farm tax and grants (EPIC 25, issues #543–#546)
+
+The figures come from rules curated from the Revenue Notes for Guidance on TCA
+Part 23 and s.317 (FA 2025 edition), ingested like the rest of the NfG. Every
+relief is a claim: the person records it as a decision, and the income tax or
+corporation tax computation applies it and cites the rules.
+
+**Grants (#543).** `grants` records each award:
+- its scheme and payer;
+- revenue or capital;
+- the amount awarded;
+- for a capital grant, the asset it funds.
+
+Receipts are posted credit lines linked to a grant (`grant_receipts`), so
+amounts are always the ledger's. `reconcileGrants` reports each grant's
+amount received and outstanding. A credit to scheme income that no grant
+claims becomes a review item. `capitalAllowances` computes each asset on its
+cost less capital grants received (s.317(2); s.658(13)).
+
+**Farm capital allowances (#545).** Two asset categories have their own
+allowances:
+- `farm_buildings`: 15% a year, and the 10% balance in year 7 (s.658).
+- `slurry_storage`: 50% a year for expenditure in 2023 to 2029 (s.658A).
+  Outside that window it is treated as a farm building, and flagged.
+
+The rates come from the rules. The €500,000 cap on the tax value is flagged,
+not measured.
+
+**Stock relief (#544).**
+- **The deduction:** the rate claimed × the increase in trading stock over the
+  period. Trading stock is the stock accounts' balances, as closing stock and
+  livestock valuations left them.
+- **Limits:** it never exceeds the profit after capital allowances, so it
+  creates no loss (s.666). It ends after 2027.
+- **The claim** is a `farm_stock_relief` decision:
+  - `general`: 25%;
+  - `young_trained`: 100%, for four years at most (s.667B);
+  - `registered_partnership`: 50%, only while the partnership is on the
+    register (s.667C).
+  - A company can claim only the general rate.
+- **Caps** on the tax value (s.667B(5A), s.667C(3A)) are flagged: the book
+  does not measure the tax saved.
+
+**Income averaging (#544).**
+- A `farm_income_averaging` decision (`averaging`, or a `step_out`) charges a
+  sole trader one fifth of the stock-relieved profits of the year and the 4
+  before it (s.657(5)), before capital allowances.
+- Years before the book take the person's recorded figure (`farm_prior_profit`,
+  with its source).
+- A missing year stops averaging, with a finding.
+- A second step-out within 5 years is refused (s.657(6A)).
+- Partners elect on their own shares, so the firm's profit is not averaged.
+
+**Partnerships and share farming (#546).**
+- `farm_partnership_registrations` records a partnership on the register of
+  farm partnerships or of succession farm partnerships.
+- The succession tax credit (€5,000 a year, s.667D) is reported for the
+  partners.
+- `share_farming_arrangements` records each arrangement's party, land and
+  shares. It posts nothing.
+- `farmTaxSummary` reads the year's figures back from the computations.
+
 ### Consolidation (bank ↔ invoice)
 
 ```
