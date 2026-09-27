@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run typecheck)",
+      "Bash(npm test)",
+      "Bash(npx tsc --noEmit)",
+      "Bash(git fetch *)",
+      "mcp__github__issue_read",
+      "mcp__github__pull_request_read",
+      "mcp__github__list_issues",
+      "mcp__Google_Drive__search_files",
+      "mcp__Google_Drive__read_file_content"
+    ]
+  }
+}
