@@ -43,6 +43,7 @@ import {
   ingestVat3ReturnGuidance, ingestRtdTdm, deriveVat3RtdRules,
   VAT3_RETURN_GUIDANCE_MD_PATH, RTD_TDM_MD_PATH,
 } from '@/domain/rules/vat3RtdIngestion';
+import { ingestEbrief168_25, deriveEbriefRules, EBRIEF_168_25_MD_PATH } from '@/domain/rules/ebriefIngestion';
 import { syncTaxRatesFromIrishRules } from '@/domain/rules/taxRateSync';
 import { loadStatutoryKnowledgeBase, statuteFilePath } from '@/domain/rules/knowledgeBase';
 import { deriveVatScopeRules } from '@/domain/rules/vatScopeIngestion';
@@ -69,7 +70,7 @@ Commands:
                                        si69-2025 (alias si69-2025-reg8) | si69-2025-reg5 | si69-2025-reg7 |
                                        si69-2025-reg9 | tdm-38-01-03b |
                                        companies-act-2014 (ingests all eight fetched sections; no --file) |
-                                       vat3-return-guidance | rtd-tdm-s76 |
+                                       vat3-return-guidance | rtd-tdm-s76 | ebrief-168-25 |
                                        --file overrides
                                        its default path, e.g. to ingest a different revised section)
   ingest-all                          Ingest every source and derive every rule in one step
@@ -251,6 +252,12 @@ export async function main(argv: string[], options: CliOptions = {}): Promise<nu
           print(ingestVat3ReturnGuidance(db, { companyId, markdown, ingestVersion: 'v1', localPath: VAT3_RETURN_GUIDANCE_MD_PATH }), format);
           return 0;
         }
+        if (source === 'ebrief-168-25') {
+          const file = getFlag(flags, 'file') ?? statuteFilePath(EBRIEF_168_25_MD_PATH);
+          const markdown = readFileSync(file, 'utf8');
+          print(ingestEbrief168_25(db, { companyId, markdown, ingestVersion: 'v1' }), format);
+          return 0;
+        }
         if (source === 'rtd-tdm-s76') {
           const file = getFlag(flags, 'file') ?? statuteFilePath(RTD_TDM_MD_PATH);
           const markdown = readFileSync(file, 'utf8');
@@ -332,6 +339,10 @@ export async function main(argv: string[], options: CliOptions = {}): Promise<nu
         }
         if (source === 'vat3-rtd') {
           print(deriveVat3RtdRules(db, { companyId }), format);
+          return 0;
+        }
+        if (source === 'ebrief') {
+          print(deriveEbriefRules(db, { companyId }), format);
           return 0;
         }
         if (source !== 'finance-act-2024') throw new Error(`Unknown --source: ${source}`);

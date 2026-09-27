@@ -3318,6 +3318,15 @@
         "rtd.section_resale",
         "rtd.section_other_deductible"
       ]
+    },
+    {
+      "id": "revenue-ebrief:2025-168",
+      "area": "other_source",
+      "title": "Revenue eBrief No. 168/25 — TDM Part 38-01-03b (VAT registration guidelines) updated",
+      "status": "rule",
+      "ruleKeys": [
+        "vat.registration_guidelines_updated_2025_09"
+      ]
     }
   ]
 }
