@@ -40,6 +40,8 @@ const SECTIONS: Array<{ heading: string; items: Array<{ href: string; label: str
       { href: '/reports/trial-balance', label: 'Trial balance' },
       { href: '/reports/partners', label: 'Partners' },
       { href: '/reports/year-end', label: 'Year-end pack' },
+      { href: '/forecast', label: 'Cash forecast' },
+      { href: '/forecast/budget', label: 'Budget' },
       { href: '/adjustments', label: 'Adjustments' },
       { href: '/audit', label: 'Audit trail' },
     ],
