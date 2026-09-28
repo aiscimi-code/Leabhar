@@ -102,3 +102,7 @@ were one or two lines. The cost was finding them later.
       is lost at merge.
 - [ ] The PR description reports the gate's result on the merged head: the
       test count and whether the build ran.
+- [ ] A new source under `docs/statutes/` gets a row in the migration ledger
+      (#556) in the same change, until the #293 catalogue replaces the files
+      (#443). Commit its Markdown conversion only: no PDF or saved HTML
+      original. Record the original's URL and SHA-256 in the front matter.
