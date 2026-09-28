@@ -736,6 +736,24 @@ export const CORPORATION_TAX_CURATED_RULES: CuratedCorporationTaxRule[] = [
   },
   // ---- Relevant contracts tax (EPIC 26, issues #548, #549, #213; Notes for Guidance on ss.530B-530P) ----
   {
+    part: 'part18', sectionNumber: '530', ruleKey: 'rct.return_due_date', ruleType: 'procedure',
+    name: 'RCT: the return and tax for a return period are due 14 days after it ends',
+    statementExcerpt: '“due date”, in relation to a return period, means 14 days after the end of that return',
+    numericValue: 14, unit: 'count',
+    taxEffect: 'The tax deducted in a return period (a month) is paid to the Collector-General by the due date (s.530L(1)).',
+    effectiveFrom: '2012-01-01',
+    interpretationNote: 'TCA s.530 (Chapter 2 interpretation), "due date"; s.530L(1) makes the tax payable by it. Used by the cash forecast (#566).',
+  },
+  {
+    part: 'part18', sectionNumber: '530', ruleKey: 'rct.return_due_date_electronic', ruleType: 'procedure',
+    name: 'RCT: 23 days where the return and the payment are both made electronically',
+    statementExcerpt: 'period, or 23 days after the end of that return period where the return for that period is',
+    numericValue: 23, unit: 'count',
+    taxEffect: 'The later date applies only where both the return and the payment are made by electronic means.',
+    effectiveFrom: '2012-01-01',
+    interpretationNote: 'TCA s.530 (Chapter 2 interpretation), "due date". The forecast uses it when the company records that it files and pays on ROS (#566).',
+  },
+  {
     part: 'part18', sectionNumber: '530B', ruleKey: 'rct.contract_notification', ruleType: 'procedure',
     name: 'RCT: a principal notifies Revenue of each relevant contract',
     statementExcerpt: 'Upon entering into a relevant contract, a principal obliged to operate RCT shall provide',

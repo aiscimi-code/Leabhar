@@ -2522,7 +2522,9 @@
       "title": "TCA 1997 s530",
       "status": "rule",
       "ruleKeys": [
-        "rct.relevant_operations_scope"
+        "rct.relevant_operations_scope",
+        "rct.return_due_date",
+        "rct.return_due_date_electronic"
       ]
     },
     {

@@ -470,6 +470,35 @@ The reports screen exports the statements, cash flow and trial balance as
 PDF (`/api/export/report?which=all&format=pdf`), laid out from the same lines
 as the spreadsheet export.
 
+Cash forecast, scenarios, recurring items and the budget (EPIC 29). Nothing
+here posts. Each option overrides the company default for one forecast;
+`set-forecast-defaults` saves a new version of the defaults:
+
+```bash
+npm run cli -- forecast --as-of 2026-03-01 --days 90 --granularity weekly
+npm run cli -- forecast --as-of 2026-03-01 --receipts customer_history --due-dates ros --include-drafts
+npm run cli -- set-forecast-defaults --receipts customer_history --days 120 --minimum 5000 --by owner
+npm run cli -- save-forecast --name "March board pack" --as-of 2026-03-01 --by owner
+npm run cli -- compare-saved-forecast --id <saved id> --as-of 2026-04-01
+npm run cli -- add-scenario --name "Slow spring" --by owner
+npm run cli -- scenario-adjust --scenario <id> --kind customer_payment_delay --description "Customers 30 days late" --from 2026-03-01 --days 30
+npm run cli -- scenario-adjust --scenario <id> --kind new_hire --description Engineer --from 2026-05-01 --amount 4500
+npm run cli -- compare-scenarios --scenarios <id> --as-of 2026-03-01
+npm run cli -- detect-recurring --as-of 2026-03-01
+npm run cli -- confirm-recurring --pattern <id> --by owner
+npm run cli -- add-recurring-item --description Rent --direction outflow --amount 2000 --frequency monthly --from 2026-03-05 --by owner
+npm run cli -- import-budget --year-end 2026-12-31 --name "Plan 2026" --file budget.csv --by owner
+npm run cli -- copy-budget --year-end 2027-12-31 --name "Plan 2027" --from actuals --percent 5 --by owner
+npm run cli -- budget-vs-actual --budget <id> --as-of 2026-06-30
+```
+
+Tax is dated by curated rules: VAT on the 19th (s.76(1)) or the 23rd on the
+ROS basis (s.78(2)); RCT 14 or 23 days after the month (TCA s.530);
+corporation tax on the 21st or the ROS 23rd; income tax on 31 October. PAYE,
+USC and PRSI have no curated payment date, so they are listed under "Not
+dated", totalled, and kept out of the running balance (ADR 0018). The screens
+are `/forecast` and `/forecast/budget`.
+
 ### Agent workflow
 
 `db:seed` only ever loads the Acme demo. To load a real (or synthetic) SME

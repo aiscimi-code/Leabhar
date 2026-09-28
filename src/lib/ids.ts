@@ -119,4 +119,12 @@ export const ids = {
   projectOverheadRate: () => newId('pohr'),
   companySizeDecision: () => newId('csize'),
   statementFormatMapping: () => newId('sfmap'),
+  forecastSettings: () => newId('fset'),
+  forecastSnapshot: () => newId('fsnap'),
+  recurringForecastItem: () => newId('rfi'),
+  recurringBankPattern: () => newId('rbp'),
+  companyBudget: () => newId('cbud'),
+  companyBudgetLine: () => newId('cbl'),
+  forecastScenario: () => newId('fscn'),
+  scenarioAdjustment: () => newId('sadj'),
 };
