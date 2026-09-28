@@ -40,3 +40,4 @@ date it was written, not the date the decision was first taken.
 | [0014](0014-payroll-figures-rpn-and-rules.md) | Take an employee's figures from the RPN and the statutory figures from the rules | Accepted |
 | [0015](0015-periodic-ledger-perpetual-stock-costed-by-replay.md) | Keep stock periodically in the ledger, perpetually in a subledger costed by replay | Accepted |
 | [0016](0016-farm-analysis-beside-the-ledger.md) | Keep farm enterprise and crop analysis beside the ledger, as allocations of posted lines | Accepted |
+| [0017](0017-statutory-layouts-from-ledger-movements.md) | Lay out the cash flow and the statutory formats from ledger movements, classified by account | Accepted |

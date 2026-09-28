@@ -452,6 +452,24 @@ npm run cli -- project-profitability --from 2026-01-01 --to 2026-12-31
 npm run cli -- wip --as-of 2026-12-31
 ```
 
+Financial reporting (cash flow, comparatives, analysis, company size and the Schedule 3A formats):
+
+```bash
+npm run cli -- cash-flow --from 2026-01-01 --to 2026-12-31
+npm run cli -- comparatives --from 2026-01-01 --to 2026-12-31
+npm run cli -- income-expense --from 2026-01-01 --to 2026-12-31
+npm run cli -- income-by-customer --from 2026-01-01 --to 2026-12-31
+npm run cli -- size-decision --year-end 2026-12-31 --kind exclusion --choice none --by owner
+npm run cli -- size-decision --year-end 2026-12-31 --kind average_employees --count 4 --note "Monthly headcount averaged" --by owner
+npm run cli -- company-size --year-end 2026-12-31
+npm run cli -- map-format-item --account 6040 --item 4 --from 2026-01-01 --note "Advertising is a distribution cost" --by owner
+npm run cli -- schedule-3a --from 2026-01-01 --to 2026-12-31
+```
+
+The reports screen exports the statements, cash flow and trial balance as
+PDF (`/api/export/report?which=all&format=pdf`), laid out from the same lines
+as the spreadsheet export.
+
 ### Agent workflow
 
 `db:seed` only ever loads the Acme demo. To load a real (or synthetic) SME

@@ -29,7 +29,7 @@ VATCA_LETTERED = [
     "92A", "92B", "92C", "92D", "108A", "108B", "108C",
 ]
 CA2014_SECTIONS = [
-    "282", "280A", "280D", "280E", "352", "358", "359", "360",
+    "282", "280A", "280B", "280C", "280D", "280E", "280F", "352", "358", "359", "360",
 ]
 TCA1997_SECTIONS = [235, 288, 299, 496, 613]
 
@@ -165,6 +165,12 @@ def extract_companies_act_2014() -> None:
                 url,
             ),
         )
+    # Schedule 3A: the small companies regime's formats (issue #554).
+    url = "https://revisedacts.lawreform.ie/eli/2014/act/38/schedule/3A/revised/en/html"
+    raw = Path("/tmp/ca2014/sch3A.html")
+    if not raw.exists():
+        fetch(url, raw)
+    write(out / "schedule-3A.md", html_to_md(raw.read_text(errors="replace"), "Companies Act 2014 Schedule 3A (revised)", "2014 Act 38 Sch. 3A", url))
 
 
 def extract_tca1997() -> None:

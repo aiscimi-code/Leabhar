@@ -36,7 +36,7 @@
  * transaction data either — `requiresGuidance`/`humanReviewRequired` are
  * always true here for the same reason.
  *
- * Nine rules from six of the eight ingested sections:
+ * Twelve rules from seven of the eleven ingested sections:
  * - s.280A (small company, general): three separate rule keys for the three
  *   independent 2-of-3 test limbs (turnover, balance sheet, employees) —
  *   split the same way `financeAct2024VatThresholdsCuration.ts` splits a
@@ -48,6 +48,11 @@
  *   "different rules" elsewhere in the Act, without itself stating any) is
  *   ingested for citability but backs no rule of its own — referenced in
  *   interpretation notes only.
+ * - s.280F (medium company, issue #554): the same three-way split, at the
+ *   medium thresholds. s.280B (small groups) and s.280C (which only names the
+ *   "small companies regime") are ingested for citability; the group test
+ *   needs group figures these books do not hold, so a holding company's size
+ *   is a person's decision (src/domain/reports/companySize.ts).
  * - s.352 (abridged filing exemption): one rule.
  * - s.358/359/360 (audit exemption conditions and effect): one rule each —
  *   358 for the non-group gate, 359 for the group gate, 360 for the actual
@@ -110,6 +115,27 @@ const MICRO_COMPANY_2_OF_3_NOTE = 'Companies Act 2014 s.280D(3): a company satis
   + 'curated) states only that a qualifying micro company may then use different ("micro companies regime") '
   + 'rules for its financial statements and reports — it states no figure of its own.';
 
+/**
+ * The s.280A, s.280D and s.280F thresholds as they now stand were substituted
+ * from 1 July 2024 by the European Union (Adjustments of Size Criteria for
+ * Certain Companies and Groups) Regulations 2024 (S.I. No. 301 of 2024), per
+ * the LRC annotations to each section (issue #554). They were first dated
+ * 2026-09-20, the day they were fetched, which is not when they took effect.
+ */
+const SI_301_2024_FROM = '2024-07-01';
+
+const SI_301_2024_NOTE = 'Substituted (1.07.2024) by S.I. No. 301 of 2024, "in effect as per reg. 2" (LRC annotation). '
+  + 'Regulation 2, which says which financial years the substituted figures first apply to, is not in this KB\'s '
+  + 'sources, so a size classification for a financial year that began before 1 July 2024 is flagged for a person '
+  + 'to confirm rather than assumed. ';
+
+const MEDIUM_COMPANY_2_OF_3_NOTE = 'Companies Act 2014 s.280F(3): a company satisfies the medium-company '
+  + 'qualifying conditions in a financial year if it "fulfils 2 or more" of the three limbs. s.280F(4) excludes a '
+  + 'holding company, an ineligible company, and a company that qualifies for the small or micro companies regime, '
+  + 'so a company is medium only when it is neither small nor micro. s.280F(2) applies the same two-year rule as '
+  + 's.280A(2); s.280F(5) adjusts the turnover limb proportionately for a financial year that is not a year; '
+  + 's.280F(6) takes the average number of employees by the s.317 methods (not ingested here).';
+
 export const COMPANIES_ACT_2014_CURATED_RULES: CuratedCompaniesAct2014Rule[] = [
   {
     citation: '2014 Act 38 s.280A',
@@ -129,8 +155,8 @@ export const COMPANIES_ACT_2014_CURATED_RULES: CuratedCompaniesAct2014Rule[] = [
     reportingEffect: 'Qualifying as a small company (2 of 3 of this limb, the balance-sheet limb, and the '
       + 'employee-count limb — see company.small_company_balance_sheet_threshold/company.small_company_employee_threshold) '
       + 'is the gateway condition for the s.352 abridged-filing exemption and, via s.358, the audit exemption.',
-    effectiveFrom: '2026-09-20',
-    interpretationNote: SMALL_COMPANY_2_OF_3_NOTE + ' No `conditions`: this KB has no company-level "annual '
+    effectiveFrom: SI_301_2024_FROM,
+    interpretationNote: SI_301_2024_NOTE + SMALL_COMPANY_2_OF_3_NOTE + ' No `conditions`: this KB has no company-level "annual '
       + 'turnover" field (distinct from the VAT-specific `annualTurnoverCurrentYearMinor`/'
       + '`annualTurnoverPreviousYearMinor` fields `financeAct2024VatThresholdsCuration.ts` uses for a different '
       + 'legal test) to test it against, so this states the figure for a human to apply, rather than a mechanical '
@@ -151,8 +177,8 @@ export const COMPANIES_ACT_2014_CURATED_RULES: CuratedCompaniesAct2014Rule[] = [
     conditions: [],
     exceptions: [],
     reportingEffect: 'See company.small_company_turnover_threshold.',
-    effectiveFrom: '2026-09-20',
-    interpretationNote: SMALL_COMPANY_2_OF_3_NOTE + ' No `conditions`, for the same reason as '
+    effectiveFrom: SI_301_2024_FROM,
+    interpretationNote: SI_301_2024_NOTE + SMALL_COMPANY_2_OF_3_NOTE + ' No `conditions`, for the same reason as '
       + 'company.small_company_turnover_threshold: this KB has no company-level "balance sheet total" field.',
   },
   {
@@ -171,8 +197,8 @@ export const COMPANIES_ACT_2014_CURATED_RULES: CuratedCompaniesAct2014Rule[] = [
     conditions: [],
     exceptions: [],
     reportingEffect: 'See company.small_company_turnover_threshold.',
-    effectiveFrom: '2026-09-20',
-    interpretationNote: SMALL_COMPANY_2_OF_3_NOTE + ' No `conditions`: this KB has no company-level employee-'
+    effectiveFrom: SI_301_2024_FROM,
+    interpretationNote: SI_301_2024_NOTE + SMALL_COMPANY_2_OF_3_NOTE + ' No `conditions`: this KB has no company-level employee-'
       + 'count field, and does not ingest s.317 (the averaging method this limb defers to).',
   },
   {
@@ -193,8 +219,8 @@ export const COMPANIES_ACT_2014_CURATED_RULES: CuratedCompaniesAct2014Rule[] = [
     exceptions: [],
     reportingEffect: 'A qualifying micro company may apply the "micro companies regime" (s.280E) to its '
       + 'financial statements and reports.',
-    effectiveFrom: '2026-09-20',
-    interpretationNote: MICRO_COMPANY_2_OF_3_NOTE + ' No `conditions`, for the same reason as the small-company '
+    effectiveFrom: SI_301_2024_FROM,
+    interpretationNote: SI_301_2024_NOTE + MICRO_COMPANY_2_OF_3_NOTE + ' No `conditions`, for the same reason as the small-company '
       + 'thresholds above: no company-level "annual turnover" field exists in this KB.',
   },
   {
@@ -213,8 +239,8 @@ export const COMPANIES_ACT_2014_CURATED_RULES: CuratedCompaniesAct2014Rule[] = [
     conditions: [],
     exceptions: [],
     reportingEffect: 'See company.micro_company_turnover_threshold.',
-    effectiveFrom: '2026-09-20',
-    interpretationNote: MICRO_COMPANY_2_OF_3_NOTE + ' No `conditions`: no company-level "balance sheet total" field.',
+    effectiveFrom: SI_301_2024_FROM,
+    interpretationNote: SI_301_2024_NOTE + MICRO_COMPANY_2_OF_3_NOTE + ' No `conditions`: no company-level "balance sheet total" field.',
   },
   {
     citation: '2014 Act 38 s.280D',
@@ -233,9 +259,66 @@ export const COMPANIES_ACT_2014_CURATED_RULES: CuratedCompaniesAct2014Rule[] = [
     conditions: [],
     exceptions: [],
     reportingEffect: 'See company.micro_company_turnover_threshold.',
-    effectiveFrom: '2026-09-20',
-    interpretationNote: MICRO_COMPANY_2_OF_3_NOTE + ' No `conditions`: no company-level employee-count field, and '
+    effectiveFrom: SI_301_2024_FROM,
+    interpretationNote: SI_301_2024_NOTE + MICRO_COMPANY_2_OF_3_NOTE + ' No `conditions`: no company-level employee-count field, and '
       + 's.317 is not ingested here (same gap as the small-company employee limb).',
+  },
+  {
+    citation: '2014 Act 38 s.280F',
+    sectionNumber: '280F',
+    ruleKey: 'company.medium_company_turnover_threshold',
+    ruleType: 'threshold',
+    topic: COMPANY_FILING_REFERENCE_TOPIC,
+    name: 'Medium company qualifying condition: turnover does not exceed €50 million',
+    statementExcerpt: 'the amount of turnover of the company does not exceed\n€50 million',
+    extractedFact: '€50 million',
+    numericValue: 5_000_000_000, // €50,000,000 = 5,000,000,000 cents
+    unit: 'eur_minor',
+    qualifier: 'one of the three s.280F(3) qualifying-condition limbs; 2 of 3 must be met; proportionately adjusted '
+      + 'for a financial year that is not in fact a year (s.280F(5))',
+    conditions: [],
+    exceptions: [],
+    reportingEffect: 'A company that is neither small nor micro and meets 2 of the 3 medium limbs is a medium company; '
+      + 'one that meets fewer is large (issue #554, src/domain/reports/companySize.ts).',
+    effectiveFrom: SI_301_2024_FROM,
+    interpretationNote: SI_301_2024_NOTE + MEDIUM_COMPANY_2_OF_3_NOTE,
+  },
+  {
+    citation: '2014 Act 38 s.280F',
+    sectionNumber: '280F',
+    ruleKey: 'company.medium_company_balance_sheet_threshold',
+    ruleType: 'threshold',
+    topic: COMPANY_FILING_REFERENCE_TOPIC,
+    name: 'Medium company qualifying condition: balance sheet total does not exceed €25 million',
+    statementExcerpt: 'the balance sheet total of the company does not exceed\n€25 million',
+    extractedFact: '€25 million',
+    numericValue: 2_500_000_000, // €25,000,000 = 2,500,000,000 cents
+    unit: 'eur_minor',
+    qualifier: 'one of the three s.280F(3) qualifying-condition limbs; 2 of 3 must be met',
+    conditions: [],
+    exceptions: [],
+    reportingEffect: 'See company.medium_company_turnover_threshold.',
+    effectiveFrom: SI_301_2024_FROM,
+    interpretationNote: SI_301_2024_NOTE + MEDIUM_COMPANY_2_OF_3_NOTE,
+  },
+  {
+    citation: '2014 Act 38 s.280F',
+    sectionNumber: '280F',
+    ruleKey: 'company.medium_company_employee_threshold',
+    ruleType: 'threshold',
+    topic: COMPANY_FILING_REFERENCE_TOPIC,
+    name: 'Medium company qualifying condition: average number of employees does not exceed 250',
+    statementExcerpt: 'the average number of employees does not exceed 250',
+    extractedFact: '250',
+    numericValue: 250,
+    unit: 'count',
+    qualifier: 'one of the three s.280F(3) qualifying-condition limbs; 2 of 3 must be met; the average is '
+      + 'determined by the s.317 methods (s.280F(6)), not curated here',
+    conditions: [],
+    exceptions: [],
+    reportingEffect: 'See company.medium_company_turnover_threshold.',
+    effectiveFrom: SI_301_2024_FROM,
+    interpretationNote: SI_301_2024_NOTE + MEDIUM_COMPANY_2_OF_3_NOTE,
   },
   {
     citation: '2014 Act 38 s.352',

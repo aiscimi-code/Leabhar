@@ -17,3 +17,16 @@ fetch shape `docs/statutes/vatca-2010-revised/` uses. These, not the
 paraphrase above, back the size-threshold and filing/audit-exemption rules
 curated in `src/domain/rules/companiesAct2014Curation.ts` — see
 `docs/RULES_KB.md`'s "Companies Act 2014 size thresholds" section.
+
+**Company size and formats (issue #554):** `s280B.md` (small groups),
+`s280C.md` (the small companies regime) and `s280F.md` (medium companies)
+join the set, fetched the same way. The threshold figures in s.280A, s.280D
+and s.280F were substituted from 1 July 2024 by S.I. No. 301 of 2024 (regs.
+4 and 7), "in effect as per reg. 2" according to the LRC annotation; reg. 2
+itself is not captured here, so which financial years the new figures first
+apply to is flagged on every size classification rather than assumed.
+`schedule-3A.md` is Schedule 3A (accounting principles, form and content of
+the entity financial statements of a company in the small companies regime),
+fetched from the LRC-revised Act. Its Format 1 headings are quoted verbatim
+by `src/domain/reports/schedule3A.ts`, and a test checks each one against this
+file.

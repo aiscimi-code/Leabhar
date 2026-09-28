@@ -117,4 +117,6 @@ export const ids = {
   projectAllocation: () => newId('palloc'),
   projectBudget: () => newId('pbud'),
   projectOverheadRate: () => newId('pohr'),
+  companySizeDecision: () => newId('csize'),
+  statementFormatMapping: () => newId('sfmap'),
 };

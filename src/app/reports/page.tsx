@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { reportsData, companyContext } from '@/lib/queries';
+import { reportsData, reportsAnalysis, companyContext } from '@/lib/queries';
 import { Page, Panel, Figure, Help, LinkButton, Badge } from '@/components/primitives';
 import { accountingMoney, money, date } from '@/lib/format';
 import { asIsoDate } from '@/domain/dates';
@@ -22,6 +22,8 @@ export default async function ReportsPage({ searchParams }: {
   const from = asIsoDate(params['from'] ?? currentYear?.startDate ?? '2025-01-01');
   const to = asIsoDate(params['to'] ?? currentYear?.endDate ?? '2025-12-31');
   const data = reportsData(from, to, from);
+  const analysis = reportsAnalysis(from, to);
+  const cf = analysis.cashFlow;
   const currency = company.baseCurrency;
 
   return (
@@ -40,6 +42,13 @@ export default async function ReportsPage({ searchParams }: {
               bg-surface text-[12px] font-medium">
             P&amp;L CSV
           </a>
+          <a href={`/api/export/report?which=all&format=pdf&from=${from}&to=${to}`}
+            className="inline-block px-2.5 py-1 rounded border border-line-strong
+              bg-surface text-[12px] font-medium">
+            PDF
+          </a>
+          <LinkButton href={`/reports/analysis?from=${from}&to=${to}`}>Comparatives and analysis</LinkButton>
+          <LinkButton href="/reports/statutory">Company size and formats</LinkButton>
           <LinkButton href="/reports/trial-balance">Trial balance</LinkButton>
           <LinkButton href="/reports/year-end">Year-end pack</LinkButton>
           {company.entityType === 'partnership' && (
@@ -166,7 +175,91 @@ export default async function ReportsPage({ searchParams }: {
           ))}
         </Panel>
       </div>
+
+      <div className="grid grid-cols-2 gap-4 items-start">
+        <Panel title="Cash flow statement" description={`${date(from)} to ${date(to)}, indirect method`}
+          tone={cf.reconciles ? 'default' : 'negative'}>
+          <table className="ledger">
+            <tbody>
+              {[
+                { section: cf.operating, total: 'Net cash from operating activities' },
+                { section: cf.investing, total: 'Net cash from investing activities' },
+                { section: cf.financing, total: 'Net cash from financing activities' },
+              ].map(({ section, total }) => (
+                <FlowSection key={section.label} label={section.label} lines={section.lines} total={total} totalMinor={section.totalMinor} currency={currency} to={to} />
+              ))}
+              <tr className="font-semibold">
+                <td className="border-t border-line-strong pt-2">Net increase/(decrease) in cash</td>
+                <td className="text-right num border-t border-line-strong pt-2">{accountingMoney(cf.netCashFlowMinor, currency)}</td>
+              </tr>
+              <tr><td className="text-ink-muted">Cash and bank at {date(from)}</td><td className="text-right num">{accountingMoney(cf.cash.openingMinor, currency)}</td></tr>
+              <tr className="font-medium"><td>Cash and bank at {date(to)}</td><td className="text-right num">{accountingMoney(cf.cash.closingMinor, currency)}</td></tr>
+            </tbody>
+          </table>
+          {cf.reconciles ? (
+            <div className="px-4 py-2 border-t border-line text-[12px] text-positive">
+              ✓ The net cash flow equals the movement in bank and cash.
+            </div>
+          ) : (
+            <div className="px-4 py-2.5 bg-negative-soft border-t border-negative/30 text-negative text-[12px]">
+              <strong>The cash flow does not reconcile.</strong> It differs from the movement in bank and cash
+              by {money(cf.differenceMinor, currency)}. The difference is shown, not absorbed.
+            </div>
+          )}
+          {cf.findings.map((f, i) => (
+            <div key={i} className="px-4 py-2 bg-caution-soft border-t border-caution/30 text-caution text-[12px]">{f}</div>
+          ))}
+        </Panel>
+
+        <Panel title="Stock" description={`Valued at ${date(to)}`}
+          actions={<a href={`/api/export/report?which=inventory&format=csv&from=${from}&to=${to}`} className="text-[12px] text-accent hover:underline">CSV</a>}>
+          {analysis.inventory.lines.length === 0 ? (
+            <p className="px-4 py-3 text-[12px] text-ink-muted">No stock items hold a quantity at this date.</p>
+          ) : (
+            <table className="ledger">
+              <thead><tr><th>Item</th><th>Location</th><th className="text-right">Quantity</th><th className="text-right">Value</th></tr></thead>
+              <tbody>
+                {analysis.inventory.lines.map((l) => (
+                  <tr key={`${l.itemId}-${l.locationId}`}>
+                    <td>{l.code} {l.name} <span className="text-ink-faint text-[11px]">{l.method}</span></td>
+                    <td>{l.locationCode}</td>
+                    <td className="text-right num">{(l.quantityMilli / 1000).toLocaleString('en-IE')} {l.unit}</td>
+                    <td className="text-right num">{accountingMoney(l.valueMinor, currency)}</td>
+                  </tr>
+                ))}
+                <tr className="font-semibold"><td colSpan={3} className="border-t border-line-strong">Total</td>
+                  <td className="text-right num border-t border-line-strong">{accountingMoney(analysis.inventory.totalMinor, currency)}</td></tr>
+              </tbody>
+            </table>
+          )}
+          <p className="px-4 py-2.5 text-[11.5px] text-ink-muted border-t border-line leading-snug">{analysis.inventory.note}</p>
+        </Panel>
+      </div>
     </Page>
+  );
+}
+
+function FlowSection({ label, lines, total, totalMinor, currency, to }: {
+  label: string; lines: Array<{ label: string; accountId?: string; amountMinor: number; method: string }>;
+  total: string; totalMinor: number; currency: string; to: string;
+}) {
+  return (
+    <>
+      <tr><td colSpan={2} className="font-medium text-ink pt-2.5">{label}</td></tr>
+      {lines.map((l) => (
+        <tr key={l.label}>
+          <td className="pl-5 text-ink-muted">{l.label}</td>
+          <td className="text-right">
+            <Figure value={accountingMoney(l.amountMinor, currency)} title={l.method}
+              href={l.accountId ? `/reports/account/${l.accountId}?to=${to}` : undefined} />
+          </td>
+        </tr>
+      ))}
+      <tr className="font-medium">
+        <td className="border-t border-line pt-1.5">{total}</td>
+        <td className="text-right num border-t border-line pt-1.5">{accountingMoney(totalMinor, currency)}</td>
+      </tr>
+    </>
   );
 }
 

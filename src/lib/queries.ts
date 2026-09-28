@@ -23,6 +23,11 @@ import { trialBalance, balancesBySystemKey, accountBalance } from '@/domain/acco
 import { buildVat3Return, vatPositionSummary } from '@/domain/vat/report';
 import { validateVatPeriod } from '@/domain/vat/periodClose';
 import { profitAndLoss, balanceSheet } from '@/domain/reports/financial';
+import { cashFlowStatement } from '@/domain/reports/cashFlow';
+import { comparativeStatements, incomeExpenseByMonth, invoicesByParty } from '@/domain/reports/analysis';
+import { valueInventory } from '@/domain/inventory/closing';
+import { companySize } from '@/domain/reports/companySize';
+import { schedule3ABalanceSheet, schedule3AProfitAndLoss } from '@/domain/reports/schedule3A';
 import { unmatchedTransactions } from '@/domain/matching/service';
 import { listAdjustments } from '@/domain/accounting/adjustments';
 import { agedAnalysis } from '@/domain/invoicing/payments';
@@ -624,6 +629,38 @@ export function reportsData(from: IsoDate, to: IsoDate, yearStart: IsoDate) {
     trialBalance: trialBalance(db, {
       companyId: company.id, asOf: to, baseCurrency: company.baseCurrency,
     }),
+  };
+}
+
+/** The rest of the reports screen (issue #553): cash flow, comparatives, income and expense analysis, and stock. */
+export function reportsAnalysis(from: IsoDate, to: IsoDate) {
+  const db = getDb();
+  const company = requireCompany();
+  const companyId = company.id;
+  return {
+    cashFlow: cashFlowStatement(db, { companyId, from, to }),
+    comparatives: comparativeStatements(db, { companyId, from, to }),
+    byMonth: incomeExpenseByMonth(db, { companyId, from, to }),
+    byCustomer: invoicesByParty(db, { companyId, direction: 'sales', from, to }),
+    bySupplier: invoicesByParty(db, { companyId, direction: 'purchase', from, to }),
+    inventory: valueInventory(db, { companyId, asOf: to }),
+  };
+}
+
+/** Company size and the Schedule 3A layout for a financial year (issue #554). */
+export function statutoryPage(yearId?: string) {
+  const db = getDb();
+  const { company, financialYears, currentYear } = companyContext();
+  const year = financialYears.find((y) => y.id === yearId) ?? currentYear;
+  if (!year) return { company, financialYears, year: null, size: null, balanceSheet: null, profitAndLoss: null, accounts: [] };
+  const from = asIsoDate(year.startDate), to = asIsoDate(year.endDate);
+  return {
+    company, financialYears, year,
+    size: companySize(db, { companyId: company.id, financialYearEnd: year.endDate }),
+    balanceSheet: schedule3ABalanceSheet(db, { companyId: company.id, asOf: to, financialYearStart: from }),
+    profitAndLoss: schedule3AProfitAndLoss(db, { companyId: company.id, from, to }),
+    accounts: db.select({ id: accounts.id, code: accounts.code, name: accounts.name, type: accounts.type }).from(accounts)
+      .where(eq(accounts.companyId, company.id)).orderBy(accounts.code).all(),
   };
 }
 

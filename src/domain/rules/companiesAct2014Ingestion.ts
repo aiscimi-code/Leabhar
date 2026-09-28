@@ -34,9 +34,13 @@ import { crossReferencesFromProvision, sameCrossReferences } from './dependencie
 
 const SOURCE_TYPE: IrishSourceType = 'legislation';
 
-/** All eight sections extract_companies_act_2014() fetches (docs/statutes/scripts/extract_vat_sources.py). */
+/**
+ * The sections extract_companies_act_2014() fetches (docs/statutes/scripts/extract_vat_sources.py):
+ * the first eight (issue #135), and s.280B (small groups), s.280C (the small
+ * companies regime) and s.280F (medium companies) for company size (issue #554).
+ */
 export const COMPANIES_ACT_2014_SECTION_NUMBERS = [
-  '282', '280A', '280D', '280E', '352', '358', '359', '360',
+  '282', '280A', '280B', '280C', '280D', '280E', '280F', '352', '358', '359', '360',
 ] as const;
 
 export interface CompaniesAct2014IngestResult {

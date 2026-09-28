@@ -1656,6 +1656,18 @@ verbatim-only policy.
   (the small-group test s.358/s.359 both defer to); s.353/s.355/s.356 (what
   "abridged" statements must contain, their approval, and the special
   auditors' report s.352 defers to) — none of these is ingested here.
+- **Issue #554** adds s.280B (small groups), s.280C (the small companies
+  regime) and s.280F (medium companies) to the fetched set, three medium-
+  company limbs (€50m / €25m / 250 employees), and Schedule 3A
+  (`schedule-3A.md`, whose Format 1 headings `src/domain/reports/schedule3A.ts`
+  quotes verbatim). The s.280A, s.280D and s.280F thresholds were re-dated
+  from 2026-09-20 (the day they were fetched) to 2024-07-01, when S.I. No. 301
+  of 2024 substituted them; the LRC annotation says "in effect as per reg. 2",
+  and reg. 2 is not captured, so every size classification for a year that
+  began before that date is flagged. The two-year and exclusion provisos are
+  now applied by `src/domain/reports/companySize.ts` on the books' figures,
+  with a person recording what the books cannot know (exclusions, the year
+  before, the average number of employees where payroll does not hold it).
 
 ### Tax rate sync (issue #133)
 

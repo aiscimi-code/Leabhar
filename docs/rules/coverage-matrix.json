@@ -2728,17 +2728,15 @@
       "id": "ca2014:s280B",
       "area": "companies_act",
       "title": "CA 2014 s280B",
-      "status": "deferred",
-      "issue": 214,
-      "reason": "Not yet ruled."
+      "status": "not_applicable",
+      "reason": "The small group test aggregates every group member's figures, which a single company's books do not hold. A holding company's size is recorded by a person (issue #554, companySize.ts)."
     },
     {
       "id": "ca2014:s280C",
       "area": "companies_act",
       "title": "CA 2014 s280C",
-      "status": "deferred",
-      "issue": 214,
-      "reason": "Not yet ruled."
+      "status": "not_applicable",
+      "reason": "Names the small companies regime for a company qualifying under s.280A or s.280B. It states no figure or test of its own."
     },
     {
       "id": "ca2014:s280D",
@@ -2763,9 +2761,12 @@
       "id": "ca2014:s280F",
       "area": "companies_act",
       "title": "CA 2014 s280F",
-      "status": "deferred",
-      "issue": 214,
-      "reason": "Not yet ruled."
+      "status": "rule",
+      "ruleKeys": [
+        "company.medium_company_turnover_threshold",
+        "company.medium_company_balance_sheet_threshold",
+        "company.medium_company_employee_threshold"
+      ]
     },
     {
       "id": "ca2014:s281",

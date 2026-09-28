@@ -337,6 +337,13 @@
       "when": 1790552156843,
       "tag": "0047_project_costing",
       "breakpoints": true
+    },
+    {
+      "idx": 48,
+      "version": "6",
+      "when": 1790566538456,
+      "tag": "0048_statutory_reporting",
+      "breakpoints": true
     }
   ]
 }

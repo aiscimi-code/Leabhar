@@ -1,8 +1,11 @@
-import { reportsData, requireCompany } from '@/lib/queries';
+import { reportsData, reportsAnalysis, requireCompany } from '@/lib/queries';
 import { requireApiActor } from '@/lib/apiAuth';
 import { mappedTrialBalance } from '@/domain/config/accountMappings';
 import { asIsoDate } from '@/domain/dates';
-import type { Explained } from '@/domain/reports/explain';
+import {
+  profitAndLossBlock, balanceSheetBlock, cashFlowBlock, trialBalanceBlock, comparativeBlock, type StatementBlock, type StatementLine,
+} from '@/lib/statementLines';
+import { renderStatementsPdf } from '@/lib/statementsPdf';
 import {
   newWorkbook, addSheet, addCoverSheet, xlsxResponse, toCsv, csvResponse,
   amountFor, type ExportColumn,
@@ -11,10 +14,10 @@ import { getDb } from '@/db';
 
 export const dynamic = 'force-dynamic';
 
-interface FlatLine { label: string; amountMinor: number; depth: number; isTotal: boolean }
-
 /**
- * Profit and loss, balance sheet and trial balance exports (README §38).
+ * Profit and loss, balance sheet, cash flow and trial balance exports
+ * (README §38), with comparatives, income and expense analysis and the stock
+ * valuation (issue #553), as XLSX, CSV or PDF.
  *
  * Section subtotals and their components are both written, indented, so the
  * exported file reads the same way the screen does. No cell is a formula: a
@@ -34,44 +37,67 @@ export async function GET(request: Request): Promise<Response> {
   const to = asIsoDate(url.searchParams.get('to') ?? `${new Date().getFullYear()}-12-31`);
   const data = reportsData(from, to, from);
 
-  const flatten = (figure: Explained, depth = 0, isTotal = false): FlatLine[] => [
-    { label: `${'  '.repeat(depth)}${figure.label}`, amountMinor: figure.valueMinor, depth, isTotal },
-    ...figure.components
-      .filter((c) => c.components.length === 0)
-      .map((c) => ({
-        label: `${'  '.repeat(depth + 1)}${c.label}`,
-        amountMinor: c.valueMinor, depth: depth + 1, isTotal: false,
-      })),
+  const analysis = reportsAnalysis(from, to);
+  const blocks = {
+    'profit-and-loss': profitAndLossBlock(data.profitAndLoss),
+    'balance-sheet': balanceSheetBlock(data.balanceSheet),
+    'cash-flow': cashFlowBlock(analysis.cashFlow),
+    'trial-balance': trialBalanceBlock(data.trialBalance, currency),
+    'comparative-profit-and-loss': comparativeBlock('Profit and loss, with comparatives', analysis.comparatives.profitAndLoss,
+      `${from} to ${to}`, `${analysis.comparatives.prior.from} to ${analysis.comparatives.prior.to}`, currency),
+    'comparative-balance-sheet': comparativeBlock('Balance sheet, with comparatives', analysis.comparatives.balanceSheet,
+      `at ${to}`, `at ${analysis.comparatives.prior.to}`, currency),
+  } as const;
+  type BlockKey = keyof typeof blocks;
+  const blockColumns = (block: StatementBlock): Array<ExportColumn<StatementLine>> => [
+    { header: 'Line', width: 52, value: (r) => `${'  '.repeat(r.depth)}${r.label}` },
+    ...block.columns.map((header, i): ExportColumn<StatementLine> => ({ header, width: 18, money: true, value: (r) => amountFor(r.values[i], currency) })),
   ];
+  const addBlockSheet = (workbook: ReturnType<typeof newWorkbook>, name: string, block: StatementBlock) => addSheet(workbook, {
+    name, preamble: [[block.title], [block.subtitle]], columns: blockColumns(block), rows: block.lines,
+    footer: [[], ...block.notes.map((n) => [n])],
+  });
 
-  const profitAndLossLines: FlatLine[] = [
-    ...flatten(data.profitAndLoss.revenue),
-    ...flatten(data.profitAndLoss.costOfSales),
-    { label: 'Gross profit', amountMinor: data.profitAndLoss.grossProfit.valueMinor, depth: 0, isTotal: true },
-    ...flatten(data.profitAndLoss.operatingExpenses),
-    { label: 'Operating profit', amountMinor: data.profitAndLoss.operatingProfit.valueMinor, depth: 0, isTotal: true },
-    ...flatten(data.profitAndLoss.otherIncome),
-    ...flatten(data.profitAndLoss.financeCosts),
-    { label: 'Net profit', amountMinor: data.profitAndLoss.netProfit.valueMinor, depth: 0, isTotal: true },
+  // PDF (issue #553): the statements and the trial balance, from the same blocks.
+  if (format === 'pdf') {
+    const keys: BlockKey[] = which === 'all' ? ['profit-and-loss', 'balance-sheet', 'cash-flow', 'trial-balance']
+      : which === 'comparatives' ? ['comparative-profit-and-loss', 'comparative-balance-sheet']
+      : which in blocks ? [which as BlockKey] : [];
+    if (keys.length === 0) return new Response(`No PDF for ${which}.`, { status: 400 });
+    const bytes = await renderStatementsPdf({
+      companyName: company.legalName, period: `${from} to ${to}`, currency, generatedOn: new Date().toISOString().slice(0, 10),
+      blocks: keys.map((k) => blocks[k]),
+    });
+    return new Response(Buffer.from(bytes), {
+      headers: { 'content-type': 'application/pdf', 'content-disposition': `attachment; filename="${which === 'all' ? 'financial-statements' : which}-${to}.pdf"` },
+    });
+  }
+
+  type MonthRow = (typeof analysis.byMonth.income)[number];
+  const monthColumns: Array<ExportColumn<MonthRow>> = [
+    { header: 'Code', width: 10, value: (r) => r.code },
+    { header: 'Account', width: 36, value: (r) => r.name },
+    ...analysis.byMonth.months.map((m, i): ExportColumn<MonthRow> => ({ header: m, width: 13, money: true, value: (r) => amountFor(r.byMonthMinor[i], currency) })),
+    { header: 'Total', width: 15, money: true, value: (r) => amountFor(r.totalMinor, currency) },
   ];
-
-  const balanceSheetLines: FlatLine[] = [
-    ...flatten(data.balanceSheet.fixedAssets),
-    ...flatten(data.balanceSheet.currentAssets),
-    { label: 'Total assets', amountMinor: data.balanceSheet.totalAssets.valueMinor, depth: 0, isTotal: true },
-    ...flatten(data.balanceSheet.currentLiabilities),
-    ...flatten(data.balanceSheet.longTermLiabilities),
-    { label: 'Net assets', amountMinor: data.balanceSheet.netAssets.valueMinor, depth: 0, isTotal: true },
-    { label: 'Share capital', amountMinor: data.balanceSheet.shareCapital.valueMinor, depth: 0, isTotal: false },
-    { label: 'Retained earnings', amountMinor: data.balanceSheet.retainedEarnings.valueMinor, depth: 0, isTotal: false },
-    { label: 'Profit for the period', amountMinor: data.balanceSheet.profitForPeriod.valueMinor, depth: 0, isTotal: false },
-    { label: 'Total equity', amountMinor: data.balanceSheet.totalEquity.valueMinor, depth: 0, isTotal: true },
+  type PartyRow = (typeof analysis.byCustomer.rows)[number];
+  const partyColumns: Array<ExportColumn<PartyRow>> = [
+    { header: 'Name', width: 40, value: (r) => r.name },
+    { header: 'Invoices', width: 10, value: (r) => r.invoiceCount },
+    { header: 'Credit notes', width: 12, value: (r) => r.creditNoteCount },
+    { header: `Net (${currency})`, width: 16, money: true, value: (r) => amountFor(r.netMinor, currency) },
+    { header: `VAT (${currency})`, width: 16, money: true, value: (r) => amountFor(r.vatMinor, currency) },
+    { header: `Gross (${currency})`, width: 16, money: true, value: (r) => amountFor(r.grossMinor, currency) },
   ];
-
-  const reportColumns: Array<ExportColumn<FlatLine>> = [
-    { header: 'Line', width: 48, value: (r) => r.label },
-    { header: `Amount (${currency})`, width: 18, money: true,
-      value: (r) => amountFor(r.amountMinor, currency) },
+  type StockRow = (typeof analysis.inventory.lines)[number];
+  const stockColumns: Array<ExportColumn<StockRow>> = [
+    { header: 'Item', width: 12, value: (r) => r.code },
+    { header: 'Name', width: 36, value: (r) => r.name },
+    { header: 'Location', width: 12, value: (r) => r.locationCode },
+    { header: 'Quantity', width: 12, value: (r) => r.quantityMilli / 1000 },
+    { header: 'Unit', width: 8, value: (r) => r.unit },
+    { header: 'Method', width: 16, value: (r) => r.method },
+    { header: `Value (${currency})`, width: 16, money: true, value: (r) => amountFor(r.valueMinor, currency) },
   ];
 
   type TrialRow = (typeof data.trialBalance.rows)[number];
@@ -140,9 +166,13 @@ export async function GET(request: Request): Promise<Response> {
     if (which === 'trial-balance') {
       return csvResponse('trial-balance.csv', toCsv(data.trialBalance.rows, trialColumns));
     }
-    const lines = which === 'balance-sheet' ? balanceSheetLines : profitAndLossLines;
-    return csvResponse(`${which === 'balance-sheet' ? 'balance-sheet' : 'profit-and-loss'}.csv`,
-      toCsv(lines, reportColumns));
+    if (which === 'income-expense') return csvResponse('income-and-expense-by-month.csv', toCsv([...analysis.byMonth.income, ...analysis.byMonth.expenses], monthColumns));
+    if (which === 'by-customer') return csvResponse('income-by-customer.csv', toCsv(analysis.byCustomer.rows, partyColumns));
+    if (which === 'by-supplier') return csvResponse('expense-by-supplier.csv', toCsv(analysis.bySupplier.rows, partyColumns));
+    if (which === 'inventory') return csvResponse('inventory.csv', toCsv(analysis.inventory.lines, stockColumns));
+    const key: BlockKey = which === 'balance-sheet' || which === 'cash-flow' ? which
+      : which === 'comparatives' ? 'comparative-profit-and-loss' : 'profit-and-loss';
+    return csvResponse(`${key}.csv`, toCsv(blocks[key].lines, blockColumns(blocks[key])));
   }
 
   const workbook = newWorkbook();
@@ -154,35 +184,38 @@ export async function GET(request: Request): Promise<Response> {
     extra: [
       ['Balance sheet balances', data.balanceSheet.balances ? 'Yes' : 'NO — investigate'],
       ['Trial balance balances', data.trialBalance.balanced ? 'Yes' : 'NO — investigate'],
+      ['Cash flow reconciles to bank and cash', analysis.cashFlow.reconciles ? 'Yes' : 'NO — investigate'],
     ],
   });
 
-  if (which === 'all' || which === 'profit-and-loss') {
-    addSheet(workbook, {
-      name: 'Profit and loss',
-      preamble: [[`Profit and loss account`], [`${from} to ${to}`]],
-      columns: reportColumns,
-      rows: profitAndLossLines,
-      footer: [[], ['This is accounting profit. Taxable profit is a different figure — see '
-        + 'the year-end pack for the bridge between them.']],
-    });
+  const all = which === 'all';
+  if (all || which === 'profit-and-loss') addBlockSheet(workbook, 'Profit and loss', blocks['profit-and-loss']);
+  if (all || which === 'balance-sheet') addBlockSheet(workbook, 'Balance sheet', blocks['balance-sheet']);
+  if (all || which === 'cash-flow') addBlockSheet(workbook, 'Cash flow', blocks['cash-flow']);
+  if (all || which === 'comparatives') {
+    addBlockSheet(workbook, 'P&L comparative', blocks['comparative-profit-and-loss']);
+    addBlockSheet(workbook, 'Balance sheet comparative', blocks['comparative-balance-sheet']);
   }
-
-  if (which === 'all' || which === 'balance-sheet') {
-    addSheet(workbook, {
-      name: 'Balance sheet',
-      preamble: [['Balance sheet'], [`As at ${to}`]],
-      columns: reportColumns,
-      rows: balanceSheetLines,
-      footer: data.balanceSheet.balances
-        ? [[], ['Net assets equal total equity.']]
-        : [[], ['THE BALANCE SHEET DOES NOT BALANCE. Difference: '
-            + `${amountFor(data.balanceSheet.differenceMinor, currency)}. `
-            + 'This is a defect in the underlying entries — do not rely on these figures.']],
-    });
+  if (all || which === 'income-expense') {
+    addSheet(workbook, { name: 'Income by month', preamble: [['Income by account by month'], [`${from} to ${to}`]], columns: monthColumns, rows: analysis.byMonth.income,
+      footer: [[], ['Total income', '', ...analysis.byMonth.incomeByMonthMinor.map((m) => amountFor(m, currency)), amountFor(analysis.byMonth.totalIncomeMinor, currency)]] });
+    addSheet(workbook, { name: 'Expenses by month', preamble: [['Expenses by account by month'], [`${from} to ${to}`]], columns: monthColumns, rows: analysis.byMonth.expenses,
+      footer: [[], ['Total expenses', '', ...analysis.byMonth.expensesByMonthMinor.map((m) => amountFor(m, currency)), amountFor(analysis.byMonth.totalExpensesMinor, currency)],
+        ['Net', '', ...analysis.byMonth.netByMonthMinor.map((m) => amountFor(m, currency)), amountFor(analysis.byMonth.netMinor, currency)]] });
   }
-
-  if (which === 'all' || which === 'trial-balance') {
+  if (all || which === 'by-customer') {
+    addSheet(workbook, { name: 'Income by customer', preamble: [['Income by customer'], [`${from} to ${to}`]], columns: partyColumns, rows: analysis.byCustomer.rows,
+      footer: [[], ['Total', analysis.byCustomer.total.invoiceCount, analysis.byCustomer.total.creditNoteCount, amountFor(analysis.byCustomer.total.netMinor, currency), amountFor(analysis.byCustomer.total.vatMinor, currency), amountFor(analysis.byCustomer.total.grossMinor, currency)], [analysis.byCustomer.method]] });
+  }
+  if (all || which === 'by-supplier') {
+    addSheet(workbook, { name: 'Expense by supplier', preamble: [['Expense by supplier'], [`${from} to ${to}`]], columns: partyColumns, rows: analysis.bySupplier.rows,
+      footer: [[], ['Total', analysis.bySupplier.total.invoiceCount, analysis.bySupplier.total.creditNoteCount, amountFor(analysis.bySupplier.total.netMinor, currency), amountFor(analysis.bySupplier.total.vatMinor, currency), amountFor(analysis.bySupplier.total.grossMinor, currency)], [analysis.bySupplier.method]] });
+  }
+  if ((all && analysis.inventory.lines.length > 0) || which === 'inventory') {
+    addSheet(workbook, { name: 'Inventory', preamble: [['Stock valuation'], [`At ${to}`]], columns: stockColumns, rows: analysis.inventory.lines,
+      footer: [[], ['Total', '', '', '', '', '', amountFor(analysis.inventory.totalMinor, currency)], [analysis.inventory.note]] });
+  }
+  if (all || which === 'trial-balance') {
     addSheet(workbook, {
       name: 'Trial balance',
       preamble: [['Trial balance'], [`As at ${to}`]],
