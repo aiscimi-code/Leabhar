@@ -1660,14 +1660,23 @@ verbatim-only policy.
   regime) and s.280F (medium companies) to the fetched set, three medium-
   company limbs (€50m / €25m / 250 employees), and Schedule 3A
   (`schedule-3A.md`, whose Format 1 headings `src/domain/reports/schedule3A.ts`
-  quotes verbatim). The s.280A, s.280D and s.280F thresholds were re-dated
-  from 2026-09-20 (the day they were fetched) to 2024-07-01, when S.I. No. 301
-  of 2024 substituted them; the LRC annotation says "in effect as per reg. 2",
-  and reg. 2 is not captured, so every size classification for a year that
-  began before that date is flagged. The two-year and exclusion provisos are
-  now applied by `src/domain/reports/companySize.ts` on the books' figures,
-  with a person recording what the books cannot know (exclusions, the year
-  before, the average number of employees where payroll does not hold it).
+  quotes verbatim). The s.280A, s.280D and s.280F turnover and balance
+  sheet thresholds were re-dated from 2026-09-20 (the day they were fetched)
+  to 2024-07-01, when S.I. No. 301 of 2024 substituted them. The two-year and
+  exclusion provisos are now applied by `src/domain/reports/companySize.ts`
+  on the books' figures, with a person recording what the books cannot know
+  (exclusions, the year before, the average number of employees where
+  payroll does not hold it).
+- **Issue #555** ingests S.I. No. 301 of 2024 (`docs/statutes/si-301-2024/`,
+  `sizeCriteriaIngestion.ts`). Reg. 2 is only its commencement (1 July
+  2024); reg. 9 inserts s.280I, under which the company elects whether the
+  substituted figures apply to financial years beginning on or after
+  1 January 2024 or 1 January 2023. The replaced figures (€12m / €6m small,
+  €700,000 / €350,000 micro, €40m / €20m medium) are curated from regs 4, 6
+  and 7 as `_pre_2024` rule keys dated from the 2017 insertion, alongside
+  `company.size_criteria_financial_year_election`. The size test picks the
+  set per financial year from its start date and the recorded election. The
+  employee limbs, never amended, now date from 9 June 2017.
 
 ### Tax rate sync (issue #133)
 

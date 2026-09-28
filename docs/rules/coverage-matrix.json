@@ -3573,6 +3573,52 @@
       "ruleKeys": [
         "ct.allowances_net_of_grants"
       ]
+    },
+    {
+      "id": "si301-2024:reg2",
+      "area": "other_source",
+      "title": "S.I. 301/2024 reg.2 — commencement",
+      "status": "not_applicable",
+      "reason": "States only that the Regulations come into operation on 1 July 2024. Which financial years the new figures reach is s.280I (reg.9)."
+    },
+    {
+      "id": "si301-2024:reg4",
+      "area": "other_source",
+      "title": "S.I. 301/2024 reg.4 — s.280A(3) small company figures substituted",
+      "status": "rule",
+      "ruleKeys": [
+        "company.small_company_turnover_threshold_pre_2024",
+        "company.small_company_balance_sheet_threshold_pre_2024"
+      ]
+    },
+    {
+      "id": "si301-2024:reg6",
+      "area": "other_source",
+      "title": "S.I. 301/2024 reg.6 — s.280D(3)(b) micro company figures substituted",
+      "status": "rule",
+      "ruleKeys": [
+        "company.micro_company_turnover_threshold_pre_2024",
+        "company.micro_company_balance_sheet_threshold_pre_2024"
+      ]
+    },
+    {
+      "id": "si301-2024:reg7",
+      "area": "other_source",
+      "title": "S.I. 301/2024 reg.7 — s.280F(3) medium company figures substituted",
+      "status": "rule",
+      "ruleKeys": [
+        "company.medium_company_turnover_threshold_pre_2024",
+        "company.medium_company_balance_sheet_threshold_pre_2024"
+      ]
+    },
+    {
+      "id": "si301-2024:reg9",
+      "area": "other_source",
+      "title": "S.I. 301/2024 reg.9 — s.280I election on the financial years the new figures apply to",
+      "status": "rule",
+      "ruleKeys": [
+        "company.size_criteria_financial_year_election"
+      ]
     }
   ]
 }

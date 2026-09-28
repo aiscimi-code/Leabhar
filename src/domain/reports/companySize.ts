@@ -2,12 +2,13 @@ import { and, eq, isNull, lte, desc } from 'drizzle-orm';
 import type { AppDatabase } from '@/db';
 import {
   accountingPeriods, companies, companySizeDecisions, employees,
-  COMPANY_SIZE_DECISION_KINDS, COMPANY_SIZE_EXCLUSIONS, COMPANY_SIZES,
+  COMPANY_SIZE_DECISION_KINDS, COMPANY_SIZE_EXCLUSIONS, COMPANY_SIZES, COMPANY_SIZE_ELECTIONS,
 } from '@/db/schema';
 import { ids } from '@/lib/ids';
 import { addDays, addYears, isIsoDate, parts, makeDate, daysInMonth, type IsoDate } from '../dates';
 import { auditRuleFigures } from '../rules/ruleFigures';
 import { COMPANIES_ACT_2014_CURATED_RULES } from '../rules/companiesAct2014Curation';
+import { SIZE_CRITERIA_CURATED_RULES, SI_301_2024_IN_OPERATION } from '../rules/sizeCriteriaCuration';
 import { profitAndLoss } from './financial';
 import { schedule3ABalanceSheet } from './schedule3A';
 
@@ -19,8 +20,11 @@ import { schedule3ABalanceSheet } from './schedule3A';
  * and loss account; the balance sheet total is fixed plus current assets on
  * the Schedule 3A layout (items A and B); the average number of employees is
  * the person's recorded figure or, failing that, worked out from payroll. The
- * thresholds are the curated rules, resolved as of the year end. The turnover
- * limb is adjusted proportionately for a financial year that is not a year.
+ * thresholds are the curated rules. For turnover and balance sheet, which set
+ * a year uses follows s.280I (S.I. 301/2024 reg. 9, issue #555): the figures
+ * as substituted for a year beginning on or after 1 January 2024, or 1 January
+ * 2023 where the company so elects; the figures they replaced otherwise. The
+ * turnover limb is adjusted proportionately for a year that is not a year.
  *
  * The two-year rule (s.280A(2), s.280D(2), s.280F(2)) needs the year before:
  * from the books where they hold it, otherwise from what a person records.
@@ -61,6 +65,8 @@ export interface YearAssessment {
   start: IsoDate;
   end: IsoDate;
   isFullYear: boolean;
+  /** Which turnover and balance sheet figures apply under s.280I. */
+  criteria: 'as_substituted_2024' | 'before_2024';
   turnoverMinor: number;
   balanceSheetTotalMinor: number;
   employees: { average: number | null; employeeMonths: number | null; months: number; source: 'recorded' | 'payroll' | null; note: string | null };
@@ -119,7 +125,12 @@ export function recordCompanySizeDecision(db: AppDatabase, params: {
   if (!year) throw new CompanySizeError(`No financial year ends on ${params.financialYearEnd}.`);
   let choice: string | null = null;
   let count: number | null = null;
-  if (params.kind === 'average_employees') {
+  if (params.kind === 'size_criteria_election') {
+    if (!params.choice || !(COMPANY_SIZE_ELECTIONS as readonly string[]).includes(params.choice)) {
+      throw new CompanySizeError(`Choose one of: ${COMPANY_SIZE_ELECTIONS.join(', ')}.`);
+    }
+    choice = params.choice;
+  } else if (params.kind === 'average_employees') {
     if (params.count === null || params.count === undefined || !Number.isInteger(params.count) || params.count < 0) {
       throw new CompanySizeError('The average number of employees is a whole number, zero or more.');
     }
@@ -159,6 +170,20 @@ function payrollEmployeeMonths(db: AppDatabase, companyId: string, start: IsoDat
   return { employeeMonths, months, any: staff.length > 0 };
 }
 
+/** The company's s.280I election, if a person has recorded one: one election, the latest standing. */
+function election(db: AppDatabase, companyId: string): string | null {
+  return db.select().from(companySizeDecisions).where(and(
+    eq(companySizeDecisions.companyId, companyId), eq(companySizeDecisions.kind, 'size_criteria_election'), isNull(companySizeDecisions.supersededById),
+  )).orderBy(desc(companySizeDecisions.createdAt)).get()?.choice ?? null;
+}
+
+/** Whether the figures S.I. 301/2024 substituted apply to a financial year starting on `start` (s.280I). */
+export function substitutedFiguresApply(start: string, elected: string | null): boolean {
+  return start >= (elected === 'fy_from_2023' ? '2023-01-01' : '2024-01-01');
+}
+
+const CURATED = [...COMPANIES_ACT_2014_CURATED_RULES, ...SIZE_CRITERIA_CURATED_RULES];
+
 function assessYear(db: AppDatabase, companyId: string, start: IsoDate, end: IsoDate, findings: Set<string>): YearAssessment {
   const isFullYear = addDays(addYears(start, 1), -1) === end;
   const days = Math.round((Date.parse(`${end}T00:00:00Z`) - Date.parse(`${start}T00:00:00Z`)) / 86_400_000) + 1;
@@ -174,9 +199,20 @@ function assessYear(db: AppDatabase, companyId: string, start: IsoDate, end: Iso
         note: 'Employees on payroll in each month (whether throughout the month or not), averaged over the months of the year. Directors on payroll are counted.' }
       : { average: null, employeeMonths: null, months: payroll.months, source: null, note: null };
 
-  const audit = auditRuleFigures(db, { companyId, asOfDate: end, curated: COMPANIES_ACT_2014_CURATED_RULES });
-  const figure = (ruleKey: string): number | null => {
-    const f = audit.figure(ruleKey);
+  // Turnover and balance sheet: the set s.280I gives the year, read on a date
+  // that set is in force. Employees: as of the year end (never amended).
+  const criteria: YearAssessment['criteria'] = substitutedFiguresApply(start, election(db, companyId)) ? 'as_substituted_2024' : 'before_2024';
+  const moneyDate = criteria === 'as_substituted_2024'
+    ? (end > SI_301_2024_IN_OPERATION ? end : SI_301_2024_IN_OPERATION)
+    : (end < SI_301_2024_IN_OPERATION ? end : addDays(SI_301_2024_IN_OPERATION as IsoDate, -1));
+  const audits = {
+    money: auditRuleFigures(db, { companyId, asOfDate: moneyDate, curated: CURATED }),
+    employees: auditRuleFigures(db, { companyId, asOfDate: end, curated: CURATED }),
+  };
+  const figure = (ruleKey: string, limb: string): number | null => {
+    const audit = limb === 'employees' ? audits.employees : audits.money;
+    const key = limb !== 'employees' && criteria === 'before_2024' ? `${ruleKey}_pre_2024` : ruleKey;
+    const f = audit.figure(key);
     if (f.status === 'rejected' || f.status === 'retired') return null;
     if (f.numericValue !== null) return f.numericValue;
     return f.curatedValue !== null && f.curatedInForce ? f.curatedValue : null;
@@ -185,9 +221,10 @@ function assessYear(db: AppDatabase, companyId: string, start: IsoDate, end: Iso
   for (const size of ['micro', 'small', 'medium'] as const) {
     const limbs: SizeLimb[] = [];
     for (const { limb, key } of LIMBS) {
-      const ruleKey = `company.${size}_company_${key}`;
-      const threshold = figure(ruleKey);
-      if (threshold === null) return { start, end, isFullYear, turnoverMinor, balanceSheetTotalMinor, employees: emp, conditions: null };
+      const baseKey = `company.${size}_company_${key}`;
+      const ruleKey = limb !== 'employees' && criteria === 'before_2024' ? `${baseKey}_pre_2024` : baseKey;
+      const threshold = figure(baseKey, limb);
+      if (threshold === null) return { start, end, isFullYear, criteria, turnoverMinor, balanceSheetTotalMinor, employees: emp, conditions: null };
       if (limb === 'turnover') {
         const applied = isFullYear ? threshold : Math.floor((threshold * days) / 365);
         limbs.push({ limb, ruleKey, value: turnoverMinor, threshold, appliedThreshold: applied,
@@ -201,8 +238,8 @@ function assessYear(db: AppDatabase, companyId: string, start: IsoDate, end: Iso
     }
     conditions.push({ size, limbs, met: twoOfThree(limbs.map((l) => l.met)) });
   }
-  for (const f of audit.findings()) findings.add(f);
-  return { start, end, isFullYear, turnoverMinor, balanceSheetTotalMinor, employees: emp, conditions };
+  for (const f of [...audits.money.findings(), ...audits.employees.findings()]) findings.add(f);
+  return { start, end, isFullYear, criteria, turnoverMinor, balanceSheetTotalMinor, employees: emp, conditions };
 }
 
 export function companySize(db: AppDatabase, params: { companyId: string; financialYearEnd: string }): CompanySizeResult {
@@ -241,7 +278,7 @@ export function companySize(db: AppDatabase, params: { companyId: string; financ
   if (!year.conditions) {
     return { ...base, status: 'no_thresholds', size: null, consequence: null, firstFinancialYear: false,
       qualifies: { micro: null, small: null, medium: null },
-      openPoints: ['No size thresholds are in force for this year in the rules held. The thresholds held apply from 1 July 2024 (S.I. No. 301 of 2024); earlier figures are not in the sources.'],
+      openPoints: ['No size thresholds are in force for this year in the rules held. The figures held date from the 2017 insertion of ss.280A, 280D and 280F (9 June 2017); the regime before it is not in the sources.'],
       findings: [...findings] };
   }
 
@@ -317,9 +354,17 @@ export function companySize(db: AppDatabase, params: { companyId: string; financ
   } else if (year.employees.source === null) {
     openPoints.push('Payroll holds no employees and no average has been recorded; the employee limb was left out, and the size rests on the other two limbs.');
   }
-  if (target.startDate < '2024-07-01') {
-    openPoints.push('This year began before 1 July 2024. The thresholds used were substituted from that date by S.I. No. 301 of 2024, "in effect as per reg. 2"; confirm under reg. 2 that they apply to this financial year.');
+  const elected = election(db, params.companyId);
+  const touches2023 = (y: { startDate: string }) => y.startDate >= '2023-01-01' && y.startDate < '2024-01-01';
+  if (!elected && (touches2023(target) || (previousPeriod && touches2023(previousPeriod)))) {
+    status = 'needs_decision';
+    openPoints.push('A financial year beginning in 2023 is in play. Under s.280I (S.I. No. 301 of 2024 reg. 9) the company elects whether '
+      + 'the higher turnover and balance sheet figures apply to years beginning on or after 1 January 2023, or only from 1 January 2024. '
+      + 'No election is recorded, so the 2023 year uses the figures before the substitution. Record the election.');
   }
+  basis.push(year.criteria === 'as_substituted_2024'
+    ? `Turnover and balance sheet figures as substituted by S.I. No. 301 of 2024 (s.280I${elected ? `, elected ${elected === 'fy_from_2023' ? 'from 2023' : 'from 2024'}` : ''}).`
+    : 'Turnover and balance sheet figures before S.I. No. 301 of 2024 (s.280I: the substituted figures do not reach this year).');
 
   const consequence = size === 'micro' ? 'The micro companies regime is open to the company (s.280E), and with it the small companies regime (s.280C): Schedule 3A formats.'
     : size === 'small' ? 'The small companies regime applies (s.280C): the entity financial statements may follow Schedule 3A.'

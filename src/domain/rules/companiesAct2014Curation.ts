@@ -121,13 +121,20 @@ const MICRO_COMPANY_2_OF_3_NOTE = 'Companies Act 2014 s.280D(3): a company satis
  * Certain Companies and Groups) Regulations 2024 (S.I. No. 301 of 2024), per
  * the LRC annotations to each section (issue #554). They were first dated
  * 2026-09-20, the day they were fetched, which is not when they took effect.
+ * The employee limbs were not amended and date from 2017 (issue #555).
  */
 const SI_301_2024_FROM = '2024-07-01';
+/** Chapter 1A of Part 6 inserted by the Companies (Accounting) Act 2017, in operation 9 June 2017. */
+const CAA_2017_FROM = '2017-06-09';
 
-const SI_301_2024_NOTE = 'Substituted (1.07.2024) by S.I. No. 301 of 2024, "in effect as per reg. 2" (LRC annotation). '
-  + 'Regulation 2, which says which financial years the substituted figures first apply to, is not in this KB\'s '
-  + 'sources, so a size classification for a financial year that began before 1 July 2024 is flagged for a person '
-  + 'to confirm rather than assumed. ';
+const SI_301_2024_NOTE = 'Substituted (1.07.2024) by S.I. No. 301 of 2024 (in operation 1 July 2024, reg. 2). Under '
+  + 's.280I, inserted by its reg. 9, the company elects whether the substituted figure applies to each financial year '
+  + 'beginning on or after 1 January 2024, or on or after 1 January 2023; the figure it replaced is curated as the '
+  + '`_pre_2024` rule (sizeCriteriaCuration.ts). ';
+
+/** The employee limbs date from the 2017 insertion of the section; S.I. 301/2024 did not amend them. */
+const EMPLOYEE_LIMB_NOTE = 'Inserted (9.06.2017) by the Companies (Accounting) Act 2017 s.15 (LRC annotation); not amended by '
+  + 'S.I. No. 301 of 2024, which changed only the turnover and balance sheet figures. '
 
 const MEDIUM_COMPANY_2_OF_3_NOTE = 'Companies Act 2014 s.280F(3): a company satisfies the medium-company '
   + 'qualifying conditions in a financial year if it "fulfils 2 or more" of the three limbs. s.280F(4) excludes a '
@@ -197,8 +204,8 @@ export const COMPANIES_ACT_2014_CURATED_RULES: CuratedCompaniesAct2014Rule[] = [
     conditions: [],
     exceptions: [],
     reportingEffect: 'See company.small_company_turnover_threshold.',
-    effectiveFrom: SI_301_2024_FROM,
-    interpretationNote: SI_301_2024_NOTE + SMALL_COMPANY_2_OF_3_NOTE + ' No `conditions`: this KB has no company-level employee-'
+    effectiveFrom: CAA_2017_FROM,
+    interpretationNote: EMPLOYEE_LIMB_NOTE + SMALL_COMPANY_2_OF_3_NOTE + ' No `conditions`: this KB has no company-level employee-'
       + 'count field, and does not ingest s.317 (the averaging method this limb defers to).',
   },
   {
@@ -259,8 +266,8 @@ export const COMPANIES_ACT_2014_CURATED_RULES: CuratedCompaniesAct2014Rule[] = [
     conditions: [],
     exceptions: [],
     reportingEffect: 'See company.micro_company_turnover_threshold.',
-    effectiveFrom: SI_301_2024_FROM,
-    interpretationNote: SI_301_2024_NOTE + MICRO_COMPANY_2_OF_3_NOTE + ' No `conditions`: no company-level employee-count field, and '
+    effectiveFrom: CAA_2017_FROM,
+    interpretationNote: EMPLOYEE_LIMB_NOTE + MICRO_COMPANY_2_OF_3_NOTE + ' No `conditions`: no company-level employee-count field, and '
       + 's.317 is not ingested here (same gap as the small-company employee limb).',
   },
   {
@@ -317,8 +324,8 @@ export const COMPANIES_ACT_2014_CURATED_RULES: CuratedCompaniesAct2014Rule[] = [
     conditions: [],
     exceptions: [],
     reportingEffect: 'See company.medium_company_turnover_threshold.',
-    effectiveFrom: SI_301_2024_FROM,
-    interpretationNote: SI_301_2024_NOTE + MEDIUM_COMPANY_2_OF_3_NOTE,
+    effectiveFrom: CAA_2017_FROM,
+    interpretationNote: EMPLOYEE_LIMB_NOTE + MEDIUM_COMPANY_2_OF_3_NOTE,
   },
   {
     citation: '2014 Act 38 s.352',

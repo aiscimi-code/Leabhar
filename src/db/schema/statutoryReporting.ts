@@ -13,7 +13,14 @@ import { accounts } from './config';
  * a year before these books. Written once; a changed mind is a new row that
  * supersedes the old one, which keeps its record.
  */
-export const COMPANY_SIZE_DECISION_KINDS = ['exclusion', 'average_employees', 'prior_year_size', 'prior_year_conditions'] as const;
+export const COMPANY_SIZE_DECISION_KINDS = ['exclusion', 'average_employees', 'prior_year_size', 'prior_year_conditions', 'size_criteria_election'] as const;
+/**
+ * The s.280I election (issue #555): whether the turnover and balance sheet
+ * figures S.I. 301/2024 substituted apply to each financial year beginning on
+ * or after 1 January 2024, or on or after 1 January 2023. One election for the
+ * company; the latest recorded stands.
+ */
+export const COMPANY_SIZE_ELECTIONS = ['fy_from_2024', 'fy_from_2023'] as const;
 export const COMPANY_SIZE_EXCLUSIONS = [
   'none', 'holding_company', 'ineligible_company', 'investment_undertaking', 'financial_holding_undertaking', 'subsidiary_in_consolidation',
 ] as const;
@@ -29,7 +36,8 @@ export const companySizeDecisions = sqliteTable('company_size_decisions', {
    * An exclusion; the size the company qualified as in the year before
    * (`first_financial_year` when there was none); or, for
    * `prior_year_conditions`, the smallest size whose qualifying conditions it
-   * met in the year before (the limbs nest, so it met every larger size's too).
+   * met in the year before (the limbs nest, so it met every larger size's too);
+   * or the s.280I election.
    */
   choice: text('choice'),
   /** The average number of employees, for `average_employees`. */

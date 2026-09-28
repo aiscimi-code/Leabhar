@@ -20,7 +20,8 @@ Financial reporting (EPIC 28, issue #553). Figures are the ledger's; nothing her
 
 Company size and Schedule 3A formats (issue #554). Decisions the books cannot make are recorded by a person:
   company-size --year-end <date>
-  size-decision --year-end <date> --kind exclusion|prior_year_size|prior_year_conditions --choice <value> [--note <text>] --by <name>
+  size-decision --year-end <date> --kind exclusion|prior_year_size|prior_year_conditions|size_criteria_election --choice <value> [--note <text>] --by <name>
+           (size_criteria_election: fy_from_2024 | fy_from_2023, the s.280I election)
   size-decision --year-end <date> --kind average_employees --count <n> --note <how> --by <name>
   schedule-3a --from <date> --to <date>          Format 1 balance sheet (at --to) and profit and loss account
   map-format-item --account <id|code> --item <code> --from <date> [--note <text>] --by <name>

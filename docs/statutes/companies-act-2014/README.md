@@ -20,11 +20,13 @@ curated in `src/domain/rules/companiesAct2014Curation.ts` — see
 
 **Company size and formats (issue #554):** `s280B.md` (small groups),
 `s280C.md` (the small companies regime) and `s280F.md` (medium companies)
-join the set, fetched the same way. The threshold figures in s.280A, s.280D
-and s.280F were substituted from 1 July 2024 by S.I. No. 301 of 2024 (regs.
-4 and 7), "in effect as per reg. 2" according to the LRC annotation; reg. 2
-itself is not captured here, so which financial years the new figures first
-apply to is flagged on every size classification rather than assumed.
+join the set, fetched the same way. The turnover and balance sheet figures
+in s.280A, s.280D and s.280F were substituted from 1 July 2024 by S.I. No. 301
+of 2024 (`../si-301-2024/`). Its reg. 9 inserts s.280I, under which the
+company elects whether the new figures apply to financial years beginning on
+or after 1 January 2024 or 1 January 2023 (issue #555); the figures they
+replaced are quoted from the S.I. The employee limbs date from the 2017
+insertion and were not amended.
 `schedule-3A.md` is Schedule 3A (accounting principles, form and content of
 the entity financial statements of a company in the small companies regime),
 fetched from the LRC-revised Act. Its Format 1 headings are quoted verbatim

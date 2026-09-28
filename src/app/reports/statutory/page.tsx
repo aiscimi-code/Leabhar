@@ -4,7 +4,7 @@ import { ActionForm } from '@/components/ActionForm';
 import { recordSizeDecisionAction, mapFormatItemAction } from '@/app/statutory-actions';
 import { accountingMoney, date, label } from '@/lib/format';
 import { MAPPABLE_BALANCE_SHEET_ITEMS, MAPPABLE_PROFIT_AND_LOSS_ITEMS, type FormatLine } from '@/domain/reports/schedule3A';
-import { COMPANY_SIZE_EXCLUSIONS, COMPANY_SIZES } from '@/db/schema';
+import { COMPANY_SIZE_EXCLUSIONS, COMPANY_SIZES, COMPANY_SIZE_ELECTIONS } from '@/db/schema';
 
 export const dynamic = 'force-dynamic';
 
@@ -74,6 +74,13 @@ export default async function StatutoryPage({ searchParams }: { searchParams: Pr
               <input type="hidden" name="financialYearEnd" value={fyEnd} /><input type="hidden" name="kind" value="exclusion" />
               <select name="choice" className={small}>{COMPANY_SIZE_EXCLUSIONS.map((e) => <option key={e} value={e}>{label(e)}</option>)}</select>
               <Input name="note" placeholder="Why" className={small} />
+            </ActionForm>
+          </Disclosure>
+          <Disclosure summary="Record the s.280I election (which years the 2024 figures apply to)">
+            <ActionForm action={recordSizeDecisionAction} submit="Record" inline>
+              <input type="hidden" name="financialYearEnd" value={fyEnd} /><input type="hidden" name="kind" value="size_criteria_election" />
+              <select name="choice" className={small}>{COMPANY_SIZE_ELECTIONS.map((e) => <option key={e} value={e}>{e === 'fy_from_2023' ? 'Years beginning on or after 1 January 2023' : 'Years beginning on or after 1 January 2024'}</option>)}</select>
+              <Input name="note" placeholder="Where the election is recorded" className={small} />
             </ActionForm>
           </Disclosure>
           <Disclosure summary="Record the average number of employees">

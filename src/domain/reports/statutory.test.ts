@@ -159,10 +159,31 @@ describe('company size (ss.280A, 280D, 280F)', () => {
     expect(limb).toMatchObject({ appliedThreshold: 44_630_136, met: false });
   });
 
-  it('flags a year that began before the thresholds were substituted, and has none before them', () => {
-    db.insert(accountingPeriods).values({ id: ids.accountingPeriod(), companyId, kind: 'financial_year', name: 'FY2024', startDate: '2024-01-01', endDate: '2024-12-31' }).run();
-    db.insert(accountingPeriods).values({ id: ids.accountingPeriod(), companyId, kind: 'financial_year', name: 'FY2023', startDate: '2023-01-01', endDate: '2023-12-31' }).run();
-    expect(companySize(db, { companyId, financialYearEnd: '2024-12-31' }).openPoints.join(' ')).toMatch(/reg\. 2/);
-    expect(companySize(db, { companyId, financialYearEnd: '2023-12-31' }).status).toBe('no_thresholds');
+  it('applies the figures S.I. 301/2024 replaced to a year it does not reach, and follows the s.280I election (#555)', () => {
+    for (const y of [2023, 2024, 2016]) {
+      db.insert(accountingPeriods).values({ id: ids.accountingPeriod(), companyId, kind: 'financial_year', name: `FY${y}`, startDate: `${y}-01-01`, endDate: `${y}-12-31` }).run();
+    }
+    sale('2023-03-01', 1_300_000_000); // €13m: over the old €12m small limit, within the new €15m.
+    recordCompanySizeDecision(db, { companyId, financialYearEnd: '2023-12-31', kind: 'prior_year_size', choice: 'first_financial_year', decidedBy: 'o' });
+    recordCompanySizeDecision(db, { companyId, financialYearEnd: '2023-12-31', kind: 'exclusion', choice: 'none', decidedBy: 'o' });
+    recordCompanySizeDecision(db, { companyId, financialYearEnd: '2023-12-31', kind: 'average_employees', count: 12, note: 'Monthly headcount', decidedBy: 'o' });
+    const limbOf = (r: ReturnType<typeof companySize>) => r.year.conditions!.find((c) => c.size === 'small')!.limbs[0]!;
+    // No election: a year beginning in 2023 takes the figures before the substitution, and says so.
+    let r = companySize(db, { companyId, financialYearEnd: '2023-12-31' });
+    expect([r.year.criteria, limbOf(r).ruleKey, limbOf(r).threshold, limbOf(r).met]).toEqual(['before_2024', 'company.small_company_turnover_threshold_pre_2024', 1_200_000_000, false]);
+    expect(r.status).toBe('needs_decision');
+    expect(r.openPoints.join(' ')).toMatch(/s\.280I/);
+    // Elected from 2023: the substituted €15m applies.
+    recordCompanySizeDecision(db, { companyId, financialYearEnd: '2023-12-31', kind: 'size_criteria_election', choice: 'fy_from_2023', decidedBy: 'o', note: 'Directors\' election' });
+    r = companySize(db, { companyId, financialYearEnd: '2023-12-31' });
+    // Turnover now within the limit, employees within, balance sheet (€13m) over: 2 of 3, small.
+    expect([r.year.criteria, limbOf(r).threshold, limbOf(r).met, r.status, r.size]).toEqual(['as_substituted_2024', 1_500_000_000, true, 'classified', 'small']);
+    // A year beginning in 2024 takes the substituted figures whatever the election; employees are never amended.
+    expect(companySize(db, { companyId, financialYearEnd: '2024-12-31' }).year.criteria).toBe('as_substituted_2024');
+    expect(companySize(db, { companyId, financialYearEnd: '2023-12-31' }).year.conditions!.find((c) => c.size === 'small')!.limbs[2]!.threshold).toBe(50);
+    expect(() => recordCompanySizeDecision(db, { companyId, financialYearEnd: '2023-12-31', kind: 'size_criteria_election', choice: '2022', decidedBy: 'o' }))
+      .toThrow(/fy_from_2024, fy_from_2023/);
+    // Before the 2017 insertion there are no figures held.
+    expect(companySize(db, { companyId, financialYearEnd: '2016-12-31' }).status).toBe('no_thresholds');
   });
 });
