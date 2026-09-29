@@ -60,3 +60,24 @@ that a test could mistake for the live table state.
   checking a returned structure: the books are the thing under test.
 - One behaviour per `it`, named as the behaviour ("posts debtors, income and
   VAT on the invoice basis"), not as the function.
+
+## Property tests (`fast-check`, issue #597)
+
+Example-based tests still own Revenue worked examples and specific error
+strings. Property tests sit beside them (`foo.property.test.ts`) and state an
+invariant that must hold for generated inputs:
+
+```ts
+import * as fc from 'fast-check';
+fc.assert(fc.property(fc.integer({ min: 0, max: 100_000_000 }), (gross) => {
+  expect(netFromGross(gross, 2300) + vatFromGross(gross, 2300)).toBe(gross);
+}), { numRuns: 200 });
+```
+
+Keep `numRuns` modest on anything that opens a database (`seedTestBook`).
+Do not replace an example-based test with a property test — #281's golden
+figures still need exact reproduction.
+
+First batch: `src/domain/money.property.test.ts`,
+`src/domain/accounting/journal.property.test.ts`. Next, in that order: VAT
+engine rounding, payroll net-pay, capital allowances.
