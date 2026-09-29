@@ -81,7 +81,7 @@ These are enforced by tests. Breaking one is a bug, not a trade-off.
   moved out of a locked period silently.
 - **Invoice amounts are stored as printed.** A credit note's figures are
   positive; its `document_type` carries the sign.
-- **A rule with no conditions matches nothing**, not everything.
+- **A rule with no conditions matches nothing**, not everything. That is the user-authored coding-rules engine (`src/domain/rules/engine.ts`). Statute-KB lookup (`transactionLookup.ts`) is the documented exception: an empty condition list on a derived rule is a topic-level fact and applies when the topic and effective window match.
 - **An unassessable match factor carries zero weight** and is excluded, rather
   than scoring as half-right or counting against.
 
