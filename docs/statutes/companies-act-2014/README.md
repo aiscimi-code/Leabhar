@@ -18,6 +18,19 @@ paraphrase above, back the size-threshold and filing/audit-exemption rules
 curated in `src/domain/rules/companiesAct2014Curation.ts` — see
 `docs/RULES_KB.md`'s "Companies Act 2014 size thresholds" section.
 
+**Accounting records, statutory financial statements and the annual return
+(issue #559 / #214):** `s281.md`, `s283.md`–`s286.md`, `s290.md`–`s293.md`,
+`s343.md` and `s347.md` join the set, fetched the same way. No HTML original
+is committed (#293); each file's front matter holds the LRC URL and
+`source_html_sha256`. The curated rules are the s.281 duty to keep adequate
+records, the s.282 adequacy test, where and how they are kept and inspected
+(ss.283–284), the s.285 six-year retention (also #557), the s.290 duty to
+prepare entity financial statements and the s.291 Companies Act form of
+those statements, the s.293 group-statements duty, the s.343 56-day annual
+return, and the s.347 annexes. s.286 (offences) and s.292 (IFRS entity
+statements) are ingested for citability and marked `not_applicable` in the
+coverage matrix.
+
 **Company size and formats (issue #554):** `s280B.md` (small groups),
 `s280C.md` (the small companies regime) and `s280F.md` (medium companies)
 join the set, fetched the same way. The turnover and balance sheet figures
