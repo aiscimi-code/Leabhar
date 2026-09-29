@@ -7,8 +7,9 @@
  *
  * Sources: Finance Act 2024 ss.2-3 (2025 bands and credits), Finance Act
  * 2025 s.2 (2026 USC bands), the LRC revised Social Welfare Consolidation Act
- * 2005 s.21 (PRSI Class S), and Revenue's Notes for Guidance on TCA Part 18D
- * (the USC exemption threshold and the surcharge on non-PAYE income).
+ * 2005 s.21 (PRSI Class S rate and €650 minimum), S.I. 312/1996 art. 92
+ * (the €5,000 Class S prescribed amount), and Revenue's Notes for Guidance
+ * on TCA Part 18D (the USC exemption threshold and the surcharge on non-PAYE income).
  */
 import type { IrishRuleType } from '@/db/schema';
 
@@ -43,7 +44,6 @@ const NFG_41A = 'Revenue NfG TCA 1997 (FA 2025 ed.) Part 41A';
 const NFG_43 = 'Revenue NfG TCA 1997 (FA 2025 ed.) Part 43';
 
 export const INCOME_TAX_CURATED_RULES: CuratedIncomeTaxRule[] = [
-  // ---- Income tax: rates and bands (TCA s.15, as substituted by FA 2024 s.3) ----
   {
     citation: FA2024, sectionNumber: '3', ruleKey: 'income_tax.band_single', ruleType: 'threshold',
     name: 'Income tax: standard rate band, single person (Table Part 1)',
@@ -100,8 +100,6 @@ export const INCOME_TAX_CURATED_RULES: CuratedIncomeTaxRule[] = [
     effectiveFrom: '2025-01-01', effectiveTo: null,
     interpretationNote: 'TCA s.472AB(2): the lower of €2,000 and 20% of earned income (s.472AB), reduced by any employee (PAYE) credit claimed.',
   },
-
-  // ---- USC (TCA s.531AN Table Part 1) ----
   {
     citation: FA2024, sectionNumber: '2', ruleKey: 'usc.band_05pct', ruleType: 'threshold',
     name: 'USC: the first €12,012 at 0.5%',
@@ -168,8 +166,6 @@ export const INCOME_TAX_CURATED_RULES: CuratedIncomeTaxRule[] = [
     interpretationNote: 'TCA s.531AN(2): the surcharge applies to the part of relevant income over €100,000. '
       + 'The threshold is the Notes for Guidance’s own figure, dated from the edition it was quoted in.',
   },
-
-  // ---- PRSI Class S (SWCA 2005 s.21) ----
   {
     citation: SWCA_S21_CITATION, sectionNumber: '21', ruleKey: 'prsi.class_s_rate', ruleType: 'rate',
     name: 'PRSI Class S: 4.2% of reckonable income, at least €650',
@@ -187,10 +183,20 @@ export const INCOME_TAX_CURATED_RULES: CuratedIncomeTaxRule[] = [
     numericValue: 65_000, unit: 'eur_minor',
     effectiveFrom: '2026-09-25', effectiveTo: null,
     interpretationNote: 'SWCA 2005 s.21(1)(a): the self-employment contribution is the greater of 4.2% of '
-      + 'reckonable income or €650. The €5,000 disregard below which no Class S is payable is NOT in the '
-      + 'collected s.21 text, so it is not curated here: the computation flags it rather than guessing it.',
+      + 'reckonable income or €650. The €5,000 floor that excepts a contributor is S.I. 312/1996 art. 92 '
+      + '(prsi.class_s_disregard), not this section.',
   },
-  // ---- Basis of assessment, credits, partnerships, payment (Revenue NfG, FA 2025 edition) ----
+  {
+    citation: 'S.I. 312/1996 s.92', sectionNumber: '92', ruleKey: 'prsi.class_s_disregard', ruleType: 'threshold',
+    name: 'PRSI Class S: no contribution where reckonable income is below €5,000',
+    statementExcerpt: 'The prescribed amount for the purposes of paragraph 3 of Part III of the First Schedule to the Principal Act shall be €5,000 in a contribution year.',
+    numericValue: 500_000, unit: 'eur_minor',
+    effectiveFrom: '2011-01-01', effectiveTo: null,
+    interpretationNote: 'S.I. 312/1996 art. 92, as substituted from 1 January 2011 by S.I. 684/2010 art. 6. '
+      + 'SWCA 2005 Sch. 1 Part 3 para. 3 excepts a person whose aggregate reckonable income, emoluments or '
+      + 'earnings is below that prescribed amount. Below €5,000 no Class S is payable; at or above it the '
+      + 's.21 rate and €650 minimum apply.',
+  },
   {
     citation: NFG_4, sectionNumber: '65', ruleKey: 'income_tax.basis_accounting_period', ruleType: 'procedure',
     name: 'Case I: the 12-month account ending in the year of assessment is its basis',
