@@ -18,9 +18,9 @@ import { INCOME_TAX_CURATED_RULES, type CuratedIncomeTaxRule } from './incomeTax
 import { upsertReviewItem } from '../extraction/service';
 import { crossReferencesFromProvision, sameCrossReferences } from './dependencies';
 
-export const SWCA_SECTIONS = ['20', '21', '22', '23'];
-export const swcaPath = (n: string) => `docs/statutes/swca-2005/swca-2005-s${n}.md`;
+export const SWCA_SECTIONS = ['20', '21', '22', '23', 'si312-art92'];
 export const SI_312_1996_ART92_PATH = 'docs/statutes/si-312-1996/art92.md';
+export const swcaPath = (n: string) => (n === 'si312-art92' ? SI_312_1996_ART92_PATH : `docs/statutes/swca-2005/swca-2005-s${n}.md`);
 
 /** Ingest one revised SWCA 2005 section. Idempotent by content. */
 export function ingestSwcaSection(
