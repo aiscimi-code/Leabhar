@@ -16,6 +16,21 @@ The roadmap is the epic index in issue #295. We work through the epics in order.
 - **PAYE is in scope** (payroll and ERR, #315, #316). Revenue submissions go
   straight from the app, using the employer's own certificate.
 
+## Rule issues vs the tools
+
+A rule issue stays on its epic only when the rule would change what the tools
+compute or file. A VAT rate, a reverse-charge test, or a threshold that every
+VAT calculation reads is essential. Do that work on the epic.
+
+A rule issue that only cites a duty the tools already honour — a seeded default,
+a review-item sentence, a coverage-matrix row — does not belong on the epic.
+Take it off the epic and put it on #588 (one list for all of them). Do not open
+a new sub-issue per source.
+
+The six-year company-record retention (Companies Act 2014 s.285) is the
+example: the books already keep records for six years. Quoting the section does
+not change a VAT figure, a journal, or a return, so it is deferred to #588.
+
 ## Non-negotiables
 
 These are enforced by tests. Breaking one is a bug, not a trade-off.
