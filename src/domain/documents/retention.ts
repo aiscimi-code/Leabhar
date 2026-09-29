@@ -22,10 +22,11 @@ import { ALL_DOCUMENT_TYPES, isVaultDocumentType, VAULT_TYPE_LABELS, type Docume
  *    explicit, audited archive (`lifecycle.archiveDocument`).
  *
  * Default policies are seeded for every new book (issue #432): six years for
- * every type the sources state (VATCA 2010 s.84(3); TCA 1997 s.886), never
- * dispose for company constitutional documents and for contracts, which
- * property and capital goods turn on. They are effective-dated policies like
- * any other: the person can change or supersede them, never silently.
+ * every type the sources state (VATCA 2010 s.84(3); TCA 1997 s.886;
+ * Companies Act 2014 s.285), never dispose for company constitutional
+ * documents and for contracts, which property and capital goods turn on.
+ * They are effective-dated policies like any other: the person can change or
+ * supersede them, never silently.
  */
 
 export class DocumentRetentionError extends AccountingError {}
@@ -202,10 +203,8 @@ export interface RetentionStatus {
   asOf: IsoDate;
   /**
    * The conditions that extend retention past the policy, stated with every
-   * expiry (issue #432): the person confirms none applies before anything is
-   * disposed. A finding is carried until the CA 2014 retention section is
-   * collected, because the 6-year figure for accounting records is
-   * uncorroborated in the repo without it.
+   * expiry (issue #432). The six-year company-record figure is Companies Act
+   * 2014 s.285, cited beside VATCA s.84(3) and TCA s.886 (issue #557).
    */
   expiryConditions: string;
   /** Documents whose policy has run out, so a person may dispose of them. */
@@ -269,9 +268,8 @@ export function retentionStatus(
 export const RETENTION_EXTENSION_CONDITIONS =
   'Retention extends while a Revenue inquiry, investigation, claim or appeal is open, until it ends '
   + '(VATCA 2010 s.84(4)), and a year whose return was never delivered is not closed off (TCA 1997 s.886). '
-  + 'Confirm none of these applies before disposing of anything. Finding: the Companies Act 2014 retention '
-  + 'section is not among the collected sources, so the six-year figure for accounting records is '
-  + 'uncorroborated in this repository until it is.';
+  + 'Company accounting records are kept for at least 6 years after the end of the financial year they '
+  + 'relate to (Companies Act 2014 s.285). Confirm none of these applies before disposing of anything.';
 
 /** The default every new book is seeded with (issue #432). */
 export const DEFAULT_RETENTION_YEARS = 6;
@@ -281,10 +279,11 @@ export const RETENTION_NEVER_DISPOSE_TYPES: DocumentType[] = ['company_document'
 
 /**
  * Seed the default retention policies into a new book (issue #432): six years
- * for every type (VATCA 2010 s.84(3); TCA 1997 s.886), never dispose for the
- * company's own constitutional documents and for contracts, which property and
- * capital goods turn on (VATCA s.84(4)). Each is an effective-dated policy the
- * person can supersede, like any other — never overwritten, never silent.
+ * for every type (VATCA 2010 s.84(3); TCA 1997 s.886; Companies Act 2014 s.285),
+ * never dispose for the company's own constitutional documents and for
+ * contracts, which property and capital goods turn on (VATCA s.84(4)). Each is
+ * an effective-dated policy the person can supersede, like any other — never
+ * overwritten, never silent.
  */
 export function seedDefaultRetentionPolicies(
   db: AppDatabase, companyId: string, params: {
@@ -313,8 +312,9 @@ export function seedDefaultRetentionPolicies(
       retainYears: DEFAULT_RETENTION_YEARS, neverDispose: false,
       effectiveFrom: params.effectiveFrom,
       note: 'Seeded default (issue #432): VAT records 6 years from the latest transaction (VATCA 2010 '
-        + 's.84(3)); books and records 6 years after the transactions (TCA 1997 s.886). The clock runs from '
-        + 'the end of the financial year containing the document\u2019s own date.',
+        + 's.84(3)); books and records 6 years after the transactions (TCA 1997 s.886); company accounting '
+        + 'records at least 6 years after the end of the financial year (Companies Act 2014 s.285). The clock '
+        + 'runs from the end of the financial year containing the document\u2019s own date.',
       createdBy: 'system', createdAt: timestamp, updatedAt: timestamp,
     },
     ...RETENTION_NEVER_DISPOSE_TYPES.map((type) => ({
@@ -362,4 +362,3 @@ function toPolicy(row: typeof documentRetentionPolicies.$inferSelect): Retention
     note: row.note, createdBy: row.createdBy, createdAt: row.createdAt,
   };
 }
-
