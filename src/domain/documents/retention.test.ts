@@ -169,6 +169,7 @@ describe('seeded defaults (#432)', () => {
     expect(all.neverDispose).toBe(false);
     expect(all.note).toContain('s.84(3)');
     expect(all.note).toContain('s.886');
+    expect(all.note).toContain('s.285');
     for (const type of RETENTION_NEVER_DISPOSE_TYPES) {
       const never = seeded.find((p) => p.appliesTo === type)!;
       expect(never.neverDispose).toBe(true);
@@ -209,7 +210,8 @@ describe('seeded defaults (#432)', () => {
     expect(status.expiryConditions).toBe(RETENTION_EXTENSION_CONDITIONS);
     expect(status.expiryConditions).toContain('s.84(4)');
     expect(status.expiryConditions).toContain('s.886');
-    expect(status.expiryConditions).toContain('Companies Act 2014');
+    expect(status.expiryConditions).toContain('Companies Act 2014 s.285');
+    expect(status.expiryConditions).not.toContain('uncorroborated');
   });
 
   it('lets a person supersede a seeded default, and refuses a never-dispose policy that states years', () => {
