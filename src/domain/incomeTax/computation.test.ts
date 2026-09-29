@@ -77,7 +77,6 @@ describe('sole trader', () => {
     const lowComp = computeIncomeTax(low.db, { companyId: low.companyId, year: 2026 });
     expect(lowComp.individuals[0]!.prsiMinor).toBe(0);
     expect(lowComp.findings.some((f) => f.includes('prescribed amount'))).toBe(true);
-
     const mid = setup('sole_trader', '2023-01-01');
     mid.income(600_000, '2026-06-01');
     expect(computeIncomeTax(mid.db, { companyId: mid.companyId, year: 2026 }).individuals[0]!.prsiMinor).toBe(65_000);
@@ -112,5 +111,30 @@ describe('sole trader', () => {
     expect(third.thirdYearReliefMinor).toBe(excess);
     expect(third.basisProfitMinor).toBe(6_000_000 - excess);
     expect(third.findings.some((f) => f.includes('s.66(3) election is recorded'))).toBe(true);
+  });
+});
+
+describe('partnership', () => {
+  it('apportions the profit by the shares in force, day by day through a change (s.1008)', () => {
+    const { db, companyId, income } = setup('partnership', '2023-01-01');
+    const a = addPartner(db, { companyId, name: 'Aoife', shareBasisPoints: 5000, joinedOn: '2023-01-01', recordedBy: 'Aoife', isPrecedentPartner: true });
+    const b = addPartner(db, { companyId, name: 'Brian', shareBasisPoints: 5000, joinedOn: '2023-01-01', recordedBy: 'Aoife' });
+    setPartnerShare(db, { companyId, partnerId: a.id, shareBasisPoints: 7000, effectiveFrom: '2025-07-02', recordedBy: 'Aoife' });
+    setPartnerShare(db, { companyId, partnerId: b.id, shareBasisPoints: 3000, effectiveFrom: '2025-07-02', recordedBy: 'Aoife' });
+    income(3_650_000, '2025-03-01');
+    const c = computeIncomeTax(db, { companyId, year: 2025 });
+    const byName = Object.fromEntries(c.individuals.map((i) => [i.name, i.profitMinor]));
+    expect(byName).toEqual({ Aoife: 910_000 + 1_281_000, Brian: 910_000 + 549_000 });
+    expect(c.findings.some((f) => f.includes('add up to'))).toBe(false);
+    expect(db.select().from(accounts).where(eq(accounts.companyId, companyId)).all().filter((x) => x.name.includes('Aoife')).length).toBe(2);
+  });
+
+  it('flags shares that do not add up to 100% and a missing precedent partner', () => {
+    const { db, companyId, income } = setup('partnership', '2023-01-01');
+    addPartner(db, { companyId, name: 'Aoife', shareBasisPoints: 6000, joinedOn: '2023-01-01', recordedBy: 'Aoife' });
+    income(1_000_000, '2025-03-01');
+    const f = computeIncomeTax(db, { companyId, year: 2025 }).findings;
+    expect(f.some((x) => x.includes('add up to 60%'))).toBe(true);
+    expect(f.some((x) => x.includes('No precedent partner'))).toBe(true);
   });
 });
