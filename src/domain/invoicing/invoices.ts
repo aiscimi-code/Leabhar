@@ -76,6 +76,32 @@ export interface InvoiceLineInput {
    * particular its deduction depends on).
    */
   holdRecoveryReason?: string;
+  /**
+   * The customs declaration's figures for an import under postponed
+   * accounting (treatment IMPORT_PA; issue #609), in the base currency, as
+   * the declaration states them. Import VAT is charged on the value for
+   * import VAT purposes — the customs (CIF) value, plus customs/excise duty
+   * and other charges payable at importation, plus freight from the point
+   * of entry into the EU to Ireland (Revenue Customs Manual on Import VAT
+   * §2.3, docs/statutes/import-vat) — and box PA1 reports the customs value
+   * plus customs duty (Revenue, "How do you complete a VAT 3 return?",
+   * docs/statutes/vat3-rtd/completing-vat3-return.md). Without it the
+   * supplier's invoice is used and the line is flagged.
+   */
+  importValuation?: ImportValuation;
+}
+
+export interface ImportValuation {
+  /** The customs (CIF) value of the goods, as declared. */
+  customsValueMinor: number;
+  /** Customs duty payable at importation. */
+  customsDutyMinor: number;
+  /** Excise duty and other charges payable at importation, other than import VAT. */
+  otherChargesMinor?: number;
+  /** Freight from the point of entry into the EU to Ireland, where not already in the customs value. */
+  freightToIrelandMinor?: number;
+  /** The customs declaration (MRN), for the trace. */
+  declarationReference?: string;
 }
 
 export interface CreateInvoiceInput {
@@ -291,18 +317,61 @@ function createInvoiceSteps(db: AppDatabase, input: CreateInvoiceInput): Created
       }
     }
 
-    const calculation = calculateVat({
-      treatment: resolved.treatment,
-      rateBasisPoints: resolved.rateBasisPoints,
-      direction: isSales ? 'sales' : 'purchases',
-      netMinor: lineNet * sign,
-      statedVatMinor: line.statedVatMinor === undefined ? undefined : line.statedVatMinor * sign,
-      recoverableOverrideMinor,
-    });
+    // Postponed accounting (issue #609): the self-accounted VAT and box PA1
+    // come from the customs declaration, in the base currency; the supplier's
+    // side of the line charges no VAT.
+    const isImportPa = !isSales && resolved.treatment.code === 'IMPORT_PA';
+    let importVat: (ReturnType<typeof calculateVat> & { valuation: ImportValuation }) | null = null;
+    if (line.importValuation && !isImportPa) {
+      throw new InvoicingError(`Line ${index + 1}: a customs valuation applies only to an import under postponed accounting (IMPORT_PA).`);
+    }
+    if (isImportPa && line.importValuation) {
+      if (input.isCreditNote) {
+        throw new InvoicingError(`Line ${index + 1}: a credit note does not carry a customs valuation. Correct the import VAT in an open period instead.`);
+      }
+      const v = line.importValuation;
+      for (const [name, amount] of Object.entries({
+        customsValueMinor: v.customsValueMinor, customsDutyMinor: v.customsDutyMinor,
+        otherChargesMinor: v.otherChargesMinor ?? 0, freightToIrelandMinor: v.freightToIrelandMinor ?? 0,
+      })) {
+        if (!Number.isInteger(amount) || amount < 0) {
+          throw new InvoicingError(`Line ${index + 1}: ${name} must be a whole number of cents, zero or more.`);
+        }
+      }
+      if (v.customsValueMinor === 0) throw new InvoicingError(`Line ${index + 1}: the customs value is required.`);
+      importVat = {
+        ...calculateVat({
+          treatment: resolved.treatment,
+          rateBasisPoints: resolved.rateBasisPoints,
+          direction: 'purchases',
+          netMinor: v.customsValueMinor + v.customsDutyMinor,
+          taxableAmountMinor: v.customsValueMinor + v.customsDutyMinor + (v.otherChargesMinor ?? 0) + (v.freightToIrelandMinor ?? 0),
+          recoverableOverrideMinor,
+        }),
+        valuation: v,
+      };
+    } else if (isImportPa) {
+      const reason = 'Import VAT under postponed accounting is charged on the value for import VAT purposes (customs '
+        + 'value, plus duty and charges at importation, plus freight to Ireland), and box PA1 reports the customs value '
+        + 'plus customs duty — both from the customs declaration, not the supplier\'s invoice. No customs valuation was '
+        + 'recorded, so T1, T2 and PA1 were taken from the invoice net. Record the declaration\'s figures.';
+      vatReviewReason = vatReviewReason ? `${vatReviewReason} ${reason}` : reason;
+    }
+
+    const calculation = importVat
+      ? { netMinor: asMinor(lineNet), vatMinor: asMinor(0), grossMinor: asMinor(lineNet), recoverableVatMinor: asMinor(0), rateBasisPoints: importVat.rateBasisPoints }
+      : calculateVat({
+        treatment: resolved.treatment,
+        rateBasisPoints: resolved.rateBasisPoints,
+        direction: isSales ? 'sales' : 'purchases',
+        netMinor: lineNet * sign,
+        statedVatMinor: line.statedVatMinor === undefined ? undefined : line.statedVatMinor * sign,
+        recoverableOverrideMinor,
+      });
 
     return {
       line, index, lineId: ids.invoiceLine(), resolved, calculation, recoverableOverrideMinor, vatReviewReason,
-      undiscountedNet, discount,
+      undiscountedNet, discount, importVat,
     };
   });
 
@@ -386,6 +455,20 @@ function createInvoiceSteps(db: AppDatabase, input: CreateInvoiceInput): Created
         currency, fxRate, memo: 'Input VAT',
       });
     }
+    // Postponed accounting on a customs valuation (issue #609): the VAT is in
+    // the base currency, as the declaration states it; any part not
+    // recoverable is a cost of the goods.
+    for (const { line, importVat } of computed) {
+      if (!importVat || historic || importVat.vatMinor === 0) continue;
+      const irrecoverable = importVat.vatMinor - importVat.recoverableVatMinor;
+      if (importVat.recoverableVatMinor !== 0) {
+        journalLines.push({ accountId: vatOnPurchases, debitMinor: importVat.recoverableVatMinor, currency: baseCurrency, memo: 'Import VAT (postponed accounting)' });
+      }
+      if (irrecoverable !== 0) {
+        journalLines.push({ accountId: line.accountId, debitMinor: irrecoverable, currency: baseCurrency, memo: `${line.description} — import VAT not recoverable` });
+      }
+      journalLines.push({ accountId: vatOnSales, creditMinor: importVat.vatMinor, currency: baseCurrency, memo: 'Import VAT (postponed accounting)' });
+    }
     // Reverse charge: the same invoice creates an output VAT liability too.
     const reverseChargeVat = historic ? 0 : computed
       .filter((c) => c.resolved.treatment.isReverseCharge)
@@ -440,7 +523,7 @@ function createInvoiceSteps(db: AppDatabase, input: CreateInvoiceInput): Created
   // ---- VAT entries ----
   const vatEntryIds: string[] = [];
   if (!vatDeferred && !historic) {
-    for (const { line, lineId, calculation, resolved, recoverableOverrideMinor } of computed) {
+    for (const { line, lineId, calculation, resolved, recoverableOverrideMinor, importVat } of computed) {
       if (calculation.vatMinor === 0 && !resolved.treatment.appliesRate) continue;
       const taxPoint = determineTaxPoint({
         basis: saleBasis,
@@ -463,15 +546,31 @@ function createInvoiceSteps(db: AppDatabase, input: CreateInvoiceInput): Created
         treatmentId: line.vatTreatmentId,
         rateOverrideId: line.taxRateId,
         taxPointDate: taxPoint.taxPointDate,
-        netMinor: calculation.netMinor,
-        statedVatMinor: calculation.vatMinor,
-        recoverableOverrideMinor: recoverableOverrideMinor === undefined
-          ? undefined : recoverableOverrideMinor * sign,
-        currency,
+        // A customs valuation is in the base currency: PA1 is the customs value
+        // plus duty, and the rate applies to the value for import VAT (#609).
+        ...(importVat
+          ? {
+            netMinor: importVat.netMinor,
+            taxableAmountMinor: importVat.valuation.customsValueMinor + importVat.valuation.customsDutyMinor
+              + (importVat.valuation.otherChargesMinor ?? 0) + (importVat.valuation.freightToIrelandMinor ?? 0),
+            recoverableOverrideMinor,
+            currency: baseCurrency,
+            notes: `Customs valuation${importVat.valuation.declarationReference ? ` (declaration ${importVat.valuation.declarationReference})` : ''}: `
+              + `customs value ${(importVat.valuation.customsValueMinor / 100).toFixed(2)}, duty ${(importVat.valuation.customsDutyMinor / 100).toFixed(2)}`
+              + `${importVat.valuation.otherChargesMinor ? `, other charges ${(importVat.valuation.otherChargesMinor / 100).toFixed(2)}` : ''}`
+              + `${importVat.valuation.freightToIrelandMinor ? `, freight to Ireland ${(importVat.valuation.freightToIrelandMinor / 100).toFixed(2)}` : ''}.`,
+          }
+          : {
+            netMinor: calculation.netMinor,
+            statedVatMinor: calculation.vatMinor,
+            recoverableOverrideMinor: recoverableOverrideMinor === undefined
+              ? undefined : recoverableOverrideMinor * sign,
+            currency,
+            fxRate: input.fxRate
+              ? { numerator: input.fxRate.numerator, denominator: input.fxRate.denominator }
+              : undefined,
+          }),
         baseCurrency,
-        fxRate: input.fxRate
-          ? { numerator: input.fxRate.numerator, denominator: input.fxRate.denominator }
-          : undefined,
         counterpartyVatNumber: counterpartyVatNumber(db, input),
         counterpartyCountry: counterpartyCountry(db, input),
         source: 'user',

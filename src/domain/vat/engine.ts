@@ -160,6 +160,12 @@ export interface CalculateVatInput {
   /** When the document states the VAT explicitly, trust it over recomputing. */
   statedVatMinor?: number;
   /**
+   * The amount the rate applies to, where it is not the reported net (issue
+   * #609): an import's VAT is charged on its value for import VAT purposes,
+   * while its PA1 figure is the customs value plus duty. Net-path only.
+   */
+  taxableAmountMinor?: number;
+  /**
    * Override `computeRecoverable`'s result. Set when a caller has already
    * decided this line's input VAT cannot yet be trusted as reclaimable —
    * e.g. it disagrees with the treatment's rate, or the supplier is not
@@ -197,11 +203,15 @@ export function calculateVat(input: CalculateVatInput): VatCalculation {
   let netMinor: Minor;
   let vatMinor: Minor;
 
+  if (input.taxableAmountMinor !== undefined && input.netMinor === undefined) {
+    throw new VatError('A taxable amount separate from the net needs the net as well.');
+  }
   if (input.netMinor !== undefined) {
     netMinor = asMinor(input.netMinor);
+    const taxable = input.taxableAmountMinor !== undefined ? asMinor(input.taxableAmountMinor) : netMinor;
     vatMinor = trustStated
       ? asMinor(input.statedVatMinor!)
-      : vatFromNet(netMinor, effectiveRate);
+      : vatFromNet(taxable, effectiveRate);
   } else if (input.grossMinor !== undefined) {
     if (trustStated) {
       vatMinor = asMinor(input.statedVatMinor!);
@@ -345,6 +355,8 @@ export interface CreateVatEntriesInput {
   netMinor?: number;
   grossMinor?: number;
   statedVatMinor?: number;
+  /** See `CalculateVatInput.taxableAmountMinor`. */
+  taxableAmountMinor?: number;
   /** See `CalculateVatInput.recoverableOverrideMinor` — threaded through so the
    *  posted VAT entry (and hence the VAT3 T2 box) agrees with the journal. */
   recoverableOverrideMinor?: number;
@@ -392,6 +404,7 @@ export function createVatEntries(
     netMinor: input.netMinor,
     grossMinor: input.grossMinor,
     statedVatMinor: input.statedVatMinor,
+    taxableAmountMinor: input.taxableAmountMinor,
     recoverableOverrideMinor: input.recoverableOverrideMinor,
   });
 
