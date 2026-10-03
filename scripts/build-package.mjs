@@ -75,6 +75,7 @@ copy('statute sources', join(ROOT, 'docs', 'statutes'), join(STANDALONE, 'docs',
 // they are read from disk at run time, so file tracing does not pick them up.
 for (const asset of [
   'node_modules/tesseract.js/dist/worker.min.js',
+  'node_modules/tesseract.js-core/tesseract-core-relaxedsimd-lstm.wasm.js',
   'node_modules/tesseract.js-core/tesseract-core-simd-lstm.wasm.js',
   'node_modules/tesseract.js-core/tesseract-core-lstm.wasm.js',
   'node_modules/@tesseract.js-data/eng/4.0.0_best_int/eng.traineddata.gz',
