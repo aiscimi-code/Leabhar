@@ -179,6 +179,11 @@ const DERIVES: Array<(db: AppDatabase, params: { companyId: string }) => unknown
   (db, p) => deriveCuratedRuleFamilies(db, { companyId: p.companyId, rules: CAR_EMISSIONS_CURATED_RULES, label: 'capital allowances' }),
 ];
 
+/** Every path `loadStatutoryKnowledgeBase` ingests, unique, repo-relative. */
+export function statuteSourcePaths(): string[] {
+  return [...new Set(SOURCES.map((s) => s.path))];
+}
+
 /** Resolve a repo-relative statute path against the running app's root (the install directory when packaged). */
 export function statuteFilePath(localPath: string, root: string = appRoot()): string {
   // Older ingests stored absolute build-machine paths; anchor on docs/statutes/.
