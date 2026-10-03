@@ -1,4 +1,5 @@
 import { suggestJournalMatches } from '@/domain/banking/journalLink';
+import { invoiceVatDeferred } from '@/domain/vat/basis';
 import { onAccountForInvoice } from '@/domain/invoicing/onAccount';
 import { customerExposure, listCustomerContacts } from '@/domain/parties/customerAccount';
 import { listRecurringInvoices } from '@/domain/invoicing/recurringInvoices';
@@ -942,9 +943,12 @@ export function invoiceDetail(invoiceId: string) {
   const expenseAccounts = db.select().from(accounts)
     .where(and(eq(accounts.companyId, company.id), eq(accounts.type, 'expense'))).orderBy(accounts.code).all();
 
+  // Read from the invoice's own posting, never the basis today (issue #608).
+  const vatDeferred = invoiceVatDeferred(db, invoice);
+
   return {
     invoice, lines, allocations, party, company, onAccount, missingParticulars, counterparts,
-    incomeAccounts, treatmentOptions, adjustsNumber, expenseAccounts,
+    incomeAccounts, treatmentOptions, adjustsNumber, expenseAccounts, vatDeferred,
   };
 }
 

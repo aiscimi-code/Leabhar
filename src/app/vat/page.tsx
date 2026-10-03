@@ -1,3 +1,4 @@
+import { vatBasisOn } from '@/domain/vat/basis';
 import Link from 'next/link';
 import { vatPeriodList, companyContext } from '@/lib/queries';
 import { Page, Panel, Badge, Figure, Help, Empty } from '@/components/primitives';
@@ -9,6 +10,9 @@ export const dynamic = 'force-dynamic';
 export default function VatPeriodsPage() {
   const periods = vatPeriodList();
   const { company } = companyContext();
+  // The basis in force today, from the recorded authorisation (issue #608),
+  // not the profile's choice alone.
+  const basisToday = vatBasisOn(company, new Date().toISOString().slice(0, 10));
 
   return (
     <Page
@@ -16,7 +20,12 @@ export default function VatPeriodsPage() {
       subtitle={
         <span>
           {company.legalName} files on the{' '}
-          <strong>{label(company.vatAccountingBasis)}</strong>
+          <strong>{label(basisToday)}</strong>
+          {company.vatAccountingBasis === 'cash_receipts' && basisToday === 'invoice' && (
+            <>
+              {' '}<Badge tone="caution">Cash receipts chosen, no authorisation in force</Badge>
+            </>
+          )}
           <Help>
             On the cash receipts basis, VAT on your sales arises when you are paid rather
             than when you invoice, so an invoice issued in one period and paid in the next

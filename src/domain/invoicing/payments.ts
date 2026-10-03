@@ -11,6 +11,7 @@ import { postJournalEntry, atomically } from '../accounting/journal';
 import { systemAccountId } from '../config/setup';
 import { createVatEntries, assertVatPeriodWritable } from '../vat/engine';
 import { upsertReviewItem } from '../extraction/service';
+import { invoiceVatDeferred, vatBasisOn } from '../vat/basis';
 import { InvoicingError } from './invoices';
 
 /**
@@ -481,8 +482,12 @@ function recordPaymentSteps(db: AppDatabase, input: RecordPaymentInput): Recorde
         ? { ...t, invoiceAllocatedMinor: t.invoiceAllocatedMinor + writeOff.amountMinor }
         : t
     ));
-  const vatReleases = isReceived && company.vatAccountingBasis === 'cash_receipts' && salesTargets.length > 0
-    ? computeVatReleases(db, salesTargets)
+  // Only an invoice whose VAT was deferred when it was posted has VAT to
+  // release (issue #608): one posted on the invoice basis declared it then,
+  // and releasing it again would report the supply twice (s.80(2)(b)).
+  const deferredTargets = isReceived ? salesTargets.filter((t) => invoiceVatDeferred(db, t.invoice)) : [];
+  const vatReleases = deferredTargets.length > 0
+    ? computeVatReleases(db, deferredTargets)
     : [];
 
   // The release is reported per invoice currency, never as a sum across
@@ -680,7 +685,7 @@ function recordPaymentSteps(db: AppDatabase, input: RecordPaymentInput): Recorde
     // was received "in respect of taxable supplies" decides if its VAT was
     // due the moment it arrived (s.80(1)). The books cannot tell, so it is
     // flagged the moment it is held, and the item says what to do.
-    if (unallocatedMinor > 0 && isReceived && company.vatAccountingBasis === 'cash_receipts' && party.customerId) {
+    if (unallocatedMinor > 0 && isReceived && vatBasisOn(company, input.paymentDate) === 'cash_receipts' && party.customerId) {
       const customerName = db.select({ n: customers.name }).from(customers)
         .where(eq(customers.id, party.customerId)).get()?.n ?? 'the customer';
       upsertReviewItem(tx, {

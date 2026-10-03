@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import { eq } from 'drizzle-orm';
 import { createTestDatabase } from '@/db/testing';
 import { createCompany } from '../config/setup';
+import { updateCompany } from '../config/mutations';
 import {
   ingestSi692025Reg5, ingestSi692025Reg7, ingestSi692025Reg8, ingestSi692025Reg9, deriveSi692025Rules,
   SI_69_2025_MD_PATH,
@@ -169,6 +170,10 @@ describe('deriveSi692025Rules', () => {
   });
 
   it('a cash_receipts company profile surfaces both eligibility threshold rules', () => {
+    // The profile alone is enough to surface the eligibility rules: a company
+    // that has chosen the basis needs the tests whether or not it has yet
+    // recorded Revenue's authorisation (issue #608 made invoice the default).
+    updateCompany(db, { companyId, changes: { vatAccountingBasis: 'cash_receipts' } });
     deriveSi692025Rules(db, { companyId });
     const result = lookupTransactionRules(db, {
       companyId,

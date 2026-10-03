@@ -8,6 +8,7 @@ import { postJournalEntry, reverseJournalEntry, atomically, type JournalLineInpu
 import { systemAccountId } from '../config/setup';
 import { upsertReviewItem } from '../extraction/service';
 import { InvoicingError } from './invoices';
+import { invoiceVatDeferred } from '../vat/basis';
 
 /**
  * Bad debts (issue #404).
@@ -87,7 +88,7 @@ export function writeOffBadDebt(
       }
     }
 
-    const cashBasis = company.vatAccountingBasis === 'cash_receipts' && invoice.vatMinor !== 0;
+    const cashBasis = invoiceVatDeferred(db, invoice);
     const vatCancelled = cashBasis ? deferredVatRemaining(db, invoice) : 0;
     const amount = invoice.outstandingMinor;
     const fx = invoice.fxRateNumerator && invoice.fxRateDenominator
