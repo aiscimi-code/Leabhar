@@ -11,7 +11,11 @@ import { asIsoDate } from '../dates';
 import { companies, customers, invoices, vatEntries } from '@/db/schema';
 import { ids } from '@/lib/ids';
 import type { AppDatabase } from '@/db';
-import { vatBasisOn, invoiceVatDeferred } from './basis';
+import { vatBasisOn, vatBasisForPeriod, invoiceVatDeferred } from './basis';
+import { postJournalEntry } from '../accounting/journal';
+import { buildFilingPack } from './filingPack';
+import { buildRtdReturn } from './rtd';
+import { vatPeriods } from '@/db/schema';
 
 /**
  * Issue #608: the cash receipts basis needs Revenue's authorisation (VATCA
@@ -35,6 +39,36 @@ describe('vatBasisOn', () => {
     expect(vatBasisOn(cash('2025-03-01'), '2025-02-28')).toBe('invoice');
     expect(vatBasisOn(cash('2025-03-01'), '2025-03-01')).toBe('cash_receipts');
     expect(vatBasisOn(cash('2025-03-01'), '2025-06-30')).toBe('cash_receipts');
+  });
+});
+
+describe('vatBasisForPeriod', () => {
+  const company = (basis: 'invoice' | 'cash_receipts', from: string | null) => ({ vatAccountingBasis: basis, cashBasisAuthorisedFrom: from });
+
+  it('is cash receipts when the authorisation has effect for the whole period', () => {
+    expect(vatBasisForPeriod(company('cash_receipts', '2025-01-01'), '2025-03-01', '2025-04-30'))
+      .toMatchObject({ basis: 'cash_receipts', chosenNotInForce: false });
+  });
+
+  it('is mixed when the authorisation starts inside the period, and names the date', () => {
+    const p = vatBasisForPeriod(company('cash_receipts', '2025-04-01'), '2025-03-01', '2025-04-30');
+    expect(p).toMatchObject({ basis: 'mixed', chosenNotInForce: false });
+    expect(p.note).toContain('2025-04-01');
+  });
+
+  it('is the invoice basis, said to be chosen but not in force, with no authorisation or one after the period', () => {
+    const none = vatBasisForPeriod(company('cash_receipts', null), '2025-03-01', '2025-04-30');
+    expect(none).toMatchObject({ basis: 'invoice', chosenNotInForce: true });
+    expect(none.note).toMatch(/no Revenue authorisation is recorded/);
+    const later = vatBasisForPeriod(company('cash_receipts', '2025-05-01'), '2025-03-01', '2025-04-30');
+    expect(later).toMatchObject({ basis: 'invoice', chosenNotInForce: true });
+    expect(later.note).toContain('2025-05-01');
+  });
+
+  it('is the invoice basis, with nothing about the cash basis, for an invoice-basis company', () => {
+    const p = vatBasisForPeriod(company('invoice', null), '2025-03-01', '2025-04-30');
+    expect(p).toMatchObject({ basis: 'invoice', chosenNotInForce: false });
+    expect(p.note).not.toMatch(/cash receipts/);
   });
 });
 
@@ -129,5 +163,49 @@ describe('the basis applied to sales', () => {
       vatAccountingBasis: 'cash_receipts',
       cashBasisAuthorisation: { eligibility: 'turnover_threshold', authorisedFrom: '2025-01-01', reference: ' ', confirmedBy: 'Joe' },
     })).toThrow(/reference/);
+  });
+  it('a non-deferred sale whose journal only debits the deferred VAT account is not deferred (review on #626)', () => {
+    const journal = postJournalEntry(db, {
+      companyId, entryDate: asIsoDate('2025-03-10'), narrative: 'Correction touching deferred VAT',
+      sourceType: 'manual_adjustment', baseCurrency: 'EUR', createdBy: 'Test', createdVia: 'user',
+      lines: [
+        { accountId: acc['vat_on_sales_deferred']!, debitMinor: 2_300, currency: 'EUR' },
+        { accountId: acc['vat_on_sales']!, creditMinor: 2_300, currency: 'EUR' },
+      ],
+    });
+    expect(invoiceVatDeferred(db, { companyId, direction: 'sales', vatMinor: 2_300, journalEntryId: journal.id })).toBe(false);
+    // The same journal read for a credit note (VAT stored negative) is a deferral the other way round.
+    expect(invoiceVatDeferred(db, { companyId, direction: 'sales', vatMinor: -2_300, journalEntryId: journal.id })).toBe(true);
+  });
+
+  it('a credit note posted under an authorisation is deferred, and one on the invoice basis is not', () => {
+    setup({
+      vatAccountingBasis: 'cash_receipts',
+      cashBasisAuthorisation: { eligibility: 'turnover_threshold', authorisedFrom: '2025-03-01', reference: 'REV-3', confirmedBy: 'Joe' },
+    });
+    const credit = (date: string) => createInvoice(db, {
+      companyId, direction: 'sales', invoiceDate: asIsoDate(date), customerId, isCreditNote: true,
+      lines: [{ description: 'Credit', netMinor: 1_000, accountId: byCode['4020']!, vatTreatmentId: tr['IE_STD']! }],
+    });
+    expect(invoiceVatDeferred(db, invoiceRow(credit('2025-03-10').invoiceId))).toBe(true);
+    expect(invoiceVatDeferred(db, invoiceRow(credit('2025-02-10').invoiceId))).toBe(false);
+  });
+
+  it('the filing pack and RTD describe a chosen but unauthorised cash basis as the invoice basis it was posted on (review on #626)', () => {
+    setup({ vatAccountingBasis: 'cash_receipts' });
+    sale('2025-03-10');
+    const period = db.select().from(vatPeriods).where(eq(vatPeriods.name, 'Mar–Apr 2025')).get()!;
+    const pack = buildFilingPack(db, { companyId, vatPeriodId: period.id });
+    expect(pack.vatBasis).toBe('invoice');
+    expect(pack.basisNote).toMatch(/no Revenue authorisation is recorded/);
+    expect(pack.report.T1.amountMinor).toBe(2_300);
+    const rtd = buildRtdReturn(db, { companyId, date: '2025-06-30' });
+    expect(rtd.findings.map((f) => f.code)).not.toContain('rtd_cash_basis_sales');
+
+    recordCashBasisAuthorisation(db, {
+      companyId, eligibility: 'turnover_threshold', authorisedFrom: '2025-04-01', reference: 'REV-4', confirmedBy: 'Joe',
+    });
+    expect(buildFilingPack(db, { companyId, vatPeriodId: period.id }).vatBasis).toBe('mixed');
+    expect(buildRtdReturn(db, { companyId, date: '2025-06-30' }).findings.map((f) => f.code)).toContain('rtd_cash_basis_sales');
   });
 });

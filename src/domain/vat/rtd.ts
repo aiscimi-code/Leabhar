@@ -3,6 +3,7 @@ import type { AppDatabase } from '@/db';
 import { vatEntries, vatTreatments, invoiceLines, invoices, accounts, vatPeriods, companies } from '@/db/schema';
 import { multiplyRational } from '../money';
 import { accountingYearContaining } from './apportionment';
+import { vatBasisForPeriod } from './basis';
 
 /**
  * The VAT Return of Trading Details (issue #210): the annual return, due with
@@ -226,11 +227,18 @@ export function buildRtdReturn(db: AppDatabase, params: { companyId: string; dat
         + 'are finalised (manual §2.6), so these figures can still change.',
     });
   }
-  if (company.vatAccountingBasis === 'cash_receipts') {
+  // Only where the cash basis was actually in force for some of the year
+  // (issue #608): a profile that chose it without an authorisation declared
+  // its sales on the invoice basis, as Revenue's grid expects.
+  const yearBasis = vatBasisForPeriod(company, start, end);
+  if (yearBasis.basis !== 'invoice') {
     findings.push({
       code: 'rtd_cash_basis_sales',
-      message: 'Sales are counted as they were declared on the VAT3s, on the cash receipts basis (when paid). Revenue asks '
-        + 'for net amounts "as per the purchase and sales invoices" (manual §2.1): confirm which your accountant files.',
+      message: (yearBasis.basis === 'mixed'
+        ? `Sales are counted as they were declared on the VAT3s: on the invoice basis before ${company.cashBasisAuthorisedFrom}, `
+          + 'on the cash receipts basis (when paid) from then. '
+        : 'Sales are counted as they were declared on the VAT3s, on the cash receipts basis (when paid). ')
+        + 'Revenue asks for net amounts "as per the purchase and sales invoices" (manual §2.1): confirm which your accountant files.',
     });
   }
 
