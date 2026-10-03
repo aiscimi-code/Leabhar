@@ -54,6 +54,17 @@ const post = (direction: 'sales' | 'purchase', code: string, netMinor: number, p
   }],
 });
 
+describe('exports outside the EU (issue #613)', () => {
+  it('go to D4, "0% Exports", not to D1 with domestic zero-rated sales (manual §2.2(d))', () => {
+    post('sales', 'EXPORT_GOODS', 50_000, 'us');
+    post('sales', 'IE_ZERO', 7_000, 'ie');
+    const rtd = buildRtdReturn(db, { companyId, date: '2025-06-30' });
+    expect(rtd.boxes[RTD_BOXES.supplies.zero_exports!]).toBe(50_000);
+    expect(rtd.boxes[RTD_BOXES.supplies.zero!]).toBe(7_000);
+    expect(rtd.boxes[RTD_BOXES.supplies.total!]).toBe(57_000);
+  });
+});
+
 describe('buildRtdReturn', () => {
   it('places each treatment in the boxes of Revenue\'s grid', () => {
     post('sales', 'IE_STD', 100_000, 'ie');

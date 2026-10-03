@@ -69,6 +69,7 @@ const LEGENDS: Record<string, string> = {
   RC_CONSTRUCTION: 'Reverse charge: VAT on this supply is to be accounted for by the principal contractor (VATCA 2010 s.16).',
   IE_EXEMPT: 'Exempt from VAT.',
   NON_EU_SERVICES_SUPPLY: 'Place of supply outside the State: no Irish VAT charged.',
+  EXPORT_GOODS: 'Export of goods outside the EU: zero-rated (Directive 2006/112/EC, Art. 146).',
 };
 
 /** Treatments whose invoice must carry the customer's VAT number. */

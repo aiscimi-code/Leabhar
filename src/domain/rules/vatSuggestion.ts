@@ -204,7 +204,8 @@ export const RULE_TREATMENT_BINDINGS: TreatmentBinding[] = [
   {
     ruleKeys: ['vat.zero_rate_export_outside_community'],
     direction: 'sale',
-    treatmentCode: () => 'IE_ZERO',
+    // Its own treatment, so the RTD reports it as a 0% export (D4, issue #613).
+    treatmentCode: () => 'EXPORT_GOODS',
   },
   {
     ruleKeys: SCHEDULE_BINDING_KEYS,
@@ -610,7 +611,7 @@ export function suggestFromFacts(
     .from(irishTaxRules).where(eq(irishTaxRules.id, decision.rule.ruleId)).get();
   const ruleRateBasisPoints = ruleRow?.unit === 'percent' && ruleRow.numericValue != null
     ? Math.round(ruleRow.numericValue * 100)
-    : (code === 'IE_ZERO' || code === 'EU_GOODS_SUPPLY' ? 0 : null);
+    : (code === 'IE_ZERO' || code === 'EU_GOODS_SUPPLY' || code === 'EXPORT_GOODS' ? 0 : null);
 
   const where = provisionCitation(decidingRule!.citation, decidingRule!.sectionNumber);
   const gap = bindingGap(decision.binding, facts, decision.rule.ruleKey);
