@@ -120,6 +120,20 @@ export function buildViesStatement(db: AppDatabase, params: {
         message: `${l.customerName} has no VAT number on record. An intra-Community supply is zero-rated only to a customer `
           + 'registered in another Member State, and the statement needs their number (column 10); get it and check it on VIES.',
       });
+    } else if (l.flag === 'S' && l.customerVatNumber.startsWith('XI')) {
+      findings.push({
+        code: 'vies_services_to_northern_ireland',
+        message: `${l.customerName}'s number "${l.customerVatNumber}" is a Northern Ireland (XI) number. Supplies of `
+          + 'services to traders in Northern Ireland are no longer reported on VIES; only goods are (VIES Traders Manual, '
+          + 'Appendix 9). Check the treatment: services to Northern Ireland are supplies outside the EU.',
+      });
+    } else if (l.customerVatNumber.startsWith('GB')) {
+      findings.push({
+        code: 'vies_great_britain_customer',
+        message: `${l.customerName}'s number "${l.customerVatNumber}" is a Great Britain (GB) number. Supplies to traders in `
+          + 'Great Britain are not reported on VIES from 1 January 2021 (VIES Traders Manual, Appendix 9). A trader in '
+          + 'Northern Ireland buying goods quotes an XI number; otherwise the sale is an export, not an intra-Community supply.',
+      });
     } else if (!/^[A-Z]{2}/.test(l.customerVatNumber) || l.customerVatNumber.startsWith('IE')) {
       findings.push({
         code: 'vies_customer_vat_number_invalid',
