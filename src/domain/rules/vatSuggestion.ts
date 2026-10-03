@@ -29,7 +29,7 @@ import {
 } from '@/db/schema';
 import { lookupTransactionRules, type ApplicableRule, type TransactionContext } from './transactionLookup';
 import { countStatutoryRules } from './knowledgeBase';
-import { EU_COUNTRY_CODES, parseVatNumber } from '../extraction/vatNumbers';
+import { EU_COUNTRY_CODES, parseVatNumber, otherMemberStateForGoods } from '../extraction/vatNumbers';
 import { resolveTreatment } from '../vat/engine';
 import { asIsoDate } from '../dates';
 import { VAT_SCOPE_CURATED_RULES } from './vatScopeCuration';
@@ -55,6 +55,24 @@ export type TransactionDirection = 'purchase' | 'sale';
 
 const EU = new Set<string>(EU_COUNTRY_CODES);
 const isEuNotIe = (c: string | null | undefined): boolean => !!c && c !== 'IE' && EU.has(c);
+
+/**
+ * Whether the customer's VAT number shows it registered in another Member
+ * State for this supply (issue #610): any other Member State's number, or a
+ * Northern Ireland (`XI`) number for goods only. A number VIES reported
+ * invalid is never evidence.
+ */
+export function customerRegisteredInOtherMemberState(
+  vatInfo: ReturnType<typeof parseVatNumber>, viesStatus: string | null, supplyType: 'goods' | 'services' | null,
+): boolean {
+  if (!vatInfo.structurallyValid || vatInfo.isIrish || viesStatus === 'invalid') return false;
+  return vatInfo.isEu || (vatInfo.isNorthernIreland && supplyType === 'goods');
+}
+
+/** A Northern Ireland trader: an `XI` VAT number, or `XI` as its country (issue #610). */
+export function isNorthernIrelandParty(vatInfo: ReturnType<typeof parseVatNumber> | null, country: string | null): boolean {
+  return !!vatInfo?.isNorthernIreland || country === 'XI';
+}
 
 /**
  * Which treatment a matched statutory rule produces (issue #200 step 1).
@@ -421,6 +439,12 @@ export function transactionFacts(
     supplyType,
   };
   sources.vatRegistered = `company VAT registration status (${company?.vatRegistrationStatus ?? 'unknown'})`;
+  if (isNorthernIrelandParty(vatInfo, counterpartyCountry)) {
+    facts.counterpartyNorthernIreland = true;
+    sources.counterpartyNorthernIreland = vatInfo?.isNorthernIreland
+      ? `${partyLabel} VAT number ${vatInfo.normalised} (XI: Northern Ireland, EU VAT rules for goods only)`
+      : `${partyLabel} country XI (Northern Ireland, EU VAT rules for goods only)`;
+  }
   applyEstablishment(facts, sources, { supplier, customer });
   sources.invoiceAvailable = doc ? `confirmed document "${doc.originalFilename}"` : 'no confirmed matched document';
 
@@ -433,7 +457,7 @@ export function transactionFacts(
     if (vatInfo) {
       // VIES's answer for this exact number, when there is one (issue #207).
       const vies = customer?.viesStatus && customer.viesCheckedVatNumber === vatInfo.normalised ? customer.viesStatus : null;
-      facts.customerVatRegisteredEu = vatInfo.structurallyValid && vatInfo.isEu && !vatInfo.isIrish && vies !== 'invalid';
+      facts.customerVatRegisteredEu = customerRegisteredInOtherMemberState(vatInfo, vies, supplyType);
       sources.customerVatRegisteredEu = vies === 'valid'
         ? `customer VAT number ${vatInfo.normalised}, confirmed valid by VIES on ${customer!.viesCheckedAt?.slice(0, 10)}`
         : vies === 'invalid'
@@ -444,7 +468,9 @@ export function transactionFacts(
     // A recorded status wins; otherwise an EU VAT number is evidence of it
     // (282/2011 art.18(1)); a missing number is NOT evidence of a consumer.
     applyCustomerStatus(facts, sources, customer, vatInfo);
-    if (supplyType === 'goods' && counterpartyCountry && !EU.has(counterpartyCountry)) {
+    // Goods to Northern Ireland stay within the EU rules for goods (issue #610).
+    if (supplyType === 'goods' && counterpartyCountry && !EU.has(counterpartyCountry)
+        && !isNorthernIrelandParty(vatInfo, counterpartyCountry) && !otherMemberStateForGoods(counterpartyCountry)) {
       facts.goodsExportedOutsideEu = true;
       sources.goodsExportedOutsideEu = `derived: goods sale to a customer in ${counterpartyCountry} `
         + '(customer country, not proof of export)';

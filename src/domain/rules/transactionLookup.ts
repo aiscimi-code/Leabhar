@@ -80,6 +80,12 @@ export interface TransactionContext {
   supplierEstablishedOutsideState?: boolean | null;
   /** The same determination for the customer (s.34(a): where the customer's business is established). */
   customerEstablishedOutsideState?: boolean | null;
+  /**
+   * The other party is a Northern Ireland trader (an `XI` VAT number, or `XI`
+   * given as its country): a Member State for goods, not for services
+   * (issue #610; see `NORTHERN_IRELAND` in extraction/vatNumbers.ts).
+   */
+  counterpartyNorthernIreland?: boolean | null;
   [key: string]: unknown;
 }
 
@@ -156,9 +162,15 @@ export function normaliseTransactionContext(input: TransactionContext): Transact
   const counterpartyEstablishedOutsideState = direction === 'purchase' ? supplierEstablishedOutsideStateResolved
     : direction === 'sale' ? (input.customerEstablishedOutsideState ?? null) : null;
   const counterpartyCountry = (direction === 'sale' ? input.customerCountry : supplierCountry) as string | null | undefined;
-  const counterpartyInEu = counterpartyCountry
-    ? EU_MEMBER_STATES.has(String(counterpartyCountry).toUpperCase()) && String(counterpartyCountry).toUpperCase() !== 'IE'
-    : null;
+  // Northern Ireland is a Member State for goods and outside the EU for
+  // services (issue #610); with the supply kind unknown, it is unresolved.
+  const northernIreland = input.counterpartyNorthernIreland === true
+    || String((direction === 'sale' ? input.customerCountry : input.supplierCountry) ?? '').toUpperCase() === 'XI';
+  const counterpartyInEu = northernIreland
+    ? (input.supplyType === 'goods' ? true : input.supplyType === 'services' ? false : null)
+    : counterpartyCountry
+      ? EU_MEMBER_STATES.has(String(counterpartyCountry).toUpperCase()) && String(counterpartyCountry).toUpperCase() !== 'IE'
+      : null;
 
   const turnoverFigures = [input.annualTurnoverCurrentYearMinor, input.annualTurnoverPreviousYearMinor]
     .filter((v): v is number => typeof v === 'number' && Number.isFinite(v));
