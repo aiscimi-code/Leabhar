@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { eq } from 'drizzle-orm';
-import { createTestDatabase, insertTestBankTransaction, insertConfirmedDocument } from '@/db/testing';
+import { createTestDatabase, insertTestBankTransaction, insertConfirmedDocument, testVatBasis } from '@/db/testing';
 import { createCompany, addBankAccount } from '../config/setup';
 import { createVatEntries } from './engine';
 import { buildVat3Return, drillIntoBox, vatPositionSummary } from './report';
@@ -25,7 +25,9 @@ const MAR_APR = makeDate(2025, 3, 15);
 beforeEach(() => {
   ({ db } = createTestDatabase());
   const created = createCompany(db, {
-    legalName: 'Test Ltd', vatRegistrationStatus: 'registered', seedYears: [2025],
+    // The cash receipts basis, which these tests were written against when it
+    // was the default (issue #608 made it opt-in, with an authorisation).
+    legalName: 'Test Ltd', vatRegistrationStatus: 'registered', ...testVatBasis('cash_receipts'), seedYears: [2025],
   });
   companyId = created.companyId;
   tr = created.treatmentsByCode;
@@ -304,7 +306,7 @@ describe('drill-down', () => {
       const cash = createTestDatabase();
       const created = createCompany(cash.db, {
         legalName: 'Cash Ltd', vatRegistrationStatus: 'registered',
-        vatAccountingBasis: 'cash_receipts', seedYears: [2025],
+        ...testVatBasis('cash_receipts'), seedYears: [2025],
       });
       const cashPeriodId = cash.db.select().from(vatPeriods)
         .where(eq(vatPeriods.name, 'Mar–Apr 2025')).get()!.id;

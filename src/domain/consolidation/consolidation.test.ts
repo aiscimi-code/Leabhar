@@ -3,7 +3,7 @@ import { eq, and } from 'drizzle-orm';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { createTestDatabase } from '@/db/testing';
+import { createTestDatabase, testVatBasis } from '@/db/testing';
 import { createCompany, addBankAccount, systemAccountId } from '../config/setup';
 import { importStatement } from '../banking/import';
 import { classifyTransaction, ClassificationError } from '../banking/classify';
@@ -34,7 +34,7 @@ let root: string;
 const setup = (basis: 'invoice' | 'cash_receipts' = 'cash_receipts') => {
   ({ db } = createTestDatabase());
   const created = createCompany(db, {
-    legalName: 'Acme Ltd', vatRegistrationStatus: 'registered', vatAccountingBasis: basis, seedYears: [2025],
+    legalName: 'Acme Ltd', vatRegistrationStatus: 'registered', ...testVatBasis(basis), seedYears: [2025],
   });
   companyId = created.companyId;
   byCode = created.accountsByCode;

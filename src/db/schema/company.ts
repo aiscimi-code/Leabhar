@@ -70,6 +70,12 @@ export const companies = sqliteTable('companies', {
    * The accounting basis for VAT. This is not a cosmetic preference: it decides
    * the tax point of output VAT and therefore which period a sale falls into.
    * See docs/DOMAIN_MODEL.md §6.
+   *
+   * The column default is historical and never relied on: `createCompany`
+   * always writes the basis, defaulting to `invoice` (issue #608). Choosing
+   * `cash_receipts` does not by itself put a sale on that basis — only a
+   * recorded authorisation in force on the sale's date does (`vatBasisOn`).
+   * Changing this default would rebuild the companies table for no effect.
    */
   vatAccountingBasis: text('vat_accounting_basis', {
     enum: ['invoice', 'cash_receipts'],

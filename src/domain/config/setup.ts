@@ -6,7 +6,7 @@ import {
   expenseRates,
 } from '@/db/schema';
 import { ids } from '@/lib/ids';
-import { type IsoDate, asIsoDate, nowIso, today } from '../dates';
+import { type IsoDate, asIsoDate, isIsoDate, nowIso, today } from '../dates';
 import {
   DEFAULT_ACCOUNTS, FARM_ACCOUNTS, FARM_ACCOUNT_OVERRIDES, farmOverrideFor, type SystemAccountKey, type ChartKind,
 } from './chartOfAccounts';
@@ -34,7 +34,19 @@ export interface CreateCompanyInput {
   vatRegistrationStatus?: 'not_registered' | 'registered' | 'deregistered' | 'pending';
   taxReferenceNumber?: string;
   eoriNumber?: string;
+  /**
+   * How the books are kept. Defaults to the invoice basis (issue #608): the
+   * cash receipts basis needs Revenue's authorisation (VATCA s.80(1), S.I.
+   * 639/2010 reg.25), and a sale is on it only from the date one is recorded.
+   */
   vatAccountingBasis?: 'invoice' | 'cash_receipts';
+  /** Revenue's moneys-received authorisation, when the company already holds one. */
+  cashBasisAuthorisation?: {
+    eligibility: 'turnover_threshold' | 'supplies_to_unregistered';
+    authorisedFrom: string;
+    reference: string;
+    confirmedBy: string;
+  };
   vatPeriodFrequency?: VatFrequency;
   financialYearEndDay?: number;
   financialYearEndMonth?: number;
@@ -123,6 +135,21 @@ function chartSeeds(
   return seeds;
 }
 
+function cashBasisColumns(
+  auth: CreateCompanyInput['cashBasisAuthorisation'], at: string,
+): Partial<typeof companies.$inferInsert> {
+  if (!auth) return {};
+  const reference = auth.reference.trim();
+  const who = auth.confirmedBy.trim();
+  if (!isIsoDate(auth.authorisedFrom)) throw new Error('The date the cash basis authorisation has effect from must be a date.');
+  if (!reference) throw new Error('Record Revenue\'s reference for the authorisation, or where it is filed.');
+  if (!who) throw new Error('Say who confirmed the authorisation.');
+  return {
+    cashBasisEligibility: auth.eligibility, cashBasisAuthorisedFrom: auth.authorisedFrom,
+    cashBasisAuthorisationReference: reference, cashBasisConfirmedBy: who, cashBasisConfirmedAt: at,
+  };
+}
+
 export function createCompany(db: AppDatabase, input: CreateCompanyInput): CreatedCompany {
   return db.transaction((tx) => {
     const companyId = ids.company();
@@ -147,7 +174,8 @@ export function createCompany(db: AppDatabase, input: CreateCompanyInput): Creat
       vatRegistrationStatus: input.vatRegistrationStatus ?? 'not_registered',
       taxReferenceNumber: input.taxReferenceNumber ?? null,
       eoriNumber: input.eoriNumber ?? null,
-      vatAccountingBasis: input.vatAccountingBasis ?? 'cash_receipts',
+      vatAccountingBasis: input.vatAccountingBasis ?? 'invoice',
+      ...cashBasisColumns(input.cashBasisAuthorisation, timestamp),
       vatPeriodFrequency: frequency,
       financialYearEndDay: yearEndDay,
       financialYearEndMonth: yearEndMonth,

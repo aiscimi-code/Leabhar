@@ -1,3 +1,4 @@
+import { vatBasisOn } from '@/domain/vat/basis';
 import {
   activeCompany, invoiceList, aged, chartOfAccounts, supplierList, customerList,
   vatTreatmentList, companyContext,
@@ -44,7 +45,7 @@ export default async function InvoicesPage({ searchParams }: {
   const treatments = vatTreatmentList().filter((treatment) => treatment.active);
   const today = new Date().toISOString().slice(0, 10);
 
-  const cashBasisNote = company.vatAccountingBasis === 'cash_receipts' && direction === 'sales';
+  const cashBasisNote = vatBasisOn(company, today) === 'cash_receipts' && direction === 'sales';
 
   return (
     <Page

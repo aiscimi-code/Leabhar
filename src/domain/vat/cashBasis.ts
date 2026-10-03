@@ -82,17 +82,17 @@ export function cashBasisFindings(db: AppDatabase, params: {
   if (!company.cashBasisAuthorisedFrom) {
     findings.push({
       code: 'cash_basis_not_authorised',
-      title: 'The cash receipts basis is used, but no Revenue authorisation is recorded',
-      detail: 'VAT on sales is being taken when payment is received. That basis needs Revenue\'s authorisation '
-        + '(VATCA s.80(1), S.I. 639/2010 reg.25). Record the authorisation on the company profile, or change the '
-        + 'basis to invoice.',
+      title: 'The cash receipts basis is chosen, but no Revenue authorisation is recorded',
+      detail: 'That basis needs Revenue\'s authorisation (VATCA s.80(1), S.I. 639/2010 reg.25), so until one is '
+        + 'recorded, VAT on sales is declared on the invoice basis, when each invoice is raised. Record the '
+        + 'authorisation on the company profile, or change the basis to invoice.',
     });
   } else if (company.cashBasisAuthorisedFrom > params.periodStart) {
     findings.push({
       code: 'cash_basis_not_authorised',
       title: `The cash receipts basis is authorised only from ${company.cashBasisAuthorisedFrom}`,
-      detail: `This period starts on ${params.periodStart}. Sales before ${company.cashBasisAuthorisedFrom} are on the `
-        + 'invoice basis (s.80(2)(b), (c)). Check which sales in the period fall before the authorisation.',
+      detail: `This period starts on ${params.periodStart}. Sales dated before ${company.cashBasisAuthorisedFrom} are `
+        + 'declared on the invoice basis (s.80(2)(b), (c)); those from that date, when paid. Check the sales either side of it.',
     });
   }
 

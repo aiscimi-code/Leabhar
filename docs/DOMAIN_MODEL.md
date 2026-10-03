@@ -294,6 +294,16 @@ this could not have been retrofitted onto a column-based design.
 Input VAT is on the invoice date under **both** bases — the cash receipts basis
 in Ireland applies to output VAT only. This asymmetry is deliberate and tested.
 
+The cash receipts basis needs Revenue's authorisation (VATCA s.80(1), S.I.
+639/2010 reg.25). Choosing it on the company profile does not put a sale on it:
+a sale is on the cash basis only when an authorisation is recorded from a date
+on or before its tax point (`vatBasisOn`, `src/domain/vat/basis.ts`). Any other
+sale is on the invoice basis, and new companies default to the invoice basis
+(#608). Release on receipt and cancellation on a bad debt follow how each
+invoice was actually posted (`invoiceVatDeferred`), never the basis today, so a
+sale declared on its invoice is not declared again when it is paid
+(s.80(2)(b)).
+
 ---
 
 ## 7. Tax rates

@@ -15,6 +15,7 @@ import {
 } from '../vat/engine';
 import { AccountingError } from '../accounting/errors';
 import { upsertReviewItem } from '../extraction/service';
+import { vatBasisOn } from '../vat/basis';
 
 export class InvoicingError extends AccountingError {}
 
@@ -314,7 +315,11 @@ function createInvoiceSteps(db: AppDatabase, input: CreateInvoiceInput): Created
   // held in a separate liability until then. Purchases are unaffected: input
   // VAT is reclaimed by reference to the supplier's invoice date under either
   // basis, which is the asymmetry people get wrong.
-  const vatDeferred = !historic && isSales && company.vatAccountingBasis === 'cash_receipts' && vatMinor !== 0;
+  // Only a sale on or after a recorded Revenue authorisation is on the cash
+  // receipts basis (s.80(1), (2)(b); issue #608); every other sale is on the
+  // invoice basis, whatever the profile says.
+  const saleBasis = vatBasisOn(company, taxPointBase);
+  const vatDeferred = !historic && isSales && saleBasis === 'cash_receipts' && vatMinor !== 0;
 
   const debtors = systemAccountId(db, input.companyId, 'debtors');
   const creditors = systemAccountId(db, input.companyId, 'creditors');
@@ -404,7 +409,7 @@ function createInvoiceSteps(db: AppDatabase, input: CreateInvoiceInput): Created
   // A locked or filed VAT return is never changed (issue #226): checked before
   // anything is written, so a refusal leaves no half-posted invoice.
   const vatTaxPoint = determineTaxPoint({
-    basis: company.vatAccountingBasis,
+    basis: saleBasis,
     direction: isSales ? 'sales' : 'purchases',
     invoiceDate: input.invoiceDate,
     supplyDate: input.supplyDate,
@@ -438,7 +443,7 @@ function createInvoiceSteps(db: AppDatabase, input: CreateInvoiceInput): Created
     for (const { line, lineId, calculation, resolved, recoverableOverrideMinor } of computed) {
       if (calculation.vatMinor === 0 && !resolved.treatment.appliesRate) continue;
       const taxPoint = determineTaxPoint({
-        basis: company.vatAccountingBasis,
+        basis: saleBasis,
         direction: isSales ? 'sales' : 'purchases',
         invoiceDate: input.invoiceDate,
         supplyDate: input.supplyDate,

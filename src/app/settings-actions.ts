@@ -147,7 +147,7 @@ export async function createCompanyAction(formData: FormData): Promise<ActionRes
       vatRegistrationStatus: (text(formData, 'vatRegistrationStatus') ?? 'not_registered') as
         'not_registered' | 'registered',
       taxReferenceNumber: text(formData, 'taxReferenceNumber'),
-      vatAccountingBasis: (text(formData, 'vatAccountingBasis') ?? 'cash_receipts') as
+      vatAccountingBasis: (text(formData, 'vatAccountingBasis') ?? 'invoice') as
         'invoice' | 'cash_receipts',
       vatPeriodFrequency: (text(formData, 'vatPeriodFrequency') ?? 'bi_monthly') as VatFrequency,
       financialYearEndDay: Number(text(formData, 'financialYearEndDay') ?? 31),

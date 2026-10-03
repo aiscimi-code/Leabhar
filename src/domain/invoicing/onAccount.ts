@@ -11,6 +11,7 @@ import { postJournalEntry, assertAccountingPeriodOpen } from '../accounting/jour
 import { systemAccountId } from '../config/setup';
 import { createVatEntries, assertVatPeriodWritable } from '../vat/engine';
 import { computeVatReleases } from './payments';
+import { invoiceVatDeferred } from '../vat/basis';
 
 /**
  * Money held on account (issue #386).
@@ -195,8 +196,7 @@ export function allocatePaymentOnAccount(
   // The tax point is the original receipt date (s.80(1)), never the
   // application date. Computed before anything is written; the writability of
   // the period is checked before that too, so a refusal leaves nothing behind.
-  const releasesCashBasisVat = invoice.direction === 'sales'
-    && invoice.vatMinor !== 0 && company.vatAccountingBasis === 'cash_receipts';
+  const releasesCashBasisVat = invoiceVatDeferred(db, invoice);
   const vatReleases = releasesCashBasisVat
     ? computeVatReleases(db, [{ invoice, invoiceAllocatedMinor: params.amountMinor }])
     : [];
