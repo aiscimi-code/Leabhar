@@ -4,7 +4,7 @@ import { invoices, invoiceLines, companies, accounts, auditEvents } from '@/db/s
 import { ids } from '@/lib/ids';
 import { nowIso, type IsoDate } from '../dates';
 import { asMinor, multiplyRational } from '../money';
-import { postJournalEntry, reverseJournalEntry, atomically, type JournalLineInput } from '../accounting/journal';
+import { postJournalEntry, reverseJournalEntry, atomically, withFxRoundingLine, type JournalLineInput } from '../accounting/journal';
 import { systemAccountId } from '../config/setup';
 import { upsertReviewItem } from '../extraction/service';
 import { InvoicingError } from './invoices';
@@ -109,7 +109,11 @@ export function writeOffBadDebt(
     const journal = postJournalEntry(db, {
       companyId: params.companyId, entryDate: params.date, narrative: memo.slice(0, 200),
       sourceType: 'sales_invoice', sourceId: invoice.id, entryType: 'adjustment',
-      baseCurrency: company.baseCurrency, createdBy: actor, createdVia: 'user', requestId: params.requestId, lines,
+      baseCurrency: company.baseCurrency, createdBy: actor, createdVia: 'user', requestId: params.requestId,
+      // Each line converted on its own can leave base totals a cent apart (#639).
+      lines: invoice.currency === company.baseCurrency
+        ? lines
+        : withFxRoundingLine(lines, company.baseCurrency, systemAccountId(db, params.companyId, 'rounding_difference')),
     });
 
     const timestamp = nowIso();

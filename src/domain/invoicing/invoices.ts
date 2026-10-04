@@ -7,7 +7,7 @@ import { ids } from '@/lib/ids';
 import { asMinor, multiplyRational } from '../money';
 import { nowIso, addDays, type IsoDate } from '../dates';
 import { customerExposure } from '../parties/customerAccount';
-import { postJournalEntry, reverseJournalEntry, atomically } from '../accounting/journal';
+import { postJournalEntry, reverseJournalEntry, atomically, withFxRoundingLine } from '../accounting/journal';
 import { systemAccountId } from '../config/setup';
 import {
   resolveTreatment, calculateVat, createVatEntries, determineTaxPoint, vatDiscrepancy, findVatPeriod,
@@ -601,7 +601,12 @@ function createInvoiceSteps(db: AppDatabase, input: CreateInvoiceInput): Created
     createdBy: input.actor ?? 'user',
     createdVia: 'user',
     requestId: input.requestId,
-    lines: journalLines,
+    // Converting each line separately can leave the base totals a cent or
+    // two apart; that difference goes visibly to rounding_difference (#639).
+    lines: currency === baseCurrency
+      ? journalLines
+      : withFxRoundingLine(journalLines, baseCurrency,
+        systemAccountId(db, input.companyId, 'rounding_difference')),
   });
 
   // ---- VAT entries ----
