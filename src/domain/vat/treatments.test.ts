@@ -19,6 +19,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { createTestDatabase } from '@/db/testing';
 import { createCompany } from '@/domain/config/setup';
 import { createVatEntries, vatDiscrepancy } from './engine';
+import { VATCA_REVISED_CURATED_RULES } from '@/domain/rules/vatcaRevisedCuration';
 import { vatTreatments, taxRates, vatEntries, vatPeriods } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { makeDate } from '@/domain/dates';
@@ -42,17 +43,26 @@ beforeEach(() => {
   rates = created.ratesByCode;
 });
 
+/** The version of a curated s.46 rate rule in force now (no end date), in basis points. */
+const curatedRateNow = (ruleKey: string): number => {
+  const current = VATCA_REVISED_CURATED_RULES.filter((r) => r.ruleKey === ruleKey && r.effectiveTo === null);
+  expect(current).toHaveLength(1);
+  return Math.round(current[0]!.numericValue! * 100);
+};
+
 describe('VAT rate configuration', () => {
-  it('standard rate is 23% (VATCA s.46(1)(a))', () => {
+  // Checked against the curated s.46 rules (LRC-revised text), not against the
+  // seed itself, so a wrong seed fails here (issue #622).
+  it('the seeded standard rate is the one s.46(1)(a) states now', () => {
     const rate = db.select().from(taxRates).where(eq(taxRates.id, rates['VAT_STD']!)).get()!;
-    expect(rate.rateBasisPoints).toBe(2300);
     expect(rate.code).toBe('VAT_STD');
+    expect(rate.rateBasisPoints).toBe(curatedRateNow('vat.rate_standard_current'));
   });
 
-  it('reduced rate is 13.5% (VATCA s.46(1)(b))', () => {
+  it('the seeded reduced rate is the one s.46(1)(c) states now', () => {
     const rate = db.select().from(taxRates).where(eq(taxRates.id, rates['VAT_RED']!)).get()!;
-    expect(rate.rateBasisPoints).toBe(1350);
     expect(rate.code).toBe('VAT_RED');
+    expect(rate.rateBasisPoints).toBe(curatedRateNow('vat.rate_reduced_current'));
   });
 });
 
@@ -93,15 +103,17 @@ describe('VAT treatment: standard domestic supply', () => {
     expect(entry.rateBasisPoints).toBe(1350);
   });
 
-  it('produces zero VAT for a zero-rated supply (VATCA s.46(1)(a))', () => {
+  it('produces zero VAT for a zero-rated supply (VATCA s.46(1)(b))', () => {
     const result = createVatEntries(db, {
       ...baseInput, companyId, treatmentId: tr['IE_ZERO']!, netMinor: 10_000,
     });
     expect(result.entries[0]!.vatMinor).toBe(0);
-    // Zero-rated supplies are reported in the T2 net box (statistical).
+    // A domestic zero-rated supply has no VAT3 net box: it is in T1/T2 at
+    // zero (and in the RTD, D1).
+    expect(result.entries[0]!.netBox).toBeNull();
   });
 
-  it('produces zero VAT for an exempt supply with no box assignment (VATCA Sch 1 Group 1)', () => {
+  it('produces zero VAT for an exempt supply with no box assignment (VATCA Schedule 1)', () => {
     const result = createVatEntries(db, {
       ...baseInput, companyId, treatmentId: tr['IE_EXEMPT']!, netMinor: 10_000,
     });
