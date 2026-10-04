@@ -2204,13 +2204,8 @@
       "id": "treatment:NON_DEDUCTIBLE",
       "area": "vat_treatment",
       "title": "NON_DEDUCTIBLE",
-      "status": "rule",
-      "ruleKeys": [
-        "vat.blocked_food_drink_accommodation",
-        "vat.blocked_entertainment",
-        "vat.blocked_motor_vehicle",
-        "vat.blocked_petrol"
-      ]
+      "status": "not_applicable",
+      "reason": "No rule decides it: a s.60(2)(a) block denies the deduction beside the treatment the supply takes (issue #616: VatSuggestion.deductionBlocked, posted as InvoiceLineInput.blockedDeductionReason), so a reverse charge and the Schedule 3 rate still apply. A person may still choose it."
     },
     {
       "id": "tca:s3",

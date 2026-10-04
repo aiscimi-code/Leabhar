@@ -1367,7 +1367,7 @@ auctioneer, is not modelled.
 - **Sources.** The rules come from the revised ss.59-62. The as-enacted s.59
   and s.60 rules are retired: their stored rows get an empty window.
 - **Blocked categories.** s.60(2)(a) is applied exactly as listed, one rule per
-  category, and each decides `NON_DEDUCTIBLE`:
+  category:
   - (i) food, drink, accommodation and personal services;
   - (iii) entertainment;
   - (iv) cars;
@@ -1375,6 +1375,20 @@ auctioneer, is not modelled.
 
   Diesel is not in the list and is not blocked. A van is not a "motor vehicle"
   here.
+- **A block denies the deduction, not the treatment** (issue #616). A matched
+  block is reported beside the treatment (`VatSuggestion.deductionBlocked`,
+  `LineChoices.deductionBlocked`), which the place-of-supply, reverse-charge
+  and rate rules still decide. Posting applies it as
+  `LineCoding.blockedDeductionRuleKey` (the four s.60(2)(a) keys only), so
+  the line's recoverable VAT is 0 and the VAT stays in the cost:
+  - a restaurant bill keeps its Schedule 3 rate, so the VAT recorded is what
+    was charged;
+  - a car leased from a lessor established abroad still self-accounts the
+    reverse charge in T1 and ES2, because s.12 makes the recipient liable;
+    only T2 is nil.
+
+  The `NON_DEDUCTIBLE` treatment stays for a person to choose; no rule decides
+  it.
 - **Qualifying vehicles.** A qualifying vehicle gives 20% of the VAT
   (s.59(2)(d)): first registered from 2021 with CO2 under 140g/km, and at least
   60% business use. This is named on every car line, because the invoice does

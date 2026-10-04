@@ -436,8 +436,9 @@ Invoice-led workflow (issue #222) — the same domain functions as the web scree
       Posts the confirmed document as an invoice, line by line, with the VAT
       as printed. --coding: [{"account":"6120","treatment":"IE_STD"}, ...],
       one per line; a line may omit treatment/account only where line-choices
-      suggested one. --fx: base per 1 unit of the document's currency
-      (1.0842 or 10842/10000).
+      suggested one. A line shown with deductionBlocked (s.60(2)(a)) deducts
+      no VAT unless its entry has "deductible": true. --fx: base per 1 unit
+      of the document's currency (1.0842 or 10842/10000).
   settle <transactionId> --allocations <json> [--fx <rate>] [--declare-in <date>]
       Settles the bank line against invoices:
       [{"invoice":"MOS-5120","amount":"24.60"}], amounts in the bank line's

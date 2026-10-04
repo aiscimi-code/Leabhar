@@ -103,6 +103,14 @@ export interface InvoiceLineInput {
    * proportion of tax deductible may be reclaimed (VATCA s.61(2)).
    */
   dualUse?: DualUseApportionment;
+  /**
+   * Purchase lines only (issue #616). The input VAT on this line is not
+   * deductible at all (VATCA s.60(2)(a)), with the provision. Only the
+   * deduction is denied: the treatment still decides the VAT, so a reverse
+   * charge is still accounted for in T1 (s.12) while nothing goes to T2. The
+   * VAT stays in the cost and the provision is noted on the VAT entry.
+   */
+  blockedDeductionReason?: string;
 }
 
 /**
@@ -315,7 +323,12 @@ function createInvoiceSteps(db: AppDatabase, input: CreateInvoiceInput): Created
     const dualUseBp = basisPointsShare(line.dualUse?.proportionBasisPoints, 'dual-use proportion', where);
     const deductibleShare = businessBp === null && dualUseBp === null ? undefined
       : { numerator: (businessBp ?? 10_000) * (dualUseBp ?? 10_000), denominator: 100_000_000 };
-    const shareNote = deductibleShare === undefined ? null : [
+    if (isSales && line.blockedDeductionReason) {
+      throw new InvoicingError(`${where}: a blocked deduction applies only to a purchase.`);
+    }
+    const blockNote = line.blockedDeductionReason?.trim() || null;
+    const shareNote = deductibleShare === undefined && !blockNote ? null : [
+      blockNote,
       businessBp !== null
         ? `Business use ${(businessBp / 100).toFixed(2)}%: the private share's VAT is not deductible (VATCA s.59(2)).`
         : null,
@@ -340,7 +353,7 @@ function createInvoiceSteps(db: AppDatabase, input: CreateInvoiceInput): Created
     // self-assessed (see calculateVat), so a stated figure on the document
     // is worth flagging for a human, but never changes what is recoverable.
     let vatReviewReason: string | null = null;
-    let recoverableOverrideMinor: number | undefined;
+    let recoverableOverrideMinor: number | undefined = blockNote ? 0 : undefined;
     if (!isSales && resolved.treatment.appliesRate) {
       if (line.holdRecoveryReason || noEvidenceReason) {
         recoverableOverrideMinor = 0;

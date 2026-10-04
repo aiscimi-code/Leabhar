@@ -81,14 +81,15 @@ export function isNorthernIrelandParty(vatInfo: ReturnType<typeof parseVatNumber
  *
  * Ordered by precedence: the first binding whose rule matched decides.
  * Outside the scope beats everything (no supply at all); then an exemption;
- * then a service sold to a business abroad (supplied there, s.34(a)); then a
- * deduction block (an exception to the general deduction rule); a reverse
- * charge beats a rate; a specific Schedule 2/3 or 9% rule
+ * then a service sold to a business abroad (supplied there, s.34(a)); a
+ * reverse charge beats a rate; a specific Schedule 2/3 or 9% rule
  * beats the reduced-rate headline; the standard rate is the residual
  * fallback. A binding whose `treatmentCode` returns null matched a rule the
  * configuration or the sources cannot settle (a Schedule 3 rate on a date
  * before the s.46(1)(ca) list is known) — that stops the search and is
  * reported, rather than falling through to a rate that is known to be wrong.
+ * A s.60(2)(a) deduction block is not a binding: it is reported beside the
+ * treatment (`VatSuggestion.deductionBlocked`, issue #616).
  */
 export interface TreatmentBinding {
   ruleKeys: string[];
@@ -204,8 +205,8 @@ export const RULE_TREATMENT_BINDINGS: TreatmentBinding[] = [
     direction: 'sale',
     treatmentCode: (f) => (isEuNotIe(f.counterpartyCountry, f.transactionDate) ? 'EU_SERVICES_SUPPLY' : 'NON_EU_SERVICES_SUPPLY'),
   },
-  // s.60(2)(a): blocked categories, exactly as listed; diesel is not among them (issue #209).
-  { ruleKeys: BLOCKED_DEDUCTION_RULE_KEYS, direction: 'purchase', treatmentCode: () => 'NON_DEDUCTIBLE' },
+  // s.60(2)(a) blocks are not bound here: they deny the deduction, not the supply's treatment, so
+  // they are reported as `deductionBlocked` beside it (issue #616).
   {
     ruleKeys: ['vat.reverse_charge_services_from_abroad'],
     direction: 'purchase',
@@ -327,6 +328,13 @@ export interface VatSuggestion {
   reviewRequired: boolean;
   /** Treatment codes to offer when the rule matched but the evidence cannot choose between them (the import entry, issue #207). */
   offeredTreatmentCodes: string[];
+  /**
+   * The s.60(2)(a) rule that blocks deducting this purchase's input VAT, when
+   * one matched (issue #616). It changes only what is deductible: the
+   * treatment, its rate and any reverse charge (s.12: the recipient is still
+   * liable for the output VAT) stand as decided.
+   */
+  deductionBlocked: StatutoryCitation | null;
   explanation: string;
 }
 
@@ -559,6 +567,7 @@ export function suggestFromFacts(
     factSources,
     reviewRequired: true,
     offeredTreatmentCodes: [] as string[],
+    deductionBlocked: null as StatutoryCitation | null,
   };
 
   if (countStatutoryRules(db, params.companyId) === 0) {
@@ -620,6 +629,18 @@ export function suggestFromFacts(
   const supportingRules = lookup.applicableRules
     .filter((r) => r.ruleId !== decision?.rule.ruleId)
     .map((r) => citationFor(db, r));
+
+  // s.60(2)(a): the deduction is blocked whatever the treatment (issue #616).
+  const blockRule = facts.direction === 'purchase'
+    ? BLOCKED_DEDUCTION_RULE_KEYS.map((k) => matched.get(k)).find((r) => r !== undefined) : undefined;
+  base.deductionBlocked = blockRule ? supportingRules.find((r) => r.ruleId === blockRule.ruleId) ?? null : null;
+  if (base.deductionBlocked) {
+    reviewReasons.push(
+      `${base.deductionBlocked.ruleName}: the VAT on this purchase is not deductible, so none of it is claimed in T2 `
+      + `(${provisionCitation(base.deductionBlocked.citation, base.deductionBlocked.sectionNumber)}). The treatment and `
+      + 'rate are still decided by what was supplied and where; a reverse charge is still accounted for in T1 (s.12).',
+    );
+  }
 
   if (!decision) {
     return {
