@@ -169,8 +169,9 @@
       "id": "vatca:s21",
       "area": "vatca_section",
       "title": "s.21 Supplies made free of charge.",
-      "status": "not_applicable",
-      "reason": "Free-of-charge deemed supplies (business gifts from stock): no bank or invoice line exists. Recorded manually and flagged - VAT applies unless the gift is within the de minimis (regulations) or a sample."
+      "status": "deferred",
+      "issue": 645,
+      "reason": "Free-of-charge supplies are deemed supplies that create output VAT with no sale invoice. No rule is curated and no posting path exists, so the output VAT cannot be accounted for in the tools (#619)."
     },
     {
       "id": "vatca:s22",
@@ -214,8 +215,9 @@
       "id": "vatca:s27",
       "area": "vatca_section",
       "title": "s.27 Self-supply of services.",
-      "status": "not_applicable",
-      "reason": "Self-supply of services (including non-business use of immovable goods): the annual charge is computed with s.44, recorded as a manual entry and flagged; not classifiable from bank or invoice lines."
+      "status": "deferred",
+      "issue": 645,
+      "reason": "Self-supply of services is a deemed supply that creates output VAT with no sale invoice. No rule is curated and no posting path exists (#619)."
     },
     {
       "id": "vatca:s28",
@@ -321,8 +323,9 @@
       "id": "vatca:s39",
       "area": "vatca_section",
       "title": "s.39 General provisions on consideration.",
-      "status": "not_applicable",
-      "reason": "The taxable amount follows the consideration actually received; a deficiency is relieved by regulation or adjusted by credit note (s.45, ruled) - no classification test on a bank or invoice line."
+      "status": "deferred",
+      "issue": 620,
+      "reason": "The taxable amount follows the consideration actually received; where it is not received, relief depends on bad-debt relief, which is not implemented on the invoice basis (#619)."
     },
     {
       "id": "vatca:s40",
@@ -360,8 +363,9 @@
       "id": "vatca:s44",
       "area": "vatca_section",
       "title": "s.44 Non-business use of immovable goods.",
-      "status": "not_applicable",
-      "reason": "Annual charge for non-business use of immovable goods (one sixth of one twentieth of the cost): arises on the capital-goods review of a property, recorded as a manual entry and flagged; not classifiable from bank or invoice lines."
+      "status": "deferred",
+      "issue": 645,
+      "reason": "Non-business use of immovable goods creates an annual output VAT charge with no sale invoice. No rule is curated and no posting path exists (#619)."
     },
     {
       "id": "vatca:s45",
@@ -666,15 +670,17 @@
       "id": "vatca:s74",
       "area": "vatca_section",
       "title": "s.74 Tax due on supplies.",
-      "status": "not_applicable",
-      "reason": "When tax falls due (invoice issue, s.69 liability, continuous supplies): the posting records tax at invoice issue on the invoice basis (or on payment on the cash basis, s.80 rules), and the RTD derives the payable from posted entries. Timing only; no classification."
+      "status": "deferred",
+      "issue": 611,
+      "reason": "When tax on a supply falls due decides the period its VAT lands in. The engine sets the tax point without a curated rule behind it (#619)."
     },
     {
       "id": "vatca:s75",
       "area": "vatca_section",
       "title": "s.75 Tax due on intra- Community acquisitions.",
-      "status": "not_applicable",
-      "reason": "When tax on an intra-Community acquisition falls due (the 15th of the following month, or invoice issue): timing only; the acquisition rules (s.9, s.10) already decide the treatment."
+      "status": "deferred",
+      "issue": 611,
+      "reason": "When tax on an intra-Community acquisition falls due decides the period its VAT lands in. Applied for VIES only, not to the acquisition VAT itself (#619)."
     },
     {
       "id": "vatca:s76",
@@ -990,8 +996,9 @@
       "id": "vatca:s113",
       "area": "vatca_section",
       "title": "s.113 Time limits.",
-      "status": "not_applicable",
-      "reason": "procedure or administration — not a transaction classification"
+      "status": "deferred",
+      "issue": 646,
+      "reason": "Time limits decide whether a late claim may enter a return at all. A late declaration is flagged but never checked against the limit (#619)."
     },
     {
       "id": "vatca:s114",
