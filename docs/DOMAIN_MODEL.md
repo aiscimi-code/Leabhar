@@ -1534,6 +1534,20 @@ correction may be declared in a later open period only when the person names
 it (`declarationDate`); the tax point is unchanged and a `period_validation`
 review item is raised.
 
+Input VAT declared late is a claim, and VATCA s.99(4) allows a claim "only
+within 4 years after the end of the taxable period to which it relates"
+(issue #646; `lateClaimLimit`, read as the company's VAT period covering the
+tax point). The claim is made in the return for the period it is declared in,
+which cannot be made before that period ends:
+- the declared period ends after the limit: a purchase invoice is posted with
+  its VAT costed, not claimed, and a review item; any other path that would
+  still claim it is refused before anything is written. A reverse charge
+  still declares its output VAT;
+- it ends in time but its return is due after the limit: the claim stands,
+  and the review item says to make that return by the limit.
+
+s.113 is not this limit: it is Revenue's window for estimates and assessments.
+
 ### Bank transaction
 
 ```

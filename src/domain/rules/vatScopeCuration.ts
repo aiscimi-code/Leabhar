@@ -57,7 +57,7 @@ export interface CuratedVatScopeRule {
     | 'VATCA 2010 s.43' | 'VATCA 2010 s.87' | 'VATCA 2010 s.88' | 'VATCA 2010 s.89' | '2010 Act 31 s.86'
     | '2010 Act 31 s.59' | '2010 Act 31 s.60' | 'VATCA 2010 s.62' | '2010 Act 31 s.66'
     | 'VATCA 2010 s.67' | 'VATCA 2010 s.69' | 'VATCA 2010 s.70' | '2010 Act 31 s.61'
-    | '2010 Act 31' | '2010 Act 31 s.37' | 'VATCA 2010 s.45' | '2010 Act 31 s.76' | '2010 Act 31 s.92A';
+    | '2010 Act 31' | '2010 Act 31 s.37' | 'VATCA 2010 s.45' | '2010 Act 31 s.76' | '2010 Act 31 s.92A' | '2010 Act 31 s.99';
   /** Schedule paragraph or section number, matched against `irish_act_provisions.section_number`. */
   sectionNumber: string;
   ruleKey: string;

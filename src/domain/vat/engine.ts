@@ -7,6 +7,7 @@ import {
 } from '../money';
 import type { IsoDate } from '../dates';
 import { AccountingError } from '../accounting/errors';
+import { lateClaimLimit, lateClaimOutOfTime, lateClaimFileByReason } from './lateClaim';
 
 export class VatError extends AccountingError {}
 
@@ -490,6 +491,21 @@ export function createVatEntries(
       : input.notes ?? null,
   } as const;
 
+  // A late input VAT claim is made only within the s.99(4) limit (issue #646).
+  // The posting path that claims it holds it back first; anything still
+  // claiming it out of time is refused here, before anything is written.
+  const rcRecoverable = treatment.isReverseCharge
+    ? (input.recoverableOverrideMinor !== undefined
+      ? asMinor(input.recoverableOverrideMinor)
+      : computeRecoverable(treatment, 'purchases', calculation.vatMinor, input.deductibleShare))
+    : null;
+  const claimed = rcRecoverable ?? (input.direction === 'purchases' ? calculation.recoverableVatMinor : 0);
+  const limit = declaredLate && claimed !== 0
+    ? lateClaimLimit(db, input.companyId, input.taxPointDate, declaredOn) : null;
+  if (limit?.outOfTime) {
+    throw new VatError(`${lateClaimOutOfTime(limit)} Post it with its VAT held back from recovery.`);
+  }
+
   const created: Array<typeof vatEntries.$inferSelect> = [];
 
   db.transaction((tx) => {
@@ -515,9 +531,7 @@ export function createVatEntries(
       created.push(output);
 
       // Leg 2: input VAT, reclaimed to the extent the treatment allows.
-      const recoverable = input.recoverableOverrideMinor !== undefined
-        ? asMinor(input.recoverableOverrideMinor)
-        : computeRecoverable(treatment, 'purchases', calculation.vatMinor, input.deductibleShare);
+      const recoverable = rcRecoverable!;
       const input2 = tx.insert(vatEntries).values({
         ...common,
         id: ids.vatEntry(),
@@ -569,7 +583,8 @@ export function createVatEntries(
       title: `VAT with tax point ${input.taxPointDate} declared in ${period?.name ?? declaredOn}`,
       detail: 'The return for the period covering the tax point is locked or filed, so this VAT was declared in a '
         + 'later open period at the person\'s choice. Confirm the correction is made the right way (for an '
-        + 'underdeclaration, whether a supplementary return is needed instead).',
+        + 'underdeclaration, whether a supplementary return is needed instead).'
+        + (limit?.fileBy ? ` ${lateClaimFileByReason(limit)}` : ''),
       entityType: 'vat_entry',
       entityId: created[0].id,
       dedupeKey: `vat_entry:${created[0].id}:declared_late`,

@@ -13,6 +13,7 @@ import {
   resolveTreatment, calculateVat, createVatEntries, determineTaxPoint, vatDiscrepancy, findVatPeriod,
   assertVatPeriodWritable,
 } from '../vat/engine';
+import { lateClaimLimit, lateClaimOutOfTime } from '../vat/lateClaim';
 import { AccountingError } from '../accounting/errors';
 import { upsertReviewItem } from '../extraction/service';
 import { vatBasisOn } from '../vat/basis';
@@ -302,6 +303,11 @@ function createInvoiceSteps(db: AppDatabase, input: CreateInvoiceInput): Created
       + 'invoice, confirm it and post it from the document to recover the VAT.'
     : undefined;
 
+  // A purchase declared in a later period is a late claim, made only within
+  // the s.99(4) limit (issue #646); out of time, its VAT is costed, not claimed.
+  const lateLimit = !isSales && !historic && input.vatDeclarationDate
+    ? lateClaimLimit(db, input.companyId, taxPointBase, input.vatDeclarationDate) : null;
+
   // ---- Compute each line ----
   const computed = input.lines.map((line, index) => {
     const resolved = resolveTreatment(db, {
@@ -394,6 +400,12 @@ function createInvoiceSteps(db: AppDatabase, input: CreateInvoiceInput): Created
             + 'whether a reverse-charge treatment applies instead.';
         }
       }
+    }
+
+    if (lateLimit?.outOfTime && !isSales && resolved.treatment.appliesRate) {
+      recoverableOverrideMinor = 0;
+      const reason = `${lateClaimOutOfTime(lateLimit)} Its VAT has been costed, not claimed.`;
+      vatReviewReason = vatReviewReason ? `${vatReviewReason} ${reason}` : reason;
     }
 
     // Postponed accounting (issue #609): the self-accounted VAT and box PA1
