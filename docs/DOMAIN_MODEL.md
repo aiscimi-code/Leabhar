@@ -312,8 +312,20 @@ they were created (§46).
 
 | Basis | Sales tax point | Purchases tax point |
 |---|---|---|
-| Invoice basis | Invoice date | Invoice date |
+| Invoice basis | Invoice date, or the end of due time if issued late | Invoice date |
 | Cash receipts basis | **Payment date** | Invoice date |
+
+A sale on the invoice basis is dated by the invoice: tax is due "at the time of
+issue of the invoice or, if the invoice is not issued in due time, upon the
+expiration of the period within which the invoice should have been issued"
+(VATCA s.74(1)(a)). Due time is within the 15 days following the end of the
+month of supply (S.I. 639/2010 reg.23(a)), so a supply on 28 February invoiced
+on 3 March falls in March–April, and one on 20 January invoiced on 20 March is
+due on 15 February. A credit or debit note keeps its own date (reg.23(e), (f)).
+The rate stays the one resolved for the line. An intra-Community acquisition
+(EU_GOODS_ACQ) is due on the 15th of the month after the acquisition, or at the
+supplier's invoice if that is earlier (s.75), under either basis (s.80(6)); its
+T1, T2 and E2 fall in that period (issue #611).
 
 On the cash receipts basis a sales invoice creates no output VAT entry at
 invoice time. Each payment against it creates an output VAT entry for the
@@ -1076,8 +1088,8 @@ bank line ──settleBankTransaction──▶ payment ──allocations──�
 ```
 
 The invoice proves the supply and its VAT; the bank line proves payment. Input
-VAT is dated by the invoice (tax point = supply date, else invoice date) under
-both bases; on the cash receipts basis a sales invoice's output VAT is released
+VAT is dated by the invoice (tax point = supply date, else invoice date; an
+acquisition by s.75) under both bases; on the cash receipts basis a sales invoice's output VAT is released
 by the payment, dated at receipt. One payment may settle several invoices, an
 invoice may be settled in parts, and a credit note allocated in the payment's
 own direction reduces the cash. A remainder is held on account and flagged.

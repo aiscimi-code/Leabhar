@@ -1,6 +1,7 @@
 import { and, eq, ne } from 'drizzle-orm';
 import type { AppDatabase } from '@/db';
 import { invoices, invoiceLines } from '@/db/schema';
+import { fifteenthOfNextMonth } from '../vat/engine';
 
 /**
  * A credit note against the invoice it corrects (VATCA s.67, issue #209
@@ -94,7 +95,5 @@ export function creditNoteFindings(db: AppDatabase, params: {
  * of supply (VATCA s.70(1); S.I. 639/2010 reg.23).
  */
 export function invoiceIssueDeadline(supplyDate: string): string {
-  const [y, m] = supplyDate.split('-').map(Number) as [number, number];
-  const next = m === 12 ? { y: y + 1, m: 1 } : { y, m: m + 1 };
-  return `${next.y}-${String(next.m).padStart(2, '0')}-15`;
+  return fifteenthOfNextMonth(supplyDate);
 }

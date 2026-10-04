@@ -124,6 +124,9 @@ const SOURCES: Array<{ path: string; ingest: IngestFn }> = [
   { path: 'docs/statutes/vatca-2010-revised/s034.md', ingest: ingestVatcaRevisedSection },
   // Issue #646: the time limit on a late input VAT claim.
   { path: 'docs/statutes/vatca-2010-revised/s099.md', ingest: ingestVatcaRevisedSection },
+  // Issue #611: when tax on a supply and on an intra-Community acquisition is due.
+  { path: 'docs/statutes/vatca-2010-revised/s074.md', ingest: ingestVatcaRevisedSection },
+  { path: 'docs/statutes/vatca-2010-revised/s075.md', ingest: ingestVatcaRevisedSection },
   { path: 'docs/statutes/tca-1997/s284.md', ingest: ingestTca1997S284 },
   { path: 'docs/statutes/finance-act-2003/s23.md', ingest: ingestFinanceAct2003S23 },
   { path: 'docs/statutes/si-639-2010/2010-si-639.md', ingest: ingestSi639 },
