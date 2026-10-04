@@ -181,8 +181,8 @@ export const INPUT_RECOVERY_CURATED_RULES: CuratedVatScopeRule[] = [
     name: 'Invoices are issued within 15 days after the end of the month of supply (s.70(1), S.I. 639/2010 reg.23)',
     statementExcerpt: 'to be issued in accordance with this Chapter shall be issued within such time',
     conditions: [],
-    vatEffect: 'A sales invoice issued later than 15 days after the month of supply is late; the VAT is still due for the '
-      + 'period of the supply.',
+    vatEffect: 'A sales invoice issued later than 15 days after the month of supply is late; the VAT is due when that '
+      + 'time expired, the 15th of the month after the supply (s.74(1)(a)), not at the invoice date.',
     interpretationNote: 'No conditions: citable, never matched. A confirmed sales invoice issued late is flagged '
       + '(invoice_issued_late).',
   }),

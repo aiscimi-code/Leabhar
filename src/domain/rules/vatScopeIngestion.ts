@@ -28,12 +28,13 @@ import { SCHEMES_CURATED_RULES } from './schemesCuration';
 import { INPUT_RECOVERY_CURATED_RULES, RETIRED_INPUT_RECOVERY_RULE_KEYS } from './inputRecoveryCuration';
 import { TAXABLE_AMOUNT_CURATED_RULES } from './taxableAmountCuration';
 import { RETURNS_CURATED_RULES } from './returnsCuration';
+import { TAX_POINT_CURATED_RULES } from './taxPointCuration';
 import { quotedTextWindow } from './lrcAnnotations';
 
 /** Every rule this module derives: scope/exemption, taxable amount, place of supply of services and returns. */
 export const VAT_SCOPE_DERIVED_RULES = [
   ...VAT_SCOPE_CURATED_RULES, ...VAT_PLACE_OF_SUPPLY_CURATED_RULES, ...COMPOSITE_SUPPLY_RULES, ...CROSS_BORDER_CURATED_RULES, ...DOMESTIC_RC_CURATED_RULES, ...CASH_BASIS_CURATED_RULES, ...PROPERTY_CURATED_RULES, ...SCHEMES_CURATED_RULES, ...INPUT_RECOVERY_CURATED_RULES,
-  ...TAXABLE_AMOUNT_CURATED_RULES, ...RETURNS_CURATED_RULES,
+  ...TAXABLE_AMOUNT_CURATED_RULES, ...RETURNS_CURATED_RULES, ...TAX_POINT_CURATED_RULES,
 ];
 import { upsertReviewItem } from '../extraction/service';
 

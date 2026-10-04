@@ -235,12 +235,75 @@ describe('determineTaxPoint', () => {
     })).toThrow(VatError);
   });
 
-  it('prefers an explicit supply date over the invoice date', () => {
+  // Issue #611: s.74(1)(a), with due time from S.I. 639/2010 reg.23(a).
+  it('dates a sale from the invoice issued in due time, not the supply', () => {
+    // Supplied 28 Feb, invoiced 3 Mar: Mar-Apr, not Jan-Feb.
     const result = determineTaxPoint({
-      basis: 'invoice', direction: 'sales', invoiceDate,
-      supplyDate: makeDate(2025, 2, 20),
+      basis: 'invoice', direction: 'sales', invoiceDate: makeDate(2025, 3, 3), supplyDate: makeDate(2025, 2, 28),
     });
-    expect(result.taxPointDate).toBe('2025-02-20');
+    expect(result.taxPointDate).toBe('2025-03-03');
+    expect(findVatPeriod(db, companyId, result.taxPointDate)!.name).toBe('Mar–Apr 2025');
+  });
+
+  it('an invoice issued on the last day of due time is in time', () => {
+    expect(determineTaxPoint({
+      basis: 'invoice', direction: 'sales', invoiceDate: makeDate(2025, 3, 15), supplyDate: makeDate(2025, 2, 10),
+    }).taxPointDate).toBe('2025-03-15');
+  });
+
+  it('an invoice issued late is dated from when due time expired', () => {
+    // Supplied 20 Jan, due by 15 Feb, invoiced 20 Mar: the VAT is due 15 Feb (Jan-Feb).
+    const result = determineTaxPoint({
+      basis: 'invoice', direction: 'sales', invoiceDate: makeDate(2025, 3, 20), supplyDate: makeDate(2025, 1, 20),
+    });
+    expect(result.taxPointDate).toBe('2025-02-15');
+    expect(result.reason).toMatch(/s\.74\(1\)\(a\)/);
+    expect(determineTaxPoint({
+      basis: 'invoice', direction: 'sales', invoiceDate: makeDate(2025, 1, 16), supplyDate: makeDate(2024, 12, 5),
+    }).taxPointDate).toBe('2025-01-15');
+  });
+
+  it('a credit or debit note takes its own date', () => {
+    expect(determineTaxPoint({
+      basis: 'invoice', direction: 'sales', invoiceDate: makeDate(2025, 3, 20), supplyDate: makeDate(2025, 1, 20),
+      adjustingNote: true,
+    }).taxPointDate).toBe('2025-03-20');
+  });
+
+  // Issue #611: s.75.
+  it('dates an acquisition on the 15th of the following month', () => {
+    // Acquired in January, invoiced 20 Feb: due 15 Feb.
+    const result = determineTaxPoint({
+      basis: 'invoice', direction: 'purchases', acquisition: true,
+      invoiceDate: makeDate(2025, 2, 20), supplyDate: makeDate(2025, 1, 10),
+    });
+    expect(result.taxPointDate).toBe('2025-02-15');
+    expect(result.reason).toMatch(/s\.75\(a\)/);
+  });
+
+  it('dates an acquisition at an invoice issued before the 15th', () => {
+    expect(determineTaxPoint({
+      basis: 'invoice', direction: 'purchases', acquisition: true,
+      invoiceDate: makeDate(2025, 3, 10), supplyDate: makeDate(2025, 2, 25),
+    }).taxPointDate).toBe('2025-03-10');
+  });
+
+  it('an acquisition straddling a period boundary moves with the 15th, on either basis', () => {
+    // Acquired 25 Feb, invoiced 20 Mar: due 15 Mar, in Mar-Apr (s.80(6): the cash basis does not apply).
+    for (const basis of ['invoice', 'cash_receipts'] as const) {
+      const result = determineTaxPoint({
+        basis, direction: 'purchases', acquisition: true,
+        invoiceDate: makeDate(2025, 3, 20), supplyDate: makeDate(2025, 2, 25),
+      });
+      expect(result.taxPointDate).toBe('2025-03-15');
+      expect(findVatPeriod(db, companyId, result.taxPointDate)!.name).toBe('Mar–Apr 2025');
+    }
+  });
+
+  it('an acquisition with no supply date is dated at its invoice', () => {
+    expect(determineTaxPoint({
+      basis: 'invoice', direction: 'purchases', acquisition: true, invoiceDate: makeDate(2025, 2, 20),
+    }).taxPointDate).toBe('2025-02-20');
   });
 
   it('moves a sale into a different VAT period depending on the basis', () => {

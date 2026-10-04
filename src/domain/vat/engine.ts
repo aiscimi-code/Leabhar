@@ -291,6 +291,13 @@ export function vatDiscrepancy(
   return { expectedMinor: expected, statedMinor: statedVatMinor, differenceMinor: difference };
 }
 
+/** The 15th day of the month after `date`'s month. */
+export function fifteenthOfNextMonth(date: string): IsoDate {
+  const [y, m] = date.split('-').map(Number) as [number, number];
+  const next = m === 12 ? { y: y + 1, m: 1 } : { y, m: m + 1 };
+  return `${next.y}-${String(next.m).padStart(2, '0')}-15` as IsoDate;
+}
+
 /**
  * Determine the tax point — the date that decides which VAT period a
  * transaction falls into (docs/DOMAIN_MODEL.md §6).
@@ -298,6 +305,16 @@ export function vatDiscrepancy(
  * The asymmetry here is the substance of the cash receipts basis and is easy to
  * get wrong: it applies to VAT on SALES only. Input VAT on purchases is
  * reclaimed by reference to the supplier's invoice date under both bases.
+ *
+ * - A sale on the invoice basis (issue #611): tax is due "at the time of issue
+ *   of the invoice or, if the invoice is not issued in due time, upon the
+ *   expiration of the period within which the invoice should have been issued"
+ *   (VATCA s.74(1)(a)). Due time is within the 15 days following the end of the
+ *   month of supply (S.I. 639/2010 reg.23(a)). A credit or debit note has its
+ *   own time limits (reg.23(e), (f)) and takes its own date.
+ * - An intra-Community acquisition (issue #611): tax is due on the 15th day of
+ *   the month following the acquisition, or when the supplier's invoice is
+ *   issued, if earlier (s.75). The cash basis does not apply to it (s.80(6)).
  */
 export function determineTaxPoint(params: {
   basis: 'invoice' | 'cash_receipts';
@@ -305,25 +322,51 @@ export function determineTaxPoint(params: {
   invoiceDate: IsoDate;
   supplyDate?: IsoDate | null;
   paymentDate?: IsoDate | null;
+  /** The VAT is on an intra-Community acquisition of goods (s.3(d)). */
+  acquisition?: boolean;
+  /** The document is a credit or debit note, not the invoice for the supply. */
+  adjustingNote?: boolean;
 }): { taxPointDate: IsoDate; reason: string } {
-  const documentDate = params.supplyDate ?? params.invoiceDate;
+  if (params.direction === 'purchases' && params.acquisition) {
+    const occurred = params.supplyDate ?? params.invoiceDate;
+    const fifteenth = fifteenthOfNextMonth(occurred);
+    return params.invoiceDate < fifteenth
+      ? {
+        taxPointDate: params.invoiceDate,
+        reason: 'VAT on an intra-Community acquisition is due when the supplier\'s invoice is issued, as it was issued '
+          + `before ${fifteenth}, the 15th day of the month following the acquisition (VATCA s.75(b)).`,
+      }
+      : {
+        taxPointDate: fifteenth,
+        reason: 'VAT on an intra-Community acquisition is due on the 15th day of the month following the month in '
+          + `which it occurs (VATCA s.75(a)); the acquisition on ${occurred} makes that ${fifteenth}.`,
+      };
+  }
 
   if (params.direction === 'purchases') {
     return {
-      taxPointDate: documentDate,
+      taxPointDate: params.supplyDate ?? params.invoiceDate,
       reason: 'Input VAT is reclaimed by reference to the supplier’s invoice date '
         + 'under both the invoice basis and the cash receipts basis.',
     };
   }
 
   if (params.basis === 'invoice') {
+    const dueBy = params.supplyDate && !params.adjustingNote ? fifteenthOfNextMonth(params.supplyDate) : null;
+    if (dueBy && params.invoiceDate > dueBy) {
+      return {
+        taxPointDate: dueBy,
+        reason: `The invoice for a supply on ${params.supplyDate} was due by ${dueBy}, within the 15 days following the `
+          + 'end of the month of supply (S.I. 639/2010 reg.23(a)). It was issued later, on '
+          + `${params.invoiceDate}, so the VAT is due when that period expired (VATCA s.74(1)(a)).`,
+      };
+    }
     return {
-      taxPointDate: documentDate,
-      reason: 'On the invoice basis, output VAT arises when the invoice is issued, '
+      taxPointDate: params.invoiceDate,
+      reason: 'On the invoice basis, output VAT is due when the invoice is issued (VATCA s.74(1)(a)), '
         + 'whether or not it has been paid.',
     };
   }
-
   if (!params.paymentDate) {
     throw new VatError(
       'On the cash receipts basis, output VAT on a sale arises when payment is '

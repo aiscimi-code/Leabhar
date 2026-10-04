@@ -605,20 +605,31 @@ function createInvoiceSteps(db: AppDatabase, input: CreateInvoiceInput): Created
     });
   }
 
-  // A locked or filed VAT return is never changed (issue #226): checked before
-  // anything is written, so a refusal leaves no half-posted invoice.
-  const vatTaxPoint = determineTaxPoint({
+  // Each line's tax point: an acquisition's is s.75's, not the invoice's (issue #611).
+  const lineTaxPoint = (treatmentCode: string) => determineTaxPoint({
     basis: saleBasis,
     direction: isSales ? 'sales' : 'purchases',
     invoiceDate: input.invoiceDate,
     supplyDate: input.supplyDate,
+    // On the invoice basis a sale's tax point is the invoice date, so no
+    // payment date is needed. Deferred sales never reach here.
     paymentDate: input.invoiceDate,
-  }).taxPointDate;
+    acquisition: !isSales && treatmentCode === 'EU_GOODS_ACQ',
+    adjustingNote: !!input.isCreditNote || !!input.isDebitNote,
+  });
+
+  // A locked or filed VAT return is never changed (issue #226): checked before
+  // anything is written, so a refusal leaves no half-posted invoice.
   const createsVatNow = !vatDeferred && !historic
     && computed.some((c) => c.calculation.vatMinor !== 0 || c.resolved.treatment.appliesRate);
   if (createsVatNow) {
-    assertVatPeriodWritable(db, input.companyId, input.vatDeclarationDate ?? vatTaxPoint,
-      `The VAT on ${input.invoiceNumber ? `invoice ${input.invoiceNumber}` : 'this invoice'}`);
+    const taxPoints = new Set(computed
+      .filter((c) => c.calculation.vatMinor !== 0 || c.resolved.treatment.appliesRate)
+      .map((c) => input.vatDeclarationDate ?? lineTaxPoint(c.resolved.treatment.code).taxPointDate));
+    for (const date of taxPoints) {
+      assertVatPeriodWritable(db, input.companyId, date,
+        `The VAT on ${input.invoiceNumber ? `invoice ${input.invoiceNumber}` : 'this invoice'}`);
+    }
   }
 
   const invoiceId = ids.invoice();
@@ -646,15 +657,7 @@ function createInvoiceSteps(db: AppDatabase, input: CreateInvoiceInput): Created
   if (!vatDeferred && !historic) {
     for (const { line, lineId, calculation, resolved, recoverableOverrideMinor, importVat, deductibleShare, shareNote } of computed) {
       if (calculation.vatMinor === 0 && !resolved.treatment.appliesRate) continue;
-      const taxPoint = determineTaxPoint({
-        basis: saleBasis,
-        direction: isSales ? 'sales' : 'purchases',
-        invoiceDate: input.invoiceDate,
-        supplyDate: input.supplyDate,
-        // On the invoice basis a sale's tax point is the invoice date, so no
-        // payment date is needed. Deferred sales never reach here.
-        paymentDate: input.invoiceDate,
-      });
+      const taxPoint = lineTaxPoint(resolved.treatment.code);
 
       const created = createVatEntries(db, {
         companyId: input.companyId,
@@ -667,6 +670,9 @@ function createInvoiceSteps(db: AppDatabase, input: CreateInvoiceInput): Created
         treatmentId: line.vatTreatmentId,
         rateOverrideId: line.taxRateId,
         taxPointDate: taxPoint.taxPointDate,
+        // The rate the line was calculated at, which a tax point moved by
+        // s.74(1)(a) or s.75 does not change (issue #611).
+        rateDate: taxPointBase,
         // A customs valuation is in the base currency: PA1 is the customs value
         // plus duty, and the rate applies to the value for import VAT (#609).
         ...(importVat
