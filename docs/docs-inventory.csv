@@ -524,6 +524,7 @@ docs/statutes/vatca-2010-revised/s012.md,2659,unreferenced,
 docs/statutes/vatca-2010-revised/s016.md,7653,runtime,read by the test suite
 docs/statutes/vatca-2010-revised/s019.md,5221,unreferenced,
 docs/statutes/vatca-2010-revised/s020.md,1860,unreferenced,
+docs/statutes/vatca-2010-revised/s021.md,1075,unreferenced,
 docs/statutes/vatca-2010-revised/s022.md,1931,unreferenced,
 docs/statutes/vatca-2010-revised/s026.md,1184,unreferenced,
 docs/statutes/vatca-2010-revised/s027.md,2167,unreferenced,
@@ -535,8 +536,10 @@ docs/statutes/vatca-2010-revised/s034.md,6656,runtime,read by the test suite
 docs/statutes/vatca-2010-revised/s035.md,2935,runtime,read by the test suite
 docs/statutes/vatca-2010-revised/s036.md,1711,unreferenced,
 docs/statutes/vatca-2010-revised/s037.md,2407,unreferenced,
+docs/statutes/vatca-2010-revised/s039.md,1690,unreferenced,
 docs/statutes/vatca-2010-revised/s043.html,19207,runtime,read by the test suite
 docs/statutes/vatca-2010-revised/s043.md,3515,runtime,read by the test suite
+docs/statutes/vatca-2010-revised/s044.md,1461,unreferenced,
 docs/statutes/vatca-2010-revised/s045.html,13485,original,docs/statutes/_inbox/B/vatca-s045.md docs/statutes/vatca-2010-revised/s045.md
 docs/statutes/vatca-2010-revised/s045.md,1805,unreferenced,
 docs/statutes/vatca-2010-revised/s046.html,44364,cited-code,src/domain/rules/vatcaRevisedCuration.ts
@@ -562,6 +565,8 @@ docs/statutes/vatca-2010-revised/s069.html,15318,runtime,read by the test suite
 docs/statutes/vatca-2010-revised/s069.md,2848,runtime,read by the test suite
 docs/statutes/vatca-2010-revised/s070.html,14002,runtime,read by the test suite
 docs/statutes/vatca-2010-revised/s070.md,1277,runtime,read by the test suite
+docs/statutes/vatca-2010-revised/s074.md,2719,unreferenced,
+docs/statutes/vatca-2010-revised/s075.md,775,unreferenced,
 docs/statutes/vatca-2010-revised/s076.md,4050,unreferenced,
 docs/statutes/vatca-2010-revised/s077.md,8545,unreferenced,
 docs/statutes/vatca-2010-revised/s078.md,1492,unreferenced,
@@ -589,6 +594,7 @@ docs/statutes/vatca-2010-revised/s097.html,31441,runtime,read by the test suite
 docs/statutes/vatca-2010-revised/s097.md,8931,runtime,read by the test suite
 docs/statutes/vatca-2010-revised/s098.html,12928,original,docs/statutes/_inbox/B/vatca-s098.md docs/statutes/vatca-2010-revised/s098.md
 docs/statutes/vatca-2010-revised/s098.md,1280,unreferenced,
+docs/statutes/vatca-2010-revised/s099.md,2677,unreferenced,
 docs/statutes/vatca-2010-revised/s108.md,11617,unreferenced,
 docs/statutes/vatca-2010-revised/s108A.md,2185,runtime,read by the test suite
 docs/statutes/vatca-2010-revised/s108B.md,2105,unreferenced,
