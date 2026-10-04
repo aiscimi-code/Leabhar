@@ -1,12 +1,13 @@
 /**
  * When tax falls due: the tax point that decides a transaction's VAT period
- * (issue #611). Both are enforced by `determineTaxPoint`, not by matching
+ * (issues #611, #614). Each is enforced by `determineTaxPoint`, not by matching
  * words, so they carry no conditions and the `vat_reference` topic: citable, never
  * matched.
  */
 import type { CuratedVatScopeRule } from './vatScopeCuration';
 
 export const SUPPLY_TAX_POINT_RULE_KEY = 'vat.tax_point_supply_invoice';
+export const CASH_RECEIPTS_TAX_POINT_RULE_KEY = 'vat.tax_point_cash_receipts';
 export const ACQUISITION_TAX_POINT_RULE_KEY = 'vat.tax_point_intra_community_acquisition';
 
 export const TAX_POINT_CURATED_RULES: CuratedVatScopeRule[] = [
@@ -30,6 +31,31 @@ export const TAX_POINT_CURATED_RULES: CuratedVatScopeRule[] = [
     interpretationNote: 'Enforced when a sales invoice is posted (determineTaxPoint), not by matching words. A credit or '
       + 'debit note takes its own date: reg.23(e) and (f) set its time limits from the change in consideration, not the '
       + 'supply. Whether an invoice was required is not recorded, so every sales invoice is read under s.74(1)(a).',
+  },
+  {
+    citation: '2010 Act 31 s.74', sectionNumber: '74', ruleKey: CASH_RECEIPTS_TAX_POINT_RULE_KEY,
+    ruleType: 'other', topic: 'vat_reference', effectiveFrom: '2010-11-01', treatment: null,
+    name: 'On the moneys-received basis, tax on a supply is due not later than when the money is received (s.74(2))',
+    statementExcerpt: 'not later than the time when the amount in respect of which it\nis payable has been received in '
+      + 'full or in part,',
+    conditions: [],
+    exceptions: [
+      { condition: 'the supply is of the kind in Schedule 2 paragraph 1(1) or (2)', effect: 's.74(2) does not apply to it' },
+      {
+        condition: 'the accountable person is not authorised under s.80 and the tax is due under s.74(1)(a), (b) or (c)',
+        effect: 's.74(2) does not apply (s.74(3)); the tax is due when the invoice is issued',
+      },
+    ],
+    crossReferences: ['VATCA 2010 s.80 (the moneys-received basis)', 'VATCA 2010 s.37(4) (the exchange rate at the time '
+      + 'the tax becomes due)', 'S.I. 639/2010 reg.25'],
+    vatEffect: 'Output VAT on a sale on the cash receipts basis falls in the period covering the receipt. An amount '
+      + 'received before the supply is a supply of that part at the time of receipt.',
+    accountingEffect: null,
+    reportingEffect: 'T1 in the period covering the receipt. A foreign-currency receipt converts the VAT it releases at '
+      + 'the rate at the receipt where one is given; otherwise period validation flags the earlier rate.',
+    interpretationNote: 'Enforced when a receipt is recorded against a sales invoice whose VAT was deferred '
+      + '(determineTaxPoint, recordPayment), not by matching words. Schedule 2 paragraph 1(1) and (2) supplies are not '
+      + 'recorded as such, so the exception is not applied automatically.',
   },
   {
     citation: '2010 Act 31 s.75', sectionNumber: '75', ruleKey: ACQUISITION_TAX_POINT_RULE_KEY,
