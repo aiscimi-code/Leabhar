@@ -258,6 +258,16 @@ export const DEFAULT_VAT_TREATMENTS: VatTreatmentSeed[] = [
     sourceNote: 'Services supplied outside the EU; outside the scope of Irish VAT under the place-of-supply rules.',
   },
   {
+    code: 'EXPORT_GOODS', name: 'Export of goods outside the EU', isSystem: true,
+    description: 'Goods dispatched or transported to a destination outside the EU. Zero-rated where the goods are '
+      + 'shown to have left the EU (customs export declaration and transport documents). Reported in the VAT3 at '
+      + 'zero in T1 only, and in the RTD as a 0% export (D4), not as a domestic zero-rated supply.',
+    jurisdiction: 'NON_EU', direction: 'sales', supplyKind: 'goods',
+    appliesRate: true, defaultRateCode: 'VAT_ZERO',
+    salesVatBox: 'T1',
+    sourceNote: 'Zero-rated export of goods (VATCA Sch.2 para 3(1)); RTD field D4 (Revenue VAT RTD manual §2.2(d)).',
+  },
+  {
     code: 'IMPORT_PA', name: 'Import — postponed accounting', isSystem: true,
     description: 'Goods imported from outside the EU where postponed accounting is used: '
       + 'import VAT is self-accounted on the VAT3 (T1 and T2, net value in PA1) rather '
