@@ -2,13 +2,15 @@ import { and, eq, gte, lte, sql, ne, isNull } from 'drizzle-orm';
 import type { AppDatabase } from '@/db';
 import {
   bankTransactions, suppliers, documents, invoices, invoiceLines, vatEntries,
-  journalLines, journalEntries, accounts, companies, fixedAssets,
+  journalLines, journalEntries, accounts, companies, fixedAssets, vatTreatments,
 } from '@/db/schema';
 import { accountBalance } from '../accounting/ledger';
 import { systemAccountId } from '../config/setup';
 import { upsertReviewItem } from '../extraction/service';
 import { normaliseDescription } from '../banking/fingerprint';
 import { daysBetween, asIsoDate, today, type IsoDate } from '../dates';
+import { resolveTreatment } from '../vat/engine';
+import { scheduleThreeRate } from '../rules/scheduleRates';
 
 /**
  * Anomaly detection (README §19, §44).
@@ -79,7 +81,7 @@ export function scanForAnomalies(
     ...nearDuplicatePurchaseInvoices(invoiceRows),
     ...duplicateBankPayments(transactions),
     ...possibleAnnualDuplicatePayments(transactions),
-    ...hospitalityRateMismatches(invoiceRows, invoiceLineRows),
+    ...hospitalityRateMismatches(db, params.companyId, invoiceRows, invoiceLineRows),
     ...possibleNonTradingPurchases(invoiceRows, invoiceLineRows),
     ...suspenseBalance(db, params.companyId),
     ...directorDebitBalance(db, params.companyId),
@@ -543,18 +545,23 @@ function possibleAnnualDuplicatePayments(
 }
 
 /**
- * A purchase line whose own description suggests a reduced-rate hospitality
- * supply, but which was posted at the standard rate (issue #145 defect 4).
+ * A purchase line whose own description suggests a restaurant, catering or
+ * takeaway supply, posted at a rate other than the one Schedule 3 paragraph
+ * 3(1) carries on the line's date (issue #145 defect 4; issue #618).
  *
- * `lookupTransactionRules` already knows the restaurant/catering reduced
- * rate (`vatcaRevisedCuration.ts`'s `vat.rate_restaurant_catering_reduced_current`);
- * this mirrors its keyword test rather than importing it, because the two
- * ask different questions — the lookup proposes a treatment for a
- * transaction that has not been posted yet, this flags an invoice that
- * already has been. Neither determines the correct rate: an invoice that
- * bundles a room hire with the meal, for instance, may genuinely be 23% on
- * part of the bill. It only says the description and the rate disagree
- * often enough to be worth a look.
+ * The rate is never a literal: it is the rate of the treatment
+ * `scheduleThreeRate` gives for the date (13.5% until 30 June 2026, 9% from
+ * 1 July 2026 under Finance Act 2025 s.71), and the standard rate is the one
+ * in force on that date (21% from 1 September 2020 to 28 February 2021).
+ * Where the sources do not say which rate applied (`scheduleThreeRate`
+ * returns no code), only a line at the standard rate is flagged, as before.
+ *
+ * `lookupTransactionRules` knows the same rate family (`vat.rate_hospitality`
+ * in `vatcaRevisedCuration.ts`); this asks a different question — it flags
+ * an invoice already posted, the lookup proposes a treatment for one not yet
+ * posted. Neither determines the correct rate: an invoice that bundles a room
+ * hire with the meal may genuinely be 23% on part of the bill. It only says
+ * the description and the rate disagree often enough to be worth a look.
  *
  * Issue #147 finding 1: the bank narrative for a meal ("Restaurant -
  * business dinner") and the purchase invoice's own line description for the
@@ -567,9 +574,24 @@ function possibleAnnualDuplicatePayments(
  */
 const HOSPITALITY_KEYWORD_RE =
   /\b(restaurant|catering|takeaway|take-away|take away|hot food|dinner|lunch|meal|entertainment)\b/i;
-const STANDARD_RATE_BASIS_POINTS = 2300;
+
+/** The rate a treatment carries on a date, in basis points; null when it has none then. */
+function treatmentRateOn(db: AppDatabase, companyId: string, code: string, onDate: string): number | null {
+  const t = db.select({ id: vatTreatments.id }).from(vatTreatments)
+    .where(and(eq(vatTreatments.companyId, companyId), eq(vatTreatments.code, code), eq(vatTreatments.active, true))).get();
+  if (!t) return null;
+  try {
+    return resolveTreatment(db, { companyId, treatmentId: t.id, onDate: asIsoDate(onDate) }).rateBasisPoints;
+  } catch {
+    return null;
+  }
+}
+
+const pct = (bp: number) => `${bp / 100}%`;
 
 function hospitalityRateMismatches(
+  db: AppDatabase,
+  companyId: string,
   invoiceRows: Array<typeof invoices.$inferSelect>,
   invoiceLineRows: Array<typeof invoiceLines.$inferSelect>,
 ): Anomaly[] {
@@ -580,20 +602,31 @@ function hospitalityRateMismatches(
     const invoice = invoicesById.get(line.invoiceId);
     if (!invoice || invoice.direction !== 'purchase' || invoice.status === 'void') continue;
     if (!HOSPITALITY_KEYWORD_RE.test(line.description)) continue;
-    if (line.rateBasisPoints !== STANDARD_RATE_BASIS_POINTS) continue;
+
+    const onDate = invoice.supplyDate ?? invoice.invoiceDate;
+    const standard = treatmentRateOn(db, companyId, 'IE_STD', onDate);
+    const scheduled = scheduleThreeRate('3(1)', onDate);
+    const expected = scheduled.code ? treatmentRateOn(db, companyId, scheduled.code, onDate) : null;
+    const flagged = expected !== null
+      ? line.rateBasisPoints !== expected && line.rateBasisPoints !== 0
+      : standard !== null && line.rateBasisPoints === standard;
+    if (!flagged) continue;
 
     anomalies.push({
       code: 'hospitality_rate_mismatch',
       severity: 'info',
-      title: `"${line.description}" was posted at the standard rate`,
-      detail: 'The description suggests a restaurant, catering or takeaway supply, which is '
-        + 'often reduced-rated, but this line was posted at the 23% standard rate.',
+      title: `"${line.description}" was posted at ${pct(line.rateBasisPoints)}`,
+      detail: 'The description suggests a restaurant, catering or takeaway supply'
+        + (expected !== null
+          ? `, which Schedule 3 paragraph 3(1) puts at ${pct(expected)} on ${onDate} (${scheduled.provision}), but this `
+            + `line was posted at ${pct(line.rateBasisPoints)}.`
+          : `, which is often reduced-rated, but this line was posted at the ${pct(line.rateBasisPoints)} standard rate. `
+            + 'Which rate applied on this date cannot be confirmed from the sources.'),
       entityType: 'invoice',
       entityId: invoice.id,
-      suggestion: 'Confirm the correct VAT treatment for this line — a reduced hospitality rate '
-        + 'may apply, subject to when the supply took place. Note that the section 60 '
-        + 'entertainment deduction exclusion is a separate question from the rate charged: even '
-        + 'a correctly-rated meal can still be non-deductible.',
+      suggestion: 'Confirm the correct VAT treatment for this line — part of the bill (a room hire, say) may '
+        + 'genuinely be at another rate. Note that the section 60 entertainment deduction exclusion is a separate '
+        + 'question from the rate charged: even a correctly-rated meal can still be non-deductible.',
       dedupeKey: `anomaly:hospitality_rate:${line.id}`,
     });
   }
