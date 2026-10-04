@@ -125,6 +125,11 @@ Rules:
   added only when the entry balances exactly in its own currency and the
   difference is within what per-line rounding can produce (half a minor unit
   per converted line); anything larger is still refused as unbalanced.
+- A foreign-currency invoice posts one VAT journal line per invoice line
+  (output, input and the reverse-charge leg), because the VAT entries convert
+  each line's VAT on its own. The VAT accounts then move by exactly what the
+  return reports, and the period reconciles (issue #643). A base-currency
+  invoice converts nothing and keeps one VAT line for the total.
 - For VAT (issue #614), s.37(4) sets the rate. It is the latest selling rate
   recorded by the Central Bank of Ireland or the European Central Bank for the
   currency at the time the tax becomes due, unless a method has been agreed
