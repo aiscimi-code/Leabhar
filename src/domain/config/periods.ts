@@ -32,14 +32,17 @@ export interface GeneratedVatPeriod {
 
 export interface VatPeriodOptions {
   /**
-   * Days after the period end by which the return is due. Configurable rather
-   * than hard-coded, per README §35: deadlines differ by filing method and can
-   * change, so the application must not assert one as universal.
+   * The day of the month after the period end by which the return is due —
+   * not a count of days after the period end, which is what this name once
+   * claimed (issue #623). Kept for the callers that pass it; it means exactly
+   * the same as `filingDeadlineDayOfFollowingMonth`, which wins when both are
+   * given. Configurable rather than hard-coded, per README §35: deadlines
+   * differ by filing method and can change.
    */
   filingDeadlineDays?: number;
   /**
-   * Some deadlines are expressed as "the Nth day of the following month"
-   * instead of a day offset. When set, this takes precedence.
+   * The return is due on this day of the month after the period end, clamped
+   * to that month's length (31 in February is the 28th or 29th).
    */
   filingDeadlineDayOfFollowingMonth?: number;
 }
@@ -78,17 +81,18 @@ export function generateVatPeriods(
 }
 
 function computeFilingDeadline(endDate: IsoDate, options: VatPeriodOptions): IsoDate {
-  if (options.filingDeadlineDayOfFollowingMonth !== undefined) {
-    const next = addMonths(endDate, 1);
-    const { year, month } = parts(next);
-    const monthEnd = parts(endOfMonth(next)).day;
-    return makeDate(year, month, Math.min(options.filingDeadlineDayOfFollowingMonth, monthEnd));
+  // Default: the 19th day of the following month, the date VATCA s.76(1)
+  // states as enacted (docs/statutes/vatca-2010/vatca-2010-enacted.md).
+  // Editable per company: a later date for electronic filers is not stated in
+  // any source in the repository, so none is assumed (issue #623, #624).
+  const day = options.filingDeadlineDayOfFollowingMonth ?? options.filingDeadlineDays ?? 19;
+  if (!Number.isInteger(day) || day < 1 || day > 31) {
+    throw new Error(`The filing deadline must be a day of the month (1 to 31), not ${day}.`);
   }
-  // Default: the 19th of the following month, the standard non-ROS date.
-  // Editable per company, because ROS filers get a later date.
   const next = addMonths(endDate, 1);
   const { year, month } = parts(next);
-  return makeDate(year, month, options.filingDeadlineDays ?? 19);
+  const monthEnd = parts(endOfMonth(next)).day;
+  return makeDate(year, month, Math.min(day, monthEnd));
 }
 
 const MONTH_ABBREV = [
