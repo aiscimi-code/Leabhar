@@ -62,6 +62,21 @@ export function turnoverProportion(db: AppDatabase, params: { companyId: string;
   };
 }
 
+/**
+ * The turnover proportion for the review period before the one containing a
+ * date: the accounting year that ends the day before it starts (S.I. 639/2010
+ * reg.17(1)). It is the figure for basis (ii) of reg.17(2)(a), where the
+ * preceding review period's proportion was calculated on turnover (s.61(4));
+ * whether turnover reflects use is the person's call (s.61(5)). Like
+ * `turnoverProportion`, it counts posted sales invoices only, and does not
+ * exclude incidental transactions under s.61(6)(b).
+ */
+export function precedingReviewPeriodProportion(db: AppDatabase, params: { companyId: string; date: string }): TurnoverProportion {
+  const current = accountingYearContaining(db, params.companyId, params.date);
+  const previous = accountingYearContaining(db, params.companyId, addDays(asIsoDate(current.start), -1));
+  return turnoverProportion(db, { companyId: params.companyId, yearStart: previous.start, yearEnd: previous.end });
+}
+
 export interface ApportionmentFinding { code: 'dual_use_apportionment'; title: string; detail: string }
 
 /** For a VAT period: when the company makes both exempt and deductible supplies, the proportion and what to do. */

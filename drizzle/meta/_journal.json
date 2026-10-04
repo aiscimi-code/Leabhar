@@ -351,6 +351,13 @@
       "when": 1790593142481,
       "tag": "0049_forecast",
       "breakpoints": true
+    },
+    {
+      "idx": 50,
+      "version": "6",
+      "when": 1791100018860,
+      "tag": "0050_invoice_line_deductible_share",
+      "breakpoints": true
     }
   ]
 }

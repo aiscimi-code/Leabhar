@@ -11,7 +11,7 @@ import { assertDocumentConfirmed } from '../documents/review';
 import { upsertReviewItem } from '../extraction/service';
 import { resolveTreatment } from '../vat/engine';
 import { documentLineChoices } from './suggest';
-import { createInvoice, type CreatedInvoice, type InvoiceLineInput } from '../invoicing/invoices';
+import { createInvoice, type CreatedInvoice, type InvoiceLineInput, type DualUseApportionment } from '../invoicing/invoices';
 
 /**
  * Post a confirmed document as an invoice (issue #203).
@@ -52,6 +52,10 @@ export interface LineCoding {
   taxRateId?: string;
   /** Statutory rules behind the treatment (from the suggestion), for the trace. */
   vatRuleKeys?: string[];
+  /** See `InvoiceLineInput.businessUseBasisPoints` (issue #612). */
+  businessUseBasisPoints?: number;
+  /** See `InvoiceLineInput.dualUse` (issue #612). */
+  dualUse?: DualUseApportionment;
 }
 
 export interface PostDocumentInput {
@@ -275,6 +279,8 @@ function postDocumentAsInvoiceSteps(db: AppDatabase, input: PostDocumentInput): 
       documentLineId: line.documentLineId,
       vatRuleKeys: coding.vatRuleKeys ?? [],
       holdRecoveryReason: holdReason,
+      businessUseBasisPoints: coding.businessUseBasisPoints,
+      dualUse: coding.dualUse,
     };
   });
 
