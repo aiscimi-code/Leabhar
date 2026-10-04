@@ -1739,6 +1739,17 @@ this KB independently confirmed against the LRC-revised text for "VATCA
   `docs/statutes/vat-rates/schedule-moves-2025-2026.md`) — left as-is
   rather than guessed at here, since fixing it correctly needs the same
   sourced ingestion issue #129 already tracks, not a hand-edited date.
+- Since issue #617, `DEFAULT_TAX_RATES` is seeded from these curated rules,
+  history included, and cites them:
+  - `VAT_STD`: 23% from 2012-01-01, 21% for 2020-09-01 to 2021-02-28 (s.46(1A)), and 23% from 2021-03-01.
+  - `VAT_RED`, `VAT_LIVESTOCK` and `VAT_ZERO`: from 2010-11-01.
+  - `VAT_SECOND_RED`: from 2020-11-01, the earliest curated 9% period. Which supplies bear it is still decided per
+    Schedule 3 paragraph (`scheduleRates.ts`).
+
+  `src/domain/config/seeds.test.ts` fails if a seed and its curated rule disagree. A book seeded earlier gets the
+  missing windows from `ensureHistoricalTaxRates`, which fills only dates before a code's earliest row and audits
+  each addition. No rate is seeded for a date the sources do not cover, such as the standard rate before 2012, so a
+  posting then is refused until a person configures the rate.
 
 ### The five 9% second-reduced-rate carve-outs (issue #129)
 

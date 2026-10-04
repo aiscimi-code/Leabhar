@@ -6,7 +6,7 @@ import {
   expenseRates,
 } from '@/db/schema';
 import { ids } from '@/lib/ids';
-import { type IsoDate, asIsoDate, isIsoDate, nowIso, today } from '../dates';
+import { type IsoDate, addDays, asIsoDate, isIsoDate, nowIso, today } from '../dates';
 import {
   DEFAULT_ACCOUNTS, FARM_ACCOUNTS, FARM_ACCOUNT_OVERRIDES, farmOverrideFor, type SystemAccountKey, type ChartKind,
 } from './chartOfAccounts';
@@ -242,10 +242,12 @@ export function createCompany(db: AppDatabase, input: CreateCompanyInput): Creat
         isDefault: seed.isDefault ?? false,
         notes: seed.notes ?? null,
         effectiveFrom: seed.effectiveFrom,
+        effectiveTo: seed.effectiveTo ?? null,
         sourceNote: seed.sourceNote ?? null,
         sourceDate: today(),
       }).run();
-      ratesByCode[seed.code] = id;
+      // A treatment points at the row still in force; earlier ones resolve by date.
+      if (!seed.effectiveTo) ratesByCode[seed.code] = id;
     }
 
     // ---- VAT treatments ----
@@ -273,7 +275,7 @@ export function createCompany(db: AppDatabase, input: CreateCompanyInput): Creat
         requiresCounterpartyVatNumber: seed.requiresCounterpartyVatNumber ?? false,
         isDefault: seed.isDefault ?? false,
         isSystem: seed.isSystem ?? false,
-        effectiveFrom: '1900-01-01',
+        effectiveFrom: seed.effectiveFrom ?? '1900-01-01',
         sourceNote: seed.sourceNote ?? null,
         sourceDate: today(),
       }).run();
@@ -573,9 +575,56 @@ export function installFarmChart(
 
   return { added, renamed, skipped };
 }
+/**
+ * Add the seeded rate history a book created before it was seeded lacks
+ * (issue #617). Only a window before the earliest row a code already has is
+ * filled, so no existing row is changed or overlapped (invariant #6); each
+ * addition is audited. Returns the codes given history.
+ */
+export function ensureHistoricalTaxRates(db: AppDatabase, companyId: string, actor?: string): string[] {
+  const rows = db.select({ code: taxRates.code, effectiveFrom: taxRates.effectiveFrom }).from(taxRates)
+    .where(eq(taxRates.companyId, companyId)).all();
+  const earliest = new Map<string, string>();
+  for (const r of rows) {
+    const e = earliest.get(r.code);
+    if (!e || r.effectiveFrom < e) earliest.set(r.code, r.effectiveFrom);
+  }
+  const additions: Array<{ seed: typeof DEFAULT_TAX_RATES[number]; to: string }> = [];
+  for (const seed of DEFAULT_TAX_RATES) {
+    const first = earliest.get(seed.code);
+    if (!first || seed.effectiveFrom >= first) continue;
+    const dayBefore = addDays(asIsoDate(first), -1);
+    const to = seed.effectiveTo && seed.effectiveTo < dayBefore ? seed.effectiveTo : dayBefore;
+    additions.push({ seed, to });
+  }
+  if (additions.length === 0) return [];
+  db.transaction((tx) => {
+    for (const { seed, to } of additions) {
+      tx.insert(taxRates).values({
+        id: ids.taxRate(), companyId, code: seed.code, name: seed.name, rateBasisPoints: seed.rateBasisPoints,
+        taxType: seed.taxType, jurisdiction: seed.jurisdiction,
+        reportingClassification: seed.reportingClassification ?? null, isDefault: false,
+        notes: seed.notes ?? null, effectiveFrom: seed.effectiveFrom, effectiveTo: to, active: true,
+        sourceNote: seed.sourceNote ?? null, sourceDate: today(),
+      }).run();
+    }
+    tx.insert(auditEvents).values({
+      id: ids.audit(), companyId, occurredAt: nowIso(), entityType: 'tax_rate', entityId: companyId,
+      action: 'created',
+      newValue: JSON.stringify(additions.map(({ seed, to }) => ({
+        code: seed.code, rateBasisPoints: seed.rateBasisPoints, effectiveFrom: seed.effectiveFrom, effectiveTo: to,
+      }))),
+      source: 'system', actor: actor ?? 'system',
+      reason: 'Added the seeded rate history for dates before this book\'s earliest rate (issue #617)',
+    }).run();
+  });
+  return [...new Set(additions.map((a) => a.seed.code))];
+}
+
 export function ensureDefaultVatTreatments(
   db: AppDatabase, companyId: string, actor?: string,
 ): { addedRates: string[]; addedTreatments: string[] } {
+  ensureHistoricalTaxRates(db, companyId, actor);
   const rateRows = db.select({ id: taxRates.id, code: taxRates.code }).from(taxRates)
     .where(eq(taxRates.companyId, companyId)).all();
   const rateIdByCode = new Map(rateRows.map((r) => [r.code, r.id]));
@@ -593,10 +642,10 @@ export function ensureDefaultVatTreatments(
         id, companyId, code: seed.code, name: seed.name, rateBasisPoints: seed.rateBasisPoints,
         taxType: seed.taxType, jurisdiction: seed.jurisdiction,
         reportingClassification: seed.reportingClassification ?? null, isDefault: false,
-        notes: seed.notes ?? null, effectiveFrom: seed.effectiveFrom,
+        notes: seed.notes ?? null, effectiveFrom: seed.effectiveFrom, effectiveTo: seed.effectiveTo ?? null,
         sourceNote: seed.sourceNote ?? null, sourceDate: today(),
       }).run();
-      rateIdByCode.set(seed.code, id);
+      if (!seed.effectiveTo) rateIdByCode.set(seed.code, id);
     }
     for (const seed of missingTreatments) {
       tx.insert(vatTreatments).values({
@@ -608,7 +657,7 @@ export function ensureDefaultVatTreatments(
         salesVatBox: seed.salesVatBox ?? null, purchasesVatBox: seed.purchasesVatBox ?? null,
         netSalesBox: seed.netSalesBox ?? null, netPurchasesBox: seed.netPurchasesBox ?? null,
         requiresCounterpartyVatNumber: seed.requiresCounterpartyVatNumber ?? false,
-        isDefault: false, isSystem: seed.isSystem ?? false, effectiveFrom: '1900-01-01',
+        isDefault: false, isSystem: seed.isSystem ?? false, effectiveFrom: seed.effectiveFrom ?? '1900-01-01',
         sourceNote: seed.sourceNote ?? null, sourceDate: today(),
       }).run();
     }

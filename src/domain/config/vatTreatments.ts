@@ -26,52 +26,80 @@ export interface TaxRateSeed {
   taxType: 'vat' | 'corporation_tax';
   jurisdiction: string;
   effectiveFrom: string;
+  /** The last day the rate applied (inclusive, as `tax_rates.effective_to`). Absent while it still applies. */
+  effectiveTo?: string;
   reportingClassification?: string;
   isDefault?: boolean;
   notes?: string;
   sourceNote?: string;
 }
 
+/** VATCA 2010 commenced on 1 November 2010; what applied before it is not in the repository. */
+const VATCA_COMMENCEMENT = '2010-11-01';
+
 /**
- * Irish VAT rates as at the seed date. Every one is editable, and the system
- * supports historical rates: changing a rate creates a new effective-dated row
- * rather than altering the old one, so historical transactions keep the rate
- * that applied when they occurred.
+ * Irish VAT rates, with their history (issue #617). Each VAT row is dated and
+ * cited from the curated s.46 rules (`vatcaRevisedCuration.ts`, from the
+ * LRC-revised text); `seeds.test.ts` holds the two in step. No rate is seeded
+ * for a date the repository's sources do not cover, so a posting then is
+ * refused until a person configures the rate (engine.ts `resolveRate`).
+ *
+ * Every row is editable, and changing a rate creates a new effective-dated
+ * row rather than altering the old one, so historical transactions keep the
+ * rate that applied when they occurred. Several rows share a code; the one
+ * still in force is the one with no `effectiveTo`.
  */
 export const DEFAULT_TAX_RATES: TaxRateSeed[] = [
   {
     code: 'VAT_STD', name: 'VAT standard rate', rateBasisPoints: 2300,
+    taxType: 'vat', jurisdiction: 'IE', effectiveFrom: '2012-01-01', effectiveTo: '2020-08-31',
+    reportingClassification: 'standard',
+    sourceNote: 'VATCA 2010 s.46(1)(a): 23%, as substituted from 1 January 2012 by Finance Act 2012 s.87 (LRC '
+      + 'footnote F95). The rate before 2012 is not in the repository: configure it before posting earlier.',
+  },
+  {
+    code: 'VAT_STD', name: 'VAT standard rate', rateBasisPoints: 2100,
+    taxType: 'vat', jurisdiction: 'IE', effectiveFrom: '2020-09-01', effectiveTo: '2021-02-28',
+    reportingClassification: 'standard',
+    sourceNote: 'VATCA 2010 s.46(1A): paragraph (a) read as 21% from 1 September 2020 to 28 February 2021.',
+  },
+  {
+    code: 'VAT_STD', name: 'VAT standard rate', rateBasisPoints: 2300,
     taxType: 'vat', jurisdiction: 'IE', effectiveFrom: '2021-03-01',
     reportingClassification: 'standard', isDefault: true,
-    sourceNote: 'Irish standard VAT rate. Verify against current Revenue guidance before filing.',
+    sourceNote: 'VATCA 2010 s.46(1)(a): 23% from 1 March 2021, the day after the s.46(1A) 21% period.',
   },
   {
     code: 'VAT_RED', name: 'VAT reduced rate', rateBasisPoints: 1350,
-    taxType: 'vat', jurisdiction: 'IE', effectiveFrom: '2021-03-01',
+    taxType: 'vat', jurisdiction: 'IE', effectiveFrom: VATCA_COMMENCEMENT,
     reportingClassification: 'reduced',
-    sourceNote: 'Irish reduced VAT rate. Applies to specified goods and services only.',
+    sourceNote: 'VATCA 2010 s.46(1)(c): 13.5% for goods and services of a kind in Schedule 3, unamended since the Act '
+      + 'commenced. Applies to specified goods and services only.',
   },
   {
     code: 'VAT_SECOND_RED', name: 'VAT second reduced rate', rateBasisPoints: 900,
-    taxType: 'vat', jurisdiction: 'IE', effectiveFrom: '2021-03-01',
+    taxType: 'vat', jurisdiction: 'IE', effectiveFrom: '2020-11-01',
     reportingClassification: 'second_reduced',
-    sourceNote: 'Irish second reduced VAT rate. Scope has changed repeatedly in recent years — check before use.',
+    sourceNote: 'VATCA 2010 s.46(1): 9% for the Schedule 3 paragraphs and periods the 9% clauses name (scheduleRates.ts). '
+      + 'Seeded from 1 November 2020, the earliest such period in the repository; earlier 9% periods are not in it. '
+      + 'Scope has changed repeatedly — check before use.',
   },
   {
     code: 'VAT_LIVESTOCK', name: 'VAT livestock rate', rateBasisPoints: 480,
-    taxType: 'vat', jurisdiction: 'IE', effectiveFrom: '2021-03-01',
+    taxType: 'vat', jurisdiction: 'IE', effectiveFrom: VATCA_COMMENCEMENT,
     reportingClassification: 'livestock',
-    sourceNote: 'Irish livestock VAT rate. Unlikely to apply to a technology company; seeded for completeness.',
+    sourceNote: 'VATCA 2010 s.46(1)(d): 4.8% on the supply of livestock, unamended since the Act commenced.',
   },
   {
     code: 'VAT_ZERO', name: 'VAT zero rate', rateBasisPoints: 0,
-    taxType: 'vat', jurisdiction: 'IE', effectiveFrom: '2021-03-01',
+    taxType: 'vat', jurisdiction: 'IE', effectiveFrom: VATCA_COMMENCEMENT,
     reportingClassification: 'zero',
     notes: 'Zero-rated supplies are taxable at 0%. They are not the same as exempt supplies.',
+    sourceNote: 'VATCA 2010 s.46(1)(b): zero per cent, for the goods and services Schedule 2 specifies.',
   },
   {
     code: 'VAT_NONE', name: 'No VAT', rateBasisPoints: 0,
-    taxType: 'vat', jurisdiction: 'IE', effectiveFrom: '2021-03-01',
+    taxType: 'vat', jurisdiction: 'IE', effectiveFrom: VATCA_COMMENCEMENT,
     reportingClassification: 'none',
     notes: 'Used by treatments where no rate applies at all, such as exempt and outside-scope.',
   },
@@ -111,6 +139,12 @@ export interface VatTreatmentSeed {
   isDefault?: boolean;
   isSystem?: boolean;
   sourceNote?: string;
+  /**
+   * The first day the treatment can apply, where its source dates it (issue
+   * #617). Absent: seeded from 1900-01-01, so it never refuses a date on its
+   * own account.
+   */
+  effectiveFrom?: string;
 }
 
 /**
@@ -275,7 +309,11 @@ export const DEFAULT_VAT_TREATMENTS: VatTreatmentSeed[] = [
     jurisdiction: 'NON_EU', direction: 'purchases', supplyKind: 'goods',
     appliesRate: true, defaultRateCode: 'VAT_STD',
     isReverseCharge: true, salesVatBox: 'T1', purchasesVatBox: 'T2', netPurchasesBox: 'PA1',
-    sourceNote: 'Postponed accounting for import VAT. Check your authorisation status before using.',
+    sourceNote: 'Postponed accounting for import VAT (VATCA s.53A, S.I. 639/2010 reg.14A). Check your authorisation '
+      + 'status before using. The arrangements "commenced after 11:00pm on 31 December 2020" (Revenue Tax and Duty '
+      + 'Manual, VAT - Postponed Accounting, §7); dates are whole days here, so the treatment applies from 31 December '
+      + '2020 and an import declared earlier that day is not eligible.',
+    effectiveFrom: '2020-12-31',
   },
   {
     code: 'IMPORT_VAT_PAID', name: 'Import VAT paid at entry', isSystem: true,
