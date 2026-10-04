@@ -175,7 +175,18 @@ export interface CalculateVatInput {
    * only the recoverable slice is held back.
    */
   recoverableOverrideMinor?: number;
+  /**
+   * The share of the treatment's recoverable VAT that may be deducted on this
+   * line (issue #612), as a fraction: the business-use share of a purchase
+   * also used privately (s.59(2): deductible only "in so far as" it is used
+   * for taxable supplies), times the proportion of tax deductible on a dual-
+   * use input (s.61(2), S.I. 639/2010 reg.17). Purchases only; ignored when
+   * `recoverableOverrideMinor` is set.
+   */
+  deductibleShare?: DeductibleShare;
 }
+
+export interface DeductibleShare { numerator: number; denominator: number }
 
 /**
  * Calculate the net/VAT/gross triple for one line under one treatment.
@@ -237,7 +248,7 @@ export function calculateVat(input: CalculateVatInput): VatCalculation {
 
   const recoverableVatMinor = input.recoverableOverrideMinor !== undefined
     ? asMinor(input.recoverableOverrideMinor)
-    : computeRecoverable(treatment, direction, vatMinor);
+    : computeRecoverable(treatment, direction, vatMinor, input.deductibleShare);
 
   return {
     netMinor,
@@ -252,12 +263,17 @@ function computeRecoverable(
   treatment: typeof vatTreatments.$inferSelect,
   direction: VatDirection,
   vatMinor: Minor,
+  share?: DeductibleShare,
 ): Minor {
   // Output VAT is never "recoverable"; it is owed.
   if (direction === 'sales') return asMinor(0);
   if (!treatment.isRecoverable) return asMinor(0);
-  if (treatment.recoverableBasisPoints >= 10_000) return vatMinor;
-  return multiplyRational(vatMinor, treatment.recoverableBasisPoints, 10_000);
+  const bp = Math.min(treatment.recoverableBasisPoints, 10_000);
+  // One rounding for the treatment's own restriction and the line's share together.
+  if (!share || share.numerator === share.denominator) {
+    return bp === 10_000 ? vatMinor : multiplyRational(vatMinor, bp, 10_000);
+  }
+  return multiplyRational(vatMinor, bp * share.numerator, 10_000 * share.denominator);
 }
 
 /**
@@ -368,6 +384,8 @@ export interface CreateVatEntriesInput {
   /** See `CalculateVatInput.recoverableOverrideMinor` — threaded through so the
    *  posted VAT entry (and hence the VAT3 T2 box) agrees with the journal. */
   recoverableOverrideMinor?: number;
+  /** See `CalculateVatInput.deductibleShare`. */
+  deductibleShare?: DeductibleShare;
   currency: string;
   baseCurrency: string;
   /**
@@ -419,6 +437,7 @@ export function createVatEntries(
     statedVatMinor: input.statedVatMinor,
     taxableAmountMinor: input.taxableAmountMinor,
     recoverableOverrideMinor: input.recoverableOverrideMinor,
+    deductibleShare: input.deductibleShare,
   });
 
   const declaredOn = input.declarationDate ?? input.taxPointDate;
@@ -498,7 +517,7 @@ export function createVatEntries(
       // Leg 2: input VAT, reclaimed to the extent the treatment allows.
       const recoverable = input.recoverableOverrideMinor !== undefined
         ? asMinor(input.recoverableOverrideMinor)
-        : computeRecoverable(treatment, 'purchases', calculation.vatMinor);
+        : computeRecoverable(treatment, 'purchases', calculation.vatMinor, input.deductibleShare);
       const input2 = tx.insert(vatEntries).values({
         ...common,
         id: ids.vatEntry(),

@@ -644,7 +644,9 @@ director's current account, or drawings), posts the business share as the cost
 and the private share to the person, records both on the bank transaction and
 raises a review item; `recordDirectorPaidExpense` records only the business
 share — the private share of a director's personally-paid cost is not the
-company's to record.
+company's to record. A purchase invoice line takes a business-use share too
+(issue #612): only that share of its VAT is deducted, the rest stays in the
+cost, and the line is flagged. See "Dual-use inputs (s.61)".
 
 ### Customer terms (issue #392)
 
@@ -1410,6 +1412,25 @@ adjustment (S.I. 639/2010 reg.17(3)).
 
 Which costs are dual-use, and whether another basis reflects use better
 (s.61(5)), is the person's judgement.
+
+A purchase invoice line marked dual-use (`dualUse`, issue #612) deducts only
+the proportion given. The line records which reg.17(2)(a) basis the
+proportion was taken on:
+
+- (i) actual use in the period;
+- (ii) the preceding review period's proportion
+  (`precedingReviewPeriodProportion` gives the turnover figure);
+- (iii) an estimate;
+- (iv) an officer's direction.
+
+An estimate is flagged, because its basis goes to Revenue with the return
+(reg.17(2)(b)). The rest of the VAT stays in the line's cost.
+
+A line can also carry a business-use share (`businessUseBasisPoints`), where
+the rest of the cost is private use. VAT is deductible only in so far as the
+cost is used for taxable supplies (s.59(2)). The share and the proportion
+multiply, rounded once. Both are stored on the invoice line and noted on its
+VAT entry.
 
 ### Credit notes and the time limit for invoices
 

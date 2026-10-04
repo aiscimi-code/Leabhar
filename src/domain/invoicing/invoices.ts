@@ -89,6 +89,50 @@ export interface InvoiceLineInput {
    * supplier's invoice is used and the line is flagged.
    */
   importValuation?: ImportValuation;
+  /**
+   * Purchase lines only (issue #612). The share of this cost used for the
+   * business, in basis points (6000 = 60%), where the rest is private use.
+   * Input VAT is deductible only "in so far as" the goods or services are used
+   * for taxable supplies (VATCA s.59(2)), so the private share's VAT is not
+   * reclaimed: it stays in the line's cost.
+   */
+  businessUseBasisPoints?: number;
+  /**
+   * Purchase lines only (issue #612). The line is a dual-use input, used for
+   * both deductible and non-deductible (e.g. exempt) supplies, so only the
+   * proportion of tax deductible may be reclaimed (VATCA s.61(2)).
+   */
+  dualUse?: DualUseApportionment;
+}
+
+/**
+ * The proportion of tax deductible on a dual-use input for the taxable period,
+ * and which of the bases in S.I. 639/2010 reg.17(2)(a) it was taken on:
+ * (i) actual use in the period, (ii) the proportion calculated for the
+ * preceding review period, (iii) an estimate for the current review period
+ * (whose basis must be sent to Revenue with the return, reg.17(2)(b)), or
+ * (iv) one an authorised officer directed (reg.17(2)(c)). Choosing the basis
+ * is the person's judgement; `precedingReviewPeriodProportion` gives the
+ * turnover figure for (ii).
+ */
+export interface DualUseApportionment {
+  proportionBasisPoints: number;
+  basis: 'actual_use' | 'preceding_review_period' | 'estimate' | 'officer_direction';
+}
+
+const DUAL_USE_BASIS_TEXT: Record<DualUseApportionment['basis'], string> = {
+  actual_use: 'actual use in the period, reg.17(2)(a)(i)',
+  preceding_review_period: 'the proportion for the preceding review period, reg.17(2)(a)(ii)',
+  estimate: 'an estimate for the review period, reg.17(2)(a)(iii)',
+  officer_direction: 'a proportion directed by an authorised officer, reg.17(2)(a)(iv)',
+};
+
+function basisPointsShare(value: number | undefined, what: string, where: string): number | null {
+  if (value === undefined) return null;
+  if (!Number.isInteger(value) || value < 0 || value > 10_000) {
+    throw new InvoicingError(`${where}: the ${what} must be a whole number of basis points from 0 to 10000.`);
+  }
+  return value;
 }
 
 export interface ImportValuation {
@@ -259,6 +303,28 @@ function createInvoiceSteps(db: AppDatabase, input: CreateInvoiceInput): Created
       rateOverrideId: line.taxRateId,
     });
 
+    // Issue #612: the deductible share of a mixed-use purchase line.
+    const where = `Line ${index + 1}`;
+    if (isSales && (line.businessUseBasisPoints !== undefined || line.dualUse)) {
+      throw new InvoicingError(`${where}: a business-use share or dual-use proportion applies only to a purchase.`);
+    }
+    if (line.dualUse && !(line.dualUse.basis in DUAL_USE_BASIS_TEXT)) {
+      throw new InvoicingError(`${where}: say which basis the dual-use proportion was taken on.`);
+    }
+    const businessBp = basisPointsShare(line.businessUseBasisPoints, 'business-use share', where);
+    const dualUseBp = basisPointsShare(line.dualUse?.proportionBasisPoints, 'dual-use proportion', where);
+    const deductibleShare = businessBp === null && dualUseBp === null ? undefined
+      : { numerator: (businessBp ?? 10_000) * (dualUseBp ?? 10_000), denominator: 100_000_000 };
+    const shareNote = deductibleShare === undefined ? null : [
+      businessBp !== null
+        ? `Business use ${(businessBp / 100).toFixed(2)}%: the private share's VAT is not deductible (VATCA s.59(2)).`
+        : null,
+      line.dualUse
+        ? `Dual-use input: ${(dualUseBp! / 100).toFixed(2)}% deductible (VATCA s.61(2)), on ${DUAL_USE_BASIS_TEXT[line.dualUse.basis]} `
+          + 'of S.I. 639/2010.'
+        : null,
+    ].filter(Boolean).join(' ');
+
     const undiscountedNet = line.netMinor !== undefined
       ? line.netMinor
       : multiplyRational(asMinor(line.unitPriceMinor ?? 0), line.quantityMilli ?? 1000, 1000);
@@ -347,6 +413,7 @@ function createInvoiceSteps(db: AppDatabase, input: CreateInvoiceInput): Created
           netMinor: v.customsValueMinor + v.customsDutyMinor,
           taxableAmountMinor: v.customsValueMinor + v.customsDutyMinor + (v.otherChargesMinor ?? 0) + (v.freightToIrelandMinor ?? 0),
           recoverableOverrideMinor,
+          deductibleShare,
         }),
         valuation: v,
       };
@@ -355,6 +422,22 @@ function createInvoiceSteps(db: AppDatabase, input: CreateInvoiceInput): Created
         + 'value, plus duty and charges at importation, plus freight to Ireland), and box PA1 reports the customs value '
         + 'plus customs duty — both from the customs declaration, not the supplier\'s invoice. No customs valuation was '
         + 'recorded, so T1, T2 and PA1 were taken from the invoice net. Record the declaration\'s figures.';
+      vatReviewReason = vatReviewReason ? `${vatReviewReason} ${reason}` : reason;
+    }
+    // A business-use share is a judgement, so it is flagged, never silent
+    // (as on the bank path). Only the VAT is apportioned here.
+    if (businessBp !== null && businessBp < 10_000 && resolved.treatment.isRecoverable) {
+      const reason = `This line is coded ${(businessBp / 100).toFixed(2)}% business use, so only that share of its VAT is `
+        + 'deducted; VAT is deductible only in so far as the cost is used for taxable supplies (VATCA s.59(2)). The rest '
+        + 'of the VAT stays in the cost. The private share of the cost itself is still booked to the line\'s account: '
+        + 'whether it should be charged to the person who used it is not decided here.';
+      vatReviewReason = vatReviewReason ? `${vatReviewReason} ${reason}` : reason;
+    }
+    if (line.dualUse?.basis === 'estimate' && resolved.treatment.isRecoverable) {
+      const reason = `The proportion of tax deductible on this dual-use line (${(dualUseBp! / 100).toFixed(2)}%) is an `
+        + 'estimate for the review period (S.I. 639/2010 reg.17(2)(a)(iii)). Send the basis for the estimate to Revenue '
+        + 'with the VAT return for this period (reg.17(2)(b)), and at the end of the review period recalculate the '
+        + 'proportion and adjust the VAT deducted in the next period (reg.17(3)).';
       vatReviewReason = vatReviewReason ? `${vatReviewReason} ${reason}` : reason;
     }
 
@@ -367,11 +450,12 @@ function createInvoiceSteps(db: AppDatabase, input: CreateInvoiceInput): Created
         netMinor: lineNet * sign,
         statedVatMinor: line.statedVatMinor === undefined ? undefined : line.statedVatMinor * sign,
         recoverableOverrideMinor,
+        deductibleShare,
       });
 
     return {
       line, index, lineId: ids.invoiceLine(), resolved, calculation, recoverableOverrideMinor, vatReviewReason,
-      undiscountedNet, discount, importVat,
+      undiscountedNet, discount, importVat, deductibleShare, shareNote, businessBp, dualUseBp,
     };
   });
 
@@ -523,7 +607,7 @@ function createInvoiceSteps(db: AppDatabase, input: CreateInvoiceInput): Created
   // ---- VAT entries ----
   const vatEntryIds: string[] = [];
   if (!vatDeferred && !historic) {
-    for (const { line, lineId, calculation, resolved, recoverableOverrideMinor, importVat } of computed) {
+    for (const { line, lineId, calculation, resolved, recoverableOverrideMinor, importVat, deductibleShare, shareNote } of computed) {
       if (calculation.vatMinor === 0 && !resolved.treatment.appliesRate) continue;
       const taxPoint = determineTaxPoint({
         basis: saleBasis,
@@ -554,8 +638,9 @@ function createInvoiceSteps(db: AppDatabase, input: CreateInvoiceInput): Created
             taxableAmountMinor: importVat.valuation.customsValueMinor + importVat.valuation.customsDutyMinor
               + (importVat.valuation.otherChargesMinor ?? 0) + (importVat.valuation.freightToIrelandMinor ?? 0),
             recoverableOverrideMinor,
+            deductibleShare,
             currency: baseCurrency,
-            notes: `Customs valuation${importVat.valuation.declarationReference ? ` (declaration ${importVat.valuation.declarationReference})` : ''}: `
+            notes: (shareNote ? `${shareNote} ` : '') + `Customs valuation${importVat.valuation.declarationReference ? ` (declaration ${importVat.valuation.declarationReference})` : ''}: `
               + `customs value ${(importVat.valuation.customsValueMinor / 100).toFixed(2)}, duty ${(importVat.valuation.customsDutyMinor / 100).toFixed(2)}`
               + `${importVat.valuation.otherChargesMinor ? `, other charges ${(importVat.valuation.otherChargesMinor / 100).toFixed(2)}` : ''}`
               + `${importVat.valuation.freightToIrelandMinor ? `, freight to Ireland ${(importVat.valuation.freightToIrelandMinor / 100).toFixed(2)}` : ''}.`,
@@ -565,6 +650,8 @@ function createInvoiceSteps(db: AppDatabase, input: CreateInvoiceInput): Created
             statedVatMinor: calculation.vatMinor,
             recoverableOverrideMinor: recoverableOverrideMinor === undefined
               ? undefined : recoverableOverrideMinor * sign,
+            deductibleShare,
+            notes: shareNote,
             currency,
             fxRate: input.fxRate
               ? { numerator: input.fxRate.numerator, denominator: input.fxRate.denominator, source: input.fxRate.source, date: input.fxRate.date }
@@ -658,7 +745,7 @@ function createInvoiceSteps(db: AppDatabase, input: CreateInvoiceInput): Created
       provenanceStatus: 'manually_entered',
     }).run();
 
-    for (const { line, index, lineId, calculation, resolved, undiscountedNet, discount } of computed) {
+    for (const { line, index, lineId, calculation, resolved, undiscountedNet, discount, businessBp, dualUseBp } of computed) {
       tx.insert(invoiceLines).values({
         id: lineId,
         companyId: input.companyId,
@@ -681,6 +768,9 @@ function createInvoiceSteps(db: AppDatabase, input: CreateInvoiceInput): Created
         fixedAssetId: line.fixedAssetId ?? null,
         documentLineId: line.documentLineId ?? null,
         vatRuleKeys: line.vatRuleKeys ?? [],
+        businessUseBasisPoints: businessBp,
+        dualUseProportionBasisPoints: dualUseBp,
+        dualUseBasis: line.dualUse?.basis ?? null,
         source: 'user',
         provenanceStatus: 'manually_entered',
       }).run();

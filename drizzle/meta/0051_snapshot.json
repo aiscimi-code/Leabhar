@@ -1,8 +1,8 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "423a2d5e-d292-4d31-b536-5dc16ad70b80",
-  "prevId": "a5939821-aa36-49cc-80a6-8c31151f7f7e",
+  "id": "514c59a3-0d6f-47c9-aac0-2b5d8dd00910",
+  "prevId": "423a2d5e-d292-4d31-b536-5dc16ad70b80",
   "tables": {
     "bank_accounts": {
       "name": "bank_accounts",
@@ -4647,6 +4647,20 @@
           "notNull": true,
           "autoincrement": false,
           "default": "(datetime('now'))"
+        },
+        "fx_rate_source": {
+          "name": "fx_rate_source",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "fx_rate_date": {
+          "name": "fx_rate_date",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
         }
       },
       "indexes": {
