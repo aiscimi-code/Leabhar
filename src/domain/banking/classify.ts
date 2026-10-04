@@ -372,7 +372,10 @@ function classifyTransactionSteps(db: AppDatabase, input: ClassifyInput): Classi
         currency,
         baseCurrency,
         fxRate: resolvedFxRate
-          ? { numerator: resolvedFxRate.numerator, denominator: resolvedFxRate.denominator }
+          ? {
+              numerator: resolvedFxRate.numerator, denominator: resolvedFxRate.denominator,
+              source: resolvedFxRate.source, date: 'date' in resolvedFxRate ? resolvedFxRate.date : undefined,
+            }
           : undefined,
         counterpartyVatNumber: counterpartyVatNumber(db, input),
         counterpartyCountry: counterpartyCountry(db, input),

@@ -579,6 +579,8 @@ function recordPaymentSteps(db: AppDatabase, input: RecordPaymentInput): Recorde
       ? {
           numerator: target.invoice.fxRateNumerator,
           denominator: target.invoice.fxRateDenominator,
+          source: target.invoice.fxRateSource,
+          date: target.invoice.fxRateDate,
         }
       : undefined;
     const created = createVatEntries(db, {

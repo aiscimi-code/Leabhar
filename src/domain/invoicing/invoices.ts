@@ -654,7 +654,7 @@ function createInvoiceSteps(db: AppDatabase, input: CreateInvoiceInput): Created
             notes: shareNote,
             currency,
             fxRate: input.fxRate
-              ? { numerator: input.fxRate.numerator, denominator: input.fxRate.denominator }
+              ? { numerator: input.fxRate.numerator, denominator: input.fxRate.denominator, source: input.fxRate.source, date: input.fxRate.date }
               : undefined,
           }),
         baseCurrency,
