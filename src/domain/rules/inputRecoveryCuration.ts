@@ -43,8 +43,9 @@ export const RETIRED_INPUT_RECOVERY_RULE_KEYS = ['vat.input_deduction_general', 
 
 type Rule = Omit<CuratedVatScopeRule, 'ruleType' | 'topic' | 'crossReferences' | 'accountingEffect' | 'reportingEffect' | 'effectiveFrom' | 'treatment' | 'exceptions'>
   & Partial<Pick<CuratedVatScopeRule, 'crossReferences' | 'accountingEffect' | 'reportingEffect' | 'exceptions'>>;
+// A rule with no conditions is enforced elsewhere and only cited: as a `vat_scope` rule it would attach to every lookup.
 const rule = (r: Rule): CuratedVatScopeRule => ({
-  ruleType: 'other', topic: 'vat_scope', crossReferences: [], accountingEffect: null, reportingEffect: null,
+  ruleType: 'other', topic: r.conditions.length ? 'vat_scope' : 'vat_reference', crossReferences: [], accountingEffect: null, reportingEffect: null,
   effectiveFrom: VATCA_COMMENCEMENT, treatment: null, exceptions: [], ...r,
 });
 const S60 = { citation: '2010 Act 31 s.60', sectionNumber: '60' } as const;

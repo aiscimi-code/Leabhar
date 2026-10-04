@@ -84,14 +84,15 @@ describe('suggestVatTreatment', () => {
     // 8 PAYE and USC procedures); EPIC 21 added 5 (#532: ERR particulars and
     // subcategories, the €3.20 allowance, the small benefit count and limit); EPIC 22
     // added 11 (#466: the Part 11C car emissions groups under the 2008, 2021 and 2027 schemes); #614 added
-    // 1 (s.37(4), the exchange rate); #646 added 1 (s.99(4), the refund claim time limit).
-    expect(first.rulesAfter).toBe(403);
+    // 1 (s.37(4), the exchange rate); #646 added 1 (s.99(4), the refund claim time limit); #611 added 2 (the s.74 and s.75 tax
+    // points); #645 added 6 (ss.21, 27(2), 42 and 44, and S.I. 639/2010 regs 5 and 7: the deemed supplies).
+    expect(first.rulesAfter).toBe(409);
   });
 
   it('loading again is a no-op', () => {
     const again = loadStatutoryKnowledgeBase(db, { companyId });
-    expect(again.rulesBefore).toBe(403);
-    expect(again.rulesAfter).toBe(403);
+    expect(again.rulesBefore).toBe(409);
+    expect(again.rulesAfter).toBe(409);
   });
 
   it('US SaaS purchase → non-EU reverse charge, cited to VATCA s.12 with a verifiable slice', () => {
@@ -315,6 +316,42 @@ describe('services sold abroad — VATCA s.34 (issue #200)', () => {
     });
     const s = suggestVatTreatment(db, { companyId, bankTransactionId: tx('MULLIGAN DIGITAL', 430_500, { customerId }) })!;
     expect(s.decidingRule?.ruleKey).not.toBe('vat.place_of_supply_services_to_business_abroad');
+  });
+});
+
+describe('rules with no conditions stay out of every lookup', () => {
+  const CITED_ONLY = ['vat.dual_use_apportionment', 'vat.invoice_tax_stated_in_error', 'vat.invoice_time_limit',
+    'vat.tax_point_supply_invoice', 'vat.tax_point_intra_community_acquisition'];
+
+  it('every derived vat_scope rule has conditions: the topic opens for every transaction', async () => {
+    const { VAT_SCOPE_DERIVED_RULES } = await import('./vatScopeIngestion');
+    expect(VAT_SCOPE_DERIVED_RULES.filter((r) => r.topic === 'vat_scope' && r.conditions.length === 0)
+      .map((r) => r.ruleKey)).toEqual([]);
+    expect(VAT_SCOPE_DERIVED_RULES.filter((r) => CITED_ONLY.includes(r.ruleKey)).map((r) => r.topic))
+      .toEqual(CITED_ONLY.map(() => 'vat_reference'));
+  });
+
+  it('a grocery purchase is not given the acquisition tax point or the invoice time limit', () => {
+    setup();
+    loadStatutoryKnowledgeBase(db, { companyId });
+    const r = lookupTransactionRules(db, { companyId, transaction: {
+      transactionDate: '2025-06-15', amountMinor: 5_000, direction: 'purchase', description: 'Tesco groceries',
+    } });
+    const keys = r.applicableRules.map((a) => a.ruleKey);
+    for (const key of CITED_ONLY) expect(keys).not.toContain(key);
+  });
+
+  it('a book derived with the old topic is re-derived, not left as it was', async () => {
+    setup();
+    loadStatutoryKnowledgeBase(db, { companyId });
+    const { irishTaxRules } = await import('@/db/schema');
+    const { eq, and } = await import('drizzle-orm');
+    const { deriveVatScopeRules } = await import('./vatScopeIngestion');
+    const active = and(eq(irishTaxRules.ruleKey, 'vat.tax_point_supply_invoice'), eq(irishTaxRules.active, true));
+    db.update(irishTaxRules).set({ topic: 'vat_scope' }).where(active).run();
+    const result = deriveVatScopeRules(db, { companyId });
+    expect(result.superseded).toBe(1);
+    expect(db.select().from(irishTaxRules).where(active).get()!.topic).toBe('vat_reference');
   });
 });
 
