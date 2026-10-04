@@ -61,7 +61,9 @@ export const INPUT_RECOVERY_CURATED_RULES: CuratedVatScopeRule[] = [
     ],
     crossReferences: ['VATCA 2010 s.60', 'VATCA 2010 s.61', 'S.I. 639/2010 reg.20 (the invoice)'],
     vatEffect: 'The VAT on the invoice is deductible (T2) in so far as the cost is used for taxable supplies.',
-    interpretationNote: 'Whether the cost is used for taxable supplies is the person\'s confirmation on each line.',
+    interpretationNote: 'Whether the cost is used for taxable supplies is the person\'s confirmation on each line. A '
+      + 'purchase invoice line can carry a business-use share; only that share of its VAT is deducted, and the line is '
+      + 'flagged (issue #612).',
   }),
   rule({
     ...S60, ruleKey: BLOCKED_FOOD_RULE_KEY,
@@ -148,7 +150,9 @@ export const INPUT_RECOVERY_CURATED_RULES: CuratedVatScopeRule[] = [
     crossReferences: ['S.I. 639/2010 reg.17 (review period adjustment)'],
     vatEffect: 'Deductible only in the proportion of deductible supplies, by default on turnover for the accounting year.',
     interpretationNote: 'No conditions: citable, never matched. Validating a VAT period computes the turnover proportion '
-      + 'and flags it when the company makes both exempt and taxable supplies (apportionmentFindings).',
+      + 'and flags it when the company makes both exempt and taxable supplies (apportionmentFindings). A purchase invoice '
+      + 'line marked dual-use deducts the proportion given, with the reg.17(2)(a) basis it was taken on; an estimated '
+      + 'proportion is flagged (issue #612).',
   }),
   rule({
     citation: 'VATCA 2010 s.69', sectionNumber: '69', ruleKey: 'vat.invoice_tax_stated_in_error',
