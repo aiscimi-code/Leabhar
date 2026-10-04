@@ -63,8 +63,12 @@ export interface CuratedVatScopeRule {
   sectionNumber: string;
   ruleKey: string;
   ruleType: IrishRuleType;
-  /** `vat_scope` rules surface in every transaction lookup; `vat_return` rules are return-level facts and never do. */
-  topic: 'vat_scope' | 'vat_return';
+  /**
+   * `vat_scope` rules surface in every transaction lookup, so each needs conditions: a statute-KB rule with none applies
+   * to every transaction (transactionLookup.ts). `vat_return` rules are return-level facts and `vat_reference` rules are
+   * citable facts the tools enforce elsewhere; neither surfaces in a lookup.
+   */
+  topic: 'vat_scope' | 'vat_return' | 'vat_reference';
   name: string;
   statementExcerpt: string;
   conditions: IrishRuleCondition[];

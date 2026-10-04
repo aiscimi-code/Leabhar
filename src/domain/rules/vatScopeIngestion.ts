@@ -94,7 +94,7 @@ export function deriveVatScopeRules(
     if (existing) {
       if (existing.provisionId === prov.id && existing.statement === rule.statementExcerpt
           && JSON.stringify(existing.conditions) === JSON.stringify(rule.conditions)
-          && existing.effectiveFrom === effectiveFrom) {
+          && existing.topic === rule.topic && existing.effectiveFrom === effectiveFrom) {
         result.unchanged++;
         continue;
       }

@@ -1,7 +1,8 @@
 /**
  * When tax falls due: the tax point that decides a transaction's VAT period
  * (issue #611). Both are enforced by `determineTaxPoint`, not by matching
- * words, so they carry no conditions: citable, never matched.
+ * words, so they carry no conditions and the `vat_reference` topic: citable, never
+ * matched.
  */
 import type { CuratedVatScopeRule } from './vatScopeCuration';
 
@@ -11,7 +12,7 @@ export const ACQUISITION_TAX_POINT_RULE_KEY = 'vat.tax_point_intra_community_acq
 export const TAX_POINT_CURATED_RULES: CuratedVatScopeRule[] = [
   {
     citation: '2010 Act 31 s.74', sectionNumber: '74', ruleKey: SUPPLY_TAX_POINT_RULE_KEY,
-    ruleType: 'other', topic: 'vat_scope', effectiveFrom: '2010-11-01', treatment: null,
+    ruleType: 'other', topic: 'vat_reference', effectiveFrom: '2010-11-01', treatment: null,
     name: 'Tax on a supply invoiced under Chapter 2 is due when the invoice is issued, or when it should have been (s.74(1)(a))',
     statementExcerpt: 'the time of issue of the invoice or, if the invoice is not\nissued in due time, upon the expiration of '
       + 'the period within\nwhich the invoice should have been issued,',
@@ -32,7 +33,7 @@ export const TAX_POINT_CURATED_RULES: CuratedVatScopeRule[] = [
   },
   {
     citation: '2010 Act 31 s.75', sectionNumber: '75', ruleKey: ACQUISITION_TAX_POINT_RULE_KEY,
-    ruleType: 'other', topic: 'vat_scope', effectiveFrom: '2010-11-01', treatment: null,
+    ruleType: 'other', topic: 'vat_reference', effectiveFrom: '2010-11-01', treatment: null,
     name: 'Tax on an intra-Community acquisition is due on the 15th of the following month, or at an earlier invoice (s.75)',
     statementExcerpt: 'on the 15th day of the month following that\nduring which the intra-Community acquisition occurs,',
     conditions: [],
