@@ -153,11 +153,12 @@ describe('suggestVatTreatment', () => {
     expect(s.agreesWithBooked).toBe(false);
   });
 
-  it('a restaurant purchase is blocked under s.60 rather than rated', () => {
+  it('a restaurant purchase keeps its rate, and s.60 blocks only the deduction (issue #616)', () => {
     const supplierId = party('supplier', 'The Winding Stair', { countryCode: 'IE' });
     const s = suggestVatTreatment(db, { companyId, bankTransactionId: tx('CLIENT DINNER RESTAURANT', -12_000, { supplierId }) })!;
-    expect(s.treatment?.code).toBe('NON_DEDUCTIBLE');
-    expect(s.decidingRule?.ruleKey).toBe('vat.blocked_food_drink_accommodation');
+    expect(s.treatment?.code).not.toBe('NON_DEDUCTIBLE');
+    expect(s.treatment?.code).not.toBe('IE_STD');
+    expect(s.deductionBlocked?.ruleKey).toBe('vat.blocked_food_drink_accommodation');
   });
 
   it('a US purchase of unknown supply type gets no rule — never the domestic 23% fallback', () => {
