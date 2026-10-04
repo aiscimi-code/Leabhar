@@ -1181,6 +1181,22 @@ describe('cli reconcile — induction and books (issue #153)', () => {
           expect(parsed.invoiceStatuses[0]).toMatchObject({ status: 'paid', outstandingMinor: 0 });
         });
 
+        it('claim-bad-debt-relief claims A x B / (100 + B) on a written-off invoice, and needs every fact stated (#620)', async () => {
+          const silent = iCapture();
+          expect(await iRun(['write-off-bad-debt', '--invoice', 'INV-2025-001', '--reason', 'Liquidation',
+            '--actor', 'Joe', '--date', '2025-09-30'])).toBe(0);
+          expect(await iRun(['claim-bad-debt-relief', '--invoice', 'INV-2025-001', '--actor', 'Joe',
+            '--date', '2025-10-15', '--reasonable-steps', 'yes'])).toBe(1);
+          silent.restore();
+          const c = iCapture();
+          const code = await iRun(['claim-bad-debt-relief', '--invoice', 'INV-2025-001', '--actor', 'Joe',
+            '--date', '2025-10-15', '--reasonable-steps', 'yes', '--allowable-s81', 'yes', '--records-kept', 'yes',
+            '--connected', 'no', '--s95-letting', 'no', '--hire-purchase', 'no']);
+          c.restore();
+          expect(code).toBe(0);
+          expect(JSON.parse(c.stdout.join(''))).toMatchObject({ posted: true, reliefMinor: 23_000 }); // 1230 x 23 / 123
+        });
+
         it('record-payment --unallocated leaves the payment on account on purpose', async () => {
           const c = iCapture();
           const code = await iRun([

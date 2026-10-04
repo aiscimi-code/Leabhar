@@ -1,13 +1,15 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { createTestDatabase, testVatBasis } from '@/db/testing';
 import { createCompany } from '../config/setup';
 import { createInvoice, voidInvoice } from './invoices';
 import { recordPayment } from './payments';
-import { writeOffBadDebt, reverseBadDebtWriteOff } from './badDebts';
+import { writeOffBadDebt, reverseBadDebtWriteOff, claimBadDebtRelief, type BadDebtReliefFacts } from './badDebts';
+import { buildVat3Return } from '../vat/report';
+import { SI_639_CURATED_RULES } from '../rules/si639Curation';
 import { trialBalance, accountBalance } from '../accounting/ledger';
 import { asIsoDate, makeDate } from '../dates';
-import { invoices, customers, vatEntries, reviewItems } from '@/db/schema';
+import { invoices, customers, vatEntries, vatPeriods, reviewItems, journalEntries } from '@/db/schema';
 import { ids } from '@/lib/ids';
 import type { AppDatabase } from '@/db';
 
@@ -98,5 +100,131 @@ describe('bad debts on the cash receipts basis (#404)', () => {
     expect(accountBalance(db, { companyId, accountId: acc['bad_debts']! })).toBe(5_000);
     expect(accountBalance(db, { companyId, accountId: acc['debtors']! })).toBe(0);
     balanced();
+  });
+});
+
+describe('bad-debt relief on the invoice basis (#620: VATCA s.39(2), S.I. 639/2010 reg.10)', () => {
+  const facts: BadDebtReliefFacts = {
+    reasonableStepsTaken: true, allowableUnderTcaS81: true, recordsKept: true, debtorConnected: false,
+    taxableLettingUnderS95: false, hirePurchase: false,
+  };
+  const period = (name: string) => db.select().from(vatPeriods)
+    .where(and(eq(vatPeriods.companyId, companyId), eq(vatPeriods.name, name))).get()!;
+  const box = (name: string, b: 'T1' | 'T2') => buildVat3Return(db, { companyId, vatPeriodId: period(name).id })[b].amountMinor;
+  const writeOff = (invoiceId: string) => writeOffBadDebt(db, {
+    companyId, invoiceId, date: asIsoDate('2025-09-30'), reason: 'Customer in liquidation', actor: 'Joe',
+  });
+  const claim = (invoiceId: string, over: Partial<BadDebtReliefFacts> = {}, date = '2025-10-15') => claimBadDebtRelief(db, {
+    companyId, invoiceId, date: asIsoDate(date), actor: 'Joe', facts: { ...facts, ...over },
+  });
+
+  it('€100 outstanding at 23%: 100 x 23 / 123 = €18.70 in T2 for the claim period, off the bad-debt charge', () => {
+    const inv = sale(10_000); // 123.00
+    pay(inv.invoiceId, 2_300);
+    writeOff(inv.invoiceId);
+    const t2Before = box('Sep–Oct 2025', 'T2');
+    const r = claim(inv.invoiceId);
+    expect(r).toMatchObject({ posted: true, reliefMinor: 1_870 }); // 1869.92
+    expect(box('Sep–Oct 2025', 'T2') - t2Before).toBe(1_870);
+    expect(box('Sep–Oct 2025', 'T1')).toBe(0);
+    expect(accountBalance(db, { companyId, accountId: acc['bad_debts']! })).toBe(10_000 - 1_870);
+    expect(row(inv.invoiceId)).toMatchObject({ badDebtReliefMinor: 1_870, badDebtReliefClaimedAt: '2025-10-15' });
+    const flag = db.select().from(reviewItems).where(eq(reviewItems.dedupeKey, `invoice:${inv.invoiceId}:bad_debt`)).get()!;
+    expect(flag.title).toContain('Bad-debt relief claimed');
+    expect(() => claim(inv.invoiceId)).toThrow(/already been claimed/);
+    balanced();
+  });
+
+  it('at 13.5%, relief on the whole gross is exactly the VAT charged', () => {
+    const inv = createInvoice(db, {
+      companyId, direction: 'sales', invoiceDate: asIsoDate('2025-03-10'), customerId,
+      lines: [{ description: 'Repairs', netMinor: 10_000, accountId: byCode['4020']!, vatTreatmentId: tr['IE_RED']! }],
+    });
+    writeOff(inv.invoiceId);
+    expect(claim(inv.invoiceId)).toMatchObject({ posted: true, reliefMinor: 1_350 }); // 11350 x 13.5 / 113.5
+  });
+
+  it('an unmet reg.10(3) condition, or a s.95 letting, gives no relief and writes nothing', () => {
+    const inv = sale(10_000);
+    writeOff(inv.invoiceId);
+    const journals = db.select().from(journalEntries).all().length;
+    const vat = db.select().from(vatEntries).all().length;
+    const refused = claim(inv.invoiceId, { reasonableStepsTaken: false, debtorConnected: true });
+    expect(refused).toMatchObject({ posted: false });
+    if (refused.posted) throw new Error('posted');
+    expect(refused.reason).toMatch(/reg\.10\(3\)\(a\).*reg\.10\(3\)\(d\)/);
+    expect(claim(inv.invoiceId, { allowableUnderTcaS81: false })).toMatchObject({ posted: false });
+    expect(claim(inv.invoiceId, { recordsKept: false })).toMatchObject({ posted: false });
+    const letting = claim(inv.invoiceId, { taxableLettingUnderS95: true });
+    expect(letting.posted ? '' : letting.reason).toMatch(/s\.39\(3\)/);
+    expect(db.select().from(journalEntries).all()).toHaveLength(journals);
+    expect(db.select().from(vatEntries).all()).toHaveLength(vat);
+    expect(row(inv.invoiceId).badDebtReliefJournalEntryId).toBeNull();
+  });
+
+  it('refuses a debt not written off, a claim before the write-off, hire purchase, and mixed rates', () => {
+    const open = sale(10_000);
+    expect(() => claim(open.invoiceId)).toThrow(/not been written off/);
+    writeOff(open.invoiceId);
+    expect(() => claim(open.invoiceId, {}, '2025-09-29')).toThrow(/after the debt is written off/);
+    expect(() => claim(open.invoiceId, { hirePurchase: true })).toThrow(/reg\.10\(5\)/);
+    const mixed = createInvoice(db, {
+      companyId, direction: 'sales', invoiceDate: asIsoDate('2025-03-10'), customerId,
+      lines: [
+        { description: 'Consulting', netMinor: 10_000, accountId: byCode['4020']!, vatTreatmentId: tr['IE_STD']! },
+        { description: 'Repairs', netMinor: 10_000, accountId: byCode['4020']!, vatTreatmentId: tr['IE_RED']! },
+      ],
+    });
+    writeOff(mixed.invoiceId);
+    expect(() => claim(mixed.invoiceId)).toThrow(/more than one rate/);
+  });
+
+  it('refuses a claim dated in a locked VAT period before anything is written', () => {
+    const inv = sale(10_000);
+    writeOff(inv.invoiceId);
+    db.update(vatPeriods).set({ status: 'locked' }).where(eq(vatPeriods.id, period('Sep–Oct 2025').id)).run();
+    const journals = db.select().from(journalEntries).all().length;
+    expect(() => claim(inv.invoiceId)).toThrow();
+    expect(db.select().from(journalEntries).all()).toHaveLength(journals);
+    expect(row(inv.invoiceId).badDebtReliefJournalEntryId).toBeNull();
+  });
+
+  it('a relieved debt recovered: reversing the write-off charges the tax again in T1 for that period (reg.10(10))', () => {
+    const inv = sale(10_000);
+    writeOff(inv.invoiceId);
+    claim(inv.invoiceId); // 12300 x 23 / 123 = 2300
+    expect(row(inv.invoiceId).badDebtReliefMinor).toBe(2_300);
+    const back = reverseBadDebtWriteOff(db, { companyId, invoiceId: inv.invoiceId, date: asIsoDate('2025-11-20'), reason: 'Liquidator paid in full', actor: 'Joe' });
+    expect(back).toMatchObject({ outstandingMinor: 12_300, reliefRepaidMinor: 2_300 });
+    expect(box('Nov–Dec 2025', 'T1')).toBe(2_300);
+    expect(accountBalance(db, { companyId, accountId: acc['bad_debts']! })).toBe(0);
+    expect(row(inv.invoiceId)).toMatchObject({ status: 'issued', badDebtReliefMinor: 0, badDebtReliefJournalEntryId: null });
+    balanced();
+  });
+
+  it('a reversal dated in a locked VAT period is refused, and the write-off and relief stand', () => {
+    const inv = sale(10_000);
+    writeOff(inv.invoiceId);
+    claim(inv.invoiceId);
+    db.update(vatPeriods).set({ status: 'locked' }).where(eq(vatPeriods.id, period('Nov–Dec 2025').id)).run();
+    expect(() => reverseBadDebtWriteOff(db, { companyId, invoiceId: inv.invoiceId, date: asIsoDate('2025-11-20'), reason: 'Paid', actor: 'Joe' })).toThrow();
+    expect(row(inv.invoiceId)).toMatchObject({ status: 'written_off', badDebtReliefMinor: 2_300 });
+  });
+
+  it('the formula is the one in S.I. 639/2010 reg.10(4)', () => {
+    const rule = SI_639_CURATED_RULES.find((r) => r.ruleKey === 'vat.bad_debt_relief')!;
+    expect(rule.statementExcerpt).toContain('100+B');
+  });
+});
+
+describe('bad-debt relief on the cash receipts basis (#620)', () => {
+  it('is refused: the unpaid VAT was never accounted for', () => {
+    setup('cash_receipts');
+    const inv = sale(10_000);
+    writeOffBadDebt(db, { companyId, invoiceId: inv.invoiceId, date: asIsoDate('2025-09-30'), reason: 'Gone', actor: 'Joe' });
+    expect(() => claimBadDebtRelief(db, {
+      companyId, invoiceId: inv.invoiceId, date: asIsoDate('2025-10-15'), actor: 'Joe',
+      facts: { reasonableStepsTaken: true, allowableUnderTcaS81: true, recordsKept: true, debtorConnected: false, taxableLettingUnderS95: false, hirePurchase: false },
+    })).toThrow(/cash receipts basis/);
   });
 });

@@ -96,6 +96,15 @@ export const invoices = sqliteTable('invoices', {
   writtenOffJournalEntryId: text('written_off_journal_entry_id'),
   writtenOffAt: text('written_off_at'),
   writeOffReason: text('write_off_reason'),
+  /**
+   * Bad-debt relief claimed on the write-off (issue #620; VATCA s.39(2), S.I.
+   * 639/2010 reg.10): the tax relieved, the adjustment that claimed it in T2,
+   * and the day it was claimed. Cleared, with the tax charged again, when the
+   * write-off is reversed (reg.10(10)).
+   */
+  badDebtReliefMinor: integer('bad_debt_relief_minor').notNull().default(0),
+  badDebtReliefJournalEntryId: text('bad_debt_relief_journal_entry_id'),
+  badDebtReliefClaimedAt: text('bad_debt_relief_claimed_at'),
   voidedAt: text('voided_at'),
   voidReason: text('void_reason'),
 

@@ -518,11 +518,23 @@ account. The invoice becomes `written_off` with `outstanding_minor` 0 and
 `written_off_minor` set, so gross = paid + written off. VAT follows the basis:
 on the cash receipts basis the unpaid share of the output VAT was never due and
 is cancelled against deferred VAT (only the net is a bad debt); on the invoice
-basis the VAT was declared, relief under VATCA s.39 is a judgement, and nothing
-is claimed — a review item says relief may be available (#278). A written-off
+basis the VAT was declared, and the write-off claims nothing — a review item
+says relief may be available. A written-off
 invoice cannot be paid, voided or given money on account until
 `reverseBadDebtWriteOff` (the debt recovered) reverses the journal and reopens
 it.
+
+Bad-debt relief on the invoice basis (#620; VATCA s.39(2), S.I. 639/2010
+reg.10) is a separate, later step: `claimBadDebtRelief`. A person states the
+reg.10(3) conditions (reasonable steps taken, allowable under TCA 1997
+s.81(2)(i), the reg.27(1)(m) records kept, the debtor not connected) and that
+the supply is not a s.95 letting (s.39(3)). The relief is A x B / (100 + B),
+A the amount written off and B the rate on the invoice (reg.10(4)). It is
+claimed as deductible tax (reg.10(9)), so it posts to T2 in the period of the
+claim date, and reduces the bad-debt charge. Hire purchase (reg.10(5)), an
+invoice with lines at more than one rate, and an invoice in another currency
+are refused. Reversing a relieved write-off charges the whole relief back to
+T1 in the period of the reversal (reg.10(10)): the debt is restored in full.
 
 ### Debit notes (issue #403)
 

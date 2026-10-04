@@ -113,4 +113,46 @@ export const SI_639_CURATED_RULES: CuratedSi639Rule[] = [
     interpretationNote: 'Enforced by recordDeemedSupply. Amending instruments after 2010 are not ingested; the formula '
       + 'is the as-made text.',
   },
+  {
+    regulationNumber: '10',
+    ruleKey: 'vat.bad_debt_relief',
+    ruleType: 'relief',
+    topic: 'vat_reference',
+    name: 'Bad-debt relief: A x B / (100 + B) on the amount outstanding, claimed as deductible tax (reg.10(3), (4), (9))',
+    statementExcerpt: 'is calculated in accordance with the following formula:\n\nA x\nB\n\n100+B',
+    conditions: [],
+    exceptions: [
+      { condition: 'all reasonable steps to recover the debt have not been taken (reg.10(3)(a))', effect: 'no relief' },
+      { condition: 'the debt is not allowable as a deduction under TCA 1997 s.81(2)(i), where the person is chargeable '
+        + 'under Case I or II of Schedule D (reg.10(3)(b))', effect: 'no relief' },
+      { condition: 'the debt is not written off in the financial accounts, or the reg.27(1)(m) records are not kept '
+        + '(reg.10(3)(c))', effect: 'no relief' },
+      { condition: 'the debtor was connected with the person (VATCA s.97(3)) at any time from the supply to the '
+        + 'write-off (reg.10(3)(d))', effect: 'no relief' },
+      { condition: 'goods supplied under a hire-purchase agreement (VATCA s.19(1)(c))', effect: 'relief is calculated '
+        + 'under reg.10(5) instead' },
+    ],
+    vatEffect: 'The tax attributable to the amount outstanding, A x B / (100 + B), B the rate applied to the supply, is '
+      + 'claimed as if it were deductible tax for the taxable period of the claim (reg.10(9)).',
+    reportingEffect: 'T2 in the period the claim is made.',
+    interpretationNote: 'Enforced by claimBadDebtRelief from the facts a person states, on an invoice written off on '
+      + 'the invoice basis. Hire purchase (reg.10(5)-(7)), an invoice with lines at more than one rate, and an invoice '
+      + 'in another currency are refused. The as-made text matches the current consolidated view (TaxSource, '
+      + 'checked 2026-10-04).',
+  },
+  {
+    regulationNumber: '10',
+    ruleKey: 'vat.bad_debt_recovered',
+    ruleType: 'relief',
+    topic: 'vat_reference',
+    name: 'A relieved bad debt later recovered: tax on the amount recovered is due for the period of recovery (reg.10(10))',
+    statementExcerpt: 'the amount so recovered is treated as inclusive of tax,',
+    conditions: [],
+    exceptions: [],
+    vatEffect: 'The amount recovered is treated as inclusive of tax; the tax on it is due and payable for the taxable '
+      + 'period in which it is recovered.',
+    reportingEffect: 'T1 in the period the debt is recovered.',
+    interpretationNote: 'Enforced by reverseBadDebtWriteOff: reversing a write-off restores the whole debt, so the '
+      + 'whole relief claimed is charged again, dated the reversal.',
+  },
 ];
