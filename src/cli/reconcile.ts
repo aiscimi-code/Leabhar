@@ -67,7 +67,7 @@ import { allocatePaymentOnAccount, paymentsOnAccount } from '@/domain/invoicing/
 import { reconciliationStatement } from '@/domain/banking/reconciliationStatement';
 import { salesInvoiceDocument } from '@/domain/invoicing/invoiceDocument';
 import { createInvoice } from '@/domain/invoicing/invoices';
-import { writeOffBadDebt, reverseBadDebtWriteOff } from '@/domain/invoicing/badDebts';
+import { writeOffBadDebt, reverseBadDebtWriteOff, claimBadDebtRelief } from '@/domain/invoicing/badDebts';
 import { setSupplierTerms } from '@/domain/parties/supplierAccount';
 import {
   overdueInvoices, customerStatement, produceReminderLetter, reminderLetter, receivablesSummary,
@@ -307,6 +307,12 @@ Books (once induction is done):
   write-off-bad-debt --invoice <number|id> --reason "..." --actor "Name" [--date <date>]
       [--account <expense code>]  Outstanding to bad debts; VAT handled per basis
   reverse-bad-debt --invoice <number|id> --reason "..." --actor "Name" [--date <date>]
+      A relieved debt: the relief is charged back in T1 (S.I. 639/2010 reg.10(10))
+  claim-bad-debt-relief --invoice <number|id> --actor "Name" [--date <date>]
+      --reasonable-steps yes|no --allowable-s81 yes|no --records-kept yes|no
+      --connected yes|no --s95-letting yes|no --hire-purchase yes|no
+      VAT relief on a debt written off on the invoice basis, A x B / (100 + B),
+      in T2 (VATCA s.39(2), S.I. 639/2010 reg.10); each fact must be stated
   apply-credit-note --credit-note <number|id> --invoice <number|id> --amount <12.30>
       --actor "Name" [--date <date>] [--reason ...]  No cash; nothing posted
   unapply-credit-note --payment <id> --actor "Name" --reason "..."
@@ -1270,6 +1276,22 @@ export async function main(argv: string[], options: CliOptions = {}): Promise<nu
         return 0;
       }
 
+      case 'claim-bad-debt-relief': {
+        print(claimBadDebtRelief(db, {
+          companyId, invoiceId: resolveInvoiceId(db, companyId, requireFlag(flags, 'invoice')),
+          date: asIsoDate(getFlag(flags, 'date') ?? today()), actor: requireFlag(flags, 'actor'),
+          facts: {
+            reasonableStepsTaken: requireYesNo(flags, 'reasonable-steps'),
+            allowableUnderTcaS81: requireYesNo(flags, 'allowable-s81'),
+            recordsKept: requireYesNo(flags, 'records-kept'),
+            debtorConnected: requireYesNo(flags, 'connected'),
+            taxableLettingUnderS95: requireYesNo(flags, 's95-letting'),
+            hirePurchase: requireYesNo(flags, 'hire-purchase'),
+          },
+        }), format);
+        return 0;
+      }
+
       case 'reverse-bad-debt': {
         print(reverseBadDebtWriteOff(db, {
           companyId, invoiceId: resolveInvoiceId(db, companyId, requireFlag(flags, 'invoice')),
@@ -2099,6 +2121,13 @@ function requireFlag(
     throw new Error(`Missing required flag: --${names[0]}`);
   }
   return value;
+}
+
+/** A fact a person must state: --flag yes or --flag no, never assumed. */
+function requireYesNo(flags: Record<string, string | boolean>, name: string): boolean {
+  const value = requireFlag(flags, name).toLowerCase();
+  if (value !== 'yes' && value !== 'no') throw new Error(`--${name} must be yes or no.`);
+  return value === 'yes';
 }
 
 /** Parse an --fx-rate flag of the form "num/den" (e.g. "113/100"). */

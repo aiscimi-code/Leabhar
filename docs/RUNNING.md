@@ -147,7 +147,12 @@ npm run cli -- create-debit-note --invoice <n> --description "..." --net <12.30>
 npm run cli -- write-off-bad-debt --invoice <n> --reason "..." --actor "Name" [--date <date>] [--account <code>]
     # outstanding to bad debts (6230); on the cash receipts basis the unpaid VAT is
     # cancelled from deferred VAT; on the invoice basis relief (s.39) is flagged
-npm run cli -- reverse-bad-debt --invoice <n> --reason "..." --actor "Name"   # the debt recovered
+npm run cli -- claim-bad-debt-relief --invoice <n> --actor "Name" [--date <date>]
+    --reasonable-steps yes|no --allowable-s81 yes|no --records-kept yes|no
+    --connected yes|no --s95-letting yes|no --hire-purchase yes|no
+    # invoice basis: A x B / (100 + B) in T2 for the claim period (S.I. 639/2010 reg.10)
+npm run cli -- reverse-bad-debt --invoice <n> --reason "..." --actor "Name"   # the debt recovered;
+    # relief claimed on it is charged back in T1 (reg.10(10))
 npm run cli -- receivables [--as-of <date>]            # owed, overdue, on account, top debtors
 npm run cli -- overdue [--as-of <date>] [--customer <id>]
 npm run cli -- customer-statement --customer <id> --from <date> --to <date> [--out statement.pdf]

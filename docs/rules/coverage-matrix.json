@@ -325,9 +325,10 @@
       "id": "vatca:s39",
       "area": "vatca_section",
       "title": "s.39 General provisions on consideration.",
-      "status": "deferred",
-      "issue": 620,
-      "reason": "The taxable amount follows the consideration actually received; where it is not received, relief depends on bad-debt relief, which is not implemented on the invoice basis (#619)."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.consideration_not_received_relief"
+      ]
     },
     {
       "id": "vatca:s40",
@@ -3406,6 +3407,16 @@
       "status": "rule",
       "ruleKeys": [
         "vat.immovable_goods_private_use_proportion"
+      ]
+    },
+    {
+      "id": "si639-2010:reg10",
+      "area": "other_source",
+      "title": "S.I. 639/2010 reg.10 — bad debts and early termination of hire purchase",
+      "status": "rule",
+      "ruleKeys": [
+        "vat.bad_debt_relief",
+        "vat.bad_debt_recovered"
       ]
     },
     {
