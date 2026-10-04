@@ -342,6 +342,14 @@ export interface CreateVatEntriesInput {
   treatmentId: string;
   rateOverrideId?: string;
   taxPointDate: IsoDate;
+  /**
+   * The date the treatment and rate are resolved on, where it is not the tax
+   * point (issue #615): on the cash receipts basis the tax point is the
+   * receipt, but "the rate of tax due ... in respect of a supply shall be the
+   * rate of tax chargeable at the time the goods or services are supplied"
+   * (VATCA s.80(2)(a)). Defaults to the tax point.
+   */
+  rateDate?: IsoDate;
   netMinor?: number;
   grossMinor?: number;
   statedVatMinor?: number;
@@ -381,7 +389,7 @@ export function createVatEntries(
   const resolved = resolveTreatment(db, {
     companyId: input.companyId,
     treatmentId: input.treatmentId,
-    onDate: input.taxPointDate,
+    onDate: input.rateDate ?? input.taxPointDate,
     rateOverrideId: input.rateOverrideId,
   });
 

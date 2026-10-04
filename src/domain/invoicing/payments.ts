@@ -592,6 +592,8 @@ function recordPaymentSteps(db: AppDatabase, input: RecordPaymentInput): Recorde
       invoiceLineId: release.invoiceLineId,
       // The tax point is the payment date. This is the whole point of the basis.
       taxPointDate: input.paymentDate,
+      // The rate is the one chargeable when the supply was made (s.80(2)(a), #615).
+      rateDate: asIsoDate(target.invoice.supplyDate ?? target.invoice.invoiceDate),
       declarationDate: input.vatDeclarationDate ?? undefined,
       netMinor: release.netMinor,
       statedVatMinor: release.vatMinor,

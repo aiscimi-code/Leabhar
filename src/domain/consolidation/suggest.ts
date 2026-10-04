@@ -4,7 +4,7 @@ import { companies, suppliers, customers, vatTreatments } from '@/db/schema';
 import { asIsoDate } from '../dates';
 import { resolveTreatment } from '../vat/engine';
 import { parseVatNumber, EU_COUNTRY_CODES } from '../extraction/vatNumbers';
-import { suggestFromFacts, applyEstablishment, applyCustomerStatus, type SuggestionFacts, type VatSuggestion } from '../rules/vatSuggestion';
+import { suggestFromFacts, applyEstablishment, applyCustomerStatus, customerRegisteredInOtherMemberState, isNorthernIrelandParty, type SuggestionFacts, type VatSuggestion } from '../rules/vatSuggestion';
 import { documentEvidenceLines, particularsOf, type EvidenceLine } from './postDocument';
 import { checkLineRate, type LineRateCheck } from '../rules/lineRateCheck';
 import { applyCompositeSupply } from './compositeSupply';
@@ -107,12 +107,17 @@ export function documentLineChoices(db: AppDatabase, params: { companyId: string
       invoiceAvailable: true,
       supplyType,
     };
+    if (isNorthernIrelandParty(vatInfo, country)) {
+      facts.counterpartyNorthernIreland = true;
+      sources.counterpartyNorthernIreland = `${partyLabel} ${vatInfo?.isNorthernIreland ? `VAT number ${vatInfo.normalised}` : 'country'} `
+        + '(XI: Northern Ireland, EU VAT rules for goods only)';
+    }
     if (isSale) {
       facts.customerCountry = country;
       if (vatInfo) {
         const c = party as typeof customers.$inferSelect | undefined;
         const vies = c?.viesStatus && c.viesCheckedVatNumber === vatInfo.normalised ? c.viesStatus : null;
-        facts.customerVatRegisteredEu = vatInfo.structurallyValid && vatInfo.isEu && !vatInfo.isIrish && vies !== 'invalid';
+        facts.customerVatRegisteredEu = customerRegisteredInOtherMemberState(vatInfo, vies, supplyType);
       }
       const customer = party as typeof customers.$inferSelect | undefined;
       applyCustomerStatus(facts, sources, customer ?? (vatNumber ? { name: 'the customer', taxableStatus: null, vatNumber } : undefined), vatInfo);

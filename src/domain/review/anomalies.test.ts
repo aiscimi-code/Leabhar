@@ -32,7 +32,7 @@ beforeEach(() => {
   ({ db } = createTestDatabase());
   const created = createCompany(db, {
     legalName: 'Acme Ltd', vatRegistrationStatus: 'registered',
-    vatAccountingBasis: 'invoice', seedYears: [2025],
+    vatAccountingBasis: 'invoice', seedYears: [2025, 2026],
   });
   companyId = created.companyId;
   acc = created.accountsByKey;
@@ -314,6 +314,22 @@ describe('invoice anomalies', () => {
 
     const scan = scanForAnomalies(db, { companyId });
     expect(scan.anomalies.filter((a) => a.code === 'hospitality_rate_mismatch')).toHaveLength(0);
+  });
+
+  // Issue #618: the expected rate comes from the dated rules, not a literal.
+  it('from 1 July 2026 flags a restaurant line still posted at 13.5%, and not one at 9%', () => {
+    const meal = (number: string, code: string) => createInvoice(db, {
+      companyId, direction: 'purchase', invoiceDate: makeDate(2026, 8, 10),
+      supplierId, invoiceNumber: number,
+      lines: [{ description: 'Restaurant - team lunch', netMinor: 10_000, accountId: byCode['6110']!, vatTreatmentId: tr[code]! }],
+    });
+    const atReduced = meal('PI-2608-A', 'IE_RED');
+    const atSecondReduced = meal('PI-2608-B', 'IE_SECOND_RED');
+
+    const found = scanForAnomalies(db, { companyId }).anomalies.filter((a) => a.code === 'hospitality_rate_mismatch');
+    expect(found.map((a) => a.entityId)).toEqual([atReduced.invoiceId]);
+    expect(found[0]!.detail).toMatch(/9% on 2026-08-10/);
+    expect(found.some((a) => a.entityId === atSecondReduced.invoiceId)).toBe(false);
   });
 
   // Issue #145 defect 5: a charitable donation posted as an ordinary

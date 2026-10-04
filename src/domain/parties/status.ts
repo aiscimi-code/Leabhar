@@ -120,8 +120,9 @@ export async function checkVatNumberWithVies(db: AppDatabase, params: {
   const party = loadParty(db, params.companyId, params.party, params.partyId);
   if (!party.vatNumber) throw new Error(`${party.name} has no VAT number to check.`);
   const parsed = parseVatNumber(party.vatNumber);
-  if (!parsed.isEu || !parsed.structurallyValid) {
-    throw new Error(`${parsed.normalised} is not a well-formed EU VAT number, so VIES cannot check it.`);
+  // VIES also holds Northern Ireland (XI) numbers (VIES Traders Manual, Appendix 9; issue #610).
+  if (!(parsed.isEu || parsed.isNorthernIreland) || !parsed.structurallyValid) {
+    throw new Error(`${parsed.normalised} is not a well-formed EU or Northern Ireland (XI) VAT number, so VIES cannot check it.`);
   }
   const prefix = parsed.normalised.slice(0, 2);
   const number = parsed.normalised.slice(2);

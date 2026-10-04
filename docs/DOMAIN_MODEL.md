@@ -294,6 +294,13 @@ this could not have been retrofitted onto a column-based design.
 Input VAT is on the invoice date under **both** bases — the cash receipts basis
 in Ireland applies to output VAT only. This asymmetry is deliberate and tested.
 
+Northern Ireland is a Member State for goods and outside the EU for services
+(the Protocol / Windsor Framework; VIES Traders Manual, Appendix 9; VATCA s.2
+as revised). A trader there is recognised by an `XI` VAT number, or `XI` as its
+country, and `counterpartyInEu` follows the supply kind: goods from an XI
+supplier are an acquisition (E2), goods to an XI customer an intra-Community
+supply (E1 and VIES), and services either way are non-EU (#610).
+
 The cash receipts basis needs Revenue's authorisation (VATCA s.80(1), S.I.
 639/2010 reg.25). Choosing it on the company profile does not put a sale on it:
 a sale is on the cash basis only when an authorisation is recorded from a date

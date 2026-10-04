@@ -4,7 +4,9 @@ import { createCompany } from '../config/setup';
 import { createInvoice } from '../invoicing/invoices';
 import { buildRtdReturn, RTD_BOXES } from './rtd';
 import { buildViesStatement, viesChargeableDate } from './vies';
-import { customers, suppliers } from '@/db/schema';
+import { customers, suppliers, taxRates } from '@/db/schema';
+import { and, eq } from 'drizzle-orm';
+import { supersedeTaxRate, createTaxRate } from '../config/mutations';
 import { makeDate } from '../dates';
 import { ids } from '@/lib/ids';
 import type { AppDatabase } from '@/db';
@@ -62,6 +64,22 @@ describe('exports outside the EU (issue #613)', () => {
     expect(rtd.boxes[RTD_BOXES.supplies.zero_exports!]).toBe(50_000);
     expect(rtd.boxes[RTD_BOXES.supplies.zero!]).toBe(7_000);
     expect(rtd.boxes[RTD_BOXES.supplies.total!]).toBe(57_000);
+  });
+});
+
+describe('RTD rows follow the rate\'s classification, not its figure (issue #618)', () => {
+  it('a superseded standard rate stays on the standard row; an unclassified rate is reported as unmapped', () => {
+    const stdId = db.select().from(taxRates).where(and(eq(taxRates.companyId, companyId), eq(taxRates.code, 'VAT_STD'))).get()!.id;
+    supersedeTaxRate(db, { companyId, taxRateId: stdId, newRateBasisPoints: 2400, effectiveFrom: makeDate(2025, 3, 1) });
+    post('sales', 'IE_STD', 10_000, 'ie');
+    const customId = createTaxRate(db, { companyId, code: 'VAT_CUSTOM', name: 'Custom', rateBasisPoints: 1000, effectiveFrom: makeDate(2025, 1, 1) });
+    createInvoice(db, {
+      companyId, direction: 'sales', invoiceDate: makeDate(2025, 3, 10), invoiceNumber: 'R-custom', customerId: party['ie'],
+      lines: [{ description: 'Custom-rate line', netMinor: 5_000, accountId: byCode['4020']!, vatTreatmentId: tr['IE_STD']!, taxRateId: customId }],
+    });
+    const rtd = buildRtdReturn(db, { companyId, date: '2025-06-30' });
+    expect(rtd.boxes[RTD_BOXES.supplies.standard!]).toBe(10_000);
+    expect(rtd.findings.map((f) => f.code)).toContain('rtd_rate_not_on_grid');
   });
 });
 
