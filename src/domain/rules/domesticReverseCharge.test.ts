@@ -87,17 +87,19 @@ describe('s.16(3) construction services', () => {
 });
 
 describe('the other s.16 reverse charges are flagged', () => {
-  it('scrap metal: no treatment chosen, RC_CONSTRUCTION offered', () => {
+  // Issue #621: each is offered its own subsection's treatment, never RC_CONSTRUCTION (s.16(3), RCT).
+  it.each([
+    ['SCRAP COPPER 2.4T', 'vat.domestic_reverse_charge_scrap_metal', 'RC_SCRAP_METAL', /s\.16\(4\)/],
+    ['EU EMISSION ALLOWANCES 500', 'vat.domestic_reverse_charge_emission_allowances', 'RC_EMISSION_ALLOWANCES', /s\.16\(2\)/],
+    ['GUARANTEES OF ORIGIN Q1', 'vat.domestic_reverse_charge_energy_certificates', 'RC_ENERGY_CERTIFICATES', /s\.16\(7\)/],
+    ['WHOLESALE ELECTRICITY MARCH', 'vat.domestic_reverse_charge_gas_electricity_dealer', 'RC_GAS_ELECTRICITY', /s\.16\(6\)/],
+  ])('%s: no treatment chosen, %s offers %s', (description, ruleKey, offered, provision) => {
     const ctx = setup();
-    const s = suggest(ctx, 'SCRAP COPPER 2.4T', -90_000);
-    expect(s.decidingRule?.ruleKey).toBe('vat.domestic_reverse_charge_scrap_metal');
+    const s = suggest(ctx, description, -90_000);
+    expect(s.decidingRule?.ruleKey).toBe(ruleKey);
     expect(s.treatment).toBeNull();
-    expect(s.offeredTreatmentCodes).toEqual(['RC_CONSTRUCTION']);
-  });
-
-  it('emission allowances and energy certificates', () => {
-    const ctx = setup();
-    expect(suggest(ctx, 'EU EMISSION ALLOWANCES 500', -900_000).decidingRule?.ruleKey).toBe('vat.domestic_reverse_charge_emission_allowances');
-    expect(suggest(ctx, 'GUARANTEES OF ORIGIN Q1', -20_000).decidingRule?.ruleKey).toBe('vat.domestic_reverse_charge_energy_certificates');
+    expect(s.offeredTreatmentCodes).toEqual([offered]);
+    expect(s.reviewReasons.join(' ')).toMatch(provision);
+    expect(s.reviewReasons.join(' ')).not.toMatch(/RC_CONSTRUCTION/);
   });
 });

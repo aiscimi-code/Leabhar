@@ -2141,6 +2141,58 @@
       ]
     },
     {
+      "id": "treatment:RC_SCRAP_METAL",
+      "area": "vat_treatment",
+      "title": "RC_SCRAP_METAL",
+      "status": "rule",
+      "ruleKeys": [
+        "vat.domestic_reverse_charge_scrap_metal"
+      ]
+    },
+    {
+      "id": "treatment:RC_EMISSION_ALLOWANCES",
+      "area": "vat_treatment",
+      "title": "RC_EMISSION_ALLOWANCES",
+      "status": "rule",
+      "ruleKeys": [
+        "vat.domestic_reverse_charge_emission_allowances"
+      ]
+    },
+    {
+      "id": "treatment:RC_CONNECTED_CONSTRUCTION",
+      "area": "vat_treatment",
+      "title": "RC_CONNECTED_CONSTRUCTION",
+      "status": "not_applicable",
+      "reason": "No rule decides or offers it: the s.16(5) rule only advises, because whether the builder is connected (s.97(3)) is not recorded. A person chooses it."
+    },
+    {
+      "id": "treatment:RC_GAS_ELECTRICITY",
+      "area": "vat_treatment",
+      "title": "RC_GAS_ELECTRICITY",
+      "status": "rule",
+      "ruleKeys": [
+        "vat.domestic_reverse_charge_gas_electricity_dealer"
+      ]
+    },
+    {
+      "id": "treatment:RC_ENERGY_CERTIFICATES",
+      "area": "vat_treatment",
+      "title": "RC_ENERGY_CERTIFICATES",
+      "status": "rule",
+      "ruleKeys": [
+        "vat.domestic_reverse_charge_energy_certificates"
+      ]
+    },
+    {
+      "id": "treatment:RC_PROPERTY_JOINT_OPTION",
+      "area": "vat_treatment",
+      "title": "RC_PROPERTY_JOINT_OPTION",
+      "status": "rule",
+      "ruleKeys": [
+        "vat.joint_option_for_taxation"
+      ]
+    },
+    {
       "id": "treatment:NON_DEDUCTIBLE",
       "area": "vat_treatment",
       "title": "NON_DEDUCTIBLE",
