@@ -9,6 +9,7 @@ import { asIsoDate, nowIso, type IsoDate } from '../dates';
 import { asMinor, multiplyRational } from '../money';
 import {
   postJournalEntry, reverseJournalEntry, atomically, assertAccountingPeriodOpen,
+  withFxRoundingLine,
 } from '../accounting/journal';
 import { systemAccountId } from '../config/setup';
 import { createVatEntries, resolveTreatment, calculateVat, assertVatPeriodWritable, findVatPeriod } from '../vat/engine';
@@ -353,7 +354,10 @@ function classifyTransactionSteps(db: AppDatabase, input: ClassifyInput): Classi
     createdBy: input.actor ?? 'user',
     createdVia: input.source === 'rule' ? 'rule' : input.source === 'ai' ? 'ai' : 'user',
     requestId: input.requestId,
-    lines,
+    // Each line converted on its own can leave base totals a cent apart (#639).
+    lines: lineCurrency === baseCurrency
+      ? lines
+      : withFxRoundingLine(lines, baseCurrency, systemAccountId(db, input.companyId, 'rounding_difference')),
   });
 
   const vatResult = createsVat

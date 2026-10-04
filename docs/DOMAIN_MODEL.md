@@ -118,6 +118,13 @@ Rules:
 - A missing FX rate is an **exception**, never an assumed 1.0.
 - FX gain/loss on settlement posts to a dedicated account so it is separately
   identifiable (§22).
+- Each journal line is converted on its own, so a foreign-currency invoice,
+  bad-debt write-off or bank classification that balances in its own currency
+  can be a minor unit or two out in base currency. That difference posts as its own base-currency line to
+  `rounding_difference` (4099), with a memo saying why (issue #639). It is
+  added only when the entry balances exactly in its own currency and the
+  difference is within what per-line rounding can produce (half a minor unit
+  per converted line); anything larger is still refused as unbalanced.
 - For VAT (issue #614), s.37(4) sets the rate. It is the latest selling rate
   recorded by the Central Bank of Ireland or the European Central Bank for the
   currency at the time the tax becomes due, unless a method has been agreed

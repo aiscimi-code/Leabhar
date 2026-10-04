@@ -43,8 +43,8 @@ const usdPurchase = (source: string, over: { treatment?: string; statedVatMinor?
       description: 'Parts', netMinor: 1_001, statedVatMinor: 'statedVatMinor' in over ? over.statedVatMinor : 230,
       accountId: byCode['6070']!, vatTreatmentId: tr[over.treatment ?? 'IE_STD']!,
     },
-    // A second line whose rounding offsets the first across the invoice, so its
-    // journal (each line converted on its own) balances.
+    // A second line whose rounding offsets the first across the invoice, so the
+    // journal needs no rounding line (that case is fxRounding.test.ts, #639).
     ...(over.treatment ? [] : [{
       description: 'Fittings', netMinor: 500, statedVatMinor: 115, accountId: byCode['6070']!, vatTreatmentId: tr['IE_STD']!,
     }]),
