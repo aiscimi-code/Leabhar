@@ -898,8 +898,10 @@
       "id": "vatca:s99",
       "area": "vatca_section",
       "title": "s.99 General provisions on refund of tax.",
-      "status": "not_applicable",
-      "reason": "procedure or administration — not a transaction classification"
+      "status": "rule",
+      "ruleKeys": [
+        "vat.refund_claim_time_limit"
+      ]
     },
     {
       "id": "vatca:s100",
@@ -996,9 +998,8 @@
       "id": "vatca:s113",
       "area": "vatca_section",
       "title": "s.113 Time limits.",
-      "status": "deferred",
-      "issue": 646,
-      "reason": "Time limits decide whether a late claim may enter a return at all. A late declaration is flagged but never checked against the limit (#619)."
+      "status": "not_applicable",
+      "reason": "The window for Revenue's own estimates and assessments under ss.110-111, not a limit on a claim. A late input VAT claim is limited by s.99(4) (vatca:s99, issue #646)."
     },
     {
       "id": "vatca:s114",

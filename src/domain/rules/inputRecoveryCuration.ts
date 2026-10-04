@@ -31,6 +31,7 @@ export const BLOCKED_PETROL_RULE_KEY = 'vat.blocked_petrol';
 export const QUALIFYING_VEHICLE_DISPOSAL_RULE_KEY = 'vat.qualifying_vehicle_disposal';
 export const INVOICE_PARTICULARS_RULE_KEY = 'vat.invoice_prescribed_particulars';
 export const CREDIT_NOTE_RULE_KEY = 'vat.credit_note_reduces_deduction';
+export const LATE_CLAIM_LIMIT_RULE_KEY = 'vat.refund_claim_time_limit';
 
 /** The s.60(2)(a) blocks: when one matches, the general s.59 deduction does not apply. */
 export const BLOCKED_DEDUCTION_RULE_KEYS = [
@@ -130,6 +131,18 @@ export const INPUT_RECOVERY_CURATED_RULES: CuratedVatScopeRule[] = [
     vatEffect: 'Input VAT is deducted only on an invoice with the prescribed particulars; posting a confirmed purchase '
       + 'invoice checks them (missingInvoiceParticulars) and holds the VAT back when one is missing.',
     interpretationNote: 'Enforced when a confirmed document is posted, not by matching words.',
+  }),
+  rule({
+    citation: '2010 Act 31 s.99', sectionNumber: '99', ruleKey: LATE_CLAIM_LIMIT_RULE_KEY,
+    name: 'A claim for a refund may be made only within 4 years after the end of its taxable period (s.99(4))',
+    statementExcerpt: 'may be made only within 4 years\nafter the end of the taxable period to which it relates.',
+    conditions: [purchase, desc('\\b(late claim|refund claim|repayment claim|claim for (a )?refund)\\b')],
+    crossReferences: ['VATCA 2010 s.113 (the window for Revenue\'s estimates and assessments, not this limit)'],
+    vatEffect: 'Input VAT declared in a later period than its own (a late declaration) is claimed only if the return '
+      + 'for that later period can be made within 4 years after the end of the period it relates to. Posting a purchase '
+      + 'declared out of time costs the VAT and does not claim it (lateClaimLimit).',
+    interpretationNote: 'Enforced when a late declaration is posted, not by matching words. The taxable period is read '
+      + 'as the company\'s VAT period covering the tax point.',
   }),
   rule({
     citation: 'VATCA 2010 s.67', sectionNumber: '67', ruleKey: CREDIT_NOTE_RULE_KEY,
