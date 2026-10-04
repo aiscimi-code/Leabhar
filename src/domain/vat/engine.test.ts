@@ -169,6 +169,14 @@ describe('calculateVat', () => {
     expect(result.vatMinor).toBe(2_760);
   });
 
+  it('applies the rate to a separate taxable amount while reporting the net, for an import valuation (#609)', () => {
+    const pa = treatment('IMPORT_PA');
+    const r = calculateVat({ treatment: pa, rateBasisPoints: 2300, direction: 'purchases', netMinor: 1_120_000, taxableAmountMinor: 1_200_000 });
+    expect(r).toMatchObject({ netMinor: 1_120_000, vatMinor: 276_000, grossMinor: 1_120_000, recoverableVatMinor: 276_000 });
+    expect(() => calculateVat({ treatment: pa, rateBasisPoints: 2300, direction: 'purchases', grossMinor: 1_000, taxableAmountMinor: 1_000 }))
+      .toThrow(/needs the net/);
+  });
+
   it('recoverableOverrideMinor holds back recovery pending review without changing the VAT charged', () => {
     const result = calculateVat({
       treatment: treatment('IE_STD'), rateBasisPoints: 2300,

@@ -294,6 +294,15 @@ this could not have been retrofitted onto a column-based design.
 Input VAT is on the invoice date under **both** bases — the cash receipts basis
 in Ireland applies to output VAT only. This asymmetry is deliberate and tested.
 
+An import under postponed accounting (IMPORT_PA) self-accounts VAT on the
+value for import VAT purposes: customs (CIF) value, plus customs/excise duty
+and other charges payable at importation, plus freight from the EU point of
+entry to Ireland (Revenue Customs Manual on Import VAT §2.3). Box PA1 reports
+the customs value plus customs duty (Revenue, completing the VAT3). Both come
+from the customs declaration (`importValuation` on the invoice line, in the
+base currency), never the supplier's invoice; a line without one is posted on
+the invoice net and flagged (#609).
+
 Northern Ireland is a Member State for goods and outside the EU for services
 (the Protocol / Windsor Framework; VIES Traders Manual, Appendix 9; VATCA s.2
 as revised). A trader there is recognised by an `XI` VAT number, or `XI` as its
