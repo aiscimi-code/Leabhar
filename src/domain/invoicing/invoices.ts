@@ -482,6 +482,14 @@ function createInvoiceSteps(db: AppDatabase, input: CreateInvoiceInput): Created
 
   const journalLines: Parameters<typeof postJournalEntry>[1]['lines'] = [];
   const fxRate = input.fxRate;
+  // The VAT entries convert each line's VAT on its own (createVatEntries), so
+  // in another currency the journal posts one VAT line per invoice line: each
+  // is converted exactly as its entry is, and the VAT accounts agree with the
+  // return (#643). In the base currency nothing is converted, so one line
+  // carries the total.
+  const vatPostings = (amounts: number[]): number[] => (currency === baseCurrency
+    ? [amounts.reduce((a, b) => a + b, 0)]
+    : amounts).filter((amount) => amount !== 0);
   const counterparty = isSales
     ? { customerId: input.customerId }
     : { supplierId: input.supplierId };
@@ -507,10 +515,10 @@ function createInvoiceSteps(db: AppDatabase, input: CreateInvoiceInput): Created
         currency, fxRate, ...counterparty, memo: line.description,
       });
     }
-    if (vatMinor !== 0 && !historic) {
+    for (const amount of historic ? [] : vatPostings(computed.map((c) => c.calculation.vatMinor))) {
       journalLines.push({
         accountId: vatDeferred ? vatOnSalesDeferred : vatOnSales,
-        ...(vatMinor >= 0 ? { creditMinor: vatMinor } : { debitMinor: -vatMinor }),
+        ...(amount >= 0 ? { creditMinor: amount } : { debitMinor: -amount }),
         currency, fxRate,
         memo: vatDeferred
           ? 'Output VAT, not due until the customer pays (cash receipts basis)'
@@ -531,8 +539,7 @@ function createInvoiceSteps(db: AppDatabase, input: CreateInvoiceInput): Created
         });
       }
     }
-    const recoverable = historic ? 0 : computed.reduce((s, c) => s + c.calculation.recoverableVatMinor, 0);
-    if (recoverable !== 0) {
+    for (const recoverable of historic ? [] : vatPostings(computed.map((c) => c.calculation.recoverableVatMinor))) {
       journalLines.push({
         accountId: vatOnPurchases,
         ...(recoverable >= 0 ? { debitMinor: recoverable } : { creditMinor: -recoverable }),
@@ -554,10 +561,10 @@ function createInvoiceSteps(db: AppDatabase, input: CreateInvoiceInput): Created
       journalLines.push({ accountId: vatOnSales, creditMinor: importVat.vatMinor, currency: baseCurrency, memo: 'Import VAT (postponed accounting)' });
     }
     // Reverse charge: the same invoice creates an output VAT liability too.
-    const reverseChargeVat = historic ? 0 : computed
+    const reverseChargeVats = historic ? [] : vatPostings(computed
       .filter((c) => c.resolved.treatment.isReverseCharge)
-      .reduce((s, c) => s + c.calculation.vatMinor, 0);
-    if (reverseChargeVat !== 0) {
+      .map((c) => c.calculation.vatMinor));
+    for (const reverseChargeVat of reverseChargeVats) {
       journalLines.push({
         accountId: vatOnSales,
         ...(reverseChargeVat >= 0
