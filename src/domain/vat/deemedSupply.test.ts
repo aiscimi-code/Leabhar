@@ -5,7 +5,9 @@ import { createCompany } from '../config/setup';
 import { buildVat3Return } from './report';
 import { journalEntries, journalLines, reviewItems, vatEntries, vatPeriods } from '@/db/schema';
 import type { AppDatabase } from '@/db';
-import { recordDeemedSupply, BUSINESS_GIFT_LIMIT_MINOR, DeemedSupplyError, type DeemedSupplyInput } from './deemedSupply';
+import {
+  recordDeemedSupply, deemedSupplyGoodsTreatments, BUSINESS_GIFT_LIMIT_MINOR, DeemedSupplyError, type DeemedSupplyInput,
+} from './deemedSupply';
 import { SI_639_CURATED_RULES } from '../rules/si639Curation';
 
 /**
@@ -129,5 +131,19 @@ describe('private use of pre-2011 property (s.27(2), s.44, reg.7)', () => {
   it('refuses a private floor area larger than the whole', () => {
     expect(() => property({ privateFloorArea: 101 })).toThrow(DeemedSupplyError);
     expect(() => property({ privateFloorArea: 0 })).toThrow(DeemedSupplyError);
+  });
+});
+
+describe('the rates offered for a deemed supply of goods (#658)', () => {
+  it('lists only Irish sales rates that charge VAT: the same test recordDeemedSupply applies', () => {
+    const offered = deemedSupplyGoodsTreatments(db, companyId);
+    expect(offered.map((t) => t.code)).toContain('IE_STD');
+    expect(goods({ treatmentCode: 'IE_STD' }).posted).toBe(true);
+    for (const t of offered) {
+      expect([t.jurisdiction, t.direction === 'purchases', t.isReverseCharge, t.appliesRate]).toEqual(['IE', false, false, true]);
+      // Accepted, never refused as the wrong rate; a zero rate is a supply with no VAT to post.
+      const r = goods({ treatmentCode: t.code });
+      if (!r.posted) expect(r.reason).toMatch(/zero-rated/);
+    }
   });
 });

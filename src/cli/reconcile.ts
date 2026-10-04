@@ -68,6 +68,7 @@ import { reconciliationStatement } from '@/domain/banking/reconciliationStatemen
 import { salesInvoiceDocument } from '@/domain/invoicing/invoiceDocument';
 import { createInvoice } from '@/domain/invoicing/invoices';
 import { writeOffBadDebt, reverseBadDebtWriteOff, claimBadDebtRelief } from '@/domain/invoicing/badDebts';
+import { recordDeemedSupply } from '@/domain/vat/deemedSupply';
 import { setSupplierTerms } from '@/domain/parties/supplierAccount';
 import {
   overdueInvoices, customerStatement, produceReminderLetter, reminderLetter, receivablesSummary,
@@ -313,6 +314,13 @@ Books (once induction is done):
       --connected yes|no --s95-letting yes|no --hire-purchase yes|no
       VAT relief on a debt written off on the invoice basis, A x B / (100 + B),
       in T2 (VATCA s.39(2), S.I. 639/2010 reg.10); each fact must be stated
+  record-deemed-supply --kind goods|property --date <date> --account <code> --description "..." --actor "Name"
+      goods:    --use gift|private-use --cost <12.30> --vat-treatment <code> --tax-deducted yes|no
+                (a gift also) --series yes|no --samples yes|no
+      property: --acquired-on <date> --acquisition-amount <12.30> --private-area <n> --total-area <n>
+                --business-asset yes|no
+      Output VAT with no sale invoice (VATCA s.19(1)(g), s.21, s.27(2)); prints the
+      reason when it is not a supply, and posts nothing
   apply-credit-note --credit-note <number|id> --invoice <number|id> --amount <12.30>
       --actor "Name" [--date <date>] [--reason ...]  No cash; nothing posted
   unapply-credit-note --payment <id> --actor "Name" --reason "..."
@@ -1298,6 +1306,44 @@ export async function main(argv: string[], options: CliOptions = {}): Promise<nu
           date: asIsoDate(getFlag(flags, 'date') ?? today()), reason: requireFlag(flags, 'reason'),
           actor: requireFlag(flags, 'actor'),
         }), format);
+        return 0;
+      }
+
+      case 'record-deemed-supply': {
+        const base = db.select({ c: companies.baseCurrency }).from(companies).where(eq(companies.id, companyId)).get()!.c;
+        const kind = requireFlag(flags, 'kind');
+        const common = {
+          companyId, date: getFlag(flags, 'date') ?? today(),
+          accountId: resolveAccountId(db, companyId, requireFlag(flags, 'account')),
+          description: requireFlag(flags, 'description'), recordedBy: requireFlag(flags, 'actor'),
+        };
+        const wholeFlag = (name: string): number => {
+          const value = requireFlag(flags, name);
+          if (!/^\d+$/.test(value)) throw new Error(`--${name} must be a whole number.`);
+          return Number(value);
+        };
+        if (kind === 'goods') {
+          const use = requireFlag(flags, 'use');
+          if (use !== 'gift' && use !== 'private-use') throw new Error('--use must be gift or private-use.');
+          print(recordDeemedSupply(db, {
+            ...common, kind: 'goods', use: use === 'gift' ? 'gift' : 'private_use',
+            costMinor: parseAmount(requireFlag(flags, 'cost'), base),
+            treatmentCode: requireFlag(flags, 'vat-treatment'),
+            taxDeductedOrTransferred: requireYesNo(flags, 'tax-deducted'),
+            ...(use === 'gift'
+              ? { partOfSeriesToSamePerson: requireYesNo(flags, 'series'), industrialSamples: requireYesNo(flags, 'samples') }
+              : {}),
+          }), format);
+        } else if (kind === 'property') {
+          print(recordDeemedSupply(db, {
+            ...common, kind: 'immovable_private_use', acquiredOn: requireFlag(flags, 'acquired-on'),
+            acquisitionTaxableAmountMinor: parseAmount(requireFlag(flags, 'acquisition-amount'), base),
+            privateFloorArea: wholeFlag('private-area'), totalFloorArea: wholeFlag('total-area'),
+            treatedAsBusinessAsset: requireYesNo(flags, 'business-asset'),
+          }), format);
+        } else {
+          throw new Error('--kind must be goods or property.');
+        }
         return 0;
       }
 

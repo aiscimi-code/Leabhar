@@ -153,6 +153,14 @@ npm run cli -- claim-bad-debt-relief --invoice <n> --actor "Name" [--date <date>
     # invoice basis: A x B / (100 + B) in T2 for the claim period (S.I. 639/2010 reg.10)
 npm run cli -- reverse-bad-debt --invoice <n> --reason "..." --actor "Name"   # the debt recovered;
     # relief claimed on it is charged back in T1 (reg.10(10))
+npm run cli -- record-deemed-supply --kind goods --use gift|private-use --cost <12.30> --vat-treatment <code>
+    --tax-deducted yes|no [--series yes|no --samples yes|no] --account <code> --description "..." --actor "Name"
+npm run cli -- record-deemed-supply --kind property --acquired-on <date> --acquisition-amount <12.30>
+    --private-area <n> --total-area <n> --business-asset yes|no --date <period end> --account <code>
+    --description "..." --actor "Name"
+    # output VAT with no sale invoice (s.19(1)(g), s.21, s.27(2)); when it is not a
+    # supply (a gift of €20 or less, samples, pre-2011 test failed) it prints the
+    # reason and posts nothing
 npm run cli -- receivables [--as-of <date>]            # owed, overdue, on account, top debtors
 npm run cli -- overdue [--as-of <date>] [--customer <id>]
 npm run cli -- customer-statement --customer <id> --from <date> --to <date> [--out statement.pdf]

@@ -1,4 +1,5 @@
 import { suggestJournalMatches } from '@/domain/banking/journalLink';
+import { deemedSupplyGoodsTreatments } from '@/domain/vat/deemedSupply';
 import { invoiceVatDeferred } from '@/domain/vat/basis';
 import { onAccountForInvoice } from '@/domain/invoicing/onAccount';
 import { customerExposure, listCustomerContacts } from '@/domain/parties/customerAccount';
@@ -489,6 +490,11 @@ export function vatTreatmentList() {
   return db.select().from(vatTreatments)
     .where(eq(vatTreatments.companyId, company.id))
     .orderBy(vatTreatments.jurisdiction, vatTreatments.code).all();
+}
+
+/** The rates a deemed supply of goods may take (issue #658): chosen by the domain, not the page. */
+export function deemedSupplyTreatments() {
+  return deemedSupplyGoodsTreatments(getDb(), requireCompany().id);
 }
 
 export function ruleList() {
