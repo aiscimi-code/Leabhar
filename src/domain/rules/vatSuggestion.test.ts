@@ -86,14 +86,14 @@ describe('suggestVatTreatment', () => {
     // added 11 (#466: the Part 11C car emissions groups under the 2008, 2021 and 2027 schemes); #614 added
     // 1 (s.37(4), the exchange rate); #646 added 1 (s.99(4), the refund claim time limit); #611 added 2 (the s.74 and s.75 tax
     // points); #645 added 6 (ss.21, 27(2), 42 and 44, and S.I. 639/2010 regs 5 and 7: the deemed supplies); #620 added 3 (s.39(2)
-    // and S.I. 639/2010 reg.10: bad-debt relief and its recovery).
-    expect(first.rulesAfter).toBe(412);
+    // and S.I. 639/2010 reg.10: bad-debt relief and its recovery); #614 added 1 more (s.74(2), the cash receipts tax point).
+    expect(first.rulesAfter).toBe(413);
   });
 
   it('loading again is a no-op', () => {
     const again = loadStatutoryKnowledgeBase(db, { companyId });
-    expect(again.rulesBefore).toBe(412);
-    expect(again.rulesAfter).toBe(412);
+    expect(again.rulesBefore).toBe(413);
+    expect(again.rulesAfter).toBe(413);
   });
 
   it('US SaaS purchase → non-EU reverse charge, cited to VATCA s.12 with a verifiable slice', () => {
@@ -322,7 +322,7 @@ describe('services sold abroad — VATCA s.34 (issue #200)', () => {
 
 describe('rules with no conditions stay out of every lookup', () => {
   const CITED_ONLY = ['vat.dual_use_apportionment', 'vat.invoice_tax_stated_in_error', 'vat.invoice_time_limit',
-    'vat.tax_point_supply_invoice', 'vat.tax_point_intra_community_acquisition'];
+    'vat.tax_point_supply_invoice', 'vat.tax_point_cash_receipts', 'vat.tax_point_intra_community_acquisition'];
 
   it('every derived vat_scope rule has conditions: the topic opens for every transaction', async () => {
     const { VAT_SCOPE_DERIVED_RULES } = await import('./vatScopeIngestion');

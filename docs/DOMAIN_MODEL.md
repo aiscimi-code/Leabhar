@@ -139,8 +139,18 @@ Rules:
   - Validating the VAT period flags any entry whose source is not the CBI,
     the ECB or an agreed method (`fx_rate_not_s37`). Nothing is converted
     again.
-  - The rate's date is recorded but not checked: when the tax becomes due on
-    the cash receipts basis is an open question (#624).
+  - The tax becomes due at the entry's tax point: the invoice, or the end of
+    due time, on the invoice basis (s.74(1)(a)), and the receipt on the cash
+    receipts basis (s.74(2)). Validating the period checks the rate's date
+    against it for output VAT: a rate dated after the tax point, or not dated,
+    is a warning (`fx_rate_date_after_tax_point`); one dated before it is a
+    note to check no later rate was recorded (`fx_rate_date_before_tax_point`).
+    A purchase's date is not checked, because its tax point is the deduction.
+  - On the cash receipts basis a receipt can carry the rate at the receipt
+    (`vatFxRate`) for the output VAT it releases. The VAT entries and the VAT
+    on sales account use it; the deferred VAT is relieved at the invoice's
+    rate, and the difference goes to exchange gains and losses. Without it,
+    the invoice's rate is used and the period check notes its earlier date.
   - A VAT entry converts the gross and the VAT and derives the net, so the
     base figures add up. A foreign-currency VAT entry with no rate is refused.
 

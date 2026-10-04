@@ -288,6 +288,44 @@ export function validateVatPeriod(
     });
   }
 
+  // ---- The rate's date against the time the tax became due (issue #614) ----
+  // s.37(4) takes the latest rate recorded "at the time the tax becomes due",
+  // which is the entry's tax point: the invoice, or the end of due time, on the
+  // invoice basis (s.74(1)(a)); the receipt on the cash receipts basis
+  // (s.74(2)). Output VAT only: a purchase's tax point is when the input VAT
+  // is deducted, not when the supplier's tax became due.
+  const foreignSales = periodEntries.filter((e) => e.currency !== baseCurrency && e.direction === 'sales');
+  const undated = foreignSales.filter((e) => !e.fxRateDate || e.fxRateDate > e.taxPointDate);
+  if (undated.length > 0) {
+    findings.push({
+      code: 'fx_rate_date_after_tax_point',
+      severity: 'warning',
+      title: `${undated.length} foreign-currency output VAT entr${undated.length === 1 ? 'y' : 'ies'} converted at a rate `
+        + 'not dated by when the tax became due',
+      detail: 'The rate these amounts were converted at is dated after the tax point, or its date was not recorded. '
+        + 'The rate is the latest one recorded at the time the tax becomes due (VATCA s.37(4)), and a rate recorded '
+        + 'afterwards cannot be that. Check the VAT on these entries; nothing has been converted again.',
+      count: undated.length,
+      entityType: 'vat_entry',
+      entityIds: undated.map((e) => e.id),
+    });
+  }
+  const earlier = foreignSales.filter((e) => e.fxRateDate && e.fxRateDate < e.taxPointDate);
+  if (earlier.length > 0) {
+    findings.push({
+      code: 'fx_rate_date_before_tax_point',
+      severity: 'info',
+      title: `${earlier.length} foreign-currency output VAT entr${earlier.length === 1 ? 'y' : 'ies'} converted at a rate `
+        + 'dated before the tax point',
+      detail: 'The rate is the latest one recorded at the time the tax becomes due (VATCA s.37(4)). Check that no later '
+        + 'rate was recorded between the rate\'s date and the tax point. On the cash receipts basis the tax is due at '
+        + 'the receipt (s.74(2)), so VAT released at the invoice\'s rate needs the rate at the receipt.',
+      count: earlier.length,
+      entityType: 'vat_entry',
+      entityIds: earlier.map((e) => e.id),
+    });
+  }
+
   // ---- A repayment position is worth a deliberate look ----
   const report = buildVat3Return(db, { companyId, vatPeriodId: params.vatPeriodId });
   if (report.netPositionMinor < 0) {

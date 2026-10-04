@@ -4,7 +4,7 @@ import type { AppDatabase } from '@/db';
 import { bankTransactions, invoices, documents, documentMatches, auditEvents, companies } from '@/db/schema';
 import { ids } from '@/lib/ids';
 import { asIsoDate, type IsoDate } from '../dates';
-import { recordPayment, type RecordedPayment, type PaymentWriteOffReason } from '../invoicing/payments';
+import { recordPayment, type RecordedPayment, type PaymentWriteOffReason, type RecordPaymentInput } from '../invoicing/payments';
 import { upsertReviewItem } from '../extraction/service';
 import { ConsolidationError } from './postDocument';
 import { resolveReviewItems } from '../matching/service';
@@ -38,6 +38,8 @@ export interface SettleInput {
   fxRate?: { numerator: number; denominator: number; source: string; date?: string };
   /** See `RecordPaymentInput.vatDeclarationDate` (issue #226). */
   vatDeclarationDate?: IsoDate | null;
+  /** The s.37(4) rate at the receipt for the output VAT it releases (issue #614; `RecordPaymentInput.vatFxRate`). */
+  vatFxRate?: RecordPaymentInput['vatFxRate'];
   /**
    * Close one invoice by writing off what this line leaves unpaid (issue #386).
    * The reason is one of the three fixed choices, each with its own treatment:
@@ -79,6 +81,7 @@ function settleBankTransactionSteps(db: AppDatabase, input: SettleInput): Record
     currency: tx.currency,
     fxRate: input.fxRate ?? statementRate(db, input.companyId, tx),
     vatDeclarationDate: input.vatDeclarationDate,
+    vatFxRate: input.vatFxRate ?? null,
     method: 'bank_transfer',
     bankTransactionId: tx.id,
     allocations: input.allocations.map((a) => ({ invoiceId: a.invoiceId, allocatedMinor: a.amountMinor })),

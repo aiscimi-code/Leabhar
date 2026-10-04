@@ -679,9 +679,10 @@
       "status": "rule",
       "issue": 611,
       "ruleKeys": [
-        "vat.tax_point_supply_invoice"
+        "vat.tax_point_supply_invoice",
+        "vat.tax_point_cash_receipts"
       ],
-      "reason": "s.74(1)(a): output VAT on the invoice basis is due at the invoice date, or at the end of the reg.23 due time if the invoice is issued late (determineTaxPoint)."
+      "reason": "s.74(1)(a): output VAT on the invoice basis is due at the invoice date, or at the end of the reg.23 due time if the invoice is issued late (determineTaxPoint). s.74(2): on the cash receipts basis it is due at the receipt, which also dates the s.37(4) exchange rate (#614)."
     },
     {
       "id": "vatca:s75",
