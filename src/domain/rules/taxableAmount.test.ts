@@ -8,7 +8,7 @@ import { lookupTransactionRules } from './transactionLookup';
 import { suggestFromFacts, type SuggestionFacts } from './vatSuggestion';
 import { irishTaxRules } from '@/db/schema';
 import {
-  TAXABLE_AMOUNT_GENERAL_RULE_KEY, OMV_CONNECTED_PARTY_RULE_KEY, TWO_THIRDS_RULE_KEY,
+  TAXABLE_AMOUNT_GENERAL_RULE_KEY, OMV_CONNECTED_PARTY_RULE_KEY, TWO_THIRDS_RULE_KEY, FX_RATE_RULE_KEY,
   CREDIT_NOTE_ADJUSTMENT_RULE_KEY,
 } from './taxableAmountCuration';
 import { RETURN_DUE_RULE_KEY } from './returnsCuration';
@@ -55,6 +55,7 @@ describe('the new rules derive, quoting their provisions verbatim', () => {
     OMV_CONNECTED_PARTY_RULE_KEY,
     TWO_THIRDS_RULE_KEY,
     CREDIT_NOTE_ADJUSTMENT_RULE_KEY,
+    FX_RATE_RULE_KEY,
     RETURN_DUE_RULE_KEY,
     DEPOSIT_RETURN_SCHEME_RULE_KEY,
     'vat.rate_works_of_art_imported',

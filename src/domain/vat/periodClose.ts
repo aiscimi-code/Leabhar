@@ -10,6 +10,7 @@ import { buildVat3Return } from './report';
 import { cashBasisFindings } from './cashBasis';
 import { capitalGoodsFindings } from './capitalGoods';
 import { apportionmentFindings } from './apportionment';
+import { s37RateSource } from './fxRate';
 
 /**
  * VAT period close (README §24).
@@ -263,6 +264,27 @@ export function validateVatPeriod(
       count: unconverted.length,
       entityType: 'vat_entry',
       entityIds: unconverted.map((e) => e.id),
+    });
+  }
+
+  // ---- Foreign-currency VAT at a rate s.37(4) does not name (issue #614) ----
+  // The rate must be the CBI or ECB selling rate when the tax becomes due, or
+  // a method agreed with Revenue. Entries posted before the source was
+  // recorded have none, and are flagged too.
+  const offRate = periodEntries.filter((e) => e.currency !== baseCurrency && s37RateSource(e.fxRateSource) === null);
+  if (offRate.length > 0) {
+    const sources = [...new Set(offRate.map((e) => e.fxRateSource ?? 'not recorded'))].sort();
+    findings.push({
+      code: 'fx_rate_not_s37',
+      severity: 'warning',
+      title: `${offRate.length} foreign-currency VAT entr${offRate.length === 1 ? 'y' : 'ies'} not at a CBI or ECB rate`,
+      detail: `These amounts were converted to ${baseCurrency} at a rate whose source is ${sources.join(', ')}. For VAT, `
+        + 'the rate is the latest selling rate recorded by the Central Bank of Ireland or the European Central Bank for '
+        + 'the currency at the time the tax becomes due, unless a method has been agreed with Revenue (VATCA s.37(4)). '
+        + 'Check the VAT on these entries at that rate; nothing has been converted again.',
+      count: offRate.length,
+      entityType: 'vat_entry',
+      entityIds: offRate.map((e) => e.id),
     });
   }
 

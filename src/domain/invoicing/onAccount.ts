@@ -295,7 +295,7 @@ export function allocatePaymentOnAccount(
           currency: invoice.currency,
           baseCurrency: base,
           fxRate: invoice.fxRateNumerator && invoice.fxRateDenominator
-            ? { numerator: invoice.fxRateNumerator, denominator: invoice.fxRateDenominator }
+            ? { numerator: invoice.fxRateNumerator, denominator: invoice.fxRateDenominator, source: invoice.fxRateSource, date: invoice.fxRateDate }
             : undefined,
           source: 'user',
           provenanceStatus: 'manually_entered',

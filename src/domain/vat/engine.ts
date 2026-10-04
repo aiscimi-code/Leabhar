@@ -370,7 +370,12 @@ export interface CreateVatEntriesInput {
   recoverableOverrideMinor?: number;
   currency: string;
   baseCurrency: string;
-  fxRate?: { numerator: number; denominator: number };
+  /**
+   * Required when `currency` is not `baseCurrency`. `source` and `date` are
+   * snapshotted on the entry, so period validation can check the rate is one
+   * s.37(4) accepts (issue #614).
+   */
+  fxRate?: { numerator: number; denominator: number; source?: string | null; date?: string | null };
   counterpartyVatNumber?: string | null;
   counterpartyCountry?: string | null;
   source?: 'ai' | 'rule' | 'user' | 'import' | 'system' | 'derived';
@@ -420,12 +425,24 @@ export function createVatEntries(
   const period = assertVatPeriodWritable(db, input.companyId, declaredOn, 'This VAT');
   const declaredLate = input.declarationDate !== undefined
     && findVatPeriod(db, input.companyId, input.taxPointDate)?.id !== period?.id;
-  const toBase = (amount: number): number =>
-    input.fxRate ? multiplyRational(asMinor(amount), input.fxRate.numerator, input.fxRate.denominator) : amount;
-
   const treatment = resolved.treatment;
   const currency = input.currency.toUpperCase();
   const baseCurrency = input.baseCurrency.toUpperCase();
+  const foreign = currency !== baseCurrency;
+  // Issue #614: an amount in another currency without a rate would be stored
+  // as though it were already in the base currency.
+  if (foreign && !input.fxRate) {
+    throw new VatError(`This VAT is in ${currency}, not ${baseCurrency}: it needs the exchange rate it is converted at `
+      + '(VATCA s.37(4): the CBI or ECB selling rate when the tax becomes due, or a method agreed with Revenue).');
+  }
+  const toBase = (amount: number): number =>
+    input.fxRate ? multiplyRational(asMinor(amount), input.fxRate.numerator, input.fxRate.denominator) : amount;
+  // The gross and the VAT are converted and the net derived, so the base
+  // figures add up as the currency ones do (issue #614). Under a reverse
+  // charge the gross is the net.
+  const baseVat = toBase(calculation.vatMinor);
+  const baseGross = toBase(calculation.grossMinor);
+  const baseNet = treatment.isReverseCharge ? baseGross : baseGross - baseVat;
 
   const common = {
     companyId: input.companyId,
@@ -443,6 +460,8 @@ export function createVatEntries(
     vatPeriodId: period?.id ?? null,
     counterpartyVatNumber: input.counterpartyVatNumber ?? null,
     counterpartyCountry: input.counterpartyCountry ?? null,
+    fxRateSource: foreign ? input.fxRate?.source ?? null : null,
+    fxRateDate: foreign ? input.fxRate?.date ?? null : null,
     source: input.source ?? 'system',
     confidence: input.confidence ?? null,
     provenanceStatus: input.provenanceStatus ?? 'manually_entered',
@@ -465,9 +484,9 @@ export function createVatEntries(
         netMinor: calculation.netMinor,
         vatMinor: calculation.vatMinor,
         grossMinor: calculation.grossMinor,
-        baseNetMinor: toBase(calculation.netMinor),
-        baseVatMinor: toBase(calculation.vatMinor),
-        baseGrossMinor: toBase(calculation.grossMinor),
+        baseNetMinor: baseNet,
+        baseVatMinor: baseVat,
+        baseGrossMinor: baseGross,
         recoverableVatMinor: 0,
         baseRecoverableVatMinor: 0,
         vatBox: treatment.salesVatBox,
@@ -487,9 +506,9 @@ export function createVatEntries(
         netMinor: calculation.netMinor,
         vatMinor: calculation.vatMinor,
         grossMinor: calculation.grossMinor,
-        baseNetMinor: toBase(calculation.netMinor),
-        baseVatMinor: toBase(calculation.vatMinor),
-        baseGrossMinor: toBase(calculation.grossMinor),
+        baseNetMinor: baseNet,
+        baseVatMinor: baseVat,
+        baseGrossMinor: baseGross,
         recoverableVatMinor: recoverable,
         baseRecoverableVatMinor: toBase(recoverable),
         vatBox: treatment.purchasesVatBox,
@@ -509,9 +528,9 @@ export function createVatEntries(
         netMinor: calculation.netMinor,
         vatMinor: calculation.vatMinor,
         grossMinor: calculation.grossMinor,
-        baseNetMinor: toBase(calculation.netMinor),
-        baseVatMinor: toBase(calculation.vatMinor),
-        baseGrossMinor: toBase(calculation.grossMinor),
+        baseNetMinor: baseNet,
+        baseVatMinor: baseVat,
+        baseGrossMinor: baseGross,
         recoverableVatMinor: calculation.recoverableVatMinor,
         baseRecoverableVatMinor: toBase(calculation.recoverableVatMinor),
         vatBox: input.direction === 'sales' ? treatment.salesVatBox : treatment.purchasesVatBox,

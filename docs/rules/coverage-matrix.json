@@ -304,7 +304,8 @@
       "title": "s.37 General rules on taxable amount.",
       "status": "rule",
       "ruleKeys": [
-        "vat.taxable_amount_general"
+        "vat.taxable_amount_general",
+        "vat.taxable_amount_foreign_currency_rate"
       ]
     },
     {

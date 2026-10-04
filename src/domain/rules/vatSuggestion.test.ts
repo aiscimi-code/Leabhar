@@ -83,14 +83,15 @@ describe('suggestVatTreatment', () => {
     // 15 dated Class A and 5 dated Class S rate versions, 2 employer thresholds, the NTF levy, and
     // 8 PAYE and USC procedures); EPIC 21 added 5 (#532: ERR particulars and
     // subcategories, the €3.20 allowance, the small benefit count and limit); EPIC 22
-    // added 11 (#466: the Part 11C car emissions groups under the 2008, 2021 and 2027 schemes).
-    expect(first.rulesAfter).toBe(399);
+    // added 11 (#466: the Part 11C car emissions groups under the 2008, 2021 and 2027 schemes); #614 added
+    // 1 (s.37(4), the exchange rate).
+    expect(first.rulesAfter).toBe(400);
   });
 
   it('loading again is a no-op', () => {
     const again = loadStatutoryKnowledgeBase(db, { companyId });
-    expect(again.rulesBefore).toBe(399);
-    expect(again.rulesAfter).toBe(399);
+    expect(again.rulesBefore).toBe(400);
+    expect(again.rulesAfter).toBe(400);
   });
 
   it('US SaaS purchase → non-EU reverse charge, cited to VATCA s.12 with a verifiable slice', () => {

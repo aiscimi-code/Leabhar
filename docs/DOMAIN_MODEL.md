@@ -118,6 +118,19 @@ Rules:
 - A missing FX rate is an **exception**, never an assumed 1.0.
 - FX gain/loss on settlement posts to a dedicated account so it is separately
   identifiable (§22).
+- For VAT (issue #614), s.37(4) sets the rate. It is the latest selling rate
+  recorded by the Central Bank of Ireland or the European Central Bank for the
+  currency at the time the tax becomes due, unless a method has been agreed
+  with Revenue.
+  - Each foreign-currency VAT entry snapshots its rate's source and date
+    (`fx_rate_source`, `fx_rate_date`).
+  - Validating the VAT period flags any entry whose source is not the CBI,
+    the ECB or an agreed method (`fx_rate_not_s37`). Nothing is converted
+    again.
+  - The rate's date is recorded but not checked: when the tax becomes due on
+    the cash receipts basis is an open question (#624).
+  - A VAT entry converts the gross and the VAT and derives the net, so the
+    base figures add up. A foreign-currency VAT entry with no rate is refused.
 
 ---
 

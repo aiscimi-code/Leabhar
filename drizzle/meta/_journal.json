@@ -351,6 +351,13 @@
       "when": 1790593142481,
       "tag": "0049_forecast",
       "breakpoints": true
+    },
+    {
+      "idx": 50,
+      "version": "6",
+      "when": 1791100641025,
+      "tag": "0050_vat_entry_fx_rate_source",
+      "breakpoints": true
     }
   ]
 }
