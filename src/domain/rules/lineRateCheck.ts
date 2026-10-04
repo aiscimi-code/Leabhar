@@ -1,6 +1,7 @@
 import { and, eq } from 'drizzle-orm';
 import type { AppDatabase } from '@/db';
 import { vatTreatments } from '@/db/schema';
+import { DOMESTIC_REVERSE_CHARGE_CODES } from '../config/vatTreatments';
 import { asIsoDate } from '../dates';
 import { resolveTreatment } from '../vat/engine';
 import { provisionCitation } from './citation';
@@ -49,7 +50,7 @@ export interface LineRateCheck {
 /** Treatments under which the supplier charges no Irish VAT on the line. */
 const NO_VAT_CHARGED = new Set([
   'IE_EXEMPT', 'OUT_OF_SCOPE', 'EU_GOODS_SUPPLY', 'EU_SERVICES_SUPPLY', 'NON_EU_SERVICES_SUPPLY',
-  'EU_SERVICES_RCV', 'NON_EU_SERVICES_RCV', 'EU_GOODS_ACQ', 'RC_CONSTRUCTION',
+  'EU_SERVICES_RCV', 'NON_EU_SERVICES_RCV', 'EU_GOODS_ACQ', ...DOMESTIC_REVERSE_CHARGE_CODES,
 ]);
 /** Treatments that say nothing about the rate charged (only about deducting it). */
 const NOT_A_RATE = new Set(['NON_DEDUCTIBLE']);

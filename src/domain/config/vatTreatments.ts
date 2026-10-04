@@ -284,6 +284,65 @@ export const DEFAULT_VAT_TREATMENTS: VatTreatmentSeed[] = [
     jurisdiction: 'IE', direction: 'purchases', supplyKind: 'services',
     appliesRate: true, defaultRateCode: 'VAT_STD',
     isReverseCharge: true, salesVatBox: 'T1', purchasesVatBox: 'T2',
+    sourceNote: 'VATCA 2010 s.16(3): construction operations (TCA 1997 s.530(1)(a)-(f)) received by an RCT principal.',
+  },
+  // The other domestic reverse charges (issue #621). Each has the VAT3 effect of RC_CONSTRUCTION
+  // (T1 and T2) but its own legal basis, so the audit trail names the provision that applies.
+  // The default rate is a starting point: the line bears the rate s.46 gives the supply.
+  {
+    code: 'RC_SCRAP_METAL', name: 'Domestic reverse charge (scrap metal)', isSystem: true,
+    description: 'Scrap metal received by a business that deals in scrap metal: the recipient '
+      + 'accounts for the VAT, the supplier charges none.',
+    jurisdiction: 'IE', direction: 'purchases', supplyKind: 'goods',
+    appliesRate: true, defaultRateCode: 'VAT_STD',
+    isReverseCharge: true, salesVatBox: 'T1', purchasesVatBox: 'T2',
+    sourceNote: 'VATCA 2010 s.16(4). Applies only where the company\'s business consists of or includes dealing in scrap metal.',
+  },
+  {
+    code: 'RC_EMISSION_ALLOWANCES', name: 'Domestic reverse charge (emission allowances)', isSystem: true,
+    description: 'Greenhouse gas emission allowances received from another taxable person in the '
+      + 'State: the recipient accounts for the VAT.',
+    jurisdiction: 'IE', direction: 'purchases', supplyKind: 'both',
+    appliesRate: true, defaultRateCode: 'VAT_STD',
+    isReverseCharge: true, salesVatBox: 'T1', purchasesVatBox: 'T2',
+    sourceNote: 'VATCA 2010 s.16(2) (allowances within Directive 2003/87/EC).',
+  },
+  {
+    code: 'RC_CONNECTED_CONSTRUCTION', name: 'Domestic reverse charge (construction by a connected person)', isSystem: true,
+    description: 'Construction work supplied by a builder connected with the company: the '
+      + 'company accounts for the VAT.',
+    jurisdiction: 'IE', direction: 'purchases', supplyKind: 'services',
+    appliesRate: true, defaultRateCode: 'VAT_STD',
+    isReverseCharge: true, salesVatBox: 'T1', purchasesVatBox: 'T2',
+    sourceNote: 'VATCA 2010 s.16(5); connected within the meaning of s.97(3).',
+  },
+  {
+    code: 'RC_GAS_ELECTRICITY', name: 'Domestic reverse charge (gas or electricity to a dealer)', isSystem: true,
+    description: 'Gas (through the natural gas distribution system) or electricity supplied to a '
+      + 'taxable dealer: the dealer accounts for the VAT.',
+    jurisdiction: 'IE', direction: 'purchases', supplyKind: 'goods',
+    appliesRate: true, defaultRateCode: 'VAT_SECOND_RED',
+    isReverseCharge: true, salesVatBox: 'T1', purchasesVatBox: 'T2',
+    sourceNote: 'VATCA 2010 s.16(6). Default rate per s.46(1)(caa) and Schedule 3 para 17(2), (3) from 1 May 2022 '
+      + 'to 31 December 2030; check the rate in force on the supply date.',
+  },
+  {
+    code: 'RC_ENERGY_CERTIFICATES', name: 'Domestic reverse charge (gas or electricity certificates)', isSystem: true,
+    description: 'A gas or electricity certificate received from another taxable person in the '
+      + 'State: the recipient accounts for the VAT.',
+    jurisdiction: 'IE', direction: 'purchases', supplyKind: 'both',
+    appliesRate: true, defaultRateCode: 'VAT_STD',
+    isReverseCharge: true, salesVatBox: 'T1', purchasesVatBox: 'T2',
+    sourceNote: 'VATCA 2010 s.16(7).',
+  },
+  {
+    code: 'RC_PROPERTY_JOINT_OPTION', name: 'Reverse charge (property, joint option for taxation)', isSystem: true,
+    description: 'Immovable goods bought under a joint option for taxation: the purchaser '
+      + 'accounts for the VAT.',
+    jurisdiction: 'IE', direction: 'purchases', supplyKind: 'goods',
+    appliesRate: true, defaultRateCode: 'VAT_STD',
+    isReverseCharge: true, salesVatBox: 'T1', purchasesVatBox: 'T2',
+    sourceNote: 'VATCA 2010 s.94(5), (6). Attach the option agreement; confirm the rate the property bears.',
   },
   {
     code: 'NON_DEDUCTIBLE', name: 'Non-deductible VAT', isSystem: true,
@@ -295,6 +354,12 @@ export const DEFAULT_VAT_TREATMENTS: VatTreatmentSeed[] = [
     isRecoverable: false, recoverableBasisPoints: 0,
     sourceNote: 'Blocked input VAT. The categories are set by law — confirm before relying on this.',
   },
+];
+
+/** The domestic reverse charges: the recipient accounts for the VAT in T1 and T2 (s.16, s.94(6)). */
+export const DOMESTIC_REVERSE_CHARGE_CODES: readonly string[] = [
+  'RC_CONSTRUCTION', 'RC_SCRAP_METAL', 'RC_EMISSION_ALLOWANCES', 'RC_CONNECTED_CONSTRUCTION',
+  'RC_GAS_ELECTRICITY', 'RC_ENERGY_CERTIFICATES', 'RC_PROPERTY_JOINT_OPTION',
 ];
 
 export const VAT3_BOXES = {

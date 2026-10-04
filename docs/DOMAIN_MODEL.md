@@ -246,6 +246,11 @@ Seeded treatments (all editable, none hard-coded in logic):
 - `IMPORT_PA` Import of goods, postponed accounting — T1 + T2, PA1
 - `IMPORT_VAT_PAID` Import VAT paid at the point of entry — T2 only
 - `RC_CONSTRUCTION` Domestic reverse charge (construction) — T1 + T2
+- `RC_SCRAP_METAL`, `RC_EMISSION_ALLOWANCES`, `RC_CONNECTED_CONSTRUCTION`,
+  `RC_GAS_ELECTRICITY`, `RC_ENERGY_CERTIFICATES` The other domestic reverse
+  charges, s.16(4), (2), (5), (6) and (7) — T1 + T2
+- `RC_PROPERTY_JOINT_OPTION` Property bought under a joint option for taxation,
+  s.94(5), (6) — T1 + T2
 
 Zero-rated, exempt and outside-scope are three distinct treatments with three
 distinct reporting consequences. §7 is explicit that they must not be conflated,
@@ -1231,8 +1236,14 @@ transaction decides either of them.
   invoice line is not pre-selected.
 - The other s.16 reverse charges are flagged with why: scrap metal, a connected
   builder, gas or electricity for resale, energy certificates and emission
-  allowances. Scrap metal is offered `RC_CONSTRUCTION`, which has the same VAT3
-  effect.
+  allowances. Each has its own treatment, citing its own subsection, so the
+  audit trail names the right legal basis (issue #621). Each is offered, never
+  chosen, because the fact it turns on is not recorded. The connected builder
+  is advisory only, so a person chooses `RC_CONNECTED_CONSTRUCTION`.
+- On the RTD, each is placed as the manual places construction services (§4
+  Q4): section 1 at its rate, and section 3 or 4. The manual does not state
+  their placement, so the RTD flags them
+  (`rtd_domestic_reverse_charge_placement`).
 - Construction work sold is flagged, because the customer may be a principal.
 
 **Cash receipts basis (s.80).**
@@ -1263,8 +1274,7 @@ transaction decides either of them.
   - a joint option for taxation;
   - the pre-July-2008 transitional rules (ss.93, 95, 96).
 - **Under a joint option**, the purchaser accounts for the VAT (s.94(6)).
-  `RC_CONSTRUCTION` is offered because it has the same VAT3 effect, but it is
-  not chosen.
+  `RC_PROPERTY_JOINT_OPTION` is offered, but it is not chosen.
 
 **The capital goods scheme (ss.63-64)** is a record, not a rule, and lives in
 `src/domain/vat/capitalGoods.ts`.

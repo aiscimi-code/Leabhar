@@ -39,7 +39,7 @@ import { VATCA_SCHEDULE_CURATED_RULES } from './vatcaScheduleCuration';
 import { SCHEDULE_RULE_PRECEDENCE } from './vatcaScheduleParagraphRules';
 import { scheduleThreeRate } from './scheduleRates';
 import { CROSS_BORDER_GAPS, ICA_RULE_KEY, IMPORT_RULE_KEY } from './crossBorderCuration';
-import { DOMESTIC_RC_GAPS, RC_CONSTRUCTION_RULE_KEY } from './domesticReverseChargeCuration';
+import { DOMESTIC_RC_GAPS, DOMESTIC_RC_OFFERS, RC_CONSTRUCTION_RULE_KEY } from './domesticReverseChargeCuration';
 import {
   PROPERTY_GAPS, LETTING_OPTION_RULE_KEY, LETTING_OPTION_RESIDENTIAL_RULE_KEY, JOINT_OPTION_RULE_KEY, PROPERTY_SUPPLY_RULE_KEY,
 } from './propertyCuration';
@@ -134,23 +134,18 @@ export const RULE_TREATMENT_BINDINGS: TreatmentBinding[] = [
     direction: 'purchase',
     treatmentCode: () => null,
     gap: PROPERTY_GAPS[JOINT_OPTION_RULE_KEY],
-    offer: ['RC_CONSTRUCTION'],
+    offer: ['RC_PROPERTY_JOINT_OPTION'],
   },
   { ruleKeys: [PROPERTY_SUPPLY_RULE_KEY], direction: 'either', treatmentCode: () => null, gap: PROPERTY_GAPS[PROPERTY_SUPPLY_RULE_KEY] },
-  {
-    ruleKeys: ['vat.domestic_reverse_charge_scrap_metal'],
+  // The other s.16 reverse charges turn on a fact no transaction shows: flagged, with the
+  // treatment for that subsection offered, never chosen (issue #621).
+  ...Object.entries(DOMESTIC_RC_OFFERS).map(([key, code]): TreatmentBinding => ({
+    ruleKeys: [key],
     direction: 'purchase',
     treatmentCode: () => null,
-    gap: DOMESTIC_RC_GAPS['vat.domestic_reverse_charge_scrap_metal'],
-    offer: ['RC_CONSTRUCTION'],
-  },
-  {
-    ruleKeys: Object.keys(DOMESTIC_RC_GAPS).filter((k) => k !== 'vat.domestic_reverse_charge_scrap_metal'
-      && !ADVISORY_RULE_KEYS.has(k)),
-    direction: 'either',
-    treatmentCode: () => null,
-    gap: (_f, key) => DOMESTIC_RC_GAPS[key]!,
-  },
+    gap: DOMESTIC_RC_GAPS[key],
+    offer: [code],
+  })),
   // Not a supply at all: nothing else about VAT applies (s.2(1), s.3).
   { ruleKeys: scopeKeys('OUT_OF_SCOPE'), direction: 'either', treatmentCode: () => 'OUT_OF_SCOPE' },
   // An exempt supply: no VAT, and so no reverse charge or rate either (Schedule 1).

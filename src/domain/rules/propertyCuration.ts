@@ -97,7 +97,7 @@ export const PROPERTY_CURATED_RULES: CuratedVatScopeRule[] = [
     statementExcerpt: 'and shall be liable to pay the tax chargeable on that supply as if that person\nsupplied those goods',
     conditions: [is('direction', 'purchase'), desc('\\b(joint option|option (for|to) tax(ation)?)\\b')],
     vatEffect: 'The purchaser accounts for the VAT and, where deductible, reclaims it in the same return.',
-    interpretationNote: 'No treatment is configured for this reverse charge; RC_CONSTRUCTION has the same VAT3 effect.',
+    interpretationNote: 'Whether an option was exercised is not on the invoice: RC_PROPERTY_JOINT_OPTION is offered, not chosen.',
   }),
   rule({
     citation: 'VATCA 2010 s.64', sectionNumber: '64', ruleKey: CAPITAL_GOODS_RULE_KEY,
@@ -124,8 +124,8 @@ export const PROPERTY_GAPS: Record<string, string> = {
     + 'in the last 5 years (taxable), occupied 24 months after a taxable sale between unconnected persons (exempt), '
     + 'a joint option for taxation (taxable, the purchaser accounts, s.94(5)), or held before 1 July 2008 (ss.93, 95, '
     + '96). Attach the contract and confirm; a capital goods scheme record may be needed (ss.63-64).',
-  [JOINT_OPTION_RULE_KEY]: 'Under a joint option for taxation the purchaser accounts for the VAT (s.94(6)). No '
-    + 'treatment is configured for it; RC_CONSTRUCTION has the same VAT3 effect (T1 and T2). Attach the option agreement.',
+  [JOINT_OPTION_RULE_KEY]: 'Under a joint option for taxation the purchaser accounts for the VAT (s.94(6)): choose '
+    + 'RC_PROPERTY_JOINT_OPTION. Attach the option agreement.',
 };
 
 /** Advisory: flags and blocks pre-selection, never decides. */

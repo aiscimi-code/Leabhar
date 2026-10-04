@@ -4,6 +4,7 @@ import { vatEntries, vatTreatments, invoiceLines, invoices, accounts, vatPeriods
 import { multiplyRational } from '../money';
 import { accountingYearContaining } from './apportionment';
 import { vatBasisForPeriod } from './basis';
+import { DOMESTIC_REVERSE_CHARGE_CODES } from '../config/vatTreatments';
 
 /**
  * The VAT Return of Trading Details (issue #210): the annual return, due with
@@ -42,8 +43,15 @@ const CLASSIFICATION_ROWS: Record<string, RtdRow> = {
   zero: 'zero', livestock: 'livestock', second_reduced: 'second_reduced', reduced: 'reduced', standard: 'standard',
 };
 
-/** Received services the recipient self-accounts for, which the manual puts in section 1 too (§2.2(e); §4 Q4, Q5). */
-const SELF_ACCOUNTED_IN_SUPPLIES = new Set(['NON_EU_SERVICES_RCV', 'RC_CONSTRUCTION']);
+/**
+ * Received supplies the recipient self-accounts for, which the manual puts in section 1 too
+ * (§2.2(e); §4 Q4, Q5). The manual names services from outside the EU and construction services
+ * received by a principal; the other domestic reverse charges (s.16(2), (4)-(7), s.94(6)) are placed
+ * the same way, and flagged, because the manual does not state their placement (issue #621).
+ */
+const SELF_ACCOUNTED_IN_SUPPLIES = new Set(['NON_EU_SERVICES_RCV', ...DOMESTIC_REVERSE_CHARGE_CODES]);
+/** Self-accounted supplies whose RTD placement the manual states (§4 Q4, Q5). */
+const PLACEMENT_STATED = new Set(['NON_EU_SERVICES_RCV', 'RC_CONSTRUCTION']);
 /** The E2, ES2 and PA1 transactions (§2.3). */
 const ACQUISITIONS = new Set(['EU_GOODS_ACQ', 'EU_SERVICES_RCV', 'IMPORT_PA']);
 const EXPORTS = new Set(['EU_GOODS_SUPPLY', 'EU_SERVICES_SUPPLY', 'NON_EU_SERVICES_SUPPLY']);
@@ -92,6 +100,7 @@ export function buildRtdReturn(db: AppDatabase, params: { companyId: string; dat
   const adjustments: string[] = [];
   const noAccount: string[] = [];
   const nonEuServices: string[] = [];
+  const placementUnstated: string[] = [];
   const restricted: string[] = [];
   let resaleCount = 0;
 
@@ -119,7 +128,10 @@ export function buildRtdReturn(db: AppDatabase, params: { companyId: string; dat
 
     if (!row) { unmapped.push(e.id); continue; }
     const postponed = code === 'IMPORT_PA';
-    if (SELF_ACCOUNTED_IN_SUPPLIES.has(code)) add('supplies', row, net, false);
+    if (SELF_ACCOUNTED_IN_SUPPLIES.has(code)) {
+      add('supplies', row, net, false);
+      if (!PLACEMENT_STATED.has(code)) placementUnstated.push(e.id);
+    }
     if (ACQUISITIONS.has(code)) add('acquisitions', row, net, postponed);
 
     // Sections 3 and 4 hold deductible inputs; section 4 "is subject to the
@@ -201,6 +213,15 @@ export function buildRtdReturn(db: AppDatabase, params: { companyId: string; dat
       message: `${nonEuServices.length} sale(s) of services to customers outside the EU are in D4 ("export of goods/services at `
         + '0% outside the EU"). Where the place of supply puts a service outside the scope of Irish VAT altogether, '
         + 'confirm with your accountant whether it belongs on the RTD.',
+    });
+  }
+  if (placementUnstated.length) {
+    findings.push({
+      code: 'rtd_domestic_reverse_charge_placement', entryIds: placementUnstated,
+      message: `${placementUnstated.length} domestic reverse-charge purchase(s) other than construction services (scrap `
+        + 'metal, emission allowances, gas or electricity, energy certificates, a connected builder, a joint option) are '
+        + 'in section 1 at their rate as well as in section 3 or 4, as the manual directs for construction services '
+        + '(§4 Q4). The manual does not state their placement: confirm with your accountant.',
     });
   }
   if (restricted.length) {

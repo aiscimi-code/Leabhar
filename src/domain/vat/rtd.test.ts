@@ -123,6 +123,26 @@ describe('buildRtdReturn', () => {
     expect(rtd.findings.map((f) => f.code)).toEqual(expect.arrayContaining(['rtd_resale_by_account', 'rtd_returns_not_filed']));
   });
 
+  it('places the other domestic reverse charges as construction is placed, and flags that the manual does not state it (issue #621)', () => {
+    post('purchase', 'RC_CONSTRUCTION', 12_000, 'sIE');
+    post('purchase', 'RC_SCRAP_METAL', 9_000, 'sIE');
+    post('purchase', 'RC_PROPERTY_JOINT_OPTION', 50_000, 'sIE');
+    const rtd = buildRtdReturn(db, { companyId, date: '2025-06-30' });
+    // Section 1 at the rate charged, and section 4 as a deductible input (§4 Q4).
+    expect(rtd.boxes['P1']).toBe(12_000 + 9_000 + 50_000);
+    expect(rtd.boxes['R2']).toBe(12_000 + 9_000 + 50_000);
+    const finding = rtd.findings.find((f) => f.code === 'rtd_domestic_reverse_charge_placement')!;
+    // The input legs of scrap metal and the joint option; not construction, which the manual places.
+    expect(finding.entryIds).toHaveLength(2);
+    expect(finding.message).toMatch(/does not state their placement/);
+  });
+
+  it('raises no placement finding for construction services alone', () => {
+    post('purchase', 'RC_CONSTRUCTION', 12_000, 'sIE');
+    const rtd = buildRtdReturn(db, { companyId, date: '2025-06-30' });
+    expect(rtd.findings.map((f) => f.code)).not.toContain('rtd_domestic_reverse_charge_placement');
+  });
+
   it('flags a box that nets negative rather than hiding it', () => {
     post('sales', 'IE_STD', 1_000, 'ie');
     post('sales', 'IE_STD', 5_000, 'ie', { isCreditNote: true });
