@@ -327,6 +327,22 @@ The rate stays the one resolved for the line. An intra-Community acquisition
 supplier's invoice if that is earlier (s.75), under either basis (s.80(6)); its
 T1, T2 and E2 fall in that period (issue #611).
 
+A deemed supply has output VAT and no sale invoice (`recordDeemedSupply`,
+`src/domain/vat/deemedSupply.ts`, issue #645). Goods given away or taken for a
+non-business purpose, where their VAT was deductible (VATCA s.19(1)(g), s.21),
+are taxed on their cost excluding VAT (s.42(1)(a)) at the rate they would bear,
+on the day they are given or taken. A gift is not a supply if it costs no more
+than €20 excluding VAT and is not one of a series to the same person (s.21(a),
+S.I. 639/2010 reg.5). Industrial samples in reasonable quantity are not a supply
+either (s.21(b)). Private use of property acquired or developed before 2011
+(s.27(2), (3)), within 20 years of acquisition, is taxed each period on C x
+private floor area / total floor area / 120 at the standard rate (s.44(1),
+reg.7). The person states the facts and the figures are calculated. Each one
+posts as a VAT adjustment, so a locked period is refused, and raises a review
+item. Services deemed supplied by regulations under s.27(1) (staff catering,
+reg.8) and transfers to another Member State (s.19(1)(h)) are not recorded this
+way.
+
 On the cash receipts basis a sales invoice creates no output VAT entry at
 invoice time. Each payment against it creates an output VAT entry for the
 proportion settled, dated at the payment. Part-payments therefore produce

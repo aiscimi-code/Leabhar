@@ -76,4 +76,41 @@ export const SI_639_CURATED_RULES: CuratedSi639Rule[] = [
       + 'thresholds for eligibility (VATCA s.80(1)(a)/(b)) are stated in the Act itself, not this Regulation, '
       + 'and are not curated here — only the "authorisation is required, not automatic" procedural fact is.',
   },
+  // Issue #645: the gift limit and the private-use formula that recordDeemedSupply
+  // (src/domain/vat/deemedSupply.ts) applies. No conditions and a reference
+  // topic: citable, never matched. The TaxSource "Current" view of both
+  // regulations (checked October 2026) matches this as-made text.
+  {
+    regulationNumber: '5',
+    ruleKey: 'vat.business_gift_limit',
+    ruleType: 'threshold',
+    topic: 'vat_reference',
+    name: 'A business gift costing no more than €20 excluding VAT is not a supply (reg.5, VATCA s.21(a))',
+    statementExcerpt: 'the cost of which to the donor does not exceed €20, exclusive of tax, shall be deemed not to '
+      + 'have been effected for consideration.',
+    conditions: [],
+    exceptions: [
+      { condition: 'the gift is one of a series or succession of gifts to the same person', effect: 'the limit does not apply: the gift is a supply' },
+    ],
+    vatEffect: 'No output VAT on a gift within the limit. Above it, the whole cost is taxed (VATCA s.42(1)(a)).',
+    reportingEffect: null,
+    interpretationNote: 'Enforced by recordDeemedSupply (BUSINESS_GIFT_LIMIT_MINOR). Amending instruments after 2010 '
+      + 'are not ingested; the figure is the as-made text.',
+  },
+  {
+    regulationNumber: '7',
+    ruleKey: 'vat.immovable_goods_private_use_proportion',
+    ruleType: 'other',
+    topic: 'vat_reference',
+    name: 'Private use of pre-2011 property: floor-area proportion, C x D / (20 x 6), standard rate (reg.7)',
+    statementExcerpt: 'being immovable goods acquired or developed by an accountable person before 1 January 2011, the '
+      + 'private use proportion shall be calculated in accordance with the following formula:',
+    conditions: [],
+    exceptions: [],
+    vatEffect: 'Each taxable period: the taxable amount on the acquisition or development x private floor area / total '
+      + 'floor area / 120, at the rate in VATCA s.46(1)(a) (reg.7(4)).',
+    reportingEffect: 'T1 in the period of the use.',
+    interpretationNote: 'Enforced by recordDeemedSupply. Amending instruments after 2010 are not ingested; the formula '
+      + 'is the as-made text.',
+  },
 ];

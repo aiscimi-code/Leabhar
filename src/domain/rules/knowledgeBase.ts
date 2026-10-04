@@ -127,6 +127,11 @@ const SOURCES: Array<{ path: string; ingest: IngestFn }> = [
   // Issue #611: when tax on a supply and on an intra-Community acquisition is due.
   { path: 'docs/statutes/vatca-2010-revised/s074.md', ingest: ingestVatcaRevisedSection },
   { path: 'docs/statutes/vatca-2010-revised/s075.md', ingest: ingestVatcaRevisedSection },
+  // Issue #645: deemed supplies (goods given away or taken, private use of property).
+  { path: 'docs/statutes/vatca-2010-revised/s021.md', ingest: ingestVatcaRevisedSection },
+  { path: 'docs/statutes/vatca-2010-revised/s027.md', ingest: ingestVatcaRevisedSection },
+  { path: 'docs/statutes/vatca-2010-revised/s042.md', ingest: ingestVatcaRevisedSection },
+  { path: 'docs/statutes/vatca-2010-revised/s044.md', ingest: ingestVatcaRevisedSection },
   { path: 'docs/statutes/tca-1997/s284.md', ingest: ingestTca1997S284 },
   { path: 'docs/statutes/finance-act-2003/s23.md', ingest: ingestFinanceAct2003S23 },
   { path: 'docs/statutes/si-639-2010/2010-si-639.md', ingest: ingestSi639 },
