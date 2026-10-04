@@ -2013,7 +2013,6 @@
       "status": "rule",
       "ruleKeys": [
         "vat.zero_rate_childrens_clothing_footwear",
-        "vat.zero_rate_export_outside_community",
         "vat.zero_rate_printed_books"
       ]
     },
@@ -2103,6 +2102,15 @@
       "status": "rule",
       "ruleKeys": [
         "vat.place_of_supply_services_to_business_abroad"
+      ]
+    },
+    {
+      "id": "treatment:EXPORT_GOODS",
+      "area": "vat_treatment",
+      "title": "EXPORT_GOODS",
+      "status": "rule",
+      "ruleKeys": [
+        "vat.zero_rate_export_outside_community"
       ]
     },
     {

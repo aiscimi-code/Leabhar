@@ -54,7 +54,8 @@ const SELF_ACCOUNTED_IN_SUPPLIES = new Set(['NON_EU_SERVICES_RCV', ...DOMESTIC_R
 const PLACEMENT_STATED = new Set(['NON_EU_SERVICES_RCV', 'RC_CONSTRUCTION']);
 /** The E2, ES2 and PA1 transactions (§2.3). */
 const ACQUISITIONS = new Set(['EU_GOODS_ACQ', 'EU_SERVICES_RCV', 'IMPORT_PA']);
-const EXPORTS = new Set(['EU_GOODS_SUPPLY', 'EU_SERVICES_SUPPLY', 'NON_EU_SERVICES_SUPPLY']);
+/** D4, "0% Exports": intra-Community supplies (§2.2(b)) and zero-rated exports outside the EU (§2.2(d), issue #613). */
+const EXPORTS = new Set(['EU_GOODS_SUPPLY', 'EU_SERVICES_SUPPLY', 'NON_EU_SERVICES_SUPPLY', 'EXPORT_GOODS']);
 
 export interface RtdFinding { code: string; message: string; entryIds?: string[] }
 

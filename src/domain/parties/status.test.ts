@@ -139,6 +139,6 @@ describe('checking a VAT number with VIES', () => {
   it('refuses a number that is not a well-formed EU VAT number', async () => {
     const id = customer('US Corp', { vatNumber: '12-3456789' });
     await expect(checkVatNumberWithVies(db, { companyId, party: 'customer', partyId: id, actor: 'joe', fetchImpl: answer(200, {}) }))
-      .rejects.toThrow(/not a well-formed EU VAT number/);
+      .rejects.toThrow(/not a well-formed EU or Northern Ireland \(XI\) VAT number/);
   });
 });
