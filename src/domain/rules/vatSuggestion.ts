@@ -29,7 +29,7 @@ import {
 } from '@/db/schema';
 import { lookupTransactionRules, type ApplicableRule, type TransactionContext } from './transactionLookup';
 import { countStatutoryRules } from './knowledgeBase';
-import { EU_COUNTRY_CODES, parseVatNumber, otherMemberStateForGoods } from '../extraction/vatNumbers';
+import { EU_COUNTRY_CODES, parseVatNumber, otherMemberStateForGoods, ukWasMemberStateOn } from '../extraction/vatNumbers';
 import { resolveTreatment } from '../vat/engine';
 import { asIsoDate } from '../dates';
 import { VAT_SCOPE_CURATED_RULES } from './vatScopeCuration';
@@ -54,7 +54,9 @@ import { S46_FAMILY_SCHEDULE_REF } from './vatcaRevisedCuration';
 export type TransactionDirection = 'purchase' | 'sale';
 
 const EU = new Set<string>(EU_COUNTRY_CODES);
-const isEuNotIe = (c: string | null | undefined): boolean => !!c && c !== 'IE' && EU.has(c);
+// The UK counts before it left the EU VAT regime (issue #617).
+const isEuNotIe = (c: string | null | undefined, date: string | null | undefined): boolean =>
+  !!c && c !== 'IE' && (EU.has(c) || ukWasMemberStateOn(c, date));
 
 /**
  * Whether the customer's VAT number shows it registered in another Member
@@ -200,14 +202,14 @@ export const RULE_TREATMENT_BINDINGS: TreatmentBinding[] = [
   {
     ruleKeys: [VAT_POS_BUSINESS_ABROAD_RULE_KEY],
     direction: 'sale',
-    treatmentCode: (f) => (isEuNotIe(f.counterpartyCountry) ? 'EU_SERVICES_SUPPLY' : 'NON_EU_SERVICES_SUPPLY'),
+    treatmentCode: (f) => (isEuNotIe(f.counterpartyCountry, f.transactionDate) ? 'EU_SERVICES_SUPPLY' : 'NON_EU_SERVICES_SUPPLY'),
   },
   // s.60(2)(a): blocked categories, exactly as listed; diesel is not among them (issue #209).
   { ruleKeys: BLOCKED_DEDUCTION_RULE_KEYS, direction: 'purchase', treatmentCode: () => 'NON_DEDUCTIBLE' },
   {
     ruleKeys: ['vat.reverse_charge_services_from_abroad'],
     direction: 'purchase',
-    treatmentCode: (f) => (isEuNotIe(f.counterpartyCountry) ? 'EU_SERVICES_RCV' : 'NON_EU_SERVICES_RCV'),
+    treatmentCode: (f) => (isEuNotIe(f.counterpartyCountry, f.transactionDate) ? 'EU_SERVICES_RCV' : 'NON_EU_SERVICES_RCV'),
   },
   {
     ruleKeys: ['vat.zero_rate_intra_community_goods'],
@@ -466,6 +468,7 @@ export function transactionFacts(
     applyCustomerStatus(facts, sources, customer, vatInfo);
     // Goods to Northern Ireland stay within the EU rules for goods (issue #610).
     if (supplyType === 'goods' && counterpartyCountry && !EU.has(counterpartyCountry)
+        && !ukWasMemberStateOn(counterpartyCountry, facts.transactionDate)
         && !isNorthernIrelandParty(vatInfo, counterpartyCountry) && !otherMemberStateForGoods(counterpartyCountry)) {
       facts.goodsExportedOutsideEu = true;
       sources.goodsExportedOutsideEu = `derived: goods sale to a customer in ${counterpartyCountry} `
