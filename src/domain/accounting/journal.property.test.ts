@@ -12,6 +12,11 @@ import { UnbalancedJournalError } from './errors';
  * journal.test.ts still own the specific error messages and period-lock
  * cases; these check the invariant across generated line sets.
  */
+// Each run seeds a fresh book (every migration applied), so a property
+// of 25 runs takes close to vitest's 5s default on its own and times out
+// when the full suite loads the machine. The bound is generous on purpose.
+const PROPERTY_TIMEOUT_MS = 30_000;
+
 describe('journal balance properties (#597)', () => {
   it('a generated balanced two-line entry posts, and its lines sum to zero in base currency', () => {
     fc.assert(fc.property(fc.integer({ min: 1, max: 10_000_000 }), (amount) => {
@@ -37,7 +42,7 @@ describe('journal balance properties (#597)', () => {
       expect(debit).toBe(credit);
       expect(debit).toBe(amount);
     }), { numRuns: 25 });
-  });
+  }, PROPERTY_TIMEOUT_MS);
 
   it('posting rejects an unbalanced entry', () => {
     fc.assert(fc.property(
@@ -60,7 +65,7 @@ describe('journal balance properties (#597)', () => {
         })).toThrow(UnbalancedJournalError);
       },
     ), { numRuns: 25 });
-  });
+  }, PROPERTY_TIMEOUT_MS);
 
   it('reversing an entry and reversing that reversal restores the posted net of the original', () => {
     fc.assert(fc.property(fc.integer({ min: 1, max: 5_000_000 }), (amount) => {
@@ -101,5 +106,5 @@ describe('journal balance properties (#597)', () => {
       expect(netByAccount.get(bank)).toBe(amount);
       expect(netByAccount.get(income)).toBe(-amount);
     }), { numRuns: 15 });
-  });
+  }, PROPERTY_TIMEOUT_MS);
 });
