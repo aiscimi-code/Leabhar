@@ -40,6 +40,24 @@ export function otherMemberStateForGoods(code: string | null | undefined): boole
   return c === NORTHERN_IRELAND || (EU_COUNTRY_CODES as readonly string[]).includes(c === 'EL' ? 'GR' : c);
 }
 
+/**
+ * The United Kingdom left the EU VAT regime at the end of the transition
+ * period: "From 1st January 2021, EU VAT legislation no longer applies to the
+ * UK" (Revenue, VIES Traders Manual, Appendix 9:
+ * docs/statutes/vies/vies-traders-manual.md; the end of the transition period
+ * is 11:00pm on 31 December 2020, Irish time, per Revenue's postponed
+ * accounting guidance, docs/statutes/_inbox/C/postponed-accounting/). A
+ * transaction dated before this was with a Member State, Great Britain and
+ * Northern Ireland alike, for goods and services (issue #617).
+ */
+export const UK_LEFT_EU_VAT_REGIME = '2021-01-01';
+
+/** Whether a UK counterparty (`GB`, or `XI`) was in another Member State on `date`, for goods and services alike. */
+export function ukWasMemberStateOn(code: string | null | undefined, date: string | null | undefined): boolean {
+  const c = code?.toUpperCase();
+  return (c === 'GB' || c === NORTHERN_IRELAND) && !!date && date < UK_LEFT_EU_VAT_REGIME;
+}
+
 /** Structural patterns per member state. 'EL' is the VAT prefix for Greece. */
 const VAT_PATTERNS: Record<string, RegExp> = {
   AT: /^ATU\d{8}$/,

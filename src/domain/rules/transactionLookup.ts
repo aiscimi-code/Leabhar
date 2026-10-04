@@ -16,7 +16,7 @@
  */
 import { rctPrincipalOn } from '../config/companyStatus';
 import { eq, and } from 'drizzle-orm';
-import { EU_COUNTRY_CODES } from '../extraction/vatNumbers';
+import { EU_COUNTRY_CODES, ukWasMemberStateOn } from '../extraction/vatNumbers';
 import type { AppDatabase } from '@/db';
 import { irishTaxRules, irishActProvisions, irishKnowledgeSources, companies } from '@/db/schema';
 import type { IrishRuleException } from '@/db/schema';
@@ -166,7 +166,10 @@ export function normaliseTransactionContext(input: TransactionContext): Transact
   // services (issue #610); with the supply kind unknown, it is unresolved.
   const northernIreland = input.counterpartyNorthernIreland === true
     || String((direction === 'sale' ? input.customerCountry : input.supplierCountry) ?? '').toUpperCase() === 'XI';
-  const counterpartyInEu = northernIreland
+  // Before 1 January 2021 the UK was a Member State (issue #617).
+  const counterpartyInEu = ukWasMemberStateOn(northernIreland ? 'XI' : counterpartyCountry, input.transactionDate)
+    ? true
+    : northernIreland
     ? (input.supplyType === 'goods' ? true : input.supplyType === 'services' ? false : null)
     : counterpartyCountry
       ? EU_MEMBER_STATES.has(String(counterpartyCountry).toUpperCase()) && String(counterpartyCountry).toUpperCase() !== 'IE'
