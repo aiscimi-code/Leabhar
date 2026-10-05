@@ -86,7 +86,7 @@ export interface CreateInvoicesFromCsvResult {
  * `invoiceNumber`, `date`, `party` (a customer/supplier name or id already
  * created via add-customer/create-supplier), `description`, `net`,
  * `account` (code), `vatTreatment` (code). Optional: `dueDate`, `supplyDate`,
- * `statedVat`, `currency`, `creditNote` ("true"/"false"), `reference`.
+ * `invoiceRequired` ("false" when Chapter 2 needs no invoice: needs `supplyDate`, s.74(1)(d)), `statedVat`, `currency`, `creditNote` ("true"/"false"), `reference`.
  */
 export async function createInvoicesFromCsv(
   db: AppDatabase, input: CreateInvoiceCsvInput,
@@ -133,6 +133,7 @@ export async function createInvoicesFromCsv(
         invoiceDate: asIsoDate(requireCell('date')),
         dueDate: record.dueDate ? asIsoDate(record.dueDate) : null,
         supplyDate: record.supplyDate ? asIsoDate(record.supplyDate) : null,
+        invoiceRequired: record.invoiceRequired?.trim().toLowerCase() === 'false' ? false : null,
         supplierId: input.direction === 'purchase' ? partyId : null,
         customerId: input.direction === 'sales' ? partyId : null,
         invoiceNumber,

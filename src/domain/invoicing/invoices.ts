@@ -164,6 +164,12 @@ export interface CreateInvoiceInput {
   dueDate?: IsoDate | null;
   /** The VAT tax point, where it differs from the invoice date. */
   supplyDate?: IsoDate | null;
+  /**
+   * False when Chapter 2 does not require an invoice for the supply: the VAT is
+   * then due at the supply date (s.74(1)(d)), which must be given. Omit when
+   * not stated; the sale is read under s.74(1)(a) (issue #678).
+   */
+  invoiceRequired?: boolean | null;
   supplierId?: string | null;
   customerId?: string | null;
   invoiceNumber?: string | null;
@@ -271,6 +277,15 @@ function createInvoiceSteps(db: AppDatabase, input: CreateInvoiceInput): Created
     }
   } else if (input.debitNoteOfId) {
     throw new InvoicingError('Only a debit note names an invoice it adjusts.');
+  }
+
+  if (input.invoiceRequired === false) {
+    if (!isSales) throw new InvoicingError('Whether an invoice is required applies to a sale, not a purchase.');
+    if (!input.supplyDate && !input.isCreditNote && !input.isDebitNote) {
+      throw new InvoicingError(
+        'No invoice is required for this supply, so its VAT is due when it is supplied (VATCA s.74(1)(d)). Give the supply date.',
+      );
+    }
   }
 
   const sign = input.isCreditNote ? -1 : 1;
@@ -616,6 +631,7 @@ function createInvoiceSteps(db: AppDatabase, input: CreateInvoiceInput): Created
     paymentDate: input.invoiceDate,
     acquisition: !isSales && treatmentCode === 'EU_GOODS_ACQ',
     adjustingNote: !!input.isCreditNote || !!input.isDebitNote,
+    invoiceNotRequired: isSales && input.invoiceRequired === false,
   });
 
   // A locked or filed VAT return is never changed (issue #226): checked before
@@ -762,6 +778,7 @@ function createInvoiceSteps(db: AppDatabase, input: CreateInvoiceInput): Created
       dueDate,
       dueDateSource,
       supplyDate: input.supplyDate ?? null,
+      invoiceRequired: isSales ? input.invoiceRequired ?? null : null,
       currency,
       netMinor, vatMinor, grossMinor,
       baseCurrency,

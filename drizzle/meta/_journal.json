@@ -372,6 +372,13 @@
       "when": 1791129595409,
       "tag": "0052_invoice_bad_debt_relief",
       "breakpoints": true
+    },
+    {
+      "idx": 53,
+      "version": "6",
+      "when": 1791236528328,
+      "tag": "0053_invoice_required",
+      "breakpoints": true
     }
   ]
 }

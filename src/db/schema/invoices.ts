@@ -42,6 +42,12 @@ export const invoices = sqliteTable('invoices', {
    * so an unusual case can be recorded rather than inferred.
    */
   supplyDate: text('supply_date'),
+  /**
+   * Whether Chapter 2 required an invoice for the supply (VATCA s.74(1)(a) vs
+   * (d)). Null means not stated: the sale is read under s.74(1)(a). False is
+   * a person's confirmation, and dates the VAT at the supply date (issue #678).
+   */
+  invoiceRequired: integer('invoice_required', { mode: 'boolean' }),
 
   currency: text('currency').notNull(),
   netMinor: integer('net_minor').notNull().default(0),
