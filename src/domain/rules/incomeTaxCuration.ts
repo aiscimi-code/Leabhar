@@ -11,6 +11,7 @@
  * (the USC exemption threshold and the surcharge on non-PAYE income).
  */
 import type { IrishRuleType } from '@/db/schema';
+import { PRSI_CLASS_S_DISREGARD_RULE } from './prsiClassSDisregard';
 
 type IrishRuleUnit = 'eur_minor' | 'usd_minor' | 'basis_points' | 'percent' | 'count' | 'text';
 
@@ -187,9 +188,10 @@ export const INCOME_TAX_CURATED_RULES: CuratedIncomeTaxRule[] = [
     numericValue: 65_000, unit: 'eur_minor',
     effectiveFrom: '2026-09-25', effectiveTo: null,
     interpretationNote: 'SWCA 2005 s.21(1)(a): the self-employment contribution is the greater of 4.2% of '
-      + 'reckonable income or €650. The €5,000 disregard below which no Class S is payable is NOT in the '
-      + 'collected s.21 text, so it is not curated here: the computation flags it rather than guessing it.',
+      + 'reckonable income or €650. The €5,000 prescribed amount below which no Class S is payable is not in '
+      + 's.21; it is the separate rule prsi.class_s_disregard (S.I. 312/1996 art. 92).',
   },
+  PRSI_CLASS_S_DISREGARD_RULE,
   // ---- Basis of assessment, credits, partnerships, payment (Revenue NfG, FA 2025 edition) ----
   {
     citation: NFG_4, sectionNumber: '65', ruleKey: 'income_tax.basis_accounting_period', ruleType: 'procedure',

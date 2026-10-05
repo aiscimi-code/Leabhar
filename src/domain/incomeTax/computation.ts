@@ -1,3 +1,4 @@
+import { classSPrsiMinor } from './classSPrsi';
 import { eq } from 'drizzle-orm';
 import type { AppDatabase } from '@/db';
 import { partners, companies, journalEntries } from '@/db/schema';
@@ -435,12 +436,13 @@ class IncomeTaxRun {
     const uscMinor = usc.reduce((s, l) => s + l.amountMinor, 0);
 
     // PRSI Class S (SWCA 2005 s.21(1)(a)): the rate and the minimum are rule
-    // figures like every other (#487). The €5,000 disregard is not in the
-    // collected SWCA sections, so it is flagged, never guessed.
+    // figures like every other (#487), as is the €5,000 prescribed amount
+    // below which no Class S is payable (S.I. 312/1996 art. 92).
     const prsiRule = ruleOn(this.db, this.companyId, 'prsi.class_s_rate', dec31);
     if (prsiRule?.finding) this.findings.push(prsiRule.finding);
     const prsiRate = prsiRule?.numericValue ?? null;
     const prsiMinimum = need('prsi.class_s_minimum');
+    const prsiDisregard = need('prsi.class_s_disregard');
     let prsiMinor: number | null = null;
     if (!prsiRate) {
       const why = prsiRule?.status === 'rejected' ? 'the rule was rejected on the review screen'
@@ -449,11 +451,13 @@ class IncomeTaxRun {
       this.findings.push(`No PRSI Class S rate is available for ${year} (${why}): PRSI is not computed for that year.`);
     } else if (!prsiMinimum) {
       this.findings.push(`No PRSI Class S minimum (prsi.class_s_minimum) is available for ${year}: PRSI is not computed for that year.`);
+    } else if (!prsiDisregard) {
+      this.findings.push(`No PRSI Class S prescribed amount (prsi.class_s_disregard) is available for ${year}: PRSI is not computed for that year.`);
     } else if (p > 0) {
-      prsiMinor = Math.max(multiplyRational(p, prsiRate, 10_000), prsiMinimum.numericValue!);
-      this.findings.push(`${name}: PRSI Class S at ${prsiRate / 100}% with the ${eur(prsiMinimum.numericValue!)} minimum. `
-        + 'No Class S is payable on reckonable income under €5,000; that threshold is not in the collected SWCA '
-        + 'sections, so it cannot be applied here — check it where income is low.');
+      prsiMinor = classSPrsiMinor(p, prsiRate, prsiMinimum.numericValue!, prsiDisregard.numericValue!);
+      this.findings.push(prsiMinor === 0
+        ? `${name}: no PRSI Class S, reckonable income is under the ${eur(prsiDisregard.numericValue!)} prescribed amount.`
+        : `${name}: PRSI Class S at ${prsiRate / 100}% with the ${eur(prsiMinimum.numericValue!)} minimum.`);
     }
     return {
       name, partnerId,
