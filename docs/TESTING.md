@@ -81,3 +81,17 @@ figures still need exact reproduction.
 First batch: `src/domain/money.property.test.ts`,
 `src/domain/accounting/journal.property.test.ts`. Next, in that order: VAT
 engine rounding, payroll net-pay, capital allowances.
+
+## Performance budget (issue #288)
+
+`src/domain/corporationTax/benchmark.test.ts` seeds seven years of books
+(240 postings a year) and times `computeCorporationTax` and `computeIncomeTax`
+for year 7, the figures the year-end page loads. Each must finish inside 5
+seconds; the assertion guards against an order-of-magnitude regression, not a
+few percent. Set `BENCH_LOG=<file>` to append the measured times.
+
+Measured on the development container: corporation tax 241 ms for year 7 against
+65 ms for year 1, and income tax 270 ms for year 7. Cost grows roughly with the
+years computed, as the issue expected, and is far inside the budget, so there is
+no cache. Add one (keyed on the company, the period and its inputs, never
+persisted) only if this test starts to fail.
