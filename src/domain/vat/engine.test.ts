@@ -272,6 +272,22 @@ describe('determineTaxPoint', () => {
     }).taxPointDate).toBe('2025-01-15');
   });
 
+  it('dates a supply that needs no invoice at the supply date, not the invoice date (s.74(1)(d))', () => {
+    // Supplied 28 Feb, entered 3 Mar: Jan-Feb, not Mar-Apr.
+    const result = determineTaxPoint({
+      basis: 'invoice', direction: 'sales', invoiceDate: makeDate(2025, 3, 3), supplyDate: makeDate(2025, 2, 28), invoiceNotRequired: true,
+    });
+    expect(result.taxPointDate).toBe('2025-02-28');
+    expect(result.reason).toMatch(/s\.74\(1\)\(d\)/);
+    expect(findVatPeriod(db, companyId, result.taxPointDate)!.name).toBe('Jan–Feb 2025');
+  });
+
+  it('refuses to fall back to the invoice date when no invoice is required and no supply date is given', () => {
+    expect(() => determineTaxPoint({
+      basis: 'invoice', direction: 'sales', invoiceDate: makeDate(2025, 3, 3), invoiceNotRequired: true,
+    })).toThrow(/supply date/);
+  });
+
   it('a credit or debit note takes its own date', () => {
     expect(determineTaxPoint({
       basis: 'invoice', direction: 'sales', invoiceDate: makeDate(2025, 3, 20), supplyDate: makeDate(2025, 1, 20),

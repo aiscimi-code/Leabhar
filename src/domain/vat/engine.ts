@@ -328,6 +328,8 @@ export function determineTaxPoint(params: {
   acquisition?: boolean;
   /** The document is a credit or debit note, not the invoice for the supply. */
   adjustingNote?: boolean;
+  /** A person confirmed that Chapter 2 does not require an invoice for this supply (s.74(1)(d)). */
+  invoiceNotRequired?: boolean;
 }): { taxPointDate: IsoDate; reason: string } {
   if (params.direction === 'purchases' && params.acquisition) {
     const occurred = params.supplyDate ?? params.invoiceDate;
@@ -351,6 +353,21 @@ export function determineTaxPoint(params: {
       reason: 'Input VAT is reclaimed by reference to the supplier’s invoice date '
         + 'under both the invoice basis and the cash receipts basis: s.59(2)(a) allows the tax charged to the person '
         + 'during the period by means of invoices, so a supply date does not move it (issue #611).',
+    };
+  }
+
+  if (params.basis === 'invoice' && params.invoiceNotRequired && !params.adjustingNote) {
+    if (!params.supplyDate) {
+      throw new VatError(
+        'No invoice is required for this supply, so its VAT is due when it is supplied (VATCA s.74(1)(d)). '
+          + 'Record the supply date; the invoice date is not a substitute.',
+        { invoiceDate: params.invoiceDate },
+      );
+    }
+    return {
+      taxPointDate: params.supplyDate,
+      reason: 'No invoice is required under Chapter 2 for this supply, so the VAT is due when the goods or services '
+        + `are supplied, on ${params.supplyDate} (VATCA s.74(1)(d)).`,
     };
   }
 

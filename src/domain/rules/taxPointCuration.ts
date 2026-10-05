@@ -30,7 +30,7 @@ export const TAX_POINT_CURATED_RULES: CuratedVatScopeRule[] = [
     reportingEffect: 'T1 in the period covering the tax point.',
     interpretationNote: 'Enforced when a sales invoice is posted (determineTaxPoint), not by matching words. A credit or '
       + 'debit note takes its own date: reg.23(e) and (f) set its time limits from the change in consideration, not the '
-      + 'supply. Whether an invoice was required is not recorded, so every sales invoice is read under s.74(1)(a).',
+      + 'supply. Where a person records that no invoice was required, the sale is dated at its supply date (s.74(1)(d)); with nothing recorded, it is read under s.74(1)(a).',
   },
   {
     citation: '2010 Act 31 s.74', sectionNumber: '74', ruleKey: CASH_RECEIPTS_TAX_POINT_RULE_KEY,
