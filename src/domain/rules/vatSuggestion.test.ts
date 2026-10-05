@@ -89,13 +89,14 @@ describe('suggestVatTreatment', () => {
     // and S.I. 639/2010 reg.10: bad-debt relief and its recovery); #614 added 1 more (s.74(2), the cash receipts tax point).
     // #277 retired 2 (Finance Act 2024 s.13 and s.48, out of scope).
     // #487 added prsi.class_s_disregard (S.I. 312/1996 art. 92).
-    expect(first.rulesAfter).toBe(412);
+    // #559 added 10 (CA 2014 ss.281-285, 290, 291, 293, 343, 347: accounting records, statements, annual return).
+    expect(first.rulesAfter).toBe(422);
   });
 
   it('loading again is a no-op', () => {
     const again = loadStatutoryKnowledgeBase(db, { companyId });
-    expect(again.rulesBefore).toBe(412);
-    expect(again.rulesAfter).toBe(412);
+    expect(again.rulesBefore).toBe(422);
+    expect(again.rulesAfter).toBe(422);
   });
 
   it('US SaaS purchase → non-EU reverse charge, cited to VATCA s.12 with a verifiable slice', () => {
