@@ -179,6 +179,7 @@ export default async function TransactionDetailPage({ params }: {
                 bankTransactionId={t.id}
                 amountMinor={t.amountMinor}
                 currency={t.currency}
+                baseCurrency={company.baseCurrency}
                 invoices={openInvoices}
                 preselectInvoiceId={confirmedDocument?.invoiceId ?? null}
                 writeOffAccounts={accounts.filter((a) => a.type === 'income' || a.type === 'expense')

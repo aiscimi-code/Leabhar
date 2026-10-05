@@ -14,6 +14,7 @@ import type { RecordedPayment } from '@/domain/invoicing/payments';
 import { asIsoDate } from '@/domain/dates';
 import { parseAmount, parseDecimalRate } from '@/domain/money';
 import { resolveAccountId, resolveVatTreatmentId } from './reconcile';
+import { vatFxFromArgs, type VatFxArgs } from './vatFx';
 
 /**
  * CLI wrappers for the invoice-led workflow (issue #222): read a document,
@@ -236,6 +237,8 @@ export interface SettleCliInput {
   allocations: string;
   fx?: string;
   vatDeclarationDate?: string;
+  /** The s.37(4) rate at the receipt, for foreign-currency output VAT on the cash receipts basis (issue #661). */
+  vatFx?: VatFxArgs;
   /** Write off what the line leaves unpaid on this invoice (number or id) to this account (code or id), issue #386. */
   /** One of bank_charges, discount, bad_debt (issue #389); each has a fixed treatment. */
   writeOff?: { invoice: string; account: string; reason: string };
@@ -271,6 +274,7 @@ export function settleCli(db: AppDatabase, input: SettleCliInput): RecordedPayme
     bankTransactionId: tx.id,
     allocations,
     fxRate: parseFxArgument(input.fx),
+    vatFxRate: vatFxFromArgs(db, input.companyId, input.vatFx, allocations.map((a) => a.invoiceId)),
     vatDeclarationDate: input.vatDeclarationDate ? asIsoDate(input.vatDeclarationDate) : undefined,
     writeOff: input.writeOff ? {
       invoiceId: resolveInvoiceId(db, input.companyId, input.writeOff.invoice),

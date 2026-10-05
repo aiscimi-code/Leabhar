@@ -1,4 +1,6 @@
 import { and, eq, isNull, ne } from 'drizzle-orm';
+import { vatFxFromArgs } from './vatFx';
+import { parseFxArgument } from './consolidate';
 import type { AppDatabase } from '@/db';
 import {
   companies, invoices, invoiceLines, bankTransactions, vatPeriods, accounts, vatTreatments,
@@ -442,6 +444,10 @@ export function recordPaymentCli(db: AppDatabase, input: RecordPaymentCliInput):
     method: input.method,
     bankTransactionId: input.bankTransactionId ?? null,
     allocations,
+    fxRate: parseFxArgument(input.fx),
+    vatFxRate: vatFxFromArgs(db, input.companyId, {
+      rate: input.vatFx, currency: input.vatFxCurrency, source: input.vatFxSource, date: input.vatFxDate,
+    }, allocations.map((a) => a.invoiceId)),
     reference: input.reference,
     actor: 'cli',
   });
