@@ -315,6 +315,8 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
                 invoiceId={invoice.id}
                 direction={isSales ? 'received' : 'made'}
                 invoiceCurrency={invoice.currency}
+                baseCurrency={invoice.baseCurrency}
+                vatDeferred={deferredVat}
                 outstandingMinor={invoice.outstandingMinor}
                 bankTransactions={unpostedTransactionOptions()}
                 officers={isSales ? [] : officerList().map((o) => ({ value: o.id, label: o.name }))}

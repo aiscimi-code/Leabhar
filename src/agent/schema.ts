@@ -276,6 +276,17 @@ export const recordPaymentInput = z.object({
     'director_personal', 'offset', 'other',
   ]).optional(),
   reference: z.string().optional(),
+  /** The payment's rate to the base currency (1.0842 or 10842/10000); needed for a foreign-currency payment (issue #661). */
+  fx: z.string().optional(),
+  /**
+   * The s.37(4) rate at the receipt for foreign-currency output VAT on the cash
+   * receipts basis (issue #661): base per 1 unit, a decimal or a fraction. The
+   * currency may be left out when the invoices carry one foreign currency.
+   */
+  vatFx: z.string().optional(),
+  vatFxCurrency: z.string().optional(),
+  vatFxSource: z.string().optional(),
+  vatFxDate: z.string().optional(),
 });
 
 export const journalCliInput = z.object({

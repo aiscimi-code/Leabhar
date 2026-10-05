@@ -19,8 +19,11 @@ interface BankTxOption {
  */
 export function PaymentForm({
   action, invoiceId, direction, invoiceCurrency, outstandingMinor,
-  bankTransactions, officers = [],
+  bankTransactions, officers = [], baseCurrency, vatDeferred = false,
 }: {
+  /** The company's base currency, and whether this sale's VAT is deferred to the receipt (cash receipts basis; issue #661). */
+  baseCurrency?: string;
+  vatDeferred?: boolean;
   action: (formData: FormData) => Promise<ActionResult>;
   invoiceId: string;
   direction: 'received' | 'made';
@@ -37,6 +40,9 @@ export function PaymentForm({
   const [bankTransactionId, setBankTransactionId] = useState('');
   const [fxRate, setFxRate] = useState('');
   const [officerId, setOfficerId] = useState('');
+  const [vatFxRate, setVatFxRate] = useState('');
+  const [vatFxSource, setVatFxSource] = useState('');
+  const [vatFxDate, setVatFxDate] = useState('');
   const [result, setResult] = useState<ActionResult | null>(null);
   const [pending, startTransition] = useTransition();
 
@@ -60,6 +66,9 @@ export function PaymentForm({
         setFxRate('');
         setBankTransactionId('');
         setOfficerId('');
+        setVatFxRate('');
+        setVatFxSource('');
+        setVatFxDate('');
       }
     });
   };
@@ -132,6 +141,22 @@ export function PaymentForm({
               onChange={(e) => setFxRate(e.target.value)}
               placeholder="e.g. 0.92" required />
           </Field>
+        </div>
+      )}
+
+      {vatDeferred && direction === 'received' && baseCurrency && invoiceCurrency !== baseCurrency && (
+        <div className="mt-3 border border-line rounded p-2">
+          <input type="hidden" name="vatFxCurrency" value={invoiceCurrency} />
+          <p className="text-[12px] font-medium">VAT rate at receipt (optional)</p>
+          <p className="text-[11.5px] text-ink-muted mb-2">
+            On the cash receipts basis the VAT is due at the receipt, converted at the CBI or ECB selling rate then (VATCA
+            s.37(4)). Enter {baseCurrency} per 1 {invoiceCurrency}. Left blank, the invoice&apos;s own rate is used and the VAT period is flagged.
+          </p>
+          <div className="grid grid-cols-3 gap-3">
+            <Field label="Rate"><Input name="vatFxRate" value={vatFxRate} onChange={(e) => setVatFxRate(e.target.value)} placeholder="e.g. 0.9123" /></Field>
+            <Field label="Source"><Input name="vatFxSource" value={vatFxSource} onChange={(e) => setVatFxSource(e.target.value)} placeholder="e.g. ECB reference rate" /></Field>
+            <Field label="Rate date"><Input name="vatFxDate" type="date" value={vatFxDate} onChange={(e) => setVatFxDate(e.target.value)} /></Field>
+          </div>
         </div>
       )}
 

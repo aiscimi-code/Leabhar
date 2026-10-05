@@ -11,6 +11,7 @@ import { linkBankTransactionToJournal } from '@/domain/banking/journalLink';
 import { allocatePaymentOnAccount } from '@/domain/invoicing/onAccount';
 import { applyCreditNote, unapplyCreditNote, refundOnAccount } from '@/domain/invoicing/customerCredit';
 import { createInvoice } from '@/domain/invoicing/invoices';
+import { parseVatFxRate } from '@/domain/invoicing/vatFxRate';
 import { writeOffBadDebt, reverseBadDebtWriteOff } from '@/domain/invoicing/badDebts';
 import { recordDeemedSupply } from '@/domain/vat/deemedSupply';
 import { produceReminderLetter } from '@/domain/invoicing/receivables';
@@ -886,6 +887,8 @@ export async function previewSettlementAction(input: {
 
 export async function settleTransactionAction(input: {
   bankTransactionId: string; allocations: SettleAllocation[]; fxRateText?: string; vatDeclarationDate?: string;
+  /** The s.37(4) rate at the receipt for foreign-currency output VAT (issue #661). */
+  vatFx?: { rate: string; currency: string; source?: string; date?: string };
   writeOff?: { invoiceId: string; accountId: string; reason: PaymentWriteOffReason } | null;
 }): Promise<ActionResult> {
   try {
@@ -894,6 +897,7 @@ export async function settleTransactionAction(input: {
     const payment = settleBankTransaction(getDb(), {
       companyId: company.id, bankTransactionId: input.bankTransactionId, allocations: input.allocations,
       fxRate: typedFxRate(input.fxRateText), actor: await actorName(),
+      vatFxRate: input.vatFx ? parseVatFxRate(input.vatFx) : null,
       vatDeclarationDate: input.vatDeclarationDate ? asIsoDate(input.vatDeclarationDate) : undefined,
       writeOff: input.writeOff ?? null,
     });
