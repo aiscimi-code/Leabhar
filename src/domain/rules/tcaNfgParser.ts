@@ -41,10 +41,16 @@ export function parseNfgSections(markdown: string): NfgSection[] {
   let at = 0;
   for (const line of lines) { offsets.push(at); at += line.length + 1; }
 
+  const contents = nfgContentsTitles(markdown);
+  // The contents list ends where the body's first "Overview" opens; a listed
+  // heading is a note only after it, never in the list itself.
+  const bodyStart = lines.findIndex((l) => l.trim() === 'Overview');
   const starts: Array<{ line: number; sectionNumber: string; heading: string }> = [];
   let previous = 0;
   let previousSection = '';
   for (let i = 0; i < lines.length; i++) {
+    // Everything before the first "Overview" is the cover and the contents list.
+    if (i < bodyStart) continue;
     const m = HEADING.exec(lines[i]!);
     if (!m) continue;
     const number = Number.parseInt(m[1]!, 10);
@@ -66,7 +72,13 @@ export function parseNfgSections(markdown: string): NfgSection[] {
     // section along: the same number or a close one. The same takes the first
     // note of a part (Part 11 opens with one, s.373): a left-margin heading
     // before any note has been taken is a note, not a line of text.
-    if (!opensBody && !((previous === 0) || (number > previous && number - previous <= 5) || (/^\d/.test(lines[i]!) && laterLetteredSection(m[1]!, previousSection)))) continue;
+    // A section the contents list names is a note even with no Summary or Details
+    // (a repealed or deleted section's note is a sentence or two): its heading
+    // opens with the listed title, and it follows the sections before it.
+    const listed = contents.get(m[1]!);
+    const listedHere = listed !== undefined && number >= previous
+      && (m[2]!.startsWith(listed) || listed.startsWith(m[2]!));
+    if (!opensBody && !listedHere && !((previous === 0) || (number > previous && number - previous <= 5) || (/^\d/.test(lines[i]!) && laterLetteredSection(m[1]!, previousSection)))) continue;
     if (!opensBody) wrapped.length = 0;
     const heading = [m[2]!, ...wrapped].join(' ').replace(/- /g, '').replace(/\s+/g, ' ').trim();
     starts.push({ line: i, sectionNumber: m[1]!, heading });
@@ -83,6 +95,51 @@ export function parseNfgSections(markdown: string): NfgSection[] {
       provisionText: markdown.slice(sourceStart, sourceEnd), sourceStart, sourceEnd,
     };
   });
+}
+
+/**
+ * The section numbers a part's table of contents lists, in order. The
+ * contents open at the "Finance Act ... edition" line of the cover page and
+ * run to the part's "Overview". An entry is an indented section number and
+ * title; a wrapped title can start a line with a year or a section reference,
+ * so a number going backwards, or a year, is a continuation and not an entry.
+ */
+export function parseNfgContents(markdown: string): string[] {
+  return [...nfgContentsTitles(markdown).keys()];
+}
+
+/** The contents list as section number → title, in order. */
+function nfgContentsTitles(markdown: string): Map<string, string> {
+  const lines = markdown.split('\n');
+  const open = lines.findIndex((l) => /^Finance Act \d{4} edition/.test(l));
+  const sections = new Map<string, string>();
+  if (open < 0) return sections;
+  let previous = 0;
+  for (let i = open + 1; i < lines.length; i++) {
+    const line = lines[i]!;
+    if (line.trim() === 'Overview') break;
+    const m = /^ {1,8}(\d+[A-Z]{0,3}) ([A-Z“"].*?)\s*$/.exec(line);
+    if (!m) continue;
+    const number = Number.parseInt(m[1]!, 10);
+    if (number > 1500 || number < previous) continue;
+    sections.set(m[1]!, m[2]!);
+    previous = number;
+  }
+  return sections;
+}
+
+/**
+ * Sections the contents list names that no note was parsed for, and notes parsed for
+ * a section the contents do not list. A section missing here means its text
+ * sits inside the previous section's note (issue #287).
+ */
+export function compareNfgContents(markdown: string): { missing: string[]; unlisted: string[] } {
+  const listed = parseNfgContents(markdown);
+  const found = parseNfgSections(markdown).map((s) => s.sectionNumber);
+  return {
+    missing: listed.filter((s) => !found.includes(s)),
+    unlisted: found.filter((s) => !listed.includes(s)),
+  };
 }
 
 /** One section's note; throws when the part has none or more than one. */
