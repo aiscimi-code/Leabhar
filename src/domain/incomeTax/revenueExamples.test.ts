@@ -10,8 +10,8 @@ import { companies } from '@/db/schema';
 
 /**
  * Revenue Notes for Guidance worked examples (issue #281).
- * Period dates are asserted. Euro figures that the Notes apportion by months
- * are not locked: the engine apportions by days (#671). The record of every
+ * Period dates and the Notes' euro figures are asserted. Whole calendar months
+ * are apportioned as months, as the Notes do (#671). The record of every
  * example, including those that cannot be run, is docs/rules/revenue-worked-examples.md.
  */
 const books = (tradeCommencedOn: string, yearEndMonth: number, yearEndDay: number) => {
@@ -34,10 +34,12 @@ const books = (tradeCommencedOn: string, yearEndMonth: number, yearEndDay: numbe
 
 describe('Part 4 Notes for Guidance basis periods (issue #281)', () => {
   it('s.65 Example 1: the year to 31 October is the basis for that year of assessment', () => {
-    const { db, companyId, profit } = books('2001-11-01', 10, 31);
-    profit(1_000_000, '2002-06-01');
-    expect(computeIncomeTax(db, { companyId, year: 2002 }).basis)
-      .toMatchObject({ from: '2001-11-01', to: '2002-10-31' });
+    // The Notes use 2002. The wear and tear rate is in force from 4 December 2002,
+    // and a computation runs from commencement, so the same case is run for 2005.
+    const { db, companyId, profit } = books('2003-11-01', 10, 31);
+    profit(1_000_000, '2005-06-01');
+    expect(computeIncomeTax(db, { companyId, year: 2005 }).basis)
+      .toMatchObject({ from: '2004-11-01', to: '2005-10-31' });
   });
 
   it('s.66 Example 1: first year is commencement to 31 December, second year the 12-month account', () => {
@@ -48,8 +50,8 @@ describe('Part 4 Notes for Guidance basis periods (issue #281)', () => {
     const second = computeIncomeTax(db, { companyId, year: 2003 });
     expect(first.basis).toMatchObject({ from: '2002-07-01', to: '2002-12-31' });
     expect(second.basis).toMatchObject({ from: '2002-07-01', to: '2003-06-30' });
-    // Notes: €12,000 × 6/12 = €6,000. The engine uses days (#671), so the figure is not locked.
-    expect(first.basisProfitMinor).not.toBe(600_000);
+    expect(first.basisProfitMinor).toBe(600_000); // €12,000 × 6/12
+    expect(second.basisProfitMinor).toBe(1_200_000);
   });
 
   it('s.67 Example 1: the cessation year is 1 January to the date the trade ceased', () => {
@@ -58,12 +60,13 @@ describe('Part 4 Notes for Guidance basis periods (issue #281)', () => {
     db.update(companies).set({ tradeCeasedOn: '2003-07-31' }).where(eq(companies.id, companyId)).run();
     const year = computeIncomeTax(db, { companyId, year: 2003 });
     expect(year.basis).toMatchObject({ from: '2003-01-01', to: '2003-07-31' });
-    // Notes: €22,000 × 7/10 = €15,400. Day apportionment does not match (#671).
-    expect(year.basisProfitMinor).not.toBe(1_540_000);
+    expect(year.basisProfitMinor).toBe(1_540_000); // €22,000 × 7/10
   });
 
-  it('s.67 Example 2: the penultimate year is flagged, not revised (#672)', () => {
-    const { db, companyId, profit } = books('2001-10-01', 9, 30);
+  it('s.67 Example 2: the penultimate year is revised up to its actual profits (#672)', () => {
+    // The Notes' first account is the year to 30 September 2002. The trade is taken to
+    // commence on 1 January 2002, since the wear and tear rate starts on 4 December 2002.
+    const { db, companyId, profit } = books('2002-01-01', 9, 30);
     profit(2_000_000, '2002-01-15');
     profit(2_400_000, '2003-01-15');
     profit(3_200_000, '2003-11-01');
@@ -72,7 +75,11 @@ describe('Part 4 Notes for Guidance basis periods (issue #281)', () => {
     const cessation = computeIncomeTax(db, { companyId, year: 2004 });
     expect(cessation.basis).toMatchObject({ from: '2004-01-01', to: '2004-05-31' });
     expect(cessation.findings.some((f) => f.includes('revised up'))).toBe(true);
-    expect(penultimate.basisProfitMinor).toBe(penultimate.assessableProfitMinor);
+    expect(cessation.basisProfitMinor).toBe(2_000_000); // €32,000 × 5/8
+    // €24,000 × 9/12 + €32,000 × 3/8 = €18,000 + €12,000.
+    expect(penultimate.basis).toMatchObject({ from: '2003-01-01', to: '2003-12-31' });
+    expect(penultimate.basisProfitMinor).toBe(3_000_000);
+    expect(penultimate.assessableProfitMinor).toBe(3_000_000);
   });
 });
 
