@@ -31,5 +31,8 @@ Each row has exactly one status:
 It prints counts by status for each area on every run.
 
 A rule issue (#205–#214, #245) closes only when its rows are `rule` or a
-justified `not_applicable`. When a rule is added, update its row; the test
+justified `not_applicable`. Before closing any issue, check that no row defers to
+it: `node scripts/check-deferred-issues.mjs` fails when a row defers to a closed
+issue (the weekly "Deferred issues" workflow runs it too); re-home the rows
+first. When a rule is added, update its row; the test
 fails until you do.
