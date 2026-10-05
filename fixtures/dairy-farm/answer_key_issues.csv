@@ -1,0 +1,57 @@
+code,kind,year,what_was_planted,expected_tool_behaviour
+SUPERLEVY,info,2008,Super-levy deducted from the milk cheque,Treat as a trading cost; do not match a separate payment.
+SUPERLEVY,info,2011,Super-levy deducted from the milk cheque,Treat as a trading cost; do not match a separate payment.
+COOP_LOAN,info,2009,"Loan advance lodged, repaid inside milk cheques",Not income. Liability reducing through netted milk payments.
+COOP_LOAN,info,2016,"Loan advance lodged, repaid inside milk cheques",Not income. Liability reducing through netted milk payments.
+E1-2009,evasion,2009,"12 calves and 2 cows moved off to a dealer for cash (about EUR 1,700); not banked, no docket",Reconcile register movements to dockets and bank receipts; flag animals with no sale evidence; estimate suppressed income; review item.
+E1-2010,evasion,2010,"14 calves and 3 cows moved off to a dealer for cash (about EUR 2,990); not banked, no docket",Reconcile register movements to dockets and bank receipts; flag animals with no sale evidence; estimate suppressed income; review item.
+E1-2011,evasion,2011,"10 calves and 4 cows moved off to a dealer for cash (about EUR 3,910); not banked, no docket",Reconcile register movements to dockets and bank receipts; flag animals with no sale evidence; estimate suppressed income; review item.
+E1-2012,evasion,2012,"16 calves and 3 cows moved off to a dealer for cash (about EUR 3,750); not banked, no docket",Reconcile register movements to dockets and bank receipts; flag animals with no sale evidence; estimate suppressed income; review item.
+E1-2013,evasion,2013,"18 calves and 4 cows moved off to a dealer for cash (about EUR 5,000); not banked, no docket",Reconcile register movements to dockets and bank receipts; flag animals with no sale evidence; estimate suppressed income; review item.
+E1-2017,evasion,2017,"9 calves and 0 cows moved off to a dealer for cash (about EUR 405); not banked, no docket",Reconcile register movements to dockets and bank receipts; flag animals with no sale evidence; estimate suppressed income; review item.
+E1-2018,evasion,2018,"11 calves and 3 cows moved off to a dealer for cash (about EUR 3,510); not banked, no docket",Reconcile register movements to dockets and bank receipts; flag animals with no sale evidence; estimate suppressed income; review item.
+E1-2019,evasion,2019,"13 calves and 4 cows moved off to a dealer for cash (about EUR 4,235); not banked, no docket",Reconcile register movements to dockets and bank receipts; flag animals with no sale evidence; estimate suppressed income; review item.
+E2-2016,evasion,2016,"Contracting paid in cash, no sales invoice and no output VAT on the VAT3",Unexplained round-sum lodgements in the contracting season with no invoice; flag as possible unrecorded income and unreturned output VAT.
+E2-2018,evasion,2018,"Contracting paid in cash, no sales invoice and no output VAT on the VAT3",Unexplained round-sum lodgements in the contracting season with no invoice; flag as possible unrecorded income and unreturned output VAT.
+E2-2020,evasion,2020,"Contracting paid in cash, no sales invoice and no output VAT on the VAT3",Unexplained round-sum lodgements in the contracting season with no invoice; flag as possible unrecorded income and unreturned output VAT.
+E2-2022,evasion,2022,"Contracting paid in cash, no sales invoice and no output VAT on the VAT3",Unexplained round-sum lodgements in the contracting season with no invoice; flag as possible unrecorded income and unreturned output VAT.
+E2-2024,evasion,2024,"Contracting paid in cash, no sales invoice and no output VAT on the VAT3",Unexplained round-sum lodgements in the contracting season with no invoice; flag as possible unrecorded income and unreturned output VAT.
+E3-2014,evasion,2014,Income cut-off: work done 2014-12-16 but invoice dated 2015-01-04,Compare supply date to invoice date across the year end; flag income deferred into the next period.
+E3-2021,evasion,2021,Income cut-off: work done 2021-12-13 but invoice dated 2022-01-04,Compare supply date to invoice date across the year end; flag income deferred into the next period.
+P1-2012,error,2012,"June and July PAYE/PRSI paid late, with Revenue interest",Detect missing Revenue direct debits for two months and the later catch-up payment.
+P2-2016,error,2016,"Revenue payroll debit taken twice in Nov 2016, refunded in March 2017",Pair the duplicate debit with the later refund; do not cost it twice.
+E4,evasion,2010,"R. Kowalski paid every month Mar-Nov 2010-2013 by transfer: not on payroll, no PAYE/PRSI/USC returned",Recurring payments to a person with no payslips and no Revenue payroll line; flag possible unreported employment.
+E5,evasion,2015,Employee overtime paid by separate transfers (Jul/Aug/Nov) outside payroll,Second payment to an employee in the same month with no payslip; flag as untaxed pay.
+E6,evasion,2016,"EUR 400/month to the farmer's son (student) 2016-2019 labelled farm labour, no payroll",Related-party payments with no payroll record; flag as personal / drawings.
+PAYE-IN,info,2009,Spouse (bus driver) and son (contractor employee) net pay lodged to the farm account,"Personal PAYE income, not farm turnover. Classify as drawings-in / non-business; match to payslips."
+FOREST,info,2009,Forestry premium lodged each November 2009-2023,Exempt income: report separately from trading and from scheme income.
+M1-2010,omission,2010,"EUR 8,500 capital cheque with no invoice",Payment with no document: no input VAT or capital allowance until evidenced.
+E7-2013,evasion,2013,"Family car (EUR 24,500 + VAT) paid from the farm account and described as a farm vehicle","Personal asset: classify as drawings, no capital allowances, no VAT; review item on a car described as farm use."
+E8-2016,evasion,2016,"Fabricator invoice EUR 31,000 +VAT claimed for grant; EUR 7,500 comes back as a cash lodgement",Round cash lodgement within weeks of a supplier payment: flag a rebate that undermines the invoice amount used for a grant claim.
+M2-2016,omission,2016,"Sale of the 2008 tractor for EUR 28,500 with no sales invoice",Disposal proceeds with no document; balancing allowance/charge not computable.
+E9-2019,evasion,2019,The same slurry tanker invoice (MT19-0388) triggers two identical grant payments,Duplicate grant income against one invoice: flag the second payment and the invoice reuse.
+E10-2024,evasion,2024,"Solar installer invoice (EUR 98,000 + VAT) used for the grant; EUR 8,000 cash comes back",Same pattern as E8: round cash lodgement after the installer is paid.
+E11-2012,evasion,2012,"Family holiday invoiced as a study tour / seminar (Dairy study tour: Portugal, 5 nights, 2 delegates (golf and spa package))","Hospitality/accommodation with golf/spa wording in the farm books; non-deductible, no input VAT."
+E11-2016,evasion,2016,Family holiday invoiced as a study tour / seminar (Farm management seminar and accommodation (4 nights)),"Hospitality/accommodation with golf/spa wording in the farm books; non-deductible, no input VAT."
+E11-2019,evasion,2019,"Family holiday invoiced as a study tour / seminar (Dairy conference and delegate package, Algarve)","Hospitality/accommodation with golf/spa wording in the farm books; non-deductible, no input VAT."
+E12,evasion,2010,"P. Crowley Plant & Labour: round-sum invoices in mid/late December 2010-2013, no VAT number, cheques paid immediately",Round-sum year-end invoices from a supplier with no VAT number and no other trading: flag as a possible fictitious expense.
+E13-2021,evasion,2021,"EUR 32,000 fertiliser invoiced and paid on 29 Dec 2021 for delivery in March 2022","Supply date after the period end: a prepayment, not a cost of this year."
+E13-2022,evasion,2022,"EUR 41,000 fertiliser invoiced and paid on 29 Dec 2022 for delivery in March 2023","Supply date after the period end: a prepayment, not a cost of this year."
+E14-2020,evasion,2020,A supermarket receipt posted as a farm purchase with input VAT claimed,Personal groceries: not a business expense; no input VAT.
+ARITH,error,2006,5 invoices whose printed gross is not net + VAT (by 10c-1.00),Cross-check and raise a review item; do not silently correct.
+WRONGVAT,error,2006,5 invoices charged at 23% where 13.5% or 0% applies,Compare printed VAT to the rate for the supply; do not reclaim more input VAT than is due.
+NOVATNO,omission,2015,6 invoices with no supplier VAT number on them,Input VAT is not claimable without a valid invoice (reg. 20 particulars).
+DUPINV,error,2006,"6 supplier invoices that appear twice (same number, resent weeks later)",Duplicate invoice number from one supplier: do not post twice.
+CN,info,2006,"10 credit notes; about half refunded by bank, the rest netted off later payments",Credit notes positive as printed; refunded vs unrefunded.
+DOUBLEPAY,error,2008,"4 supplier invoices paid twice, refunded 5-10 weeks later","Second payment for the same invoice is a receivable, not a cost."
+TRANSPOSE,error,2008,5 payments with two digits swapped against the invoice amount,"Near-match with an exact-digits transposition: flag, do not auto-settle."
+WRONGREF,error,2008,5 payments carrying the reference of an invoice that is not the one paid,Prefer amount/date/supplier over a conflicting reference; flag.
+RETURNED,error,2013,2 customer cheques returned unpaid after being lodged,Reverse the receipt; the sales invoice reopens.
+BANKERR,error,2011,"Bank charged a fee twice, reversed three weeks later",Net to nil; do not treat as income.
+GBP,info,2016,8 invoices in GBP paid by card in EUR with FX fee,"Foreign-currency purchase: EUR amount comes from the bank line, not the invoice."
+V1-2018,error,2018,VAT3 Mar-Apr 2018 paid 6 weeks late with interest,Compare VAT payment date to due date.
+E15,evasion,2015,"VAT3 T2 includes input VAT on cars, hospitality-type invoices, groceries, ghost-supplier and no-VAT-number invoices",T2 must sum recoverable VAT only; quantify the over-claim by year.
+E16,evasion,2016,"Cash contracting income never invoiced, so no output VAT in T1",Under-declared T1 that matches the unexplained cash lodgements (E2).
+GAP,omission,2008,"Four statement pages missing (Oct 2008, Jul 2012, Feb 2017, Sep 2022): rows absent but the running balance continues",Running-balance break between consecutive rows: report a statement gap; never invent the missing lines.
+DUPROW,error,2009,"Eight rows duplicated in the export (same date, text, amount and balance)",Distinguish an export duplicate from a real second payment.
+OVERLAP,error,2010,"The 2010, 2016 and 2021 files start 10 days early and repeat the prior December",Fingerprint dedup across overlapping files.
