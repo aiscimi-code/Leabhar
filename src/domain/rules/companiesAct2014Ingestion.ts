@@ -36,11 +36,13 @@ const SOURCE_TYPE: IrishSourceType = 'legislation';
 
 /**
  * The sections extract_companies_act_2014() fetches (docs/statutes/scripts/extract_vat_sources.py):
- * the first eight (issue #135), and s.280B (small groups), s.280C (the small
- * companies regime) and s.280F (medium companies) for company size (issue #554).
+ * the first eight (issue #135), s.280B/C/F for company size (issue #554), and
+ * ss.281, 283–286, 290–293, 343 and 347 for accounting records, statutory
+ * financial statements and the annual return (issue #559 / #214).
  */
 export const COMPANIES_ACT_2014_SECTION_NUMBERS = [
   '282', '280A', '280B', '280C', '280D', '280E', '280F', '352', '358', '359', '360',
+  '281', '283', '284', '285', '286', '290', '291', '292', '293', '343', '347',
 ] as const;
 
 export interface CompaniesAct2014IngestResult {

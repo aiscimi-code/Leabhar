@@ -33,6 +33,22 @@ describe('parseCompaniesAct2014Section', () => {
     expect(p.provisionText).toContain('does not exceed 10');
   });
 
+  it('parses s.281, a one-sentence duty with no numbered subsections', () => {
+    const p = parseCompaniesAct2014SectionFile(companiesAct2014SectionPath('281'));
+    expect(p.sectionNumber).toBe('281');
+    expect(p.heading).toBe('Obligation to keep adequate accounting records');
+    expect(p.provisionText.startsWith('281.')).toBe(true);
+    expect(p.provisionText).toContain('adequate accounting records');
+  });
+
+  it('parses s.343 and keeps the substituted 56-day period', () => {
+    const p = parseCompaniesAct2014SectionFile(companiesAct2014SectionPath('343'));
+    expect(p.sectionNumber).toBe('343');
+    expect(p.heading).toBe('Obligation to make annual return');
+    expect(p.provisionText).toContain('56 days');
+    expect(p.provisionText).toContain('annual return date');
+  });
+
   it('parses s.280E, the shortest section (no subsections at all)', () => {
     const p = parseCompaniesAct2014SectionFile(companiesAct2014SectionPath('280E'));
     expect(p.sectionNumber).toBe('280E');
