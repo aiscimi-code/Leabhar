@@ -42,3 +42,4 @@ date it was written, not the date the decision was first taken.
 | [0016](0016-farm-analysis-beside-the-ledger.md) | Keep farm enterprise and crop analysis beside the ledger, as allocations of posted lines | Accepted |
 | [0017](0017-statutory-layouts-from-ledger-movements.md) | Lay out the cash flow and the statutory formats from ledger movements, classified by account | Accepted |
 | [0018](0018-forecast-dates-from-rules-or-none.md) | Date a forecast payment by a curated rule, or leave it undated | Accepted |
+| [0019](0019-income-tax-basis-profits-by-months-when-whole.md) | Apportion basis-period profits by months when the dates are whole months | Accepted |

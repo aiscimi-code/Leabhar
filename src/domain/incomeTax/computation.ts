@@ -1,3 +1,4 @@
+import { classSPrsiMinor } from './classSPrsi';
 import { eq } from 'drizzle-orm';
 import type { AppDatabase } from '@/db';
 import { partners, companies, journalEntries } from '@/db/schema';
@@ -128,6 +129,20 @@ export class IncomeTaxError extends Error {}
 const day = 86_400_000;
 const addDays = (d: string, n: number) => new Date(Date.parse(d) + n * day).toISOString().slice(0, 10);
 const days = (a: string, b: string) => Math.round((Date.parse(b) - Date.parse(a)) / day) + 1;
+const startsMonth = (d: string) => d.endsWith('-01');
+const endsMonth = (d: string) => addDays(d, 1).endsWith('-01');
+const months = (a: string, b: string) => (Number(b.slice(0, 4)) - Number(a.slice(0, 4))) * 12 + Number(b.slice(5, 7)) - Number(a.slice(5, 7)) + 1;
+
+/**
+ * The part of an account's profit that falls in [a, b], inside the account [from, to].
+ * Revenue's Notes for Guidance apportion by months (s.66 Examples 1-2, s.67 Examples 1-2),
+ * so whole calendar months are counted as months; any other boundary is counted in days
+ * (issue #671).
+ */
+const apportion = (profitMinor: number, a: string, b: string, from: string, to: string) =>
+  startsMonth(a) && endsMonth(b) && startsMonth(from) && endsMonth(to)
+    ? multiplyRational(profitMinor, months(a, b), months(from, to))
+    : multiplyRational(profitMinor, days(a, b), days(from, to));
 const eur = (minor: number) => (minor / 100).toFixed(2);
 
 /** The figure a rule states on a date: the stored rule a person can review, not the shipped constant (issue #282). */
@@ -207,7 +222,7 @@ class IncomeTaxRun {
       const a = p.from > from ? p.from : from;
       const b = p.to < to ? p.to : to;
       if (a > b) continue;
-      total += multiplyRational(this.adjusted(p), days(a, b), days(p.from, p.to));
+      total += apportion(this.adjusted(p), a, b, p.from, p.to);
     }
     return total;
   }
@@ -265,8 +280,26 @@ class IncomeTaxRun {
       .map((a) => ({ name: a.partner.name, partnerId: a.partner.id, share: a.amountMinor }));
   }
 
-  /** The basis period for a year and the profit assessed on it (ss.65-67). */
+  /**
+   * The basis period for a year and the profit assessed on it (ss.65-67). The
+   * year before the one the trade ceases in is revised up to its actual profits
+   * if they are greater (s.67(1)(a)(ii); issue #672).
+   */
   private assessed(year: number): { from: string; to: string; rule: string; ruleKeys: string[]; profit: number } {
+    const original = this.assessedBeforeRevision(year);
+    const ceased = this.company.tradeCeasedOn;
+    if (!ceased || Number(ceased.slice(0, 4)) !== year + 1) return original;
+    const actual = this.profitOf(`${year}-01-01`, `${year}-12-31`);
+    if (actual <= original.profit) return original;
+    return {
+      from: `${year}-01-01`, to: `${year}-12-31`, profit: actual,
+      rule: 'Year before cessation: revised to the actual profits of the year, as they exceed the first assessment (s.67(1)(a)(ii)).',
+      ruleKeys: [...new Set([...original.ruleKeys, 'income_tax.basis_cessation'])],
+    };
+  }
+
+  /** The assessment a year would have had if the trade had not ceased in the next one (ss.65-66). */
+  private assessedBeforeRevision(year: number): { from: string; to: string; rule: string; ruleKeys: string[]; profit: number } {
     const jan1 = `${year}-01-01`;
     const dec31 = `${year}-12-31`;
     const firstYear = Number(this.commenced.slice(0, 4));
@@ -403,12 +436,13 @@ class IncomeTaxRun {
     const uscMinor = usc.reduce((s, l) => s + l.amountMinor, 0);
 
     // PRSI Class S (SWCA 2005 s.21(1)(a)): the rate and the minimum are rule
-    // figures like every other (#487). The €5,000 disregard is not in the
-    // collected SWCA sections, so it is flagged, never guessed.
+    // figures like every other (#487), as is the €5,000 prescribed amount
+    // below which no Class S is payable (S.I. 312/1996 art. 92).
     const prsiRule = ruleOn(this.db, this.companyId, 'prsi.class_s_rate', dec31);
     if (prsiRule?.finding) this.findings.push(prsiRule.finding);
     const prsiRate = prsiRule?.numericValue ?? null;
     const prsiMinimum = need('prsi.class_s_minimum');
+    const prsiDisregard = need('prsi.class_s_disregard');
     let prsiMinor: number | null = null;
     if (!prsiRate) {
       const why = prsiRule?.status === 'rejected' ? 'the rule was rejected on the review screen'
@@ -417,11 +451,13 @@ class IncomeTaxRun {
       this.findings.push(`No PRSI Class S rate is available for ${year} (${why}): PRSI is not computed for that year.`);
     } else if (!prsiMinimum) {
       this.findings.push(`No PRSI Class S minimum (prsi.class_s_minimum) is available for ${year}: PRSI is not computed for that year.`);
+    } else if (!prsiDisregard) {
+      this.findings.push(`No PRSI Class S prescribed amount (prsi.class_s_disregard) is available for ${year}: PRSI is not computed for that year.`);
     } else if (p > 0) {
-      prsiMinor = Math.max(multiplyRational(p, prsiRate, 10_000), prsiMinimum.numericValue!);
-      this.findings.push(`${name}: PRSI Class S at ${prsiRate / 100}% with the ${eur(prsiMinimum.numericValue!)} minimum. `
-        + 'No Class S is payable on reckonable income under €5,000; that threshold is not in the collected SWCA '
-        + 'sections, so it cannot be applied here — check it where income is low.');
+      prsiMinor = classSPrsiMinor(p, prsiRate, prsiMinimum.numericValue!, prsiDisregard.numericValue!);
+      this.findings.push(prsiMinor === 0
+        ? `${name}: no PRSI Class S, reckonable income is under the ${eur(prsiDisregard.numericValue!)} prescribed amount.`
+        : `${name}: PRSI Class S at ${prsiRate / 100}% with the ${eur(prsiMinimum.numericValue!)} minimum.`);
     }
     return {
       name, partnerId,
@@ -579,11 +615,11 @@ class IncomeTaxRun {
       }
     }
     if (this.company.tradeCeasedOn?.startsWith(String(year)) && year > firstYear) {
-      const prior = this.assessed(year - 1);
+      const prior = this.assessedBeforeRevision(year - 1);
       const actual = this.profitOf(`${year - 1}-01-01`, `${year - 1}-12-31`);
       if (actual > prior.profit) {
         this.findings.push(`The trade ceased in ${year}: ${year - 1} was assessed on ${eur(prior.profit)} but its actual profits `
-          + `were ${eur(actual)}, so ${year - 1} is revised up by ${eur(actual - prior.profit)} (s.67(1)(a)(ii)).`);
+          + `were ${eur(actual)}, so ${year - 1} was revised up by ${eur(actual - prior.profit)} (s.67(1)(a)(ii)).`);
       }
     }
     const basisProfitMinor = basis.profit - thirdYearReliefMinor;

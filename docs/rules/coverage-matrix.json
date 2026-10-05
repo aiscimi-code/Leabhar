@@ -3293,6 +3293,15 @@
       ]
     },
     {
+      "id": "si3121996:art92",
+      "area": "other_source",
+      "title": "S.I. 312/1996 art. 92 (LRC revised) — Class S prescribed amount (€5,000)",
+      "status": "rule",
+      "ruleKeys": [
+        "prsi.class_s_disregard"
+      ]
+    },
+    {
       "id": "fa2024:s13",
       "area": "other_source",
       "title": "Finance Act 2024 s.13 — pension standard fund threshold",
