@@ -90,8 +90,8 @@ describe('sole trader', () => {
     const second = computeIncomeTax(db, { companyId, year: 2025 });
     expect(second.basis).toMatchObject({ from: '2024-07-01', to: '2025-06-30' });
     expect(second.assessableProfitMinor).toBe(12_000_000);
-    // Actual 2025: 181/365 of 120,000 + 184/365 of 60,000.
-    const actual2025 = Math.round(12_000_000 * 181 / 365) + Math.round(6_000_000 * 184 / 365);
+    // Actual 2025: 6/12 of 120,000 + 6/12 of 60,000 (whole months are apportioned as months, #671).
+    const actual2025 = 6_000_000 + 3_000_000;
     const excess = Math.min(12_000_000 - actual2025, 6_000_000);
 
     // The relief is elective: with no election recorded it is not applied, and
