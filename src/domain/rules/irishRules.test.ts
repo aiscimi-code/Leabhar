@@ -51,8 +51,8 @@ describe('deriveTaxRules', () => {
 
   it('creates one rule per curated, relevant section', () => {
     const result = deriveTaxRules(db, { companyId });
-    // factExtractor.SECTION_RULE_KEYS curates sections 2, 3, 13, 48.
-    expect(result.created).toBe(4);
+    // factExtractor.SECTION_RULE_KEYS curates sections 2 and 3 (13 and 48 were retired, issue #277).
+    expect(result.created).toBe(2);
     expect(result.unchanged).toBe(0);
   });
 
@@ -74,7 +74,7 @@ describe('deriveTaxRules', () => {
     deriveTaxRules(db, { companyId });
     const items = db.select().from(reviewItems)
       .where(eq(reviewItems.companyId, companyId)).all();
-    expect(items).toHaveLength(4);
+    expect(items).toHaveLength(2);
     expect(items.every((i) => i.entityType === 'irish_tax_rule')).toBe(true);
     expect(items.every((i) => i.kind === 'unresolved_ai_suggestion')).toBe(true);
   });
@@ -83,7 +83,7 @@ describe('deriveTaxRules', () => {
     deriveTaxRules(db, { companyId });
     const second = deriveTaxRules(db, { companyId });
     expect(second.created).toBe(0);
-    expect(second.unchanged).toBe(4);
+    expect(second.unchanged).toBe(2);
   });
 
   it('versions a rule instead of editing it in place when its figure changes', () => {

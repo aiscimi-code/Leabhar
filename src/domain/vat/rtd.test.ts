@@ -4,7 +4,9 @@ import { createCompany } from '../config/setup';
 import { createInvoice } from '../invoicing/invoices';
 import { buildRtdReturn, RTD_BOXES } from './rtd';
 import { buildViesStatement, viesChargeableDate } from './vies';
-import { customers, suppliers } from '@/db/schema';
+import { customers, suppliers, taxRates } from '@/db/schema';
+import { and, eq } from 'drizzle-orm';
+import { supersedeTaxRate, createTaxRate } from '../config/mutations';
 import { makeDate } from '../dates';
 import { ids } from '@/lib/ids';
 import type { AppDatabase } from '@/db';
@@ -52,6 +54,33 @@ const post = (direction: 'sales' | 'purchase', code: string, netMinor: number, p
     description: `${code} line`, netMinor,
     accountId: byCode[opts.account ?? (direction === 'sales' ? '4020' : '6070')]!, vatTreatmentId: tr[code]!,
   }],
+});
+
+describe('exports outside the EU (issue #613)', () => {
+  it('go to D4, "0% Exports", not to D1 with domestic zero-rated sales (manual §2.2(d))', () => {
+    post('sales', 'EXPORT_GOODS', 50_000, 'us');
+    post('sales', 'IE_ZERO', 7_000, 'ie');
+    const rtd = buildRtdReturn(db, { companyId, date: '2025-06-30' });
+    expect(rtd.boxes[RTD_BOXES.supplies.zero_exports!]).toBe(50_000);
+    expect(rtd.boxes[RTD_BOXES.supplies.zero!]).toBe(7_000);
+    expect(rtd.boxes[RTD_BOXES.supplies.total!]).toBe(57_000);
+  });
+});
+
+describe('RTD rows follow the rate\'s classification, not its figure (issue #618)', () => {
+  it('a superseded standard rate stays on the standard row; an unclassified rate is reported as unmapped', () => {
+    const stdId = db.select().from(taxRates).where(and(eq(taxRates.companyId, companyId), eq(taxRates.code, 'VAT_STD'))).get()!.id;
+    supersedeTaxRate(db, { companyId, taxRateId: stdId, newRateBasisPoints: 2400, effectiveFrom: makeDate(2025, 3, 1) });
+    post('sales', 'IE_STD', 10_000, 'ie');
+    const customId = createTaxRate(db, { companyId, code: 'VAT_CUSTOM', name: 'Custom', rateBasisPoints: 1000, effectiveFrom: makeDate(2025, 1, 1) });
+    createInvoice(db, {
+      companyId, direction: 'sales', invoiceDate: makeDate(2025, 3, 10), invoiceNumber: 'R-custom', customerId: party['ie'],
+      lines: [{ description: 'Custom-rate line', netMinor: 5_000, accountId: byCode['4020']!, vatTreatmentId: tr['IE_STD']!, taxRateId: customId }],
+    });
+    const rtd = buildRtdReturn(db, { companyId, date: '2025-06-30' });
+    expect(rtd.boxes[RTD_BOXES.supplies.standard!]).toBe(10_000);
+    expect(rtd.findings.map((f) => f.code)).toContain('rtd_rate_not_on_grid');
+  });
 });
 
 describe('buildRtdReturn', () => {
@@ -103,6 +132,26 @@ describe('buildRtdReturn', () => {
     expect(b['E6']).toBe(1_500);
     expect(b['Z5']).toBe(30_500);
     expect(rtd.findings.map((f) => f.code)).toEqual(expect.arrayContaining(['rtd_resale_by_account', 'rtd_returns_not_filed']));
+  });
+
+  it('places the other domestic reverse charges as construction is placed, and flags that the manual does not state it (issue #621)', () => {
+    post('purchase', 'RC_CONSTRUCTION', 12_000, 'sIE');
+    post('purchase', 'RC_SCRAP_METAL', 9_000, 'sIE');
+    post('purchase', 'RC_PROPERTY_JOINT_OPTION', 50_000, 'sIE');
+    const rtd = buildRtdReturn(db, { companyId, date: '2025-06-30' });
+    // Section 1 at the rate charged, and section 4 as a deductible input (§4 Q4).
+    expect(rtd.boxes['P1']).toBe(12_000 + 9_000 + 50_000);
+    expect(rtd.boxes['R2']).toBe(12_000 + 9_000 + 50_000);
+    const finding = rtd.findings.find((f) => f.code === 'rtd_domestic_reverse_charge_placement')!;
+    // The input legs of scrap metal and the joint option; not construction, which the manual places.
+    expect(finding.entryIds).toHaveLength(2);
+    expect(finding.message).toMatch(/does not state their placement/);
+  });
+
+  it('raises no placement finding for construction services alone', () => {
+    post('purchase', 'RC_CONSTRUCTION', 12_000, 'sIE');
+    const rtd = buildRtdReturn(db, { companyId, date: '2025-06-30' });
+    expect(rtd.findings.map((f) => f.code)).not.toContain('rtd_domestic_reverse_charge_placement');
   });
 
   it('flags a box that nets negative rather than hiding it', () => {

@@ -240,6 +240,10 @@ export async function seedDemoCompany(
     vatRegistrationStatus: 'registered',
     taxReferenceNumber: '3456789TA',
     vatAccountingBasis: 'cash_receipts',
+    cashBasisAuthorisation: {
+      eligibility: 'turnover_threshold', authorisedFrom: '2023-07-01',
+      reference: 'Demo data — no real authorisation', confirmedBy: 'Demo setup',
+    },
     vatPeriodFrequency: 'bi_monthly',
     financialYearEndDay: 31,
     financialYearEndMonth: 12,

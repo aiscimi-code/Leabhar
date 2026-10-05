@@ -8,7 +8,7 @@
  *  2. Copy static assets (standalone doesn't include them).
  *  3. Copy drizzle migrations.
  *  4. Copy the launcher.
- *  5. Copy the better-sqlite3 native addon (platform-specific).
+ *  5. Copy the better-sqlite3 native addon (prebuilds/ or build/Release/).
  *  6. Stage everything into dist/leabhar/app/.
  *  7. Write leabhar.bat (the thing the shortcut runs).
  *
@@ -69,12 +69,17 @@ copy('drizzle migrations', join(ROOT, 'drizzle'), join(STANDALONE, 'drizzle'));
 const INBOX = join(ROOT, 'docs', 'statutes', '_inbox');
 copy('statute sources', join(ROOT, 'docs', 'statutes'), join(STANDALONE, 'docs', 'statutes'),
   (src) => src !== INBOX && !src.startsWith(INBOX + sep));
+// Next's file tracing already pulled the whole statutes directory into the
+// standalone output (the knowledge base reads it dynamically), `_inbox`
+// included, so the filter above cannot keep it out: remove it explicitly.
+rmSync(join(STANDALONE, 'docs', 'statutes', '_inbox'), { recursive: true, force: true });
 
 // 3c. Copy the OCR and PDF-rendering assets the review screen serves to the
 // browser (issue #202). The list mirrors OCR_ASSETS in src/lib/ocrAssets.ts;
 // they are read from disk at run time, so file tracing does not pick them up.
 for (const asset of [
   'node_modules/tesseract.js/dist/worker.min.js',
+  'node_modules/tesseract.js-core/tesseract-core-relaxedsimd-lstm.wasm.js',
   'node_modules/tesseract.js-core/tesseract-core-simd-lstm.wasm.js',
   'node_modules/tesseract.js-core/tesseract-core-lstm.wasm.js',
   'node_modules/@tesseract.js-data/eng/4.0.0_best_int/eng.traineddata.gz',
@@ -92,17 +97,30 @@ for (const asset of [
 // 4. Copy the launcher
 copy('launcher', join(ROOT, 'scripts', 'launcher.cjs'), join(STANDALONE, 'launcher.cjs'));
 
-// 5. Verify and copy better-sqlite3 native addon
-const nativeAddon = join(ROOT, 'node_modules', 'better-sqlite3', 'build', 'Release');
-if (!existsSync(nativeAddon)) {
-  console.error('ERROR: better-sqlite3 native addon not found at');
-  console.error(`  ${nativeAddon}`);
-  console.error('Run `npm ci` first, or `npm run build:native` if compilation is needed.');
+// 5. Verify and copy better-sqlite3 native addon. better-sqlite3 >= 13 ships
+// per-platform binaries in `prebuilds/` (and only builds `build/Release` when
+// no prebuild matches); 12.x and source builds use `build/Release`. Copy
+// whichever exists: file tracing does not pick up either.
+const bsqliteRoot = join(ROOT, 'node_modules', 'better-sqlite3');
+const bsqliteDest = join(STANDALONE, 'node_modules', 'better-sqlite3');
+const nativeDirs = ['prebuilds', join('build', 'Release')].filter((d) =>
+  existsSync(join(bsqliteRoot, d)),
+);
+if (nativeDirs.length === 0) {
+  console.error('ERROR: better-sqlite3 native addon not found (no prebuilds/ or build/Release/) in');
+  console.error(`  ${bsqliteRoot}`);
+  console.error('Run `npm ci` first; on an unsupported platform build it with `npm rebuild better-sqlite3 --build-from-source`.');
   process.exit(1);
 }
-const bsqliteDest = join(STANDALONE, 'node_modules', 'better-sqlite3', 'build', 'Release');
-mkdirSync(bsqliteDest, { recursive: true });
-copy('better-sqlite3 native addon', nativeAddon, bsqliteDest);
+for (const dir of nativeDirs) {
+  mkdirSync(join(bsqliteDest, dir), { recursive: true });
+  copy('better-sqlite3 native addon', join(bsqliteRoot, dir), join(bsqliteDest, dir));
+}
+if (process.platform === 'win32' && !existsSync(join(bsqliteDest, 'prebuilds', 'win32-x64.node'))
+    && !existsSync(join(bsqliteDest, 'build', 'Release', 'better_sqlite3.node'))) {
+  console.error('ERROR: no Windows x64 better-sqlite3 binary was staged.');
+  process.exit(1);
+}
 
 // 6. Stage into dist/leabhar/app/
 console.log('\n=== Stage dist ===');

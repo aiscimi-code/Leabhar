@@ -68,6 +68,7 @@ const TITLES: Record<string, string> = {
   conflict: 'Conflict',
   cash_receipts: 'Cash receipts basis',
   invoice: 'Invoice basis',
+  mixed: 'Invoice basis, then cash receipts basis',
 };
 
 export function label(value: string | null | undefined): string {

@@ -57,6 +57,56 @@ export interface PostJournalInput {
   overrideLock?: { reason: string };
 }
 
+/**
+ * Converting each line of a foreign-currency entry on its own can leave the
+ * base-currency totals a few minor units apart even though the entry balances
+ * in its own currency (issue #639): net 10.01 + VAT 2.30 = 12.31 USD at 7/9
+ * converts to 7.79 + 1.79 = 9.58 against 9.57. This returns the lines with
+ * one extra base-currency line to `roundingAccountId` that absorbs that
+ * difference, visibly and with a memo, or the lines unchanged when the
+ * conversion already balances.
+ *
+ * It never covers a real imbalance: the entry must balance exactly in each
+ * transaction currency, and the base difference must be no larger than the
+ * rounding the conversions can produce (half a minor unit per converted
+ * line). Anything else is returned unchanged for postJournalEntry to refuse.
+ */
+export function withFxRoundingLine(
+  lines: JournalLineInput[],
+  baseCurrency: string,
+  roundingAccountId: string,
+): JournalLineInput[] {
+  const base = baseCurrency.toUpperCase();
+  const netByCurrency = new Map<string, number>();
+  let baseNet = 0;
+  let converted = 0;
+  for (const line of lines) {
+    const currency = (line.currency ?? base).toUpperCase();
+    const debit = line.debitMinor ?? 0;
+    const credit = line.creditMinor ?? 0;
+    netByCurrency.set(currency, (netByCurrency.get(currency) ?? 0) + debit - credit);
+    if (currency === base) {
+      baseNet += debit - credit;
+      continue;
+    }
+    if (!line.fxRate) return lines;
+    const { numerator, denominator } = line.fxRate;
+    const toBase = (amount: number) => amount === 0 ? 0 : multiplyRational(amount, numerator, denominator);
+    baseNet += toBase(debit) - toBase(credit);
+    converted += 1;
+  }
+  if (converted === 0 || baseNet === 0) return lines;
+  if ([...netByCurrency.values()].some((net) => net !== 0)) return lines;
+  if (Math.abs(baseNet) * 2 > converted) return lines;
+  return [...lines, {
+    accountId: roundingAccountId,
+    ...(baseNet > 0 ? { creditMinor: baseNet } : { debitMinor: -baseNet }),
+    currency: base,
+    memo: `Rounding on conversion to ${base}: each line is converted on its own, ` +
+      `leaving ${Math.abs(baseNet)} minor unit(s) between debits and credits`,
+  }];
+}
+
 export interface PostedJournal {
   id: string;
   entryNumber: number;

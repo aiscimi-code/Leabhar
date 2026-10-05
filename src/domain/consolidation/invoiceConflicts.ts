@@ -149,8 +149,8 @@ export function invoiceConflicts(input: InvoiceConflictInput): InvoiceConflict[]
       out.push({
         code: 'invoice_issued_late',
         message: `The invoice is dated ${input.documentDate} for a supply on ${input.supplyDate}. It was due by ${deadline}: within `
-          + '15 days after the end of the month of supply (VATCA s.70(1), S.I. 639/2010 reg.23). The VAT is still due for the '
-          + 'period of the supply; check that it was declared there.',
+          + `15 days after the end of the month of supply (VATCA s.70(1), S.I. 639/2010 reg.23). The VAT was due on ${deadline}, `
+          + 'when that period expired (VATCA s.74(1)(a)), not on the invoice date; it is declared in the period covering that day.',
       });
     }
   }

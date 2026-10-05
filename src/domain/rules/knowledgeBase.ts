@@ -122,6 +122,18 @@ const SOURCES: Array<{ path: string; ingest: IngestFn }> = [
   { path: 'docs/statutes/vatca-2010-revised/s076.md', ingest: ingestVatcaRevisedSection },
   { path: 'docs/statutes/vatca-2010-revised/s92A.md', ingest: ingestVatcaRevisedSection },
   { path: 'docs/statutes/vatca-2010-revised/s034.md', ingest: ingestVatcaRevisedSection },
+  // Issue #646: the time limit on a late input VAT claim.
+  { path: 'docs/statutes/vatca-2010-revised/s099.md', ingest: ingestVatcaRevisedSection },
+  // Issue #611: when tax on a supply and on an intra-Community acquisition is due.
+  { path: 'docs/statutes/vatca-2010-revised/s074.md', ingest: ingestVatcaRevisedSection },
+  { path: 'docs/statutes/vatca-2010-revised/s075.md', ingest: ingestVatcaRevisedSection },
+  // Issue #645: deemed supplies (goods given away or taken, private use of property).
+  { path: 'docs/statutes/vatca-2010-revised/s021.md', ingest: ingestVatcaRevisedSection },
+  { path: 'docs/statutes/vatca-2010-revised/s027.md', ingest: ingestVatcaRevisedSection },
+  { path: 'docs/statutes/vatca-2010-revised/s042.md', ingest: ingestVatcaRevisedSection },
+  { path: 'docs/statutes/vatca-2010-revised/s044.md', ingest: ingestVatcaRevisedSection },
+  // Issue #620: bad-debt relief.
+  { path: 'docs/statutes/vatca-2010-revised/s039.md', ingest: ingestVatcaRevisedSection },
   { path: 'docs/statutes/tca-1997/s284.md', ingest: ingestTca1997S284 },
   { path: 'docs/statutes/finance-act-2003/s23.md', ingest: ingestFinanceAct2003S23 },
   { path: 'docs/statutes/si-639-2010/2010-si-639.md', ingest: ingestSi639 },
@@ -178,6 +190,11 @@ const DERIVES: Array<(db: AppDatabase, params: { companyId: string }) => unknown
   deriveSizeCriteriaRules,
   (db, p) => deriveCuratedRuleFamilies(db, { companyId: p.companyId, rules: CAR_EMISSIONS_CURATED_RULES, label: 'capital allowances' }),
 ];
+
+/** Every path `loadStatutoryKnowledgeBase` ingests, unique, repo-relative. */
+export function statuteSourcePaths(): string[] {
+  return [...new Set(SOURCES.map((s) => s.path))];
+}
 
 /** Resolve a repo-relative statute path against the running app's root (the install directory when packaged). */
 export function statuteFilePath(localPath: string, root: string = appRoot()): string {

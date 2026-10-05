@@ -1339,6 +1339,8 @@ Headline numbers:
   S.I. 156/2012, 1 S.I. 69/2025 reg.8, 1 Revenue TDM 38-01-03b), 194 judged
   relevant to transaction classification, 154 not (procedural/repeal/
   penalty/pure-definition, or uncategorised and flagged for review).
+- (Snapshot from the first ingestion; the knowledge base now derives 257 rules,
+  and the counts below are stale. `docs/rules/coverage-matrix.json` is current.)
 - 32 rules extracted (4 Finance Act, 5 VATCA principal-Act, 4 Schedule 2, 4
   Schedule 3, 4 RCT, 3 current VAT rates, 1 capital allowances, 1 S.I.
   639/2010 cash accounting, 1 S.I. 156/2012 mandatory e-filing, 2 S.I.
@@ -1739,6 +1741,17 @@ this KB independently confirmed against the LRC-revised text for "VATCA
   `docs/statutes/vat-rates/schedule-moves-2025-2026.md`) — left as-is
   rather than guessed at here, since fixing it correctly needs the same
   sourced ingestion issue #129 already tracks, not a hand-edited date.
+- Since issue #617, `DEFAULT_TAX_RATES` is seeded from these curated rules,
+  history included, and cites them:
+  - `VAT_STD`: 23% from 2012-01-01, 21% for 2020-09-01 to 2021-02-28 (s.46(1A)), and 23% from 2021-03-01.
+  - `VAT_RED`, `VAT_LIVESTOCK` and `VAT_ZERO`: from 2010-11-01.
+  - `VAT_SECOND_RED`: from 2020-11-01, the earliest curated 9% period. Which supplies bear it is still decided per
+    Schedule 3 paragraph (`scheduleRates.ts`).
+
+  `src/domain/config/seeds.test.ts` fails if a seed and its curated rule disagree. A book seeded earlier gets the
+  missing windows from `ensureHistoricalTaxRates`, which fills only dates before a code's earliest row and audits
+  each addition. No rate is seeded for a date the sources do not cover, such as the standard rate before 2012, so a
+  posting then is refused until a person configures the rate.
 
 ### The five 9% second-reduced-rate carve-outs (issue #129)
 
@@ -1851,6 +1864,35 @@ This supersedes the rule keys and gaps described in the two sections above.
   one is flagged, not given a rate. These are Schedule 3 lines before
   2025, whose (ca) list is not in the repository, and the standard rate
   before 2012.
+
+### Revenue Notes for Guidance, and the corporation tax and income tax rules (issues #211, #212)
+
+There is no LRC revised TCA 1997, so Revenue's Notes for Guidance (NfG) on the
+TCA 1997, Finance Act 2025 edition, are the current statement of each section.
+They are a source family of their own:
+
+- Each part is one `revenue_guidance` knowledge source, kept as a pdftotext
+  conversion in `docs/statutes/tca-1997-nfg/partNN.md`. Guidance ranks below
+  the Act (see "Source hierarchy"), and every rule quoting it says so.
+- `tcaNfgParser.ts` cuts one provision per section note. It reads a left-margin
+  heading followed by "Summary", "Details" or "Definitions" as a note; the
+  indented contents list is skipped. A section the contents list names is a
+  note even without those words (a repealed section's note is a sentence or
+  two). A test requires every part's parsed sections to equal its contents list,
+  so a note can no longer be merged into the one before it (issue #287).
+- `tcaNfgIngestion.ts` ingests the sections `NFG_SECTIONS` lists, and
+  `corporationTaxCuration.ts` curates rules from them. Each `statementExcerpt`
+  is verbatim from the note (a test checks it). These rules carry no transaction
+  conditions: the corporation tax computation cites them and reads its rates
+  from them.
+- `incomeTaxCuration.ts` holds the income tax, USC and PRSI Class S rules for
+  sole traders and partners. They quote the Finance Acts, the LRC revised Social
+  Welfare Consolidation Act 2005 and NfG Part 18D. `incomeTaxIngestion.ts`
+  ingests the SWCA sections and derives every curated rule. PAYE is out of scope.
+- A figure that changes is a **version-chained** rule family outside VAT too:
+  one `ruleKey`, each version dated from the year its Act says, each
+  superseding the one before it, only the latest `active`. A later Act's
+  figure is a new version, never an edit.
 
 ## Next steps
 

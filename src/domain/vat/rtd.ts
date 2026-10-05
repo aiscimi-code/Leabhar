@@ -1,8 +1,10 @@
 import { and, eq, gte, lte, notInArray, sql } from 'drizzle-orm';
 import type { AppDatabase } from '@/db';
-import { vatEntries, vatTreatments, invoiceLines, invoices, accounts, vatPeriods, companies } from '@/db/schema';
+import { vatEntries, vatTreatments, invoiceLines, invoices, accounts, vatPeriods, companies, taxRates } from '@/db/schema';
 import { multiplyRational } from '../money';
 import { accountingYearContaining } from './apportionment';
+import { vatBasisForPeriod } from './basis';
+import { DOMESTIC_REVERSE_CHARGE_CODES } from '../config/vatTreatments';
 
 /**
  * The VAT Return of Trading Details (issue #210): the annual return, due with
@@ -31,16 +33,29 @@ export const RTD_BOXES: Record<RtdSection, Partial<Record<RtdRow | 'total' | 'po
 };
 
 /**
- * The row for a rate. Manual §4 Q2: a change in a rate (21% to 23%) stays on
- * the same row, so the historic standard rate maps to the standard row.
+ * The row for a rate, from the rate's own `reportingClassification`, never
+ * its percentage (issue #618). Manual §4 Q2: a change in a rate (21% to 23%)
+ * stays on the same row, which the classification gives for free — every
+ * version of VAT_STD is `standard`. A rate with no classification the grid
+ * knows is reported as unmapped rather than guessed from its figure.
  */
-const RATE_ROWS: Record<number, RtdRow> = { 0: 'zero', 480: 'livestock', 900: 'second_reduced', 1350: 'reduced', 2100: 'standard', 2300: 'standard' };
+const CLASSIFICATION_ROWS: Record<string, RtdRow> = {
+  zero: 'zero', livestock: 'livestock', second_reduced: 'second_reduced', reduced: 'reduced', standard: 'standard',
+};
 
-/** Received services the recipient self-accounts for, which the manual puts in section 1 too (§2.2(e); §4 Q4, Q5). */
-const SELF_ACCOUNTED_IN_SUPPLIES = new Set(['NON_EU_SERVICES_RCV', 'RC_CONSTRUCTION']);
+/**
+ * Received supplies the recipient self-accounts for, which the manual puts in section 1 too
+ * (§2.2(e); §4 Q4, Q5). The manual names services from outside the EU and construction services
+ * received by a principal; the other domestic reverse charges (s.16(2), (4)-(7), s.94(6)) are placed
+ * the same way, and flagged, because the manual does not state their placement (issue #621).
+ */
+const SELF_ACCOUNTED_IN_SUPPLIES = new Set(['NON_EU_SERVICES_RCV', ...DOMESTIC_REVERSE_CHARGE_CODES]);
+/** Self-accounted supplies whose RTD placement the manual states (§4 Q4, Q5). */
+const PLACEMENT_STATED = new Set(['NON_EU_SERVICES_RCV', 'RC_CONSTRUCTION']);
 /** The E2, ES2 and PA1 transactions (§2.3). */
 const ACQUISITIONS = new Set(['EU_GOODS_ACQ', 'EU_SERVICES_RCV', 'IMPORT_PA']);
-const EXPORTS = new Set(['EU_GOODS_SUPPLY', 'EU_SERVICES_SUPPLY', 'NON_EU_SERVICES_SUPPLY']);
+/** D4, "0% Exports": intra-Community supplies (§2.2(b)) and zero-rated exports outside the EU (§2.2(d), issue #613). */
+const EXPORTS = new Set(['EU_GOODS_SUPPLY', 'EU_SERVICES_SUPPLY', 'NON_EU_SERVICES_SUPPLY', 'EXPORT_GOODS']);
 
 export interface RtdFinding { code: string; message: string; entryIds?: string[] }
 
@@ -61,9 +76,13 @@ const eur = (minor: number) => (minor / 100).toFixed(2);
 export function buildRtdReturn(db: AppDatabase, params: { companyId: string; date: string }): RtdReturn {
   const { start, end } = accountingYearContaining(db, params.companyId, params.date);
   const company = db.select().from(companies).where(eq(companies.id, params.companyId)).get()!;
-  const rows = db.select({ e: vatEntries, code: vatTreatments.code, appliesRate: vatTreatments.appliesRate })
+  const rows = db.select({
+    e: vatEntries, code: vatTreatments.code, appliesRate: vatTreatments.appliesRate,
+    classification: taxRates.reportingClassification,
+  })
     .from(vatEntries)
     .innerJoin(vatTreatments, eq(vatEntries.vatTreatmentId, vatTreatments.id))
+    .leftJoin(taxRates, eq(vatEntries.taxRateId, taxRates.id))
     .where(and(eq(vatEntries.companyId, params.companyId), gte(vatEntries.taxPointDate, start), lte(vatEntries.taxPointDate, end)))
     .all();
 
@@ -82,20 +101,21 @@ export function buildRtdReturn(db: AppDatabase, params: { companyId: string; dat
   const adjustments: string[] = [];
   const noAccount: string[] = [];
   const nonEuServices: string[] = [];
+  const placementUnstated: string[] = [];
   const restricted: string[] = [];
   let resaleCount = 0;
 
-  const rowFor = (code: string, appliesRate: boolean, rate: number): RtdRow | null =>
-    code === 'IE_EXEMPT' || !appliesRate ? 'exempt' : RATE_ROWS[rate] ?? null;
+  const rowFor = (code: string, appliesRate: boolean, classification: string | null): RtdRow | null =>
+    code === 'IE_EXEMPT' || !appliesRate ? 'exempt' : (classification ? CLASSIFICATION_ROWS[classification] ?? null : null);
 
-  for (const { e, code, appliesRate } of rows) {
+  for (const { e, code, appliesRate, classification } of rows) {
     if (code === 'OUT_OF_SCOPE') continue;
     // Manual §4 Q3: capital goods scheme adjustments are left out. Other
     // adjustments are not transactions with a trading value either.
     if (e.sourceType === 'manual_adjustment') { adjustments.push(e.id); continue; }
     // A reverse charge's output leg mirrors its input leg; the input leg places both.
     if (e.isReverseChargeLeg && e.direction === 'sales') continue;
-    const row = rowFor(code, appliesRate, e.rateBasisPoints);
+    const row = rowFor(code, appliesRate, classification);
     const net = e.baseNetMinor;
 
     if (e.direction === 'sales') {
@@ -109,7 +129,10 @@ export function buildRtdReturn(db: AppDatabase, params: { companyId: string; dat
 
     if (!row) { unmapped.push(e.id); continue; }
     const postponed = code === 'IMPORT_PA';
-    if (SELF_ACCOUNTED_IN_SUPPLIES.has(code)) add('supplies', row, net, false);
+    if (SELF_ACCOUNTED_IN_SUPPLIES.has(code)) {
+      add('supplies', row, net, false);
+      if (!PLACEMENT_STATED.has(code)) placementUnstated.push(e.id);
+    }
     if (ACQUISITIONS.has(code)) add('acquisitions', row, net, postponed);
 
     // Sections 3 and 4 hold deductible inputs; section 4 "is subject to the
@@ -193,6 +216,15 @@ export function buildRtdReturn(db: AppDatabase, params: { companyId: string; dat
         + 'confirm with your accountant whether it belongs on the RTD.',
     });
   }
+  if (placementUnstated.length) {
+    findings.push({
+      code: 'rtd_domestic_reverse_charge_placement', entryIds: placementUnstated,
+      message: `${placementUnstated.length} domestic reverse-charge purchase(s) other than construction services (scrap `
+        + 'metal, emission allowances, gas or electricity, energy certificates, a connected builder, a joint option) are '
+        + 'in section 1 at their rate as well as in section 3 or 4, as the manual directs for construction services '
+        + '(§4 Q4). The manual does not state their placement: confirm with your accountant.',
+    });
+  }
   if (restricted.length) {
     findings.push({
       code: 'rtd_restricted_recovery_scaled', entryIds: restricted,
@@ -226,11 +258,18 @@ export function buildRtdReturn(db: AppDatabase, params: { companyId: string; dat
         + 'are finalised (manual §2.6), so these figures can still change.',
     });
   }
-  if (company.vatAccountingBasis === 'cash_receipts') {
+  // Only where the cash basis was actually in force for some of the year
+  // (issue #608): a profile that chose it without an authorisation declared
+  // its sales on the invoice basis, as Revenue's grid expects.
+  const yearBasis = vatBasisForPeriod(company, start, end);
+  if (yearBasis.basis !== 'invoice') {
     findings.push({
       code: 'rtd_cash_basis_sales',
-      message: 'Sales are counted as they were declared on the VAT3s, on the cash receipts basis (when paid). Revenue asks '
-        + 'for net amounts "as per the purchase and sales invoices" (manual §2.1): confirm which your accountant files.',
+      message: (yearBasis.basis === 'mixed'
+        ? `Sales are counted as they were declared on the VAT3s: on the invoice basis before ${company.cashBasisAuthorisedFrom}, `
+          + 'on the cash receipts basis (when paid) from then. '
+        : 'Sales are counted as they were declared on the VAT3s, on the cash receipts basis (when paid). ')
+        + 'Revenue asks for net amounts "as per the purchase and sales invoices" (manual §2.1): confirm which your accountant files.',
     });
   }
 

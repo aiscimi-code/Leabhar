@@ -29,30 +29,58 @@ const suggest = (description: string) => {
 };
 const keys = (s: ReturnType<typeof suggest>) => [s.decidingRule, ...s.supportingRules].map((r) => r?.ruleKey);
 
+// A block denies the deduction beside the treatment; it never replaces it (issue #616).
 describe('s.60(2)(a), exactly as listed', () => {
   it('petrol is blocked (v)', () => {
     const s = suggest('Unleaded petrol, 40 litres');
-    expect(s.decidingRule?.ruleKey).toBe('vat.blocked_petrol');
-    expect(s.treatment?.code).toBe('NON_DEDUCTIBLE');
+    expect(s.deductionBlocked?.ruleKey).toBe('vat.blocked_petrol');
+    expect(s.treatment?.code).toBe('IE_STD');
+    expect(s.reviewReasons.join(' ')).toMatch(/not deductible, so none of it is claimed in T2/);
   });
 
   it('diesel is not blocked: s.60 does not list it', () => {
     const s = suggest('Diesel, 60 litres');
     expect(keys(s)).not.toContain('vat.blocked_petrol');
-    expect(s.treatment?.code).not.toBe('NON_DEDUCTIBLE');
+    expect(s.deductionBlocked).toBeNull();
     expect(keys(s)).toContain('vat.input_deduction_taxable_use');
   });
 
   it('food and accommodation (i), entertainment (iii)', () => {
-    expect(suggest('Hotel accommodation, Cork, 2 nights').decidingRule?.ruleKey).toBe('vat.blocked_food_drink_accommodation');
-    expect(suggest('Client entertainment evening').decidingRule?.ruleKey).toBe('vat.blocked_entertainment');
+    expect(suggest('Hotel accommodation, Cork, 2 nights').deductionBlocked?.ruleKey).toBe('vat.blocked_food_drink_accommodation');
+    expect(suggest('Client entertainment evening').deductionBlocked?.ruleKey).toBe('vat.blocked_entertainment');
   });
 
   it('a car lease is blocked (iv), and the qualifying-vehicle 20% case is named, nothing pre-decided beyond it', () => {
     const s = suggest('Car lease, March');
-    expect(s.decidingRule?.ruleKey).toBe('vat.blocked_motor_vehicle');
-    expect(s.treatment?.code).toBe('NON_DEDUCTIBLE');
+    expect(s.deductionBlocked?.ruleKey).toBe('vat.blocked_motor_vehicle');
+    expect(s.treatment?.code).not.toBe('NON_DEDUCTIBLE');
     expect(s.reviewReasons.join(' ')).toMatch(/qualifying vehicle.*20%/);
+  });
+
+  it('accommodation keeps the rate Schedule 3 gives it: the block is not a rate (issue #616)', () => {
+    const s = suggest('Hotel accommodation, Cork, 2 nights');
+    expect(s.decidingRule?.ruleKey).toBe('vat.reduced_rate_holiday_accommodation');
+    expect(s.treatment?.code).not.toBe('NON_DEDUCTIBLE');
+  });
+
+  it('a car leased from a lessor established in another Member State: the s.12 reverse charge stands (issue #616)', () => {
+    const facts: SuggestionFacts = {
+      transactionDate: '2026-03-01', amountMinor: 50_000, currency: 'EUR', description: 'Car leasing, March', vatRegistered: true,
+      direction: 'purchase', counterpartyCountry: 'DE', supplierCountry: 'DE', supplierEstablishedOutsideState: true,
+      invoiceAvailable: true, supplyType: 'services',
+    };
+    const s = suggestFromFacts(db, { companyId, subjectId: 'line', facts, factSources: {}, bookedTreatmentId: null });
+    expect(s.treatment?.code).toBe('EU_SERVICES_RCV');
+    expect(s.decidingRule?.ruleKey).toBe('vat.reverse_charge_services_from_abroad');
+    expect(s.deductionBlocked?.ruleKey).toBe('vat.blocked_motor_vehicle');
+  });
+
+  it('a sale is never blocked: s.60 is about deducting input VAT', () => {
+    const facts: SuggestionFacts = {
+      transactionDate: '2026-03-01', amountMinor: 10_000, currency: 'EUR', description: 'Unleaded petrol', vatRegistered: true,
+      direction: 'sale', counterpartyCountry: 'IE', invoiceAvailable: true,
+    };
+    expect(suggestFromFacts(db, { companyId, subjectId: 'line', facts, factSources: {}, bookedTreatmentId: null }).deductionBlocked).toBeNull();
   });
 
   it('a van is not a motor vehicle here, and petrol for a company car is petrol, not a car', () => {

@@ -22,13 +22,12 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
 
   const {
     invoice, lines, allocations, party, company, onAccount, missingParticulars, counterparts,
-    incomeAccounts, treatmentOptions, adjustsNumber, expenseAccounts,
+    incomeAccounts, treatmentOptions, adjustsNumber, expenseAccounts, vatDeferred,
   } = detail;
   const today = new Date().toISOString().slice(0, 10);
   const isSales = invoice.direction === 'sales';
   const orders = !isSales && invoice.status !== 'void' ? purchaseOrderOptions(invoice) : null;
-  const deferredVat = isSales && company.vatAccountingBasis === 'cash_receipts'
-    && invoice.vatMinor !== 0;
+  const deferredVat = vatDeferred;
 
   return (
     <Page
@@ -358,7 +357,7 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
                 </div>
               </ActionForm>
               <p className="text-ink-muted mt-2 leading-snug">
-                {company.vatAccountingBasis === 'cash_receipts'
+                {vatDeferred
                   ? 'On the cash receipts basis the unpaid share of this invoice\'s VAT was never due; it is cancelled from deferred VAT and only the net is a bad debt.'
                   : 'The VAT in it was declared when the invoice was raised. Bad-debt relief may let it be reclaimed; nothing is claimed here, and a review item is raised.'}
               </p>

@@ -25,6 +25,8 @@ export interface PostingLine {
   accountId: string | null;
   accountReason: string | null;
   flags: string[];
+  /** The s.60(2)(a) rule that blocks deducting this line's VAT (issue #616). */
+  deductionBlocked: { ruleKey: string; ruleName: string; provision: string } | null;
 }
 
 const money = (minor: number | null, currency: string) =>
@@ -47,6 +49,8 @@ export function PostInvoiceForm({ documentId, direction, currency, baseCurrency,
   const [fx, setFx] = useState('');
   const [lateDate, setLateDate] = useState('');
   const [holdVat, setHoldVat] = useState(false);
+  // A matched s.60(2)(a) block applies unless the person unticks it (a qualifying vehicle, stock-in-trade).
+  const [blocked, setBlocked] = useState<boolean[]>(lines.map((l) => !!l.deductionBlocked));
   const [result, setResult] = useState<ActionResult | null>(null);
   const [pending, startTransition] = useTransition();
   const foreign = currency !== baseCurrency;
@@ -67,7 +71,10 @@ export function PostInvoiceForm({ documentId, direction, currency, baseCurrency,
       documentId,
       coding: lines.map((l, i) => {
         const chosen = l.options.find((o) => o.treatmentId === treatmentIds[i]);
-        return { accountId: accountIds[i]!, vatTreatmentId: treatmentIds[i]!, vatRuleKeys: chosen?.ruleKeys ?? [] };
+        return {
+          accountId: accountIds[i]!, vatTreatmentId: treatmentIds[i]!, vatRuleKeys: chosen?.ruleKeys ?? [],
+          blockedDeductionRuleKey: l.deductionBlocked && blocked[i] ? l.deductionBlocked.ruleKey : undefined,
+        };
       }),
       fxRate,
       vatDeclarationDate: lateDate || undefined,
@@ -122,6 +129,17 @@ export function PostInvoiceForm({ documentId, direction, currency, baseCurrency,
                   {relevantAccounts.map((a) => <option key={a.id} value={a.id}>{a.code} {a.name}</option>)}
                 </Select>
               </div>
+              {line.deductionBlocked && (
+                <label className="flex gap-2 items-start text-[12px]">
+                  <input type="checkbox" className="mt-0.5" checked={blocked[i]}
+                    onChange={(e) => setBlocked((bs) => bs.map((b, j) => (j === i ? e.target.checked : b)))} />
+                  <span>
+                    VAT not deductible: {line.deductionBlocked.ruleName} ({line.deductionBlocked.provision}).
+                    <span className="text-ink-muted"> The treatment above still applies, and a reverse charge is still
+                      accounted for; only the T2 claim is withheld. Untick for an exception the provision allows.</span>
+                  </span>
+                </label>
+              )}
               {line.accountReason && accountIds[i] === line.accountId && (
                 <p className="text-[11px] text-ink-faint ml-[7.5rem]">{line.accountReason}</p>
               )}

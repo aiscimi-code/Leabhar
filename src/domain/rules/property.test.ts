@@ -61,10 +61,11 @@ describe('supplies of property', () => {
     expect(s.reviewReasons.join(' ')).toMatch(/joint option for taxation/);
   });
 
-  it('a joint option: the purchaser accounts, RC_CONSTRUCTION offered, nothing chosen', () => {
+  it('a joint option: the purchaser accounts, RC_PROPERTY_JOINT_OPTION offered, nothing chosen (issue #621)', () => {
     const s = suggest('Purchase of premises under joint option for taxation', 'purchase');
     expect(s.decidingRule?.ruleKey).toBe('vat.joint_option_for_taxation');
     expect(s.treatment).toBeNull();
-    expect(s.offeredTreatmentCodes).toEqual(['RC_CONSTRUCTION']);
+    expect(s.offeredTreatmentCodes).toEqual(['RC_PROPERTY_JOINT_OPTION']);
+    expect(s.reviewReasons.join(' ')).toMatch(/s\.94\(6\)/);
   });
 });

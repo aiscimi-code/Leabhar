@@ -171,7 +171,7 @@ export default async function DocumentDetailPage({ params }: {
                 number: c.line.number, description: c.line.description, netMinor: c.line.netMinor,
                 vatMinor: c.line.vatMinor, rateBasisPoints: c.line.rateBasisPoints, options: c.options,
                 preselectedTreatmentId: c.preselectedTreatmentId, accountId: c.accountId,
-                accountReason: c.accountReason, flags: c.flags,
+                accountReason: c.accountReason, flags: c.flags, deductionBlocked: c.deductionBlocked,
               }))}
               accounts={chartOfAccounts().filter((a) => a.active).map((a) => ({ id: a.id, code: a.code, name: a.name, type: a.type }))}
               treatments={treatmentsWithRates(asIsoDate(doc.documentDate ?? new Date().toISOString().slice(0, 10)))

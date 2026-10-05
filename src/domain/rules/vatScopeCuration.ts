@@ -57,13 +57,19 @@ export interface CuratedVatScopeRule {
     | 'VATCA 2010 s.43' | 'VATCA 2010 s.87' | 'VATCA 2010 s.88' | 'VATCA 2010 s.89' | '2010 Act 31 s.86'
     | '2010 Act 31 s.59' | '2010 Act 31 s.60' | 'VATCA 2010 s.62' | '2010 Act 31 s.66'
     | 'VATCA 2010 s.67' | 'VATCA 2010 s.69' | 'VATCA 2010 s.70' | '2010 Act 31 s.61'
-    | '2010 Act 31' | '2010 Act 31 s.37' | 'VATCA 2010 s.45' | '2010 Act 31 s.76' | '2010 Act 31 s.92A';
+    | '2010 Act 31' | '2010 Act 31 s.37' | 'VATCA 2010 s.45' | '2010 Act 31 s.76' | '2010 Act 31 s.92A' | '2010 Act 31 s.99'
+    | '2010 Act 31 s.74' | '2010 Act 31 s.75' | '2010 Act 31 s.21' | '2010 Act 31 s.27' | '2010 Act 31 s.42'
+    | '2010 Act 31 s.44' | '2010 Act 31 s.39';
   /** Schedule paragraph or section number, matched against `irish_act_provisions.section_number`. */
   sectionNumber: string;
   ruleKey: string;
   ruleType: IrishRuleType;
-  /** `vat_scope` rules surface in every transaction lookup; `vat_return` rules are return-level facts and never do. */
-  topic: 'vat_scope' | 'vat_return';
+  /**
+   * `vat_scope` rules surface in every transaction lookup, so each needs conditions: a statute-KB rule with none applies
+   * to every transaction (transactionLookup.ts). `vat_return` rules are return-level facts and `vat_reference` rules are
+   * citable facts the tools enforce elsewhere; neither surfaces in a lookup.
+   */
+  topic: 'vat_scope' | 'vat_return' | 'vat_reference';
   name: string;
   statementExcerpt: string;
   conditions: IrishRuleCondition[];

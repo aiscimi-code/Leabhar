@@ -11,6 +11,7 @@ import { postJournalEntry, atomically } from '../accounting/journal';
 import { systemAccountId } from '../config/setup';
 import { createVatEntries, assertVatPeriodWritable } from '../vat/engine';
 import { upsertReviewItem } from '../extraction/service';
+import { invoiceVatDeferred, vatBasisOn } from '../vat/basis';
 import { InvoicingError } from './invoices';
 
 /**
@@ -100,6 +101,17 @@ export interface RecordPaymentInput {
    * filed (issue #226). Flagged for review.
    */
   vatDeclarationDate?: IsoDate | null;
+  /**
+   * The exchange rate for the output VAT this receipt releases on invoices in
+   * `currency` (cash receipts basis, issue #614): `currency` to base. VAT is
+   * converted at the CBI or ECB selling rate "at the time the tax becomes due"
+   * (VATCA s.37(4)), and on the cash receipts basis that is the receipt
+   * (s.74(2)). Without it, the release is converted at the invoice's own rate,
+   * and validating the VAT period flags the rate's date. The deferred VAT is
+   * still relieved at the invoice's rate; the difference is an exchange
+   * difference.
+   */
+  vatFxRate?: { currency: string; numerator: number; denominator: number; source: string; date?: string } | null;
   reference?: string | null;
   notes?: string | null;
   actor?: string;
@@ -481,8 +493,12 @@ function recordPaymentSteps(db: AppDatabase, input: RecordPaymentInput): Recorde
         ? { ...t, invoiceAllocatedMinor: t.invoiceAllocatedMinor + writeOff.amountMinor }
         : t
     ));
-  const vatReleases = isReceived && company.vatAccountingBasis === 'cash_receipts' && salesTargets.length > 0
-    ? computeVatReleases(db, salesTargets)
+  // Only an invoice whose VAT was deferred when it was posted has VAT to
+  // release (issue #608): one posted on the invoice basis declared it then,
+  // and releasing it again would report the supply twice (s.80(2)(b)).
+  const deferredTargets = isReceived ? salesTargets.filter((t) => invoiceVatDeferred(db, t.invoice)) : [];
+  const vatReleases = deferredTargets.length > 0
+    ? computeVatReleases(db, deferredTargets)
     : [];
 
   // The release is reported per invoice currency, never as a sum across
@@ -497,6 +513,26 @@ function recordPaymentSteps(db: AppDatabase, input: RecordPaymentInput): Recorde
     .map(([currency, minor]) => ({ currency, minor }))
     .sort((a, b) => a.currency.localeCompare(b.currency));
   let vatReleasedBaseMinor = 0;
+
+  // The s.37(4) rate at the receipt, for the invoices in its currency (#614).
+  const vatFx = input.vatFxRate
+    ? { ...input.vatFxRate, currency: input.vatFxRate.currency.toUpperCase() }
+    : null;
+  if (vatFx) {
+    if (vatFx.currency === baseCurrency.toUpperCase()) {
+      throw new InvoicingError(`VAT in ${baseCurrency} needs no exchange rate.`);
+    }
+    if (!vatReleases.some((r) => targets.find((t) => t.invoice.id === r.invoiceId)!.invoice.currency.toUpperCase()
+      === vatFx.currency)) {
+      throw new InvoicingError(`This receipt releases no output VAT on an invoice in ${vatFx.currency}, so it has no `
+        + 'VAT for that exchange rate to convert.');
+    }
+  }
+  const vatFxFor = (invoiceCurrency: string) =>
+    vatFx && vatFx.currency === invoiceCurrency.toUpperCase() ? vatFx : null;
+  // The release in base at the receipt's rate, converted line by line as the
+  // VAT entries are, so the VAT-on-sales account agrees with the VAT3.
+  const releasedBaseAtVatRate = new Map<string, number>();
 
   // The release journal lines are posted per invoice, in the invoice's own
   // currency at the invoice's booking rate — exactly how the deferral was
@@ -532,12 +568,43 @@ function recordPaymentSteps(db: AppDatabase, input: RecordPaymentInput): Recorde
       currency: invoice.currency, fxRate: releaseFx,
       memo: 'VAT now due following payment (cash receipts basis)',
     });
-    journalLines.push({
-      accountId: vatOnSales,
-      [releaseLines.due]: Math.abs(releasedMinor),
-      currency: invoice.currency, fxRate: releaseFx,
-      memo: 'VAT now due following payment (cash receipts basis)',
-    });
+    const dueFx = vatFxFor(invoice.currency);
+    if (!dueFx) {
+      journalLines.push({
+        accountId: vatOnSales,
+        [releaseLines.due]: Math.abs(releasedMinor),
+        currency: invoice.currency, fxRate: releaseFx,
+        memo: 'VAT now due following payment (cash receipts basis)',
+      });
+      continue;
+    }
+    // At the receipt's rate (s.37(4), #614): the VAT now due is posted in base
+    // as the VAT entries convert it, and what the deferral was booked at
+    // differs from it by an exchange difference.
+    const dueBase = vatReleases.filter((r) => r.invoiceId === invoiceId)
+      .reduce((sum, r) => sum + multiplyRational(asMinor(r.vatMinor), dueFx.numerator, dueFx.denominator), 0);
+    releasedBaseAtVatRate.set(invoiceId, dueBase);
+    const deferredBase = Math.sign(releasedMinor) * (releaseFx
+      ? multiplyRational(asMinor(Math.abs(releasedMinor)), releaseFx.numerator, releaseFx.denominator)
+      : Math.abs(releasedMinor));
+    if (dueBase !== 0) {
+      journalLines.push({
+        accountId: vatOnSales,
+        ...(dueBase > 0 ? { creditMinor: dueBase } : { debitMinor: -dueBase }),
+        currency: baseCurrency,
+        memo: `VAT now due following payment (cash receipts basis), at the ${dueFx.source} rate of the receipt`,
+      });
+    }
+    // Debit what more is owed than the deferral held (a loss); credit what less.
+    const vatFxDifference = dueBase - deferredBase;
+    if (vatFxDifference !== 0) {
+      journalLines.push({
+        accountId: fxAccount,
+        ...(vatFxDifference > 0 ? { debitMinor: vatFxDifference } : { creditMinor: -vatFxDifference }),
+        currency: baseCurrency,
+        memo: 'Exchange difference on output VAT released at the receipt\'s rate (VATCA s.37(4))',
+      });
+    }
   }
 
   // A locked or filed VAT return is never changed (issue #226): checked before
@@ -570,12 +637,15 @@ function recordPaymentSteps(db: AppDatabase, input: RecordPaymentInput): Recorde
     // converts them to base is the invoice's booking rate, not the payment's.
     const target = targets.find((t) => t.invoice.id === release.invoiceId)!;
     const releaseCurrency = target.invoice.currency;
-    const releaseFx = target.invoice.fxRateNumerator && target.invoice.fxRateDenominator
+    // Or the receipt's s.37(4) rate, where one is given (#614).
+    const releaseFx = vatFxFor(releaseCurrency) ?? (target.invoice.fxRateNumerator && target.invoice.fxRateDenominator
       ? {
           numerator: target.invoice.fxRateNumerator,
           denominator: target.invoice.fxRateDenominator,
+          source: target.invoice.fxRateSource,
+          date: target.invoice.fxRateDate,
         }
-      : undefined;
+      : undefined);
     const created = createVatEntries(db, {
       companyId: input.companyId,
       journalEntryId: journal.id,
@@ -587,6 +657,8 @@ function recordPaymentSteps(db: AppDatabase, input: RecordPaymentInput): Recorde
       invoiceLineId: release.invoiceLineId,
       // The tax point is the payment date. This is the whole point of the basis.
       taxPointDate: input.paymentDate,
+      // The rate is the one chargeable when the supply was made (s.80(2)(a), #615).
+      rateDate: asIsoDate(target.invoice.supplyDate ?? target.invoice.invoiceDate),
       declarationDate: input.vatDeclarationDate ?? undefined,
       netMinor: release.netMinor,
       statedVatMinor: release.vatMinor,
@@ -600,10 +672,21 @@ function recordPaymentSteps(db: AppDatabase, input: RecordPaymentInput): Recorde
     vatEntryIds.push(...created.entries.map((e) => e.id));
     // The base-currency release: the sum of the base VAT on the VAT entries
     // this payment creates (its sales legs), each converted at its own
-    // invoice's booking rate — what the VAT3 shows (issue #503).
-    vatReleasedBaseMinor += created.entries
+    // invoice's booking rate, or the receipt's (#614) — what the VAT3 shows (issue #503).
+    const releasedBase = created.entries
       .filter((e) => e.direction === 'sales')
       .reduce((s, e) => s + e.baseVatMinor, 0);
+    vatReleasedBaseMinor += releasedBase;
+    if (releasedBaseAtVatRate.has(release.invoiceId)) {
+      releasedBaseAtVatRate.set(release.invoiceId, releasedBaseAtVatRate.get(release.invoiceId)! - releasedBase);
+    }
+  }
+  // The VAT-on-sales line was posted before the entries; they must agree.
+  for (const [invoiceId, residual] of releasedBaseAtVatRate) {
+    if (residual !== 0) {
+      throw new InvoicingError(`The output VAT released on invoice ${invoiceId} at the receipt's rate does not agree `
+        + `with its VAT entries by ${residual} minor units.`);
+    }
   }
 
   // ---- Persist ----
@@ -680,7 +763,7 @@ function recordPaymentSteps(db: AppDatabase, input: RecordPaymentInput): Recorde
     // was received "in respect of taxable supplies" decides if its VAT was
     // due the moment it arrived (s.80(1)). The books cannot tell, so it is
     // flagged the moment it is held, and the item says what to do.
-    if (unallocatedMinor > 0 && isReceived && company.vatAccountingBasis === 'cash_receipts' && party.customerId) {
+    if (unallocatedMinor > 0 && isReceived && vatBasisOn(company, input.paymentDate) === 'cash_receipts' && party.customerId) {
       const customerName = db.select({ n: customers.name }).from(customers)
         .where(eq(customers.id, party.customerId)).get()?.n ?? 'the customer';
       upsertReviewItem(tx, {

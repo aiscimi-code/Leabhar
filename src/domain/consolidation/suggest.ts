@@ -4,13 +4,14 @@ import { companies, suppliers, customers, vatTreatments } from '@/db/schema';
 import { asIsoDate } from '../dates';
 import { resolveTreatment } from '../vat/engine';
 import { parseVatNumber, EU_COUNTRY_CODES } from '../extraction/vatNumbers';
-import { suggestFromFacts, applyEstablishment, applyCustomerStatus, type SuggestionFacts, type VatSuggestion } from '../rules/vatSuggestion';
+import { suggestFromFacts, applyEstablishment, applyCustomerStatus, customerRegisteredInOtherMemberState, isNorthernIrelandParty, type SuggestionFacts, type VatSuggestion } from '../rules/vatSuggestion';
 import { documentEvidenceLines, particularsOf, type EvidenceLine } from './postDocument';
 import { checkLineRate, type LineRateCheck } from '../rules/lineRateCheck';
 import { applyCompositeSupply } from './compositeSupply';
 import { invoiceConflicts, type InvoiceConflict } from './invoiceConflicts';
 import { missingInvoiceParticulars, type MissingParticular } from './invoiceParticulars';
 import { advisoryReasons } from '../rules/advisoryRules';
+import { provisionCitation } from '../rules/citation';
 
 /**
  * The choices for coding each line of a confirmed document (issue #203).
@@ -44,6 +45,12 @@ export interface LineChoices {
   rateCheck: LineRateCheck;
   /** Why a choice is needed, when one is. */
   flags: string[];
+  /**
+   * The s.60(2)(a) rule that blocks deducting this line's VAT, when one
+   * matched (issue #616). It sits beside the treatment, never replaces it;
+   * pass its `ruleKey` as `LineCoding.blockedDeductionRuleKey` to apply it.
+   */
+  deductionBlocked: { ruleKey: string; ruleName: string; provision: string } | null;
 }
 
 const EU = new Set<string>(EU_COUNTRY_CODES);
@@ -107,12 +114,17 @@ export function documentLineChoices(db: AppDatabase, params: { companyId: string
       invoiceAvailable: true,
       supplyType,
     };
+    if (isNorthernIrelandParty(vatInfo, country)) {
+      facts.counterpartyNorthernIreland = true;
+      sources.counterpartyNorthernIreland = `${partyLabel} ${vatInfo?.isNorthernIreland ? `VAT number ${vatInfo.normalised}` : 'country'} `
+        + '(XI: Northern Ireland, EU VAT rules for goods only)';
+    }
     if (isSale) {
       facts.customerCountry = country;
       if (vatInfo) {
         const c = party as typeof customers.$inferSelect | undefined;
         const vies = c?.viesStatus && c.viesCheckedVatNumber === vatInfo.normalised ? c.viesStatus : null;
-        facts.customerVatRegisteredEu = vatInfo.structurallyValid && vatInfo.isEu && !vatInfo.isIrish && vies !== 'invalid';
+        facts.customerVatRegisteredEu = customerRegisteredInOtherMemberState(vatInfo, vies, supplyType);
       }
       const customer = party as typeof customers.$inferSelect | undefined;
       applyCustomerStatus(facts, sources, customer ?? (vatNumber ? { name: 'the customer', taxableStatus: null, vatNumber } : undefined), vatInfo);
@@ -216,8 +228,12 @@ export function documentLineChoices(db: AppDatabase, params: { companyId: string
     const agreed = list.length === 1 && statutory.status !== 'fallback_only' && !rcUnconfirmed && advisories.length === 0
       ? list[0]!.treatmentId : null;
     const accountId = party?.defaultAccountId ?? null;
+    const block = statutory.deductionBlocked;
     return {
       line, options: list, preselectedTreatmentId: agreed, statutory, rateCheck, flags,
+      deductionBlocked: block
+        ? { ruleKey: block.ruleKey, ruleName: block.ruleName, provision: provisionCitation(block.citation, block.sectionNumber) }
+        : null,
       accountId, accountReason: accountId ? `Previously confirmed for ${party!.name}.` : null,
     };
   });

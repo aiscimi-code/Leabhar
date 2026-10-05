@@ -7,14 +7,16 @@ import { ids } from '@/lib/ids';
 import { asMinor, multiplyRational } from '../money';
 import { nowIso, addDays, type IsoDate } from '../dates';
 import { customerExposure } from '../parties/customerAccount';
-import { postJournalEntry, reverseJournalEntry, atomically } from '../accounting/journal';
+import { postJournalEntry, reverseJournalEntry, atomically, withFxRoundingLine } from '../accounting/journal';
 import { systemAccountId } from '../config/setup';
 import {
   resolveTreatment, calculateVat, createVatEntries, determineTaxPoint, vatDiscrepancy, findVatPeriod,
   assertVatPeriodWritable,
 } from '../vat/engine';
+import { lateClaimLimit, lateClaimOutOfTime } from '../vat/lateClaim';
 import { AccountingError } from '../accounting/errors';
 import { upsertReviewItem } from '../extraction/service';
+import { vatBasisOn } from '../vat/basis';
 
 export class InvoicingError extends AccountingError {}
 
@@ -75,6 +77,84 @@ export interface InvoiceLineInput {
    * particular its deduction depends on).
    */
   holdRecoveryReason?: string;
+  /**
+   * The customs declaration's figures for an import under postponed
+   * accounting (treatment IMPORT_PA; issue #609), in the base currency, as
+   * the declaration states them. Import VAT is charged on the value for
+   * import VAT purposes — the customs (CIF) value, plus customs/excise duty
+   * and other charges payable at importation, plus freight from the point
+   * of entry into the EU to Ireland (Revenue Customs Manual on Import VAT
+   * §2.3, docs/statutes/import-vat) — and box PA1 reports the customs value
+   * plus customs duty (Revenue, "How do you complete a VAT 3 return?",
+   * docs/statutes/vat3-rtd/completing-vat3-return.md). Without it the
+   * supplier's invoice is used and the line is flagged.
+   */
+  importValuation?: ImportValuation;
+  /**
+   * Purchase lines only (issue #612). The share of this cost used for the
+   * business, in basis points (6000 = 60%), where the rest is private use.
+   * Input VAT is deductible only "in so far as" the goods or services are used
+   * for taxable supplies (VATCA s.59(2)), so the private share's VAT is not
+   * reclaimed: it stays in the line's cost.
+   */
+  businessUseBasisPoints?: number;
+  /**
+   * Purchase lines only (issue #612). The line is a dual-use input, used for
+   * both deductible and non-deductible (e.g. exempt) supplies, so only the
+   * proportion of tax deductible may be reclaimed (VATCA s.61(2)).
+   */
+  dualUse?: DualUseApportionment;
+  /**
+   * Purchase lines only (issue #616). The input VAT on this line is not
+   * deductible at all (VATCA s.60(2)(a)), with the provision. Only the
+   * deduction is denied: the treatment still decides the VAT, so a reverse
+   * charge is still accounted for in T1 (s.12) while nothing goes to T2. The
+   * VAT stays in the cost and the provision is noted on the VAT entry.
+   */
+  blockedDeductionReason?: string;
+}
+
+/**
+ * The proportion of tax deductible on a dual-use input for the taxable period,
+ * and which of the bases in S.I. 639/2010 reg.17(2)(a) it was taken on:
+ * (i) actual use in the period, (ii) the proportion calculated for the
+ * preceding review period, (iii) an estimate for the current review period
+ * (whose basis must be sent to Revenue with the return, reg.17(2)(b)), or
+ * (iv) one an authorised officer directed (reg.17(2)(c)). Choosing the basis
+ * is the person's judgement; `precedingReviewPeriodProportion` gives the
+ * turnover figure for (ii).
+ */
+export interface DualUseApportionment {
+  proportionBasisPoints: number;
+  basis: 'actual_use' | 'preceding_review_period' | 'estimate' | 'officer_direction';
+}
+
+const DUAL_USE_BASIS_TEXT: Record<DualUseApportionment['basis'], string> = {
+  actual_use: 'actual use in the period, reg.17(2)(a)(i)',
+  preceding_review_period: 'the proportion for the preceding review period, reg.17(2)(a)(ii)',
+  estimate: 'an estimate for the review period, reg.17(2)(a)(iii)',
+  officer_direction: 'a proportion directed by an authorised officer, reg.17(2)(a)(iv)',
+};
+
+function basisPointsShare(value: number | undefined, what: string, where: string): number | null {
+  if (value === undefined) return null;
+  if (!Number.isInteger(value) || value < 0 || value > 10_000) {
+    throw new InvoicingError(`${where}: the ${what} must be a whole number of basis points from 0 to 10000.`);
+  }
+  return value;
+}
+
+export interface ImportValuation {
+  /** The customs (CIF) value of the goods, as declared. */
+  customsValueMinor: number;
+  /** Customs duty payable at importation. */
+  customsDutyMinor: number;
+  /** Excise duty and other charges payable at importation, other than import VAT. */
+  otherChargesMinor?: number;
+  /** Freight from the point of entry into the EU to Ireland, where not already in the customs value. */
+  freightToIrelandMinor?: number;
+  /** The customs declaration (MRN), for the trace. */
+  declarationReference?: string;
 }
 
 export interface CreateInvoiceInput {
@@ -223,6 +303,11 @@ function createInvoiceSteps(db: AppDatabase, input: CreateInvoiceInput): Created
       + 'invoice, confirm it and post it from the document to recover the VAT.'
     : undefined;
 
+  // A purchase declared in a later period is a late claim, made only within
+  // the s.99(4) limit (issue #646); out of time, its VAT is costed, not claimed.
+  const lateLimit = !isSales && !historic && input.vatDeclarationDate
+    ? lateClaimLimit(db, input.companyId, taxPointBase, input.vatDeclarationDate) : null;
+
   // ---- Compute each line ----
   const computed = input.lines.map((line, index) => {
     const resolved = resolveTreatment(db, {
@@ -231,6 +316,33 @@ function createInvoiceSteps(db: AppDatabase, input: CreateInvoiceInput): Created
       onDate: taxPointBase,
       rateOverrideId: line.taxRateId,
     });
+
+    // Issue #612: the deductible share of a mixed-use purchase line.
+    const where = `Line ${index + 1}`;
+    if (isSales && (line.businessUseBasisPoints !== undefined || line.dualUse)) {
+      throw new InvoicingError(`${where}: a business-use share or dual-use proportion applies only to a purchase.`);
+    }
+    if (line.dualUse && !(line.dualUse.basis in DUAL_USE_BASIS_TEXT)) {
+      throw new InvoicingError(`${where}: say which basis the dual-use proportion was taken on.`);
+    }
+    const businessBp = basisPointsShare(line.businessUseBasisPoints, 'business-use share', where);
+    const dualUseBp = basisPointsShare(line.dualUse?.proportionBasisPoints, 'dual-use proportion', where);
+    const deductibleShare = businessBp === null && dualUseBp === null ? undefined
+      : { numerator: (businessBp ?? 10_000) * (dualUseBp ?? 10_000), denominator: 100_000_000 };
+    if (isSales && line.blockedDeductionReason) {
+      throw new InvoicingError(`${where}: a blocked deduction applies only to a purchase.`);
+    }
+    const blockNote = line.blockedDeductionReason?.trim() || null;
+    const shareNote = deductibleShare === undefined && !blockNote ? null : [
+      blockNote,
+      businessBp !== null
+        ? `Business use ${(businessBp / 100).toFixed(2)}%: the private share's VAT is not deductible (VATCA s.59(2)).`
+        : null,
+      line.dualUse
+        ? `Dual-use input: ${(dualUseBp! / 100).toFixed(2)}% deductible (VATCA s.61(2)), on ${DUAL_USE_BASIS_TEXT[line.dualUse.basis]} `
+          + 'of S.I. 639/2010.'
+        : null,
+    ].filter(Boolean).join(' ');
 
     const undiscountedNet = line.netMinor !== undefined
       ? line.netMinor
@@ -247,7 +359,7 @@ function createInvoiceSteps(db: AppDatabase, input: CreateInvoiceInput): Created
     // self-assessed (see calculateVat), so a stated figure on the document
     // is worth flagging for a human, but never changes what is recoverable.
     let vatReviewReason: string | null = null;
-    let recoverableOverrideMinor: number | undefined;
+    let recoverableOverrideMinor: number | undefined = blockNote ? 0 : undefined;
     if (!isSales && resolved.treatment.appliesRate) {
       if (line.holdRecoveryReason || noEvidenceReason) {
         recoverableOverrideMinor = 0;
@@ -290,18 +402,85 @@ function createInvoiceSteps(db: AppDatabase, input: CreateInvoiceInput): Created
       }
     }
 
-    const calculation = calculateVat({
-      treatment: resolved.treatment,
-      rateBasisPoints: resolved.rateBasisPoints,
-      direction: isSales ? 'sales' : 'purchases',
-      netMinor: lineNet * sign,
-      statedVatMinor: line.statedVatMinor === undefined ? undefined : line.statedVatMinor * sign,
-      recoverableOverrideMinor,
-    });
+    if (lateLimit?.outOfTime && !isSales && resolved.treatment.appliesRate) {
+      recoverableOverrideMinor = 0;
+      const reason = `${lateClaimOutOfTime(lateLimit)} Its VAT has been costed, not claimed.`;
+      vatReviewReason = vatReviewReason ? `${vatReviewReason} ${reason}` : reason;
+    }
+
+    // Postponed accounting (issue #609): the self-accounted VAT and box PA1
+    // come from the customs declaration, in the base currency; the supplier's
+    // side of the line charges no VAT.
+    const isImportPa = !isSales && resolved.treatment.code === 'IMPORT_PA';
+    let importVat: (ReturnType<typeof calculateVat> & { valuation: ImportValuation }) | null = null;
+    if (line.importValuation && !isImportPa) {
+      throw new InvoicingError(`Line ${index + 1}: a customs valuation applies only to an import under postponed accounting (IMPORT_PA).`);
+    }
+    if (isImportPa && line.importValuation) {
+      if (input.isCreditNote) {
+        throw new InvoicingError(`Line ${index + 1}: a credit note does not carry a customs valuation. Correct the import VAT in an open period instead.`);
+      }
+      const v = line.importValuation;
+      for (const [name, amount] of Object.entries({
+        customsValueMinor: v.customsValueMinor, customsDutyMinor: v.customsDutyMinor,
+        otherChargesMinor: v.otherChargesMinor ?? 0, freightToIrelandMinor: v.freightToIrelandMinor ?? 0,
+      })) {
+        if (!Number.isInteger(amount) || amount < 0) {
+          throw new InvoicingError(`Line ${index + 1}: ${name} must be a whole number of cents, zero or more.`);
+        }
+      }
+      if (v.customsValueMinor === 0) throw new InvoicingError(`Line ${index + 1}: the customs value is required.`);
+      importVat = {
+        ...calculateVat({
+          treatment: resolved.treatment,
+          rateBasisPoints: resolved.rateBasisPoints,
+          direction: 'purchases',
+          netMinor: v.customsValueMinor + v.customsDutyMinor,
+          taxableAmountMinor: v.customsValueMinor + v.customsDutyMinor + (v.otherChargesMinor ?? 0) + (v.freightToIrelandMinor ?? 0),
+          recoverableOverrideMinor,
+          deductibleShare,
+        }),
+        valuation: v,
+      };
+    } else if (isImportPa) {
+      const reason = 'Import VAT under postponed accounting is charged on the value for import VAT purposes (customs '
+        + 'value, plus duty and charges at importation, plus freight to Ireland), and box PA1 reports the customs value '
+        + 'plus customs duty — both from the customs declaration, not the supplier\'s invoice. No customs valuation was '
+        + 'recorded, so T1, T2 and PA1 were taken from the invoice net. Record the declaration\'s figures.';
+      vatReviewReason = vatReviewReason ? `${vatReviewReason} ${reason}` : reason;
+    }
+    // A business-use share is a judgement, so it is flagged, never silent
+    // (as on the bank path). Only the VAT is apportioned here.
+    if (businessBp !== null && businessBp < 10_000 && resolved.treatment.isRecoverable) {
+      const reason = `This line is coded ${(businessBp / 100).toFixed(2)}% business use, so only that share of its VAT is `
+        + 'deducted; VAT is deductible only in so far as the cost is used for taxable supplies (VATCA s.59(2)). The rest '
+        + 'of the VAT stays in the cost. The private share of the cost itself is still booked to the line\'s account: '
+        + 'whether it should be charged to the person who used it is not decided here.';
+      vatReviewReason = vatReviewReason ? `${vatReviewReason} ${reason}` : reason;
+    }
+    if (line.dualUse?.basis === 'estimate' && resolved.treatment.isRecoverable) {
+      const reason = `The proportion of tax deductible on this dual-use line (${(dualUseBp! / 100).toFixed(2)}%) is an `
+        + 'estimate for the review period (S.I. 639/2010 reg.17(2)(a)(iii)). Send the basis for the estimate to Revenue '
+        + 'with the VAT return for this period (reg.17(2)(b)), and at the end of the review period recalculate the '
+        + 'proportion and adjust the VAT deducted in the next period (reg.17(3)).';
+      vatReviewReason = vatReviewReason ? `${vatReviewReason} ${reason}` : reason;
+    }
+
+    const calculation = importVat
+      ? { netMinor: asMinor(lineNet), vatMinor: asMinor(0), grossMinor: asMinor(lineNet), recoverableVatMinor: asMinor(0), rateBasisPoints: importVat.rateBasisPoints }
+      : calculateVat({
+        treatment: resolved.treatment,
+        rateBasisPoints: resolved.rateBasisPoints,
+        direction: isSales ? 'sales' : 'purchases',
+        netMinor: lineNet * sign,
+        statedVatMinor: line.statedVatMinor === undefined ? undefined : line.statedVatMinor * sign,
+        recoverableOverrideMinor,
+        deductibleShare,
+      });
 
     return {
       line, index, lineId: ids.invoiceLine(), resolved, calculation, recoverableOverrideMinor, vatReviewReason,
-      undiscountedNet, discount,
+      undiscountedNet, discount, importVat, deductibleShare, shareNote, businessBp, dualUseBp,
     };
   });
 
@@ -314,7 +493,11 @@ function createInvoiceSteps(db: AppDatabase, input: CreateInvoiceInput): Created
   // held in a separate liability until then. Purchases are unaffected: input
   // VAT is reclaimed by reference to the supplier's invoice date under either
   // basis, which is the asymmetry people get wrong.
-  const vatDeferred = !historic && isSales && company.vatAccountingBasis === 'cash_receipts' && vatMinor !== 0;
+  // Only a sale on or after a recorded Revenue authorisation is on the cash
+  // receipts basis (s.80(1), (2)(b); issue #608); every other sale is on the
+  // invoice basis, whatever the profile says.
+  const saleBasis = vatBasisOn(company, taxPointBase);
+  const vatDeferred = !historic && isSales && saleBasis === 'cash_receipts' && vatMinor !== 0;
 
   const debtors = systemAccountId(db, input.companyId, 'debtors');
   const creditors = systemAccountId(db, input.companyId, 'creditors');
@@ -324,6 +507,14 @@ function createInvoiceSteps(db: AppDatabase, input: CreateInvoiceInput): Created
 
   const journalLines: Parameters<typeof postJournalEntry>[1]['lines'] = [];
   const fxRate = input.fxRate;
+  // The VAT entries convert each line's VAT on its own (createVatEntries), so
+  // in another currency the journal posts one VAT line per invoice line: each
+  // is converted exactly as its entry is, and the VAT accounts agree with the
+  // return (#643). In the base currency nothing is converted, so one line
+  // carries the total.
+  const vatPostings = (amounts: number[]): number[] => (currency === baseCurrency
+    ? [amounts.reduce((a, b) => a + b, 0)]
+    : amounts).filter((amount) => amount !== 0);
   const counterparty = isSales
     ? { customerId: input.customerId }
     : { supplierId: input.supplierId };
@@ -349,10 +540,10 @@ function createInvoiceSteps(db: AppDatabase, input: CreateInvoiceInput): Created
         currency, fxRate, ...counterparty, memo: line.description,
       });
     }
-    if (vatMinor !== 0 && !historic) {
+    for (const amount of historic ? [] : vatPostings(computed.map((c) => c.calculation.vatMinor))) {
       journalLines.push({
         accountId: vatDeferred ? vatOnSalesDeferred : vatOnSales,
-        ...(vatMinor >= 0 ? { creditMinor: vatMinor } : { debitMinor: -vatMinor }),
+        ...(amount >= 0 ? { creditMinor: amount } : { debitMinor: -amount }),
         currency, fxRate,
         memo: vatDeferred
           ? 'Output VAT, not due until the customer pays (cash receipts basis)'
@@ -373,19 +564,32 @@ function createInvoiceSteps(db: AppDatabase, input: CreateInvoiceInput): Created
         });
       }
     }
-    const recoverable = historic ? 0 : computed.reduce((s, c) => s + c.calculation.recoverableVatMinor, 0);
-    if (recoverable !== 0) {
+    for (const recoverable of historic ? [] : vatPostings(computed.map((c) => c.calculation.recoverableVatMinor))) {
       journalLines.push({
         accountId: vatOnPurchases,
         ...(recoverable >= 0 ? { debitMinor: recoverable } : { creditMinor: -recoverable }),
         currency, fxRate, memo: 'Input VAT',
       });
     }
+    // Postponed accounting on a customs valuation (issue #609): the VAT is in
+    // the base currency, as the declaration states it; any part not
+    // recoverable is a cost of the goods.
+    for (const { line, importVat } of computed) {
+      if (!importVat || historic || importVat.vatMinor === 0) continue;
+      const irrecoverable = importVat.vatMinor - importVat.recoverableVatMinor;
+      if (importVat.recoverableVatMinor !== 0) {
+        journalLines.push({ accountId: vatOnPurchases, debitMinor: importVat.recoverableVatMinor, currency: baseCurrency, memo: 'Import VAT (postponed accounting)' });
+      }
+      if (irrecoverable !== 0) {
+        journalLines.push({ accountId: line.accountId, debitMinor: irrecoverable, currency: baseCurrency, memo: `${line.description} — import VAT not recoverable` });
+      }
+      journalLines.push({ accountId: vatOnSales, creditMinor: importVat.vatMinor, currency: baseCurrency, memo: 'Import VAT (postponed accounting)' });
+    }
     // Reverse charge: the same invoice creates an output VAT liability too.
-    const reverseChargeVat = historic ? 0 : computed
+    const reverseChargeVats = historic ? [] : vatPostings(computed
       .filter((c) => c.resolved.treatment.isReverseCharge)
-      .reduce((s, c) => s + c.calculation.vatMinor, 0);
-    if (reverseChargeVat !== 0) {
+      .map((c) => c.calculation.vatMinor));
+    for (const reverseChargeVat of reverseChargeVats) {
       journalLines.push({
         accountId: vatOnSales,
         ...(reverseChargeVat >= 0
@@ -401,20 +605,31 @@ function createInvoiceSteps(db: AppDatabase, input: CreateInvoiceInput): Created
     });
   }
 
-  // A locked or filed VAT return is never changed (issue #226): checked before
-  // anything is written, so a refusal leaves no half-posted invoice.
-  const vatTaxPoint = determineTaxPoint({
-    basis: company.vatAccountingBasis,
+  // Each line's tax point: an acquisition's is s.75's, not the invoice's (issue #611).
+  const lineTaxPoint = (treatmentCode: string) => determineTaxPoint({
+    basis: saleBasis,
     direction: isSales ? 'sales' : 'purchases',
     invoiceDate: input.invoiceDate,
     supplyDate: input.supplyDate,
+    // On the invoice basis a sale's tax point is the invoice date, so no
+    // payment date is needed. Deferred sales never reach here.
     paymentDate: input.invoiceDate,
-  }).taxPointDate;
+    acquisition: !isSales && treatmentCode === 'EU_GOODS_ACQ',
+    adjustingNote: !!input.isCreditNote || !!input.isDebitNote,
+  });
+
+  // A locked or filed VAT return is never changed (issue #226): checked before
+  // anything is written, so a refusal leaves no half-posted invoice.
   const createsVatNow = !vatDeferred && !historic
     && computed.some((c) => c.calculation.vatMinor !== 0 || c.resolved.treatment.appliesRate);
   if (createsVatNow) {
-    assertVatPeriodWritable(db, input.companyId, input.vatDeclarationDate ?? vatTaxPoint,
-      `The VAT on ${input.invoiceNumber ? `invoice ${input.invoiceNumber}` : 'this invoice'}`);
+    const taxPoints = new Set(computed
+      .filter((c) => c.calculation.vatMinor !== 0 || c.resolved.treatment.appliesRate)
+      .map((c) => input.vatDeclarationDate ?? lineTaxPoint(c.resolved.treatment.code).taxPointDate));
+    for (const date of taxPoints) {
+      assertVatPeriodWritable(db, input.companyId, date,
+        `The VAT on ${input.invoiceNumber ? `invoice ${input.invoiceNumber}` : 'this invoice'}`);
+    }
   }
 
   const invoiceId = ids.invoice();
@@ -429,23 +644,20 @@ function createInvoiceSteps(db: AppDatabase, input: CreateInvoiceInput): Created
     createdBy: input.actor ?? 'user',
     createdVia: 'user',
     requestId: input.requestId,
-    lines: journalLines,
+    // Converting each line separately can leave the base totals a cent or
+    // two apart; that difference goes visibly to rounding_difference (#639).
+    lines: currency === baseCurrency
+      ? journalLines
+      : withFxRoundingLine(journalLines, baseCurrency,
+        systemAccountId(db, input.companyId, 'rounding_difference')),
   });
 
   // ---- VAT entries ----
   const vatEntryIds: string[] = [];
   if (!vatDeferred && !historic) {
-    for (const { line, lineId, calculation, resolved, recoverableOverrideMinor } of computed) {
+    for (const { line, lineId, calculation, resolved, recoverableOverrideMinor, importVat, deductibleShare, shareNote } of computed) {
       if (calculation.vatMinor === 0 && !resolved.treatment.appliesRate) continue;
-      const taxPoint = determineTaxPoint({
-        basis: company.vatAccountingBasis,
-        direction: isSales ? 'sales' : 'purchases',
-        invoiceDate: input.invoiceDate,
-        supplyDate: input.supplyDate,
-        // On the invoice basis a sale's tax point is the invoice date, so no
-        // payment date is needed. Deferred sales never reach here.
-        paymentDate: input.invoiceDate,
-      });
+      const taxPoint = lineTaxPoint(resolved.treatment.code);
 
       const created = createVatEntries(db, {
         companyId: input.companyId,
@@ -458,15 +670,37 @@ function createInvoiceSteps(db: AppDatabase, input: CreateInvoiceInput): Created
         treatmentId: line.vatTreatmentId,
         rateOverrideId: line.taxRateId,
         taxPointDate: taxPoint.taxPointDate,
-        netMinor: calculation.netMinor,
-        statedVatMinor: calculation.vatMinor,
-        recoverableOverrideMinor: recoverableOverrideMinor === undefined
-          ? undefined : recoverableOverrideMinor * sign,
-        currency,
+        // The rate the line was calculated at, which a tax point moved by
+        // s.74(1)(a) or s.75 does not change (issue #611).
+        rateDate: taxPointBase,
+        // A customs valuation is in the base currency: PA1 is the customs value
+        // plus duty, and the rate applies to the value for import VAT (#609).
+        ...(importVat
+          ? {
+            netMinor: importVat.netMinor,
+            taxableAmountMinor: importVat.valuation.customsValueMinor + importVat.valuation.customsDutyMinor
+              + (importVat.valuation.otherChargesMinor ?? 0) + (importVat.valuation.freightToIrelandMinor ?? 0),
+            recoverableOverrideMinor,
+            deductibleShare,
+            currency: baseCurrency,
+            notes: (shareNote ? `${shareNote} ` : '') + `Customs valuation${importVat.valuation.declarationReference ? ` (declaration ${importVat.valuation.declarationReference})` : ''}: `
+              + `customs value ${(importVat.valuation.customsValueMinor / 100).toFixed(2)}, duty ${(importVat.valuation.customsDutyMinor / 100).toFixed(2)}`
+              + `${importVat.valuation.otherChargesMinor ? `, other charges ${(importVat.valuation.otherChargesMinor / 100).toFixed(2)}` : ''}`
+              + `${importVat.valuation.freightToIrelandMinor ? `, freight to Ireland ${(importVat.valuation.freightToIrelandMinor / 100).toFixed(2)}` : ''}.`,
+          }
+          : {
+            netMinor: calculation.netMinor,
+            statedVatMinor: calculation.vatMinor,
+            recoverableOverrideMinor: recoverableOverrideMinor === undefined
+              ? undefined : recoverableOverrideMinor * sign,
+            deductibleShare,
+            notes: shareNote,
+            currency,
+            fxRate: input.fxRate
+              ? { numerator: input.fxRate.numerator, denominator: input.fxRate.denominator, source: input.fxRate.source, date: input.fxRate.date }
+              : undefined,
+          }),
         baseCurrency,
-        fxRate: input.fxRate
-          ? { numerator: input.fxRate.numerator, denominator: input.fxRate.denominator }
-          : undefined,
         counterpartyVatNumber: counterpartyVatNumber(db, input),
         counterpartyCountry: counterpartyCountry(db, input),
         source: 'user',
@@ -554,7 +788,7 @@ function createInvoiceSteps(db: AppDatabase, input: CreateInvoiceInput): Created
       provenanceStatus: 'manually_entered',
     }).run();
 
-    for (const { line, index, lineId, calculation, resolved, undiscountedNet, discount } of computed) {
+    for (const { line, index, lineId, calculation, resolved, undiscountedNet, discount, businessBp, dualUseBp } of computed) {
       tx.insert(invoiceLines).values({
         id: lineId,
         companyId: input.companyId,
@@ -577,6 +811,9 @@ function createInvoiceSteps(db: AppDatabase, input: CreateInvoiceInput): Created
         fixedAssetId: line.fixedAssetId ?? null,
         documentLineId: line.documentLineId ?? null,
         vatRuleKeys: line.vatRuleKeys ?? [],
+        businessUseBasisPoints: businessBp,
+        dualUseProportionBasisPoints: dualUseBp,
+        dualUseBasis: line.dualUse?.basis ?? null,
         source: 'user',
         provenanceStatus: 'manually_entered',
       }).run();

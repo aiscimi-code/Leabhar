@@ -29,7 +29,7 @@ import {
 } from '@/db/schema';
 import { lookupTransactionRules, type ApplicableRule, type TransactionContext } from './transactionLookup';
 import { countStatutoryRules } from './knowledgeBase';
-import { EU_COUNTRY_CODES, parseVatNumber } from '../extraction/vatNumbers';
+import { EU_COUNTRY_CODES, parseVatNumber, otherMemberStateForGoods, ukWasMemberStateOn } from '../extraction/vatNumbers';
 import { resolveTreatment } from '../vat/engine';
 import { asIsoDate } from '../dates';
 import { VAT_SCOPE_CURATED_RULES } from './vatScopeCuration';
@@ -39,7 +39,7 @@ import { VATCA_SCHEDULE_CURATED_RULES } from './vatcaScheduleCuration';
 import { SCHEDULE_RULE_PRECEDENCE } from './vatcaScheduleParagraphRules';
 import { scheduleThreeRate } from './scheduleRates';
 import { CROSS_BORDER_GAPS, ICA_RULE_KEY, IMPORT_RULE_KEY } from './crossBorderCuration';
-import { DOMESTIC_RC_GAPS, RC_CONSTRUCTION_RULE_KEY } from './domesticReverseChargeCuration';
+import { DOMESTIC_RC_GAPS, DOMESTIC_RC_OFFERS, RC_CONSTRUCTION_RULE_KEY } from './domesticReverseChargeCuration';
 import {
   PROPERTY_GAPS, LETTING_OPTION_RULE_KEY, LETTING_OPTION_RESIDENTIAL_RULE_KEY, JOINT_OPTION_RULE_KEY, PROPERTY_SUPPLY_RULE_KEY,
 } from './propertyCuration';
@@ -54,21 +54,42 @@ import { S46_FAMILY_SCHEDULE_REF } from './vatcaRevisedCuration';
 export type TransactionDirection = 'purchase' | 'sale';
 
 const EU = new Set<string>(EU_COUNTRY_CODES);
-const isEuNotIe = (c: string | null | undefined): boolean => !!c && c !== 'IE' && EU.has(c);
+// The UK counts before it left the EU VAT regime (issue #617).
+const isEuNotIe = (c: string | null | undefined, date: string | null | undefined): boolean =>
+  !!c && c !== 'IE' && (EU.has(c) || ukWasMemberStateOn(c, date));
+
+/**
+ * Whether the customer's VAT number shows it registered in another Member
+ * State for this supply (issue #610): any other Member State's number, or a
+ * Northern Ireland (`XI`) number for goods only. A number VIES reported
+ * invalid is never evidence.
+ */
+export function customerRegisteredInOtherMemberState(
+  vatInfo: ReturnType<typeof parseVatNumber>, viesStatus: string | null, supplyType: 'goods' | 'services' | null,
+): boolean {
+  if (!vatInfo.structurallyValid || vatInfo.isIrish || viesStatus === 'invalid') return false;
+  return vatInfo.isEu || (vatInfo.isNorthernIreland && supplyType === 'goods');
+}
+
+/** A Northern Ireland trader: an `XI` VAT number, or `XI` as its country (issue #610). */
+export function isNorthernIrelandParty(vatInfo: ReturnType<typeof parseVatNumber> | null, country: string | null): boolean {
+  return !!vatInfo?.isNorthernIreland || country === 'XI';
+}
 
 /**
  * Which treatment a matched statutory rule produces (issue #200 step 1).
  *
  * Ordered by precedence: the first binding whose rule matched decides.
  * Outside the scope beats everything (no supply at all); then an exemption;
- * then a service sold to a business abroad (supplied there, s.34(a)); then a
- * deduction block (an exception to the general deduction rule); a reverse
- * charge beats a rate; a specific Schedule 2/3 or 9% rule
+ * then a service sold to a business abroad (supplied there, s.34(a)); a
+ * reverse charge beats a rate; a specific Schedule 2/3 or 9% rule
  * beats the reduced-rate headline; the standard rate is the residual
  * fallback. A binding whose `treatmentCode` returns null matched a rule the
  * configuration or the sources cannot settle (a Schedule 3 rate on a date
  * before the s.46(1)(ca) list is known) — that stops the search and is
  * reported, rather than falling through to a rate that is known to be wrong.
+ * A s.60(2)(a) deduction block is not a binding: it is reported beside the
+ * treatment (`VatSuggestion.deductionBlocked`, issue #616).
  */
 export interface TreatmentBinding {
   ruleKeys: string[];
@@ -134,23 +155,18 @@ export const RULE_TREATMENT_BINDINGS: TreatmentBinding[] = [
     direction: 'purchase',
     treatmentCode: () => null,
     gap: PROPERTY_GAPS[JOINT_OPTION_RULE_KEY],
-    offer: ['RC_CONSTRUCTION'],
+    offer: ['RC_PROPERTY_JOINT_OPTION'],
   },
   { ruleKeys: [PROPERTY_SUPPLY_RULE_KEY], direction: 'either', treatmentCode: () => null, gap: PROPERTY_GAPS[PROPERTY_SUPPLY_RULE_KEY] },
-  {
-    ruleKeys: ['vat.domestic_reverse_charge_scrap_metal'],
+  // The other s.16 reverse charges turn on a fact no transaction shows: flagged, with the
+  // treatment for that subsection offered, never chosen (issue #621).
+  ...Object.entries(DOMESTIC_RC_OFFERS).map(([key, code]): TreatmentBinding => ({
+    ruleKeys: [key],
     direction: 'purchase',
     treatmentCode: () => null,
-    gap: DOMESTIC_RC_GAPS['vat.domestic_reverse_charge_scrap_metal'],
-    offer: ['RC_CONSTRUCTION'],
-  },
-  {
-    ruleKeys: Object.keys(DOMESTIC_RC_GAPS).filter((k) => k !== 'vat.domestic_reverse_charge_scrap_metal'
-      && !ADVISORY_RULE_KEYS.has(k)),
-    direction: 'either',
-    treatmentCode: () => null,
-    gap: (_f, key) => DOMESTIC_RC_GAPS[key]!,
-  },
+    gap: DOMESTIC_RC_GAPS[key],
+    offer: [code],
+  })),
   // Not a supply at all: nothing else about VAT applies (s.2(1), s.3).
   { ruleKeys: scopeKeys('OUT_OF_SCOPE'), direction: 'either', treatmentCode: () => 'OUT_OF_SCOPE' },
   // An exempt supply: no VAT, and so no reverse charge or rate either (Schedule 1).
@@ -187,14 +203,14 @@ export const RULE_TREATMENT_BINDINGS: TreatmentBinding[] = [
   {
     ruleKeys: [VAT_POS_BUSINESS_ABROAD_RULE_KEY],
     direction: 'sale',
-    treatmentCode: (f) => (isEuNotIe(f.counterpartyCountry) ? 'EU_SERVICES_SUPPLY' : 'NON_EU_SERVICES_SUPPLY'),
+    treatmentCode: (f) => (isEuNotIe(f.counterpartyCountry, f.transactionDate) ? 'EU_SERVICES_SUPPLY' : 'NON_EU_SERVICES_SUPPLY'),
   },
-  // s.60(2)(a): blocked categories, exactly as listed; diesel is not among them (issue #209).
-  { ruleKeys: BLOCKED_DEDUCTION_RULE_KEYS, direction: 'purchase', treatmentCode: () => 'NON_DEDUCTIBLE' },
+  // s.60(2)(a) blocks are not bound here: they deny the deduction, not the supply's treatment, so
+  // they are reported as `deductionBlocked` beside it (issue #616).
   {
     ruleKeys: ['vat.reverse_charge_services_from_abroad'],
     direction: 'purchase',
-    treatmentCode: (f) => (isEuNotIe(f.counterpartyCountry) ? 'EU_SERVICES_RCV' : 'NON_EU_SERVICES_RCV'),
+    treatmentCode: (f) => (isEuNotIe(f.counterpartyCountry, f.transactionDate) ? 'EU_SERVICES_RCV' : 'NON_EU_SERVICES_RCV'),
   },
   {
     ruleKeys: ['vat.zero_rate_intra_community_goods'],
@@ -204,7 +220,8 @@ export const RULE_TREATMENT_BINDINGS: TreatmentBinding[] = [
   {
     ruleKeys: ['vat.zero_rate_export_outside_community'],
     direction: 'sale',
-    treatmentCode: () => 'IE_ZERO',
+    // Its own treatment, so the RTD reports it as a 0% export (D4, issue #613).
+    treatmentCode: () => 'EXPORT_GOODS',
   },
   {
     ruleKeys: SCHEDULE_BINDING_KEYS,
@@ -311,6 +328,13 @@ export interface VatSuggestion {
   reviewRequired: boolean;
   /** Treatment codes to offer when the rule matched but the evidence cannot choose between them (the import entry, issue #207). */
   offeredTreatmentCodes: string[];
+  /**
+   * The s.60(2)(a) rule that blocks deducting this purchase's input VAT, when
+   * one matched (issue #616). It changes only what is deductible: the
+   * treatment, its rate and any reverse charge (s.12: the recipient is still
+   * liable for the output VAT) stand as decided.
+   */
+  deductionBlocked: StatutoryCitation | null;
   explanation: string;
 }
 
@@ -421,6 +445,12 @@ export function transactionFacts(
     supplyType,
   };
   sources.vatRegistered = `company VAT registration status (${company?.vatRegistrationStatus ?? 'unknown'})`;
+  if (isNorthernIrelandParty(vatInfo, counterpartyCountry)) {
+    facts.counterpartyNorthernIreland = true;
+    sources.counterpartyNorthernIreland = vatInfo?.isNorthernIreland
+      ? `${partyLabel} VAT number ${vatInfo.normalised} (XI: Northern Ireland, EU VAT rules for goods only)`
+      : `${partyLabel} country XI (Northern Ireland, EU VAT rules for goods only)`;
+  }
   applyEstablishment(facts, sources, { supplier, customer });
   sources.invoiceAvailable = doc ? `confirmed document "${doc.originalFilename}"` : 'no confirmed matched document';
 
@@ -433,7 +463,7 @@ export function transactionFacts(
     if (vatInfo) {
       // VIES's answer for this exact number, when there is one (issue #207).
       const vies = customer?.viesStatus && customer.viesCheckedVatNumber === vatInfo.normalised ? customer.viesStatus : null;
-      facts.customerVatRegisteredEu = vatInfo.structurallyValid && vatInfo.isEu && !vatInfo.isIrish && vies !== 'invalid';
+      facts.customerVatRegisteredEu = customerRegisteredInOtherMemberState(vatInfo, vies, supplyType);
       sources.customerVatRegisteredEu = vies === 'valid'
         ? `customer VAT number ${vatInfo.normalised}, confirmed valid by VIES on ${customer!.viesCheckedAt?.slice(0, 10)}`
         : vies === 'invalid'
@@ -444,7 +474,10 @@ export function transactionFacts(
     // A recorded status wins; otherwise an EU VAT number is evidence of it
     // (282/2011 art.18(1)); a missing number is NOT evidence of a consumer.
     applyCustomerStatus(facts, sources, customer, vatInfo);
-    if (supplyType === 'goods' && counterpartyCountry && !EU.has(counterpartyCountry)) {
+    // Goods to Northern Ireland stay within the EU rules for goods (issue #610).
+    if (supplyType === 'goods' && counterpartyCountry && !EU.has(counterpartyCountry)
+        && !ukWasMemberStateOn(counterpartyCountry, facts.transactionDate)
+        && !isNorthernIrelandParty(vatInfo, counterpartyCountry) && !otherMemberStateForGoods(counterpartyCountry)) {
       facts.goodsExportedOutsideEu = true;
       sources.goodsExportedOutsideEu = `derived: goods sale to a customer in ${counterpartyCountry} `
         + '(customer country, not proof of export)';
@@ -534,6 +567,7 @@ export function suggestFromFacts(
     factSources,
     reviewRequired: true,
     offeredTreatmentCodes: [] as string[],
+    deductionBlocked: null as StatutoryCitation | null,
   };
 
   if (countStatutoryRules(db, params.companyId) === 0) {
@@ -596,6 +630,18 @@ export function suggestFromFacts(
     .filter((r) => r.ruleId !== decision?.rule.ruleId)
     .map((r) => citationFor(db, r));
 
+  // s.60(2)(a): the deduction is blocked whatever the treatment (issue #616).
+  const blockRule = facts.direction === 'purchase'
+    ? BLOCKED_DEDUCTION_RULE_KEYS.map((k) => matched.get(k)).find((r) => r !== undefined) : undefined;
+  base.deductionBlocked = blockRule ? supportingRules.find((r) => r.ruleId === blockRule.ruleId) ?? null : null;
+  if (base.deductionBlocked) {
+    reviewReasons.push(
+      `${base.deductionBlocked.ruleName}: the VAT on this purchase is not deductible, so none of it is claimed in T2 `
+      + `(${provisionCitation(base.deductionBlocked.citation, base.deductionBlocked.sectionNumber)}). The treatment and `
+      + 'rate are still decided by what was supplied and where; a reverse charge is still accounted for in T1 (s.12).',
+    );
+  }
+
   if (!decision) {
     return {
       ...base, status: 'no_rule', supportingRules,
@@ -610,7 +656,7 @@ export function suggestFromFacts(
     .from(irishTaxRules).where(eq(irishTaxRules.id, decision.rule.ruleId)).get();
   const ruleRateBasisPoints = ruleRow?.unit === 'percent' && ruleRow.numericValue != null
     ? Math.round(ruleRow.numericValue * 100)
-    : (code === 'IE_ZERO' || code === 'EU_GOODS_SUPPLY' ? 0 : null);
+    : (code === 'IE_ZERO' || code === 'EU_GOODS_SUPPLY' || code === 'EXPORT_GOODS' ? 0 : null);
 
   const where = provisionCitation(decidingRule!.citation, decidingRule!.sectionNumber);
   const gap = bindingGap(decision.binding, facts, decision.rule.ruleKey);

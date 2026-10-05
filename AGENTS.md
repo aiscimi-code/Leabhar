@@ -16,6 +16,21 @@ The roadmap is the epic index in issue #295. We work through the epics in order.
 - **PAYE is in scope** (payroll and ERR, #315, #316). Revenue submissions go
   straight from the app, using the employer's own certificate.
 
+## Rule issues vs the tools
+
+A rule issue stays on its epic only when the rule would change what the tools
+compute or file. A VAT rate, a reverse-charge test, or a threshold that every
+VAT calculation reads is essential. Do that work on the epic.
+
+A rule issue that only cites a duty the tools already honour — a seeded default,
+a review-item sentence, a coverage-matrix row — does not belong on the epic.
+Take it off the epic and put it on #588 (one list for all of them). Do not open
+a new sub-issue per source.
+
+The six-year company-record retention (Companies Act 2014 s.285) is the
+example: the books already keep records for six years. Quoting the section does
+not change a VAT figure, a journal, or a return, so it is deferred to #588.
+
 ## Non-negotiables
 
 These are enforced by tests. Breaking one is a bug, not a trade-off.
@@ -66,7 +81,15 @@ These are enforced by tests. Breaking one is a bug, not a trade-off.
   moved out of a locked period silently.
 - **Invoice amounts are stored as printed.** A credit note's figures are
   positive; its `document_type` carries the sign.
-- **A rule with no conditions matches nothing**, not everything.
+- **A rule with no conditions matches nothing**, not everything. That is the user-authored coding-rules engine (`src/domain/rules/engine.ts`). Statute-KB lookup (`transactionLookup.ts`) is the documented exception: an empty condition list on a derived rule is a topic-level fact and applies when the topic and effective window match.
+- **A close company surcharge is charged for a later period** than the income
+  it is on: the earliest accounting period ending 12 months or more after it
+  (s.440(6)). The period's own corporation tax does not include it.
+- **Income tax capital allowances go per year of assessment**, not per
+  accounting period.
+- **A revised text does not date its own figures.** The LRC and Revenue
+  consolidations state the current wording. Take each figure's start date from
+  the Act or footnote that set it, never from the revised file's date.
 - **An unassessable match factor carries zero weight** and is excluded, rather
   than scoring as half-right or counting against.
 

@@ -5,7 +5,7 @@ LRC revised text of ss.20–23 (PRSI Class S), retrieved 2026-09-25
 dated history: `prsi.class_s_rate` (4.2%, at least €650, s.21(1)(a)) is
 dated from the retrieval date because the text does not say when that rate
 took effect. The €5,000 reckonable-income threshold for Class S liability is
-not in these sections.
+not in these sections: it is S.I. 312/1996 art. 92 (`docs/statutes/si-312-1996/art92.md`, issue #487).
 
 Ingested by `src/domain/rules/incomeTaxIngestion.ts` (issue #212).
 

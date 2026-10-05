@@ -48,10 +48,11 @@ export default function CompanySettingsPage() {
                   <Field
                     label="VAT basis"
                     help="On the cash receipts basis, VAT on your sales arises when you are
-                      paid rather than when you invoice. Choose the basis Revenue registered
-                      you on — changing it later does not restate anything already posted."
+                      paid rather than when you invoice. It needs Revenue's authorisation:
+                      sales stay on the invoice basis until you record it on the company
+                      profile. Changing the basis later does not restate anything already posted."
                   >
-                    <Select name="vatAccountingBasis" defaultValue="cash_receipts">
+                    <Select name="vatAccountingBasis" defaultValue="invoice">
                       <option value="cash_receipts">Cash receipts</option>
                       <option value="invoice">Invoice (sales)</option>
                     </Select>

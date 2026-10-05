@@ -142,6 +142,8 @@ export interface LineChoicesCliResult {
     suggestedAccount: string | null;
     accountReason: string | null;
     flags: string[];
+    /** The s.60(2)(a) block on this line's VAT deduction, applied on posting unless the coding says `"deductible": true` (issue #616). */
+    deductionBlocked: { ruleKey: string; ruleName: string; provision: string } | null;
   }>;
 }
 
@@ -163,6 +165,7 @@ export function lineChoicesCli(db: AppDatabase, input: { companyId: string; docu
       suggestedAccount: c.accountId,
       accountReason: c.accountReason,
       flags: c.flags,
+      deductionBlocked: c.deductionBlocked,
     })),
   };
 }
@@ -176,6 +179,8 @@ export interface PostDocumentCliInput {
    * JSON array, one entry per line in `line-choices` order:
    * `{"account":"6120","treatment":"IE_STD"}`. A line may omit `treatment` or
    * `account` only where `line-choices` suggested one (every source agreed).
+   * A line `line-choices` shows as `deductionBlocked` is posted with no VAT
+   * deducted unless its entry says `"deductible": true` (issue #616).
    */
   coding: string;
   fx?: string;
@@ -185,7 +190,7 @@ export interface PostDocumentCliInput {
 }
 
 export function postDocumentCli(db: AppDatabase, input: PostDocumentCliInput): CreatedInvoice {
-  const entries = parseJson<Array<{ account?: string; treatment?: string }>>(input.coding, '--coding');
+  const entries = parseJson<Array<{ account?: string; treatment?: string; deductible?: boolean }>>(input.coding, '--coding');
   if (!Array.isArray(entries)) throw new Error('--coding must be a JSON array, one entry per line.');
   const choices = documentLineChoices(db, input);
   if (entries.length !== choices.lines.length) {
@@ -206,7 +211,10 @@ export function postDocumentCli(db: AppDatabase, input: PostDocumentCliInput): C
     const accountId = entry.account ? resolveAccountId(db, input.companyId, entry.account) : choice.accountId;
     if (!accountId) throw new Error(`Line ${i} ("${choice.line.description}") needs an account.`);
     const chosen = choice.options.find((o) => o.treatmentId === treatmentId);
-    return { accountId, vatTreatmentId: treatmentId, vatRuleKeys: chosen?.ruleKeys ?? [] };
+    return {
+      accountId, vatTreatmentId: treatmentId, vatRuleKeys: chosen?.ruleKeys ?? [],
+      blockedDeductionRuleKey: choice.deductionBlocked && entry.deductible !== true ? choice.deductionBlocked.ruleKey : undefined,
+    };
   });
   return postDocumentAsInvoice(db, {
     companyId: input.companyId,

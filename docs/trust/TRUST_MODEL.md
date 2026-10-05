@@ -254,14 +254,16 @@ Rules extracted from Irish legislation and Revenue guidance. Each rule:
 - Has a stable `ruleKey` (human-curated, never derived from prose).
 - Carries `effectiveFrom`/`effectiveTo` — resolves the rule in force on the
   transaction's own date, not today's.
-- Has `reviewStatus` — `ai_extracted` rules are never authoritative for lookup
-  until a human transitions them to `active`.
+- Has `reviewStatus` — an `ai_extracted` rule is returned by lookup, but always
+  flagged (`humanReviewRequired`, a review reason, `reviewRequired: true`), and is
+  never treated as authoritative until a human transitions it to `active`.
 - Has `sourceType` (legislation/revenue_guidance/etc.) — a Revenue
-  interpretation can never outrank legislation it explains.
+  interpretation can never outrank legislation it explains. Lookup results are
+  ordered by it, legislation first, and each carries its `sourceAuthority` rank.
 - Has `conditions` (evaluated) and `exceptions` (plain-language, always
   flagged for review when present).
 
-**Current state:** all 32 statute-derived rules are `ai_extracted`,
+**Current state:** every statute-derived rule (257 at the #277 audit; the count grows as sources are curated) is `ai_extracted`,
 `human_review_required: true`. The lookup therefore *always* returns
 `reviewRequired: true`. This is the correct, honest state — the system refuses
 to make AI-extracted rules authoritative.

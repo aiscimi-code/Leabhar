@@ -18,6 +18,46 @@ export const EU_COUNTRY_CODES = [
 
 export type EuCountryCode = (typeof EU_COUNTRY_CODES)[number];
 
+/**
+ * Northern Ireland (issue #610). From 1 January 2021, under the Protocol (now
+ * the Windsor Framework), Northern Ireland "is subject to the same VAT rules on
+ * Goods as European Union Member States" but "not subject to the same VAT rules
+ * on Services", and its traders in goods hold VAT numbers prefixed `XI`
+ * (Revenue, VIES Traders Manual, Appendix 9:
+ * docs/statutes/_inbox/C/vies/vies-traders-manual.md; VATCA s.2 as revised,
+ * docs/statutes/vatca-2010-revised/s002.md, reads "Member State" as including
+ * Northern Ireland, save for the Schedule 9 provisions).
+ *
+ * So `XI` is a Member State for goods only. It is never in `EU_COUNTRY_CODES`,
+ * which answers the services question.
+ */
+export const NORTHERN_IRELAND = 'XI';
+
+/** Whether a country (ISO code, or `XI`) is a Member State other than Ireland for a supply of goods. */
+export function otherMemberStateForGoods(code: string | null | undefined): boolean {
+  const c = code?.toUpperCase();
+  if (!c || c === 'IE') return false;
+  return c === NORTHERN_IRELAND || (EU_COUNTRY_CODES as readonly string[]).includes(c === 'EL' ? 'GR' : c);
+}
+
+/**
+ * The United Kingdom left the EU VAT regime at the end of the transition
+ * period: "From 1st January 2021, EU VAT legislation no longer applies to the
+ * UK" (Revenue, VIES Traders Manual, Appendix 9:
+ * docs/statutes/vies/vies-traders-manual.md; the end of the transition period
+ * is 11:00pm on 31 December 2020, Irish time, per Revenue's postponed
+ * accounting guidance, docs/statutes/_inbox/C/postponed-accounting/). A
+ * transaction dated before this was with a Member State, Great Britain and
+ * Northern Ireland alike, for goods and services (issue #617).
+ */
+export const UK_LEFT_EU_VAT_REGIME = '2021-01-01';
+
+/** Whether a UK counterparty (`GB`, or `XI`) was in another Member State on `date`, for goods and services alike. */
+export function ukWasMemberStateOn(code: string | null | undefined, date: string | null | undefined): boolean {
+  const c = code?.toUpperCase();
+  return (c === 'GB' || c === NORTHERN_IRELAND) && !!date && date < UK_LEFT_EU_VAT_REGIME;
+}
+
 /** Structural patterns per member state. 'EL' is the VAT prefix for Greece. */
 const VAT_PATTERNS: Record<string, RegExp> = {
   AT: /^ATU\d{8}$/,
@@ -49,6 +89,8 @@ const VAT_PATTERNS: Record<string, RegExp> = {
   SE: /^SE\d{12}$/,
   SI: /^SI\d{8}$/,
   SK: /^SK\d{10}$/,
+  // Northern Ireland: nine digits, or twelve for a member of a group (VIES Traders Manual, country table).
+  XI: /^XI(\d{9}|\d{12})$/,
 };
 
 export function normaliseVatNumber(input: string): string {
@@ -59,6 +101,8 @@ export interface VatNumberInfo {
   normalised: string;
   countryCode: string | null;
   isEu: boolean;
+  /** An `XI` number: a Northern Ireland trader in goods, under EU VAT rules for goods only (issue #610). */
+  isNorthernIreland: boolean;
   isIrish: boolean;
   structurallyValid: boolean;
   note: string;
@@ -71,18 +115,23 @@ export function parseVatNumber(input: string): VatNumberInfo {
   const country = prefix === 'EL' ? 'GR' : prefix;
   const pattern = VAT_PATTERNS[prefix];
   const isEu = (EU_COUNTRY_CODES as readonly string[]).includes(country) || prefix === 'EL';
+  const isNorthernIreland = prefix === NORTHERN_IRELAND;
   const structurallyValid = pattern ? pattern.test(normalised) : false;
 
   return {
     normalised,
-    countryCode: isEu ? country : null,
+    countryCode: isEu || isNorthernIreland ? country : null,
     isEu,
+    isNorthernIreland,
     isIrish: country === 'IE',
     structurallyValid,
-    note: structurallyValid
+    note: structurallyValid && isNorthernIreland
+      ? 'A Northern Ireland (XI) number, correctly formed. EU VAT rules apply to goods bought from or sold to this '
+        + 'trader, not to services. This is a format check only — it does not confirm the number is registered.'
+      : structurallyValid
       ? 'The number is correctly formed for its member state. This is a format check '
         + 'only — it does not confirm the number is registered or currently valid.'
-      : isEu
+      : isEu || isNorthernIreland
         ? 'This does not match the expected format for that member state. Check it '
           + 'before relying on a treatment that depends on the other party being registered.'
         : 'Not recognised as an EU VAT number.',
@@ -100,7 +149,7 @@ export function findVatNumbers(
   // allowing the spaces and separators that appear on real invoices. Horizontal
   // whitespace only: a VAT number never spans a line break, and allowing one
   // would let the first letters of the following line be read as part of it.
-  const pattern = /\b(AT|BE|BG|CY|CZ|DE|DK|EE|EL|ES|FI|FR|GR|HR|HU|IE|IT|LT|LU|LV|MT|NL|PL|PT|RO|SE|SI|SK)[^\S\n\r]?([A-Z0-9][A-Z0-9 \t.\-/]{5,14}[A-Z0-9])\b/gi;
+  const pattern = /\b(AT|BE|BG|CY|CZ|DE|DK|EE|EL|ES|FI|FR|GR|HR|HU|IE|IT|LT|LU|LV|MT|NL|PL|PT|RO|SE|SI|SK|XI)[^\S\n\r]?([A-Z0-9][A-Z0-9 \t.\-/]{5,14}[A-Z0-9])\b/gi;
 
   for (const match of text.matchAll(pattern)) {
     candidates.add(normaliseVatNumber(match[0]));
@@ -155,7 +204,10 @@ export function suggestPurchaseTreatment(params: {
             + 'or outside the scope, and those are three different things. Confirm which.' };
   }
 
-  if (country && (EU_COUNTRY_CODES as readonly string[]).includes(country)) {
+  // Northern Ireland: under EU rules for goods (an acquisition), not for services
+  // (a supply from outside the EU), issue #610.
+  const memberState = kind === 'GOODS' ? otherMemberStateForGoods(country) : (EU_COUNTRY_CODES as readonly string[]).includes(country);
+  if (country && memberState) {
     if (chargedVat) {
       return { code: 'IE_STD', confidence: 30,
         reason: `A supplier in ${country} charged VAT rather than applying the reverse `
