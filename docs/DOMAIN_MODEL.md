@@ -1685,6 +1685,56 @@ never reports compliance (§48).
 
 ---
 
+## 9a. Tables added since migration 0010
+
+The tables below are not covered by the lifecycle sections above. Each row
+names its invariant; the schema comment in `src/db/schema/` is the detail.
+
+### The business and its people
+
+| Table | Holds | Invariant |
+|---|---|---|
+| `companies.entity_type` | `company`, `sole_trader` or `partnership` | Decides which computations apply; never inferred from the books. |
+| `companies.trade_commenced_on`, `trade_ceased_on` | The dates a trade started and stopped | A person's entry. The income tax basis-period rules read them; nothing writes them from the ledger. |
+| `partners` | The partners of a partnership, with the precedent partner | A partner leaves with `left_on`; the row is kept. |
+| `partner_shares` | A partner's share of profits, in basis points | Effective-dated: a change is a new row from its date that closes the previous one. Nothing is overwritten. |
+| `company_registrations`, `company_trading_names`, `company_trading_activities` | Tax registrations, trading names and activities | Dated with `effective_to` or `ceased_on`; a change is a new row. |
+| `company_members` | A user's role in a book | The role is stored; what it allows lives in `src/domain/auth/permissions.ts`. |
+
+### Tax records that are a person's decision
+
+| Table | Holds | Invariant |
+|---|---|---|
+| `ct_decisions` | Choices the computations cannot settle: an add-back and its provision, an income account's Case, a loss claim, close company or trading status, basis elections, farm reliefs | Write-once. A changed mind is a new row that sets `superseded_by_id` on the old one, which keeps its record. |
+| `capital_goods`, `capital_good_intervals` | The capital goods scheme record (VATCA ss.63-64): one row per good, one per interval with the proportion of deductible use | The adjustment arithmetic is the domain's (`src/domain/vat/capitalGoods.ts`), never typed in. |
+| `company_size_decisions`, `statement_format_mappings` | Company size per financial year, and the mapping of accounts to Schedule 3A formats | Written once; a changed mind is a new row. |
+
+### Operations beside the ledger
+
+These records never post by themselves. Anything that reaches the ledger goes
+through a posting path and the invariants of section 0.
+
+| Table | Holds |
+|---|---|
+| `loans` | A loan's terms; the balance is the ledger's, never stored here. |
+| `recurring_journals`, `recurring_journal_lines`, `recurring_invoices`, `recurring_invoice_lines` | Templates. Each occurrence is an ordinary immutable entry or invoice. |
+| `timing_adjustments` | The workflow record of an accrual or prepayment that reverses itself on a named date; the entries are ordinary. |
+| `customer_contacts`, `invoice_reminders` | Who to write to and what was sent. |
+| `document_retention_policies` | How long each kind of document is kept. |
+| `stocktakes`, `stocktake_lines` | Counts; a difference is a review item, never an adjustment. |
+| `farm_allocations`, `livestock_valuations` | Analysis of posted lines by enterprise (allocations never exceed 100%), and valuations that post a journal. |
+| `rct_subcontractors`, `rct_contracts`, `rct_payments` | Relevant contracts tax records; the rate is Revenue's, carried by each deduction authorisation. |
+| `jobs`, `project_allocations`, `project_budgets`, `project_overhead_rates` | Project costing, analysis beside the ledger; budgets and rates are effective-dated. |
+| `company_budgets`, `company_budget_lines`, `forecast_scenarios`, `forecast_settings`, `forecast_snapshots`, `recurring_bank_patterns`, `recurring_forecast_items`, `scenario_adjustments` | The forecast: a view beside the ledger that never writes journals. Snapshots are immutable once saved. |
+
+### Where the tax computations sit
+
+The corporation tax and income tax computations (`computeCorporationTax`,
+`computeIncomeTax`) are **read-only**. They read the ledger and the decisions
+above and return figures. They never post, and nothing they return is stored
+as a source of truth: the ledger stays the source. A report and the screen
+that shows it call the same function.
+
 ## 10. Provenance
 
 Every derived or classified value carries the pair `(source, status)`:

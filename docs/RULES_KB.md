@@ -1863,6 +1863,35 @@ This supersedes the rule keys and gaps described in the two sections above.
   2025, whose (ca) list is not in the repository, and the standard rate
   before 2012.
 
+### Revenue Notes for Guidance, and the corporation tax and income tax rules (issues #211, #212)
+
+There is no LRC revised TCA 1997, so Revenue's Notes for Guidance (NfG) on the
+TCA 1997, Finance Act 2025 edition, are the current statement of each section.
+They are a source family of their own:
+
+- Each part is one `revenue_guidance` knowledge source, kept as a pdftotext
+  conversion in `docs/statutes/tca-1997-nfg/partNN.md`. Guidance ranks below
+  the Act (see "Source hierarchy"), and every rule quoting it says so.
+- `tcaNfgParser.ts` cuts one provision per section note. It reads a left-margin
+  heading followed by "Summary", "Details" or "Definitions" as a note; the
+  indented contents list is skipped. A section the contents list names is a
+  note even without those words (a repealed section's note is a sentence or
+  two). A test requires every part's parsed sections to equal its contents list,
+  so a note can no longer be merged into the one before it (issue #287).
+- `tcaNfgIngestion.ts` ingests the sections `NFG_SECTIONS` lists, and
+  `corporationTaxCuration.ts` curates rules from them. Each `statementExcerpt`
+  is verbatim from the note (a test checks it). These rules carry no transaction
+  conditions: the corporation tax computation cites them and reads its rates
+  from them.
+- `incomeTaxCuration.ts` holds the income tax, USC and PRSI Class S rules for
+  sole traders and partners. They quote the Finance Acts, the LRC revised Social
+  Welfare Consolidation Act 2005 and NfG Part 18D. `incomeTaxIngestion.ts`
+  ingests the SWCA sections and derives every curated rule. PAYE is out of scope.
+- A figure that changes is a **version-chained** rule family outside VAT too:
+  one `ruleKey`, each version dated from the year its Act says, each
+  superseding the one before it, only the latest `active`. A later Act's
+  figure is a new version, never an edit.
+
 ## Next steps
 
 - Curate rule keys for the remaining ~106 relevant provisions (many Finance
