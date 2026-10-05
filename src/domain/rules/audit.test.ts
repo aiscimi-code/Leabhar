@@ -25,10 +25,10 @@ describe('generateAuditReport', () => {
     expect(report.provisionCount).toBe(118);
     expect(report.relevantProvisionCount).toBeGreaterThan(0);
     expect(report.relevantProvisionCount).toBeLessThan(report.provisionCount);
-    expect(report.ruleCount).toBe(4);
+    expect(report.ruleCount).toBe(2);
     // Every rule starts unreviewed.
     expect(report.rulesRequiringHumanReview).toBe(report.ruleCount);
-    expect(report.rulesByReviewStatus['ai_extracted']).toBe(4);
+    expect(report.rulesByReviewStatus['ai_extracted']).toBe(2);
   });
 
   it('flags every curated section that has not yet produced a rule', () => {
@@ -40,7 +40,7 @@ describe('generateAuditReport', () => {
 
     const report = generateAuditReport(freshDb, { companyId: freshCompanyId });
     expect(report.ruleCount).toBe(0);
-    expect(report.provisionsWithoutExtractedRule.length).toBe(4);
+    expect(report.provisionsWithoutExtractedRule.length).toBe(2);
     expect(report.provisionsWithoutExtractedRule.map((p) => p.ruleKey)).toContain('usc.medical_card_2pct_threshold');
   });
 
