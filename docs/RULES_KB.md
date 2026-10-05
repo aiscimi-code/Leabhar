@@ -1339,6 +1339,8 @@ Headline numbers:
   S.I. 156/2012, 1 S.I. 69/2025 reg.8, 1 Revenue TDM 38-01-03b), 194 judged
   relevant to transaction classification, 154 not (procedural/repeal/
   penalty/pure-definition, or uncategorised and flagged for review).
+- (Snapshot from the first ingestion; the knowledge base now derives 257 rules,
+  and the counts below are stale. `docs/rules/coverage-matrix.json` is current.)
 - 32 rules extracted (4 Finance Act, 5 VATCA principal-Act, 4 Schedule 2, 4
   Schedule 3, 4 RCT, 3 current VAT rates, 1 capital allowances, 1 S.I.
   639/2010 cash accounting, 1 S.I. 156/2012 mandatory e-filing, 2 S.I.
