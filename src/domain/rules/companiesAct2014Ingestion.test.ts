@@ -39,7 +39,7 @@ describe('ingestCompaniesAct2014Section', () => {
 });
 
 describe('ingestAllCompaniesAct2014Sections', () => {
-  it('ingests all eight fetched sections, each under its own citation', () => {
+  it('ingests every fetched section, each under its own citation', () => {
     const result = ingestAllCompaniesAct2014Sections(db, { companyId, ingestVersion: 'v1' });
     expect(result.sections).toHaveLength(COMPANIES_ACT_2014_SECTION_NUMBERS.length);
     expect(result.sections.every((s) => s.ingested)).toBe(true);
@@ -106,6 +106,32 @@ describe('deriveCompaniesAct2014Rules', () => {
     const second = deriveCompaniesAct2014Rules(db, { companyId });
     expect(second.created).toBe(0);
     expect(second.unchanged).toBe(COMPANIES_ACT_2014_CURATED_RULES.length);
+  });
+
+  it('the s.285 retention rule states 6 years as a count, not currency', () => {
+    deriveCompaniesAct2014Rules(db, { companyId });
+    const rule = lookupTaxRule(db, { companyId, ruleKey: 'company.accounting_records_retention' });
+    expect(rule).not.toBeNull();
+    expect(rule!.value).toBe(6);
+    expect(rule!.unit).toBe('count');
+    expect(rule!.citation).toBe('2014 Act 38 s.285');
+  });
+
+  it('the s.343 annual-return rule states 56 days as a count, dated from the 2020 substitution', () => {
+    deriveCompaniesAct2014Rules(db, { companyId });
+    const rule = lookupTaxRule(db, { companyId, ruleKey: 'company.annual_return_delivery' });
+    expect(rule).not.toBeNull();
+    expect(rule!.value).toBe(56);
+    expect(rule!.unit).toBe('count');
+    expect(rule!.citation).toBe('2014 Act 38 s.343');
+    expect(rule!.effectiveFrom).toBe('2020-12-16');
+  });
+
+  it('every curated statement excerpt appears verbatim in its ingested section file', () => {
+    for (const rule of COMPANIES_ACT_2014_CURATED_RULES) {
+      const src = readFileSync(companiesAct2014SectionPath(rule.sectionNumber), 'utf8');
+      expect(src, rule.ruleKey).toContain(rule.statementExcerpt);
+    }
   });
 
   it('surfaces each new rule in the existing review inbox', () => {

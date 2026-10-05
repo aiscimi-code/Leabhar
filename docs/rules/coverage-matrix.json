@@ -2851,97 +2851,105 @@
       "id": "ca2014:s281",
       "area": "companies_act",
       "title": "CA 2014 s281",
-      "status": "deferred",
-      "issue": 214,
-      "reason": "Not yet ruled."
+      "status": "rule",
+      "ruleKeys": [
+        "company.accounting_records_duty"
+      ]
     },
     {
       "id": "ca2014:s282",
       "area": "companies_act",
       "title": "CA 2014 s282",
-      "status": "deferred",
-      "issue": 214,
-      "reason": "Not yet ruled."
+      "status": "rule",
+      "ruleKeys": [
+        "company.adequate_accounting_records"
+      ]
     },
     {
       "id": "ca2014:s283",
       "area": "companies_act",
       "title": "CA 2014 s283",
-      "status": "deferred",
-      "issue": 214,
-      "reason": "Not yet ruled."
+      "status": "rule",
+      "ruleKeys": [
+        "company.accounting_records_location"
+      ]
     },
     {
       "id": "ca2014:s284",
       "area": "companies_act",
       "title": "CA 2014 s284",
-      "status": "deferred",
-      "issue": 214,
-      "reason": "Not yet ruled."
+      "status": "rule",
+      "ruleKeys": [
+        "company.accounting_records_access"
+      ]
     },
     {
       "id": "ca2014:s285",
       "area": "companies_act",
       "title": "CA 2014 s285",
-      "status": "deferred",
-      "issue": 214,
-      "reason": "Not yet ruled."
+      "status": "rule",
+      "ruleKeys": [
+        "company.accounting_records_retention"
+      ]
     },
     {
       "id": "ca2014:s286",
       "area": "companies_act",
       "title": "CA 2014 s286",
-      "status": "deferred",
-      "issue": 214,
-      "reason": "Not yet ruled."
+      "status": "not_applicable",
+      "reason": "Offences for failing to keep adequate accounting records: a penalty provision, not a duty the tools compute or file against (the duty itself is company.accounting_records_duty)."
     },
     {
       "id": "ca2014:s290",
       "area": "companies_act",
       "title": "CA 2014 s290",
-      "status": "deferred",
-      "issue": 214,
-      "reason": "Not yet ruled."
+      "status": "rule",
+      "ruleKeys": [
+        "company.financial_statements_duty"
+      ]
     },
     {
       "id": "ca2014:s291",
       "area": "companies_act",
       "title": "CA 2014 s291",
-      "status": "deferred",
-      "issue": 214,
-      "reason": "Not yet ruled."
+      "status": "rule",
+      "ruleKeys": [
+        "company.companies_act_financial_statements"
+      ]
     },
     {
       "id": "ca2014:s292",
       "area": "companies_act",
       "title": "CA 2014 s292",
-      "status": "deferred",
-      "issue": 214,
-      "reason": "Not yet ruled."
+      "status": "not_applicable",
+      "reason": "IFRS entity financial statements: Leabhar prepares Companies Act statements (s.291), so the IFRS election route is outside the product."
     },
     {
       "id": "ca2014:s293",
       "area": "companies_act",
       "title": "CA 2014 s293",
-      "status": "deferred",
-      "issue": 214,
-      "reason": "Not yet ruled."
+      "status": "rule",
+      "ruleKeys": [
+        "company.group_financial_statements"
+      ]
     },
     {
       "id": "ca2014:s343",
       "area": "companies_act",
       "title": "CA 2014 s343",
-      "status": "deferred",
-      "issue": 214,
-      "reason": "Not yet ruled."
+      "status": "rule",
+      "ruleKeys": [
+        "company.annual_return_delivery"
+      ]
     },
     {
       "id": "ca2014:s347",
       "area": "companies_act",
       "title": "CA 2014 s347",
-      "status": "deferred",
-      "issue": 214,
-      "reason": "Not yet ruled."
+      "status": "rule",
+      "ruleKeys": [
+        "company.annual_return_annexes"
+      ]
     },
     {
       "id": "ca2014:s352",
