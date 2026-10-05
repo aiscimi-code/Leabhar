@@ -8,6 +8,7 @@ import { seedDemoCompany } from './demo';
 import {
   companies, bankTransactions, documents, vatPeriods, reviewItems,
   suppliers, fixedAssets, rules, taxDeadlines, payments, irishActProvisions,
+  partners, partnerShares,
 } from '@/db/schema';
 import { statuteSourceIndex } from '@/domain/search/knowledgeBase';
 import { trialBalance } from '@/domain/accounting/ledger';
@@ -184,5 +185,48 @@ describe('demo data', () => {
     expect(pl.operatingExpenses.valueMinor).toBeGreaterThan(0);
     // Revenue exceeds costs on this dataset.
     expect(pl.netProfit.valueMinor).toBeGreaterThan(0);
+  });
+});
+
+describe('demo entity variants (issue #283)', () => {
+  it('seeds a sole trader with income-tax books and no officers', async () => {
+    const { db } = createTestDatabase();
+    const root = mkdtempSync(join(tmpdir(), 'seed-st-'));
+    try {
+      const { companyId, entityType } = await seedDemoCompany(db, {
+        storageRoot: root, entityType: 'sole_trader',
+      });
+      expect(entityType).toBe('sole_trader');
+      const company = db.select().from(companies).where(eq(companies.id, companyId)).get()!;
+      expect(company.entityType).toBe('sole_trader');
+      expect(company.tradeCommencedOn).toBe('2023-06-12');
+      expect(company.isDemo).toBe(true);
+      const tb = trialBalance(db, { companyId, asOf: makeDate(2025, 12, 31) });
+      expect(tb.balanced).toBe(true);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it('seeds a partnership with two partners whose shares add to 100%', async () => {
+    const { db } = createTestDatabase();
+    const root = mkdtempSync(join(tmpdir(), 'seed-p-'));
+    try {
+      const { companyId, entityType } = await seedDemoCompany(db, {
+        storageRoot: root, entityType: 'partnership',
+      });
+      expect(entityType).toBe('partnership');
+      const company = db.select().from(companies).where(eq(companies.id, companyId)).get()!;
+      expect(company.entityType).toBe('partnership');
+      const rows = db.select().from(partners).where(eq(partners.companyId, companyId)).all();
+      expect(rows).toHaveLength(2);
+      expect(rows.some((p) => p.isPrecedentPartner)).toBe(true);
+      const shares = db.select().from(partnerShares).where(eq(partnerShares.companyId, companyId)).all();
+      expect(shares.reduce((n, s) => n + s.shareBasisPoints, 0)).toBe(10_000);
+      const tb = trialBalance(db, { companyId, asOf: makeDate(2025, 12, 31) });
+      expect(tb.balanced).toBe(true);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
   });
 });

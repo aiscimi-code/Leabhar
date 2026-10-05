@@ -7,6 +7,7 @@ import {
 } from '@/db/schema';
 import { ids } from '@/lib/ids';
 import { createCompany, addBankAccount, systemAccountId } from '@/domain/config/setup';
+import { addPartner } from '@/domain/config/partners';
 import { importStatement, saveImportProfile } from '@/domain/banking/import';
 import { classifyTransaction } from '@/domain/banking/classify';
 import { storeDocument } from '@/domain/documents/storage';
@@ -37,13 +38,61 @@ import { normaliseName } from '@/domain/extraction/service';
  * makes every screen look green.
  */
 
+/** Demo book shape (issue #283): LTD, sole trader, or partnership. */
+export type DemoEntityType = 'company' | 'sole_trader' | 'partnership';
+
+export interface SeedDemoOptions {
+  storageRoot?: string;
+  /** Defaults to a limited company — the original demo. */
+  entityType?: DemoEntityType;
+}
+
 export interface SeedResult {
   companyId: string;
+  entityType: DemoEntityType;
   /** The statutes ingested for the demo company (issue #475). */
   knowledgeBase: { sourcesProcessed: number; rulesBefore: number; rulesAfter: number };
   bankAccountId: string;
   counts: Record<string, number>;
 }
+
+const DEMO_PROFILE: Record<DemoEntityType, {
+  legalName: string;
+  tradingName: string;
+  companyType: string;
+  croNumber: string | null;
+  dateIncorporated: string | null;
+  tradeCommencedOn: string | null;
+  billToName: string;
+}> = {
+  company: {
+    legalName: 'Acme Software Limited',
+    tradingName: 'Acme Software',
+    companyType: 'Private company limited by shares (LTD)',
+    croNumber: '123456',
+    dateIncorporated: '2023-06-12',
+    tradeCommencedOn: null,
+    billToName: 'Acme Software Limited',
+  },
+  sole_trader: {
+    legalName: "Joseph O'Sullivan",
+    tradingName: 'Acme Software',
+    companyType: 'Sole trader',
+    croNumber: null,
+    dateIncorporated: null,
+    tradeCommencedOn: '2023-06-12',
+    billToName: "Joseph O'Sullivan",
+  },
+  partnership: {
+    legalName: 'Acme Software Partners',
+    tradingName: 'Acme Software',
+    companyType: 'Partnership',
+    croNumber: null,
+    dateIncorporated: null,
+    tradeCommencedOn: '2023-06-12',
+    billToName: 'Acme Software Partners',
+  },
+};
 
 const STATEMENT_CSV = [
   'Date,Description,Amount,Balance,Currency',
@@ -82,11 +131,11 @@ const COLUMN_MAP = {
 };
 
 /** Plain-text stand-ins for scanned invoices, so extraction has real input. */
-/** The "Bill to" block under the supplier's heading: the demo company's name and address. */
-function withBillTo(body: string): string {
+/** The "Bill to" block under the supplier's heading: the demo business's name and address. */
+function withBillTo(body: string, billToName: string): string {
   const lines = body.split('\n');
   const at = lines.indexOf('');
-  lines.splice(at < 0 ? lines.length : at, 0, '', 'Bill to:', 'Acme Software Limited', '27 Pearse Street, Dublin 2, D02 XY45');
+  lines.splice(at < 0 ? lines.length : at, 0, '', 'Bill to:', billToName, '27 Pearse Street, Dublin 2, D02 XY45');
   return lines.join('\n');
 }
 
@@ -226,14 +275,20 @@ const DEMO_DOCUMENTS: Array<{ filename: string; body: string }> = [
 ];
 
 export async function seedDemoCompany(
-  db: AppDatabase, options: { storageRoot?: string } = {},
+  db: AppDatabase, options: SeedDemoOptions = {},
 ): Promise<SeedResult> {
+  const entityType: DemoEntityType = options.entityType ?? 'company';
+  const profile = DEMO_PROFILE[entityType];
+  const isCompany = entityType === 'company';
+
   const created = createCompany(db, {
-    legalName: 'Acme Software Limited',
-    tradingName: 'Acme Software',
-    croNumber: '123456',
-    companyType: 'Private company limited by shares (LTD)',
-    dateIncorporated: '2023-06-12',
+    legalName: profile.legalName,
+    tradingName: profile.tradingName,
+    croNumber: profile.croNumber ?? undefined,
+    companyType: profile.companyType,
+    entityType,
+    dateIncorporated: profile.dateIncorporated ?? undefined,
+    tradeCommencedOn: profile.tradeCommencedOn ?? undefined,
     registeredOffice: '27 Pearse Street, Dublin 2, D02 XY45, Ireland',
     vatNumber: 'IE3456789TA',
     vatRegistrationDate: '2023-07-01',
@@ -254,22 +309,25 @@ export async function seedDemoCompany(
 
   const { companyId, accountsByKey: acc, accountsByCode: byCode, treatmentsByCode: tr } = created;
 
-  // ---- Officers and share capital ----
-  const directorId = ids.officer();
-  db.insert(companyOfficers).values({
-    id: directorId, companyId, name: 'Joseph O’Sullivan', role: 'director',
-    address: '27 Pearse Street, Dublin 2, Ireland', nationality: 'Irish',
-    appointedOn: '2023-06-12', sharesHeld: 100, shareClass: 'Ordinary',
-    currentAccountId: acc['directors_current_account'],
-  }).run();
-  db.insert(companyOfficers).values({
-    id: ids.officer(), companyId, name: 'Maria Lynch', role: 'secretary',
-    appointedOn: '2023-06-12',
-  }).run();
-  db.insert(shareCapital).values({
-    id: ids.shareCapital(), companyId, shareClass: 'Ordinary',
-    authorisedShares: 1000, issuedShares: 100, nominalValueMinor: 100, currency: 'EUR',
-  }).run();
+  // ---- Officers and share capital (companies only) ----
+  let directorId: string | null = null;
+  if (isCompany) {
+    directorId = ids.officer();
+    db.insert(companyOfficers).values({
+      id: directorId, companyId, name: "Joseph O'Sullivan", role: 'director',
+      address: '27 Pearse Street, Dublin 2, Ireland', nationality: 'Irish',
+      appointedOn: '2023-06-12', sharesHeld: 100, shareClass: 'Ordinary',
+      currentAccountId: acc['directors_current_account'],
+    }).run();
+    db.insert(companyOfficers).values({
+      id: ids.officer(), companyId, name: 'Maria Lynch', role: 'secretary',
+      appointedOn: '2023-06-12',
+    }).run();
+    db.insert(shareCapital).values({
+      id: ids.shareCapital(), companyId, shareClass: 'Ordinary',
+      authorisedShares: 1000, issuedShares: 100, nominalValueMinor: 100, currency: 'EUR',
+    }).run();
+  }
 
   // ---- Bank account ----
   const bankAccountId = addBankAccount(db, {
@@ -292,6 +350,18 @@ export async function seedDemoCompany(
     establishmentBasis: `Demo data: seat of economic activity in ${country}; no fixed establishment elsewhere`,
     establishmentConfirmedBy: 'demo', establishmentConfirmedAt: '2025-01-01T00:00:00.000Z',
   });
+
+  // ---- Partners (partnership demo only, issue #283) ----
+  if (entityType === 'partnership') {
+    addPartner(db, {
+      companyId, name: "Joseph O'Sullivan", shareBasisPoints: 6_000,
+      joinedOn: '2023-06-12', recordedBy: 'demo', isPrecedentPartner: true, activityStatus: 'active',
+    });
+    addPartner(db, {
+      companyId, name: 'Maria Lynch', shareBasisPoints: 4_000,
+      joinedOn: '2023-06-12', recordedBy: 'demo', activityStatus: 'active',
+    });
+  }
 
   // ---- Suppliers ----
   const supplier = (
@@ -429,37 +499,45 @@ export async function seedDemoCompany(
     });
   };
 
-  // Share capital and director's loan: equity and liability, not income.
+  // Opening equity / owner's funds: share capital for a company, capital
+  // introduced for a sole trader or partnership (chart account 3000).
   const shareTx = find('SHARE CAPITAL');
   if (shareTx) {
+    const equityAccountId = isCompany ? acc['share_capital']! : acc['share_capital']!;
     postJournalEntry(db, {
       companyId, entryDate: makeDate(2025, 1, 6),
-      narrative: 'Share capital subscribed', sourceType: 'bank_transaction',
+      narrative: isCompany ? 'Share capital subscribed' : 'Capital introduced',
+      sourceType: 'bank_transaction',
       sourceId: shareTx.id, baseCurrency: 'EUR', createdBy: 'demo', createdVia: 'user',
       lines: [
         { accountId: acc['bank_control']!, debitMinor: 10_000 },
-        { accountId: acc['share_capital']!, creditMinor: 10_000 },
+        { accountId: equityAccountId, creditMinor: 10_000 },
       ],
     });
     db.update(bankTransactions).set({
-      status: 'posted', accountId: acc['share_capital'],
+      status: 'posted', accountId: equityAccountId,
       vatTreatmentId: tr['OUT_OF_SCOPE'], provenanceStatus: 'user_confirmed', source: 'user',
     }).where(eq(bankTransactions.id, shareTx.id)).run();
   }
 
   const loanTx = find('DIRECTOR LOAN');
   if (loanTx) {
+    const currentAccountId = acc['directors_current_account']!;
     postJournalEntry(db, {
       companyId, entryDate: makeDate(2025, 1, 8),
-      narrative: 'Funds introduced by director', sourceType: 'bank_transaction',
+      narrative: isCompany ? 'Funds introduced by director' : 'Funds introduced by the owner',
+      sourceType: 'bank_transaction',
       sourceId: loanTx.id, baseCurrency: 'EUR', createdBy: 'demo', createdVia: 'user',
       lines: [
         { accountId: acc['bank_control']!, debitMinor: 500_000 },
-        { accountId: acc['directors_current_account']!, creditMinor: 500_000, officerId: directorId },
+        {
+          accountId: currentAccountId, creditMinor: 500_000,
+          ...(directorId ? { officerId: directorId } : {}),
+        },
       ],
     });
     db.update(bankTransactions).set({
-      status: 'posted', accountId: acc['directors_current_account'],
+      status: 'posted', accountId: currentAccountId,
       vatTreatmentId: tr['OUT_OF_SCOPE'], provenanceStatus: 'user_confirmed', source: 'user',
     }).where(eq(bankTransactions.id, loanTx.id)).run();
   }
@@ -498,7 +576,7 @@ export async function seedDemoCompany(
   for (const demo of DEMO_DOCUMENTS) {
     const posting = DOCUMENT_POSTING[demo.filename]!;
     // A supplier's invoice is addressed to the demo company (S.I. 639/2010 reg.20(2)(d)).
-    const body = posting.party.supplierId ? withBillTo(demo.body) : demo.body;
+    const body = posting.party.supplierId ? withBillTo(demo.body, profile.billToName) : demo.body;
     const stored = storeDocument(db, {
       companyId, filename: demo.filename,
       content: Buffer.from(body, 'utf8'),
@@ -522,7 +600,7 @@ export async function seedDemoCompany(
       companyId, documentId: stored.documentId, actor: 'demo',
       coding: lines.map(() => ({ accountId: byCode[posting.account]!, vatTreatmentId: tr[posting.treatment]! })),
     });
-    if (posting.paidByDirectorOn) {
+    if (posting.paidByDirectorOn && directorId) {
       settleInvoiceByDirector(db, {
         companyId, officerId: directorId, paymentDate: asIsoDate(posting.paidByDirectorOn), actor: 'demo',
         reference: 'Paid on personal card',
@@ -542,7 +620,7 @@ export async function seedDemoCompany(
   // A duplicate document upload (README §51).
   storeDocument(db, {
     companyId, filename: 'vercel-2025-01-copy.txt',
-    content: Buffer.from(withBillTo(DEMO_DOCUMENTS[0]!.body), 'utf8'),
+    content: Buffer.from(withBillTo(DEMO_DOCUMENTS[0]!.body, profile.billToName), 'utf8'),
     root: options.storageRoot, uploadedBy: 'demo',
   });
   documentCount += 1;
@@ -592,53 +670,56 @@ export async function seedDemoCompany(
   // 'UNKNOWN COUNTERPARTY' is deliberately left unclassified and unmatched,
   // so the review queue has something real in it.
 
-  // ---- Expense claims (issue #306) ----
-  // Mileage priced from the seeded civil service rate, one claim approved and
-  // reimbursed by a dated payment, one still awaiting approval. A claim claims
-  // no input VAT: it is the no-invoice counterpart of the invoice workflow.
-  const mileageRate = db.select().from(expenseRates)
-    .where(and(eq(expenseRates.companyId, companyId), eq(expenseRates.code, 'car_upto_1200cc_band1')))
-    .get()!;
-  const travelAccount = byCode['6110']!;
-  const reimbursedClaim = createExpenseClaim(db, {
-    companyId, claimant: { officerId: directorId },
-    title: 'Client visits, February',
-    lines: [
-      {
-        lineType: 'mileage', date: makeDate(2025, 2, 12), description: 'Mullingar client meeting',
-        accountId: travelAccount, rateId: mileageRate.id, units: 164,
-      },
-      {
-        lineType: 'subsistence', date: makeDate(2025, 2, 12), description: 'Full-day absence',
-        accountId: travelAccount,
-        rateId: db.select().from(expenseRates)
-          .where(and(eq(expenseRates.companyId, companyId), eq(expenseRates.code, 'day_10_hours_or_more')))
-          .get()!.id,
-        units: 1,
-      },
-    ],
-    actor: 'demo',
-  });
-  approveExpenseClaim(db, { companyId, claimId: reimbursedClaim.claimId, actor: 'demo' });
-  reimburseExpenseClaim(db, {
-    companyId, claimId: reimbursedClaim.claimId, bankAccountId, date: makeDate(2025, 2, 26), actor: 'demo',
-  });
+  if (directorId) {
+    // ---- Expense claims (issue #306) ----
+    // Mileage priced from the seeded civil service rate, one claim approved and
+    // reimbursed by a dated payment, one still awaiting approval. A claim claims
+    // no input VAT: it is the no-invoice counterpart of the invoice workflow.
+    const mileageRate = db.select().from(expenseRates)
+      .where(and(eq(expenseRates.companyId, companyId), eq(expenseRates.code, 'car_upto_1200cc_band1')))
+      .get()!;
+    const travelAccount = byCode['6110']!;
+    const reimbursedClaim = createExpenseClaim(db, {
+      companyId, claimant: { officerId: directorId },
+      title: 'Client visits, February',
+      lines: [
+        {
+          lineType: 'mileage', date: makeDate(2025, 2, 12), description: 'Mullingar client meeting',
+          accountId: travelAccount, rateId: mileageRate.id, units: 164,
+        },
+        {
+          lineType: 'subsistence', date: makeDate(2025, 2, 12), description: 'Full-day absence',
+          accountId: travelAccount,
+          rateId: db.select().from(expenseRates)
+            .where(and(eq(expenseRates.companyId, companyId), eq(expenseRates.code, 'day_10_hours_or_more')))
+            .get()!.id,
+          units: 1,
+        },
+      ],
+      actor: 'demo',
+    });
+    approveExpenseClaim(db, { companyId, claimId: reimbursedClaim.claimId, actor: 'demo' });
+    reimburseExpenseClaim(db, {
+      companyId, claimId: reimbursedClaim.claimId, bankAccountId, date: makeDate(2025, 2, 26), actor: 'demo',
+    });
 
-  createExpenseClaim(db, {
-    companyId, claimant: { officerId: directorId },
-    title: 'Conference, March',
-    lines: [
-      {
-        lineType: 'receipt', date: makeDate(2025, 3, 12), description: 'Conference registration',
-        accountId: byCode['6140']!, amountMinor: 29_500, businessUseBasisPoints: 10_000,
-      },
-      {
-        lineType: 'receipt', date: makeDate(2025, 3, 14), description: 'Home broadband',
-        accountId: byCode['6030']!, amountMinor: 5_500, businessUseBasisPoints: 8_000,
-      },
-    ],
-    actor: 'demo',
-  });
+    createExpenseClaim(db, {
+      companyId, claimant: { officerId: directorId },
+      title: 'Conference, March',
+      lines: [
+        {
+          lineType: 'receipt', date: makeDate(2025, 3, 12), description: 'Conference registration',
+          accountId: byCode['6140']!, amountMinor: 29_500, businessUseBasisPoints: 10_000,
+        },
+        {
+          lineType: 'receipt', date: makeDate(2025, 3, 14), description: 'Home broadband',
+          accountId: byCode['6030']!, amountMinor: 5_500, businessUseBasisPoints: 8_000,
+        },
+      ],
+      actor: 'demo',
+    });
+
+  }
 
   // ---- Fixed asset from the capital purchase ----
   const appleTx = find('APPLE STORE');
@@ -680,21 +761,32 @@ export async function seedDemoCompany(
     }).run();
   }
 
-  db.insert(taxDeadlines).values({
-    id: ids.audit(), companyId,
-    title: 'Corporation tax return (CT1) for the year ended 31 December 2025',
-    kind: 'corporation_tax_return', dueDate: '2026-09-23',
-    periodStart: '2025-01-01', periodEnd: '2025-12-31', status: 'upcoming',
-    sourceNote: 'Indicative date only. Confirm your own filing deadline with Revenue '
-      + 'or your accountant.',
-  }).run();
+  if (isCompany) {
+    db.insert(taxDeadlines).values({
+      id: ids.audit(), companyId,
+      title: 'Corporation tax return (CT1) for the year ended 31 December 2025',
+      kind: 'corporation_tax_return', dueDate: '2026-09-23',
+      periodStart: '2025-01-01', periodEnd: '2025-12-31', status: 'upcoming',
+      sourceNote: 'Indicative date only. Confirm your own filing deadline with Revenue '
+        + 'or your accountant.',
+    }).run();
 
-  db.insert(taxDeadlines).values({
-    id: ids.audit(), companyId,
-    title: 'CRO annual return (Form B1)', kind: 'cro_annual_return',
-    dueDate: '2026-03-12', status: 'upcoming',
-    sourceNote: 'Based on the company’s annual return date. Confirm with the CRO.',
-  }).run();
+    db.insert(taxDeadlines).values({
+      id: ids.audit(), companyId,
+      title: 'CRO annual return (Form B1)', kind: 'cro_annual_return',
+      dueDate: '2026-03-12', status: 'upcoming',
+      sourceNote: "Based on the company's annual return date. Confirm with the CRO.",
+    }).run();
+  } else {
+    db.insert(taxDeadlines).values({
+      id: ids.audit(), companyId,
+      title: 'Income tax return (Form 11) for the year of assessment 2025',
+      kind: 'other', dueDate: '2026-10-31',
+      periodStart: '2025-01-01', periodEnd: '2025-12-31', status: 'upcoming',
+      sourceNote: 'Indicative date only. Confirm your own filing deadline with Revenue '
+        + 'or your accountant.',
+    }).run();
+  }
 
   // ---- Statutory knowledge base ----
   // The demo book ships with the statutes ingested (issue #475): a person
@@ -711,5 +803,5 @@ export async function seedDemoCompany(
     customers: db.select().from(customers).where(eq(customers.companyId, companyId)).all().length,
   };
 
-  return { companyId, bankAccountId, counts, knowledgeBase };
+  return { companyId, entityType, bankAccountId, counts, knowledgeBase };
 }

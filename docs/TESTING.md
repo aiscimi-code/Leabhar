@@ -95,3 +95,19 @@ Measured on the development container: corporation tax 241 ms for year 7 against
 years computed, as the issue expected, and is far inside the budget, so there is
 no cache. Add one (keyed on the company, the period and its inputs, never
 persisted) only if this test starts to fail.
+
+## Playwright smoke (issue #283)
+
+Chromium smoke for screens that previously had no browser coverage:
+
+```bash
+npx playwright install chrome   # once, if needed
+npm run test:e2e:smoke
+```
+
+`tests/e2e/year-end-partners.smoke.spec.ts` logs in, loads each demo variant
+(company, sole trader, partnership), opens `/reports/year-end` and
+`/settings/company`, records one CT decision, adds a partner and changes a
+share, and downloads the year-end export. The suite uses `data/e2e/` as its
+database (gitignored) and starts `next dev` via Playwright's `webServer`.
+
