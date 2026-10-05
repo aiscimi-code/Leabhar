@@ -106,10 +106,11 @@ export default function CompanySettingsPage() {
           <Panel title="Or load demo data" id="demo">
             <div className="px-4 py-3">
               <p className="text-ink-muted mb-3 leading-relaxed">
-                The demo company is a fictional Irish LTD with a quarter of real-looking
+                Demo books are fictional Irish businesses with a quarter of real-looking
                 transactions: reverse-charge purchases from EU and US suppliers, an exempt
-                insurance renewal, a capital purchase, a director-paid expense, an unmatched
-                transaction and a duplicate. It is labelled as demo data on every screen.
+                insurance renewal, a capital purchase, an unmatched transaction and a
+                duplicate. Pick a limited company, sole trader, or partnership. Each is
+                labelled as demo data on every screen.
               </p>
               <DemoLoader />
             </div>
@@ -292,6 +293,17 @@ export default function CompanySettingsPage() {
       </div>
 
       <PartnersPanel company={company} />
+      {company.isDemo && (
+        <Panel
+          title="Demo variants"
+          description="Replace this demo book with another entity type. The current demo is archived first so the new one is the only active book (issue #283)."
+          id="demo-variants"
+        >
+          <div className="px-4 py-3">
+            <DemoLoader />
+          </div>
+        </Panel>
+      )}
       <CompanyVatStatus company={company} />
       <BusinessProfilePanels company={company} />
 
