@@ -389,6 +389,10 @@ Books (once induction is done):
       --invoices, paid off in the order given until the amount runs out.
       Part: one invoice with --amount below its outstanding balance.
       --unallocated leaves the whole payment on account, on purpose.
+      [--fx <rate>]  The payment's rate to the base currency, for a payment
+      in another currency. [--vat-fx <rate> [--vat-fx-currency <ISO>]
+      [--vat-fx-source <text>] [--vat-fx-date <date>]]  The VATCA s.37(4)
+      rate at the receipt, as on settle.
   journal --date <date> --narrative "..." --lines <json> [--reason "..."]
       A standalone multi-line manual adjustment (a VAT3 settlement, an
       own-account transfer). --lines is a JSON array of
@@ -454,6 +458,12 @@ Invoice-led workflow (issue #222) — the same domain functions as the web scree
       no VAT unless its entry has "deductible": true. --fx: base per 1 unit
       of the document's currency (1.0842 or 10842/10000).
   settle <transactionId> --allocations <json> [--fx <rate>] [--declare-in <date>]
+         [--vat-fx <rate> [--vat-fx-currency <ISO>] [--vat-fx-source <text>] [--vat-fx-date <date>]]
+      --vat-fx: on the cash receipts basis, the CBI or ECB selling rate at the
+      receipt (base per 1 unit of the invoice's currency) for the output VAT
+      it releases (VATCA s.37(4), s.74(2)). The currency may be left out when
+      one foreign currency is settled. Without it the invoice's own rate is
+      used and the VAT period is flagged.
       Settles the bank line against invoices:
       [{"invoice":"MOS-5120","amount":"24.60"}], amounts in the bank line's
       currency. A remainder is held on account and flagged.
@@ -1585,6 +1595,11 @@ export async function main(argv: string[], options: CliOptions = {}): Promise<nu
           direction: getFlag(flags, 'direction'),
           method: getFlag(flags, 'method'),
           reference: getFlag(flags, 'reference'),
+          fx: getFlag(flags, 'fx'),
+          vatFx: getFlag(flags, 'vat-fx'),
+          vatFxCurrency: getFlag(flags, 'vat-fx-currency'),
+          vatFxSource: getFlag(flags, 'vat-fx-source'),
+          vatFxDate: getFlag(flags, 'vat-fx-date'),
         });
         print(recordPaymentCli(db, parsed), format);
         return 0;
@@ -1761,6 +1776,10 @@ export async function main(argv: string[], options: CliOptions = {}): Promise<nu
           bankTransactionId: positionals[0] ?? requireFlag(flags, 'transaction'),
           allocations: requireFlag(flags, 'allocations'),
           fx: getFlag(flags, 'fx'),
+          vatFx: {
+            rate: getFlag(flags, 'vat-fx'), currency: getFlag(flags, 'vat-fx-currency'),
+            source: getFlag(flags, 'vat-fx-source'), date: getFlag(flags, 'vat-fx-date'),
+          },
           vatDeclarationDate: getFlag(flags, 'declare-in'),
           writeOff: getFlag(flags, 'write-off-invoice') ? {
             invoice: requireFlag(flags, 'write-off-invoice'),

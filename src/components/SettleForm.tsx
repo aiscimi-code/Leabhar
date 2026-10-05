@@ -26,8 +26,10 @@ export interface OpenInvoice {
 const fmt = (minor: number) => (minor / 100).toFixed(2);
 
 export function SettleForm({
-  bankTransactionId, amountMinor, currency, invoices, preselectInvoiceId, writeOffAccounts = [],
+  bankTransactionId, amountMinor, currency, invoices, preselectInvoiceId, writeOffAccounts = [], baseCurrency,
 }: {
+  /** The company's base currency, so a foreign-currency sale's VAT rate at receipt can be asked for (issue #661). */
+  baseCurrency?: string;
   bankTransactionId: string;
   amountMinor: number;
   currency: string;
@@ -47,6 +49,9 @@ export function SettleForm({
   const [writeOffAccount, setWriteOffAccount] = useState('');
   const [writeOffReason, setWriteOffReason] = useState<'' | 'bank_charges' | 'discount' | 'bad_debt'>('');
   const [fxText, setFxText] = useState('');
+  const [vatFxText, setVatFxText] = useState('');
+  const [vatFxSource, setVatFxSource] = useState('');
+  const [vatFxDate, setVatFxDate] = useState('');
   const [check, setCheck] = useState<Awaited<ReturnType<typeof previewSettlementAction>> | null>(null);
   const [result, setResult] = useState<ActionResult | null>(null);
   const [pending, startTransition] = useTransition();
@@ -69,6 +74,12 @@ export function SettleForm({
     ? { invoiceId: single.invoiceId, accountId: writeOffAccount, reason: writeOffReason }
     : null;
   const writeOffKey = JSON.stringify(writeOff && writeOff.accountId ? writeOff : null);
+
+  // A receipt on a foreign-currency sale: the VAT it releases is converted at the rate at the receipt (VATCA s.37(4)).
+  const foreignSales = [...new Set(chosen.map((p) => invoices.find((i) => i.invoiceId === p.invoiceId))
+    .filter((i): i is OpenInvoice => !!i && !i.isCreditNote && !!baseCurrency && i.currency !== baseCurrency)
+    .map((i) => i.currency))];
+  const vatFxCurrency = amountMinor > 0 && foreignSales.length === 1 ? foreignSales[0]! : null;
 
   // Ask the domain what this settlement needs and would post; nothing is written.
   useEffect(() => {
@@ -215,10 +226,28 @@ export function SettleForm({
           </div>
         </details>
       )}
+      {vatFxCurrency && (
+        <details className="text-[12px]">
+          <summary className="cursor-pointer text-ink-muted">VAT rate at receipt for the {vatFxCurrency} sale (optional)</summary>
+          <div className="mt-1.5 flex items-center gap-2 flex-wrap">
+            <span className="text-ink-faint">{baseCurrency} per 1 {vatFxCurrency}</span>
+            <Input className="!w-28" aria-label="VAT rate at receipt" value={vatFxText} placeholder="e.g. 0.9123"
+              onChange={(e) => setVatFxText(e.target.value)} />
+            <Input className="!w-44" aria-label="Rate source" value={vatFxSource} placeholder="e.g. ECB reference rate"
+              onChange={(e) => setVatFxSource(e.target.value)} />
+            <Input type="date" className="!w-40" aria-label="Rate date" value={vatFxDate} onChange={(e) => setVatFxDate(e.target.value)} />
+          </div>
+          <p className="text-ink-faint mt-1">On the cash receipts basis the VAT is due at the receipt, at the CBI or ECB selling rate
+            then (VATCA s.37(4)). Left blank, the invoice&apos;s own rate is used and the VAT period is flagged.</p>
+        </details>
+      )}
       <Button variant="primary" disabled={pending || invalid} onClick={() => startTransition(async () => {
         const r = await settleTransactionAction({
           bankTransactionId, allocations, fxRateText: fxText || undefined,
           vatDeclarationDate: lateDate || undefined,
+          vatFx: vatFxCurrency && vatFxText.trim()
+            ? { rate: vatFxText, currency: vatFxCurrency, source: vatFxSource || undefined, date: vatFxDate || undefined }
+            : undefined,
           writeOff,
         });
         setResult(r);

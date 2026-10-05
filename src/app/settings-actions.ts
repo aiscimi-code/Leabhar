@@ -20,6 +20,7 @@ import { postDepreciation } from '@/domain/assets/depreciation';
 import { scanForAnomalies, syncAnomaliesToReviewQueue } from '@/domain/review/anomalies';
 import { createInvoice } from '@/domain/invoicing/invoices';
 import { recordPayment } from '@/domain/invoicing/payments';
+import { parseVatFxRate } from '@/domain/invoicing/vatFxRate';
 import { settleInvoiceByDirector } from '@/domain/consolidation/settle';
 import { parseAmount, parseRate, parseDecimalRate, parsePercentBasisPoints } from '@/domain/money';
 import { asIsoDate } from '@/domain/dates';
@@ -758,6 +759,12 @@ export async function recordPaymentAction(formData: FormData): Promise<ActionRes
     const fxRateText = text(formData, 'fxRate');
     const fxRate = fxRateText ? parseRateToRational(fxRateText) : undefined;
 
+    // The s.37(4) rate at the receipt, for a foreign-currency sale on the cash receipts basis (issue #661).
+    const vatFxRate = parseVatFxRate({
+      rate: text(formData, 'vatFxRate'), currency: text(formData, 'vatFxCurrency'),
+      source: text(formData, 'vatFxSource'), date: text(formData, 'vatFxDate'),
+    });
+
     const paymentDate = asIsoDate(text(formData, 'paymentDate')
       ?? new Date().toISOString().slice(0, 10));
     // A director who paid a purchase invoice personally (issue #221): the
@@ -778,6 +785,7 @@ export async function recordPaymentAction(formData: FormData): Promise<ActionRes
           currency,
           bankTransactionId: text(formData, 'bankTransactionId'),
           fxRate,
+          vatFxRate,
           reference: text(formData, 'reference'),
           allocations: [{ invoiceId, allocatedMinor: amountMinor }],
           actor: 'user',
