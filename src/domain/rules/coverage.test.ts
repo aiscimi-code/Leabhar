@@ -75,8 +75,8 @@ describe('rule coverage matrix', () => {
     });
 
     it('a derived rule is in no row', () => {
-      const m = withRows((rows) => rows.filter((r) => r.id !== 'fa2024:s48'));
-      expect(check(m).errors).toContain('rule "film.tax_credit_rate" is derived but in no matrix row');
+      const m = withRows((rows) => rows.filter((r) => r.id !== 'fa2024:s2'));
+      expect(check(m).errors).toContain('rule "usc.medical_card_2pct_threshold" is derived but in no matrix row');
     });
 
     it('a treatment is marked covered but no rule can produce it', () => {

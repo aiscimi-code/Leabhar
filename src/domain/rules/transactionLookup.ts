@@ -19,9 +19,10 @@ import { eq, and } from 'drizzle-orm';
 import { EU_COUNTRY_CODES, ukWasMemberStateOn } from '../extraction/vatNumbers';
 import type { AppDatabase } from '@/db';
 import { irishTaxRules, irishActProvisions, irishKnowledgeSources, companies } from '@/db/schema';
-import type { IrishRuleException } from '@/db/schema';
+import type { IrishRuleException, IrishSourceType } from '@/db/schema';
 import { evaluateAllConditions, type ConditionResult } from './conditionEval';
-import { today, isIsoDate } from '../dates';
+import { isIsoDate } from '../dates';
+import { sortByAuthority, sourceAuthorityRank } from './sourceHierarchy';
 import { listTaxRulesByTopic, listIngestedCitations, type LookupResult } from './irishRules';
 import { RCT_SCOPE_RE } from './rctCuration';
 import { VAT_STANDARD_RATE_FALLBACK_RULE_KEY } from './vatcaRevisedCuration';
@@ -327,6 +328,9 @@ export interface ApplicableRule {
   reviewStatus: string;
   humanReviewRequired: boolean;
   requiresGuidance: boolean;
+  /** The kind of source this rule comes from, and its rank: 1 legislation/EU law, then guidance, standards, Leabhar's own rules. */
+  sourceType: IrishSourceType;
+  sourceAuthority: number;
   citation: {
     citation: string;
     sourceUrl: string;
@@ -376,7 +380,9 @@ export function lookupTransactionRules(
 ): TransactionLookupResult {
   const ctx = normaliseTransactionContext(params.transaction);
   const topics = identifyTopics(ctx);
-  const asOf = ctx.transactionDate || today();
+  // No date is no date: an empty one must not become today, which would look up
+  // today's rules for a transaction of unknown date. It fails closed below.
+  const asOf = ctx.transactionDate;
 
   // Company profile facts (issue #143 finding F): `companyType`,
   // `vatRegistrationStatus` and `vatAccountingBasis` are stored on the
@@ -492,6 +498,8 @@ export function lookupTransactionRules(
       reviewStatus: rule.reviewStatus,
       humanReviewRequired: rule.humanReviewRequired,
       requiresGuidance: rule.requiresGuidance,
+      sourceType: rule.sourceType,
+      sourceAuthority: sourceAuthorityRank(rule.sourceType),
       citation: {
         citation: rule.citation,
         sourceUrl: rule.sourceUrl,
@@ -504,7 +512,21 @@ export function lookupTransactionRules(
   }
 
   const rateResolved = resolveVatRateExclusivity(applicableRules, reviewReasons);
-  const finalApplicableRules = resolveDeductionExclusivity(rateResolved, reviewReasons);
+  // Legislation first, then guidance, standards and Leabhar's own rules; the
+  // order within a rank is the priority order the rules were retrieved in.
+  const finalApplicableRules = sortByAuthority(resolveDeductionExclusivity(rateResolved, reviewReasons));
+
+  // Guidance standing in for legislation that is not ingested: a topic whose
+  // applicable rules come only from guidance has no statute text behind it here.
+  for (const topic of new Set(finalApplicableRules.map((r) => r.topic))) {
+    const forTopic = finalApplicableRules.filter((r) => r.topic === topic);
+    if (forTopic.every((r) => r.sourceAuthority > 1)) {
+      reviewReasons.add(
+        `The rules for topic "${topic}" come from guidance (${[...new Set(forTopic.map((r) => r.sourceType))].join(', ')}), `
+        + 'not from legislation, which this knowledge base has not ingested for it.',
+      );
+    }
+  }
 
   const possibleTreatment = {
     accounting: dedupe(finalApplicableRules.map((r) => r.effect.accounting)),

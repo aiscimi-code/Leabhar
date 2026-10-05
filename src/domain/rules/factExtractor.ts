@@ -125,6 +125,9 @@ export interface CuratedRule {
   topic: string;
 }
 
+// Finance Act 2024 s.13 (pension standard fund threshold) and s.48 (film tax credit)
+// were retired from here, out of scope and dated wrongly (issue #277); their
+// coverage rows say so.
 export const SECTION_RULE_KEYS: Record<string, CuratedRule> = {
   '2': {
     // s.531AN(3), not a band of the Table (issue #199): a full medical card holder under 70 with aggregate
@@ -137,13 +140,5 @@ export const SECTION_RULE_KEYS: Record<string, CuratedRule> = {
     // married couple's or civil partners' standard rate band.
     key: 'income_tax.second_earner_band_increase_max', name: 'Income tax: maximum increase in the standard rate band for a second income',
     unit: 'eur_minor', kind: 'threshold', topic: 'income_tax',
-  },
-  '13': {
-    key: 'pension.standard_fund_threshold', name: 'Standard fund threshold adjustment',
-    unit: 'eur_minor', kind: 'threshold', topic: 'pension',
-  },
-  '48': {
-    key: 'film.tax_credit_rate', name: 'Film tax credit',
-    unit: 'percent', kind: 'rate', topic: 'corporation_tax_relief',
   },
 };
