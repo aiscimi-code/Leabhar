@@ -4,7 +4,8 @@ import { eq } from 'drizzle-orm';
 import { createTestDatabase } from '@/db/testing';
 import { createCompany } from '../config/setup';
 import { irishTaxRules } from '@/db/schema';
-import { parseNfgSections, extractNfgSection } from './tcaNfgParser';
+import { parseNfgSections, extractNfgSection, parseNfgContents } from './tcaNfgParser';
+import { readdirSync } from 'node:fs';
 import { ingestTcaNfgPart, deriveCorporationTaxRules, nfgPath } from './tcaNfgIngestion';
 import {
   CORPORATION_TAX_CURATED_RULES, NFG_SECTIONS, corporationTaxRateBasisPoints,
@@ -31,6 +32,24 @@ describe('Notes for Guidance parser', () => {
     expect(parseNfgSections(read('part11')).map((s) => s.sectionNumber))
       .toEqual(['373', '374', '375', '376', '377', '378', '379', '380']);
     expect(extractNfgSection(read('part11'), '374').heading).toBe('Capital allowances for cars costing over certain amount');
+  });
+
+  it('finds a note for every section each part\'s contents list, and no others (issue #287)', () => {
+    const parts = readdirSync(nfgPath('').replace(/[^/]*$/, '')).filter((f) => /^part.*\.md$/.test(f));
+    expect(parts.length).toBeGreaterThanOrEqual(15);
+    for (const file of parts) {
+      const md = read(file.replace(/\.md$/, ''));
+      const listed = parseNfgContents(md);
+      expect(listed.length, file).toBeGreaterThan(0);
+      expect(parseNfgSections(md).map((s) => s.sectionNumber), file).toEqual(listed);
+    }
+  });
+
+  it('keeps the note of a repealed section apart from the one before it', () => {
+    const part = read('part18d');
+    expect(extractNfgSection(part, '531AP').provisionText).not.toContain('531AO');
+    expect(extractNfgSection(part, '531AO').provisionText).not.toContain('531AP Record-keeping');
+    expect(extractNfgSection(read('part02'), '22A').heading).toContain('Reduction of corporation tax liability');
   });
 
   it('finds every in-scope section, and each slice is the file between its offsets', () => {
