@@ -15,7 +15,7 @@ months are apportioned as months, as the Notes do, and other dates in days
 | s.66 Example 1 | Passing test: period dates, €6,000 (6/12) and €12,000. |
 | s.66 Example 2 (one 14-month account) | Not reproducible. No way to record a first account that is not the year-end. |
 | s.66 Example 3 (two accounts ending in the second year) | Not reproducible. Same reason. |
-| s.66 Example 4 (s.66(3) election) | The election is tested in `computation.test.ts`. The excess is computed by the same month apportionment; the Notes' €2,000 figure is not run as it needs the long first account of Example 2. |
+| s.66 Example 4 (s.66(3) election) | Passing test: excess €2,000, revised third year €10,000, once the election is recorded. |
 | s.66 Examples 5–6 (2001 short year, 74%) | Not reproducible. The 2001 changeover is not implemented. |
 | s.67 Example 1 | Passing test: cessation-year dates and €15,400 (7/10). |
 | s.67 Example 2 | Passing test: cessation year €20,000 (5/8), penultimate year revised to €30,000. Run with commencement on 1 January 2002 (wear and tear rate start). |

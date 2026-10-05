@@ -4,7 +4,7 @@ import { createTestDatabase } from '@/db/testing';
 import { createCompany } from '../config/setup';
 import { postJournalEntry } from '../accounting/journal';
 import { computeIncomeTax } from './computation';
-import { section440Surcharge } from '../corporationTax/computation';
+import { recordCtDecision, section440Surcharge } from '../corporationTax/computation';
 import { asIsoDate } from '../dates';
 import { companies } from '@/db/schema';
 
@@ -52,6 +52,20 @@ describe('Part 4 Notes for Guidance basis periods (issue #281)', () => {
     expect(second.basis).toMatchObject({ from: '2002-07-01', to: '2003-06-30' });
     expect(first.basisProfitMinor).toBe(600_000); // €12,000 × 6/12
     expect(second.basisProfitMinor).toBe(1_200_000);
+  });
+
+  it('s.66 Example 4: the third year is reduced by the second year\'s excess when the election is recorded', () => {
+    const { db, companyId, profit } = books('2002-07-01', 6, 30);
+    profit(1_600_000, '2002-08-01');
+    profit(1_200_000, '2003-08-01');
+    expect(computeIncomeTax(db, { companyId, year: 2003 }).basisProfitMinor).toBe(1_600_000);
+    recordCtDecision(db, {
+      companyId, subjectType: 'basis_election', subjectId: companyId, periodEnd: '2004-12-31', choice: 'elect', decidedBy: 'Trader',
+    });
+    const third = computeIncomeTax(db, { companyId, year: 2004 });
+    // Actual 2003 is 6/12 of €16,000 + 6/12 of €12,000 = €14,000. Excess €2,000. Revised €10,000.
+    expect(third.thirdYearReliefMinor).toBe(200_000);
+    expect(third.basisProfitMinor).toBe(1_000_000);
   });
 
   it('s.67 Example 1: the cessation year is 1 January to the date the trade ceased', () => {
