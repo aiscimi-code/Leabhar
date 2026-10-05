@@ -1,7 +1,11 @@
 import { vatBasisOn } from '@/domain/vat/basis';
 import Link from 'next/link';
-import { vatPeriodList, companyContext } from '@/lib/queries';
-import { Page, Panel, Badge, Figure, Help, Empty } from '@/components/primitives';
+import { vatPeriodList, companyContext, chartOfAccounts, deemedSupplyTreatments } from '@/lib/queries';
+import {
+  Page, Panel, Badge, Figure, Help, Empty, Disclosure, Field, Input, Select,
+} from '@/components/primitives';
+import { ActionForm } from '@/components/ActionForm';
+import { recordDeemedSupplyAction } from '@/app/actions';
 import { money, date, label } from '@/lib/format';
 
 export const dynamic = 'force-dynamic';
@@ -12,7 +16,14 @@ export default function VatPeriodsPage() {
   const { company } = companyContext();
   // The basis in force today, from the recorded authorisation (issue #608),
   // not the profile's choice alone.
-  const basisToday = vatBasisOn(company, new Date().toISOString().slice(0, 10));
+  const today = new Date().toISOString().slice(0, 10);
+  const basisToday = vatBasisOn(company, today);
+  const accountOptions = chartOfAccounts().filter((account) => account.active).map((account) => (
+    <option key={account.id} value={account.id}>{account.code} — {account.name}</option>
+  ));
+  const treatmentOptions = deemedSupplyTreatments().map((treatment) => (
+    <option key={treatment.id} value={treatment.code}>{treatment.code} — {treatment.name}</option>
+  ));
 
   return (
     <Page
@@ -92,6 +103,108 @@ export default function VatPeriodsPage() {
           </table>
         )}
       </Panel>
+
+      <Panel
+        title="Deemed supplies"
+        description="Output VAT on goods given away or taken out of the business, and on private use of
+          business property, where no sale invoice exists. You state the facts; whether VAT is due,
+          the taxable amount and the VAT are worked out from them. Each one posts as a VAT
+          adjustment and goes to the review queue."
+      >
+        <Disclosure summary="Goods given away or taken for private use" tone="accent">
+          <ActionForm action={recordDeemedSupplyAction} submit="Record deemed supply"
+            extra={{ kind: 'goods' }} resetOnSuccess>
+            <div className="grid grid-cols-2 gap-3 max-w-4xl">
+              <Field label="What happened" help="A gift is a disposal free of charge. Private use is
+                goods appropriated for a non-business purpose (VATCA s.19(1)(g)).">
+                <Select name="use" required defaultValue="">
+                  <option value="" disabled>Choose</option>
+                  <option value="gift">Given away as a gift</option>
+                  <option value="private_use">Taken for private or non-business use</option>
+                </Select>
+              </Field>
+              <Field label="Date" hint="The day the goods were given or taken.">
+                <Input name="date" type="date" defaultValue={today} required />
+              </Field>
+              <Field label="Cost excluding VAT" hint={`In ${company.baseCurrency}: what the goods cost the
+                business (s.42(1)(a)).`}>
+                <Input name="cost" required placeholder="0.00" />
+              </Field>
+              <Field label="Rate the goods would bear" hint="The rate they would be sold at.">
+                <Select name="treatmentCode" required defaultValue="">
+                  <option value="" disabled>Choose a rate</option>
+                  {treatmentOptions}
+                </Select>
+              </Field>
+              <Field label="Account charged" hint="Drawings, a director's loan, or gifts and entertainment.">
+                <Select name="accountId" required defaultValue="">
+                  <option value="" disabled>Choose an account</option>
+                  {accountOptions}
+                </Select>
+              </Field>
+              <Field label="Description">
+                <Input name="description" required placeholder="Christmas hamper for a client" />
+              </Field>
+              <YesNo name="taxDeductedOrTransferred" label="VAT on the goods was deducted, or they came in a
+                transfer of a business" />
+              <YesNo name="partOfSeriesToSamePerson" giftOnly label="A gift only: one of a series of gifts to the same
+                person" />
+              <YesNo name="industrialSamples" giftOnly label="A gift only: industrial samples, in a form not sold to
+                the public" />
+            </div>
+          </ActionForm>
+        </Disclosure>
+        <Disclosure summary="Private use of business property acquired before 2011">
+          <ActionForm action={recordDeemedSupplyAction} submit="Record deemed supply"
+            extra={{ kind: 'immovable_private_use' }} resetOnSuccess>
+            <div className="grid grid-cols-2 gap-3 max-w-4xl">
+              <Field label="Last day of the VAT period used in">
+                <Input name="date" type="date" required />
+              </Field>
+              <Field label="Acquired or developed on">
+                <Input name="acquiredOn" type="date" required />
+              </Field>
+              <Field label="Amount taxed on acquisition (C)" hint={`In ${company.baseCurrency}
+                (S.I. 639/2010 reg.7(3)).`}>
+                <Input name="acquisitionAmount" required placeholder="0.00" />
+              </Field>
+              <YesNo name="treatedAsBusinessAsset" label="Treated as a business asset when acquired" />
+              <Field label="Private floor area (A)" hint="Whole units, such as square metres.">
+                <Input name="privateFloorArea" inputMode="numeric" required />
+              </Field>
+              <Field label="Total floor area (B)">
+                <Input name="totalFloorArea" inputMode="numeric" required />
+              </Field>
+              <Field label="Account charged">
+                <Select name="accountId" required defaultValue="">
+                  <option value="" disabled>Choose an account</option>
+                  {accountOptions}
+                </Select>
+              </Field>
+              <Field label="Description">
+                <Input name="description" required placeholder="Flat over the shop" />
+              </Field>
+            </div>
+          </ActionForm>
+        </Disclosure>
+      </Panel>
     </Page>
+  );
+}
+
+/**
+ * A fact the person must state: no default, so an unanswered question cannot
+ * pass as "no". A gift-only question is left to the action to insist on, since
+ * it does not apply to goods taken for private use.
+ */
+function YesNo({ name, label, giftOnly = false }: { name: string; label: string; giftOnly?: boolean }) {
+  return (
+    <Field label={label}>
+      <Select name={name} required={!giftOnly} defaultValue="">
+        <option value="" disabled>Choose</option>
+        <option value="yes">Yes</option>
+        <option value="no">No</option>
+      </Select>
+    </Field>
   );
 }

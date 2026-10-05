@@ -349,7 +349,9 @@ either (s.21(b)). Private use of property acquired or developed before 2011
 private floor area / total floor area / 120 at the standard rate (s.44(1),
 reg.7). The person states the facts and the figures are calculated. Each one
 posts as a VAT adjustment, so a locked period is refused, and raises a review
-item. Services deemed supplied by regulations under s.27(1) (staff catering,
+item. A person records one on the VAT periods screen or with `npm run cli --
+record-deemed-supply` (issue #658); when the facts make it no supply, nothing is
+posted and the reason is shown. Services deemed supplied by regulations under s.27(1) (staff catering,
 reg.8) and transfers to another Member State (s.19(1)(h)) are not recorded this
 way.
 

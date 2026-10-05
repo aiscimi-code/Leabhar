@@ -102,6 +102,18 @@ function treatmentByCode(db: AppDatabase, companyId: string, code: string): type
   return row;
 }
 
+/** A rate an Irish sale of goods could bear: the only treatments a deemed supply of goods may take. */
+function isDeemedGoodsRate(treatment: typeof vatTreatments.$inferSelect): boolean {
+  return treatment.jurisdiction === 'IE' && treatment.direction !== 'purchases' && !treatment.isReverseCharge
+    && treatment.appliesRate;
+}
+
+/** The treatments a person may choose for a deemed supply of goods, for a form or a prompt (issue #658). */
+export function deemedSupplyGoodsTreatments(db: AppDatabase, companyId: string): (typeof vatTreatments.$inferSelect)[] {
+  return db.select().from(vatTreatments).where(eq(vatTreatments.companyId, companyId))
+    .orderBy(vatTreatments.code).all().filter(isDeemedGoodsRate);
+}
+
 const euro = (minor: number): string => `€${(minor / 100).toFixed(2)}`;
 
 /** Why a goods event is not a supply, or null when it is one. */
@@ -146,8 +158,7 @@ export function recordDeemedSupply(db: AppDatabase, input: DeemedSupplyInput): D
     const reason = goodsNotSupplied(input, cost);
     if (reason) return { posted: false, reason };
     treatment = treatmentByCode(db, input.companyId, input.treatmentCode);
-    if (treatment.jurisdiction !== 'IE' || treatment.direction === 'purchases' || treatment.isReverseCharge
-      || !treatment.appliesRate) {
+    if (!isDeemedGoodsRate(treatment)) {
       throw new DeemedSupplyError(`${treatment.code} is not a rate an Irish sale of these goods would bear: choose the `
         + 'rate the goods would be sold at.');
     }

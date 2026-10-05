@@ -1149,6 +1149,38 @@ describe('cli reconcile — induction and books (issue #153)', () => {
         expect(parsed.results[1].invoiceId).toBeTruthy();
       });
 
+      it('record-deemed-supply posts output VAT on a gift, and prints the reason when it is not a supply (#658)', async () => {
+        const gift = ['record-deemed-supply', '--kind', 'goods', '--use', 'gift', '--date', '2025-03-10',
+          '--account', '6070', '--description', 'Hamper for a client', '--actor', 'Joe', '--vat-treatment', 'IE_STD',
+          '--tax-deducted', 'yes', '--series', 'no', '--samples', 'no'];
+        let c = iCapture();
+        expect(await iRun([...gift, '--cost', '50.00'])).toBe(0);
+        c.restore();
+        expect(JSON.parse(c.stdout.join(''))).toMatchObject({ posted: true, taxableAmountMinor: 5_000, vatMinor: 1_150 });
+
+        c = iCapture();
+        expect(await iRun([...gift, '--cost', '20.00'])).toBe(0);
+        c.restore();
+        const notSupplied = JSON.parse(c.stdout.join(''));
+        expect(notSupplied.posted).toBe(false);
+        expect(notSupplied.reason).toMatch(/reg\.5/);
+
+        const silent = iCapture();
+        const missingFact = await iRun(gift.filter((a, i) => a !== '--series' && gift[i - 1] !== '--series')
+          .concat('--cost', '50.00'));
+        silent.restore();
+        expect(missingFact).toBe(1);
+
+        c = iCapture();
+        expect(await iRun(['record-deemed-supply', '--kind', 'property', '--date', '2025-04-30', '--account', '6070',
+          '--description', 'Flat over the shop', '--actor', 'Joe', '--acquired-on', '2008-06-01',
+          '--acquisition-amount', '500000.00', '--private-area', '30', '--total-area', '100',
+          '--business-asset', 'yes'])).toBe(0);
+        c.restore();
+        // C x A/B / 120 = 500,000 x 0.3 / 120 = 1,250.00; VAT at 23% = 287.50.
+        expect(JSON.parse(c.stdout.join(''))).toMatchObject({ posted: true, taxableAmountMinor: 125_000, vatMinor: 28_750 });
+      });
+
       describe('with a sales invoice posted', () => {
         beforeEach(async () => {
           const csv = join(root, 'sales.csv');
