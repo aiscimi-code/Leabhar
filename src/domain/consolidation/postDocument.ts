@@ -12,7 +12,7 @@ import { upsertReviewItem } from '../extraction/service';
 import { resolveTreatment } from '../vat/engine';
 import { documentLineChoices } from './suggest';
 import { BLOCKED_DEDUCTION_RULE_KEYS, INPUT_RECOVERY_CURATED_RULES } from '../rules/inputRecoveryCuration';
-import { createInvoice, type CreatedInvoice, type InvoiceLineInput, type DualUseApportionment } from '../invoicing/invoices';
+import { createInvoice, type CreatedInvoice, type InvoiceLineInput, type DualUseApportionment, type ImportValuation } from '../invoicing/invoices';
 
 /**
  * Post a confirmed document as an invoice (issue #203).
@@ -63,6 +63,12 @@ export interface LineCoding {
    * Only the four s.60(2)(a) rule keys are accepted.
    */
   blockedDeductionRuleKey?: string;
+  /**
+   * The customs declaration's figures, for a line coded IMPORT_PA (issue #629;
+   * see `InvoiceLineInput.importValuation`). Left out, the line posts on the
+   * invoice net and is flagged for review, as in `createInvoice`.
+   */
+  importValuation?: ImportValuation;
 }
 
 export interface PostDocumentInput {
@@ -301,6 +307,7 @@ function postDocumentAsInvoiceSteps(db: AppDatabase, input: PostDocumentInput): 
       businessUseBasisPoints: coding.businessUseBasisPoints,
       dualUse: coding.dualUse,
       blockedDeductionReason: blockedDeductionReason(coding.blockedDeductionRuleKey, direction, where),
+      importValuation: coding.importValuation,
     };
   });
 
