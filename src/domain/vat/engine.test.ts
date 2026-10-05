@@ -229,6 +229,15 @@ describe('determineTaxPoint', () => {
     }
   });
 
+  it('does not let a supply date move a domestic purchase out of its invoice period (s.59(2)(a))', () => {
+    for (const basis of ['invoice', 'cash_receipts'] as const) {
+      const result = determineTaxPoint({
+        basis, direction: 'purchases', invoiceDate: makeDate(2025, 3, 3), supplyDate: makeDate(2025, 2, 28), paymentDate,
+      });
+      expect(result.taxPointDate).toBe('2025-03-03');
+    }
+  });
+
   it('refuses to invent a tax point for an unpaid sale on the cash basis', () => {
     expect(() => determineTaxPoint({
       basis: 'cash_receipts', direction: 'sales', invoiceDate, paymentDate: null,

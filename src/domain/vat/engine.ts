@@ -312,6 +312,8 @@ export function fifteenthOfNextMonth(date: string): IsoDate {
  *   (VATCA s.74(1)(a)). Due time is within the 15 days following the end of the
  *   month of supply (S.I. 639/2010 reg.23(a)). A credit or debit note has its
  *   own time limits (reg.23(e), (f)) and takes its own date.
+ * - A domestic purchase (issue #611): input VAT is deducted in the period in which the supplier's invoice
+ *   charges it (VATCA s.59(2)(a)), whatever the supply date.
  * - An intra-Community acquisition (issue #611): tax is due on the 15th day of
  *   the month following the acquisition, or when the supplier's invoice is
  *   issued, if earlier (s.75). The cash basis does not apply to it (s.80(6)).
@@ -345,9 +347,10 @@ export function determineTaxPoint(params: {
 
   if (params.direction === 'purchases') {
     return {
-      taxPointDate: params.supplyDate ?? params.invoiceDate,
+      taxPointDate: params.invoiceDate,
       reason: 'Input VAT is reclaimed by reference to the supplier’s invoice date '
-        + 'under both the invoice basis and the cash receipts basis.',
+        + 'under both the invoice basis and the cash receipts basis: s.59(2)(a) allows the tax charged to the person '
+        + 'during the period by means of invoices, so a supply date does not move it (issue #611).',
     };
   }
 
