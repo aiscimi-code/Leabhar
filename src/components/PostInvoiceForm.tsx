@@ -4,6 +4,7 @@ import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button, Input, Select } from './primitives';
 import { postDocumentAction, type ActionResult } from '@/app/actions';
+import { parseAmount, type Minor } from '@/domain/money';
 
 /**
  * Post a confirmed document as an invoice (issue #203).
@@ -29,6 +30,38 @@ export interface PostingLine {
   deductionBlocked: { ruleKey: string; ruleName: string; provision: string } | null;
 }
 
+/** The customs declaration's figures for one IMPORT_PA line, as typed (issue #629). */
+interface ValuationText { customsValue: string; customsDuty: string; otherCharges: string; freight: string; mrn: string }
+const NO_VALUATION: ValuationText = { customsValue: '', customsDuty: '', otherCharges: '', freight: '', mrn: '' };
+const VALUATION_FIELDS: Array<[keyof Omit<ValuationText, 'mrn'>, string]> = [
+  ['customsValue', 'Customs value (CIF)'], ['customsDuty', 'Customs duty'],
+  ['otherCharges', 'Excise and other charges'], ['freight', 'Freight to Ireland'],
+];
+
+/** Nothing typed: the line posts on the invoice net and is flagged. Typed: every figure must parse and the customs value be set. */
+function parseValuation(v: ValuationText, base: string) {
+  if (Object.values(v).every((x) => x.trim() === '')) return { ok: true as const, valuation: undefined };
+  const amount = (text: string): Minor | null => {
+    if (text.trim() === '') return 0 as Minor;
+    try { return parseAmount(text, base); } catch { return null; }
+  };
+  const customsValueMinor = amount(v.customsValue);
+  const customsDutyMinor = amount(v.customsDuty);
+  const otherChargesMinor = amount(v.otherCharges);
+  const freightToIrelandMinor = amount(v.freight);
+  if (customsValueMinor === null || customsDutyMinor === null || otherChargesMinor === null || freightToIrelandMinor === null
+      || customsValueMinor <= 0 || customsDutyMinor < 0 || otherChargesMinor < 0 || freightToIrelandMinor < 0) {
+    return { ok: false as const };
+  }
+  return {
+    ok: true as const,
+    valuation: {
+      customsValueMinor, customsDutyMinor, otherChargesMinor, freightToIrelandMinor,
+      ...(v.mrn.trim() ? { declarationReference: v.mrn.trim() } : {}),
+    },
+  };
+}
+
 const money = (minor: number | null, currency: string) =>
   minor === null ? '—' : `${(minor / 100).toLocaleString('en-IE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${currency}`;
 
@@ -51,12 +84,17 @@ export function PostInvoiceForm({ documentId, direction, currency, baseCurrency,
   const [holdVat, setHoldVat] = useState(false);
   // A matched s.60(2)(a) block applies unless the person unticks it (a qualifying vehicle, stock-in-trade).
   const [blocked, setBlocked] = useState<boolean[]>(lines.map((l) => !!l.deductionBlocked));
+  const [valuations, setValuations] = useState<ValuationText[]>(lines.map(() => NO_VALUATION));
   const [result, setResult] = useState<ActionResult | null>(null);
   const [pending, startTransition] = useTransition();
   const foreign = currency !== baseCurrency;
   const relevantAccounts = accounts.filter((a) => (direction === 'sales'
     ? a.type === 'income' : ['expense', 'asset'].includes(a.type)));
-  const complete = accountIds.every(Boolean) && treatmentIds.every(Boolean) && (!foreign || /^\d+(\.\d+)?$/.test(fx.trim()))
+  const codeOf = (treatmentId: string | undefined) => treatments.find((t) => t.id === treatmentId)?.code
+    ?? lines.flatMap((l) => l.options).find((o) => o.treatmentId === treatmentId)?.code;
+  const isImportPa = (i: number) => direction === 'purchase' && codeOf(treatmentIds[i]) === 'IMPORT_PA';
+  const valuationsValid = lines.every((_, i) => !isImportPa(i) || parseValuation(valuations[i]!, baseCurrency).ok);
+  const complete = valuationsValid && accountIds.every(Boolean) && treatmentIds.every(Boolean) && (!foreign || /^\d+(\.\d+)?$/.test(fx.trim()))
     && (missingParticulars.length === 0 || holdVat);
 
   const post = () => startTransition(async () => {
@@ -74,6 +112,7 @@ export function PostInvoiceForm({ documentId, direction, currency, baseCurrency,
         return {
           accountId: accountIds[i]!, vatTreatmentId: treatmentIds[i]!, vatRuleKeys: chosen?.ruleKeys ?? [],
           blockedDeductionRuleKey: l.deductionBlocked && blocked[i] ? l.deductionBlocked.ruleKey : undefined,
+          importValuation: isImportPa(i) ? parseValuation(valuations[i]!, baseCurrency).valuation : undefined,
         };
       }),
       fxRate,
@@ -139,6 +178,31 @@ export function PostInvoiceForm({ documentId, direction, currency, baseCurrency,
                       accounted for; only the T2 claim is withheld. Untick for an exception the provision allows.</span>
                   </span>
                 </label>
+              )}
+              {isImportPa(i) && (
+                <div className="text-[12px] border border-line rounded p-2 space-y-1.5">
+                  <p className="font-medium">Customs declaration, in {baseCurrency}</p>
+                  <p className="text-ink-muted text-[11.5px]">Import VAT is charged on the customs value plus duty, other charges and
+                    freight to Ireland, and PA1 reports the customs value plus duty: both from the declaration, not this
+                    invoice. Leave these blank to post on the invoice net; the line is then flagged for review.</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    {VALUATION_FIELDS.map(([key, label]) => (
+                      <label key={key} className="flex flex-col gap-0.5">
+                        <span className="text-ink-faint">{label}</span>
+                        <Input inputMode="decimal" value={valuations[i]![key]}
+                          onChange={(e) => setValuations((vs) => vs.map((v, j) => (j === i ? { ...v, [key]: e.target.value } : v)))} />
+                      </label>
+                    ))}
+                    <label className="flex flex-col gap-0.5 col-span-2">
+                      <span className="text-ink-faint">Declaration reference (MRN)</span>
+                      <Input value={valuations[i]!.mrn}
+                        onChange={(e) => setValuations((vs) => vs.map((v, j) => (j === i ? { ...v, mrn: e.target.value } : v)))} />
+                    </label>
+                  </div>
+                  {!parseValuation(valuations[i]!, baseCurrency).ok && (
+                    <p className="text-negative text-[11.5px]">Enter the customs value and whole amounts of {baseCurrency}, or clear them all.</p>
+                  )}
+                </div>
               )}
               {line.accountReason && accountIds[i] === line.accountId && (
                 <p className="text-[11px] text-ink-faint ml-[7.5rem]">{line.accountReason}</p>
