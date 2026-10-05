@@ -31,7 +31,11 @@
     "cli": "tsx src/cli/reconcile.ts",
     "cli:rules": "tsx src/cli/irishRules.ts",
     "build:package": "node scripts/build-package.mjs",
-    "build:installer": "makensis scripts/installer.nsi"
+    "build:installer": "makensis scripts/installer.nsi",
+    "test:e2e": "playwright test",
+    "test:e2e:smoke": "playwright test tests/e2e/year-end-partners.smoke.spec.ts",
+    "db:seed:sole-trader": "tsx src/db/seed/run.ts --sole-trader",
+    "db:seed:partnership": "tsx src/db/seed/run.ts --partnership"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.128.0",
@@ -51,6 +55,7 @@
     "zustand": "^5.0.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.55.0",
     "@tailwindcss/postcss": "^4.1.11",
     "@types/better-sqlite3": "^7.6.13",
     "@types/node": "^26.6.3",

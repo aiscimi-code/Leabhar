@@ -2,8 +2,8 @@ import { cookies } from 'next/headers';
 import { getDb } from '@/db';
 import { verifySession, type AuthUser } from '@/domain/auth/auth';
 import { sessionCookieName } from '@/domain/auth/constants';
-import { assertMemberAllowed, type Action } from '@/domain/auth/permissions';
-import { requireCompany } from './queries';
+import { assertAllowed, assertMemberAllowed, type Action } from '@/domain/auth/permissions';
+import { activeCompany } from './queries';
 
 /** The signed-in user, verified against the database (not just the cookie). */
 export async function currentUser(): Promise<AuthUser | null> {
@@ -27,6 +27,10 @@ export async function actorName(): Promise<string> {
  * one named). The matrix itself lives
  * in src/domain/auth/permissions.ts — this function applies it, it does not
  * decide it. Throws with a message the UI can show as-is.
+ *
+ * When no company exists yet, only `company.manage` is allowed (create the
+ * first book or load a demo). Membership cannot be checked until there is a
+ * company to be a member of.
  */
 export async function requireActor(action: Action, companyId?: string): Promise<AuthUser> {
   const user = await currentUser();
@@ -34,8 +38,19 @@ export async function requireActor(action: Action, companyId?: string): Promise<
   if (user.mustChangePassword) {
     throw new Error('Change your password first (Setup → Change password): you are still on the one-time password your invoker set.');
   }
-  // The active company, unless the action names another one: bringing an
-  // archived business back acts on a company that is not the active one.
-  assertMemberAllowed(getDb(), user.id, companyId ?? requireCompany().id, action);
+  const db = getDb();
+  if (companyId) {
+    assertMemberAllowed(db, user.id, companyId, action);
+    return user;
+  }
+  const company = activeCompany();
+  if (!company) {
+    if (action !== 'company.manage') {
+      throw new Error('No company has been set up yet.');
+    }
+    assertAllowed(user.role, action);
+    return user;
+  }
+  assertMemberAllowed(db, user.id, company.id, action);
   return user;
 }

@@ -25,3 +25,9 @@ docs/statutes/_inbox/I/
 docs/statutes/_inbox/I-FRS-not-collected/
 *FRS_102_*.pdf
 *FRS_105_*.pdf
+
+# Playwright
+/playwright-report/
+/test-results/
+/blob-report/
+/data/e2e/

@@ -54,7 +54,8 @@ import {
 } from '@/domain/documents/retention';
 import { importStatement, recordManualTransaction, rollbackStatementImport } from '@/domain/banking/import';
 import { detectStatementFormat } from '@/domain/banking/structuredStatements';
-import { seedDemoCompany } from '@/db/seed/demo';
+import { seedDemoCompany, type DemoEntityType } from '@/db/seed/demo';
+import { archiveCompany } from '@/domain/config/businessProfile';
 import { runMigrations } from '@/db/migrate';
 import { createBackup, restoreBackup, verifyBackup } from '@/domain/backup/backup';
 import { nowIso } from '@/domain/dates';
@@ -1013,24 +1014,47 @@ export async function rematchAllAction(): Promise<ActionResult> {
   }
 }
 
-export async function loadDemoDataAction(): Promise<ActionResult> {
+export async function loadDemoDataAction(formData?: FormData): Promise<ActionResult> {
   try {
     await requireActor('company.manage');
     const db = getDb();
     runMigrations(db);
-    const existing = db.select({ id: companies.id }).from(companies).all();
-    if (existing.length > 0) {
+    const raw = formData ? String(formData.get('entityType') ?? 'company').trim() : 'company';
+    const entityType: DemoEntityType =
+      raw === 'sole_trader' || raw === 'partnership' || raw === 'company' ? raw : 'company';
+    const existing = db.select().from(companies).all();
+    if (existing.some((c) => !c.isDemo)) {
       return {
         ok: false,
-        error: 'A company already exists in this database. Demo data is only loaded into an '
-          + 'empty database, so it can never be mixed with real books.',
+        error: 'Demo data is only loaded when the book holds no real companies, so it can never '
+          + 'be mixed with real books.',
       };
     }
-    const result = await seedDemoCompany(db);
+    if (existing.some((c) => c.isDemo && c.entityType === entityType && !c.archivedAt)) {
+      const label = entityType === 'sole_trader' ? 'sole trader'
+        : entityType === 'partnership' ? 'partnership' : 'limited company';
+      return {
+        ok: false,
+        error: `A demo ${label} is already the active book.`,
+      };
+    }
+    // One active book at a time: put earlier demos away so the new one is the working set.
+    for (const prior of existing.filter((c) => c.isDemo && !c.archivedAt)) {
+      archiveCompany(db, {
+        companyId: prior.id,
+        basis: 'Replaced by another demo variant (issue #283).',
+        confirmedBy: await actorName(),
+      });
+    }
+    const result = await seedDemoCompany(db, { entityType });
     revalidatePath('/');
+    revalidatePath('/settings/company');
+    revalidatePath('/reports/year-end');
+    const label = entityType === 'sole_trader' ? 'sole trader'
+      : entityType === 'partnership' ? 'partnership' : 'limited company';
     return {
       ok: true,
-      message: `Demo company created with ${result.counts.transactions} transactions and `
+      message: `Demo ${label} created with ${result.counts.transactions} transactions and `
         + `${result.counts.documents} documents. It is labelled as demo data everywhere.`,
     };
   } catch (error) {
