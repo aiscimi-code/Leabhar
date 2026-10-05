@@ -1,11 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
+import { dirname } from 'node:path';
 import { eq } from 'drizzle-orm';
 import { createTestDatabase } from '@/db/testing';
 import { createCompany } from '../config/setup';
 import { irishTaxRules } from '@/db/schema';
-import { parseNfgSections, extractNfgSection, parseNfgContents } from './tcaNfgParser';
-import { readdirSync } from 'node:fs';
+import { parseNfgSections, extractNfgSection, parseNfgContents, compareNfgContents } from './tcaNfgParser';
 import { ingestTcaNfgPart, deriveCorporationTaxRules, nfgPath } from './tcaNfgIngestion';
 import {
   CORPORATION_TAX_CURATED_RULES, NFG_SECTIONS, corporationTaxRateBasisPoints,
@@ -34,14 +34,15 @@ describe('Notes for Guidance parser', () => {
     expect(extractNfgSection(read('part11'), '374').heading).toBe('Capital allowances for cars costing over certain amount');
   });
 
-  it('finds a note for every section each part\'s contents list, and no others (issue #287)', () => {
-    const parts = readdirSync(nfgPath('').replace(/[^/]*$/, '')).filter((f) => /^part.*\.md$/.test(f));
+  it('finds a note for every section in each part\'s contents list, and no others (issue #287)', () => {
+    const parts = readdirSync(dirname(nfgPath('part01'))).filter((f) => /^part.*\.md$/.test(f));
     expect(parts.length).toBeGreaterThanOrEqual(15);
     for (const file of parts) {
       const md = read(file.replace(/\.md$/, ''));
       const listed = parseNfgContents(md);
       expect(listed.length, file).toBeGreaterThan(0);
       expect(parseNfgSections(md).map((s) => s.sectionNumber), file).toEqual(listed);
+      expect(compareNfgContents(md), file).toEqual({ missing: [], unlisted: [] });
     }
   });
 

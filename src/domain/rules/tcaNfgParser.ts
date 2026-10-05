@@ -72,7 +72,7 @@ export function parseNfgSections(markdown: string): NfgSection[] {
     // section along: the same number or a close one. The same takes the first
     // note of a part (Part 11 opens with one, s.373): a left-margin heading
     // before any note has been taken is a note, not a line of text.
-    // A section the contents list is a note even with no Summary or Details
+    // A section the contents list names is a note even with no Summary or Details
     // (a repealed or deleted section's note is a sentence or two): its heading
     // opens with the listed title, and it follows the sections before it.
     const listed = contents.get(m[1]!);
@@ -129,7 +129,7 @@ function nfgContentsTitles(markdown: string): Map<string, string> {
 }
 
 /**
- * Sections the contents list that no note was parsed for, and notes parsed for
+ * Sections the contents list names that no note was parsed for, and notes parsed for
  * a section the contents do not list. A section missing here means its text
  * sits inside the previous section's note (issue #287).
  */
