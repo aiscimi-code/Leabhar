@@ -82,6 +82,14 @@ These are enforced by tests. Breaking one is a bug, not a trade-off.
 - **Invoice amounts are stored as printed.** A credit note's figures are
   positive; its `document_type` carries the sign.
 - **A rule with no conditions matches nothing**, not everything. That is the user-authored coding-rules engine (`src/domain/rules/engine.ts`). Statute-KB lookup (`transactionLookup.ts`) is the documented exception: an empty condition list on a derived rule is a topic-level fact and applies when the topic and effective window match.
+- **A close company surcharge is charged for a later period** than the income
+  it is on: the earliest accounting period ending 12 months or more after it
+  (s.440(6)). The period's own corporation tax does not include it.
+- **Income tax capital allowances go per year of assessment**, not per
+  accounting period.
+- **A revised text does not date its own figures.** The LRC and Revenue
+  consolidations state the current wording. Take each figure's start date from
+  the Act or footnote that set it, never from the revised file's date.
 - **An unassessable match factor carries zero weight** and is excluded, rather
   than scoring as half-right or counting against.
 
