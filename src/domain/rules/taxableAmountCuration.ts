@@ -27,6 +27,7 @@ export const TAXABLE_AMOUNT_GENERAL_RULE_KEY = 'vat.taxable_amount_general';
 export const OMV_CONNECTED_PARTY_RULE_KEY = 'vat.omv_connected_party_low_price';
 export const TWO_THIRDS_RULE_KEY = 'vat.two_thirds_rule_goods_with_services';
 export const CREDIT_NOTE_ADJUSTMENT_RULE_KEY = 'vat.consideration_change_credit_note';
+export const FX_RATE_RULE_KEY = 'vat.taxable_amount_foreign_currency_rate';
 
 /**
  * The rules that never decide a treatment (the facts they turn on are not on
@@ -77,6 +78,36 @@ export const TAXABLE_AMOUNT_CURATED_RULES: CuratedVatScopeRule[] = [
     interpretationNote: 'Foundational (like vat.charge_general), scoped to the lines it speaks to: it applies where '
       + 'a document line states a VAT amount, because that is where the taxable amount the line prints is the figure '
       + 's.37(1) defines. It decides no treatment.',
+  },
+  {
+    citation: '2010 Act 31 s.37',
+    sectionNumber: '37',
+    ruleKey: FX_RATE_RULE_KEY,
+    ruleType: 'other',
+    topic: 'vat_scope',
+    name: 'An amount in another currency is converted at the CBI or ECB selling rate when the tax becomes due, '
+      + 'or a method agreed with Revenue (s.37(4))',
+    statementExcerpt: 'the exchange rate to be used shall be the latest\nselling rate recorded by the Central Bank of Ireland',
+    conditions: [{ field: 'currency', operator: 'not_equals', value: 'EUR' }],
+    exceptions: [{
+      condition: 'a method for determining the exchange rate is agreed with the Revenue Commissioners (s.37(4)(b))',
+      effect: 'that method is used, for every foreign-currency transaction, until Revenue withdraws the agreement',
+    }],
+    crossReferences: ['VATCA 2010 s.91C(5), s.91E(5) (the OSS and IOSS schemes, which s.37(4) is subject to)',
+      'VATCA 2010 s.74(1)(a) and (2) (when the tax becomes due: the invoice, or the receipt on the cash receipts basis)'],
+    treatment: null,
+    vatEffect: 'The VAT is computed on the amount converted at the latest CBI or ECB selling rate for the currency at '
+      + 'the time the tax becomes due, unless a method agreed with Revenue applies.',
+    accountingEffect: null,
+    reportingEffect: 'Each foreign-currency VAT entry records its rate\'s source and date. Validating the VAT period '
+      + 'flags any whose source is not the CBI, the ECB or an agreed method (fx_rate_not_s37), and output VAT whose '
+      + 'rate is dated after its tax point or not dated (fx_rate_date_after_tax_point) or before it '
+      + '(fx_rate_date_before_tax_point).',
+    effectiveFrom: VATCA_COMMENCEMENT,
+    interpretationNote: 'A rate\'s source is recorded with the rate; it is never converted again automatically. The time '
+      + 'the tax becomes due is the entry\'s tax point (s.74): on the cash receipts basis, the receipt (s.74(2)), so a '
+      + 'receipt can carry the rate at that date for the VAT it releases. A purchase\'s rate date is not checked: its '
+      + 'tax point is when the input VAT is deducted, not when the supplier\'s tax became due.',
   },
   {
     citation: '2010 Act 31',

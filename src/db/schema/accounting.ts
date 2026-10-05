@@ -168,6 +168,13 @@ export const vatEntries = sqliteTable('vat_entries', {
   baseVatMinor: integer('base_vat_minor').notNull(),
   baseGrossMinor: integer('base_gross_minor').notNull(),
   baseCurrency: text('base_currency').notNull(),
+  /**
+   * The exchange rate's source and date, snapshotted when the amounts are in
+   * another currency (issue #614): s.37(4) requires a CBI or ECB selling rate,
+   * or a method agreed with Revenue. Null for an entry in the base currency.
+   */
+  fxRateSource: text('fx_rate_source'),
+  fxRateDate: text('fx_rate_date'),
 
   /** What can actually be reclaimed, after any restriction on the treatment. */
   recoverableVatMinor: integer('recoverable_vat_minor').notNull().default(0),

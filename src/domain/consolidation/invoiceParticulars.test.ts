@@ -124,4 +124,15 @@ describe('posting a purchase invoice that lacks a particular', () => {
     const entries = db.select().from(vatEntries).all().filter((e) => e.journalEntryId === je);
     expect(entries.reduce((s, e) => s + e.recoverableVatMinor, 0)).toBe(2_300);
   });
+
+  it('a line coded 60% business use recovers 60% of its VAT (issue #612, s.59(2))', () => {
+    const doc = confirmed({ customerAddress: '2 Quay St, Cork' });
+    const inv = postDocumentAsInvoice(db, {
+      companyId, documentId: doc,
+      coding: [{ accountId: byCode['6120']!, vatTreatmentId: tr['IE_STD']!, businessUseBasisPoints: 6_000 }],
+    });
+    const je = db.select().from(invoices).where(eq(invoices.id, inv.invoiceId)).get()!.journalEntryId;
+    const entries = db.select().from(vatEntries).all().filter((e) => e.journalEntryId === je);
+    expect(entries.reduce((s, e) => s + e.recoverableVatMinor, 0)).toBe(1_380);
+  });
 });

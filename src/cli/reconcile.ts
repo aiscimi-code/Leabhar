@@ -67,7 +67,8 @@ import { allocatePaymentOnAccount, paymentsOnAccount } from '@/domain/invoicing/
 import { reconciliationStatement } from '@/domain/banking/reconciliationStatement';
 import { salesInvoiceDocument } from '@/domain/invoicing/invoiceDocument';
 import { createInvoice } from '@/domain/invoicing/invoices';
-import { writeOffBadDebt, reverseBadDebtWriteOff } from '@/domain/invoicing/badDebts';
+import { writeOffBadDebt, reverseBadDebtWriteOff, claimBadDebtRelief } from '@/domain/invoicing/badDebts';
+import { recordDeemedSupply } from '@/domain/vat/deemedSupply';
 import { setSupplierTerms } from '@/domain/parties/supplierAccount';
 import {
   overdueInvoices, customerStatement, produceReminderLetter, reminderLetter, receivablesSummary,
@@ -307,6 +308,19 @@ Books (once induction is done):
   write-off-bad-debt --invoice <number|id> --reason "..." --actor "Name" [--date <date>]
       [--account <expense code>]  Outstanding to bad debts; VAT handled per basis
   reverse-bad-debt --invoice <number|id> --reason "..." --actor "Name" [--date <date>]
+      A relieved debt: the relief is charged back in T1 (S.I. 639/2010 reg.10(10))
+  claim-bad-debt-relief --invoice <number|id> --actor "Name" [--date <date>]
+      --reasonable-steps yes|no --allowable-s81 yes|no --records-kept yes|no
+      --connected yes|no --s95-letting yes|no --hire-purchase yes|no
+      VAT relief on a debt written off on the invoice basis, A x B / (100 + B),
+      in T2 (VATCA s.39(2), S.I. 639/2010 reg.10); each fact must be stated
+  record-deemed-supply --kind goods|property --date <date> --account <code> --description "..." --actor "Name"
+      goods:    --use gift|private-use --cost <12.30> --vat-treatment <code> --tax-deducted yes|no
+                (a gift also) --series yes|no --samples yes|no
+      property: --acquired-on <date> --acquisition-amount <12.30> --private-area <n> --total-area <n>
+                --business-asset yes|no
+      Output VAT with no sale invoice (VATCA s.19(1)(g), s.21, s.27(2)); prints the
+      reason when it is not a supply, and posts nothing
   apply-credit-note --credit-note <number|id> --invoice <number|id> --amount <12.30>
       --actor "Name" [--date <date>] [--reason ...]  No cash; nothing posted
   unapply-credit-note --payment <id> --actor "Name" --reason "..."
@@ -436,8 +450,9 @@ Invoice-led workflow (issue #222) — the same domain functions as the web scree
       Posts the confirmed document as an invoice, line by line, with the VAT
       as printed. --coding: [{"account":"6120","treatment":"IE_STD"}, ...],
       one per line; a line may omit treatment/account only where line-choices
-      suggested one. --fx: base per 1 unit of the document's currency
-      (1.0842 or 10842/10000).
+      suggested one. A line shown with deductionBlocked (s.60(2)(a)) deducts
+      no VAT unless its entry has "deductible": true. --fx: base per 1 unit
+      of the document's currency (1.0842 or 10842/10000).
   settle <transactionId> --allocations <json> [--fx <rate>] [--declare-in <date>]
       Settles the bank line against invoices:
       [{"invoice":"MOS-5120","amount":"24.60"}], amounts in the bank line's
@@ -1269,12 +1284,66 @@ export async function main(argv: string[], options: CliOptions = {}): Promise<nu
         return 0;
       }
 
+      case 'claim-bad-debt-relief': {
+        print(claimBadDebtRelief(db, {
+          companyId, invoiceId: resolveInvoiceId(db, companyId, requireFlag(flags, 'invoice')),
+          date: asIsoDate(getFlag(flags, 'date') ?? today()), actor: requireFlag(flags, 'actor'),
+          facts: {
+            reasonableStepsTaken: requireYesNo(flags, 'reasonable-steps'),
+            allowableUnderTcaS81: requireYesNo(flags, 'allowable-s81'),
+            recordsKept: requireYesNo(flags, 'records-kept'),
+            debtorConnected: requireYesNo(flags, 'connected'),
+            taxableLettingUnderS95: requireYesNo(flags, 's95-letting'),
+            hirePurchase: requireYesNo(flags, 'hire-purchase'),
+          },
+        }), format);
+        return 0;
+      }
+
       case 'reverse-bad-debt': {
         print(reverseBadDebtWriteOff(db, {
           companyId, invoiceId: resolveInvoiceId(db, companyId, requireFlag(flags, 'invoice')),
           date: asIsoDate(getFlag(flags, 'date') ?? today()), reason: requireFlag(flags, 'reason'),
           actor: requireFlag(flags, 'actor'),
         }), format);
+        return 0;
+      }
+
+      case 'record-deemed-supply': {
+        const base = db.select({ c: companies.baseCurrency }).from(companies).where(eq(companies.id, companyId)).get()!.c;
+        const kind = requireFlag(flags, 'kind');
+        const common = {
+          companyId, date: getFlag(flags, 'date') ?? today(),
+          accountId: resolveAccountId(db, companyId, requireFlag(flags, 'account')),
+          description: requireFlag(flags, 'description'), recordedBy: requireFlag(flags, 'actor'),
+        };
+        const wholeFlag = (name: string): number => {
+          const value = requireFlag(flags, name);
+          if (!/^\d+$/.test(value)) throw new Error(`--${name} must be a whole number.`);
+          return Number(value);
+        };
+        if (kind === 'goods') {
+          const use = requireFlag(flags, 'use');
+          if (use !== 'gift' && use !== 'private-use') throw new Error('--use must be gift or private-use.');
+          print(recordDeemedSupply(db, {
+            ...common, kind: 'goods', use: use === 'gift' ? 'gift' : 'private_use',
+            costMinor: parseAmount(requireFlag(flags, 'cost'), base),
+            treatmentCode: requireFlag(flags, 'vat-treatment'),
+            taxDeductedOrTransferred: requireYesNo(flags, 'tax-deducted'),
+            ...(use === 'gift'
+              ? { partOfSeriesToSamePerson: requireYesNo(flags, 'series'), industrialSamples: requireYesNo(flags, 'samples') }
+              : {}),
+          }), format);
+        } else if (kind === 'property') {
+          print(recordDeemedSupply(db, {
+            ...common, kind: 'immovable_private_use', acquiredOn: requireFlag(flags, 'acquired-on'),
+            acquisitionTaxableAmountMinor: parseAmount(requireFlag(flags, 'acquisition-amount'), base),
+            privateFloorArea: wholeFlag('private-area'), totalFloorArea: wholeFlag('total-area'),
+            treatedAsBusinessAsset: requireYesNo(flags, 'business-asset'),
+          }), format);
+        } else {
+          throw new Error('--kind must be goods or property.');
+        }
         return 0;
       }
 
@@ -2098,6 +2167,13 @@ function requireFlag(
     throw new Error(`Missing required flag: --${names[0]}`);
   }
   return value;
+}
+
+/** A fact a person must state: --flag yes or --flag no, never assumed. */
+function requireYesNo(flags: Record<string, string | boolean>, name: string): boolean {
+  const value = requireFlag(flags, name).toLowerCase();
+  if (value !== 'yes' && value !== 'no') throw new Error(`--${name} must be yes or no.`);
+  return value === 'yes';
 }
 
 /** Parse an --fx-rate flag of the form "num/den" (e.g. "113/100"). */

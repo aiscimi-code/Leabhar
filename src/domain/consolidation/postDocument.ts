@@ -11,7 +11,8 @@ import { assertDocumentConfirmed } from '../documents/review';
 import { upsertReviewItem } from '../extraction/service';
 import { resolveTreatment } from '../vat/engine';
 import { documentLineChoices } from './suggest';
-import { createInvoice, type CreatedInvoice, type InvoiceLineInput } from '../invoicing/invoices';
+import { BLOCKED_DEDUCTION_RULE_KEYS, INPUT_RECOVERY_CURATED_RULES } from '../rules/inputRecoveryCuration';
+import { createInvoice, type CreatedInvoice, type InvoiceLineInput, type DualUseApportionment } from '../invoicing/invoices';
 
 /**
  * Post a confirmed document as an invoice (issue #203).
@@ -52,6 +53,16 @@ export interface LineCoding {
   taxRateId?: string;
   /** Statutory rules behind the treatment (from the suggestion), for the trace. */
   vatRuleKeys?: string[];
+  /** See `InvoiceLineInput.businessUseBasisPoints` (issue #612). */
+  businessUseBasisPoints?: number;
+  /** See `InvoiceLineInput.dualUse` (issue #612). */
+  dualUse?: DualUseApportionment;
+  /**
+   * The s.60(2)(a) rule that blocks deducting this line's VAT (issue #616),
+   * from the line's statutory suggestion (`LineChoices.deductionBlocked`).
+   * Only the four s.60(2)(a) rule keys are accepted.
+   */
+  blockedDeductionRuleKey?: string;
 }
 
 export interface PostDocumentInput {
@@ -77,6 +88,18 @@ export interface PostDocumentInput {
 }
 
 type DocumentRow = typeof documents.$inferSelect;
+
+const BLOCKED_DEDUCTION_RULES = new Map(INPUT_RECOVERY_CURATED_RULES
+  .filter((r) => BLOCKED_DEDUCTION_RULE_KEYS.includes(r.ruleKey)).map((r) => [r.ruleKey, r]));
+
+/** The note recorded on a line whose deduction s.60(2)(a) blocks (issue #616). */
+function blockedDeductionReason(ruleKey: string | undefined, direction: 'sales' | 'purchase', where: string): string | undefined {
+  if (!ruleKey) return undefined;
+  const rule = BLOCKED_DEDUCTION_RULES.get(ruleKey);
+  if (!rule) throw new ConsolidationError(`${where}: "${ruleKey}" is not a rule that blocks a VAT deduction.`);
+  if (direction !== 'purchase') throw new ConsolidationError(`${where}: a blocked deduction applies only to a purchase.`);
+  return `${rule.name} [VATCA 2010 s.${rule.sectionNumber}]: the VAT stays in the cost.`;
+}
 
 /** Which way the document runs, or null when it is not a VAT invoice at all. */
 export function documentDirection(doc: Pick<DocumentRow, 'documentType' | 'customerId' | 'supplierId'>):
@@ -275,6 +298,9 @@ function postDocumentAsInvoiceSteps(db: AppDatabase, input: PostDocumentInput): 
       documentLineId: line.documentLineId,
       vatRuleKeys: coding.vatRuleKeys ?? [],
       holdRecoveryReason: holdReason,
+      businessUseBasisPoints: coding.businessUseBasisPoints,
+      dualUse: coding.dualUse,
+      blockedDeductionReason: blockedDeductionReason(coding.blockedDeductionRuleKey, direction, where),
     };
   });
 

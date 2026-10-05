@@ -169,8 +169,10 @@
       "id": "vatca:s21",
       "area": "vatca_section",
       "title": "s.21 Supplies made free of charge.",
-      "status": "not_applicable",
-      "reason": "Free-of-charge deemed supplies (business gifts from stock): no bank or invoice line exists. Recorded manually and flagged - VAT applies unless the gift is within the de minimis (regulations) or a sample."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.deemed_supply_goods_free_of_charge"
+      ]
     },
     {
       "id": "vatca:s22",
@@ -214,8 +216,10 @@
       "id": "vatca:s27",
       "area": "vatca_section",
       "title": "s.27 Self-supply of services.",
-      "status": "not_applicable",
-      "reason": "Self-supply of services (including non-business use of immovable goods): the annual charge is computed with s.44, recorded as a manual entry and flagged; not classifiable from bank or invoice lines."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.self_supply_immovable_goods_private_use"
+      ]
     },
     {
       "id": "vatca:s28",
@@ -304,7 +308,8 @@
       "title": "s.37 General rules on taxable amount.",
       "status": "rule",
       "ruleKeys": [
-        "vat.taxable_amount_general"
+        "vat.taxable_amount_general",
+        "vat.taxable_amount_foreign_currency_rate"
       ]
     },
     {
@@ -320,8 +325,10 @@
       "id": "vatca:s39",
       "area": "vatca_section",
       "title": "s.39 General provisions on consideration.",
-      "status": "not_applicable",
-      "reason": "The taxable amount follows the consideration actually received; a deficiency is relieved by regulation or adjusted by credit note (s.45, ruled) - no classification test on a bank or invoice line."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.consideration_not_received_relief"
+      ]
     },
     {
       "id": "vatca:s40",
@@ -343,8 +350,10 @@
       "id": "vatca:s42",
       "area": "vatca_section",
       "title": "s.42 Taxable amount for certain supplies.",
-      "status": "not_applicable",
-      "reason": "Taxable amount for deemed supplies (goods applied to non-business use, retention on cancellation): no third-party invoice exists; recorded as a manual journal at cost and flagged for a person. No classification rule."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.deemed_supply_taxable_amount_cost"
+      ]
     },
     {
       "id": "vatca:s43",
@@ -359,8 +368,10 @@
       "id": "vatca:s44",
       "area": "vatca_section",
       "title": "s.44 Non-business use of immovable goods.",
-      "status": "not_applicable",
-      "reason": "Annual charge for non-business use of immovable goods (one sixth of one twentieth of the cost): arises on the capital-goods review of a property, recorded as a manual entry and flagged; not classifiable from bank or invoice lines."
+      "status": "rule",
+      "ruleKeys": [
+        "vat.non_business_use_immovable_goods_amount"
+      ]
     },
     {
       "id": "vatca:s45",
@@ -665,15 +676,24 @@
       "id": "vatca:s74",
       "area": "vatca_section",
       "title": "s.74 Tax due on supplies.",
-      "status": "not_applicable",
-      "reason": "When tax falls due (invoice issue, s.69 liability, continuous supplies): the posting records tax at invoice issue on the invoice basis (or on payment on the cash basis, s.80 rules), and the RTD derives the payable from posted entries. Timing only; no classification."
+      "status": "rule",
+      "issue": 611,
+      "ruleKeys": [
+        "vat.tax_point_supply_invoice",
+        "vat.tax_point_cash_receipts"
+      ],
+      "reason": "s.74(1)(a): output VAT on the invoice basis is due at the invoice date, or at the end of the reg.23 due time if the invoice is issued late (determineTaxPoint). s.74(2): on the cash receipts basis it is due at the receipt, which also dates the s.37(4) exchange rate (#614)."
     },
     {
       "id": "vatca:s75",
       "area": "vatca_section",
       "title": "s.75 Tax due on intra- Community acquisitions.",
-      "status": "not_applicable",
-      "reason": "When tax on an intra-Community acquisition falls due (the 15th of the following month, or invoice issue): timing only; the acquisition rules (s.9, s.10) already decide the treatment."
+      "status": "rule",
+      "issue": 611,
+      "ruleKeys": [
+        "vat.tax_point_intra_community_acquisition"
+      ],
+      "reason": "s.75: acquisition VAT is due on the 15th of the month following the acquisition, or at an earlier invoice (determineTaxPoint)."
     },
     {
       "id": "vatca:s76",
@@ -891,8 +911,10 @@
       "id": "vatca:s99",
       "area": "vatca_section",
       "title": "s.99 General provisions on refund of tax.",
-      "status": "not_applicable",
-      "reason": "procedure or administration — not a transaction classification"
+      "status": "rule",
+      "ruleKeys": [
+        "vat.refund_claim_time_limit"
+      ]
     },
     {
       "id": "vatca:s100",
@@ -990,7 +1012,7 @@
       "area": "vatca_section",
       "title": "s.113 Time limits.",
       "status": "not_applicable",
-      "reason": "procedure or administration — not a transaction classification"
+      "reason": "The window for Revenue's own estimates and assessments under ss.110-111, not a limit on a claim. A late input VAT claim is limited by s.99(4) (vatca:s99, issue #646)."
     },
     {
       "id": "vatca:s114",
@@ -2013,7 +2035,6 @@
       "status": "rule",
       "ruleKeys": [
         "vat.zero_rate_childrens_clothing_footwear",
-        "vat.zero_rate_export_outside_community",
         "vat.zero_rate_printed_books"
       ]
     },
@@ -2106,6 +2127,15 @@
       ]
     },
     {
+      "id": "treatment:EXPORT_GOODS",
+      "area": "vat_treatment",
+      "title": "EXPORT_GOODS",
+      "status": "rule",
+      "ruleKeys": [
+        "vat.zero_rate_export_outside_community"
+      ]
+    },
+    {
       "id": "treatment:IMPORT_PA",
       "area": "vat_treatment",
       "title": "IMPORT_PA",
@@ -2133,16 +2163,63 @@
       ]
     },
     {
+      "id": "treatment:RC_SCRAP_METAL",
+      "area": "vat_treatment",
+      "title": "RC_SCRAP_METAL",
+      "status": "rule",
+      "ruleKeys": [
+        "vat.domestic_reverse_charge_scrap_metal"
+      ]
+    },
+    {
+      "id": "treatment:RC_EMISSION_ALLOWANCES",
+      "area": "vat_treatment",
+      "title": "RC_EMISSION_ALLOWANCES",
+      "status": "rule",
+      "ruleKeys": [
+        "vat.domestic_reverse_charge_emission_allowances"
+      ]
+    },
+    {
+      "id": "treatment:RC_CONNECTED_CONSTRUCTION",
+      "area": "vat_treatment",
+      "title": "RC_CONNECTED_CONSTRUCTION",
+      "status": "not_applicable",
+      "reason": "No rule decides or offers it: the s.16(5) rule only advises, because whether the builder is connected (s.97(3)) is not recorded. A person chooses it."
+    },
+    {
+      "id": "treatment:RC_GAS_ELECTRICITY",
+      "area": "vat_treatment",
+      "title": "RC_GAS_ELECTRICITY",
+      "status": "rule",
+      "ruleKeys": [
+        "vat.domestic_reverse_charge_gas_electricity_dealer"
+      ]
+    },
+    {
+      "id": "treatment:RC_ENERGY_CERTIFICATES",
+      "area": "vat_treatment",
+      "title": "RC_ENERGY_CERTIFICATES",
+      "status": "rule",
+      "ruleKeys": [
+        "vat.domestic_reverse_charge_energy_certificates"
+      ]
+    },
+    {
+      "id": "treatment:RC_PROPERTY_JOINT_OPTION",
+      "area": "vat_treatment",
+      "title": "RC_PROPERTY_JOINT_OPTION",
+      "status": "rule",
+      "ruleKeys": [
+        "vat.joint_option_for_taxation"
+      ]
+    },
+    {
       "id": "treatment:NON_DEDUCTIBLE",
       "area": "vat_treatment",
       "title": "NON_DEDUCTIBLE",
-      "status": "rule",
-      "ruleKeys": [
-        "vat.blocked_food_drink_accommodation",
-        "vat.blocked_entertainment",
-        "vat.blocked_motor_vehicle",
-        "vat.blocked_petrol"
-      ]
+      "status": "not_applicable",
+      "reason": "No rule decides it: a s.60(2)(a) block denies the deduction beside the treatment the supply takes (issue #616: VatSuggestion.deductionBlocked, posted as InvoiceLineInput.blockedDeductionReason), so a reverse charge and the Schedule 3 rate still apply. A person may still choose it."
     },
     {
       "id": "tca:s3",
@@ -3211,19 +3288,15 @@
       "id": "fa2024:s13",
       "area": "other_source",
       "title": "Finance Act 2024 s.13 — pension standard fund threshold",
-      "status": "rule",
-      "ruleKeys": [
-        "pension.standard_fund_threshold"
-      ]
+      "status": "not_applicable",
+      "reason": "Pensions are outside the product's scope. The retired rule stated 2,000,000 euro from 2026, but the provision gives that figure for 2014 to 2025 and a ladder after it (issue #277)."
     },
     {
       "id": "fa2024:s48",
       "area": "other_source",
       "title": "Finance Act 2024 s.48 — film tax credit",
-      "status": "rule",
-      "ruleKeys": [
-        "film.tax_credit_rate"
-      ]
+      "status": "not_applicable",
+      "reason": "Film tax credit is outside what the tools compute. It commences on a day the Minister appoints by order, which this knowledge base does not hold, so the rule was dated from the Act in error (issue #277)."
     },
     {
       "id": "fa2024:s78",
@@ -3313,6 +3386,34 @@
       "ruleKeys": [
         "vat.annual_turnover_definition",
         "vat.cross_border_sme_scheme_union_threshold"
+      ]
+    },
+    {
+      "id": "si639-2010:reg5",
+      "area": "other_source",
+      "title": "S.I. 639/2010 reg.5 — business gifts limit",
+      "status": "rule",
+      "ruleKeys": [
+        "vat.business_gift_limit"
+      ]
+    },
+    {
+      "id": "si639-2010:reg7",
+      "area": "other_source",
+      "title": "S.I. 639/2010 reg.7 — private use of immovable goods",
+      "status": "rule",
+      "ruleKeys": [
+        "vat.immovable_goods_private_use_proportion"
+      ]
+    },
+    {
+      "id": "si639-2010:reg10",
+      "area": "other_source",
+      "title": "S.I. 639/2010 reg.10 — bad debts and early termination of hire purchase",
+      "status": "rule",
+      "ruleKeys": [
+        "vat.bad_debt_relief",
+        "vat.bad_debt_recovered"
       ]
     },
     {

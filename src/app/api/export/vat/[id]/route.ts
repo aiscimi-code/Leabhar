@@ -3,6 +3,7 @@ import { requireCompany } from '@/lib/queries';
 import { requireApiActor } from '@/lib/apiAuth';
 import { buildFilingPack } from '@/domain/vat/filingPack';
 import type { VatDrillRow } from '@/domain/vat/report';
+import { label } from '@/lib/format';
 import {
   newWorkbook, addSheet, addCoverSheet, xlsxResponse, toCsv, csvResponse,
   amountFor, type ExportColumn,
@@ -66,7 +67,7 @@ export async function GET(
     currency,
     extra: [
       ['VAT number', pack.vatNumber ?? 'Not recorded'],
-      ['Basis', pack.vatBasis === 'cash_receipts' ? 'Cash receipts basis' : 'Invoice basis'],
+      ['Basis', label(pack.vatBasis)],
       ['Filing deadline', pack.filingDeadline ?? 'Not configured'],
       ['Period status', pack.status],
       ['Internal checks', pack.validation.verdict],

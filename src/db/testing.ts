@@ -112,3 +112,21 @@ export function insertConfirmedDocument(
   }).run();
   return id;
 }
+
+/**
+ * Revenue's moneys-received authorisation for a cash-basis test company
+ * (issue #608). The cash receipts basis applies to a sale only from a
+ * recorded authorisation, so a test of cash-basis behaviour records one,
+ * from well before the dates it posts.
+ */
+export const TEST_CASH_BASIS_AUTHORISATION: NonNullable<CreateCompanyInput['cashBasisAuthorisation']> = {
+  eligibility: 'turnover_threshold', authorisedFrom: '2020-01-01',
+  reference: 'Test authorisation', confirmedBy: 'Test',
+};
+
+/** The createCompany fields for a basis: the cash basis comes with its authorisation. */
+export function testVatBasis(basis: 'invoice' | 'cash_receipts'): Pick<CreateCompanyInput, 'vatAccountingBasis' | 'cashBasisAuthorisation'> {
+  return basis === 'cash_receipts'
+    ? { vatAccountingBasis: basis, cashBasisAuthorisation: TEST_CASH_BASIS_AUTHORISATION }
+    : { vatAccountingBasis: basis };
+}

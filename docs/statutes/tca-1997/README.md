@@ -15,9 +15,10 @@ from the Finance Act that inserted them instead.
    substituted it — every file here carries `consolidation: as-enacted-1997`
    in its front matter as a standing reminder.
 
-None of this is ingested into the deterministic KB yet — see
-[`docs/RULES_KB.md`](../../RULES_KB.md) "Next steps". These are reference
-extracts only.
+These as-enacted extracts are reference only. The deterministic KB reads the
+current Revenue Notes for Guidance instead
+([`docs/statutes/tca-1997-nfg/`](../tca-1997-nfg/), `tcaNfgIngestion.ts`),
+which supply the corporation tax and income tax rules.
 
 ## Files
 

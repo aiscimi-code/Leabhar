@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { eq, and } from 'drizzle-orm';
-import { createTestDatabase, insertConfirmedDocument } from '@/db/testing';
+import { createTestDatabase, insertConfirmedDocument, testVatBasis } from '@/db/testing';
 import { createCompany, addBankAccount } from '../config/setup';
 import { createInvoice, voidInvoice } from '../invoicing/invoices';
 import { recordPayment } from '../invoicing/payments';
@@ -41,7 +41,7 @@ const MAY = asIsoDate('2025-05-05');
 const setup = (basis: 'invoice' | 'cash_receipts' = 'invoice') => {
   ({ db } = createTestDatabase());
   const created = createCompany(db, {
-    legalName: 'Acme Ltd', vatRegistrationStatus: 'registered', vatAccountingBasis: basis, seedYears: [2025],
+    legalName: 'Acme Ltd', vatRegistrationStatus: 'registered', ...testVatBasis(basis), seedYears: [2025],
   });
   companyId = created.companyId;
   acc = created.accountsByKey;

@@ -7,6 +7,7 @@ import {
 } from '../money';
 import type { IsoDate } from '../dates';
 import { AccountingError } from '../accounting/errors';
+import { lateClaimLimit, lateClaimOutOfTime, lateClaimFileByReason } from './lateClaim';
 
 export class VatError extends AccountingError {}
 
@@ -160,6 +161,12 @@ export interface CalculateVatInput {
   /** When the document states the VAT explicitly, trust it over recomputing. */
   statedVatMinor?: number;
   /**
+   * The amount the rate applies to, where it is not the reported net (issue
+   * #609): an import's VAT is charged on its value for import VAT purposes,
+   * while its PA1 figure is the customs value plus duty. Net-path only.
+   */
+  taxableAmountMinor?: number;
+  /**
    * Override `computeRecoverable`'s result. Set when a caller has already
    * decided this line's input VAT cannot yet be trusted as reclaimable —
    * e.g. it disagrees with the treatment's rate, or the supplier is not
@@ -169,7 +176,18 @@ export interface CalculateVatInput {
    * only the recoverable slice is held back.
    */
   recoverableOverrideMinor?: number;
+  /**
+   * The share of the treatment's recoverable VAT that may be deducted on this
+   * line (issue #612), as a fraction: the business-use share of a purchase
+   * also used privately (s.59(2): deductible only "in so far as" it is used
+   * for taxable supplies), times the proportion of tax deductible on a dual-
+   * use input (s.61(2), S.I. 639/2010 reg.17). Purchases only; ignored when
+   * `recoverableOverrideMinor` is set.
+   */
+  deductibleShare?: DeductibleShare;
 }
+
+export interface DeductibleShare { numerator: number; denominator: number }
 
 /**
  * Calculate the net/VAT/gross triple for one line under one treatment.
@@ -197,11 +215,15 @@ export function calculateVat(input: CalculateVatInput): VatCalculation {
   let netMinor: Minor;
   let vatMinor: Minor;
 
+  if (input.taxableAmountMinor !== undefined && input.netMinor === undefined) {
+    throw new VatError('A taxable amount separate from the net needs the net as well.');
+  }
   if (input.netMinor !== undefined) {
     netMinor = asMinor(input.netMinor);
+    const taxable = input.taxableAmountMinor !== undefined ? asMinor(input.taxableAmountMinor) : netMinor;
     vatMinor = trustStated
       ? asMinor(input.statedVatMinor!)
-      : vatFromNet(netMinor, effectiveRate);
+      : vatFromNet(taxable, effectiveRate);
   } else if (input.grossMinor !== undefined) {
     if (trustStated) {
       vatMinor = asMinor(input.statedVatMinor!);
@@ -227,7 +249,7 @@ export function calculateVat(input: CalculateVatInput): VatCalculation {
 
   const recoverableVatMinor = input.recoverableOverrideMinor !== undefined
     ? asMinor(input.recoverableOverrideMinor)
-    : computeRecoverable(treatment, direction, vatMinor);
+    : computeRecoverable(treatment, direction, vatMinor, input.deductibleShare);
 
   return {
     netMinor,
@@ -242,12 +264,17 @@ function computeRecoverable(
   treatment: typeof vatTreatments.$inferSelect,
   direction: VatDirection,
   vatMinor: Minor,
+  share?: DeductibleShare,
 ): Minor {
   // Output VAT is never "recoverable"; it is owed.
   if (direction === 'sales') return asMinor(0);
   if (!treatment.isRecoverable) return asMinor(0);
-  if (treatment.recoverableBasisPoints >= 10_000) return vatMinor;
-  return multiplyRational(vatMinor, treatment.recoverableBasisPoints, 10_000);
+  const bp = Math.min(treatment.recoverableBasisPoints, 10_000);
+  // One rounding for the treatment's own restriction and the line's share together.
+  if (!share || share.numerator === share.denominator) {
+    return bp === 10_000 ? vatMinor : multiplyRational(vatMinor, bp, 10_000);
+  }
+  return multiplyRational(vatMinor, bp * share.numerator, 10_000 * share.denominator);
 }
 
 /**
@@ -264,6 +291,13 @@ export function vatDiscrepancy(
   return { expectedMinor: expected, statedMinor: statedVatMinor, differenceMinor: difference };
 }
 
+/** The 15th day of the month after `date`'s month. */
+export function fifteenthOfNextMonth(date: string): IsoDate {
+  const [y, m] = date.split('-').map(Number) as [number, number];
+  const next = m === 12 ? { y: y + 1, m: 1 } : { y, m: m + 1 };
+  return `${next.y}-${String(next.m).padStart(2, '0')}-15` as IsoDate;
+}
+
 /**
  * Determine the tax point — the date that decides which VAT period a
  * transaction falls into (docs/DOMAIN_MODEL.md §6).
@@ -271,6 +305,16 @@ export function vatDiscrepancy(
  * The asymmetry here is the substance of the cash receipts basis and is easy to
  * get wrong: it applies to VAT on SALES only. Input VAT on purchases is
  * reclaimed by reference to the supplier's invoice date under both bases.
+ *
+ * - A sale on the invoice basis (issue #611): tax is due "at the time of issue
+ *   of the invoice or, if the invoice is not issued in due time, upon the
+ *   expiration of the period within which the invoice should have been issued"
+ *   (VATCA s.74(1)(a)). Due time is within the 15 days following the end of the
+ *   month of supply (S.I. 639/2010 reg.23(a)). A credit or debit note has its
+ *   own time limits (reg.23(e), (f)) and takes its own date.
+ * - An intra-Community acquisition (issue #611): tax is due on the 15th day of
+ *   the month following the acquisition, or when the supplier's invoice is
+ *   issued, if earlier (s.75). The cash basis does not apply to it (s.80(6)).
  */
 export function determineTaxPoint(params: {
   basis: 'invoice' | 'cash_receipts';
@@ -278,25 +322,51 @@ export function determineTaxPoint(params: {
   invoiceDate: IsoDate;
   supplyDate?: IsoDate | null;
   paymentDate?: IsoDate | null;
+  /** The VAT is on an intra-Community acquisition of goods (s.3(d)). */
+  acquisition?: boolean;
+  /** The document is a credit or debit note, not the invoice for the supply. */
+  adjustingNote?: boolean;
 }): { taxPointDate: IsoDate; reason: string } {
-  const documentDate = params.supplyDate ?? params.invoiceDate;
+  if (params.direction === 'purchases' && params.acquisition) {
+    const occurred = params.supplyDate ?? params.invoiceDate;
+    const fifteenth = fifteenthOfNextMonth(occurred);
+    return params.invoiceDate < fifteenth
+      ? {
+        taxPointDate: params.invoiceDate,
+        reason: 'VAT on an intra-Community acquisition is due when the supplier\'s invoice is issued, as it was issued '
+          + `before ${fifteenth}, the 15th day of the month following the acquisition (VATCA s.75(b)).`,
+      }
+      : {
+        taxPointDate: fifteenth,
+        reason: 'VAT on an intra-Community acquisition is due on the 15th day of the month following the month in '
+          + `which it occurs (VATCA s.75(a)); the acquisition on ${occurred} makes that ${fifteenth}.`,
+      };
+  }
 
   if (params.direction === 'purchases') {
     return {
-      taxPointDate: documentDate,
+      taxPointDate: params.supplyDate ?? params.invoiceDate,
       reason: 'Input VAT is reclaimed by reference to the supplier’s invoice date '
         + 'under both the invoice basis and the cash receipts basis.',
     };
   }
 
   if (params.basis === 'invoice') {
+    const dueBy = params.supplyDate && !params.adjustingNote ? fifteenthOfNextMonth(params.supplyDate) : null;
+    if (dueBy && params.invoiceDate > dueBy) {
+      return {
+        taxPointDate: dueBy,
+        reason: `The invoice for a supply on ${params.supplyDate} was due by ${dueBy}, within the 15 days following the `
+          + 'end of the month of supply (S.I. 639/2010 reg.23(a)). It was issued later, on '
+          + `${params.invoiceDate}, so the VAT is due when that period expired (VATCA s.74(1)(a)).`,
+      };
+    }
     return {
-      taxPointDate: documentDate,
-      reason: 'On the invoice basis, output VAT arises when the invoice is issued, '
+      taxPointDate: params.invoiceDate,
+      reason: 'On the invoice basis, output VAT is due when the invoice is issued (VATCA s.74(1)(a)), '
         + 'whether or not it has been paid.',
     };
   }
-
   if (!params.paymentDate) {
     throw new VatError(
       'On the cash receipts basis, output VAT on a sale arises when payment is '
@@ -342,15 +412,32 @@ export interface CreateVatEntriesInput {
   treatmentId: string;
   rateOverrideId?: string;
   taxPointDate: IsoDate;
+  /**
+   * The date the treatment and rate are resolved on, where it is not the tax
+   * point (issue #615): on the cash receipts basis the tax point is the
+   * receipt, but "the rate of tax due ... in respect of a supply shall be the
+   * rate of tax chargeable at the time the goods or services are supplied"
+   * (VATCA s.80(2)(a)). Defaults to the tax point.
+   */
+  rateDate?: IsoDate;
   netMinor?: number;
   grossMinor?: number;
   statedVatMinor?: number;
+  /** See `CalculateVatInput.taxableAmountMinor`. */
+  taxableAmountMinor?: number;
   /** See `CalculateVatInput.recoverableOverrideMinor` — threaded through so the
    *  posted VAT entry (and hence the VAT3 T2 box) agrees with the journal. */
   recoverableOverrideMinor?: number;
+  /** See `CalculateVatInput.deductibleShare`. */
+  deductibleShare?: DeductibleShare;
   currency: string;
   baseCurrency: string;
-  fxRate?: { numerator: number; denominator: number };
+  /**
+   * Required when `currency` is not `baseCurrency`. `source` and `date` are
+   * snapshotted on the entry, so period validation can check the rate is one
+   * s.37(4) accepts (issue #614).
+   */
+  fxRate?: { numerator: number; denominator: number; source?: string | null; date?: string | null };
   counterpartyVatNumber?: string | null;
   counterpartyCountry?: string | null;
   source?: 'ai' | 'rule' | 'user' | 'import' | 'system' | 'derived';
@@ -381,7 +468,7 @@ export function createVatEntries(
   const resolved = resolveTreatment(db, {
     companyId: input.companyId,
     treatmentId: input.treatmentId,
-    onDate: input.taxPointDate,
+    onDate: input.rateDate ?? input.taxPointDate,
     rateOverrideId: input.rateOverrideId,
   });
 
@@ -392,19 +479,33 @@ export function createVatEntries(
     netMinor: input.netMinor,
     grossMinor: input.grossMinor,
     statedVatMinor: input.statedVatMinor,
+    taxableAmountMinor: input.taxableAmountMinor,
     recoverableOverrideMinor: input.recoverableOverrideMinor,
+    deductibleShare: input.deductibleShare,
   });
 
   const declaredOn = input.declarationDate ?? input.taxPointDate;
   const period = assertVatPeriodWritable(db, input.companyId, declaredOn, 'This VAT');
   const declaredLate = input.declarationDate !== undefined
     && findVatPeriod(db, input.companyId, input.taxPointDate)?.id !== period?.id;
-  const toBase = (amount: number): number =>
-    input.fxRate ? multiplyRational(asMinor(amount), input.fxRate.numerator, input.fxRate.denominator) : amount;
-
   const treatment = resolved.treatment;
   const currency = input.currency.toUpperCase();
   const baseCurrency = input.baseCurrency.toUpperCase();
+  const foreign = currency !== baseCurrency;
+  // Issue #614: an amount in another currency without a rate would be stored
+  // as though it were already in the base currency.
+  if (foreign && !input.fxRate) {
+    throw new VatError(`This VAT is in ${currency}, not ${baseCurrency}: it needs the exchange rate it is converted at `
+      + '(VATCA s.37(4): the CBI or ECB selling rate when the tax becomes due, or a method agreed with Revenue).');
+  }
+  const toBase = (amount: number): number =>
+    input.fxRate ? multiplyRational(asMinor(amount), input.fxRate.numerator, input.fxRate.denominator) : amount;
+  // The gross and the VAT are converted and the net derived, so the base
+  // figures add up as the currency ones do (issue #614). Under a reverse
+  // charge the gross is the net.
+  const baseVat = toBase(calculation.vatMinor);
+  const baseGross = toBase(calculation.grossMinor);
+  const baseNet = treatment.isReverseCharge ? baseGross : baseGross - baseVat;
 
   const common = {
     companyId: input.companyId,
@@ -422,6 +523,8 @@ export function createVatEntries(
     vatPeriodId: period?.id ?? null,
     counterpartyVatNumber: input.counterpartyVatNumber ?? null,
     counterpartyCountry: input.counterpartyCountry ?? null,
+    fxRateSource: foreign ? input.fxRate?.source ?? null : null,
+    fxRateDate: foreign ? input.fxRate?.date ?? null : null,
     source: input.source ?? 'system',
     confidence: input.confidence ?? null,
     provenanceStatus: input.provenanceStatus ?? 'manually_entered',
@@ -430,6 +533,21 @@ export function createVatEntries(
         + 'period\'s return is locked or filed.'].filter(Boolean).join(' ')
       : input.notes ?? null,
   } as const;
+
+  // A late input VAT claim is made only within the s.99(4) limit (issue #646).
+  // The posting path that claims it holds it back first; anything still
+  // claiming it out of time is refused here, before anything is written.
+  const rcRecoverable = treatment.isReverseCharge
+    ? (input.recoverableOverrideMinor !== undefined
+      ? asMinor(input.recoverableOverrideMinor)
+      : computeRecoverable(treatment, 'purchases', calculation.vatMinor, input.deductibleShare))
+    : null;
+  const claimed = rcRecoverable ?? (input.direction === 'purchases' ? calculation.recoverableVatMinor : 0);
+  const limit = declaredLate && claimed !== 0
+    ? lateClaimLimit(db, input.companyId, input.taxPointDate, declaredOn) : null;
+  if (limit?.outOfTime) {
+    throw new VatError(`${lateClaimOutOfTime(limit)} Post it with its VAT held back from recovery.`);
+  }
 
   const created: Array<typeof vatEntries.$inferSelect> = [];
 
@@ -444,9 +562,9 @@ export function createVatEntries(
         netMinor: calculation.netMinor,
         vatMinor: calculation.vatMinor,
         grossMinor: calculation.grossMinor,
-        baseNetMinor: toBase(calculation.netMinor),
-        baseVatMinor: toBase(calculation.vatMinor),
-        baseGrossMinor: toBase(calculation.grossMinor),
+        baseNetMinor: baseNet,
+        baseVatMinor: baseVat,
+        baseGrossMinor: baseGross,
         recoverableVatMinor: 0,
         baseRecoverableVatMinor: 0,
         vatBox: treatment.salesVatBox,
@@ -456,9 +574,7 @@ export function createVatEntries(
       created.push(output);
 
       // Leg 2: input VAT, reclaimed to the extent the treatment allows.
-      const recoverable = input.recoverableOverrideMinor !== undefined
-        ? asMinor(input.recoverableOverrideMinor)
-        : computeRecoverable(treatment, 'purchases', calculation.vatMinor);
+      const recoverable = rcRecoverable!;
       const input2 = tx.insert(vatEntries).values({
         ...common,
         id: ids.vatEntry(),
@@ -466,9 +582,9 @@ export function createVatEntries(
         netMinor: calculation.netMinor,
         vatMinor: calculation.vatMinor,
         grossMinor: calculation.grossMinor,
-        baseNetMinor: toBase(calculation.netMinor),
-        baseVatMinor: toBase(calculation.vatMinor),
-        baseGrossMinor: toBase(calculation.grossMinor),
+        baseNetMinor: baseNet,
+        baseVatMinor: baseVat,
+        baseGrossMinor: baseGross,
         recoverableVatMinor: recoverable,
         baseRecoverableVatMinor: toBase(recoverable),
         vatBox: treatment.purchasesVatBox,
@@ -488,9 +604,9 @@ export function createVatEntries(
         netMinor: calculation.netMinor,
         vatMinor: calculation.vatMinor,
         grossMinor: calculation.grossMinor,
-        baseNetMinor: toBase(calculation.netMinor),
-        baseVatMinor: toBase(calculation.vatMinor),
-        baseGrossMinor: toBase(calculation.grossMinor),
+        baseNetMinor: baseNet,
+        baseVatMinor: baseVat,
+        baseGrossMinor: baseGross,
         recoverableVatMinor: calculation.recoverableVatMinor,
         baseRecoverableVatMinor: toBase(calculation.recoverableVatMinor),
         vatBox: input.direction === 'sales' ? treatment.salesVatBox : treatment.purchasesVatBox,
@@ -510,7 +626,8 @@ export function createVatEntries(
       title: `VAT with tax point ${input.taxPointDate} declared in ${period?.name ?? declaredOn}`,
       detail: 'The return for the period covering the tax point is locked or filed, so this VAT was declared in a '
         + 'later open period at the person\'s choice. Confirm the correction is made the right way (for an '
-        + 'underdeclaration, whether a supplementary return is needed instead).',
+        + 'underdeclaration, whether a supplementary return is needed instead).'
+        + (limit?.fileBy ? ` ${lateClaimFileByReason(limit)}` : ''),
       entityType: 'vat_entry',
       entityId: created[0].id,
       dedupeKey: `vat_entry:${created[0].id}:declared_late`,

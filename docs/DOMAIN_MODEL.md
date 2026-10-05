@@ -118,6 +118,41 @@ Rules:
 - A missing FX rate is an **exception**, never an assumed 1.0.
 - FX gain/loss on settlement posts to a dedicated account so it is separately
   identifiable (§22).
+- Each journal line is converted on its own, so a foreign-currency invoice,
+  bad-debt write-off or bank classification that balances in its own currency
+  can be a minor unit or two out in base currency. That difference posts as its own base-currency line to
+  `rounding_difference` (4099), with a memo saying why (issue #639). It is
+  added only when the entry balances exactly in its own currency and the
+  difference is within what per-line rounding can produce (half a minor unit
+  per converted line); anything larger is still refused as unbalanced.
+- A foreign-currency invoice posts one VAT journal line per invoice line
+  (output, input and the reverse-charge leg), because the VAT entries convert
+  each line's VAT on its own. The VAT accounts then move by exactly what the
+  return reports, and the period reconciles (issue #643). A base-currency
+  invoice converts nothing and keeps one VAT line for the total.
+- For VAT (issue #614), s.37(4) sets the rate. It is the latest selling rate
+  recorded by the Central Bank of Ireland or the European Central Bank for the
+  currency at the time the tax becomes due, unless a method has been agreed
+  with Revenue.
+  - Each foreign-currency VAT entry snapshots its rate's source and date
+    (`fx_rate_source`, `fx_rate_date`).
+  - Validating the VAT period flags any entry whose source is not the CBI,
+    the ECB or an agreed method (`fx_rate_not_s37`). Nothing is converted
+    again.
+  - The tax becomes due at the entry's tax point: the invoice, or the end of
+    due time, on the invoice basis (s.74(1)(a)), and the receipt on the cash
+    receipts basis (s.74(2)). Validating the period checks the rate's date
+    against it for output VAT: a rate dated after the tax point, or not dated,
+    is a warning (`fx_rate_date_after_tax_point`); one dated before it is a
+    note to check no later rate was recorded (`fx_rate_date_before_tax_point`).
+    A purchase's date is not checked, because its tax point is the deduction.
+  - On the cash receipts basis a receipt can carry the rate at the receipt
+    (`vatFxRate`) for the output VAT it releases. The VAT entries and the VAT
+    on sales account use it; the deferred VAT is relieved at the invoice's
+    rate, and the difference goes to exchange gains and losses. Without it,
+    the invoice's rate is used and the period check notes its earlier date.
+  - A VAT entry converts the gross and the VAT and derives the net, so the
+    base figures add up. A foreign-currency VAT entry with no rate is refused.
 
 ---
 
@@ -246,6 +281,11 @@ Seeded treatments (all editable, none hard-coded in logic):
 - `IMPORT_PA` Import of goods, postponed accounting — T1 + T2, PA1
 - `IMPORT_VAT_PAID` Import VAT paid at the point of entry — T2 only
 - `RC_CONSTRUCTION` Domestic reverse charge (construction) — T1 + T2
+- `RC_SCRAP_METAL`, `RC_EMISSION_ALLOWANCES`, `RC_CONNECTED_CONSTRUCTION`,
+  `RC_GAS_ELECTRICITY`, `RC_ENERGY_CERTIFICATES` The other domestic reverse
+  charges, s.16(4), (2), (5), (6) and (7) — T1 + T2
+- `RC_PROPERTY_JOINT_OPTION` Property bought under a joint option for taxation,
+  s.94(5), (6) — T1 + T2
 
 Zero-rated, exempt and outside-scope are three distinct treatments with three
 distinct reporting consequences. §7 is explicit that they must not be conflated,
@@ -282,8 +322,38 @@ they were created (§46).
 
 | Basis | Sales tax point | Purchases tax point |
 |---|---|---|
-| Invoice basis | Invoice date | Invoice date |
+| Invoice basis | Invoice date, or the end of due time if issued late | Invoice date |
 | Cash receipts basis | **Payment date** | Invoice date |
+
+A sale on the invoice basis is dated by the invoice: tax is due "at the time of
+issue of the invoice or, if the invoice is not issued in due time, upon the
+expiration of the period within which the invoice should have been issued"
+(VATCA s.74(1)(a)). Due time is within the 15 days following the end of the
+month of supply (S.I. 639/2010 reg.23(a)), so a supply on 28 February invoiced
+on 3 March falls in March–April, and one on 20 January invoiced on 20 March is
+due on 15 February. A credit or debit note keeps its own date (reg.23(e), (f)).
+The rate stays the one resolved for the line. An intra-Community acquisition
+(EU_GOODS_ACQ) is due on the 15th of the month after the acquisition, or at the
+supplier's invoice if that is earlier (s.75), under either basis (s.80(6)); its
+T1, T2 and E2 fall in that period (issue #611).
+
+A deemed supply has output VAT and no sale invoice (`recordDeemedSupply`,
+`src/domain/vat/deemedSupply.ts`, issue #645). Goods given away or taken for a
+non-business purpose, where their VAT was deductible (VATCA s.19(1)(g), s.21),
+are taxed on their cost excluding VAT (s.42(1)(a)) at the rate they would bear,
+on the day they are given or taken. A gift is not a supply if it costs no more
+than €20 excluding VAT and is not one of a series to the same person (s.21(a),
+S.I. 639/2010 reg.5). Industrial samples in reasonable quantity are not a supply
+either (s.21(b)). Private use of property acquired or developed before 2011
+(s.27(2), (3)), within 20 years of acquisition, is taxed each period on C x
+private floor area / total floor area / 120 at the standard rate (s.44(1),
+reg.7). The person states the facts and the figures are calculated. Each one
+posts as a VAT adjustment, so a locked period is refused, and raises a review
+item. A person records one on the VAT periods screen or with `npm run cli --
+record-deemed-supply` (issue #658); when the facts make it no supply, nothing is
+posted and the reason is shown. Services deemed supplied by regulations under s.27(1) (staff catering,
+reg.8) and transfers to another Member State (s.19(1)(h)) are not recorded this
+way.
 
 On the cash receipts basis a sales invoice creates no output VAT entry at
 invoice time. Each payment against it creates an output VAT entry for the
@@ -293,6 +363,32 @@ this could not have been retrofitted onto a column-based design.
 
 Input VAT is on the invoice date under **both** bases — the cash receipts basis
 in Ireland applies to output VAT only. This asymmetry is deliberate and tested.
+
+An import under postponed accounting (IMPORT_PA) self-accounts VAT on the
+value for import VAT purposes: customs (CIF) value, plus customs/excise duty
+and other charges payable at importation, plus freight from the EU point of
+entry to Ireland (Revenue Customs Manual on Import VAT §2.3). Box PA1 reports
+the customs value plus customs duty (Revenue, completing the VAT3). Both come
+from the customs declaration (`importValuation` on the invoice line, in the
+base currency), never the supplier's invoice; a line without one is posted on
+the invoice net and flagged (#609).
+
+Northern Ireland is a Member State for goods and outside the EU for services
+(the Protocol / Windsor Framework; VIES Traders Manual, Appendix 9; VATCA s.2
+as revised). A trader there is recognised by an `XI` VAT number, or `XI` as its
+country, and `counterpartyInEu` follows the supply kind: goods from an XI
+supplier are an acquisition (E2), goods to an XI customer an intra-Community
+supply (E1 and VIES), and services either way are non-EU (#610).
+
+The cash receipts basis needs Revenue's authorisation (VATCA s.80(1), S.I.
+639/2010 reg.25). Choosing it on the company profile does not put a sale on it:
+a sale is on the cash basis only when an authorisation is recorded from a date
+on or before its tax point (`vatBasisOn`, `src/domain/vat/basis.ts`). Any other
+sale is on the invoice basis, and new companies default to the invoice basis
+(#608). Release on receipt and cancellation on a bad debt follow how each
+invoice was actually posted (`invoiceVatDeferred`), never the basis today, so a
+sale declared on its invoice is not declared again when it is paid
+(s.80(2)(b)).
 
 ---
 
@@ -434,11 +530,23 @@ account. The invoice becomes `written_off` with `outstanding_minor` 0 and
 `written_off_minor` set, so gross = paid + written off. VAT follows the basis:
 on the cash receipts basis the unpaid share of the output VAT was never due and
 is cancelled against deferred VAT (only the net is a bad debt); on the invoice
-basis the VAT was declared, relief under VATCA s.39 is a judgement, and nothing
-is claimed — a review item says relief may be available (#278). A written-off
+basis the VAT was declared, and the write-off claims nothing — a review item
+says relief may be available. A written-off
 invoice cannot be paid, voided or given money on account until
 `reverseBadDebtWriteOff` (the debt recovered) reverses the journal and reopens
 it.
+
+Bad-debt relief on the invoice basis (#620; VATCA s.39(2), S.I. 639/2010
+reg.10) is a separate, later step: `claimBadDebtRelief`. A person states the
+reg.10(3) conditions (reasonable steps taken, allowable under TCA 1997
+s.81(2)(i), the reg.27(1)(m) records kept, the debtor not connected) and that
+the supply is not a s.95 letting (s.39(3)). The relief is A x B / (100 + B),
+A the amount written off and B the rate on the invoice (reg.10(4)). It is
+claimed as deductible tax (reg.10(9)), so it posts to T2 in the period of the
+claim date, and reduces the bad-debt charge. Hire purchase (reg.10(5)), an
+invoice with lines at more than one rate, and an invoice in another currency
+are refused. Reversing a relieved write-off charges the whole relief back to
+T1 in the period of the reversal (reg.10(10)): the debt is restored in full.
 
 ### Debit notes (issue #403)
 
@@ -600,7 +708,9 @@ director's current account, or drawings), posts the business share as the cost
 and the private share to the person, records both on the bank transaction and
 raises a review item; `recordDirectorPaidExpense` records only the business
 share — the private share of a director's personally-paid cost is not the
-company's to record.
+company's to record. A purchase invoice line takes a business-use share too
+(issue #612): only that share of its VAT is deducted, the rest stays in the
+cost, and the line is flagged. See "Dual-use inputs (s.61)".
 
 ### Customer terms (issue #392)
 
@@ -1018,8 +1128,8 @@ bank line ──settleBankTransaction──▶ payment ──allocations──�
 ```
 
 The invoice proves the supply and its VAT; the bank line proves payment. Input
-VAT is dated by the invoice (tax point = supply date, else invoice date) under
-both bases; on the cash receipts basis a sales invoice's output VAT is released
+VAT is dated by the invoice (tax point = supply date, else invoice date; an
+acquisition by s.75) under both bases; on the cash receipts basis a sales invoice's output VAT is released
 by the payment, dated at receipt. One payment may settle several invoices, an
 invoice may be settled in parts, and a credit note allocated in the payment's
 own direction reduces the cash. A remainder is held on account and flagged.
@@ -1221,8 +1331,14 @@ transaction decides either of them.
   invoice line is not pre-selected.
 - The other s.16 reverse charges are flagged with why: scrap metal, a connected
   builder, gas or electricity for resale, energy certificates and emission
-  allowances. Scrap metal is offered `RC_CONSTRUCTION`, which has the same VAT3
-  effect.
+  allowances. Each has its own treatment, citing its own subsection, so the
+  audit trail names the right legal basis (issue #621). Each is offered, never
+  chosen, because the fact it turns on is not recorded. The connected builder
+  is advisory only, so a person chooses `RC_CONNECTED_CONSTRUCTION`.
+- On the RTD, each is placed as the manual places construction services (§4
+  Q4): section 1 at its rate, and section 3 or 4. The manual does not state
+  their placement, so the RTD flags them
+  (`rtd_domestic_reverse_charge_placement`).
 - Construction work sold is flagged, because the customer may be a principal.
 
 **Cash receipts basis (s.80).**
@@ -1253,8 +1369,7 @@ transaction decides either of them.
   - a joint option for taxation;
   - the pre-July-2008 transitional rules (ss.93, 95, 96).
 - **Under a joint option**, the purchaser accounts for the VAT (s.94(6)).
-  `RC_CONSTRUCTION` is offered because it has the same VAT3 effect, but it is
-  not chosen.
+  `RC_PROPERTY_JOINT_OPTION` is offered, but it is not chosen.
 
 **The capital goods scheme (ss.63-64)** is a record, not a rule, and lives in
 `src/domain/vat/capitalGoods.ts`.
@@ -1304,7 +1419,7 @@ auctioneer, is not modelled.
 - **Sources.** The rules come from the revised ss.59-62. The as-enacted s.59
   and s.60 rules are retired: their stored rows get an empty window.
 - **Blocked categories.** s.60(2)(a) is applied exactly as listed, one rule per
-  category, and each decides `NON_DEDUCTIBLE`:
+  category:
   - (i) food, drink, accommodation and personal services;
   - (iii) entertainment;
   - (iv) cars;
@@ -1312,6 +1427,20 @@ auctioneer, is not modelled.
 
   Diesel is not in the list and is not blocked. A van is not a "motor vehicle"
   here.
+- **A block denies the deduction, not the treatment** (issue #616). A matched
+  block is reported beside the treatment (`VatSuggestion.deductionBlocked`,
+  `LineChoices.deductionBlocked`), which the place-of-supply, reverse-charge
+  and rate rules still decide. Posting applies it as
+  `LineCoding.blockedDeductionRuleKey` (the four s.60(2)(a) keys only), so
+  the line's recoverable VAT is 0 and the VAT stays in the cost:
+  - a restaurant bill keeps its Schedule 3 rate, so the VAT recorded is what
+    was charged;
+  - a car leased from a lessor established abroad still self-accounts the
+    reverse charge in T1 and ES2, because s.12 makes the recipient liable;
+    only T2 is nil.
+
+  The `NON_DEDUCTIBLE` treatment stays for a person to choose; no rule decides
+  it.
 - **Qualifying vehicles.** A qualifying vehicle gives 20% of the VAT
   (s.59(2)(d)): first registered from 2021 with CO2 under 140g/km, and at least
   60% business use. This is named on every car line, because the invoice does
@@ -1361,6 +1490,25 @@ adjustment (S.I. 639/2010 reg.17(3)).
 
 Which costs are dual-use, and whether another basis reflects use better
 (s.61(5)), is the person's judgement.
+
+A purchase invoice line marked dual-use (`dualUse`, issue #612) deducts only
+the proportion given. The line records which reg.17(2)(a) basis the
+proportion was taken on:
+
+- (i) actual use in the period;
+- (ii) the preceding review period's proportion
+  (`precedingReviewPeriodProportion` gives the turnover figure);
+- (iii) an estimate;
+- (iv) an officer's direction.
+
+An estimate is flagged, because its basis goes to Revenue with the return
+(reg.17(2)(b)). The rest of the VAT stays in the line's cost.
+
+A line can also carry a business-use share (`businessUseBasisPoints`), where
+the rest of the cost is private use. VAT is deductible only in so far as the
+cost is used for taxable supplies (s.59(2)). The share and the proportion
+multiply, rounded once. Both are stored on the invoice line and noted on its
+VAT entry.
 
 ### Credit notes and the time limit for invoices
 
@@ -1437,6 +1585,20 @@ Corrections are negative entries in an open period. A late document or a
 correction may be declared in a later open period only when the person names
 it (`declarationDate`); the tax point is unchanged and a `period_validation`
 review item is raised.
+
+Input VAT declared late is a claim, and VATCA s.99(4) allows a claim "only
+within 4 years after the end of the taxable period to which it relates"
+(issue #646; `lateClaimLimit`, read as the company's VAT period covering the
+tax point). The claim is made in the return for the period it is declared in,
+which cannot be made before that period ends:
+- the declared period ends after the limit: a purchase invoice is posted with
+  its VAT costed, not claimed, and a review item; any other path that would
+  still claim it is refused before anything is written. A reverse charge
+  still declares its output VAT;
+- it ends in time but its return is due after the limit: the claim stands,
+  and the review item says to make that return by the limit.
+
+s.113 is not this limit: it is Revenue's window for estimates and assessments.
 
 ### Bank transaction
 
@@ -1522,6 +1684,56 @@ checks passed"** or **"NOT READY"** with the specific blocking exceptions. It
 never reports compliance (§48).
 
 ---
+
+## 9a. Tables added since migration 0010
+
+The tables below are not covered by the lifecycle sections above. Each row
+names its invariant; the schema comment in `src/db/schema/` is the detail.
+
+### The business and its people
+
+| Table | Holds | Invariant |
+|---|---|---|
+| `companies.entity_type` | `company`, `sole_trader` or `partnership` | Decides which computations apply; never inferred from the books. |
+| `companies.trade_commenced_on`, `trade_ceased_on` | The dates a trade started and stopped | A person's entry. The income tax basis-period rules read them; nothing writes them from the ledger. |
+| `partners` | The partners of a partnership, with the precedent partner | A partner leaves with `left_on`; the row is kept. |
+| `partner_shares` | A partner's share of profits, in basis points | Effective-dated: a change is a new row from its date that closes the previous one. Nothing is overwritten. |
+| `company_registrations`, `company_trading_names`, `company_trading_activities` | Tax registrations, trading names and activities | Dated with `effective_to` or `ceased_on`; a change is a new row. |
+| `company_members` | A user's role in a book | The role is stored; what it allows lives in `src/domain/auth/permissions.ts`. |
+
+### Tax records that are a person's decision
+
+| Table | Holds | Invariant |
+|---|---|---|
+| `ct_decisions` | Choices the computations cannot settle: an add-back and its provision, an income account's Case, a loss claim, close company or trading status, basis elections, farm reliefs | Write-once. A changed mind is a new row that sets `superseded_by_id` on the old one, which keeps its record. |
+| `capital_goods`, `capital_good_intervals` | The capital goods scheme record (VATCA ss.63-64): one row per good, one per interval with the proportion of deductible use | The adjustment arithmetic is the domain's (`src/domain/vat/capitalGoods.ts`), never typed in. |
+| `company_size_decisions`, `statement_format_mappings` | Company size per financial year, and the mapping of accounts to Schedule 3A formats | Written once; a changed mind is a new row. |
+
+### Operations beside the ledger
+
+These records never post by themselves. Anything that reaches the ledger goes
+through a posting path and the invariants of section 0.
+
+| Table | Holds |
+|---|---|
+| `loans` | A loan's terms; the balance is the ledger's, never stored here. |
+| `recurring_journals`, `recurring_journal_lines`, `recurring_invoices`, `recurring_invoice_lines` | Templates. Each occurrence is an ordinary immutable entry or invoice. |
+| `timing_adjustments` | The workflow record of an accrual or prepayment that reverses itself on a named date; the entries are ordinary. |
+| `customer_contacts`, `invoice_reminders` | Who to write to and what was sent. |
+| `document_retention_policies` | How long each kind of document is kept. |
+| `stocktakes`, `stocktake_lines` | Counts; a difference is a review item, never an adjustment. |
+| `farm_allocations`, `livestock_valuations` | Analysis of posted lines by enterprise (allocations never exceed 100%), and valuations that post a journal. |
+| `rct_subcontractors`, `rct_contracts`, `rct_payments` | Relevant contracts tax records; the rate is Revenue's, carried by each deduction authorisation. |
+| `jobs`, `project_allocations`, `project_budgets`, `project_overhead_rates` | Project costing, analysis beside the ledger; budgets and rates are effective-dated. |
+| `company_budgets`, `company_budget_lines`, `forecast_scenarios`, `forecast_settings`, `forecast_snapshots`, `recurring_bank_patterns`, `recurring_forecast_items`, `scenario_adjustments` | The forecast: a view beside the ledger that never writes journals. Snapshots are immutable once saved. |
+
+### Where the tax computations sit
+
+The corporation tax and income tax computations (`computeCorporationTax`,
+`computeIncomeTax`) are **read-only**. They read the ledger and the decisions
+above and return figures. They never post, and nothing they return is stored
+as a source of truth: the ledger stays the source. A report and the screen
+that shows it call the same function.
 
 ## 10. Provenance
 

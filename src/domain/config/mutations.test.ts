@@ -67,7 +67,7 @@ describe('updateCompany', () => {
     });
 
     const result = updateCompany(db, {
-      companyId, changes: { vatAccountingBasis: 'invoice' },
+      companyId, changes: { vatAccountingBasis: 'cash_receipts' },
     });
     expect(result.changed).toContain('vatAccountingBasis');
     expect(result.warnings.join(' ')).toContain('nothing is restated');

@@ -10,6 +10,7 @@ import { buildVat3Return } from './report';
 import { cashBasisFindings } from './cashBasis';
 import { capitalGoodsFindings } from './capitalGoods';
 import { apportionmentFindings } from './apportionment';
+import { s37RateSource } from './fxRate';
 
 /**
  * VAT period close (README §24).
@@ -263,6 +264,65 @@ export function validateVatPeriod(
       count: unconverted.length,
       entityType: 'vat_entry',
       entityIds: unconverted.map((e) => e.id),
+    });
+  }
+
+  // ---- Foreign-currency VAT at a rate s.37(4) does not name (issue #614) ----
+  // The rate must be the CBI or ECB selling rate when the tax becomes due, or
+  // a method agreed with Revenue. Entries posted before the source was
+  // recorded have none, and are flagged too.
+  const offRate = periodEntries.filter((e) => e.currency !== baseCurrency && s37RateSource(e.fxRateSource) === null);
+  if (offRate.length > 0) {
+    const sources = [...new Set(offRate.map((e) => e.fxRateSource ?? 'not recorded'))].sort();
+    findings.push({
+      code: 'fx_rate_not_s37',
+      severity: 'warning',
+      title: `${offRate.length} foreign-currency VAT entr${offRate.length === 1 ? 'y' : 'ies'} not at a CBI or ECB rate`,
+      detail: `These amounts were converted to ${baseCurrency} at a rate whose source is ${sources.join(', ')}. For VAT, `
+        + 'the rate is the latest selling rate recorded by the Central Bank of Ireland or the European Central Bank for '
+        + 'the currency at the time the tax becomes due, unless a method has been agreed with Revenue (VATCA s.37(4)). '
+        + 'Check the VAT on these entries at that rate; nothing has been converted again.',
+      count: offRate.length,
+      entityType: 'vat_entry',
+      entityIds: offRate.map((e) => e.id),
+    });
+  }
+
+  // ---- The rate's date against the time the tax became due (issue #614) ----
+  // s.37(4) takes the latest rate recorded "at the time the tax becomes due",
+  // which is the entry's tax point: the invoice, or the end of due time, on the
+  // invoice basis (s.74(1)(a)); the receipt on the cash receipts basis
+  // (s.74(2)). Output VAT only: a purchase's tax point is when the input VAT
+  // is deducted, not when the supplier's tax became due.
+  const foreignSales = periodEntries.filter((e) => e.currency !== baseCurrency && e.direction === 'sales');
+  const undated = foreignSales.filter((e) => !e.fxRateDate || e.fxRateDate > e.taxPointDate);
+  if (undated.length > 0) {
+    findings.push({
+      code: 'fx_rate_date_after_tax_point',
+      severity: 'warning',
+      title: `${undated.length} foreign-currency output VAT entr${undated.length === 1 ? 'y' : 'ies'} converted at a rate `
+        + 'not dated by when the tax became due',
+      detail: 'The rate these amounts were converted at is dated after the tax point, or its date was not recorded. '
+        + 'The rate is the latest one recorded at the time the tax becomes due (VATCA s.37(4)), and a rate recorded '
+        + 'afterwards cannot be that. Check the VAT on these entries; nothing has been converted again.',
+      count: undated.length,
+      entityType: 'vat_entry',
+      entityIds: undated.map((e) => e.id),
+    });
+  }
+  const earlier = foreignSales.filter((e) => e.fxRateDate && e.fxRateDate < e.taxPointDate);
+  if (earlier.length > 0) {
+    findings.push({
+      code: 'fx_rate_date_before_tax_point',
+      severity: 'info',
+      title: `${earlier.length} foreign-currency output VAT entr${earlier.length === 1 ? 'y' : 'ies'} converted at a rate `
+        + 'dated before the tax point',
+      detail: 'The rate is the latest one recorded at the time the tax becomes due (VATCA s.37(4)). Check that no later '
+        + 'rate was recorded between the rate\'s date and the tax point. On the cash receipts basis the tax is due at '
+        + 'the receipt (s.74(2)), so VAT released at the invoice\'s rate needs the rate at the receipt.',
+      count: earlier.length,
+      entityType: 'vat_entry',
+      entityIds: earlier.map((e) => e.id),
     });
   }
 

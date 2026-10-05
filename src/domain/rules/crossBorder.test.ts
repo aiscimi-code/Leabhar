@@ -131,6 +131,8 @@ describe('sales abroad', () => {
     const id = customer('Toronto Retail Ltd', 'CA', 'EU_GOODS_SUPPLY');
     const s = suggest('TORONTO RETAIL INV 55', 60_000, { customerId: id });
     expect(s.decidingRule?.ruleKey).toBe('vat.zero_rate_export_outside_community');
+    // Its own treatment, so the RTD reports it in D4 rather than D1 (issue #613).
+    expect(s.treatment?.code).toBe('EXPORT_GOODS');
     expect(s.reviewReasons.join(' ')).toMatch(/proof that the goods were transported outside the EU/);
   });
 });

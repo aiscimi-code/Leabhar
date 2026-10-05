@@ -351,6 +351,27 @@
       "when": 1790593142481,
       "tag": "0049_forecast",
       "breakpoints": true
+    },
+    {
+      "idx": 50,
+      "version": "6",
+      "when": 1791100018860,
+      "tag": "0050_invoice_line_deductible_share",
+      "breakpoints": true
+    },
+    {
+      "idx": 51,
+      "version": "6",
+      "when": 1791100641026,
+      "tag": "0051_vat_entry_fx_rate_source",
+      "breakpoints": true
+    },
+    {
+      "idx": 52,
+      "version": "6",
+      "when": 1791129595409,
+      "tag": "0052_invoice_bad_debt_relief",
+      "breakpoints": true
     }
   ]
 }

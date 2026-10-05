@@ -31,6 +31,7 @@ export const BLOCKED_PETROL_RULE_KEY = 'vat.blocked_petrol';
 export const QUALIFYING_VEHICLE_DISPOSAL_RULE_KEY = 'vat.qualifying_vehicle_disposal';
 export const INVOICE_PARTICULARS_RULE_KEY = 'vat.invoice_prescribed_particulars';
 export const CREDIT_NOTE_RULE_KEY = 'vat.credit_note_reduces_deduction';
+export const LATE_CLAIM_LIMIT_RULE_KEY = 'vat.refund_claim_time_limit';
 
 /** The s.60(2)(a) blocks: when one matches, the general s.59 deduction does not apply. */
 export const BLOCKED_DEDUCTION_RULE_KEYS = [
@@ -42,8 +43,9 @@ export const RETIRED_INPUT_RECOVERY_RULE_KEYS = ['vat.input_deduction_general', 
 
 type Rule = Omit<CuratedVatScopeRule, 'ruleType' | 'topic' | 'crossReferences' | 'accountingEffect' | 'reportingEffect' | 'effectiveFrom' | 'treatment' | 'exceptions'>
   & Partial<Pick<CuratedVatScopeRule, 'crossReferences' | 'accountingEffect' | 'reportingEffect' | 'exceptions'>>;
+// A rule with no conditions is enforced elsewhere and only cited: as a `vat_scope` rule it would attach to every lookup.
 const rule = (r: Rule): CuratedVatScopeRule => ({
-  ruleType: 'other', topic: 'vat_scope', crossReferences: [], accountingEffect: null, reportingEffect: null,
+  ruleType: 'other', topic: r.conditions.length ? 'vat_scope' : 'vat_reference', crossReferences: [], accountingEffect: null, reportingEffect: null,
   effectiveFrom: VATCA_COMMENCEMENT, treatment: null, exceptions: [], ...r,
 });
 const S60 = { citation: '2010 Act 31 s.60', sectionNumber: '60' } as const;
@@ -61,7 +63,9 @@ export const INPUT_RECOVERY_CURATED_RULES: CuratedVatScopeRule[] = [
     ],
     crossReferences: ['VATCA 2010 s.60', 'VATCA 2010 s.61', 'S.I. 639/2010 reg.20 (the invoice)'],
     vatEffect: 'The VAT on the invoice is deductible (T2) in so far as the cost is used for taxable supplies.',
-    interpretationNote: 'Whether the cost is used for taxable supplies is the person\'s confirmation on each line.',
+    interpretationNote: 'Whether the cost is used for taxable supplies is the person\'s confirmation on each line. A '
+      + 'purchase invoice line can carry a business-use share; only that share of its VAT is deducted, and the line is '
+      + 'flagged (issue #612).',
   }),
   rule({
     ...S60, ruleKey: BLOCKED_FOOD_RULE_KEY,
@@ -130,6 +134,18 @@ export const INPUT_RECOVERY_CURATED_RULES: CuratedVatScopeRule[] = [
     interpretationNote: 'Enforced when a confirmed document is posted, not by matching words.',
   }),
   rule({
+    citation: '2010 Act 31 s.99', sectionNumber: '99', ruleKey: LATE_CLAIM_LIMIT_RULE_KEY,
+    name: 'A claim for a refund may be made only within 4 years after the end of its taxable period (s.99(4))',
+    statementExcerpt: 'may be made only within 4 years\nafter the end of the taxable period to which it relates.',
+    conditions: [purchase, desc('\\b(late claim|refund claim|repayment claim|claim for (a )?refund)\\b')],
+    crossReferences: ['VATCA 2010 s.113 (the window for Revenue\'s estimates and assessments, not this limit)'],
+    vatEffect: 'Input VAT declared in a later period than its own (a late declaration) is claimed only if the return '
+      + 'for that later period can be made within 4 years after the end of the period it relates to. Posting a purchase '
+      + 'declared out of time costs the VAT and does not claim it (lateClaimLimit).',
+    interpretationNote: 'Enforced when a late declaration is posted, not by matching words. The taxable period is read '
+      + 'as the company\'s VAT period covering the tax point.',
+  }),
+  rule({
     citation: 'VATCA 2010 s.67', sectionNumber: '67', ruleKey: CREDIT_NOTE_RULE_KEY,
     name: 'A credit note received reduces the deduction by the tax shown on it (s.67(1)(b)(ii))',
     statementExcerpt: 'be reduced by the amount of tax shown on that credit',
@@ -148,7 +164,9 @@ export const INPUT_RECOVERY_CURATED_RULES: CuratedVatScopeRule[] = [
     crossReferences: ['S.I. 639/2010 reg.17 (review period adjustment)'],
     vatEffect: 'Deductible only in the proportion of deductible supplies, by default on turnover for the accounting year.',
     interpretationNote: 'No conditions: citable, never matched. Validating a VAT period computes the turnover proportion '
-      + 'and flags it when the company makes both exempt and taxable supplies (apportionmentFindings).',
+      + 'and flags it when the company makes both exempt and taxable supplies (apportionmentFindings). A purchase invoice '
+      + 'line marked dual-use deducts the proportion given, with the reg.17(2)(a) basis it was taken on; an estimated '
+      + 'proportion is flagged (issue #612).',
   }),
   rule({
     citation: 'VATCA 2010 s.69', sectionNumber: '69', ruleKey: 'vat.invoice_tax_stated_in_error',
@@ -164,8 +182,8 @@ export const INPUT_RECOVERY_CURATED_RULES: CuratedVatScopeRule[] = [
     name: 'Invoices are issued within 15 days after the end of the month of supply (s.70(1), S.I. 639/2010 reg.23)',
     statementExcerpt: 'to be issued in accordance with this Chapter shall be issued within such time',
     conditions: [],
-    vatEffect: 'A sales invoice issued later than 15 days after the month of supply is late; the VAT is still due for the '
-      + 'period of the supply.',
+    vatEffect: 'A sales invoice issued later than 15 days after the month of supply is late; the VAT is due when that '
+      + 'time expired, the 15th of the month after the supply (s.74(1)(a)), not at the invoice date.',
     interpretationNote: 'No conditions: citable, never matched. A confirmed sales invoice issued late is flagged '
       + '(invoice_issued_late).',
   }),

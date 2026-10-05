@@ -49,6 +49,16 @@ describe('generateVatPeriods', () => {
     expect(byDay[0]!.filingDeadline).toBe('2025-03-31');
     expect(byDay[1]!.filingDeadline).toBe('2025-05-31');
   });
+
+  // Issue #623: filingDeadlineDays is a day of the following month, clamped
+  // like the other option; it used to throw on a short month.
+  it('reads filingDeadlineDays as a day of the following month, clamped to its length', () => {
+    const periods = generateVatPeriods(2025, 'monthly', { filingDeadlineDays: 30 });
+    expect(periods[0]!.filingDeadline).toBe('2025-02-28'); // January's return
+    expect(periods[1]!.filingDeadline).toBe('2025-03-30');
+    expect(() => generateVatPeriods(2025, 'monthly', { filingDeadlineDays: 0 })).toThrow(/day of the month/);
+    expect(() => generateVatPeriods(2025, 'monthly', { filingDeadlineDays: 45 })).toThrow(/day of the month/);
+  });
 });
 
 describe('generateFinancialYear', () => {

@@ -1,4 +1,6 @@
 import { suggestJournalMatches } from '@/domain/banking/journalLink';
+import { deemedSupplyGoodsTreatments } from '@/domain/vat/deemedSupply';
+import { invoiceVatDeferred } from '@/domain/vat/basis';
 import { onAccountForInvoice } from '@/domain/invoicing/onAccount';
 import { customerExposure, listCustomerContacts } from '@/domain/parties/customerAccount';
 import { listRecurringInvoices } from '@/domain/invoicing/recurringInvoices';
@@ -490,6 +492,11 @@ export function vatTreatmentList() {
     .orderBy(vatTreatments.jurisdiction, vatTreatments.code).all();
 }
 
+/** The rates a deemed supply of goods may take (issue #658): chosen by the domain, not the page. */
+export function deemedSupplyTreatments() {
+  return deemedSupplyGoodsTreatments(getDb(), requireCompany().id);
+}
+
 export function ruleList() {
   const db = getDb();
   const company = requireCompany();
@@ -942,9 +949,12 @@ export function invoiceDetail(invoiceId: string) {
   const expenseAccounts = db.select().from(accounts)
     .where(and(eq(accounts.companyId, company.id), eq(accounts.type, 'expense'))).orderBy(accounts.code).all();
 
+  // Read from the invoice's own posting, never the basis today (issue #608).
+  const vatDeferred = invoiceVatDeferred(db, invoice);
+
   return {
     invoice, lines, allocations, party, company, onAccount, missingParticulars, counterparts,
-    incomeAccounts, treatmentOptions, adjustsNumber, expenseAccounts,
+    incomeAccounts, treatmentOptions, adjustsNumber, expenseAccounts, vatDeferred,
   };
 }
 

@@ -12,6 +12,11 @@ import { appRoot } from './paths';
  */
 export const OCR_ASSETS: Record<string, { path: string; type: string }> = {
   'worker.min.js': { path: 'node_modules/tesseract.js/dist/worker.min.js', type: 'text/javascript' },
+  // tesseract.js 7 prefers this build when the browser has WASM relaxed SIMD.
+  // The simd and non-simd LSTM files below are the fallbacks it requests otherwise.
+  'tesseract-core-relaxedsimd-lstm.wasm.js': {
+    path: 'node_modules/tesseract.js-core/tesseract-core-relaxedsimd-lstm.wasm.js', type: 'text/javascript',
+  },
   'tesseract-core-simd-lstm.wasm.js': {
     path: 'node_modules/tesseract.js-core/tesseract-core-simd-lstm.wasm.js', type: 'text/javascript',
   },

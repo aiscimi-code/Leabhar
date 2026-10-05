@@ -12,6 +12,7 @@ import {
 import {
   ingestSi692025Reg5, ingestSi692025Reg8, ingestSi692025Reg9, deriveSi692025Rules, SI_69_2025_MD_PATH,
 } from './si692025Ingestion';
+import { sourceAuthorityRank } from './sourceHierarchy';
 import { lookupTransactionRules, identifyTopics, transactionContextFromQueryParams } from './transactionLookup';
 import { deriveVatScopeRules } from './vatScopeIngestion';
 import { irishTaxRules } from '@/db/schema';
@@ -251,6 +252,31 @@ describe('lookupTransactionRules — issue #136 data-quality gates', () => {
     expect(result.unresolvedFields).toContain('transactionDate');
     expect(result.reviewRequired).toBe(true);
     expect(result.reviewReasons.join(' ')).toMatch(/not a valid ISO date/);
+  });
+
+  it('returns no rules for an empty transactionDate, rather than looking up today\'s (issue #277)', () => {
+    const result = lookupTransactionRules(db, {
+      companyId,
+      transaction: { transactionDate: '', amountMinor: 100000, transactionType: 'payroll' },
+    });
+    expect(result.applicableRules).toEqual([]);
+    expect(result.candidateCount).toBe(0);
+    expect(result.unresolvedFields).toContain('transactionDate');
+    expect(result.reviewReasons.join(' ')).toMatch(/not a valid ISO date/);
+  });
+
+  it('returns the rules ranked by source authority, legislation first (issue #277)', () => {
+    const result = lookupTransactionRules(db, {
+      companyId,
+      transaction: {
+        transactionDate: '2026-09-18', amountMinor: 100000, currency: 'EUR',
+        vatRegistered: true, supplyType: 'services', counterpartyCountry: 'IE',
+      },
+    });
+    expect(result.applicableRules.length).toBeGreaterThan(0);
+    const ranks = result.applicableRules.map((r) => r.sourceAuthority);
+    expect(ranks).toEqual([...ranks].sort((a, b) => a - b));
+    expect(result.applicableRules.every((r) => r.sourceAuthority === sourceAuthorityRank(r.sourceType))).toBe(true);
   });
 
   it('rejects a negative amountMinor instead of attaching VAT rate/deduction rules', () => {

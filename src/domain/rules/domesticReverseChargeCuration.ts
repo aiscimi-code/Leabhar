@@ -10,9 +10,11 @@
  * The others turn on facts no transaction shows: whether the recipient deals in
  * scrap metal (s.16(4)), is connected with the builder (s.16(5), s.97(3)), is a
  * taxable dealer in gas or electricity (s.16(6)), or received emission
- * allowances or energy certificates (s.16(2), (7)). Each is bound to no
- * treatment and says why (`DOMESTIC_RC_GAPS`). NAMA vesting orders (s.16(1))
- * are not modelled: this company is neither NAMA nor a NAMA entity.
+ * allowances or energy certificates (s.16(2), (7)). Each decides no treatment
+ * and says why (`DOMESTIC_RC_GAPS`); each has its own treatment, which is
+ * offered (`DOMESTIC_RC_OFFERS`, issue #621) or, for a connected builder,
+ * chosen by a person. NAMA vesting orders (s.16(1)) are not modelled: this
+ * company is neither NAMA nor a NAMA entity.
  */
 import type { IrishRuleCondition } from '@/db/schema';
 import type { CuratedVatScopeRule } from './vatScopeCuration';
@@ -118,7 +120,7 @@ export const DOMESTIC_RC_CURATED_RULES: CuratedVatScopeRule[] = [
     statementExcerpt: 'makes a supply of a gas or an\nelectricity certificate',
     conditions: [is('direction', 'purchase'), desc('\\b(guarantees? of origin|(gas|electricity|energy|renewable) certificates?)\\b')],
     vatEffect: 'The business receiving the certificate accounts for the VAT.',
-    interpretationNote: 'No treatment is configured for this reverse charge: the line is flagged.',
+    interpretationNote: 'Whether the supplier is a taxable person in the State is not recorded: the line is flagged.',
   }),
   rule({
     ...S16, ruleKey: 'vat.domestic_reverse_charge_emission_allowances',
@@ -126,7 +128,7 @@ export const DOMESTIC_RC_CURATED_RULES: CuratedVatScopeRule[] = [
     statementExcerpt: 'receives greenhouse gas emission allowances from\nanother taxable person',
     conditions: [is('direction', 'purchase'), desc('\\b(emissions? allowances?|carbon (credits?|allowances?)|EUAs?)\\b')],
     vatEffect: 'The business receiving the allowances accounts for the VAT.',
-    interpretationNote: 'No treatment is configured for this reverse charge: the line is flagged.',
+    interpretationNote: 'Whether the supplier is a taxable person in the State is not recorded: the line is flagged.',
   }),
 ];
 
@@ -149,13 +151,24 @@ export const DOMESTIC_RC_GAPS: Record<string, string> = {
     + 'RCT, it accounts for the VAT (s.16(3)): the invoice charges none and states that the principal is liable. '
     + 'Otherwise charge VAT at the rate for the work. Confirm which.',
   'vat.domestic_reverse_charge_scrap_metal': 'If the company deals in scrap metal, it accounts for the VAT on scrap '
-    + 'it buys (s.16(4)). RC_CONSTRUCTION has the same VAT3 effect (T1 and T2); choose it only if s.16(4) applies.',
+    + 'it buys (s.16(4)): choose RC_SCRAP_METAL. Otherwise the supplier charges VAT.',
   'vat.domestic_reverse_charge_connected_construction': 'Construction work from a connected builder (s.97(3)) is '
-    + 'reverse-charged (s.16(5)). Whether the builder is connected is not recorded: confirm it.',
+    + 'reverse-charged (s.16(5)): choose RC_CONNECTED_CONSTRUCTION. Whether the builder is connected is not '
+    + 'recorded: confirm it.',
   'vat.domestic_reverse_charge_gas_electricity_dealer': 'Gas or electricity bought for resale by a taxable dealer '
-    + 'is reverse-charged (s.16(6)). Confirm the company is such a dealer.',
+    + 'is reverse-charged (s.16(6)): choose RC_GAS_ELECTRICITY. Confirm the company is such a dealer.',
   'vat.domestic_reverse_charge_energy_certificates': 'The recipient of a gas or electricity certificate accounts '
-    + 'for the VAT (s.16(7)). No treatment is configured for it: record it with your adviser.',
+    + 'for the VAT (s.16(7)): choose RC_ENERGY_CERTIFICATES once you have confirmed the supplier is a taxable person '
+    + 'carrying on business in the State.',
   'vat.domestic_reverse_charge_emission_allowances': 'The recipient of emission allowances accounts for the VAT '
-    + '(s.16(2)). No treatment is configured for it: record it with your adviser.',
+    + '(s.16(2)): choose RC_EMISSION_ALLOWANCES once you have confirmed the supplier is a taxable person carrying on '
+    + 'business in the State.',
+};
+
+/** The treatment each flag-only s.16 rule offers (issue #621): its own subsection, never RC_CONSTRUCTION. */
+export const DOMESTIC_RC_OFFERS: Record<string, string> = {
+  'vat.domestic_reverse_charge_scrap_metal': 'RC_SCRAP_METAL',
+  'vat.domestic_reverse_charge_gas_electricity_dealer': 'RC_GAS_ELECTRICITY',
+  'vat.domestic_reverse_charge_energy_certificates': 'RC_ENERGY_CERTIFICATES',
+  'vat.domestic_reverse_charge_emission_allowances': 'RC_EMISSION_ALLOWANCES',
 };

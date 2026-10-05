@@ -11,6 +11,7 @@ import { postJournalEntry, assertAccountingPeriodOpen } from '../accounting/jour
 import { systemAccountId } from '../config/setup';
 import { createVatEntries, assertVatPeriodWritable } from '../vat/engine';
 import { computeVatReleases } from './payments';
+import { invoiceVatDeferred } from '../vat/basis';
 
 /**
  * Money held on account (issue #386).
@@ -195,8 +196,7 @@ export function allocatePaymentOnAccount(
   // The tax point is the original receipt date (s.80(1)), never the
   // application date. Computed before anything is written; the writability of
   // the period is checked before that too, so a refusal leaves nothing behind.
-  const releasesCashBasisVat = invoice.direction === 'sales'
-    && invoice.vatMinor !== 0 && company.vatAccountingBasis === 'cash_receipts';
+  const releasesCashBasisVat = invoiceVatDeferred(db, invoice);
   const vatReleases = releasesCashBasisVat
     ? computeVatReleases(db, [{ invoice, invoiceAllocatedMinor: params.amountMinor }])
     : [];
@@ -287,13 +287,15 @@ export function allocatePaymentOnAccount(
           // The tax point is the day the money arrived (s.80(1)), not the day
           // it was applied. This is the whole point of the basis.
           taxPointDate: asIsoDate(payment.paymentDate),
+          // The rate is the one chargeable when the supply was made (s.80(2)(a), #615).
+          rateDate: asIsoDate(invoice.supplyDate ?? invoice.invoiceDate),
           declarationDate: declarationDate ? asIsoDate(declarationDate) : undefined,
           netMinor: release.netMinor,
           statedVatMinor: release.vatMinor,
           currency: invoice.currency,
           baseCurrency: base,
           fxRate: invoice.fxRateNumerator && invoice.fxRateDenominator
-            ? { numerator: invoice.fxRateNumerator, denominator: invoice.fxRateDenominator }
+            ? { numerator: invoice.fxRateNumerator, denominator: invoice.fxRateDenominator, source: invoice.fxRateSource, date: invoice.fxRateDate }
             : undefined,
           source: 'user',
           provenanceStatus: 'manually_entered',

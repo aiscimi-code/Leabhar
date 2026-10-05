@@ -96,6 +96,15 @@ export const invoices = sqliteTable('invoices', {
   writtenOffJournalEntryId: text('written_off_journal_entry_id'),
   writtenOffAt: text('written_off_at'),
   writeOffReason: text('write_off_reason'),
+  /**
+   * Bad-debt relief claimed on the write-off (issue #620; VATCA s.39(2), S.I.
+   * 639/2010 reg.10): the tax relieved, the adjustment that claimed it in T2,
+   * and the day it was claimed. Cleared, with the tax charged again, when the
+   * write-off is reversed (reg.10(10)).
+   */
+  badDebtReliefMinor: integer('bad_debt_relief_minor').notNull().default(0),
+  badDebtReliefJournalEntryId: text('bad_debt_relief_journal_entry_id'),
+  badDebtReliefClaimedAt: text('bad_debt_relief_claimed_at'),
   voidedAt: text('voided_at'),
   voidReason: text('void_reason'),
 
@@ -191,6 +200,18 @@ export const invoiceLines = sqliteTable('invoice_lines', {
   documentLineId: text('document_line_id'),
   /** The statutory rules behind the VAT treatment chosen for this line. */
   vatRuleKeys: text('vat_rule_keys', { mode: 'json' }).$type<string[]>().notNull().default([]),
+  /**
+   * A purchase line's input VAT deduction share (issue #612), as posted: the
+   * business-use share where the cost is also used privately (s.59(2)), and
+   * the proportion of tax deductible on a dual-use input with the basis it was
+   * taken on (s.61, S.I. 639/2010 reg.17(2)(a)). Null when the line is wholly
+   * for the business, or not dual-use.
+   */
+  businessUseBasisPoints: integer('business_use_basis_points'),
+  dualUseProportionBasisPoints: integer('dual_use_proportion_basis_points'),
+  dualUseBasis: text('dual_use_basis', {
+    enum: ['actual_use', 'preceding_review_period', 'estimate', 'officer_direction'],
+  }),
 
   notes: text('notes'),
   ...provenance,

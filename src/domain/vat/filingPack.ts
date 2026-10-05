@@ -1,4 +1,5 @@
 import { and, eq, gte, lte } from 'drizzle-orm';
+import { vatBasisForPeriod, type PeriodBasis } from './basis';
 import type { AppDatabase } from '@/db';
 import {
   vatPeriods, companies, vatTreatments, documents, bankTransactions,
@@ -34,7 +35,8 @@ export interface FilingPack {
   companyId: string;
   companyName: string;
   vatNumber: string | null;
-  vatBasis: 'invoice' | 'cash_receipts';
+  /** The basis the period's sales were declared on (issue #608): from the authorisation, not the profile alone. */
+  vatBasis: PeriodBasis['basis'];
   basisNote: string;
 
   periodId: string;
@@ -174,17 +176,14 @@ export function buildFilingPack(
     };
   });
 
+  const periodBasis = vatBasisForPeriod(company, period.startDate, period.endDate);
+
   return {
     companyId: company.id,
     companyName: company.legalName,
     vatNumber: company.vatNumber,
-    vatBasis: company.vatAccountingBasis,
-    basisNote: company.vatAccountingBasis === 'cash_receipts'
-      ? 'Prepared on the cash receipts basis: VAT on sales arises when payment is received, '
-        + 'so a sale invoiced in an earlier period appears here if it was paid in this one. '
-        + 'VAT on purchases is claimed by reference to the supplier’s invoice date.'
-      : 'Prepared on the invoice basis: VAT on sales arises when the invoice is issued, '
-        + 'whether or not it has been paid.',
+    vatBasis: periodBasis.basis,
+    basisNote: periodBasis.note,
     periodId: period.id,
     periodName: period.name,
     startDate: period.startDate,

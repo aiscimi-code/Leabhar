@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { eq, and } from 'drizzle-orm';
-import { createTestDatabase, insertConfirmedDocument } from '@/db/testing';
+import { createTestDatabase, insertConfirmedDocument, testVatBasis } from '@/db/testing';
 import { createCompany, addBankAccount, systemAccountId } from '../config/setup';
 import { createInvoice, voidInvoice, InvoicingError } from './invoices';
 import { recordPayment, outstandingInvoices, agedAnalysis } from './payments';
@@ -27,7 +27,7 @@ const setup = (basis: 'invoice' | 'cash_receipts' = 'cash_receipts') => {
   ({ db } = createTestDatabase());
   const created = createCompany(db, {
     legalName: 'Acme Ltd', vatRegistrationStatus: 'registered',
-    vatAccountingBasis: basis, seedYears: [2025],
+    ...testVatBasis(basis), seedYears: [2025],
   });
   companyId = created.companyId;
   acc = created.accountsByKey;

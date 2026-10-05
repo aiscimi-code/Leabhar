@@ -9,6 +9,7 @@ on:
 jobs:
   build-windows:
     runs-on: windows-latest
+    timeout-minutes: 30
     env:
       VT_API_KEY: ${{ secrets.VT_API_KEY }}
     permissions:
@@ -21,7 +22,9 @@ jobs:
           node-version: '22'
           cache: npm
 
-      - run: Remove-Item -Force package-lock.json -ErrorAction SilentlyContinue; npm install
+      # --ignore-scripts: better-sqlite3 13 ships a prebuilt Windows binary, but
+      # npm would still run node-gyp over it, which needs Visual Studio.
+      - run: npm ci --ignore-scripts
 
       - name: Build standalone package
         run: node scripts/build-package.mjs

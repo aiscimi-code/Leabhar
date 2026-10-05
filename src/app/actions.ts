@@ -12,6 +12,7 @@ import { allocatePaymentOnAccount } from '@/domain/invoicing/onAccount';
 import { applyCreditNote, unapplyCreditNote, refundOnAccount } from '@/domain/invoicing/customerCredit';
 import { createInvoice } from '@/domain/invoicing/invoices';
 import { writeOffBadDebt, reverseBadDebtWriteOff } from '@/domain/invoicing/badDebts';
+import { recordDeemedSupply } from '@/domain/vat/deemedSupply';
 import { produceReminderLetter } from '@/domain/invoicing/receivables';
 import { setSupplierTerms } from '@/domain/parties/supplierAccount';
 import { reconcileSupplierStatement } from '@/domain/invoicing/supplierStatements';
@@ -1363,6 +1364,66 @@ export async function reverseBadDebtAction(formData: FormData): Promise<ActionRe
     revalidatePath(`/invoices/${invoiceId}`);
     revalidatePath('/invoices');
     return { ok: true, message: 'Write-off reversed. The invoice is open again.' };
+  } catch (error) {
+    return fail(error);
+  }
+}
+
+/**
+ * Record a deemed supply (issue #658). The person states the facts; the domain
+ * works out whether it is a supply, the taxable amount and the VAT. When it is
+ * not a supply, nothing is posted and the reason is shown.
+ */
+export async function recordDeemedSupplyAction(formData: FormData): Promise<ActionResult> {
+  try {
+    await requireActor('journals.post');
+    const company = requireCompany();
+    const field = (key: string) => String(formData.get(key) ?? '').trim();
+    const yes = (key: string, question = 'every question') => {
+      const value = field(key);
+      if (value !== 'yes' && value !== 'no') throw new Error(`Answer ${question} yes or no: each one decides whether VAT is due.`);
+      return value === 'yes';
+    };
+    const whole = (key: string, what: string) => {
+      const value = field(key);
+      if (!/^\d+$/.test(value)) throw new Error(`${what} must be a whole number.`);
+      return Number(value);
+    };
+    const common = {
+      companyId: company.id, date: field('date'), accountId: field('accountId'),
+      description: field('description'), recordedBy: await actorName(),
+    };
+    const kind = field('kind');
+    let result;
+    if (kind === 'goods') {
+      const use = field('use');
+      if (use !== 'gift' && use !== 'private_use') throw new Error('Say whether the goods were given away or taken for private use.');
+      result = recordDeemedSupply(getDb(), {
+        ...common, kind, use, costMinor: parseAmount(field('cost'), company.baseCurrency),
+        treatmentCode: field('treatmentCode'), taxDeductedOrTransferred: yes('taxDeductedOrTransferred'),
+        ...(use === 'gift'
+          ? {
+            partOfSeriesToSamePerson: yes('partOfSeriesToSamePerson', 'whether the gift is one of a series to the same person'),
+            industrialSamples: yes('industrialSamples', 'whether the gift is industrial samples'),
+          }
+          : {}),
+      });
+    } else if (kind === 'immovable_private_use') {
+      result = recordDeemedSupply(getDb(), {
+        ...common, kind, acquiredOn: field('acquiredOn'),
+        acquisitionTaxableAmountMinor: parseAmount(field('acquisitionAmount'), company.baseCurrency),
+        privateFloorArea: whole('privateFloorArea', 'The private floor area'),
+        totalFloorArea: whole('totalFloorArea', 'The total floor area'),
+        treatedAsBusinessAsset: yes('treatedAsBusinessAsset'),
+      });
+    } else {
+      throw new Error('Say what kind of deemed supply this is.');
+    }
+    if (!result.posted) return { ok: true, message: 'Nothing posted: this is not a supply.', warnings: [result.reason] };
+    revalidatePath('/vat');
+    revalidatePath('/adjustments');
+    revalidatePath('/review');
+    return { ok: true, message: `Posted. ${result.working}` };
   } catch (error) {
     return fail(error);
   }

@@ -1,6 +1,6 @@
-import { and, eq, gte, lte, notInArray } from 'drizzle-orm';
+import { and, eq, gt, gte, isNotNull, lte, notInArray } from 'drizzle-orm';
 import type { AppDatabase } from '@/db';
-import { companies, invoices, invoiceLines, vatTreatments } from '@/db/schema';
+import { bankTransactions, companies, invoices, invoiceLines, vatEntries, vatTreatments } from '@/db/schema';
 import { multiplyRational } from '../money';
 import { addDays, addYears, asIsoDate, makeDate } from '../dates';
 
@@ -49,17 +49,60 @@ export function turnoverProportion(db: AppDatabase, params: { companyId: string;
     )).all();
   let deductible = 0;
   let exempt = 0;
+  const add = (code: string | null, base: number) => {
+    if (code === 'OUT_OF_SCOPE') return;
+    if (code === 'IE_EXEMPT') exempt += base; else deductible += base;
+  };
   for (const r of rows) {
-    if (r.code === 'OUT_OF_SCOPE') continue;
     // In base currency: the line's share of the invoice's base net.
-    const base = r.invNet ? multiplyRational(r.lineNet, r.invBaseNet, r.invNet) : r.lineNet;
-    if (r.code === 'IE_EXEMPT') exempt += base; else deductible += base;
+    add(r.code, r.invNet ? multiplyRational(r.lineNet, r.invBaseNet, r.invNet) : r.lineNet);
   }
+
+  // Sales recorded from the bank, with no invoice (issue #637). A rated sale
+  // always has a VAT entry, which carries its base net; a reversed
+  // classification's entries are negated, so they net out.
+  const bankEntries = db.select({ baseNet: vatEntries.baseNetMinor, code: vatTreatments.code }).from(vatEntries)
+    .leftJoin(vatTreatments, eq(vatEntries.vatTreatmentId, vatTreatments.id))
+    .where(and(
+      eq(vatEntries.companyId, params.companyId), eq(vatEntries.sourceType, 'bank_transaction'),
+      eq(vatEntries.direction, 'sales'), eq(vatEntries.isReverseChargeLeg, false),
+      gte(vatEntries.taxPointDate, params.yearStart), lte(vatEntries.taxPointDate, params.yearEnd),
+    )).all();
+  for (const e of bankEntries) add(e.code, e.baseNet);
+  // A receipt classified under a treatment that charges no rate (an exempt
+  // sale) writes no VAT entry: its whole amount is the net. A receipt that
+  // settles an invoice carries no treatment, and is counted with the invoice.
+  const unrated = db.select({
+    amount: bankTransactions.amountMinor, baseAmount: bankTransactions.baseAmountMinor, code: vatTreatments.code,
+  }).from(bankTransactions)
+    .innerJoin(vatTreatments, eq(bankTransactions.vatTreatmentId, vatTreatments.id))
+    .where(and(
+      eq(bankTransactions.companyId, params.companyId), eq(bankTransactions.status, 'posted'),
+      isNotNull(bankTransactions.journalEntryId), gt(bankTransactions.amountMinor, 0),
+      eq(vatTreatments.appliesRate, false),
+      gte(bankTransactions.transactionDate, params.yearStart), lte(bankTransactions.transactionDate, params.yearEnd),
+    )).all();
+  for (const t of unrated) add(t.code, t.baseAmount ?? t.amount);
   const total = deductible + exempt;
   return {
     yearStart: params.yearStart, yearEnd: params.yearEnd, deductibleMinor: deductible, exemptMinor: exempt, totalMinor: total,
     proportionBp: total > 0 ? multiplyRational(deductible, 10_000, total) : null,
   };
+}
+
+/**
+ * The turnover proportion for the review period before the one containing a
+ * date: the accounting year that ends the day before it starts (S.I. 639/2010
+ * reg.17(1)). It is the figure for basis (ii) of reg.17(2)(a), where the
+ * preceding review period's proportion was calculated on turnover (s.61(4));
+ * whether turnover reflects use is the person's call (s.61(5)). Like
+ * `turnoverProportion`, it counts posted sales, invoiced or recorded from the
+ * bank, and does not exclude incidental transactions under s.61(6)(b).
+ */
+export function precedingReviewPeriodProportion(db: AppDatabase, params: { companyId: string; date: string }): TurnoverProportion {
+  const current = accountingYearContaining(db, params.companyId, params.date);
+  const previous = accountingYearContaining(db, params.companyId, addDays(asIsoDate(current.start), -1));
+  return turnoverProportion(db, { companyId: params.companyId, yearStart: previous.start, yearEnd: previous.end });
 }
 
 export interface ApportionmentFinding { code: 'dual_use_apportionment'; title: string; detail: string }

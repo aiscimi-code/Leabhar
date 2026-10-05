@@ -2,6 +2,7 @@
 title: "S.I. 312/1996 art. 92 (LRC revised)"
 citation: "S.I. 312/1996 s.92"
 source_url: "https://revisedacts.lawreform.ie/eli/1996/si/312/revised/en/html"
+source_html_sha256: "e3eeea0d5010fa2163c79b0e0be898bf5a1bca92fbc7c69e2e7b390f052f9022"
 source_type: legislation
 jurisdiction: IE
 conversion: official-html-plaintext
