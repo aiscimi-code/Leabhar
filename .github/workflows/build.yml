@@ -21,7 +21,7 @@ jobs:
           node-version: '22'
           cache: npm
 
-      - run: Remove-Item -Force package-lock.json -ErrorAction SilentlyContinue; npm install
+      - run: npm ci
 
       - name: Build standalone package
         run: node scripts/build-package.mjs
