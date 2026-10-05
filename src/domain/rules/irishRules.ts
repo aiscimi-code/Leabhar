@@ -419,6 +419,8 @@ export interface LookupResult {
   sourceEnd: number | null;
   sourceUrl: string;
   citation: string;
+  /** What kind of source the rule's provision comes from; ranks it (sourceHierarchy.ts). */
+  sourceType: IrishSourceType;
 }
 
 const LOOKUP_COLUMNS = {
@@ -452,6 +454,7 @@ const LOOKUP_COLUMNS = {
   sourceEnd: irishActProvisions.sourceEnd,
   sourceUrl: irishKnowledgeSources.sourceUrl,
   citation: irishKnowledgeSources.citation,
+  sourceType: irishKnowledgeSources.sourceType,
 } as const;
 
 function toLookupResult(row: Record<string, unknown>): LookupResult {

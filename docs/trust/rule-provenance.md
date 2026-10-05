@@ -78,10 +78,12 @@ verified by a qualified professional before Leabhar treats them as authoritative
    qualifying-activities list, partial exemption, and apportionment rules.
    - **Status**: `RULE_REQUIRES_AUTHORITATIVE_VERIFICATION`
 
-3. **VATCA s.46 rates** — the KB records 21%/13.5%/4.8% from the 2010 enactment,
-   but the standard rate has since been amended to 23% via Finance Acts not
-   ingested into this KB. The current rate (23%) is a **seeded configuration**
-   value (`createCompany`), not a knowledge-base rule.
+3. **VATCA s.46 rates** — the as-enacted s.46 (21%/13.5%/4.8% from 2010) is
+   deliberately **not curated** (`vatcaCuration.ts`). The current rates come from
+   the LRC-revised s.46 as dated versions of `vat.rate_standard_current`,
+   `vat.rate_reduced_current` and `vat.rate_livestock_current`
+   (`vatcaRevisedCuration.ts`). The 23% figure the books post with is a
+   **seeded configuration** value (`createCompany`), not a knowledge-base rule.
    - **Status**: `RULE_REQUIRES_AUTHORITATIVE_VERIFICATION`
    - **Note**: The system correctly flags rate rules as requiring review;
    it never silently uses an unspecified rate.
@@ -97,9 +99,9 @@ and are NOT derived from statute ingestion. They are snapshots in the
 | `VAT_STD` | 23% | IE | Seeded config; current as of 2025 |
 | `VAT_RED` | 13.5% | IE | Seeded config; current as of 2025 |
 
-The gap between the KB's 21% (from VATCA 2010 §46) and the current 23% is
-**documentated**, not silently papered over. The KB's rate rules carry
-`requiresGuidance: true` and never produce an authoritative rate on their own.
+The as-enacted 21% (VATCA 2010 §46) is not in the KB, so it cannot be returned
+for a current transaction. The KB's current-rate rules are `ai_extracted` and
+flagged for review, and never produce an authoritative rate on their own.
 
 ## Rule ingestion chain
 

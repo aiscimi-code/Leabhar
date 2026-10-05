@@ -3288,19 +3288,15 @@
       "id": "fa2024:s13",
       "area": "other_source",
       "title": "Finance Act 2024 s.13 — pension standard fund threshold",
-      "status": "rule",
-      "ruleKeys": [
-        "pension.standard_fund_threshold"
-      ]
+      "status": "not_applicable",
+      "reason": "Pensions are outside the product's scope. The retired rule stated 2,000,000 euro from 2026, but the provision gives that figure for 2014 to 2025 and a ladder after it (issue #277)."
     },
     {
       "id": "fa2024:s48",
       "area": "other_source",
       "title": "Finance Act 2024 s.48 — film tax credit",
-      "status": "rule",
-      "ruleKeys": [
-        "film.tax_credit_rate"
-      ]
+      "status": "not_applicable",
+      "reason": "Film tax credit is outside what the tools compute. It commences on a day the Minister appoints by order, which this knowledge base does not hold, so the rule was dated from the Act in error (issue #277)."
     },
     {
       "id": "fa2024:s78",
