@@ -9,6 +9,7 @@ on:
 jobs:
   build-windows:
     runs-on: windows-latest
+    timeout-minutes: 30
     env:
       VT_API_KEY: ${{ secrets.VT_API_KEY }}
     permissions:

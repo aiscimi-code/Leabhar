@@ -69,6 +69,10 @@ copy('drizzle migrations', join(ROOT, 'drizzle'), join(STANDALONE, 'drizzle'));
 const INBOX = join(ROOT, 'docs', 'statutes', '_inbox');
 copy('statute sources', join(ROOT, 'docs', 'statutes'), join(STANDALONE, 'docs', 'statutes'),
   (src) => src !== INBOX && !src.startsWith(INBOX + sep));
+// Next's file tracing already pulled the whole statutes directory into the
+// standalone output (the knowledge base reads it dynamically), `_inbox`
+// included, so the filter above cannot keep it out: remove it explicitly.
+rmSync(join(STANDALONE, 'docs', 'statutes', '_inbox'), { recursive: true, force: true });
 
 // 3c. Copy the OCR and PDF-rendering assets the review screen serves to the
 // browser (issue #202). The list mirrors OCR_ASSETS in src/lib/ocrAssets.ts;
