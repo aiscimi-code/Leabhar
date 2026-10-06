@@ -4,7 +4,8 @@ import { createHash } from 'node:crypto';
 import { eq } from 'drizzle-orm';
 import { createTestDatabase } from '@/db/testing';
 import { createCompany } from '../config/setup';
-import { irishActProvisions, irishKnowledgeSources } from '@/db/schema';
+import { irishActProvisions, irishKnowledgeSources, irishTaxRules, reviewItems } from '@/db/schema';
+import { ids } from '@/lib/ids';
 import type { AppDatabase } from '@/db';
 import {
   CATALOGUE_ENTRIES, catalogueOfficialFilePath, catalogueRulesFor, ingestCatalogueEntry, readCatalogueEntry, validateCatalogueEntry,
@@ -117,6 +118,41 @@ describe('ingestCatalogueEntry', () => {
     };
     expect(ingestCatalogueEntry(d, { companyId: c, entry: moved, localPath: 'catalogue/x.json', ingestVersion: 'v2' }).ingested).toBe(true);
     expect(d.select().from(irishKnowledgeSources).all()).toHaveLength(2);
+  });
+
+  it('supersedes a copy that differs only by punctuation, and records the change (#706)', () => {
+    const { d, c } = fresh();
+    const official = s46();
+    const copy: CatalogueEntry = {
+      ...official,
+      source: { ...official.source, sha256: '0'.repeat(64) },
+      provisions: official.provisions.map((p, i) => i === 0
+        ? { ...p, excerpt: p.excerpt.replace(',', '') }
+        : p),
+    };
+    const before = ingestCatalogueEntry(d, { companyId: c, entry: copy, localPath: 'docs/statutes/x.md', ingestVersion: 'v1' });
+    const provisionId = d.select({ id: irishActProvisions.id }).from(irishActProvisions)
+      .where(eq(irishActProvisions.sourceId, before.sourceId)).get()!.id;
+    d.insert(irishTaxRules).values({
+      id: ids.taxRule(), companyId: c, provisionId, ruleKey: 'vat.punctuation_copy', topic: 'vat',
+      name: 'Copy rule', statement: 'A rule taken from the copy.', effectiveFrom: '2010-11-01',
+    }).run();
+
+    const after = ingestCatalogueEntry(d, { companyId: c, entry: official, localPath: 'catalogue/x.json', ingestVersion: 'v1' });
+    expect(after.ingested).toBe(true);
+    expect(after.repointed).toBe(1);
+    expect(after.sourceId).not.toBe(before.sourceId);
+    expect(d.select().from(irishKnowledgeSources).all()).toHaveLength(2);
+    const rule = d.select().from(irishTaxRules).where(eq(irishTaxRules.ruleKey, 'vat.punctuation_copy')).get()!;
+    expect(rule.provisionId).not.toBe(provisionId);
+    const pointed = d.select().from(irishActProvisions).where(eq(irishActProvisions.id, rule.provisionId)).get()!;
+    expect(pointed.sourceId).toBe(after.sourceId);
+    const item = d.select().from(reviewItems).where(eq(reviewItems.companyId, c)).get()!;
+    expect(item.dedupeKey).toBe(`catalogue-punctuation:${official.source.citation}`);
+    expect(item.status).toBe('open');
+
+    const again = ingestCatalogueEntry(d, { companyId: c, entry: official, localPath: 'catalogue/x.json', ingestVersion: 'v1' });
+    expect(again).toEqual({ ...after, ingested: false, repointed: 0 });
   });
 });
 
