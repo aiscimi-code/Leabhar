@@ -1,0 +1,26 @@
+{
+  "format": 1,
+  "source": {
+    "citation": "2014 Act 38 s.280B",
+    "title": "Companies Act 2014 s.280B (revised)",
+    "sourceType": "legislation",
+    "jurisdiction": "IE",
+    "sourceUrl": "https://revisedacts.lawreform.ie/eli/2014/act/38/section/280B/revised/en/html",
+    "sha256": "afab402f3596335cd9958b3e3c028578abcebd31ccbc270fa1ff626d15c72c8f",
+    "conversion": "lrc-html-plaintext",
+    "retrievedOn": "2026-10-06",
+    "note": "LRC-revised text as retrieved — a live, continuously-updated page, not a dated historical snapshot. Distinct source row per section, never merged with any other Companies Act 2014 section."
+  },
+  "provisions": [
+    {
+      "sectionNumber": "280B",
+      "heading": "Qualification of company as small company: holding company",
+      "locator": "s.280B",
+      "category": "other",
+      "relevant": false,
+      "relevanceReason": "Uncategorised by heading/body keyword match; needs human review to determine relevance.",
+      "excerpt": "280B.\n(1) A holding company qualifies as a small company in relation to a financial year\nonly if the group, in respect of which it is the holding company, qualifies as a small\ngroup in relation to that same financial year.\n\n(2) A group that is not excluded by\nsubsection (5)\nqualifies as a small group in relation to the first financial year of the holding\ncompany if the qualifying conditions are satisfied in respect of that year.\n\n(3) A group that is not excluded by\nsubsection (5)\nqualifies as a small group in relation to a subsequent financial year (in this subsection\nreferred to as \"relevant year\") of the holding company if the qualifying conditions\n—\n\n(a) are satisfied in respect of the relevant year and the financial year immediately\npreceding the relevant year,\n\n(b) are satisfied in respect of the relevant year and the group qualified as a small\ngroup in relation to the financial year immediately preceding the relevant year, or\n\n(c) were satisfied in the financial year immediately preceding the relevant year and\nthe group qualified as a small group in relation to that preceding financial year.\n\n(4) The qualifying conditions for a small group are satisfied by a group if, in relation\nto a financial year, it fulfils 2 or more of the following requirements:\n\n(a) the aggregate amount of turnover of the group does not exceed €15 million net\n(or €18 million gross);\n\n(b) the aggregate balance sheet total of the group does not exceed €7.5 million net\n(or €9 million gross);\n\n(c) the aggregate average number of employees of the group does not exceed 50.\n\n(5) This section shall not apply to a holding company of a group if any member of\nthe group is an ineligible entity.\n\n(6) In the application of this section to any period which is a financial year but\nis not in fact a year, the amounts specified in\nsubsection (4)(a)\nshall be proportionally adjusted.\n\n(7) The aggregate figures referred to in\nsubsection (4)\nshall be ascertained by aggregating the equivalent figures determined in accordance\nwith\nsection 280A\nfor each member of the group.\n\n(8) Where a group proposes to satisfy the qualifying conditions referred to in\nsubsection (4)\non the basis of the requirements of\nparagraphs (a)\nand\n(b)\nof that subsection, it may do so on the basis of either the net figures or the gross\nfigures respectively for both of the said paragraphs.\n\n(9) The figures for each subsidiary undertaking shall be those included in its entity\nfinancial statements for the relevant financial year\n—\n\n(a) if its financial year ends with that of the holding company, that financial year,\nand\n\n(b) if not, its financial year ending last before the end of the financial year of\nthe holding company.\n\n(10) In this section\n—\n\n\"first financial year of a holding company\" means the first financial year at the\nend of which the company qualifies as a holding company by virtue of having one or\nmore subsidiaries;\n\n\"qualifying conditions\" mean the requirements referred to in\nsubsection (4)\n.\n\n(11) For the purposes of this section, in relation to the aggregate figures for turnover\nand balance sheet total\n—\n\n\"net\" means after set-offs and other adjustments made to eliminate group transactions\n—\n\n(i) in the case of Companies Act financial statements, in accordance with\nSchedule 4\n, and\n\n(ii) in the case of IFRS financial statements, in accordance with international financial\nreporting standards;\n\n\"gross\" means without those set-offs and other adjustments."
+    }
+  ],
+  "rules": []
+}

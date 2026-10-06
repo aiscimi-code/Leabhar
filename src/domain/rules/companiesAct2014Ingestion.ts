@@ -1,21 +1,15 @@
 /**
  * Ingestion for the Companies Act 2014 size-threshold/filing/audit-exemption
- * sections in their LRC-revised form (docs/statutes/companies-act-2014/s*.md,
- * fetched by extract_vat_sources.py's extract_companies_act_2014()) —
- * closing issue #135. Each section is its own independently-fetched,
- * independently-hashed document (its own `source_html_sha256`), so — matching
+ * sections in their LRC-revised form — closing issue #135. Each section is
+ * its own independently-fetched, independently-hashed page, so — matching
  * `vatcaRevisedIngestion.ts`'s precedent for the same kind of source — each
  * becomes its own `irish_knowledge_sources` row, never merged with another.
  *
- * Unlike `vatcaRevisedIngestion.ts` (which ingests one named section, s.46),
- * this source is eight separate files from the start with no single default
- * to point `--file` at, so there are two entry points: `ingestCompaniesAct2014Section`
- * for one file (generic, mirrors `ingestVatcaRevisedSection`), and
- * `ingestAllCompaniesAct2014Sections` to ingest the whole fetched set in one
- * call — the CLI (`npm run cli:rules -- ingest --source companies-act-2014`)
- * uses the latter.
+ * The knowledge base loads every section from its rules catalogue entry
+ * (`catalogue/companies-act-2014/s<N>.json`, with the LRC page beside it;
+ * `ingestCompaniesAct2014FromCatalogue`, #556). `ingestCompaniesAct2014Section`
+ * ingests one section from a Markdown copy (the CLI's `--file`).
  */
-import { readFileSync } from 'node:fs';
 import { and, eq } from 'drizzle-orm';
 import type { AppDatabase } from '@/db';
 import {
@@ -25,19 +19,19 @@ import { ids } from '@/lib/ids';
 import { nowIso } from '../dates';
 import { sha256Hex } from '@/lib/hash';
 import {
-  parseCompaniesAct2014Section, provisionSlug, assessRelevance, companiesAct2014SectionPath,
+  parseCompaniesAct2014Section, provisionSlug, assessRelevance, type ParsedCompaniesAct2014Section,
 } from './companiesAct2014SectionParser';
 import { parseScheduleFrontMatter } from './vatcaScheduleParser';
 import { COMPANIES_ACT_2014_CURATED_RULES } from './companiesAct2014Curation';
 import { upsertReviewItem } from '../extraction/service';
 import { crossReferencesFromProvision, sameCrossReferences } from './dependencies';
 import { taxHeadsFor } from './taxHeads';
+import { ingestCatalogueFile, type CatalogueIngestResult } from './catalogue';
 
 const SOURCE_TYPE: IrishSourceType = 'legislation';
 
 /**
- * The sections extract_companies_act_2014() fetches (docs/statutes/scripts/extract_vat_sources.py):
- * the first eight (issue #135), s.280B/C/F for company size (issue #554), and
+ * The sections the knowledge base holds, each a catalogue entry: the first eight (issue #135), s.280B/C/F for company size (issue #554), and
  * ss.281, 283–286, 290–293, 343 and 347 for accounting records, statutory
  * financial statements and the annual return (issue #559 / #214).
  */
@@ -45,6 +39,45 @@ export const COMPANIES_ACT_2014_SECTION_NUMBERS = [
   '282', '280A', '280B', '280C', '280D', '280E', '280F', '352', '358', '359', '360',
   '281', '283', '284', '285', '286', '290', '291', '292', '293', '343', '347',
 ] as const;
+
+export type CompaniesAct2014SectionNumber = typeof COMPANIES_ACT_2014_SECTION_NUMBERS[number];
+
+/**
+ * What every section's source says of itself: a live LRC page, so the
+ * source's date means "confirmed accurate as retrieved", not a commencement.
+ */
+export const COMPANIES_ACT_2014_NOTE = 'LRC-revised text as retrieved — a live, continuously-updated page, '
+  + 'not a dated historical snapshot. Distinct source row per section, never merged with any other '
+  + 'Companies Act 2014 section.';
+
+/** Whether a section bears on the rules: its category's default, or curated into a rule. */
+export function companiesAct2014Relevance(parsed: ParsedCompaniesAct2014Section): { relevant: boolean; reason: string } {
+  const { relevant, reason } = assessRelevance(parsed.category);
+  if (relevant || !COMPANIES_ACT_2014_CURATED_RULES.some((r) => r.sectionNumber === parsed.sectionNumber)) return { relevant, reason };
+  return {
+    relevant: true,
+    reason: `Curated: mapped to a rule in companiesAct2014Curation.ts, overriding the ${parsed.category} category default.`,
+  };
+}
+
+/** A section's catalogue entry. */
+export const companiesAct2014CatalogueEntry = (n: CompaniesAct2014SectionNumber) => `companies-act-2014/s${n}.json`;
+
+export interface CompaniesAct2014CatalogueIngestResult {
+  sections: Array<CatalogueIngestResult & { sectionNumber: CompaniesAct2014SectionNumber }>;
+}
+
+/** Load every section from its catalogue entry. */
+export function ingestCompaniesAct2014FromCatalogue(
+  db: AppDatabase,
+  params: { companyId?: string | null; ingestVersion?: string; root?: string },
+): CompaniesAct2014CatalogueIngestResult {
+  return {
+    sections: COMPANIES_ACT_2014_SECTION_NUMBERS.map((sectionNumber) => ({
+      sectionNumber, ...ingestCatalogueFile(db, { ...params, entry: companiesAct2014CatalogueEntry(sectionNumber) }),
+    })),
+  };
+}
 
 export interface CompaniesAct2014IngestResult {
   sourceId: string;
@@ -54,7 +87,7 @@ export interface CompaniesAct2014IngestResult {
   ingested: boolean;
 }
 
-/** Ingest one Companies Act 2014 section's Markdown. Idempotent by content. */
+/** Ingest one Companies Act 2014 section from a Markdown copy (the CLI's `--file`). Idempotent by content. */
 export function ingestCompaniesAct2014Section(
   db: AppDatabase,
   params: { companyId?: string | null; markdown: string; ingestVersion: string; localPath?: string },
@@ -101,18 +134,11 @@ export function ingestCompaniesAct2014Section(
       // dated historical snapshot — effectiveFrom means "confirmed accurate
       // as of ingest", not a claimed commencement date.
       effectiveFrom: nowIso().slice(0, 10),
-      sourceNote: `Ingest ${params.ingestVersion} of ${fm.citation}, LRC-revised text as retrieved — `
-        + 'a live, continuously-updated page, not a dated historical snapshot. Distinct source row per section, '
-        + 'never merged with any other Companies Act 2014 section.',
+      sourceNote: `Ingest ${params.ingestVersion} of ${fm.citation}, ${COMPANIES_ACT_2014_NOTE}`,
       sourceDate: nowIso(),
     }).run();
 
-    let { relevant, reason } = assessRelevance(parsed.category);
-    const curated = COMPANIES_ACT_2014_CURATED_RULES.some((r) => r.sectionNumber === parsed.sectionNumber);
-    if (!relevant && curated) {
-      relevant = true;
-      reason = `Curated: mapped to a rule in companiesAct2014Curation.ts, overriding the ${parsed.category} category default.`;
-    }
+    const { relevant, reason } = companiesAct2014Relevance(parsed);
 
     tx.insert(irishActProvisions).values({
       id: ids.provision(),
@@ -137,23 +163,6 @@ export function ingestCompaniesAct2014Section(
 
     return { sourceId, sectionNumber: parsed.sectionNumber, provisionCount: 1, relevantCount: relevant ? 1 : 0, ingested: true };
   });
-}
-
-export interface CompaniesAct2014IngestAllResult {
-  sections: CompaniesAct2014IngestResult[];
-}
-
-/** Ingest every fetched section (docs/statutes/companies-act-2014/s*.md) in one call. */
-export function ingestAllCompaniesAct2014Sections(
-  db: AppDatabase,
-  params: { companyId?: string | null; ingestVersion: string },
-): CompaniesAct2014IngestAllResult {
-  const sections = COMPANIES_ACT_2014_SECTION_NUMBERS.map((n) => {
-    const path = companiesAct2014SectionPath(n);
-    const markdown = readFileSync(path, 'utf8');
-    return ingestCompaniesAct2014Section(db, { ...params, markdown, localPath: path });
-  });
-  return { sections };
 }
 
 export interface CompaniesAct2014DeriveResult {

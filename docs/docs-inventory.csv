@@ -305,21 +305,21 @@ docs/statutes/_inbox/G/47-06-01.md,6922,duplicate,docs/statutes/tdm-ct/47-06-01.
 docs/statutes/_inbox/G/47-06-01.pdf,158375,duplicate,docs/statutes/tdm-ct/47-06-01.pdf
 docs/statutes/_inbox/G/SOURCES.txt,1366,duplicate,docs/statutes/tdm-ct/SOURCES.txt
 docs/statutes/_inbox/H/SOURCES.txt,1110,unreferenced,
-docs/statutes/_inbox/H/ca2014-s280A.html,17500,original,docs/statutes/_inbox/H/ca2014-s280A.md docs/statutes/companies-act-2014/s280A.md
+docs/statutes/_inbox/H/ca2014-s280A.html,17500,original,docs/statutes/_inbox/H/ca2014-s280A.md
 docs/statutes/_inbox/H/ca2014-s280A.md,2382,unreferenced,
 docs/statutes/_inbox/H/ca2014-s280B.html,21088,original,docs/statutes/_inbox/H/ca2014-s280B.md
 docs/statutes/_inbox/H/ca2014-s280B.md,3922,unreferenced,
 docs/statutes/_inbox/H/ca2014-s280C.html,12345,original,docs/statutes/_inbox/H/ca2014-s280C.md
 docs/statutes/_inbox/H/ca2014-s280C.md,802,unreferenced,
-docs/statutes/_inbox/H/ca2014-s280D.html,18440,original,docs/statutes/_inbox/H/ca2014-s280D.md docs/statutes/companies-act-2014/s280D.md
+docs/statutes/_inbox/H/ca2014-s280D.html,18440,original,docs/statutes/_inbox/H/ca2014-s280D.md
 docs/statutes/_inbox/H/ca2014-s280D.md,2631,unreferenced,
-docs/statutes/_inbox/H/ca2014-s280E.html,12251,original,docs/statutes/_inbox/H/ca2014-s280E.md docs/statutes/companies-act-2014/s280E.md
+docs/statutes/_inbox/H/ca2014-s280E.html,12251,original,docs/statutes/_inbox/H/ca2014-s280E.md
 docs/statutes/_inbox/H/ca2014-s280E.md,771,unreferenced,
 docs/statutes/_inbox/H/ca2014-s280F.html,17974,original,docs/statutes/_inbox/H/ca2014-s280F.md
 docs/statutes/_inbox/H/ca2014-s280F.md,2512,unreferenced,
 docs/statutes/_inbox/H/ca2014-s281.html,10949,original,docs/statutes/_inbox/H/ca2014-s281.md
 docs/statutes/_inbox/H/ca2014-s281.md,509,unreferenced,
-docs/statutes/_inbox/H/ca2014-s282.html,19981,original,docs/statutes/_inbox/H/ca2014-s282.md docs/statutes/companies-act-2014/s282.md
+docs/statutes/_inbox/H/ca2014-s282.html,19981,original,docs/statutes/_inbox/H/ca2014-s282.md
 docs/statutes/_inbox/H/ca2014-s282.md,5222,unreferenced,
 docs/statutes/_inbox/H/ca2014-s283.html,12367,original,docs/statutes/_inbox/H/ca2014-s283.md
 docs/statutes/_inbox/H/ca2014-s283.md,1224,unreferenced,
@@ -341,13 +341,13 @@ docs/statutes/_inbox/H/ca2014-s343.html,25603,original,docs/statutes/_inbox/H/ca
 docs/statutes/_inbox/H/ca2014-s343.md,4004,unreferenced,
 docs/statutes/_inbox/H/ca2014-s347.html,23406,original,docs/statutes/_inbox/H/ca2014-s347.md
 docs/statutes/_inbox/H/ca2014-s347.md,3466,unreferenced,
-docs/statutes/_inbox/H/ca2014-s352.html,19120,original,docs/statutes/_inbox/H/ca2014-s352.md docs/statutes/companies-act-2014/s352.md
+docs/statutes/_inbox/H/ca2014-s352.html,19120,original,docs/statutes/_inbox/H/ca2014-s352.md
 docs/statutes/_inbox/H/ca2014-s352.md,2427,unreferenced,
-docs/statutes/_inbox/H/ca2014-s358.html,13938,original,docs/statutes/_inbox/H/ca2014-s358.md docs/statutes/companies-act-2014/s358.md
+docs/statutes/_inbox/H/ca2014-s358.html,13938,original,docs/statutes/_inbox/H/ca2014-s358.md
 docs/statutes/_inbox/H/ca2014-s358.md,1516,unreferenced,
-docs/statutes/_inbox/H/ca2014-s359.html,16652,original,docs/statutes/_inbox/H/ca2014-s359.md docs/statutes/companies-act-2014/s359.md
+docs/statutes/_inbox/H/ca2014-s359.html,16652,original,docs/statutes/_inbox/H/ca2014-s359.md
 docs/statutes/_inbox/H/ca2014-s359.md,1418,unreferenced,
-docs/statutes/_inbox/H/ca2014-s360.html,22281,original,docs/statutes/_inbox/H/ca2014-s360.md docs/statutes/companies-act-2014/s360.md
+docs/statutes/_inbox/H/ca2014-s360.html,22281,original,docs/statutes/_inbox/H/ca2014-s360.md
 docs/statutes/_inbox/H/ca2014-s360.md,2922,unreferenced,
 docs/statutes/_inbox/H/ca2014-schedule-3A.html,180605,original,docs/statutes/_inbox/H/ca2014-schedule-3A.md
 docs/statutes/_inbox/H/ca2014-schedule-3A.md,55975,unreferenced,
@@ -364,14 +364,6 @@ docs/statutes/_inbox/README.md,407,unreferenced,
 docs/statutes/audit-report.json,38658,cited-docs,docs/RULES_KB.md docs/statutes/README.md docs/statutes/finance-act-2024/README.md …
 docs/statutes/companies-act-2014/README.md,1129,unreferenced,
 docs/statutes/companies-act-2014/companies-act-2014.md,1616,cited-code,src/domain/rules/companiesAct2014Curation.ts
-docs/statutes/companies-act-2014/s280A.md,2378,runtime,read by the test suite
-docs/statutes/companies-act-2014/s280D.md,2627,runtime,read by the test suite
-docs/statutes/companies-act-2014/s280E.md,767,runtime,read by the test suite
-docs/statutes/companies-act-2014/s282.md,5218,runtime,read by the test suite
-docs/statutes/companies-act-2014/s352.md,2423,runtime,read by the test suite
-docs/statutes/companies-act-2014/s358.md,1512,runtime,read by the test suite
-docs/statutes/companies-act-2014/s359.md,1414,runtime,read by the test suite
-docs/statutes/companies-act-2014/s360.md,2918,runtime,read by the test suite
 docs/statutes/distance-sales/tdm-intra-community-distance-sales.md,10898,cited-docs,docs/statutes/SOURCE-REGISTER.md
 docs/statutes/finance-act-2001/s53.md,1821,cited-code,src/domain/rules/capitalAllowancesCuration.ts src/domain/rules/capitalAllowancesIngestion.ts
 docs/statutes/finance-act-2003/README.md,1449,unreferenced,

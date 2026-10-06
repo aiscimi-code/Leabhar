@@ -30,7 +30,8 @@ describe('ingested statute inventory (#591)', () => {
   const paths = statuteSourcePaths();
 
   it('loadStatutoryKnowledgeBase points at files that exist', () => {
-    expect(paths.length).toBeGreaterThan(40);
+    // Shrinks as #556 moves each source to the rules catalogue; it only guards against an empty list.
+    expect(paths.length).toBeGreaterThan(0);
     for (const rel of paths) {
       expect(existsSync(statuteFilePath(rel)), rel).toBe(true);
     }

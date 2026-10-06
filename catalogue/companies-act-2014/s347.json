@@ -1,0 +1,49 @@
+{
+  "format": 1,
+  "source": {
+    "citation": "2014 Act 38 s.347",
+    "title": "Companies Act 2014 s.347 (revised)",
+    "sourceType": "legislation",
+    "jurisdiction": "IE",
+    "sourceUrl": "https://revisedacts.lawreform.ie/eli/2014/act/38/section/347/revised/en/html",
+    "sha256": "ad92e701d60f7f025c07aebdbba21fb3dc00a9f38175f02e8aab7b41f7a53380",
+    "conversion": "lrc-html-plaintext",
+    "retrievedOn": "2026-10-06",
+    "note": "LRC-revised text as retrieved — a live, continuously-updated page, not a dated historical snapshot. Distinct source row per section, never merged with any other Companies Act 2014 section."
+  },
+  "provisions": [
+    {
+      "sectionNumber": "347",
+      "heading": "Documents to be annexed to annual return: all cases",
+      "locator": "s.347",
+      "category": "exemption",
+      "relevant": true,
+      "relevanceReason": "Substantive exemption provision; potentially bears on transaction treatment.",
+      "excerpt": "347.\n(1) Subject to the provisions of\nthis Part and Part 28\n, there shall be annexed to the annual return a copy of the following documents that\nhave been, or are to be, laid before the relevant general meeting:\n\n(a) the statutory financial statements of the company;\n\n(b)\nsubject to\nsubsection (1A)\n, the directors\n’\nreport\n, including any group directors’ report; and\n\n(c) the statutory auditors’ report on those financial statements and that directors’ report;\n\nand “relevant general meeting” in this subsection means the general meeting of the company held during the period\nto which the annual return relates or, if the most recent statutory financial statements\nof the company and the other foregoing documents have not been required to be laid\nbefore such a meeting, the next general meeting held after the return’s delivery to the Registrar before which those statements and other documents are\nrequired to be laid.\n\n(1A)\nSubsection (1)(b)\nshall not apply to a company that qualifies for the micro companies regime and has\navailed itself of the exemption, under\nsection 325(1A)\n, from preparing a directors\n’\nreport.\n\n(2) The reference in\nsubsection (1)\nto a copy of a document is a reference to a copy that satisfies the following conditions:\n\n(a) it is a true copy of the original save for the difference that the signature or\nsignatures on the original, and any date or dates thereon, shall appear in typeset\nform on the copy; and\n\n(b) it is accompanied by a certificate of a director and the secretary of the company,\nthat bears the signature of the director and the secretary in electronic or written\nform, stating that the copy is a true copy of the original (and one such certificate\nrelating to all of the documents mentioned in\nsubsection (1)\nsuffices and the foregoing statement need not be qualified on account of the difference\npermitted by\nparagraph (a)\nas to the form of a signature or of a date).\n\n(3) Where any document referred to in\nsubsection (1)\nthat has been annexed to the annual return is in a language other than the English\nlanguage or the Irish language, there shall be annexed to each such document a translation\nof it in the English language or the Irish language certified in the prescribed manner\nto be a correct translation.\n\n(4) Every document annexed to the annual return in accordance with\nsubsection (1)\nshall cover the period—\n\n(a) in the case of the first annual return to which such documents are annexed — since the incorporation of the company, and\n\n(b) in any other case — since the end of the period covered by the statutory financial statements annexed\nto the preceding annual return,\n\nand shall be made up to a date falling not more than 9 months before the date to which\nthe annual return is made up.\n\n(5) If a company fails to comply with\nsubsection (1)\n,\n(3)\nor\n(4)\n, the company and any officer of it who is in default shall be guilty of a category\n3 offence.\n\n(6) In\nsubsection (5)\n“officer” includes any shadow director and\nde facto\ndirector."
+    }
+  ],
+  "rules": [
+    {
+      "key": "company.annual_return_annexes",
+      "sectionNumber": "347",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2017-06-09",
+          "effectiveTo": null,
+          "quote": "there shall be annexed to the annual return a copy of the following documents that\nhave been, or are to be, laid before the relevant general meeting:",
+          "value": null,
+          "unit": null,
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    }
+  ]
+}

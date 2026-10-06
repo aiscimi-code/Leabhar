@@ -1,0 +1,49 @@
+{
+  "format": 1,
+  "source": {
+    "citation": "2014 Act 38 s.281",
+    "title": "Companies Act 2014 s.281 (revised)",
+    "sourceType": "legislation",
+    "jurisdiction": "IE",
+    "sourceUrl": "https://revisedacts.lawreform.ie/eli/2014/act/38/section/281/revised/en/html",
+    "sha256": "f53cd09c5b19a0c3a502b58ddb8e681906996076e55dfcf16a3423475dbf5363",
+    "conversion": "lrc-html-plaintext",
+    "retrievedOn": "2026-10-06",
+    "note": "LRC-revised text as retrieved — a live, continuously-updated page, not a dated historical snapshot. Distinct source row per section, never merged with any other Companies Act 2014 section."
+  },
+  "provisions": [
+    {
+      "sectionNumber": "281",
+      "heading": "Obligation to keep adequate accounting records",
+      "locator": "s.281",
+      "category": "other",
+      "relevant": true,
+      "relevanceReason": "Curated: mapped to a rule in companiesAct2014Curation.ts, overriding the other category default.",
+      "excerpt": "281.\nA company shall keep or cause to be kept adequate accounting records."
+    }
+  ],
+  "rules": [
+    {
+      "key": "company.accounting_records_duty",
+      "sectionNumber": "281",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2015-06-01",
+          "effectiveTo": null,
+          "quote": "A company shall keep or cause to be kept adequate accounting records.",
+          "value": null,
+          "unit": null,
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    }
+  ]
+}

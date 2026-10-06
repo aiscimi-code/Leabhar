@@ -74,6 +74,8 @@ import { SI_156, si156Relevance } from '@/domain/rules/si156Ingestion';
 import { parseSi692025Regulation } from '@/domain/rules/si692025Parser';
 import { SI_69_2025, SI_69_2025_REGULATIONS, si692025RelevanceReason } from '@/domain/rules/si692025Ingestion';
 import { extractCapacityExclusionSection } from '@/domain/rules/tdm3801_03bParser';
+import { parseCompaniesAct2014Section } from '@/domain/rules/companiesAct2014SectionParser';
+import { COMPANIES_ACT_2014_NOTE, companiesAct2014Relevance } from '@/domain/rules/companiesAct2014Ingestion';
 import { TDM_38_01_03B } from '@/domain/rules/tdm3801_03bIngestion';
 import { nowIso } from '@/domain/dates';
 import { lrcAnnotationLayer } from '@/domain/rules/lrcAnnotations';
@@ -125,6 +127,32 @@ function extractorFor(entry: string, naming: Naming | null): Extractor {
             citation, title, sourceType: 'legislation', jurisdiction: 'IE', sourceUrl: url,
             sha256: createHash('sha256').update(html).digest('hex'),
             conversion: 'lrc-html-plaintext', retrievedOn,
+            ...(annotate ? { lrcAnnotations: lrcAnnotationLayer(html.toString('utf8')) } : {}),
+          },
+          provisions: [{
+            sectionNumber: parsed.sectionNumber, heading: parsed.heading, locator: `s.${parsed.sectionNumber}`,
+            category: parsed.category, relevant, relevanceReason: reason, excerpt: parsed.provisionText,
+          }],
+        };
+      },
+    };
+  }
+  // A Companies Act 2014 section, revised, from its LRC page: one provision.
+  const ca2014 = /^companies-act-2014\/s(\d+[A-Z]*)$/.exec(entry)?.[1];
+  if (ca2014) {
+    const url = `https://revisedacts.lawreform.ie/eli/2014/act/38/section/${ca2014}/revised/en/html`;
+    const title = naming?.title ?? `Companies Act 2014 s.${ca2014} (revised)`;
+    const citation = naming?.citation ?? `2014 Act 38 s.${ca2014}`;
+    return {
+      url, title, citation,
+      build: (html, retrievedOn, annotate) => {
+        const parsed = parseCompaniesAct2014Section(convertLrc(html, title, citation, url));
+        const { relevant, reason } = companiesAct2014Relevance(parsed);
+        return {
+          source: {
+            citation, title, sourceType: 'legislation', jurisdiction: 'IE', sourceUrl: url,
+            sha256: createHash('sha256').update(html).digest('hex'),
+            conversion: 'lrc-html-plaintext', retrievedOn, note: COMPANIES_ACT_2014_NOTE,
             ...(annotate ? { lrcAnnotations: lrcAnnotationLayer(html.toString('utf8')) } : {}),
           },
           provisions: [{

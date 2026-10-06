@@ -1,0 +1,49 @@
+{
+  "format": 1,
+  "source": {
+    "citation": "2014 Act 38 s.291",
+    "title": "Companies Act 2014 s.291 (revised)",
+    "sourceType": "legislation",
+    "jurisdiction": "IE",
+    "sourceUrl": "https://revisedacts.lawreform.ie/eli/2014/act/38/section/291/revised/en/html",
+    "sha256": "14188e28c1b020df6521fe3afbc34ecf38b95d2b43c00747f5e2166f0c3f02b9",
+    "conversion": "lrc-html-plaintext",
+    "retrievedOn": "2026-10-06",
+    "note": "LRC-revised text as retrieved — a live, continuously-updated page, not a dated historical snapshot. Distinct source row per section, never merged with any other Companies Act 2014 section."
+  },
+  "provisions": [
+    {
+      "sectionNumber": "291",
+      "heading": "Companies Act entity financial statements",
+      "locator": "s.291",
+      "category": "other",
+      "relevant": true,
+      "relevanceReason": "Curated: mapped to a rule in companiesAct2014Curation.ts, overriding the other category default.",
+      "excerpt": "291.\n(1) Companies Act entity financial statements in relation to a company for any financial\nyear of it shall comprise—\n\n(a) a balance sheet as at the financial year end date,\n\n(b) a profit and loss account for the financial year, and\n\n(c) any other additional statements and information required by the financial reporting\nframework adopted in relation to the company.\n\n(2) Companies Act entity financial statements shall give a true and fair view of the\nassets, liabilities and financial position of the company as at the financial year\nend date and of the profit or loss of the company for the financial year.\n\n(3) Companies Act entity financial statements shall\n—\n\n(a) as to the accounting principles to be applied, the form and content of the balance\nsheet and profit and loss account and the additional information to be provided by\nway of notes to the financial statements, comply with\n—\n\n(i) in the case of a company that does not qualify for the small companies regime,\nthe provisions of\nSchedule 3\n,\n\n(ii) in the case of a company that qualifies for the small companies regime, the provisions\nof\nSchedule 3A\nor, if the company so elects, the provisions of\nSchedule 3\n, or\n\n(iii) in the case of a small company that qualifies for the micro companies regime,\nthe provisions of Schedule 3B or, if the company so elects, the provisions of either\nSchedule 3A\nor\nSchedule 3\n,\n\n(b) comply with applicable accounting standards, and\n\n(c) comply with the other provisions of this Act.\n\n(3A) Companies Act entity financial statements shall state the following:\n\n(a) the name and legal form of the company;\n\n(b) the place of registration of the company and the number under which it is registered;\n\n(c) the address of its registered office;\n\n(d) where the company is being wound up, the information required by\nsection 595\n.\n\n(4) Where compliance with\nSchedule 3\nor\n3A\n, as the case may be,\napplicable accounting standards and the other provisions of this Act as to the matters\nto be included in entity financial statements (or in notes to those financial statements)\nwould not be sufficient to give a true and fair view of the matters referred to in\n\nsubsection (2)\n, the necessary additional information shall be given in the entity financial statements\nor a note to them.\n\n(5) If in special circumstances compliance with any of the provisions of this Act\n(even if additional information were provided under\nsubsection (4)\n) is inconsistent with the requirement to give a true and fair view of the matters\nreferred to in\nsubsection (2)\n, the directors of the company shall depart from that provision to the extent necessary\nto give a true and fair view.\n\n(6) Particulars of any departure under\nsubsection (5)\n, the reasons for it and its effect shall be given in a note to the financial statements\nof the company.\n\n(6A) In the case of a micro company that elects to adopt the micro company regime,\nit shall be presumed that compliance with\n—\n\n(a)\nSchedule 3B\n,\n\n(b) applicable accounting standards, and\n\n(c) the other provisions of this Act,\n\nshall be sufficient to give a true and fair view of the matters referred to in\nsubsection (2)\n, and accordingly,\nsubsections (4)\n,\n(5)\nand\n(6)\nshall not apply to a company that qualifies for the micro companies regime.\n\n(7) A company shall ensure—\n\n(a) that its Companies Act entity financial statements include a statement as to whether\nthey have been prepared in accordance with applicable accounting standards and identify\nthe standards in question, and\n\n(b) that any material departure from those standards, the effect of the departure\nand the reasons for it are noted in the Companies Act entity financial statements.\n\n(8) Accounting standards are applicable to a company’s entity financial statements if those standards are, in accordance with their terms,\nrelevant to the company’s circumstances and those entity financial statements.\n\n(9) If a company fails to comply with any of\nsubsections (2)\nto\n(7)\n, the company and any officer of it who is in default shall be guilty of a category\n2 offence.\n\n(10) In any proceedings against a person in respect of an offence under\nsubsection (9)\n, it shall be a defence to prove that the defendant had reasonable grounds for believing\nand did believe that—\n\n(a) a competent and reliable person was charged with the duty of ensuring that the\nprovisions of the subsection concerned were complied with, and\n\n(b) the latter person was in a position to discharge that duty.\n\n(11) In\nsubsection (9)\n“officer” includes any shadow director and\nde facto\ndirector."
+    }
+  ],
+  "rules": [
+    {
+      "key": "company.companies_act_financial_statements",
+      "sectionNumber": "291",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2017-06-09",
+          "effectiveTo": null,
+          "quote": "Companies Act entity financial statements in relation to a company for any financial\nyear of it shall comprise—",
+          "value": null,
+          "unit": null,
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    }
+  ]
+}

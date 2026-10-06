@@ -1,0 +1,49 @@
+{
+  "format": 1,
+  "source": {
+    "citation": "2014 Act 38 s.293",
+    "title": "Companies Act 2014 s.293 (revised)",
+    "sourceType": "legislation",
+    "jurisdiction": "IE",
+    "sourceUrl": "https://revisedacts.lawreform.ie/eli/2014/act/38/section/293/revised/en/html",
+    "sha256": "4929398ee43718aadb188a50c7d9f8d8028e6aeaecb471b9016d0fc1881e7b5c",
+    "conversion": "lrc-html-plaintext",
+    "retrievedOn": "2026-10-06",
+    "note": "LRC-revised text as retrieved — a live, continuously-updated page, not a dated historical snapshot. Distinct source row per section, never merged with any other Companies Act 2014 section."
+  },
+  "provisions": [
+    {
+      "sectionNumber": "293",
+      "heading": "Obligation to prepare group financial statements under relevant financial reporting framework",
+      "locator": "s.293",
+      "category": "exemption",
+      "relevant": true,
+      "relevanceReason": "Substantive exemption provision; potentially bears on transaction treatment.",
+      "excerpt": "293.\n(1)\nSubject to\nsubsections (1A)\nand\n(9)\n, where at the end of its financial year\na company is a holding company, the directors of the company, as well as preparing\nentity financial statements for the financial year, shall prepare group financial\nstatements for the holding company and all its subsidiary undertakings for that financial\nyear.\n\n(1A) A holding company that qualifies for the small companies regime or the micro\ncompanies regime shall be exempt from the requirements of\nsubsection (1)\nbut may, however elect to prepare group financial statements.\n\n(2) Where a holding company prepares group financial statements under this section,\nthere shall be associated with those group financial statements the entity financial\nstatements prepared under\nsection 290\nand together they shall constitute the statutory financial statements of the company.\n\n(3) Subject to\nsubsections (5)\nto\n(9)\n,\na company that is required to prepare group financial statements or has elected to\nprepare group financial statements\nshall prepare the statements either (as the company elects) in accordance with—\n\n(a)\nsection 294\n, or\n\n(b) international financial reporting standards and\nsection 295\n.\n\n(4) Group financial statements prepared in accordance with—\n\n(a)\nsection 294\nshall be known, and are in this Act referred to, as “Companies Act group financial statements” — and this also applies in any ensuing case where preparation of such statements in\naccordance with that section is obligatory, or\n\n(b) international financial reporting standards and\nsection 295\nshall be known, and are in this Act referred to, as “IFRS group financial statements” — and this also applies in any ensuing case where preparation of such statements in\naccordance with those standards and that section is obligatory.\n\n(5) In respect of a group not trading for the acquisition of gain by its members,\ngroup financial statements shall be prepared in accordance with\nsection 294\n.\n\n(6)\nSubject to\nsubsection (6A)\n, after the first financial year\nin which the directors of a holding company prepare IFRS group financial statements\n(in this section referred to as the “first IFRS year”), all subsequent group financial statements shall be prepared in accordance with\ninternational financial reporting standards unless there is a relevant change of circumstances\nas referred to in\nsubsection (7).\n\n(6A) After a financial year in which the directors of a holding company prepare IFRS\ngroup financial statements, the directors of the company may, notwithstanding that\nthere is not a relevant change of circumstances as referred to in\nsubsection (7)\n, subsequently prepare Companies Act group financial statements for the company provided\nthey have not changed to preparing Companies Act group financial statements in the\nperiod of 5 years preceding the first day of that financial year.\n\n(6B) For the purposes of calculating the 5 year period referred to in\nsubsection (6A)\n, the reference to \"changed to Companies Act group financial statements\" shall not\nbe read as including a reference to a change to using those financial statements which\nwas due to a relevant change in circumstances.\n\n(7) There is a relevant change of circumstances where at any time during or after\nthe first IFRS year—\n\n(a) the company becomes a subsidiary undertaking of another undertaking that does\nnot prepare IFRS group financial statements,\n\n(b) the company, having re-registered as a private company limited by shares, ceases\nto be a company with securities admitted to trading on a regulated market in an EEA\nstate, or\n\n(c) a holding undertaking of the company ceases to be an undertaking with securities\nadmitted to trading on a regulated market in an EEA state.\n\n(8)\nWhere Companies Act group financial statements are prepared in relation to a company\nin accordance with\nsubsection (6A)\nor\n(7)\nas the case may be\n, the directors of the company may subsequently prepare IFRS group financial statements\nfor the company and\nsubsections (6), (6A)\nand\n(7)\nshall apply as if the financial year for which such IFRS group financial statements\nare subsequently prepared was the first IFRS year.\n\n(9) This section is subject to—\n\n(a)\n…\n\n(b)\nsection 299\n(holding company that is subsidiary undertaking of undertaking registered in EEA),\n\n(c)\nsection 300\n(holding company that is subsidiary undertaking of undertaking registered outside\nEEA),\n\n(d)\nsection 301\n(all subsidiaries excluded from consolidation), and\n\n(e)\nsection 302\n(IFRS exemption)."
+    }
+  ],
+  "rules": [
+    {
+      "key": "company.group_financial_statements",
+      "sectionNumber": "293",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2017-06-09",
+          "effectiveTo": null,
+          "quote": "where at the end of its financial year\na company is a holding company, the directors of the company, as well as preparing\nentity financial statements for the financial year, shall prepare group financial\nstatements",
+          "value": null,
+          "unit": null,
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    }
+  ]
+}

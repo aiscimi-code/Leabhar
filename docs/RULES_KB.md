@@ -1712,11 +1712,10 @@ which carries no source hash and cannot back a curated rule under this KB's
 verbatim-only policy.
 
 - Eight sections fetched verbatim from the LRC-revised Companies Act 2014
-  (`docs/statutes/companies-act-2014/s282.md`, `s280A.md`, `s280D.md`,
-  `s280E.md`, `s352.md`, `s358.md`, `s359.md`, `s360.md`), each with a real
-  `source_html_sha256`, via a new `extract_companies_act_2014()` in
-  `docs/statutes/scripts/extract_vat_sources.py` — the same per-section LRC
-  fetch shape `vatca-2010-revised/` already uses. s.359(3)-(12) are genuine
+  (ss.282, 280A, 280D, 280E, 352, 358, 359 and 360; later fourteen more), the
+  same per-section LRC shape `vatca-2010-revised/` uses. Each is now a rules
+  catalogue entry, `catalogue/companies-act-2014/s<N>.json`, with its LRC page
+  beside it (#556). s.359(3)-(12) are genuine
   LRC deletions (superseded by the 2016/2017 statutory-audit restructuring),
   rendered as bare "…" in the fetched text; nothing is curated from them.
 - `src/domain/rules/companiesAct2014SectionParser.ts` — a new parser shape:
@@ -1724,11 +1723,11 @@ verbatim-only policy.
   with no em-dash at all (unlike VATCA's `"46\n.—(1)"` convention, which
   never matches here), verified against all eight fetched files.
 - `src/domain/rules/companiesAct2014Ingestion.ts` —
-  `ingestCompaniesAct2014Section`/`ingestAllCompaniesAct2014Sections`/
-  `deriveCompaniesAct2014Rules`, mirroring `vatcaRevisedIngestion.ts`'s
-  idempotency and per-section-as-its-own-source discipline; wired into the
-  CLI as `--source companies-act-2014` (ingests all eight; no single
-  default file to point `--file` at).
+  `ingestCompaniesAct2014FromCatalogue`/`ingestCompaniesAct2014Section` (one
+  section from a Markdown copy)/`deriveCompaniesAct2014Rules`, mirroring
+  `vatcaRevisedIngestion.ts`'s per-section-as-its-own-source discipline;
+  wired into the CLI as `--source companies-act-2014` (every section from the
+  catalogue; `--file` ingests one).
 - `src/domain/rules/companiesAct2014Curation.ts` — ten rules from six of the
   eight sections: the s.280A small-company 2-of-3 test's three independent
   limbs (turnover €15m, balance sheet €7.5m, employees 50) as three separate

@@ -36,7 +36,7 @@ import {
   ingestTdm3801_03bCapacityExclusion, ingestTdm3801_03bFromCatalogue, deriveTdm3801_03bCapacityExclusionRule,
 } from '@/domain/rules/tdm3801_03bIngestion';
 import {
-  ingestAllCompaniesAct2014Sections, deriveCompaniesAct2014Rules,
+  ingestCompaniesAct2014Section, ingestCompaniesAct2014FromCatalogue, deriveCompaniesAct2014Rules,
 } from '@/domain/rules/companiesAct2014Ingestion';
 import {
   ingestVat3ReturnGuidance, ingestRtdTdm, deriveVat3RtdRules,
@@ -72,7 +72,7 @@ Commands:
                                        vatca-2010-revised | tca1997-s284 | finance-act-2003-s23 | si639 | si156 |
                                        si69-2025 (regs 5, 7, 8, 9; with --file, reg 8) | si69-2025-reg5 | si69-2025-reg7 |
                                        si69-2025-reg9 | tdm-38-01-03b |
-                                       companies-act-2014 (ingests all eight fetched sections; no --file) |
+                                       companies-act-2014 (every section; with --file, one) |
                                        vat3-return-guidance | rtd-tdm-s76 | ebrief-168-25 | eu-282-2011 |
                                        --file overrides
                                        its default path, e.g. to ingest a different revised section;
@@ -262,8 +262,11 @@ export async function main(argv: string[], options: CliOptions = {}): Promise<nu
           return 0;
         }
         if (source === 'companies-act-2014') {
-          // No single default file (eight sections, each its own source) — --file is not supported here.
-          print(ingestAllCompaniesAct2014Sections(db, { companyId, ingestVersion: 'v1' }), format);
+          // Every section from the catalogue; --file reads one section from a Markdown copy.
+          const file = getFlag(flags, 'file');
+          print(file
+            ? ingestCompaniesAct2014Section(db, { companyId, markdown: readFileSync(file, 'utf8'), ingestVersion: 'v1', localPath: file })
+            : ingestCompaniesAct2014FromCatalogue(db, { companyId }), format);
           return 0;
         }
         if (source === 'vat3-return-guidance') {

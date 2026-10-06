@@ -1,0 +1,49 @@
+{
+  "format": 1,
+  "source": {
+    "citation": "2014 Act 38 s.290",
+    "title": "Companies Act 2014 s.290 (revised)",
+    "sourceType": "legislation",
+    "jurisdiction": "IE",
+    "sourceUrl": "https://revisedacts.lawreform.ie/eli/2014/act/38/section/290/revised/en/html",
+    "sha256": "7e59f6558eacd0b734224b36063dc19556be87dc15e909e313fe9b726ed82d91",
+    "conversion": "lrc-html-plaintext",
+    "retrievedOn": "2026-10-06",
+    "note": "LRC-revised text as retrieved — a live, continuously-updated page, not a dated historical snapshot. Distinct source row per section, never merged with any other Companies Act 2014 section."
+  },
+  "provisions": [
+    {
+      "sectionNumber": "290",
+      "heading": "Obligation to prepare entity financial statements under relevant financial reporting framework",
+      "locator": "s.290",
+      "category": "other",
+      "relevant": true,
+      "relevanceReason": "Curated: mapped to a rule in companiesAct2014Curation.ts, overriding the other category default.",
+      "excerpt": "290.\n(1) The directors of a company shall prepare entity financial statements for the\ncompany in respect of each financial year of it.\n\n(2) The entity financial statements prepared under this section shall be the statutory\nfinancial statements of a company that does not prepare group financial statements\nunder\nsection 293\n.\n\n(3) Subject to\nsubsections (5)\nto\n(8)\nand\nsection 296\n, a company’s entity financial statements shall be prepared either (as the company elects) in\naccordance with—\n\n(a)\nsection 291\n, or\n\n(b) international financial reporting standards and\nsection 292\n.\n\n(4) Entity financial statements prepared in accordance with—\n\n(a)\nsection 291\nshall be known, and are in this Act referred to, as “Companies Act entity financial statements” — and this also applies in any ensuing case where preparation of such statements in\naccordance with that section is obligatory, or\n\n(b) international financial reporting standards and\nsection 292\nshall be known, and are in this Act referred to, as “IFRS entity financial statements” — and this also applies in any ensuing case where preparation of such statements in\naccordance with those standards and that section is obligatory.\n\n(5) In respect of a company not trading for the acquisition of gain by its members,\nentity financial statements shall be prepared in accordance with\nsection 291\n.\n\n(6)\nSubject to\nsubsection (6A)\n, after the first financial year\nin which the directors of a company prepare IFRS entity financial statements (in\nthis section referred to as the “first IFRS year”), all subsequent entity financial statements of the company shall be prepared in\naccordance with international financial reporting standards and\nsection 292\nunless there is a relevant change of circumstances as referred to in\nsubsection (7).\n\n(6A) After a financial year in which the directors of a company prepare IFRS entity\nfinancial statements, the directors of the company may, notwithstanding that there\nis not a relevant change of circumstances as referred to in\nsubsection (7)\n, subsequently prepare Companies Act entity financial statements for the company provided\nthey have not changed to preparing Companies Act entity financial statements in the\nperiod of 5 years preceding the first day of that financial year.\n\n(6B) For the purposes of calculating the 5 year period referred to in\nsubsection (6A)\n, the reference to \"changed to Companies Act entity financial statements\" shall not\nbe read as including a reference to a change to using those financial statements which\nwas due to a relevant change in circumstances.\n\n(7) There is a relevant change of circumstances where at any time during or after\nthe first IFRS year—\n\n(a) the company becomes a subsidiary undertaking of another undertaking that does\nnot prepare IFRS financial statements,\n\n(b) the company, having re-registered as a private company limited by shares, ceases\nto be a company with securities admitted to trading on a regulated market in an EEA\nstate, or\n\n(c) a holding undertaking of the company ceases to be an undertaking with securities\nadmitted to trading on a regulated market in an EEA state.\n\n(8) Where,\nin accordance with\nsubsection (6A)\nor\n(7)\n, Companies Act entity financial statements are prepared in relation to a company,\nthe directors of the company may subsequently prepare IFRS entity financial statements\nfor the company and\nsubsections (6), (6A)\nand\n(7)\nshall apply as if the financial year for which such IFRS entity financial statements\nare subsequently prepared was the first IFRS year."
+    }
+  ],
+  "rules": [
+    {
+      "key": "company.financial_statements_duty",
+      "sectionNumber": "290",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2017-06-09",
+          "effectiveTo": null,
+          "quote": "The directors of a company shall prepare entity financial statements for the\ncompany in respect of each financial year of it.",
+          "value": null,
+          "unit": null,
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    }
+  ]
+}

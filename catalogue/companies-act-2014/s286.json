@@ -1,0 +1,26 @@
+{
+  "format": 1,
+  "source": {
+    "citation": "2014 Act 38 s.286",
+    "title": "Companies Act 2014 s.286 (revised)",
+    "sourceType": "legislation",
+    "jurisdiction": "IE",
+    "sourceUrl": "https://revisedacts.lawreform.ie/eli/2014/act/38/section/286/revised/en/html",
+    "sha256": "5638e7b85c190088c00ed00dd96c0ecaf407cffb6924a8d425953e099ffdbf92",
+    "conversion": "lrc-html-plaintext",
+    "retrievedOn": "2026-10-06",
+    "note": "LRC-revised text as retrieved — a live, continuously-updated page, not a dated historical snapshot. Distinct source row per section, never merged with any other Companies Act 2014 section."
+  },
+  "provisions": [
+    {
+      "sectionNumber": "286",
+      "heading": "Accounting records: offences",
+      "locator": "s.286",
+      "category": "other",
+      "relevant": false,
+      "relevanceReason": "Uncategorised by heading/body keyword match; needs human review to determine relevance.",
+      "excerpt": "286.\n(1) A company that contravenes\nsection 281\n,\n282\n,\n283\n,\n284\nor\n285\nshall be guilty of—\n\n(a) subject to\nparagraph (b)\n, a category 2 offence, or\n\n(b) if the contravention falls within a case to which\nsubsection (3)\n,\n(4)\nor\n(5)\nrelates, a category 1 offence.\n\n(2) A director of a company who fails to take all reasonable steps to secure compliance\nby the company with the requirements of any of\nsections 281\nto\n285\n, or has by his or her own intentional act been the cause of any default by the company\nunder any of them, shall be guilty of—\n\n(a) subject to\nparagraph (b)\n, a category 2 offence, or\n\n(b) if the contravention falls within a case to which\nsubsection (3)\n,\n(4)\nor\n(5)\nrelates, a category 1 offence.\n\n(3) This subsection relates to a case in which both of the following circumstances\napply—\n\n(a) the contravention arose in relation to a company that is subsequently wound up\nand that company is unable to pay its debts, and\n\n(b) the contravention has—\n\n(i) contributed to the company’s inability to pay all of its debts, or\n\n(ii) resulted in substantial uncertainty as to the assets and liabilities of the company,\nor\n\n(iii) substantially impeded the orderly winding up of the company.\n\n(4) This subsection relates to a case in which the contravention persisted during\na continuous period of 3 years or more.\n\n(5) This subsection relates to a case in which the contravention involved the failure\nto correctly record and explain one or more transactions of a company the value or\naggregate value of which transaction or transactions exceeded €1 million or 10 per cent of the net assets of the company, whichever is the greater.\n\n(6) Subject to\nsubsection (7)\n, the reference in\nsubsection (5)\nto the net assets of the company is a reference to net assets, as defined in\nsection 275\n(1)\n, of the company and for this purpose the amount of its net assets shall be ascertained\nby reference to the entity financial statements prepared under\nsection 290\nand laid in accordance with\nsection 341\nin respect of the last preceding financial year in respect of which such entity financial\nstatements were so laid.\n\n(7) Where no entity financial statements of the company have been prepared and laid\nunder the foregoing sections before that time, the reference in\nsubsection (5)\nto the net assets of the company shall be taken to be a reference to the amount of\nits called-up share capital at the time of the contravention.\n\n(8) In any proceedings against a person in respect of an offence under\nsubsection (2)\nconsisting of a failure to take reasonable steps to secure compliance by a company\nwith the requirements of any of\nsections 281\nto\n285\n, it shall be a defence to prove both of the following:\n\n(a) that the defendant had reasonable grounds for believing and did believe that a\ncompetent and reliable person was—\n\n(i) charged with the duty of undertaking that those requirements were complied with,\nand\n\n(ii) in a position to discharge that duty,\n\nand\n\n(b) that the discharge of that duty by such competent and reliable person was monitored\nby the defendant, by means of reasonable methods properly used."
+    }
+  ],
+  "rules": []
+}

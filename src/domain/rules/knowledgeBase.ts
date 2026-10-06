@@ -40,9 +40,7 @@ import { deriveVatScopeRules } from './vatScopeIngestion';
 import { ingestTcaNfgPart, deriveCorporationTaxRules, nfgPath } from './tcaNfgIngestion';
 import { NFG_SECTIONS } from './corporationTaxCuration';
 import { ingestSwcaSection, deriveIncomeTaxRules, SWCA_SECTIONS, swcaPath } from './incomeTaxIngestion';
-import {
-  ingestCompaniesAct2014Section, deriveCompaniesAct2014Rules, COMPANIES_ACT_2014_SECTION_NUMBERS,
-} from './companiesAct2014Ingestion';
+import { deriveCompaniesAct2014Rules } from './companiesAct2014Ingestion';
 import { ingestVat3ReturnGuidance, ingestRtdTdm, deriveVat3RtdRules } from './vat3RtdIngestion';
 import { ingestEbrief168_25, deriveEbriefRules } from './ebriefIngestion';
 import { ingestEu282Articles, deriveEu282Rules, EU_282_2011_MD_PATH } from './eu282Ingestion';
@@ -65,10 +63,6 @@ type IngestFn = (db: AppDatabase, params: IngestParams) => unknown;
  * the provision viewer can resolve it wherever the app runs.
  */
 const SOURCES: Array<{ path: string; ingest: IngestFn }> = [
-  ...COMPANIES_ACT_2014_SECTION_NUMBERS.map((n) => ({
-    path: `docs/statutes/companies-act-2014/s${n}.md`,
-    ingest: ingestCompaniesAct2014Section as IngestFn,
-  })),
   ...Object.keys(NFG_SECTIONS).map((part) => ({
     path: nfgPath(part),
     ingest: ((db, p) => ingestTcaNfgPart(db, { ...p, part })) as IngestFn,

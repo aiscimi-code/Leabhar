@@ -229,6 +229,29 @@ export const CATALOGUE_ENTRIES = [
   // Revenue's VAT registration manual (Tax and Duty Manual Part 38-01-03b):
   // only its capacity exclusion passage, one provision, with the PDF beside it.
   'tdm-38-01-03b/38-01-03b.json',
+  // Companies Act 2014 sections, revised, each one provision from its LRC page.
+  'companies-act-2014/s282.json',
+  'companies-act-2014/s280A.json',
+  'companies-act-2014/s280B.json',
+  'companies-act-2014/s280C.json',
+  'companies-act-2014/s280D.json',
+  'companies-act-2014/s280E.json',
+  'companies-act-2014/s280F.json',
+  'companies-act-2014/s352.json',
+  'companies-act-2014/s358.json',
+  'companies-act-2014/s359.json',
+  'companies-act-2014/s360.json',
+  'companies-act-2014/s281.json',
+  'companies-act-2014/s283.json',
+  'companies-act-2014/s284.json',
+  'companies-act-2014/s285.json',
+  'companies-act-2014/s286.json',
+  'companies-act-2014/s290.json',
+  'companies-act-2014/s291.json',
+  'companies-act-2014/s292.json',
+  'companies-act-2014/s293.json',
+  'companies-act-2014/s343.json',
+  'companies-act-2014/s347.json',
 ] as const;
 
 export function catalogueEntryPath(entry: string, root: string = appRoot()): string {

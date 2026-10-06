@@ -1,0 +1,49 @@
+{
+  "format": 1,
+  "source": {
+    "citation": "2014 Act 38 s.358",
+    "title": "Companies Act 2014 s.358 (revised)",
+    "sourceType": "legislation",
+    "jurisdiction": "IE",
+    "sourceUrl": "https://revisedacts.lawreform.ie/eli/2014/act/38/section/358/revised/en/html",
+    "sha256": "2c1c61580619f87c5166c591313800e2612593b91e5d4d718adbce089d1530af",
+    "conversion": "lrc-html-plaintext",
+    "retrievedOn": "2026-10-06",
+    "note": "LRC-revised text as retrieved — a live, continuously-updated page, not a dated historical snapshot. Distinct source row per section, never merged with any other Companies Act 2014 section."
+  },
+  "provisions": [
+    {
+      "sectionNumber": "358",
+      "heading": "Main conditions for audit exemption — non-group situation",
+      "locator": "s.358",
+      "category": "exemption",
+      "relevant": true,
+      "relevanceReason": "Substantive exemption provision; potentially bears on transaction treatment.",
+      "excerpt": "358.\n(1) Subject to\nsubsection (3)\nand the other provisions of this Chapter,\nsection 360\n(audit exemption) applies to a company in respect of its statutory financial statements\nfor a particular financial year if the company qualifies as a small company in relation\nto that financial year.\n\n(2) For the purposes of this section, whether a company qualifies as a small company\nshall be determined in accordance with\nsections 280A\nand\n280B\n.\n\n(3)\nSection 360\ndoes not apply to a company in respect of its statutory financial statements for\na particular financial year during any part of which the company was a group company\n(within the meaning of\nsection 359\n) unless the group qualifies, under\nsection 359\n, as a small group in relation to that financial year (and the other relevant provisions\nof this Chapter are complied with).\n\n(4) In\nsubsection (3)\n“group”, in relation to a group company, shall be read in accordance with\nsection 359\n(1)(b)\n.\n\n(5) Nothing in this section prejudices the operation of\nChapter 16\n(special audit exemption for dormant companies)."
+    }
+  ],
+  "rules": [
+    {
+      "key": "company.audit_exemption_non_group_gate",
+      "sectionNumber": "358",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2026-09-20",
+          "effectiveTo": null,
+          "quote": "section 360\n(audit exemption) applies to a company in respect of its statutory financial statements\nfor a particular financial year if the company qualifies as a small company in relation\nto that financial year",
+          "value": null,
+          "unit": null,
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    }
+  ]
+}

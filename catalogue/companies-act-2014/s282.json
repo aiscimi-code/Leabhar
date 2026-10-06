@@ -1,0 +1,49 @@
+{
+  "format": 1,
+  "source": {
+    "citation": "2014 Act 38 s.282",
+    "title": "Companies Act 2014 s.282 (revised)",
+    "sourceType": "legislation",
+    "jurisdiction": "IE",
+    "sourceUrl": "https://revisedacts.lawreform.ie/eli/2014/act/38/section/282/revised/en/html",
+    "sha256": "ce171e4e706b60ce167b99ac4bd282ba2fae1c0775ab53af37e4110a7927623c",
+    "conversion": "lrc-html-plaintext",
+    "retrievedOn": "2026-10-06",
+    "note": "LRC-revised text as retrieved — a live, continuously-updated page, not a dated historical snapshot. Distinct source row per section, never merged with any other Companies Act 2014 section."
+  },
+  "provisions": [
+    {
+      "sectionNumber": "282",
+      "heading": "Basic requirements for accounting records",
+      "locator": "s.282",
+      "category": "other",
+      "relevant": true,
+      "relevanceReason": "Curated: mapped to a rule in companiesAct2014Curation.ts, overriding the other category default.",
+      "excerpt": "282.\n(1) For the purposes of this Part, adequate accounting records are those that are\nsufficient to—\n\n(a) correctly record and explain the transactions of the company,\n\n(b) enable, at any time, the assets, liabilities, financial position and profit or\nloss of the company to be determined with reasonable accuracy,\n\n(c) enable the directors to ensure that any financial statements of the company, required\nto be prepared under\nsection 290\nor\n293\n, and any directors’ report required to be prepared under\nsection 325\n, comply with the requirements of this Act and, where applicable, Article 4 of the\nIAS Regulation, and\n\n(d) enable those financial statements of the company so prepared to be audited.\n\n(2) The accounting records shall be kept on a continuous and consistent basis, which\nis to say, the entries in them shall be made in a timely manner and be consistent\nfrom one period to the next; if those records are not kept by making entries in a\nbound book but by some other means, adequate precautions shall be taken for guarding\nagainst falsification and facilitating discovery of such falsification, should it\noccur.\n\n(3) Without prejudice to the generality of\nsubsections (1)\nand\n(2)\n, accounting records kept pursuant to\nsection 281\nshall contain—\n\n(a) entries from day to day of all sums of money received and expended by the company\nand the matters in respect of which the receipt and expenditure takes place,\n\n(b) a record of the assets and liabilities of the company,\n\n(c) if the company’s business involves dealing in goods—\n\n(i) a record of all transactions whereby goods are purchased and whereby goods are\nsold, showing the goods and the sellers and buyers (except buyers of goods in ordinary\nretail trade) in sufficient detail to enable the goods and the sellers and buyers\nto be identified and a record of all the invoices relating to such purchases and sales,\n\n(ii) statements of stock held by the company at the end of each financial year and\nall records of stocktakings from which any such statement of stock has been, or is\nto be, prepared,\n\nand\n\n(d) if the company’s business involves the provision or purchase of services, a record of all transactions\nwhereby services are provided and whereby services are purchased, to whom they were\nprovided or from whom they were purchased (unless provided or purchased by way of\nordinary retail trade) and of all the invoices relating thereto.\n\n(4) For the purposes of\nsubsections (1)\nto\n(3)\n, adequate accounting records shall be deemed to have been maintained if they comply\nwith those subsections and explain the company’s transactions and facilitate the preparation of financial statements that give a\ntrue and fair view of the assets, liabilities, financial position and profit or loss\nof the company and, if relevant, the group and include any information and returns\nreferred to in\nsection 283\n(2)\n.\n\n(5) The adequate accounting records required by\nsection 281\nto be kept, including the information and returns referred to in this Chapter, shall\nbe kept either—\n\n(a) in written form in an official language of the State, or\n\n(b) so as to enable the accounting records, including the information and returns,\nto be readily accessible and readily convertible into written form in an official\nlanguage of the State.\n\n(6) Subject to\nsubsection (7)\n, any computer (the “server computer”) that provides services to another computer, being services the provision of which\nto the latter is necessary so that the accounting records, and the other foregoing\ninformation and returns, stored in the latter can be accessed at all times, shall\nbe kept in a place in the State.\n\n(7) In any case where the accounting records are kept outside the State as mentioned\nin\nsection 283\n(2)\n—\n\n(a) save to the extent that the Minister by regulations provides otherwise,\nsubsection (6)\nshall not apply,\n\n(b) the Minister may by regulations impose requirements on the companies so keeping\ntheir accounting records (and which companies are not subject to\nsubsection (6)\nby virtue of regulations under\nparagraph (a)\n) for the purpose of securing the effective access, in accordance with this Act, at\nall times to the accounting records stored in the computers concerned.\n\n(8) A holding company which has a subsidiary undertaking in relation to which the\npreceding requirements of this section or similar such requirements do not apply shall\ntake the following steps.\n\n(9) Those steps are all reasonable steps to secure that the subsidiary undertaking\nkeeps such adequate accounting records as will enable the directors of the holding\ncompany to ensure that any group financial statements required to be prepared under\nthis Part comply with the requirements of this Part and, where applicable, Article\n4 of the IAS Regulation."
+    }
+  ],
+  "rules": [
+    {
+      "key": "company.adequate_accounting_records",
+      "sectionNumber": "282",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2015-06-01",
+          "effectiveTo": null,
+          "quote": "adequate accounting records are those that are\nsufficient to—\n\n(a) correctly record and explain the transactions of the company,",
+          "value": null,
+          "unit": null,
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    }
+  ]
+}
