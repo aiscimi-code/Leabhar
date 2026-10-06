@@ -31,11 +31,9 @@ import { deriveVatcaScheduleRules } from './vatcaScheduleIngestion';
 import { deriveRctRules } from './rctIngestion';
 import { ingestVatcaRevisedSection, deriveVatcaRevisedRules } from './vatcaRevisedIngestion';
 import { deriveCapitalAllowancesRules } from './capitalAllowancesIngestion';
-import { ingestSi639, deriveSi639Rules } from './si639Ingestion';
-import { ingestSi156, deriveSi156Rules } from './si156Ingestion';
-import {
-  ingestSi692025Reg5, ingestSi692025Reg7, ingestSi692025Reg8, ingestSi692025Reg9, deriveSi692025Rules,
-} from './si692025Ingestion';
+import { deriveSi639Rules } from './si639Ingestion';
+import { deriveSi156Rules } from './si156Ingestion';
+import { deriveSi692025Rules } from './si692025Ingestion';
 import { deriveFinanceAct2024VatThresholds } from './financeAct2024VatThresholdsIngestion';
 import { ingestTdm3801_03bCapacityExclusion, deriveTdm3801_03bCapacityExclusionRule } from './tdm3801_03bIngestion';
 import { deriveVatScopeRules } from './vatScopeIngestion';
@@ -67,12 +65,6 @@ type IngestFn = (db: AppDatabase, params: IngestParams) => unknown;
  * the provision viewer can resolve it wherever the app runs.
  */
 const SOURCES: Array<{ path: string; ingest: IngestFn }> = [
-  { path: 'docs/statutes/si-639-2010/2010-si-639.md', ingest: ingestSi639 },
-  { path: 'docs/statutes/si-156-2012/2012-si-156.md', ingest: ingestSi156 },
-  { path: 'docs/statutes/si-69-2025/2025-si-69.md', ingest: ingestSi692025Reg5 },
-  { path: 'docs/statutes/si-69-2025/2025-si-69.md', ingest: ingestSi692025Reg7 },
-  { path: 'docs/statutes/si-69-2025/2025-si-69.md', ingest: ingestSi692025Reg8 },
-  { path: 'docs/statutes/si-69-2025/2025-si-69.md', ingest: ingestSi692025Reg9 },
   { path: 'docs/statutes/tdm-38-01-03b/38-01-03b.md', ingest: ingestTdm3801_03bCapacityExclusion },
   ...COMPANIES_ACT_2014_SECTION_NUMBERS.map((n) => ({
     path: `docs/statutes/companies-act-2014/s${n}.md`,

@@ -6,7 +6,7 @@ so a ported excerpt says exactly what the copy said.
 
 Called by scripts/catalogue/extract.ts, never at run time:
 
-  python3 scripts/catalogue/lrc_html_to_text.py <page.html> <title> <citation> <url>
+  python3 scripts/catalogue/lrc_html_to_text.py <page.html> <title> <citation> <url> [--paragraphs]
 
 Writes the converted Markdown to standard output.
 """
@@ -22,7 +22,7 @@ except ImportError as e:
     raise SystemExit("pip install beautifulsoup4") from e
 
 
-def html_to_md(html: str, title: str, citation: str, url: str) -> str:
+def html_to_md(html: str, title: str, citation: str, url: str, paragraphs: bool = False) -> str:
     soup = BeautifulSoup(html, "html.parser")
     for tag in soup.select("script, style, nav, header, footer, noscript, form"):
         tag.decompose()
@@ -65,6 +65,14 @@ def html_to_md(html: str, title: str, citation: str, url: str) -> str:
         # itself is in the accompanying class="change" span, which is kept.
         for tag in root.select(".markup"):
             tag.decompose()
+        # An Irish Statute Book instrument page breaks its paragraphs' source
+        # lines around every link and italic letter ("the \n<a>Taxes
+        # Consolidation Act 1997</a>\n (No. 39", "(<i>a</i>)"); with
+        # --paragraphs each <p> becomes one line, those line breaks dropped,
+        # as the S.I. 156/2012 copy was written (#556).
+        if paragraphs:
+            for p in root.select("p"):
+                p.string = re.sub(r" {2,}", " ", p.get_text("").replace("\n", "")).strip()
     skip = {
         "Home", "Baile", "Acts", "Achtanna", "Introduction", "Alphabetical List",
         "Chronological List", "Annotations", "This Act", "View Full Act",
@@ -94,8 +102,9 @@ def html_to_md(html: str, title: str, citation: str, url: str) -> str:
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 5:
+    args = [a for a in sys.argv[1:] if a != "--paragraphs"]
+    if len(args) != 4:
         raise SystemExit(__doc__)
-    path, title, citation, url = sys.argv[1:]
+    path, title, citation, url = args
     with open(path, encoding="utf-8", errors="replace") as f:
-        sys.stdout.write(html_to_md(f.read(), title, citation, url))
+        sys.stdout.write(html_to_md(f.read(), title, citation, url, "--paragraphs" in sys.argv[1:]))

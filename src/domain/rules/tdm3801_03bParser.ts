@@ -16,8 +16,9 @@
  *
  * This closes a gap `si156Curation.ts` explicitly flagged: S.I. 156/2012
  * reg.5's "capacity" exclusion criteria are not restated anywhere in this
- * KB because the local si-156-2012 transcript only summarises regs 5-9
- * rather than quoting them. This TDM is Revenue's own guidance on exactly
+ * KB because the statute copy of S.I. 156/2012 only summarised regs 5-9
+ * rather than quoting them, so the KB holds regs 1, 2 and 4 only (#705).
+ * This TDM is Revenue's own guidance on exactly
  * that exclusion — a different source, lower in the source hierarchy than
  * the Regulation itself (`revenue_guidance`, not `legislation`), but
  * genuinely verbatim and citable in its own right.

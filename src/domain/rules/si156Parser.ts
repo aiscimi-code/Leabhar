@@ -1,26 +1,19 @@
 /**
  * Deterministic parser for S.I. 156/2012 (Tax Returns and Payments (Mandatory
- * Electronic Filing and Payment of Tax) Regulations 2012), as-made text at
- * docs/statutes/si-156-2012/2012-si-156.md.
+ * Electronic Filing and Payment of Tax) Regulations 2012), as made.
  *
- * Unlike `si639Parser.ts`, this local Markdown is **not a full verbatim
- * transcript of the instrument**: regulations 1, 2 and 4 are quoted in full
- * (each under its own `## ` heading, numbered opener intact — e.g.
- * "4. (1) Where any specified person..."), but regulation 3 is omitted
- * entirely and regulations 5-9 are collapsed into a single editorial summary
- * line ("5–9. Capacity exclusions, Appeal Commissioners review, revocation of
- * exclusion, and electronic payment timing rules as in the official
- * instrument.") rather than their own text. That summary line is a paraphrase,
- * not a source, so this parser deliberately never emits a provision for it:
- * the numbered-opener regex (`^(\d+)\.\s`) does not match "5–9." (an en-dash,
- * not a period, follows the first digit), so the placeholder section is
- * excluded by construction rather than by a special case.
+ * It reads each regulation under its own `## ` heading, numbered opener
+ * intact (e.g. "4. (1) Where any specified person..."). The catalogue
+ * extraction lays the Irish Statute Book page out that way
+ * (`scripts/catalogue/extract.ts`, #556), as the statute copy before it was
+ * written. A heading whose body does not open with a number is skipped: the
+ * copy replaced regulations 5-9 with one summary line ("5–9. Capacity
+ * exclusions, ..."), a paraphrase, not a source, and the opener regex
+ * (`^(\d+)\.\s`) does not match "5–9." (an en-dash follows the first digit).
  *
- * Only three provisions are ever returned: regs 1, 2 and 4. Regulation 3
- * ("Persons in receipt of certain income...") has no body at all in this
- * file and is not fabricated here either.
+ * The knowledge base holds regs 1, 2 and 4, the ones that copy quoted; the
+ * page has all nine (#705).
  */
-import { readFileSync } from 'node:fs';
 import { categoriseProvision, provisionSlug, type ProvisionCategory } from './statuteParser';
 
 export { categoriseProvision, provisionSlug, assessRelevance } from './statuteParser';
@@ -95,12 +88,3 @@ export function parseSi156(source: string): ParsedSi156Regulation[] {
 
   return regulations;
 }
-
-export function parseSi156File(path: string): ParsedSi156Regulation[] {
-  return parseSi156(readFileSync(path, 'utf8'));
-}
-
-export const SI_156_2012_MD_PATH = new URL(
-  '../../../docs/statutes/si-156-2012/2012-si-156.md',
-  import.meta.url,
-).pathname;

@@ -389,8 +389,6 @@ docs/statutes/rct/README.md,2718,cited-code,src/domain/rules/rctCuration.ts src/
 docs/statutes/rct/tdm-18-02-01-operations.md,858,cited-docs,docs/statutes/rct/README.md
 docs/statutes/rct/tdm-18-02-02-principal.md,1721,cited-docs,docs/statutes/rct/README.md
 docs/statutes/scripts/extract_vat_sources.py,10340,cited-code,src/domain/rules/companiesAct2014Ingestion.ts src/domain/rules/vatcaScheduleParser.ts
-docs/statutes/si-156-2012/2012-si-156.md,4696,runtime,read by the test suite
-docs/statutes/si-639-2010/2010-si-639.md,159413,runtime,read by the test suite
 docs/statutes/si-639-2010/README.md,1013,unreferenced,
 docs/statutes/si-639-2010/reg-14.md,1896,cited-docs,docs/statutes/si-639-2010/README.md
 docs/statutes/si-639-2010/reg-14A-si-734-2020.md,1942,cited-code,src/domain/rules/si639Curation.ts
@@ -404,7 +402,6 @@ docs/statutes/si-639-2010/reg-26.md,590,cited-docs,docs/statutes/si-639-2010/REA
 docs/statutes/si-639-2010/reg-29.md,2323,cited-docs,docs/statutes/si-639-2010/README.md
 docs/statutes/si-651-2011/2011-si-651.md,22628,cited-docs,docs/statutes/SOURCE-REGISTER.md
 docs/statutes/si-651-2011/README.md,1330,cited-docs,docs/RULES_KB.md
-docs/statutes/si-69-2025/2025-si-69.md,22926,runtime,read by the test suite
 docs/statutes/sme-scheme/tdm-sme-domestic-layer.md,12249,cited-docs,docs/statutes/SOURCE-REGISTER.md
 docs/statutes/swca-2005/README.md,535,unreferenced,
 docs/statutes/swca-2005/SOURCES.txt,313,cited-docs,docs/statutes/swca-2005/README.md

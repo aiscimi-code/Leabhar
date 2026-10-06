@@ -1,7 +1,8 @@
 /**
  * Ingestion and rule derivation for S.I. 156/2012 (Tax Returns and Payments
  * (Mandatory Electronic Filing and Payment of Tax) Regulations 2012), built
- * on `si156Parser.ts`.
+ * on `si156Parser.ts`. The knowledge base loads the instrument from its rules
+ * catalogue entry (`ingestSi156FromCatalogue`, #556).
  */
 import { and, eq } from 'drizzle-orm';
 import type { AppDatabase } from '@/db';
@@ -9,21 +10,50 @@ import { irishKnowledgeSources, irishActProvisions, irishTaxRules } from '@/db/s
 import { ids } from '@/lib/ids';
 import { nowIso } from '../dates';
 import { sha256Hex } from '@/lib/hash';
-import { parseSi156, provisionSlug, assessRelevance, SI_156_2012_MD_PATH } from './si156Parser';
+import { parseSi156, provisionSlug, assessRelevance, type ParsedSi156Regulation } from './si156Parser';
 import { SI_156_CURATED_RULES } from './si156Curation';
 import { upsertReviewItem } from '../extraction/service';
 import { crossReferencesFromProvision, sameCrossReferences } from './dependencies';
 import { taxHeadsFor } from './taxHeads';
+import { ingestCatalogueFile, type CatalogueIngestResult } from './catalogue';
 
-export { SI_156_2012_MD_PATH };
-
-const SI_156 = {
+export const SI_156 = {
   citation: 'S.I. 156/2012',
+  title: 'Tax Returns and Payments (Mandatory Electronic Filing and Payment of Tax) Regulations 2012',
   sourceUrl: 'https://www.irishstatutebook.ie/eli/2012/si/156/made/en/html',
   // Regulation 1(2) states its own commencement verbatim: "These Regulations
   // come into operation on 1 June 2012."
   effectiveFrom: '2012-06-01',
+  /**
+   * The regulations held as provisions: the ones the statute copy quoted
+   * verbatim, which books already hold. The official page has all nine (#705).
+   */
+  regulations: ['1', '2', '4'],
+  note: 'Only regulations 1, 2 and 4 are held as provisions: the ones the earlier statute copy quoted '
+    + 'verbatim, which books already hold. Regulations 3 and 5-9 are on the official page but are not '
+    + 'ingested or curated into any rule (#705).',
 };
+
+/** Whether a regulation bears on the rules: its category's default, or curated into a rule. */
+export function si156Relevance(reg: ParsedSi156Regulation): { relevant: boolean; reason: string } {
+  const { relevant, reason } = assessRelevance(reg.category);
+  if (relevant || !SI_156_CURATED_RULES.some((r) => r.regulationNumber === reg.regulationNumber)) return { relevant, reason };
+  return {
+    relevant: true,
+    reason: 'Curated: mapped to a rule in si156Curation.ts, overriding the '
+      + `${reg.category} category default.`,
+  };
+}
+
+export const SI_156_CATALOGUE_ENTRY = 'si-156-2012/2012-si-156.json';
+
+/** Load the instrument from its catalogue entry. */
+export function ingestSi156FromCatalogue(
+  db: AppDatabase,
+  params: { companyId?: string | null; ingestVersion?: string; root?: string },
+): CatalogueIngestResult {
+  return ingestCatalogueFile(db, { ...params, entry: SI_156_CATALOGUE_ENTRY });
+}
 
 export interface Si156IngestResult {
   sourceId: string;
@@ -33,8 +63,9 @@ export interface Si156IngestResult {
 }
 
 /**
- * Ingest S.I. 156/2012. Only regs 1, 2 and 4 (the ones this local file
- * quotes verbatim) become provisions; see `si156Parser.ts`'s header.
+ * Ingest a Markdown copy of S.I. 156/2012 (the CLI's `--file`). Every
+ * regulation under its own `## ` heading becomes a provision; see
+ * `si156Parser.ts`'s header.
  */
 export function ingestSi156(
   db: AppDatabase,
@@ -65,33 +96,24 @@ export function ingestSi156(
       id: sourceId,
       companyId: params.companyId ?? null,
       sourceType: 'legislation',
-      title: 'Tax Returns and Payments (Mandatory Electronic Filing and Payment of Tax) Regulations 2012',
+      title: SI_156.title,
       citation: SI_156.citation,
       jurisdiction: 'IE',
       sourceUrl: SI_156.sourceUrl,
-      localPath: params.localPath ?? SI_156_2012_MD_PATH,
+      localPath: params.localPath ?? null,
       sha256: digest,
       ingestVersion: params.ingestVersion,
       publicationDate: null,
       retrievedAt: nowIso(),
       effectiveFrom: SI_156.effectiveFrom,
-      sourceNote: 'This local transcript is NOT a complete verbatim rendering of the instrument: only '
-        + 'regulations 1, 2 and 4 are quoted verbatim from the official text; regulation 3 has no body in this '
-        + 'file and regulations 5-9 are replaced with a single editorial summary line. Only regs 1, 2 and 4 are '
-        + 'ingested as provisions here; regs 3 and 5-9 are not fabricated and are not curated into any rule.',
+      sourceNote: SI_156.note,
       sourceDate: nowIso(),
     }).run();
 
     const parsed = parseSi156(params.markdown);
-    const curatedRegs = new Set(SI_156_CURATED_RULES.map((r) => r.regulationNumber));
     let relevantCount = 0;
     for (const reg of parsed) {
-      let { relevant, reason } = assessRelevance(reg.category);
-      if (!relevant && curatedRegs.has(reg.regulationNumber)) {
-        relevant = true;
-        reason = 'Curated: mapped to a rule in si156Curation.ts, overriding the '
-          + `${reg.category} category default.`;
-      }
+      const { relevant, reason } = si156Relevance(reg);
       if (relevant) relevantCount++;
 
       tx.insert(irishActProvisions).values({

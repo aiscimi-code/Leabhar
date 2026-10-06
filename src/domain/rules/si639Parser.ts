@@ -1,11 +1,11 @@
 /**
  * Deterministic parser for S.I. 639/2010 (Value-Added Tax Regulations 2010),
- * as-made text at docs/statutes/si-639-2010/2010-si-639.md — a single
- * converted Markdown covering all regulations, like the VATCA/Finance Act
+ * as made: the Irish Statute Book page as converted, one text covering all
+ * regulations (the catalogue extraction reads it, #556), like the VATCA/Finance Act
  * 2024 whole-Act parsers, not the one-file-per-provision shape TCA 1997 or
  * the VATCA Schedules use.
  *
- * Layout (verified against the committed file): front matter, a title line,
+ * Layout (verified against the converted page): front matter, a title line,
  * an "ARRANGEMENT OF REGULATIONS" table of contents (numbered headings only,
  * no body), the enacting clause ("...hereby make the following
  * regulations:"), the 47 regulations themselves (each opening as a bare
@@ -18,7 +18,6 @@
  * than trying to distinguish a real regulation-opener from a TOC or
  * explanatory-note line by pattern alone.
  */
-import { readFileSync } from 'node:fs';
 import { categoriseProvision, provisionSlug, type ProvisionCategory } from './statuteParser';
 
 export { categoriseProvision, provisionSlug, assessRelevance } from './statuteParser';
@@ -119,12 +118,3 @@ export function parseSi639(source: string): ParsedSi639Regulation[] {
 
   return regulations;
 }
-
-export function parseSi639File(path: string): ParsedSi639Regulation[] {
-  return parseSi639(readFileSync(path, 'utf8'));
-}
-
-export const SI_639_2010_MD_PATH = new URL(
-  '../../../docs/statutes/si-639-2010/2010-si-639.md',
-  import.meta.url,
-).pathname;

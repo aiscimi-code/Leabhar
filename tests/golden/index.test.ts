@@ -26,17 +26,16 @@ import {
   ingestVatcaScheduleFromCatalogue, deriveVatcaScheduleRules,
 } from '@/domain/rules/vatcaScheduleIngestion';
 import {
-  ingestSi692025Reg5, ingestSi692025Reg8, ingestSi692025Reg9,
-  deriveSi692025Rules, SI_69_2025_MD_PATH,
+  ingestSi692025FromCatalogue, deriveSi692025Rules,
 } from '@/domain/rules/si692025Ingestion';
 import {
   deriveFinanceAct2024VatThresholds,
 } from '@/domain/rules/financeAct2024VatThresholdsIngestion';
 import {
-  ingestSi639, deriveSi639Rules, SI_639_2010_MD_PATH,
+  ingestSi639FromCatalogue, deriveSi639Rules,
 } from '@/domain/rules/si639Ingestion';
 import {
-  ingestSi156, deriveSi156Rules, SI_156_2012_MD_PATH,
+  ingestSi156FromCatalogue, deriveSi156Rules,
 } from '@/domain/rules/si156Ingestion';
 import {
   ingestTca1997S284FromCatalogue, deriveCapitalAllowancesRules,
@@ -101,20 +100,15 @@ beforeEach(() => {
   ingestVatcaScheduleFromCatalogue(db, { companyId, scheduleNumber: '3' });
   deriveVatcaScheduleRules(db, { companyId, scheduleNumber: '3' });
 
-  const si69Md = readFileSync(SI_69_2025_MD_PATH, 'utf8');
-  ingestSi692025Reg5(db, { companyId, markdown: si69Md, ingestVersion: 'v1' });
-  ingestSi692025Reg8(db, { companyId, markdown: si69Md, ingestVersion: 'v1' });
-  ingestSi692025Reg9(db, { companyId, markdown: si69Md, ingestVersion: 'v1' });
+  ingestSi692025FromCatalogue(db, { companyId });
   deriveSi692025Rules(db, { companyId });
 
   deriveFinanceAct2024VatThresholds(db, { companyId });
 
-  const si639Md = readFileSync(SI_639_2010_MD_PATH, 'utf8');
-  ingestSi639(db, { companyId, markdown: si639Md, ingestVersion: 'v1' });
+  ingestSi639FromCatalogue(db, { companyId });
   deriveSi639Rules(db, { companyId });
 
-  const si156Md = readFileSync(SI_156_2012_MD_PATH, 'utf8');
-  ingestSi156(db, { companyId, markdown: si156Md, ingestVersion: 'v1' });
+  ingestSi156FromCatalogue(db, { companyId });
   deriveSi156Rules(db, { companyId });
 
   ingestTca1997S284FromCatalogue(db, { companyId });

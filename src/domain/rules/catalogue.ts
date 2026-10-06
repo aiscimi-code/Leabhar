@@ -220,6 +220,12 @@ export const CATALOGUE_ENTRIES = [
   'rct/tdm-18-02-04.json',
   'rct/tdm-18-02-05.json',
   'rct/tdm-18-02-11.json',
+  // Statutory instruments as made, from their Irish Statute Book pages: the
+  // regulations books already hold (S.I. 156/2012's 1, 2 and 4, #705; S.I.
+  // 69/2025's 5, 7, 8 and 9), each one provision.
+  'si-639-2010/2010-si-639.json',
+  'si-156-2012/2012-si-156.json',
+  'si-69-2025/2025-si-69.json',
 ] as const;
 
 export function catalogueEntryPath(entry: string, root: string = appRoot()): string {

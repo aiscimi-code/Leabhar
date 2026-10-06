@@ -998,7 +998,8 @@ The first statutory instrument (secondary legislation, not an Act) ingested
 into the KB, and a new whole-document parser shape:
 
 - `src/domain/rules/si639Parser.ts` — parses the entire 47-regulation as-made
-  document at `docs/statutes/si-639-2010/2010-si-639.md` in one pass, the
+  document (the Irish Statute Book page as converted; the knowledge base reads
+  the result from `catalogue/si-639-2010/2010-si-639.json`, #556) in one pass, the
   same "many provisions, one file" shape as the VATCA Schedules parser
   (`vatcaScheduleParser.ts`), reusing its line-based extent-finding for a
   bare `"N."` regulation opener. Unlike the Schedules, this document also has
@@ -1040,12 +1041,15 @@ The first source where the local Markdown transcript is only **partly**
 verbatim, and the KB's handling of that is deliberate rather than an
 oversight:
 
-- `docs/statutes/si-156-2012/2012-si-156.md` quotes Regulations 1, 2 and 4 of
-  the instrument in full, official-text form, but Regulation 3 has no body at
-  all in the file and Regulations 5-9 are replaced with a single editorial
-  summary sentence ("5–9. Capacity exclusions, Appeal Commissioners review,
+- The statute copy (`docs/statutes/si-156-2012/2012-si-156.md`, since
+  replaced by `catalogue/si-156-2012/2012-si-156.json`, #556) quoted
+  Regulations 1, 2 and 4 of the instrument in full, official-text form, but
+  Regulation 3 had no body at all in the file and Regulations 5-9 were
+  replaced with a single editorial summary sentence ("5–9. Capacity exclusions, Appeal Commissioners review,
   revocation of exclusion, and electronic payment timing rules as in the
-  official instrument."). That sentence is a paraphrase, not a source.
+  official instrument."). That sentence is a paraphrase, not a source. The
+  catalogue entry holds the same three regulations, which books already
+  hold, from the official page; that page has all nine (#705).
 - `src/domain/rules/si156Parser.ts` never emits a provision for the
   placeholder section — its numbered-opener regex requires a period after
   the leading digits ("N. "), which "5–9." (an en-dash, not a period) does
@@ -1060,7 +1064,7 @@ oversight:
   that a Regulation 5 "capacity" exclusion exists (insufficient internet
   access, or an individual prevented by age/infirmity), **without** stating
   what specifically qualifies for it, because that text is exactly the part
-  this local file only summarises rather than quotes — asserting the actual
+  the statute copy only summarised rather than quoted — asserting the actual
   criteria would mean inventing text this KB does not hold. (A companion
   rule sourced from Revenue's own guidance now states those criteria in
   full — see "Revenue TDM 38-01-03b (Mandatory E-Filing Exclusion)" below.)
@@ -1085,7 +1089,9 @@ issue #130:
   document) as its boundary — the same targeted approach
   `vatcaRevisedSectionParser.ts` uses for a single VATCA section. It is
   generic over the regulation number, so `si692025Ingestion.ts` calls it
-  for Regulations 5, 7, 8 and 9 from the same already-fetched file, each
+  for Regulations 5, 7, 8 and 9 from the same already-fetched file (the
+  knowledge base now reads all four from one rules catalogue entry,
+  `catalogue/si-69-2025/2025-si-69.json`, #556), each
   becoming its own `irish_act_provisions` row under one shared
   `irish_knowledge_sources` row (same citation, same content hash — it is
   one physical instrument; the ingestion's idempotency check is scoped to
@@ -1220,8 +1226,8 @@ right:
   reg.4's mandatory-electronic-filing obligation.
 - This is exactly the gap "S.I. 156/2012 (Mandatory Electronic Filing)"
   above explicitly left open: reg.5's own "capacity" exclusion criteria are
-  not restated in this KB because the local si-156-2012 transcript only
-  summarises regs 5-9 rather than quoting them. Revenue's own current
+  not restated in this KB because the statute copy of S.I. 156/2012 only
+  summarised regs 5-9 rather than quoting them (#705). Revenue's own current
   guidance states the same criteria and the application procedure, verbatim
   and independently — a different, lower-ranked source (`revenue_guidance`,
   not `legislation` — see "Source hierarchy" below) than the Regulation
@@ -1554,8 +1560,8 @@ depends <ruleKey>           What a rule relies on: rules, and the provisions beh
   curated. Regulation 5's actual "capacity" exclusion criteria are not
   restated anywhere in this KB: the curated rule's `exceptions` records that
   an exclusion regime exists without asserting what qualifies for it, since
-  that text is exactly the part this local file only summarises rather than
-  quotes verbatim.
+  that text is exactly the part the statute copy only summarised rather than
+  quoted verbatim (#705).
 - **VATCA's conditions are curated, not mechanically extracted — and this is
   recorded, not glossed over.** Mapping "a supplier established outside the
   State" onto `supplierEstablishedOutsideStateResolved` (itself a caller's

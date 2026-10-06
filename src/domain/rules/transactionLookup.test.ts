@@ -1,5 +1,4 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { readFileSync } from 'node:fs';
 import { createTestDatabase } from '@/db/testing';
 import { createCompany } from '../config/setup';
 import { ingestFinanceAct2024FromCatalogue, ingestFinanceAct2025FromCatalogue, deriveTaxRules } from './irishRules';
@@ -9,9 +8,7 @@ import { ingestVatcaRevised, deriveVatcaRevisedRules, ingestVatcaRevisedS46 } fr
 import {
   ingestVatcaScheduleFromCatalogue, deriveVatcaScheduleRules,
 } from './vatcaScheduleIngestion';
-import {
-  ingestSi692025Reg5, ingestSi692025Reg8, ingestSi692025Reg9, deriveSi692025Rules, SI_69_2025_MD_PATH,
-} from './si692025Ingestion';
+import { ingestSi692025FromCatalogue, deriveSi692025Rules } from './si692025Ingestion';
 import { sourceAuthorityRank } from './sourceHierarchy';
 import { lookupTransactionRules, identifyTopics, transactionContextFromQueryParams } from './transactionLookup';
 import { deriveVatScopeRules } from './vatScopeIngestion';
@@ -704,14 +701,10 @@ describe('lookupTransactionRules — unregistered trader over the registration t
 });
 
 describe('lookupTransactionRules — issue #143 findings D, E, F, G', () => {
-  const si69Md = readFileSync(SI_69_2025_MD_PATH, 'utf8');
-
   beforeEach(() => {
     ingestVatcaRevisedS46(db, { companyId });
     deriveVatcaRevisedRules(db, { companyId });
-    ingestSi692025Reg5(db, { companyId, markdown: si69Md, ingestVersion: 'v1' });
-    ingestSi692025Reg8(db, { companyId, markdown: si69Md, ingestVersion: 'v1' });
-    ingestSi692025Reg9(db, { companyId, markdown: si69Md, ingestVersion: 'v1' });
+    ingestSi692025FromCatalogue(db, { companyId });
     deriveSi692025Rules(db, { companyId });
   });
 
@@ -778,7 +771,7 @@ describe('lookupTransactionRules — issue #143 findings D, E, F, G', () => {
     deriveTaxRules(db, { companyId: tonyId });
     ingestVatca2010FromCatalogue(db, { companyId: tonyId });
     deriveVatcaRules(db, { companyId: tonyId });
-    ingestSi692025Reg8(db, { companyId: tonyId, markdown: readFileSync(SI_69_2025_MD_PATH, 'utf8'), ingestVersion: 'v1' });
+    ingestSi692025FromCatalogue(db, { companyId: tonyId });
     deriveSi692025Rules(db, { companyId: tonyId });
     const result = lookupTransactionRules(db, {
       companyId: tonyId,

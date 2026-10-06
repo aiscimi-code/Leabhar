@@ -19,7 +19,8 @@
  * 1. Fetch the official page (or read `--html`, a copy saved from the same
  *    URL) and keep it beside the entry, byte for byte (`s046.html`): the
  *    entry records its hash, and the gate re-checks it.
- * 2. Convert it to text (lrc_html_to_text.py; convert-statute-pdf.ts for the
+ * 2. Convert it to text (lrc_html_to_text.py, with --paragraphs for S.I.
+ *    156/2012; convert-statute-pdf.ts for the
  *    VATCA PDF, `pdftotext -layout` for a Finance Act's, pdfplumber_to_text.py
  *    for a Revenue manual's) and parse it with
  *    the same parser the rules were curated against.
@@ -66,6 +67,12 @@ import {
   FINANCE_ACT_2024, FINANCE_ACT_2025, enactedActRelevance, financeAct2024CuratedReason, financeAct2025CuratedReason,
   type KnowledgeSourceRef,
 } from '@/domain/rules/irishRules';
+import { parseSi639 } from '@/domain/rules/si639Parser';
+import { SI_639, si639Relevance } from '@/domain/rules/si639Ingestion';
+import { parseSi156 } from '@/domain/rules/si156Parser';
+import { SI_156, si156Relevance } from '@/domain/rules/si156Ingestion';
+import { parseSi692025Regulation } from '@/domain/rules/si692025Parser';
+import { SI_69_2025, SI_69_2025_REGULATIONS, si692025RelevanceReason } from '@/domain/rules/si692025Ingestion';
 import { nowIso } from '@/domain/dates';
 import { lrcAnnotationLayer } from '@/domain/rules/lrcAnnotations';
 
@@ -304,6 +311,27 @@ function extractorFor(entry: string, naming: Naming | null): Extractor {
       },
     };
   }
+  // A statutory instrument as made, from its Irish Statute Book page: the
+  // regulations the knowledge base holds, parsed as the curation read them.
+  const instrument = STATUTORY_INSTRUMENTS[entry];
+  if (instrument) {
+    const { title, citation, url, paragraphs, source, provisions } = instrument;
+    return {
+      url, title, citation,
+      build: (html, retrievedOn) => {
+        const text = convertLrc(html, title, citation, url, paragraphs);
+        return {
+          source: {
+            citation, title, sourceType: 'legislation', jurisdiction: 'IE', sourceUrl: url,
+            sha256: createHash('sha256').update(html).digest('hex'),
+            conversion: paragraphs ? 'isb-html-plaintext-paragraphs' : 'isb-html-plaintext', retrievedOn,
+            ...source,
+          },
+          provisions: provisions(text),
+        };
+      },
+    };
+  }
   // A section of an Act as enacted, on the Irish Statute Book: the source's
   // URL is the one its statute copy, or the entry, already records.
   const isb = isbSectionUrl(entry, naming);
@@ -408,6 +436,74 @@ function insertedSection(page: string, sectionNumber: string): string {
   return lines.slice(headingOf(open), end).join('\n').trim();
 }
 
+/**
+ * The statutory instruments, by entry name. S.I. 156/2012's copy joined each
+ * paragraph's lines, which the page breaks around every link (`paragraphs`).
+ */
+const STATUTORY_INSTRUMENTS: Record<string, {
+  title: string; citation: string; url: string; paragraphs: boolean;
+  source: Pick<CatalogueEntry['source'], 'publicationDate' | 'effectiveFrom' | 'note'>;
+  provisions: (text: string) => CatalogueEntry['provisions'];
+}> = {
+  'si-639-2010/2010-si-639': {
+    title: SI_639.title, citation: SI_639.citation, url: SI_639.sourceUrl, paragraphs: false,
+    source: { publicationDate: null, effectiveFrom: SI_639.effectiveFrom, note: SI_639.note },
+    provisions: (text) => parseSi639(text).map((reg) => {
+      const { relevant, reason } = si639Relevance(reg);
+      return {
+        sectionNumber: reg.regulationNumber, heading: reg.heading, locator: `reg.${reg.regulationNumber}`,
+        category: reg.category, relevant, relevanceReason: reason, excerpt: reg.provisionText,
+      };
+    }),
+  },
+  'si-156-2012/2012-si-156': {
+    title: SI_156.title, citation: SI_156.citation, url: SI_156.sourceUrl, paragraphs: true,
+    source: { publicationDate: null, effectiveFrom: SI_156.effectiveFrom, note: SI_156.note },
+    provisions: (text) => {
+      const regs = parseSi156(withRegulationHeadings(text)).filter((reg) => SI_156.regulations.includes(reg.regulationNumber));
+      const found = regs.map((reg) => reg.regulationNumber).join(', ');
+      if (found !== SI_156.regulations.join(', ')) throw new Error(`S.I. 156/2012: found regulations ${found}.`);
+      return regs.map((reg) => {
+        const { relevant, reason } = si156Relevance(reg);
+        return {
+          sectionNumber: reg.regulationNumber, heading: reg.heading, locator: `reg.${reg.regulationNumber}`,
+          category: reg.category, relevant, relevanceReason: reason, excerpt: reg.provisionText,
+        };
+      });
+    },
+  },
+  'si-69-2025/2025-si-69': {
+    title: SI_69_2025.title, citation: SI_69_2025.citation, url: SI_69_2025.sourceUrl, paragraphs: false,
+    source: { publicationDate: SI_69_2025.effectiveFrom, effectiveFrom: SI_69_2025.effectiveFrom, note: SI_69_2025.note },
+    provisions: (text) => SI_69_2025_REGULATIONS.map((reg) => ({
+      sectionNumber: reg.regulationNumber, heading: reg.heading, locator: `reg.${reg.regulationNumber}`,
+      principalAct: SI_69_2025.principalAct, amendsSection: reg.amendsSection, citedActs: [SI_69_2025.principalAct],
+      category: 'vat', relevant: true, relevanceReason: si692025RelevanceReason(reg.regulationNumber),
+      excerpt: parseSi692025Regulation(text, reg.regulationNumber).provisionText,
+    })),
+  },
+};
+
+/**
+ * An instrument's regulations under "## " headings, as si156Parser.ts reads
+ * them: between the enacting clause and the Schedules, the line above each
+ * "N. " opener is its heading.
+ */
+function withRegulationHeadings(text: string): string {
+  const start = text.indexOf('make the following regulations:');
+  if (start < 0) throw new Error('The page has no enacting clause.');
+  const lines = text.slice(start).split('\n');
+  const end = lines.findIndex((l) => /^SCHEDULE 1$/.test(l));
+  const body = lines.slice(1, end < 0 ? lines.length : end);
+  body.forEach((line, i) => {
+    if (!/^\d+\. /.test(line)) return;
+    let j = i - 1;
+    while (j >= 0 && body[j]!.trim() === '') j--;
+    if (j >= 0 && !/^\d+\. /.test(body[j]!)) body[j] = `## ${body[j]}`;
+  });
+  return body.join('\n');
+}
+
 /** The Finance Acts the script extracts as a whole, by entry name. */
 const FINANCE_ACTS: Record<string, { act: KnowledgeSourceRef; curatedReason: (n: string) => string | undefined }> = {
   'finance-act-2024/2024-act-43-enacted': { act: FINANCE_ACT_2024, curatedReason: financeAct2024CuratedReason },
@@ -452,12 +548,12 @@ function convertStatutePdf(pdf: Buffer, options: string[]): string {
   }
 }
 
-function convertLrc(html: Buffer, title: string, citation: string, url: string): string {
+function convertLrc(html: Buffer, title: string, citation: string, url: string, paragraphs = false): string {
   const dir = mkdtempSync(join(tmpdir(), 'leabhar-catalogue-'));
   try {
     const page = join(dir, 'page.html');
     writeFileSync(page, html);
-    return execFileSync('python3', [CONVERTER, page, title, citation, url], { encoding: 'utf8' });
+    return execFileSync('python3', [CONVERTER, page, title, citation, url, ...(paragraphs ? ['--paragraphs'] : [])], { encoding: 'utf8' });
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }

@@ -32,11 +32,12 @@ superseded and what to use instead.
   (`catalogue/vatca-2010-revised/`), TCA 1997 ss.530, 530A, 530E, 530G,
   530H, 530I and 284 (`catalogue/tca-1997/`) and Finance Act 2003 s.23
   (`catalogue/finance-act-2003/`), and Revenue's RCT manuals TDM
-  18-02-04, -05 and -11 (`catalogue/rct/`); `si-639-2010/2010-si-639.md`
-  (all 47 regs parsed, reg.25 curated); `si-156-2012/2012-si-156.md` (regs
-  1/2/4 only, reg.4 curated); `si-69-2025/2025-si-69.md` (regs.5, 8 and 9 —
-  reg.5 curated for issue #136 bug 2/#137's turnover-test fix, reg.9 for
-  the s.92B "annual turnover" definition it depends on); and
+  18-02-04, -05 and -11 (`catalogue/rct/`), S.I. 639/2010 (all 47 regs,
+  reg.25 curated; `catalogue/si-639-2010/`), S.I. 156/2012 (regs 1/2/4 only,
+  reg.4 curated; `catalogue/si-156-2012/`) and S.I. 69/2025 (regs 5, 7, 8
+  and 9 — reg.5 curated for issue #136 bug 2/#137's turnover-test fix, reg.9
+  for the s.92B "annual turnover" definition it depends on;
+  `catalogue/si-69-2025/`); and
   one passage of `tdm-38-01-03b/38-01-03b.md` (the e-filing capacity
   exclusion).
 - **Reference material** (everything else below): curated pointers,
@@ -58,9 +59,9 @@ superseded and what to use instead.
 | `vatca-2010/` | VATCA 2010 (No. 31 of 2010) | Deterministic (full Act, as-enacted) + 4 reference pointers to current/revised text | Complete (deterministic, all 125 sections); ingested. Revised pointers cover ss. 5, 46, 65, 84 only |
 | `vatca-2010-revised/` | VATCA 2010, full LRC-revised corpus (separate from the 4 pointers above) | Deterministic (s.46, Schedules 2/3) + reference (Schedules 4, 5, 6, 9 and other individual sections) | s.46 ingested for current rates (23%/13.5%/4.8%); Schedules 2/3 ingested (8 curated paragraphs). Schedules 4, 5, 6, 9 and the ~50 other individual sections committed as text but not ingested; Schedules 1, 7, 8 not committed at all |
 | `tca-1997/` | Taxes Consolidation Act 1997 (No. 39 of 1997) | Deterministic (s.530, s.284) + reference (the other 9 sections) | s.530 (RCT definitions) and s.284 (wear-and-tear qualification, no rate) ingested. s18, s52, ss.885-887 are paraphrase; s235, s288, s299, s496, s613 read as verbatim but carry no source hash — see `docs/RULES_KB.md` "Documents reviewed, not curated" |
-| `si-639-2010/` | VAT Regulations 2010 (S.I. 639/2010) | Deterministic (whole document, reg.25 curated) | All 47 regulations parsed and ingested; only reg.25 (cash-accounting authorisation) has a curated rule. Reg 14A (postponed accounting, via S.I. 734/2020) and most others are ingested text without a rule |
-| `si-156-2012/` | Mandatory e-filing Regulations 2012 (S.I. 156/2012) | Deterministic (regs 1/2/4 only, reg.4 curated) | The local transcript only quotes regs 1, 2 and 4 verbatim (regs 5-9 are an editorial summary, not ingested); reg.4 (mandatory e-filing) is curated |
-| `si-69-2025/` | European Union (VAT) Regulations 2025 (S.I. 69/2025) | Deterministic (regs.5, 8 and 9) | Reg.8 (current s.80(1) cash-accounting eligibility thresholds: 90% test / €2,000,000) ingested and curated as 2 rules. Reg.5 (current VATCA s.6(1)(c)/(d) "current or previous calendar year" turnover test) and reg.9 (s.92B "annual turnover" definition) ingested and curated as part of the issue #136 bug 2/#137 fix. Regs 1-4, 6, 7, 10 (the rest of the cross-border SME scheme) not ingested |
+| `si-639-2010/` | VAT Regulations 2010 (S.I. 639/2010) | Deterministic (whole document, reg.25 curated; from `catalogue/si-639-2010/`) | All 47 regulations parsed and ingested; only reg.25 (cash-accounting authorisation) has a curated rule. Reg 14A (postponed accounting, via S.I. 734/2020) and most others are ingested text without a rule |
+| `si-156-2012/` | Mandatory e-filing Regulations 2012 (S.I. 156/2012) | Deterministic (regs 1/2/4 only, reg.4 curated; from `catalogue/si-156-2012/`) | Regs 1, 2 and 4 are held, the ones the earlier statute copy quoted verbatim; the official page beside the entry has all nine (#705). Reg.4 (mandatory e-filing) is curated |
+| `si-69-2025/` | European Union (VAT) Regulations 2025 (S.I. 69/2025) | Deterministic (regs 5, 7, 8 and 9; from `catalogue/si-69-2025/`) | Reg.8 (current s.80(1) cash-accounting eligibility thresholds: 90% test / €2,000,000) curated as 2 rules. Reg.5 (current VATCA s.6(1)(c)/(d) "current or previous calendar year" turnover test) and reg.9 (s.92B "annual turnover" definition) curated as part of the issue #136 bug 2/#137 fix; reg.7 (s.60(4) deductibility restriction) and reg.9's Union threshold for issue #130. Regs 1-4, 6 and 10 not ingested |
 | `si-651-2011/` | Income Tax and Corporation Tax (RCT) Regulations 2011 (S.I. 651/2011) | Reference only | eRCT administration mechanics; superseded by SI 576/2012 — see the folder's own README |
 | `vat-rates/` | Revenue current VAT rates table (Markdown + machine-readable JSON) + category-move notes | Reference only, not a source (no hash) | Rate history complete (2020-2026, retrieved 2026-09-18); `schedule-moves-2025-2026.md` tracks category reclassifications (e.g. restaurant/hairdressing to 9% from 1 Jul 2026) the headline table alone doesn't show |
 | `ebriefs/` | Revenue eBriefs — notices announcing guidance changes | Deterministic (eBrief No. 168/25, 03 September 2025) | First `revenue_ebrief` source (issue #440): records that TDM Part 38-01-03b's registration-application, threshold and EU VAT SME scheme sections were updated |

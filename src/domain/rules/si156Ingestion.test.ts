@@ -1,33 +1,31 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { readFileSync } from 'node:fs';
 import { eq } from 'drizzle-orm';
 import { createTestDatabase } from '@/db/testing';
 import { createCompany } from '../config/setup';
-import { ingestSi156, deriveSi156Rules, SI_156_2012_MD_PATH } from './si156Ingestion';
+import { ingestSi156FromCatalogue, deriveSi156Rules } from './si156Ingestion';
 import { lookupTaxRule } from './irishRules';
 import { lookupTransactionRules } from './transactionLookup';
 import { SI_156_CURATED_RULES } from './si156Curation';
-import { irishTaxRules, irishKnowledgeSources, reviewItems } from '@/db/schema';
+import { irishTaxRules, irishActProvisions, irishKnowledgeSources, reviewItems } from '@/db/schema';
 import type { AppDatabase } from '@/db';
 
 let db: AppDatabase;
 let companyId: string;
-let markdown: string;
 
 beforeEach(() => {
   ({ db } = createTestDatabase());
   ({ companyId } = createCompany(db, { legalName: 'SI 156 Ltd', seedYears: [2025] }));
-  markdown = readFileSync(SI_156_2012_MD_PATH, 'utf8');
 });
 
-describe('ingestSi156', () => {
+describe('ingestSi156FromCatalogue', () => {
   it('ingests only regs 1, 2 and 4 under its own citation and is idempotent by content', () => {
-    const first = ingestSi156(db, { companyId, markdown, ingestVersion: 'v1' });
+    const first = ingestSi156FromCatalogue(db, { companyId });
     expect(first.ingested).toBe(true);
-    expect(first.regulationCount).toBe(3);
-    expect(first.relevantCount).toBe(1); // curated override for reg.4
+    expect(first.provisionCount).toBe(3);
+    const relevant = db.select().from(irishActProvisions).where(eq(irishActProvisions.sourceId, first.sourceId)).all().filter((p) => p.relevant);
+    expect(relevant.length).toBe(1); // curated override for reg.4
 
-    const second = ingestSi156(db, { companyId, markdown, ingestVersion: 'v1' });
+    const second = ingestSi156FromCatalogue(db, { companyId });
     expect(second.ingested).toBe(false);
     expect(second.sourceId).toBe(first.sourceId);
 
@@ -39,7 +37,7 @@ describe('ingestSi156', () => {
 
 describe('deriveSi156Rules', () => {
   beforeEach(() => {
-    ingestSi156(db, { companyId, markdown, ingestVersion: 'v1' });
+    ingestSi156FromCatalogue(db, { companyId });
   });
 
   it('creates one rule for the mandatory electronic filing obligation', () => {

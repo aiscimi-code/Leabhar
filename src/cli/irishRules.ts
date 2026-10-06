@@ -25,11 +25,11 @@ import {
   ingestTca1997S284, ingestFinanceAct2003S23, ingestTca1997S284FromCatalogue, ingestFinanceAct2003S23FromCatalogue,
   deriveCapitalAllowancesRules,
 } from '@/domain/rules/capitalAllowancesIngestion';
-import { ingestSi639, deriveSi639Rules, SI_639_2010_MD_PATH } from '@/domain/rules/si639Ingestion';
-import { ingestSi156, deriveSi156Rules, SI_156_2012_MD_PATH } from '@/domain/rules/si156Ingestion';
+import { ingestSi639, ingestSi639FromCatalogue, deriveSi639Rules } from '@/domain/rules/si639Ingestion';
+import { ingestSi156, ingestSi156FromCatalogue, deriveSi156Rules } from '@/domain/rules/si156Ingestion';
 import {
   ingestSi692025Reg5, ingestSi692025Reg7, ingestSi692025Reg8, ingestSi692025Reg9, deriveSi692025Rules,
-  SI_69_2025_MD_PATH,
+  ingestSi692025FromCatalogue,
 } from '@/domain/rules/si692025Ingestion';
 import { deriveFinanceAct2024VatThresholds } from '@/domain/rules/financeAct2024VatThresholdsIngestion';
 import {
@@ -70,7 +70,7 @@ Commands:
                                        rct-tca530 | rct-fa2011-a | rct-fa2011-e | rct-fa2011-g |
                                        rct-fa2011-h | rct-fa2011-i | rct-tdm | rct-tdm-05 | rct-tdm-11 |
                                        vatca-2010-revised | tca1997-s284 | finance-act-2003-s23 | si639 | si156 |
-                                       si69-2025 (alias si69-2025-reg8) | si69-2025-reg5 | si69-2025-reg7 |
+                                       si69-2025 (regs 5, 7, 8, 9; with --file, reg 8) | si69-2025-reg5 | si69-2025-reg7 |
                                        si69-2025-reg9 | tdm-38-01-03b |
                                        companies-act-2014 (ingests all eight fetched sections; no --file) |
                                        vat3-return-guidance | rtd-tdm-s76 | ebrief-168-25 | eu-282-2011 |
@@ -227,39 +227,31 @@ export async function main(argv: string[], options: CliOptions = {}): Promise<nu
           return 0;
         }
         if (source === 'si639') {
-          const file = getFlag(flags, 'file') ?? SI_639_2010_MD_PATH;
-          const markdown = readFileSync(file, 'utf8');
-          print(ingestSi639(db, { companyId, markdown, ingestVersion: 'v1', localPath: file }), format);
+          // From the rules catalogue (#556), or --file: a Markdown copy.
+          const file = getFlag(flags, 'file');
+          print(file
+            ? ingestSi639(db, { companyId, markdown: readFileSync(file, 'utf8'), ingestVersion: 'v1', localPath: file })
+            : ingestSi639FromCatalogue(db, { companyId }), format);
           return 0;
         }
         if (source === 'si156') {
-          const file = getFlag(flags, 'file') ?? SI_156_2012_MD_PATH;
-          const markdown = readFileSync(file, 'utf8');
-          print(ingestSi156(db, { companyId, markdown, ingestVersion: 'v1', localPath: file }), format);
+          const file = getFlag(flags, 'file');
+          print(file
+            ? ingestSi156(db, { companyId, markdown: readFileSync(file, 'utf8'), ingestVersion: 'v1', localPath: file })
+            : ingestSi156FromCatalogue(db, { companyId }), format);
           return 0;
         }
-        if (source === 'si69-2025' || source === 'si69-2025-reg8') {
-          const file = getFlag(flags, 'file') ?? SI_69_2025_MD_PATH;
-          const markdown = readFileSync(file, 'utf8');
-          print(ingestSi692025Reg8(db, { companyId, markdown, ingestVersion: 'v1', localPath: file }), format);
-          return 0;
-        }
-        if (source === 'si69-2025-reg5') {
-          const file = getFlag(flags, 'file') ?? SI_69_2025_MD_PATH;
-          const markdown = readFileSync(file, 'utf8');
-          print(ingestSi692025Reg5(db, { companyId, markdown, ingestVersion: 'v1', localPath: file }), format);
-          return 0;
-        }
-        if (source === 'si69-2025-reg7') {
-          const file = getFlag(flags, 'file') ?? SI_69_2025_MD_PATH;
-          const markdown = readFileSync(file, 'utf8');
-          print(ingestSi692025Reg7(db, { companyId, markdown, ingestVersion: 'v1', localPath: file }), format);
-          return 0;
-        }
-        if (source === 'si69-2025-reg9') {
-          const file = getFlag(flags, 'file') ?? SI_69_2025_MD_PATH;
-          const markdown = readFileSync(file, 'utf8');
-          print(ingestSi692025Reg9(db, { companyId, markdown, ingestVersion: 'v1', localPath: file }), format);
+        if (source === 'si69-2025' || /^si69-2025-reg[5789]$/.test(source)) {
+          // The catalogue entry holds regs 5, 7, 8 and 9 together; --file
+          // reads one regulation (reg 8 for plain si69-2025) from a Markdown copy.
+          const file = getFlag(flags, 'file');
+          const byRegulation: Record<string, typeof ingestSi692025Reg8> = {
+            'si69-2025': ingestSi692025Reg8, 'si69-2025-reg8': ingestSi692025Reg8, 'si69-2025-reg5': ingestSi692025Reg5,
+            'si69-2025-reg7': ingestSi692025Reg7, 'si69-2025-reg9': ingestSi692025Reg9,
+          };
+          print(file
+            ? byRegulation[source]!(db, { companyId, markdown: readFileSync(file, 'utf8'), ingestVersion: 'v1', localPath: file })
+            : ingestSi692025FromCatalogue(db, { companyId }), format);
           return 0;
         }
         if (source === 'tdm-38-01-03b') {
