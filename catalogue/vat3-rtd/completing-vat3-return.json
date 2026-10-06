@@ -7,6 +7,7 @@
     "jurisdiction": "IE",
     "sourceUrl": "https://www.revenue.ie/en/vat/accounting-for-vat/how-to-account-for-value-added-tax/completing-vat3-return.aspx",
     "sha256": "29180ddd0c7ea8a15a5dbf03c15b45de99b15feec2a660090b830f3dbecb9912",
+    "contentSha256": "010a5351bb4fbd25a087c514961a20d655bc61071edd83cda46093bb622d586b",
     "conversion": "revenue-html-plaintext",
     "retrievedOn": "2026-10-06",
     "publicationDate": "2026-07-28",

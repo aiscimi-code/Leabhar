@@ -504,7 +504,7 @@ export async function main(argv: string[], options: CliOptions = {}): Promise<nu
           ? reports.filter((r) => r.status === 'changed').map((report) => traceSourceChange(db, { companyId, report }))
           : [];
         print({ reports, traces }, format);
-        return reports.every((r) => r.status === 'unchanged') ? 0 : 1;
+        return reports.every((r) => r.status === 'unchanged' || r.status === 'page_state_only') ? 0 : 1;
       }
 
       case 'generate-tests': {

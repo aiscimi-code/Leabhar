@@ -7,7 +7,7 @@ import { createCompany } from '../config/setup';
 import { irishActProvisions, irishKnowledgeSources, irishTaxRules } from '@/db/schema';
 import type { AppDatabase } from '@/db';
 import {
-  CATALOGUE_ENTRIES, catalogueOfficialFilePath, catalogueRulesFor, ingestCatalogueEntry, quotedWords, readCatalogueEntry, validateCatalogueEntry,
+  CATALOGUE_ENTRIES, catalogueOfficialFilePath, contentSha256Of, catalogueRulesFor, ingestCatalogueEntry, quotedWords, readCatalogueEntry, validateCatalogueEntry,
   type CatalogueEntry,
 } from './catalogue';
 import { loadStatutoryKnowledgeBase } from './knowledgeBase';
@@ -64,6 +64,10 @@ describe.each(CATALOGUE_ENTRIES)('catalogue entry %s', (name) => {
     const path = catalogueOfficialFilePath(name);
     expect(existsSync(path), path).toBe(true);
     expect(createHash('sha256').update(readFileSync(path)).digest('hex')).toBe(entry().source.sha256);
+  });
+
+  it('records the content hash of a page with ASP.NET state, and only of one (#713)', () => {
+    expect(entry().source.contentSha256 ?? null).toBe(contentSha256Of(readFileSync(catalogueOfficialFilePath(name))));
   });
 
   it('has replaced its statute copy: no .md, .html or .pdf of it is left in docs/statutes (#556)', () => {

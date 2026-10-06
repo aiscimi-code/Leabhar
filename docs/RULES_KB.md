@@ -155,10 +155,19 @@ catalogue by what it says (dates and quote), not by its number.
 
 **Source drift.** `npm run cli:rules -- verify-sources [--entry <e>] [--trace]`
 fetches each entry's official file (online, only when asked) and reports it
-unchanged, changed or unreachable, naming each rule version whose quote is no
+unchanged, changed (or, for a page with ASP.NET state, `page_state_only`) or unreachable, naming each rule version whose quote is no
 longer in the text. `--trace` raises a review item for every rule taken from
 a changed source and every rule relying on one (`sourceDrift.ts`); nothing is
 edited, and an approval stands only against the hash it was given on.
+
+An entry's `source.sha256` is always the hash of the bytes fetched. A page
+that carries ASP.NET state (revenue.ie's) also records `contentSha256`: the
+hash of the same bytes with only the values of `__VIEWSTATE`,
+`__VIEWSTATEGENERATOR` and `__EVENTVALIDATION` emptied (`withoutPageState`,
+`catalogue.ts`). Those values rotate while the page stays the same, so when
+the bytes differ but the content hash still matches, the report is
+`page_state_only` and nothing is traced. When the content hash differs too,
+the source is `changed` and its quotes are checked as above (#713).
 
 **Stated periods.** A version whose dates its own quote does not state
 names the words that do (`statedPeriod`, `vatcaRevisedCuration.ts`): the

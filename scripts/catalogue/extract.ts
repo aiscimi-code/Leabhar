@@ -47,7 +47,7 @@ import { dirname, join } from 'node:path';
 import { createTestDatabase } from '@/db/testing';
 import { createCompany } from '@/domain/config/setup';
 import {
-  CATALOGUE_FORMAT, catalogueEntryPath, catalogueOfficialFilePath, catalogueRulesFor, serialiseCatalogueEntry, validateCatalogueEntry,
+  CATALOGUE_FORMAT, catalogueEntryPath, contentSha256Of, catalogueOfficialFilePath, catalogueRulesFor, serialiseCatalogueEntry, validateCatalogueEntry,
   type CatalogueEntry, type CatalogueOfficialExtension,
 } from '@/domain/rules/catalogue';
 import { loadStatutoryKnowledgeBase } from '@/domain/rules/knowledgeBase';
@@ -786,6 +786,12 @@ async function main(args: string[]): Promise<void> {
     const retrievedOn = flag(args, 'retrieved-on') ?? (saved ? previous?.source.retrievedOn : undefined) ?? nowIso().slice(0, 10);
     const built = extractor.build(html, retrievedOn, annotates(name, previous, args));
     if (previous && previous.source.sha256 === built.source.sha256) built.source.retrievedOn = previous.source.retrievedOn;
+    // A page with ASP.NET state also records its hash without it (#713).
+    const contentSha256 = extractor.ext === 'pdf' ? null : contentSha256Of(html);
+    if (contentSha256) {
+      built.source = Object.fromEntries(Object.entries(built.source)
+        .flatMap(([k, v]) => (k === 'sha256' ? [[k, v], ['contentSha256', contentSha256]] : [[k, v]]))) as typeof built.source;
+    }
     const entry: CatalogueEntry = { format: CATALOGUE_FORMAT, ...built, rules: [] };
     mkdirSync(dirname(path), { recursive: true });
     writeFileSync(catalogueOfficialFilePath(entryFile, ROOT, extractor.ext ?? 'html'), html);

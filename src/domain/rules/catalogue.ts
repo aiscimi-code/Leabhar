@@ -29,6 +29,7 @@
  * A computation's `consumed_by` links are not here: they describe the code
  * that reads a rule, not the law, and load from the manifests (consumers.ts).
  */
+import { createHash } from 'node:crypto';
 import { existsSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { and, eq, inArray } from 'drizzle-orm';
@@ -54,6 +55,16 @@ export interface CatalogueSource {
   sourceUrl: string;
   /** SHA-256 of the official file's bytes as fetched. `verify-sources` compares the file online with it. */
   sha256: string;
+  /**
+   * SHA-256 of the same bytes with the values of ASP.NET's hidden
+   * `__VIEWSTATE`, `__VIEWSTATEGENERATOR` and `__EVENTVALIDATION` fields
+   * emptied (`withoutPageState`); nothing else is removed. Present only for a
+   * page that carries them (revenue.ie's), whose bytes change when that state
+   * rotates though the page does not: `verify-sources` reads a page whose
+   * bytes differ but whose content hash matches as unchanged but for page
+   * state (#713). `sha256` stays the record of the file as fetched.
+   */
+  contentSha256?: string;
   /** How the official file became the excerpts, e.g. `lrc-html-plaintext`. */
   conversion: string;
   /** The day the official file was fetched. Never a provision's or rule's effective date (#216). */
@@ -300,6 +311,30 @@ export function catalogueOfficialFilePath(entry: string, root: string = appRoot(
   return at(CATALOGUE_OFFICIAL_EXTENSIONS.find((e) => existsSync(at(e))) ?? 'html');
 }
 
+/** The ASP.NET fields whose values change with server state, not with the page (#713). */
+const PAGE_STATE_FIELDS = /\bname\s*=\s*"(?:__VIEWSTATE|__VIEWSTATEGENERATOR|__EVENTVALIDATION)"/i;
+
+/**
+ * An HTML file's bytes with the values of its ASP.NET page-state fields
+ * emptied, every other byte as it was; null when it has none of them.
+ */
+export function withoutPageState(file: Buffer): Buffer | null {
+  let found = false;
+  // latin1 maps each byte to one character and back, so untouched bytes survive.
+  const text = file.toString('latin1').replace(/<input\b[^>]*>/gi, (tag) => {
+    if (!PAGE_STATE_FIELDS.test(tag)) return tag;
+    found = true;
+    return tag.replace(/\bvalue\s*=\s*"[^"]*"/i, 'value=""');
+  });
+  return found ? Buffer.from(text, 'latin1') : null;
+}
+
+/** The content hash `CatalogueSource.contentSha256` records; null for a file with no page state. */
+export function contentSha256Of(file: Buffer): string | null {
+  const stripped = withoutPageState(file);
+  return stripped ? createHash('sha256').update(stripped).digest('hex') : null;
+}
+
 const isDate = (s: unknown) => typeof s === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(s);
 
 /** Check an entry's shape, so a hand edit that breaks it fails loudly rather than loading half. */
@@ -311,6 +346,7 @@ export function validateCatalogueEntry(entry: unknown, label = 'catalogue entry'
   if (!s || !s.citation || !s.title || !s.sourceUrl?.startsWith('https://')) fail('source needs a citation, a title and an https URL');
   if (!IRISH_SOURCE_TYPES.includes(s.sourceType)) fail(`unknown source type ${s.sourceType}`);
   if (!/^[0-9a-f]{64}$/.test(s.sha256)) fail('source sha256 must be 64 hex characters');
+  if (s.contentSha256 !== undefined && !/^[0-9a-f]{64}$/.test(s.contentSha256)) fail('source contentSha256 must be 64 hex characters');
   if (!isDate(s.retrievedOn)) fail('source retrievedOn must be an ISO date');
   if (s.lrcAnnotations !== undefined
       && (typeof s.lrcAnnotations.text !== 'string' || !Array.isArray(s.lrcAnnotations.footnotes)
