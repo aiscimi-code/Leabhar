@@ -55,6 +55,7 @@ import { generateDefaultTestCases, runTestCases } from '@/domain/rules/testCases
 import { generateAuditReport } from '@/domain/rules/audit';
 import { resolveRuleDependencies, resolveAllRuleDependencies } from '@/domain/rules/dependencies';
 import { resolveImpactTarget, ruleDepends, ruleImpact } from '@/domain/rules/ruleImpact';
+import { traceSourceChange, verifySources, type SourceFetcher } from '@/domain/rules/sourceDrift';
 import { irishActProvisions, irishTaxRules } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 
@@ -105,6 +106,12 @@ Commands:
   impact <ruleKey|provision>          Everything that relies on a rule, or on a provision (an id or a
                                        reference such as "VATCA 2010 s.46"), directly and transitively
   depends <ruleKey>                   Everything a rule relies on: rules, and the provisions behind them
+  verify-sources [--entry <e>] [--trace]
+                                       Fetch each rules catalogue entry's official file (online) and
+                                       report whether it has changed since it was curated, and which
+                                       rule quotes are no longer in it. --trace puts every affected
+                                       rule, and everything relying on it, in front of this book as a
+                                       review item. Exits 1 when a source has changed or is unreachable
   generate-tests                      Write default positive/effective-date test cases
   test                                Run all stored test cases, print pass/fail
   audit                               Print the QC/audit report
@@ -117,6 +124,8 @@ Flags:
 export interface CliOptions {
   db?: AppDatabase;
   companyId?: string;
+  /** verify-sources: fetches the official files (tests pass a fake). */
+  fetchSource?: SourceFetcher;
 }
 
 export async function main(argv: string[], options: CliOptions = {}): Promise<number> {
@@ -476,6 +485,19 @@ export async function main(argv: string[], options: CliOptions = {}): Promise<nu
         if (target.kind !== 'rule') throw new Error(`"${ruleKey}" is not a rule key in this book.`);
         print(ruleDepends(db, { companyId, ruleKey }), format);
         return 0;
+      }
+
+      case 'verify-sources': {
+        const entry = getFlag(flags, 'entry');
+        const reports = await verifySources({
+          entries: entry ? [entry.endsWith('.json') ? entry : `${entry}.json`] : undefined,
+          fetch: options.fetchSource,
+        });
+        const traces = hasFlag(flags, 'trace')
+          ? reports.filter((r) => r.status === 'changed').map((report) => traceSourceChange(db, { companyId, report }))
+          : [];
+        print({ reports, traces }, format);
+        return reports.every((r) => r.status === 'unchanged') ? 0 : 1;
       }
 
       case 'generate-tests': {

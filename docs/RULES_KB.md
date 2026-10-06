@@ -87,11 +87,23 @@ VAT seed rows by `config/seeds.test.ts`.
 belongs to (`taxHeads.ts`): a capital allowance is corporation tax and income
 tax, import VAT is VAT and customs. `listTaxRulesByHead` reads them.
 
-**Not yet.** Rules are still stored per book. Shipping the rules and their
-expert review as a catalogue, an install-level rules store with per-book
-`rule_decisions`, and re-confirming the rules a source change reaches before
-release (ADR-0020 §6, issue #686 steps 10–12) wait on the #293 catalogue
-(#443).
+**Catalogue.** A ported source is one JSON entry under `catalogue/` (#443):
+the official file's URL and SHA-256, its provisions' verbatim excerpts, and
+the rules derived from them with their quotes, links and expert review.
+`npm run catalogue:extract -- <entry>` writes one from the official page;
+`catalogue.test.ts` fails the gate when an entry no longer matches what the
+curation derives. VATCA 2010 s.46 is the first entry; the other sources wait
+on #556.
+
+**Source drift.** `npm run cli:rules -- verify-sources [--entry <e>] [--trace]`
+fetches each entry's official file (online, only when asked) and reports it
+unchanged, changed or unreachable, naming each rule version whose quote is no
+longer in the text. `--trace` raises a review item for every rule taken from
+a changed source and every rule relying on one (`sourceDrift.ts`); nothing is
+edited, and an approval stands only against the hash it was given on.
+
+**Not yet.** Rules are still stored per book. An install-level rules store
+with per-book `rule_decisions` (ADR-0020 §6, issue #686 step 11) follows.
 
 A relationship between rules that exists only in code is a bug: declare it
 as a link.
