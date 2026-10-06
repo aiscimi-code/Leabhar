@@ -1,0 +1,26 @@
+{
+  "format": 1,
+  "source": {
+    "citation": "2025 Act 19 s.2",
+    "title": "Social Welfare and Automatic Enrolment Retirement Savings System (Amendment) Act 2025 s.2 (as enacted)",
+    "sourceType": "legislation",
+    "jurisdiction": "IE",
+    "sourceUrl": "https://www.irishstatutebook.ie/eli/2025/act/19/section/2/enacted/en/html",
+    "sha256": "ced72e8b26f0e77c9b0e698bb0f175a1f104f6979fd0afd466941f9bbda61450",
+    "conversion": "lrc-html-plaintext",
+    "retrievedOn": "2026-10-06",
+    "note": "As enacted; in operation from 1 January 2026 (s.2(2))."
+  },
+  "provisions": [
+    {
+      "sectionNumber": "2",
+      "heading": "Employment contributions",
+      "locator": "s.2",
+      "category": "income_tax",
+      "relevant": true,
+      "relevanceReason": "Payroll: the employer's weekly threshold from 1 January 2026 (2025 Act 19 s.2).",
+      "excerpt": "2.\n(1) Section 13(2) (amended by section 2 of the Act of 2024) of the Principal Act is amended, in paragraph (d)—\n\n(a) by the substitution, in subparagraph (i), of “€552” for “€527”, and\n\n(b) by the substitution, in subparagraph (ii), of “€552” for “€527”.\n\n(2) This section comes into operation on 1 January 2026."
+    }
+  ],
+  "rules": []
+}

@@ -287,6 +287,13 @@ export const CATALOGUE_ENTRIES = [
   'swca-2005/s21.json',
   'swca-2005/s22.json',
   'swca-2005/s23.json',
+  // Payroll acts whose figures the Class A rules quote: SWCA s.13, SWMPA 2024 s.3,
+  // Social Welfare Act 2024 s.2, the 2025 threshold Act s.2, and NTF Act 2000 s.4.
+  'swca-2005/s13.json',
+  'swmpa-2024/s3.json',
+  'swa-2024/s2.json',
+  'swaerss-2025/s2.json',
+  'ntf-2000/s4.json',
   // Revenue's VAT3 and RTD form guidance: the VAT3 page's box passages (its
   // HTML beside it) and the RTD manual's curated sections (its PDF).
   'vat3-rtd/completing-vat3-return.json',

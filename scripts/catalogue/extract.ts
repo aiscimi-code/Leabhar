@@ -206,6 +206,30 @@ function extractorFor(entry: string, naming: Naming | null): Extractor {
       },
     };
   }
+  // Payroll acts ported with the Class A rules (#556). One provision, the words the copy sliced.
+  const payrollAct = PAYROLL_ACTS[entry];
+  if (payrollAct) {
+    return {
+      url: payrollAct.url, title: payrollAct.title, citation: payrollAct.citation,
+      build: (html, retrievedOn) => {
+        const markdown = convertLrc(html, payrollAct.title, payrollAct.citation, payrollAct.url);
+        const body = markdown.split('---').slice(2).join('---');
+        const at = body.indexOf(payrollAct.start);
+        if (at < 0) throw new Error(`${entry}: the opening "${payrollAct.start}" is not in the page.`);
+        return {
+          source: {
+            citation: payrollAct.citation, title: payrollAct.title, sourceType: 'legislation', jurisdiction: 'IE',
+            sourceUrl: payrollAct.url, sha256: createHash('sha256').update(html).digest('hex'),
+            conversion: 'lrc-html-plaintext', retrievedOn, note: payrollAct.note,
+          },
+          provisions: [{
+            sectionNumber: payrollAct.section, heading: payrollAct.heading, locator: payrollAct.locator,
+            category: 'income_tax', relevant: true, relevanceReason: payrollAct.reason, excerpt: body.slice(at).trim(),
+          }],
+        };
+      },
+    };
+  }
   // A Schedule: one provision per paragraph, as the schedule parser reads it.
   const schedule = /^vatca-2010-revised\/schedule-(\d+)$/.exec(entry)?.[1];
   if (schedule) {
@@ -709,6 +733,46 @@ function withRegulationHeadings(text: string): string {
   });
   return body.join('\n');
 }
+
+
+/** Payroll acts extracted as one provision from the page the copy recorded. */
+const PAYROLL_ACTS: Record<string, { url: string; title: string; citation: string; section: string; heading: string; locator: string; start: string; note: string; reason: string }> = {
+  'swca-2005/s13': {
+    url: 'https://revisedacts.lawreform.ie/eli/2005/act/26/section/13/revised/en/html',
+    title: 'SWCA 2005 s.13 (LRC revised)', citation: 'SWCA 2005 s.13', section: '13',
+    heading: 'Employment contributions', locator: 's.13', start: '13.\n—(1)',
+    note: 'LRC revised text as retrieved: current law on that date. The amendment notes that date each figure are in the page beside it.',
+    reason: 'Payroll: the Class A thresholds and the PRSI credit (SWCA 2005 s.13).',
+  },
+  'ntf-2000/s4': {
+    url: 'https://revisedacts.lawreform.ie/eli/2000/act/41/section/4/revised/en/html',
+    title: 'National Training Fund Act 2000 s.4 (LRC revised)', citation: 'NTF Act 2000 s.4', section: '4',
+    heading: 'Rate of levy and supplemental provisions', locator: 's.4', start: '4.\n—\n(1)',
+    note: 'LRC revised text as retrieved: current law on that date. The 1.0% rate is dated by amendment note F3 (1 January 2020).',
+    reason: 'Payroll: the National Training Fund levy (NTF Act 2000 s.4).',
+  },
+  'swmpa-2024/s3': {
+    url: 'https://www.irishstatutebook.ie/eli/2024/act/24/section/3/enacted/en/html',
+    title: 'Social Welfare (Miscellaneous Provisions) Act 2024 s.3 (as enacted)', citation: '2024 Act 24 s.3', section: '3',
+    heading: 'Amendment of certain provisions of Principal Act relevant to employment contributions', locator: 's.3', start: '3.\n(1) Each provision',
+    note: 'As enacted. The Table fixes the Class A and Class S rates on 1 October in each of 2024 to 2028 (s.3(1)-(5)).',
+    reason: 'Payroll: the Class A and Class S rate substitutions (SWMPA 2024 s.3).',
+  },
+  'swa-2024/s2': {
+    url: 'https://www.irishstatutebook.ie/eli/2024/act/36/section/2/enacted/en/html',
+    title: 'Social Welfare Act 2024 s.2 (as enacted)', citation: '2024 Act 36 s.2', section: '2',
+    heading: 'Employment contributions', locator: 's.2', start: '2.\n(1)',
+    note: 'As enacted; in operation from 1 January 2025 (s.2(2)).',
+    reason: "Payroll: the employer's weekly threshold from 1 January 2025 (Social Welfare Act 2024 s.2).",
+  },
+  'swaerss-2025/s2': {
+    url: 'https://www.irishstatutebook.ie/eli/2025/act/19/section/2/enacted/en/html',
+    title: 'Social Welfare and Automatic Enrolment Retirement Savings System (Amendment) Act 2025 s.2 (as enacted)', citation: '2025 Act 19 s.2', section: '2',
+    heading: 'Employment contributions', locator: 's.2', start: '2.\n(1)',
+    note: 'As enacted; in operation from 1 January 2026 (s.2(2)).',
+    reason: "Payroll: the employer's weekly threshold from 1 January 2026 (2025 Act 19 s.2).",
+  },
+};
 
 /** The Finance Acts the script extracts as a whole, by entry name. */
 const FINANCE_ACTS: Record<string, { act: KnowledgeSourceRef; curatedReason: (n: string) => string | undefined }> = {

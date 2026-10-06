@@ -10,48 +10,16 @@ import { ingestSlicedSource, sliceProvision, type SlicedSource } from './slicedS
 
 export { sliceProvision };
 
+/** Ported to the catalogue (#556). The knowledge base loads these entries. */
+export const PAYROLL_CATALOGUE_ENTRIES = [
+  'swca-2005/s13.json',
+  'swmpa-2024/s3.json',
+  'swa-2024/s2.json',
+  'swaerss-2025/s2.json',
+  'ntf-2000/s4.json',
+] as const;
+
 export const PAYROLL_SOURCES: SlicedSource[] = [
-  {
-    path: 'docs/statutes/swca-2005/swca-2005-s13.md',
-    effectiveFrom: '2026-09-27',
-    sourceNote: 'LRC revised text as retrieved on 2026-09-27: current law on that date. The amendment notes that date '
-      + 'each figure are in swca-2005-s13.html beside it.',
-    provisions: [{
-      sectionNumber: '13', heading: 'Employment contributions', category: 'income_tax',
-      start: '13.\n—(1)', end: null,
-    }],
-  },
-  {
-    path: 'docs/statutes/swmpa-2024/2024-act-24-s3.md',
-    effectiveFrom: '2024-10-01',
-    sourceNote: 'As enacted. The Table fixes the Class A rates on 1 October in each of 2024 to 2028 (s.3(1)-(5)).',
-    provisions: [{
-      sectionNumber: '3', heading: 'Amendment of certain provisions of Principal Act relevant to employment contributions',
-      category: 'income_tax', start: '3.\n(1) Each provision', end: null,
-    }],
-  },
-  {
-    path: 'docs/statutes/swa-2024/2024-act-36-s2.md',
-    effectiveFrom: '2025-01-01',
-    sourceNote: 'As enacted; in operation from 1 January 2025 (s.2(2)).',
-    provisions: [{ sectionNumber: '2', heading: 'Employment contributions', category: 'income_tax', start: '2.\n(1)', end: null }],
-  },
-  {
-    path: 'docs/statutes/swaerss-2025/2025-act-19-s2.md',
-    effectiveFrom: '2026-01-01',
-    sourceNote: 'As enacted; in operation from 1 January 2026 (s.2(2)).',
-    provisions: [{ sectionNumber: '2', heading: 'Employment contributions', category: 'income_tax', start: '2.\n(1)', end: null }],
-  },
-  {
-    path: 'docs/statutes/ntf-2000/ntf-2000-s4.md',
-    effectiveFrom: '2026-09-27',
-    sourceNote: 'LRC revised text as retrieved on 2026-09-27: current law on that date. The 1.0% rate is dated by '
-      + 'amendment note F3 in ntf-2000-s4.html beside it (1 January 2020).',
-    provisions: [{
-      sectionNumber: '4', heading: 'Rate of levy and supplemental provisions', category: 'income_tax',
-      start: '4.\n—\n(1)', end: null,
-    }],
-  },
   {
     path: 'docs/statutes/si-345-2018/2018-si-345.md',
     effectiveFrom: '2019-01-01',

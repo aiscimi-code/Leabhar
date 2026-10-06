@@ -1,0 +1,26 @@
+{
+  "format": 1,
+  "source": {
+    "citation": "2024 Act 36 s.2",
+    "title": "Social Welfare Act 2024 s.2 (as enacted)",
+    "sourceType": "legislation",
+    "jurisdiction": "IE",
+    "sourceUrl": "https://www.irishstatutebook.ie/eli/2024/act/36/section/2/enacted/en/html",
+    "sha256": "3b570e810d174f3bcdb691d67787b3d16a3758ca09ec1737d5ca3a09f0b9e5e4",
+    "conversion": "lrc-html-plaintext",
+    "retrievedOn": "2026-10-06",
+    "note": "As enacted; in operation from 1 January 2025 (s.2(2))."
+  },
+  "provisions": [
+    {
+      "sectionNumber": "2",
+      "heading": "Employment contributions",
+      "locator": "s.2",
+      "category": "income_tax",
+      "relevant": true,
+      "relevanceReason": "Payroll: the employer's weekly threshold from 1 January 2025 (Social Welfare Act 2024 s.2).",
+      "excerpt": "2.\n(1) Section 13(2) of the Principal Act is amended, in paragraph (d)—\n\n(a) by the substitution, in subparagraph (i), of “€527” for “€496”, and\n\n(b) by the substitution, in subparagraph (ii), of “€527” for “€496”.\n\n(2) This section comes into operation on 1 January 2025."
+    }
+  ],
+  "rules": []
+}
