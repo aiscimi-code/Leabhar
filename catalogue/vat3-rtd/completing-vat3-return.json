@@ -1,0 +1,308 @@
+{
+  "format": 1,
+  "source": {
+    "citation": "Revenue: How do you complete a VAT 3 return?",
+    "title": "Revenue: How do you complete a VAT 3 return?",
+    "sourceType": "revenue_guidance",
+    "jurisdiction": "IE",
+    "sourceUrl": "https://www.revenue.ie/en/vat/accounting-for-vat/how-to-account-for-value-added-tax/completing-vat3-return.aspx",
+    "sha256": "29180ddd0c7ea8a15a5dbf03c15b45de99b15feec2a660090b830f3dbecb9912",
+    "conversion": "revenue-html-plaintext",
+    "retrievedOn": "2026-10-06",
+    "publicationDate": "2026-07-28",
+    "effectiveFrom": "2026-07-28",
+    "note": "Revenue's own page of VAT3 box definitions, quoted passage by passage. It is guidance, not legislation: it explains the return S.I. 639/2010 reg.24 prescribes, and ranks below that Regulation and VATCA s.76. src/domain/vat/boxDefinitions.ts implements the same mapping."
+  },
+  "provisions": [
+    {
+      "sectionNumber": "T1",
+      "heading": "VAT on sales",
+      "locator": "box T1",
+      "principalAct": "Value-Added Tax Consolidation Act 2010",
+      "category": "procedure",
+      "relevant": true,
+      "relevanceReason": "Curated: a reporting rule cites this passage (vat3RtdCuration.ts).",
+      "excerpt": "T1 – VAT on sales This figure is the total VAT due on your: supplies of goods and services intra-Community acquisitions of goods import of goods, where you have applied VAT Postponed Accounting received services , as appropriate."
+    },
+    {
+      "sectionNumber": "T2",
+      "heading": "VAT on purchases",
+      "locator": "box T2",
+      "principalAct": "Value-Added Tax Consolidation Act 2010",
+      "category": "procedure",
+      "relevant": true,
+      "relevanceReason": "Curated: a reporting rule cites this passage (vat3RtdCuration.ts).",
+      "excerpt": "T2 – VAT on purchases This figure is the total VAT which you are entitled to reclaim in respect of costs incurred by you on: goods and services, insofar as they relate to your taxable supplies and qualifying activities. intra-Community acquisitions of goods import of goods where you have applied VAT Postponed Accounting received services flat-rate addition . Where you issue, or receive, a credit note , you may adjust the T1 and T2 figures."
+    },
+    {
+      "sectionNumber": "T3",
+      "heading": "VAT payable",
+      "locator": "box T3",
+      "principalAct": "Value-Added Tax Consolidation Act 2010",
+      "category": "procedure",
+      "relevant": true,
+      "relevanceReason": "Curated: a reporting rule cites this passage (vat3RtdCuration.ts).",
+      "excerpt": "T3 – VAT payable VAT is payable to Revenue where the T1 figure is greater than the T2 figure. The amount payable is the difference between the two figures."
+    },
+    {
+      "sectionNumber": "T4",
+      "heading": "VAT repayable",
+      "locator": "box T4",
+      "principalAct": "Value-Added Tax Consolidation Act 2010",
+      "category": "procedure",
+      "relevant": true,
+      "relevanceReason": "Curated: a reporting rule cites this passage (vat3RtdCuration.ts).",
+      "excerpt": "T4 – VAT repayable VAT is repayable to you where the T2 figure is greater than the T1 figure. The amount repayable is the difference between the two figures. You may have a taxable period w here no VAT is payable, or repayable. I n this instance your VAT 3 must be returned marked zero at T1, T2 T3 and T4. Please note: Do not insert 'nil' on any line."
+    },
+    {
+      "sectionNumber": "E1",
+      "heading": "intra-European Union (EU) supplies of goods",
+      "locator": "box E1",
+      "principalAct": "Value-Added Tax Consolidation Act 2010",
+      "category": "procedure",
+      "relevant": true,
+      "relevanceReason": "Curated: a reporting rule cites this passage (vat3RtdCuration.ts).",
+      "excerpt": "E1 – intra-European Union (EU) supplies of goods This is the total value of goods sent to customers in other EU countries."
+    },
+    {
+      "sectionNumber": "E2",
+      "heading": "intra-EU acquisitions of goods",
+      "locator": "box E2",
+      "principalAct": "Value-Added Tax Consolidation Act 2010",
+      "category": "procedure",
+      "relevant": true,
+      "relevanceReason": "Curated: a reporting rule cites this passage (vat3RtdCuration.ts).",
+      "excerpt": "E2 – intra-EU acquisitions of goods This is the total value of goods received from suppliers in other EU countries."
+    },
+    {
+      "sectionNumber": "ES1",
+      "heading": "intra-EU supply of service",
+      "locator": "box ES1",
+      "principalAct": "Value-Added Tax Consolidation Act 2010",
+      "category": "procedure",
+      "relevant": true,
+      "relevanceReason": "Curated: a reporting rule cites this passage (vat3RtdCuration.ts).",
+      "excerpt": "ES1 – intra-EU supply of service This is the total value of services supplied to customers in other EU countries."
+    },
+    {
+      "sectionNumber": "ES2",
+      "heading": "intra-EU acquisition of services",
+      "locator": "box ES2",
+      "principalAct": "Value-Added Tax Consolidation Act 2010",
+      "category": "procedure",
+      "relevant": true,
+      "relevanceReason": "Curated: a reporting rule cites this passage (vat3RtdCuration.ts).",
+      "excerpt": "ES2 – intra-EU acquisition of services This is the total value of services received from suppliers in other EU countries."
+    },
+    {
+      "sectionNumber": "PA1",
+      "heading": "postponed accounting",
+      "locator": "box PA1",
+      "principalAct": "Value-Added Tax Consolidation Act 2010",
+      "category": "procedure",
+      "relevant": true,
+      "relevanceReason": "Curated: a reporting rule cites this passage (vat3RtdCuration.ts).",
+      "excerpt": "PA1 – postponed accounting This is the total of the Customs value of goods imported under postponed accounting, as per Customs Declarations plus Customs Duty."
+    }
+  ],
+  "rules": [
+    {
+      "key": "vat3.box_e1",
+      "sectionNumber": "E1",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2011-01-01",
+          "effectiveTo": null,
+          "quote": "This is the total value of goods sent to customers in other EU countries.",
+          "value": null,
+          "unit": null,
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    },
+    {
+      "key": "vat3.box_e2",
+      "sectionNumber": "E2",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2011-01-01",
+          "effectiveTo": null,
+          "quote": "This is the total value of goods received from suppliers in other EU countries.",
+          "value": null,
+          "unit": null,
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    },
+    {
+      "key": "vat3.box_es1",
+      "sectionNumber": "ES1",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2011-01-01",
+          "effectiveTo": null,
+          "quote": "This is the total value of services supplied to customers in other EU countries.",
+          "value": null,
+          "unit": null,
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    },
+    {
+      "key": "vat3.box_es2",
+      "sectionNumber": "ES2",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2011-01-01",
+          "effectiveTo": null,
+          "quote": "This is the total value of services received from suppliers in other EU countries.",
+          "value": null,
+          "unit": null,
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    },
+    {
+      "key": "vat3.box_pa1",
+      "sectionNumber": "PA1",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2011-01-01",
+          "effectiveTo": null,
+          "quote": "This is the total of the Customs value of goods imported under postponed accounting, as per Customs Declarations plus Customs Duty.",
+          "value": null,
+          "unit": null,
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    },
+    {
+      "key": "vat3.box_t1",
+      "sectionNumber": "T1",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2011-01-01",
+          "effectiveTo": null,
+          "quote": "This figure is the total VAT due on your: supplies of goods and services intra-Community acquisitions of goods import of goods, where you have applied VAT Postponed Accounting received services",
+          "value": null,
+          "unit": null,
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    },
+    {
+      "key": "vat3.box_t2",
+      "sectionNumber": "T2",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2011-01-01",
+          "effectiveTo": null,
+          "quote": "This figure is the total VAT which you are entitled to reclaim in respect of costs incurred by you on: goods and services, insofar as they relate to your taxable supplies and qualifying activities.",
+          "value": null,
+          "unit": null,
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    },
+    {
+      "key": "vat3.box_t3",
+      "sectionNumber": "T3",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2011-01-01",
+          "effectiveTo": null,
+          "quote": "VAT is payable to Revenue where the T1 figure is greater than the T2 figure.",
+          "value": null,
+          "unit": null,
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    },
+    {
+      "key": "vat3.box_t4",
+      "sectionNumber": "T4",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2011-01-01",
+          "effectiveTo": null,
+          "quote": "VAT is repayable to you where the T2 figure is greater than the T1 figure.",
+          "value": null,
+          "unit": null,
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    }
+  ]
+}

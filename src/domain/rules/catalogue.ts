@@ -275,6 +275,10 @@ export const CATALOGUE_ENTRIES = [
   'swca-2005/s21.json',
   'swca-2005/s22.json',
   'swca-2005/s23.json',
+  // Revenue's VAT3 and RTD form guidance: the VAT3 page's box passages (its
+  // HTML beside it) and the RTD manual's curated sections (its PDF).
+  'vat3-rtd/completing-vat3-return.json',
+  'vat3-rtd/VAT-RTD-S76.json',
 ] as const;
 
 export function catalogueEntryPath(entry: string, root: string = appRoot()): string {

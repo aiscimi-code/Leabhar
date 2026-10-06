@@ -3,11 +3,12 @@
  * and derivation of the curated reporting rules from them (issue #439).
  *
  * The VAT return screens already implement these documents' box layouts
- * (src/domain/vat/boxDefinitions.ts and rtd.ts read them directly); what was
- * missing was the rules knowledge base's own copy: a source row with the URL
- * and hash, provisions carrying the verbatim definitions with offsets, and
- * rules a report can cite when it names a box. Nothing here replaces the
- * screens — it is the citation behind them.
+ * (src/domain/vat/boxDefinitions.ts and rtd.ts quote them); what was missing
+ * was the rules knowledge base's own copy: a source row with the URL and
+ * hash, provisions carrying the verbatim definitions, and rules a report can
+ * cite when it names a box. Nothing here replaces the screens — it is the
+ * citation behind them. The knowledge base loads both documents from their
+ * rules catalogue entries (`ingestVat3RtdFromCatalogue`, #556).
  */
 import { and, eq } from 'drizzle-orm';
 import type { AppDatabase } from '@/db';
@@ -18,34 +19,68 @@ import { sha256Hex } from '@/lib/hash';
 import { upsertReviewItem } from '../extraction/service';
 import { parseVat3Boxes, parseRtdManualSections, type ParsedPassage } from './vat3RtdParser';
 import { VAT3_BOX_RULES, RTD_MANUAL_RULES, VAT3_GUIDANCE_CITATION, RTD_TDM_CITATION, type CuratedFormRule } from './vat3RtdCuration';
-import { VAT3_GUIDANCE_PATH } from '../vat/boxDefinitions';
-import { RTD_GUIDANCE_PATH } from '../vat/rtd';
 import { taxHeadsFor } from './taxHeads';
-
-export const VAT3_RETURN_GUIDANCE_MD_PATH = VAT3_GUIDANCE_PATH;
-export const RTD_TDM_MD_PATH = RTD_GUIDANCE_PATH;
+import { ingestCatalogueFile, type CatalogueIngestResult } from './catalogue';
 
 /** S.I. 639/2010 came into force on 1 January 2011 (si639Ingestion.ts); the
  * return obligations these boxes report on date from it. */
 const FORM_RULES_EFFECTIVE_FROM = '2011-01-01';
 
-const VAT3_SOURCE = {
+/** Every passage's provision: the Act the guidance explains, and why it is held. */
+export const FORM_GUIDANCE_PRINCIPAL_ACT = 'Value-Added Tax Consolidation Act 2010';
+export const FORM_GUIDANCE_RELEVANCE_REASON = 'Curated: a reporting rule cites this passage (vat3RtdCuration.ts).';
+
+export const VAT3_GUIDANCE = {
   citation: VAT3_GUIDANCE_CITATION,
   title: 'Revenue: How do you complete a VAT 3 return?',
   sourceUrl: 'https://www.revenue.ie/en/vat/accounting-for-vat/how-to-account-for-value-added-tax/completing-vat3-return.aspx',
   // The page itself states "Published: 28 July 2026".
   effectiveFrom: '2026-07-28',
-  publicationDate: '2026-07-28',
+  publicationDate: '2026-07-28' as string | null,
+  note: 'Revenue\'s own page of VAT3 box definitions, quoted passage by passage. It is guidance, not '
+    + 'legislation: it explains the return S.I. 639/2010 reg.24 prescribes, and ranks below that '
+    + 'Regulation and VATCA s.76. src/domain/vat/boxDefinitions.ts implements the same mapping.',
 };
 
-const RTD_TDM_SOURCE = {
+export const RTD_TDM = {
   citation: RTD_TDM_CITATION,
   title: 'Revenue TDM VAT-RTD-S76 — VAT Return of Trading Details (Part 9, Chapter 3)',
   sourceUrl: 'https://www.revenue.ie/en/tax-professionals/tdm/value-added-tax/part09-obligations-accountable-persons/return/VAT-RTD-S76.pdf',
   // The manual's own cover: "Document last updated February 2026".
   effectiveFrom: '2026-02-01',
   publicationDate: null as string | null,
+  note: 'Revenue\'s Tax and Duty Manual on the annual Return of Trading Details, curated for its obligations and the four '
+    + 'reporting sections. The statutory requirement is VATCA s.76 and S.I. 639/2010 reg.24(1); the manual explains how '
+    + 'they are filed. src/domain/vat/rtd.ts implements the same grid.',
 };
+
+/** The two documents' catalogue entries. */
+export const VAT3_GUIDANCE_CATALOGUE_ENTRY = 'vat3-rtd/completing-vat3-return.json';
+export const RTD_TDM_CATALOGUE_ENTRY = 'vat3-rtd/VAT-RTD-S76.json';
+
+/** Load both documents from their catalogue entries. */
+export function ingestVat3RtdFromCatalogue(
+  db: AppDatabase,
+  params: { companyId?: string | null; ingestVersion?: string; root?: string },
+): CatalogueIngestResult[] {
+  return [VAT3_GUIDANCE_CATALOGUE_ENTRY, RTD_TDM_CATALOGUE_ENTRY].map((entry) => ingestCatalogueFile(db, { ...params, entry }));
+}
+
+/** The VAT3 page's box passages, each located by its box. */
+export function vat3GuidancePassages(text: string): Array<ParsedPassage & { locator: string }> {
+  const passages = parseVat3Boxes(text).map((p) => ({ ...p, locator: `box ${p.sectionNumber}` }));
+  if (passages.length === 0) throw new Error('The VAT3 guidance page defines no boxes this parser recognises.');
+  return passages;
+}
+
+/** The RTD manual's curated passages, each located by its page. */
+export function rtdTdmPassages(text: string): Array<ParsedPassage & { locator: string }> {
+  // Page numbers are the manual's own table of contents: §1 → 3, §2.2 → 6, §2.3 → 7, §2.4 → 8, §2.5 → 9, §2.6 → 10.
+  const pages: Record<string, number> = { '1': 3, '2.2': 6, '2.3': 7, '2.4': 8, '2.5': 9, '2.6': 10 };
+  const passages = parseRtdManualSections(text).map((p) => ({ ...p, locator: `page ${pages[p.sectionNumber] ?? '?'}` }));
+  if (passages.length === 0) throw new Error('The RTD TDM contains none of the curated sections this parser looks for.');
+  return passages;
+}
 
 export interface FormGuidanceIngestResult {
   sourceId: string;
@@ -53,13 +88,12 @@ export interface FormGuidanceIngestResult {
   ingested: boolean;
 }
 
-/** Ingest one of the two guidance documents: source row plus one provision per passage. */
+/** Ingest one of the two guidance documents from a Markdown copy: source row plus one provision per passage. */
 function ingestGuidanceSource(
   db: AppDatabase,
   params: { companyId?: string | null; markdown: string; ingestVersion: string; localPath: string },
-  source: typeof VAT3_SOURCE | typeof RTD_TDM_SOURCE,
+  source: typeof VAT3_GUIDANCE | typeof RTD_TDM,
   passages: ParsedPassage[],
-  sourceNote: string,
 ): FormGuidanceIngestResult {
   const digest = sha256Hex(params.markdown);
   const existing = db.select({ id: irishKnowledgeSources.id }).from(irishKnowledgeSources)
@@ -85,7 +119,7 @@ function ingestGuidanceSource(
       publicationDate: source.publicationDate,
       retrievedAt: nowIso(),
       effectiveFrom: source.effectiveFrom,
-      sourceNote,
+      sourceNote: source.note,
       sourceDate: nowIso(),
     }).run();
     for (const passage of passages) {
@@ -96,7 +130,7 @@ function ingestGuidanceSource(
         sectionNumber: passage.sectionNumber,
         slug: `vat3-rtd-${passage.sectionNumber.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`,
         heading: passage.heading,
-        principalAct: 'Value-Added Tax Consolidation Act 2010',
+        principalAct: FORM_GUIDANCE_PRINCIPAL_ACT,
         provisionText: passage.provisionText,
         sourceStart: passage.sourceStart,
         sourceEnd: passage.sourceEnd,
@@ -106,7 +140,7 @@ function ingestGuidanceSource(
         effectiveClue: null,
         citedActs: [],
         relevant: true,
-        relevanceReason: 'Curated: a reporting rule cites this passage (vat3RtdCuration.ts).',
+        relevanceReason: FORM_GUIDANCE_RELEVANCE_REASON,
         source: 'import',
         provenanceStatus: 'imported',
       }).run();
@@ -115,36 +149,20 @@ function ingestGuidanceSource(
   });
 }
 
+/** Ingest the VAT3 page from a Markdown copy (the CLI's --file). */
 export function ingestVat3ReturnGuidance(
   db: AppDatabase,
-  params: { companyId?: string | null; markdown: string; ingestVersion: string; localPath?: string },
+  params: { companyId?: string | null; markdown: string; ingestVersion: string; localPath: string },
 ): FormGuidanceIngestResult {
-  const passages = parseVat3Boxes(params.markdown).map((p) => ({ ...p, locator: `box ${p.sectionNumber}` }));
-  if (passages.length === 0) throw new Error('The VAT3 guidance page defines no boxes this parser recognises.');
-  return ingestGuidanceSource(db, {
-    companyId: params.companyId, markdown: params.markdown, ingestVersion: params.ingestVersion,
-    localPath: params.localPath ?? VAT3_RETURN_GUIDANCE_MD_PATH,
-  }, VAT3_SOURCE, passages,
-  'Revenue\'s own page of VAT3 box definitions, quoted passage by passage. It is guidance, not '
-    + 'legislation: it explains the return S.I. 639/2010 reg.24 prescribes, and ranks below that '
-    + 'Regulation and VATCA s.76. src/domain/vat/boxDefinitions.ts implements the same mapping.');
+  return ingestGuidanceSource(db, params, VAT3_GUIDANCE, vat3GuidancePassages(params.markdown));
 }
 
+/** Ingest the RTD manual from a Markdown copy (the CLI's --file). */
 export function ingestRtdTdm(
   db: AppDatabase,
-  params: { companyId?: string | null; markdown: string; ingestVersion: string; localPath?: string },
+  params: { companyId?: string | null; markdown: string; ingestVersion: string; localPath: string },
 ): FormGuidanceIngestResult {
-  // Page numbers are the manual's own table of contents: §1 → 3, §2.2 → 6, §2.3 → 7, §2.4 → 8, §2.5 → 9, §2.6 → 10.
-  const pages: Record<string, number> = { '1': 3, '2.2': 6, '2.3': 7, '2.4': 8, '2.5': 9, '2.6': 10 };
-  const passages = parseRtdManualSections(params.markdown).map((p) => ({ ...p, locator: `page ${pages[p.sectionNumber] ?? '?'}` }));
-  if (passages.length === 0) throw new Error('The RTD TDM contains none of the curated sections this parser looks for.');
-  return ingestGuidanceSource(db, {
-    companyId: params.companyId, markdown: params.markdown, ingestVersion: params.ingestVersion,
-    localPath: params.localPath ?? RTD_TDM_MD_PATH,
-  }, RTD_TDM_SOURCE, passages,
-  'Revenue\'s Tax and Duty Manual on the annual Return of Trading Details, curated for its obligations and the four '
-    + 'reporting sections. The statutory requirement is VATCA s.76 and S.I. 639/2010 reg.24(1); the manual explains how '
-    + 'they are filed. src/domain/vat/rtd.ts implements the same grid.');
+  return ingestGuidanceSource(db, params, RTD_TDM, rtdTdmPassages(params.markdown));
 }
 
 export interface FormRulesDeriveResult {

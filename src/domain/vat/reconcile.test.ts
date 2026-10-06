@@ -1,5 +1,4 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { readFileSync } from 'node:fs';
 import { eq } from 'drizzle-orm';
 import { createTestDatabase, insertTestBankTransaction } from '@/db/testing';
 import { createCompany, addBankAccount } from '../config/setup';
@@ -7,7 +6,9 @@ import { createInvoice } from '../invoicing/invoices';
 import { reconcileVatReturn } from './reconcile';
 import { createVatEntries } from './engine';
 import { buildVat3Return } from './report';
-import { VAT3_BOX_DEFINITIONS, VAT3_GUIDANCE_PATH, normaliseSpace, treatmentBoxCitations } from './boxDefinitions';
+import { VAT3_BOX_DEFINITIONS, normaliseSpace, treatmentBoxCitations } from './boxDefinitions';
+import { readCatalogueEntry } from '../rules/catalogue';
+import { VAT3_GUIDANCE_CATALOGUE_ENTRY } from '../rules/vat3RtdIngestion';
 import { DEFAULT_VAT_TREATMENTS } from '../config/vatTreatments';
 import { customers, suppliers, vatPeriods } from '@/db/schema';
 import { makeDate } from '../dates';
@@ -15,11 +16,13 @@ import { ids } from '@/lib/ids';
 import type { AppDatabase } from '@/db';
 
 describe('VAT3 box definitions', () => {
-  const guidance = normaliseSpace(readFileSync(VAT3_GUIDANCE_PATH, 'utf8'));
+  const passages = readCatalogueEntry(VAT3_GUIDANCE_CATALOGUE_ENTRY).provisions;
 
-  it("quotes Revenue's guidance verbatim for every box", () => {
+  it("quotes Revenue's guidance verbatim for every box, from that box's own passage", () => {
     for (const d of Object.values(VAT3_BOX_DEFINITIONS)) {
-      expect(guidance, `${d.box} quote`).toContain(normaliseSpace(d.quote));
+      const passage = passages.find((p) => p.sectionNumber === d.box);
+      expect(passage, `${d.box} passage`).toBeDefined();
+      expect(normaliseSpace(passage!.excerpt), `${d.box} quote`).toContain(normaliseSpace(d.quote));
     }
   });
 

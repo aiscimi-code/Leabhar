@@ -10,6 +10,7 @@
  *   npm run catalogue:extract -- finance-act-2024/2024-act-43-enacted
  *   npm run catalogue:extract -- tca-1997-nfg/part02
  *   npm run catalogue:extract -- swca-2005/s21
+ *   npm run catalogue:extract -- vat3-rtd/completing-vat3-return vat3-rtd/VAT-RTD-S76
  *
  * Several entries are extracted together: every entry's source and
  * provisions are written first, then the knowledge base is loaded once and
@@ -22,7 +23,8 @@
  *    URL) and keep it beside the entry, byte for byte (`s046.html`): the
  *    entry records its hash, and the gate re-checks it.
  * 2. Convert it to text (lrc_html_to_text.py, with --paragraphs for S.I.
- *    156/2012; convert-statute-pdf.ts for the
+ *    156/2012; revenue_html_to_text.py for a revenue.ie page;
+ *    convert-statute-pdf.ts for the
  *    VATCA PDF, `pdftotext -layout` for a Finance Act's or a Notes for
  *    Guidance part's, pdfplumber_to_text.py
  *    for a Revenue manual's) and parse it with
@@ -81,6 +83,9 @@ import { parseCompaniesAct2014Section } from '@/domain/rules/companiesAct2014Sec
 import { COMPANIES_ACT_2014_NOTE, companiesAct2014Relevance } from '@/domain/rules/companiesAct2014Ingestion';
 import { TDM_38_01_03B } from '@/domain/rules/tdm3801_03bIngestion';
 import { SWCA_NOTE, SWCA_RELEVANCE_REASON } from '@/domain/rules/incomeTaxIngestion';
+import {
+  FORM_GUIDANCE_PRINCIPAL_ACT, FORM_GUIDANCE_RELEVANCE_REASON, RTD_TDM, VAT3_GUIDANCE, rtdTdmPassages, vat3GuidancePassages,
+} from '@/domain/rules/vat3RtdIngestion';
 import { compareNfgContents, extractNfgSection } from '@/domain/rules/tcaNfgParser';
 import { NFG_EFFECTIVE_FROM, NFG_NOTE, nfgRelevanceReason, nfgSourceUrl, nfgTitle } from '@/domain/rules/tcaNfgIngestion';
 import { NFG_SECTIONS, nfgCitation } from '@/domain/rules/corporationTaxCuration';
@@ -91,6 +96,7 @@ const ROOT = join(dirname(new URL(import.meta.url).pathname), '..', '..');
 const CONVERTER = join(ROOT, 'scripts', 'catalogue', 'lrc_html_to_text.py');
 const PDF_CONVERTER = join(ROOT, 'scripts', 'convert-statute-pdf.ts');
 const PDFPLUMBER_CONVERTER = join(ROOT, 'scripts', 'catalogue', 'pdfplumber_to_text.py');
+const REVENUE_CONVERTER = join(ROOT, 'scripts', 'catalogue', 'revenue_html_to_text.py');
 
 /** The title and citation a source already goes by: the entry's, else its statute copy's front matter. */
 interface Naming { title: string; citation: string; sourceUrl?: string }
@@ -397,6 +403,31 @@ function extractorFor(entry: string, naming: Naming | null): Extractor {
       },
     };
   }
+  // Revenue's VAT3 and RTD form guidance (#439): the passages a reporting
+  // rule quotes, as the curation's parser reads them from each document.
+  if (entry === 'vat3-rtd/completing-vat3-return' || entry === 'vat3-rtd/VAT-RTD-S76') {
+    const vat3 = entry === 'vat3-rtd/completing-vat3-return';
+    const { title, citation, sourceUrl: url, effectiveFrom, publicationDate, note } = vat3 ? VAT3_GUIDANCE : RTD_TDM;
+    return {
+      url, title, citation, ext: vat3 ? 'html' : 'pdf',
+      build: (file, retrievedOn) => {
+        const passages = vat3 ? vat3GuidancePassages(revenueHtmlText(file)) : rtdTdmPassages(pdftotextLayout(file));
+        return {
+          source: {
+            citation, title, sourceType: 'revenue_guidance', jurisdiction: 'IE', sourceUrl: url,
+            sha256: createHash('sha256').update(file).digest('hex'),
+            conversion: vat3 ? 'revenue-html-plaintext' : 'pdftotext-layout', retrievedOn,
+            publicationDate, effectiveFrom, note,
+          },
+          provisions: passages.map((p) => ({
+            sectionNumber: p.sectionNumber, heading: p.heading, locator: p.locator,
+            principalAct: FORM_GUIDANCE_PRINCIPAL_ACT,
+            category: 'procedure', relevant: true, relevanceReason: FORM_GUIDANCE_RELEVANCE_REASON, excerpt: p.provisionText,
+          })),
+        };
+      },
+    };
+  }
   // A part of Revenue's Notes for Guidance on the TCA 1997, from its PDF as
   // `pdftotext -layout` lays it out: the section notes the curation reads.
   const nfgPart = /^tca-1997-nfg\/(part\w+)$/.exec(entry)?.[1];
@@ -639,6 +670,18 @@ function pdfplumberText(pdf: Buffer): string {
     const input = join(dir, 'manual.pdf');
     writeFileSync(input, pdf);
     return execFileSync('python3', [PDFPLUMBER_CONVERTER, input], { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+}
+
+/** A revenue.ie page as text (revenue_html_to_text.py). */
+function revenueHtmlText(html: Buffer): string {
+  const dir = mkdtempSync(join(tmpdir(), 'leabhar-catalogue-'));
+  try {
+    const page = join(dir, 'page.html');
+    writeFileSync(page, html);
+    return execFileSync('python3', [REVENUE_CONVERTER, page], { encoding: 'utf8' });
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }

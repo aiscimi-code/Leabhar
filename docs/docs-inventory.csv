@@ -232,10 +232,10 @@ docs/statutes/_inbox/C/vat-letting-of-property.md,16975,unreferenced,
 docs/statutes/_inbox/C/vat-letting-of-property.pdf,646913,original,docs/statutes/_inbox/C/vat-letting-of-property.md
 docs/statutes/_inbox/C/vat-supply-of-property.md,33101,unreferenced,
 docs/statutes/_inbox/C/vat-supply-of-property.pdf,576501,original,docs/statutes/_inbox/C/immovable-goods/supply-of-property.md docs/statutes/_inbox/C/vat-supply-of-property.md
-docs/statutes/_inbox/C/vat3-rtd/VAT-RTD-S76.md,73294,duplicate,docs/statutes/vat3-rtd/VAT-RTD-S76.md
-docs/statutes/_inbox/C/vat3-rtd/VAT-RTD-S76.pdf,683786,duplicate,docs/statutes/vat3-rtd/VAT-RTD-S76.pdf
-docs/statutes/_inbox/C/vat3-rtd/completing-vat3-return.html,68792,duplicate,docs/statutes/vat3-rtd/completing-vat3-return.html
-docs/statutes/_inbox/C/vat3-rtd/completing-vat3-return.md,2762,duplicate,docs/statutes/vat3-rtd/completing-vat3-return.md
+docs/statutes/_inbox/C/vat3-rtd/VAT-RTD-S76.md,73294,cited-docs,docs/statutes/_inbox/MANIFEST.sha256
+docs/statutes/_inbox/C/vat3-rtd/VAT-RTD-S76.pdf,683786,duplicate,catalogue/vat3-rtd/VAT-RTD-S76.pdf
+docs/statutes/_inbox/C/vat3-rtd/completing-vat3-return.html,68792,original,docs/statutes/_inbox/C/vat3-rtd/completing-vat3-return.md
+docs/statutes/_inbox/C/vat3-rtd/completing-vat3-return.md,2762,cited-docs,docs/statutes/_inbox/MANIFEST.sha256
 docs/statutes/_inbox/C/vat3-rtd/index.html,63598,original,docs/statutes/_inbox/C/vat3-rtd/index.md
 docs/statutes/_inbox/C/vat3-rtd/index.md,1029,unreferenced,
 docs/statutes/_inbox/C/vies/vies-and-intrastat.html,70131,duplicate,docs/statutes/vies/vies-and-intrastat.html
@@ -449,10 +449,6 @@ docs/statutes/vat-rates/rates.json,1657,cited-code,src/domain/rules/taxRateSync.
 docs/statutes/vat-rates/schedule-moves-2025-2026.md,1304,cited-docs,docs/RULES_KB.md docs/trust/rule-traceability-audit.md
 docs/statutes/vat-thresholds/revenue-vat-thresholds.md,3506,cited-code,src/domain/rules/si692025Curation.ts
 docs/statutes/vat3-rtd/README.md,1003,unreferenced,
-docs/statutes/vat3-rtd/VAT-RTD-S76.md,73294,cited-code,src/domain/vat/rtd.ts
-docs/statutes/vat3-rtd/VAT-RTD-S76.pdf,683786,original,docs/statutes/_inbox/C/vat3-rtd/VAT-RTD-S76.md docs/statutes/vat3-rtd/VAT-RTD-S76.md
-docs/statutes/vat3-rtd/completing-vat3-return.html,68792,original,docs/statutes/_inbox/C/vat3-rtd/completing-vat3-return.md docs/statutes/vat3-rtd/completing-vat3-return.md
-docs/statutes/vat3-rtd/completing-vat3-return.md,2762,runtime,read by the test suite
 docs/statutes/vat3-rtd/vat3-rtd-boxes.md,2266,cited-docs,docs/RULES_KB.md docs/statutes/vat3-rtd/README.md
 docs/statutes/vatca-2010-revised/README.md,1596,unreferenced,
 docs/statutes/vatca-2010-revised/s005.md,1136,unreferenced,

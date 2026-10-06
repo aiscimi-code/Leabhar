@@ -10,8 +10,9 @@ import { DOMESTIC_REVERSE_CHARGE_CODES } from '../config/vatTreatments';
  * The VAT Return of Trading Details (issue #210): the annual return, due with
  * the year's final VAT3, of net values by Irish VAT rate (VATCA s.76; S.I.
  * 639/2010 reg.24(1)). The layout and every box code follow Revenue's Tax and
- * Duty Manual "VAT Return of Trading Details" (February 2026), kept at
- * docs/statutes/vat3-rtd/VAT-RTD-S76.md; §2.6 gives the grid.
+ * Duty Manual "VAT Return of Trading Details" (February 2026), kept in the
+ * rules catalogue (catalogue/vat3-rtd/VAT-RTD-S76.json, the PDF beside it);
+ * §2.6 gives the grid.
  *
  * It is built from the VAT entries, the same records behind the year's VAT3s,
  * so the two agree. Where the placement of an entry is a judgement (for resale
@@ -19,7 +20,7 @@ import { DOMESTIC_REVERSE_CHARGE_CODES } from '../config/vatTreatments';
  * rather than deciding silently.
  */
 
-export const RTD_GUIDANCE_PATH = 'docs/statutes/vat3-rtd/VAT-RTD-S76.md';
+export const RTD_GUIDANCE_PATH = 'catalogue/vat3-rtd/VAT-RTD-S76.pdf';
 
 export type RtdRow = 'exempt' | 'zero_exports' | 'zero' | 'livestock' | 'second_reduced' | 'reduced' | 'standard' | 'flat_rate';
 export type RtdSection = 'supplies' | 'acquisitions' | 'resale' | 'otherDeductible';

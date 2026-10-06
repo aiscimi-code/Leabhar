@@ -4,9 +4,10 @@ import { and, eq } from 'drizzle-orm';
 import { createTestDatabase } from '@/db/testing';
 import { createCompany } from '../config/setup';
 import {
-  ingestVat3ReturnGuidance, ingestRtdTdm, deriveVat3RtdRules,
-  VAT3_RETURN_GUIDANCE_MD_PATH, RTD_TDM_MD_PATH,
+  ingestVat3ReturnGuidance, ingestRtdTdm, ingestVat3RtdFromCatalogue, deriveVat3RtdRules,
+  VAT3_GUIDANCE_CATALOGUE_ENTRY, RTD_TDM_CATALOGUE_ENTRY,
 } from './vat3RtdIngestion';
+import { readCatalogueEntry } from './catalogue';
 import { VAT3_BOX_RULES, RTD_MANUAL_RULES } from './vat3RtdCuration';
 import { parseVat3Boxes, parseRtdManualSections } from './vat3RtdParser';
 import { resolveRuleDependencies } from './dependencies';
@@ -16,14 +17,14 @@ import type { AppDatabase } from '@/db';
 
 let db: AppDatabase;
 let companyId: string;
-let vat3Markdown: string;
-let rtdMarkdown: string;
+/** The VAT3 page as revenue_html_to_text.py converts it, and the RTD manual's curated pages as pdftotext lays them out. */
+const VAT3_FIXTURE = 'src/domain/rules/__fixtures__/completing-vat3-return.md';
+const vat3Markdown = readFileSync(VAT3_FIXTURE, 'utf8');
+const rtdMarkdown = readFileSync(new URL('./__fixtures__/vat-rtd-s76-excerpt.md', import.meta.url), 'utf8');
 
 beforeEach(() => {
   ({ db } = createTestDatabase());
   ({ companyId } = createCompany(db, { legalName: 'VAT3 RTD Ltd', vatRegistrationStatus: 'registered', seedYears: [2025] }));
-  vat3Markdown = readFileSync(VAT3_RETURN_GUIDANCE_MD_PATH, 'utf8');
-  rtdMarkdown = readFileSync(RTD_TDM_MD_PATH, 'utf8');
 });
 
 describe('the parsers', () => {
@@ -41,16 +42,41 @@ describe('the parsers', () => {
     expect(sections.map((s) => s.sectionNumber)).toEqual(['1', '2.2', '2.3', '2.4', '2.5', '2.6']);
     expect(sections[0]!.provisionText).toContain('This is an annual return which all VAT registered persons');
   });
+
+  it('reads the same passages the catalogue entries hold', () => {
+    const passages = (entry: string) => readCatalogueEntry(entry).provisions.map((p) => [p.sectionNumber, p.heading, p.excerpt]);
+    expect(parseVat3Boxes(vat3Markdown).map((p) => [p.sectionNumber, p.heading, p.provisionText]))
+      .toEqual(passages(VAT3_GUIDANCE_CATALOGUE_ENTRY));
+    expect(parseRtdManualSections(rtdMarkdown).map((p) => [p.sectionNumber, p.heading, p.provisionText]))
+      .toEqual(passages(RTD_TDM_CATALOGUE_ENTRY));
+  });
 });
 
-describe('ingestion', () => {
+describe('ingestVat3RtdFromCatalogue (#556)', () => {
+  it('loads both documents from their entries, idempotently, dated from the documents, not the fetch', () => {
+    const first = ingestVat3RtdFromCatalogue(db, { companyId });
+    expect(first.map((r) => [r.provisionCount, r.ingested])).toEqual([[9, true], [6, true]]);
+    expect(ingestVat3RtdFromCatalogue(db, { companyId }).every((r) => !r.ingested)).toBe(true);
+
+    const source = (citation: string) => db.select().from(irishKnowledgeSources).where(eq(irishKnowledgeSources.citation, citation)).get()!;
+    const vat3 = source('Revenue: How do you complete a VAT 3 return?');
+    expect(vat3).toMatchObject({ sourceType: 'revenue_guidance', localPath: `catalogue/${VAT3_GUIDANCE_CATALOGUE_ENTRY}`, effectiveFrom: '2026-07-28' });
+    expect(source('Revenue TDM VAT-RTD-S76')).toMatchObject({ sourceType: 'revenue_guidance', effectiveFrom: '2026-02-01' });
+
+    const t1 = db.select().from(irishActProvisions)
+      .where(and(eq(irishActProvisions.sourceId, vat3.id), eq(irishActProvisions.sectionNumber, 'T1'))).get()!;
+    expect(t1.locator).toBe('box T1');
+  });
+});
+
+describe('ingestion from a Markdown copy (the CLI\'s --file)', () => {
   it('ingests both guidance documents as revenue_guidance sources, idempotently, with locators', () => {
-    const first = ingestVat3ReturnGuidance(db, { companyId, markdown: vat3Markdown, ingestVersion: 'v1' });
+    const first = ingestVat3ReturnGuidance(db, { companyId, markdown: vat3Markdown, ingestVersion: 'v1', localPath: VAT3_FIXTURE });
     expect(first).toMatchObject({ provisionCount: 9, ingested: true });
-    const second = ingestVat3ReturnGuidance(db, { companyId, markdown: vat3Markdown, ingestVersion: 'v1' });
+    const second = ingestVat3ReturnGuidance(db, { companyId, markdown: vat3Markdown, ingestVersion: 'v1', localPath: VAT3_FIXTURE });
     expect(second.ingested).toBe(false);
 
-    const rtdFirst = ingestRtdTdm(db, { companyId, markdown: rtdMarkdown, ingestVersion: 'v1' });
+    const rtdFirst = ingestRtdTdm(db, { companyId, markdown: rtdMarkdown, ingestVersion: 'v1', localPath: 'rtd.md' });
     expect(rtdFirst).toMatchObject({ provisionCount: 6, ingested: true });
 
     const sources = db.select().from(irishKnowledgeSources).all();
@@ -67,7 +93,7 @@ describe('ingestion', () => {
   });
 
   it('the stored offsets still slice the cited passage from the file (AGENTS.md #5)', () => {
-    ingestVat3ReturnGuidance(db, { companyId, markdown: vat3Markdown, ingestVersion: 'v1' });
+    ingestVat3ReturnGuidance(db, { companyId, markdown: vat3Markdown, ingestVersion: 'v1', localPath: VAT3_FIXTURE });
     const source = db.select().from(irishKnowledgeSources)
       .where(eq(irishKnowledgeSources.citation, 'Revenue: How do you complete a VAT 3 return?')).get()!;
     const provision = db.select().from(irishActProvisions)
@@ -80,8 +106,7 @@ describe('ingestion', () => {
 
 describe('deriveVat3RtdRules (issue #439)', () => {
   beforeEach(() => {
-    ingestVat3ReturnGuidance(db, { companyId, markdown: vat3Markdown, ingestVersion: 'v1' });
-    ingestRtdTdm(db, { companyId, markdown: rtdMarkdown, ingestVersion: 'v1' });
+    ingestVat3RtdFromCatalogue(db, { companyId });
   });
 
   it('derives every curated form rule, each quoting its passage verbatim', () => {

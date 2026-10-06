@@ -1,10 +1,11 @@
 ---
-title: "completing-vat3-return.html"
-source_type: official-html-plaintext
-source_html_sha256: "9b3da7b934cdb3b9ad07b99597c972b3841a25af7689a44a88f3445f5fd4a667"
-conversion: html-plaintext
-retrieved: 2026-09-25
-original_preserved: true
+title: "Revenue: How do you complete a VAT 3 return?"
+citation: "Revenue: How do you complete a VAT 3 return?"
+source_url: "https://www.revenue.ie/en/vat/accounting-for-vat/how-to-account-for-value-added-tax/completing-vat3-return.aspx"
+source_type: revenue_guidance
+jurisdiction: IE
+conversion: revenue-html-plaintext
+source_html_sha256: "29180ddd0c7ea8a15a5dbf03c15b45de99b15feec2a660090b830f3dbecb9912"
 ---
 
 How to account for Value-Added Tax (VAT)
