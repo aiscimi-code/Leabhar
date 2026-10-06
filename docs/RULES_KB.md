@@ -72,7 +72,16 @@ computations that read any of it; `depends <ruleKey>` walks the other way.
 The provision page shows both for each rule, and the audit report lists the
 link counts, the graph findings and the most relied-on rules.
 
-**Consumers.** Each computation declares the keys it reads in a
+**Consumers.** The transaction lookup and the VAT suggestion read rules by
+topic and conditions, not by key (`TOPIC_RULE_CONSUMERS`, #694): the lookup
+reads every rule of a topic it routes to (`LOOKUP_TOPICS`), and the
+suggestion acts on the keys its binding and deduction-block tables name
+(`VAT_SUGGESTION_RULE_KEYS`). Their `consumed_by` links are derived from the
+book and those tables, so `impact` reaches them and a new curated rule is
+covered without an edit. `catalogue:extract` prints each rule version whose
+window moved, and what reads it, before the entry is committed.
+
+Each computation that reads a figure declares the keys it reads in a
 `ruleManifest.ts` beside it. `resolveRuleFigure` accepts only a declared key
 (`ManifestRuleKey`), so an undeclared figure fails the typecheck;
 `consumers.test.ts` checks each declared key exists and each key a consumer's

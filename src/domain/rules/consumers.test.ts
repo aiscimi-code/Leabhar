@@ -9,6 +9,9 @@ import { RULE_CONSUMERS, consumerId, isManifestRuleKey, type RuleConsumer } from
 import { resolveRuleFigure } from './ruleFigures';
 import { ruleImpact } from './ruleImpact';
 import { ruleLinksFrom } from './ruleLinks';
+import { LOOKUP_TOPICS } from './transactionLookup';
+import { RULE_TREATMENT_BINDINGS, VAT_SUGGESTION_RULE_KEYS } from './vatSuggestion';
+import { BLOCKED_DEDUCTION_RULE_KEYS } from './inputRecoveryCuration';
 import type { AppDatabase } from '@/db';
 
 describe('consumer manifests (ADR-0020 §4, issue #686 step 5)', () => {
@@ -57,7 +60,54 @@ describe('consumer manifests (ADR-0020 §4, issue #686 step 5)', () => {
     expect(ruleLinksFrom(db, { companyId, ruleKey: 'ct.rate_standard', kinds: ['consumed_by'] }).map((l) => l.toKey))
       .toEqual([consumerId('corporation_tax')]);
     const impact = ruleImpact(db, { companyId, target: { kind: 'rule', ruleKey: 'usc.band_2pct' } });
-    expect(impact.consumers.map((c) => c.consumer).sort()).toEqual([consumerId('income_tax'), consumerId('payroll')]);
+    // The lookup routes a payroll line to the usc topic, so it reads the band too (#694).
+    expect(impact.consumers.map((c) => c.consumer).sort())
+      .toEqual([consumerId('income_tax'), consumerId('payroll'), consumerId('transaction_lookup')]);
     expect(impact.affected.some((e) => e.ruleKey.startsWith('consumer:'))).toBe(false);
   });
 });
+
+describe('readers by topic (#694)', () => {
+  let db: AppDatabase;
+  let companyId: string;
+  let held: Array<{ ruleKey: string; topic: string }>;
+
+  beforeAll(() => {
+    ({ db } = createTestDatabase());
+    ({ companyId } = createCompany(db, { legalName: 'Topic Readers Ltd', vatRegistrationStatus: 'registered', seedYears: [2025] }));
+    loadStatutoryKnowledgeBase(db, { companyId });
+    held = db.select({ ruleKey: irishTaxRules.ruleKey, topic: irishTaxRules.topic, from: irishTaxRules.effectiveFrom, to: irishTaxRules.effectiveTo })
+      .from(irishTaxRules).where(eq(irishTaxRules.companyId, companyId)).all()
+      .filter((r) => r.to === null || r.to > r.from);
+  });
+  const readers = (ruleKey: string) => ruleLinksFrom(db, { companyId, ruleKey, kinds: ['consumed_by'] }).map((l) => l.toKey);
+
+  it('impact reaches the suggestion and the lookup from a rule they read by topic, as the food block showed it did not', () => {
+    const impact = ruleImpact(db, { companyId, target: { kind: 'rule', ruleKey: 'vat.blocked_food_drink_accommodation' } });
+    expect(impact.consumers.map((c) => c.name).sort()).toEqual(['Transaction rule lookup', 'VAT treatment suggestion']);
+  });
+
+  it('links every rule of a topic the lookup routes to, and no other', () => {
+    const topics = new Set(LOOKUP_TOPICS);
+    for (const { ruleKey, topic } of held) {
+      expect(readers(ruleKey).includes(consumerId('transaction_lookup')), `${ruleKey} (${topic})`)
+        .toBe(held.some((r) => r.ruleKey === ruleKey && topics.has(r.topic)));
+    }
+  });
+
+  it('declares every key the suggestion names in its source, and links each one the book holds', () => {
+    const named = new Set([...readFileSync('src/domain/rules/vatSuggestion.ts', 'utf8').matchAll(/'([a-z0-9_]+\.[a-z0-9_]+)'/g)]
+      .map((m) => m[1]!).filter((k) => held.some((r) => r.ruleKey === k)));
+    expect([...named].filter((k) => !VAT_SUGGESTION_RULE_KEYS.includes(k))).toEqual([]);
+    for (const key of VAT_SUGGESTION_RULE_KEYS.filter((k) => held.some((r) => r.ruleKey === k))) {
+      expect(readers(key), key).toContain(consumerId('vat_suggestion'));
+    }
+  });
+
+  it('includes every deduction block and every binding key', () => {
+    for (const key of [...BLOCKED_DEDUCTION_RULE_KEYS, ...RULE_TREATMENT_BINDINGS.flatMap((b) => b.ruleKeys)]) {
+      expect(VAT_SUGGESTION_RULE_KEYS, key).toContain(key);
+    }
+  });
+});
+
