@@ -50,6 +50,14 @@ function isAccumulatedAccount(account: typeof accounts.$inferSelect): boolean {
 }
 
 /** The cost account an asset sat in on a date, from its transfer history. */
+/**
+ * The wear and tear allowance a new asset starts with: 12.5% a year over eight
+ * years (TCA 1997 s.284(2)). A copy of `ct.wear_and_tear_rate`, held to it by
+ * figureCopies.test.ts (issue #686 step 6).
+ */
+export const DEFAULT_CAPITAL_ALLOWANCE_RATE_BP = 1250;
+export const DEFAULT_CAPITAL_ALLOWANCE_YEARS = 8;
+
 export function assetAccountOn(db: AppDatabase, asset: FixedAsset, date: string): string | null {
   const transfers = db.select().from(fixedAssetTransfers).where(eq(fixedAssetTransfers.fixedAssetId, asset.id))
     .orderBy(asc(fixedAssetTransfers.transferDate), sql`rowid`).all();
@@ -154,8 +162,8 @@ export function registerFixedAsset(db: AppDatabase, input: RegisterFixedAssetInp
       depreciationExpenseAccountId: systemAccountId(tx as unknown as AppDatabase, input.companyId, 'depreciation_expense'),
       depreciationMethod: input.depreciationMethod ?? 'straight_line', usefulLifeMonths: months, residualValueMinor: residual,
       depreciationStartDate: purchaseDate,
-      capitalAllowanceRateBasisPoints: input.capitalAllowanceRateBasisPoints ?? 1250,
-      capitalAllowanceYears: input.capitalAllowanceYears ?? 8,
+      capitalAllowanceRateBasisPoints: input.capitalAllowanceRateBasisPoints ?? DEFAULT_CAPITAL_ALLOWANCE_RATE_BP,
+      capitalAllowanceYears: input.capitalAllowanceYears ?? DEFAULT_CAPITAL_ALLOWANCE_YEARS,
       co2EmissionsGramsPerKm: grams, co2EmissionsEvidence: input.co2EmissionsEvidence?.trim() || null,
       status: 'active', source: 'user', provenanceStatus: 'user_confirmed',
     }).run();
