@@ -68,7 +68,7 @@ export class PayrollFigures {
   /** The snapshot a payslip stores (invariant 6). */
   snapshot(): PayslipRuleFigure[] {
     return [...this.resolved.values()].map((f) => ({
-      ruleKey: f.ruleKey, value: f.numericValue, rateBasisPoints: f.rateBasisPoints, status: f.status,
+      ruleKey: f.ruleKey, value: f.numericValue, rateBasisPoints: f.rateBasisPoints, status: f.status, versionId: f.versionId,
     }));
   }
 

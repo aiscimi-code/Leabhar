@@ -172,8 +172,14 @@ export const TAX_BASES = [
 ] as const;
 export type PayslipTaxBasis = (typeof TAX_BASES)[number];
 
-/** A figure a payslip resolved from a rule, snapshotted (invariant 6). */
-export interface PayslipRuleFigure { ruleKey: string; value: number | null; rateBasisPoints: number | null; status: string }
+/**
+ * A figure a payslip resolved from a rule, snapshotted (invariant 6), with the
+ * rule version it came from (`key@version`, issue #686 step 7). Absent on a
+ * payslip computed before versions were recorded; null for a curation figure.
+ */
+export interface PayslipRuleFigure {
+  ruleKey: string; value: number | null; rateBasisPoints: number | null; status: string; versionId?: string | null;
+}
 
 /**
  * A payslip (issues #526, #527): one employee's figures on one run. The

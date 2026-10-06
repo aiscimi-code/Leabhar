@@ -393,6 +393,8 @@ export interface LookupResult {
   sectionNumber: string;
   heading: string;
   ruleKey: string;
+  /** The version of `ruleKey` this row is; with the key, the version ID (`ruleVersionId`). */
+  ruleVersion: number;
   ruleType: string;
   topic: string;
   name: string;
@@ -427,6 +429,7 @@ const LOOKUP_COLUMNS = {
   id: irishTaxRules.id,
   provisionId: irishTaxRules.provisionId,
   ruleKey: irishTaxRules.ruleKey,
+  ruleVersion: irishTaxRules.ruleVersion,
   ruleType: irishTaxRules.ruleType,
   topic: irishTaxRules.topic,
   name: irishTaxRules.name,
@@ -459,6 +462,26 @@ const LOOKUP_COLUMNS = {
 
 function toLookupResult(row: Record<string, unknown>): LookupResult {
   return row as unknown as LookupResult;
+}
+
+/**
+ * A rule version's ID: the stable key and the version, `key@version` (ADR-0020
+ * §2). What a book records where a rule was applied, so the exact wording
+ * applied can be found again after the key gains a newer version.
+ */
+export function ruleVersionId(ruleKey: string, ruleVersion: number): string {
+  return `${ruleKey}@${ruleVersion}`;
+}
+
+/** The version IDs of the rules in force on a date, for the keys the book holds; a key with none is left out. */
+export function appliedRuleVersions(
+  db: AppDatabase,
+  params: { companyId: string; ruleKeys: readonly string[]; asOfDate: string },
+): string[] {
+  return [...new Set(params.ruleKeys)].flatMap((ruleKey) => {
+    const r = lookupTaxRule(db, { companyId: params.companyId, ruleKey, asOfDate: params.asOfDate });
+    return r ? [ruleVersionId(r.ruleKey, r.ruleVersion)] : [];
+  });
 }
 
 /**

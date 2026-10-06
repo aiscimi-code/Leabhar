@@ -207,6 +207,13 @@ export const invoiceLines = sqliteTable('invoice_lines', {
   /** The statutory rules behind the VAT treatment chosen for this line. */
   vatRuleKeys: text('vat_rule_keys', { mode: 'json' }).$type<string[]>().notNull().default([]),
   /**
+   * The versions of those rules in force on the invoice date (`key@version`,
+   * issue #686 step 7), so the wording applied can be found again after a key
+   * gains a newer version. Empty on lines posted before versions were
+   * recorded, and for a key the book did not hold.
+   */
+  vatRuleVersions: text('vat_rule_versions', { mode: 'json' }).$type<string[]>().notNull().default([]),
+  /**
    * A purchase line's input VAT deduction share (issue #612), as posted: the
    * business-use share where the cost is also used privately (s.59(2)), and
    * the proportion of tax deductible on a dual-use input with the basis it was

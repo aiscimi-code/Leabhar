@@ -119,6 +119,8 @@ export interface CtComputation {
   surcharge: CtSurcharge;
   dates: CtDates;
   decisions: CtPendingDecision[];
+  /** The rule versions the figures came from (`key@version`, issue #686 step 7). */
+  ruleVersions: string[];
   findings: string[];
 }
 
@@ -1004,7 +1006,7 @@ export function computeCorporationTax(db: AppDatabase, params: { companyId: stri
       setBackMinor: run.setBackMinor, valueBasisCreditMinor: run.creditMinor, carriedForwardMinor: run.lossLeftMinor,
       citations: [cite('ct.loss_carry_forward'), cite('ct.relevant_trading_loss_set_off'), cite('ct.loss_value_basis')],
     },
-    surcharge, dates, decisions, findings,
+    surcharge, dates, decisions, ruleVersions: figures.versions(), findings,
   };
 }
 
