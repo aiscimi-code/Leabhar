@@ -564,13 +564,11 @@ docs/statutes/vatca-2010-revised/schedule-4.md,2181,runtime,read by the test sui
 docs/statutes/vatca-2010-revised/schedule-5.md,2725,runtime,read by the test suite
 docs/statutes/vatca-2010-revised/schedule-6.md,1182,runtime,read by the test suite
 docs/statutes/vatca-2010-revised/schedule-9.md,844,runtime,read by the test suite
-docs/statutes/vatca-2010/README.md,3087,cited-code,src/domain/rules/vatcaParser.ts
+docs/statutes/vatca-2010/README.md,1729,unreferenced,
 docs/statutes/vatca-2010/s46-revised.md,939,cited-docs,docs/statutes/vatca-2010/README.md
 docs/statutes/vatca-2010/s5-revised.md,1144,cited-docs,docs/statutes/SOURCE-REGISTER.md docs/statutes/vatca-2010/README.md
 docs/statutes/vatca-2010/s65-revised.md,2835,cited-docs,docs/statutes/vatca-2010/README.md
 docs/statutes/vatca-2010/s84-revised.md,1488,cited-docs,docs/statutes/vatca-2010/README.md
-docs/statutes/vatca-2010/vatca-2010-enacted.md,447045,runtime,read by the test suite
-docs/statutes/vatca-2010/vatca-2010-enacted.pdf,770300,cited-docs,docs/statutes/vatca-2010/README.md
 docs/statutes/vies/vies-and-intrastat.html,70131,original,docs/statutes/_inbox/C/vies/vies-and-intrastat.md docs/statutes/vies/vies-and-intrastat.md
 docs/statutes/vies/vies-and-intrastat.md,1969,unreferenced,
 docs/statutes/vies/vies-traders-manual.md,68212,cited-code,src/domain/vat/vies.ts

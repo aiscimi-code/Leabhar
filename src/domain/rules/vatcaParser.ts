@@ -8,7 +8,7 @@
  * *amending* Act, parsed by `statuteParser.ts`). `scripts/convert-statute-pdf.ts`
  * already reconstructs the heading onto its own line directly above the
  * section number during the one-time PDF conversion (see that script's own
- * header and docs/statutes/vatca-2010/README.md), so this parser reads the
+ * header and docs/RULES_KB.md), so this parser reads the
  * same "heading above section" convention `statuteParser.ts` does, and
  * reuses its generic (source-independent) helpers: `categoriseProvision`,
  * `assessRelevance`, `provisionSlug`.
@@ -18,7 +18,11 @@
  * derived rule downstream carries the verbatim `provisionText` as its
  * authority.
  *
- * Input conventions (verified against docs/statutes/vatca-2010/vatca-2010-enacted.md):
+ * The extraction script (`npm run catalogue:extract -- vatca-2010/vatca-2010-enacted`)
+ * converts the Irish Statute Book PDF and parses it into the rules catalogue
+ * (#556); the app reads the entry.
+ *
+ * Input conventions (verified against the conversion of that PDF):
  *  - A section opens with `^<num>[A-Z]? .—` (e.g. "34 .—", "12 .—(1)").
  *  - Its heading is the line(s) directly above (see convert-statute-pdf.ts).
  *  - All 125 numbered body sections resolve; cross-checked against the Act's
@@ -27,7 +31,6 @@
  *    conversion stops at the first "SCHEDULE" heading) — a documented
  *    limitation, not a silent gap — see docs/RULES_KB.md.
  */
-import { readFileSync } from 'node:fs';
 import { categoriseProvision, provisionSlug, type ParsedProvision } from './statuteParser';
 
 export { categoriseProvision, provisionSlug, assessRelevance } from './statuteParser';
@@ -95,8 +98,8 @@ function parseSectionReferences(text: string): string[] {
  * The algorithm mirrors `parseFinanceAct2024`: find every body section start,
  * capture from there to just before the next one, normalise, and locate the
  * heading above it. `source` here is the *converted Markdown*, not the PDF —
- * offsets are only recoverable against that file, which is itself
- * reproducible from the PDF (docs/statutes/vatca-2010/README.md).
+ * offsets are only recoverable against that text, which is itself
+ * reproducible from the PDF kept beside the catalogue entry.
  */
 export function parseVatca2010(source: string): ParsedProvision[] {
   const lines = source.split('\n');
@@ -148,13 +151,3 @@ export function parseVatca2010(source: string): ParsedProvision[] {
 
   return provisions;
 }
-
-export function parseVatca2010File(path: string): ParsedProvision[] {
-  return parseVatca2010(readFileSync(path, 'utf8'));
-}
-
-/** Path to the bundled VATCA 2010 converted Markdown extract, resolved relative to this file. */
-export const VATCA_2010_MD_PATH = new URL(
-  '../../../docs/statutes/vatca-2010/vatca-2010-enacted.md',
-  import.meta.url,
-).pathname;

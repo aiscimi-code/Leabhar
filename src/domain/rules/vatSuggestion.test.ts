@@ -6,14 +6,14 @@ import { createCompany, addBankAccount } from '../config/setup';
 import { bankTransactions, suppliers, customers } from '@/db/schema';
 import { ids } from '@/lib/ids';
 import type { AppDatabase } from '@/db';
-import { loadStatutoryKnowledgeBase, statuteFilePath } from './knowledgeBase';
+import { loadStatutoryKnowledgeBase } from './knowledgeBase';
 import { suggestVatTreatment, RULE_TREATMENT_BINDINGS } from './vatSuggestion';
 import { VATCA_REVISED_CURATED_RULES } from './vatcaRevisedCuration';
 import { VATCA_SCHEDULE_CURATED_RULES } from './vatcaScheduleCuration';
 import { VAT_SCOPE_CURATED_RULES } from './vatScopeCuration';
 import { VAT_PLACE_OF_SUPPLY_CURATED_RULES } from './vatPlaceOfSupplyCuration';
 import { lookupTransactionRules } from './transactionLookup';
-import { readCatalogueEntry } from './catalogue';
+import { catalogueOfficialFilePath, readCatalogueEntry } from './catalogue';
 import { containsIgnoringLayout } from './lrcAnnotations';
 
 let db: AppDatabase;
@@ -113,14 +113,15 @@ describe('suggestVatTreatment', () => {
     expect(s.reviewRequired).toBe(true);
     expect(s.factSources['supplierEstablishedOutsideState']).toContain('confirmed by tester');
 
-    // The citation is checkable: the file exists, its hash matches, and the
-    // offsets slice a region containing the quoted words.
+    // The citation is checkable: the official PDF kept beside the catalogue
+    // entry has the cited hash, and the section's excerpt holds the quoted words.
     const c = s.decidingRule!;
-    expect(c.localPath).toBe('docs/statutes/vatca-2010/vatca-2010-enacted.md');
-    const file = readFileSync(statuteFilePath(c.localPath!), 'utf8');
-    expect(createHash('sha256').update(file).digest('hex')).toBe(c.sha256);
-    const slice = file.slice(c.sourceStart!, c.sourceEnd!).replace(/\s+/g, ' ');
-    expect(slice).toContain('receives a service from a supplier established');
+    expect(c.localPath).toBe('catalogue/vatca-2010/vatca-2010-enacted.json');
+    const entry = readCatalogueEntry('vatca-2010/vatca-2010-enacted.json');
+    expect(entry.source.sha256).toBe(c.sha256);
+    expect(createHash('sha256').update(readFileSync(catalogueOfficialFilePath('vatca-2010/vatca-2010-enacted.json'))).digest('hex')).toBe(c.sha256);
+    const excerpt = entry.provisions.find((p) => p.sectionNumber === '12')!.excerpt.replace(/\s+/g, ' ');
+    expect(excerpt).toContain('receives a service from a supplier established');
   });
 
   it('a US supplier whose establishment nobody has confirmed: no reverse charge from its country alone, flagged', () => {

@@ -29,7 +29,7 @@
  * A computation's `consumed_by` links are not here: they describe the code
  * that reads a rule, not the law, and load from the manifests (consumers.ts).
  */
-import { readFileSync, statSync } from 'node:fs';
+import { existsSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { and, eq, inArray } from 'drizzle-orm';
 import type { AppDatabase } from '@/db';
@@ -64,6 +64,12 @@ export interface CatalogueSource {
    * quotes (`quotedTextWindow`) without the page. Absent for other sources.
    */
   lrcAnnotations?: LrcAnnotationLayer;
+  /** The day the source itself was published or enacted, where it states one. */
+  publicationDate?: string | null;
+  /** The day the source came into force, where it states one; otherwise the day it was fetched. */
+  effectiveFrom?: string | null;
+  /** What a reader of the source should know, e.g. that an Act's text is as enacted. */
+  note?: string | null;
 }
 
 export interface CatalogueProvision {
@@ -73,6 +79,8 @@ export interface CatalogueProvision {
   locator: string;
   /** The Part of a Schedule the paragraph sits under ("Part 2"); absent where the source has none. */
   part?: string | null;
+  /** The provisions it cites or amends, as the parser read them ("section 46(1); section 3(a)"). */
+  amendsSection?: string | null;
   category: IrishProvisionCategory;
   relevant: boolean;
   relevanceReason: string | null;
@@ -182,15 +190,27 @@ export const CATALOGUE_ENTRIES = [
   'vatca-2010-revised/schedule-1.json',
   'vatca-2010-revised/schedule-2.json',
   'vatca-2010-revised/schedule-3.json',
+  // The Act as enacted, from the Irish Statute Book PDF: one provision per section.
+  'vatca-2010/vatca-2010-enacted.json',
 ] as const;
 
 export function catalogueEntryPath(entry: string, root: string = appRoot()): string {
   return join(root, CATALOGUE_DIR, entry);
 }
 
-/** The official file an entry was extracted from, kept beside it byte for byte (`s046.json` → `s046.html`). */
-export function catalogueOfficialFilePath(entry: string, root: string = appRoot()): string {
-  return catalogueEntryPath(entry.replace(/\.json$/, '.html'), root);
+/** The kinds of official file an entry can be extracted from. */
+export const CATALOGUE_OFFICIAL_EXTENSIONS = ['html', 'pdf'] as const;
+export type CatalogueOfficialExtension = (typeof CATALOGUE_OFFICIAL_EXTENSIONS)[number];
+
+/**
+ * The official file an entry was extracted from, kept beside it byte for byte
+ * (`s046.json` → `s046.html`, `vatca-2010-enacted.json` → `vatca-2010-enacted.pdf`):
+ * the one with `ext`, or else whichever is there (an HTML page when neither is).
+ */
+export function catalogueOfficialFilePath(entry: string, root: string = appRoot(), ext?: CatalogueOfficialExtension): string {
+  const at = (e: CatalogueOfficialExtension) => catalogueEntryPath(entry.replace(/\.json$/, `.${e}`), root);
+  if (ext) return at(ext);
+  return at(CATALOGUE_OFFICIAL_EXTENSIONS.find((e) => existsSync(at(e))) ?? 'html');
 }
 
 const isDate = (s: unknown) => typeof s === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(s);
@@ -210,12 +230,19 @@ export function validateCatalogueEntry(entry: unknown, label = 'catalogue entry'
         || s.lrcAnnotations.footnotes.some((f) => !/^F\d+$/.test(f.ref) || typeof f.text !== 'string'))) {
     fail('source lrcAnnotations needs a text and a list of footnotes');
   }
+  for (const d of ['publicationDate', 'effectiveFrom'] as const) {
+    if (s[d] !== undefined && s[d] !== null && !isDate(s[d])) fail(`source ${d} must be an ISO date`);
+  }
+  if (s.note !== undefined && s.note !== null && typeof s.note !== 'string') fail('source note must be a string');
   if (!Array.isArray(e.provisions) || e.provisions.length === 0) fail('an entry needs at least one provision');
   const sections = new Set<string>();
   for (const p of e.provisions) {
     if (!p.sectionNumber || !p.locator || !p.excerpt) fail(`provision ${p.sectionNumber} needs a section, a locator and an excerpt`);
     if (!IRISH_PROVISION_CATEGORIES.includes(p.category)) fail(`provision ${p.sectionNumber}: unknown category ${p.category}`);
     if (p.part !== undefined && p.part !== null && typeof p.part !== 'string') fail(`provision ${p.sectionNumber}: part must be a string`);
+    if (p.amendsSection !== undefined && p.amendsSection !== null && typeof p.amendsSection !== 'string') {
+      fail(`provision ${p.sectionNumber}: amendsSection must be a string`);
+    }
     if (sections.has(p.sectionNumber)) fail(`provision ${p.sectionNumber} is listed twice`);
     sections.add(p.sectionNumber);
   }
@@ -327,12 +354,12 @@ export function ingestCatalogueEntry(
       localPath: params.localPath,
       sha256: source.sha256,
       ingestVersion: params.ingestVersion,
-      publicationDate: null,
+      publicationDate: source.publicationDate ?? null,
       retrievedAt: `${source.retrievedOn}T00:00:00.000Z`,
-      effectiveFrom: source.retrievedOn,
+      effectiveFrom: source.effectiveFrom ?? source.retrievedOn,
       sourceNote: `Ingest ${params.ingestVersion} of ${source.citation} from the rules catalogue (${params.localPath}); `
         + `${source.conversion} of the official file at ${source.sourceUrl}, SHA-256 ${source.sha256}, `
-        + `fetched ${source.retrievedOn}.`,
+        + `fetched ${source.retrievedOn}.${source.note ? ` ${source.note}` : ''}`,
       sourceDate: `${source.retrievedOn}T00:00:00.000Z`,
     }).run();
     for (const p of provisions) {
@@ -351,7 +378,7 @@ export function ingestCatalogueEntry(
         sourceEnd: null,
         locator: p.locator,
         category: p.category,
-        amendsSection: null,
+        amendsSection: p.amendsSection ?? null,
         effectiveClue: null,
         citedActs: [],
         relevant: p.relevant,

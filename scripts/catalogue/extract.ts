@@ -6,19 +6,20 @@
  *   npm run catalogue:extract -- vatca-2010-revised/s046 --html saved.html --retrieved-on 2026-09-29
  *   npm run catalogue:extract -- vatca-2010-revised/s009 vatca-2010-revised/s010 --html-dir pages/
  *   npm run catalogue:extract -- vatca-2010-revised/schedule-2
+ *   npm run catalogue:extract -- vatca-2010/vatca-2010-enacted --html vatca.pdf
  *
  * Several entries are extracted together: every entry's source and
  * provisions are written first, then the knowledge base is loaded once and
  * each entry's rules are written (a rule can rely on another entry's).
  * `--html-dir` holds a saved copy of each page, named after the entry's last
- * part (`s009.html`). `--lrc-annotations` keeps the page's amendment
+ * part (`s009.html`; `vatca-2010-enacted.pdf` for a PDF source). `--lrc-annotations` keeps the page's amendment
  * footnotes in the entry (see `annotates`).
  *
  * 1. Fetch the official page (or read `--html`, a copy saved from the same
  *    URL) and keep it beside the entry, byte for byte (`s046.html`): the
  *    entry records its hash, and the gate re-checks it.
- * 2. Convert it to text (lrc_html_to_text.py) and parse it with the same
- *    parser the rules were curated against.
+ * 2. Convert it to text (lrc_html_to_text.py, or convert-statute-pdf.ts for
+ *    a PDF) and parse it with the same parser the rules were curated against.
  * 3. Write the entry's source and provisions, load the knowledge base into a
  *    throwaway book from it, and write the rules the curation derives, with
  *    their links. An approval in the previous entry is kept only for a version
@@ -38,7 +39,7 @@ import { createTestDatabase } from '@/db/testing';
 import { createCompany } from '@/domain/config/setup';
 import {
   CATALOGUE_FORMAT, catalogueEntryPath, catalogueOfficialFilePath, catalogueRulesFor, serialiseCatalogueEntry, validateCatalogueEntry,
-  type CatalogueEntry,
+  type CatalogueEntry, type CatalogueOfficialExtension,
 } from '@/domain/rules/catalogue';
 import { loadStatutoryKnowledgeBase } from '@/domain/rules/knowledgeBase';
 import { ruleImpact } from '@/domain/rules/ruleImpact';
@@ -46,11 +47,14 @@ import { parseVatcaRevisedSection } from '@/domain/rules/vatcaRevisedSectionPars
 import { vatcaRevisedRelevance } from '@/domain/rules/vatcaRevisedIngestion';
 import { parseVatcaSchedule } from '@/domain/rules/vatcaScheduleParser';
 import { vatcaScheduleRelevance } from '@/domain/rules/vatcaScheduleIngestion';
+import { parseVatca2010 } from '@/domain/rules/vatcaParser';
+import { VATCA_2010, VATCA_2010_ENACTED_NOTE, vatca2010Relevance } from '@/domain/rules/vatcaIngestion';
 import { nowIso } from '@/domain/dates';
 import { lrcAnnotationLayer } from '@/domain/rules/lrcAnnotations';
 
 const ROOT = join(dirname(new URL(import.meta.url).pathname), '..', '..');
 const CONVERTER = join(ROOT, 'scripts', 'catalogue', 'lrc_html_to_text.py');
+const PDF_CONVERTER = join(ROOT, 'scripts', 'convert-statute-pdf.ts');
 
 /** The title and citation a source already goes by: the entry's, else its statute copy's front matter. */
 interface Naming { title: string; citation: string; sourceUrl?: string }
@@ -70,6 +74,8 @@ interface Extractor {
   url: string;
   title: string;
   citation: string;
+  /** The official file's kind; an HTML page unless stated. */
+  ext?: CatalogueOfficialExtension;
   /** The entry's source and provisions, from the official file's bytes. */
   build: (html: Buffer, retrievedOn: string, annotate: boolean) => Pick<CatalogueEntry, 'source' | 'provisions'>;
 }
@@ -133,6 +139,38 @@ function extractorFor(entry: string, naming: Naming | null): Extractor {
       },
     };
   }
+  // The Act as enacted, from the Irish Statute Book PDF: one provision per
+  // section, with the sections each cites.
+  if (entry === 'vatca-2010/vatca-2010-enacted') {
+    const { sourceUrl: url, title, citation } = VATCA_2010;
+    return {
+      url, title, citation, ext: 'pdf',
+      build: (pdf, retrievedOn) => {
+        const sections = parseVatca2010(convertStatutePdf(pdf, [
+          '--section-re', String.raw`^(\d+[A-Z]?)\s*\.—`, '--start-after', 'BE IT ENACTED', '--stop-at', 'SCHEDULE',
+        ]));
+        if (sections.length === 0) throw new Error('VATCA 2010: the parser found no sections.');
+        return {
+          source: {
+            citation, title, sourceType: 'legislation', jurisdiction: 'IE', sourceUrl: url,
+            sha256: createHash('sha256').update(pdf).digest('hex'),
+            conversion: 'isb-pdf-marginal-notes', retrievedOn,
+            // The Act's own commencement (s.125), not the day it was fetched.
+            publicationDate: VATCA_2010.enactedDate, effectiveFrom: VATCA_2010.enactedDate,
+            note: VATCA_2010_ENACTED_NOTE,
+          },
+          provisions: sections.map((p) => {
+            const { relevant, reason } = vatca2010Relevance(p);
+            return {
+              sectionNumber: p.sectionNumber, heading: p.heading, locator: `s.${p.sectionNumber}`,
+              amendsSection: p.amendsSection.length ? p.amendsSection.join('; ') : null,
+              category: p.category, relevant, relevanceReason: reason, excerpt: p.provisionText,
+            };
+          }),
+        };
+      },
+    };
+  }
   // A section of an Act as enacted, on the Irish Statute Book: the source's
   // URL is the one its statute copy, or the entry, already records.
   const isb = isbSectionUrl(entry, naming);
@@ -176,6 +214,20 @@ function parseIsbSection(text: string, section: string): { heading: string; exce
   const heading = body.slice(0, start).trim();
   if (!heading || heading.includes('\n')) throw new Error(`Section ${section}: expected a one-line heading, found "${heading}".`);
   return { heading, excerpt: body.slice(start).trim() };
+}
+
+/** An Irish Statute Book PDF in the marginal-note layout, as text (convert-statute-pdf.ts). */
+function convertStatutePdf(pdf: Buffer, options: string[]): string {
+  const dir = mkdtempSync(join(tmpdir(), 'leabhar-catalogue-'));
+  try {
+    const input = join(dir, 'act.pdf');
+    const output = join(dir, 'act.md');
+    writeFileSync(input, pdf);
+    execFileSync('npx', ['tsx', PDF_CONVERTER, input, output, ...options], { cwd: ROOT, stdio: ['ignore', 'ignore', 'inherit'] });
+    return readFileSync(output, 'utf8');
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
 }
 
 function convertLrc(html: Buffer, title: string, citation: string, url: string): string {
@@ -246,14 +298,14 @@ async function main(args: string[]): Promise<void> {
     const path = catalogueEntryPath(entryFile, ROOT);
     const previous = existsSync(path) ? validateCatalogueEntry(JSON.parse(readFileSync(path, 'utf8')), entryFile) : null;
     const extractor = extractorFor(name, existingNaming(name, previous));
-    const saved = htmlFile ?? (htmlDir ? join(htmlDir, `${name.split('/').pop()}.html`) : undefined);
+    const saved = htmlFile ?? (htmlDir ? join(htmlDir, `${name.split('/').pop()}.${extractor.ext ?? 'html'}`) : undefined);
     const html = saved ? readFileSync(saved) : await fetchOfficial(extractor.url);
     const retrievedOn = flag(args, 'retrieved-on') ?? (saved ? previous?.source.retrievedOn : undefined) ?? nowIso().slice(0, 10);
     const built = extractor.build(html, retrievedOn, annotates(name, previous, args));
     if (previous && previous.source.sha256 === built.source.sha256) built.source.retrievedOn = previous.source.retrievedOn;
     const entry: CatalogueEntry = { format: CATALOGUE_FORMAT, ...built, rules: [] };
     mkdirSync(dirname(path), { recursive: true });
-    writeFileSync(catalogueOfficialFilePath(entryFile, ROOT), html);
+    writeFileSync(catalogueOfficialFilePath(entryFile, ROOT, extractor.ext ?? 'html'), html);
     writeFileSync(path, serialiseCatalogueEntry(entry));
     written.push({ name, entryFile, path, entry, previous });
   }

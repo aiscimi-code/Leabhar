@@ -16,7 +16,7 @@ import {
   ingestFinanceAct2024, deriveTaxRules, FINANCE_ACT_2024_MD_PATH,
 } from '@/domain/rules/irishRules';
 import {
-  ingestVatca2010, deriveVatcaRules, VATCA_2010_MD_PATH,
+  ingestVatca2010FromCatalogue, deriveVatcaRules,
 } from '@/domain/rules/vatcaIngestion';
 import {
   ingestVatcaRevised, deriveVatcaRevisedRules,
@@ -87,8 +87,7 @@ beforeEach(() => {
   ingestFinanceAct2024(db, { companyId, markdown: faMd, ingestVersion: 'v1' });
   deriveTaxRules(db, { companyId });
 
-  const vatcaMd = readFileSync(VATCA_2010_MD_PATH, 'utf8');
-  ingestVatca2010(db, { companyId, markdown: vatcaMd, ingestVersion: 'v1' });
+  ingestVatca2010FromCatalogue(db, { companyId });
   deriveVatcaRules(db, { companyId });
 
   ingestVatcaRevisedS46(db, { companyId });

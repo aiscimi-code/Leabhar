@@ -4,7 +4,7 @@ import { createTestDatabase } from '@/db/testing';
 import { createCompany } from '../config/setup';
 import { ingestFinanceAct2024, ingestFinanceAct2025, deriveTaxRules, FINANCE_ACT_2024_MD_PATH, FINANCE_ACT_2025 } from './irishRules';
 import { deriveFinanceAct2024VatThresholds } from './financeAct2024VatThresholdsIngestion';
-import { ingestVatca2010, deriveVatcaRules, VATCA_2010_MD_PATH } from './vatcaIngestion';
+import { ingestVatca2010FromCatalogue, deriveVatcaRules } from './vatcaIngestion';
 import { ingestVatcaRevised, deriveVatcaRevisedRules, ingestVatcaRevisedS46 } from './vatcaRevisedIngestion';
 import {
   ingestVatcaScheduleFromCatalogue, deriveVatcaScheduleRules,
@@ -22,14 +22,13 @@ import type { AppDatabase } from '@/db';
 let db: AppDatabase;
 let companyId: string;
 const financeActMd = readFileSync(FINANCE_ACT_2024_MD_PATH, 'utf8');
-const vatcaMd = readFileSync(VATCA_2010_MD_PATH, 'utf8');
 
 beforeEach(() => {
   ({ db } = createTestDatabase());
   ({ companyId } = createCompany(db, { legalName: 'Lookup Ltd', seedYears: [2025] }));
   ingestFinanceAct2024(db, { companyId, markdown: financeActMd, ingestVersion: 'v1' });
   deriveTaxRules(db, { companyId });
-  ingestVatca2010(db, { companyId, markdown: vatcaMd, ingestVersion: 'v1' });
+  ingestVatca2010FromCatalogue(db, { companyId });
   deriveVatcaRules(db, { companyId });
   // The input-recovery rules come from the revised s.59/s.60 (issue #209).
   for (const n of ['059', '060']) {
@@ -781,7 +780,7 @@ describe('lookupTransactionRules — issue #143 findings D, E, F, G', () => {
     });
     ingestFinanceAct2024(db, { companyId: tonyId, markdown: financeActMd, ingestVersion: 'v1' });
     deriveTaxRules(db, { companyId: tonyId });
-    ingestVatca2010(db, { companyId: tonyId, markdown: vatcaMd, ingestVersion: 'v1' });
+    ingestVatca2010FromCatalogue(db, { companyId: tonyId });
     deriveVatcaRules(db, { companyId: tonyId });
     ingestSi692025Reg8(db, { companyId: tonyId, markdown: readFileSync(SI_69_2025_MD_PATH, 'utf8'), ingestVersion: 'v1' });
     deriveSi692025Rules(db, { companyId: tonyId });

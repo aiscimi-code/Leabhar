@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { createTestDatabase } from '@/db/testing';
 import { createCompany } from '../config/setup';
-import { ingestVatca2010, VATCA_2010_MD_PATH } from './vatcaIngestion';
+import { ingestVatca2010FromCatalogue } from './vatcaIngestion';
 import { compareRuleVersions } from './versionCompare';
 import { irishActProvisions, irishTaxRules } from '@/db/schema';
 import { ids } from '@/lib/ids';
@@ -17,7 +17,7 @@ const RULE_KEY = 'test.threshold_versioned';
 beforeEach(() => {
   ({ db } = createTestDatabase());
   ({ companyId } = createCompany(db, { legalName: 'Version Ltd', seedYears: [2025] }));
-  ingestVatca2010(db, { companyId, markdown: readFileSync(VATCA_2010_MD_PATH, 'utf8'), ingestVersion: 'v1' });
+  ingestVatca2010FromCatalogue(db, { companyId });
   provisionId = db.select({ id: irishActProvisions.id }).from(irishActProvisions)
     .limit(1).all()[0]!.id;
 });

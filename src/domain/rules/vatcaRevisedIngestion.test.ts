@@ -5,7 +5,7 @@ import { createTestDatabase } from '@/db/testing';
 import { createCompany } from '../config/setup';
 import { ingestVatcaRevisedSection, deriveVatcaRevisedRules, ingestVatcaRevisedS46, statedPeriodProblems } from './vatcaRevisedIngestion';
 import { ingestCatalogueFile } from './catalogue';
-import { ingestVatca2010, VATCA_2010_MD_PATH } from './vatcaIngestion';
+import { ingestVatca2010FromCatalogue } from './vatcaIngestion';
 import { lookupTaxRule, ingestFinanceAct2025, FINANCE_ACT_2025 } from './irishRules';
 import { VATCA_REVISED_CURATED_RULES, S46_FAMILY_SCHEDULE_REF } from './vatcaRevisedCuration';
 import { scheduleThreeRate } from './scheduleRates';
@@ -38,7 +38,7 @@ describe('ingestVatcaRevisedS46', () => {
   });
 
   it('never collides with the as-enacted whole-Act source, even though both cite "2010 Act 31"-family text', () => {
-    ingestVatca2010(db, { companyId, markdown: readFileSync(VATCA_2010_MD_PATH, 'utf8'), ingestVersion: 'v1' });
+    ingestVatca2010FromCatalogue(db, { companyId });
     const revised = ingestVatcaRevisedS46(db, { companyId });
     expect(revised.ingested).toBe(true);
 

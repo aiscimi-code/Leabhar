@@ -25,10 +25,10 @@ superseded and what to use instead.
   content actually driving the deterministic rule engine — see
   `docs/RULES_KB.md`'s "CLI" section for the full `--source` list. As of
   this writing that's: `finance-act-2024/2024-act-43-enacted.md` (whole
-  Act) and its s.78 (VAT registration thresholds); `vatca-2010/
-  vatca-2010-enacted.md` (whole Act, as-enacted); s.46 (current rates) and
-  38 other revised sections, now in the rules catalogue
-  (`catalogue/vatca-2010-revised/`, #443, #556), and `vatca-2010-revised/schedule-{2,3}.md`; `tca-1997/s530.md` and
+  Act) and its s.78 (VAT registration thresholds); in the rules catalogue
+  (#443, #556): VATCA 2010 as enacted (`catalogue/vatca-2010/`, whole Act),
+  s.46 (current rates) and 38 other revised sections, and Schedules 1–3
+  (`catalogue/vatca-2010-revised/`); `tca-1997/s530.md` and
   `s284.md`; `rct/tdm-18-02-{04,05,11}.md`; `si-639-2010/2010-si-639.md`
   (all 47 regs parsed, reg.25 curated); `si-156-2012/2012-si-156.md` (regs
   1/2/4 only, reg.4 curated); `si-69-2025/2025-si-69.md` (regs.5, 8 and 9 —

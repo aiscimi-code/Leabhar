@@ -9,7 +9,7 @@ import {
   FINANCE_ACT_2024_MD_PATH,
   ingestFinanceAct2025, FINANCE_ACT_2025,
 } from '@/domain/rules/irishRules';
-import { ingestVatca2010, deriveVatcaRules, VATCA_2010_MD_PATH } from '@/domain/rules/vatcaIngestion';
+import { ingestVatca2010, ingestVatca2010FromCatalogue, deriveVatcaRules } from '@/domain/rules/vatcaIngestion';
 import {
   ingestVatcaSchedule, ingestVatcaScheduleFromCatalogue, deriveVatcaScheduleRules, type VatcaScheduleNumber,
 } from '@/domain/rules/vatcaScheduleIngestion';
@@ -145,9 +145,11 @@ export async function main(argv: string[], options: CliOptions = {}): Promise<nu
       case 'ingest': {
         const source = getFlag(flags, 'source') ?? 'finance-act-2024';
         if (source === 'vatca-2010') {
-          const file = getFlag(flags, 'file') ?? VATCA_2010_MD_PATH;
-          const markdown = readFileSync(file, 'utf8');
-          print(ingestVatca2010(db, { companyId, markdown, ingestVersion: 'v1', localPath: file }), format);
+          // From the rules catalogue (#556), or --file: a Markdown copy.
+          const file = getFlag(flags, 'file');
+          print(file
+            ? ingestVatca2010(db, { companyId, markdown: readFileSync(file, 'utf8'), ingestVersion: 'v1', localPath: file })
+            : ingestVatca2010FromCatalogue(db, { companyId }), format);
           return 0;
         }
         if (source === 'vatca-2010-sch1' || source === 'vatca-2010-sch2' || source === 'vatca-2010-sch3') {

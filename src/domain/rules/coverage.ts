@@ -1,6 +1,5 @@
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
-import { parseVatca2010 } from './vatcaParser';
 import { parseVatcaSchedule } from './vatcaScheduleParser';
 import { CATALOGUE_DIR, readCatalogueEntry } from './catalogue';
 import { RULE_TREATMENT_BINDINGS } from './vatSuggestion';
@@ -53,7 +52,7 @@ export const COVERAGE_MATRIX_PATH = 'docs/rules/coverage-matrix.json';
 
 // ---- Rows the sources define ----
 
-const VATCA_ENACTED = 'docs/statutes/vatca-2010/vatca-2010-enacted.md';
+const VATCA_ENACTED = 'vatca-2010/vatca-2010-enacted.json';
 const VATCA_REVISED_DIR = 'docs/statutes/vatca-2010-revised';
 
 /** Schedules whose paragraphs are rows. Schedule 9 is a list of sections by Part, so its Parts are the rows. */
@@ -109,7 +108,8 @@ export function expectedCoverageRows(params: { root: string; treatmentCodes: str
   const rows: ExpectedRow[] = [];
   const read = (p: string) => readFileSync(join(params.root, p), 'utf8');
 
-  for (const s of parseVatca2010(read(VATCA_ENACTED))) {
+  // The sections as enacted, from the rules catalogue (#556).
+  for (const s of readCatalogueEntry(VATCA_ENACTED, params.root).provisions) {
     rows.push({ id: `vatca:s${s.sectionNumber}`, area: 'vatca_section', title: `s.${s.sectionNumber} ${s.heading}` });
   }
   // Sections inserted after enactment (91A…, 92A…, 108A…), from the revised

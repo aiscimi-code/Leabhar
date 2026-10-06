@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { createTestDatabase } from '@/db/testing';
 import { createCompany } from '../config/setup';
-import { ingestVatca2010, deriveVatcaRules, VATCA_2010_MD_PATH } from '../rules/vatcaIngestion';
+import { ingestVatca2010FromCatalogue, deriveVatcaRules } from '../rules/vatcaIngestion';
 import { ingestVatcaScheduleFromCatalogue } from '../rules/vatcaScheduleIngestion';
 import {
   searchProvisions, searchStatutoryRules, searchKnowledgeSources,
@@ -21,7 +21,7 @@ beforeEach(() => {
   ({ db } = createTestDatabase());
   ({ companyId } = createCompany(db, { legalName: 'KB Search Ltd', seedYears: [2025] }));
   ({ companyId: otherCompanyId } = createCompany(db, { legalName: 'Other Ltd', seedYears: [2025] }));
-  ingestVatca2010(db, { companyId, markdown: readFileSync(VATCA_2010_MD_PATH, 'utf8'), ingestVersion: 'v1' });
+  ingestVatca2010FromCatalogue(db, { companyId });
   deriveVatcaRules(db, { companyId });
   ingestVatcaScheduleFromCatalogue(db, { companyId, scheduleNumber: '2' });
 });

@@ -100,12 +100,17 @@ tax, import VAT is VAT and customs. `listTaxRulesByHead` reads them.
 the official file's URL and SHA-256, its provisions' verbatim excerpts, and
 the rules derived from them with their quotes, links and expert review. The
 official file is kept beside the entry byte for byte (`s046.json`,
-`s046.html`); the gate re-checks its hash, and a provision's provenance
+`s046.html`; `vatca-2010-enacted.json`, `vatca-2010-enacted.pdf`); the gate re-checks its hash, and a provision's provenance
 re-hashes it (AGENTS.md #5).
 `npm run catalogue:extract -- <entry>` writes one from the official page;
 `catalogue.test.ts` fails the gate when an entry no longer matches what the
-curation derives. All 39 loaded LRC-revised VATCA sections and Schedules
-1-3 are in it; the other sources wait on #556. A Schedule entry holds one
+curation derives. All 39 loaded LRC-revised VATCA sections, Schedules
+1-3 and VATCA 2010 as enacted are in it; the other sources wait on #556.
+An entry can state the source's own publication and commencement dates
+(the enacted Act's 1 November 2010) and a note; a provision can carry the
+sections it cites (`amendsSection`), which the dependency graph reads.
+The enacted Act's excerpts are the parse the statute copy gave, including
+the next section's heading at the end of each (#701). A Schedule entry holds one
 provision per paragraph, with its Part, and its paragraph windows are read
 from the LRC page kept beside it. Its page is the one the parser was
 verified against: the LRC's re-rendered pages break lines where the
@@ -372,7 +377,10 @@ to parseable text needed its own, reusable step:
   different dash glyph — a font detail, not a content error), and the
   verbatim-excerpt test below has never needed a `provisionText` workaround
   since. Schedules remain out of scope.
-- `src/domain/rules/vatcaParser.ts` — parses the converted Markdown, reusing
+- `src/domain/rules/vatcaParser.ts` — parses the converted text into the
+  catalogue entry `catalogue/vatca-2010/vatca-2010-enacted.json` (written by
+  `npm run catalogue:extract -- vatca-2010/vatca-2010-enacted`, which runs
+  the converter on the PDF; #556), reusing
   `statuteParser.ts`'s generic (source-independent) `categoriseProvision`,
   `assessRelevance` and `provisionSlug` rather than re-implementing them.
 - `src/domain/rules/vatcaCuration.ts` — hand-authored rules for 5 sections
@@ -393,9 +401,11 @@ to parseable text needed its own, reusable step:
   arts.10-11), not a country-code test; see issue #136 bug 4 / issue #138
   and docs/statutes/282-2011/articles-10-13b-establishment.md).
   Every `statementExcerpt` is verified (`vatcaParser.test.ts`) to be a
-  verbatim substring of the parsed provision text.
-- `src/domain/rules/vatcaIngestion.ts` — `ingestVatca2010`/`deriveVatcaRules`,
-  mirroring the Finance Act functions' idempotency and versioning.
+  verbatim substring of its section's excerpt in the catalogue entry.
+- `src/domain/rules/vatcaIngestion.ts` — `ingestVatca2010FromCatalogue`
+  (what the knowledge base loads), `ingestVatca2010` (a Markdown copy given
+  to the CLI with `--file`) and `deriveVatcaRules`, mirroring the Finance Act
+  functions' idempotency and versioning.
 
 A real bug surfaced by adding this second source, fixed before it shipped:
 `deriveTaxRules`/`deriveVatcaRules` originally looked up "the provision for

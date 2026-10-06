@@ -6,7 +6,7 @@ import { createCompany } from '../config/setup';
 import {
   ingestVatcaSchedule, ingestVatcaScheduleFromCatalogue, deriveVatcaScheduleRules,
 } from './vatcaScheduleIngestion';
-import { ingestVatca2010, VATCA_2010_MD_PATH } from './vatcaIngestion';
+import { ingestVatca2010FromCatalogue } from './vatcaIngestion';
 import { lookupTaxRule } from './irishRules';
 import { VATCA_SCHEDULE_CURATED_RULES } from './vatcaScheduleCuration';
 import { irishTaxRules, irishKnowledgeSources, irishActProvisions, reviewItems } from '@/db/schema';
@@ -50,7 +50,7 @@ describe('ingestVatcaScheduleFromCatalogue', () => {
   });
 
   it('never collides with the principal Act\'s own source, even though both are "2010 Act 31"-family citations', () => {
-    ingestVatca2010(db, { companyId, markdown: readFileSync(VATCA_2010_MD_PATH, 'utf8'), ingestVersion: 'v1' });
+    ingestVatca2010FromCatalogue(db, { companyId });
     const sch2 = fromCatalogue('2');
     expect(sch2.ingested).toBe(true);
 

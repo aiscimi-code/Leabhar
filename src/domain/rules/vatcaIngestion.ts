@@ -17,17 +17,17 @@ import {
 import { ids } from '@/lib/ids';
 import { nowIso } from '../dates';
 import { sha256Hex } from '@/lib/hash';
-import { parseVatca2010, provisionSlug, assessRelevance, VATCA_2010_MD_PATH } from './vatcaParser';
+import { parseVatca2010, provisionSlug, assessRelevance, type ParsedProvision } from './vatcaParser';
 import { VATCA_CURATED_RULES } from './vatcaCuration';
 import { upsertReviewItem } from '../extraction/service';
 import { taxHeadsFor } from './taxHeads';
+import { ingestCatalogueFile, type CatalogueIngestResult } from './catalogue';
 
 export interface VatcaSourceRef {
   title: string;
   citation: string;
   sourceType: IrishSourceType;
   sourceUrl: string;
-  localPath?: string;
   /** ISO date of commencement, read verbatim from the Act's own text (s.125). */
   enactedDate: string;
 }
@@ -37,11 +37,36 @@ export const VATCA_2010: VatcaSourceRef = {
   citation: '2010 Act 31',
   sourceType: 'legislation',
   sourceUrl: 'https://www.irishstatutebook.ie/eli/2010/act/31/enacted/en/pdf',
-  localPath: 'docs/statutes/vatca-2010/vatca-2010-enacted.md',
   enactedDate: '2010-11-01',
 };
 
-export { VATCA_2010_MD_PATH };
+/** What a reader of the enacted text should know about it (the source's note). */
+export const VATCA_2010_ENACTED_NOTE = 'Enacted text only — later Finance Act amendments (e.g. the standard VAT rate change '
+  + 'to 23%) are not reflected; see docs/RULES_KB.md "Limitations".';
+
+/** The Act as enacted, in the rules catalogue (#556). */
+export const VATCA_2010_CATALOGUE_ENTRY = 'vatca-2010/vatca-2010-enacted.json';
+
+/**
+ * Whether a section is relevant: by its category, or because a curated rule
+ * is mapped to it. The extraction script and the Markdown ingest share it, so
+ * the catalogue entry says what an ingest of the copy did.
+ */
+export function vatca2010Relevance(p: Pick<ParsedProvision, 'sectionNumber' | 'category'>): { relevant: boolean; reason: string } {
+  const { relevant, reason } = assessRelevance(p.category);
+  if (!relevant && VATCA_CURATED_RULES.some((r) => r.sectionNumber === p.sectionNumber)) {
+    return { relevant: true, reason: `Curated: mapped to a rule in vatcaCuration.ts, overriding the ${p.category} category default.` };
+  }
+  return { relevant, reason };
+}
+
+/** Load the Act as enacted from its catalogue entry. */
+export function ingestVatca2010FromCatalogue(
+  db: AppDatabase,
+  params: { companyId?: string | null; ingestVersion?: string; root?: string },
+): CatalogueIngestResult {
+  return ingestCatalogueFile(db, { ...params, entry: VATCA_2010_CATALOGUE_ENTRY });
+}
 
 export interface VatcaIngestResult {
   sourceId: string;
@@ -50,7 +75,11 @@ export interface VatcaIngestResult {
   ingested: boolean;
 }
 
-/** Ingest the VATCA 2010 converted Markdown. Idempotent by content, same as `ingestFinanceAct2024`. */
+/**
+ * Ingest a converted Markdown copy of the Act (given to the CLI with `--file`).
+ * Idempotent by content, same as `ingestFinanceAct2024`. The knowledge base
+ * loads the catalogue entry instead (`ingestVatca2010FromCatalogue`).
+ */
 export function ingestVatca2010(
   db: AppDatabase,
   params: { companyId?: string | null; markdown: string; ingestVersion: string; localPath?: string },
@@ -84,27 +113,20 @@ export function ingestVatca2010(
       citation: VATCA_2010.citation,
       jurisdiction: 'IE',
       sourceUrl: VATCA_2010.sourceUrl,
-      localPath: params.localPath ?? VATCA_2010.localPath ?? null,
+      localPath: params.localPath ?? null,
       sha256: digest,
       ingestVersion: params.ingestVersion,
       publicationDate: VATCA_2010.enactedDate,
       retrievedAt: nowIso(),
       effectiveFrom: VATCA_2010.enactedDate,
-      sourceNote: `Ingest ${params.ingestVersion} of ${VATCA_2010.citation} enacted Markdown. `
-        + 'Enacted text only — later Finance Act amendments (e.g. the standard VAT rate change '
-        + 'to 23%) are not reflected; see docs/RULES_KB.md "Limitations".',
+      sourceNote: `Ingest ${params.ingestVersion} of ${VATCA_2010.citation} enacted Markdown. ${VATCA_2010_ENACTED_NOTE}`,
       sourceDate: nowIso(),
     }).run();
 
     const parsed = parseVatca2010(params.markdown);
-    const curatedSections = new Set(VATCA_CURATED_RULES.map((r) => r.sectionNumber));
     let relevantCount = 0;
     for (const p of parsed) {
-      let { relevant, reason } = assessRelevance(p.category);
-      if (!relevant && curatedSections.has(p.sectionNumber)) {
-        relevant = true;
-        reason = `Curated: mapped to a rule in vatcaCuration.ts, overriding the ${p.category} category default.`;
-      }
+      const { relevant, reason } = vatca2010Relevance(p);
       if (relevant) relevantCount++;
 
       tx.insert(irishActProvisions).values({
