@@ -22,6 +22,7 @@ import { sha256Hex } from '@/lib/hash';
 import { normaliseSpace } from '../vat/boxDefinitions';
 import { upsertReviewItem } from '../extraction/service';
 import type { IrishRuleType } from '@/db/schema';
+import { taxHeadsFor } from './taxHeads';
 
 export const EU_282_2011_MD_PATH = 'docs/statutes/282-2011/articles-10-13b-establishment.md';
 
@@ -240,6 +241,7 @@ export function deriveEu282Rules(db: AppDatabase, params: { companyId: string })
       ruleKey: rule.ruleKey,
       ruleType: rule.ruleType,
       topic: 'place_of_supply',
+      taxHeads: taxHeadsFor(rule.ruleKey, 'place_of_supply'),
       name: rule.name,
       statement: rule.statementExcerpt,
       extractedFact: null,

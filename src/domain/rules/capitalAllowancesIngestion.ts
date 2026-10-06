@@ -22,6 +22,7 @@ import { parseTca1997Section, provisionSlug } from './tca1997SectionParser';
 import { CAPITAL_ALLOWANCES_CURATED_RULES } from './capitalAllowancesCuration';
 import { upsertReviewItem } from '../extraction/service';
 import { crossReferencesFromProvision, sameCrossReferences } from './dependencies';
+import { taxHeadsFor } from './taxHeads';
 
 export const TCA_1997_S284_MD_PATH = new URL(
   '../../../docs/statutes/tca-1997/s284.md',
@@ -184,6 +185,7 @@ export function deriveCapitalAllowancesRules(
       ruleKey: rule.ruleKey,
       ruleType: rule.ruleType,
       topic: rule.topic,
+      taxHeads: taxHeadsFor(rule.ruleKey, rule.topic),
       name: rule.name,
       statement: rule.statementExcerpt,
       extractedFact: rule.numericValue !== null ? String(rule.numericValue) : null,

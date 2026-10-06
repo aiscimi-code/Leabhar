@@ -17,6 +17,7 @@ import { CORPORATION_TAX_CURATED_RULES, NFG_SECTIONS, nfgCitation } from './corp
 import { provisionSlug } from './statuteParser';
 import { upsertReviewItem } from '../extraction/service';
 import { crossReferencesFromProvision, sameCrossReferences } from './dependencies';
+import { taxHeadsFor } from './taxHeads';
 
 const NFG_URL = 'https://www.revenue.ie/en/tax-professionals/documents/notes-for-guidance/tca/';
 
@@ -125,6 +126,7 @@ export function deriveCorporationTaxRules(db: AppDatabase, params: { companyId: 
       ruleKey: rule.ruleKey,
       ruleType: rule.ruleType,
       topic: 'corporation_tax',
+      taxHeads: taxHeadsFor(rule.ruleKey, 'corporation_tax'),
       name: rule.name,
       statement: rule.statementExcerpt,
       extractedFact: rule.numericValue !== null ? String(rule.numericValue) : null,

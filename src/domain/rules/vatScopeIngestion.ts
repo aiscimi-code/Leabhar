@@ -40,6 +40,7 @@ export const VAT_SCOPE_DERIVED_RULES = [
   ...DEEMED_SUPPLY_CURATED_RULES, ...BAD_DEBT_RELIEF_CURATED_RULES,
 ];
 import { upsertReviewItem } from '../extraction/service';
+import { taxHeadsFor } from './taxHeads';
 
 export interface VatScopeDeriveResult {
   created: number;
@@ -118,6 +119,7 @@ export function deriveVatScopeRules(
       ruleKey: rule.ruleKey,
       ruleType: rule.ruleType,
       topic: rule.topic,
+      taxHeads: taxHeadsFor(rule.ruleKey, rule.topic),
       name: rule.name,
       statement: rule.statementExcerpt,
       extractedFact: null,

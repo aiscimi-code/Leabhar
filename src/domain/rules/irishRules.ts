@@ -27,6 +27,7 @@ import { resolveEffectiveDate } from './effectiveClue';
 import { upsertReviewItem } from '../extraction/service';
 import type { ParsedProvision } from './statuteParser';
 import { retiredBy } from './supersessions';
+import { taxHeadsFor } from './taxHeads';
 
 export interface KnowledgeSourceRef {
   title: string;
@@ -332,6 +333,7 @@ export function deriveTaxRules(
       ruleKey: curated.key,
       ruleType: curated.kind === 'threshold' ? 'threshold' : curated.kind === 'rate' ? 'rate' : 'other',
       topic: curated.topic,
+      taxHeads: taxHeadsFor(curated.key, curated.topic),
       name: curated.name,
       statement: `Finance Act 2024 s.${prov.sectionNumber}: ${fact.evidence}`,
       extractedFact: fact.rawValue,
@@ -519,6 +521,28 @@ export function lookupTaxRule(
 
   const inForce = rows.find((r) => r.effectiveFrom <= asOf && (!r.effectiveTo || r.effectiveTo > asOf));
   return inForce ? toLookupResult(inForce) : null;
+}
+
+/**
+ * The rules of one tax head in force on a date (issue #686 step 9), by key.
+ * A rule belongs to every head it names, so a capital allowance rule answers
+ * for income tax and for corporation tax.
+ */
+export function listTaxRulesByHead(
+  db: AppDatabase,
+  params: { companyId: string; head: string; asOfDate?: string },
+): Array<{ ruleKey: string; ruleVersion: number; topic: string; taxHeads: string[] }> {
+  const asOf = params.asOfDate ?? today();
+  if (!isIsoDate(asOf)) return [];
+  return db.select({
+    ruleKey: irishTaxRules.ruleKey, ruleVersion: irishTaxRules.ruleVersion, topic: irishTaxRules.topic,
+    taxHeads: irishTaxRules.taxHeads, effectiveFrom: irishTaxRules.effectiveFrom, effectiveTo: irishTaxRules.effectiveTo,
+  }).from(irishTaxRules)
+    .where(and(eq(irishTaxRules.companyId, params.companyId), eq(irishTaxRules.enabled, true), ne(irishTaxRules.reviewStatus, 'superseded')))
+    .orderBy(irishTaxRules.ruleKey)
+    .all()
+    .filter((r) => r.taxHeads.includes(params.head) && r.effectiveFrom <= asOf && (r.effectiveTo === null || r.effectiveTo > asOf))
+    .map(({ ruleKey, ruleVersion, topic, taxHeads }) => ({ ruleKey, ruleVersion, topic, taxHeads }));
 }
 
 /**

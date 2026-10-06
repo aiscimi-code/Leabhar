@@ -20,6 +20,7 @@ import { parseVat3Boxes, parseRtdManualSections, type ParsedPassage } from './va
 import { VAT3_BOX_RULES, RTD_MANUAL_RULES, VAT3_GUIDANCE_CITATION, RTD_TDM_CITATION, type CuratedFormRule } from './vat3RtdCuration';
 import { VAT3_GUIDANCE_PATH } from '../vat/boxDefinitions';
 import { RTD_GUIDANCE_PATH } from '../vat/rtd';
+import { taxHeadsFor } from './taxHeads';
 
 export const VAT3_RETURN_GUIDANCE_MD_PATH = VAT3_GUIDANCE_PATH;
 export const RTD_TDM_MD_PATH = RTD_GUIDANCE_PATH;
@@ -193,6 +194,7 @@ export function deriveVat3RtdRules(db: AppDatabase, params: { companyId: string 
       ruleKey: rule.ruleKey,
       ruleType: rule.ruleType,
       topic: rule.ruleKey.startsWith('vat3.') ? 'vat_return_form' : 'rtd',
+      taxHeads: taxHeadsFor(rule.ruleKey, rule.ruleKey.startsWith('vat3.') ? 'vat_return_form' : 'rtd'),
       name: rule.name,
       statement: rule.statementExcerpt,
       extractedFact: null,

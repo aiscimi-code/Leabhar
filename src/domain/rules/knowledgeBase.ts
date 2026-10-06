@@ -57,6 +57,7 @@ import { ingestSlicedSource } from './slicedSourceIngestion';
 import { deriveCuratedRuleFamilies } from './incomeTaxIngestion';
 import { CAR_EMISSIONS_SOURCES, CAR_EMISSIONS_CURATED_RULES } from './carEmissionsCuration';
 import { syncRuleLinks } from './ruleLinks';
+import { taxHeadsFor } from './taxHeads';
 
 type IngestParams = { companyId: string; markdown: string; ingestVersion: string; localPath: string };
 type IngestFn = (db: AppDatabase, params: IngestParams) => unknown;
@@ -215,6 +216,23 @@ export function countStatutoryRules(db: AppDatabase, companyId: string): number 
     .where(eq(irishTaxRules.companyId, companyId)).get()?.n ?? 0;
 }
 
+/**
+ * Give a rule stored before tax heads were recorded (issue #686 step 9) its
+ * heads. Only an empty list is filled; a stated one is never overwritten.
+ */
+export function fillTaxHeads(db: AppDatabase, params: { companyId: string }): number {
+  let filled = 0;
+  for (const r of db.select({ id: irishTaxRules.id, ruleKey: irishTaxRules.ruleKey, topic: irishTaxRules.topic, taxHeads: irishTaxRules.taxHeads })
+    .from(irishTaxRules).where(eq(irishTaxRules.companyId, params.companyId)).all()) {
+    if (r.taxHeads.length > 0) continue;
+    const heads = taxHeadsFor(r.ruleKey, r.topic);
+    if (heads.length === 0) continue;
+    db.update(irishTaxRules).set({ taxHeads: heads }).where(eq(irishTaxRules.id, r.id)).run();
+    filled += 1;
+  }
+  return filled;
+}
+
 export function loadStatutoryKnowledgeBase(
   db: AppDatabase,
   params: { companyId: string; root?: string; ingestVersion?: string },
@@ -231,6 +249,7 @@ export function loadStatutoryKnowledgeBase(
   for (const derive of DERIVES) derive(db, { companyId: params.companyId });
   // The links between rules (ADR-0020), after every rule they name exists.
   syncRuleLinks(db, { companyId: params.companyId });
+  fillTaxHeads(db, { companyId: params.companyId });
   return {
     sourcesProcessed: SOURCES.length,
     rulesBefore,

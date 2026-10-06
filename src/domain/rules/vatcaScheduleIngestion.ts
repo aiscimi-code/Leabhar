@@ -33,6 +33,7 @@ import { join } from 'node:path';
 import { appRoot } from '@/lib/paths';
 import { scheduleParagraphWindows, type ParagraphWindow } from './lrcAnnotations';
 import { crossReferencesFromProvision, sameCrossReferences } from './dependencies';
+import { taxHeadsFor } from './taxHeads';
 
 /** Schedule 1 (exempt activities) is ingested for the exempt rules in vatScopeCuration.ts (issue #200). */
 export type VatcaScheduleNumber = '1' | '2' | '3';
@@ -272,6 +273,7 @@ export function deriveVatcaScheduleRules(
       ruleKey: rule.ruleKey,
       ruleType: rule.ruleType,
       topic: rule.topic,
+      taxHeads: taxHeadsFor(rule.ruleKey, rule.topic),
       name: rule.name,
       statement: rule.statementExcerpt,
       extractedFact: null,

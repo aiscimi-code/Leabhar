@@ -17,6 +17,7 @@ import { provisionSlug } from './statuteParser';
 import { INCOME_TAX_CURATED_RULES, type CuratedIncomeTaxRule } from './incomeTaxCuration';
 import { upsertReviewItem } from '../extraction/service';
 import { crossReferencesFromProvision, sameCrossReferences } from './dependencies';
+import { taxHeadsFor } from './taxHeads';
 
 export const SWCA_SECTIONS = ['20', '21', '22', '23', 'si312-art92'];
 export const SI_312_1996_ART92_PATH = 'docs/statutes/si-312-1996/art92.md';
@@ -102,7 +103,7 @@ export function deriveCuratedRuleFamilies(
       const id = ids.taxRule();
       db.insert(irishTaxRules).values({
         id, companyId: params.companyId, provisionId: prov.id, ruleKey, ruleType: rule.ruleType,
-        topic: ruleKey.split('.')[0]!, name: rule.name, statement: rule.statementExcerpt,
+        topic: ruleKey.split('.')[0]!, taxHeads: taxHeadsFor(ruleKey, ruleKey.split('.')[0]!), name: rule.name, statement: rule.statementExcerpt,
         extractedFact: rule.numericValue !== null ? String(rule.numericValue) : null, humanExplanation: rule.interpretationNote,
         numericValue: rule.numericValue, unit: rule.unit,
         qualifier: rule.rateBasisPoints !== undefined ? `rate_bp:${rule.rateBasisPoints}` : null,

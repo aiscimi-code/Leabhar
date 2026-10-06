@@ -13,6 +13,7 @@ import { parseSi156, provisionSlug, assessRelevance, SI_156_2012_MD_PATH } from 
 import { SI_156_CURATED_RULES } from './si156Curation';
 import { upsertReviewItem } from '../extraction/service';
 import { crossReferencesFromProvision, sameCrossReferences } from './dependencies';
+import { taxHeadsFor } from './taxHeads';
 
 export { SI_156_2012_MD_PATH };
 
@@ -170,6 +171,7 @@ export function deriveSi156Rules(
       ruleKey: rule.ruleKey,
       ruleType: rule.ruleType,
       topic: rule.topic,
+      taxHeads: taxHeadsFor(rule.ruleKey, rule.topic),
       name: rule.name,
       statement: rule.statementExcerpt,
       extractedFact: null,

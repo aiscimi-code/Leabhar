@@ -245,6 +245,13 @@ export const irishTaxRules = sqliteTable('irish_tax_rules', {
   ruleType: text('rule_type', { enum: IRISH_RULE_TYPES }).notNull().default('other'),
   /** Broad subject the rule speaks to, e.g. "business_expense", "usc". Defaults to the provision's category. */
   topic: text('topic').notNull(),
+  /**
+   * The tax heads the rule belongs to (issue #686 step 9): one or more, where
+   * `topic` routes a lookup and names one subject. Import VAT is `vat` and
+   * `customs`; a capital allowance is corporation tax and income tax. Set
+   * from `taxHeadsFor` (src/domain/rules/taxHeads.ts).
+   */
+  taxHeads: text('tax_heads', { mode: 'json' }).$type<string[]>().notNull().default([]),
   /** Human-readable summary, at most a single sentence. */
   name: text('name').notNull(),
   /** The rule's statement, built only from the provision's own wording — never invented. */

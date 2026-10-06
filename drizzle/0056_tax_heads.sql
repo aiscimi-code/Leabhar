@@ -1,0 +1,1 @@
+ALTER TABLE `irish_tax_rules` ADD `tax_heads` text DEFAULT '[]' NOT NULL;

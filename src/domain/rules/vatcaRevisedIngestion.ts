@@ -33,6 +33,7 @@ import { VAT_SCOPE_CURATED_RULES } from './vatScopeCuration';
 import { VAT_PLACE_OF_SUPPLY_CURATED_RULES } from './vatPlaceOfSupplyCuration';
 import { upsertReviewItem } from '../extraction/service';
 import { crossReferencesFromProvision, sameCrossReferences } from './dependencies';
+import { taxHeadsFor } from './taxHeads';
 
 export { VATCA_REVISED_S046_MD_PATH };
 
@@ -223,6 +224,7 @@ export function deriveVatcaRevisedRules(
         ruleKey: rule.ruleKey,
         ruleType: rule.ruleType,
         topic: rule.topic,
+        taxHeads: taxHeadsFor(rule.ruleKey, rule.topic),
         name: rule.name,
         statement: rule.statementExcerpt,
         extractedFact: rule.extractedFact,
