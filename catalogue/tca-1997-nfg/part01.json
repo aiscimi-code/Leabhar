@@ -1,0 +1,52 @@
+{
+  "format": 1,
+  "source": {
+    "citation": "Revenue NfG TCA 1997 (FA 2025 ed.) Part 1",
+    "title": "Notes for Guidance — Taxes Consolidation Act 1997 — Finance Act 2025 edition — part01",
+    "sourceType": "revenue_guidance",
+    "jurisdiction": "IE",
+    "sourceUrl": "https://www.revenue.ie/en/tax-professionals/documents/notes-for-guidance/tca/part01.pdf",
+    "sha256": "18e8b26d338b72eb2ec88c9408cf379bf0f4fc9938e3c330cc31b2c9f1f3a789",
+    "conversion": "pdftotext-layout",
+    "retrievedOn": "2026-10-06",
+    "publicationDate": null,
+    "effectiveFrom": "2025-12-31",
+    "note": "Revenue guidance summarising the TCA 1997 as amended to Finance Act 2025. There is no LRC revised TCA; the Notes are the current consolidated statement of each section, but rank below the Act itself."
+  },
+  "provisions": [
+    {
+      "sectionNumber": "3",
+      "heading": "Interpretation of Income Tax Acts",
+      "locator": "s.3",
+      "principalAct": "1997 Act 39",
+      "category": "corporation_tax",
+      "relevant": true,
+      "relevanceReason": "In scope for the corporation tax computation (issue #211); not yet curated.",
+      "excerpt": " 3 Interpretation of Income Tax Acts\n\n Summary\n This section gives the meaning of certain terms and sets out rules for the construction of\n certain references used in the Income Tax Acts. The various definitions and rules of\n construction apply unless the context requires otherwise.\n\n Details\n Definitions\n Certain of the terms mentioned in the section are, in fact, defined elsewhere in the Income (1)\n Tax Acts and are listed in this section so as to give them general application throughout\n the Income Tax Acts. The provisions where these definitions are found are —\n •     section 15 – higher rate and standard rate;\n •     section 458 – taxable income.\n                                                                  4\n\fNotes for Guidance – Taxes Consolidation Act 1997 – Finance Act 2025 Edition - Part 1\n\n “chargeable tax” means the tax chargeable in respect of total income after allowing the\n various deductions from that income but before it is reduced by credits and other tax\n reliefs (defined as “general tax credits”) while “income tax payable” is the actual tax due\n and is the chargeable tax less personal and general tax credits.\n The definitions of “incapacitated person” and “total income” are self-explanatory.\n “personal tax credit” means a tax credit specified in sections 461, 461A, 462B, 463, 464,\n 465, 466, 466A, 468 and 472.\n The term “relative” is not defined in any true sense and must, therefore, take its normal\n meaning. The section, however, does extend the term to include an individual under 16\n years of age in the custody of and maintained by the individual claiming the relief at that\n individual’s own expense.\n The term “tax” is defined as meaning “income tax”. It is to be noted that the definition of\n “tax” for the purposes of the Tax Acts which is contained in section 2 does to a large\n extent overrule this definition. Where “tax” appears in the Income Tax Acts it means\n income tax. However, for the purposes of the Tax Acts (which includes both the Income\n Tax Acts and the Corporation Tax Acts), the same reference can mean either income tax\n or corporation tax.\n The section does not provide a comprehensive definition of “trade”. It does, however,\n extend the meaning to include every trade, manufacture, adventure or concern in the\n nature of trade. It is necessary to refer to the extensive body of case law so as obtain a full\n picture on what is or is not a trade. Some assistance in the matter is given in the UK report\n of the Royal Commission on the Taxation of Profits and Income which identified a\n number of “badges of trade” – that is, factors which should be taken into consideration\n when deciding whether or not a particular activity constitutes trading.\n An individual’s (and in the case of a married man the reference is to be taken as including (2) & (3)\n his wife where the wife’s profits are treated as the husbands profits and in the case of civil\n partners the reference is to be taken as including the civil partner who is assessed to tax\n in respect of their joint income) “earned income” is —\n •     income from the individual’s office/employment,\n •     income from any pension, superannuation, deferred pay or compensation for loss of\n       office given in respect of the past services of the individual or of the individual’s\n       husband, civil partner or parent or given to the individual in respect of the past\n       services of any deceased person irrespective of whether the individual or the\n       individual’s husband, civil partner or parent contributed to the pension,\n       superannuation, allowance or deferred pay,\n •     income from property attached to or derived from the emoluments of an\n       office/employment held by the individual (examples would be benefits-in-kind such\n       as rent free accommodation),\n •     income from a trade or profession,\n •     annuities (approved under Chapter 2 of Part 30 – relief for retirement annuities)\n       payable to the individual to the extent that the annuity relates to any amount on which\n       relief is given under section 787, and\n •     the Capital Gains Tax Acts (which consist of the provisions relating to capital).\n\n\n                                                                  5\n\fNotes for Guidance – Taxes Consolidation Act 1997 – Finance Act 2025 Edition - Part 1\n\n The concept of “earned income” is now relevant only in the context of the meaning of\n “investment income” in section 783(1)(a) (which provides for the interpretation of\n Chapter 2 of Part 30 – relief for retirement annuities) and section 434(1) (which is\n concerned with the meaning of the investment income and estate income of a company\n for the purposes of the close company surcharge provided for by section 440).\n\n Construction of references to profits or gains\n References to profits/gains in the Income Tax Acts are not to be taken as including (4)\n chargeable gains within the meaning of the Capital Gains Tax Acts.\n\n"
+    }
+  ],
+  "rules": [
+    {
+      "key": "income_tax.earned_income_trade",
+      "sectionNumber": "3",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "1997-04-06",
+          "effectiveTo": null,
+          "quote": "income from a trade or profession,",
+          "value": null,
+          "unit": null,
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    }
+  ]
+}

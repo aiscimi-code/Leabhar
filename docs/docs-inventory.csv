@@ -251,30 +251,30 @@ docs/statutes/_inbox/CONVERSION.md,742,cited-docs,docs/statutes/_inbox/COLLECTED
 docs/statutes/_inbox/D/SOURCES.txt,898,duplicate,docs/statutes/tca-1997-nfg/SOURCES.txt
 docs/statutes/_inbox/D/introduction.md,2766,duplicate,docs/statutes/tca-1997-nfg/introduction.md
 docs/statutes/_inbox/D/introduction.pdf,64540,duplicate,docs/statutes/tca-1997-nfg/introduction.pdf
-docs/statutes/_inbox/D/part01.md,51355,duplicate,docs/statutes/tca-1997-nfg/part01.md
-docs/statutes/_inbox/D/part01.pdf,344086,duplicate,docs/statutes/tca-1997-nfg/part01.pdf
-docs/statutes/_inbox/D/part02.md,121241,duplicate,docs/statutes/tca-1997-nfg/part02.md
-docs/statutes/_inbox/D/part02.pdf,584621,duplicate,docs/statutes/tca-1997-nfg/part02.pdf
-docs/statutes/_inbox/D/part04.md,436207,duplicate,docs/statutes/tca-1997-nfg/part04.md
-docs/statutes/_inbox/D/part04.pdf,1445800,duplicate,docs/statutes/tca-1997-nfg/part04.pdf
-docs/statutes/_inbox/D/part09.md,463797,duplicate,docs/statutes/tca-1997-nfg/part09.md
-docs/statutes/_inbox/D/part09.pdf,1497236,duplicate,docs/statutes/tca-1997-nfg/part09.pdf
-docs/statutes/_inbox/D/part12.md,358830,duplicate,docs/statutes/tca-1997-nfg/part12.md
-docs/statutes/_inbox/D/part12.pdf,1397792,duplicate,docs/statutes/tca-1997-nfg/part12.pdf
-docs/statutes/_inbox/D/part13.md,69967,duplicate,docs/statutes/tca-1997-nfg/part13.md
-docs/statutes/_inbox/D/part13.pdf,425448,duplicate,docs/statutes/tca-1997-nfg/part13.pdf
-docs/statutes/_inbox/D/part15.md,522024,duplicate,docs/statutes/tca-1997-nfg/part15.md
-docs/statutes/_inbox/D/part15.pdf,1816016,duplicate,docs/statutes/tca-1997-nfg/part15.pdf
-docs/statutes/_inbox/D/part18.md,131641,duplicate,docs/statutes/tca-1997-nfg/part18.md
-docs/statutes/_inbox/D/part18.pdf,581130,duplicate,docs/statutes/tca-1997-nfg/part18.pdf
-docs/statutes/_inbox/D/part18d.md,59033,duplicate,docs/statutes/tca-1997-nfg/part18d.md
-docs/statutes/_inbox/D/part18d.pdf,359926,duplicate,docs/statutes/tca-1997-nfg/part18d.pdf
-docs/statutes/_inbox/D/part36.md,125811,duplicate,docs/statutes/tca-1997-nfg/part36.md
-docs/statutes/_inbox/D/part36.pdf,639392,duplicate,docs/statutes/tca-1997-nfg/part36.pdf
-docs/statutes/_inbox/D/part41a.md,87984,duplicate,docs/statutes/tca-1997-nfg/part41a.md
-docs/statutes/_inbox/D/part41a.pdf,526463,duplicate,docs/statutes/tca-1997-nfg/part41a.pdf
-docs/statutes/_inbox/D/part43.md,53305,duplicate,docs/statutes/tca-1997-nfg/part43.md
-docs/statutes/_inbox/D/part43.pdf,319215,duplicate,docs/statutes/tca-1997-nfg/part43.pdf
+docs/statutes/_inbox/D/part01.md,51355,cited-docs,docs/statutes/_inbox/MANIFEST.sha256
+docs/statutes/_inbox/D/part01.pdf,344086,duplicate,catalogue/tca-1997-nfg/part01.pdf
+docs/statutes/_inbox/D/part02.md,121241,cited-docs,docs/statutes/_inbox/MANIFEST.sha256
+docs/statutes/_inbox/D/part02.pdf,584621,duplicate,catalogue/tca-1997-nfg/part02.pdf
+docs/statutes/_inbox/D/part04.md,436207,cited-docs,docs/statutes/_inbox/MANIFEST.sha256
+docs/statutes/_inbox/D/part04.pdf,1445800,duplicate,catalogue/tca-1997-nfg/part04.pdf
+docs/statutes/_inbox/D/part09.md,463797,cited-docs,docs/statutes/_inbox/MANIFEST.sha256
+docs/statutes/_inbox/D/part09.pdf,1497236,duplicate,catalogue/tca-1997-nfg/part09.pdf
+docs/statutes/_inbox/D/part12.md,358830,cited-docs,docs/statutes/_inbox/MANIFEST.sha256
+docs/statutes/_inbox/D/part12.pdf,1397792,duplicate,catalogue/tca-1997-nfg/part12.pdf
+docs/statutes/_inbox/D/part13.md,69967,cited-docs,docs/statutes/_inbox/MANIFEST.sha256
+docs/statutes/_inbox/D/part13.pdf,425448,duplicate,catalogue/tca-1997-nfg/part13.pdf
+docs/statutes/_inbox/D/part15.md,522024,cited-docs,docs/statutes/_inbox/MANIFEST.sha256
+docs/statutes/_inbox/D/part15.pdf,1816016,duplicate,catalogue/tca-1997-nfg/part15.pdf
+docs/statutes/_inbox/D/part18.md,131641,cited-docs,docs/statutes/_inbox/MANIFEST.sha256
+docs/statutes/_inbox/D/part18.pdf,581130,duplicate,catalogue/tca-1997-nfg/part18.pdf
+docs/statutes/_inbox/D/part18d.md,59033,cited-docs,docs/statutes/_inbox/MANIFEST.sha256
+docs/statutes/_inbox/D/part18d.pdf,359926,duplicate,catalogue/tca-1997-nfg/part18d.pdf
+docs/statutes/_inbox/D/part36.md,125811,cited-docs,docs/statutes/_inbox/MANIFEST.sha256
+docs/statutes/_inbox/D/part36.pdf,639392,duplicate,catalogue/tca-1997-nfg/part36.pdf
+docs/statutes/_inbox/D/part41a.md,87984,cited-docs,docs/statutes/_inbox/MANIFEST.sha256
+docs/statutes/_inbox/D/part41a.pdf,526463,duplicate,catalogue/tca-1997-nfg/part41a.pdf
+docs/statutes/_inbox/D/part43.md,53305,cited-docs,docs/statutes/_inbox/MANIFEST.sha256
+docs/statutes/_inbox/D/part43.pdf,319215,duplicate,catalogue/tca-1997-nfg/part43.pdf
 docs/statutes/_inbox/E/SOURCES.txt,718,unreferenced,
 docs/statutes/_inbox/E/si-2012-576-print.html,66242,cited-docs,docs/statutes/_inbox/E/SOURCES.txt
 docs/statutes/_inbox/E/si-2012-576.md,20757,unreferenced,
@@ -406,34 +406,10 @@ docs/statutes/swca-2005/swca-2005-s22.md,1643,runtime,read by the test suite
 docs/statutes/swca-2005/swca-2005-s23.html,30132,original,docs/statutes/_inbox/F/swca-2005-s23.md docs/statutes/swca-2005/swca-2005-s23.md
 docs/statutes/swca-2005/swca-2005-s23.md,5436,runtime,read by the test suite
 docs/statutes/tbe-services/tdm-tbe-services.md,24082,cited-docs,docs/statutes/SOURCE-REGISTER.md
-docs/statutes/tca-1997-nfg/README.md,921,unreferenced,
+docs/statutes/tca-1997-nfg/README.md,1844,unreferenced,
 docs/statutes/tca-1997-nfg/SOURCES.txt,898,cited-docs,docs/statutes/tca-1997-nfg/README.md
 docs/statutes/tca-1997-nfg/introduction.md,2766,unreferenced,
 docs/statutes/tca-1997-nfg/introduction.pdf,64540,original,docs/statutes/_inbox/D/introduction.md docs/statutes/tca-1997-nfg/introduction.md
-docs/statutes/tca-1997-nfg/part01.md,51355,runtime,read by the test suite
-docs/statutes/tca-1997-nfg/part01.pdf,344086,original,docs/statutes/_inbox/D/part01.md docs/statutes/tca-1997-nfg/part01.md
-docs/statutes/tca-1997-nfg/part02.md,121241,runtime,read by the test suite
-docs/statutes/tca-1997-nfg/part02.pdf,584621,original,docs/statutes/_inbox/D/part02.md docs/statutes/tca-1997-nfg/part02.md
-docs/statutes/tca-1997-nfg/part04.md,436207,runtime,read by the test suite
-docs/statutes/tca-1997-nfg/part04.pdf,1445800,original,docs/statutes/_inbox/D/part04.md docs/statutes/tca-1997-nfg/part04.md
-docs/statutes/tca-1997-nfg/part09.md,463797,runtime,read by the test suite
-docs/statutes/tca-1997-nfg/part09.pdf,1497236,original,docs/statutes/_inbox/D/part09.md docs/statutes/tca-1997-nfg/part09.md
-docs/statutes/tca-1997-nfg/part12.md,358830,runtime,read by the test suite
-docs/statutes/tca-1997-nfg/part12.pdf,1397792,original,docs/statutes/_inbox/D/part12.md docs/statutes/tca-1997-nfg/part12.md
-docs/statutes/tca-1997-nfg/part13.md,69967,runtime,read by the test suite
-docs/statutes/tca-1997-nfg/part13.pdf,425448,original,docs/statutes/_inbox/D/part13.md docs/statutes/tca-1997-nfg/part13.md
-docs/statutes/tca-1997-nfg/part15.md,522024,runtime,read by the test suite
-docs/statutes/tca-1997-nfg/part15.pdf,1816016,original,docs/statutes/_inbox/D/part15.md docs/statutes/tca-1997-nfg/part15.md
-docs/statutes/tca-1997-nfg/part18.md,131641,unreferenced,
-docs/statutes/tca-1997-nfg/part18.pdf,581130,original,docs/statutes/_inbox/D/part18.md docs/statutes/tca-1997-nfg/part18.md
-docs/statutes/tca-1997-nfg/part18d.md,59033,runtime,read by the test suite
-docs/statutes/tca-1997-nfg/part18d.pdf,359926,original,docs/statutes/_inbox/D/part18d.md docs/statutes/tca-1997-nfg/part18d.md
-docs/statutes/tca-1997-nfg/part36.md,125811,runtime,read by the test suite
-docs/statutes/tca-1997-nfg/part36.pdf,639392,original,docs/statutes/_inbox/D/part36.md docs/statutes/tca-1997-nfg/part36.md
-docs/statutes/tca-1997-nfg/part41a.md,87984,runtime,read by the test suite
-docs/statutes/tca-1997-nfg/part41a.pdf,526463,original,docs/statutes/_inbox/D/part41a.md docs/statutes/tca-1997-nfg/part41a.md
-docs/statutes/tca-1997-nfg/part43.md,53305,runtime,read by the test suite
-docs/statutes/tca-1997-nfg/part43.pdf,319215,original,docs/statutes/_inbox/D/part43.md docs/statutes/tca-1997-nfg/part43.md
 docs/statutes/tca-1997/1997-act-39-ss-885-887.md,1466,cited-docs,docs/RULES_KB.md docs/statutes/tca-1997/README.md
 docs/statutes/tca-1997/README.md,3103,cited-code,src/domain/rules/financeAct2011RctSectionParser.ts src/domain/rules/rctCuration.ts src/domain/rules/rctIngestion.ts src/domain/rules/tca1997Ingestion.ts src/domain/rules/tca1997SectionParser.ts src/domain/rules/tcaNfgParser.ts
 docs/statutes/tca-1997/s18.md,838,cited-docs,docs/RULES_KB.md docs/statutes/tca-1997/README.md

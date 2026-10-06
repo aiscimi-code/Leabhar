@@ -1,11 +1,3 @@
----
-title: "part11.pdf"
-source_type: official-pdf-plaintext
-source_pdf_sha256: "e74b9515ffbc0fdb5946f5a2f785d95653adcb8e507a2247b06b64c5a50d4f69"
-conversion: pdftotext-layout
-retrieved: 2026-09-27
----
-
    Notes for Guidance - Taxes Consolidation Act
                        1997
                       Finance Act 2025 edition
@@ -171,7 +163,7 @@ Finance Act 2025 edition
 
        less proceeds of car A €18,000         €30,000
                                                             (-------------------------------------------
-                                                                22,000 18,000)
+                                                                22,000 18,000)-
        restricted to                          €15,840                    ( 25,000)
 
        Renewals allowance                     €14,160

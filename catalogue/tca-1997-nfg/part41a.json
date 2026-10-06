@@ -1,0 +1,420 @@
+{
+  "format": 1,
+  "source": {
+    "citation": "Revenue NfG TCA 1997 (FA 2025 ed.) Part 41A",
+    "title": "Notes for Guidance — Taxes Consolidation Act 1997 — Finance Act 2025 edition — part41a",
+    "sourceType": "revenue_guidance",
+    "jurisdiction": "IE",
+    "sourceUrl": "https://www.revenue.ie/en/tax-professionals/documents/notes-for-guidance/tca/part41a.pdf",
+    "sha256": "31974bd22ecbc6b02c92735ce068fcae93a3b875ea9af3e434cca4d6d35f8874",
+    "conversion": "pdftotext-layout",
+    "retrievedOn": "2026-10-06",
+    "publicationDate": null,
+    "effectiveFrom": "2025-12-31",
+    "note": "Revenue guidance summarising the TCA 1997 as amended to Finance Act 2025. There is no LRC revised TCA; the Notes are the current consolidated statement of each section, but rank below the Act itself."
+  },
+  "provisions": [
+    {
+      "sectionNumber": "959A",
+      "heading": "Interpretation",
+      "locator": "s.959A",
+      "principalAct": "1997 Act 39",
+      "category": "corporation_tax",
+      "relevant": true,
+      "relevanceReason": "Curated: mapped to a rule in corporationTaxCuration.ts.",
+      "excerpt": "959A Interpretation\nSummary\nThis section contains definitions for the purposes of Part 41A. The section contains similar\ndefinitions to those previously contained in section 950 for the purposes of Part 41. Included\nin the section are definitions of:\nThe “Acts” to which Part 41A applies, being the Income Tax Acts, the Corporation Tax\nActs, the Capital Gains Tax Acts, Part 18A, Part 18C and Part 18D.\n“Assessment” is an assessment to tax, including a self-assessment, made under the Acts, as\ndefined, except in section 959G.\n“Chargeable period” is a company’s accounting period or a tax year.\n“Chargeable person”, being a person within the self-assessment system, is defined as a per-\nson who is chargeable to tax for a chargeable period but excludes persons to whom section\n959B(1) applies.\n“Self-assessment” is an assessment to tax made by or on behalf of a chargeable person. The\nitems that are included in a self-assessment e.g., “amount of tax chargeable”, “amount of tax\npayable”, etc. are also defined in this section.\n“Specified return date for the chargeable period” in relation to a tax year means the 31 Oc-\ntober in the next tax year, and in relation to the accounting period of a company means the\nday 9 months after the year end (but the 21st of the month if it would be later).\n“Tax” for the purposes of this Part, other than section 959G, means any income tax, corpo-\nration tax, capital gains tax or any other levy or charge which the Acts place under the care\nand management of Revenue (e.g. the USC).\n\n\n\n\n                                                          3\n\fNotes for Guidance – Taxes Consolidation Act 1997 – Finance Act 2025 Edition - Part 41A\n\n"
+    },
+    {
+      "sectionNumber": "959I",
+      "heading": "Obligation to make a return",
+      "locator": "s.959I",
+      "principalAct": "1997 Act 39",
+      "category": "corporation_tax",
+      "relevant": true,
+      "relevanceReason": "In scope for the corporation tax computation (issue #211); not yet curated.",
+      "excerpt": "959I Obligation to make a return\nSummary\nThis section provides that every chargeable person must submit a return for an accounting pe-\nriod or tax year by the specified return filing date for the period or year involved.\nDetails\nEvery chargeable person, as defined, must file a tax return, as prescribed, with the Collector (1)\nGeneral for a chargeable period, as defined, by the due date, as defined.\nThe tax return may include items relating to gifts and inheritance tax.                           (2)\n\nWhen a person files their tax return, they shall be deemed to have been required by notice to (3)\ndeliver a statement containing matters and particulars contained in a return or a return done\nso on foot of a request under sections 877, 879, 880 or 884.\nA person must file their tax return regardless of whether or not they have received a notice (4)\nunder sections 877, 879, 880 or 884.\nA person does not have to file their tax return earlier than the due date, as defined.            (5)\n\nA new subsection (6) inserted by Finance Act 2025 provides that claims for allowances, de- (6)\nductions or reliefs can be made in a return that is filed after the specified return date by a\nchargeable person for a chargeable period, except in circumstances where such a claim is\nprecluded by other provisions in the Acts such that;\n\n\n    (a) another provision within the Acts specifically prevents them from claiming same in a\n        return which is filed after the specified return date, or\n\n\n    (b) another provision within the Acts prevents them for claiming same in a return which\n        is filed after a date specified in a provision within the Acts.\n"
+    },
+    {
+      "sectionNumber": "959AM",
+      "heading": "Interpretation and miscellaneous (Chapter 7)",
+      "locator": "s.959AM",
+      "principalAct": "1997 Act 39",
+      "category": "corporation_tax",
+      "relevant": true,
+      "relevanceReason": "Curated: mapped to a rule in corporationTaxCuration.ts.",
+      "excerpt": "959AM Interpretation and miscellaneous (Chapter 7)\nSummary\nThis section contains definitions and interpretation for the purposes of Chapter 7.\nDetails\nThis subsection contains definitions of some of the key terms in relation to chargeable per- (1)\nsons’ tax payment obligations under this Chapter.\nWhere a company’s accounting period is short, and the final preliminary tax payment would (2)\nbe due on or before the date of the initial preliminary tax payment, then that accounting period\nis not a ‘relevant accounting period’ for the purposes of this Chapter.\nWhere an accounting period is less than 12 months, the relevant limit for that accounting (3)\nperiod shall be proportionately reduced.\nSubsection (3A) ensures that there is no difference in the calculation of preliminary corpora- (3A)\ntion tax where either the current year or the previous year is a leap year. Where an accounting\nperiod which lasts 12 months contains 29 February, the figure for that period to be used in\nthe calculation of the “corresponding corporation tax” or “corresponding income tax for the\npreceding accounting period” will be 365 rather than 366.\nA company will be a ‘small company’ for the purposes of this Chapter if the corporation tax (4)\nfor the preceding period is less than the relevant limit (€200,000 in 12 months).\nCompanies other than with relevant accounting periods preliminary tax is due and payable as (5)\nstated in section 959AR(1) TCA.\nCompanies with a relevant accounting periods whose preliminary tax is due and payable in (6)\ntwo instalments (an initial instalment and final instalment) as stated in section 959AS(2)\nTCA.\nThis Chapter only applies to chargeable persons.                                                   (7)\n\nThe provisions of this Chapter are subject to section 579(4)(b) (in relation to non-residents) (8)\nand section 981 (in relation to payments by instalments).\n"
+    },
+    {
+      "sectionNumber": "959AN",
+      "heading": "Obligation to pay preliminary tax",
+      "locator": "s.959AN",
+      "principalAct": "1997 Act 39",
+      "category": "corporation_tax",
+      "relevant": true,
+      "relevanceReason": "Curated: mapped to a rule in corporationTaxCuration.ts.",
+      "excerpt": "959AN Obligation to pay preliminary tax\nSummary\nThis section provides a requirement on a chargeable person to pay preliminary tax for a charge-\nable period. The amount to be paid is the amount which, in the taxpayer’s opinion, would be\ndue under an assessment for the period. The section does not apply to capital gains tax as there\nis no preliminary tax obligation for that tax.\nDetails\nEvery chargeable person must pay an appropriate amount of preliminary tax to the Collector- (1)\nGeneral.\nThe amount of preliminary tax is the amount which the chargeable person expects will be (2)\ndue under their self-assessment (or a Revenue assessment) for that chargeable period.\nThe amount of tax which the chargeable person expects to pay will be regarded as being the (2A)\nsame as “amount of tax payable” as defined in section 959A.\nPreliminary tax paid, and not refunded, shall be treated as a payment on account.                  (3)\n                                                          24\n\fNotes for Guidance – Taxes Consolidation Act 1997 – Finance Act 2025 Edition - Part 41A\n\nWhere a company’s expected tax for a period is less than €200,000, and this is the company’s (4)\nfirst accounting period, then the appropriate preliminary tax for that company for that period\nis Nil.\nThis section does not apply to CGT as it has no preliminary tax obligations.                        (5)\n\n"
+    },
+    {
+      "sectionNumber": "959AO",
+      "heading": "Date for payment of income tax",
+      "locator": "s.959AO",
+      "principalAct": "1997 Act 39",
+      "category": "corporation_tax",
+      "relevant": true,
+      "relevanceReason": "In scope for the corporation tax computation (issue #211); not yet curated.",
+      "excerpt": "959AO Date for payment of income tax\n\nSummary\nThis section sets out the due dates for the payment of income tax. Preliminary tax is due by 31\nOctober in the tax year. Income tax is, in general, due by the return filing date for the year.\nHowever, if relevant preliminary tax requirements have not been met, the due date for income\ntax reverts to 31 October in the tax year.\n\nDetails\nExcept in the cases of payment by Direct Debit (dealt with under section 959AP) the due date\nfor payment of preliminary income tax is 31 October in the tax year.\nIncome tax for a year is generally due for payment on or before the specified return date (de-\nfined in section 959A as the 31 October in the tax year following the year). This date applies\nregardless of whether or not an assessment has been made.\n\nIncome tax may be due earlier than the specified return date if:\n▪      Preliminary tax was not paid.\n▪      Insufficient preliminary tax was paid. That is, the amount paid is less than the least of:\n              o 90% of current year liability\n              o 100% of prior year liability\n              o 105% of the pre-preceding year liability when paying by Direct Debit under\n                section 959AP.\n▪      Preliminary tax was not paid by the due date.\nIn these cases, income tax is due on 31 October in the tax year e.g. the date on which the\npreliminary tax was due.\n\nFor the purposes of determining if sufficient preliminary tax was paid:\n▪      Where the chargeable person was not a chargeable person for the prior year, the income\n       tax payable for that period was nil.\n▪      If additional tax becomes due in the prior year or the pre-preceding year, and that amount\n       is payable one month after the assessment (under section 959AU(2) for an amended as-\n       sessment or under section 959AV(2) in relation to the determination of an appeal), then\n       it shall not be taken into account for this test.\n▪      The amount of the tax liability for the prior and pre-preceding years should be before any\n       relief under section 481 (being investment in films) or under part 16 (being Employment\n       Incentive Initiative or Seed Capital relief)\nIn the case of joint assessment under sections 1017 or 1031C, where a chargeable person was\nnot the chargeable person in the prior year or the pre-preceding year because the other spouse\n/ civil partner was, or where separate assessment under section 1023 or 1031H applied, then\nthe correct amount of preliminary tax should be determined by reference to the tax liability that\n\n\n                                                          25\n\fNotes for Guidance – Taxes Consolidation Act 1997 – Finance Act 2025 Edition - Part 41A\n\nwould have been payable, had the couple been jointly assessed and had the chargeable person\nbeen the chargeable person in that previous year.\nWhere the amount of tax assessable on the prior year is to be adjusted because of the operation\nof section 65(3) (e.g. where a chargeable person has changed their accounting date) then any\nadditional tax due under such an amendment is due by the specified return date for the tax year.\nThis increase amount of tax is not taken into account for the purposes of determining the ap-\npropriate amount of preliminary tax.\n"
+    },
+    {
+      "sectionNumber": "959AR",
+      "heading": "Date for payment of corporation tax: Companies other than with relevant accounting periods",
+      "locator": "s.959AR",
+      "principalAct": "1997 Act 39",
+      "category": "corporation_tax",
+      "relevant": true,
+      "relevanceReason": "Curated: mapped to a rule in corporationTaxCuration.ts.",
+      "excerpt": "959AR Date for payment of corporation tax: Companies other than with relevant ac-\n      counting periods\n\nSummary\nThis section sets out the due dates for the payment of corporation tax by companies other than\nthose with “relevant accounting periods”, that is, small companies and those with short ac-\ncounting periods. Preliminary tax is payable in one instalment and is due 31 days before the\nend of the accounting period (normally in the 11th month of the accounting period) – but no\nlater than the 21st day (or the 23rd day for electronic filers) of the month involved. Corporation\ntax is, in general, due by the return filing date for the accounting period. However, if relevant\npreliminary tax requirements have not been met, the due date reverts to the due date for the\npayment of preliminary tax.\n\nDetails\nA small company (as defined in section 959AM(1)) and a company with a short accounting\nperiod (under section 959AM(2)) make a single payment of preliminary tax. The preliminary\ntax appropriate to an accounting period is due and payable:\n▪      31 days before the accounting period end, or the 21st of the month if it would otherwise\n       be later. For electronic filers the relevant date is the 23rd of the month.\n▪      Where an accounting period is less than one-month, preliminary tax must be paid by:\n              o The last day of the accounting period\n              o The 21st day of the month in which the last accounting period ends, if the ac-\n                counting period ends after the 21st day (or after the 23rd day for electronic filers).\nThe balance of tax payable is due by the specified return date.\nAny tax due and payable under an assessment on the company will also be due and payable\nbefore the specified return date.\nThe balance of tax shall be deemed to have been due on the due date for preliminary tax where:\n▪      the chargeable person has defaulted in the payment of preliminary tax\n▪      in the case of a small company, the preliminary tax paid was less than:\n              o 90% of the current year liability or\n              o 100% of the prior year’s income and corporation tax liability\n▪      in the case of a company with a short accounting period, the preliminary tax paid was\n       less than 90% of the current year liability.\n▪      the preliminary tax was not paid by the due date.\nWhen determining whether or not a company with a short accounting period met the 90% test,\nand\n▪      they would have met the test but for a chargeable gain or gains / losses on financial assets\n       in the period after the payment of preliminary tax, and\n▪      they make a top-up payment of preliminary tax within one month of the end of the ac-\n       counting period bringing the total preliminary tax paid to 90% of the current year liability,\n       or\n▪      they would have met the test but for a disallowable amount under Part 35D, and\n▪      they make a top-up payment of preliminary tax within six months of the end of the ac-\n       counting period bringing the total preliminary tax paid to 90% of the current year liability,\n                                                          27\n\fNotes for Guidance – Taxes Consolidation Act 1997 – Finance Act 2025 Edition - Part 41A\n\nthen the chargeable person will have met their preliminary tax obligations under this section.\nThe provision allowing for a top-up payment of preliminary tax 6 months after the end of the\naccounting period to satisfy the 90% preliminary tax rule applies to accounting periods com-\nmencing on or after 1 January 2022 and ending on or before 31 December 2027.\n"
+    },
+    {
+      "sectionNumber": "959AS",
+      "heading": "Date for payment of corporation tax: Companies with relevant accounting periods",
+      "locator": "s.959AS",
+      "principalAct": "1997 Act 39",
+      "category": "corporation_tax",
+      "relevant": true,
+      "relevanceReason": "Curated: mapped to a rule in corporationTaxCuration.ts.",
+      "excerpt": "959AS Date for payment of corporation tax: Companies with relevant accounting peri-\n      ods\n\nSummary\nThis section sets out the due dates for the payment of corporation tax by larger companies with\n“relevant accounting periods”. Preliminary tax is payable by these companies in two instal-\nments. The first instalment is payable within 6 months of the start of the accounting period but\nno later than the 21st day (or the 23rd day for electronic filers) of the month involved. The\nsecond instalment is due 31 days before the end of the accounting period (normally in the 11th\nmonth of the accounting period) – but no later than the 21st day (or the 23rd day for electronic\nfilers) of the month involved.\n\nDetails\nLarge companies, other than those with short accounting periods, pay their preliminary tax in\ntwo instalments.\n▪       The first instalment is due within 6 months from the start of the accounting period but\n        not later than the 21st day of the month or 23rd day for electronic filers.\n▪       The second instalment is due 31 days before the accounting period end, or 21st of the\n        month if it would otherwise be later. For electronic filers the relevant date is the 23rd of\n        the month (that is, the same day as the single preliminary tax payment date for small\n        companies).\nThe balance of tax payable is due by the specified return date.\nAny tax due and payable under an assessment on the company will be due and payable before\nthe specified return date also.\nFinance Act 2021 inserted subsection 1A which applies to companies not resident in the State\nwithin the charge to corporation tax as a result of the insertion of section 25(2A) Taxes Con-\nsolidation Act. The subsection provides that the preliminary tax liability of such company that\n-\n    •     would be considered a “large” company for preliminary tax purposes, and\n    •     has an accounting period ending on or before 21 June 2022,\nwill be due and payable not later than 21 June 2022, or 23 June 2022 where payment of pre-\nliminary tax is made by electronic means.\nSubject to section 959AT (which deals with the tax payment date of groups) the balance of tax\nshall be deemed to have been due on the due date for preliminary tax where:\n▪       the chargeable person has defaulted in the payment of either payment of preliminary tax\n▪       The initial payment was less than:\n              o 45% of current year tax liability, or\n              o 50% of prior year tax liability\n▪       in the case of a large company’s first accounting period within the charge to corporation\n        tax, the adequacy of the initial payment can only be assessed by reference to the 45% of\n        current year liability test.\n\n\n                                                          28\n\fNotes for Guidance – Taxes Consolidation Act 1997 – Finance Act 2025 Edition - Part 41A\n\n▪      the amount paid in both initial and second instalment of preliminary tax is less than 90%\n       of current year tax payable.\n▪      preliminary tax was not paid by the due dates.\nThe amounts of preliminary tax which a company must pay in two instalments under this sec-\ntion are:\n▪      an initial instalment: 45% of current year tax payable in the initial payment\n▪      a final instalment: balance to bring the total paid up to the current year tax payable.\nWhen looking at whether or not a company met the 45% of current year test for the initial\npayment, and\n▪      they would have met the test but for a chargeable gain or gains / losses on financial assets\n       in the period after the payment of preliminary tax, and\n▪      the tax paid in the final instalment brings the total tax paid to 90% of the current year tax\n       payable,\nthen the company will have met their preliminary tax obligations in respect of the initial instal-\nment under this section.\nWhen looking at whether or not a company met the 90% of current year test for the final pay-\nment and\n▪      they would have met the test but for a chargeable gain or gains / losses on financial assets\n       in the period after the payment of preliminary tax, and\n▪      they make a top-up payment of preliminary tax within one month of the end of the ac-\n       counting period bringing the total preliminary tax paid to 90% of the current year liability,\n       or\n▪      they would have met the test but for a disallowable amount under Part 35D, and\n▪      they make a top-up payment of preliminary tax within 6 months of the end of the ac-\n       counting period bringing the total preliminary tax paid to 90% of the current year liability,\nthen the company will have met their preliminary tax obligations under this section.\nThe provision allowing for a top-up payment of preliminary tax 6 months after the end of the\naccounting period to satisfy the 90% preliminary tax rule applies to accounting periods com-\nmencing on or after 1 January 2022 and ending on or before 31 December 2027.\n"
+    }
+  ],
+  "rules": [
+    {
+      "key": "ct.preliminary_tax_first_period_nil",
+      "sectionNumber": "959AN",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "1997-04-06",
+          "effectiveTo": null,
+          "quote": "first accounting period, then the appropriate preliminary tax for that company for that period",
+          "value": null,
+          "unit": null,
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    },
+    {
+      "key": "ct.preliminary_tax_large",
+      "sectionNumber": "959AS",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "1997-04-06",
+          "effectiveTo": null,
+          "quote": "The first instalment is due within 6 months from the start of the accounting period but",
+          "value": null,
+          "unit": null,
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    },
+    {
+      "key": "ct.preliminary_tax_large_initial",
+      "sectionNumber": "959AS",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "1997-04-06",
+          "effectiveTo": null,
+          "quote": "45% of current year tax liability, or",
+          "value": 4500,
+          "unit": "basis_points",
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    },
+    {
+      "key": "ct.preliminary_tax_large_initial_prior",
+      "sectionNumber": "959AS",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "1997-04-06",
+          "effectiveTo": null,
+          "quote": "50% of prior year tax liability",
+          "value": 5000,
+          "unit": "basis_points",
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    },
+    {
+      "key": "ct.preliminary_tax_large_total",
+      "sectionNumber": "959AS",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "1997-04-06",
+          "effectiveTo": null,
+          "quote": "the amount paid in both initial and second instalment of preliminary tax is less than 90%",
+          "value": 9000,
+          "unit": "basis_points",
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    },
+    {
+      "key": "ct.preliminary_tax_small",
+      "sectionNumber": "959AR",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "1997-04-06",
+          "effectiveTo": null,
+          "quote": "Preliminary tax is payable in one instalment and is due 31 days before the",
+          "value": null,
+          "unit": null,
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    },
+    {
+      "key": "ct.preliminary_tax_small_current",
+      "sectionNumber": "959AR",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "1997-04-06",
+          "effectiveTo": null,
+          "quote": "90% of the current year liability or",
+          "value": 9000,
+          "unit": "basis_points",
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    },
+    {
+      "key": "ct.preliminary_tax_small_prior",
+      "sectionNumber": "959AR",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "1997-04-06",
+          "effectiveTo": null,
+          "quote": "100% of the prior year’s income and corporation tax liability",
+          "value": 10000,
+          "unit": "basis_points",
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    },
+    {
+      "key": "ct.return_filing_date",
+      "sectionNumber": "959A",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "1997-04-06",
+          "effectiveTo": null,
+          "quote": "day 9 months after the year end (but the 21st of the month if it would be later).",
+          "value": null,
+          "unit": null,
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    },
+    {
+      "key": "ct.small_company_threshold",
+      "sectionNumber": "959AM",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "1997-04-06",
+          "effectiveTo": null,
+          "quote": "for the preceding period is less than the relevant limit (€200,000 in 12 months).",
+          "value": 20000000,
+          "unit": "eur_minor",
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    },
+    {
+      "key": "income_tax.preliminary_tax_current_year",
+      "sectionNumber": "959AO",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2012-01-01",
+          "effectiveTo": null,
+          "quote": "90% of current year liability",
+          "value": 9000,
+          "unit": "basis_points",
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    },
+    {
+      "key": "income_tax.preliminary_tax_date",
+      "sectionNumber": "959AO",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2012-01-01",
+          "effectiveTo": null,
+          "quote": "This section sets out the due dates for the payment of income tax. Preliminary tax is due by 31",
+          "value": null,
+          "unit": null,
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    },
+    {
+      "key": "income_tax.preliminary_tax_pre_preceding_year",
+      "sectionNumber": "959AO",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2012-01-01",
+          "effectiveTo": null,
+          "quote": "105% of the pre-preceding year liability when paying by Direct Debit under",
+          "value": 10500,
+          "unit": "basis_points",
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    },
+    {
+      "key": "income_tax.preliminary_tax_prior_year",
+      "sectionNumber": "959AO",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2012-01-01",
+          "effectiveTo": null,
+          "quote": "100% of prior year liability",
+          "value": 10000,
+          "unit": "basis_points",
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    },
+    {
+      "key": "income_tax.return_date",
+      "sectionNumber": "959AO",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2012-01-01",
+          "effectiveTo": null,
+          "quote": "fined in section 959A as the 31 October in the tax year following the year).",
+          "value": null,
+          "unit": null,
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    }
+  ]
+}

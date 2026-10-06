@@ -8,6 +8,7 @@
  *   npm run catalogue:extract -- vatca-2010-revised/schedule-2
  *   npm run catalogue:extract -- vatca-2010/vatca-2010-enacted --html vatca.pdf
  *   npm run catalogue:extract -- finance-act-2024/2024-act-43-enacted
+ *   npm run catalogue:extract -- tca-1997-nfg/part02
  *
  * Several entries are extracted together: every entry's source and
  * provisions are written first, then the knowledge base is loaded once and
@@ -21,7 +22,8 @@
  *    entry records its hash, and the gate re-checks it.
  * 2. Convert it to text (lrc_html_to_text.py, with --paragraphs for S.I.
  *    156/2012; convert-statute-pdf.ts for the
- *    VATCA PDF, `pdftotext -layout` for a Finance Act's, pdfplumber_to_text.py
+ *    VATCA PDF, `pdftotext -layout` for a Finance Act's or a Notes for
+ *    Guidance part's, pdfplumber_to_text.py
  *    for a Revenue manual's) and parse it with
  *    the same parser the rules were curated against.
  * 3. Write the entry's source and provisions, load the knowledge base into a
@@ -77,6 +79,9 @@ import { extractCapacityExclusionSection } from '@/domain/rules/tdm3801_03bParse
 import { parseCompaniesAct2014Section } from '@/domain/rules/companiesAct2014SectionParser';
 import { COMPANIES_ACT_2014_NOTE, companiesAct2014Relevance } from '@/domain/rules/companiesAct2014Ingestion';
 import { TDM_38_01_03B } from '@/domain/rules/tdm3801_03bIngestion';
+import { compareNfgContents, extractNfgSection } from '@/domain/rules/tcaNfgParser';
+import { NFG_EFFECTIVE_FROM, NFG_NOTE, nfgRelevanceReason, nfgSourceUrl, nfgTitle } from '@/domain/rules/tcaNfgIngestion';
+import { NFG_SECTIONS, nfgCitation } from '@/domain/rules/corporationTaxCuration';
 import { nowIso } from '@/domain/dates';
 import { lrcAnnotationLayer } from '@/domain/rules/lrcAnnotations';
 
@@ -362,6 +367,42 @@ function extractorFor(entry: string, naming: Naming | null): Extractor {
             locator: 'Appendix 8, page 40 (repeated in Appendices 9, 10 and 11)',
             category: 'procedure', relevant: true, relevanceReason, excerpt: section.provisionText,
           }],
+        };
+      },
+    };
+  }
+  // A part of Revenue's Notes for Guidance on the TCA 1997, from its PDF as
+  // `pdftotext -layout` lays it out: the section notes the curation reads.
+  const nfgPart = /^tca-1997-nfg\/(part\w+)$/.exec(entry)?.[1];
+  if (nfgPart && NFG_SECTIONS[nfgPart]) {
+    const url = nfgSourceUrl(nfgPart);
+    const title = naming?.title ?? nfgTitle(nfgPart);
+    const citation = naming?.citation ?? nfgCitation(nfgPart);
+    return {
+      url, title, citation, ext: 'pdf',
+      build: (pdf, retrievedOn) => {
+        const text = pdftotextLayout(pdf);
+        // Every section the part's contents list names has its own note, and
+        // no other (issue #287): otherwise a note runs into the next.
+        const { missing, unlisted } = compareNfgContents(text);
+        if (missing.length || unlisted.length) {
+          throw new Error(`${entry}: notes missing for ${missing.join(', ') || 'none'}; unlisted ${unlisted.join(', ') || 'none'}.`);
+        }
+        return {
+          source: {
+            citation, title, sourceType: 'revenue_guidance', jurisdiction: 'IE', sourceUrl: url,
+            sha256: createHash('sha256').update(pdf).digest('hex'),
+            conversion: 'pdftotext-layout', retrievedOn,
+            publicationDate: null, effectiveFrom: NFG_EFFECTIVE_FROM, note: NFG_NOTE,
+          },
+          provisions: NFG_SECTIONS[nfgPart]!.map((n) => {
+            const section = extractNfgSection(text, n);
+            return {
+              sectionNumber: section.sectionNumber, heading: section.heading, locator: `s.${section.sectionNumber}`,
+              principalAct: '1997 Act 39', category: 'corporation_tax', relevant: true,
+              relevanceReason: nfgRelevanceReason(nfgPart, n), excerpt: section.provisionText,
+            };
+          }),
         };
       },
     };

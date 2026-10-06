@@ -1975,16 +1975,18 @@ There is no LRC revised TCA 1997, so Revenue's Notes for Guidance (NfG) on the
 TCA 1997, Finance Act 2025 edition, are the current statement of each section.
 They are a source family of their own:
 
-- Each part is one `revenue_guidance` knowledge source, kept as a pdftotext
-  conversion in `docs/statutes/tca-1997-nfg/partNN.md`. Guidance ranks below
-  the Act (see "Source hierarchy"), and every rule quoting it says so.
+- Each part is one `revenue_guidance` knowledge source, a rules catalogue
+  entry (`catalogue/tca-1997-nfg/partNN.json`, with Revenue's PDF beside it;
+  the excerpts are its `pdftotext -layout` conversion, #556). Guidance ranks
+  below the Act (see "Source hierarchy"), and every rule quoting it says so.
 - `tcaNfgParser.ts` cuts one provision per section note. It reads a left-margin
   heading followed by "Summary", "Details" or "Definitions" as a note; the
   indented contents list is skipped. A section the contents list names is a
   note even without those words (a repealed section's note is a sentence or
-  two). A test requires every part's parsed sections to equal its contents list,
-  so a note can no longer be merged into the one before it (issue #287).
-- `tcaNfgIngestion.ts` ingests the sections `NFG_SECTIONS` lists, and
+  two). The catalogue extraction refuses a part whose parsed sections differ
+  from its contents list, so a note can no longer be merged into the one
+  before it (issue #287); a test checks the same on two converted parts.
+- Each part's entry holds the sections `NFG_SECTIONS` lists (`tcaNfgIngestion.ts`), and
   `corporationTaxCuration.ts` curates rules from them. Each `statementExcerpt`
   is verbatim from the note (a test checks it). These rules carry no transaction
   conditions: the corporation tax computation cites them and reads its rates

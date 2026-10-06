@@ -1,0 +1,194 @@
+{
+  "format": 1,
+  "source": {
+    "citation": "Revenue NfG TCA 1997 (FA 2025 ed.) Part 11",
+    "title": "Notes for Guidance — Taxes Consolidation Act 1997 — Finance Act 2025 edition — part11",
+    "sourceType": "revenue_guidance",
+    "jurisdiction": "IE",
+    "sourceUrl": "https://www.revenue.ie/en/tax-professionals/documents/notes-for-guidance/tca/part11.pdf",
+    "sha256": "e74b9515ffbc0fdb5946f5a2f785d95653adcb8e507a2247b06b64c5a50d4f69",
+    "conversion": "pdftotext-layout",
+    "retrievedOn": "2026-10-06",
+    "publicationDate": null,
+    "effectiveFrom": "2025-12-31",
+    "note": "Revenue guidance summarising the TCA 1997 as amended to Finance Act 2025. There is no LRC revised TCA; the Notes are the current consolidated statement of each section, but rank below the Act itself."
+  },
+  "provisions": [
+    {
+      "sectionNumber": "373",
+      "heading": "Interpretation (Part 11)",
+      "locator": "s.373",
+      "principalAct": "1997 Act 39",
+      "category": "corporation_tax",
+      "relevant": true,
+      "relevanceReason": "Curated: mapped to a rule in corporationTaxCuration.ts.",
+      "excerpt": " 373 Interpretation (Part 11)\n The vehicles to which this Part applies are, essentially, ordinary motor cars. Excluded, (1)\n therefore, are commercial type vehicles such as lorries, delivery vans, buses, etc.\n The restrictions in this Part apply only to motor cars which cost over a certain amount. This (2)\n amount (referred to as “the specified amount”) varies depending on when the car was\n purchased or hired. The specified amount is —\n •     for expenditure incurred in the period 16 May, 1973 to 28 January, 1976, €3,174.35\n •     for expenditure incurred in the period 29 January, 1976 to 5 April, 1986, €4,444.08\n •     for expenditure incurred in the period 6 April, 1986 to 27 January, 1988, €5,078.95\n •     for expenditure incurred in the period 28 January, 1988 to 25 January, 1989, €7,618.43\n •     for expenditure incurred in the period 26 January, 1989 to 29 January, 1992, €8,888.17\n •     for expenditure incurred on a second-hand car in the period beginning on 30 January,\n       1992 and ending with an accounting period or basis period ending on or before 31\n       December, 2000, €12,697.38\n •     for expenditure incurred in the period 30 January, 1992 to 26 January, 1994 in the case\n       of a car which was first registered in the State without having been registered\n       elsewhere, €12,697.38\n •     for expenditure incurred in the period 27 January, 1994 to 8 February, 1995, in the\n       case of a car which was not a used or second-hand car and which was first registered\n       in the State without having been registered elsewhere, €16,506.60\n •     for expenditure incurred in the period 9 February, 1995 to 22 January, 1997, in the\n       case of a car which was not a used car or a second-hand car and which was first\n       registered in the State without having been registered elsewhere, €17,776.33\n •     for expenditure incurred in the period 23 January, 1997 to 2 December, 1997, in the\n       case of a car which is not a used car or a second-hand car and which was first registered\n       in the State without having been registered elsewhere, €19,046.07\n •     for expenditure incurred in the period 3 December, 1997 to 1 December, 1998, in the\n       case of a car which is not a used car or a second-hand car and which was first registered\n       in the State without having been registered elsewhere, €19,680.94\n •     for expenditure incurred in the period 2 December, 1998 to 30 November 1999, in the\n       case of a car which is not a used car or a second-hand car and which was first registered\n       in the State without having been registered elsewhere, €20,315.81\n •     for expenditure incurred in the period beginning on 1 December 1999 and ending with\n       an accounting period or basis period ending on or before 31 December 2000 in the\n       case of a car which is not a used car or a second-hand car and which was first registered\n       in the State without having been registered elsewhere, €20,950.68\n                                                                  2\n\fNotes for Guidance – Taxes Consolidation Act 1997 – Finance Act 2025 Edition - Part 11\n\n •     for expenditure incurred in accounting periods or basis periods ending in the period 1\n       January 2001 to 31 December 2001, in the case of all cars (both new and second-hand),\n       €21,585.55\n •     for expenditure incurred in accounting periods or basis periods ending in the period 1\n       January 2002 to 31 December 2005, in the case of all cars (both new and second-hand),\n       €22,000\n •     for expenditure incurred on accounting periods or basis periods ending in the period 1\n       January 2006 to 31 December 2006, in the case of all cars (both new and second-hand),\n       €23,000.\n •     for expenditure incurred in accounting periods or basis periods from 1 January 2007\n       onwards, in the case of all cars (both new and second-hand), €24,000.\n This Part is to be construed as one with Part 9 (that is, the Part providing for relief for capital (3)\n expenditure), but in section 375 (limit on renewals allowance for cars) the reference to\n “capital expenditure” is construed without regard to section 316(1). The effect of this is that\n the prohibition in that section on including as capital expenditure sums which are treated as\n revenue expenditure does not apply for the purposes of section 375.\n\n"
+    },
+    {
+      "sectionNumber": "374",
+      "heading": "Capital allowances for cars costing over certain amount",
+      "locator": "s.374",
+      "principalAct": "1997 Act 39",
+      "category": "corporation_tax",
+      "relevant": true,
+      "relevanceReason": "Curated: mapped to a rule in corporationTaxCuration.ts.",
+      "excerpt": " 374 Capital allowances for cars costing over certain amount\n The wear and tear allowances for motor cars costing in excess of the specified amount are (1)\n to be restricted to what they would be if the actual cost were taken, for the purposes of section\n 284 (that is, the section which provides for wear and tear allowances), to be the specified\n amount.\n The wear and tear allowances to be taken into account in computing the “expenditure still (2)\n unallowed” for the purposes of balancing allowances and balancing charges are to be the\n allowances as so reduced. Any balancing allowance or balancing charge is to be computed\n on the basis that the original cost of the car was the specified amount.\n Where the car is put out of use and there are sale, insurance, salvage or compensation moneys (3)\n received or deemed to have been received, those moneys are reduced in the proportion which\n the specified amount bears to the cost of the car for the purposes of the balancing allowance\n or balancing charge.\n Where the car changes hands otherwise than by sale in the open market, the allowances to (4)(a)\n the new owner are to be scaled down in the proportion which the specified amount bears to\n the actual cost of the car to the previous owner.\n Where there is a chain of transfers to which these provisions apply, the reduction to be (4)(b)\n applied to the deemed proceeds of sale at each successive transfer is in the proportion which\n the specified amount bears to the cost of the car to the first owner in the chain. This applies\n so long as there is no sale in the open market.\n Where a trader elects to have the wear and tear allowances on a car computed on the amount (5)\n by which the cost of the car exceeds the balancing charge which might have been made in\n respect of the car it replaced, the cost of the car bought in replacement is first restricted to\n the specified amount before the balancing charge on the old car is deducted.\n Where the taxpayer purchasing a car costing more than the specified amount receives a (6)\n subsidy directly or indirectly from the State or a public authority so that the expenditure to\n be taken into account for the purposes of balancing allowances and balancing charges is the\n net expenditure only, the net outlay is to be restricted in the proportion which the specified\n amount bears to the gross cost of the car.\n\n\n\n                                                                  3\n\fNotes for Guidance – Taxes Consolidation Act 1997 – Finance Act 2025 Edition - Part 11\n\n\n"
+    }
+  ],
+  "rules": [
+    {
+      "key": "ct.car_allowances_restricted_to_specified_amount",
+      "sectionNumber": "374",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "1997-04-06",
+          "effectiveTo": null,
+          "quote": "on the basis that the original cost of the car was the specified amount.",
+          "value": null,
+          "unit": null,
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    },
+    {
+      "key": "ct.car_disposal_proceeds_scaled_down",
+      "sectionNumber": "374",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "1997-04-06",
+          "effectiveTo": null,
+          "quote": "those moneys are reduced in the proportion which",
+          "value": null,
+          "unit": null,
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    },
+    {
+      "key": "ct.car_specified_amount_2001",
+      "sectionNumber": "373",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2001-01-01",
+          "effectiveTo": null,
+          "quote": "January 2001 to 31 December 2001, in the case of all cars (both new and second-hand),\n       €21,585.55",
+          "value": 2158555,
+          "unit": "eur_minor",
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    },
+    {
+      "key": "ct.car_specified_amount_2002_to_2005",
+      "sectionNumber": "373",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2002-01-01",
+          "effectiveTo": null,
+          "quote": "January 2002 to 31 December 2005, in the case of all cars (both new and second-hand),\n       €22,000",
+          "value": 2200000,
+          "unit": "eur_minor",
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    },
+    {
+      "key": "ct.car_specified_amount_2006",
+      "sectionNumber": "373",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2006-01-01",
+          "effectiveTo": null,
+          "quote": "January 2006 to 31 December 2006, in the case of all cars (both new and second-hand),\n       €23,000.",
+          "value": 2300000,
+          "unit": "eur_minor",
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    },
+    {
+      "key": "ct.car_specified_amount_2007_onwards",
+      "sectionNumber": "373",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2007-01-01",
+          "effectiveTo": null,
+          "quote": "for expenditure incurred in accounting periods or basis periods from 1 January 2007\n       onwards, in the case of all cars (both new and second-hand), €24,000.",
+          "value": 2400000,
+          "unit": "eur_minor",
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    },
+    {
+      "key": "ct.motor_car_restrictions_cars_only",
+      "sectionNumber": "373",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "1997-04-06",
+          "effectiveTo": null,
+          "quote": "The vehicles to which this Part applies are, essentially, ordinary motor cars. Excluded, (1)",
+          "value": null,
+          "unit": null,
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    }
+  ]
+}

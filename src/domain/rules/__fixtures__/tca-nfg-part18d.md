@@ -1,11 +1,3 @@
----
-title: "part18d.pdf"
-source_type: official-pdf-plaintext
-source_pdf_sha256: "04feb61eed1699904e0c6a599a8d7baa46febfb8ffd77e4fbc498e75e5a472cf"
-conversion: pdftotext-layout
-retrieved: 2026-09-25
----
-
    Notes for Guidance - Taxes Consolidation Act
                        1997
                       Finance Act 2025 edition

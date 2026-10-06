@@ -1,0 +1,74 @@
+{
+  "format": 1,
+  "source": {
+    "citation": "Revenue NfG TCA 1997 (FA 2025 ed.) Part 36",
+    "title": "Notes for Guidance — Taxes Consolidation Act 1997 — Finance Act 2025 edition — part36",
+    "sourceType": "revenue_guidance",
+    "jurisdiction": "IE",
+    "sourceUrl": "https://www.revenue.ie/en/tax-professionals/documents/notes-for-guidance/tca/part36.pdf",
+    "sha256": "2b547661d38b9340cd68678e766fcca0a9f2576e579a09a9b62e1d2551969226",
+    "conversion": "pdftotext-layout",
+    "retrievedOn": "2026-10-06",
+    "publicationDate": null,
+    "effectiveFrom": "2025-12-31",
+    "note": "Revenue guidance summarising the TCA 1997 as amended to Finance Act 2025. There is no LRC revised TCA; the Notes are the current consolidated statement of each section, but rank below the Act itself."
+  },
+  "provisions": [
+    {
+      "sectionNumber": "840",
+      "heading": "Business entertainment",
+      "locator": "s.840",
+      "principalAct": "1997 Act 39",
+      "category": "corporation_tax",
+      "relevant": true,
+      "relevanceReason": "Curated: mapped to a rule in corporationTaxCuration.ts.",
+      "excerpt": "840 Business entertainment\nSummary\nThis section ensures that business entertainment expenses are not allowed as a deduction for the purposes\nof income tax or corporation tax. Entertainment expenses include expenses incurred on the provision of\naccommodation, food, drink or any other form of hospitality. The section also provides that capital\nallowances are not granted in respect of assets used for entertainment for income or corporation tax\npurposes. The section applies in relation to the provision of a gift in the same way as it applies in relation\nto business entertainment expenses.\nDetails\nDefinitions and construction\n“business entertainment” is defined very broadly and covers any form of hospitality provided (1)\ndirectly or indirectly by a trader, a member of his/her staff or someone acting on behalf of\nthe trader. The definition extends to cover expenses incurred in or assets used for providing\nanything incidental to the provision of entertainment, but does not include anything provided\nfor genuine members of staff (for example, Christmas party). This exclusion for staff\nmembers does not apply if the provision of entertainment to them is incidental to its provision\nalso to others.\n“staff” includes employees, directors of a company and other persons engaged in the\nmanagement of a company.\nThe restrictions provided for by this section extend to trades, businesses, professions and\nemployments.\nThe section applies to the provision of gifts as it applies to the provision of entertainment.    (5)\nRestrictions\nThe main restrictions are that —\n•     business entertainment expenditure incurred is not deductible in determining the profits (2)\n      of any trade, profession, business or employment, and\n•     capital allowances are not available in relation to any assets used in the provision of (3)\n      business entertainment.\nThe non-deductibility of expenses also applies to all payments and expense allowances (4)\nplaced at the disposal of employees (including directors) for the purposes of business\nentertainment.\nWhere payments for services include amounts in respect of business entertainment these (6)\namounts are not deductible. The inspector is to determine the amount, and this determination\nmay be amended by the Appeal Commissioners or the Circuit Court.\n\n\n\n                                                                  6\n\fNotes for Guidance – Taxes Consolidation Act 1997 – Finance Act 2025 Edition - Part 36\n\n"
+    }
+  ],
+  "rules": [
+    {
+      "key": "ct.business_entertainment_not_deductible",
+      "sectionNumber": "840",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "1997-04-06",
+          "effectiveTo": null,
+          "quote": "business entertainment expenditure incurred is not deductible in determining the profits",
+          "value": null,
+          "unit": null,
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    },
+    {
+      "key": "ct.staff_entertainment_deductible",
+      "sectionNumber": "840",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "1997-04-06",
+          "effectiveTo": null,
+          "quote": "for genuine members of staff (for example, Christmas party). This exclusion for staff",
+          "value": null,
+          "unit": null,
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    }
+  ]
+}

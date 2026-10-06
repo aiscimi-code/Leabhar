@@ -37,8 +37,7 @@ import { deriveSi692025Rules } from './si692025Ingestion';
 import { deriveFinanceAct2024VatThresholds } from './financeAct2024VatThresholdsIngestion';
 import { deriveTdm3801_03bCapacityExclusionRule } from './tdm3801_03bIngestion';
 import { deriveVatScopeRules } from './vatScopeIngestion';
-import { ingestTcaNfgPart, deriveCorporationTaxRules, nfgPath } from './tcaNfgIngestion';
-import { NFG_SECTIONS } from './corporationTaxCuration';
+import { deriveCorporationTaxRules } from './tcaNfgIngestion';
 import { ingestSwcaSection, deriveIncomeTaxRules, SWCA_SECTIONS, swcaPath } from './incomeTaxIngestion';
 import { deriveCompaniesAct2014Rules } from './companiesAct2014Ingestion';
 import { ingestVat3ReturnGuidance, ingestRtdTdm, deriveVat3RtdRules } from './vat3RtdIngestion';
@@ -63,10 +62,6 @@ type IngestFn = (db: AppDatabase, params: IngestParams) => unknown;
  * the provision viewer can resolve it wherever the app runs.
  */
 const SOURCES: Array<{ path: string; ingest: IngestFn }> = [
-  ...Object.keys(NFG_SECTIONS).map((part) => ({
-    path: nfgPath(part),
-    ingest: ((db, p) => ingestTcaNfgPart(db, { ...p, part })) as IngestFn,
-  })),
   ...SWCA_SECTIONS.map((n) => ({ path: swcaPath(n), ingest: ingestSwcaSection as IngestFn })),
   { path: 'docs/statutes/vat3-rtd/completing-vat3-return.md', ingest: ingestVat3ReturnGuidance },
   { path: 'docs/statutes/vat3-rtd/VAT-RTD-S76.md', ingest: ingestRtdTdm },

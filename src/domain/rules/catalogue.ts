@@ -252,6 +252,23 @@ export const CATALOGUE_ENTRIES = [
   'companies-act-2014/s293.json',
   'companies-act-2014/s343.json',
   'companies-act-2014/s347.json',
+  // Revenue's Notes for Guidance on the TCA 1997, one entry per part with its
+  // PDF beside it: the section notes the corporation tax rules quote.
+  'tca-1997-nfg/part01.json',
+  'tca-1997-nfg/part02.json',
+  'tca-1997-nfg/part04.json',
+  'tca-1997-nfg/part09.json',
+  'tca-1997-nfg/part11.json',
+  'tca-1997-nfg/part11c.json',
+  'tca-1997-nfg/part12.json',
+  'tca-1997-nfg/part13.json',
+  'tca-1997-nfg/part15.json',
+  'tca-1997-nfg/part18.json',
+  'tca-1997-nfg/part18d.json',
+  'tca-1997-nfg/part23.json',
+  'tca-1997-nfg/part36.json',
+  'tca-1997-nfg/part41a.json',
+  'tca-1997-nfg/part43.json',
 ] as const;
 
 export function catalogueEntryPath(entry: string, root: string = appRoot()): string {
