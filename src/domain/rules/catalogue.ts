@@ -5,8 +5,10 @@
  * `catalogue/`, instead of being derived at run time from a copy of the
  * statute in `docs/statutes/`. An entry carries:
  *
- *   - the source: its URL and the SHA-256 of the official file as fetched,
- *     never a local copy of it;
+ *   - the source: its URL and the SHA-256 of the official file as fetched.
+ *     The file itself is kept beside the entry (`s046.json`, `s046.html`),
+ *     byte for byte, so the hash can be re-checked and the excerpt re-derived
+ *     without the publisher (AGENTS.md #5);
  *   - each provision: its locator (how the source itself points a reader to
  *     it) and the verbatim excerpt the rules quote;
  *   - each rule derived from it: every version with its dates and quote, the
@@ -14,7 +16,7 @@
  *     (who approved it, when, and against which source hash).
  *
  * The extraction script (`npm run catalogue:extract`) writes an entry from the
- * official file: fetch to a temporary directory, convert, parse, then fill in
+ * official file: fetch it, keep it beside the entry, convert, parse, then fill in
  * the rules from the curation. Parsing and curation stay developer steps; the
  * app only reads the entry (`ingestCatalogueEntry`). `catalogue.test.ts` fails
  * when an entry no longer matches what the curation derives, so the two
@@ -178,6 +180,11 @@ export const CATALOGUE_ENTRIES = [
 
 export function catalogueEntryPath(entry: string, root: string = appRoot()): string {
   return join(root, CATALOGUE_DIR, entry);
+}
+
+/** The official file an entry was extracted from, kept beside it byte for byte (`s046.json` → `s046.html`). */
+export function catalogueOfficialFilePath(entry: string, root: string = appRoot()): string {
+  return catalogueEntryPath(entry.replace(/\.json$/, '.html'), root);
 }
 
 const isDate = (s: unknown) => typeof s === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(s);

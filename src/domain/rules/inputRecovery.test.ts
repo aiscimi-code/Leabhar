@@ -4,7 +4,7 @@ import { createTestDatabase } from '@/db/testing';
 import { createCompany } from '../config/setup';
 import { irishTaxRules } from '@/db/schema';
 import { loadStatutoryKnowledgeBase } from './knowledgeBase';
-import { deriveVatScopeRules } from './vatScopeIngestion';
+import { deriveVatScopeRules, quotedAsEnacted } from './vatScopeIngestion';
 import { suggestFromFacts, type SuggestionFacts } from './vatSuggestion';
 import { qualifyingVehicleClawback } from './inputRecoveryCuration';
 import type { AppDatabase } from '@/db';
@@ -110,5 +110,34 @@ describe('the as-enacted s.59/s.60 rules are retired, not deleted', () => {
     deriveVatScopeRules(db, { companyId });
     const row = db.select().from(irishTaxRules).where(and(eq(irishTaxRules.id, 'rule_old_s60'))).get()!;
     expect(row).toMatchObject({ effectiveTo: '2010-11-01', active: false });
+  });
+});
+
+describe('s.60(2)(a)(i) over time (#691)', () => {
+  const on = (transactionDate: string, description: string) => suggestFromFacts(db, {
+    companyId, subjectId: 'line', factSources: {}, bookedTreatmentId: null,
+    facts: { transactionDate, amountMinor: 10_000, currency: 'EUR', description, vatRegistered: true,
+      direction: 'purchase', counterpartyCountry: 'IE', invoiceAvailable: true },
+  });
+
+  it('blocks food, drink and accommodation from 1 November 2010, across the 2024 substitution of the subparagraph', () => {
+    for (const date of ['2010-11-01', '2023-06-01', '2024-11-11', '2024-11-12', '2026-03-01']) {
+      for (const description of ['Hotel accommodation, Cork, 2 nights', 'Staff lunch, restaurant']) {
+        expect(on(date, description).deductionBlocked?.ruleKey, `${date} ${description}`).toBe('vat.blocked_food_drink_accommodation');
+      }
+    }
+  });
+
+  it('is dated from the Act, not the F148 substitution, because its quoted words are in the Act as enacted', () => {
+    const rows = db.select().from(irishTaxRules)
+      .where(and(eq(irishTaxRules.companyId, companyId), eq(irishTaxRules.ruleKey, 'vat.blocked_food_drink_accommodation'))).all()
+      .filter((r) => r.effectiveTo !== r.effectiveFrom);
+    expect(rows.map((r) => [r.effectiveFrom, r.effectiveTo, r.active])).toEqual([['2010-11-01', null, true]]);
+    expect(quotedAsEnacted(db, { sectionNumber: '60', statementExcerpt: rows[0]!.statement! })).toBe(true);
+  });
+
+  it('checks the claim: words s.81 changed are not in the Act as enacted', () => {
+    expect(quotedAsEnacted(db, { sectionNumber: '60',
+      statementExcerpt: 'being the provision of food or drink, or accommodation, or other personal services' })).toBe(false);
   });
 });

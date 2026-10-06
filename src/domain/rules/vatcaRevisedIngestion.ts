@@ -38,6 +38,7 @@ import { upsertReviewItem } from '../extraction/service';
 import { crossReferencesFromProvision, sameCrossReferences } from './dependencies';
 import { taxHeadsFor } from './taxHeads';
 
+import { containsIgnoringLayout, plainQuotes } from './lrcAnnotations';
 import { CATALOGUE_ENTRIES, ingestCatalogueFile, type CatalogueIngestResult } from './catalogue';
 
 /** s.46 is ported to the rules catalogue (#443): its statute copy is gone. */
@@ -202,6 +203,56 @@ export interface VatcaRevisedDeriveResult {
   superseded: number;
   unchanged: number;
   skippedNoProvision: string[];
+  /** Families left as they are because a version's stated period did not check out against its sources. */
+  skippedStatedPeriod: string[];
+}
+
+const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+
+/** "31 August 2023" → "2023-08-31"; null when it is not a date in those words. */
+export function isoFromWords(words: string): string | null {
+  const m = /^(\d{1,2}) ([A-Z][a-z]+) (\d{4})$/.exec(words.trim());
+  const month = m ? MONTHS.indexOf(m[2]!) + 1 : 0;
+  return m && month > 0 ? `${m[3]}-${String(month).padStart(2, '0')}-${m[1]!.padStart(2, '0')}` : null;
+}
+
+const dayAfter = (iso: string): string => new Date(Date.parse(`${iso}T00:00:00Z`) + 86_400_000).toISOString().slice(0, 10);
+
+/**
+ * Why a version's stated period does not hold, or [] when it does: each
+ * quote is in its provision (ignoring layout), the setting words start on
+ * `effectiveFrom`, each substitution replaces the end date before it, and the
+ * last one ends the day before `effectiveTo` (exclusive). `textOf` reads a
+ * provision's text by citation and section, or null when it is not ingested.
+ */
+export function statedPeriodProblems(
+  rule: CuratedVatcaRevisedRule,
+  textOf: (citation: string, sectionNumber: string) => string | null,
+): string[] {
+  const period = rule.statedPeriod;
+  if (!period) return [];
+  const problems: string[] = [];
+  const check = (q: { citation: string; sectionNumber: string; quote: string }) => {
+    const text = textOf(q.citation, q.sectionNumber);
+    if (text === null) problems.push(`${q.citation} is not ingested`);
+    else if (!containsIgnoringLayout(text, q.quote)) problems.push(`"${q.quote}" is not in ${q.citation}`);
+  };
+  check(period.setBy);
+  const set = /from (\d{1,2} [A-Z][a-z]+ \d{4}) to (\d{1,2} [A-Z][a-z]+ \d{4})/.exec(period.setBy.quote);
+  if (!set) return [...problems, `the setting words state no "from … to …" period`];
+  if (isoFromWords(set[1]!) !== rule.effectiveFrom) problems.push(`the period starts ${set[1]}, not ${rule.effectiveFrom}`);
+  let end = set[2]!;
+  for (const sub of period.endDateSubstitutions) {
+    check(sub);
+    if (!plainQuotes(sub.quote).includes(`"${sub.substitutes}" for "${sub.replaces}"`)) {
+      problems.push(`${sub.citation}: the quote does not substitute "${sub.substitutes}" for "${sub.replaces}"`);
+    }
+    if (sub.replaces !== end) problems.push(`${sub.citation} replaces "${sub.replaces}", but the end date then was "${end}"`);
+    end = sub.substitutes;
+  }
+  const last = isoFromWords(end);
+  if (!last || rule.effectiveTo !== dayAfter(last)) problems.push(`the stated period ends ${end}, but effectiveTo is ${rule.effectiveTo}`);
+  return problems;
 }
 
 /**
@@ -230,6 +281,7 @@ export function deriveVatcaRevisedRules(
   let superseded = 0;
   let unchanged = 0;
   const skippedNoProvision: string[] = [];
+  const skippedStatedPeriod: string[] = [];
 
   const families = new Map<string, CuratedVatcaRevisedRule[]>();
   for (const rule of VATCA_REVISED_CURATED_RULES) {
@@ -248,6 +300,10 @@ export function deriveVatcaRevisedRules(
         .get()
       : undefined;
   };
+  const provisionTextOf = (citation: string, sectionNumber: string): string | null => {
+    const prov = provisionFor({ citation, sectionNumber } as CuratedVatcaRevisedRule);
+    return prov ? prov.provisionText ?? '' : null;
+  };
   const storedRows = (ruleKey: string) => db.select().from(irishTaxRules)
     .where(and(eq(irishTaxRules.companyId, params.companyId), eq(irishTaxRules.ruleKey, ruleKey))).all();
   const retire = (row: typeof irishTaxRules.$inferSelect) => {
@@ -261,6 +317,24 @@ export function deriveVatcaRevisedRules(
     const ordered = [...versions].sort((a, b) => a.effectiveFrom.localeCompare(b.effectiveFrom));
     const provisions = ordered.map(provisionFor);
     if (provisions.some((prov) => !prov || !prov.relevant)) { skippedNoProvision.push(ruleKey); continue; }
+    // A date the version's own quote does not state is checked against the
+    // words that do; a family whose dates do not check out is not derived.
+    const periodProblems = ordered.flatMap((rule) => statedPeriodProblems(rule, provisionTextOf));
+    if (periodProblems.length) {
+      skippedStatedPeriod.push(ruleKey);
+      upsertReviewItem(db, {
+        companyId: params.companyId,
+        kind: 'other',
+        severity: 'warning',
+        title: `The dates of ${ruleKey} do not match the Acts that state them`,
+        detail: `${periodProblems.join('; ')}. The rule was not derived; nothing else has been changed.`,
+        entityType: 'irish_rule_key',
+        entityId: ruleKey,
+        dedupeKey: `rule_stated_period:${ruleKey}:${periodProblems.join('|')}`,
+        context: { ruleKey, problems: periodProblems },
+      });
+      continue;
+    }
 
     const stored = storedRows(ruleKey);
     const kept = new Set<string>();
@@ -358,5 +432,5 @@ export function deriveVatcaRevisedRules(
     for (const row of storedRows(ruleKey)) if (retire(row)) superseded++;
   }
 
-  return { created, superseded, unchanged, skippedNoProvision };
+  return { created, superseded, unchanged, skippedNoProvision, skippedStatedPeriod };
 }

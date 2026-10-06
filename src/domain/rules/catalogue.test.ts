@@ -1,12 +1,13 @@
 import { describe, it, expect, beforeAll } from 'vitest';
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { eq } from 'drizzle-orm';
 import { createTestDatabase } from '@/db/testing';
 import { createCompany } from '../config/setup';
 import { irishActProvisions, irishKnowledgeSources } from '@/db/schema';
 import type { AppDatabase } from '@/db';
 import {
-  CATALOGUE_ENTRIES, catalogueRulesFor, ingestCatalogueEntry, readCatalogueEntry, validateCatalogueEntry,
+  CATALOGUE_ENTRIES, catalogueOfficialFilePath, catalogueRulesFor, ingestCatalogueEntry, readCatalogueEntry, validateCatalogueEntry,
   type CatalogueEntry,
 } from './catalogue';
 import { loadStatutoryKnowledgeBase } from './knowledgeBase';
@@ -57,6 +58,12 @@ describe.each(CATALOGUE_ENTRIES)('catalogue entry %s', (name) => {
         if (v.review.status !== 'ai_extracted') expect(v.review.sourceSha256, `${rule.key}@${v.version}`).toBe(e.source.sha256);
       }
     }
+  });
+
+  it('keeps the official file it was extracted from, byte for byte, beside it (AGENTS.md #5)', () => {
+    const path = catalogueOfficialFilePath(name);
+    expect(existsSync(path), path).toBe(true);
+    expect(createHash('sha256').update(readFileSync(path)).digest('hex')).toBe(entry().source.sha256);
   });
 
   it('has replaced its statute copy: no .md, .html or .pdf of it is left in docs/statutes (#556)', () => {

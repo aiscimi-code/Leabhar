@@ -7,4 +7,4 @@ Captured for issue #688. This is the Act that puts 31 August 2023 into paragraph
 - Retrieved 2026-10-06
 - Enacted 15 May 2023. The (cb) substitution has effect as on and from 23 February 2023.
 
-Now in the rules catalogue (`catalogue/finance-act-2023/s5.json`, #688): the entry records the official file's URL and SHA-256 (above) and the section's text. The HTML and Markdown copies are no longer kept; `npm run catalogue:extract -- finance-act-2023/s5` re-reads the official page, and `npm run cli:rules -- verify-sources` checks it has not moved.
+Now in the rules catalogue (#688): `catalogue/finance-act-2023/s5.json` records the official file's URL and SHA-256 (above) and the section's text, and the official HTML is kept beside it, byte for byte, as `catalogue/finance-act-2023/s5.html` (the gate re-checks its hash). `npm run catalogue:extract -- finance-act-2023/s5` re-reads the official page, and `npm run cli:rules -- verify-sources` checks it has not moved.

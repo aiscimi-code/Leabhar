@@ -13,8 +13,9 @@
  * part (`s009.html`). `--lrc-annotations` keeps the page's amendment
  * footnotes in the entry (see `annotates`).
  *
- * 1. Fetch the official page into a temporary directory (or read `--html`, a
- *    copy saved from the same URL). Nothing fetched is committed.
+ * 1. Fetch the official page (or read `--html`, a copy saved from the same
+ *    URL) and keep it beside the entry, byte for byte (`s046.html`): the
+ *    entry records its hash, and the gate re-checks it.
  * 2. Convert it to text (lrc_html_to_text.py) and parse it with the same
  *    parser the rules were curated against.
  * 3. Write the entry's source and provisions, load the knowledge base into a
@@ -35,7 +36,7 @@ import { dirname, join } from 'node:path';
 import { createTestDatabase } from '@/db/testing';
 import { createCompany } from '@/domain/config/setup';
 import {
-  CATALOGUE_FORMAT, catalogueEntryPath, catalogueRulesFor, serialiseCatalogueEntry, validateCatalogueEntry,
+  CATALOGUE_FORMAT, catalogueEntryPath, catalogueOfficialFilePath, catalogueRulesFor, serialiseCatalogueEntry, validateCatalogueEntry,
   type CatalogueEntry,
 } from '@/domain/rules/catalogue';
 import { loadStatutoryKnowledgeBase } from '@/domain/rules/knowledgeBase';
@@ -200,6 +201,7 @@ async function main(args: string[]): Promise<void> {
     if (previous && previous.source.sha256 === built.source.sha256) built.source.retrievedOn = previous.source.retrievedOn;
     const entry: CatalogueEntry = { format: CATALOGUE_FORMAT, ...built, rules: [] };
     mkdirSync(dirname(path), { recursive: true });
+    writeFileSync(catalogueOfficialFilePath(entryFile, ROOT), html);
     writeFileSync(path, serialiseCatalogueEntry(entry));
     written.push({ name, entryFile, path, entry, previous });
   }

@@ -83,6 +83,27 @@ export interface CuratedVatcaRevisedRule {
   interpretationNote: string;
   /** References beyond those its provision states, e.g. the later Acts that moved its end date. */
   crossReferences?: readonly string[];
+  /**
+   * Where the version's dates are stated, when not in its own quote: the
+   * words that set the period, then each later substitution of the end date,
+   * in order. The derive checks every quote against its provision and that
+   * the chain ends on `effectiveTo` (`statedPeriodProblems`).
+   */
+  statedPeriod?: StatedPeriod;
+}
+
+/** A quote from one provision, by the citation and section it was ingested under. */
+export interface ProvisionQuote {
+  citation: string;
+  sectionNumber: string;
+  quote: string;
+}
+
+export interface StatedPeriod {
+  /** Words stating the period as first enacted: "from <effectiveFrom> to <first end date>". */
+  setBy: ProvisionQuote;
+  /** Each later substitution of the end date: its quote reads "“<substitutes>” for “<replaces>”". */
+  endDateSubstitutions: Array<ProvisionQuote & { substitutes: string; replaces: string }>;
 }
 
 /** The one empty-condition VAT rate rule `transactionLookup.ts`'s exclusivity
@@ -110,7 +131,18 @@ const CB_2020_2023 = {
     'Finance (Covid-19 and Miscellaneous Provisions) Act 2022 s.7',
     'Finance Act 2023 s.5',
   ],
-} as const;
+  statedPeriod: {
+    setBy: { citation: '2020 Act 26 s.39', sectionNumber: '39', quote: 'during the period from 1 November 2020 to 31 December 2021' },
+    endDateSubstitutions: [
+      { citation: '2021 Act 23 s.6', sectionNumber: '6', quote: 'by the substitution of “31 August 2022” for “31 December 2021”',
+        substitutes: '31 August 2022', replaces: '31 December 2021' },
+      { citation: '2022 Act 9 s.7', sectionNumber: '7', quote: 'the substitution in paragraph (cb) of “28 February 2023” for “31 August 2022”',
+        substitutes: '28 February 2023', replaces: '31 August 2022' },
+      { citation: '2023 Act 11 s.5', sectionNumber: '5', quote: 'in paragraph (cb), by the substitution of “31 August 2023” for “28 February 2023”',
+        substitutes: '31 August 2023', replaces: '28 February 2023' },
+    ],
+  },
+} as const satisfies Partial<CuratedVatcaRevisedRule>;
 
 export const VATCA_REVISED_CURATED_RULES: CuratedVatcaRevisedRule[] = [
   {
@@ -245,8 +277,10 @@ export const VATCA_REVISED_CURATED_RULES: CuratedVatcaRevisedRule[] = [
     vatEffect: 'Restaurant and catering services and hot food and drink (Schedule 3 paragraphs 3(1) and 3(3)) were chargeable at 9% from 1 November 2020 to 31 August 2023.',
     effectiveFrom: '2020-11-01',
     effectiveTo: '2023-09-01',
-    interpretationNote: 'Version 1 of 3. The period is stated in (cb) as inserted by Finance Act 2020 s.39 and '
-      + 'extended to 31 August 2023 by Finance Act 2023 s.5(a)(ii). Before it, what s.46(1)(ca) listed '
+    interpretationNote: 'Version 1 of 3. The rate and scope are (cb) as inserted by Finance Act 2020 s.39(b), '
+      + 'which set the period to 31 December 2021. The end date 31 August 2023 is the last of three substitutions '
+      + '(2021 Act 23 s.6, 2022 Act 9 s.7(d), Finance Act 2023 s.5(a)(ii)), each checked against its text '
+      + '(statedPeriod). Before it, what s.46(1)(ca) listed '
       + 'is not in the repository (it put hospitality at 9% for part of 2011-2018), so no earlier version is curated '
       + 'and an earlier line is flagged.',
   },
@@ -306,8 +340,10 @@ export const VATCA_REVISED_CURATED_RULES: CuratedVatcaRevisedRule[] = [
     vatEffect: 'Hairdressing services (Schedule 3 paragraph 13(3)) were chargeable at 9% from 1 November 2020 to 31 August 2023.',
     effectiveFrom: '2020-11-01',
     effectiveTo: '2023-09-01',
-    interpretationNote: 'Version 1 of 3. The period is stated in (cb) as inserted by Finance Act 2020 s.39 and '
-      + 'extended to 31 August 2023 by Finance Act 2023 s.5(a)(ii). Before it, what s.46(1)(ca) listed '
+    interpretationNote: 'Version 1 of 3. The rate and scope are (cb) as inserted by Finance Act 2020 s.39(b), '
+      + 'which set the period to 31 December 2021. The end date 31 August 2023 is the last of three substitutions '
+      + '(2021 Act 23 s.6, 2022 Act 9 s.7(d), Finance Act 2023 s.5(a)(ii)), each checked against its text '
+      + '(statedPeriod). Before it, what s.46(1)(ca) listed '
       + 'is not in the repository (it put hospitality at 9% for part of 2011-2018), so no earlier version is curated '
       + 'and an earlier line is flagged.',
   },

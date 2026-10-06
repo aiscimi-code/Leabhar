@@ -3,7 +3,8 @@ import { readFileSync } from 'node:fs';
 import { and, eq } from 'drizzle-orm';
 import { createTestDatabase } from '@/db/testing';
 import { createCompany } from '../config/setup';
-import { ingestVatcaRevisedSection, deriveVatcaRevisedRules, ingestVatcaRevisedS46 } from './vatcaRevisedIngestion';
+import { ingestVatcaRevisedSection, deriveVatcaRevisedRules, ingestVatcaRevisedS46, statedPeriodProblems } from './vatcaRevisedIngestion';
+import { ingestCatalogueFile } from './catalogue';
 import { ingestVatca2010, VATCA_2010_MD_PATH } from './vatcaIngestion';
 import { lookupTaxRule, ingestFinanceAct2025, FINANCE_ACT_2025 } from './irishRules';
 import { VATCA_REVISED_CURATED_RULES, S46_FAMILY_SCHEDULE_REF } from './vatcaRevisedCuration';
@@ -203,5 +204,54 @@ describe('deriveVatcaRevisedRules', () => {
       const curated = VATCA_REVISED_CURATED_RULES.find((r) => r.ruleKey === key)!;
       expect(rateOn(key, curated.effectiveFrom), key).toBe(9);
     }
+  });
+});
+
+describe('stated periods (#688)', () => {
+  const textIn = (d: AppDatabase) => (citation: string, sectionNumber: string): string | null => {
+    const source = d.select().from(irishKnowledgeSources).where(eq(irishKnowledgeSources.citation, citation)).get();
+    const prov = source && d.select().from(irishActProvisions)
+      .where(and(eq(irishActProvisions.sourceId, source.id), eq(irishActProvisions.sectionNumber, sectionNumber))).get();
+    return prov ? prov.provisionText ?? '' : null;
+  };
+  const cbVersions = () => VATCA_REVISED_CURATED_RULES.filter((r) => r.statedPeriod);
+
+  it('the 2020-2023 (cb) versions end on 31 August 2023 because the Acts say so, link by link', () => {
+    ingestVatcaRevisedS46(db, { companyId });
+    expect(cbVersions().map((r) => r.ruleKey).sort()).toEqual([
+      'vat.rate_admission_9pct_2020_2023', 'vat.rate_hairdressing', 'vat.rate_hospitality',
+      'vat.rate_hotel_accommodation_9pct_2020_2023', 'vat.rate_printed_matter_9pct_2020_2023',
+    ]);
+    for (const rule of cbVersions()) {
+      expect(rule.effectiveTo, rule.ruleKey).toBe('2023-09-01');
+      expect(statedPeriodProblems(rule, textIn(db)), rule.ruleKey).toEqual([]);
+    }
+  });
+
+  it('refuses a period the Acts do not state: a wrong end date, a broken link, a quote not in its Act', () => {
+    ingestVatcaRevisedS46(db, { companyId });
+    const [rule] = cbVersions();
+    const period = rule!.statedPeriod!;
+    expect(statedPeriodProblems({ ...rule!, effectiveTo: '2023-10-01' }, textIn(db)).join(' '))
+      .toMatch(/ends 31 August 2023, but effectiveTo is 2023-10-01/);
+    const skipped = { ...period, endDateSubstitutions: period.endDateSubstitutions.slice(1) };
+    expect(statedPeriodProblems({ ...rule!, statedPeriod: skipped }, textIn(db)).join(' '))
+      .toMatch(/replaces "31 August 2022", but the end date then was "31 December 2021"/);
+    const misquoted = { ...period, setBy: { ...period.setBy, quote: 'during the period from 1 November 2020 to 31 August 2023' } };
+    expect(statedPeriodProblems({ ...rule!, statedPeriod: misquoted }, textIn(db)).join(' ')).toMatch(/is not in 2020 Act 26 s\.39/);
+  });
+
+  it('leaves a family underived, with a review item, when its period does not check out', () => {
+    const { db: other } = createTestDatabase();
+    const { companyId: otherCompany } = createCompany(other, { legalName: 'Unamended Ltd', seedYears: [2025] });
+    // s.46 and s.39 without the Acts that moved the end date.
+    ingestCatalogueFile(other, { companyId: otherCompany, entry: 'finance-act-2020/s39.json' });
+    ingestCatalogueFile(other, { companyId: otherCompany, entry: 'vatca-2010-revised/s046.json' });
+    ingestFinanceAct2025(other, { companyId: otherCompany, markdown: readFileSync(FA2025_PATH, 'utf8'), ingestVersion: 'v1' });
+    const result = deriveVatcaRevisedRules(other, { companyId: otherCompany });
+    expect(result.skippedStatedPeriod).toContain('vat.rate_hospitality');
+    expect(other.select().from(irishTaxRules).where(eq(irishTaxRules.ruleKey, 'vat.rate_hospitality')).all()).toEqual([]);
+    const item = other.select().from(reviewItems).where(eq(reviewItems.entityId, 'vat.rate_hospitality')).get()!;
+    expect(item.detail).toMatch(/2021 Act 23 s\.6 is not ingested/);
   });
 });

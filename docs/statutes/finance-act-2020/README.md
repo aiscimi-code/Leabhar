@@ -10,4 +10,4 @@ Operative text: with effect from 1 November 2020, s.46(1)(c) is amended to refer
 
 Later substitutions of the end date are in `catalogue/finance-covid-2021/s6.json`, `catalogue/finance-covid-2022/s7.json` and `catalogue/finance-act-2023/s5.json`. The 1 July 2026 substitution is already in `../finance-act-2025/`.
 
-Now in the rules catalogue (`catalogue/finance-act-2020/s39.json`, #688): the entry records the official file's URL and SHA-256 (above) and the section's text. The HTML and Markdown copies are no longer kept; `npm run catalogue:extract -- finance-act-2020/s39` re-reads the official page, and `npm run cli:rules -- verify-sources` checks it has not moved.
+Now in the rules catalogue (#688): `catalogue/finance-act-2020/s39.json` records the official file's URL and SHA-256 (above) and the section's text, and the official HTML is kept beside it, byte for byte, as `catalogue/finance-act-2020/s39.html` (the gate re-checks its hash). `npm run catalogue:extract -- finance-act-2020/s39` re-reads the official page, and `npm run cli:rules -- verify-sources` checks it has not moved.

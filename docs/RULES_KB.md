@@ -89,7 +89,10 @@ tax, import VAT is VAT and customs. `listTaxRulesByHead` reads them.
 
 **Catalogue.** A ported source is one JSON entry under `catalogue/` (#443):
 the official file's URL and SHA-256, its provisions' verbatim excerpts, and
-the rules derived from them with their quotes, links and expert review.
+the rules derived from them with their quotes, links and expert review. The
+official file is kept beside the entry byte for byte (`s046.json`,
+`s046.html`); the gate re-checks its hash, and a provision's provenance
+re-hashes it (AGENTS.md #5).
 `npm run catalogue:extract -- <entry>` writes one from the official page;
 `catalogue.test.ts` fails the gate when an entry no longer matches what the
 curation derives. All 39 loaded LRC-revised VATCA sections are in it; the
@@ -102,8 +105,12 @@ An LRC entry can carry the page's amendment footnotes (`lrcAnnotations`), so
 a rule's window is still read from the footnotes on the words it quotes.
 A port adds them only where the statute copy had its HTML, so no rule's
 dates move as a side effect; adding them is its own reviewed change (#691
-added them to ss.27, 34, 60, 61, 66 and 86, moving seven rules to the date
-the words they quote took effect).
+added them to ss.27, 34, 60, 61, 66 and 86, moving six rules to the date
+the words they quote took effect). A footnote can date a substitution wider
+than the words it changed: a rule whose quote stands as enacted says so
+(`wordsAsEnacted`), the derivation checks the quote is in the 2010 Act as
+enacted, and the rule keeps its 2010 start (`vat.blocked_food_drink_accommodation`:
+Finance Act 2024 s.81 replaced s.60(2)(a)(i) but changed only its tail).
 
 A book numbers a rule's versions as it derives them, so a book that held a
 version before it was corrected numbers the correction 2 where a new book
@@ -116,6 +123,15 @@ unchanged, changed or unreachable, naming each rule version whose quote is no
 longer in the text. `--trace` raises a review item for every rule taken from
 a changed source and every rule relying on one (`sourceDrift.ts`); nothing is
 edited, and an approval stands only against the hash it was given on.
+
+**Stated periods.** A version whose dates its own quote does not state
+names the words that do (`statedPeriod`, `vatcaRevisedCuration.ts`): the
+words that set the period, then each Act that substituted its end date. The
+derivation checks every quote against its Act, that each substitution
+replaces the date before it, and that the last ends the day before
+`effectiveTo`; a family that does not check out is not derived, and a review
+item says why (#688: s.46(1)(cb) 2020-2023 rests on Finance Act 2020 s.39,
+the 2021 and 2022 Covid Acts and Finance Act 2023 s.5).
 
 **Decisions.** A book's own decisions about a rule version are kept in
 `irish_rule_decisions`, append-only: `review` (`setRuleReviewStatus`) adds

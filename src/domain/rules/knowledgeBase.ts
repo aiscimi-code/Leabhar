@@ -58,7 +58,7 @@ import { deriveCuratedRuleFamilies } from './incomeTaxIngestion';
 import { CAR_EMISSIONS_SOURCES, CAR_EMISSIONS_CURATED_RULES } from './carEmissionsCuration';
 import { syncRuleLinks } from './ruleLinks';
 import { taxHeadsFor } from './taxHeads';
-import { CATALOGUE_DIR, CATALOGUE_ENTRIES, catalogueEntryPath, ingestCatalogueFile, readCatalogueEntry } from './catalogue';
+import { CATALOGUE_DIR, CATALOGUE_ENTRIES, catalogueEntryPath, catalogueOfficialFilePath, ingestCatalogueFile, readCatalogueEntry } from './catalogue';
 import { checkCatalogueVersions } from './ruleDecisions';
 
 type IngestParams = { companyId: string; markdown: string; ingestVersion: string; localPath: string };
@@ -249,20 +249,23 @@ export function verifyStatuteFile(
   sectionNumber?: string,
 ): StatuteFileCheck {
   if (!localPath) return { path: null, exists: false, computedSha256: null, sha256Matches: false, slice: null };
-  // A source ported to the catalogue holds no copy of the statute: check the
-  // entry still records the hash ingested, and slice its excerpt. Whether the
-  // official file still matches is `verify-sources` (online, opt-in).
+  // A source ported to the catalogue: re-hash the official file kept beside
+  // its entry, and slice the provision's excerpt. Whether the publisher's
+  // file still matches is `verify-sources` (online, opt-in).
   if (localPath.startsWith(`${CATALOGUE_DIR}/`)) {
     const entryName = localPath.slice(CATALOGUE_DIR.length + 1);
-    const path = catalogueEntryPath(entryName, root);
-    if (!existsSync(path)) return { path, exists: false, computedSha256: null, sha256Matches: false, slice: null };
+    const path = catalogueOfficialFilePath(entryName, root);
+    if (!existsSync(path) || !existsSync(catalogueEntryPath(entryName, root))) {
+      return { path, exists: false, computedSha256: null, sha256Matches: false, slice: null };
+    }
+    const computedSha256 = sha256Hex(readFileSync(path));
     const entry = readCatalogueEntry(entryName, root);
     const provision = entry.provisions.find((p) => p.sectionNumber === sectionNumber) ?? (entry.provisions.length === 1 ? entry.provisions[0] : undefined);
     return {
       path,
       exists: true,
-      computedSha256: entry.source.sha256,
-      sha256Matches: entry.source.sha256 === expectedSha256,
+      computedSha256,
+      sha256Matches: computedSha256 === expectedSha256 && entry.source.sha256 === expectedSha256,
       slice: provision?.excerpt ?? null,
     };
   }

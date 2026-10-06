@@ -7,4 +7,4 @@ Captured for issue #688. Extends the (cb) end date inserted by Finance Act 2020 
 - Retrieved 2026-10-06
 - Enacted 19 July 2021
 
-Now in the rules catalogue (`catalogue/finance-covid-2021/s6.json`, #688): the entry records the official file's URL and SHA-256 (above) and the section's text. The HTML and Markdown copies are no longer kept; `npm run catalogue:extract -- finance-covid-2021/s6` re-reads the official page, and `npm run cli:rules -- verify-sources` checks it has not moved.
+Now in the rules catalogue (#688): `catalogue/finance-covid-2021/s6.json` records the official file's URL and SHA-256 (above) and the section's text, and the official HTML is kept beside it, byte for byte, as `catalogue/finance-covid-2021/s6.html` (the gate re-checks its hash). `npm run catalogue:extract -- finance-covid-2021/s6` re-reads the official page, and `npm run cli:rules -- verify-sources` checks it has not moved.
