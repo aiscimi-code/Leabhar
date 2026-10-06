@@ -8,7 +8,30 @@
     "sourceUrl": "https://revisedacts.lawreform.ie/eli/2010/act/31/section/86/revised/en/html",
     "sha256": "51f47a04e1ca68d48922c008a30a40b093d36a2fb58333c6326da23125d0d6bd",
     "conversion": "lrc-html-plaintext",
-    "retrievedOn": "2026-10-06"
+    "retrievedOn": "2026-10-06",
+    "lrcAnnotations": {
+      "text": "Value-Added Tax Consolidation Act 2010 | Law Reform Revised Acts Classified List www.lawreform.ie Search Revised Acts Revised Acts Introduction Alphabetical List Chronological List Annotations This Act View Full Act View by Section Download PDFs With annotations Without annotations On the eISB Act as originally enacted ↗ Amendments to this Act ↗ #content a:link, #content a:active, #content a:visited { color: var(--header-background-color); text-decoration: none } Value-Added Tax Consolidation Act 2010 《 Go to Front 〈 Previous Section Next Section 〉 86 Special provisions for tax invoiced by flat-rate farmers. [VATA ss. 12A and 35(3)] 86. —⟦F216⟧ [ (1) Subject to section 68(1) and (6) and subsection (1A) , where a flat-rate farmer supplies agricultural produce or an agricultural service to a person, the farmer shall issue to the person an invoice indicating the consideration (exclusive of the flat-rate addition) in respect of the supply and an amount (in this Act referred to as a “flat-rate addition”) equal to ⟦F217⟧ [ 4.5 per cent ] of that consideration (exclusive of the flat-rate addition). (1A) Where section 68(6) applies, the issue of an invoice by a flat-rate farmer shall only apply in respect of agricultural produce or an agricultural service of a kind not specified in an order made by the Minister under section 86A . ] (2) Where, in relation to a supply of agricultural produce or an agricultural service by a flat-rate farmer, the farmer issues an invoice in which the flat-rate addition is stated separately, that addition is recoverable by the farmer as part of the consideration for the ⟦F218⟧ [ transaction other than where an order has been made by the Minister under section 86A relating to such supply of produce or service. ] Annotations Amendments: Editorial Notes: Law Reform Ireland Styne House, Upper Hatch Street Dublin 2 D02 DY27 Email: info@lawreform.ie Projects Current Projects Access to Legislation Legislation Directory Revised Acts Classified List of In-force Legislation Statute Law Revision Programme About Us Who We Are FOI Publication Scheme Protected Disclosures Careers Publications Browse all Publications Implementation Table Annual Reports Consultations Other Contact Us Latest News Sitemap All content Copyright 2026 Privacy Policy Data Protection Policy",
+      "footnotes": [
+        {
+          "ref": "F216",
+          "kind": "Substituted",
+          "date": "2017-01-01",
+          "text": "Substituted and inserted (1.01.2017) by Finance Act 2016 (18/2016), s. 47(1)(b)(i), commenced as per s. (2)."
+        },
+        {
+          "ref": "F217",
+          "kind": "Substituted",
+          "date": "2026-01-01",
+          "text": "Substituted (1.01.2026) by Finance Act 2025 (18/2025), s. 73, in effect as per s. 73."
+        },
+        {
+          "ref": "F218",
+          "kind": "Substituted",
+          "date": "2017-01-01",
+          "text": "Substituted (1.01.2017) by Finance Act 2016 (18/2016), s. 47(1)(b)(ii), commenced as per subs. (2)."
+        }
+      ]
+    }
   },
   "provisions": [
     {
@@ -28,7 +51,7 @@
       "versions": [
         {
           "version": 1,
-          "effectiveFrom": "2010-11-01",
+          "effectiveFrom": "2017-01-01",
           "effectiveTo": null,
           "quote": "an amount (in this Act referred to as a \"flat-rate addition\") equal to",
           "value": null,

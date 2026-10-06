@@ -100,6 +100,17 @@ describe('checkCatalogueVersions', () => {
     expect(missingItems()).toEqual([]);
   });
 
+  it('recognises a version the book numbered differently, when the catalogue holds the same dates and quote', () => {
+    // A book that held a version before it was corrected keeps the old one,
+    // closed, and numbers the correction 2; a new book, and the catalogue, 1.
+    const root = mkdtempSync(join(tmpdir(), 'leabhar-catalogue-'));
+    cpSync('catalogue', join(root, 'catalogue'), { recursive: true });
+    const entry = readCatalogueEntry('vatca-2010-revised/s046.json');
+    entry.rules = entry.rules.map((r) => ({ ...r, versions: r.versions.map((v) => ({ ...v, version: v.version + 1 })) }));
+    writeFileSync(join(root, 'catalogue', 'vatca-2010-revised', 's046.json'), serialiseCatalogueEntry(entry));
+    expect(checkCatalogueVersions(db, { companyId, root })).toEqual([]);
+  });
+
   it('raises a review item, once, for a version the book holds that the catalogue no longer ships', () => {
     const root = mkdtempSync(join(tmpdir(), 'leabhar-catalogue-'));
     const entry = readCatalogueEntry('vatca-2010-revised/s046.json');

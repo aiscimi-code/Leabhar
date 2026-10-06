@@ -8,7 +8,24 @@
     "sourceUrl": "https://revisedacts.lawreform.ie/eli/2010/act/31/section/27/revised/en/html",
     "sha256": "1dff95f3c3881a7c44525234ba947c5eae91a830f6c80d55dce3ac09a40d06b1",
     "conversion": "lrc-html-plaintext",
-    "retrievedOn": "2026-10-06"
+    "retrievedOn": "2026-10-06",
+    "lrcAnnotations": {
+      "text": "Value-Added Tax Consolidation Act 2010 | Law Reform Revised Acts Classified List www.lawreform.ie Search Revised Acts Revised Acts Introduction Alphabetical List Chronological List Annotations This Act View Full Act View by Section Download PDFs With annotations Without annotations On the eISB Act as originally enacted ↗ Amendments to this Act ↗ #content a:link, #content a:active, #content a:visited { color: var(--header-background-color); text-decoration: none } Value-Added Tax Consolidation Act 2010 《 Go to Front 〈 Previous Section Next Section 〉 27 Self-supply of services. [VATA s. 5(3) and (3B)] 27 .—(1) For the purposes of this Act, any of the following, if so provided by regulations, and in accordance with those regulations, shall be deemed to be a supply of services by a person for consideration in the course or furtherance of that person’s business: ( a ) the use of goods (other than immovable goods) forming part of the assets of a business— (i) for the private use of an accountable person or of such person’s staff, or (ii) for any purposes other than those of an accountable person’s business, where the tax on those goods is wholly or partly deductible; ( b ) the supply of services carried out free of charge by an accountable person for such person’s own private use or that of such person’s staff or for any purposes other than those of such person’s business; ( c ) the supply of services by an accountable person for the purposes of such person’s business where the tax on such services, were they supplied by another accountable person, would not be wholly deductible. (2) ⟦F62⟧ [ Subject to subsection (3) , the use of immovable goods ] forming part of the assets of a business— ( a ) for the private use of an accountable person or of such person’s staff, or ( b ) for any purpose other than those of the accountable person’s business, is a taxable supply of services if— (i) that use occurs during a period of 20 years following the acquisition or development of those goods by the accountable person, and (ii) those goods are treated for tax purposes as forming part of the assets of the business at the time of their acquisition or development. ⟦F63⟧ [ (3) Subsection (2) does not apply in the case of immovable goods that are acquired or developed by an accountable person on or after 1 January 2011. ] Annotations Amendments: Editorial Notes: Law Reform Ireland Styne House, Upper Hatch Street Dublin 2 D02 DY27 Email: info@lawreform.ie Projects Current Projects Access to Legislation Legislation Directory Revised Acts Classified List of In-force Legislation Statute Law Revision Programme About Us Who We Are FOI Publication Scheme Protected Disclosures Careers Publications Browse all Publications Implementation Table Annual Reports Consultations Other Contact Us Latest News Sitemap All content Copyright 2026 Privacy Policy Data Protection Policy",
+      "footnotes": [
+        {
+          "ref": "F62",
+          "kind": "Substituted",
+          "date": "2011-01-01",
+          "text": "Substituted (1.01.2011) by European Union (Value-Added Tax) Regulations 2010 (S.I. No. 612 of 2010), reg. 4(b)(i), in effect as per reg. 1(2)."
+        },
+        {
+          "ref": "F63",
+          "kind": "Inserted",
+          "date": "2011-01-01",
+          "text": "Inserted (1.01.2011) by European Union (Value-Added Tax) Regulations 2010 (S.I. No. 612 of 2010), reg. 4(b)(ii), in effect as per reg. 1(2)."
+        }
+      ]
+    }
   },
   "provisions": [
     {
@@ -28,7 +45,7 @@
       "versions": [
         {
           "version": 1,
-          "effectiveFrom": "2010-11-01",
+          "effectiveFrom": "2011-01-01",
           "effectiveTo": null,
           "quote": "does not apply in the case of immovable goods that are acquired or developed by an\naccountable person on or after 1 January 2011.",
           "value": null,

@@ -99,9 +99,16 @@ A quote matches its provision word for word, ignoring line breaks and
 quote-mark style (`containsIgnoringLayout`): the LRC re-renders its pages
 and has printed both straight and curly quotes, and neither changes the law.
 An LRC entry can carry the page's amendment footnotes (`lrcAnnotations`), so
-a rule's window is still read from the footnotes on the words it quotes;
-a port adds them only where the statute copy had its HTML, so no rule's
-dates move as a side effect (#691 lists the seven that would).
+a rule's window is still read from the footnotes on the words it quotes.
+A port adds them only where the statute copy had its HTML, so no rule's
+dates move as a side effect; adding them is its own reviewed change (#691
+added them to ss.27, 34, 60, 61, 66 and 86, moving seven rules to the date
+the words they quote took effect).
+
+A book numbers a rule's versions as it derives them, so a book that held a
+version before it was corrected numbers the correction 2 where a new book
+has it as 1. `checkCatalogueVersions` matches a book's version to the
+catalogue by what it says (dates and quote), not by its number.
 
 **Source drift.** `npm run cli:rules -- verify-sources [--entry <e>] [--trace]`
 fetches each entry's official file (online, only when asked) and reports it

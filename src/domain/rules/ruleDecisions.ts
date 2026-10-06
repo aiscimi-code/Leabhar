@@ -32,24 +32,29 @@ export interface CatalogueVersionRecord {
 export interface CatalogueRuleStore {
   versions: ReadonlyMap<string, CatalogueVersionRecord>;
   keys: ReadonlySet<string>;
+  /** What each key's versions say (dates and quote), to recognise a book's copy whatever it numbered it. */
+  contents: ReadonlyMap<string, ReadonlyArray<{ effectiveFrom: string; effectiveTo: string | null; quote: string | null }>>;
 }
 
 /** The read-only store, read from the committed catalogue entries (a few small files; not cached, so a rewritten entry is never read stale). */
 export function catalogueRuleStore(root?: string): CatalogueRuleStore {
   const versions = new Map<string, CatalogueVersionRecord>();
   const keys = new Set<string>();
+  const contents = new Map<string, Array<{ effectiveFrom: string; effectiveTo: string | null; quote: string | null }>>();
   for (const name of CATALOGUE_ENTRIES) {
     const entry = readCatalogueEntry(name, root);
     for (const rule of entry.rules) {
       keys.add(rule.key);
       for (const v of rule.versions) {
+        contents.set(rule.key, [...(contents.get(rule.key) ?? []),
+          { effectiveFrom: v.effectiveFrom, effectiveTo: v.effectiveTo, quote: v.quote }]);
         versions.set(ruleVersionId(rule.key, v.version), {
           entry: name, citation: entry.source.citation, sourceSha256: entry.source.sha256, review: v.review,
         });
       }
     }
   }
-  return { versions, keys };
+  return { versions, keys, contents };
 }
 
 export type RuleDecision = typeof irishRuleDecisions.$inferSelect;
@@ -136,22 +141,32 @@ export function checkCatalogueVersions(
   // A key can take versions from more than one source (a later Act amends a
   // rate s.46 set), and only the sources ported to the catalogue ship theirs.
   // So a version is the catalogue's to ship when the book's row for it was
-  // read from a catalogue entry, or when the book holds no row for it at all.
+  // read from a catalogue entry, or when the book holds no row for it at all
+  // (then only its key and number can be checked).
   const rows = db.select({
     ruleKey: irishTaxRules.ruleKey, ruleVersion: irishTaxRules.ruleVersion,
     effectiveFrom: irishTaxRules.effectiveFrom, effectiveTo: irishTaxRules.effectiveTo,
-    localPath: irishKnowledgeSources.localPath,
+    statement: irishTaxRules.statement, localPath: irishKnowledgeSources.localPath,
   }).from(irishTaxRules)
     .innerJoin(irishActProvisions, eq(irishActProvisions.id, irishTaxRules.provisionId))
     .innerJoin(irishKnowledgeSources, eq(irishKnowledgeSources.id, irishActProvisions.sourceId))
     .where(eq(irishTaxRules.companyId, params.companyId)).all();
-  const fromCatalogue = new Map(rows.map((r) => [
-    ruleVersionId(r.ruleKey, r.ruleVersion), r.localPath?.startsWith(`${CATALOGUE_DIR}/`) ?? false,
-  ]));
+  const rowFor = new Map(rows.map((r) => [ruleVersionId(r.ruleKey, r.ruleVersion), r]));
+  // A book numbers its versions as it derives them: a book that held a
+  // version before it was corrected keeps the old one (closed) and numbers
+  // the correction 2, where a new book has it as 1. So a book's version is
+  // the catalogue's when the catalogue holds a version of that key saying the
+  // same thing (dates and quote), whatever its number.
+  const shipped = (r: (typeof rows)[number]) => (store.contents.get(r.ruleKey) ?? []).some((c) =>
+    c.effectiveFrom === r.effectiveFrom && c.effectiveTo === r.effectiveTo && c.quote === r.statement);
   const referenced = new Map<string, Set<'rule' | 'invoice_line'>>();
   const note = (versionId: string, by: 'rule' | 'invoice_line') => {
-    if (store.versions.has(versionId)) return;
-    if (!(fromCatalogue.get(versionId) ?? store.keys.has(versionId.replace(/@\d+$/, '')))) return;
+    const row = rowFor.get(versionId);
+    if (row) {
+      if (!row.localPath?.startsWith(`${CATALOGUE_DIR}/`) || shipped(row)) return;
+    } else if (store.versions.has(versionId) || !store.keys.has(versionId.replace(/@\d+$/, ''))) {
+      return;
+    }
     referenced.set(versionId, (referenced.get(versionId) ?? new Set()).add(by));
   };
   for (const r of rows) {
