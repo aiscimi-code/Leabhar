@@ -294,6 +294,13 @@ export const CATALOGUE_ENTRIES = [
   'swa-2024/s2.json',
   'swaerss-2025/s2.json',
   'ntf-2000/s4.json',
+  // Employment regulations and the ERR manual the payroll rules quote.
+  'si-345-2018/2018-si-345.json',
+  'si-1-2024/2024-si-1.json',
+  'si-510-2018/2018-si-510.json',
+  'tdm-38-03-33/38-03-33.json',
+  // Company size criteria (issue #555).
+  'si-301-2024/2024-si-301.json',
   // Revenue's VAT3 and RTD form guidance: the VAT3 page's box passages (its
   // HTML beside it) and the RTD manual's curated sections (its PDF).
   'vat3-rtd/completing-vat3-return.json',

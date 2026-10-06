@@ -44,7 +44,7 @@ import { deriveVat3RtdRules } from './vat3RtdIngestion';
 import { deriveEbriefRules } from './ebriefIngestion';
 import { deriveEu282Rules } from './eu282Ingestion';
 import { ingestPayrollSource, derivePayrollRules, PAYROLL_SOURCES } from './payrollIngestion';
-import { ingestSizeCriteriaSource, deriveSizeCriteriaRules, SIZE_CRITERIA_SOURCES } from './sizeCriteriaIngestion';
+import { deriveSizeCriteriaRules } from './sizeCriteriaIngestion';
 import { ingestSlicedSource } from './slicedSourceIngestion';
 import { deriveCuratedRuleFamilies } from './incomeTaxIngestion';
 import { CAR_EMISSIONS_SOURCES, CAR_EMISSIONS_CURATED_RULES } from './carEmissionsCuration';
@@ -64,7 +64,6 @@ type IngestFn = (db: AppDatabase, params: IngestParams) => unknown;
 const SOURCES: Array<{ path: string; ingest: IngestFn }> = [
   { path: SI_312_1996_ART92_PATH, ingest: ingestSwcaSection as IngestFn },
   ...PAYROLL_SOURCES.map((s) => ({ path: s.path, ingest: ingestPayrollSource as IngestFn })),
-  ...SIZE_CRITERIA_SOURCES.map((s) => ({ path: s.path, ingest: ingestSizeCriteriaSource as IngestFn })),
   ...CAR_EMISSIONS_SOURCES.map((s) => ({
     path: s.path,
     ingest: ((db, p) => ingestSlicedSource(db, CAR_EMISSIONS_SOURCES,
