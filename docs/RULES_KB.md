@@ -109,8 +109,12 @@ added them to ss.27, 34, 60, 61, 66 and 86, moving six rules to the date
 the words they quote took effect). A footnote can date a substitution wider
 than the words it changed: a rule whose quote stands as enacted says so
 (`wordsAsEnacted`), the derivation checks the quote is in the 2010 Act as
-enacted, and the rule keeps its 2010 start (`vat.blocked_food_drink_accommodation`:
-Finance Act 2024 s.81 replaced s.60(2)(a)(i) but changed only its tail).
+enacted, and the rule keeps its 2010 start: `vat.blocked_food_drink_accommodation`
+(Finance Act 2024 s.81 replaced s.60(2)(a)(i) but changed only its tail),
+`vat.invoice_prescribed_particulars` (S.I. 354/2012 substituted s.66(1)
+around the quoted words) and `vat.flat_rate_farmer_purchase` (Finance Act
+2016 s.47 changed the s.86(1) percentage, a separate fact) (#695). A quote of
+inserted or replaced words does not take it.
 
 A book numbers a rule's versions as it derives them, so a book that held a
 version before it was corrected numbers the correction 2 where a new book

@@ -140,7 +140,11 @@ export const INPUT_RECOVERY_CURATED_RULES: CuratedVatScopeRule[] = [
     crossReferences: ['S.I. 639/2010 reg.20(2)', 'VATCA 2010 s.59(2)(a)'],
     vatEffect: 'Input VAT is deducted only on an invoice with the prescribed particulars; posting a confirmed purchase '
       + 'invoice checks them (missingInvoiceParticulars) and holds the VAT back when one is missing.',
-    interpretationNote: 'Enforced when a confirmed document is posted, not by matching words.',
+    // S.I. 354/2012 substituted s.66(1) from 1 January 2013 (LRC F169), but the
+    // quoted words are already in the 2010 s.66(1) (#695).
+    wordsAsEnacted: true,
+    interpretationNote: 'Enforced when a confirmed document is posted, not by matching words. In force from '
+      + '1 November 2010: S.I. 354/2012 substituted s.66(1) from 1 January 2013, but the quoted words stand as enacted (#695).',
   }),
   rule({
     citation: '2010 Act 31 s.99', sectionNumber: '99', ruleKey: LATE_CLAIM_LIMIT_RULE_KEY,

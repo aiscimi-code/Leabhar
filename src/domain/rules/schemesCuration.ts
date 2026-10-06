@@ -74,7 +74,13 @@ export const SCHEMES_CURATED_RULES: CuratedVatScopeRule[] = [
     crossReferences: ['VATCA 2010 s.68 (farmer invoices)'],
     vatEffect: 'The buyer may deduct the flat-rate addition shown on the farmer\'s invoice (4.5% of the consideration from '
       + '1 January 2026; broiler stock-minding excluded from 1 September 2025, S.I. 327/2025).',
-    interpretationNote: 'No treatment models the flat-rate addition: flagged.',
+    // Finance Act 2016 s.47 substituted s.86(1) from 1 January 2017 (LRC F216)
+    // to change the percentage, which the quote does not include; the words are
+    // the 2010 s.86(1). The rate is a separate fact (#695).
+    wordsAsEnacted: true,
+    interpretationNote: 'No treatment models the flat-rate addition: flagged. In force from 1 November 2010: Finance '
+      + 'Act 2016 s.47 substituted s.86(1) from 1 January 2017 to change the percentage, which this quote does not '
+      + 'include (#695).',
   }),
   rule({
     citation: 'VATCA 2010 s.43', sectionNumber: '43', ruleKey: VOUCHER_RULE_KEY,

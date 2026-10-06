@@ -141,3 +141,29 @@ describe('s.60(2)(a)(i) over time (#691)', () => {
       statementExcerpt: 'being the provision of food or drink, or accommodation, or other personal services' })).toBe(false);
   });
 });
+
+describe('rules whose quoted words stand as enacted keep their 2010 start (#695)', () => {
+  const window = (ruleKey: string) => db.select().from(irishTaxRules)
+    .where(and(eq(irishTaxRules.companyId, companyId), eq(irishTaxRules.ruleKey, ruleKey))).all()
+    .filter((r) => r.effectiveTo !== r.effectiveFrom)
+    .map((r) => [r.effectiveFrom, r.effectiveTo]);
+
+  it.each([
+    ['vat.invoice_prescribed_particulars', '66'],
+    ['vat.flat_rate_farmer_purchase', '86'],
+  ])('%s is in force from 1 November 2010, its quote checked against enacted s.%s', (ruleKey, section) => {
+    expect(window(ruleKey)).toEqual([['2010-11-01', null]]);
+    const statement = db.select().from(irishTaxRules).where(eq(irishTaxRules.ruleKey, ruleKey)).get()!.statement!;
+    expect(quotedAsEnacted(db, { sectionNumber: section, statementExcerpt: statement })).toBe(true);
+  });
+
+  it.each([
+    ['vat.place_of_supply_event_admission', '2011-01-01'],
+    ['vat.dual_use_apportionment', '2016-12-25'],
+    ['vat.self_supply_immovable_goods_private_use', '2011-01-01'],
+    ['vat.place_of_supply_electronic_services_consumers', '2015-01-01'],
+  ])('%s quotes inserted or replaced words, so it starts on %s', (ruleKey, from) => {
+    expect(window(ruleKey)).toEqual([[from, null]]);
+  });
+});
+
