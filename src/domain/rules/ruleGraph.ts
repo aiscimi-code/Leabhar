@@ -28,7 +28,7 @@ import { and, eq, ne } from 'drizzle-orm';
 import type { AppDatabase } from '@/db';
 import { irishRuleLinks, irishTaxRules, type IrishRuleLinkKind } from '@/db/schema';
 import { CA_LIST_KNOWN_FROM } from './scheduleRates';
-import { RULE_CONSUMERS, consumerId, type RuleConsumer } from './consumers';
+import { ALL_CONSUMER_IDS } from './consumers';
 
 export type RuleGraphFindingKind = 'dangling' | 'uncovered' | 'gap' | 'overlap' | 'cycle' | 'supersession';
 
@@ -115,7 +115,7 @@ export function checkRuleGraph(db: AppDatabase, params: { companyId: string }): 
     .where(and(eq(irishRuleLinks.companyId, params.companyId), eq(irishRuleLinks.active, true)))
     .all();
 
-  const consumers = new Set((Object.keys(RULE_CONSUMERS) as RuleConsumer[]).map(consumerId));
+  const consumers = ALL_CONSUMER_IDS;
   for (const l of links) {
     if (l.kind === 'consumed_by') {
       if (!spansByKey.has(l.fromKey)) {

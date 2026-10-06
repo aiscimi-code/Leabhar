@@ -21,7 +21,7 @@ import { and, eq } from 'drizzle-orm';
 import type { AppDatabase } from '@/db';
 import { irishActProvisions, irishKnowledgeSources, irishRuleLinks, irishTaxRules } from '@/db/schema';
 import { resolveReference } from './dependencies';
-import { RULE_CONSUMERS, type RuleConsumer } from './consumers';
+import { consumerName } from './consumers';
 
 export interface ImpactEdge {
   /** The rule reached. */
@@ -131,8 +131,7 @@ export function ruleImpact(db: AppDatabase, params: { companyId: string; target:
     for (const c of consumedBy.get(key) ?? []) reached.set(c, (reached.get(c) ?? new Set()).add(key));
   }
   const consumers = [...reached].sort(([a], [b]) => a.localeCompare(b)).map(([consumer, keys]) => {
-    const name = consumer.replace(/^consumer:/, '');
-    return { consumer, name: RULE_CONSUMERS[name as RuleConsumer]?.name ?? name, ruleKeys: [...keys].sort() };
+    return { consumer, name: consumerName(consumer), ruleKeys: [...keys].sort() };
   });
   return { target: t, affected, consumers };
 }

@@ -40,6 +40,7 @@ import {
   type CatalogueEntry,
 } from '@/domain/rules/catalogue';
 import { loadStatutoryKnowledgeBase } from '@/domain/rules/knowledgeBase';
+import { ruleImpact } from '@/domain/rules/ruleImpact';
 import { parseVatcaRevisedSection } from '@/domain/rules/vatcaRevisedSectionParser';
 import { vatcaRevisedRelevance } from '@/domain/rules/vatcaRevisedIngestion';
 import { nowIso } from '@/domain/dates';
@@ -166,6 +167,23 @@ function annotates(name: string, previous: CatalogueEntry | null, args: string[]
     || existsSync(join(ROOT, 'docs', 'statutes', `${name}.html`));
 }
 
+/** Each rule version whose dates differ from the previous entry's, or that is new or gone. */
+function movedWindows(previous: CatalogueEntry | null, entry: CatalogueEntry): Array<{ key: string; what: string }> {
+  if (!previous) return [];
+  const span = (v: { effectiveFrom: string; effectiveTo: string | null }) => `${v.effectiveFrom} to ${v.effectiveTo ?? 'open'}`;
+  const versions = (e: CatalogueEntry) => new Map(e.rules.flatMap((r) => r.versions.map((v) => [`${r.key}@${v.version}`, { key: r.key, v }] as const)));
+  const before = versions(previous);
+  const after = versions(entry);
+  const moved: Array<{ key: string; what: string }> = [];
+  for (const [id, { key, v }] of after) {
+    const old = before.get(id);
+    if (!old) moved.push({ key, what: `${id} is new (${span(v)})` });
+    else if (span(old.v) !== span(v)) moved.push({ key, what: `${id} moved from ${span(old.v)} to ${span(v)}` });
+  }
+  for (const [id, { key, v }] of before) if (!after.has(id)) moved.push({ key, what: `${id} is gone (was ${span(v)})` });
+  return moved;
+}
+
 async function fetchOfficial(url: string): Promise<Buffer> {
   const res = await fetch(url, { headers: { 'User-Agent': 'Leabhar-catalogue/1.0' } });
   if (!res.ok) throw new Error(`${url}: HTTP ${res.status}`);
@@ -216,6 +234,12 @@ async function main(args: string[]): Promise<void> {
     const changed = previous && previous.source.sha256 !== entry.source.sha256;
     console.log(`wrote ${path}: ${entry.provisions.length} provision(s), ${entry.rules.length} rule(s)`
       + `${changed ? `; the source hash changed from ${previous.source.sha256}, so every approval was reset` : ''}`);
+    // A moved window changes what the rule decides on some dates: name it and
+    // what reads it, before the entry is committed (#694).
+    for (const moved of movedWindows(previous, entry)) {
+      const readers = ruleImpact(db, { companyId, target: { kind: 'rule', ruleKey: moved.key } }).consumers.map((c) => c.name);
+      console.log(`  ${moved.what}; read by ${readers.length ? readers.join(', ') : 'no declared consumer'}`);
+    }
   }
 }
 

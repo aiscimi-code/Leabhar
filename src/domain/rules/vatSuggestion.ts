@@ -269,6 +269,15 @@ export const RULE_TREATMENT_BINDINGS: TreatmentBinding[] = [
   },
 ];
 
+/**
+ * The rule keys the suggestion acts on by name: a binding's keys decide a
+ * treatment, and a s.60(2)(a) key blocks the deduction beside it. Loaded as
+ * `consumed_by` links (ruleLinks.ts), so `impact` reaches the suggestion (#694).
+ */
+export const VAT_SUGGESTION_RULE_KEYS: readonly string[] = [
+  ...new Set([...RULE_TREATMENT_BINDINGS.flatMap((b) => b.ruleKeys), ...BLOCKED_DEDUCTION_RULE_KEYS]),
+].sort();
+
 /** The context passed to the lookup, plus the facts only the binding step needs. */
 export type SuggestionFacts = TransactionContext & {
   direction: TransactionDirection;

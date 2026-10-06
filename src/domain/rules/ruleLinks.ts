@@ -49,7 +49,9 @@ import {
   CA_LIST_KNOWN_FROM, SECOND_REDUCED_WINDOWS, scheduleThreeRate, scheduleThreeGap, withinReference, type ScheduleRate,
 } from './scheduleRates';
 import { resolveBookDependencies } from './dependencies';
-import { RULE_CONSUMERS, consumerId, type RuleConsumer } from './consumers';
+import { RULE_CONSUMERS, TOPIC_RULE_CONSUMERS, consumerId, type RuleConsumer, type TopicRuleConsumer } from './consumers';
+import { LOOKUP_TOPICS } from './transactionLookup';
+import { VAT_SUGGESTION_RULE_KEYS } from './vatSuggestion';
 import { SUPERSESSIONS } from './supersessions';
 
 /**
@@ -245,6 +247,27 @@ export function bookDerivedLinks(db: AppDatabase, params: { companyId: string })
       + 'fact (VATCA 2010 s.46(1); issue #136).',
   })));
 
+  // The readers by topic (#694): the lookup reads every rule of a topic it
+  // routes to; the suggestion acts on the keys its tables name.
+  const held = db.select({ ruleKey: irishTaxRules.ruleKey, topic: irishTaxRules.topic,
+    effectiveFrom: irishTaxRules.effectiveFrom, effectiveTo: irishTaxRules.effectiveTo })
+    .from(irishTaxRules).where(eq(irishTaxRules.companyId, params.companyId)).all()
+    .filter((r) => r.effectiveTo === null || r.effectiveTo > r.effectiveFrom);
+  const topics = new Set(LOOKUP_TOPICS);
+  const readBy = (consumer: TopicRuleConsumer, keys: Iterable<string>): CuratedRuleLink[] => [...new Set(keys)].sort().map((fromKey) => ({
+    fromKey,
+    kind: 'consumed_by' as const,
+    toKey: consumerId(consumer),
+    effectiveFrom: LINK_FROM_RULES,
+    effectiveTo: null,
+    note: `Read by ${TOPIC_RULE_CONSUMERS[consumer].name} (${TOPIC_RULE_CONSUMERS[consumer].modules.join(', ')}).`,
+  }));
+  const heldKeys = new Set(held.map((r) => r.ruleKey));
+  const topicLinks = [
+    ...readBy('transaction_lookup', held.filter((r) => topics.has(r.topic)).map((r) => r.ruleKey)),
+    ...readBy('vat_suggestion', VAT_SUGGESTION_RULE_KEYS.filter((k) => heldKeys.has(k))),
+  ];
+
   const seen = new Set<string>();
   const citeLinks: CuratedRuleLink[] = [];
   for (const dep of resolveBookDependencies(db, params)) {
@@ -261,7 +284,7 @@ export function bookDerivedLinks(db: AppDatabase, params: { companyId: string })
     const key = identity(link);
     if (!seen.has(key)) { seen.add(key); citeLinks.push(link); }
   }
-  return [...rateLinks, ...citeLinks];
+  return [...rateLinks, ...topicLinks, ...citeLinks];
 }
 
 /** Fields that identify a link. A change to any of them is a new link, never an edit. */

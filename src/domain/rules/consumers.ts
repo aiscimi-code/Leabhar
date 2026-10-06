@@ -44,11 +44,39 @@ export const RULE_CONSUMERS = {
   company_size: { name: 'Company size test', modules: ['src/domain/reports/companySize.ts'], keys: COMPANY_SIZE_RULE_KEYS },
 } as const satisfies Record<string, RuleConsumerManifest>;
 
+/**
+ * Computations that read rules by topic and conditions rather than by a
+ * declared key (#694): the transaction lookup reads every rule of a topic it
+ * routes a transaction to, and the VAT suggestion acts on the keys its
+ * binding and deduction-block tables name. Their keys come from the book and
+ * from those tables (`bookDerivedLinks`, ruleLinks.ts), not a manifest, so a
+ * new curated rule is covered without an edit. They are not `ManifestRuleKey`s:
+ * neither reads a figure through `resolveRuleFigure`.
+ */
+export const TOPIC_RULE_CONSUMERS = {
+  transaction_lookup: { name: 'Transaction rule lookup', modules: ['src/domain/rules/transactionLookup.ts'] },
+  vat_suggestion: { name: 'VAT treatment suggestion', modules: ['src/domain/rules/vatSuggestion.ts'] },
+} as const satisfies Record<string, Omit<RuleConsumerManifest, 'keys'>>;
+
+export type TopicRuleConsumer = keyof typeof TOPIC_RULE_CONSUMERS;
+
 export type RuleConsumer = keyof typeof RULE_CONSUMERS;
 export type ManifestRuleKey = (typeof RULE_CONSUMERS)[RuleConsumer]['keys'][number];
 
 /** How a consumer is named at the other end of a `consumed_by` link. */
-export const consumerId = (consumer: RuleConsumer) => `consumer:${consumer}`;
+export const consumerId = (consumer: RuleConsumer | TopicRuleConsumer) => `consumer:${consumer}`;
+
+/** Every declared consumer's id, by manifest or by topic. */
+export const ALL_CONSUMER_IDS: ReadonlySet<string> = new Set(
+  [...Object.keys(RULE_CONSUMERS), ...Object.keys(TOPIC_RULE_CONSUMERS)].map((c) => `consumer:${c}`),
+);
+
+/** A consumer's name, from its id ("consumer:payroll" → "Payroll"). */
+export function consumerName(id: string): string {
+  const key = id.replace(/^consumer:/, '');
+  return (RULE_CONSUMERS as Record<string, { name: string }>)[key]?.name
+    ?? (TOPIC_RULE_CONSUMERS as Record<string, { name: string }>)[key]?.name ?? key;
+}
 
 const ALL_KEYS = new Set<string>(Object.values(RULE_CONSUMERS).flatMap((c) => [...c.keys]));
 

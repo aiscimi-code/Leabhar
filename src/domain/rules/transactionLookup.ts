@@ -303,6 +303,9 @@ const TOPIC_RULES: TopicRule[] = [
   { topic: 'corporation_tax_relief', test: (ctx) => /film|production|r&d|research and development/i.test(TEXT_FIELDS(ctx)) },
 ];
 
+/** Every topic a transaction can be routed to: the lookup reads every rule of these topics (#694). */
+export const LOOKUP_TOPICS: readonly string[] = [...new Set(TOPIC_RULES.map((t) => t.topic))];
+
 export function identifyTopics(ctx: TransactionContext): string[] {
   return TOPIC_RULES.filter((t) => t.test(ctx)).map((t) => t.topic);
 }
