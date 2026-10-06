@@ -14,7 +14,7 @@
  * distinction is already in the words matched.
  *
  * A Schedule 3 rule names the sub-paragraphs it covers (`rateRefs`); the
- * rate those bear on the line's date comes from s.46 (`scheduleRates.ts`),
+ * rate those bear on the line's date comes from s.46 (its `rate_from` link, ruleLinks.ts),
  * never from the rule. A rule only groups sub-paragraphs that bear the same
  * rate on every date.
  *

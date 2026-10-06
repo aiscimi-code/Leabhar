@@ -110,13 +110,37 @@ export function resolveRuleDependencies(
 ): ResolvedDependency[] {
   const rule = db.select().from(irishTaxRules).where(eq(irishTaxRules.id, params.ruleId)).get();
   if (!rule) throw new Error(`No rule with id ${params.ruleId}.`);
-  const provision = db.select().from(irishActProvisions).where(eq(irishActProvisions.id, rule.provisionId)).get();
-  const references = rule.crossReferences;
-  if (!references.length) return [];
+  if (!rule.crossReferences.length) return [];
+  return resolveReferences(db, rule, bookContext(db, rule.companyId));
+}
 
-  const sources = db.select().from(irishKnowledgeSources).all();
-  const provisionRules = db.select().from(irishTaxRules)
-    .where(eq(irishTaxRules.companyId, rule.companyId)).all();
+type RuleRow = typeof irishTaxRules.$inferSelect;
+interface BookContext {
+  sources: Array<typeof irishKnowledgeSources.$inferSelect>;
+  provisionRules: RuleRow[];
+  provisions: Map<string, typeof irishActProvisions.$inferSelect>;
+}
+
+function bookContext(db: AppDatabase, companyId: string): BookContext {
+  return {
+    sources: db.select().from(irishKnowledgeSources).all(),
+    provisionRules: db.select().from(irishTaxRules).where(eq(irishTaxRules.companyId, companyId)).all(),
+    provisions: new Map(),
+  };
+}
+
+function provisionById(db: AppDatabase, ctx: BookContext, id: string) {
+  if (!ctx.provisions.has(id)) {
+    const row = db.select().from(irishActProvisions).where(eq(irishActProvisions.id, id)).get();
+    if (row) ctx.provisions.set(id, row);
+  }
+  return ctx.provisions.get(id);
+}
+
+function resolveReferences(db: AppDatabase, rule: RuleRow, ctx: BookContext): ResolvedDependency[] {
+  const provision = provisionById(db, ctx, rule.provisionId);
+  const references = rule.crossReferences;
+  const { sources, provisionRules } = ctx;
 
   return references.map((reference) => {
     const locator = referenceLocator(reference);
@@ -179,18 +203,23 @@ export function resolveRuleDependencies(
   });
 }
 
+/** Every active rule version's dependencies, resolved, with the version's dates (the `cites` links, ruleLinks.ts). */
+export function resolveBookDependencies(db: AppDatabase, params: { companyId: string }): Array<ResolvedDependency & {
+  ruleKey: string; effectiveFrom: string; effectiveTo: string | null;
+}> {
+  const ctx = bookContext(db, params.companyId);
+  return db.select().from(irishTaxRules)
+    .where(and(eq(irishTaxRules.companyId, params.companyId), eq(irishTaxRules.active, true))).all()
+    .filter((r) => r.crossReferences.length > 0)
+    .flatMap((rule) => resolveReferences(db, rule, ctx).map((dep) => ({
+      ...dep, ruleKey: rule.ruleKey, effectiveFrom: rule.effectiveFrom, effectiveTo: rule.effectiveTo,
+    })));
+}
+
 /** Every active rule's dependencies, resolved, for the audit report. */
 export function resolveAllRuleDependencies(db: AppDatabase, params: { companyId: string }): Array<{
   ruleKey: string; reference: string; resolved: boolean; reason: string | null;
 }> {
-  const rules = db.select().from(irishTaxRules)
-    .where(and(eq(irishTaxRules.companyId, params.companyId), eq(irishTaxRules.active, true))).all()
-    .filter((r) => r.crossReferences.length > 0);
-  const out: Array<{ ruleKey: string; reference: string; resolved: boolean; reason: string | null }> = [];
-  for (const rule of rules) {
-    for (const dep of resolveRuleDependencies(db, { ruleId: rule.id })) {
-      out.push({ ruleKey: rule.ruleKey, reference: dep.reference, resolved: dep.resolved, reason: dep.reason });
-    }
-  }
-  return out;
+  return resolveBookDependencies(db, params)
+    .map((d) => ({ ruleKey: d.ruleKey, reference: d.reference, resolved: d.resolved, reason: d.reason }));
 }

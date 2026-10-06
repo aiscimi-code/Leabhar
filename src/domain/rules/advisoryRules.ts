@@ -1,5 +1,5 @@
 import { INPUT_RECOVERY_REASONS, BLOCKED_MOTOR_VEHICLE_RULE_KEY, QUALIFYING_VEHICLE_DISPOSAL_RULE_KEY } from './inputRecoveryCuration';
-import { DOMESTIC_RC_ADVISORY_RULE_KEYS, DOMESTIC_RC_GAPS, RC_CONSTRUCTION_RULE_KEY } from './domesticReverseChargeCuration';
+import { DOMESTIC_RC_ADVISORY_RULE_KEYS, DOMESTIC_RC_GAPS } from './domesticReverseChargeCuration';
 import {
   LETTING_LANDLORD_REASON, LETTING_OPTION_LANDLORD_RULE_KEY, CAPITAL_GOODS_REASON, CAPITAL_GOODS_RULE_KEY,
 } from './propertyCuration';
@@ -8,31 +8,32 @@ import {
   CONTRACT_WORK_ADVISORY_REASON, CONTRACT_WORK_RULE_KEY, WORKS_OF_ART_ADVISORY_REASON, WORKS_OF_ART_RULE_KEY,
 } from './vatcaCuration';
 import { DEPOSIT_RETURN_SCHEME_RULE_KEY, SCHEMES_GAPS } from './schemesCuration';
+import { declaredLinksFrom } from './ruleLinks';
 
 /**
  * Rules that never decide a treatment (issue #208). Each turns on a fact
  * nobody has recorded (the company's principal status, whether a builder is
  * connected, whether the company opted to tax its letting), so when it
  * matches it adds its reason to whatever rule does decide, and an invoice
- * line is not pre-selected. A rule listed in `silencedBy` settles the
- * question, and the advisory is then dropped.
+ * line is not pre-selected. A rule the advisory is `silenced_by`
+ * (ruleLinks.ts) settles the question, and the advisory is then dropped.
  */
-export interface AdvisoryRule { ruleKey: string; reason: string; silencedBy: string[] }
+export interface AdvisoryRule { ruleKey: string; reason: string }
 
 export const ADVISORY_RULES: AdvisoryRule[] = [
   ...DOMESTIC_RC_ADVISORY_RULE_KEYS.map((ruleKey) => ({
-    ruleKey, reason: DOMESTIC_RC_GAPS[ruleKey]!, silencedBy: [RC_CONSTRUCTION_RULE_KEY],
+    ruleKey, reason: DOMESTIC_RC_GAPS[ruleKey]!,
   })),
-  { ruleKey: LETTING_OPTION_LANDLORD_RULE_KEY, reason: LETTING_LANDLORD_REASON, silencedBy: [] },
-  { ruleKey: CAPITAL_GOODS_RULE_KEY, reason: CAPITAL_GOODS_REASON, silencedBy: [] },
+  { ruleKey: LETTING_OPTION_LANDLORD_RULE_KEY, reason: LETTING_LANDLORD_REASON },
+  { ruleKey: CAPITAL_GOODS_RULE_KEY, reason: CAPITAL_GOODS_REASON },
   // The 20% qualifying-vehicle case turns on the car's registration and use (issue #209).
-  { ruleKey: BLOCKED_MOTOR_VEHICLE_RULE_KEY, reason: INPUT_RECOVERY_REASONS[BLOCKED_MOTOR_VEHICLE_RULE_KEY]!, silencedBy: [] },
-  { ruleKey: QUALIFYING_VEHICLE_DISPOSAL_RULE_KEY, reason: INPUT_RECOVERY_REASONS[QUALIFYING_VEHICLE_DISPOSAL_RULE_KEY]!, silencedBy: [] },
+  { ruleKey: BLOCKED_MOTOR_VEHICLE_RULE_KEY, reason: INPUT_RECOVERY_REASONS[BLOCKED_MOTOR_VEHICLE_RULE_KEY]! },
+  { ruleKey: QUALIFYING_VEHICLE_DISPOSAL_RULE_KEY, reason: INPUT_RECOVERY_REASONS[QUALIFYING_VEHICLE_DISPOSAL_RULE_KEY]! },
   // Taxable amount (issue #245) and the s.48/s.49 rate questions (issue #278): each turns on a fact no line carries.
-  ...Object.entries(TAXABLE_AMOUNT_ADVISORY).map(([ruleKey, reason]) => ({ ruleKey, reason, silencedBy: [] })),
-  { ruleKey: CONTRACT_WORK_RULE_KEY, reason: CONTRACT_WORK_ADVISORY_REASON, silencedBy: [] },
-  { ruleKey: WORKS_OF_ART_RULE_KEY, reason: WORKS_OF_ART_ADVISORY_REASON, silencedBy: [] },
-  { ruleKey: DEPOSIT_RETURN_SCHEME_RULE_KEY, reason: SCHEMES_GAPS[DEPOSIT_RETURN_SCHEME_RULE_KEY]!, silencedBy: [] },
+  ...Object.entries(TAXABLE_AMOUNT_ADVISORY).map(([ruleKey, reason]) => ({ ruleKey, reason })),
+  { ruleKey: CONTRACT_WORK_RULE_KEY, reason: CONTRACT_WORK_ADVISORY_REASON },
+  { ruleKey: WORKS_OF_ART_RULE_KEY, reason: WORKS_OF_ART_ADVISORY_REASON },
+  { ruleKey: DEPOSIT_RETURN_SCHEME_RULE_KEY, reason: SCHEMES_GAPS[DEPOSIT_RETURN_SCHEME_RULE_KEY]! },
 ];
 
 export const ADVISORY_RULE_KEYS = new Set(ADVISORY_RULES.map((r) => r.ruleKey));
@@ -41,6 +42,7 @@ export const ADVISORY_RULE_KEYS = new Set(ADVISORY_RULES.map((r) => r.ruleKey));
 export function advisoryReasons(matchedKeys: Iterable<string | null | undefined>): string[] {
   const keys = new Set(matchedKeys);
   return ADVISORY_RULES
-    .filter((a) => keys.has(a.ruleKey) && !a.silencedBy.some((k) => keys.has(k)))
+    .filter((a) => keys.has(a.ruleKey)
+      && !declaredLinksFrom(a.ruleKey, { kinds: ['silenced_by'] }).some((l) => keys.has(l.toKey)))
     .map((a) => a.reason);
 }

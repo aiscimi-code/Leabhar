@@ -37,19 +37,49 @@ interface SecondReducedWindow {
   from: string;
   to: string | null;
   provision: string;
+  /** The s.46 rule stating the 9% rate for each listed reference (its `rate_from` link, ruleLinks.ts). */
+  rateKeys: Record<string, string>;
 }
+
+const each = (refs: string[], key: string) => Object.fromEntries(refs.map((r) => [r, key]));
 
 /** The 9% clauses, each with the Schedule 3 references and period it states. */
 export const SECOND_REDUCED_WINDOWS: SecondReducedWindow[] = [
-  { refs: ['3(1)', '3(3)', '13(3)'], from: '2026-07-01', to: null, provision: 'Finance Act 2025 s.71 (s.46(1)(cb) as substituted)' },
+  {
+    refs: ['3(1)', '3(3)', '13(3)'], from: '2026-07-01', to: null, provision: 'Finance Act 2025 s.71 (s.46(1)(cb) as substituted)',
+    rateKeys: { ...each(['3(1)', '3(3)'], 'vat.rate_hospitality'), '13(3)': 'vat.rate_hairdressing' },
+  },
   {
     refs: ['3(1)', '3(3)', '7(b)', '7(c)', '7(d)', '7(e)', '8', '11', '13(3)'],
     from: '2020-11-01', to: '2023-08-31', provision: 'VATCA 2010 s.46(1)(cb)',
+    rateKeys: {
+      ...each(['3(1)', '3(3)'], 'vat.rate_hospitality'),
+      ...each(['7(b)', '7(c)', '7(d)', '7(e)'], 'vat.rate_printed_matter_9pct_2020_2023'),
+      '8': 'vat.rate_admission_9pct_2020_2023',
+      '11': 'vat.rate_hotel_accommodation_9pct_2020_2023',
+      '13(3)': 'vat.rate_hairdressing',
+    },
   },
-  { refs: ['17(2)', '17(3)'], from: '2022-05-01', to: '2030-12-31', provision: 'VATCA 2010 s.46(1)(caa)' },
-  { refs: ['9A'], from: '2025-10-08', to: '2025-11-25', provision: 'VATCA 2010 s.46(1)(cab)' },
-  { refs: ['9B(2)', '9B(3)'], from: '2025-11-26', to: '2030-12-31', provision: 'VATCA 2010 s.46(1)(cac)' },
-  { refs: ['7(a)', '7A', '12', '12A'], from: '2025-01-01', to: null, provision: 'VATCA 2010 s.46(1)(ca)' },
+  {
+    refs: ['17(2)', '17(3)'], from: '2022-05-01', to: '2030-12-31', provision: 'VATCA 2010 s.46(1)(caa)',
+    rateKeys: each(['17(2)', '17(3)'], 'vat.rate_gas_electricity_9pct_current'),
+  },
+  {
+    refs: ['9A'], from: '2025-10-08', to: '2025-11-25', provision: 'VATCA 2010 s.46(1)(cab)',
+    rateKeys: { '9A': 'vat.rate_social_housing_apartment_9pct_2025_narrow' },
+  },
+  {
+    refs: ['9B(2)', '9B(3)'], from: '2025-11-26', to: '2030-12-31', provision: 'VATCA 2010 s.46(1)(cac)',
+    rateKeys: each(['9B(2)', '9B(3)'], 'vat.rate_social_housing_apartment_9pct_current'),
+  },
+  {
+    refs: ['7(a)', '7A', '12', '12A'], from: '2025-01-01', to: null, provision: 'VATCA 2010 s.46(1)(ca)',
+    rateKeys: {
+      ...each(['7(a)', '7A'], 'vat.rate_periodicals_9pct_current'),
+      '12': 'vat.rate_sporting_facilities_9pct_current',
+      '12A': 'vat.rate_heat_pump_installation_9pct_current',
+    },
+  },
 ];
 
 /** From this date the (ca) list is known ("paragraphs 7(a), 7A, 12 and 12A", F101). */
@@ -68,6 +98,11 @@ export function scheduleThreeRate(ref: string, onDate: string): ScheduleRate {
     }
   }
   if (onDate >= CA_LIST_KNOWN_FROM) return { code: 'IE_RED', provision: 'VATCA 2010 s.46(1)(c)' };
+  return scheduleThreeGap(ref);
+}
+
+/** No rate for a Schedule 3 paragraph: the date is before the (ca) list is known and no dated clause covers it. */
+export function scheduleThreeGap(ref: string): ScheduleRate {
   return {
     code: null,
     provision: 'VATCA 2010 s.46(1)(c) and (ca)',
