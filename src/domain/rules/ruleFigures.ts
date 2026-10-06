@@ -26,6 +26,7 @@ import type { AppDatabase } from '@/db';
 import { irishTaxRules } from '@/db/schema';
 import { isIsoDate } from '../dates';
 import { lookupTaxRule } from './irishRules';
+import type { ManifestRuleKey } from './consumers';
 
 /** A shipped curation constant any figure falls back to. */
 export interface CuratedRuleFigure {
@@ -120,7 +121,7 @@ function statusOf(reviewStatus: string): RuleFigureStatus {
  */
 export function resolveRuleFigure(
   db: AppDatabase,
-  params: { companyId: string; ruleKey: string; asOfDate: string; curated: CuratedRuleFigure },
+  params: { companyId: string; ruleKey: ManifestRuleKey; asOfDate: string; curated: CuratedRuleFigure },
 ): ResolvedRuleFigure {
   const curatedRateBasisPoints = params.curated.rateBasisPoints ?? null;
   const base = {
@@ -229,11 +230,11 @@ export function auditRuleFigures(
   db: AppDatabase,
   params: { companyId: string; asOfDate: string; curated: CuratedRuleFigure[] },
 ): {
-  figure: (ruleKey: string) => ResolvedRuleFigure;
+  figure: (ruleKey: ManifestRuleKey) => ResolvedRuleFigure;
   findings: () => string[];
 } {
   const byKey = new Map<string, ResolvedRuleFigure>();
-  const figure = (ruleKey: string) => {
+  const figure = (ruleKey: ManifestRuleKey) => {
     const memo = byKey.get(ruleKey);
     if (memo) return memo;
     const curated = params.curated.find((r) => r.ruleKey === ruleKey);

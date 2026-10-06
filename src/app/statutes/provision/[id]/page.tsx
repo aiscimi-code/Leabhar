@@ -45,7 +45,7 @@ export default async function ProvisionPage({ params, searchParams }: {
   const { rule: highlightRuleId } = await searchParams;
   const detail = provisionDetail(id);
   if (!detail) notFound();
-  const { provision: p, source: s, rulesCiting, dependencies, reliesOn, reliedOnBy, file } = detail;
+  const { provision: p, source: s, rulesCiting, dependencies, reliesOn, reliedOnBy, readBy, file } = detail;
   const isGuidance = s.sourceType !== 'legislation' && s.sourceType !== 'eu_source';
 
   return (
@@ -134,6 +134,21 @@ export default async function ProvisionPage({ params, searchParams }: {
                         <Help>The rules to look at again if this rule changes, directly and through other rules. npm run cli:rules -- impact {r.ruleKey}</Help>
                       </td>
                       <td><LinkList edges={reliedOnBy[r.ruleKey] ?? []} /></td>
+                    </tr>
+                  )}
+                  {(readBy[r.ruleKey] ?? []).length > 0 && (
+                    <tr>
+                      <td className="text-ink-faint align-top">
+                        Read by
+                        <Help>The computations and returns that read this rule, or a rule relying on it, from their declared manifests.</Help>
+                      </td>
+                      <td>
+                        <ul className="text-[12px] space-y-0.5">
+                          {(readBy[r.ruleKey] ?? []).map((c) => (
+                            <li key={c.consumer}>{c.name}{c.ruleKeys.some((k) => k !== r.ruleKey) && <span className="text-ink-faint"> (through {c.ruleKeys.filter((k) => k !== r.ruleKey).join(', ')})</span>}</li>
+                          ))}
+                        </ul>
+                      </td>
                     </tr>
                   )}
                   {(r.vatEffect ?? r.taxEffect) && (

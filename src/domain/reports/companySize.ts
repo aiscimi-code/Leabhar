@@ -7,6 +7,7 @@ import {
 import { ids } from '@/lib/ids';
 import { addDays, addYears, isIsoDate, parts, makeDate, daysInMonth, type IsoDate } from '../dates';
 import { auditRuleFigures } from '../rules/ruleFigures';
+import type { CompanySizeRuleKey } from './companySizeRuleManifest';
 import { COMPANIES_ACT_2014_CURATED_RULES } from '../rules/companiesAct2014Curation';
 import { SIZE_CRITERIA_CURATED_RULES, SI_301_2024_IN_OPERATION } from '../rules/sizeCriteriaCuration';
 import { profitAndLoss } from './financial';
@@ -209,9 +210,9 @@ function assessYear(db: AppDatabase, companyId: string, start: IsoDate, end: Iso
     money: auditRuleFigures(db, { companyId, asOfDate: moneyDate, curated: CURATED }),
     employees: auditRuleFigures(db, { companyId, asOfDate: end, curated: CURATED }),
   };
-  const figure = (ruleKey: string, limb: string): number | null => {
+  const figure = (ruleKey: CompanySizeRuleKey, limb: string): number | null => {
     const audit = limb === 'employees' ? audits.employees : audits.money;
-    const key = limb !== 'employees' && criteria === 'before_2024' ? `${ruleKey}_pre_2024` : ruleKey;
+    const key = limb !== 'employees' && criteria === 'before_2024' ? `${ruleKey}_pre_2024` as CompanySizeRuleKey : ruleKey;
     const f = audit.figure(key);
     if (f.status === 'rejected' || f.status === 'retired') return null;
     if (f.numericValue !== null) return f.numericValue;
@@ -221,7 +222,7 @@ function assessYear(db: AppDatabase, companyId: string, start: IsoDate, end: Iso
   for (const size of ['micro', 'small', 'medium'] as const) {
     const limbs: SizeLimb[] = [];
     for (const { limb, key } of LIMBS) {
-      const baseKey = `company.${size}_company_${key}`;
+      const baseKey = `company.${size}_company_${key}` as const;
       const ruleKey = limb !== 'employees' && criteria === 'before_2024' ? `${baseKey}_pre_2024` : baseKey;
       const threshold = figure(baseKey, limb);
       if (threshold === null) return { start, end, isFullYear, criteria, turnoverMinor, balanceSheetTotalMinor, employees: emp, conditions: null };

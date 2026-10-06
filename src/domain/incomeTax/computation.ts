@@ -12,6 +12,7 @@ import {
 } from '../corporationTax/computation';
 import { INCOME_TAX_CURATED_RULES } from '../rules/incomeTaxCuration';
 import { resolveRuleFigure, type ResolvedRuleFigure } from '../rules/ruleFigures';
+import type { ManifestRuleKey } from '../rules/consumers';
 import { allocateByShares, partnershipFindings } from '../config/partners';
 import { partnerLoanInterestForPeriod } from '../partnerships/interest';
 import { FARM_INCOME_AVERAGING, FARM_STOCK_RELIEF_CLAIMS, type FarmIncomeAveraging, type FarmStockReliefClaim } from '../corporationTax/subjects';
@@ -146,7 +147,7 @@ const apportion = (profitMinor: number, a: string, b: string, from: string, to: 
 const eur = (minor: number) => (minor / 100).toFixed(2);
 
 /** The figure a rule states on a date: the stored rule a person can review, not the shipped constant (issue #282). */
-function ruleOn(db: AppDatabase, companyId: string, ruleKey: string, date: string): ResolvedRuleFigure | null {
+function ruleOn(db: AppDatabase, companyId: string, ruleKey: ManifestRuleKey, date: string): ResolvedRuleFigure | null {
   const curatedVersion = INCOME_TAX_CURATED_RULES.filter((r) => r.ruleKey === ruleKey
     && r.effectiveFrom <= date && (r.effectiveTo === null || r.effectiveTo > date))
     .sort((a, b) => b.effectiveFrom.localeCompare(a.effectiveFrom))[0];
@@ -346,7 +347,7 @@ class IncomeTaxRun {
       reason: 'The standard rate band and personal credit depend on it (s.15 Table, s.461). '
         + 'The band and credit in force are shown on the computation lines, from the rules that state them.',
     });
-    const need = (key: string) => {
+    const need = (key: ManifestRuleKey) => {
       const r = ruleOn(this.db, this.companyId, key, dec31);
       if (!r) {
         this.findings.push(`No ${key} rule is in force for ${year}: that part of ${name}'s liability is not computed.`);
@@ -414,7 +415,7 @@ class IncomeTaxRun {
     // USC (s.531AN).
     const usc: IncomeTaxLine[] = [];
     const exemption = need('usc.exemption_threshold');
-    const bands = ['usc.band_05pct', 'usc.band_2pct', 'usc.band_3pct'].map(need);
+    const bands = (['usc.band_05pct', 'usc.band_2pct', 'usc.band_3pct'] as const).map((k) => need(k));
     const top = need('usc.rate_top');
     const surcharge = need('usc.surcharge_non_paye');
     const surchargeThreshold = need('usc.surcharge_threshold');
@@ -742,7 +743,7 @@ class IncomeTaxRun {
     // every other figure (issue #486): an edited or re-derived rule changes the
     // computation, a rejected one stops the part.
     const dec31 = `${year}-12-31`;
-    const pct = (key: string): number | null => {
+    const pct = (key: ManifestRuleKey): number | null => {
       const r = ruleOn(this.db, this.companyId, key, dec31);
       if (r?.finding) this.findings.push(r.finding);
       if (!r || r.numericValue === null) {

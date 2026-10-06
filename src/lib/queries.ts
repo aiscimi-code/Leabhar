@@ -1029,9 +1029,11 @@ export function provisionDetail(provisionId: string) {
   // What each rule relies on, and what relies on it, through the rule links (ADR-0020, issue #686).
   const keys = [...new Set(rulesCiting.map((r) => r.ruleKey))];
   const reliesOn = Object.fromEntries(keys.map((ruleKey) => [ruleKey, ruleDepends(db, { companyId: company.id, ruleKey }).rules]));
-  const reliedOnBy = Object.fromEntries(keys.map((ruleKey) =>
-    [ruleKey, ruleImpact(db, { companyId: company.id, target: { kind: 'rule', ruleKey } }).affected]));
-  return { ...row, rulesCiting, dependencies, reliesOn, reliedOnBy, file: verifyStatuteFile(row.source.localPath, row.source.sha256,
+  const impacts = Object.fromEntries(keys.map((ruleKey) =>
+    [ruleKey, ruleImpact(db, { companyId: company.id, target: { kind: 'rule', ruleKey } })]));
+  const reliedOnBy = Object.fromEntries(keys.map((k) => [k, impacts[k]!.affected]));
+  const readBy = Object.fromEntries(keys.map((k) => [k, impacts[k]!.consumers]));
+  return { ...row, rulesCiting, dependencies, reliesOn, reliedOnBy, readBy, file: verifyStatuteFile(row.source.localPath, row.source.sha256,
     row.provision.sourceStart, row.provision.sourceEnd) };
 }
 

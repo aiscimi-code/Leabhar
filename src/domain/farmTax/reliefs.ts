@@ -8,6 +8,7 @@ import { asIsoDate } from '../dates';
 import { multiplyRational } from '../money';
 import { accountBalance } from '../accounting/ledger';
 import { auditRuleFigures, RejectedRuleError } from '../rules/ruleFigures';
+import type { ManifestRuleKey } from '../rules/consumers';
 import { CORPORATION_TAX_CURATED_RULES } from '../rules/corporationTaxCuration';
 
 /**
@@ -21,7 +22,7 @@ import { CORPORATION_TAX_CURATED_RULES } from '../rules/corporationTaxCuration';
 const eur = (m: number) => (m / 100).toFixed(2);
 
 /** A Part 23 figure in force on a date: the stored rule, else the shipped constant; a rejected rule stops the computation. */
-export function farmFigure(db: AppDatabase, companyId: string, ruleKey: string, date: string): number {
+export function farmFigure(db: AppDatabase, companyId: string, ruleKey: ManifestRuleKey, date: string): number {
   const f = auditRuleFigures(db, { companyId, asOfDate: date, curated: CORPORATION_TAX_CURATED_RULES }).figure(ruleKey);
   if (f.status === 'rejected' || f.status === 'retired') throw new RejectedRuleError(f);
   if (f.numericValue !== null) return f.numericValue;
@@ -114,7 +115,7 @@ export function stockRelief(db: AppDatabase, p: {
     findings.push(`Stock relief is not available for a period ending after ${lastYear} (s.666(4)).`);
     return { ...base, rateBasisPoints: 0, grossReliefMinor: 0, reliefMinor: 0, ruleKeys };
   }
-  let rateKey = 'farm.stock_relief_rate';
+  let rateKey: ManifestRuleKey = 'farm.stock_relief_rate';
   if (p.category === 'young_trained') {
     const further = farmFigure(db, p.companyId, 'farm.young_trained_further_years', p.to);
     if ((p.priorYoungTrainedYears ?? 0) > further) {

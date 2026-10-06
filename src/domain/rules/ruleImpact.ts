@@ -9,6 +9,10 @@
  * walk. Both read the book's `irish_rule_links`, so they see what the
  * curation declared as of the book's last load.
  *
+ * The computations reading the target or anything reached (`consumed_by`,
+ * from their manifests) are listed beside the rules, so the answer includes
+ * the returns and computations a change reaches.
+ *
  * Every link kind counts: a rule that excludes, silences or takes its rate
  * from X has to be looked at again when X changes, even where it turns out
  * not to move.
@@ -17,6 +21,7 @@ import { and, eq } from 'drizzle-orm';
 import type { AppDatabase } from '@/db';
 import { irishActProvisions, irishKnowledgeSources, irishRuleLinks, irishTaxRules } from '@/db/schema';
 import { resolveReference } from './dependencies';
+import { RULE_CONSUMERS, type RuleConsumer } from './consumers';
 
 export interface ImpactEdge {
   /** The rule reached. */
@@ -38,6 +43,8 @@ export interface ImpactResult {
   target: ImpactTarget;
   /** In the order reached: nearest first, then by key. Each rule appears once, at its nearest depth. */
   affected: ImpactEdge[];
+  /** The computations that read the target or an affected rule (`consumed_by`), and through which rules. */
+  consumers: Array<{ consumer: string; name: string; ruleKeys: string[] }>;
 }
 
 function activeLinks(db: AppDatabase, companyId: string) {
@@ -79,8 +86,13 @@ export function resolveImpactTarget(db: AppDatabase, params: { companyId: string
 export function ruleImpact(db: AppDatabase, params: { companyId: string; target: ImpactTarget }): ImpactResult {
   const links = activeLinks(db, params.companyId);
   const byTo = new Map<string, typeof links>();
+  const consumedBy = new Map<string, string[]>();
   for (const l of links) {
     if (l.toKey === null) continue;
+    if (l.kind === 'consumed_by') {
+      consumedBy.set(l.fromKey, [...(consumedBy.get(l.fromKey) ?? []), l.toKey]);
+      continue;
+    }
     byTo.set(l.toKey, [...(byTo.get(l.toKey) ?? []), l]);
   }
   const seen = new Set<string>();
@@ -113,7 +125,16 @@ export function ruleImpact(db: AppDatabase, params: { companyId: string; target:
     }
     ring = next;
   }
-  return { target: t, affected };
+
+  const reached = new Map<string, Set<string>>();
+  for (const key of [...(t.kind === 'rule' ? [t.ruleKey] : []), ...affected.map((e) => e.ruleKey)]) {
+    for (const c of consumedBy.get(key) ?? []) reached.set(c, (reached.get(c) ?? new Set()).add(key));
+  }
+  const consumers = [...reached].sort(([a], [b]) => a.localeCompare(b)).map(([consumer, keys]) => {
+    const name = consumer.replace(/^consumer:/, '');
+    return { consumer, name: RULE_CONSUMERS[name as RuleConsumer]?.name ?? name, ruleKeys: [...keys].sort() };
+  });
+  return { target: t, affected, consumers };
 }
 
 export interface DependsResult {
@@ -147,6 +168,7 @@ export function ruleDepends(db: AppDatabase, params: { companyId: string; ruleKe
       }
       const out = [...(byFrom.get(key) ?? [])].sort((a, b) => (a.toKey ?? '').localeCompare(b.toKey ?? '') || a.kind.localeCompare(b.kind));
       for (const l of out) {
+        if (l.kind === 'consumed_by') continue;
         if (l.toProvisionId && !provisions.has(l.toProvisionId)) {
           provisions.set(l.toProvisionId, { provisionId: l.toProvisionId, citation: provisionLabel(db, l.toProvisionId), kind: l.kind, from: key });
         }
@@ -165,7 +187,7 @@ export function ruleDepends(db: AppDatabase, params: { companyId: string; ruleKe
 export function mostReliedOn(db: AppDatabase, params: { companyId: string; limit?: number }): Array<{ ruleKey: string; affected: number }> {
   const links = activeLinks(db, params.companyId);
   const byTo = new Map<string, string[]>();
-  for (const l of links) if (l.toKey !== null) byTo.set(l.toKey, [...(byTo.get(l.toKey) ?? []), l.fromKey]);
+  for (const l of links) if (l.toKey !== null && l.kind !== 'consumed_by') byTo.set(l.toKey, [...(byTo.get(l.toKey) ?? []), l.fromKey]);
   const counts = [...byTo.keys()].map((ruleKey) => {
     const seen = new Set([ruleKey]);
     const queue = [...(byTo.get(ruleKey) ?? [])];

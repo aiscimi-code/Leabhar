@@ -21,7 +21,9 @@
  *     deduction (issue #143), and the standard-rate fallback over the other
  *     headline rate facts (issue #136); read by `lookupTransactionRules`;
  *   - `rate_from`: a Schedule 3 rule and the s.46 rate rule its paragraph
- *     bears on each date (issue #205; read by the Schedule 3 binding).
+ *     bears on each date (issue #205; read by the Schedule 3 binding);
+ *   - `consumed_by`: a rule and each computation that reads it, from the
+ *     computations' manifests (consumers.ts), so `impact` reaches them.
  *
  * Derived from the book at load (`bookDerivedLinks`):
  *
@@ -44,6 +46,7 @@ import {
   CA_LIST_KNOWN_FROM, SECOND_REDUCED_WINDOWS, scheduleThreeRate, scheduleThreeGap, withinReference, type ScheduleRate,
 } from './scheduleRates';
 import { resolveBookDependencies } from './dependencies';
+import { RULE_CONSUMERS, consumerId, type RuleConsumer } from './consumers';
 
 /**
  * The start date of a link that adds no date of its own: it holds whenever
@@ -156,6 +159,14 @@ export const CURATED_RULE_LINKS: CuratedRuleLink[] = [
   ...VATCA_SCHEDULE_CURATED_RULES
     .filter((r) => r.scheduleNumber === '3' && (r.rateRefs ?? []).length > 0)
     .flatMap((r) => scheduleRateLinks(r.ruleKey, r.rateRefs![0]!)),
+  ...(Object.keys(RULE_CONSUMERS) as RuleConsumer[]).flatMap((consumer) => RULE_CONSUMERS[consumer].keys.map((fromKey) => ({
+    fromKey,
+    kind: 'consumed_by' as const,
+    toKey: consumerId(consumer),
+    effectiveFrom: LINK_FROM_RULES,
+    effectiveTo: null,
+    note: `Read by ${RULE_CONSUMERS[consumer].name} (${RULE_CONSUMERS[consumer].modules.join(', ')}).`,
+  }))),
 ];
 
 /** The declared links matching a query, the way the code that acts on them reads them. */

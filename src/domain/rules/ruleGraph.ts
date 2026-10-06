@@ -11,6 +11,9 @@
  *     reason in `DECLARED_VERSION_GAPS`;
  *   - has rules relying on each other in a circle (`cycle`).
  *
+ * A computation's manifest (`consumed_by`) must name keys the book holds and a
+ * declared consumer.
+ *
  * Exclusions (`excludes`) and silencing (`silenced_by`) are not reliance: a
  * rule that excludes one no longer in force simply excludes nothing, so they
  * are checked for dangling keys and cycles only.
@@ -19,6 +22,7 @@ import { and, eq, ne } from 'drizzle-orm';
 import type { AppDatabase } from '@/db';
 import { irishRuleLinks, irishTaxRules, type IrishRuleLinkKind } from '@/db/schema';
 import { CA_LIST_KNOWN_FROM } from './scheduleRates';
+import { RULE_CONSUMERS, consumerId, type RuleConsumer } from './consumers';
 
 export type RuleGraphFindingKind = 'dangling' | 'uncovered' | 'gap' | 'overlap' | 'cycle';
 
@@ -105,7 +109,17 @@ export function checkRuleGraph(db: AppDatabase, params: { companyId: string }): 
     .where(and(eq(irishRuleLinks.companyId, params.companyId), eq(irishRuleLinks.active, true)))
     .all();
 
+  const consumers = new Set((Object.keys(RULE_CONSUMERS) as RuleConsumer[]).map(consumerId));
   for (const l of links) {
+    if (l.kind === 'consumed_by') {
+      if (!spansByKey.has(l.fromKey)) {
+        findings.push({ kind: 'dangling', ruleKey: l.fromKey, detail: `${l.toKey} declares it reads ${l.fromKey}, which this book does not hold in force.` });
+      }
+      if (l.toKey === null || !consumers.has(l.toKey)) {
+        findings.push({ kind: 'dangling', ruleKey: l.fromKey, detail: `A consumed_by link names ${l.toKey}, which is not a declared consumer.` });
+      }
+      continue;
+    }
     for (const key of [l.fromKey, l.toKey]) {
       if (key !== null && !spansByKey.has(key)) {
         findings.push({ kind: 'dangling', ruleKey: l.fromKey, detail: `A ${l.kind} link names ${key}, which this book does not hold in force.` });
@@ -130,7 +144,7 @@ export function checkRuleGraph(db: AppDatabase, params: { companyId: string }): 
   // A circle of rules relying on, excluding or silencing one another.
   const edges = new Map<string, Set<string>>();
   for (const l of links) {
-    if (l.toKey === null) continue;
+    if (l.toKey === null || l.kind === 'consumed_by') continue;
     edges.set(l.fromKey, (edges.get(l.fromKey) ?? new Set()).add(l.toKey));
   }
   const state = new Map<string, 'open' | 'done'>();

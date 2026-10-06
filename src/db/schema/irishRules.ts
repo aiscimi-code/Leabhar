@@ -343,6 +343,7 @@ export const irishTaxRuleTests = sqliteTable('irish_tax_rule_tests', {
  *   excludes     -- when both match, the rule drops `toKey`.
  *   supersedes   -- the rule replaces `toKey`, wholly or in part.
  *   cites        -- the rule's provision cites `toProvisionId`.
+ *   consumed_by  -- a computation reads the rule; `toKey` is `consumer:<name>`.
  *
  * A link names rule KEYS, not row ids, so a new version of either rule keeps
  * every link that points at it. A link is effective-dated like the rules it
@@ -360,6 +361,8 @@ export const irishTaxRuleTests = sqliteTable('irish_tax_rule_tests', {
  */
 export const IRISH_RULE_LINK_KINDS = [
   'uses_value', 'rate_from', 'silenced_by', 'excludes', 'supersedes', 'cites',
+  // The rule is read by a computation: `to_key` is `consumer:<name>` (src/domain/rules/consumers.ts).
+  'consumed_by',
 ] as const;
 export type IrishRuleLinkKind = (typeof IRISH_RULE_LINK_KINDS)[number];
 
