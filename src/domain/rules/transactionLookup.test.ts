@@ -7,7 +7,7 @@ import { deriveFinanceAct2024VatThresholds } from './financeAct2024VatThresholds
 import { ingestVatca2010, deriveVatcaRules, VATCA_2010_MD_PATH } from './vatcaIngestion';
 import { ingestVatcaRevised, deriveVatcaRevisedRules, ingestVatcaRevisedS46 } from './vatcaRevisedIngestion';
 import {
-  ingestVatcaSchedule, deriveVatcaScheduleRules, VATCA_SCHEDULE_2_MD_PATH, VATCA_SCHEDULE_3_MD_PATH,
+  ingestVatcaScheduleFromCatalogue, deriveVatcaScheduleRules,
 } from './vatcaScheduleIngestion';
 import {
   ingestSi692025Reg5, ingestSi692025Reg8, ingestSi692025Reg9, deriveSi692025Rules, SI_69_2025_MD_PATH,
@@ -387,9 +387,6 @@ describe('lookupTransactionRules — issue #136 bug 4 / issue #138: supplier est
 });
 
 describe('lookupTransactionRules — issue #136 bugs 1 and 8: VAT rate exclusivity', () => {
-  const schedule2Md = readFileSync(VATCA_SCHEDULE_2_MD_PATH, 'utf8');
-  const schedule3Md = readFileSync(VATCA_SCHEDULE_3_MD_PATH, 'utf8');
-
   beforeEach(() => {
     ingestVatcaRevisedS46(db, { companyId });
     ingestFinanceAct2025(db, {
@@ -397,8 +394,8 @@ describe('lookupTransactionRules — issue #136 bugs 1 and 8: VAT rate exclusivi
       markdown: readFileSync(new URL(`../../../${FINANCE_ACT_2025.localPath}`, import.meta.url).pathname, 'utf8'),
     });
     deriveVatcaRevisedRules(db, { companyId });
-    ingestVatcaSchedule(db, { companyId, scheduleNumber: '2', markdown: schedule2Md, ingestVersion: 'v1' });
-    ingestVatcaSchedule(db, { companyId, scheduleNumber: '3', markdown: schedule3Md, ingestVersion: 'v1' });
+    ingestVatcaScheduleFromCatalogue(db, { companyId, scheduleNumber: '2' });
+    ingestVatcaScheduleFromCatalogue(db, { companyId, scheduleNumber: '3' });
     deriveVatcaScheduleRules(db, { companyId, scheduleNumber: '2' });
     deriveVatcaScheduleRules(db, { companyId, scheduleNumber: '3' });
   });

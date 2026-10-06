@@ -11,8 +11,7 @@ import {
 } from '@/domain/rules/irishRules';
 import { ingestVatca2010, deriveVatcaRules, VATCA_2010_MD_PATH } from '@/domain/rules/vatcaIngestion';
 import {
-  ingestVatcaSchedule, deriveVatcaScheduleRules,
-  VATCA_SCHEDULE_1_MD_PATH, VATCA_SCHEDULE_2_MD_PATH, VATCA_SCHEDULE_3_MD_PATH, type VatcaScheduleNumber,
+  ingestVatcaSchedule, ingestVatcaScheduleFromCatalogue, deriveVatcaScheduleRules, type VatcaScheduleNumber,
 } from '@/domain/rules/vatcaScheduleIngestion';
 import {
   ingestTca1997S530, ingestTca1997S530A, ingestTca1997S530E, ingestTca1997S530G, ingestTca1997S530H,
@@ -76,7 +75,8 @@ Commands:
                                        companies-act-2014 (ingests all eight fetched sections; no --file) |
                                        vat3-return-guidance | rtd-tdm-s76 | ebrief-168-25 | eu-282-2011 |
                                        --file overrides
-                                       its default path, e.g. to ingest a different revised section)
+                                       its default path, e.g. to ingest a different revised section;
+                                       a source in the rules catalogue loads from it without --file)
   ingest-all                          Ingest every source and derive every rule in one step
                                        (same as the ingest/extract sequence below; idempotent)
   extract [--source <s>]              Derive irish_tax_rules from ingested provisions
@@ -151,14 +151,12 @@ export async function main(argv: string[], options: CliOptions = {}): Promise<nu
           return 0;
         }
         if (source === 'vatca-2010-sch1' || source === 'vatca-2010-sch2' || source === 'vatca-2010-sch3') {
+          // From the rules catalogue (#556), or --file: a Markdown copy.
           const scheduleNumber = source.slice(-1) as VatcaScheduleNumber;
-          const defaultFile = { '1': VATCA_SCHEDULE_1_MD_PATH, '2': VATCA_SCHEDULE_2_MD_PATH, '3': VATCA_SCHEDULE_3_MD_PATH }[scheduleNumber];
-          const file = getFlag(flags, 'file') ?? defaultFile;
-          const markdown = readFileSync(file, 'utf8');
-          print(
-            ingestVatcaSchedule(db, { companyId, scheduleNumber, markdown, ingestVersion: 'v1', localPath: file }),
-            format,
-          );
+          const file = getFlag(flags, 'file');
+          print(file
+            ? ingestVatcaSchedule(db, { companyId, scheduleNumber, markdown: readFileSync(file, 'utf8'), ingestVersion: 'v1', localPath: file })
+            : ingestVatcaScheduleFromCatalogue(db, { companyId, scheduleNumber }), format);
           return 0;
         }
         if (source === 'rct-tca530') {

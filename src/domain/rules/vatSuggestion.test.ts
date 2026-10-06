@@ -204,7 +204,7 @@ describe('exempt and outside-the-scope lines (issue #200)', () => {
   const suggest = (description: string, amountMinor: number) =>
     suggestVatTreatment(db, { companyId, bankTransactionId: tx(description, amountMinor) })!;
 
-  it('bank charges → exempt under Schedule 1 para 6(1)(c), with a verifiable slice of schedule-1.md', () => {
+  it('bank charges → exempt under Schedule 1 para 6(1)(c), quoting the rules catalogue\'s excerpt', () => {
     const s = suggest('BANK CHARGES Q1', -1_250);
     expect(s.status).toBe('suggested');
     expect(s.treatment?.code).toBe('IE_EXEMPT');
@@ -212,10 +212,10 @@ describe('exempt and outside-the-scope lines (issue #200)', () => {
     expect(s.decidingRule?.citation).toBe('2010 Act 31 Sch.1');
     expect(s.decidingRule?.sectionNumber).toBe('6');
     const c = s.decidingRule!;
-    expect(c.localPath).toBe('docs/statutes/vatca-2010-revised/schedule-1.md');
-    const file = readFileSync(statuteFilePath(c.localPath!), 'utf8');
-    expect(createHash('sha256').update(file).digest('hex')).toBe(c.sha256);
-    expect(file.slice(c.sourceStart!, c.sourceEnd!)).toContain(c.quote!);
+    expect(c.localPath).toBe('catalogue/vatca-2010-revised/schedule-1.json');
+    const entry = readCatalogueEntry('vatca-2010-revised/schedule-1.json');
+    expect(entry.source.sha256).toBe(c.sha256);
+    expect(containsIgnoringLayout(entry.provisions.find((p) => p.sectionNumber === '6')!.excerpt, c.quote!)).toBe(true);
   });
 
   it.each([

@@ -22,8 +22,7 @@ import { ids } from '@/lib/ids';
 import { nowIso } from '../dates';
 import { sha256Hex } from '@/lib/hash';
 import {
-  parseVatcaSchedule, parseScheduleFrontMatter, provisionSlug, assessRelevance,
-  VATCA_SCHEDULE_1_MD_PATH, VATCA_SCHEDULE_2_MD_PATH, VATCA_SCHEDULE_3_MD_PATH,
+  parseVatcaSchedule, parseScheduleFrontMatter, provisionSlug, assessRelevance, type ParsedScheduleParagraph,
 } from './vatcaScheduleParser';
 import { VATCA_SCHEDULE_CURATED_RULES } from './vatcaScheduleCuration';
 import { VAT_SCOPE_CURATED_RULES } from './vatScopeCuration';
@@ -32,24 +31,18 @@ import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { appRoot } from '@/lib/paths';
 import { lrcAnnotationLayer, scheduleParagraphWindows, type LrcAnnotationLayer, type ParagraphWindow } from './lrcAnnotations';
-import { CATALOGUE_DIR, readCatalogueEntry } from './catalogue';
+import { catalogueEntryForSource, catalogueOfficialFilePath, ingestCatalogueFile } from './catalogue';
 import { crossReferencesFromProvision, sameCrossReferences } from './dependencies';
 import { taxHeadsFor } from './taxHeads';
 
 /** Schedule 1 (exempt activities) is ingested for the exempt rules in vatScopeCuration.ts (issue #200). */
 export type VatcaScheduleNumber = '1' | '2' | '3';
 
-const SCHEDULE_PATHS: Record<VatcaScheduleNumber, string> = {
-  '1': VATCA_SCHEDULE_1_MD_PATH, '2': VATCA_SCHEDULE_2_MD_PATH, '3': VATCA_SCHEDULE_3_MD_PATH,
-};
-
 /** The Act's own commencement date — see the module docstring on why a
  *  per-paragraph commencement date is not modelled here. */
 const VATCA_2010_ENACTED_DATE = '2010-11-01';
 
 const SCHEDULE_SOURCE_TYPE: IrishSourceType = 'legislation';
-
-export { VATCA_SCHEDULE_1_MD_PATH, VATCA_SCHEDULE_2_MD_PATH, VATCA_SCHEDULE_3_MD_PATH };
 
 export interface VatcaScheduleIngestResult {
   sourceId: string;
@@ -59,7 +52,37 @@ export interface VatcaScheduleIngestResult {
   ingested: boolean;
 }
 
-/** Ingest one Schedule's converted Markdown. Idempotent by content, same as `ingestVatca2010`. */
+/**
+ * Whether a Schedule paragraph bears on the rules, and why: its category's
+ * default, unless a curated rule is mapped to it. Shared with the catalogue
+ * extraction (scripts/catalogue/extract.ts), so both judge a paragraph alike.
+ */
+export function vatcaScheduleRelevance(
+  scheduleNumber: string, citation: string, p: Pick<ParsedScheduleParagraph, 'paragraphNumber' | 'category'>,
+): { relevant: boolean; reason: string } {
+  const assessed = assessRelevance(p.category);
+  const curated = VATCA_SCHEDULE_CURATED_RULES.some((r) => r.scheduleNumber === scheduleNumber && r.sectionNumber === p.paragraphNumber)
+    || VAT_SCOPE_CURATED_RULES.some((r) => r.citation === citation && r.sectionNumber === p.paragraphNumber);
+  return !assessed.relevant && curated
+    ? { relevant: true, reason: `Curated: mapped to a rule in vatcaScheduleCuration.ts or vatScopeCuration.ts, overriding the ${p.category} category default.` }
+    : assessed;
+}
+
+/** A Schedule's rules catalogue entry (#556). */
+export const vatcaScheduleCatalogueEntry = (scheduleNumber: VatcaScheduleNumber) => `vatca-2010-revised/schedule-${scheduleNumber}.json`;
+
+/** Load a Schedule from the rules catalogue. Idempotent, as `ingestCatalogueEntry` is. */
+export function ingestVatcaScheduleFromCatalogue(
+  db: AppDatabase,
+  params: { companyId?: string | null; scheduleNumber: VatcaScheduleNumber; ingestVersion?: string; root?: string },
+): { sourceId: string; provisionCount: number; ingested: boolean } {
+  return ingestCatalogueFile(db, {
+    companyId: params.companyId, entry: vatcaScheduleCatalogueEntry(params.scheduleNumber),
+    ingestVersion: params.ingestVersion, root: params.root,
+  });
+}
+
+/** Ingest one Schedule's converted Markdown (a copy given to the CLI). Idempotent by content, same as `ingestVatca2010`. */
 export function ingestVatcaSchedule(
   db: AppDatabase,
   params: {
@@ -80,20 +103,7 @@ export function ingestVatcaSchedule(
     )).get();
 
   const parsed = parseVatcaSchedule(params.markdown);
-  const curatedParagraphs = new Set([
-    ...VATCA_SCHEDULE_CURATED_RULES
-      .filter((r) => r.scheduleNumber === params.scheduleNumber)
-      .map((r) => r.sectionNumber),
-    ...VAT_SCOPE_CURATED_RULES
-      .filter((r) => r.citation === fm.citation)
-      .map((r) => r.sectionNumber),
-  ]);
-  const relevance = (p: (typeof parsed)[number]) => {
-    const assessed = assessRelevance(p.category);
-    return !assessed.relevant && curatedParagraphs.has(p.paragraphNumber)
-      ? { relevant: true, reason: `Curated: mapped to a rule in vatcaScheduleCuration.ts or vatScopeCuration.ts, overriding the ${p.category} category default.` }
-      : assessed;
-  };
+  const relevance = (p: (typeof parsed)[number]) => vatcaScheduleRelevance(params.scheduleNumber, fm.citation, p);
   const provisionRow = (sourceId: string, p: (typeof parsed)[number]) => {
     const { relevant, reason } = relevance(p);
     return {
@@ -162,7 +172,7 @@ export function ingestVatcaSchedule(
       citation: fm.citation,
       jurisdiction: 'IE',
       sourceUrl: fm.sourceUrl,
-      localPath: params.localPath ?? SCHEDULE_PATHS[params.scheduleNumber],
+      localPath: params.localPath ?? null,
       sha256: digest,
       ingestVersion: params.ingestVersion,
       publicationDate: null,
@@ -324,9 +334,9 @@ export function deriveVatcaScheduleRules(
 }
 
 /**
- * Paragraph windows for an ingested schedule source, read from the LRC HTML
- * kept beside its Markdown (`schedule-3.md` -> `schedule-3.html`). Null when
- * the HTML is not there, or is not the file the Markdown was converted from.
+ * Paragraph windows for an ingested schedule source, read from its LRC page:
+ * the one kept beside its rules catalogue entry, or beside its Markdown copy
+ * (`lrcHtmlForSource`). Null when neither is there.
  */
 function paragraphWindowsForSource(
   db: AppDatabase, sourceId: string, scheduleNumber: string,
@@ -334,42 +344,61 @@ function paragraphWindowsForSource(
 ): Map<string, ParagraphWindow> | null {
   const html = lrcHtmlForSource(db, sourceId);
   if (html === null) return null;
-  const paragraphs = provisions
-    .filter((p) => p.sourceId === sourceId)
-    .sort((a, b) => (a.sourceStart ?? 0) - (b.sourceStart ?? 0))
-    .map((p) => p.sectionNumber);
+  const own = provisions.filter((p) => p.sourceId === sourceId);
+  // In the page's order: by offset in a Markdown copy, else as the entry lists them.
+  const order = own.every((p) => p.sourceStart !== null) ? null
+    : catalogueEntryForSource(db, sourceId)?.entry.provisions.map((p) => p.sectionNumber) ?? null;
+  if (order === null && own.some((p) => p.sourceStart === null)) return null;
+  const paragraphs = order ?? own.sort((a, b) => a.sourceStart! - b.sourceStart!).map((p) => p.sectionNumber);
   return scheduleParagraphWindows(html, scheduleNumber, paragraphs);
 }
 
 /**
- * The LRC revised HTML kept beside an ingested source's Markdown
- * (`schedule-1.md` -> `schedule-1.html`), when it is the file the Markdown
- * was converted from (same SHA-256 as its front matter records); else null.
+ * The LRC revised page an ingested source was read from, when it is still
+ * the file recorded for it; else null. For a source in the rules catalogue
+ * (or held from a statute copy since ported, #698), the page kept beside its
+ * entry; otherwise the HTML kept beside its Markdown copy (`schedule-1.md` ->
+ * `schedule-1.html`), with the SHA-256 its front matter records.
  */
 export function lrcHtmlForSource(db: AppDatabase, sourceId: string): string | null {
   const source = db.select().from(irishKnowledgeSources).where(eq(irishKnowledgeSources.id, sourceId)).get();
-  if (!source?.localPath?.endsWith('.md')) return null;
-  const at = source.localPath.indexOf('docs/statutes/');
-  const mdPath = join(appRoot(), at >= 0 ? source.localPath.slice(at) : source.localPath);
-  const htmlPath = mdPath.replace(/\.md$/, '.html');
-  if (!existsSync(htmlPath) || !existsSync(mdPath)) return null;
-  const html = readFileSync(htmlPath);
-  const recorded = /source_html_sha256:\s*"([0-9a-f]{64})"/.exec(readFileSync(mdPath, 'utf8'))?.[1];
-  if (!recorded || sha256Hex(html) !== recorded) return null;
-  return html.toString('utf8');
+  if (!source?.localPath) return null;
+  const copy = copyHtml(source.localPath);
+  if (copy !== undefined) return copy;
+  const ported = catalogueEntryForSource(db, sourceId);
+  if (!ported) return null;
+  const path = catalogueOfficialFilePath(ported.name);
+  if (!existsSync(path)) return null;
+  const html = readFileSync(path);
+  return sha256Hex(html) === ported.entry.source.sha256 ? html.toString('utf8') : null;
 }
 
 /**
- * The LRC amendment footnotes for an ingested source: from its rules
- * catalogue entry, or from the HTML kept beside its Markdown
- * (`lrcHtmlForSource`). Null when neither holds them.
+ * The HTML beside a Markdown statute copy, if it is the file the copy was
+ * converted from; null if it is not; undefined when the copy is gone.
+ */
+function copyHtml(localPath: string): string | null | undefined {
+  if (!localPath.endsWith('.md')) return undefined;
+  const at = localPath.indexOf('docs/statutes/');
+  const mdPath = join(appRoot(), at >= 0 ? localPath.slice(at) : localPath);
+  if (!existsSync(mdPath)) return undefined;
+  const htmlPath = mdPath.replace(/\.md$/, '.html');
+  if (!existsSync(htmlPath)) return null;
+  const html = readFileSync(htmlPath);
+  const recorded = /source_html_sha256:\s*"([0-9a-f]{64})"/.exec(readFileSync(mdPath, 'utf8'))?.[1];
+  return recorded && sha256Hex(html) === recorded ? html.toString('utf8') : null;
+}
+
+/**
+ * The LRC amendment footnotes for an ingested source: from its Markdown
+ * copy's HTML while the copy is there, else from its rules catalogue entry
+ * (#698: a book that read the copy before the port keeps that source). Null
+ * when neither holds them.
  */
 export function lrcAnnotationsForSource(db: AppDatabase, sourceId: string): LrcAnnotationLayer | null {
   const source = db.select().from(irishKnowledgeSources).where(eq(irishKnowledgeSources.id, sourceId)).get();
-  if (source?.localPath?.startsWith(`${CATALOGUE_DIR}/`)) {
-    const entry = readCatalogueEntry(source.localPath.slice(CATALOGUE_DIR.length + 1));
-    return entry.source.sha256 === source.sha256 ? entry.source.lrcAnnotations ?? null : null;
-  }
-  const html = lrcHtmlForSource(db, sourceId);
-  return html === null ? null : lrcAnnotationLayer(html);
+  if (!source?.localPath) return null;
+  const copy = copyHtml(source.localPath);
+  if (copy !== undefined) return copy === null ? null : lrcAnnotationLayer(copy);
+  return catalogueEntryForSource(db, sourceId)?.entry.source.lrcAnnotations ?? null;
 }

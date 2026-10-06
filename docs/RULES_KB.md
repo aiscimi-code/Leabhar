@@ -104,8 +104,12 @@ official file is kept beside the entry byte for byte (`s046.json`,
 re-hashes it (AGENTS.md #5).
 `npm run catalogue:extract -- <entry>` writes one from the official page;
 `catalogue.test.ts` fails the gate when an entry no longer matches what the
-curation derives. All 39 loaded LRC-revised VATCA sections are in it; the
-other sources wait on #556.
+curation derives. All 39 loaded LRC-revised VATCA sections and Schedules
+1-3 are in it; the other sources wait on #556. A Schedule entry holds one
+provision per paragraph, with its Part, and its paragraph windows are read
+from the LRC page kept beside it. Its page is the one the parser was
+verified against: the LRC's re-rendered pages break lines where the
+line-based schedule parser misreads them (#699).
 
 A quote matches its provision word for word, ignoring line breaks and
 quote-mark style (`containsIgnoringLayout`): the LRC re-renders its pages
@@ -124,6 +128,11 @@ enacted, and the rule keeps its 2010 start: `vat.blocked_food_drink_accommodatio
 around the quoted words) and `vat.flat_rate_farmer_purchase` (Finance Act
 2016 s.47 changed the s.86(1) percentage, a separate fact) (#695). A quote of
 inserted or replaced words does not take it.
+
+A book that loaded a source from its statute copy before the port keeps
+that source, since its words are the same. Once the copy is gone, its
+footnotes and page are read from the entry with the same citation and words
+(`catalogueEntryForSource`), so its rules keep their dates (#698).
 
 A book numbers a rule's versions as it derives them, so a book that held a
 version before it was corrected numbers the correction 2 where a new book
@@ -426,9 +435,10 @@ never conflated with it:
   mid-sentence too — so, exactly like `vatcaParser.ts`, a paragraph's extent
   is found by locating every paragraph-opening *line* and slicing to just
   before the next one, never by grouping blank-line-delimited blocks.
-- `src/domain/rules/vatcaScheduleIngestion.ts` — `ingestVatcaSchedule`/
+- `src/domain/rules/vatcaScheduleIngestion.ts` — `ingestVatcaScheduleFromCatalogue`
+  (or `ingestVatcaSchedule` for a Markdown copy) and
   `deriveVatcaScheduleRules`, ingesting each Schedule under its own citation
-  (`2010 Act 31 Sch.2` / `Sch.3`, read from the file's own front matter) as
+  (`2010 Act 31 Sch.2` / `Sch.3`) as
   its own `irish_knowledge_sources` row — never merged into `2010 Act 31`
   (the principal Act's citation), and scoped so that Schedule 2's paragraph 9
   (printed matter) is never confused with Schedule 3's own, unrelated
@@ -1823,7 +1833,7 @@ this KB independently confirmed against the LRC-revised text for "VATCA
 lettered 9% carve-outs — (ca), (caa), (cab), (cac), (cb) — "each needs the
 same care as the headline rates". Both source documents this needed were
 already ingested (s.46, now `catalogue/vatca-2010-revised/s046.json`, for the carve-outs
-themselves, `vatca-2010-revised/schedule-3.md` for what each one's Schedule
+themselves, `catalogue/vatca-2010-revised/schedule-3.json` for what each one's Schedule
 3 references actually cover), so this closes the gap without any new
 ingestion.
 

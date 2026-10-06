@@ -102,11 +102,11 @@ docs/statutes/_inbox/B/vatca-s097.html,31441,unreferenced,
 docs/statutes/_inbox/B/vatca-s097.md,8931,unreferenced,
 docs/statutes/_inbox/B/vatca-s098.html,12928,duplicate,docs/statutes/vatca-2010-revised/s098.html
 docs/statutes/_inbox/B/vatca-s098.md,1280,duplicate,docs/statutes/vatca-2010-revised/s098.md
-docs/statutes/_inbox/B/vatca-schedule-1.html,84455,duplicate,docs/statutes/vatca-2010-revised/schedule-1.html
+docs/statutes/_inbox/B/vatca-schedule-1.html,84455,unreferenced,
 docs/statutes/_inbox/B/vatca-schedule-1.md,19988,unreferenced,
-docs/statutes/_inbox/B/vatca-schedule-2.html,92965,duplicate,docs/statutes/vatca-2010-revised/schedule-2.html
+docs/statutes/_inbox/B/vatca-schedule-2.html,92965,unreferenced,
 docs/statutes/_inbox/B/vatca-schedule-2.md,21955,unreferenced,
-docs/statutes/_inbox/B/vatca-schedule-3.html,100367,duplicate,docs/statutes/vatca-2010-revised/schedule-3.html
+docs/statutes/_inbox/B/vatca-schedule-3.html,100367,unreferenced,
 docs/statutes/_inbox/B/vatca-schedule-3.md,19366,unreferenced,
 docs/statutes/_inbox/C/COLLECT-LOG.json,45518,unreferenced,
 docs/statutes/_inbox/C/SOURCES.txt,4465,unreferenced,
@@ -560,12 +560,6 @@ docs/statutes/vatca-2010-revised/s91J.md,13032,unreferenced,
 docs/statutes/vatca-2010-revised/s92B.md,2155,unreferenced,
 docs/statutes/vatca-2010-revised/s92C.md,9762,unreferenced,
 docs/statutes/vatca-2010-revised/s92D.md,1753,unreferenced,
-docs/statutes/vatca-2010-revised/schedule-1.html,84455,runtime,read by the test suite
-docs/statutes/vatca-2010-revised/schedule-1.md,19981,runtime,read by the test suite
-docs/statutes/vatca-2010-revised/schedule-2.html,92965,runtime,read by the test suite
-docs/statutes/vatca-2010-revised/schedule-2.md,21948,runtime,read by the test suite
-docs/statutes/vatca-2010-revised/schedule-3.html,100367,runtime,read by the test suite
-docs/statutes/vatca-2010-revised/schedule-3.md,19359,runtime,read by the test suite
 docs/statutes/vatca-2010-revised/schedule-4.md,2181,runtime,read by the test suite
 docs/statutes/vatca-2010-revised/schedule-5.md,2725,runtime,read by the test suite
 docs/statutes/vatca-2010-revised/schedule-6.md,1182,runtime,read by the test suite

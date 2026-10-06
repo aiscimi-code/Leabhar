@@ -7,8 +7,10 @@
  * ingested as their own `irish_knowledge_sources` rows, never merged into
  * the principal Act's).
  *
- * Layout (verified against docs/statutes/vatca-2010-revised/schedule-2.md
- * and schedule-3.md): a front-matter block, a `# Title` line, then the flat
+ * Layout (verified against the LRC pages kept in the rules catalogue,
+ * catalogue/vatca-2010-revised/schedule-N.html, as `lrc_html_to_text.py`
+ * converts them; the extraction parses them with this parser, #556): a
+ * front-matter block, a `# Title` line, then the flat
  * body. A paragraph opens with a bare `N.` / `N. (1)` / `NA.` at the very
  * start of a line (no ".—" convention here, unlike the principal Act). Its
  * marginal-note heading sits one blank line above it (also unlike the
@@ -22,6 +24,11 @@
  * paragraph's extent is found by locating every paragraph-opening *line*
  * and slicing from one to just before the next, never by grouping
  * blank-line-delimited blocks.
+ *
+ * That makes it depend on where the conversion breaks lines. The LRC's
+ * re-rendered pages (October 2026) break a cross-reference so that a bare
+ * "3." opens a line, and move two headings; until the parser copes (#699)
+ * the catalogue keeps the pages it was verified against.
  */
 import { readFileSync } from 'node:fs';
 import { categoriseProvision, provisionSlug, type ParsedProvision } from './statuteParser';
@@ -190,18 +197,3 @@ export function parseVatcaSchedule(source: string): ParsedScheduleParagraph[] {
 export function parseVatcaScheduleFile(path: string): ParsedScheduleParagraph[] {
   return parseVatcaSchedule(readFileSync(path, 'utf8'));
 }
-
-export const VATCA_SCHEDULE_1_MD_PATH = new URL(
-  '../../../docs/statutes/vatca-2010-revised/schedule-1.md',
-  import.meta.url,
-).pathname;
-
-export const VATCA_SCHEDULE_2_MD_PATH = new URL(
-  '../../../docs/statutes/vatca-2010-revised/schedule-2.md',
-  import.meta.url,
-).pathname;
-
-export const VATCA_SCHEDULE_3_MD_PATH = new URL(
-  '../../../docs/statutes/vatca-2010-revised/schedule-3.md',
-  import.meta.url,
-).pathname;

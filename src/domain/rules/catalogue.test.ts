@@ -4,7 +4,7 @@ import { createHash } from 'node:crypto';
 import { eq } from 'drizzle-orm';
 import { createTestDatabase } from '@/db/testing';
 import { createCompany } from '../config/setup';
-import { irishActProvisions, irishKnowledgeSources } from '@/db/schema';
+import { irishActProvisions, irishKnowledgeSources, irishTaxRules } from '@/db/schema';
 import type { AppDatabase } from '@/db';
 import {
   CATALOGUE_ENTRIES, catalogueOfficialFilePath, catalogueRulesFor, ingestCatalogueEntry, readCatalogueEntry, validateCatalogueEntry,
@@ -77,8 +77,9 @@ describe.each(CATALOGUE_ENTRIES)('catalogue entry %s', (name) => {
     expect(source.sha256).toBe(e.source.sha256);
     expect(source.localPath).toBe(`catalogue/${name}`);
     const provisions = db.select().from(irishActProvisions).where(eq(irishActProvisions.sourceId, source.id)).all();
-    expect(provisions.map((p) => [p.sectionNumber, p.locator, p.sourceStart])).toEqual(
-      e.provisions.map((p) => [p.sectionNumber, p.locator, null]));
+    const bySection = (a: unknown[], b: unknown[]) => String(a[0]).localeCompare(String(b[0]));
+    expect(provisions.map((p) => [p.sectionNumber, p.locator, p.part, p.sourceStart]).sort(bySection)).toEqual(
+      e.provisions.map((p) => [p.sectionNumber, p.locator, p.part ?? null, null]).sort(bySection));
   });
 });
 
@@ -117,6 +118,29 @@ describe('ingestCatalogueEntry', () => {
     };
     expect(ingestCatalogueEntry(d, { companyId: c, entry: moved, localPath: 'catalogue/x.json', ingestVersion: 'v2' }).ingested).toBe(true);
     expect(d.select().from(irishKnowledgeSources).all()).toHaveLength(2);
+  });
+});
+
+describe('a book that read the statute copies before the port (#698)', () => {
+  const rules = (d: AppDatabase, c: string) => d.select({ key: irishTaxRules.ruleKey, v: irishTaxRules.ruleVersion, from: irishTaxRules.effectiveFrom, to: irishTaxRules.effectiveTo })
+    .from(irishTaxRules).where(eq(irishTaxRules.companyId, c)).all()
+    .map((r) => `${r.key}@${r.v} ${r.from}..${r.to ?? 'open'}`).sort();
+
+  it('keeps every rule date once the copies are gone: footnotes and pages come from the entry with the same words', () => {
+    // Each source as a book loaded it from its copy: a Markdown path no longer
+    // in the repository, its own hash, the same words.
+    const { db: d } = createTestDatabase();
+    const { companyId: c } = createCompany(d, { legalName: 'Old Ltd', vatRegistrationStatus: 'registered', seedYears: [2025] });
+    for (const name of CATALOGUE_ENTRIES) {
+      const e = readCatalogueEntry(name);
+      ingestCatalogueEntry(d, {
+        companyId: c, entry: { ...e, source: { ...e.source, sha256: 'f'.repeat(64) } },
+        localPath: `docs/statutes/${name.replace(/\.json$/, '.md')}`, ingestVersion: 'v1',
+      });
+    }
+    loadStatutoryKnowledgeBase(d, { companyId: c });
+    expect(d.select().from(irishKnowledgeSources).where(eq(irishKnowledgeSources.localPath, 'catalogue/vatca-2010-revised/s030.json')).all()).toHaveLength(0);
+    expect(rules(d, c)).toEqual(rules(db, companyId));
   });
 });
 

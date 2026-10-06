@@ -39,9 +39,9 @@
  *
  * A Schedule 1 rule's window starts on the latest LRC amendment to the words
  * it quotes (`statementExcerpt` and any `windowQuotes`), read from the LRC
- * HTML beside schedule-1.md (`quotedTextWindow`, issue #206). The s.2 and
- * s.3 rules keep the Act's commencement: their LRC HTML is not in the
- * repository.
+ * footnotes in its rules catalogue entry (`quotedTextWindow`, issue #206).
+ * The s.2 and s.3 rules keep the Act's commencement: their entries carry no
+ * footnotes, as their statute copies had no LRC HTML (#556, #691).
  *
  * Every `statementExcerpt` must be a verbatim substring of its provision's
  * `provisionText`; `deriveVatScopeRules` refuses (and reports) any that is not.

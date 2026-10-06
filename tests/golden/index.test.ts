@@ -23,8 +23,7 @@ import {
   ingestVatcaRevisedS46,
 } from '@/domain/rules/vatcaRevisedIngestion';
 import {
-  ingestVatcaSchedule, deriveVatcaScheduleRules,
-  VATCA_SCHEDULE_2_MD_PATH, VATCA_SCHEDULE_3_MD_PATH,
+  ingestVatcaScheduleFromCatalogue, deriveVatcaScheduleRules,
 } from '@/domain/rules/vatcaScheduleIngestion';
 import {
   ingestSi692025Reg5, ingestSi692025Reg8, ingestSi692025Reg9,
@@ -100,11 +99,9 @@ beforeEach(() => {
   }
   deriveVatScopeRules(db, { companyId });
 
-  const sch2Md = readFileSync(VATCA_SCHEDULE_2_MD_PATH, 'utf8');
-  const sch3Md = readFileSync(VATCA_SCHEDULE_3_MD_PATH, 'utf8');
-  ingestVatcaSchedule(db, { companyId, scheduleNumber: '2', markdown: sch2Md, ingestVersion: 'v1' });
+  ingestVatcaScheduleFromCatalogue(db, { companyId, scheduleNumber: '2' });
   deriveVatcaScheduleRules(db, { companyId, scheduleNumber: '2' });
-  ingestVatcaSchedule(db, { companyId, scheduleNumber: '3', markdown: sch3Md, ingestVersion: 'v1' });
+  ingestVatcaScheduleFromCatalogue(db, { companyId, scheduleNumber: '3' });
   deriveVatcaScheduleRules(db, { companyId, scheduleNumber: '3' });
 
   const si69Md = readFileSync(SI_69_2025_MD_PATH, 'utf8');

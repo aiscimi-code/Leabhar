@@ -27,7 +27,7 @@ import { irishTaxRules } from '@/db/schema';
 import { ensureDefaultVatTreatments } from '../config/setup';
 import { ingestFinanceAct2024, ingestFinanceAct2025, deriveTaxRules } from './irishRules';
 import { ingestVatca2010, deriveVatcaRules } from './vatcaIngestion';
-import { ingestVatcaSchedule, deriveVatcaScheduleRules } from './vatcaScheduleIngestion';
+import { deriveVatcaScheduleRules } from './vatcaScheduleIngestion';
 import {
   ingestTca1997S530, ingestTca1997S530A, ingestTca1997S530E, ingestTca1997S530G, ingestTca1997S530H,
   ingestTca1997S530I, ingestRctTdm18_02_04, ingestRctTdm18_02_05, ingestRctTdm18_02_11, deriveRctRules,
@@ -73,18 +73,6 @@ const SOURCES: Array<{ path: string; ingest: IngestFn }> = [
   { path: 'docs/statutes/finance-act-2024/2024-act-43-enacted.md', ingest: ingestFinanceAct2024 },
   { path: 'docs/statutes/finance-act-2025/2025-act-18-enacted.md', ingest: ingestFinanceAct2025 },
   { path: 'docs/statutes/vatca-2010/vatca-2010-enacted.md', ingest: ingestVatca2010 },
-  {
-    path: 'docs/statutes/vatca-2010-revised/schedule-1.md',
-    ingest: (db, p) => ingestVatcaSchedule(db, { ...p, scheduleNumber: '1' }),
-  },
-  {
-    path: 'docs/statutes/vatca-2010-revised/schedule-2.md',
-    ingest: (db, p) => ingestVatcaSchedule(db, { ...p, scheduleNumber: '2' }),
-  },
-  {
-    path: 'docs/statutes/vatca-2010-revised/schedule-3.md',
-    ingest: (db, p) => ingestVatcaSchedule(db, { ...p, scheduleNumber: '3' }),
-  },
   { path: 'docs/statutes/tca-1997/s530.md', ingest: ingestTca1997S530 },
   { path: 'docs/statutes/tca-1997/s530A.md', ingest: ingestTca1997S530A },
   { path: 'docs/statutes/tca-1997/s530E.md', ingest: ingestTca1997S530E },

@@ -29,7 +29,7 @@
  * A computation's `consumed_by` links are not here: they describe the code
  * that reads a rule, not the law, and load from the manifests (consumers.ts).
  */
-import { readFileSync } from 'node:fs';
+import { readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { and, eq, inArray } from 'drizzle-orm';
 import type { AppDatabase } from '@/db';
@@ -71,6 +71,8 @@ export interface CatalogueProvision {
   heading: string;
   /** How the source points a reader here: `s.46`, `page 12`, `box T1`. */
   locator: string;
+  /** The Part of a Schedule the paragraph sits under ("Part 2"); absent where the source has none. */
+  part?: string | null;
   category: IrishProvisionCategory;
   relevant: boolean;
   relevanceReason: string | null;
@@ -176,6 +178,10 @@ export const CATALOGUE_ENTRIES = [
   'vatca-2010-revised/s059.json',
   'vatca-2010-revised/s064.json',
   'vatca-2010-revised/s094.json',
+  // Schedules 1-3: one provision per paragraph, under its Part.
+  'vatca-2010-revised/schedule-1.json',
+  'vatca-2010-revised/schedule-2.json',
+  'vatca-2010-revised/schedule-3.json',
 ] as const;
 
 export function catalogueEntryPath(entry: string, root: string = appRoot()): string {
@@ -209,6 +215,7 @@ export function validateCatalogueEntry(entry: unknown, label = 'catalogue entry'
   for (const p of e.provisions) {
     if (!p.sectionNumber || !p.locator || !p.excerpt) fail(`provision ${p.sectionNumber} needs a section, a locator and an excerpt`);
     if (!IRISH_PROVISION_CATEGORIES.includes(p.category)) fail(`provision ${p.sectionNumber}: unknown category ${p.category}`);
+    if (p.part !== undefined && p.part !== null && typeof p.part !== 'string') fail(`provision ${p.sectionNumber}: part must be a string`);
     if (sections.has(p.sectionNumber)) fail(`provision ${p.sectionNumber} is listed twice`);
     sections.add(p.sectionNumber);
   }
@@ -230,7 +237,55 @@ export function readCatalogueEntry(entry: string, root?: string): CatalogueEntry
   return validateCatalogueEntry(JSON.parse(readFileSync(catalogueEntryPath(entry, root), 'utf8')), entry);
 }
 
+/** Each entry's citation, by file version: the lookup below reads only the entries that share one. */
+const citations = new Map<string, { stamp: string; citation: string }>();
+
+function citationOf(entry: string, root?: string): string {
+  const path = catalogueEntryPath(entry, root);
+  const { mtimeMs, size } = statSync(path);
+  const stamp = `${mtimeMs}:${size}`;
+  const cached = citations.get(path);
+  if (cached?.stamp === stamp) return cached.citation;
+  const citation = readCatalogueEntry(entry, root).source.citation;
+  citations.set(path, { stamp, citation });
+  return citation;
+}
+
 const normaliseSpace = (s: string) => s.replace(/\s+/g, ' ').trim();
+
+/** Whether a held source's provisions say the same words as an entry's. */
+function sameWords(rows: Array<{ sectionNumber: string; text: string | null }>, provisions: CatalogueProvision[]): boolean {
+  return rows.length === provisions.length && provisions.every((p) =>
+    rows.some((r) => r.sectionNumber === p.sectionNumber && normaliseSpace(r.text ?? '') === normaliseSpace(p.excerpt)));
+}
+
+/**
+ * The catalogue entry a held source's words come from: the entry it was
+ * loaded from, or, for a source a book read from a statute copy before the
+ * port, the entry with its citation whose provisions say the same words
+ * (`ingestCatalogueEntry` keeps such a source). Its footnotes and kept page
+ * stand in for the deleted copy's (#698). Null for a source not ported.
+ */
+export function catalogueEntryForSource(
+  db: AppDatabase, sourceId: string, root?: string,
+): { name: string; entry: CatalogueEntry } | null {
+  const source = db.select({ citation: irishKnowledgeSources.citation, sha256: irishKnowledgeSources.sha256, localPath: irishKnowledgeSources.localPath })
+    .from(irishKnowledgeSources).where(eq(irishKnowledgeSources.id, sourceId)).get();
+  if (!source) return null;
+  if (source.localPath?.startsWith(`${CATALOGUE_DIR}/`)) {
+    const name = source.localPath.slice(CATALOGUE_DIR.length + 1);
+    const entry = readCatalogueEntry(name, root);
+    return entry.source.sha256 === source.sha256 ? { name, entry } : null;
+  }
+  const rows = db.select({ sectionNumber: irishActProvisions.sectionNumber, text: irishActProvisions.provisionText })
+    .from(irishActProvisions).where(eq(irishActProvisions.sourceId, sourceId)).all();
+  for (const name of CATALOGUE_ENTRIES) {
+    if (citationOf(name, root) !== source.citation) continue;
+    const entry = readCatalogueEntry(name, root);
+    if (sameWords(rows, entry.provisions)) return { name, entry };
+  }
+  return null;
+}
 
 export interface CatalogueIngestResult {
   sourceId: string;
@@ -255,8 +310,7 @@ export function ingestCatalogueEntry(
   for (const h of held) {
     const rows = db.select({ sectionNumber: irishActProvisions.sectionNumber, text: irishActProvisions.provisionText })
       .from(irishActProvisions).where(eq(irishActProvisions.sourceId, h.id)).all();
-    const same = h.sha256 === source.sha256 || (rows.length === provisions.length && provisions.every((p) =>
-      rows.some((r) => r.sectionNumber === p.sectionNumber && normaliseSpace(r.text ?? '') === normaliseSpace(p.excerpt))));
+    const same = h.sha256 === source.sha256 || sameWords(rows, provisions);
     if (same && rows.length > 0) return { sourceId: h.id, provisionCount: rows.length, ingested: false };
   }
 
@@ -290,6 +344,7 @@ export function ingestCatalogueEntry(
         slug: slug(`${source.citation} ${p.sectionNumber} ${p.heading}`),
         heading: p.heading,
         principalAct: null,
+        part: p.part ?? null,
         provisionText: p.excerpt,
         // No local file to slice: the locator says where the words are in the source.
         sourceStart: null,

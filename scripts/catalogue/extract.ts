@@ -5,6 +5,7 @@
  *   npm run catalogue:extract -- vatca-2010-revised/s046
  *   npm run catalogue:extract -- vatca-2010-revised/s046 --html saved.html --retrieved-on 2026-09-29
  *   npm run catalogue:extract -- vatca-2010-revised/s009 vatca-2010-revised/s010 --html-dir pages/
+ *   npm run catalogue:extract -- vatca-2010-revised/schedule-2
  *
  * Several entries are extracted together: every entry's source and
  * provisions are written first, then the knowledge base is loaded once and
@@ -43,6 +44,8 @@ import { loadStatutoryKnowledgeBase } from '@/domain/rules/knowledgeBase';
 import { ruleImpact } from '@/domain/rules/ruleImpact';
 import { parseVatcaRevisedSection } from '@/domain/rules/vatcaRevisedSectionParser';
 import { vatcaRevisedRelevance } from '@/domain/rules/vatcaRevisedIngestion';
+import { parseVatcaSchedule } from '@/domain/rules/vatcaScheduleParser';
+import { vatcaScheduleRelevance } from '@/domain/rules/vatcaScheduleIngestion';
 import { nowIso } from '@/domain/dates';
 import { lrcAnnotationLayer } from '@/domain/rules/lrcAnnotations';
 
@@ -95,6 +98,37 @@ function extractorFor(entry: string, naming: Naming | null): Extractor {
             sectionNumber: parsed.sectionNumber, heading: parsed.heading, locator: `s.${parsed.sectionNumber}`,
             category: parsed.category, relevant, relevanceReason: reason, excerpt: parsed.provisionText,
           }],
+        };
+      },
+    };
+  }
+  // A Schedule: one provision per paragraph, as the schedule parser reads it.
+  const schedule = /^vatca-2010-revised\/schedule-(\d+)$/.exec(entry)?.[1];
+  if (schedule) {
+    const url = `https://revisedacts.lawreform.ie/eli/2010/act/31/schedule/${schedule}/revised/en/html`;
+    const title = naming?.title ?? `VATCA 2010 Schedule ${schedule} (revised)`;
+    const citation = naming?.citation ?? `2010 Act 31 Sch.${schedule}`;
+    return {
+      url, title, citation,
+      build: (html, retrievedOn, annotate) => {
+        const paragraphs = parseVatcaSchedule(convertLrc(html, title, citation, url));
+        if (paragraphs.length === 0) throw new Error(`Schedule ${schedule}: the parser found no paragraphs.`);
+        return {
+          source: {
+            citation, title, sourceType: 'legislation', jurisdiction: 'IE', sourceUrl: url,
+            sha256: createHash('sha256').update(html).digest('hex'),
+            conversion: 'lrc-html-plaintext', retrievedOn,
+            ...(annotate ? { lrcAnnotations: lrcAnnotationLayer(html.toString('utf8')) } : {}),
+          },
+          provisions: paragraphs.map((p) => {
+            const { relevant, reason } = vatcaScheduleRelevance(schedule, citation, p);
+            return {
+              sectionNumber: p.paragraphNumber,
+              heading: p.heading || `Schedule ${schedule} paragraph ${p.paragraphNumber}`,
+              locator: `Sch.${schedule} para ${p.paragraphNumber}`, part: p.part,
+              category: p.category, relevant, relevanceReason: reason, excerpt: p.provisionText,
+            };
+          }),
         };
       },
     };

@@ -1,24 +1,25 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { sha256Hex } from '@/lib/hash';
-import { parseVatcaSchedule } from './vatcaScheduleParser';
+import { readCatalogueEntry } from './catalogue';
 import { annotateScheduleParagraphs, parseLrcFootnotes, scheduleParagraphWindows, UNNUMBERED_PARAGRAPHS } from './lrcAnnotations';
 import { UNNUMBERED_SCHEDULE_PARAGRAPHS } from './coverage';
 
 /**
  * Issue #205: each schedule paragraph's rule window comes from the LRC's own
- * amendment footnotes, read from the HTML the Markdown was converted from.
+ * amendment footnotes, read from the LRC page kept beside its rules
+ * catalogue entry (#556), in the order the entry lists the paragraphs.
  */
 
-const DIR = 'docs/statutes/vatca-2010-revised';
+const DIR = 'catalogue/vatca-2010-revised';
 const html = (n: string) => readFileSync(`${DIR}/schedule-${n}.html`, 'utf8');
-const paragraphs = (n: string) => parseVatcaSchedule(readFileSync(`${DIR}/schedule-${n}.md`, 'utf8')).map((p) => p.paragraphNumber);
+const entry = (n: string) => readCatalogueEntry(`vatca-2010-revised/schedule-${n}.json`);
+const paragraphs = (n: string) => entry(n).provisions.map((p) => p.sectionNumber);
 
 describe('LRC schedule annotations', () => {
-  it('reads the HTML the Markdown was converted from', () => {
+  it('reads the page the entry was extracted from', () => {
     for (const n of ['2', '3']) {
-      const recorded = /source_html_sha256:\s*"([0-9a-f]{64})"/.exec(readFileSync(`${DIR}/schedule-${n}.md`, 'utf8'))![1];
-      expect(sha256Hex(readFileSync(`${DIR}/schedule-${n}.html`))).toBe(recorded);
+      expect(sha256Hex(readFileSync(`${DIR}/schedule-${n}.html`))).toBe(entry(n).source.sha256);
     }
   });
 
@@ -34,7 +35,7 @@ describe('LRC schedule annotations', () => {
     }
   });
 
-  it('finds every paragraph the Markdown parser finds, and places every footnote', () => {
+  it('finds every paragraph the schedule parser finds, and places every footnote', () => {
     for (const n of ['2', '3']) {
       const list = paragraphs(n);
       for (const u of UNNUMBERED_PARAGRAPHS[n] ?? []) {

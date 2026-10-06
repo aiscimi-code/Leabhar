@@ -10,6 +10,12 @@ via `../scripts/extract_vat_sources.py`.
 
 ## Status
 
+The sections and Schedules the knowledge base loads (Schedules 1-3 and the
+revised sections it reads) have moved to the rules catalogue,
+[`catalogue/vatca-2010-revised/`](../../../catalogue/vatca-2010-revised/),
+each with the official page it was extracted from (#556). What remains here
+is reference text not yet ported; the history below predates the move.
+
 Schedules 2, 3, 4, 5, 6 and 9 are committed — including the two most
 commercially significant ones for invoice coding: Schedule 2 (zero-rated
 goods/services) and Schedule 3 (reduced-rate goods/services, with the
