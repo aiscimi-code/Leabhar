@@ -22,4 +22,4 @@ The rules KB cites Part 3's VAT rate sections (issue #205):
 - s.71: from 1 July 2026, (cb) becomes 9% for Sch.3 paras 3(1), 3(3) and 13(3) (food and drink,
   catering, hairdressing), with no end date.
 
-The LRC revised s.46 (`../vatca-2010-revised/s046.md`) does not yet show s.71.
+The LRC revised s.46 now shows s.71 (retrieved 2026-10-06, `../vatca-2010-revised/s046-2026-10-06.html`, footnote F106). The curated `s046.md` is still the 2026-09-29 copy and does not.
