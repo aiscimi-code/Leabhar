@@ -449,27 +449,48 @@ class IncomeTaxRun {
 
     // PRSI Class S (SWCA 2005 s.21(1)(a)): the rate and the minimum are rule
     // figures like every other (#487), as is the €5,000 prescribed amount
-    // below which no Class S is payable (S.I. 312/1996 art. 92).
-    const prsiRule = this.rule('prsi.class_s_rate', dec31);
-    if (prsiRule?.finding) this.findings.push(prsiRule.finding);
-    const prsiRate = prsiRule?.numericValue ?? null;
+    // below which no Class S is payable (S.I. 312/1996 art. 92). The rate
+    // changes on 1 October (SWMPA 2024 s.3), so the year is split at each
+    // change and each rate charged on its own part's income (#711); the
+    // minimum and the prescribed amount are tested on the whole year.
+    const jan1 = `${year}-01-01`;
+    const changes = [...new Set(INCOME_TAX_CURATED_RULES
+      .filter((r) => r.ruleKey === 'prsi.class_s_rate' && r.effectiveFrom > jan1 && r.effectiveFrom <= dec31)
+      .map((r) => r.effectiveFrom))].sort();
+    const starts = [jan1, ...changes];
+    const windows = starts.map((from, i) => ({
+      from, to: i + 1 < starts.length ? addDays(starts[i + 1]!, -1) : dec31, rule: this.rule('prsi.class_s_rate', from),
+    }));
+    for (const w of windows) if (w.rule?.finding && !this.findings.includes(w.rule.finding)) this.findings.push(w.rule.finding);
+    const unrated = windows.find((w) => !w.rule?.numericValue);
     const prsiMinimum = need('prsi.class_s_minimum');
     const prsiDisregard = need('prsi.class_s_disregard');
     let prsiMinor: number | null = null;
-    if (!prsiRate) {
-      const why = prsiRule?.status === 'rejected' ? 'the rule was rejected on the review screen'
-        : prsiRule?.status === 'retired' ? 'the rule was retired on the review screen'
-        : 'the revised s.21 text is dated from 2026-09-25';
-      this.findings.push(`No PRSI Class S rate is available for ${year} (${why}): PRSI is not computed for that year.`);
+    if (unrated) {
+      const why = unrated.rule?.status === 'rejected' ? 'the rule was rejected on the review screen'
+        : unrated.rule?.status === 'retired' ? 'the rule was retired on the review screen'
+        : 'no rate is curated from before 1 October 2024';
+      this.findings.push(`No PRSI Class S rate is available for ${unrated.from} to ${unrated.to} (${why}): `
+        + `PRSI is not computed for ${year}.`);
     } else if (!prsiMinimum) {
       this.findings.push(`No PRSI Class S minimum (prsi.class_s_minimum) is available for ${year}: PRSI is not computed for that year.`);
     } else if (!prsiDisregard) {
       this.findings.push(`No PRSI Class S prescribed amount (prsi.class_s_disregard) is available for ${year}: PRSI is not computed for that year.`);
     } else if (p > 0) {
-      prsiMinor = classSPrsiMinor(p, prsiRate, prsiMinimum.numericValue!, prsiDisregard.numericValue!);
+      // Each part's income is the year's, apportioned by time; the last takes the remainder so the parts add up.
+      const parts = windows.map((w, i) => ({
+        ...w, rateBasisPoints: w.rule!.numericValue!,
+        incomeMinor: i < windows.length - 1 ? apportion(p, w.from, w.to, jan1, dec31) : 0,
+      }));
+      parts[parts.length - 1]!.incomeMinor = p - parts.slice(0, -1).reduce((s, w) => s + w.incomeMinor, 0);
+      prsiMinor = classSPrsiMinor(parts, prsiMinimum.numericValue!, prsiDisregard.numericValue!);
+      const rates = parts.length === 1
+        ? `${parts[0]!.rateBasisPoints / 100}%`
+        : `${parts.map((w) => `${w.rateBasisPoints / 100}% on ${eur(w.incomeMinor)} (${w.from} to ${w.to})`).join(' and ')}, `
+          + 'the year\'s income apportioned by time,';
       this.findings.push(prsiMinor === 0
         ? `${name}: no PRSI Class S, reckonable income is under the ${eur(prsiDisregard.numericValue!)} prescribed amount.`
-        : `${name}: PRSI Class S at ${prsiRate / 100}% with the ${eur(prsiMinimum.numericValue!)} minimum.`);
+        : `${name}: PRSI Class S at ${rates} with the ${eur(prsiMinimum.numericValue!)} minimum.`);
     }
     return {
       name, partnerId,

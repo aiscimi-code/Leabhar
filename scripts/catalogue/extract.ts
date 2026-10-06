@@ -9,6 +9,7 @@
  *   npm run catalogue:extract -- vatca-2010/vatca-2010-enacted --html vatca.pdf
  *   npm run catalogue:extract -- finance-act-2024/2024-act-43-enacted
  *   npm run catalogue:extract -- tca-1997-nfg/part02
+ *   npm run catalogue:extract -- swca-2005/s21
  *
  * Several entries are extracted together: every entry's source and
  * provisions are written first, then the knowledge base is loaded once and
@@ -79,6 +80,7 @@ import { extractCapacityExclusionSection } from '@/domain/rules/tdm3801_03bParse
 import { parseCompaniesAct2014Section } from '@/domain/rules/companiesAct2014SectionParser';
 import { COMPANIES_ACT_2014_NOTE, companiesAct2014Relevance } from '@/domain/rules/companiesAct2014Ingestion';
 import { TDM_38_01_03B } from '@/domain/rules/tdm3801_03bIngestion';
+import { SWCA_NOTE, SWCA_RELEVANCE_REASON } from '@/domain/rules/incomeTaxIngestion';
 import { compareNfgContents, extractNfgSection } from '@/domain/rules/tcaNfgParser';
 import { NFG_EFFECTIVE_FROM, NFG_NOTE, nfgRelevanceReason, nfgSourceUrl, nfgTitle } from '@/domain/rules/tcaNfgIngestion';
 import { NFG_SECTIONS, nfgCitation } from '@/domain/rules/corporationTaxCuration';
@@ -163,6 +165,30 @@ function extractorFor(entry: string, naming: Naming | null): Extractor {
           provisions: [{
             sectionNumber: parsed.sectionNumber, heading: parsed.heading, locator: `s.${parsed.sectionNumber}`,
             category: parsed.category, relevant, relevanceReason: reason, excerpt: parsed.provisionText,
+          }],
+        };
+      },
+    };
+  }
+  // A Social Welfare Consolidation Act 2005 section, revised, from its LRC page: one provision.
+  const swca = /^swca-2005\/s(\d+[A-Z]*)$/.exec(entry)?.[1];
+  if (swca) {
+    const url = `https://revisedacts.lawreform.ie/eli/2005/act/26/section/${swca}/revised/en/html`;
+    const title = naming?.title ?? `SWCA 2005 s.${swca} (LRC revised)`;
+    const citation = naming?.citation ?? `SWCA 2005 s.${swca}`;
+    return {
+      url, title, citation,
+      build: (html, retrievedOn) => {
+        const parsed = parseVatcaRevisedSection(convertLrc(html, title, citation, url));
+        return {
+          source: {
+            citation, title, sourceType: 'legislation', jurisdiction: 'IE', sourceUrl: url,
+            sha256: createHash('sha256').update(html).digest('hex'),
+            conversion: 'lrc-html-plaintext', retrievedOn, note: SWCA_NOTE,
+          },
+          provisions: [{
+            sectionNumber: parsed.sectionNumber, heading: parsed.heading, locator: `s.${parsed.sectionNumber}`,
+            category: 'income_tax', relevant: true, relevanceReason: SWCA_RELEVANCE_REASON, excerpt: parsed.provisionText,
           }],
         };
       },

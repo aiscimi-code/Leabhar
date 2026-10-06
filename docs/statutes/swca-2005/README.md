@@ -1,11 +1,16 @@
 # Social Welfare Consolidation Act 2005 — self-employment contributions
 
 LRC revised text of ss.20–23 (PRSI Class S), retrieved 2026-09-25
-(`SOURCES.txt`). Revised text is current law on the day retrieved, not a
-dated history: `prsi.class_s_rate` (4.2%, at least €650, s.21(1)(a)) is
-dated from the retrieval date because the text does not say when that rate
-took effect. The €5,000 reckonable-income threshold for Class S liability is
-not in these sections: it is S.I. 312/1996 art. 92 (`docs/statutes/si-312-1996/art92.md`, issue #487).
+(`SOURCES.txt`). Each section is now a rules catalogue entry,
+`catalogue/swca-2005/s<N>.json`, with its LRC page beside it (#556).
+Revised text is current law on the day retrieved, not a dated history, so no
+figure is dated from it (#711): `prsi.class_s_rate` is dated and quoted from
+SWMPA 2024 s.3 (Table, amendment 9: 4.1% from 1 October 2024 to 4.7% from
+1 October 2028), and the €650 minimum from 1 October 2024 (SWMPA 2024
+s.5(b), LRC note F188). The €5,000 reckonable-income threshold for Class S
+liability is not in these sections: it is S.I. 312/1996 art. 92
+(`docs/statutes/si-312-1996/art92.md`, issue #487), still a statute copy
+(#712).
 
 Ingested by `src/domain/rules/incomeTaxIngestion.ts` (issue #212).
 

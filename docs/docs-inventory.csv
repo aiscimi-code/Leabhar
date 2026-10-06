@@ -285,14 +285,14 @@ docs/statutes/_inbox/E/tdm-18-02-01.pdf,491481,original,docs/statutes/_inbox/E/t
 docs/statutes/_inbox/E/tdm-18-02-02.md,19220,unreferenced,
 docs/statutes/_inbox/E/tdm-18-02-02.pdf,480120,original,docs/statutes/_inbox/E/tdm-18-02-02.md
 docs/statutes/_inbox/F/SOURCES.txt,313,duplicate,docs/statutes/swca-2005/SOURCES.txt
-docs/statutes/_inbox/F/swca-2005-s20.html,17450,duplicate,docs/statutes/swca-2005/swca-2005-s20.html
-docs/statutes/_inbox/F/swca-2005-s20.md,2116,duplicate,docs/statutes/swca-2005/swca-2005-s20.md
-docs/statutes/_inbox/F/swca-2005-s21.html,63680,duplicate,docs/statutes/swca-2005/swca-2005-s21.html
-docs/statutes/_inbox/F/swca-2005-s21.md,5359,duplicate,docs/statutes/swca-2005/swca-2005-s21.md
-docs/statutes/_inbox/F/swca-2005-s22.html,16680,duplicate,docs/statutes/swca-2005/swca-2005-s22.html
-docs/statutes/_inbox/F/swca-2005-s22.md,1643,duplicate,docs/statutes/swca-2005/swca-2005-s22.md
-docs/statutes/_inbox/F/swca-2005-s23.html,30132,duplicate,docs/statutes/swca-2005/swca-2005-s23.html
-docs/statutes/_inbox/F/swca-2005-s23.md,5436,duplicate,docs/statutes/swca-2005/swca-2005-s23.md
+docs/statutes/_inbox/F/swca-2005-s20.html,17450,duplicate,catalogue/swca-2005/s20.html
+docs/statutes/_inbox/F/swca-2005-s20.md,2116,cited-docs,docs/statutes/_inbox/MANIFEST.sha256
+docs/statutes/_inbox/F/swca-2005-s21.html,63680,duplicate,catalogue/swca-2005/s21.html
+docs/statutes/_inbox/F/swca-2005-s21.md,5359,cited-docs,docs/statutes/_inbox/MANIFEST.sha256
+docs/statutes/_inbox/F/swca-2005-s22.html,16680,duplicate,catalogue/swca-2005/s22.html
+docs/statutes/_inbox/F/swca-2005-s22.md,1643,cited-docs,docs/statutes/_inbox/MANIFEST.sha256
+docs/statutes/_inbox/F/swca-2005-s23.html,30132,duplicate,catalogue/swca-2005/s23.html
+docs/statutes/_inbox/F/swca-2005-s23.md,5436,cited-docs,docs/statutes/_inbox/MANIFEST.sha256
 docs/statutes/_inbox/G/38-01-04J.md,83192,duplicate,docs/statutes/tdm-ct/38-01-04J.md
 docs/statutes/_inbox/G/38-01-04J.pdf,4804398,duplicate,docs/statutes/tdm-ct/38-01-04J.pdf
 docs/statutes/_inbox/G/38-02-01.md,2770,duplicate,docs/statutes/tdm-ct/38-02-01.md
@@ -397,14 +397,6 @@ docs/statutes/si-651-2011/README.md,1330,cited-docs,docs/RULES_KB.md
 docs/statutes/sme-scheme/tdm-sme-domestic-layer.md,12249,cited-docs,docs/statutes/SOURCE-REGISTER.md
 docs/statutes/swca-2005/README.md,535,unreferenced,
 docs/statutes/swca-2005/SOURCES.txt,313,cited-docs,docs/statutes/swca-2005/README.md
-docs/statutes/swca-2005/swca-2005-s20.html,17450,original,docs/statutes/_inbox/F/swca-2005-s20.md docs/statutes/swca-2005/swca-2005-s20.md
-docs/statutes/swca-2005/swca-2005-s20.md,2116,runtime,read by the test suite
-docs/statutes/swca-2005/swca-2005-s21.html,63680,original,docs/statutes/_inbox/F/swca-2005-s21.md docs/statutes/swca-2005/swca-2005-s21.md
-docs/statutes/swca-2005/swca-2005-s21.md,5359,runtime,read by the test suite
-docs/statutes/swca-2005/swca-2005-s22.html,16680,original,docs/statutes/_inbox/F/swca-2005-s22.md docs/statutes/swca-2005/swca-2005-s22.md
-docs/statutes/swca-2005/swca-2005-s22.md,1643,runtime,read by the test suite
-docs/statutes/swca-2005/swca-2005-s23.html,30132,original,docs/statutes/_inbox/F/swca-2005-s23.md docs/statutes/swca-2005/swca-2005-s23.md
-docs/statutes/swca-2005/swca-2005-s23.md,5436,runtime,read by the test suite
 docs/statutes/tbe-services/tdm-tbe-services.md,24082,cited-docs,docs/statutes/SOURCE-REGISTER.md
 docs/statutes/tca-1997-nfg/README.md,1844,unreferenced,
 docs/statutes/tca-1997-nfg/SOURCES.txt,898,cited-docs,docs/statutes/tca-1997-nfg/README.md

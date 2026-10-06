@@ -1,0 +1,26 @@
+{
+  "format": 1,
+  "source": {
+    "citation": "SWCA 2005 s.22",
+    "title": "SWCA 2005 s.22 (LRC revised)",
+    "sourceType": "legislation",
+    "jurisdiction": "IE",
+    "sourceUrl": "https://revisedacts.lawreform.ie/eli/2005/act/26/section/22/revised/en/html",
+    "sha256": "2babc0dee38dd9a9222b9b464289c301a253a66cf1145130b43b4517559df2b0",
+    "conversion": "lrc-html-plaintext",
+    "retrievedOn": "2026-09-25",
+    "note": "LRC revised text as retrieved: current law on that date, not a dated history."
+  },
+  "provisions": [
+    {
+      "sectionNumber": "22",
+      "heading": "Regulations providing for determination of contributions payable.",
+      "locator": "s.22",
+      "category": "income_tax",
+      "relevant": true,
+      "relevanceReason": "Self-employment (Class S) contributions for sole traders and partners (issue #212).",
+      "excerpt": "22.\n—(1)\nRegulations may provide for the determination of the contributions payable, the\namount or rates of those contributions, and the contribution weeks in respect of\nwhich those contributions shall be regarded as having been paid, in the case of a\nperson who—\n\n(\na\n) becomes for the\nfirst time a self-employed contributor,\n\n(\nb\n) ceases to be a\nself-employed contributor,\n\n(\nc\n) is both an\nemployed contributor and a self-employed contributor whether concurrently or\nnot,\n\n(\nd\n) in any\ncontribution year has reckonable emoluments but does not have reckonable\nincome,\n\n(\ne\n) in any\ncontribution year has both reckonable emoluments and reckonable income, or\n\n(\nf\n) in any\ncontribution year has reckonable emoluments which relate to a period less than the\nfull year.\n\n[1993 s19(2); 2001 s9(2)(\nb\n)]\n\n(2) The Minister may by\nregulations specify the circumstances in which contributions payable by a\nself-employed contributor may be treated as paid.\n\n[1993 s19(4); 2001 s9(2)(\nb\n)]\n\n(3) For the purposes of\nthis section “contributions” means—\n\n(\na\n) employment\ncontributions payable under\nsection 13\n, and\n\n(\nb\n) self-employment\ncontributions payable under\nsection 21\n."
+    }
+  ],
+  "rules": []
+}

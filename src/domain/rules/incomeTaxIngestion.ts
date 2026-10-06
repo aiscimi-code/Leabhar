@@ -4,6 +4,11 @@
  * step for every curated income tax, USC and PRSI rule, whichever source it
  * quotes. A rule family (one ruleKey) is chained by date: each version
  * supersedes the one before it and only the latest is active.
+ *
+ * The knowledge base loads ss.20-23 from their rules catalogue entries
+ * (`catalogue/swca-2005/s<N>.json`, with the LRC page beside it;
+ * `ingestSwcaFromCatalogue`, #556). S.I. 312/1996 art. 92 still reads its
+ * statute copy, which cannot be ported with the same words (#712).
  */
 import { and, eq } from 'drizzle-orm';
 import type { AppDatabase } from '@/db';
@@ -18,12 +23,31 @@ import { INCOME_TAX_CURATED_RULES, type CuratedIncomeTaxRule } from './incomeTax
 import { upsertReviewItem } from '../extraction/service';
 import { crossReferencesFromProvision, sameCrossReferences } from './dependencies';
 import { taxHeadsFor } from './taxHeads';
+import { ingestCatalogueFile, type CatalogueIngestResult } from './catalogue';
 
-export const SWCA_SECTIONS = ['20', '21', '22', '23', 'si312-art92'];
+/** The SWCA 2005 sections the knowledge base holds, each a catalogue entry. */
+export const SWCA_SECTIONS = ['20', '21', '22', '23'] as const;
+export type SwcaSectionNumber = typeof SWCA_SECTIONS[number];
 export const SI_312_1996_ART92_PATH = 'docs/statutes/si-312-1996/art92.md';
-export const swcaPath = (n: string) => (n === 'si312-art92' ? SI_312_1996_ART92_PATH : `docs/statutes/swca-2005/swca-2005-s${n}.md`);
 
-/** Ingest one revised SWCA 2005 section. Idempotent by content. */
+/** What each section's source says of itself: the revised text on the day it was fetched. */
+export const SWCA_NOTE = 'LRC revised text as retrieved: current law on that date, not a dated history.';
+export const SWCA_RELEVANCE_REASON = 'Self-employment (Class S) contributions for sole traders and partners (issue #212).';
+
+/** A section's catalogue entry. */
+export const swcaCatalogueEntry = (n: SwcaSectionNumber) => `swca-2005/s${n}.json`;
+
+/** Load every SWCA section from its catalogue entry. */
+export function ingestSwcaFromCatalogue(
+  db: AppDatabase,
+  params: { companyId?: string | null; ingestVersion?: string; root?: string },
+): Array<CatalogueIngestResult & { sectionNumber: SwcaSectionNumber }> {
+  return SWCA_SECTIONS.map((sectionNumber) => ({
+    sectionNumber, ...ingestCatalogueFile(db, { ...params, entry: swcaCatalogueEntry(sectionNumber) }),
+  }));
+}
+
+/** Ingest one revised section from a Markdown copy: S.I. 312/1996 art. 92 (#712). Idempotent by content. */
 export function ingestSwcaSection(
   db: AppDatabase,
   params: { companyId?: string | null; markdown: string; ingestVersion: string; localPath?: string },
@@ -49,7 +73,7 @@ export function ingestSwcaSection(
       slug: provisionSlug(`swca-${parsed.sectionNumber}`, parsed.heading), heading: parsed.heading, principalAct: null,
       provisionText: parsed.provisionText, sourceStart: parsed.sourceStart, sourceEnd: parsed.sourceEnd,
       category: 'income_tax', amendsSection: null, effectiveClue: null, citedActs: [], relevant: true,
-      relevanceReason: 'Self-employment (Class S) contributions for sole traders and partners (issue #212).',
+      relevanceReason: SWCA_RELEVANCE_REASON,
       source: 'import', provenanceStatus: 'imported',
     }).run();
     return { sourceId, ingested: true };

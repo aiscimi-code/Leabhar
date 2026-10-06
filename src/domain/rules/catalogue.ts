@@ -269,6 +269,12 @@ export const CATALOGUE_ENTRIES = [
   'tca-1997-nfg/part36.json',
   'tca-1997-nfg/part41a.json',
   'tca-1997-nfg/part43.json',
+  // Social Welfare Consolidation Act 2005 ss.20-23 (PRSI Class S), revised,
+  // each one provision from its LRC page.
+  'swca-2005/s20.json',
+  'swca-2005/s21.json',
+  'swca-2005/s22.json',
+  'swca-2005/s23.json',
 ] as const;
 
 export function catalogueEntryPath(entry: string, root: string = appRoot()): string {

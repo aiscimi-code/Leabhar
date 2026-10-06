@@ -1993,8 +1993,12 @@ They are a source family of their own:
   from them.
 - `incomeTaxCuration.ts` holds the income tax, USC and PRSI Class S rules for
   sole traders and partners. They quote the Finance Acts, the LRC revised Social
-  Welfare Consolidation Act 2005 and NfG Part 18D. `incomeTaxIngestion.ts`
-  ingests the SWCA sections and derives every curated rule. PAYE is out of scope.
+  Welfare Consolidation Act 2005 and NfG Part 18D. The SWCA sections (ss.20-23)
+  are rules catalogue entries, `catalogue/swca-2005/s<N>.json`, each with its
+  LRC page beside it (#556); S.I. 312/1996 art. 92 is still a statute copy
+  (#712). The Class S rate is quoted and dated from SWMPA 2024 s.3, not the
+  revised s.21, and a contribution year the rate changes in is charged at
+  each rate on its own part of the year's income (#711). `incomeTaxIngestion.ts` derives every curated rule. PAYE is out of scope.
 - A figure that changes is a **version-chained** rule family outside VAT too:
   one `ruleKey`, each version dated from the year its Act says, each
   superseding the one before it, only the latest `active`. A later Act's

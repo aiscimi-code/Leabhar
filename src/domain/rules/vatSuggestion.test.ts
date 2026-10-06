@@ -92,13 +92,14 @@ describe('suggestVatTreatment', () => {
     // #277 retired 2 (Finance Act 2024 s.13 and s.48, out of scope).
     // #487 added prsi.class_s_disregard (S.I. 312/1996 art. 92).
     // #559 added 10 (CA 2014 ss.281-285, 290, 291, 293, 343, 347: accounting records, statements, annual return).
-    expect(first.rulesAfter).toBe(422);
+    // #711 dated the Class S rate from SWMPA 2024 s.3: one row became five versions (+4).
+    expect(first.rulesAfter).toBe(426);
   });
 
   it('loading again is a no-op', () => {
     const again = loadStatutoryKnowledgeBase(db, { companyId });
-    expect(again.rulesBefore).toBe(422);
-    expect(again.rulesAfter).toBe(422);
+    expect(again.rulesBefore).toBe(426);
+    expect(again.rulesAfter).toBe(426);
   });
 
   it('US SaaS purchase → non-EU reverse charge, cited to VATCA s.12 with a verifiable slice', () => {

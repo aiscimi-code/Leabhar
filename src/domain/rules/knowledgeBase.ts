@@ -38,7 +38,7 @@ import { deriveFinanceAct2024VatThresholds } from './financeAct2024VatThresholds
 import { deriveTdm3801_03bCapacityExclusionRule } from './tdm3801_03bIngestion';
 import { deriveVatScopeRules } from './vatScopeIngestion';
 import { deriveCorporationTaxRules } from './tcaNfgIngestion';
-import { ingestSwcaSection, deriveIncomeTaxRules, SWCA_SECTIONS, swcaPath } from './incomeTaxIngestion';
+import { ingestSwcaSection, deriveIncomeTaxRules, SI_312_1996_ART92_PATH } from './incomeTaxIngestion';
 import { deriveCompaniesAct2014Rules } from './companiesAct2014Ingestion';
 import { ingestVat3ReturnGuidance, ingestRtdTdm, deriveVat3RtdRules } from './vat3RtdIngestion';
 import { ingestEbrief168_25, deriveEbriefRules } from './ebriefIngestion';
@@ -62,7 +62,7 @@ type IngestFn = (db: AppDatabase, params: IngestParams) => unknown;
  * the provision viewer can resolve it wherever the app runs.
  */
 const SOURCES: Array<{ path: string; ingest: IngestFn }> = [
-  ...SWCA_SECTIONS.map((n) => ({ path: swcaPath(n), ingest: ingestSwcaSection as IngestFn })),
+  { path: SI_312_1996_ART92_PATH, ingest: ingestSwcaSection as IngestFn },
   { path: 'docs/statutes/vat3-rtd/completing-vat3-return.md', ingest: ingestVat3ReturnGuidance },
   { path: 'docs/statutes/vat3-rtd/VAT-RTD-S76.md', ingest: ingestRtdTdm },
   { path: 'docs/statutes/ebriefs/2025/no-168-25.md', ingest: ingestEbrief168_25 },
