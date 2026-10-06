@@ -77,6 +77,7 @@ export const ids = {
   timingAdjustment: () => newId('tim'),
   provision: () => newId('prov'),
   taxRule: () => newId('taxrule'),
+  ruleLink: () => newId('rlnk'),
   taxRuleTest: () => newId('taxruletest'),
   knowledgeSource: () => newId('src'),
   reviewItem: () => newId('rev'),

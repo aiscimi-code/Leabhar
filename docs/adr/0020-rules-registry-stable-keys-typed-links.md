@@ -1,6 +1,6 @@
 # 0020. Keep the statutory rules in one registry, with stable keys, typed links and shipped review
 
-- **Status:** Proposed
+- **Status:** Accepted
 - **Date:** 2026-10-06
 
 ## Context

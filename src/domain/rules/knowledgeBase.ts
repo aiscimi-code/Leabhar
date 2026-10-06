@@ -56,6 +56,7 @@ import { ingestSizeCriteriaSource, deriveSizeCriteriaRules, SIZE_CRITERIA_SOURCE
 import { ingestSlicedSource } from './slicedSourceIngestion';
 import { deriveCuratedRuleFamilies } from './incomeTaxIngestion';
 import { CAR_EMISSIONS_SOURCES, CAR_EMISSIONS_CURATED_RULES } from './carEmissionsCuration';
+import { syncRuleLinks } from './ruleLinks';
 
 type IngestParams = { companyId: string; markdown: string; ingestVersion: string; localPath: string };
 type IngestFn = (db: AppDatabase, params: IngestParams) => unknown;
@@ -228,6 +229,8 @@ export function loadStatutoryKnowledgeBase(
     source.ingest(db, { companyId: params.companyId, markdown, ingestVersion, localPath: source.path });
   }
   for (const derive of DERIVES) derive(db, { companyId: params.companyId });
+  // The links between rules (ADR-0020), after every rule they name exists.
+  syncRuleLinks(db, { companyId: params.companyId });
   return {
     sourcesProcessed: SOURCES.length,
     rulesBefore,
