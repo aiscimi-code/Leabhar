@@ -1,65 +1,18 @@
 # Irish rules knowledge base
 
-A structured, versioned, source-linked knowledge base for Irish accounting/tax
-statutes and guidance, and a deterministic lookup engine that maps a
-transaction to the rules that apply to it. Two sources are ingested:
+A structured, versioned, source-linked knowledge base for Irish accounting and
+tax law and guidance, and a deterministic lookup engine that maps a
+transaction to the rules that apply to it. It stands in for a tax adviser's
+knowledge, so it is kept as a registry: every rule has a stable key and dated
+versions, and every relationship between rules is a row, not a constant in
+code (ADR-0020, issue #686).
 
-- the Finance Act 2024 (2024 Act 43), from
-  `docs/statutes/finance-act-2024/2024-act-43-enacted.md`;
-- the Value-Added Tax Consolidation Act 2010 (2010 Act 31), from
-  `docs/statutes/vatca-2010/vatca-2010-enacted.md`;
-- VATCA 2010 Schedules 2 and 3 (zero-rated / reduced-rate goods and
-  services), from the LRC's revised text at
-  `docs/statutes/vatca-2010-revised/schedule-{2,3}.md` — ingested as their own
-  sources, distinct from the principal Act's as-enacted text above (see
-  "VATCA 2010 Schedules 2 and 3" below);
-- TCA 1997 s.530 (RCT definitions) and Revenue TDMs 18-02-04, 18-02-05 and
-  18-02-11 (the current post-2011 RCT procedure and rate criteria) — a
-  wholly different tax (a withholding regime, never VAT) from
-  `docs/statutes/tca-1997/s530.md` and `docs/statutes/rct/tdm-18-02-{04,05,11}.md`
-  (see "Relevant Contracts Tax (RCT)" below);
-- VATCA 2010 s.46 (rates of tax), from the LRC's revised text at
-  `docs/statutes/vatca-2010-revised/s046.md` — the *current* 23%/13.5%/4.8%
-  VAT rates, ingested as its own source distinct from every other VATCA
-  source above (see "VATCA 2010 current rates" below);
-- TCA 1997 s.284 (wear and tear allowances), from
-  `docs/statutes/tca-1997/s284.md` — the first non-VAT, non-RCT TCA 1997
-  curation, and the first to demonstrate the generic `tca1997Ingestion.ts`
-  pipeline (see "Capital allowances" below);
-- S.I. No. 639 of 2010 (Value-Added Tax Regulations 2010), as-made text at
-  `docs/statutes/si-639-2010/2010-si-639.md` — a whole 47-regulation
-  statutory instrument, curated for Regulation 25 (moneys-received/cash
-  basis of VAT accounting requires a Revenue authorisation, not a bookkeeping
-  election) (see "S.I. 639/2010 (VAT Regulations 2010)" below);
-- S.I. No. 156 of 2012 (Tax Returns and Payments (Mandatory Electronic
-  Filing and Payment of Tax) Regulations 2012), from
-  `docs/statutes/si-156-2012/2012-si-156.md` — curated for Regulation 4
-  (VAT-accountable persons must file and pay electronically), the first
-  source where the local transcript is only *partly* verbatim (see "S.I.
-  156/2012 (Mandatory Electronic Filing)" below);
-- S.I. No. 69/2025 (European Union (Value-Added Tax) Regulations 2025),
-  Regulation 8 only, from `docs/statutes/si-69-2025/2025-si-69.md` — the
-  *current* VATCA 2010 s.80(1) moneys-received/cash-basis eligibility
-  thresholds (90% test / €2,000,000 turnover), closing a gap "S.I. 639/2010
-  (VAT Regulations 2010)" above explicitly left open (see "S.I. 69/2025
-  (Cash Accounting Thresholds)" below);
-- Finance Act 2024 s.78 (already ingested as part of the whole Act above),
-  now also curated for the current VAT registration turnover thresholds
-  (€85,000 goods / €42,500 services, from 1 January 2025) — no new document,
-  just a derive step that had been missed the first time (see "Finance Act
-  2024 VAT Registration Thresholds" below);
-- Revenue TDM Part 38-01-03b (Guidelines for VAT Registration), one passage
-  only, from `docs/statutes/tdm-38-01-03b/38-01-03b.md`;
-- Revenue's VAT3 and RTD form guidance (issue #439): the nine box passages of
-  `docs/statutes/vat3-rtd/completing-vat3-return.md` and six sections of TDM
-  VAT-RTD-S76 (`docs/statutes/vat3-rtd/VAT-RTD-S76.md`), ingested as their
-  own sources and curated as reporting rules (`vat3.box_*`, `rtd.*`) so a
-  report naming a box can cite the definition behind it. The screens
-  (`src/domain/vat/boxDefinitions.ts`, `rtd.ts`) implement the same mapping — Revenue's own
-  guidance on the "capacity" exclusion from mandatory electronic VAT
-  filing, closing a gap "S.I. 156/2012 (Mandatory Electronic Filing)" above
-  explicitly left open (see "Revenue TDM 38-01-03b (Mandatory E-Filing
-  Exclusion)" below).
+The sources a book loads are `SOURCES` and `DERIVES` in
+`src/domain/rules/knowledgeBase.ts`; `npm run cli:rules -- ingest-all` loads
+them all. Counts go stale, so this document gives none: `npm run cli:rules --
+audit` reports what a book holds, and `docs/rules/coverage-matrix.json` says
+which statute rows are covered. The sections after "Ingestion pipeline"
+record, source by source, how each was curated.
 
 This is not a RAG system and it does not ask an LLM what the tax treatment
 should be. The pipeline is:
@@ -75,6 +28,73 @@ An LLM may assist extraction and explanation later; nothing in the lookup
 path depends on one, and none of the code shipped here calls one. Every
 number a rule states is a token the parser found in the source text, not a
 model's claim.
+
+## The rules registry (ADR-0020)
+
+**Keys and versions.** A rule is a stable key (`vat.rate_standard_current`)
+with one row per version in `irish_tax_rules`. A version holds for its own
+dates (`effective_to` exclusive); `active` marks only the latest. A new version
+of the same key is chained to the one before by `supersedesRuleId`. Where a
+rule is applied, the book records its version ID, `key@version`
+(`ruleVersionId`): on invoice lines (`vat_rule_versions`), in payslip rule
+figures (`versionId`), and in the CT and income tax computations
+(`ruleVersions`).
+
+**Links.** `irish_rule_links` holds how one rule relies on another. Links name
+keys, so a new version keeps every link, and are dated like rules. A link is
+never edited or deleted: one the curation drops is set inactive.
+
+| kind | from → to | declared in |
+|---|---|---|
+| `silenced_by` | an advisory rule → the rule that settles its question | `ruleLinks.ts` |
+| `excludes` | a rule that wins → the rule it drops when both match | `ruleLinks.ts`; the conditioned-over-headline VAT rate half is derived from the book |
+| `rate_from` | a Schedule 3 rule → the s.46 rate rule it bears, dated | `ruleLinks.ts`, from `SECOND_REDUCED_WINDOWS` (`scheduleRates.ts`) |
+| `uses_value` | a rule → a rule whose figure it takes | `ruleLinks.ts` |
+| `supersedes` | a new key → an old key (merge, split, rename, carve-out) | `supersessions.ts` |
+| `cites` | a rule → a provision its cross-references resolve to | derived from the book (`dependencies.ts`) |
+| `consumed_by` | a rule → `consumer:<name>`, a computation that reads it | each area's `ruleManifest.ts`, collected in `consumers.ts` |
+
+`syncRuleLinks` writes them into a book at the end of
+`loadStatutoryKnowledgeBase`. The code that acts on a relationship reads the
+declared links (`declaredLinksFrom`, `declaredLinksTo`), so a book loaded
+before a link was declared answers the same as one loaded after.
+
+**Graph checks.** `checkRuleGraph` (`ruleGraph.ts`) reports a link to a key the
+book does not hold, a rule relying on a key with no version in force over the
+same dates, a gap or overlap between one key's versions (other than the gaps
+the sources leave, declared in `DECLARED_VERSION_GAPS`), a cycle, and a
+`supersedesRuleId` across keys with no `supersedes` link. `ruleGraph.test.ts`
+runs it on a freshly loaded book, so the gate fails on any of them.
+
+**Impact.** `npm run cli:rules -- impact <ruleKey|provision>` lists everything
+that relies on a rule or provision, directly and transitively, and the
+computations that read any of it; `depends <ruleKey>` walks the other way.
+The provision page shows both for each rule, and the audit report lists the
+link counts, the graph findings and the most relied-on rules.
+
+**Consumers.** Each computation declares the keys it reads in a
+`ruleManifest.ts` beside it. `resolveRuleFigure` accepts only a declared key
+(`ManifestRuleKey`), so an undeclared figure fails the typecheck;
+`consumers.test.ts` checks each declared key exists and each key a consumer's
+source names is declared.
+
+**One source per figure.** A rate copied outside the rules (the CT seed rates,
+the invoice parser's known rates, the asset register's default wear and tear,
+the browser books' rates) is held to its rule by `figureCopies.test.ts`; the
+VAT seed rows by `config/seeds.test.ts`.
+
+**Tax heads.** `topic` routes a lookup; `tax_heads` lists every head a rule
+belongs to (`taxHeads.ts`): a capital allowance is corporation tax and income
+tax, import VAT is VAT and customs. `listTaxRulesByHead` reads them.
+
+**Not yet.** Rules are still stored per book. Shipping the rules and their
+expert review as a catalogue, an install-level rules store with per-book
+`rule_decisions`, and re-confirming the rules a source change reaches before
+release (ADR-0020 §6, issue #686 steps 10–12) wait on the #293 catalogue
+(#443).
+
+A relationship between rules that exists only in code is a bug: declare it
+as a link.
 
 ## Architecture assessment
 
@@ -139,15 +159,14 @@ leabhar_implementation_rule          -> rank 4 (this practice's own convention)
 The ranking lives in one place, `src/domain/rules/sourceHierarchy.ts`
 (`sourceAuthorityRank`), and nowhere else — it is never duplicated as a stored
 column. A Revenue eBrief can update how a Tax and Duty Manual is read; it can
-never edit, merge into, or outrank a `legislation` row. Today the KB holds two
-sources, both `legislation` (Finance Act 2024, VATCA 2010); the architecture
-is what makes adding a Revenue Tax and Duty Manual later an *ingestion*, not a
-redesign — see "Adding a new source" below.
+never edit, merge into, or outrank a `legislation` row. Adding a source of
+any type is an *ingestion*, not a redesign — see "Adding a new source" below.
 
 ## Schema
 
-Four new tables (`src/db/schema/irishRules.ts`, migration
-`drizzle/0004_irish_rules_kb.sql`), additive to the existing schema:
+Five tables (`src/db/schema/irishRules.ts`; the first four from migration
+`drizzle/0004_irish_rules_kb.sql`). The fifth, `irish_rule_links`, is
+described under "The rules registry" above.
 
 ### `irish_knowledge_sources`
 The document itself. Content-addressed by `sha256`; a citation may have more
@@ -1304,10 +1323,10 @@ a defect in the rules themselves — see "Limitations".
 
 ## Audit report
 
-Generated by `src/domain/rules/audit.ts` (`generateAuditReport`); a snapshot
-from a fresh ingest of both sources is committed at
-[`docs/statutes/audit-report.json`](statutes/audit-report.json)
-and reproducible with:
+Generated by `src/domain/rules/audit.ts` (`generateAuditReport`). An early
+snapshot is committed at
+[`docs/statutes/audit-report.json`](statutes/audit-report.json); its counts are
+long out of date. Reproduce a current one with:
 
 ```
 npm run cli:rules -- ingest --source finance-act-2024 && npm run cli:rules -- extract --source finance-act-2024
@@ -1330,39 +1349,15 @@ npm run cli:rules -- ingest --source tdm-38-01-03b && npm run cli:rules -- extra
 npm run cli:rules -- audit
 ```
 
-Headline numbers:
+or, for every source, `npm run cli:rules -- ingest-all` then `audit`.
 
-- 348 provisions ingested across fourteen sources (118 Finance Act 2024, 125
-  VATCA 2010, 15 VATCA 2010 Schedule 2, 32 VATCA 2010 Schedule 3, 1 TCA 1997
-  s.530, 1 Revenue TDM 18-02-04, 1 VATCA 2010 s.46 revised, 1 TCA 1997
-  s.284, 1 Revenue TDM 18-02-05, 1 Revenue TDM 18-02-11, 47 S.I. 639/2010, 3
-  S.I. 156/2012, 1 S.I. 69/2025 reg.8, 1 Revenue TDM 38-01-03b), 194 judged
-  relevant to transaction classification, 154 not (procedural/repeal/
-  penalty/pure-definition, or uncategorised and flagged for review).
-- (Snapshot from the first ingestion; the knowledge base now derives 257 rules,
-  and the counts below are stale. `docs/rules/coverage-matrix.json` is current.)
-- 32 rules extracted (4 Finance Act, 5 VATCA principal-Act, 4 Schedule 2, 4
-  Schedule 3, 4 RCT, 3 current VAT rates, 1 capital allowances, 1 S.I.
-  639/2010 cash accounting, 1 S.I. 156/2012 mandatory e-filing, 2 S.I.
-  69/2025 cash-accounting eligibility thresholds, 2 Finance Act 2024 VAT
-  registration thresholds, 1 Revenue TDM 38-01-03b e-filing capacity
-  exclusion), all `ai_extracted`, all `human_review_required = true` —
-  **zero rules in this KB are authoritative yet.**
-- 15 rules with a stated exception the system flags rather than evaluates,
-  0 duplicate rule keys.
-- 442 cross-references the report cannot resolve — expected, not a bug: the
-  Finance Act 2024 *amends*, and VATCA 2010 heavily cross-refers to, the
-  Taxes Consolidation Act 1997 and other Acts not themselves ingested yet, so
-  "section 531AN", "section 654A" et al. have nothing to resolve against
-  inside this KB alone. (The Schedule, RCT, current-rates, S.I. 639/2010,
-  S.I. 156/2012 and Revenue TDM 38-01-03b sources add none of their own;
-  S.I. 69/2025's own `amendsSection: "80"` resolves locally since VATCA
-  2010 is already ingested, so it adds no new unresolved reference either —
-  see "VATCA 2010 Schedules 2 and 3", "Relevant Contracts Tax (RCT)",
-  "VATCA 2010 current rates", "S.I. 639/2010 (VAT Regulations 2010)", "S.I.
-  156/2012 (Mandatory Electronic Filing)", "S.I. 69/2025 (Cash Accounting
-  Thresholds)" and "Revenue TDM 38-01-03b (Mandatory E-Filing Exclusion)"
-  above.)
+The report counts sources, provisions, rules by review status, rules needing
+a person or guidance, cross-references resolved and not (with the reason),
+duplicate keys and test results, and the rule links: how many of each kind,
+the graph findings, and the rules most others rely on. It gives no figures
+here because they change with every source added; run it on a loaded book.
+Until a person approves them, every rule is `ai_extracted` and
+`human_review_required`: none is authoritative.
 
 **This is not a claim that the knowledge base is legally complete.** It is a
 record of what was ingested, what was judged relevant, what was extracted,
@@ -1389,6 +1384,9 @@ lookup --json '<transaction context>'
 generate-tests
 test                        Exit code 1 if any test case fails
 audit
+impact <ruleKey|provisionId|reference>
+                            What relies on a rule or provision, transitively, and the computations reading it
+depends <ruleKey>           What a rule relies on: rules, and the provisions behind them
 ```
 
 `--format human` on any command for a readable render instead of JSON.
@@ -1407,14 +1405,11 @@ audit
   the as-enacted VATCA text (reverse charge, place of supply, deductibility)
   is a structural mechanism that has not been fundamentally rewritten since
   2010, so curating its *existence* from the frozen text remains safe.
-- **Only 32 of 194 relevant provisions have a curated rule key** (4 Finance
-  Act, 5 VATCA principal-Act, 4 Schedule 2, 4 Schedule 3, 4 RCT, 3 current
-  rates, 1 capital allowances, 1 S.I. 639/2010, 1 S.I. 156/2012, 2 S.I.
-  69/2025, 2 Finance Act 2024 VAT thresholds, 1 Revenue TDM 38-01-03b).
-  Everything else is ingested (text, offsets, category all on disk) but not
-  yet extracted into named rules — `provisionsWithoutExtractedRule` in the
-  audit report would show these once curated; today it's empty because the
-  curated set and the derived set match exactly.
+- **Not every relevant provision has a curated rule key.** Everything is
+  ingested (text, offsets, category), but only curated provisions become named
+  rules. `docs/rules/coverage-matrix.json` gives each statute row's status
+  (`rule`, `not_applicable` with a reason, or `deferred` to an issue), and
+  `coverage.test.ts` keeps it current.
 - **RCT's actual 0%/standard/35% deduction-rate structure is now in this KB
   (issue #131)**, sourced from TCA 1997 ss.530A/530E/530G/530H/530I as
   inserted by Finance Act 2011 s.20 (as-enacted text — no LRC-revised TCA

@@ -36,3 +36,20 @@ it: `node scripts/check-deferred-issues.mjs` fails when a row defers to a closed
 issue (the weekly "Deferred issues" workflow runs it too); re-home the rows
 first. When a rule is added, update its row; the test
 fails until you do.
+
+## The rest of the rules registry
+
+The coverage matrix says which statute rows have a rule. How the rules relate
+to one another is in the registry (ADR-0020, `docs/RULES_KB.md`, "The rules
+registry"):
+
+- links between rules: `src/domain/rules/ruleLinks.ts` and `supersessions.ts`,
+  loaded into `irish_rule_links`;
+- the keys each computation reads: its `ruleManifest.ts`, collected in
+  `src/domain/rules/consumers.ts`;
+- the graph checks the gate runs on a loaded book: `ruleGraph.test.ts`;
+- what a change reaches: `npm run cli:rules -- impact <ruleKey|provision>`
+  and `depends <ruleKey>`.
+
+When a rule is added, update its matrix row; when it relies on, silences,
+excludes or replaces another rule, declare the link in the same change.
