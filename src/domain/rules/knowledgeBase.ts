@@ -41,7 +41,7 @@ import { deriveCorporationTaxRules } from './tcaNfgIngestion';
 import { ingestSwcaSection, deriveIncomeTaxRules, SI_312_1996_ART92_PATH } from './incomeTaxIngestion';
 import { deriveCompaniesAct2014Rules } from './companiesAct2014Ingestion';
 import { deriveVat3RtdRules } from './vat3RtdIngestion';
-import { ingestEbrief168_25, deriveEbriefRules } from './ebriefIngestion';
+import { deriveEbriefRules } from './ebriefIngestion';
 import { ingestEu282Articles, deriveEu282Rules, EU_282_2011_MD_PATH } from './eu282Ingestion';
 import { ingestPayrollSource, derivePayrollRules, PAYROLL_SOURCES } from './payrollIngestion';
 import { ingestSizeCriteriaSource, deriveSizeCriteriaRules, SIZE_CRITERIA_SOURCES } from './sizeCriteriaIngestion';
@@ -63,7 +63,6 @@ type IngestFn = (db: AppDatabase, params: IngestParams) => unknown;
  */
 const SOURCES: Array<{ path: string; ingest: IngestFn }> = [
   { path: SI_312_1996_ART92_PATH, ingest: ingestSwcaSection as IngestFn },
-  { path: 'docs/statutes/ebriefs/2025/no-168-25.md', ingest: ingestEbrief168_25 },
   { path: EU_282_2011_MD_PATH, ingest: ingestEu282Articles },
   ...PAYROLL_SOURCES.map((s) => ({ path: s.path, ingest: ingestPayrollSource as IngestFn })),
   ...SIZE_CRITERIA_SOURCES.map((s) => ({ path: s.path, ingest: ingestSizeCriteriaSource as IngestFn })),

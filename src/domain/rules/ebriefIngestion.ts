@@ -8,7 +8,9 @@
  * first one, eBrief No. 168/25, records that TDM Part 38-01-03b — the manual
  * this KB already ingests a passage of, and the manual the registration
  * threshold rules are read against — was updated on 3 September 2025, with
- * the EU VAT SME scheme (S.I. 69/2025) among the sections changed.
+ * the EU VAT SME scheme (S.I. 69/2025) among the sections changed. The
+ * knowledge base loads it from its rules catalogue entry
+ * (`ingestEbriefFromCatalogue`, #556).
  */
 import { and, eq } from 'drizzle-orm';
 import type { AppDatabase } from '@/db';
@@ -20,8 +22,7 @@ import { normaliseSpace } from '../vat/boxDefinitions';
 import { upsertReviewItem } from '../extraction/service';
 import { sameCrossReferences } from './dependencies';
 import { taxHeadsFor } from './taxHeads';
-
-export const EBRIEF_168_25_MD_PATH = 'docs/statutes/ebriefs/2025/no-168-25.md';
+import { ingestCatalogueFile, type CatalogueIngestResult } from './catalogue';
 
 export const EBRIEF_168_25 = {
   citation: 'Revenue eBrief No. 168/25',
@@ -30,7 +31,41 @@ export const EBRIEF_168_25 = {
   // The notice's own published date, stated twice on the page.
   effectiveFrom: '2025-09-03',
   sectionNumber: '168/25',
+  heading: 'Part 38-01-03b - Guidelines for VAT Registration',
+  locator: 'notice 168/25',
+  effectiveClue: 'Published: 03 September 2025',
+  citedActs: ['S.I. 69/2025'],
+  relevanceReason: 'Curated: a procedure rule cites this notice (ebriefIngestion.ts).',
+  note: 'A Revenue notice: it records that TDM Part 38-01-03b was updated on 3 September 2025 (sections '
+    + '3.4, 3.4.4 and 10). It ranks below legislation (sourceHierarchy.ts) and never supersedes the Act or '
+    + 'the Regulations; it tells a reader the guidance this KB cites has moved.',
 };
+
+/** The notice's catalogue entry. */
+export const EBRIEF_168_25_CATALOGUE_ENTRY = 'ebriefs/no-168-25.json';
+
+/** Load the notice from its catalogue entry. */
+export function ingestEbriefFromCatalogue(
+  db: AppDatabase,
+  params: { companyId?: string | null; ingestVersion?: string; root?: string },
+): CatalogueIngestResult {
+  return ingestCatalogueFile(db, { ...params, entry: EBRIEF_168_25_CATALOGUE_ENTRY });
+}
+
+/**
+ * The notice's words, from the page as revenue_html_to_text.py converts it:
+ * its title down to its "Published:" line, without the page's feedback links.
+ */
+export function ebriefNoticeText(text: string): string {
+  const lines = text.split('\n');
+  const end = lines.findIndex((l) => l.trim() === EBRIEF_168_25.effectiveClue);
+  if (end < 0) throw new Error(`The eBrief page has no "${EBRIEF_168_25.effectiveClue}" line.`);
+  const notice = normaliseSpace(lines.slice(0, end + 1).join('\n'));
+  if (!notice.includes(EBRIEF_168_25_RULE.statementExcerpt)) {
+    throw new Error('The eBrief page does not contain the passage the curated rule quotes.');
+  }
+  return notice;
+}
 
 export const EBRIEF_168_25_RULE = {
   ruleKey: 'vat.registration_guidelines_updated_2025_09',
@@ -47,10 +82,10 @@ export const EBRIEF_168_25_RULE = {
 
 export interface EbriefIngestResult { sourceId: string; provisionCount: number; ingested: boolean }
 
-/** Ingest the eBrief: one source, one provision (the notice is a single passage). */
+/** Ingest the eBrief from a Markdown copy (the CLI's --file): one source, one provision (the notice is a single passage). */
 export function ingestEbrief168_25(
   db: AppDatabase,
-  params: { companyId?: string | null; markdown: string; ingestVersion: string; localPath?: string },
+  params: { companyId?: string | null; markdown: string; ingestVersion: string; localPath: string },
 ): EbriefIngestResult {
   const digest = sha256Hex(params.markdown);
   const existing = db.select({ id: irishKnowledgeSources.id }).from(irishKnowledgeSources)
@@ -68,7 +103,7 @@ export function ingestEbrief168_25(
   }
   const sourceStart = params.markdown.indexOf(EBRIEF_168_25_RULE.statementExcerpt);
   const sourceEnd = sourceStart >= 0
-    ? params.markdown.indexOf('*Published: 03 September 2025*', sourceStart) + 1 || params.markdown.length
+    ? params.markdown.indexOf(EBRIEF_168_25.effectiveClue, sourceStart) + EBRIEF_168_25.effectiveClue.length
     : params.markdown.length;
 
   return db.transaction((tx) => {
@@ -81,15 +116,13 @@ export function ingestEbrief168_25(
       citation: EBRIEF_168_25.citation,
       jurisdiction: 'IE',
       sourceUrl: EBRIEF_168_25.sourceUrl,
-      localPath: params.localPath ?? EBRIEF_168_25_MD_PATH,
+      localPath: params.localPath,
       sha256: digest,
       ingestVersion: params.ingestVersion,
       publicationDate: EBRIEF_168_25.effectiveFrom,
       retrievedAt: nowIso(),
       effectiveFrom: EBRIEF_168_25.effectiveFrom,
-      sourceNote: 'A Revenue notice: it records that TDM Part 38-01-03b was updated on 3 September 2025 (sections '
-        + '3.4, 3.4.4 and 10). It ranks below legislation (sourceHierarchy.ts) and never supersedes the Act or '
-        + 'the Regulations; it tells a reader the guidance this KB cites has moved.',
+      sourceNote: EBRIEF_168_25.note,
       sourceDate: nowIso(),
     }).run();
     tx.insert(irishActProvisions).values({
@@ -98,18 +131,18 @@ export function ingestEbrief168_25(
       sourceId,
       sectionNumber: EBRIEF_168_25.sectionNumber,
       slug: 'ebrief-168-25-part-38-01-03b-updated',
-      heading: 'Part 38-01-03b - Guidelines for VAT Registration',
+      heading: EBRIEF_168_25.heading,
       principalAct: null,
       provisionText: body,
       sourceStart: sourceStart >= 0 ? sourceStart : 0,
       sourceEnd,
-      locator: 'notice 168/25',
+      locator: EBRIEF_168_25.locator,
       category: 'procedure',
       amendsSection: null,
-      effectiveClue: 'Published: 03 September 2025',
-      citedActs: ['S.I. 69/2025'],
+      effectiveClue: EBRIEF_168_25.effectiveClue,
+      citedActs: EBRIEF_168_25.citedActs,
       relevant: true,
-      relevanceReason: 'Curated: a procedure rule cites this notice (ebriefIngestion.ts).',
+      relevanceReason: EBRIEF_168_25.relevanceReason,
       source: 'import',
       provenanceStatus: 'imported',
     }).run();

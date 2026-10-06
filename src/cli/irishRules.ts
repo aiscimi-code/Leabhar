@@ -42,7 +42,7 @@ import {
   ingestVat3ReturnGuidance, ingestRtdTdm, deriveVat3RtdRules,
   VAT3_GUIDANCE_CATALOGUE_ENTRY, RTD_TDM_CATALOGUE_ENTRY,
 } from '@/domain/rules/vat3RtdIngestion';
-import { ingestEbrief168_25, deriveEbriefRules, EBRIEF_168_25_MD_PATH } from '@/domain/rules/ebriefIngestion';
+import { ingestEbrief168_25, ingestEbriefFromCatalogue, deriveEbriefRules } from '@/domain/rules/ebriefIngestion';
 import { ingestEu282Articles, deriveEu282Rules, EU_282_2011_MD_PATH } from '@/domain/rules/eu282Ingestion';
 import { syncTaxRatesFromIrishRules } from '@/domain/rules/taxRateSync';
 import { loadStatutoryKnowledgeBase, statuteFilePath } from '@/domain/rules/knowledgeBase';
@@ -284,9 +284,10 @@ export async function main(argv: string[], options: CliOptions = {}): Promise<nu
           return 0;
         }
         if (source === 'ebrief-168-25') {
-          const file = getFlag(flags, 'file') ?? statuteFilePath(EBRIEF_168_25_MD_PATH);
-          const markdown = readFileSync(file, 'utf8');
-          print(ingestEbrief168_25(db, { companyId, markdown, ingestVersion: 'v1' }), format);
+          const file = getFlag(flags, 'file');
+          print(file
+            ? ingestEbrief168_25(db, { companyId, markdown: readFileSync(file, 'utf8'), ingestVersion: 'v1', localPath: file })
+            : ingestEbriefFromCatalogue(db, { companyId }), format);
           return 0;
         }
         if (source === 'rtd-tdm-s76') {

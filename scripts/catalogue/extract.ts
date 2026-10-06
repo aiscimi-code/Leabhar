@@ -11,6 +11,7 @@
  *   npm run catalogue:extract -- tca-1997-nfg/part02
  *   npm run catalogue:extract -- swca-2005/s21
  *   npm run catalogue:extract -- vat3-rtd/completing-vat3-return vat3-rtd/VAT-RTD-S76
+ *   npm run catalogue:extract -- ebriefs/no-168-25
  *
  * Several entries are extracted together: every entry's source and
  * provisions are written first, then the knowledge base is loaded once and
@@ -86,6 +87,7 @@ import { SWCA_NOTE, SWCA_RELEVANCE_REASON } from '@/domain/rules/incomeTaxIngest
 import {
   FORM_GUIDANCE_PRINCIPAL_ACT, FORM_GUIDANCE_RELEVANCE_REASON, RTD_TDM, VAT3_GUIDANCE, rtdTdmPassages, vat3GuidancePassages,
 } from '@/domain/rules/vat3RtdIngestion';
+import { EBRIEF_168_25, ebriefNoticeText } from '@/domain/rules/ebriefIngestion';
 import { compareNfgContents, extractNfgSection } from '@/domain/rules/tcaNfgParser';
 import { NFG_EFFECTIVE_FROM, NFG_NOTE, nfgRelevanceReason, nfgSourceUrl, nfgTitle } from '@/domain/rules/tcaNfgIngestion';
 import { NFG_SECTIONS, nfgCitation } from '@/domain/rules/corporationTaxCuration';
@@ -426,6 +428,27 @@ function extractorFor(entry: string, naming: Naming | null): Extractor {
           })),
         };
       },
+    };
+  }
+  // Revenue eBrief No. 168/25 (#440), from its page: the notice, one provision.
+  if (entry === 'ebriefs/no-168-25') {
+    const e = EBRIEF_168_25;
+    return {
+      url: e.sourceUrl, title: e.title, citation: e.citation,
+      build: (html, retrievedOn) => ({
+        source: {
+          citation: e.citation, title: e.title, sourceType: 'revenue_ebrief', jurisdiction: 'IE', sourceUrl: e.sourceUrl,
+          sha256: createHash('sha256').update(html).digest('hex'),
+          conversion: 'revenue-html-plaintext', retrievedOn,
+          publicationDate: e.effectiveFrom, effectiveFrom: e.effectiveFrom, note: e.note,
+        },
+        provisions: [{
+          sectionNumber: e.sectionNumber, heading: e.heading, locator: e.locator,
+          effectiveClue: e.effectiveClue, citedActs: e.citedActs,
+          category: 'procedure', relevant: true, relevanceReason: e.relevanceReason,
+          excerpt: ebriefNoticeText(revenueHtmlText(html)),
+        }],
+      }),
     };
   }
   // A part of Revenue's Notes for Guidance on the TCA 1997, from its PDF as

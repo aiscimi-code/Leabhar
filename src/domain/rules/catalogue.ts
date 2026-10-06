@@ -290,6 +290,8 @@ export const CATALOGUE_ENTRIES = [
   // HTML beside it) and the RTD manual's curated sections (its PDF).
   'vat3-rtd/completing-vat3-return.json',
   'vat3-rtd/VAT-RTD-S76.json',
+  // Revenue eBrief No. 168/25: the notice, one provision, its page beside it.
+  'ebriefs/no-168-25.json',
 ] as const;
 
 export function catalogueEntryPath(entry: string, root: string = appRoot()): string {
