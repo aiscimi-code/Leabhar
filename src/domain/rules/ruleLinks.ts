@@ -23,7 +23,10 @@
  *   - `rate_from`: a Schedule 3 rule and the s.46 rate rule its paragraph
  *     bears on each date (issue #205; read by the Schedule 3 binding);
  *   - `consumed_by`: a rule and each computation that reads it, from the
- *     computations' manifests (consumers.ts), so `impact` reaches them.
+ *     computations' manifests (consumers.ts), so `impact` reaches them;
+ *   - `supersedes`: merges, splits, renames and carve-outs between keys
+ *     (supersessions.ts). A new version of one key is not a link: its
+ *     `supersedesRuleId` chains it to the version before.
  *
  * Derived from the book at load (`bookDerivedLinks`):
  *
@@ -47,6 +50,7 @@ import {
 } from './scheduleRates';
 import { resolveBookDependencies } from './dependencies';
 import { RULE_CONSUMERS, consumerId, type RuleConsumer } from './consumers';
+import { SUPERSESSIONS } from './supersessions';
 
 /**
  * The start date of a link that adds no date of its own: it holds whenever
@@ -167,6 +171,14 @@ export const CURATED_RULE_LINKS: CuratedRuleLink[] = [
     effectiveTo: null,
     note: `Read by ${RULE_CONSUMERS[consumer].name} (${RULE_CONSUMERS[consumer].modules.join(', ')}).`,
   }))),
+  ...SUPERSESSIONS.flatMap((s) => s.newKeys.flatMap((fromKey) => s.oldKeys.map((toKey) => ({
+    fromKey,
+    kind: 'supersedes' as const,
+    toKey,
+    effectiveFrom: s.from ?? LINK_FROM_RULES,
+    effectiveTo: null,
+    note: `${s.shape.replace('_', '-')}${s.whole ? '' : ', in part'}: ${s.note}`,
+  })))),
 ];
 
 /** The declared links matching a query, the way the code that acts on them reads them. */

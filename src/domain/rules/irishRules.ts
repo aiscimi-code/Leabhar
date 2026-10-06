@@ -26,6 +26,7 @@ import { extractFactsFromProvision, SECTION_RULE_KEYS } from './factExtractor';
 import { resolveEffectiveDate } from './effectiveClue';
 import { upsertReviewItem } from '../extraction/service';
 import type { ParsedProvision } from './statuteParser';
+import { retiredBy } from './supersessions';
 
 export interface KnowledgeSourceRef {
   title: string;
@@ -229,8 +230,8 @@ export interface DeriveResult {
  * `supersedesRuleId` — the historical row is never edited in place
  * (AGENTS.md invariant #6).
  */
-/** Replaced by correctly named keys (issue #199): the old names described a different figure. */
-export const RETIRED_FINANCE_ACT_2024_RULE_KEYS = ['usc.first_band_threshold', 'income_tax.standard_rate_threshold'];
+/** Replaced by correctly named keys (issue #199; supersessions.ts): the old names described a different figure. */
+export const RETIRED_FINANCE_ACT_2024_RULE_KEYS = retiredBy(['usc.medical_card_2pct_threshold', 'income_tax.second_earner_band_increase_max']);
 
 export function deriveTaxRules(
   db: AppDatabase,

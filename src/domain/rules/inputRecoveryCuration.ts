@@ -18,6 +18,7 @@
  */
 import type { IrishRuleCondition } from '@/db/schema';
 import type { CuratedVatScopeRule } from './vatScopeCuration';
+import { retiredBy } from './supersessions';
 
 const VATCA_COMMENCEMENT = '2010-11-01';
 const desc = (value: string): IrishRuleCondition => ({ field: 'description', operator: 'matches', value });
@@ -38,8 +39,8 @@ export const BLOCKED_DEDUCTION_RULE_KEYS = [
   BLOCKED_FOOD_RULE_KEY, BLOCKED_ENTERTAINMENT_RULE_KEY, BLOCKED_MOTOR_VEHICLE_RULE_KEY, BLOCKED_PETROL_RULE_KEY,
 ];
 
-/** The as-enacted rules these replace; deriving retires their stored rows. */
-export const RETIRED_INPUT_RECOVERY_RULE_KEYS = ['vat.input_deduction_general', 'vat.deduction_exclusions_entertainment'];
+/** The as-enacted rules these replace (supersessions.ts); deriving retires their stored rows. */
+export const RETIRED_INPUT_RECOVERY_RULE_KEYS = retiredBy([INPUT_DEDUCTION_RULE_KEY, ...BLOCKED_DEDUCTION_RULE_KEYS]);
 
 type Rule = Omit<CuratedVatScopeRule, 'ruleType' | 'topic' | 'crossReferences' | 'accountingEffect' | 'reportingEffect' | 'effectiveFrom' | 'treatment' | 'exceptions'>
   & Partial<Pick<CuratedVatScopeRule, 'crossReferences' | 'accountingEffect' | 'reportingEffect' | 'exceptions'>>;

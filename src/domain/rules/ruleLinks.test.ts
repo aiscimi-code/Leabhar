@@ -34,7 +34,7 @@ describe('rule links in a loaded book (ADR-0020, issue #686)', () => {
     const rows = bookLinks();
     expect(rows).toHaveLength(CURATED_RULE_LINKS.length + bookDerivedLinks(db, { companyId }).length);
     expect(rows.every((r) => r.active && r.source === 'system' && r.provenanceStatus === 'system_rule')).toBe(true);
-    for (const kind of ['silenced_by', 'excludes', 'rate_from', 'cites', 'consumed_by'] as const) {
+    for (const kind of ['silenced_by', 'excludes', 'rate_from', 'cites', 'consumed_by', 'supersedes'] as const) {
       expect(rows.some((r) => r.kind === kind), kind).toBe(true);
     }
   });
@@ -42,7 +42,8 @@ describe('rule links in a loaded book (ADR-0020, issue #686)', () => {
   it('names only rule keys the book holds', () => {
     const keys = new Set(db.select({ k: irishTaxRules.ruleKey }).from(irishTaxRules)
       .where(eq(irishTaxRules.companyId, companyId)).all().map((r) => r.k));
-    const missing = bookLinks().flatMap((l) => [l.fromKey, l.kind === 'consumed_by' ? null : l.toKey])
+    // A consumer is not a rule; a superseded key may never have been derived in this book.
+    const missing = bookLinks().flatMap((l) => [l.fromKey, l.kind === 'consumed_by' || l.kind === 'supersedes' ? null : l.toKey])
       .filter((k) => k !== null && !keys.has(k));
     expect(missing).toEqual([]);
   });

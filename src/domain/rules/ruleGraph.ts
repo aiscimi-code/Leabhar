@@ -9,10 +9,16 @@
  *   - leaves a gap or an overlap between one key's versions (`gap`,
  *     `overlap`), other than a gap the sources leave, declared with its
  *     reason in `DECLARED_VERSION_GAPS`;
- *   - has rules relying on each other in a circle (`cycle`).
+ *   - has rules relying on each other in a circle (`cycle`);
+ *   - chains a row by `supersedesRuleId` to a row of another key with no
+ *     `supersedes` link between the keys (`supersession`): the one-to-one
+ *     shortcut must agree with the links.
  *
  * A computation's manifest (`consumed_by`) must name keys the book holds and a
  * declared consumer.
+ *
+ * A `supersedes` link may name an old key the book never held, or holds
+ * retired, so only its new key must be in force; nor is it reliance.
  *
  * Exclusions (`excludes`) and silencing (`silenced_by`) are not reliance: a
  * rule that excludes one no longer in force simply excludes nothing, so they
@@ -24,7 +30,7 @@ import { irishRuleLinks, irishTaxRules, type IrishRuleLinkKind } from '@/db/sche
 import { CA_LIST_KNOWN_FROM } from './scheduleRates';
 import { RULE_CONSUMERS, consumerId, type RuleConsumer } from './consumers';
 
-export type RuleGraphFindingKind = 'dangling' | 'uncovered' | 'gap' | 'overlap' | 'cycle';
+export type RuleGraphFindingKind = 'dangling' | 'uncovered' | 'gap' | 'overlap' | 'cycle' | 'supersession';
 
 export interface RuleGraphFinding {
   kind: RuleGraphFindingKind;
@@ -33,7 +39,7 @@ export interface RuleGraphFinding {
 }
 
 /** Links through which one rule relies on another's being in force. */
-export const RELIANCE_KINDS: IrishRuleLinkKind[] = ['uses_value', 'rate_from', 'supersedes'];
+export const RELIANCE_KINDS: IrishRuleLinkKind[] = ['uses_value', 'rate_from'];
 
 const OPEN_END = '9999-12-31';
 
@@ -120,7 +126,8 @@ export function checkRuleGraph(db: AppDatabase, params: { companyId: string }): 
       }
       continue;
     }
-    for (const key of [l.fromKey, l.toKey]) {
+    // A superseded key may have been retired before this book existed.
+    for (const key of [l.fromKey, l.kind === 'supersedes' ? null : l.toKey]) {
       if (key !== null && !spansByKey.has(key)) {
         findings.push({ kind: 'dangling', ruleKey: l.fromKey, detail: `A ${l.kind} link names ${key}, which this book does not hold in force.` });
       }
@@ -138,6 +145,18 @@ export function checkRuleGraph(db: AppDatabase, params: { companyId: string }): 
           detail: `v${v.version} relies on ${l.toKey} (${l.kind}), which has no version in force ${showSpan(hole)}.`,
         });
       }
+    }
+  }
+
+  // supersedesRuleId across keys must be stated as a supersedes link.
+  const rows = db.select({ id: irishTaxRules.id, ruleKey: irishTaxRules.ruleKey, supersedesRuleId: irishTaxRules.supersedesRuleId })
+    .from(irishTaxRules).where(eq(irishTaxRules.companyId, params.companyId)).all();
+  const keyOf = new Map(rows.map((r) => [r.id, r.ruleKey]));
+  const supersedes = new Set(links.filter((l) => l.kind === 'supersedes').map((l) => `${l.fromKey}|${l.toKey}`));
+  for (const r of rows) {
+    const oldKey = r.supersedesRuleId ? keyOf.get(r.supersedesRuleId) : undefined;
+    if (oldKey && oldKey !== r.ruleKey && !supersedes.has(`${r.ruleKey}|${oldKey}`)) {
+      findings.push({ kind: 'supersession', ruleKey: r.ruleKey, detail: `A version is chained to ${oldKey} by supersedesRuleId, but no supersedes link says so.` });
     }
   }
 

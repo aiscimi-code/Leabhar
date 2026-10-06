@@ -59,6 +59,7 @@
  * `scheduleThreeRate`, and a test checks every version agrees with it.
  */
 import type { IrishRuleCondition, IrishRuleType } from '@/db/schema';
+import { retiredBy } from './supersessions';
 
 export interface CuratedVatcaRevisedRule {
   citation: string;
@@ -639,15 +640,10 @@ export const VATCA_REVISED_CURATED_RULES: CuratedVatcaRevisedRule[] = [
  * `vat.rate_hairdressing`, and the "not modelled" gap is modelled from
  * Finance Act 2025 s.71. The 13.5% restaurant window from 2010 to 2020 is
  * dropped: s.46(1)(ca) put hospitality at 9% for part of it. Deriving
- * retires their rows (an empty window) rather than deleting them.
+ * retires their rows (an empty window) rather than deleting them. The
+ * supersessions are declared in supersessions.ts.
  */
-export const RETIRED_S46_RULE_KEYS = [
-  'vat.rate_restaurant_catering_reduced_current',
-  'vat.rate_restaurant_catering_reduced_pre_9pct_window',
-  'vat.rate_hospitality_9pct_not_modelled',
-  'vat.rate_restaurant_catering_9pct_2020_2023',
-  'vat.rate_hairdressing_9pct_2020_2023',
-];
+export const RETIRED_S46_RULE_KEYS = retiredBy(['vat.rate_hospitality', 'vat.rate_hairdressing']);
 
 /**
  * The Schedule 3 sub-paragraph whose rate a multi-version s.46 family
