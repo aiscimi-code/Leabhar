@@ -1,9 +1,9 @@
 /**
  * Deterministic parser for Revenue TDM Part 38-01-03b (Guidelines for VAT
- * Registration), as-converted PDF text at
- * docs/statutes/tdm-38-01-03b/38-01-03b.md (pdfplumber extraction, real
- * `source_pdf_sha256` in front matter — genuinely verbatim, unlike the short
- * paraphrased reference files this KB has excluded elsewhere).
+ * Registration), as pdfplumber converts Revenue's PDF
+ * (`scripts/catalogue/pdfplumber_to_text.py`). The rules catalogue entry
+ * (`catalogue/tdm-38-01-03b/38-01-03b.json`) holds the passage this parses,
+ * with the PDF beside it.
  *
  * This 40+ page manual repeats its "Exclusion from Mandatory Electronic
  * Filing and Payment of Tax" guidance once per registrant-type scenario
@@ -23,8 +23,6 @@
  * the Regulation itself (`revenue_guidance`, not `legislation`), but
  * genuinely verbatim and citable in its own right.
  */
-import { readFileSync } from 'node:fs';
-
 const HEADING = 'Exclusion from Mandatory Electronic Filing and Payment of Tax';
 const END_ANCHOR = 'of this notification.';
 
@@ -80,12 +78,3 @@ export function extractCapacityExclusionSection(source: string): ParsedTdmCapaci
     occurrences: occurrences.length,
   };
 }
-
-export function extractCapacityExclusionSectionFile(path: string): ParsedTdmCapacityExclusion {
-  return extractCapacityExclusionSection(readFileSync(path, 'utf8'));
-}
-
-export const TDM_38_01_03B_MD_PATH = new URL(
-  '../../../docs/statutes/tdm-38-01-03b/38-01-03b.md',
-  import.meta.url,
-).pathname;

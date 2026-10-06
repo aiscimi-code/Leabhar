@@ -38,8 +38,8 @@ superseded and what to use instead.
   and 9 — reg.5 curated for issue #136 bug 2/#137's turnover-test fix, reg.9
   for the s.92B "annual turnover" definition it depends on;
   `catalogue/si-69-2025/`); and
-  one passage of `tdm-38-01-03b/38-01-03b.md` (the e-filing capacity
-  exclusion).
+  one passage of Revenue's TDM Part 38-01-03b (the e-filing capacity
+  exclusion; `catalogue/tdm-38-01-03b/`).
 - **Reference material** (everything else below): curated pointers,
   summaries, or partial extracts sourced from official HTML/PDF. Useful for
   a human or an LLM-assisted lookup to know where to look and what changed,

@@ -226,6 +226,9 @@ export const CATALOGUE_ENTRIES = [
   'si-639-2010/2010-si-639.json',
   'si-156-2012/2012-si-156.json',
   'si-69-2025/2025-si-69.json',
+  // Revenue's VAT registration manual (Tax and Duty Manual Part 38-01-03b):
+  // only its capacity exclusion passage, one provision, with the PDF beside it.
+  'tdm-38-01-03b/38-01-03b.json',
 ] as const;
 
 export function catalogueEntryPath(entry: string, root: string = appRoot()): string {

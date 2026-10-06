@@ -73,6 +73,8 @@ import { parseSi156 } from '@/domain/rules/si156Parser';
 import { SI_156, si156Relevance } from '@/domain/rules/si156Ingestion';
 import { parseSi692025Regulation } from '@/domain/rules/si692025Parser';
 import { SI_69_2025, SI_69_2025_REGULATIONS, si692025RelevanceReason } from '@/domain/rules/si692025Ingestion';
+import { extractCapacityExclusionSection } from '@/domain/rules/tdm3801_03bParser';
+import { TDM_38_01_03B } from '@/domain/rules/tdm3801_03bIngestion';
 import { nowIso } from '@/domain/dates';
 import { lrcAnnotationLayer } from '@/domain/rules/lrcAnnotations';
 
@@ -306,6 +308,31 @@ function extractorFor(entry: string, naming: Naming | null): Extractor {
           provisions: [{
             sectionNumber: 'full', heading: title, locator: 'whole document',
             category: 'procedure', relevant, relevanceReason: reason, excerpt,
+          }],
+        };
+      },
+    };
+  }
+  // Revenue's VAT registration manual, from its PDF: only the capacity
+  // exclusion passage, which every Advice of Registration letter repeats.
+  if (entry === 'tdm-38-01-03b/38-01-03b') {
+    const { title, citation, sourceUrl: url, effectiveFrom, sectionNumber, note, relevanceReason } = TDM_38_01_03B;
+    return {
+      url, title, citation, ext: 'pdf',
+      build: (pdf, retrievedOn) => {
+        const section = extractCapacityExclusionSection(pdfplumberText(pdf));
+        if (section.occurrences !== 4) throw new Error(`${entry}: expected the passage four times, found ${section.occurrences}.`);
+        return {
+          source: {
+            citation, title, sourceType: 'revenue_guidance', jurisdiction: 'IE', sourceUrl: url,
+            sha256: createHash('sha256').update(pdf).digest('hex'),
+            conversion: 'pdfplumber-full', retrievedOn,
+            publicationDate: null, effectiveFrom, note,
+          },
+          provisions: [{
+            sectionNumber, heading: section.heading,
+            locator: 'Appendix 8, page 40 (repeated in Appendices 9, 10 and 11)',
+            category: 'procedure', relevant: true, relevanceReason, excerpt: section.provisionText,
           }],
         };
       },

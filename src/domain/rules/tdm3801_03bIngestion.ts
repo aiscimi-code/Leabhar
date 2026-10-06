@@ -1,6 +1,8 @@
 /**
  * Ingestion and rule derivation for Revenue TDM Part 38-01-03b's capacity
- * exclusion guidance, built on `tdm3801_03bParser.ts`.
+ * exclusion guidance, built on `tdm3801_03bParser.ts`. The knowledge base
+ * loads the passage from its rules catalogue entry
+ * (`ingestTdm3801_03bFromCatalogue`, #556).
  */
 import { and, eq } from 'drizzle-orm';
 import type { AppDatabase } from '@/db';
@@ -8,21 +10,40 @@ import { irishKnowledgeSources, irishActProvisions, irishTaxRules } from '@/db/s
 import { ids } from '@/lib/ids';
 import { nowIso } from '../dates';
 import { sha256Hex } from '@/lib/hash';
-import { extractCapacityExclusionSection, TDM_38_01_03B_MD_PATH } from './tdm3801_03bParser';
+import { extractCapacityExclusionSection } from './tdm3801_03bParser';
 import { TDM_38_01_03B_CAPACITY_EXCLUSION_RULE } from './tdm3801_03bCuration';
 import { upsertReviewItem } from '../extraction/service';
 import { taxHeadsFor } from './taxHeads';
+import { ingestCatalogueFile, type CatalogueIngestResult } from './catalogue';
 
-export { TDM_38_01_03B_MD_PATH };
-
-const TDM_38_01_03B = {
+export const TDM_38_01_03B = {
   citation: 'Revenue TDM Part 38-01-03b',
+  title: 'TDM Part 38-01-03b — Guidelines for VAT Registration (capacity exclusion from mandatory e-filing)',
   sourceUrl: 'https://www.revenue.ie/en/tax-professionals/tdm/income-tax-capital-gains-tax-corporation-tax/part-38/38-01-03b.pdf',
   // The TDM's own front matter states "Document last updated May 2026"; no
   // more precise effective date is stated for this specific guidance passage.
+  // The exclusion itself is S.I. 156/2012 reg.5's, in force from 2012 (#709).
   effectiveFrom: '2026-05-01',
   sectionNumber: 'capacity-exclusion',
+  note: 'Only the "Exclusion from Mandatory Electronic Filing and Payment of Tax" passage is ingested '
+    + 'from this 40+ page manual — it repeats byte-identically four times (once per registrant-type '
+    + 'scenario), verified by tdm3801_03bParser.ts. This is Revenue guidance, not legislation: it ranks '
+    + 'below S.I. 156/2012 itself in the source hierarchy, and closes a gap that Regulation left open here '
+    + '(its own exclusion criteria are not restated in this KB — see si156Curation.ts).',
+  // Curated by construction: the parser extracts nothing else.
+  relevanceReason: 'Curated: mapped to vat.mandatory_electronic_filing_capacity_exclusion in '
+    + 'tdm3801_03bCuration.ts.',
 };
+
+export const TDM_38_01_03B_CATALOGUE_ENTRY = 'tdm-38-01-03b/38-01-03b.json';
+
+/** Load the passage from its catalogue entry. */
+export function ingestTdm3801_03bFromCatalogue(
+  db: AppDatabase,
+  params: { companyId?: string | null; ingestVersion?: string; root?: string },
+): CatalogueIngestResult {
+  return ingestCatalogueFile(db, { ...params, entry: TDM_38_01_03B_CATALOGUE_ENTRY });
+}
 
 export interface TdmCapacityExclusionIngestResult {
   sourceId: string;
@@ -31,6 +52,7 @@ export interface TdmCapacityExclusionIngestResult {
   ingested: boolean;
 }
 
+/** Ingest a Markdown copy of the manual (the CLI's `--file`): only the capacity exclusion passage. */
 export function ingestTdm3801_03bCapacityExclusion(
   db: AppDatabase,
   params: { companyId?: string | null; markdown: string; ingestVersion: string; localPath?: string },
@@ -60,28 +82,21 @@ export function ingestTdm3801_03bCapacityExclusion(
       id: sourceId,
       companyId: params.companyId ?? null,
       sourceType: 'revenue_guidance',
-      title: 'TDM Part 38-01-03b — Guidelines for VAT Registration (capacity exclusion from mandatory e-filing)',
+      title: TDM_38_01_03B.title,
       citation: TDM_38_01_03B.citation,
       jurisdiction: 'IE',
       sourceUrl: TDM_38_01_03B.sourceUrl,
-      localPath: params.localPath ?? TDM_38_01_03B_MD_PATH,
+      localPath: params.localPath ?? null,
       sha256: digest,
       ingestVersion: params.ingestVersion,
       publicationDate: null,
       retrievedAt: nowIso(),
       effectiveFrom: TDM_38_01_03B.effectiveFrom,
-      sourceNote: 'Only the "Exclusion from Mandatory Electronic Filing and Payment of Tax" passage is ingested '
-        + 'from this 40+ page manual — it repeats byte-identically four times (once per registrant-type '
-        + 'scenario), verified by tdm3801_03bParser.ts. This is Revenue guidance, not legislation: it ranks '
-        + 'below S.I. 156/2012 itself in the source hierarchy, and closes a gap that Regulation left open here '
-        + '(its own exclusion criteria are not restated in this KB — see si156Curation.ts).',
+      sourceNote: TDM_38_01_03B.note,
       sourceDate: nowIso(),
     }).run();
 
     const section = extractCapacityExclusionSection(params.markdown);
-    const relevant = true; // curated by construction — this parser extracts nothing else
-    const reason = 'Curated: mapped to vat.mandatory_electronic_filing_capacity_exclusion in '
-      + 'tdm3801_03bCuration.ts.';
 
     tx.insert(irishActProvisions).values({
       id: ids.provision(),
@@ -98,8 +113,8 @@ export function ingestTdm3801_03bCapacityExclusion(
       amendsSection: null,
       effectiveClue: null,
       citedActs: [],
-      relevant,
-      relevanceReason: reason,
+      relevant: true,
+      relevanceReason: TDM_38_01_03B.relevanceReason,
       source: 'import',
       provenanceStatus: 'imported',
     }).run();

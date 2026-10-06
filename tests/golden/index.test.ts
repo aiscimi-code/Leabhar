@@ -9,7 +9,6 @@
  * in the test output. The case id and description appear as the test name.
  */
 import { describe, it, expect, beforeEach } from 'vitest';
-import { readFileSync } from 'node:fs';
 import { createTestDatabase } from '@/db/testing';
 import { createCompany } from '@/domain/config/setup';
 import {
@@ -45,9 +44,8 @@ import {
   deriveRctRules,
 } from '@/domain/rules/rctIngestion';
 import {
-  ingestTdm3801_03bCapacityExclusion,
+  ingestTdm3801_03bFromCatalogue,
   deriveTdm3801_03bCapacityExclusionRule,
-  TDM_38_01_03B_MD_PATH,
 } from '@/domain/rules/tdm3801_03bIngestion';
 import { deriveVatScopeRules } from '@/domain/rules/vatScopeIngestion';
 import { runGoldenCase } from './runner';
@@ -121,8 +119,7 @@ beforeEach(() => {
   ingestRctTdmFromCatalogue(db, 'tdm_18_02_11', { companyId });
   deriveRctRules(db, { companyId });
 
-  const tdmMd = readFileSync(TDM_38_01_03B_MD_PATH, 'utf8');
-  ingestTdm3801_03bCapacityExclusion(db, { companyId, markdown: tdmMd, ingestVersion: 'v1' });
+  ingestTdm3801_03bFromCatalogue(db, { companyId });
   deriveTdm3801_03bCapacityExclusionRule(db, { companyId });
 });
 

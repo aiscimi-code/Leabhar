@@ -1211,9 +1211,9 @@ right:
 - `src/domain/rules/tdm3801_03bParser.ts` extracts one named passage —
   "Exclusion from Mandatory Electronic Filing and Payment of Tax" — from
   Revenue's 40+ page "Guidelines for VAT Registration" TDM
-  (`docs/statutes/tdm-38-01-03b/38-01-03b.md`, genuinely verbatim: a real
-  `source_pdf_sha256` from a `pdfplumber`-extracted PDF, not a hand-written
-  summary). The passage repeats byte-identically four times in the source
+  (the rules catalogue entry `catalogue/tdm-38-01-03b/38-01-03b.json`, with
+  Revenue's PDF beside it, converted by `pdfplumber`, not a hand-written
+  summary; #556). The passage repeats byte-identically four times in the source
   document (once per registrant-type scenario — resident/non-resident
   individual/company); the parser verifies all four match before extracting
   the first, and throws rather than silently picking one if they ever

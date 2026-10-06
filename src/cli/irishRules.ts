@@ -33,7 +33,7 @@ import {
 } from '@/domain/rules/si692025Ingestion';
 import { deriveFinanceAct2024VatThresholds } from '@/domain/rules/financeAct2024VatThresholdsIngestion';
 import {
-  ingestTdm3801_03bCapacityExclusion, deriveTdm3801_03bCapacityExclusionRule, TDM_38_01_03B_MD_PATH,
+  ingestTdm3801_03bCapacityExclusion, ingestTdm3801_03bFromCatalogue, deriveTdm3801_03bCapacityExclusionRule,
 } from '@/domain/rules/tdm3801_03bIngestion';
 import {
   ingestAllCompaniesAct2014Sections, deriveCompaniesAct2014Rules,
@@ -255,9 +255,10 @@ export async function main(argv: string[], options: CliOptions = {}): Promise<nu
           return 0;
         }
         if (source === 'tdm-38-01-03b') {
-          const file = getFlag(flags, 'file') ?? TDM_38_01_03B_MD_PATH;
-          const markdown = readFileSync(file, 'utf8');
-          print(ingestTdm3801_03bCapacityExclusion(db, { companyId, markdown, ingestVersion: 'v1', localPath: file }), format);
+          const file = getFlag(flags, 'file');
+          print(file
+            ? ingestTdm3801_03bCapacityExclusion(db, { companyId, markdown: readFileSync(file, 'utf8'), ingestVersion: 'v1', localPath: file })
+            : ingestTdm3801_03bFromCatalogue(db, { companyId }), format);
           return 0;
         }
         if (source === 'companies-act-2014') {

@@ -35,7 +35,7 @@ import { deriveSi639Rules } from './si639Ingestion';
 import { deriveSi156Rules } from './si156Ingestion';
 import { deriveSi692025Rules } from './si692025Ingestion';
 import { deriveFinanceAct2024VatThresholds } from './financeAct2024VatThresholdsIngestion';
-import { ingestTdm3801_03bCapacityExclusion, deriveTdm3801_03bCapacityExclusionRule } from './tdm3801_03bIngestion';
+import { deriveTdm3801_03bCapacityExclusionRule } from './tdm3801_03bIngestion';
 import { deriveVatScopeRules } from './vatScopeIngestion';
 import { ingestTcaNfgPart, deriveCorporationTaxRules, nfgPath } from './tcaNfgIngestion';
 import { NFG_SECTIONS } from './corporationTaxCuration';
@@ -65,7 +65,6 @@ type IngestFn = (db: AppDatabase, params: IngestParams) => unknown;
  * the provision viewer can resolve it wherever the app runs.
  */
 const SOURCES: Array<{ path: string; ingest: IngestFn }> = [
-  { path: 'docs/statutes/tdm-38-01-03b/38-01-03b.md', ingest: ingestTdm3801_03bCapacityExclusion },
   ...COMPANIES_ACT_2014_SECTION_NUMBERS.map((n) => ({
     path: `docs/statutes/companies-act-2014/s${n}.md`,
     ingest: ingestCompaniesAct2014Section as IngestFn,
