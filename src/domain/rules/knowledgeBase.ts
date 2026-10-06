@@ -28,9 +28,7 @@ import { ensureDefaultVatTreatments } from '../config/setup';
 import { deriveTaxRules } from './irishRules';
 import { deriveVatcaRules } from './vatcaIngestion';
 import { deriveVatcaScheduleRules } from './vatcaScheduleIngestion';
-import {
-  ingestRctTdm18_02_04, ingestRctTdm18_02_05, ingestRctTdm18_02_11, deriveRctRules,
-} from './rctIngestion';
+import { deriveRctRules } from './rctIngestion';
 import { ingestVatcaRevisedSection, deriveVatcaRevisedRules } from './vatcaRevisedIngestion';
 import { deriveCapitalAllowancesRules } from './capitalAllowancesIngestion';
 import { ingestSi639, deriveSi639Rules } from './si639Ingestion';
@@ -69,9 +67,6 @@ type IngestFn = (db: AppDatabase, params: IngestParams) => unknown;
  * the provision viewer can resolve it wherever the app runs.
  */
 const SOURCES: Array<{ path: string; ingest: IngestFn }> = [
-  { path: 'docs/statutes/rct/tdm-18-02-04.md', ingest: ingestRctTdm18_02_04 },
-  { path: 'docs/statutes/rct/tdm-18-02-05.md', ingest: ingestRctTdm18_02_05 },
-  { path: 'docs/statutes/rct/tdm-18-02-11.md', ingest: ingestRctTdm18_02_11 },
   { path: 'docs/statutes/si-639-2010/2010-si-639.md', ingest: ingestSi639 },
   { path: 'docs/statutes/si-156-2012/2012-si-156.md', ingest: ingestSi156 },
   { path: 'docs/statutes/si-69-2025/2025-si-69.md', ingest: ingestSi692025Reg5 },

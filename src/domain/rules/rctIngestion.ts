@@ -133,12 +133,14 @@ export const RCT_FA2011_SECTIONS: Record<RctFa2011SectionKey, {
   },
 };
 
-type RctTdmKey = Exclude<RctSourceKind, 'tca1997_s530' | RctFa2011SectionKey>;
+export type RctTdmKey = Exclude<RctSourceKind, 'tca1997_s530' | RctFa2011SectionKey>;
 
-const RCT_TDM_SOURCES: Record<RctTdmKey, {
-  citation: string; sourceType: IrishSourceType; sourceUrl: string; effectiveFrom: string; localPath: string;
+export const RCT_TDM_SOURCES: Record<RctTdmKey, {
+  /** The manual's own title, as its first page prints it. */
+  title: string; citation: string; sourceType: IrishSourceType; sourceUrl: string; effectiveFrom: string;
 }> = {
   tdm_18_02_04: {
+    title: 'TDM Part 18-02-04 RCT for Principal Contractors',
     citation: 'Revenue TDM Part 18-02-04',
     sourceType: 'revenue_guidance',
     sourceUrl: 'https://www.revenue.ie/en/tax-professionals/tdm/income-tax-capital-gains-tax-corporation-tax/part-18/18-02-04.pdf',
@@ -146,21 +148,20 @@ const RCT_TDM_SOURCES: Record<RctTdmKey, {
     // 2012" (its own §1) — used as the effective date of the guidance it
     // gives, not a claim about when the document itself was authored.
     effectiveFrom: '2012-01-01',
-    localPath: 'docs/statutes/rct/tdm-18-02-04.md',
   },
   tdm_18_02_05: {
+    title: 'TDM Part 18-02-05 RCT for Subcontractors',
     citation: 'Revenue TDM Part 18-02-05',
     sourceType: 'revenue_guidance',
     sourceUrl: 'https://www.revenue.ie/en/tax-professionals/tdm/income-tax-capital-gains-tax-corporation-tax/part-18/18-02-05.pdf',
     effectiveFrom: '2012-01-01',
-    localPath: 'docs/statutes/rct/tdm-18-02-05.md',
   },
   tdm_18_02_11: {
+    title: 'TDM Part 18-02-11 Electronic Relevant Contracts Tax System',
     citation: 'Revenue TDM Part 18-02-11',
     sourceType: 'revenue_guidance',
     sourceUrl: 'https://www.revenue.ie/en/tax-professionals/tdm/income-tax-capital-gains-tax-corporation-tax/part-18/18-02-11.pdf',
     effectiveFrom: '2012-01-01',
-    localPath: 'docs/statutes/rct/tdm-18-02-11.md',
   },
 };
 
@@ -420,6 +421,44 @@ export function ingestTca1997S530I(
 }
 
 /** Ingest one whole RCT TDM document as a single provision. */
+export const RCT_TDM_NOTE = "Revenue guidance, not legislation — never allowed to outrank TCA 1997 ss.530-530V "
+  + '(sourceHierarchy.ts). Ingested as one whole-document provision rather than split by heading: '
+  + 'it is continuous procedural prose, not an addressable statute.';
+
+/**
+ * Whether a manual bears on the rules. Ingested wholesale, not run through
+ * categoriseProvision/assessRelevance (designed for a single statute
+ * section, not an 18-page mixed-topic guidance document) — relevant only
+ * when the manual actually backs a curated rule (RCT_CURATED_RULES), same
+ * override convention every other ingestion module in this KB applies.
+ */
+export function rctTdmRelevance(key: RctTdmKey): { relevant: boolean; reason: string } {
+  const curated = RCT_CURATED_RULES.some((r) => r.source === key);
+  return {
+    relevant: curated,
+    reason: curated
+      ? 'Curated: mapped to a rule in rctCuration.ts.'
+      : 'Ingested for citability; not currently curated into a rule (see rctCuration.ts for what is).',
+  };
+}
+
+/** Where each manual is in the rules catalogue: its whole text is one provision. */
+export const rctTdmCatalogueEntry = (key: RctTdmKey) => `rct/tdm-${key.slice('tdm_'.length).replace(/_/g, '-')}.json`;
+
+/** Load one manual from its catalogue entry. */
+export function ingestRctTdmFromCatalogue(
+  db: AppDatabase,
+  key: RctTdmKey,
+  params: { companyId?: string | null; ingestVersion?: string; root?: string },
+): CatalogueIngestResult {
+  return ingestCatalogueFile(db, { ...params, entry: rctTdmCatalogueEntry(key) });
+}
+
+/**
+ * Ingest a Markdown copy of a manual (the CLI's `--file`): the converted
+ * text after its front matter and title. The knowledge base loads the
+ * catalogue entry (`ingestRctTdmFromCatalogue`).
+ */
 function ingestRctTdm(
   db: AppDatabase,
   params: { tdmKey: RctTdmKey; companyId?: string | null; markdown: string; ingestVersion: string; localPath?: string },
@@ -467,24 +506,17 @@ function ingestRctTdm(
       citation: meta.citation,
       jurisdiction: 'IE',
       sourceUrl: meta.sourceUrl,
-      localPath: params.localPath ?? meta.localPath,
+      localPath: params.localPath ?? null,
       sha256: digest,
       ingestVersion: params.ingestVersion,
       publicationDate: null,
       retrievedAt: nowIso(),
       effectiveFrom: meta.effectiveFrom,
-      sourceNote: "Revenue guidance, not legislation — never allowed to outrank TCA 1997 ss.530-530V "
-        + '(sourceHierarchy.ts). Ingested as one whole-document provision rather than split by heading: '
-        + 'it is continuous procedural prose, not an addressable statute.',
+      sourceNote: RCT_TDM_NOTE,
       sourceDate: nowIso(),
     }).run();
 
-    // Ingested wholesale, not run through categoriseProvision/assessRelevance
-    // (designed for a single statute section, not an 18-page mixed-topic
-    // guidance document) — relevant only when this TDM actually backs a
-    // curated rule (RCT_CURATED_RULES), same override convention every
-    // other ingestion module in this KB applies.
-    const curated = RCT_CURATED_RULES.some((r) => r.source === params.tdmKey);
+    const { relevant: curated, reason } = rctTdmRelevance(params.tdmKey);
     tx.insert(irishActProvisions).values({
       id: ids.provision(),
       companyId: params.companyId ?? null,
@@ -504,9 +536,7 @@ function ingestRctTdm(
       effectiveClue: null,
       citedActs: [],
       relevant: curated,
-      relevanceReason: curated
-        ? 'Curated: mapped to a rule in rctCuration.ts.'
-        : 'Ingested for citability; not currently curated into a rule (see rctCuration.ts for what is).',
+      relevanceReason: reason,
       source: 'import',
       provenanceStatus: 'imported',
     }).run();

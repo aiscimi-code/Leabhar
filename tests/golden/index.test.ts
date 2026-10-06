@@ -42,7 +42,7 @@ import {
   ingestTca1997S284FromCatalogue, deriveCapitalAllowancesRules,
 } from '@/domain/rules/capitalAllowancesIngestion';
 import {
-  ingestTca1997S530FromCatalogue, ingestRctTdm18_02_04, ingestRctTdm18_02_05, ingestRctTdm18_02_11,
+  ingestTca1997S530FromCatalogue, ingestRctTdmFromCatalogue,
   deriveRctRules,
 } from '@/domain/rules/rctIngestion';
 import {
@@ -122,9 +122,9 @@ beforeEach(() => {
 
   // Each RCT source through its own path (issue #199): s.530 as the statute, each TDM from its own file.
   ingestTca1997S530FromCatalogue(db, { companyId });
-  ingestRctTdm18_02_04(db, { companyId, markdown: readFileSync('docs/statutes/rct/tdm-18-02-04.md', 'utf8'), ingestVersion: 'v1' });
-  ingestRctTdm18_02_05(db, { companyId, markdown: readFileSync('docs/statutes/rct/tdm-18-02-05.md', 'utf8'), ingestVersion: 'v1' });
-  ingestRctTdm18_02_11(db, { companyId, markdown: readFileSync('docs/statutes/rct/tdm-18-02-11.md', 'utf8'), ingestVersion: 'v1' });
+  ingestRctTdmFromCatalogue(db, 'tdm_18_02_04', { companyId });
+  ingestRctTdmFromCatalogue(db, 'tdm_18_02_05', { companyId });
+  ingestRctTdmFromCatalogue(db, 'tdm_18_02_11', { companyId });
   deriveRctRules(db, { companyId });
 
   const tdmMd = readFileSync(TDM_38_01_03B_MD_PATH, 'utf8');

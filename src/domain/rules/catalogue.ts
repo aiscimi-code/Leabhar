@@ -215,6 +215,11 @@ export const CATALOGUE_ENTRIES = [
   'tca-1997/s530I.json',
   'tca-1997/s284.json',
   'finance-act-2003/s23.json',
+  // Revenue's RCT manuals (Tax and Duty Manual Part 18-02-04, -05, -11),
+  // each one whole-document provision, with the PDF beside it.
+  'rct/tdm-18-02-04.json',
+  'rct/tdm-18-02-05.json',
+  'rct/tdm-18-02-11.json',
 ] as const;
 
 export function catalogueEntryPath(entry: string, root: string = appRoot()): string {

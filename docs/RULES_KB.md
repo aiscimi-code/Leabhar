@@ -106,8 +106,10 @@ re-hashes it (AGENTS.md #5).
 `catalogue.test.ts` fails the gate when an entry no longer matches what the
 curation derives. All 39 loaded LRC-revised VATCA sections, Schedules
 1-3, VATCA 2010 as enacted, the Finance Acts 2024 and 2025 as enacted,
-TCA 1997 ss.530, 530A, 530E, 530G, 530H, 530I and 284, and Finance Act
-2003 s.23 are in it; the other sources wait on #556. Each of ss.530A-530I
+TCA 1997 ss.530, 530A, 530E, 530G, 530H, 530I and 284, Finance Act
+2003 s.23, and Revenue's RCT manuals (TDM 18-02-04, -05, -11; each one
+whole-document provision, from its PDF by `pdfplumber_to_text.py`) are in
+it; the other sources wait on #556. Each of ss.530A-530I
 is its own source with FA 2011 s.20's page beside it, cut from that page
 at its heading. A provision can carry its Chapter (`chapter`).
 An entry can state the source's own publication and commencement dates

@@ -5,13 +5,13 @@ import { createTestDatabase } from '@/db/testing';
 import { createCompany } from '../config/setup';
 import {
   ingestTca1997S530, ingestTca1997S530A, ingestTca1997S530FromCatalogue, ingestTca1997RctFa2011SectionFromCatalogue,
-  ingestRctTdm18_02_04, ingestRctTdm18_02_05, ingestRctTdm18_02_11, deriveRctRules,
+  ingestRctTdm18_02_04, ingestRctTdmFromCatalogue, deriveRctRules,
   RCT_FA2011_SECTIONS, type RctFa2011SectionKey,
 } from './rctIngestion';
 import { lookupTaxRule } from './irishRules';
 import { lookupTransactionRules } from './transactionLookup';
 import { RCT_CURATED_RULES } from './rctCuration';
-import { irishTaxRules, irishKnowledgeSources, reviewItems } from '@/db/schema';
+import { irishTaxRules, irishKnowledgeSources, irishActProvisions, reviewItems } from '@/db/schema';
 import type { AppDatabase } from '@/db';
 
 let db: AppDatabase;
@@ -20,18 +20,8 @@ let companyId: string;
 const s530Markdown = readFileSync(new URL('./__fixtures__/tca-1997-s530-excerpt.md', import.meta.url), 'utf8');
 const s530AMarkdown = readFileSync(new URL('./__fixtures__/tca-1997-s530A-excerpt.md', import.meta.url), 'utf8');
 const FA2011_KEYS = Object.keys(RCT_FA2011_SECTIONS) as RctFa2011SectionKey[];
-const tdmMarkdown = readFileSync(
-  new URL('../../../docs/statutes/rct/tdm-18-02-04.md', import.meta.url).pathname,
-  'utf8',
-);
-const tdm05Markdown = readFileSync(
-  new URL('../../../docs/statutes/rct/tdm-18-02-05.md', import.meta.url).pathname,
-  'utf8',
-);
-const tdm11Markdown = readFileSync(
-  new URL('../../../docs/statutes/rct/tdm-18-02-11.md', import.meta.url).pathname,
-  'utf8',
-);
+/** A Markdown copy of TDM 18-02-04 (front matter, title, first page), as the CLI's --file takes. */
+const tdmMarkdown = readFileSync(new URL('./__fixtures__/tdm-18-02-04-excerpt.md', import.meta.url), 'utf8');
 
 function ingestFa2011Sections(): void {
   for (const key of FA2011_KEYS) ingestTca1997RctFa2011SectionFromCatalogue(db, key, { companyId });
@@ -113,7 +103,20 @@ describe('ingestTca1997S530A / S530E / S530G / S530H / S530I (issue #131)', () =
   });
 });
 
-describe('ingestRctTdm18_02_04', () => {
+describe('ingestRctTdmFromCatalogue', () => {
+  it('loads the manual as revenue_guidance, one whole-document provision, and is idempotent', () => {
+    const first = ingestRctTdmFromCatalogue(db, 'tdm_18_02_04', { companyId });
+    expect(first).toMatchObject({ ingested: true, provisionCount: 1 });
+    expect(ingestRctTdmFromCatalogue(db, 'tdm_18_02_04', { companyId })).toMatchObject({ ingested: false, sourceId: first.sourceId });
+    const source = db.select().from(irishKnowledgeSources).where(eq(irishKnowledgeSources.id, first.sourceId)).get()!;
+    expect(source).toMatchObject({
+      citation: 'Revenue TDM Part 18-02-04', sourceType: 'revenue_guidance', title: 'TDM Part 18-02-04 RCT for Principal Contractors',
+      effectiveFrom: '2012-01-01', localPath: 'catalogue/rct/tdm-18-02-04.json',
+    });
+  });
+});
+
+describe('ingestRctTdm18_02_04 (a Markdown copy, the CLI\'s --file)', () => {
   it('ingests the TDM as legislation-distinct revenue_guidance and is idempotent by content', () => {
     const first = ingestRctTdm18_02_04(db, { companyId, markdown: tdmMarkdown, ingestVersion: 'v1' });
     expect(first.ingested).toBe(true);
@@ -130,9 +133,9 @@ describe('ingestRctTdm18_02_04', () => {
 
 describe('ingestRctTdm18_02_05 / ingestRctTdm18_02_11', () => {
   it('ingest each as its own revenue_guidance source, distinct from 18-02-04', () => {
-    const tdm04 = ingestRctTdm18_02_04(db, { companyId, markdown: tdmMarkdown, ingestVersion: 'v1' });
-    const tdm05 = ingestRctTdm18_02_05(db, { companyId, markdown: tdm05Markdown, ingestVersion: 'v1' });
-    const tdm11 = ingestRctTdm18_02_11(db, { companyId, markdown: tdm11Markdown, ingestVersion: 'v1' });
+    const tdm04 = ingestRctTdmFromCatalogue(db, 'tdm_18_02_04', { companyId });
+    const tdm05 = ingestRctTdmFromCatalogue(db, 'tdm_18_02_05', { companyId });
+    const tdm11 = ingestRctTdmFromCatalogue(db, 'tdm_18_02_11', { companyId });
 
     const sources = db.select().from(irishKnowledgeSources).all();
     const citations = new Set(sources.map((s) => s.citation));
@@ -143,9 +146,9 @@ describe('ingestRctTdm18_02_05 / ingestRctTdm18_02_11', () => {
   });
 
   it('18-02-11 is ingested for citability but not currently curated into a rule, so it is not marked relevant', () => {
-    const result = ingestRctTdm18_02_11(db, { companyId, markdown: tdm11Markdown, ingestVersion: 'v1' });
+    const result = ingestRctTdmFromCatalogue(db, 'tdm_18_02_11', { companyId });
     expect(result.ingested).toBe(true);
-    expect(result.relevantCount).toBe(0);
+    expect(db.select().from(irishActProvisions).where(eq(irishActProvisions.sourceId, result.sourceId)).get()!.relevant).toBe(false);
   });
 });
 
@@ -153,8 +156,8 @@ describe('deriveRctRules', () => {
   beforeEach(() => {
     ingestTca1997S530FromCatalogue(db, { companyId });
     ingestFa2011Sections();
-    ingestRctTdm18_02_04(db, { companyId, markdown: tdmMarkdown, ingestVersion: 'v1' });
-    ingestRctTdm18_02_05(db, { companyId, markdown: tdm05Markdown, ingestVersion: 'v1' });
+    ingestRctTdmFromCatalogue(db, 'tdm_18_02_04', { companyId });
+    ingestRctTdmFromCatalogue(db, 'tdm_18_02_05', { companyId });
   });
 
   it('creates one rule per curated RCT rule, resolved against the correct source for each', () => {

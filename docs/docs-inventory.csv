@@ -11,7 +11,7 @@ docs/statutes/282-2011/articles-10-13b-establishment.md,5175,cited-code,src/doma
 docs/statutes/282-2011/consolidated-282-2011.md,123226,cited-docs,docs/statutes/282-2011/articles-10-13b-establishment.md docs/statutes/SOURCE-REGISTER.md
 docs/statutes/CURRENT-REGISTER.md,3782,cited-docs,docs/statutes/README.md
 docs/statutes/CURRENT-REGISTRATION.md,1640,cited-docs,docs/statutes/CURRENT-REGISTER.md docs/statutes/README.md
-docs/statutes/README.md,13847,cited-docs,docs/RULES_KB.md docs/statutes/SOURCE-REGISTER.md docs/statutes/finance-act-2024/README.md …
+docs/statutes/README.md,13890,cited-docs,docs/RULES_KB.md docs/statutes/SOURCE-REGISTER.md docs/statutes/finance-act-2024/README.md …
 docs/statutes/SOURCE-REGISTER.md,13355,cited-code,src/domain/rules/taxRateSync.ts
 docs/statutes/_inbox/A/SOURCES.txt,668,unreferenced,
 docs/statutes/_inbox/A/finance-act-2025-enacted-print.html,847145,cited-docs,docs/statutes/_inbox/A/SOURCES.txt
@@ -385,12 +385,9 @@ docs/statutes/import-vat/README.md,1176,cited-docs,docs/statutes/README.md
 docs/statutes/import-vat/customs-manual-import-vat.md,80893,cited-docs,docs/RULES_KB.md docs/statutes/import-vat/README.md
 docs/statutes/pos-of-services/exceptions-to-general-rules.md,4942,cited-docs,docs/statutes/SOURCE-REGISTER.md
 docs/statutes/pos-of-services/general-place-of-supply.md,4540,cited-docs,docs/statutes/SOURCE-REGISTER.md
-docs/statutes/rct/README.md,2299,cited-code,src/domain/rules/rctCuration.ts src/domain/rules/rctIngestion.ts
+docs/statutes/rct/README.md,2718,cited-code,src/domain/rules/rctCuration.ts src/domain/rules/rctIngestion.ts
 docs/statutes/rct/tdm-18-02-01-operations.md,858,cited-docs,docs/statutes/rct/README.md
 docs/statutes/rct/tdm-18-02-02-principal.md,1721,cited-docs,docs/statutes/rct/README.md
-docs/statutes/rct/tdm-18-02-04.md,40493,runtime,read by the test suite
-docs/statutes/rct/tdm-18-02-05.md,38444,runtime,read by the test suite
-docs/statutes/rct/tdm-18-02-11.md,7265,runtime,read by the test suite
 docs/statutes/scripts/extract_vat_sources.py,10340,cited-code,src/domain/rules/companiesAct2014Ingestion.ts src/domain/rules/vatcaScheduleParser.ts
 docs/statutes/si-156-2012/2012-si-156.md,4696,runtime,read by the test suite
 docs/statutes/si-639-2010/2010-si-639.md,159413,runtime,read by the test suite
@@ -406,7 +403,7 @@ docs/statutes/si-639-2010/reg-25.md,598,cited-docs,docs/statutes/si-639-2010/REA
 docs/statutes/si-639-2010/reg-26.md,590,cited-docs,docs/statutes/si-639-2010/README.md
 docs/statutes/si-639-2010/reg-29.md,2323,cited-docs,docs/statutes/si-639-2010/README.md
 docs/statutes/si-651-2011/2011-si-651.md,22628,cited-docs,docs/statutes/SOURCE-REGISTER.md
-docs/statutes/si-651-2011/README.md,1338,cited-docs,docs/RULES_KB.md
+docs/statutes/si-651-2011/README.md,1330,cited-docs,docs/RULES_KB.md
 docs/statutes/si-69-2025/2025-si-69.md,22926,runtime,read by the test suite
 docs/statutes/sme-scheme/tdm-sme-domestic-layer.md,12249,cited-docs,docs/statutes/SOURCE-REGISTER.md
 docs/statutes/swca-2005/README.md,535,unreferenced,

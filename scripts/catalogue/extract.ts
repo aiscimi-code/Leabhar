@@ -20,7 +20,8 @@
  *    URL) and keep it beside the entry, byte for byte (`s046.html`): the
  *    entry records its hash, and the gate re-checks it.
  * 2. Convert it to text (lrc_html_to_text.py; convert-statute-pdf.ts for the
- *    VATCA PDF, `pdftotext -layout` for a Finance Act's) and parse it with
+ *    VATCA PDF, `pdftotext -layout` for a Finance Act's, pdfplumber_to_text.py
+ *    for a Revenue manual's) and parse it with
  *    the same parser the rules were curated against.
  * 3. Write the entry's source and provisions, load the knowledge base into a
  *    throwaway book from it, and write the rules the curation derives, with
@@ -55,8 +56,9 @@ import { parseFinanceAct2024 } from '@/domain/rules/statuteParser';
 import { parseTca1997Section, type ParsedTcaSection } from '@/domain/rules/tca1997SectionParser';
 import { parseFinanceAct2011RctSection } from '@/domain/rules/financeAct2011RctSectionParser';
 import {
-  RCT_FA2011_CITED_ACTS, RCT_FA2011_NOTE, RCT_FA2011_PRINCIPAL_ACT, RCT_FA2011_SECTIONS, TCA_1997_S530,
-  rctFa2011Relevance, rctFa2011Title, tca1997S530Relevance, type RctFa2011SectionKey,
+  RCT_FA2011_CITED_ACTS, RCT_FA2011_NOTE, RCT_FA2011_PRINCIPAL_ACT, RCT_FA2011_SECTIONS, RCT_TDM_NOTE, RCT_TDM_SOURCES,
+  TCA_1997_S530, rctFa2011Relevance, rctFa2011Title, rctTdmRelevance, tca1997S530Relevance,
+  type RctFa2011SectionKey, type RctTdmKey,
 } from '@/domain/rules/rctIngestion';
 import { TCA_1997_AS_ENACTED_FROM, TCA_1997_AS_ENACTED_NOTE, tca1997SectionRelevance } from '@/domain/rules/tca1997Ingestion';
 import { CAPITAL_ALLOWANCES_CURATED_SECTIONS, FINANCE_ACT_2003 } from '@/domain/rules/capitalAllowancesIngestion';
@@ -70,6 +72,7 @@ import { lrcAnnotationLayer } from '@/domain/rules/lrcAnnotations';
 const ROOT = join(dirname(new URL(import.meta.url).pathname), '..', '..');
 const CONVERTER = join(ROOT, 'scripts', 'catalogue', 'lrc_html_to_text.py');
 const PDF_CONVERTER = join(ROOT, 'scripts', 'convert-statute-pdf.ts');
+const PDFPLUMBER_CONVERTER = join(ROOT, 'scripts', 'catalogue', 'pdfplumber_to_text.py');
 
 /** The title and citation a source already goes by: the entry's, else its statute copy's front matter. */
 interface Naming { title: string; citation: string; sourceUrl?: string }
@@ -274,6 +277,33 @@ function extractorFor(entry: string, naming: Naming | null): Extractor {
       },
     };
   }
+  // A Revenue Tax and Duty Manual on RCT, from its PDF: the whole text, page
+  // by page as pdfplumber extracts it, is one provision.
+  const tdm = /^rct\/tdm-18-02-(04|05|11)$/.exec(entry)?.[1];
+  if (tdm) {
+    const key = `tdm_18_02_${tdm}` as RctTdmKey;
+    const { title, citation, sourceType, sourceUrl: url, effectiveFrom } = RCT_TDM_SOURCES[key];
+    return {
+      url, title, citation, ext: 'pdf',
+      build: (pdf, retrievedOn) => {
+        const excerpt = pdfplumberText(pdf).trim();
+        if (!excerpt.startsWith('<!-- page 1 of')) throw new Error(`${entry}: the PDF gave no text.`);
+        const { relevant, reason } = rctTdmRelevance(key);
+        return {
+          source: {
+            citation, title, sourceType, jurisdiction: 'IE', sourceUrl: url,
+            sha256: createHash('sha256').update(pdf).digest('hex'),
+            conversion: 'pdfplumber-full', retrievedOn,
+            publicationDate: null, effectiveFrom, note: RCT_TDM_NOTE,
+          },
+          provisions: [{
+            sectionNumber: 'full', heading: title, locator: 'whole document',
+            category: 'procedure', relevant, relevanceReason: reason, excerpt,
+          }],
+        };
+      },
+    };
+  }
   // A section of an Act as enacted, on the Irish Statute Book: the source's
   // URL is the one its statute copy, or the entry, already records.
   const isb = isbSectionUrl(entry, naming);
@@ -383,6 +413,18 @@ const FINANCE_ACTS: Record<string, { act: KnowledgeSourceRef; curatedReason: (n:
   'finance-act-2024/2024-act-43-enacted': { act: FINANCE_ACT_2024, curatedReason: financeAct2024CuratedReason },
   'finance-act-2025/2025-act-18-enacted': { act: FINANCE_ACT_2025, curatedReason: financeAct2025CuratedReason },
 };
+
+/** A Revenue PDF as text, page by page (pdfplumber_to_text.py). */
+function pdfplumberText(pdf: Buffer): string {
+  const dir = mkdtempSync(join(tmpdir(), 'leabhar-catalogue-'));
+  try {
+    const input = join(dir, 'manual.pdf');
+    writeFileSync(input, pdf);
+    return execFileSync('python3', [PDFPLUMBER_CONVERTER, input], { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+}
 
 /** A PDF as Poppler's `pdftotext -layout` lays it out. */
 function pdftotextLayout(pdf: Buffer): string {

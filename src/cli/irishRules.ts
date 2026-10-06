@@ -15,7 +15,7 @@ import {
 import {
   ingestTca1997S530, ingestTca1997S530A, ingestTca1997S530E, ingestTca1997S530G, ingestTca1997S530H,
   ingestTca1997S530I, ingestTca1997S530FromCatalogue, ingestTca1997RctFa2011SectionFromCatalogue,
-  type RctFa2011SectionKey, ingestRctTdm18_02_04, ingestRctTdm18_02_05, ingestRctTdm18_02_11,
+  type RctFa2011SectionKey, type RctTdmKey, ingestRctTdmFromCatalogue, ingestRctTdm18_02_04, ingestRctTdm18_02_05, ingestRctTdm18_02_11,
   deriveRctRules,
 } from '@/domain/rules/rctIngestion';
 import {
@@ -187,18 +187,17 @@ export async function main(argv: string[], options: CliOptions = {}): Promise<nu
           return 0;
         }
         if (source === 'rct-tdm' || source === 'rct-tdm-05' || source === 'rct-tdm-11') {
-          const rctTdmFiles: Record<string, string> = {
-            'rct-tdm': 'tdm-18-02-04.md',
-            'rct-tdm-05': 'tdm-18-02-05.md',
-            'rct-tdm-11': 'tdm-18-02-11.md',
+          const manuals: Record<string, [RctTdmKey, typeof ingestRctTdm18_02_04]> = {
+            'rct-tdm': ['tdm_18_02_04', ingestRctTdm18_02_04],
+            'rct-tdm-05': ['tdm_18_02_05', ingestRctTdm18_02_05],
+            'rct-tdm-11': ['tdm_18_02_11', ingestRctTdm18_02_11],
           };
-          const defaultFile = new URL(`../../docs/statutes/rct/${rctTdmFiles[source]}`, import.meta.url).pathname;
-          const file = getFlag(flags, 'file') ?? defaultFile;
-          const markdown = readFileSync(file, 'utf8');
-          const ingestFn = source === 'rct-tdm'
-            ? ingestRctTdm18_02_04
-            : source === 'rct-tdm-05' ? ingestRctTdm18_02_05 : ingestRctTdm18_02_11;
-          print(ingestFn(db, { companyId, markdown, ingestVersion: 'v1', localPath: file }), format);
+          // From the rules catalogue (#556), or --file: a Markdown copy.
+          const [key, ingestFn] = manuals[source]!;
+          const file = getFlag(flags, 'file');
+          print(file
+            ? ingestFn(db, { companyId, markdown: readFileSync(file, 'utf8'), ingestVersion: 'v1', localPath: file })
+            : ingestRctTdmFromCatalogue(db, key, { companyId }), format);
           return 0;
         }
         if (source === 'vatca-2010-revised') {

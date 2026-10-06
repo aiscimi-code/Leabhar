@@ -31,7 +31,8 @@ superseded and what to use instead.
   s.46 (current rates) and 38 other revised sections, and Schedules 1–3
   (`catalogue/vatca-2010-revised/`), TCA 1997 ss.530, 530A, 530E, 530G,
   530H, 530I and 284 (`catalogue/tca-1997/`) and Finance Act 2003 s.23
-  (`catalogue/finance-act-2003/`); `rct/tdm-18-02-{04,05,11}.md`; `si-639-2010/2010-si-639.md`
+  (`catalogue/finance-act-2003/`), and Revenue's RCT manuals TDM
+  18-02-04, -05 and -11 (`catalogue/rct/`); `si-639-2010/2010-si-639.md`
   (all 47 regs parsed, reg.25 curated); `si-156-2012/2012-si-156.md` (regs
   1/2/4 only, reg.4 curated); `si-69-2025/2025-si-69.md` (regs.5, 8 and 9 —
   reg.5 curated for issue #136 bug 2/#137's turnover-test fix, reg.9 for
