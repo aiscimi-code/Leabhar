@@ -54,6 +54,7 @@ import { setRuleReviewStatus } from '@/domain/rules/review';
 import { generateDefaultTestCases, runTestCases } from '@/domain/rules/testCases';
 import { generateAuditReport } from '@/domain/rules/audit';
 import { resolveRuleDependencies, resolveAllRuleDependencies } from '@/domain/rules/dependencies';
+import { resolveImpactTarget, ruleDepends, ruleImpact } from '@/domain/rules/ruleImpact';
 import { irishActProvisions, irishTaxRules } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 
@@ -101,6 +102,9 @@ Commands:
   versions --rule-key <k>              Compare every version of a rule: what
                                        changed between each version and the one
                                        it supersedes, oldest first
+  impact <ruleKey|provision>          Everything that relies on a rule, or on a provision (an id or a
+                                       reference such as "VATCA 2010 s.46"), directly and transitively
+  depends <ruleKey>                   Everything a rule relies on: rules, and the provisions behind them
   generate-tests                      Write default positive/effective-date test cases
   test                                Run all stored test cases, print pass/fail
   audit                               Print the QC/audit report
@@ -116,7 +120,7 @@ export interface CliOptions {
 }
 
 export async function main(argv: string[], options: CliOptions = {}): Promise<number> {
-  const { command, flags } = parseArgs(argv);
+  const { command, flags, positionals } = parseArgs(argv);
   const format: Format = getFlag(flags, 'format') === 'human' ? 'human' : 'json';
 
   if (command === '' || hasFlag(flags, 'help', 'h')) {
@@ -453,6 +457,22 @@ export async function main(argv: string[], options: CliOptions = {}): Promise<nu
           return 1;
         }
         print(comparison, format);
+        return 0;
+      }
+
+      case 'impact': {
+        const target = positionals.join(' ') || getFlag(flags, 'rule-key', 'provision');
+        if (!target) throw new Error('Usage: impact <ruleKey|provisionId|reference>');
+        print(ruleImpact(db, { companyId, target: resolveImpactTarget(db, { companyId, target }) }), format);
+        return 0;
+      }
+
+      case 'depends': {
+        const ruleKey = positionals[0] ?? getFlag(flags, 'rule-key');
+        if (!ruleKey) throw new Error('Usage: depends <ruleKey>');
+        const target = resolveImpactTarget(db, { companyId, target: ruleKey });
+        if (target.kind !== 'rule') throw new Error(`"${ruleKey}" is not a rule key in this book.`);
+        print(ruleDepends(db, { companyId, ruleKey }), format);
         return 0;
       }
 

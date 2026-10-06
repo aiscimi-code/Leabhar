@@ -39,6 +39,7 @@ import { suggestVatTreatment } from '@/domain/rules/vatSuggestion';
 import { listAccountMappings } from '@/domain/config/accountMappings';
 import { verifyStatuteFile } from '@/domain/rules/knowledgeBase';
 import { resolveRuleDependencies } from '@/domain/rules/dependencies';
+import { ruleDepends, ruleImpact } from '@/domain/rules/ruleImpact';
 import { documentReviewValues } from '@/domain/documents/review';
 import { documentEvidence } from '@/domain/documents/evidence';
 import { documentDependencies } from '@/domain/documents/lifecycle';
@@ -1025,7 +1026,12 @@ export function provisionDetail(provisionId: string) {
   // Each citing rule's cross-references, resolved against what this book holds (issue #438).
   const dependencies = Object.fromEntries(rulesCiting.map((r) =>
     [r.id, r.crossReferences.length ? resolveRuleDependencies(db, { ruleId: r.id }) : []]));
-  return { ...row, rulesCiting, dependencies, file: verifyStatuteFile(row.source.localPath, row.source.sha256,
+  // What each rule relies on, and what relies on it, through the rule links (ADR-0020, issue #686).
+  const keys = [...new Set(rulesCiting.map((r) => r.ruleKey))];
+  const reliesOn = Object.fromEntries(keys.map((ruleKey) => [ruleKey, ruleDepends(db, { companyId: company.id, ruleKey }).rules]));
+  const reliedOnBy = Object.fromEntries(keys.map((ruleKey) =>
+    [ruleKey, ruleImpact(db, { companyId: company.id, target: { kind: 'rule', ruleKey } }).affected]));
+  return { ...row, rulesCiting, dependencies, reliesOn, reliedOnBy, file: verifyStatuteFile(row.source.localPath, row.source.sha256,
     row.provision.sourceStart, row.provision.sourceEnd) };
 }
 

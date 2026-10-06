@@ -114,6 +114,15 @@ export function resolveRuleDependencies(
   return resolveReferences(db, rule, bookContext(db, rule.companyId));
 }
 
+/**
+ * Resolve a free-standing reference ("VATCA 2010 s.46") against this book, as
+ * a rule's cross-reference would be. Used to name a provision for `impact`.
+ */
+export function resolveReference(db: AppDatabase, params: { companyId: string; reference: string }): ResolvedDependency {
+  const asRule = { crossReferences: [params.reference], provisionId: '' } as unknown as RuleRow;
+  return resolveReferences(db, asRule, bookContext(db, params.companyId))[0]!;
+}
+
 type RuleRow = typeof irishTaxRules.$inferSelect;
 interface BookContext {
   sources: Array<typeof irishKnowledgeSources.$inferSelect>;
