@@ -50,6 +50,28 @@ function sale(
   });
 }
 
+/**
+ * Money figures only. Serialising the whole report and searching for "1000"
+ * fails when a random company or account id happens to contain that text
+ * (issue #707).
+ */
+function moneyFigures(value: unknown): number[] {
+  const figures: number[] = [];
+  const walk = (node: unknown): void => {
+    if (Array.isArray(node)) {
+      for (const item of node) walk(item);
+      return;
+    }
+    if (node === null || typeof node !== 'object') return;
+    for (const [key, child] of Object.entries(node)) {
+      if (key.endsWith('Minor') && typeof child === 'number') figures.push(child);
+      else walk(child);
+    }
+  };
+  walk(value);
+  return figures;
+}
+
 describe('company scoping', () => {
   it('starts from two distinct companies in one book', () => {
     const rows = db.select().from(companies).all();
@@ -71,9 +93,9 @@ describe('company scoping', () => {
     expect(tbBeta.rows.every((r) => betaAccounts.has(r.accountId))).toBe(true);
     expect(tbBeta.rows.some((r) => alphaAccounts.has(r.accountId))).toBe(false);
 
-    // The figures are the company's own: no row of Alpha's carries Beta's amount.
-    expect(JSON.stringify(tbAlpha)).not.toContain('777777');
-    expect(JSON.stringify(tbBeta)).not.toContain('1230');
+    // The figures are the company's own: no money figure of Alpha's is Beta's amount.
+    expect(moneyFigures(tbAlpha)).not.toContain(777_777);
+    expect(moneyFigures(tbBeta)).not.toContain(1_230);
   });
 
   it('scopes profit and loss: one company never sees the other\'s figures', () => {
@@ -85,11 +107,12 @@ describe('company scoping', () => {
     const plAlpha = profitAndLoss(db, { companyId: alpha.companyId, from, to });
     const plBeta = profitAndLoss(db, { companyId: beta.companyId, from, to });
 
-    const alphaFigures = JSON.stringify(plAlpha);
-    expect(alphaFigures).toContain('1000');
-    expect(alphaFigures).not.toContain('777777');
-    expect(JSON.stringify(plBeta)).toContain('777777');
-    expect(JSON.stringify(plBeta)).not.toContain('1000');
+    const alphaFigures = moneyFigures(plAlpha);
+    expect(alphaFigures).toContain(1_000);
+    expect(alphaFigures).not.toContain(777_777);
+    const betaFigures = moneyFigures(plBeta);
+    expect(betaFigures).toContain(777_777);
+    expect(betaFigures).not.toContain(1_000);
   });
 
   it('scopes unmatched bank transactions', () => {
