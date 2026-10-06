@@ -57,12 +57,13 @@ export interface CatalogueSource {
   sha256: string;
   /**
    * SHA-256 of the same bytes with the values of ASP.NET's hidden
-   * `__VIEWSTATE`, `__VIEWSTATEGENERATOR` and `__EVENTVALIDATION` fields
-   * emptied (`withoutPageState`); nothing else is removed. Present only for a
-   * page that carries them (revenue.ie's), whose bytes change when that state
-   * rotates though the page does not: `verify-sources` reads a page whose
-   * bytes differ but whose content hash matches as unchanged but for page
-   * state (#713). `sha256` stays the record of the file as fetched.
+   * `__VIEWSTATE`, `__VIEWSTATEGENERATOR` and `__EVENTVALIDATION` fields, and
+   * of a Dynatrace `data-dtconfig` attribute, emptied (`withoutPageState`);
+   * nothing else is removed. Present only for a page that carries them
+   * (revenue.ie's, EUR-Lex's), whose bytes change when that state rotates
+   * though the page does not: `verify-sources` reads a page whose bytes
+   * differ but whose content hash matches as unchanged but for page state
+   * (#713, #714). `sha256` stays the record of the file as fetched.
    */
   contentSha256?: string;
   /** How the official file became the excerpts, e.g. `lrc-html-plaintext`. */
@@ -292,6 +293,9 @@ export const CATALOGUE_ENTRIES = [
   'vat3-rtd/VAT-RTD-S76.json',
   // Revenue eBrief No. 168/25: the notice, one provision, its page beside it.
   'ebriefs/no-168-25.json',
+  // Council Implementing Regulation (EU) No 282/2011 arts. 10-13b: the
+  // establishment tests, from the EUR-Lex consolidated text kept beside it.
+  'eu-282-2011/consolidated-2025-04-14.json',
 ] as const;
 
 export function catalogueEntryPath(entry: string, root: string = appRoot()): string {
@@ -315,19 +319,27 @@ export function catalogueOfficialFilePath(entry: string, root: string = appRoot(
 
 /** The ASP.NET fields whose values change with server state, not with the page (#713). */
 const PAGE_STATE_FIELDS = /\bname\s*=\s*"(?:__VIEWSTATE|__VIEWSTATEGENERATOR|__EVENTVALIDATION)"/i;
+/** Dynatrace's monitoring config, whose agent and page ids change with every request (EUR-Lex's; #714). */
+const DYNATRACE_CONFIG = /(\sdata-dtconfig\s*=\s*")[^"]*"/gi;
 
 /**
- * An HTML file's bytes with the values of its ASP.NET page-state fields
- * emptied, every other byte as it was; null when it has none of them.
+ * An HTML file's bytes with the values of its page state emptied: ASP.NET's
+ * state fields and Dynatrace's per-request config. Every other byte is as it
+ * was; null when it has none of them.
  */
 export function withoutPageState(file: Buffer): Buffer | null {
   let found = false;
   // latin1 maps each byte to one character and back, so untouched bytes survive.
-  const text = file.toString('latin1').replace(/<input\b[^>]*>/gi, (tag) => {
-    if (!PAGE_STATE_FIELDS.test(tag)) return tag;
-    found = true;
-    return tag.replace(/\bvalue\s*=\s*"[^"]*"/i, 'value=""');
-  });
+  const text = file.toString('latin1')
+    .replace(/<input\b[^>]*>/gi, (tag) => {
+      if (!PAGE_STATE_FIELDS.test(tag)) return tag;
+      found = true;
+      return tag.replace(/\bvalue\s*=\s*"[^"]*"/i, 'value=""');
+    })
+    .replace(DYNATRACE_CONFIG, (_, opening: string) => {
+      found = true;
+      return `${opening}"`;
+    });
   return found ? Buffer.from(text, 'latin1') : null;
 }
 

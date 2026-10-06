@@ -21,10 +21,9 @@ function recordedDigest(rel: string): string | null {
 
 /** Ingested files that still have neither source_html_sha256 nor
  *  source_pdf_sha256. Shrink only when a capture adds the real bytes' hash.
- *  EUR-Lex returned an empty 202 body on 2026-09-30 — do not invent a digest. */
-const MISSING_UPSTREAM_HASH = [
-  'docs/statutes/282-2011/articles-10-13b-establishment.md',
-];
+ *  Empty since EU 282/2011 moved to the rules catalogue with its EUR-Lex
+ *  page (#556); do not invent a digest to keep it so. */
+const MISSING_UPSTREAM_HASH: string[] = [];
 
 describe('ingested statute inventory (#591)', () => {
   const paths = statuteSourcePaths();

@@ -97,6 +97,31 @@ describe('a page with ASP.NET state (#713)', () => {
   });
 });
 
+describe('a EUR-Lex page with Dynatrace config (#714)', () => {
+  const EU = 'eu-282-2011/consolidated-2025-04-14.json';
+  const eu = () => readCatalogueEntry(EU);
+  const kept = () => readFileSync(catalogueOfficialFilePath(EU)).toString('latin1');
+  /** The kept page as EUR-Lex serves it on another request: new agent and page ids. */
+  const refetched = (edit: (html: string) => string = (x) => x) => Buffer.from(edit(kept()
+    .replace(/(data-dtconfig="[^"]*?agentId=)[0-9a-f]+/, '$10123456789abcdef')), 'latin1');
+
+  it('empties only the config attribute\'s value', () => {
+    const page = Buffer.from('<script src="a.js" data-dtconfig="app=1|agentId=2" async></script><p data-x="keep">');
+    expect(withoutPageState(page)!.toString()).toBe('<script src="a.js" data-dtconfig="" async></script><p data-x="keep">');
+  });
+
+  it('reports a page whose bytes moved only with its config as page_state_only', () => {
+    expect(refetched().equals(readFileSync(catalogueOfficialFilePath(EU)))).toBe(false);
+    expect(compareWithCatalogue(EU, eu(), refetched()).status).toBe('page_state_only');
+  });
+
+  it('still reports a page whose words moved as changed, quote by quote', () => {
+    const report = compareWithCatalogue(EU, eu(), refetched((html) => html.replace('a VAT identification number shall not', 'a VAT identification number may not')));
+    expect(report.status).toBe('changed');
+    expect(report.quotesMissing).toEqual(['eu.fixed_establishment_vat_number_not_sufficient@1']);
+  });
+});
+
 describe('verifySources', () => {
   it('reports a file it cannot fetch as unreachable, and carries on', async () => {
     const reports = await verifySources({ entries: [NAME], fetch: () => Promise.reject(new Error('HTTP 503')) });

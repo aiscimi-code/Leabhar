@@ -8,8 +8,9 @@
  *
  *   - `unchanged`: the file's SHA-256 is the one recorded;
  *   - `page_state_only`: unchanged but for page state. The bytes differ, but
- *     the entry records a content hash (a revenue.ie page's, #713) and the
- *     file still has it once its ASP.NET state values are emptied, so
+ *     the entry records a content hash (a revenue.ie or EUR-Lex page's,
+ *     #713, #714) and the file still has it once its page-state values
+ *     (ASP.NET's fields, Dynatrace's config) are emptied, so
  *     nothing a person reads has moved and nothing is traced;
  *   - `changed`: it is not (nor, where one is recorded, the content hash). Each rule version's quote is then looked for in
  *     the file's words, so the report says which quotes still stand and which

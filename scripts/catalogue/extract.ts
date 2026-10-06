@@ -12,6 +12,7 @@
  *   npm run catalogue:extract -- swca-2005/s21
  *   npm run catalogue:extract -- vat3-rtd/completing-vat3-return vat3-rtd/VAT-RTD-S76
  *   npm run catalogue:extract -- ebriefs/no-168-25
+ *   npm run catalogue:extract -- eu-282-2011/consolidated-2025-04-14
  *
  * Several entries are extracted together: every entry's source and
  * provisions are written first, then the knowledge base is loaded once and
@@ -25,6 +26,7 @@
  *    entry records its hash, and the gate re-checks it.
  * 2. Convert it to text (lrc_html_to_text.py, with --paragraphs for S.I.
  *    156/2012; revenue_html_to_text.py for a revenue.ie page;
+ *    eurlex_html_to_text.py for a EUR-Lex consolidated text;
  *    convert-statute-pdf.ts for the
  *    VATCA PDF, `pdftotext -layout` for a Finance Act's or a Notes for
  *    Guidance part's, pdfplumber_to_text.py
@@ -88,6 +90,7 @@ import {
   FORM_GUIDANCE_PRINCIPAL_ACT, FORM_GUIDANCE_RELEVANCE_REASON, RTD_TDM, VAT3_GUIDANCE, rtdTdmPassages, vat3GuidancePassages,
 } from '@/domain/rules/vat3RtdIngestion';
 import { EBRIEF_168_25, ebriefNoticeText } from '@/domain/rules/ebriefIngestion';
+import { EU_282_2011, EU_282_2011_ARTICLES, parseEuArticles } from '@/domain/rules/eu282Ingestion';
 import { compareNfgContents, extractNfgSection } from '@/domain/rules/tcaNfgParser';
 import { NFG_EFFECTIVE_FROM, NFG_NOTE, nfgRelevanceReason, nfgSourceUrl, nfgTitle } from '@/domain/rules/tcaNfgIngestion';
 import { NFG_SECTIONS, nfgCitation } from '@/domain/rules/corporationTaxCuration';
@@ -99,6 +102,7 @@ const CONVERTER = join(ROOT, 'scripts', 'catalogue', 'lrc_html_to_text.py');
 const PDF_CONVERTER = join(ROOT, 'scripts', 'convert-statute-pdf.ts');
 const PDFPLUMBER_CONVERTER = join(ROOT, 'scripts', 'catalogue', 'pdfplumber_to_text.py');
 const REVENUE_CONVERTER = join(ROOT, 'scripts', 'catalogue', 'revenue_html_to_text.py');
+const EURLEX_CONVERTER = join(ROOT, 'scripts', 'catalogue', 'eurlex_html_to_text.py');
 
 /** The title and citation a source already goes by: the entry's, else its statute copy's front matter. */
 interface Naming { title: string; citation: string; sourceUrl?: string }
@@ -451,6 +455,32 @@ function extractorFor(entry: string, naming: Naming | null): Extractor {
       }),
     };
   }
+  // Council Implementing Regulation (EU) No 282/2011 arts. 10-13b (#441), from
+  // the EUR-Lex consolidated text: one provision per article.
+  if (entry === 'eu-282-2011/consolidated-2025-04-14') {
+    const e = EU_282_2011;
+    return {
+      url: e.sourceUrl, title: e.title, citation: e.citation,
+      build: (html, retrievedOn) => {
+        const articles = parseEuArticles(eurlexArticlesText(html, [...EU_282_2011_ARTICLES]));
+        const found = articles.map((a) => a.sectionNumber).join(', ');
+        if (found !== EU_282_2011_ARTICLES.join(', ')) throw new Error(`${entry}: found articles ${found || 'none'}.`);
+        return {
+          source: {
+            citation: e.citation, title: e.title, sourceType: 'eu_source', jurisdiction: 'EU', sourceUrl: e.sourceUrl,
+            sha256: createHash('sha256').update(html).digest('hex'),
+            conversion: 'eurlex-html-plaintext', retrievedOn,
+            publicationDate: null, effectiveFrom: e.effectiveFrom, note: e.note,
+          },
+          provisions: articles.map((a) => ({
+            sectionNumber: a.sectionNumber, heading: `Article ${a.sectionNumber}`, locator: `art. ${a.sectionNumber}`,
+            effectiveClue: e.effectiveClue, citedActs: e.citedActs,
+            category: 'vat', relevant: true, relevanceReason: e.relevanceReason, excerpt: a.provisionText,
+          })),
+        };
+      },
+    };
+  }
   // A part of Revenue's Notes for Guidance on the TCA 1997, from its PDF as
   // `pdftotext -layout` lays it out: the section notes the curation reads.
   const nfgPart = /^tca-1997-nfg\/(part\w+)$/.exec(entry)?.[1];
@@ -710,6 +740,18 @@ function revenueHtmlText(html: Buffer): string {
   }
 }
 
+/** The named articles of a EUR-Lex consolidated text, as text (eurlex_html_to_text.py). */
+function eurlexArticlesText(html: Buffer, articles: string[]): string {
+  const dir = mkdtempSync(join(tmpdir(), 'leabhar-catalogue-'));
+  try {
+    const page = join(dir, 'page.html');
+    writeFileSync(page, html);
+    return execFileSync('python3', [EURLEX_CONVERTER, page, ...articles], { encoding: 'utf8' });
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+}
+
 /** A PDF as Poppler's `pdftotext -layout` lays it out. */
 function pdftotextLayout(pdf: Buffer): string {
   const dir = mkdtempSync(join(tmpdir(), 'leabhar-catalogue-'));
@@ -809,7 +851,7 @@ async function main(args: string[]): Promise<void> {
     const retrievedOn = flag(args, 'retrieved-on') ?? (saved ? previous?.source.retrievedOn : undefined) ?? nowIso().slice(0, 10);
     const built = extractor.build(html, retrievedOn, annotates(name, previous, args));
     if (previous && previous.source.sha256 === built.source.sha256) built.source.retrievedOn = previous.source.retrievedOn;
-    // A page with ASP.NET state also records its hash without it (#713).
+    // A page with page state also records its hash without it (#713, #714).
     const contentSha256 = extractor.ext === 'pdf' ? null : contentSha256Of(html);
     if (contentSha256) {
       built.source = Object.fromEntries(Object.entries(built.source)

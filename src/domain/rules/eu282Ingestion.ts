@@ -11,7 +11,9 @@
  * multi-factor legal test a person applies, and the lookup already refuses to
  * infer establishment from a country code. These rules are the citation
  * behind that refusal — EU law ranking with legislation, and defining the
- * terms VATCA ss.12/34 rely on without defining themselves.
+ * terms VATCA ss.12/34 rely on without defining themselves. The knowledge
+ * base loads the articles from their rules catalogue entry, the EUR-Lex page
+ * kept beside it (`ingestEu282FromCatalogue`, #556).
  */
 import { and, eq } from 'drizzle-orm';
 import type { AppDatabase } from '@/db';
@@ -23,8 +25,10 @@ import { normaliseSpace } from '../vat/boxDefinitions';
 import { upsertReviewItem } from '../extraction/service';
 import type { IrishRuleType } from '@/db/schema';
 import { taxHeadsFor } from './taxHeads';
+import { ingestCatalogueFile, type CatalogueIngestResult } from './catalogue';
 
-export const EU_282_2011_MD_PATH = 'docs/statutes/282-2011/articles-10-13b-establishment.md';
+/** The articles' catalogue entry: the consolidated text on EUR-Lex, kept beside it. */
+export const EU_282_2011_CATALOGUE_ENTRY = 'eu-282-2011/consolidated-2025-04-14.json';
 
 export const EU_282_2011 = {
   citation: 'Council Implementing Regulation (EU) No 282/2011 arts. 10-13b',
@@ -32,10 +36,25 @@ export const EU_282_2011 = {
   sourceUrl: 'https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX:02011R0282-20250414',
   // The consolidated regulation's own application provision: "It shall apply from 1 July 2011."
   effectiveFrom: '2011-07-01',
+  effectiveClue: 'It shall apply from 1 July 2011.',
+  citedActs: ['Directive 2006/112/EC'],
+  relevanceReason: 'Curated: definition rules cite these articles (eu282Ingestion.ts).',
+  note: 'Consolidated EUR-Lex text (CELEX 02011R0282, 14.04.2025) of the establishment tests. The '
+    + 'Regulation\u2019s own application provision says it applies from 1 July 2011. EU implementing law ranks '
+    + 'with legislation in the source hierarchy; these articles define "established" and "fixed establishment" '
+    + 'for the VATCA ss.12/34 place-of-supply and reverse-charge rules, which do not define them themselves.',
 };
 
-/** The articles curated into rules, in the extract's order. */
-const EU_ARTICLES = ['10', '11', '12', '13', '13a', '13b'] as const;
+/** The articles curated into rules, in the regulation's order. */
+export const EU_282_2011_ARTICLES = ['10', '11', '12', '13', '13a', '13b'] as const;
+
+/** Load the articles from their catalogue entry. */
+export function ingestEu282FromCatalogue(
+  db: AppDatabase,
+  params: { companyId?: string | null; ingestVersion?: string; root?: string },
+): CatalogueIngestResult {
+  return ingestCatalogueFile(db, { ...params, entry: EU_282_2011_CATALOGUE_ENTRY });
+}
 
 export interface EuRule {
   sectionNumber: string;
@@ -117,10 +136,14 @@ export interface ParsedArticle {
   sourceEnd: number;
 }
 
-/** The articles of the extract, one provision each, with offsets into the file. */
+/**
+ * The articles, one provision each, with offsets into the text: a Markdown
+ * extract (the CLI's --file), or the EUR-Lex page as eurlex_html_to_text.py
+ * converts it. Each starts at its "Article N" line.
+ */
 export function parseEuArticles(markdown: string): ParsedArticle[] {
   const frontMatterEnd = markdown.indexOf('---\n', 4) + 4;
-  const starts = EU_ARTICLES.flatMap((article) => {
+  const starts = EU_282_2011_ARTICLES.flatMap((article) => {
     const m = new RegExp(`^Article ${article.replace(/([a-z])$/, '$1')}$`, 'm').exec(markdown);
     return m ? [{ article, index: m.index + m[0].length }] : [];
   }).sort((a, b) => a.index - b.index);
@@ -135,10 +158,10 @@ export function parseEuArticles(markdown: string): ParsedArticle[] {
   });
 }
 
-/** Ingest the extract: one eu_source row, one provision per article. */
+/** Ingest a Markdown extract (the CLI's --file): one eu_source row, one provision per article. */
 export function ingestEu282Articles(
   db: AppDatabase,
-  params: { companyId?: string | null; markdown: string; ingestVersion: string; localPath?: string },
+  params: { companyId?: string | null; markdown: string; ingestVersion: string; localPath: string },
 ): EuIngestResult {
   const digest = sha256Hex(params.markdown);
   const existing = db.select({ id: irishKnowledgeSources.id }).from(irishKnowledgeSources)
@@ -149,8 +172,8 @@ export function ingestEu282Articles(
     return { sourceId: existing.id, provisionCount: count, ingested: false };
   }
   const articles = parseEuArticles(params.markdown);
-  if (articles.length !== EU_ARTICLES.length) {
-    throw new Error(`Expected articles ${EU_ARTICLES.join(', ')}; found ${articles.map((a) => a.sectionNumber).join(', ') || 'none'}.`);
+  if (articles.length !== EU_282_2011_ARTICLES.length) {
+    throw new Error(`Expected articles ${EU_282_2011_ARTICLES.join(', ')}; found ${articles.map((a) => a.sectionNumber).join(', ') || 'none'}.`);
   }
   return db.transaction((tx) => {
     const sourceId = ids.knowledgeSource();
@@ -162,16 +185,13 @@ export function ingestEu282Articles(
       citation: EU_282_2011.citation,
       jurisdiction: 'EU',
       sourceUrl: EU_282_2011.sourceUrl,
-      localPath: params.localPath ?? EU_282_2011_MD_PATH,
+      localPath: params.localPath,
       sha256: digest,
       ingestVersion: params.ingestVersion,
       publicationDate: null,
       retrievedAt: nowIso(),
       effectiveFrom: EU_282_2011.effectiveFrom,
-      sourceNote: 'Consolidated EUR-Lex text (CELEX 02011R0282, 14.04.2025) of the establishment tests. The '
-        + 'Regulation\u2019s own application provision says it applies from 1 July 2011. EU implementing law ranks '
-        + 'with legislation in the source hierarchy; these articles define "established" and "fixed establishment" '
-        + 'for the VATCA ss.12/34 place-of-supply and reverse-charge rules, which do not define them themselves.',
+      sourceNote: EU_282_2011.note,
       sourceDate: nowIso(),
     }).run();
     for (const article of articles) {
@@ -189,10 +209,10 @@ export function ingestEu282Articles(
         locator: `art. ${article.sectionNumber}`,
         category: 'vat',
         amendsSection: null,
-        effectiveClue: 'It shall apply from 1 July 2011.',
-        citedActs: ['Directive 2006/112/EC'],
+        effectiveClue: EU_282_2011.effectiveClue,
+        citedActs: EU_282_2011.citedActs,
         relevant: true,
-        relevanceReason: 'Curated: definition rules cite these articles (eu282Ingestion.ts).',
+        relevanceReason: EU_282_2011.relevanceReason,
         source: 'import',
         provenanceStatus: 'imported',
       }).run();

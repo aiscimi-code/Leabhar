@@ -43,9 +43,9 @@ import {
   VAT3_GUIDANCE_CATALOGUE_ENTRY, RTD_TDM_CATALOGUE_ENTRY,
 } from '@/domain/rules/vat3RtdIngestion';
 import { ingestEbrief168_25, ingestEbriefFromCatalogue, deriveEbriefRules } from '@/domain/rules/ebriefIngestion';
-import { ingestEu282Articles, deriveEu282Rules, EU_282_2011_MD_PATH } from '@/domain/rules/eu282Ingestion';
+import { ingestEu282Articles, ingestEu282FromCatalogue, deriveEu282Rules } from '@/domain/rules/eu282Ingestion';
 import { syncTaxRatesFromIrishRules } from '@/domain/rules/taxRateSync';
-import { loadStatutoryKnowledgeBase, statuteFilePath } from '@/domain/rules/knowledgeBase';
+import { loadStatutoryKnowledgeBase } from '@/domain/rules/knowledgeBase';
 import { ingestCatalogueFile } from '@/domain/rules/catalogue';
 import { deriveVatScopeRules } from '@/domain/rules/vatScopeIngestion';
 import { lookupTransactionRules, type TransactionContext } from '@/domain/rules/transactionLookup';
@@ -278,9 +278,10 @@ export async function main(argv: string[], options: CliOptions = {}): Promise<nu
           return 0;
         }
         if (source === 'eu-282-2011') {
-          const file = getFlag(flags, 'file') ?? statuteFilePath(EU_282_2011_MD_PATH);
-          const markdown = readFileSync(file, 'utf8');
-          print(ingestEu282Articles(db, { companyId, markdown, ingestVersion: 'v1', localPath: EU_282_2011_MD_PATH }), format);
+          const file = getFlag(flags, 'file');
+          print(file
+            ? ingestEu282Articles(db, { companyId, markdown: readFileSync(file, 'utf8'), ingestVersion: 'v1', localPath: file })
+            : ingestEu282FromCatalogue(db, { companyId }), format);
           return 0;
         }
         if (source === 'ebrief-168-25') {

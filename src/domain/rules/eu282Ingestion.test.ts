@@ -4,9 +4,10 @@ import { and, eq } from 'drizzle-orm';
 import { createTestDatabase } from '@/db/testing';
 import { createCompany } from '../config/setup';
 import {
-  ingestEu282Articles, deriveEu282Rules, parseEuArticles,
-  EU_282_2011_MD_PATH, EU_282_2011_RULES, EU_282_2011,
+  ingestEu282Articles, ingestEu282FromCatalogue, deriveEu282Rules, parseEuArticles,
+  EU_282_2011_RULES, EU_282_2011, EU_282_2011_CATALOGUE_ENTRY,
 } from './eu282Ingestion';
+import { readCatalogueEntry } from './catalogue';
 import { loadStatutoryKnowledgeBase, verifyStatuteFile } from './knowledgeBase';
 import { resolveRuleDependencies } from './dependencies';
 import { sourceAuthorityRank } from './sourceHierarchy';
@@ -15,12 +16,13 @@ import type { AppDatabase } from '@/db';
 
 let db: AppDatabase;
 let companyId: string;
-let markdown: string;
+/** The Markdown extract the knowledge base read before the port (the CLI's --file). */
+const FIXTURE = 'src/domain/rules/__fixtures__/eu-282-2011-articles-10-13b.md';
+const markdown = readFileSync(FIXTURE, 'utf8');
 
 beforeEach(() => {
   ({ db } = createTestDatabase());
   ({ companyId } = createCompany(db, { legalName: 'EU 282 Ltd', vatRegistrationStatus: 'registered', seedYears: [2025] }));
-  markdown = readFileSync(EU_282_2011_MD_PATH, 'utf8');
 });
 
 describe('the first EU source (issue #441)', () => {
@@ -34,10 +36,38 @@ describe('the first EU source (issue #441)', () => {
     }
   });
 
-  it('ingests the articles as an eu_source, idempotently, with article locators', () => {
-    const first = ingestEu282Articles(db, { companyId, markdown, ingestVersion: 'v1' });
+  it('loads the articles from their catalogue entry as an eu_source, idempotently, with article locators', () => {
+    const first = ingestEu282FromCatalogue(db, { companyId });
     expect(first).toMatchObject({ provisionCount: 6, ingested: true });
-    expect(ingestEu282Articles(db, { companyId, markdown, ingestVersion: 'v1' }).ingested).toBe(false);
+    expect(ingestEu282FromCatalogue(db, { companyId }).ingested).toBe(false);
+
+    const source = db.select().from(irishKnowledgeSources)
+      .where(eq(irishKnowledgeSources.id, first.sourceId)).get()!;
+    expect(source).toMatchObject({ sourceType: 'eu_source', jurisdiction: 'EU', localPath: `catalogue/${EU_282_2011_CATALOGUE_ENTRY}` });
+    expect(source.effectiveFrom).toBe('2011-07-01'); // the Regulation's application provision, not its retrieval
+    const article = db.select().from(irishActProvisions)
+      .where(and(eq(irishActProvisions.sourceId, source.id), eq(irishActProvisions.sectionNumber, '13b'))).get()!;
+    expect(article).toMatchObject({ locator: 'art. 13b', effectiveClue: EU_282_2011.effectiveClue, citedActs: ['Directive 2006/112/EC'] });
+    const check = verifyStatuteFile(source.localPath, source.sha256, null, null, undefined, '13b');
+    expect(check.exists && check.sha256Matches).toBe(true);
+    expect(check.slice).toContain('any specific part of the earth');
+  });
+
+  it('the EUR-Lex page says the same words the Markdown extract did, article by article', () => {
+    const entry = readCatalogueEntry(EU_282_2011_CATALOGUE_ENTRY);
+    expect(entry.provisions.map((p) => [p.sectionNumber, p.excerpt]))
+      .toEqual(parseEuArticles(markdown).map((a) => [a.sectionNumber, a.provisionText]));
+  });
+
+  it('a book that read the Markdown extract keeps its source when the catalogue entry loads', () => {
+    const before = ingestEu282Articles(db, { companyId, markdown, ingestVersion: 'v1', localPath: FIXTURE });
+    expect(ingestEu282FromCatalogue(db, { companyId })).toMatchObject({ sourceId: before.sourceId, ingested: false });
+  });
+
+  it('ingests a Markdown extract (--file) as an eu_source, idempotently, with article locators', () => {
+    const first = ingestEu282Articles(db, { companyId, markdown, ingestVersion: 'v1', localPath: FIXTURE });
+    expect(first).toMatchObject({ provisionCount: 6, ingested: true });
+    expect(ingestEu282Articles(db, { companyId, markdown, ingestVersion: 'v1', localPath: FIXTURE }).ingested).toBe(false);
 
     const source = db.select().from(irishKnowledgeSources)
       .where(eq(irishKnowledgeSources.id, first.sourceId)).get()!;
@@ -55,7 +85,7 @@ describe('the first EU source (issue #441)', () => {
   });
 
   it('EU law ranks with legislation, above guidance', () => {
-    ingestEu282Articles(db, { companyId, markdown, ingestVersion: 'v1' });
+    ingestEu282FromCatalogue(db, { companyId });
     const source = db.select().from(irishKnowledgeSources)
       .where(eq(irishKnowledgeSources.citation, EU_282_2011.citation)).get()!;
     expect(sourceAuthorityRank(source.sourceType)).toBe(sourceAuthorityRank('legislation'));
@@ -63,7 +93,7 @@ describe('the first EU source (issue #441)', () => {
   });
 
   it('derives every curated definition rule, quoting its article verbatim, unreviewed', () => {
-    ingestEu282Articles(db, { companyId, markdown, ingestVersion: 'v1' });
+    ingestEu282FromCatalogue(db, { companyId });
     const result = deriveEu282Rules(db, { companyId });
     expect(result).toMatchObject({ created: EU_282_2011_RULES.length, skippedNoProvision: [] });
 
@@ -89,7 +119,7 @@ describe('the first EU source (issue #441)', () => {
   });
 
   it('the rules cross-reference the VATCA sections that rely on the tests, and resolve', () => {
-    ingestEu282Articles(db, { companyId, markdown, ingestVersion: 'v1' });
+    ingestEu282FromCatalogue(db, { companyId });
     loadStatutoryKnowledgeBase(db, { companyId });
     deriveEu282Rules(db, { companyId });
     const rule = db.select().from(irishTaxRules)

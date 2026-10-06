@@ -42,7 +42,7 @@ import { ingestSwcaSection, deriveIncomeTaxRules, SI_312_1996_ART92_PATH } from 
 import { deriveCompaniesAct2014Rules } from './companiesAct2014Ingestion';
 import { deriveVat3RtdRules } from './vat3RtdIngestion';
 import { deriveEbriefRules } from './ebriefIngestion';
-import { ingestEu282Articles, deriveEu282Rules, EU_282_2011_MD_PATH } from './eu282Ingestion';
+import { deriveEu282Rules } from './eu282Ingestion';
 import { ingestPayrollSource, derivePayrollRules, PAYROLL_SOURCES } from './payrollIngestion';
 import { ingestSizeCriteriaSource, deriveSizeCriteriaRules, SIZE_CRITERIA_SOURCES } from './sizeCriteriaIngestion';
 import { ingestSlicedSource } from './slicedSourceIngestion';
@@ -63,7 +63,6 @@ type IngestFn = (db: AppDatabase, params: IngestParams) => unknown;
  */
 const SOURCES: Array<{ path: string; ingest: IngestFn }> = [
   { path: SI_312_1996_ART92_PATH, ingest: ingestSwcaSection as IngestFn },
-  { path: EU_282_2011_MD_PATH, ingest: ingestEu282Articles },
   ...PAYROLL_SOURCES.map((s) => ({ path: s.path, ingest: ingestPayrollSource as IngestFn })),
   ...SIZE_CRITERIA_SOURCES.map((s) => ({ path: s.path, ingest: ingestSizeCriteriaSource as IngestFn })),
   ...CAR_EMISSIONS_SOURCES.map((s) => ({

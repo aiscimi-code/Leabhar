@@ -155,19 +155,21 @@ catalogue by what it says (dates and quote), not by its number.
 
 **Source drift.** `npm run cli:rules -- verify-sources [--entry <e>] [--trace]`
 fetches each entry's official file (online, only when asked) and reports it
-unchanged, changed (or, for a page with ASP.NET state, `page_state_only`) or unreachable, naming each rule version whose quote is no
+unchanged, changed (or, for a page with page state, `page_state_only`) or unreachable, naming each rule version whose quote is no
 longer in the text. `--trace` raises a review item for every rule taken from
 a changed source and every rule relying on one (`sourceDrift.ts`); nothing is
 edited, and an approval stands only against the hash it was given on.
 
 An entry's `source.sha256` is always the hash of the bytes fetched. A page
-that carries ASP.NET state (revenue.ie's) also records `contentSha256`: the
-hash of the same bytes with only the values of `__VIEWSTATE`,
-`__VIEWSTATEGENERATOR` and `__EVENTVALIDATION` emptied (`withoutPageState`,
-`catalogue.ts`). Those values rotate while the page stays the same, so when
-the bytes differ but the content hash still matches, the report is
-`page_state_only` and nothing is traced. When the content hash differs too,
-the source is `changed` and its quotes are checked as above (#713).
+that carries page state also records `contentSha256`: the hash of the same
+bytes with only the values of that state emptied (`withoutPageState`,
+`catalogue.ts`). The state is ASP.NET's `__VIEWSTATE`,
+`__VIEWSTATEGENERATOR` and `__EVENTVALIDATION` fields (revenue.ie, #713),
+and the Dynatrace `data-dtconfig` attribute, whose agent and page ids change
+with every request (EUR-Lex, #714). Those values rotate while the page stays
+the same, so when the bytes differ but the content hash still matches, the
+report is `page_state_only` and nothing is traced. When the content hash
+differs too, the source is `changed` and its quotes are checked as above.
 
 **Stated periods.** A version whose dates its own quote does not state
 names the words that do (`statedPeriod`, `vatcaRevisedCuration.ts`): the
@@ -420,7 +422,7 @@ to parseable text needed its own, reusable step:
   the caller supplies no direct establishment determination — "established
   outside the State" is a multi-factor legal test (EU Reg 282/2011
   arts.10-11), not a country-code test; see issue #136 bug 4 / issue #138
-  and docs/statutes/282-2011/articles-10-13b-establishment.md).
+  and catalogue/eu-282-2011/consolidated-2025-04-14.json).
   Every `statementExcerpt` is verified (`vatcaParser.test.ts`) to be a
   verbatim substring of its section's excerpt in the catalogue entry.
 - `src/domain/rules/vatcaIngestion.ts` — `ingestVatca2010FromCatalogue`
