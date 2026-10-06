@@ -1,0 +1,167 @@
+docId,kind,date,issuer,subject,gross,net,reference,note
+O00020,remittance_advice,04/12/2006,DAFM,Single Farm Payment 2006,16635.61,16635.61,SFP2006,
+O00021,remittance_advice,12/12/2006,DAFM,Areas of natural constraint 2006,2900.00,2900.00,,
+O00022,remittance_advice,19/12/2006,DAFM,DAFF REPS4 payment 2006,5600.00,5600.00,,
+O00091,loan_agreement,12/04/2007,AIB,Shed extension loan,120000.00,0.00,L01,"term 120 months, variable rate"
+O00023,remittance_advice,03/12/2007,DAFM,Single Farm Payment 2007,17572.06,17572.06,SFP2007,
+O00092,remittance_advice,06/12/2007,DAFF,Farm investment scheme grant,48000.00,48000.00,,
+O00024,remittance_advice,12/12/2007,DAFM,Areas of natural constraint 2007,2908.00,2908.00,,
+O00025,remittance_advice,19/12/2007,DAFM,DAFF REPS4 payment 2007,5600.00,5600.00,,
+O00026,remittance_advice,02/12/2008,DAFM,Single Farm Payment 2008,17599.90,17599.90,SFP2008,
+O00027,remittance_advice,12/12/2008,DAFM,Areas of natural constraint 2008,2916.00,2916.00,,
+O00028,remittance_advice,19/12/2008,DAFM,DAFF REPS4 payment 2008,5600.00,5600.00,,
+O00018,loan_agreement,12/03/2009,Slieve Dairy Co-Operative Society Ltd,Milk price support loan,25000.00,0.00,,repaid in instalments via milk payment
+O00001,coop_loan_deduction,25/05/2009,Slieve Dairy Co-Operative Society Ltd,Instalment deducted from milk payment MS-200904,3000.00,0.00,MS-200904,
+O00002,coop_loan_deduction,25/06/2009,Slieve Dairy Co-Operative Society Ltd,Instalment deducted from milk payment MS-200905,3000.00,0.00,MS-200905,
+O00003,coop_loan_deduction,27/07/2009,Slieve Dairy Co-Operative Society Ltd,Instalment deducted from milk payment MS-200906,3000.00,0.00,MS-200906,
+O00004,coop_loan_deduction,25/08/2009,Slieve Dairy Co-Operative Society Ltd,Instalment deducted from milk payment MS-200907,3000.00,0.00,MS-200907,
+O00005,coop_loan_deduction,25/09/2009,Slieve Dairy Co-Operative Society Ltd,Instalment deducted from milk payment MS-200908,3000.00,0.00,MS-200908,
+O00006,coop_loan_deduction,26/10/2009,Slieve Dairy Co-Operative Society Ltd,Instalment deducted from milk payment MS-200909,3000.00,0.00,MS-200909,
+O00007,coop_loan_deduction,25/11/2009,Slieve Dairy Co-Operative Society Ltd,Instalment deducted from milk payment MS-200910,3000.00,0.00,MS-200910,
+O00029,remittance_advice,02/12/2009,DAFM,Single Farm Payment 2009,17519.74,17519.74,SFP2009,
+O00030,remittance_advice,14/12/2009,DAFM,Areas of natural constraint 2009,2924.00,2924.00,,
+O00031,remittance_advice,21/12/2009,DAFM,DAFF REPS4 payment 2009,5600.00,5600.00,,
+O00008,coop_loan_deduction,28/12/2009,Slieve Dairy Co-Operative Society Ltd,Instalment deducted from milk payment MS-200911,3000.00,0.00,MS-200911,
+O00009,coop_loan_deduction,25/01/2010,Slieve Dairy Co-Operative Society Ltd,Instalment deducted from milk payment MS-200912,3000.00,0.00,MS-200912,
+O00010,coop_loan_deduction,25/02/2010,Slieve Dairy Co-Operative Society Ltd,Instalment deducted from milk payment MS-201001,3500.00,0.00,MS-201001,
+O00032,remittance_advice,02/12/2010,DAFM,Single Farm Payment 2010,17509.94,17509.94,SFP2010,
+O00033,remittance_advice,13/12/2010,DAFM,Areas of natural constraint 2010,2932.00,2932.00,,
+O00034,remittance_advice,20/12/2010,DAFM,DAFF AEOS payment 2010,4800.00,4800.00,,
+O00035,remittance_advice,02/12/2011,DAFM,Single Farm Payment 2011,17429.82,17429.82,SFP2011,
+O00036,remittance_advice,12/12/2011,DAFM,Areas of natural constraint 2011,2940.00,2940.00,,
+O00037,remittance_advice,19/12/2011,DAFM,DAFF AEOS payment 2011,4800.00,4800.00,,
+O00038,remittance_advice,03/12/2012,DAFM,Single Farm Payment 2012,16638.45,16638.45,SFP2012,
+O00039,remittance_advice,12/12/2012,DAFM,Areas of natural constraint 2012,2948.00,2948.00,,
+O00040,remittance_advice,19/12/2012,DAFM,DAFF AEOS payment 2012,4800.00,4800.00,,
+O00041,remittance_advice,02/12/2013,DAFM,Single Farm Payment 2013,17186.81,17186.81,SFP2013,
+O00042,remittance_advice,12/12/2013,DAFM,Areas of natural constraint 2013,2956.00,2956.00,,
+O00043,remittance_advice,19/12/2013,DAFM,DAFF AEOS payment 2013,4800.00,4800.00,,
+O00044,remittance_advice,02/12/2014,DAFM,Single Farm Payment 2014,16126.31,16126.31,SFP2014,
+O00045,remittance_advice,12/12/2014,DAFM,Areas of natural constraint 2014,2964.00,2964.00,,
+O00046,remittance_advice,19/12/2014,DAFM,DAFF AEOS payment 2014,4800.00,4800.00,,
+O00093,loan_agreement,20/02/2015,AIB,Expansion term loan,400000.00,0.00,L02,"term 180 months, variable rate"
+O00101,vat3_return,19/03/2015,Revenue,VAT3 JAN-FEB 2015: T1 4000.14 T2 41580.82,-37580.68,-37580.68,VAT3 2015-01,"as filed: includes VAT on every purchase invoice, including cars and personal items"
+O00102,vat3_return,19/05/2015,Revenue,VAT3 MAR-APR 2015: T1 13014.99 T2 40485.22,-27470.23,-27470.23,VAT3 2015-03,"as filed: includes VAT on every purchase invoice, including cars and personal items"
+O00103,vat3_return,19/07/2015,Revenue,VAT3 MAY-JUN 2015: T1 16768.44 T2 32389.09,-15620.65,-15620.65,VAT3 2015-05,"as filed: includes VAT on every purchase invoice, including cars and personal items"
+O00104,vat3_return,19/09/2015,Revenue,VAT3 JUL-AUG 2015: T1 14338.78 T2 10756.11,3582.67,3582.67,VAT3 2015-07,"as filed: includes VAT on every purchase invoice, including cars and personal items"
+O00047,remittance_advice,21/10/2015,DAFM,DAFM BASIC PAYMENT 2015 advance,13681.44,13681.44,MENT2015,
+O00105,vat3_return,19/11/2015,Revenue,VAT3 SEP-OCT 2015: T1 8301.79 T2 3539.66,4762.13,4762.13,VAT3 2015-09,"as filed: includes VAT on every purchase invoice, including cars and personal items"
+O00094,remittance_advice,03/12/2015,DAFM,TAMS II grant buildings,64000.00,64000.00,,
+O00048,remittance_advice,07/12/2015,DAFM,DAFM BASIC PAYMENT 2015 balance,4560.49,4560.49,MENT2015,
+O00049,remittance_advice,14/12/2015,DAFM,Areas of natural constraint 2015,2972.00,2972.00,,
+O00050,remittance_advice,21/12/2015,DAFM,DAFM GLAS payment 2015,5200.00,5200.00,,
+O00106,vat3_return,19/01/2016,Revenue,VAT3 NOV-DEC 2015: T1 1757.80 T2 2619.73,-861.93,-861.93,VAT3 2015-11,"as filed: includes VAT on every purchase invoice, including cars and personal items"
+O00107,vat3_return,19/03/2016,Revenue,VAT3 JAN-FEB 2016: T1 3169.10 T2 12728.26,-9559.16,-9559.16,VAT3 2016-01,"as filed: includes VAT on every purchase invoice, including cars and personal items"
+O00095,remittance_advice,14/04/2016,DAFM,TAMS II grant dairy equipment,32000.00,32000.00,,
+O00019,loan_agreement,12/05/2016,Slieve Dairy Co-Operative Society Ltd,Fodder & price support loan,24500.00,0.00,,repaid in instalments via milk payment
+O00108,vat3_return,19/05/2016,Revenue,VAT3 MAR-APR 2016: T1 13279.91 T2 17245.50,-3965.59,-3965.59,VAT3 2016-03,"as filed: includes VAT on every purchase invoice, including cars and personal items"
+O00109,vat3_return,19/07/2016,Revenue,VAT3 MAY-JUN 2016: T1 17040.63 T2 5790.12,11250.51,11250.51,VAT3 2016-05,"as filed: includes VAT on every purchase invoice, including cars and personal items"
+O00011,coop_loan_deduction,25/07/2016,Slieve Dairy Co-Operative Society Ltd,Instalment deducted from milk payment MS-201606,3500.00,0.00,MS-201606,
+O00012,coop_loan_deduction,25/08/2016,Slieve Dairy Co-Operative Society Ltd,Instalment deducted from milk payment MS-201607,3500.00,0.00,MS-201607,
+O00110,vat3_return,19/09/2016,Revenue,VAT3 JUL-AUG 2016: T1 14792.88 T2 6124.65,8668.23,8668.23,VAT3 2016-07,"as filed: includes VAT on every purchase invoice, including cars and personal items"
+O00013,coop_loan_deduction,26/09/2016,Slieve Dairy Co-Operative Society Ltd,Instalment deducted from milk payment MS-201608,3500.00,0.00,MS-201608,
+O00051,remittance_advice,21/10/2016,DAFM,DAFM BASIC PAYMENT 2016 advance,13606.02,13606.02,MENT2016,
+O00014,coop_loan_deduction,25/10/2016,Slieve Dairy Co-Operative Society Ltd,Instalment deducted from milk payment MS-201609,3500.00,0.00,MS-201609,
+O00111,vat3_return,19/11/2016,Revenue,VAT3 SEP-OCT 2016: T1 9989.36 T2 26326.56,-16337.20,-16337.20,VAT3 2016-09,"as filed: includes VAT on every purchase invoice, including cars and personal items"
+O00015,coop_loan_deduction,25/11/2016,Slieve Dairy Co-Operative Society Ltd,Instalment deducted from milk payment MS-201610,3500.00,0.00,MS-201610,
+O00052,remittance_advice,05/12/2016,DAFM,DAFM BASIC PAYMENT 2016 balance,4535.34,4535.34,MENT2016,
+O00053,remittance_advice,12/12/2016,DAFM,Areas of natural constraint 2016,2980.00,2980.00,,
+O00054,remittance_advice,19/12/2016,DAFM,DAFM GLAS payment 2016,5200.00,5200.00,,
+O00016,coop_loan_deduction,27/12/2016,Slieve Dairy Co-Operative Society Ltd,Instalment deducted from milk payment MS-201611,3500.00,0.00,MS-201611,
+O00112,vat3_return,19/01/2017,Revenue,VAT3 NOV-DEC 2016: T1 2717.54 T2 2573.11,144.43,144.43,VAT3 2016-11,"as filed: includes VAT on every purchase invoice, including cars and personal items"
+O00017,coop_loan_deduction,25/01/2017,Slieve Dairy Co-Operative Society Ltd,Instalment deducted from milk payment MS-201612,3500.00,0.00,MS-201612,
+O00113,vat3_return,19/03/2017,Revenue,VAT3 JAN-FEB 2017: T1 5018.90 T2 6021.44,-1002.54,-1002.54,VAT3 2017-01,"as filed: includes VAT on every purchase invoice, including cars and personal items"
+O00114,vat3_return,19/05/2017,Revenue,VAT3 MAR-APR 2017: T1 20307.19 T2 6700.91,13606.28,13606.28,VAT3 2017-03,"as filed: includes VAT on every purchase invoice, including cars and personal items"
+O00115,vat3_return,19/07/2017,Revenue,VAT3 MAY-JUN 2017: T1 23607.13 T2 13306.12,10301.01,10301.01,VAT3 2017-05,"as filed: includes VAT on every purchase invoice, including cars and personal items"
+O00116,vat3_return,19/09/2017,Revenue,VAT3 JUL-AUG 2017: T1 19354.77 T2 5435.13,13919.64,13919.64,VAT3 2017-07,"as filed: includes VAT on every purchase invoice, including cars and personal items"
+O00055,remittance_advice,23/10/2017,DAFM,DAFM BASIC PAYMENT 2017 advance,13928.10,13928.10,MENT2017,
+O00117,vat3_return,19/11/2017,Revenue,VAT3 SEP-OCT 2017: T1 13255.74 T2 9465.39,3790.35,3790.35,VAT3 2017-09,"as filed: includes VAT on every purchase invoice, including cars and personal items"
+O00056,remittance_advice,05/12/2017,DAFM,DAFM BASIC PAYMENT 2017 balance,4642.71,4642.71,MENT2017,
+O00057,remittance_advice,12/12/2017,DAFM,Areas of natural constraint 2017,2988.00,2988.00,,
+O00058,remittance_advice,19/12/2017,DAFM,DAFM GLAS payment 2017,5200.00,5200.00,,
+O00118,vat3_return,19/01/2018,Revenue,VAT3 NOV-DEC 2017: T1 2384.69 T2 4069.57,-1684.88,-1684.88,VAT3 2017-11,"as filed: includes VAT on every purchase invoice, including cars and personal items"
+O00119,vat3_return,19/03/2018,Revenue,VAT3 JAN-FEB 2018: T1 4548.85 T2 3758.68,790.17,790.17,VAT3 2018-01,"as filed: includes VAT on every purchase invoice, including cars and personal items"
+O00096,loan_agreement,09/05/2018,AIB,Land purchase loan,200000.00,0.00,L03,"term 240 months, variable rate"
+O00097,solicitor_completion,14/05/2018,Fitzgerald & Co Solicitors,"Completion statement: 25 acres, folio CK12345",235000.00,0.00,,
+O00120,vat3_return,19/05/2018,Revenue,VAT3 MAR-APR 2018: T1 18820.01 T2 9247.31,9572.70,9572.70,VAT3 2018-03,"as filed: includes VAT on every purchase invoice, including cars and personal items"
+O00121,vat3_return,19/07/2018,Revenue,VAT3 MAY-JUN 2018: T1 20461.93 T2 8879.88,11582.05,11582.05,VAT3 2018-05,"as filed: includes VAT on every purchase invoice, including cars and personal items"
+O00122,vat3_return,19/09/2018,Revenue,VAT3 JUL-AUG 2018: T1 16736.66 T2 5236.81,11499.85,11499.85,VAT3 2018-07,"as filed: includes VAT on every purchase invoice, including cars and personal items"
+O00059,remittance_advice,22/10/2018,DAFM,DAFM BASIC PAYMENT 2018 advance,13936.17,13936.17,MENT2018,
+O00123,vat3_return,19/11/2018,Revenue,VAT3 SEP-OCT 2018: T1 15177.38 T2 4515.95,10661.43,10661.43,VAT3 2018-09,"as filed: includes VAT on every purchase invoice, including cars and personal items"
+O00060,remittance_advice,05/12/2018,DAFM,DAFM BASIC PAYMENT 2018 balance,4645.40,4645.40,MENT2018,
+O00061,remittance_advice,12/12/2018,DAFM,Areas of natural constraint 2018,2996.00,2996.00,,
+O00062,remittance_advice,19/12/2018,DAFM,DAFM GLAS payment 2018,5200.00,5200.00,,
+O00124,vat3_return,19/01/2019,Revenue,VAT3 NOV-DEC 2018: T1 2114.18 T2 3525.80,-1411.62,-1411.62,VAT3 2018-11,"as filed: includes VAT on every purchase invoice, including cars and personal items"
+O00125,vat3_return,19/03/2019,Revenue,VAT3 JAN-FEB 2019: T1 4854.25 T2 3517.83,1336.42,1336.42,VAT3 2019-01,"as filed: includes VAT on every purchase invoice, including cars and personal items"
+O00126,vat3_return,19/05/2019,Revenue,VAT3 MAR-APR 2019: T1 19035.30 T2 8856.43,10178.87,10178.87,VAT3 2019-03,"as filed: includes VAT on every purchase invoice, including cars and personal items"
+O00127,vat3_return,19/07/2019,Revenue,VAT3 MAY-JUN 2019: T1 21445.48 T2 8841.65,12603.83,12603.83,VAT3 2019-05,"as filed: includes VAT on every purchase invoice, including cars and personal items"
+O00128,vat3_return,19/09/2019,Revenue,VAT3 JUL-AUG 2019: T1 18344.98 T2 11199.23,7145.75,7145.75,VAT3 2019-07,"as filed: includes VAT on every purchase invoice, including cars and personal items"
+O00063,remittance_advice,21/10/2019,DAFM,DAFM BASIC PAYMENT 2019 advance,13700.34,13700.34,MENT2019,
+O00129,vat3_return,19/11/2019,Revenue,VAT3 SEP-OCT 2019: T1 11847.28 T2 12884.12,-1036.84,-1036.84,VAT3 2019-09,"as filed: includes VAT on every purchase invoice, including cars and personal items"
+O00064,remittance_advice,05/12/2019,DAFM,DAFM BASIC PAYMENT 2019 balance,4566.79,4566.79,MENT2019,
+O00065,remittance_advice,12/12/2019,DAFM,Areas of natural constraint 2019,3004.00,3004.00,,
+O00066,remittance_advice,19/12/2019,DAFM,DAFM GLAS payment 2019,5200.00,5200.00,,
+O00130,vat3_return,19/01/2020,Revenue,VAT3 NOV-DEC 2019: T1 3887.81 T2 3088.48,799.33,799.33,VAT3 2019-11,"as filed: includes VAT on every purchase invoice, including cars and personal items"
+O00131,vat3_return,19/03/2020,Revenue,VAT3 JAN-FEB 2020: T1 5013.12 T2 5834.95,-821.83,-821.83,VAT3 2020-01,"as filed: includes VAT on every purchase invoice, including cars and personal items"
+O00132,vat3_return,19/05/2020,Revenue,VAT3 MAR-APR 2020: T1 19600.20 T2 20269.87,-669.67,-669.67,VAT3 2020-03,"as filed: includes VAT on every purchase invoice, including cars and personal items"
+O00133,vat3_return,19/07/2020,Revenue,VAT3 MAY-JUN 2020: T1 23391.73 T2 7700.16,15691.57,15691.57,VAT3 2020-05,"as filed: includes VAT on every purchase invoice, including cars and personal items"
+O00134,vat3_return,19/09/2020,Revenue,VAT3 JUL-AUG 2020: T1 20306.73 T2 8613.92,11692.81,11692.81,VAT3 2020-07,"as filed: includes VAT on every purchase invoice, including cars and personal items"
+O00067,remittance_advice,21/10/2020,DAFM,DAFM BASIC PAYMENT 2020 advance,13865.82,13865.82,MENT2020,
+O00135,vat3_return,19/11/2020,Revenue,VAT3 SEP-OCT 2020: T1 10888.47 T2 4674.56,6213.91,6213.91,VAT3 2020-09,"as filed: includes VAT on every purchase invoice, including cars and personal items"
+O00068,remittance_advice,07/12/2020,DAFM,DAFM BASIC PAYMENT 2020 balance,4621.95,4621.95,MENT2020,
+O00069,remittance_advice,14/12/2020,DAFM,Areas of natural constraint 2020,3012.00,3012.00,,
+O00070,remittance_advice,21/12/2020,DAFM,DAFM GLAS payment 2020,5200.00,5200.00,,
+O00136,vat3_return,19/01/2021,Revenue,VAT3 NOV-DEC 2020: T1 3194.51 T2 3338.98,-144.47,-144.47,VAT3 2020-11,"as filed: includes VAT on every purchase invoice, including cars and personal items"
+O00137,vat3_return,19/03/2021,Revenue,VAT3 JAN-FEB 2021: T1 4727.77 T2 3291.44,1436.33,1436.33,VAT3 2021-01,"as filed: includes VAT on every purchase invoice, including cars and personal items"
+O00138,vat3_return,19/05/2021,Revenue,VAT3 MAR-APR 2021: T1 20615.95 T2 16553.30,4062.65,4062.65,VAT3 2021-03,"as filed: includes VAT on every purchase invoice, including cars and personal items"
+O00139,vat3_return,19/07/2021,Revenue,VAT3 MAY-JUN 2021: T1 27882.32 T2 10712.08,17170.24,17170.24,VAT3 2021-05,"as filed: includes VAT on every purchase invoice, including cars and personal items"
+O00140,vat3_return,19/09/2021,Revenue,VAT3 JUL-AUG 2021: T1 25405.99 T2 7329.16,18076.83,18076.83,VAT3 2021-07,"as filed: includes VAT on every purchase invoice, including cars and personal items"
+O00071,remittance_advice,21/10/2021,DAFM,DAFM BASIC PAYMENT 2021 advance,13857.03,13857.03,MENT2021,
+O00141,vat3_return,19/11/2021,Revenue,VAT3 SEP-OCT 2021: T1 16145.52 T2 6936.96,9208.56,9208.56,VAT3 2021-09,"as filed: includes VAT on every purchase invoice, including cars and personal items"
+O00072,remittance_advice,06/12/2021,DAFM,DAFM BASIC PAYMENT 2021 balance,4619.02,4619.02,MENT2021,
+O00073,remittance_advice,13/12/2021,DAFM,Areas of natural constraint 2021,3020.00,3020.00,,
+O00074,remittance_advice,20/12/2021,DAFM,DAFM GLAS payment 2021,5200.00,5200.00,,
+O00142,vat3_return,19/01/2022,Revenue,VAT3 NOV-DEC 2021: T1 4343.21 T2 7397.24,-3054.03,-3054.03,VAT3 2021-11,"as filed: includes VAT on every purchase invoice, including cars and personal items"
+O00143,vat3_return,19/03/2022,Revenue,VAT3 JAN-FEB 2022: T1 7584.70 T2 4720.68,2864.02,2864.02,VAT3 2022-01,"as filed: includes VAT on every purchase invoice, including cars and personal items"
+O00144,vat3_return,19/05/2022,Revenue,VAT3 MAR-APR 2022: T1 29579.14 T2 20731.79,8847.35,8847.35,VAT3 2022-03,"as filed: includes VAT on every purchase invoice, including cars and personal items"
+O00145,vat3_return,19/07/2022,Revenue,VAT3 MAY-JUN 2022: T1 38856.70 T2 13965.32,24891.38,24891.38,VAT3 2022-05,"as filed: includes VAT on every purchase invoice, including cars and personal items"
+O00146,vat3_return,19/09/2022,Revenue,VAT3 JUL-AUG 2022: T1 35563.02 T2 7744.90,27818.12,27818.12,VAT3 2022-07,"as filed: includes VAT on every purchase invoice, including cars and personal items"
+O00098,hp_agreement,06/10/2022,Southern Asset Finance DAC,HP agreement 48 months,148350.00,0.00,HP22-0719,"monthly 2,950 incl. interest"
+O00075,remittance_advice,21/10/2022,DAFM,DAFM BASIC PAYMENT 2022 advance,13096.64,13096.64,MENT2022,
+O00147,vat3_return,19/11/2022,Revenue,VAT3 SEP-OCT 2022: T1 23935.92 T2 38314.25,-14378.33,-14378.33,VAT3 2022-09,"as filed: includes VAT on every purchase invoice, including cars and personal items"
+O00076,remittance_advice,05/12/2022,DAFM,DAFM BASIC PAYMENT 2022 balance,4365.55,4365.55,MENT2022,
+O00077,remittance_advice,12/12/2022,DAFM,Areas of natural constraint 2022,3028.00,3028.00,,
+O00078,remittance_advice,19/12/2022,DAFM,DAFM GLAS payment 2022,5200.00,5200.00,,
+O00148,vat3_return,19/01/2023,Revenue,VAT3 NOV-DEC 2022: T1 4875.30 T2 10134.90,-5259.60,-5259.60,VAT3 2022-11,"as filed: includes VAT on every purchase invoice, including cars and personal items"
+O00149,vat3_return,19/03/2023,Revenue,VAT3 JAN-FEB 2023: T1 6959.38 T2 6389.16,570.22,570.22,VAT3 2023-01,"as filed: includes VAT on every purchase invoice, including cars and personal items"
+O00150,vat3_return,19/05/2023,Revenue,VAT3 MAR-APR 2023: T1 26714.14 T2 8656.96,18057.18,18057.18,VAT3 2023-03,"as filed: includes VAT on every purchase invoice, including cars and personal items"
+O00151,vat3_return,19/07/2023,Revenue,VAT3 MAY-JUN 2023: T1 28600.32 T2 16022.37,12577.95,12577.95,VAT3 2023-05,"as filed: includes VAT on every purchase invoice, including cars and personal items"
+O00152,vat3_return,19/09/2023,Revenue,VAT3 JUL-AUG 2023: T1 23229.15 T2 7735.42,15493.73,15493.73,VAT3 2023-07,"as filed: includes VAT on every purchase invoice, including cars and personal items"
+O00079,remittance_advice,23/10/2023,DAFM,DAFM BISS 2023 advance,12117.30,12117.30,BISS2023,
+O00153,vat3_return,19/11/2023,Revenue,VAT3 SEP-OCT 2023: T1 16067.29 T2 3547.15,12520.14,12520.14,VAT3 2023-09,"as filed: includes VAT on every purchase invoice, including cars and personal items"
+O00080,remittance_advice,05/12/2023,DAFM,DAFM BISS 2023 balance,4039.10,4039.10,BISS2023,
+O00081,remittance_advice,12/12/2023,DAFM,Areas of natural constraint 2023,3036.00,3036.00,,
+O00082,remittance_advice,19/12/2023,DAFM,DAFM ACRES payment 2023,7200.00,7200.00,,
+O00154,vat3_return,19/01/2024,Revenue,VAT3 NOV-DEC 2023: T1 2342.75 T2 4459.46,-2116.71,-2116.71,VAT3 2023-11,"as filed: includes VAT on every purchase invoice, including cars and personal items"
+O00155,vat3_return,19/03/2024,Revenue,VAT3 JAN-FEB 2024: T1 5133.28 T2 5212.36,-79.08,-79.08,VAT3 2024-01,"as filed: includes VAT on every purchase invoice, including cars and personal items"
+O00156,vat3_return,19/05/2024,Revenue,VAT3 MAR-APR 2024: T1 22175.30 T2 20689.13,1486.17,1486.17,VAT3 2024-03,"as filed: includes VAT on every purchase invoice, including cars and personal items"
+O00157,vat3_return,19/07/2024,Revenue,VAT3 MAY-JUN 2024: T1 28427.34 T2 9052.65,19374.69,19374.69,VAT3 2024-05,"as filed: includes VAT on every purchase invoice, including cars and personal items"
+O00099,remittance_advice,12/09/2024,DAFM,Solar capital investment scheme grant,54000.00,54000.00,,
+O00158,vat3_return,19/09/2024,Revenue,VAT3 JUL-AUG 2024: T1 24137.49 T2 5730.52,18406.97,18406.97,VAT3 2024-07,"as filed: includes VAT on every purchase invoice, including cars and personal items"
+O00083,remittance_advice,21/10/2024,DAFM,DAFM BISS 2024 advance,11694.36,11694.36,BISS2024,
+O00159,vat3_return,19/11/2024,Revenue,VAT3 SEP-OCT 2024: T1 14303.56 T2 5373.56,8930.00,8930.00,VAT3 2024-09,"as filed: includes VAT on every purchase invoice, including cars and personal items"
+O00084,remittance_advice,05/12/2024,DAFM,DAFM BISS 2024 balance,3898.13,3898.13,BISS2024,
+O00085,remittance_advice,12/12/2024,DAFM,Areas of natural constraint 2024,3044.00,3044.00,,
+O00086,remittance_advice,19/12/2024,DAFM,DAFM ACRES payment 2024,7200.00,7200.00,,
+O00160,vat3_return,19/01/2025,Revenue,VAT3 NOV-DEC 2024: T1 3467.45 T2 3660.41,-192.96,-192.96,VAT3 2024-11,"as filed: includes VAT on every purchase invoice, including cars and personal items"
+O00161,vat3_return,19/03/2025,Revenue,VAT3 JAN-FEB 2025: T1 5827.36 T2 4429.20,1398.16,1398.16,VAT3 2025-01,"as filed: includes VAT on every purchase invoice, including cars and personal items"
+O00162,vat3_return,19/05/2025,Revenue,VAT3 MAR-APR 2025: T1 24664.10 T2 11860.56,12803.54,12803.54,VAT3 2025-03,"as filed: includes VAT on every purchase invoice, including cars and personal items"
+O00163,vat3_return,19/07/2025,Revenue,VAT3 MAY-JUN 2025: T1 29445.16 T2 7844.62,21600.54,21600.54,VAT3 2025-05,"as filed: includes VAT on every purchase invoice, including cars and personal items"
+O00164,vat3_return,19/09/2025,Revenue,VAT3 JUL-AUG 2025: T1 24051.43 T2 6031.77,18019.66,18019.66,VAT3 2025-07,"as filed: includes VAT on every purchase invoice, including cars and personal items"
+O00087,remittance_advice,21/10/2025,DAFM,DAFM BISS 2025 advance,11821.40,11821.40,BISS2025,
+O00165,vat3_return,19/11/2025,Revenue,VAT3 SEP-OCT 2025: T1 16236.12 T2 5019.83,11216.29,11216.29,VAT3 2025-09,"as filed: includes VAT on every purchase invoice, including cars and personal items"
+O00088,remittance_advice,05/12/2025,DAFM,DAFM BISS 2025 balance,3940.47,3940.47,BISS2025,
+O00089,remittance_advice,12/12/2025,DAFM,Areas of natural constraint 2025,3052.00,3052.00,,
+O00090,remittance_advice,19/12/2025,DAFM,DAFM ACRES payment 2025,7200.00,7200.00,,
+O00100,note,31/12/2025,Mullane Dairy Farm,Statement coverage 2006-01-01 to 2025-12-31,0.00,0.00,,
+O00166,vat3_return,19/01/2026,Revenue,VAT3 NOV-DEC 2025: T1 3070.80 T2 4566.46,-1495.66,-1495.66,VAT3 2025-11,"as filed: includes VAT on every purchase invoice, including cars and personal items"

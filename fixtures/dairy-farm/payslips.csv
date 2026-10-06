@@ -1,0 +1,812 @@
+period,employee,pps,gross,paye,usc,prsi_employee,prsi_employer,net,paid
+2006-01,L. Barry,PPS-EMP-004,1900.00,749.70,66.50,76.00,204.25,1007.80,bank transfer
+2006-01,S. Coakley (relief milker),PPS-EMP-002,514.21,195.38,17.99,20.56,55.27,280.28,bank transfer
+2006-02,L. Barry,PPS-EMP-004,1900.00,749.70,66.50,76.00,204.25,1007.80,bank transfer
+2006-02,S. Coakley (relief milker),PPS-EMP-002,505.73,191.99,17.70,20.22,54.36,275.82,bank transfer
+2006-03,L. Barry,PPS-EMP-004,1900.00,749.70,66.50,76.00,204.25,1007.80,bank transfer
+2006-03,S. Coakley (relief milker),PPS-EMP-002,509.87,193.64,17.84,20.39,54.81,278.00,bank transfer
+2006-04,L. Barry,PPS-EMP-004,1900.00,749.70,66.50,76.00,204.25,1007.80,bank transfer
+2006-04,S. Coakley (relief milker),PPS-EMP-002,533.34,203.03,18.66,21.33,57.33,290.32,bank transfer
+2006-05,L. Barry,PPS-EMP-004,1900.00,749.70,66.50,76.00,204.25,1007.80,bank transfer
+2006-05,S. Coakley (relief milker),PPS-EMP-002,507.85,192.84,17.77,20.31,54.59,276.93,bank transfer
+2006-06,L. Barry,PPS-EMP-004,1900.00,749.70,66.50,76.00,204.25,1007.80,bank transfer
+2006-06,S. Coakley (relief milker),PPS-EMP-002,506.83,192.43,17.73,20.27,54.48,276.40,bank transfer
+2006-07,L. Barry,PPS-EMP-004,1900.00,749.70,66.50,76.00,204.25,1007.80,bank transfer
+2006-07,S. Coakley (relief milker),PPS-EMP-002,524.25,199.40,18.34,20.97,56.35,285.54,bank transfer
+2006-08,L. Barry,PPS-EMP-004,1900.00,749.70,66.50,76.00,204.25,1007.80,bank transfer
+2006-08,S. Coakley (relief milker),PPS-EMP-002,540.62,205.94,18.92,21.62,58.11,294.14,bank transfer
+2006-09,L. Barry,PPS-EMP-004,1900.00,749.70,66.50,76.00,204.25,1007.80,bank transfer
+2006-09,S. Coakley (relief milker),PPS-EMP-002,524.68,199.57,18.36,20.98,56.40,285.77,bank transfer
+2006-10,L. Barry,PPS-EMP-004,1900.00,749.70,66.50,76.00,204.25,1007.80,bank transfer
+2006-10,S. Coakley (relief milker),PPS-EMP-002,525.35,199.84,18.38,21.01,56.47,286.12,bank transfer
+2006-11,L. Barry,PPS-EMP-004,1900.00,749.70,66.50,76.00,204.25,1007.80,bank transfer
+2006-11,S. Coakley (relief milker),PPS-EMP-002,506.29,192.21,17.72,20.25,54.42,276.11,bank transfer
+2006-12,L. Barry,PPS-EMP-004,1900.00,749.70,66.50,76.00,204.25,1007.80,bank transfer
+2006-12,S. Coakley (relief milker),PPS-EMP-002,540.58,205.93,18.92,21.62,58.11,294.11,bank transfer
+2007-01,L. Barry,PPS-EMP-004,1957.00,772.50,68.49,78.28,210.37,1037.73,bank transfer
+2007-01,S. Coakley (relief milker),PPS-EMP-002,535.49,203.89,18.74,21.41,57.56,291.45,bank transfer
+2007-02,L. Barry,PPS-EMP-004,1957.00,772.50,68.49,78.28,210.37,1037.73,bank transfer
+2007-02,S. Coakley (relief milker),PPS-EMP-002,522.38,198.65,18.28,20.89,56.15,284.56,bank transfer
+2007-03,L. Barry,PPS-EMP-004,1957.00,772.50,68.49,78.28,210.37,1037.73,bank transfer
+2007-03,S. Coakley (relief milker),PPS-EMP-002,556.98,212.49,19.49,22.27,59.87,302.73,bank transfer
+2007-04,L. Barry,PPS-EMP-004,1957.00,772.50,68.49,78.28,210.37,1037.73,bank transfer
+2007-04,S. Coakley (relief milker),PPS-EMP-002,533.64,203.15,18.67,21.34,57.36,290.48,bank transfer
+2007-05,L. Barry,PPS-EMP-004,1957.00,772.50,68.49,78.28,210.37,1037.73,bank transfer
+2007-05,S. Coakley (relief milker),PPS-EMP-002,546.56,208.32,19.12,21.86,58.75,297.26,bank transfer
+2007-06,L. Barry,PPS-EMP-004,1957.00,772.50,68.49,78.28,210.37,1037.73,bank transfer
+2007-06,S. Coakley (relief milker),PPS-EMP-002,546.81,208.42,19.13,21.87,58.78,297.39,bank transfer
+2007-07,L. Barry,PPS-EMP-004,1957.00,772.50,68.49,78.28,210.37,1037.73,bank transfer
+2007-07,S. Coakley (relief milker),PPS-EMP-002,551.92,210.46,19.31,22.07,59.33,300.08,bank transfer
+2007-08,L. Barry,PPS-EMP-004,1957.00,772.50,68.49,78.28,210.37,1037.73,bank transfer
+2007-08,S. Coakley (relief milker),PPS-EMP-002,548.50,209.10,19.19,21.94,58.96,298.27,bank transfer
+2007-09,L. Barry,PPS-EMP-004,1957.00,772.50,68.49,78.28,210.37,1037.73,bank transfer
+2007-09,S. Coakley (relief milker),PPS-EMP-002,546.00,208.10,19.11,21.84,58.69,296.95,bank transfer
+2007-10,L. Barry,PPS-EMP-004,1957.00,772.50,68.49,78.28,210.37,1037.73,bank transfer
+2007-10,S. Coakley (relief milker),PPS-EMP-002,557.89,212.85,19.52,22.31,59.97,303.21,bank transfer
+2007-11,L. Barry,PPS-EMP-004,1957.00,772.50,68.49,78.28,210.37,1037.73,bank transfer
+2007-11,S. Coakley (relief milker),PPS-EMP-002,542.01,206.50,18.97,21.68,58.26,294.86,bank transfer
+2007-12,L. Barry,PPS-EMP-004,1957.00,772.50,68.49,78.28,210.37,1037.73,bank transfer
+2007-12,S. Coakley (relief milker),PPS-EMP-002,549.77,209.60,19.24,21.99,59.10,298.94,bank transfer
+2008-01,L. Barry,PPS-EMP-004,2015.71,795.98,70.54,80.62,216.68,1068.57,bank transfer
+2008-01,S. Coakley (relief milker),PPS-EMP-002,569.61,217.54,19.93,22.78,61.23,309.36,bank transfer
+2008-02,L. Barry,PPS-EMP-004,2015.71,795.98,70.54,80.62,216.68,1068.57,bank transfer
+2008-02,S. Coakley (relief milker),PPS-EMP-002,558.33,213.03,19.54,22.33,60.02,303.43,bank transfer
+2008-03,P. Nowak,PPS-EMP-001,2463.82,975.22,86.23,98.55,264.86,1303.82,bank transfer
+2008-03,S. Coakley (relief milker),PPS-EMP-002,567.77,216.80,19.87,22.71,61.03,308.39,bank transfer
+2008-04,P. Nowak,PPS-EMP-001,2463.82,975.22,86.23,98.55,264.86,1303.82,bank transfer
+2008-04,S. Coakley (relief milker),PPS-EMP-002,545.52,207.90,19.09,21.82,58.64,296.71,bank transfer
+2008-05,P. Nowak,PPS-EMP-001,2463.82,975.22,86.23,98.55,264.86,1303.82,bank transfer
+2008-05,S. Coakley (relief milker),PPS-EMP-002,541.26,206.20,18.94,21.65,58.18,294.47,bank transfer
+2008-06,P. Nowak,PPS-EMP-001,2463.82,975.22,86.23,98.55,264.86,1303.82,bank transfer
+2008-06,S. Coakley (relief milker),PPS-EMP-002,542.66,206.76,18.99,21.70,58.33,295.21,bank transfer
+2008-07,P. Nowak,PPS-EMP-001,2463.82,975.22,86.23,98.55,264.86,1303.82,bank transfer
+2008-07,S. Coakley (relief milker),PPS-EMP-002,563.20,214.98,19.71,22.52,60.54,305.99,bank transfer
+2008-08,P. Nowak,PPS-EMP-001,2463.82,975.22,86.23,98.55,264.86,1303.82,bank transfer
+2008-08,S. Coakley (relief milker),PPS-EMP-002,547.39,208.65,19.15,21.89,58.84,297.70,bank transfer
+2008-09,P. Nowak,PPS-EMP-001,2463.82,975.22,86.23,98.55,264.86,1303.82,bank transfer
+2008-09,S. Coakley (relief milker),PPS-EMP-002,548.74,209.19,19.20,21.94,58.98,298.41,bank transfer
+2008-10,P. Nowak,PPS-EMP-001,2463.82,975.22,86.23,98.55,264.86,1303.82,bank transfer
+2008-10,S. Coakley (relief milker),PPS-EMP-002,571.07,218.12,19.98,22.84,61.39,310.13,bank transfer
+2008-11,P. Nowak,PPS-EMP-001,2463.82,975.22,86.23,98.55,264.86,1303.82,bank transfer
+2008-11,S. Coakley (relief milker),PPS-EMP-002,544.10,207.34,19.04,21.76,58.49,295.96,bank transfer
+2008-12,P. Nowak,PPS-EMP-001,2463.82,975.22,86.23,98.55,264.86,1303.82,bank transfer
+2008-12,S. Coakley (relief milker),PPS-EMP-002,555.69,211.97,19.44,22.22,59.73,302.06,bank transfer
+2009-01,P. Nowak,PPS-EMP-001,2550.05,1009.72,89.25,102.00,274.13,1349.08,bank transfer
+2009-01,S. Coakley (relief milker),PPS-EMP-002,581.52,222.30,20.35,23.26,62.51,315.61,bank transfer
+2009-02,P. Nowak,PPS-EMP-001,2550.05,1009.72,89.25,102.00,274.13,1349.08,bank transfer
+2009-02,S. Coakley (relief milker),PPS-EMP-002,586.52,224.30,20.52,23.46,63.05,318.24,bank transfer
+2009-03,P. Nowak,PPS-EMP-001,2550.05,1009.72,89.25,102.00,274.13,1349.08,bank transfer
+2009-03,S. Coakley (relief milker),PPS-EMP-002,569.21,217.38,19.92,22.76,61.19,309.15,bank transfer
+2009-04,P. Nowak,PPS-EMP-001,2550.05,1009.72,89.25,102.00,274.13,1349.08,bank transfer
+2009-04,S. Coakley (relief milker),PPS-EMP-002,564.93,215.67,19.77,22.59,60.72,306.90,bank transfer
+2009-05,P. Nowak,PPS-EMP-001,2550.05,1009.72,89.25,102.00,274.13,1349.08,bank transfer
+2009-05,S. Coakley (relief milker),PPS-EMP-002,578.22,220.98,20.23,23.12,62.15,313.89,bank transfer
+2009-06,P. Nowak,PPS-EMP-001,2550.05,1009.72,89.25,102.00,274.13,1349.08,bank transfer
+2009-06,S. Coakley (relief milker),PPS-EMP-002,578.97,221.28,20.26,23.15,62.23,314.28,bank transfer
+2009-07,P. Nowak,PPS-EMP-001,2550.05,1009.72,89.25,102.00,274.13,1349.08,bank transfer
+2009-07,S. Coakley (relief milker),PPS-EMP-002,564.63,215.55,19.76,22.58,60.69,306.74,bank transfer
+2009-08,P. Nowak,PPS-EMP-001,2550.05,1009.72,89.25,102.00,274.13,1349.08,bank transfer
+2009-08,S. Coakley (relief milker),PPS-EMP-002,559.60,213.54,19.58,22.38,60.15,304.10,bank transfer
+2009-09,P. Nowak,PPS-EMP-001,2550.05,1009.72,89.25,102.00,274.13,1349.08,bank transfer
+2009-09,S. Coakley (relief milker),PPS-EMP-002,559.41,213.46,19.57,22.37,60.13,304.01,bank transfer
+2009-09,S. Mullane (spouse) - school transport,PPS-PERS-002,1700.00,669.70,59.50,68.00,182.75,902.80,lodged to farm account (NOT a farm wage)
+2009-10,P. Nowak,PPS-EMP-001,2550.05,1009.72,89.25,102.00,274.13,1349.08,bank transfer
+2009-10,S. Coakley (relief milker),PPS-EMP-002,572.32,218.62,20.03,22.89,61.52,310.78,bank transfer
+2009-10,S. Mullane (spouse) - school transport,PPS-PERS-002,1700.00,669.70,59.50,68.00,182.75,902.80,lodged to farm account (NOT a farm wage)
+2009-11,P. Nowak,PPS-EMP-001,2550.05,1009.72,89.25,102.00,274.13,1349.08,bank transfer
+2009-11,S. Coakley (relief milker),PPS-EMP-002,574.78,219.61,20.11,22.99,61.78,312.07,bank transfer
+2009-11,S. Mullane (spouse) - school transport,PPS-PERS-002,1700.00,669.70,59.50,68.00,182.75,902.80,lodged to farm account (NOT a farm wage)
+2009-12,P. Nowak,PPS-EMP-001,2550.05,1009.72,89.25,102.00,274.13,1349.08,bank transfer
+2009-12,S. Coakley (relief milker),PPS-EMP-002,567.16,216.56,19.85,22.68,60.96,308.07,bank transfer
+2009-12,S. Mullane (spouse) - school transport,PPS-PERS-002,1700.00,669.70,59.50,68.00,182.75,902.80,lodged to farm account (NOT a farm wage)
+2010-01,P. Nowak,PPS-EMP-001,2639.30,1045.42,92.37,105.57,283.72,1395.94,bank transfer
+2010-01,S. Coakley (relief milker),PPS-EMP-002,610.38,233.85,21.36,24.41,65.61,330.76,bank transfer
+2010-01,S. Mullane (spouse) - school transport,PPS-PERS-002,1751.00,690.10,61.28,70.04,188.23,929.58,lodged to farm account (NOT a farm wage)
+2010-02,P. Nowak,PPS-EMP-001,2639.30,1045.42,92.37,105.57,283.72,1395.94,bank transfer
+2010-02,S. Coakley (relief milker),PPS-EMP-002,595.37,227.84,20.83,23.81,64.00,322.89,bank transfer
+2010-02,S. Mullane (spouse) - school transport,PPS-PERS-002,1751.00,690.10,61.28,70.04,188.23,929.58,lodged to farm account (NOT a farm wage)
+2010-03,P. Nowak,PPS-EMP-001,2639.30,1045.42,92.37,105.57,283.72,1395.94,bank transfer
+2010-03,S. Coakley (relief milker),PPS-EMP-002,583.00,222.90,20.40,23.32,62.67,316.38,bank transfer
+2010-03,S. Mullane (spouse) - school transport,PPS-PERS-002,1751.00,690.10,61.28,70.04,188.23,929.58,lodged to farm account (NOT a farm wage)
+2010-04,P. Nowak,PPS-EMP-001,2639.30,1045.42,92.37,105.57,283.72,1395.94,bank transfer
+2010-04,S. Coakley (relief milker),PPS-EMP-002,584.35,223.44,20.45,23.37,62.81,317.09,bank transfer
+2010-04,S. Mullane (spouse) - school transport,PPS-PERS-002,1751.00,690.10,61.28,70.04,188.23,929.58,lodged to farm account (NOT a farm wage)
+2010-05,P. Nowak,PPS-EMP-001,2639.30,1045.42,92.37,105.57,283.72,1395.94,bank transfer
+2010-05,S. Coakley (relief milker),PPS-EMP-002,609.07,233.32,21.31,24.36,65.47,330.08,bank transfer
+2010-05,S. Mullane (spouse) - school transport,PPS-PERS-002,1751.00,690.10,61.28,70.04,188.23,929.58,lodged to farm account (NOT a farm wage)
+2010-06,P. Nowak,PPS-EMP-001,2639.30,1045.42,92.37,105.57,283.72,1395.94,bank transfer
+2010-06,S. Coakley (relief milker),PPS-EMP-002,600.27,229.80,21.00,24.01,64.52,325.46,bank transfer
+2010-06,S. Mullane (spouse) - school transport,PPS-PERS-002,1751.00,690.10,61.28,70.04,188.23,929.58,lodged to farm account (NOT a farm wage)
+2010-07,P. Nowak,PPS-EMP-001,2639.30,1045.42,92.37,105.57,283.72,1395.94,bank transfer
+2010-07,S. Coakley (relief milker),PPS-EMP-002,620.30,237.82,21.71,24.81,66.68,335.96,bank transfer
+2010-08,P. Nowak,PPS-EMP-001,2639.30,1045.42,92.37,105.57,283.72,1395.94,bank transfer
+2010-08,S. Coakley (relief milker),PPS-EMP-002,588.12,224.94,20.58,23.52,63.22,319.08,bank transfer
+2010-09,P. Nowak,PPS-EMP-001,2639.30,1045.42,92.37,105.57,283.72,1395.94,bank transfer
+2010-09,S. Coakley (relief milker),PPS-EMP-002,598.62,229.14,20.95,23.94,64.35,324.59,bank transfer
+2010-09,S. Mullane (spouse) - school transport,PPS-PERS-002,1751.00,690.10,61.28,70.04,188.23,929.58,lodged to farm account (NOT a farm wage)
+2010-10,P. Nowak,PPS-EMP-001,2639.30,1045.42,92.37,105.57,283.72,1395.94,bank transfer
+2010-10,S. Coakley (relief milker),PPS-EMP-002,601.71,230.38,21.05,24.06,64.68,326.22,bank transfer
+2010-10,S. Mullane (spouse) - school transport,PPS-PERS-002,1751.00,690.10,61.28,70.04,188.23,929.58,lodged to farm account (NOT a farm wage)
+2010-11,P. Nowak,PPS-EMP-001,2639.30,1045.42,92.37,105.57,283.72,1395.94,bank transfer
+2010-11,S. Coakley (relief milker),PPS-EMP-002,607.39,232.65,21.25,24.29,65.29,329.20,bank transfer
+2010-11,S. Mullane (spouse) - school transport,PPS-PERS-002,1751.00,690.10,61.28,70.04,188.23,929.58,lodged to farm account (NOT a farm wage)
+2010-12,P. Nowak,PPS-EMP-001,2639.30,1045.42,92.37,105.57,283.72,1395.94,bank transfer
+2010-12,S. Coakley (relief milker),PPS-EMP-002,609.99,233.69,21.34,24.39,65.57,330.57,bank transfer
+2010-12,S. Mullane (spouse) - school transport,PPS-PERS-002,1751.00,690.10,61.28,70.04,188.23,929.58,lodged to farm account (NOT a farm wage)
+2011-01,P. Nowak,PPS-EMP-001,2731.68,1082.37,95.60,109.26,293.65,1444.45,bank transfer
+2011-01,S. Coakley (relief milker),PPS-EMP-002,618.95,237.28,21.66,24.75,66.53,335.26,bank transfer
+2011-01,S. Mullane (spouse) - school transport,PPS-PERS-002,1803.53,711.11,63.12,72.14,193.87,957.16,lodged to farm account (NOT a farm wage)
+2011-02,P. Nowak,PPS-EMP-001,2731.68,1082.37,95.60,109.26,293.65,1444.45,bank transfer
+2011-02,S. Coakley (relief milker),PPS-EMP-002,630.07,241.72,22.05,25.20,67.73,341.10,bank transfer
+2011-02,S. Mullane (spouse) - school transport,PPS-PERS-002,1803.53,711.11,63.12,72.14,193.87,957.16,lodged to farm account (NOT a farm wage)
+2011-03,P. Nowak,PPS-EMP-001,2731.68,1082.37,95.60,109.26,293.65,1444.45,bank transfer
+2011-03,S. Coakley (relief milker),PPS-EMP-002,617.26,236.60,21.60,24.69,66.35,334.37,bank transfer
+2011-03,S. Mullane (spouse) - school transport,PPS-PERS-002,1803.53,711.11,63.12,72.14,193.87,957.16,lodged to farm account (NOT a farm wage)
+2011-04,P. Nowak,PPS-EMP-001,2731.68,1082.37,95.60,109.26,293.65,1444.45,bank transfer
+2011-04,S. Coakley (relief milker),PPS-EMP-002,637.31,244.62,22.30,25.49,68.51,344.90,bank transfer
+2011-04,S. Mullane (spouse) - school transport,PPS-PERS-002,1803.53,711.11,63.12,72.14,193.87,957.16,lodged to farm account (NOT a farm wage)
+2011-05,P. Nowak,PPS-EMP-001,2731.68,1082.37,95.60,109.26,293.65,1444.45,bank transfer
+2011-05,S. Coakley (relief milker),PPS-EMP-002,606.56,232.32,21.22,24.26,65.20,328.76,bank transfer
+2011-05,S. Mullane (spouse) - school transport,PPS-PERS-002,1803.53,711.11,63.12,72.14,193.87,957.16,lodged to farm account (NOT a farm wage)
+2011-06,P. Nowak,PPS-EMP-001,2731.68,1082.37,95.60,109.26,293.65,1444.45,bank transfer
+2011-06,S. Coakley (relief milker),PPS-EMP-002,600.37,229.84,21.01,24.01,64.53,325.51,bank transfer
+2011-06,S. Mullane (spouse) - school transport,PPS-PERS-002,1803.53,711.11,63.12,72.14,193.87,957.16,lodged to farm account (NOT a farm wage)
+2011-07,P. Nowak,PPS-EMP-001,2731.68,1082.37,95.60,109.26,293.65,1444.45,bank transfer
+2011-07,S. Coakley (relief milker),PPS-EMP-002,624.51,239.50,21.85,24.98,67.13,338.18,bank transfer
+2011-08,P. Nowak,PPS-EMP-001,2731.68,1082.37,95.60,109.26,293.65,1444.45,bank transfer
+2011-08,S. Coakley (relief milker),PPS-EMP-002,633.12,242.94,22.15,25.32,68.06,342.71,bank transfer
+2011-09,P. Nowak,PPS-EMP-001,2731.68,1082.37,95.60,109.26,293.65,1444.45,bank transfer
+2011-09,S. Coakley (relief milker),PPS-EMP-002,631.49,242.29,22.10,25.25,67.88,341.85,bank transfer
+2011-09,S. Mullane (spouse) - school transport,PPS-PERS-002,1803.53,711.11,63.12,72.14,193.87,957.16,lodged to farm account (NOT a farm wage)
+2011-10,P. Nowak,PPS-EMP-001,2731.68,1082.37,95.60,109.26,293.65,1444.45,bank transfer
+2011-10,S. Coakley (relief milker),PPS-EMP-002,626.58,240.33,21.93,25.06,67.35,339.26,bank transfer
+2011-10,S. Mullane (spouse) - school transport,PPS-PERS-002,1803.53,711.11,63.12,72.14,193.87,957.16,lodged to farm account (NOT a farm wage)
+2011-11,P. Nowak,PPS-EMP-001,2731.68,1082.37,95.60,109.26,293.65,1444.45,bank transfer
+2011-11,S. Coakley (relief milker),PPS-EMP-002,633.49,243.09,22.17,25.33,68.10,342.90,bank transfer
+2011-11,S. Mullane (spouse) - school transport,PPS-PERS-002,1803.53,711.11,63.12,72.14,193.87,957.16,lodged to farm account (NOT a farm wage)
+2011-12,P. Nowak,PPS-EMP-001,2731.68,1082.37,95.60,109.26,293.65,1444.45,bank transfer
+2011-12,S. Coakley (relief milker),PPS-EMP-002,633.89,243.25,22.18,25.35,68.14,343.11,bank transfer
+2011-12,S. Mullane (spouse) - school transport,PPS-PERS-002,1803.53,711.11,63.12,72.14,193.87,957.16,lodged to farm account (NOT a farm wage)
+2012-01,P. Nowak,PPS-EMP-001,2827.29,1120.61,98.95,113.09,303.93,1494.64,bank transfer
+2012-01,S. Coakley (relief milker),PPS-EMP-002,628.46,241.08,21.99,25.13,67.55,340.26,bank transfer
+2012-01,S. Mullane (spouse) - school transport,PPS-PERS-002,1857.64,732.75,65.01,74.30,199.69,985.58,lodged to farm account (NOT a farm wage)
+2012-02,P. Nowak,PPS-EMP-001,2827.29,1120.61,98.95,113.09,303.93,1494.64,bank transfer
+2012-02,S. Coakley (relief milker),PPS-EMP-002,636.66,244.36,22.28,25.46,68.44,344.56,bank transfer
+2012-02,S. Mullane (spouse) - school transport,PPS-PERS-002,1857.64,732.75,65.01,74.30,199.69,985.58,lodged to farm account (NOT a farm wage)
+2012-03,P. Nowak,PPS-EMP-001,2827.29,1120.61,98.95,113.09,303.93,1494.64,bank transfer
+2012-03,S. Coakley (relief milker),PPS-EMP-002,656.04,252.11,22.96,26.24,70.52,354.73,bank transfer
+2012-03,S. Mullane (spouse) - school transport,PPS-PERS-002,1857.64,732.75,65.01,74.30,199.69,985.58,lodged to farm account (NOT a farm wage)
+2012-04,P. Nowak,PPS-EMP-001,2827.29,1120.61,98.95,113.09,303.93,1494.64,bank transfer
+2012-04,S. Coakley (relief milker),PPS-EMP-002,660.15,253.76,23.10,26.40,70.96,356.89,bank transfer
+2012-04,S. Mullane (spouse) - school transport,PPS-PERS-002,1857.64,732.75,65.01,74.30,199.69,985.58,lodged to farm account (NOT a farm wage)
+2012-05,P. Nowak,PPS-EMP-001,2827.29,1120.61,98.95,113.09,303.93,1494.64,bank transfer
+2012-05,S. Coakley (relief milker),PPS-EMP-002,639.66,245.56,22.38,25.58,68.76,346.14,bank transfer
+2012-05,S. Mullane (spouse) - school transport,PPS-PERS-002,1857.64,732.75,65.01,74.30,199.69,985.58,lodged to farm account (NOT a farm wage)
+2012-06,P. Nowak,PPS-EMP-001,2827.29,1120.61,98.95,113.09,303.93,1494.64,bank transfer
+2012-06,S. Coakley (relief milker),PPS-EMP-002,643.34,247.03,22.51,25.73,69.15,348.07,bank transfer
+2012-06,S. Mullane (spouse) - school transport,PPS-PERS-002,1857.64,732.75,65.01,74.30,199.69,985.58,lodged to farm account (NOT a farm wage)
+2012-07,P. Nowak,PPS-EMP-001,2827.29,1120.61,98.95,113.09,303.93,1494.64,bank transfer
+2012-07,S. Coakley (relief milker),PPS-EMP-002,654.45,251.48,22.90,26.17,70.35,353.90,bank transfer
+2012-08,P. Nowak,PPS-EMP-001,2827.29,1120.61,98.95,113.09,303.93,1494.64,bank transfer
+2012-08,S. Coakley (relief milker),PPS-EMP-002,639.16,245.36,22.37,25.56,68.70,345.87,bank transfer
+2012-09,P. Nowak,PPS-EMP-001,2827.29,1120.61,98.95,113.09,303.93,1494.64,bank transfer
+2012-09,S. Coakley (relief milker),PPS-EMP-002,634.55,243.52,22.20,25.38,68.21,343.45,bank transfer
+2012-09,S. Mullane (spouse) - school transport,PPS-PERS-002,1857.64,732.75,65.01,74.30,199.69,985.58,lodged to farm account (NOT a farm wage)
+2012-10,P. Nowak,PPS-EMP-001,2827.29,1120.61,98.95,113.09,303.93,1494.64,bank transfer
+2012-10,S. Coakley (relief milker),PPS-EMP-002,640.96,246.08,22.43,25.63,68.90,346.82,bank transfer
+2012-10,S. Mullane (spouse) - school transport,PPS-PERS-002,1857.64,732.75,65.01,74.30,199.69,985.58,lodged to farm account (NOT a farm wage)
+2012-11,P. Nowak,PPS-EMP-001,2827.29,1120.61,98.95,113.09,303.93,1494.64,bank transfer
+2012-11,S. Coakley (relief milker),PPS-EMP-002,638.71,245.18,22.35,25.54,68.66,345.64,bank transfer
+2012-11,S. Mullane (spouse) - school transport,PPS-PERS-002,1857.64,732.75,65.01,74.30,199.69,985.58,lodged to farm account (NOT a farm wage)
+2012-12,P. Nowak,PPS-EMP-001,2827.29,1120.61,98.95,113.09,303.93,1494.64,bank transfer
+2012-12,S. Coakley (relief milker),PPS-EMP-002,652.50,250.70,22.83,26.10,70.14,352.87,bank transfer
+2012-12,S. Mullane (spouse) - school transport,PPS-PERS-002,1857.64,732.75,65.01,74.30,199.69,985.58,lodged to farm account (NOT a farm wage)
+2013-01,P. Nowak,PPS-EMP-001,2926.24,1160.19,102.41,117.04,314.57,1546.60,bank transfer
+2013-01,S. Coakley (relief milker),PPS-EMP-002,642.60,246.74,22.49,25.70,69.07,347.67,bank transfer
+2013-01,S. Mullane (spouse) - school transport,PPS-PERS-002,1913.36,755.04,66.96,76.53,205.68,1014.83,lodged to farm account (NOT a farm wage)
+2013-02,P. Nowak,PPS-EMP-001,2926.24,1160.19,102.41,117.04,314.57,1546.60,bank transfer
+2013-02,S. Coakley (relief milker),PPS-EMP-002,687.68,264.77,24.06,27.50,73.92,371.35,bank transfer
+2013-02,S. Mullane (spouse) - school transport,PPS-PERS-002,1913.36,755.04,66.96,76.53,205.68,1014.83,lodged to farm account (NOT a farm wage)
+2013-03,P. Nowak,PPS-EMP-001,2926.24,1160.19,102.41,117.04,314.57,1546.60,bank transfer
+2013-03,S. Coakley (relief milker),PPS-EMP-002,660.42,253.86,23.11,26.41,70.99,357.04,bank transfer
+2013-03,S. Mullane (spouse) - school transport,PPS-PERS-002,1913.36,755.04,66.96,76.53,205.68,1014.83,lodged to farm account (NOT a farm wage)
+2013-04,P. Nowak,PPS-EMP-001,2926.24,1160.19,102.41,117.04,314.57,1546.60,bank transfer
+2013-04,S. Coakley (relief milker),PPS-EMP-002,661.99,254.49,23.16,26.47,71.16,357.87,bank transfer
+2013-04,S. Mullane (spouse) - school transport,PPS-PERS-002,1913.36,755.04,66.96,76.53,205.68,1014.83,lodged to farm account (NOT a farm wage)
+2013-05,P. Nowak,PPS-EMP-001,2926.24,1160.19,102.41,117.04,314.57,1546.60,bank transfer
+2013-05,S. Coakley (relief milker),PPS-EMP-002,656.60,252.34,22.98,26.26,70.58,355.02,bank transfer
+2013-05,S. Mullane (spouse) - school transport,PPS-PERS-002,1913.36,755.04,66.96,76.53,205.68,1014.83,lodged to farm account (NOT a farm wage)
+2013-06,P. Nowak,PPS-EMP-001,2926.24,1160.19,102.41,117.04,314.57,1546.60,bank transfer
+2013-06,S. Coakley (relief milker),PPS-EMP-002,669.01,257.30,23.41,26.76,71.91,361.54,bank transfer
+2013-06,S. Mullane (spouse) - school transport,PPS-PERS-002,1913.36,755.04,66.96,76.53,205.68,1014.83,lodged to farm account (NOT a farm wage)
+2013-07,P. Nowak,PPS-EMP-001,2926.24,1160.19,102.41,117.04,314.57,1546.60,bank transfer
+2013-07,S. Coakley (relief milker),PPS-EMP-002,641.83,246.43,22.46,25.67,68.99,347.27,bank transfer
+2013-08,P. Nowak,PPS-EMP-001,2926.24,1160.19,102.41,117.04,314.57,1546.60,bank transfer
+2013-08,S. Coakley (relief milker),PPS-EMP-002,655.36,251.84,22.93,26.21,70.45,354.38,bank transfer
+2013-09,P. Nowak,PPS-EMP-001,2926.24,1160.19,102.41,117.04,314.57,1546.60,bank transfer
+2013-09,S. Coakley (relief milker),PPS-EMP-002,651.92,250.46,22.81,26.07,70.08,352.58,bank transfer
+2013-09,S. Mullane (spouse) - school transport,PPS-PERS-002,1913.36,755.04,66.96,76.53,205.68,1014.83,lodged to farm account (NOT a farm wage)
+2013-10,P. Nowak,PPS-EMP-001,2926.24,1160.19,102.41,117.04,314.57,1546.60,bank transfer
+2013-10,S. Coakley (relief milker),PPS-EMP-002,645.28,247.81,22.58,25.81,69.36,349.08,bank transfer
+2013-10,S. Mullane (spouse) - school transport,PPS-PERS-002,1913.36,755.04,66.96,76.53,205.68,1014.83,lodged to farm account (NOT a farm wage)
+2013-11,P. Nowak,PPS-EMP-001,2926.24,1160.19,102.41,117.04,314.57,1546.60,bank transfer
+2013-11,S. Coakley (relief milker),PPS-EMP-002,671.69,258.37,23.50,26.86,72.20,362.96,bank transfer
+2013-11,S. Mullane (spouse) - school transport,PPS-PERS-002,1913.36,755.04,66.96,76.53,205.68,1014.83,lodged to farm account (NOT a farm wage)
+2013-12,P. Nowak,PPS-EMP-001,2926.24,1160.19,102.41,117.04,314.57,1546.60,bank transfer
+2013-12,S. Coakley (relief milker),PPS-EMP-002,644.33,247.43,22.55,25.77,69.26,348.58,bank transfer
+2013-12,S. Mullane (spouse) - school transport,PPS-PERS-002,1913.36,755.04,66.96,76.53,205.68,1014.83,lodged to farm account (NOT a farm wage)
+2014-01,P. Nowak,PPS-EMP-001,3028.66,1201.16,106.00,121.14,325.58,1600.36,bank transfer
+2014-01,S. Coakley (relief milker),PPS-EMP-002,668.67,257.16,23.40,26.74,71.88,361.37,bank transfer
+2014-01,S. Mullane (spouse) - school transport,PPS-PERS-002,1970.77,778.00,68.97,78.83,211.85,1044.97,lodged to farm account (NOT a farm wage)
+2014-02,A. Brosnan (calving season),PPS-EMP-003,1710.14,673.75,59.85,68.40,183.84,908.14,bank transfer
+2014-02,P. Nowak,PPS-EMP-001,3028.66,1201.16,106.00,121.14,325.58,1600.36,bank transfer
+2014-02,S. Coakley (relief milker),PPS-EMP-002,691.15,266.16,24.19,27.64,74.29,373.16,bank transfer
+2014-02,S. Mullane (spouse) - school transport,PPS-PERS-002,1970.77,778.00,68.97,78.83,211.85,1044.97,lodged to farm account (NOT a farm wage)
+2014-03,A. Brosnan (calving season),PPS-EMP-003,1710.14,673.75,59.85,68.40,183.84,908.14,bank transfer
+2014-03,P. Nowak,PPS-EMP-001,3028.66,1201.16,106.00,121.14,325.58,1600.36,bank transfer
+2014-03,S. Coakley (relief milker),PPS-EMP-002,666.88,256.45,23.34,26.67,71.68,360.42,bank transfer
+2014-03,S. Mullane (spouse) - school transport,PPS-PERS-002,1970.77,778.00,68.97,78.83,211.85,1044.97,lodged to farm account (NOT a farm wage)
+2014-04,A. Brosnan (calving season),PPS-EMP-003,1710.14,673.75,59.85,68.40,183.84,908.14,bank transfer
+2014-04,P. Nowak,PPS-EMP-001,3028.66,1201.16,106.00,121.14,325.58,1600.36,bank transfer
+2014-04,S. Coakley (relief milker),PPS-EMP-002,709.34,273.43,24.82,28.37,76.25,382.72,bank transfer
+2014-04,S. Mullane (spouse) - school transport,PPS-PERS-002,1970.77,778.00,68.97,78.83,211.85,1044.97,lodged to farm account (NOT a farm wage)
+2014-05,A. Brosnan (calving season),PPS-EMP-003,1710.14,673.75,59.85,68.40,183.84,908.14,bank transfer
+2014-05,P. Nowak,PPS-EMP-001,3028.66,1201.16,106.00,121.14,325.58,1600.36,bank transfer
+2014-05,S. Coakley (relief milker),PPS-EMP-002,710.13,273.75,24.85,28.40,76.33,383.13,bank transfer
+2014-05,S. Mullane (spouse) - school transport,PPS-PERS-002,1970.77,778.00,68.97,78.83,211.85,1044.97,lodged to farm account (NOT a farm wage)
+2014-06,A. Brosnan (calving season),PPS-EMP-003,1710.14,673.75,59.85,68.40,183.84,908.14,bank transfer
+2014-06,P. Nowak,PPS-EMP-001,3028.66,1201.16,106.00,121.14,325.58,1600.36,bank transfer
+2014-06,S. Coakley (relief milker),PPS-EMP-002,696.19,268.17,24.36,27.84,74.84,375.82,bank transfer
+2014-06,S. Mullane (spouse) - school transport,PPS-PERS-002,1970.77,778.00,68.97,78.83,211.85,1044.97,lodged to farm account (NOT a farm wage)
+2014-07,A. Brosnan (calving season),PPS-EMP-003,1710.14,673.75,59.85,68.40,183.84,908.14,bank transfer
+2014-07,P. Nowak,PPS-EMP-001,3028.66,1201.16,106.00,121.14,325.58,1600.36,bank transfer
+2014-07,S. Coakley (relief milker),PPS-EMP-002,706.17,272.16,24.71,28.24,75.91,381.06,bank transfer
+2014-08,A. Brosnan (calving season),PPS-EMP-003,1710.14,673.75,59.85,68.40,183.84,908.14,bank transfer
+2014-08,P. Nowak,PPS-EMP-001,3028.66,1201.16,106.00,121.14,325.58,1600.36,bank transfer
+2014-08,S. Coakley (relief milker),PPS-EMP-002,689.18,265.37,24.12,27.56,74.08,372.13,bank transfer
+2014-09,P. Nowak,PPS-EMP-001,3028.66,1201.16,106.00,121.14,325.58,1600.36,bank transfer
+2014-09,S. Coakley (relief milker),PPS-EMP-002,703.96,271.28,24.63,28.15,75.67,379.90,bank transfer
+2014-09,S. Mullane (spouse) - school transport,PPS-PERS-002,1970.77,778.00,68.97,78.83,211.85,1044.97,lodged to farm account (NOT a farm wage)
+2014-10,P. Nowak,PPS-EMP-001,3028.66,1201.16,106.00,121.14,325.58,1600.36,bank transfer
+2014-10,S. Coakley (relief milker),PPS-EMP-002,701.90,270.46,24.56,28.07,75.45,378.81,bank transfer
+2014-10,S. Mullane (spouse) - school transport,PPS-PERS-002,1970.77,778.00,68.97,78.83,211.85,1044.97,lodged to farm account (NOT a farm wage)
+2014-11,P. Nowak,PPS-EMP-001,3028.66,1201.16,106.00,121.14,325.58,1600.36,bank transfer
+2014-11,S. Coakley (relief milker),PPS-EMP-002,707.17,272.56,24.75,28.28,76.02,381.58,bank transfer
+2014-11,S. Mullane (spouse) - school transport,PPS-PERS-002,1970.77,778.00,68.97,78.83,211.85,1044.97,lodged to farm account (NOT a farm wage)
+2014-12,P. Nowak,PPS-EMP-001,3028.66,1201.16,106.00,121.14,325.58,1600.36,bank transfer
+2014-12,S. Coakley (relief milker),PPS-EMP-002,686.60,264.34,24.03,27.46,73.80,370.77,bank transfer
+2014-12,S. Mullane (spouse) - school transport,PPS-PERS-002,1970.77,778.00,68.97,78.83,211.85,1044.97,lodged to farm account (NOT a farm wage)
+2015-01,P. Nowak,PPS-EMP-001,3134.66,1243.56,109.71,125.38,336.97,1656.01,bank transfer
+2015-01,S. Coakley (relief milker),PPS-EMP-002,729.08,281.33,25.51,29.16,78.37,393.08,bank transfer
+2015-01,S. Mullane (spouse) - school transport,PPS-PERS-002,2029.89,801.65,71.04,81.19,218.21,1076.01,lodged to farm account (NOT a farm wage)
+2015-02,A. Brosnan (calving season),PPS-EMP-003,1761.44,694.27,61.65,70.45,189.35,935.07,bank transfer
+2015-02,P. Nowak,PPS-EMP-001,3134.66,1243.56,109.71,125.38,336.97,1656.01,bank transfer
+2015-02,S. Coakley (relief milker),PPS-EMP-002,712.98,274.89,24.95,28.51,76.64,384.63,bank transfer
+2015-02,S. Mullane (spouse) - school transport,PPS-PERS-002,2029.89,801.65,71.04,81.19,218.21,1076.01,lodged to farm account (NOT a farm wage)
+2015-03,A. Brosnan (calving season),PPS-EMP-003,1761.44,694.27,61.65,70.45,189.35,935.07,bank transfer
+2015-03,P. Nowak,PPS-EMP-001,3134.66,1243.56,109.71,125.38,336.97,1656.01,bank transfer
+2015-03,S. Coakley (relief milker),PPS-EMP-002,728.10,280.94,25.48,29.12,78.27,392.56,bank transfer
+2015-03,S. Mullane (spouse) - school transport,PPS-PERS-002,2029.89,801.65,71.04,81.19,218.21,1076.01,lodged to farm account (NOT a farm wage)
+2015-04,A. Brosnan (calving season),PPS-EMP-003,1761.44,694.27,61.65,70.45,189.35,935.07,bank transfer
+2015-04,P. Nowak,PPS-EMP-001,3134.66,1243.56,109.71,125.38,336.97,1656.01,bank transfer
+2015-04,S. Coakley (relief milker),PPS-EMP-002,722.90,278.86,25.30,28.91,77.71,389.83,bank transfer
+2015-04,S. Mullane (spouse) - school transport,PPS-PERS-002,2029.89,801.65,71.04,81.19,218.21,1076.01,lodged to farm account (NOT a farm wage)
+2015-05,A. Brosnan (calving season),PPS-EMP-003,1761.44,694.27,61.65,70.45,189.35,935.07,bank transfer
+2015-05,P. Nowak,PPS-EMP-001,3134.66,1243.56,109.71,125.38,336.97,1656.01,bank transfer
+2015-05,S. Coakley (relief milker),PPS-EMP-002,702.28,270.61,24.57,28.09,75.49,379.01,bank transfer
+2015-05,S. Mullane (spouse) - school transport,PPS-PERS-002,2029.89,801.65,71.04,81.19,218.21,1076.01,lodged to farm account (NOT a farm wage)
+2015-06,A. Brosnan (calving season),PPS-EMP-003,1761.44,694.27,61.65,70.45,189.35,935.07,bank transfer
+2015-06,P. Nowak,PPS-EMP-001,3134.66,1243.56,109.71,125.38,336.97,1656.01,bank transfer
+2015-06,S. Coakley (relief milker),PPS-EMP-002,700.86,270.04,24.53,28.03,75.34,378.26,bank transfer
+2015-06,S. Mullane (spouse) - school transport,PPS-PERS-002,2029.89,801.65,71.04,81.19,218.21,1076.01,lodged to farm account (NOT a farm wage)
+2015-07,A. Brosnan (calving season),PPS-EMP-003,1761.44,694.27,61.65,70.45,189.35,935.07,bank transfer
+2015-07,P. Nowak,PPS-EMP-001,3134.66,1243.56,109.71,125.38,336.97,1656.01,bank transfer
+2015-07,S. Coakley (relief milker),PPS-EMP-002,696.97,268.48,24.39,27.87,74.92,376.23,bank transfer
+2015-08,A. Brosnan (calving season),PPS-EMP-003,1761.44,694.27,61.65,70.45,189.35,935.07,bank transfer
+2015-08,P. Nowak,PPS-EMP-001,3134.66,1243.56,109.71,125.38,336.97,1656.01,bank transfer
+2015-08,S. Coakley (relief milker),PPS-EMP-002,727.53,280.71,25.46,29.10,78.20,392.26,bank transfer
+2015-09,P. Nowak,PPS-EMP-001,3134.66,1243.56,109.71,125.38,336.97,1656.01,bank transfer
+2015-09,S. Coakley (relief milker),PPS-EMP-002,717.58,276.73,25.11,28.70,77.13,387.04,bank transfer
+2015-09,S. Mullane (spouse) - school transport,PPS-PERS-002,2029.89,801.65,71.04,81.19,218.21,1076.01,lodged to farm account (NOT a farm wage)
+2015-10,P. Nowak,PPS-EMP-001,3134.66,1243.56,109.71,125.38,336.97,1656.01,bank transfer
+2015-10,S. Coakley (relief milker),PPS-EMP-002,691.28,266.21,24.19,27.65,74.31,373.23,bank transfer
+2015-10,S. Mullane (spouse) - school transport,PPS-PERS-002,2029.89,801.65,71.04,81.19,218.21,1076.01,lodged to farm account (NOT a farm wage)
+2015-11,P. Nowak,PPS-EMP-001,3134.66,1243.56,109.71,125.38,336.97,1656.01,bank transfer
+2015-11,S. Coakley (relief milker),PPS-EMP-002,735.27,283.80,25.73,29.41,79.04,396.33,bank transfer
+2015-11,S. Mullane (spouse) - school transport,PPS-PERS-002,2029.89,801.65,71.04,81.19,218.21,1076.01,lodged to farm account (NOT a farm wage)
+2015-12,P. Nowak,PPS-EMP-001,3134.66,1243.56,109.71,125.38,336.97,1656.01,bank transfer
+2015-12,S. Coakley (relief milker),PPS-EMP-002,718.33,277.03,25.14,28.73,77.22,387.43,bank transfer
+2015-12,S. Mullane (spouse) - school transport,PPS-PERS-002,2029.89,801.65,71.04,81.19,218.21,1076.01,lodged to farm account (NOT a farm wage)
+2016-01,P. Nowak,PPS-EMP-001,3244.38,1287.45,113.55,129.77,348.77,1713.61,bank transfer
+2016-01,S. Coakley (relief milker),PPS-EMP-002,716.72,276.38,25.08,28.66,77.04,386.60,bank transfer
+2016-01,S. Mullane (spouse) - school transport,PPS-PERS-002,2090.79,826.01,73.17,83.63,224.75,1107.98,lodged to farm account (NOT a farm wage)
+2016-02,A. Brosnan (calving season),PPS-EMP-003,1814.29,715.41,63.50,72.57,195.03,962.81,bank transfer
+2016-02,P. Nowak,PPS-EMP-001,3244.38,1287.45,113.55,129.77,348.77,1713.61,bank transfer
+2016-02,S. Coakley (relief milker),PPS-EMP-002,742.40,286.66,25.98,29.69,79.80,400.07,bank transfer
+2016-02,S. Mullane (spouse) - school transport,PPS-PERS-002,2090.79,826.01,73.17,83.63,224.75,1107.98,lodged to farm account (NOT a farm wage)
+2016-03,A. Brosnan (calving season),PPS-EMP-003,1814.29,715.41,63.50,72.57,195.03,962.81,bank transfer
+2016-03,P. Nowak,PPS-EMP-001,3244.38,1287.45,113.55,129.77,348.77,1713.61,bank transfer
+2016-03,S. Coakley (relief milker),PPS-EMP-002,715.81,276.02,25.05,28.63,76.94,386.11,bank transfer
+2016-03,S. Mullane (spouse) - school transport,PPS-PERS-002,2090.79,826.01,73.17,83.63,224.75,1107.98,lodged to farm account (NOT a farm wage)
+2016-04,A. Brosnan (calving season),PPS-EMP-003,1814.29,715.41,63.50,72.57,195.03,962.81,bank transfer
+2016-04,P. Nowak,PPS-EMP-001,3244.38,1287.45,113.55,129.77,348.77,1713.61,bank transfer
+2016-04,S. Coakley (relief milker),PPS-EMP-002,762.27,294.60,26.67,30.49,81.94,410.51,bank transfer
+2016-04,S. Mullane (spouse) - school transport,PPS-PERS-002,2090.79,826.01,73.17,83.63,224.75,1107.98,lodged to farm account (NOT a farm wage)
+2016-05,A. Brosnan (calving season),PPS-EMP-003,1814.29,715.41,63.50,72.57,195.03,962.81,bank transfer
+2016-05,P. Nowak,PPS-EMP-001,3244.38,1287.45,113.55,129.77,348.77,1713.61,bank transfer
+2016-05,S. Coakley (relief milker),PPS-EMP-002,751.44,290.27,26.30,30.05,80.77,404.82,bank transfer
+2016-05,S. Mullane (spouse) - school transport,PPS-PERS-002,2090.79,826.01,73.17,83.63,224.75,1107.98,lodged to farm account (NOT a farm wage)
+2016-06,A. Brosnan (calving season),PPS-EMP-003,1814.29,715.41,63.50,72.57,195.03,962.81,bank transfer
+2016-06,P. Nowak,PPS-EMP-001,3244.38,1287.45,113.55,129.77,348.77,1713.61,bank transfer
+2016-06,S. Coakley (relief milker),PPS-EMP-002,716.45,276.28,25.07,28.65,77.01,386.45,bank transfer
+2016-06,S. Mullane (spouse) - school transport,PPS-PERS-002,2090.79,826.01,73.17,83.63,224.75,1107.98,lodged to farm account (NOT a farm wage)
+2016-07,A. Brosnan (calving season),PPS-EMP-003,1814.29,715.41,63.50,72.57,195.03,962.81,bank transfer
+2016-07,P. Nowak,PPS-EMP-001,3244.38,1287.45,113.55,129.77,348.77,1713.61,bank transfer
+2016-07,S. Coakley (relief milker),PPS-EMP-002,733.68,283.17,25.67,29.34,78.87,395.50,bank transfer
+2016-08,A. Brosnan (calving season),PPS-EMP-003,1814.29,715.41,63.50,72.57,195.03,962.81,bank transfer
+2016-08,P. Nowak,PPS-EMP-001,3244.38,1287.45,113.55,129.77,348.77,1713.61,bank transfer
+2016-08,S. Coakley (relief milker),PPS-EMP-002,713.50,275.10,24.97,28.54,76.70,384.89,bank transfer
+2016-09,P. Nowak,PPS-EMP-001,3244.38,1287.45,113.55,129.77,348.77,1713.61,bank transfer
+2016-09,S. Coakley (relief milker),PPS-EMP-002,722.16,278.56,25.27,28.88,77.63,389.45,bank transfer
+2016-09,S. Mullane (spouse) - school transport,PPS-PERS-002,2090.79,826.01,73.17,83.63,224.75,1107.98,lodged to farm account (NOT a farm wage)
+2016-10,P. Nowak,PPS-EMP-001,3244.38,1287.45,113.55,129.77,348.77,1713.61,bank transfer
+2016-10,S. Coakley (relief milker),PPS-EMP-002,713.36,275.04,24.96,28.53,76.68,384.83,bank transfer
+2016-10,S. Mullane (spouse) - school transport,PPS-PERS-002,2090.79,826.01,73.17,83.63,224.75,1107.98,lodged to farm account (NOT a farm wage)
+2016-11,P. Nowak,PPS-EMP-001,3244.38,1287.45,113.55,129.77,348.77,1713.61,bank transfer
+2016-11,S. Coakley (relief milker),PPS-EMP-002,715.89,276.05,25.05,28.63,76.95,386.16,bank transfer
+2016-11,S. Mullane (spouse) - school transport,PPS-PERS-002,2090.79,826.01,73.17,83.63,224.75,1107.98,lodged to farm account (NOT a farm wage)
+2016-12,P. Nowak,PPS-EMP-001,3244.38,1287.45,113.55,129.77,348.77,1713.61,bank transfer
+2016-12,S. Coakley (relief milker),PPS-EMP-002,762.17,294.56,26.67,30.48,81.93,410.46,bank transfer
+2016-12,S. Mullane (spouse) - school transport,PPS-PERS-002,2090.79,826.01,73.17,83.63,224.75,1107.98,lodged to farm account (NOT a farm wage)
+2017-01,P. Nowak,PPS-EMP-001,3357.93,1332.87,117.52,134.31,360.97,1773.23,bank transfer
+2017-01,S. Coakley (relief milker),PPS-EMP-002,765.09,295.73,26.77,30.60,82.24,411.99,bank transfer
+2017-01,S. Mullane (spouse) - school transport,PPS-PERS-002,2153.51,851.10,75.37,86.14,231.50,1140.90,lodged to farm account (NOT a farm wage)
+2017-02,A. Brosnan (calving season),PPS-EMP-003,1868.72,737.18,65.40,74.74,200.88,991.40,bank transfer
+2017-02,P. Nowak,PPS-EMP-001,3357.93,1332.87,117.52,134.31,360.97,1773.23,bank transfer
+2017-02,S. Coakley (relief milker),PPS-EMP-002,765.20,295.78,26.78,30.60,82.25,412.04,bank transfer
+2017-02,S. Mullane (spouse) - school transport,PPS-PERS-002,2153.51,851.10,75.37,86.14,231.50,1140.90,lodged to farm account (NOT a farm wage)
+2017-03,A. Brosnan (calving season),PPS-EMP-003,1868.72,737.18,65.40,74.74,200.88,991.40,bank transfer
+2017-03,P. Nowak,PPS-EMP-001,3357.93,1332.87,117.52,134.31,360.97,1773.23,bank transfer
+2017-03,S. Coakley (relief milker),PPS-EMP-002,764.86,295.64,26.77,30.59,82.22,411.86,bank transfer
+2017-03,S. Mullane (spouse) - school transport,PPS-PERS-002,2153.51,851.10,75.37,86.14,231.50,1140.90,lodged to farm account (NOT a farm wage)
+2017-04,A. Brosnan (calving season),PPS-EMP-003,1868.72,737.18,65.40,74.74,200.88,991.40,bank transfer
+2017-04,P. Nowak,PPS-EMP-001,3357.93,1332.87,117.52,134.31,360.97,1773.23,bank transfer
+2017-04,S. Coakley (relief milker),PPS-EMP-002,763.25,295.00,26.71,30.53,82.04,411.01,bank transfer
+2017-04,S. Mullane (spouse) - school transport,PPS-PERS-002,2153.51,851.10,75.37,86.14,231.50,1140.90,lodged to farm account (NOT a farm wage)
+2017-05,A. Brosnan (calving season),PPS-EMP-003,1868.72,737.18,65.40,74.74,200.88,991.40,bank transfer
+2017-05,P. Nowak,PPS-EMP-001,3357.93,1332.87,117.52,134.31,360.97,1773.23,bank transfer
+2017-05,S. Coakley (relief milker),PPS-EMP-002,789.29,305.41,27.62,31.57,84.84,424.69,bank transfer
+2017-05,S. Mullane (spouse) - school transport,PPS-PERS-002,2153.51,851.10,75.37,86.14,231.50,1140.90,lodged to farm account (NOT a farm wage)
+2017-06,A. Brosnan (calving season),PPS-EMP-003,1868.72,737.18,65.40,74.74,200.88,991.40,bank transfer
+2017-06,P. Nowak,PPS-EMP-001,3357.93,1332.87,117.52,134.31,360.97,1773.23,bank transfer
+2017-06,S. Coakley (relief milker),PPS-EMP-002,769.65,297.56,26.93,30.78,82.73,414.38,bank transfer
+2017-06,S. Mullane (spouse) - school transport,PPS-PERS-002,2153.51,851.10,75.37,86.14,231.50,1140.90,lodged to farm account (NOT a farm wage)
+2017-07,A. Brosnan (calving season),PPS-EMP-003,1868.72,737.18,65.40,74.74,200.88,991.40,bank transfer
+2017-07,P. Nowak,PPS-EMP-001,3357.93,1332.87,117.52,134.31,360.97,1773.23,bank transfer
+2017-07,S. Coakley (relief milker),PPS-EMP-002,784.02,303.30,27.44,31.36,84.28,421.92,bank transfer
+2017-08,A. Brosnan (calving season),PPS-EMP-003,1868.72,737.18,65.40,74.74,200.88,991.40,bank transfer
+2017-08,P. Nowak,PPS-EMP-001,3357.93,1332.87,117.52,134.31,360.97,1773.23,bank transfer
+2017-08,S. Coakley (relief milker),PPS-EMP-002,774.06,299.32,27.09,30.96,83.21,416.69,bank transfer
+2017-09,P. Nowak,PPS-EMP-001,3357.93,1332.87,117.52,134.31,360.97,1773.23,bank transfer
+2017-09,S. Coakley (relief milker),PPS-EMP-002,743.48,287.09,26.02,29.73,79.92,400.64,bank transfer
+2017-09,S. Mullane (spouse) - school transport,PPS-PERS-002,2153.51,851.10,75.37,86.14,231.50,1140.90,lodged to farm account (NOT a farm wage)
+2017-10,P. Nowak,PPS-EMP-001,3357.93,1332.87,117.52,134.31,360.97,1773.23,bank transfer
+2017-10,S. Coakley (relief milker),PPS-EMP-002,778.55,301.12,27.24,31.14,83.69,419.05,bank transfer
+2017-10,S. Mullane (spouse) - school transport,PPS-PERS-002,2153.51,851.10,75.37,86.14,231.50,1140.90,lodged to farm account (NOT a farm wage)
+2017-11,P. Nowak,PPS-EMP-001,3357.93,1332.87,117.52,134.31,360.97,1773.23,bank transfer
+2017-11,S. Coakley (relief milker),PPS-EMP-002,789.37,305.44,27.62,31.57,84.85,424.74,bank transfer
+2017-11,S. Mullane (spouse) - school transport,PPS-PERS-002,2153.51,851.10,75.37,86.14,231.50,1140.90,lodged to farm account (NOT a farm wage)
+2017-12,P. Nowak,PPS-EMP-001,3357.93,1332.87,117.52,134.31,360.97,1773.23,bank transfer
+2017-12,S. Coakley (relief milker),PPS-EMP-002,754.88,291.65,26.42,30.19,81.14,406.62,bank transfer
+2017-12,S. Mullane (spouse) - school transport,PPS-PERS-002,2153.51,851.10,75.37,86.14,231.50,1140.90,lodged to farm account (NOT a farm wage)
+2018-01,P. Nowak,PPS-EMP-001,3475.46,1379.88,121.64,139.01,373.61,1834.93,bank transfer
+2018-01,S. Coakley (relief milker),PPS-EMP-002,784.27,303.40,27.44,31.37,84.30,422.06,bank transfer
+2018-01,S. Mullane (spouse) - school transport,PPS-PERS-002,2218.11,876.94,77.63,88.72,238.44,1174.82,lodged to farm account (NOT a farm wage)
+2018-02,A. Brosnan (calving season),PPS-EMP-003,1924.78,759.61,67.36,76.99,206.91,1020.82,bank transfer
+2018-02,P. Nowak,PPS-EMP-001,3475.46,1379.88,121.64,139.01,373.61,1834.93,bank transfer
+2018-02,S. Coakley (relief milker),PPS-EMP-002,814.03,315.31,28.49,32.56,87.50,437.67,bank transfer
+2018-02,S. Mullane (spouse) - school transport,PPS-PERS-002,2218.11,876.94,77.63,88.72,238.44,1174.82,lodged to farm account (NOT a farm wage)
+2018-03,A. Brosnan (calving season),PPS-EMP-003,1924.78,759.61,67.36,76.99,206.91,1020.82,bank transfer
+2018-03,P. Nowak,PPS-EMP-001,3475.46,1379.88,121.64,139.01,373.61,1834.93,bank transfer
+2018-03,S. Coakley (relief milker),PPS-EMP-002,795.74,307.99,27.85,31.82,85.54,428.08,bank transfer
+2018-03,S. Mullane (spouse) - school transport,PPS-PERS-002,2218.11,876.94,77.63,88.72,238.44,1174.82,lodged to farm account (NOT a farm wage)
+2018-04,A. Brosnan (calving season),PPS-EMP-003,1924.78,759.61,67.36,76.99,206.91,1020.82,bank transfer
+2018-04,P. Nowak,PPS-EMP-001,3475.46,1379.88,121.64,139.01,373.61,1834.93,bank transfer
+2018-04,S. Coakley (relief milker),PPS-EMP-002,807.63,312.75,28.26,32.30,86.82,434.32,bank transfer
+2018-04,S. Mullane (spouse) - school transport,PPS-PERS-002,2218.11,876.94,77.63,88.72,238.44,1174.82,lodged to farm account (NOT a farm wage)
+2018-05,A. Brosnan (calving season),PPS-EMP-003,1924.78,759.61,67.36,76.99,206.91,1020.82,bank transfer
+2018-05,P. Nowak,PPS-EMP-001,3475.46,1379.88,121.64,139.01,373.61,1834.93,bank transfer
+2018-05,S. Coakley (relief milker),PPS-EMP-002,765.29,295.81,26.78,30.61,82.26,412.09,bank transfer
+2018-05,S. Mullane (spouse) - school transport,PPS-PERS-002,2218.11,876.94,77.63,88.72,238.44,1174.82,lodged to farm account (NOT a farm wage)
+2018-06,A. Brosnan (calving season),PPS-EMP-003,1924.78,759.61,67.36,76.99,206.91,1020.82,bank transfer
+2018-06,P. Nowak,PPS-EMP-001,3475.46,1379.88,121.64,139.01,373.61,1834.93,bank transfer
+2018-06,S. Coakley (relief milker),PPS-EMP-002,793.62,307.14,27.77,31.74,85.31,426.97,bank transfer
+2018-06,S. Mullane (spouse) - school transport,PPS-PERS-002,2218.11,876.94,77.63,88.72,238.44,1174.82,lodged to farm account (NOT a farm wage)
+2018-07,A. Brosnan (calving season),PPS-EMP-003,1924.78,759.61,67.36,76.99,206.91,1020.82,bank transfer
+2018-07,P. Nowak,PPS-EMP-001,3475.46,1379.88,121.64,139.01,373.61,1834.93,bank transfer
+2018-07,S. Coakley (relief milker),PPS-EMP-002,801.45,310.28,28.05,32.05,86.15,431.07,bank transfer
+2018-08,A. Brosnan (calving season),PPS-EMP-003,1924.78,759.61,67.36,76.99,206.91,1020.82,bank transfer
+2018-08,P. Nowak,PPS-EMP-001,3475.46,1379.88,121.64,139.01,373.61,1834.93,bank transfer
+2018-08,S. Coakley (relief milker),PPS-EMP-002,763.86,295.24,26.73,30.55,82.11,411.34,bank transfer
+2018-09,P. Nowak,PPS-EMP-001,3475.46,1379.88,121.64,139.01,373.61,1834.93,bank transfer
+2018-09,S. Coakley (relief milker),PPS-EMP-002,774.36,299.44,27.10,30.97,83.24,416.85,bank transfer
+2018-09,S. Mullane (spouse) - school transport,PPS-PERS-002,2218.11,876.94,77.63,88.72,238.44,1174.82,lodged to farm account (NOT a farm wage)
+2018-10,P. Nowak,PPS-EMP-001,3475.46,1379.88,121.64,139.01,373.61,1834.93,bank transfer
+2018-10,S. Coakley (relief milker),PPS-EMP-002,762.71,294.78,26.69,30.50,81.99,410.74,bank transfer
+2018-10,S. Mullane (spouse) - school transport,PPS-PERS-002,2218.11,876.94,77.63,88.72,238.44,1174.82,lodged to farm account (NOT a farm wage)
+2018-11,P. Nowak,PPS-EMP-001,3475.46,1379.88,121.64,139.01,373.61,1834.93,bank transfer
+2018-11,S. Coakley (relief milker),PPS-EMP-002,785.97,304.08,27.50,31.43,84.49,422.96,bank transfer
+2018-11,S. Mullane (spouse) - school transport,PPS-PERS-002,2218.11,876.94,77.63,88.72,238.44,1174.82,lodged to farm account (NOT a farm wage)
+2018-12,P. Nowak,PPS-EMP-001,3475.46,1379.88,121.64,139.01,373.61,1834.93,bank transfer
+2018-12,S. Coakley (relief milker),PPS-EMP-002,787.49,304.69,27.56,31.49,84.65,423.75,bank transfer
+2018-12,S. Mullane (spouse) - school transport,PPS-PERS-002,2218.11,876.94,77.63,88.72,238.44,1174.82,lodged to farm account (NOT a farm wage)
+2019-01,C. Mullane (son) - agri contractor employee,PPS-PERS-003,2300.00,909.70,80.50,92.00,247.25,1217.80,lodged to farm account (NOT a farm wage)
+2019-01,P. Nowak,PPS-EMP-001,3597.10,1428.54,125.89,143.88,386.68,1898.79,bank transfer
+2019-01,S. Coakley (relief milker),PPS-EMP-002,842.14,326.55,29.47,33.68,90.53,452.44,bank transfer
+2019-01,S. Mullane (spouse) - school transport,PPS-PERS-002,2284.66,903.56,79.96,91.38,245.60,1209.76,lodged to farm account (NOT a farm wage)
+2019-02,A. Brosnan (calving season),PPS-EMP-003,1982.52,782.70,69.38,79.30,213.12,1051.14,bank transfer
+2019-02,C. Mullane (son) - agri contractor employee,PPS-PERS-003,2300.00,909.70,80.50,92.00,247.25,1217.80,lodged to farm account (NOT a farm wage)
+2019-02,P. Nowak,PPS-EMP-001,3597.10,1428.54,125.89,143.88,386.68,1898.79,bank transfer
+2019-02,S. Coakley (relief milker),PPS-EMP-002,824.30,319.42,28.85,32.97,88.61,443.06,bank transfer
+2019-02,S. Mullane (spouse) - school transport,PPS-PERS-002,2284.66,903.56,79.96,91.38,245.60,1209.76,lodged to farm account (NOT a farm wage)
+2019-03,A. Brosnan (calving season),PPS-EMP-003,1982.52,782.70,69.38,79.30,213.12,1051.14,bank transfer
+2019-03,C. Mullane (son) - agri contractor employee,PPS-PERS-003,2300.00,909.70,80.50,92.00,247.25,1217.80,lodged to farm account (NOT a farm wage)
+2019-03,P. Nowak,PPS-EMP-001,3597.10,1428.54,125.89,143.88,386.68,1898.79,bank transfer
+2019-03,S. Coakley (relief milker),PPS-EMP-002,798.13,308.95,27.93,31.92,85.79,429.33,bank transfer
+2019-03,S. Mullane (spouse) - school transport,PPS-PERS-002,2284.66,903.56,79.96,91.38,245.60,1209.76,lodged to farm account (NOT a farm wage)
+2019-04,A. Brosnan (calving season),PPS-EMP-003,1982.52,782.70,69.38,79.30,213.12,1051.14,bank transfer
+2019-04,C. Mullane (son) - agri contractor employee,PPS-PERS-003,2300.00,909.70,80.50,92.00,247.25,1217.80,lodged to farm account (NOT a farm wage)
+2019-04,P. Nowak,PPS-EMP-001,3597.10,1428.54,125.89,143.88,386.68,1898.79,bank transfer
+2019-04,S. Coakley (relief milker),PPS-EMP-002,835.74,323.99,29.25,33.42,89.84,449.08,bank transfer
+2019-04,S. Mullane (spouse) - school transport,PPS-PERS-002,2284.66,903.56,79.96,91.38,245.60,1209.76,lodged to farm account (NOT a farm wage)
+2019-05,A. Brosnan (calving season),PPS-EMP-003,1982.52,782.70,69.38,79.30,213.12,1051.14,bank transfer
+2019-05,C. Mullane (son) - agri contractor employee,PPS-PERS-003,2300.00,909.70,80.50,92.00,247.25,1217.80,lodged to farm account (NOT a farm wage)
+2019-05,P. Nowak,PPS-EMP-001,3597.10,1428.54,125.89,143.88,386.68,1898.79,bank transfer
+2019-05,S. Coakley (relief milker),PPS-EMP-002,833.45,323.08,29.17,33.33,89.59,447.87,bank transfer
+2019-05,S. Mullane (spouse) - school transport,PPS-PERS-002,2284.66,903.56,79.96,91.38,245.60,1209.76,lodged to farm account (NOT a farm wage)
+2019-06,A. Brosnan (calving season),PPS-EMP-003,1982.52,782.70,69.38,79.30,213.12,1051.14,bank transfer
+2019-06,C. Mullane (son) - agri contractor employee,PPS-PERS-003,2300.00,909.70,80.50,92.00,247.25,1217.80,lodged to farm account (NOT a farm wage)
+2019-06,P. Nowak,PPS-EMP-001,3597.10,1428.54,125.89,143.88,386.68,1898.79,bank transfer
+2019-06,S. Coakley (relief milker),PPS-EMP-002,792.25,306.60,27.72,31.69,85.16,426.24,bank transfer
+2019-06,S. Mullane (spouse) - school transport,PPS-PERS-002,2284.66,903.56,79.96,91.38,245.60,1209.76,lodged to farm account (NOT a farm wage)
+2019-07,A. Brosnan (calving season),PPS-EMP-003,1982.52,782.70,69.38,79.30,213.12,1051.14,bank transfer
+2019-07,C. Mullane (son) - agri contractor employee,PPS-PERS-003,2300.00,909.70,80.50,92.00,247.25,1217.80,lodged to farm account (NOT a farm wage)
+2019-07,P. Nowak,PPS-EMP-001,3597.10,1428.54,125.89,143.88,386.68,1898.79,bank transfer
+2019-07,S. Coakley (relief milker),PPS-EMP-002,802.09,310.53,28.07,32.08,86.22,431.41,bank transfer
+2019-08,A. Brosnan (calving season),PPS-EMP-003,1982.52,782.70,69.38,79.30,213.12,1051.14,bank transfer
+2019-08,C. Mullane (son) - agri contractor employee,PPS-PERS-003,2300.00,909.70,80.50,92.00,247.25,1217.80,lodged to farm account (NOT a farm wage)
+2019-08,P. Nowak,PPS-EMP-001,3597.10,1428.54,125.89,143.88,386.68,1898.79,bank transfer
+2019-08,S. Coakley (relief milker),PPS-EMP-002,831.21,322.18,29.09,33.24,89.35,446.70,bank transfer
+2019-09,C. Mullane (son) - agri contractor employee,PPS-PERS-003,2300.00,909.70,80.50,92.00,247.25,1217.80,lodged to farm account (NOT a farm wage)
+2019-09,P. Nowak,PPS-EMP-001,3597.10,1428.54,125.89,143.88,386.68,1898.79,bank transfer
+2019-09,S. Coakley (relief milker),PPS-EMP-002,832.78,322.81,29.14,33.31,89.52,447.52,bank transfer
+2019-09,S. Mullane (spouse) - school transport,PPS-PERS-002,2284.66,903.56,79.96,91.38,245.60,1209.76,lodged to farm account (NOT a farm wage)
+2019-10,C. Mullane (son) - agri contractor employee,PPS-PERS-003,2300.00,909.70,80.50,92.00,247.25,1217.80,lodged to farm account (NOT a farm wage)
+2019-10,P. Nowak,PPS-EMP-001,3597.10,1428.54,125.89,143.88,386.68,1898.79,bank transfer
+2019-10,S. Coakley (relief milker),PPS-EMP-002,826.10,320.14,28.91,33.04,88.80,444.01,bank transfer
+2019-10,S. Mullane (spouse) - school transport,PPS-PERS-002,2284.66,903.56,79.96,91.38,245.60,1209.76,lodged to farm account (NOT a farm wage)
+2019-11,C. Mullane (son) - agri contractor employee,PPS-PERS-003,2300.00,909.70,80.50,92.00,247.25,1217.80,lodged to farm account (NOT a farm wage)
+2019-11,P. Nowak,PPS-EMP-001,3597.10,1428.54,125.89,143.88,386.68,1898.79,bank transfer
+2019-11,S. Coakley (relief milker),PPS-EMP-002,828.64,321.15,29.00,33.14,89.07,445.35,bank transfer
+2019-11,S. Mullane (spouse) - school transport,PPS-PERS-002,2284.66,903.56,79.96,91.38,245.60,1209.76,lodged to farm account (NOT a farm wage)
+2019-12,C. Mullane (son) - agri contractor employee,PPS-PERS-003,2300.00,909.70,80.50,92.00,247.25,1217.80,lodged to farm account (NOT a farm wage)
+2019-12,P. Nowak,PPS-EMP-001,3597.10,1428.54,125.89,143.88,386.68,1898.79,bank transfer
+2019-12,S. Coakley (relief milker),PPS-EMP-002,835.99,324.09,29.25,33.43,89.86,449.22,bank transfer
+2019-12,S. Mullane (spouse) - school transport,PPS-PERS-002,2284.66,903.56,79.96,91.38,245.60,1209.76,lodged to farm account (NOT a farm wage)
+2020-01,C. Mullane (son) - agri contractor employee,PPS-PERS-003,2392.00,946.50,83.72,95.68,257.14,1266.10,lodged to farm account (NOT a farm wage)
+2020-01,P. Nowak,PPS-EMP-001,3723.00,1478.90,130.30,148.92,400.22,1964.88,bank transfer
+2020-01,S. Coakley (relief milker),PPS-EMP-002,851.24,330.19,29.79,34.04,91.50,457.22,bank transfer
+2020-01,S. Mullane (spouse) - school transport,PPS-PERS-002,2353.20,930.98,82.36,94.12,252.96,1245.74,lodged to farm account (NOT a farm wage)
+2020-02,A. Brosnan (calving season),PPS-EMP-003,2042.00,806.50,71.47,81.68,219.51,1082.35,bank transfer
+2020-02,C. Mullane (son) - agri contractor employee,PPS-PERS-003,2392.00,946.50,83.72,95.68,257.14,1266.10,lodged to farm account (NOT a farm wage)
+2020-02,P. Nowak,PPS-EMP-001,3723.00,1478.90,130.30,148.92,400.22,1964.88,bank transfer
+2020-02,S. Coakley (relief milker),PPS-EMP-002,826.12,320.14,28.91,33.04,88.80,444.03,bank transfer
+2020-02,S. Mullane (spouse) - school transport,PPS-PERS-002,2353.20,930.98,82.36,94.12,252.96,1245.74,lodged to farm account (NOT a farm wage)
+2020-03,A. Brosnan (calving season),PPS-EMP-003,2042.00,806.50,71.47,81.68,219.51,1082.35,bank transfer
+2020-03,C. Mullane (son) - agri contractor employee,PPS-PERS-003,2392.00,946.50,83.72,95.68,257.14,1266.10,lodged to farm account (NOT a farm wage)
+2020-03,P. Nowak,PPS-EMP-001,3723.00,1478.90,130.30,148.92,400.22,1964.88,bank transfer
+2020-03,S. Coakley (relief milker),PPS-EMP-002,858.32,333.02,30.04,34.33,92.26,460.93,bank transfer
+2020-03,S. Mullane (spouse) - school transport,PPS-PERS-002,2353.20,930.98,82.36,94.12,252.96,1245.74,lodged to farm account (NOT a farm wage)
+2020-04,A. Brosnan (calving season),PPS-EMP-003,2042.00,806.50,71.47,81.68,219.51,1082.35,bank transfer
+2020-04,C. Mullane (son) - agri contractor employee,PPS-PERS-003,2392.00,946.50,83.72,95.68,257.14,1266.10,lodged to farm account (NOT a farm wage)
+2020-04,P. Nowak,PPS-EMP-001,3723.00,1478.90,130.30,148.92,400.22,1964.88,bank transfer
+2020-04,S. Coakley (relief milker),PPS-EMP-002,817.27,316.60,28.60,32.69,87.85,439.38,bank transfer
+2020-04,S. Mullane (spouse) - school transport,PPS-PERS-002,2353.20,930.98,82.36,94.12,252.96,1245.74,lodged to farm account (NOT a farm wage)
+2020-05,A. Brosnan (calving season),PPS-EMP-003,2042.00,806.50,71.47,81.68,219.51,1082.35,bank transfer
+2020-05,C. Mullane (son) - agri contractor employee,PPS-PERS-003,2392.00,946.50,83.72,95.68,257.14,1266.10,lodged to farm account (NOT a farm wage)
+2020-05,P. Nowak,PPS-EMP-001,3723.00,1478.90,130.30,148.92,400.22,1964.88,bank transfer
+2020-05,S. Coakley (relief milker),PPS-EMP-002,871.27,338.20,30.49,34.85,93.66,467.73,bank transfer
+2020-05,S. Mullane (spouse) - school transport,PPS-PERS-002,2353.20,930.98,82.36,94.12,252.96,1245.74,lodged to farm account (NOT a farm wage)
+2020-06,A. Brosnan (calving season),PPS-EMP-003,2042.00,806.50,71.47,81.68,219.51,1082.35,bank transfer
+2020-06,C. Mullane (son) - agri contractor employee,PPS-PERS-003,2392.00,946.50,83.72,95.68,257.14,1266.10,lodged to farm account (NOT a farm wage)
+2020-06,P. Nowak,PPS-EMP-001,3723.00,1478.90,130.30,148.92,400.22,1964.88,bank transfer
+2020-06,S. Coakley (relief milker),PPS-EMP-002,836.74,324.39,29.28,33.46,89.94,449.61,bank transfer
+2020-06,S. Mullane (spouse) - school transport,PPS-PERS-002,2353.20,930.98,82.36,94.12,252.96,1245.74,lodged to farm account (NOT a farm wage)
+2020-07,A. Brosnan (calving season),PPS-EMP-003,2042.00,806.50,71.47,81.68,219.51,1082.35,bank transfer
+2020-07,C. Mullane (son) - agri contractor employee,PPS-PERS-003,2392.00,946.50,83.72,95.68,257.14,1266.10,lodged to farm account (NOT a farm wage)
+2020-07,P. Nowak,PPS-EMP-001,3723.00,1478.90,130.30,148.92,400.22,1964.88,bank transfer
+2020-07,S. Coakley (relief milker),PPS-EMP-002,852.09,330.53,29.82,34.08,91.59,457.66,bank transfer
+2020-08,A. Brosnan (calving season),PPS-EMP-003,2042.00,806.50,71.47,81.68,219.51,1082.35,bank transfer
+2020-08,C. Mullane (son) - agri contractor employee,PPS-PERS-003,2392.00,946.50,83.72,95.68,257.14,1266.10,lodged to farm account (NOT a farm wage)
+2020-08,P. Nowak,PPS-EMP-001,3723.00,1478.90,130.30,148.92,400.22,1964.88,bank transfer
+2020-08,S. Coakley (relief milker),PPS-EMP-002,873.06,338.92,30.55,34.92,93.85,468.67,bank transfer
+2020-09,C. Mullane (son) - agri contractor employee,PPS-PERS-003,2392.00,946.50,83.72,95.68,257.14,1266.10,lodged to farm account (NOT a farm wage)
+2020-09,P. Nowak,PPS-EMP-001,3723.00,1478.90,130.30,148.92,400.22,1964.88,bank transfer
+2020-09,S. Coakley (relief milker),PPS-EMP-002,826.33,320.23,28.92,33.05,88.83,444.13,bank transfer
+2020-09,S. Mullane (spouse) - school transport,PPS-PERS-002,2353.20,930.98,82.36,94.12,252.96,1245.74,lodged to farm account (NOT a farm wage)
+2020-10,C. Mullane (son) - agri contractor employee,PPS-PERS-003,2392.00,946.50,83.72,95.68,257.14,1266.10,lodged to farm account (NOT a farm wage)
+2020-10,P. Nowak,PPS-EMP-001,3723.00,1478.90,130.30,148.92,400.22,1964.88,bank transfer
+2020-10,S. Coakley (relief milker),PPS-EMP-002,862.14,334.55,30.17,34.48,92.68,462.94,bank transfer
+2020-10,S. Mullane (spouse) - school transport,PPS-PERS-002,2353.20,930.98,82.36,94.12,252.96,1245.74,lodged to farm account (NOT a farm wage)
+2020-11,C. Mullane (son) - agri contractor employee,PPS-PERS-003,2392.00,946.50,83.72,95.68,257.14,1266.10,lodged to farm account (NOT a farm wage)
+2020-11,P. Nowak,PPS-EMP-001,3723.00,1478.90,130.30,148.92,400.22,1964.88,bank transfer
+2020-11,S. Coakley (relief milker),PPS-EMP-002,863.21,334.98,30.21,34.52,92.79,463.50,bank transfer
+2020-11,S. Mullane (spouse) - school transport,PPS-PERS-002,2353.20,930.98,82.36,94.12,252.96,1245.74,lodged to farm account (NOT a farm wage)
+2020-12,C. Mullane (son) - agri contractor employee,PPS-PERS-003,2392.00,946.50,83.72,95.68,257.14,1266.10,lodged to farm account (NOT a farm wage)
+2020-12,P. Nowak,PPS-EMP-001,3723.00,1478.90,130.30,148.92,400.22,1964.88,bank transfer
+2020-12,S. Coakley (relief milker),PPS-EMP-002,842.15,326.56,29.47,33.68,90.53,452.44,bank transfer
+2020-12,S. Mullane (spouse) - school transport,PPS-PERS-002,2353.20,930.98,82.36,94.12,252.96,1245.74,lodged to farm account (NOT a farm wage)
+2021-01,C. Mullane (son) - agri contractor employee,PPS-PERS-003,2487.68,984.77,87.06,99.50,267.42,1316.35,lodged to farm account (NOT a farm wage)
+2021-01,P. Nowak,PPS-EMP-001,3853.30,1531.02,134.86,154.13,414.22,2033.29,bank transfer
+2021-01,S. Coakley (relief milker),PPS-EMP-002,885.48,343.89,30.99,35.41,95.18,475.19,bank transfer
+2021-01,S. Mullane (spouse) - school transport,PPS-PERS-002,2423.79,959.21,84.83,96.95,260.55,1282.80,lodged to farm account (NOT a farm wage)
+2021-02,A. Brosnan (calving season),PPS-EMP-003,2103.26,831.00,73.61,84.13,226.10,1114.52,bank transfer
+2021-02,C. Mullane (son) - agri contractor employee,PPS-PERS-003,2487.68,984.77,87.06,99.50,267.42,1316.35,lodged to farm account (NOT a farm wage)
+2021-02,P. Nowak,PPS-EMP-001,3853.30,1531.02,134.86,154.13,414.22,2033.29,bank transfer
+2021-02,S. Coakley (relief milker),PPS-EMP-002,852.74,330.79,29.84,34.10,91.66,458.01,bank transfer
+2021-02,S. Mullane (spouse) - school transport,PPS-PERS-002,2423.79,959.21,84.83,96.95,260.55,1282.80,lodged to farm account (NOT a farm wage)
+2021-03,A. Brosnan (calving season),PPS-EMP-003,2103.26,831.00,73.61,84.13,226.10,1114.52,bank transfer
+2021-03,C. Mullane (son) - agri contractor employee,PPS-PERS-003,2487.68,984.77,87.06,99.50,267.42,1316.35,lodged to farm account (NOT a farm wage)
+2021-03,P. Nowak,PPS-EMP-001,3853.30,1531.02,134.86,154.13,414.22,2033.29,bank transfer
+2021-03,S. Coakley (relief milker),PPS-EMP-002,857.27,332.60,30.00,34.29,92.15,460.38,bank transfer
+2021-03,S. Mullane (spouse) - school transport,PPS-PERS-002,2423.79,959.21,84.83,96.95,260.55,1282.80,lodged to farm account (NOT a farm wage)
+2021-04,A. Brosnan (calving season),PPS-EMP-003,2103.26,831.00,73.61,84.13,226.10,1114.52,bank transfer
+2021-04,C. Mullane (son) - agri contractor employee,PPS-PERS-003,2487.68,984.77,87.06,99.50,267.42,1316.35,lodged to farm account (NOT a farm wage)
+2021-04,P. Nowak,PPS-EMP-001,3853.30,1531.02,134.86,154.13,414.22,2033.29,bank transfer
+2021-04,S. Coakley (relief milker),PPS-EMP-002,891.46,346.28,31.20,35.65,95.83,478.33,bank transfer
+2021-04,S. Mullane (spouse) - school transport,PPS-PERS-002,2423.79,959.21,84.83,96.95,260.55,1282.80,lodged to farm account (NOT a farm wage)
+2021-05,A. Brosnan (calving season),PPS-EMP-003,2103.26,831.00,73.61,84.13,226.10,1114.52,bank transfer
+2021-05,C. Mullane (son) - agri contractor employee,PPS-PERS-003,2487.68,984.77,87.06,99.50,267.42,1316.35,lodged to farm account (NOT a farm wage)
+2021-05,P. Nowak,PPS-EMP-001,3853.30,1531.02,134.86,154.13,414.22,2033.29,bank transfer
+2021-05,S. Coakley (relief milker),PPS-EMP-002,903.87,351.24,31.63,36.15,97.16,484.85,bank transfer
+2021-05,S. Mullane (spouse) - school transport,PPS-PERS-002,2423.79,959.21,84.83,96.95,260.55,1282.80,lodged to farm account (NOT a farm wage)
+2021-06,A. Brosnan (calving season),PPS-EMP-003,2103.26,831.00,73.61,84.13,226.10,1114.52,bank transfer
+2021-06,C. Mullane (son) - agri contractor employee,PPS-PERS-003,2487.68,984.77,87.06,99.50,267.42,1316.35,lodged to farm account (NOT a farm wage)
+2021-06,P. Nowak,PPS-EMP-001,3853.30,1531.02,134.86,154.13,414.22,2033.29,bank transfer
+2021-06,S. Coakley (relief milker),PPS-EMP-002,860.77,334.00,30.12,34.43,92.53,462.22,bank transfer
+2021-06,S. Mullane (spouse) - school transport,PPS-PERS-002,2423.79,959.21,84.83,96.95,260.55,1282.80,lodged to farm account (NOT a farm wage)
+2021-07,A. Brosnan (calving season),PPS-EMP-003,2103.26,831.00,73.61,84.13,226.10,1114.52,bank transfer
+2021-07,C. Mullane (son) - agri contractor employee,PPS-PERS-003,2487.68,984.77,87.06,99.50,267.42,1316.35,lodged to farm account (NOT a farm wage)
+2021-07,P. Nowak,PPS-EMP-001,3853.30,1531.02,134.86,154.13,414.22,2033.29,bank transfer
+2021-07,S. Coakley (relief milker),PPS-EMP-002,864.26,335.40,30.24,34.57,92.90,464.05,bank transfer
+2021-08,A. Brosnan (calving season),PPS-EMP-003,2103.26,831.00,73.61,84.13,226.10,1114.52,bank transfer
+2021-08,C. Mullane (son) - agri contractor employee,PPS-PERS-003,2487.68,984.77,87.06,99.50,267.42,1316.35,lodged to farm account (NOT a farm wage)
+2021-08,P. Nowak,PPS-EMP-001,3853.30,1531.02,134.86,154.13,414.22,2033.29,bank transfer
+2021-08,S. Coakley (relief milker),PPS-EMP-002,877.13,340.55,30.69,35.08,94.29,470.81,bank transfer
+2021-09,C. Mullane (son) - agri contractor employee,PPS-PERS-003,2487.68,984.77,87.06,99.50,267.42,1316.35,lodged to farm account (NOT a farm wage)
+2021-09,P. Nowak,PPS-EMP-001,3853.30,1531.02,134.86,154.13,414.22,2033.29,bank transfer
+2021-09,S. Coakley (relief milker),PPS-EMP-002,881.03,342.11,30.83,35.24,94.71,472.85,bank transfer
+2021-09,S. Mullane (spouse) - school transport,PPS-PERS-002,2423.79,959.21,84.83,96.95,260.55,1282.80,lodged to farm account (NOT a farm wage)
+2021-10,C. Mullane (son) - agri contractor employee,PPS-PERS-003,2487.68,984.77,87.06,99.50,267.42,1316.35,lodged to farm account (NOT a farm wage)
+2021-10,P. Nowak,PPS-EMP-001,3853.30,1531.02,134.86,154.13,414.22,2033.29,bank transfer
+2021-10,S. Coakley (relief milker),PPS-EMP-002,863.34,335.03,30.21,34.53,92.80,463.57,bank transfer
+2021-10,S. Mullane (spouse) - school transport,PPS-PERS-002,2423.79,959.21,84.83,96.95,260.55,1282.80,lodged to farm account (NOT a farm wage)
+2021-11,C. Mullane (son) - agri contractor employee,PPS-PERS-003,2487.68,984.77,87.06,99.50,267.42,1316.35,lodged to farm account (NOT a farm wage)
+2021-11,P. Nowak,PPS-EMP-001,3853.30,1531.02,134.86,154.13,414.22,2033.29,bank transfer
+2021-11,S. Coakley (relief milker),PPS-EMP-002,882.26,342.60,30.87,35.29,94.84,473.50,bank transfer
+2021-11,S. Mullane (spouse) - school transport,PPS-PERS-002,2423.79,959.21,84.83,96.95,260.55,1282.80,lodged to farm account (NOT a farm wage)
+2021-12,C. Mullane (son) - agri contractor employee,PPS-PERS-003,2487.68,984.77,87.06,99.50,267.42,1316.35,lodged to farm account (NOT a farm wage)
+2021-12,P. Nowak,PPS-EMP-001,3853.30,1531.02,134.86,154.13,414.22,2033.29,bank transfer
+2021-12,S. Coakley (relief milker),PPS-EMP-002,882.03,342.51,30.87,35.28,94.81,473.37,bank transfer
+2021-12,S. Mullane (spouse) - school transport,PPS-PERS-002,2423.79,959.21,84.83,96.95,260.55,1282.80,lodged to farm account (NOT a farm wage)
+2022-01,C. Mullane (son) - agri contractor employee,PPS-PERS-003,2587.19,1024.57,90.55,103.48,278.12,1368.59,lodged to farm account (NOT a farm wage)
+2022-01,P. Nowak,PPS-EMP-001,3988.17,1584.96,139.58,159.52,428.72,2104.11,bank transfer
+2022-01,S. Coakley (relief milker),PPS-EMP-002,897.21,348.58,31.40,35.88,96.45,481.35,bank transfer
+2022-01,S. Mullane (spouse) - school transport,PPS-PERS-002,2496.51,988.30,87.37,99.86,268.37,1320.98,lodged to farm account (NOT a farm wage)
+2022-02,A. Brosnan (calving season),PPS-EMP-003,2166.35,856.24,75.82,86.65,232.88,1147.64,bank transfer
+2022-02,C. Mullane (son) - agri contractor employee,PPS-PERS-003,2587.19,1024.57,90.55,103.48,278.12,1368.59,lodged to farm account (NOT a farm wage)
+2022-02,P. Nowak,PPS-EMP-001,3988.17,1584.96,139.58,159.52,428.72,2104.11,bank transfer
+2022-02,S. Coakley (relief milker),PPS-EMP-002,917.09,356.53,32.09,36.68,98.58,491.79,bank transfer
+2022-02,S. Mullane (spouse) - school transport,PPS-PERS-002,2496.51,988.30,87.37,99.86,268.37,1320.98,lodged to farm account (NOT a farm wage)
+2022-03,A. Brosnan (calving season),PPS-EMP-003,2166.35,856.24,75.82,86.65,232.88,1147.64,bank transfer
+2022-03,C. Mullane (son) - agri contractor employee,PPS-PERS-003,2587.19,1024.57,90.55,103.48,278.12,1368.59,lodged to farm account (NOT a farm wage)
+2022-03,P. Nowak,PPS-EMP-001,3988.17,1584.96,139.58,159.52,428.72,2104.11,bank transfer
+2022-03,S. Coakley (relief milker),PPS-EMP-002,914.65,355.56,32.01,36.58,98.32,490.50,bank transfer
+2022-03,S. Mullane (spouse) - school transport,PPS-PERS-002,2496.51,988.30,87.37,99.86,268.37,1320.98,lodged to farm account (NOT a farm wage)
+2022-04,A. Brosnan (calving season),PPS-EMP-003,2166.35,856.24,75.82,86.65,232.88,1147.64,bank transfer
+2022-04,C. Mullane (son) - agri contractor employee,PPS-PERS-003,2587.19,1024.57,90.55,103.48,278.12,1368.59,lodged to farm account (NOT a farm wage)
+2022-04,P. Nowak,PPS-EMP-001,3988.17,1584.96,139.58,159.52,428.72,2104.11,bank transfer
+2022-04,S. Coakley (relief milker),PPS-EMP-002,920.31,357.82,32.21,36.81,98.93,493.47,bank transfer
+2022-04,S. Mullane (spouse) - school transport,PPS-PERS-002,2496.51,988.30,87.37,99.86,268.37,1320.98,lodged to farm account (NOT a farm wage)
+2022-05,A. Brosnan (calving season),PPS-EMP-003,2166.35,856.24,75.82,86.65,232.88,1147.64,bank transfer
+2022-05,C. Mullane (son) - agri contractor employee,PPS-PERS-003,2587.19,1024.57,90.55,103.48,278.12,1368.59,lodged to farm account (NOT a farm wage)
+2022-05,P. Nowak,PPS-EMP-001,3988.17,1584.96,139.58,159.52,428.72,2104.11,bank transfer
+2022-05,S. Coakley (relief milker),PPS-EMP-002,896.87,348.44,31.39,35.87,96.41,481.17,bank transfer
+2022-05,S. Mullane (spouse) - school transport,PPS-PERS-002,2496.51,988.30,87.37,99.86,268.37,1320.98,lodged to farm account (NOT a farm wage)
+2022-06,A. Brosnan (calving season),PPS-EMP-003,2166.35,856.24,75.82,86.65,232.88,1147.64,bank transfer
+2022-06,C. Mullane (son) - agri contractor employee,PPS-PERS-003,2587.19,1024.57,90.55,103.48,278.12,1368.59,lodged to farm account (NOT a farm wage)
+2022-06,P. Nowak,PPS-EMP-001,3988.17,1584.96,139.58,159.52,428.72,2104.11,bank transfer
+2022-06,S. Coakley (relief milker),PPS-EMP-002,882.54,342.71,30.88,35.30,94.87,473.65,bank transfer
+2022-06,S. Mullane (spouse) - school transport,PPS-PERS-002,2496.51,988.30,87.37,99.86,268.37,1320.98,lodged to farm account (NOT a farm wage)
+2022-07,A. Brosnan (calving season),PPS-EMP-003,2166.35,856.24,75.82,86.65,232.88,1147.64,bank transfer
+2022-07,C. Mullane (son) - agri contractor employee,PPS-PERS-003,2587.19,1024.57,90.55,103.48,278.12,1368.59,lodged to farm account (NOT a farm wage)
+2022-07,P. Nowak,PPS-EMP-001,3988.17,1584.96,139.58,159.52,428.72,2104.11,bank transfer
+2022-07,S. Coakley (relief milker),PPS-EMP-002,899.84,349.63,31.49,35.99,96.73,482.73,bank transfer
+2022-08,A. Brosnan (calving season),PPS-EMP-003,2166.35,856.24,75.82,86.65,232.88,1147.64,bank transfer
+2022-08,C. Mullane (son) - agri contractor employee,PPS-PERS-003,2587.19,1024.57,90.55,103.48,278.12,1368.59,lodged to farm account (NOT a farm wage)
+2022-08,P. Nowak,PPS-EMP-001,3988.17,1584.96,139.58,159.52,428.72,2104.11,bank transfer
+2022-08,S. Coakley (relief milker),PPS-EMP-002,880.02,341.70,30.80,35.20,94.60,472.32,bank transfer
+2022-09,C. Mullane (son) - agri contractor employee,PPS-PERS-003,2587.19,1024.57,90.55,103.48,278.12,1368.59,lodged to farm account (NOT a farm wage)
+2022-09,P. Nowak,PPS-EMP-001,3988.17,1584.96,139.58,159.52,428.72,2104.11,bank transfer
+2022-09,S. Coakley (relief milker),PPS-EMP-002,880.50,341.90,30.81,35.22,94.65,472.57,bank transfer
+2022-09,S. Mullane (spouse) - school transport,PPS-PERS-002,2496.51,988.30,87.37,99.86,268.37,1320.98,lodged to farm account (NOT a farm wage)
+2022-10,C. Mullane (son) - agri contractor employee,PPS-PERS-003,2587.19,1024.57,90.55,103.48,278.12,1368.59,lodged to farm account (NOT a farm wage)
+2022-10,P. Nowak,PPS-EMP-001,3988.17,1584.96,139.58,159.52,428.72,2104.11,bank transfer
+2022-10,S. Coakley (relief milker),PPS-EMP-002,885.25,343.80,30.98,35.41,95.16,475.06,bank transfer
+2022-10,S. Mullane (spouse) - school transport,PPS-PERS-002,2496.51,988.30,87.37,99.86,268.37,1320.98,lodged to farm account (NOT a farm wage)
+2022-11,C. Mullane (son) - agri contractor employee,PPS-PERS-003,2587.19,1024.57,90.55,103.48,278.12,1368.59,lodged to farm account (NOT a farm wage)
+2022-11,P. Nowak,PPS-EMP-001,3988.17,1584.96,139.58,159.52,428.72,2104.11,bank transfer
+2022-11,S. Coakley (relief milker),PPS-EMP-002,921.13,358.15,32.23,36.84,99.02,493.91,bank transfer
+2022-11,S. Mullane (spouse) - school transport,PPS-PERS-002,2496.51,988.30,87.37,99.86,268.37,1320.98,lodged to farm account (NOT a farm wage)
+2022-12,C. Mullane (son) - agri contractor employee,PPS-PERS-003,2587.19,1024.57,90.55,103.48,278.12,1368.59,lodged to farm account (NOT a farm wage)
+2022-12,P. Nowak,PPS-EMP-001,3988.17,1584.96,139.58,159.52,428.72,2104.11,bank transfer
+2022-12,S. Coakley (relief milker),PPS-EMP-002,896.21,348.18,31.36,35.84,96.34,480.83,bank transfer
+2022-12,S. Mullane (spouse) - school transport,PPS-PERS-002,2496.51,988.30,87.37,99.86,268.37,1320.98,lodged to farm account (NOT a farm wage)
+2023-01,C. Mullane (son) - agri contractor employee,PPS-PERS-003,2690.67,1065.96,94.17,107.62,289.24,1422.92,lodged to farm account (NOT a farm wage)
+2023-01,P. Nowak,PPS-EMP-001,4127.75,1640.80,144.47,165.11,443.73,2177.37,bank transfer
+2023-01,S. Coakley (relief milker),PPS-EMP-002,933.97,363.28,32.68,37.35,100.40,500.66,bank transfer
+2023-01,S. Mullane (spouse) - school transport,PPS-PERS-002,2571.40,1018.26,89.99,102.85,276.42,1360.30,lodged to farm account (NOT a farm wage)
+2023-02,A. Brosnan (calving season),PPS-EMP-003,2231.34,882.23,78.09,89.25,239.86,1181.77,bank transfer
+2023-02,C. Mullane (son) - agri contractor employee,PPS-PERS-003,2690.67,1065.96,94.17,107.62,289.24,1422.92,lodged to farm account (NOT a farm wage)
+2023-02,P. Nowak,PPS-EMP-001,4127.75,1640.80,144.47,165.11,443.73,2177.37,bank transfer
+2023-02,S. Coakley (relief milker),PPS-EMP-002,963.81,375.22,33.73,38.55,103.60,516.31,bank transfer
+2023-02,S. Mullane (spouse) - school transport,PPS-PERS-002,2571.40,1018.26,89.99,102.85,276.42,1360.30,lodged to farm account (NOT a farm wage)
+2023-03,A. Brosnan (calving season),PPS-EMP-003,2231.34,882.23,78.09,89.25,239.86,1181.77,bank transfer
+2023-03,C. Mullane (son) - agri contractor employee,PPS-PERS-003,2690.67,1065.96,94.17,107.62,289.24,1422.92,lodged to farm account (NOT a farm wage)
+2023-03,P. Nowak,PPS-EMP-001,4127.75,1640.80,144.47,165.11,443.73,2177.37,bank transfer
+2023-03,S. Coakley (relief milker),PPS-EMP-002,919.76,357.60,32.19,36.79,98.87,493.18,bank transfer
+2023-03,S. Mullane (spouse) - school transport,PPS-PERS-002,2571.40,1018.26,89.99,102.85,276.42,1360.30,lodged to farm account (NOT a farm wage)
+2023-04,A. Brosnan (calving season),PPS-EMP-003,2231.34,882.23,78.09,89.25,239.86,1181.77,bank transfer
+2023-04,C. Mullane (son) - agri contractor employee,PPS-PERS-003,2690.67,1065.96,94.17,107.62,289.24,1422.92,lodged to farm account (NOT a farm wage)
+2023-04,P. Nowak,PPS-EMP-001,4127.75,1640.80,144.47,165.11,443.73,2177.37,bank transfer
+2023-04,S. Coakley (relief milker),PPS-EMP-002,966.02,376.10,33.81,38.64,103.84,517.47,bank transfer
+2023-04,S. Mullane (spouse) - school transport,PPS-PERS-002,2571.40,1018.26,89.99,102.85,276.42,1360.30,lodged to farm account (NOT a farm wage)
+2023-05,A. Brosnan (calving season),PPS-EMP-003,2231.34,882.23,78.09,89.25,239.86,1181.77,bank transfer
+2023-05,C. Mullane (son) - agri contractor employee,PPS-PERS-003,2690.67,1065.96,94.17,107.62,289.24,1422.92,lodged to farm account (NOT a farm wage)
+2023-05,P. Nowak,PPS-EMP-001,4127.75,1640.80,144.47,165.11,443.73,2177.37,bank transfer
+2023-05,S. Coakley (relief milker),PPS-EMP-002,925.51,359.90,32.39,37.02,99.49,496.20,bank transfer
+2023-05,S. Mullane (spouse) - school transport,PPS-PERS-002,2571.40,1018.26,89.99,102.85,276.42,1360.30,lodged to farm account (NOT a farm wage)
+2023-06,A. Brosnan (calving season),PPS-EMP-003,2231.34,882.23,78.09,89.25,239.86,1181.77,bank transfer
+2023-06,C. Mullane (son) - agri contractor employee,PPS-PERS-003,2690.67,1065.96,94.17,107.62,289.24,1422.92,lodged to farm account (NOT a farm wage)
+2023-06,P. Nowak,PPS-EMP-001,4127.75,1640.80,144.47,165.11,443.73,2177.37,bank transfer
+2023-06,S. Coakley (relief milker),PPS-EMP-002,919.40,357.46,32.17,36.77,98.83,493.00,bank transfer
+2023-06,S. Mullane (spouse) - school transport,PPS-PERS-002,2571.40,1018.26,89.99,102.85,276.42,1360.30,lodged to farm account (NOT a farm wage)
+2023-07,A. Brosnan (calving season),PPS-EMP-003,2231.34,882.23,78.09,89.25,239.86,1181.77,bank transfer
+2023-07,C. Mullane (son) - agri contractor employee,PPS-PERS-003,2690.67,1065.96,94.17,107.62,289.24,1422.92,lodged to farm account (NOT a farm wage)
+2023-07,P. Nowak,PPS-EMP-001,4127.75,1640.80,144.47,165.11,443.73,2177.37,bank transfer
+2023-07,S. Coakley (relief milker),PPS-EMP-002,963.55,375.12,33.72,38.54,103.58,516.17,bank transfer
+2023-08,A. Brosnan (calving season),PPS-EMP-003,2231.34,882.23,78.09,89.25,239.86,1181.77,bank transfer
+2023-08,C. Mullane (son) - agri contractor employee,PPS-PERS-003,2690.67,1065.96,94.17,107.62,289.24,1422.92,lodged to farm account (NOT a farm wage)
+2023-08,P. Nowak,PPS-EMP-001,4127.75,1640.80,144.47,165.11,443.73,2177.37,bank transfer
+2023-08,S. Coakley (relief milker),PPS-EMP-002,911.82,354.42,31.91,36.47,98.02,489.02,bank transfer
+2023-09,C. Mullane (son) - agri contractor employee,PPS-PERS-003,2690.67,1065.96,94.17,107.62,289.24,1422.92,lodged to farm account (NOT a farm wage)
+2023-09,P. Nowak,PPS-EMP-001,4127.75,1640.80,144.47,165.11,443.73,2177.37,bank transfer
+2023-09,S. Coakley (relief milker),PPS-EMP-002,935.02,363.70,32.72,37.40,100.51,501.20,bank transfer
+2023-09,S. Mullane (spouse) - school transport,PPS-PERS-002,2571.40,1018.26,89.99,102.85,276.42,1360.30,lodged to farm account (NOT a farm wage)
+2023-10,C. Mullane (son) - agri contractor employee,PPS-PERS-003,2690.67,1065.96,94.17,107.62,289.24,1422.92,lodged to farm account (NOT a farm wage)
+2023-10,P. Nowak,PPS-EMP-001,4127.75,1640.80,144.47,165.11,443.73,2177.37,bank transfer
+2023-10,S. Coakley (relief milker),PPS-EMP-002,950.13,369.75,33.25,38.00,102.13,509.13,bank transfer
+2023-10,S. Mullane (spouse) - school transport,PPS-PERS-002,2571.40,1018.26,89.99,102.85,276.42,1360.30,lodged to farm account (NOT a farm wage)
+2023-11,C. Mullane (son) - agri contractor employee,PPS-PERS-003,2690.67,1065.96,94.17,107.62,289.24,1422.92,lodged to farm account (NOT a farm wage)
+2023-11,P. Nowak,PPS-EMP-001,4127.75,1640.80,144.47,165.11,443.73,2177.37,bank transfer
+2023-11,S. Coakley (relief milker),PPS-EMP-002,905.24,351.79,31.68,36.20,97.31,485.57,bank transfer
+2023-11,S. Mullane (spouse) - school transport,PPS-PERS-002,2571.40,1018.26,89.99,102.85,276.42,1360.30,lodged to farm account (NOT a farm wage)
+2023-12,C. Mullane (son) - agri contractor employee,PPS-PERS-003,2690.67,1065.96,94.17,107.62,289.24,1422.92,lodged to farm account (NOT a farm wage)
+2023-12,P. Nowak,PPS-EMP-001,4127.75,1640.80,144.47,165.11,443.73,2177.37,bank transfer
+2023-12,S. Coakley (relief milker),PPS-EMP-002,961.38,374.25,33.64,38.45,103.34,515.04,bank transfer
+2023-12,S. Mullane (spouse) - school transport,PPS-PERS-002,2571.40,1018.26,89.99,102.85,276.42,1360.30,lodged to farm account (NOT a farm wage)
+2024-01,C. Mullane (son) - agri contractor employee,PPS-PERS-003,2798.30,1109.02,97.94,111.93,300.81,1479.41,lodged to farm account (NOT a farm wage)
+2024-01,P. Nowak,PPS-EMP-001,4272.23,1698.59,149.52,170.88,459.26,2253.24,bank transfer
+2024-01,S. Coakley (relief milker),PPS-EMP-002,963.76,375.20,33.73,38.55,103.60,516.28,bank transfer
+2024-01,S. Mullane (spouse) - school transport,PPS-PERS-002,2648.54,1049.11,92.69,105.94,284.71,1400.80,lodged to farm account (NOT a farm wage)
+2024-02,A. Brosnan (calving season),PPS-EMP-003,2298.28,909.01,80.43,91.93,247.06,1216.91,bank transfer
+2024-02,C. Mullane (son) - agri contractor employee,PPS-PERS-003,2798.30,1109.02,97.94,111.93,300.81,1479.41,lodged to farm account (NOT a farm wage)
+2024-02,P. Nowak,PPS-EMP-001,4272.23,1698.59,149.52,170.88,459.26,2253.24,bank transfer
+2024-02,S. Coakley (relief milker),PPS-EMP-002,997.73,388.79,34.92,39.90,107.25,534.12,bank transfer
+2024-02,S. Mullane (spouse) - school transport,PPS-PERS-002,2648.54,1049.11,92.69,105.94,284.71,1400.80,lodged to farm account (NOT a farm wage)
+2024-03,A. Brosnan (calving season),PPS-EMP-003,2298.28,909.01,80.43,91.93,247.06,1216.91,bank transfer
+2024-03,C. Mullane (son) - agri contractor employee,PPS-PERS-003,2798.30,1109.02,97.94,111.93,300.81,1479.41,lodged to farm account (NOT a farm wage)
+2024-03,P. Nowak,PPS-EMP-001,4272.23,1698.59,149.52,170.88,459.26,2253.24,bank transfer
+2024-03,S. Coakley (relief milker),PPS-EMP-002,955.78,372.01,33.45,38.23,102.74,512.09,bank transfer
+2024-03,S. Mullane (spouse) - school transport,PPS-PERS-002,2648.54,1049.11,92.69,105.94,284.71,1400.80,lodged to farm account (NOT a farm wage)
+2024-04,A. Brosnan (calving season),PPS-EMP-003,2298.28,909.01,80.43,91.93,247.06,1216.91,bank transfer
+2024-04,C. Mullane (son) - agri contractor employee,PPS-PERS-003,2798.30,1109.02,97.94,111.93,300.81,1479.41,lodged to farm account (NOT a farm wage)
+2024-04,P. Nowak,PPS-EMP-001,4272.23,1698.59,149.52,170.88,459.26,2253.24,bank transfer
+2024-04,S. Coakley (relief milker),PPS-EMP-002,950.92,370.06,33.28,38.03,102.22,509.55,bank transfer
+2024-04,S. Mullane (spouse) - school transport,PPS-PERS-002,2648.54,1049.11,92.69,105.94,284.71,1400.80,lodged to farm account (NOT a farm wage)
+2024-05,A. Brosnan (calving season),PPS-EMP-003,2298.28,909.01,80.43,91.93,247.06,1216.91,bank transfer
+2024-05,C. Mullane (son) - agri contractor employee,PPS-PERS-003,2798.30,1109.02,97.94,111.93,300.81,1479.41,lodged to farm account (NOT a farm wage)
+2024-05,P. Nowak,PPS-EMP-001,4272.23,1698.59,149.52,170.88,459.26,2253.24,bank transfer
+2024-05,S. Coakley (relief milker),PPS-EMP-002,991.15,386.16,34.69,39.64,106.54,530.66,bank transfer
+2024-05,S. Mullane (spouse) - school transport,PPS-PERS-002,2648.54,1049.11,92.69,105.94,284.71,1400.80,lodged to farm account (NOT a farm wage)
+2024-06,A. Brosnan (calving season),PPS-EMP-003,2298.28,909.01,80.43,91.93,247.06,1216.91,bank transfer
+2024-06,C. Mullane (son) - agri contractor employee,PPS-PERS-003,2798.30,1109.02,97.94,111.93,300.81,1479.41,lodged to farm account (NOT a farm wage)
+2024-06,P. Nowak,PPS-EMP-001,4272.23,1698.59,149.52,170.88,459.26,2253.24,bank transfer
+2024-06,S. Coakley (relief milker),PPS-EMP-002,993.94,387.27,34.78,39.75,106.84,532.14,bank transfer
+2024-06,S. Mullane (spouse) - school transport,PPS-PERS-002,2648.54,1049.11,92.69,105.94,284.71,1400.80,lodged to farm account (NOT a farm wage)
+2024-07,A. Brosnan (calving season),PPS-EMP-003,2298.28,909.01,80.43,91.93,247.06,1216.91,bank transfer
+2024-07,C. Mullane (son) - agri contractor employee,PPS-PERS-003,2798.30,1109.02,97.94,111.93,300.81,1479.41,lodged to farm account (NOT a farm wage)
+2024-07,P. Nowak,PPS-EMP-001,4272.23,1698.59,149.52,170.88,459.26,2253.24,bank transfer
+2024-07,S. Coakley (relief milker),PPS-EMP-002,959.38,373.45,33.57,38.37,103.13,513.99,bank transfer
+2024-08,A. Brosnan (calving season),PPS-EMP-003,2298.28,909.01,80.43,91.93,247.06,1216.91,bank transfer
+2024-08,C. Mullane (son) - agri contractor employee,PPS-PERS-003,2798.30,1109.02,97.94,111.93,300.81,1479.41,lodged to farm account (NOT a farm wage)
+2024-08,P. Nowak,PPS-EMP-001,4272.23,1698.59,149.52,170.88,459.26,2253.24,bank transfer
+2024-08,S. Coakley (relief milker),PPS-EMP-002,959.73,373.59,33.59,38.38,103.17,514.17,bank transfer
+2024-09,C. Mullane (son) - agri contractor employee,PPS-PERS-003,2798.30,1109.02,97.94,111.93,300.81,1479.41,lodged to farm account (NOT a farm wage)
+2024-09,P. Nowak,PPS-EMP-001,4272.23,1698.59,149.52,170.88,459.26,2253.24,bank transfer
+2024-09,S. Coakley (relief milker),PPS-EMP-002,982.20,382.58,34.37,39.28,105.58,525.97,bank transfer
+2024-09,S. Mullane (spouse) - school transport,PPS-PERS-002,2648.54,1049.11,92.69,105.94,284.71,1400.80,lodged to farm account (NOT a farm wage)
+2024-10,C. Mullane (son) - agri contractor employee,PPS-PERS-003,2798.30,1109.02,97.94,111.93,300.81,1479.41,lodged to farm account (NOT a farm wage)
+2024-10,P. Nowak,PPS-EMP-001,4272.23,1698.59,149.52,170.88,459.26,2253.24,bank transfer
+2024-10,S. Coakley (relief milker),PPS-EMP-002,938.04,364.91,32.83,37.52,100.83,502.78,bank transfer
+2024-10,S. Mullane (spouse) - school transport,PPS-PERS-002,2648.54,1049.11,92.69,105.94,284.71,1400.80,lodged to farm account (NOT a farm wage)
+2024-11,C. Mullane (son) - agri contractor employee,PPS-PERS-003,2798.30,1109.02,97.94,111.93,300.81,1479.41,lodged to farm account (NOT a farm wage)
+2024-11,P. Nowak,PPS-EMP-001,4272.23,1698.59,149.52,170.88,459.26,2253.24,bank transfer
+2024-11,S. Coakley (relief milker),PPS-EMP-002,937.42,364.66,32.80,37.49,100.77,502.47,bank transfer
+2024-11,S. Mullane (spouse) - school transport,PPS-PERS-002,2648.54,1049.11,92.69,105.94,284.71,1400.80,lodged to farm account (NOT a farm wage)
+2024-12,C. Mullane (son) - agri contractor employee,PPS-PERS-003,2798.30,1109.02,97.94,111.93,300.81,1479.41,lodged to farm account (NOT a farm wage)
+2024-12,P. Nowak,PPS-EMP-001,4272.23,1698.59,149.52,170.88,459.26,2253.24,bank transfer
+2024-12,S. Coakley (relief milker),PPS-EMP-002,962.76,374.80,33.69,38.51,103.49,515.76,bank transfer
+2024-12,S. Mullane (spouse) - school transport,PPS-PERS-002,2648.54,1049.11,92.69,105.94,284.71,1400.80,lodged to farm account (NOT a farm wage)
+2025-01,C. Mullane (son) - agri contractor employee,PPS-PERS-003,2910.23,1153.79,101.85,116.40,312.84,1538.19,lodged to farm account (NOT a farm wage)
+2025-01,P. Nowak,PPS-EMP-001,4421.75,1758.40,154.76,176.87,475.33,2331.72,bank transfer
+2025-01,S. Coakley (relief milker),PPS-EMP-002,1034.57,403.52,36.20,41.38,111.21,553.47,bank transfer
+2025-01,S. Mullane (spouse) - school transport,PPS-PERS-002,2728.00,1080.90,95.48,109.12,293.26,1442.50,lodged to farm account (NOT a farm wage)
+2025-02,A. Brosnan (calving season),PPS-EMP-003,2367.23,936.59,82.85,94.68,254.47,1253.11,bank transfer
+2025-02,C. Mullane (son) - agri contractor employee,PPS-PERS-003,2910.23,1153.79,101.85,116.40,312.84,1538.19,lodged to farm account (NOT a farm wage)
+2025-02,P. Nowak,PPS-EMP-001,4421.75,1758.40,154.76,176.87,475.33,2331.72,bank transfer
+2025-02,S. Coakley (relief milker),PPS-EMP-002,1017.97,396.88,35.62,40.71,109.43,544.76,bank transfer
+2025-02,S. Mullane (spouse) - school transport,PPS-PERS-002,2728.00,1080.90,95.48,109.12,293.26,1442.50,lodged to farm account (NOT a farm wage)
+2025-03,A. Brosnan (calving season),PPS-EMP-003,2367.23,936.59,82.85,94.68,254.47,1253.11,bank transfer
+2025-03,C. Mullane (son) - agri contractor employee,PPS-PERS-003,2910.23,1153.79,101.85,116.40,312.84,1538.19,lodged to farm account (NOT a farm wage)
+2025-03,P. Nowak,PPS-EMP-001,4421.75,1758.40,154.76,176.87,475.33,2331.72,bank transfer
+2025-03,S. Coakley (relief milker),PPS-EMP-002,1006.62,392.34,35.23,40.26,108.21,538.79,bank transfer
+2025-03,S. Mullane (spouse) - school transport,PPS-PERS-002,2728.00,1080.90,95.48,109.12,293.26,1442.50,lodged to farm account (NOT a farm wage)
+2025-04,A. Brosnan (calving season),PPS-EMP-003,2367.23,936.59,82.85,94.68,254.47,1253.11,bank transfer
+2025-04,C. Mullane (son) - agri contractor employee,PPS-PERS-003,2910.23,1153.79,101.85,116.40,312.84,1538.19,lodged to farm account (NOT a farm wage)
+2025-04,P. Nowak,PPS-EMP-001,4421.75,1758.40,154.76,176.87,475.33,2331.72,bank transfer
+2025-04,S. Coakley (relief milker),PPS-EMP-002,996.69,388.37,34.88,39.86,107.14,533.58,bank transfer
+2025-04,S. Mullane (spouse) - school transport,PPS-PERS-002,2728.00,1080.90,95.48,109.12,293.26,1442.50,lodged to farm account (NOT a farm wage)
+2025-05,A. Brosnan (calving season),PPS-EMP-003,2367.23,936.59,82.85,94.68,254.47,1253.11,bank transfer
+2025-05,C. Mullane (son) - agri contractor employee,PPS-PERS-003,2910.23,1153.79,101.85,116.40,312.84,1538.19,lodged to farm account (NOT a farm wage)
+2025-05,P. Nowak,PPS-EMP-001,4421.75,1758.40,154.76,176.87,475.33,2331.72,bank transfer
+2025-05,S. Coakley (relief milker),PPS-EMP-002,1010.42,393.86,35.36,40.41,108.62,540.79,bank transfer
+2025-05,S. Mullane (spouse) - school transport,PPS-PERS-002,2728.00,1080.90,95.48,109.12,293.26,1442.50,lodged to farm account (NOT a farm wage)
+2025-06,A. Brosnan (calving season),PPS-EMP-003,2367.23,936.59,82.85,94.68,254.47,1253.11,bank transfer
+2025-06,C. Mullane (son) - agri contractor employee,PPS-PERS-003,2910.23,1153.79,101.85,116.40,312.84,1538.19,lodged to farm account (NOT a farm wage)
+2025-06,P. Nowak,PPS-EMP-001,4421.75,1758.40,154.76,176.87,475.33,2331.72,bank transfer
+2025-06,S. Coakley (relief milker),PPS-EMP-002,982.67,382.76,34.39,39.30,105.63,526.22,bank transfer
+2025-06,S. Mullane (spouse) - school transport,PPS-PERS-002,2728.00,1080.90,95.48,109.12,293.26,1442.50,lodged to farm account (NOT a farm wage)
+2025-07,A. Brosnan (calving season),PPS-EMP-003,2367.23,936.59,82.85,94.68,254.47,1253.11,bank transfer
+2025-07,C. Mullane (son) - agri contractor employee,PPS-PERS-003,2910.23,1153.79,101.85,116.40,312.84,1538.19,lodged to farm account (NOT a farm wage)
+2025-07,P. Nowak,PPS-EMP-001,4421.75,1758.40,154.76,176.87,475.33,2331.72,bank transfer
+2025-07,S. Coakley (relief milker),PPS-EMP-002,973.69,379.17,34.07,38.94,104.67,521.51,bank transfer
+2025-08,C. Mullane (son) - agri contractor employee,PPS-PERS-003,2910.23,1153.79,101.85,116.40,312.84,1538.19,lodged to farm account (NOT a farm wage)
+2025-08,P. Nowak,PPS-EMP-001,4421.75,1758.40,154.76,176.87,475.33,2331.72,bank transfer
+2025-08,S. Coakley (relief milker),PPS-EMP-002,1032.97,402.88,36.15,41.31,111.04,552.63,bank transfer
+2025-09,C. Mullane (son) - agri contractor employee,PPS-PERS-003,2910.23,1153.79,101.85,116.40,312.84,1538.19,lodged to farm account (NOT a farm wage)
+2025-09,P. Nowak,PPS-EMP-001,4421.75,1758.40,154.76,176.87,475.33,2331.72,bank transfer
+2025-09,S. Coakley (relief milker),PPS-EMP-002,1028.88,401.25,36.01,41.15,110.60,550.47,bank transfer
+2025-09,S. Mullane (spouse) - school transport,PPS-PERS-002,2728.00,1080.90,95.48,109.12,293.26,1442.50,lodged to farm account (NOT a farm wage)
+2025-10,C. Mullane (son) - agri contractor employee,PPS-PERS-003,2910.23,1153.79,101.85,116.40,312.84,1538.19,lodged to farm account (NOT a farm wage)
+2025-10,P. Nowak,PPS-EMP-001,4421.75,1758.40,154.76,176.87,475.33,2331.72,bank transfer
+2025-10,S. Coakley (relief milker),PPS-EMP-002,1023.72,399.18,35.83,40.94,110.04,547.77,bank transfer
+2025-10,S. Mullane (spouse) - school transport,PPS-PERS-002,2728.00,1080.90,95.48,109.12,293.26,1442.50,lodged to farm account (NOT a farm wage)
+2025-11,C. Mullane (son) - agri contractor employee,PPS-PERS-003,2910.23,1153.79,101.85,116.40,312.84,1538.19,lodged to farm account (NOT a farm wage)
+2025-11,P. Nowak,PPS-EMP-001,4421.75,1758.40,154.76,176.87,475.33,2331.72,bank transfer
+2025-11,S. Coakley (relief milker),PPS-EMP-002,1024.36,399.44,35.85,40.97,110.11,548.10,bank transfer
+2025-11,S. Mullane (spouse) - school transport,PPS-PERS-002,2728.00,1080.90,95.48,109.12,293.26,1442.50,lodged to farm account (NOT a farm wage)
+2025-12,C. Mullane (son) - agri contractor employee,PPS-PERS-003,2910.23,1153.79,101.85,116.40,312.84,1538.19,lodged to farm account (NOT a farm wage)
+2025-12,P. Nowak,PPS-EMP-001,4421.75,1758.40,154.76,176.87,475.33,2331.72,bank transfer
+2025-12,S. Coakley (relief milker),PPS-EMP-002,1024.26,399.40,35.84,40.97,110.10,548.05,bank transfer
+2025-12,S. Mullane (spouse) - school transport,PPS-PERS-002,2728.00,1080.90,95.48,109.12,293.26,1442.50,lodged to farm account (NOT a farm wage)

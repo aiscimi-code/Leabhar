@@ -1,0 +1,689 @@
+invoiceNumber,date,party,description,net,vat,gross,due,currency,reference,type,supplyDate,partyVatNo,docId
+MS-200512,31/12/2005,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Dec 2005: 5,060 L @ 29.21 c/L, fat 4.13% protein 3.52% (flat-rate addition 4.8%)",1477.80,70.93,1548.73,25/01/2006,EUR,,self_billed_statement,,IE9462300P,D00001
+MS-200601,31/01/2006,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Jan 2006: 15,170 L @ 28.97 c/L, fat 4.03% protein 3.52% (flat-rate addition 4.8%)",4394.99,210.96,4605.95,25/02/2006,EUR,,self_billed_statement,,IE9462300P,D00003
+MS-200602,28/02/2006,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Feb 2006: 51,450 L @ 29.09 c/L, fat 4.05% protein 3.43% (flat-rate addition 4.8%)",14967.44,718.44,15685.88,25/03/2006,EUR,,self_billed_statement,,IE9462300P,D00005
+LD-06-7211,08/03/2006,Kilbeg Livestock Mart Ltd,"Mart docket: 18 calves (12 bull, 6 heifer) avg EUR 92.73",1669.06,80.11,1749.17,15/03/2006,EUR,,sales_docket,,IE6958430T,D04409
+LD-06-3245,20/03/2006,Kilbeg Livestock Mart Ltd,"Mart docket: 18 calves (12 bull, 6 heifer) avg EUR 91.34",1644.09,78.92,1723.01,27/03/2006,EUR,,sales_docket,,IE6958430T,D04411
+LD-06-9901,28/03/2006,Kilbeg Livestock Mart Ltd,"Mart docket: 17 calves (12 bull, 5 heifer) avg EUR 94.64",1608.86,77.23,1686.09,04/04/2006,EUR,,sales_docket,,IE6958430T,D04413
+MS-200603,31/03/2006,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Mar 2006: 102,330 L @ 28.98 c/L, fat 4.18% protein 3.62% (flat-rate addition 4.8%)",29657.32,1423.55,31080.87,25/04/2006,EUR,,self_billed_statement,,IE9462300P,D00007
+LD-06-3513,07/04/2006,Kilbeg Livestock Mart Ltd,"Mart docket: 17 calves (12 bull, 5 heifer) avg EUR 78.86",1340.62,64.35,1404.97,14/04/2006,EUR,,sales_docket,,IE6958430T,D04415
+LD-06-3590,24/04/2006,Kilbeg Livestock Mart Ltd,"Mart docket: 17 calves (12 bull, 5 heifer) avg EUR 90.02",1530.35,73.46,1603.81,01/05/2006,EUR,,sales_docket,,IE6958430T,D04417
+MS-200604,30/04/2006,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Apr 2006: 146,730 L @ 29.13 c/L, fat 4.37% protein 3.54% (flat-rate addition 4.8%)",42739.24,2051.48,44790.72,25/05/2006,EUR,,self_billed_statement,,IE9462300P,D00009
+LD-06-2783,01/05/2006,Kilbeg Livestock Mart Ltd,"Mart docket: 17 calves (12 bull, 5 heifer) avg EUR 78.76",1338.88,64.27,1403.15,08/05/2006,EUR,,sales_docket,,IE6958430T,D04419
+LD-06-6927,09/05/2006,Kilbeg Livestock Mart Ltd,"Mart docket: 17 calves (12 bull, 5 heifer) avg EUR 96.59",1642.02,78.82,1720.84,16/05/2006,EUR,,sales_docket,,IE6958430T,D04421
+LD-06-1583,17/05/2006,Kilbeg Livestock Mart Ltd,"Mart docket: 17 calves (12 bull, 5 heifer) avg EUR 98.54",1675.24,80.41,1755.65,24/05/2006,EUR,,sales_docket,,IE6958430T,D04423
+MS-200605,31/05/2006,Slieve Dairy Co-Operative Society Ltd,"Milk supplied May 2006: 150,470 L @ 28.80 c/L, fat 4.23% protein 3.52% (flat-rate addition 4.8%)",43340.17,2080.33,45420.50,25/06/2006,EUR,,self_billed_statement,,IE9462300P,D00011
+MS-200606,30/06/2006,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Jun 2006: 147,140 L @ 29.01 c/L, fat 4.53% protein 3.57% (flat-rate addition 4.8%)",42690.30,2049.13,44739.43,25/07/2006,EUR,,self_billed_statement,,IE9462300P,D00013
+MS-200607,31/07/2006,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Jul 2006: 131,610 L @ 29.06 c/L, fat 4.24% protein 3.67% (flat-rate addition 4.8%)",38247.18,1835.86,40083.04,25/08/2006,EUR,,self_billed_statement,,IE9462300P,D00015
+LD-06-7930,14/08/2006,Kilbeg Livestock Mart Ltd,Mart docket: 7 cull cows avg EUR 642.54,4497.81,215.89,4713.70,21/08/2006,EUR,,sales_docket,,IE6958430T,D04427
+MS-200608,31/08/2006,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Aug 2006: 118,410 L @ 28.98 c/L, fat 4.20% protein 3.69% (flat-rate addition 4.8%)",34316.32,1647.18,35963.50,25/09/2006,EUR,,self_billed_statement,,IE9462300P,D00017
+SM-06-7555,11/09/2006,Southern Meats Ltd,Carcase docket: 8 cull cows avg EUR 696.60,5572.83,267.50,5840.33,18/09/2006,EUR,,sales_docket,,IE8651198C,D04431
+LD-06-9059,21/09/2006,Kilbeg Livestock Mart Ltd,Mart docket: 8 cull cows avg EUR 696.04,5568.30,267.28,5835.58,28/09/2006,EUR,,sales_docket,,IE6958430T,D04432
+MS-200609,30/09/2006,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Sep 2006: 90,390 L @ 29.10 c/L, fat 4.02% protein 3.40% (flat-rate addition 4.8%)",26307.40,1262.76,27570.16,25/10/2006,EUR,,self_billed_statement,,IE9462300P,D00019
+LD-06-6790,16/10/2006,Kilbeg Livestock Mart Ltd,Mart docket: 7 cull cows avg EUR 659.26,4614.83,221.51,4836.34,23/10/2006,EUR,,sales_docket,,IE6958430T,D04429
+MS-200610,31/10/2006,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Oct 2006: 56,500 L @ 28.82 c/L, fat 4.14% protein 3.52% (flat-rate addition 4.8%)",16284.97,781.68,17066.65,25/11/2006,EUR,,self_billed_statement,,IE9462300P,D00021
+LD-06-5225,03/11/2006,Kilbeg Livestock Mart Ltd,Mart docket: 7 cull cows avg EUR 624.90,4374.29,209.97,4584.26,10/11/2006,EUR,,sales_docket,,IE6958430T,D04425
+MS-200611,30/11/2006,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Nov 2006: 26,230 L @ 29.01 c/L, fat 4.04% protein 3.56% (flat-rate addition 4.8%)",7608.39,365.20,7973.59,25/12/2006,EUR,,self_billed_statement,,IE9462300P,D00023
+MS-200612,31/12/2006,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Dec 2006: 5,490 L @ 28.80 c/L, fat 3.99% protein 3.64% (flat-rate addition 4.8%)",1580.94,75.89,1656.83,25/01/2007,EUR,,self_billed_statement,,IE9462300P,D00025
+MS-200701,31/01/2007,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Jan 2007: 16,410 L @ 29.87 c/L, fat 4.23% protein 3.34% (flat-rate addition 4.8%)",4901.94,235.29,5137.23,25/02/2007,EUR,,self_billed_statement,,IE9462300P,D00027
+MS-200702,28/02/2007,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Feb 2007: 53,540 L @ 30.47 c/L, fat 4.28% protein 3.51% (flat-rate addition 4.8%)",16311.94,782.97,17094.91,25/03/2007,EUR,,self_billed_statement,,IE9462300P,D00029
+LD-07-3577,12/03/2007,Kilbeg Livestock Mart Ltd,"Mart docket: 28 calves (19 bull, 9 heifer) avg EUR 100.35",2809.78,134.87,2944.65,19/03/2007,EUR,,sales_docket,,IE6958430T,D04436
+LD-07-9247,27/03/2007,Kilbeg Livestock Mart Ltd,"Mart docket: 27 calves (19 bull, 8 heifer) avg EUR 88.68",2394.29,114.93,2509.22,03/04/2007,EUR,,sales_docket,,IE6958430T,D04438
+MS-200703,31/03/2007,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Mar 2007: 109,900 L @ 31.22 c/L, fat 4.16% protein 3.57% (flat-rate addition 4.8%)",34305.95,1646.69,35952.64,25/04/2007,EUR,,self_billed_statement,,IE9462300P,D00031
+LD-07-1517,12/04/2007,Kilbeg Livestock Mart Ltd,"Mart docket: 27 calves (19 bull, 8 heifer) avg EUR 102.77",2774.69,133.19,2907.88,19/04/2007,EUR,,sales_docket,,IE6958430T,D04440
+LD-07-5892,27/04/2007,Kilbeg Livestock Mart Ltd,"Mart docket: 27 calves (19 bull, 8 heifer) avg EUR 100.90",2724.41,130.77,2855.18,04/05/2007,EUR,,sales_docket,,IE6958430T,D04442
+MS-200704,30/04/2007,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Apr 2007: 151,550 L @ 31.98 c/L, fat 4.25% protein 3.32% (flat-rate addition 4.8%)",48463.20,2326.23,50789.43,25/05/2007,EUR,,self_billed_statement,,IE9462300P,D00033
+LD-07-6088,15/05/2007,Kilbeg Livestock Mart Ltd,"Mart docket: 27 calves (19 bull, 8 heifer) avg EUR 95.76",2585.44,124.10,2709.54,22/05/2007,EUR,,sales_docket,,IE6958430T,D04444
+MS-200705,31/05/2007,Slieve Dairy Co-Operative Society Ltd,"Milk supplied May 2007: 155,460 L @ 32.73 c/L, fat 4.02% protein 3.52% (flat-rate addition 4.8%)",50879.36,2442.21,53321.57,25/06/2007,EUR,,self_billed_statement,,IE9462300P,D00035
+MS-200706,30/06/2007,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Jun 2007: 154,400 L @ 33.38 c/L, fat 4.11% protein 3.39% (flat-rate addition 4.8%)",51540.14,2473.93,54014.07,25/07/2007,EUR,,self_billed_statement,,IE9462300P,D00037
+SM-07-9170,03/07/2007,Southern Meats Ltd,Carcase docket: 13 cull cows avg EUR 724.27,9415.47,451.94,9867.41,10/07/2007,EUR,,sales_docket,,IE8651198C,D04449
+SM-07-1141,16/07/2007,Southern Meats Ltd,Carcase docket: 12 cull cows avg EUR 729.04,8748.43,419.92,9168.35,23/07/2007,EUR,,sales_docket,,IE8651198C,D04446
+MS-200707,31/07/2007,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Jul 2007: 138,220 L @ 33.78 c/L, fat 4.38% protein 3.66% (flat-rate addition 4.8%)",46691.33,2241.18,48932.51,25/08/2007,EUR,,self_billed_statement,,IE9462300P,D00039
+MS-200708,31/08/2007,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Aug 2007: 118,690 L @ 34.47 c/L, fat 4.33% protein 3.49% (flat-rate addition 4.8%)",40913.36,1963.84,42877.20,25/09/2007,EUR,,self_billed_statement,,IE9462300P,D00041
+MS-200709,30/09/2007,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Sep 2007: 94,410 L @ 35.19 c/L, fat 4.08% protein 3.32% (flat-rate addition 4.8%)",33221.73,1594.64,34816.37,25/10/2007,EUR,,self_billed_statement,,IE9462300P,D00043
+MS-200710,31/10/2007,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Oct 2007: 57,690 L @ 35.99 c/L, fat 4.47% protein 3.37% (flat-rate addition 4.8%)",20763.81,996.66,21760.47,25/11/2007,EUR,,self_billed_statement,,IE9462300P,D00045
+LD-07-4585,05/11/2007,Kilbeg Livestock Mart Ltd,Mart docket: 12 cull cows avg EUR 733.62,8803.47,422.57,9226.04,12/11/2007,EUR,,sales_docket,,IE6958430T,D04447
+MS-200711,30/11/2007,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Nov 2007: 27,000 L @ 36.37 c/L, fat 3.95% protein 3.57% (flat-rate addition 4.8%)",9819.51,471.34,10290.85,25/12/2007,EUR,,self_billed_statement,,IE9462300P,D00047
+MS-200712,31/12/2007,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Dec 2007: 5,160 L @ 37.35 c/L, fat 4.53% protein 3.36% (flat-rate addition 4.8%)",1927.40,92.52,2019.92,25/01/2008,EUR,,self_billed_statement,,IE9462300P,D00049
+MS-200801,31/01/2008,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Jan 2008: 16,620 L @ 38.54 c/L, fat 4.09% protein 3.69% (flat-rate addition 4.8%)",6405.79,307.48,6713.27,25/02/2008,EUR,,self_billed_statement,,IE9462300P,D00051
+MS-200802,29/02/2008,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Feb 2008: 57,520 L @ 38.32 c/L, fat 4.10% protein 3.50% (flat-rate addition 4.8%)",22039.27,1057.88,23097.15,25/03/2008,EUR,,self_billed_statement,,IE9462300P,D00053
+LD-08-9349,10/03/2008,Kilbeg Livestock Mart Ltd,"Mart docket: 17 calves (12 bull, 5 heifer) avg EUR 100.83",1714.10,82.28,1796.38,17/03/2008,EUR,,sales_docket,,IE6958430T,D04452
+LD-08-6936,19/03/2008,Kilbeg Livestock Mart Ltd,"Mart docket: 17 calves (12 bull, 5 heifer) avg EUR 103.21",1754.51,84.22,1838.73,26/03/2008,EUR,,sales_docket,,IE6958430T,D04454
+MS-200803,31/03/2008,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Mar 2008: 114,070 L @ 37.66 c/L, fat 4.23% protein 3.66% (flat-rate addition 4.8%)",42957.56,2061.96,45019.52,25/04/2008,EUR,,self_billed_statement,,IE9462300P,D00056
+LD-08-1522,01/04/2008,Kilbeg Livestock Mart Ltd,"Mart docket: 16 calves (11 bull, 5 heifer) avg EUR 94.21",1507.32,72.35,1579.67,08/04/2008,EUR,,sales_docket,,IE6958430T,D04456
+LD-08-9205,14/04/2008,Kilbeg Livestock Mart Ltd,"Mart docket: 16 calves (11 bull, 5 heifer) avg EUR 89.71",1435.42,68.90,1504.32,21/04/2008,EUR,,sales_docket,,IE6958430T,D04458
+LD-08-3516,21/04/2008,Kilbeg Livestock Mart Ltd,"Mart docket: 16 calves (11 bull, 5 heifer) avg EUR 89.56",1432.97,68.78,1501.75,28/04/2008,EUR,,sales_docket,,IE6958430T,D04460
+MS-200804,30/04/2008,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Apr 2008: 157,340 L @ 36.89 c/L, fat 4.35% protein 3.58% (flat-rate addition 4.8%)",58043.60,2786.09,60829.69,25/05/2008,EUR,,self_billed_statement,,IE9462300P,D00058
+LD-08-4728,02/05/2008,Kilbeg Livestock Mart Ltd,"Mart docket: 16 calves (11 bull, 5 heifer) avg EUR 105.30",1684.83,80.87,1765.70,09/05/2008,EUR,,sales_docket,,IE6958430T,D04462
+LD-08-6011,07/05/2008,Kilbeg Livestock Mart Ltd,"Mart docket: 16 calves (11 bull, 5 heifer) avg EUR 88.98",1423.70,68.34,1492.04,14/05/2008,EUR,,sales_docket,,IE6958430T,D04464
+LD-08-9969,20/05/2008,Kilbeg Livestock Mart Ltd,"Mart docket: 16 calves (11 bull, 5 heifer) avg EUR 101.94",1631.09,78.29,1709.38,27/05/2008,EUR,,sales_docket,,IE6958430T,D04466
+MS-200805,31/05/2008,Slieve Dairy Co-Operative Society Ltd,"Milk supplied May 2008: 168,860 L @ 36.51 c/L, fat 4.35% protein 3.46% (flat-rate addition 4.8%)",61642.82,2958.86,64601.68,25/06/2008,EUR,,self_billed_statement,,IE9462300P,D00060
+MS-200806,30/06/2008,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Jun 2008: 162,810 L @ 35.74 c/L, fat 4.16% protein 3.34% (flat-rate addition 4.8%)",58196.26,2793.42,60989.68,25/07/2008,EUR,,self_billed_statement,,IE9462300P,D00062
+LD-08-1564,21/07/2008,Kilbeg Livestock Mart Ltd,Mart docket: 10 cull cows avg EUR 710.13,7101.35,340.86,7442.21,28/07/2008,EUR,,sales_docket,,IE6958430T,D04474
+MS-200807,31/07/2008,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Jul 2008: 142,500 L @ 35.24 c/L, fat 4.17% protein 3.55% (flat-rate addition 4.8%)",50210.42,2410.10,52620.52,25/08/2008,EUR,,self_billed_statement,,IE9462300P,D00064
+MS-200808,31/08/2008,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Aug 2008: 116,760 L @ 34.56 c/L, fat 4.46% protein 3.35% (flat-rate addition 4.8%)",40346.86,1936.65,42283.51,25/09/2008,EUR,,self_billed_statement,,IE9462300P,D00066
+MS-200809,30/09/2008,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Sep 2008: 97,280 L @ 34.02 c/L, fat 4.49% protein 3.40% (flat-rate addition 4.8%)",33097.17,1588.66,34685.83,25/10/2008,EUR,,self_billed_statement,,IE9462300P,D00068
+MS-200810,31/10/2008,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Oct 2008: 58,830 L @ 33.33 c/L, fat 3.94% protein 3.52% (flat-rate addition 4.8%)",19610.19,941.29,20551.48,25/11/2008,EUR,,self_billed_statement,,IE9462300P,D00070
+LD-08-2755,12/11/2008,Kilbeg Livestock Mart Ltd,Mart docket: 10 cull cows avg EUR 687.59,6875.85,330.04,7205.89,19/11/2008,EUR,,sales_docket,,IE6958430T,D04472
+LD-08-9830,14/11/2008,Kilbeg Livestock Mart Ltd,Mart docket: 9 cull cows avg EUR 721.50,6493.47,311.69,6805.16,21/11/2008,EUR,,sales_docket,,IE6958430T,D04470
+LD-08-6321,20/11/2008,Kilbeg Livestock Mart Ltd,Mart docket: 9 cull cows avg EUR 651.05,5859.49,281.26,6140.75,27/11/2008,EUR,,sales_docket,,IE6958430T,D04468
+MS-200811,30/11/2008,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Nov 2008: 27,500 L @ 32.64 c/L, fat 4.43% protein 3.59% (flat-rate addition 4.8%)",8974.71,430.79,9405.50,25/12/2008,EUR,,self_billed_statement,,IE9462300P,D00072
+MS-200812,31/12/2008,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Dec 2008: 5,440 L @ 32.21 c/L, fat 4.51% protein 3.40% (flat-rate addition 4.8%)",1751.97,84.09,1836.06,25/01/2009,EUR,,self_billed_statement,,IE9462300P,D00074
+MS-200901,31/01/2009,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Jan 2009: 15,960 L @ 21.41 c/L, fat 4.56% protein 3.39% (flat-rate addition 5.2%)",3417.12,177.69,3594.81,25/02/2009,EUR,,self_billed_statement,,IE9462300P,D00076
+MS-200902,28/02/2009,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Feb 2009: 57,410 L @ 21.79 c/L, fat 4.02% protein 3.41% (flat-rate addition 5.2%)",12510.47,650.54,13161.01,25/03/2009,EUR,,self_billed_statement,,IE9462300P,D00078
+LD-09-3717,09/03/2009,Kilbeg Livestock Mart Ltd,"Mart docket: 20 calves (13 bull, 7 heifer) avg EUR 61.50",1230.10,63.97,1294.07,16/03/2009,EUR,,sales_docket,,IE6958430T,D04479
+LD-09-5320,25/03/2009,Kilbeg Livestock Mart Ltd,"Mart docket: 20 calves (13 bull, 7 heifer) avg EUR 51.00",1019.92,53.04,1072.96,01/04/2009,EUR,,sales_docket,,IE6958430T,D04481
+MS-200903,31/03/2009,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Mar 2009: 106,430 L @ 22.27 c/L, fat 4.54% protein 3.59% (flat-rate addition 5.2%)",23705.53,1232.69,24938.22,25/04/2009,EUR,,self_billed_statement,,IE9462300P,D00080
+LD-09-3943,06/04/2009,Kilbeg Livestock Mart Ltd,"Mart docket: 20 calves (13 bull, 7 heifer) avg EUR 57.09",1141.74,59.37,1201.11,13/04/2009,EUR,,sales_docket,,IE6958430T,D04483
+LD-09-2724,17/04/2009,Kilbeg Livestock Mart Ltd,"Mart docket: 19 calves (13 bull, 6 heifer) avg EUR 61.69",1172.14,60.95,1233.09,24/04/2009,EUR,,sales_docket,,IE6958430T,D04485
+LD-09-3765,27/04/2009,Kilbeg Livestock Mart Ltd,"Mart docket: 19 calves (13 bull, 6 heifer) avg EUR 52.20",991.73,51.57,1043.30,04/05/2009,EUR,,sales_docket,,IE6958430T,D04487
+MS-200904,30/04/2009,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Apr 2009: 145,450 L @ 22.89 c/L, fat 4.17% protein 3.47% (flat-rate addition 5.2%)",33292.44,1731.21,35023.65,25/05/2009,EUR,,self_billed_statement,,IE9462300P,D00082
+LD-09-9455,04/05/2009,Kilbeg Livestock Mart Ltd,"Mart docket: 19 calves (13 bull, 6 heifer) avg EUR 53.72",1020.62,53.07,1073.69,11/05/2009,EUR,,sales_docket,,IE6958430T,D04489
+LD-09-6103,21/05/2009,Kilbeg Livestock Mart Ltd,"Mart docket: 19 calves (13 bull, 6 heifer) avg EUR 59.20",1124.82,58.49,1183.31,28/05/2009,EUR,,sales_docket,,IE6958430T,D04491
+MS-200905,31/05/2009,Slieve Dairy Co-Operative Society Ltd,"Milk supplied May 2009: 168,020 L @ 23.11 c/L, fat 4.25% protein 3.39% (flat-rate addition 5.2%)",38837.74,2019.56,40857.30,25/06/2009,EUR,,self_billed_statement,,IE9462300P,D00084
+MS-200906,30/06/2009,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Jun 2009: 148,730 L @ 23.95 c/L, fat 4.06% protein 3.35% (flat-rate addition 5.2%)",35622.27,1852.36,37474.63,25/07/2009,EUR,,self_billed_statement,,IE9462300P,D00086
+LD-09-4286,08/07/2009,Kilbeg Livestock Mart Ltd,Mart docket: 7 cull cows avg EUR 505.61,3539.24,184.04,3723.28,15/07/2009,EUR,,sales_docket,,IE6958430T,D04493
+LD-09-6750,22/07/2009,Kilbeg Livestock Mart Ltd,Mart docket: 8 cull cows avg EUR 525.80,4206.42,218.73,4425.15,29/07/2009,EUR,,sales_docket,,IE6958430T,D04497
+MS-200907,31/07/2009,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Jul 2009: 134,340 L @ 24.30 c/L, fat 4.42% protein 3.35% (flat-rate addition 5.2%)",32650.46,1697.82,34348.28,25/08/2009,EUR,,self_billed_statement,,IE9462300P,D00088
+SM-09-4544,11/08/2009,Southern Meats Ltd,Carcase docket: 8 cull cows avg EUR 493.07,3944.53,205.12,4149.65,18/08/2009,EUR,,sales_docket,,IE8651198C,D04499
+LD-09-7075,11/08/2009,Kilbeg Livestock Mart Ltd,Mart docket: 8 cull cows avg EUR 536.48,4291.82,223.17,4514.99,18/08/2009,EUR,,sales_docket,,IE6958430T,D04500
+MS-200908,31/08/2009,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Aug 2009: 119,430 L @ 24.74 c/L, fat 4.16% protein 3.63% (flat-rate addition 5.2%)",29547.39,1536.46,31083.85,25/09/2009,EUR,,self_billed_statement,,IE9462300P,D00090
+MS-200909,30/09/2009,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Sep 2009: 93,590 L @ 25.10 c/L, fat 3.95% protein 3.33% (flat-rate addition 5.2%)",23490.38,1221.50,24711.88,25/10/2009,EUR,,self_billed_statement,,IE9462300P,D00092
+LD-09-6204,19/10/2009,Kilbeg Livestock Mart Ltd,Mart docket: 8 cull cows avg EUR 478.71,3829.70,199.14,4028.84,26/10/2009,EUR,,sales_docket,,IE6958430T,D04495
+MS-200910,31/10/2009,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Oct 2009: 57,830 L @ 25.62 c/L, fat 3.90% protein 3.32% (flat-rate addition 5.2%)",14816.61,770.46,15587.07,25/11/2009,EUR,,self_billed_statement,,IE9462300P,D00094
+MS-200911,30/11/2009,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Nov 2009: 27,980 L @ 26.31 c/L, fat 4.28% protein 3.49% (flat-rate addition 5.2%)",7362.74,382.86,7745.60,25/12/2009,EUR,,self_billed_statement,,IE9462300P,D00096
+MS-200912,31/12/2009,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Dec 2009: 5,590 L @ 26.48 c/L, fat 4.07% protein 3.30% (flat-rate addition 5.2%)",1480.00,76.96,1556.96,25/01/2010,EUR,,self_billed_statement,,IE9462300P,D00098
+MS-201001,31/01/2010,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Jan 2010: 16,800 L @ 30.28 c/L, fat 4.26% protein 3.66% (flat-rate addition 5.2%)",5086.26,264.49,5350.75,25/02/2010,EUR,,self_billed_statement,,IE9462300P,D00100
+MS-201002,28/02/2010,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Feb 2010: 58,130 L @ 30.47 c/L, fat 4.00% protein 3.40% (flat-rate addition 5.2%)",17712.08,921.03,18633.11,25/03/2010,EUR,,self_billed_statement,,IE9462300P,D00102
+LD-10-5300,09/03/2010,Kilbeg Livestock Mart Ltd,"Mart docket: 21 calves (14 bull, 7 heifer) avg EUR 85.41",1793.60,93.27,1886.87,16/03/2010,EUR,,sales_docket,,IE6958430T,D04504
+LD-10-8175,24/03/2010,Kilbeg Livestock Mart Ltd,"Mart docket: 20 calves (14 bull, 6 heifer) avg EUR 90.64",1812.88,94.27,1907.15,31/03/2010,EUR,,sales_docket,,IE6958430T,D04506
+MS-201003,31/03/2010,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Mar 2010: 115,530 L @ 30.59 c/L, fat 3.93% protein 3.36% (flat-rate addition 5.2%)",35340.31,1837.70,37178.01,25/04/2010,EUR,,self_billed_statement,,IE9462300P,D00104
+LD-10-2128,02/04/2010,Kilbeg Livestock Mart Ltd,"Mart docket: 20 calves (14 bull, 6 heifer) avg EUR 90.09",1801.85,93.70,1895.55,09/04/2010,EUR,,sales_docket,,IE6958430T,D04508
+LD-10-6821,14/04/2010,Kilbeg Livestock Mart Ltd,"Mart docket: 20 calves (14 bull, 6 heifer) avg EUR 93.27",1865.38,97.00,1962.38,21/04/2010,EUR,,sales_docket,,IE6958430T,D04510
+LD-10-3049,23/04/2010,Kilbeg Livestock Mart Ltd,"Mart docket: 20 calves (14 bull, 6 heifer) avg EUR 95.78",1915.68,99.62,2015.30,30/04/2010,EUR,,sales_docket,,IE6958430T,D04512
+MS-201004,30/04/2010,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Apr 2010: 164,110 L @ 30.66 c/L, fat 4.42% protein 3.65% (flat-rate addition 5.2%)",50312.99,2616.28,52929.27,25/05/2010,EUR,,self_billed_statement,,IE9462300P,D00106
+LD-10-5677,04/05/2010,Kilbeg Livestock Mart Ltd,"Mart docket: 20 calves (14 bull, 6 heifer) avg EUR 83.34",1666.78,86.67,1753.45,11/05/2010,EUR,,sales_docket,,IE6958430T,D04514
+LD-10-9572,17/05/2010,Kilbeg Livestock Mart Ltd,"Mart docket: 20 calves (14 bull, 6 heifer) avg EUR 95.54",1910.84,99.36,2010.20,24/05/2010,EUR,,sales_docket,,IE6958430T,D04516
+MS-201005,31/05/2010,Slieve Dairy Co-Operative Society Ltd,"Milk supplied May 2010: 176,920 L @ 30.30 c/L, fat 4.58% protein 3.43% (flat-rate addition 5.2%)",53606.16,2787.52,56393.68,25/06/2010,EUR,,self_billed_statement,,IE9462300P,D00108
+MS-201006,30/06/2010,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Jun 2010: 163,610 L @ 30.68 c/L, fat 4.43% protein 3.68% (flat-rate addition 5.2%)",50190.10,2609.89,52799.99,25/07/2010,EUR,,self_billed_statement,,IE9462300P,D00110
+SM-10-8135,12/07/2010,Southern Meats Ltd,Carcase docket: 8 cull cows avg EUR 612.93,4903.43,254.98,5158.41,19/07/2010,EUR,,sales_docket,,IE8651198C,D04524
+LD-10-9992,19/07/2010,Kilbeg Livestock Mart Ltd,Mart docket: 8 cull cows avg EUR 649.72,5197.78,270.28,5468.06,26/07/2010,EUR,,sales_docket,,IE6958430T,D04522
+MS-201007,31/07/2010,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Jul 2010: 141,950 L @ 30.66 c/L, fat 3.96% protein 3.44% (flat-rate addition 5.2%)",43515.18,2262.79,45777.97,25/08/2010,EUR,,self_billed_statement,,IE9462300P,D00112
+SM-10-6776,23/08/2010,Southern Meats Ltd,Carcase docket: 8 cull cows avg EUR 596.48,4771.87,248.14,5020.01,30/08/2010,EUR,,sales_docket,,IE8651198C,D04518
+MS-201008,31/08/2010,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Aug 2010: 124,240 L @ 30.71 c/L, fat 4.13% protein 3.65% (flat-rate addition 5.2%)",38151.95,1983.90,40135.85,25/09/2010,EUR,,self_billed_statement,,IE9462300P,D00114
+MS-201009,30/09/2010,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Sep 2010: 102,900 L @ 30.33 c/L, fat 3.94% protein 3.66% (flat-rate addition 5.2%)",31206.07,1622.72,32828.79,25/10/2010,EUR,,self_billed_statement,,IE9462300P,D00116
+SM-10-1548,11/10/2010,Southern Meats Ltd,Carcase docket: 8 cull cows avg EUR 550.52,4404.18,229.02,4633.20,18/10/2010,EUR,,sales_docket,,IE8651198C,D04519
+LD-10-9736,11/10/2010,Kilbeg Livestock Mart Ltd,Mart docket: 8 cull cows avg EUR 623.92,4991.34,259.55,5250.89,18/10/2010,EUR,,sales_docket,,IE6958430T,D04520
+MS-201010,31/10/2010,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Oct 2010: 61,640 L @ 30.32 c/L, fat 4.39% protein 3.66% (flat-rate addition 5.2%)",18689.06,971.83,19660.89,25/11/2010,EUR,,self_billed_statement,,IE9462300P,D00118
+MS-201011,30/11/2010,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Nov 2010: 28,170 L @ 30.67 c/L, fat 4.18% protein 3.40% (flat-rate addition 5.2%)",8640.30,449.30,9089.60,25/12/2010,EUR,,self_billed_statement,,IE9462300P,D00120
+MS-201012,31/12/2010,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Dec 2010: 5,820 L @ 30.37 c/L, fat 4.51% protein 3.63% (flat-rate addition 5.2%)",1767.44,91.91,1859.35,25/01/2011,EUR,,self_billed_statement,,IE9462300P,D00122
+MS-201101,31/01/2011,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Jan 2011: 17,290 L @ 32.10 c/L, fat 4.37% protein 3.49% (flat-rate addition 5.2%)",5549.98,288.60,5838.58,25/02/2011,EUR,,self_billed_statement,,IE9462300P,D00124
+MS-201102,28/02/2011,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Feb 2011: 56,610 L @ 32.03 c/L, fat 4.33% protein 3.45% (flat-rate addition 5.2%)",18133.11,942.92,19076.03,25/03/2011,EUR,,self_billed_statement,,IE9462300P,D00126
+DOC11-0001,02/03/2011,Ballynoe Farms Partnership,Slurry spreading (tanker + operator),1477.23,0.00,1477.23,01/04/2011,EUR,,invoice,,,D04872
+LD-11-9365,14/03/2011,Kilbeg Livestock Mart Ltd,"Mart docket: 23 calves (16 bull, 7 heifer) avg EUR 95.00",2185.08,113.62,2298.70,21/03/2011,EUR,,sales_docket,,IE6958430T,D04527
+LD-11-1409,28/03/2011,Kilbeg Livestock Mart Ltd,"Mart docket: 23 calves (16 bull, 7 heifer) avg EUR 94.47",2172.87,112.99,2285.86,04/04/2011,EUR,,sales_docket,,IE6958430T,D04529
+MS-201103,31/03/2011,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Mar 2011: 113,250 L @ 32.40 c/L, fat 4.23% protein 3.65% (flat-rate addition 5.2%)",36697.56,1908.27,38605.83,25/04/2011,EUR,,self_billed_statement,,IE9462300P,D00128
+LD-11-1843,04/04/2011,Kilbeg Livestock Mart Ltd,"Mart docket: 23 calves (16 bull, 7 heifer) avg EUR 109.79",2525.24,131.31,2656.55,11/04/2011,EUR,,sales_docket,,IE6958430T,D04531
+LD-11-7174,19/04/2011,Kilbeg Livestock Mart Ltd,"Mart docket: 23 calves (16 bull, 7 heifer) avg EUR 103.29",2375.63,123.53,2499.16,26/04/2011,EUR,,sales_docket,,IE6958430T,D04533
+DOC11-0002,19/04/2011,B. Walsh & Sons,Slurry spreading (tanker + operator),916.33,0.00,916.33,19/05/2011,EUR,,invoice,,,D04870
+MS-201104,30/04/2011,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Apr 2011: 164,510 L @ 32.73 c/L, fat 4.20% protein 3.60% (flat-rate addition 5.2%)",53839.49,2799.65,56639.14,25/05/2011,EUR,,self_billed_statement,,IE9462300P,D00131
+LD-11-2922,02/05/2011,Kilbeg Livestock Mart Ltd,"Mart docket: 23 calves (16 bull, 7 heifer) avg EUR 104.15",2395.44,124.56,2520.00,09/05/2011,EUR,,sales_docket,,IE6958430T,D04535
+LD-11-7167,16/05/2011,Kilbeg Livestock Mart Ltd,"Mart docket: 22 calves (15 bull, 7 heifer) avg EUR 91.67",2016.68,104.87,2121.55,23/05/2011,EUR,,sales_docket,,IE6958430T,D04537
+MS-201105,31/05/2011,Slieve Dairy Co-Operative Society Ltd,"Milk supplied May 2011: 162,600 L @ 32.87 c/L, fat 4.29% protein 3.67% (flat-rate addition 5.2%)",53451.99,2779.50,56231.49,25/06/2011,EUR,,self_billed_statement,,IE9462300P,D00133
+DOC11-0001,24/06/2011,S. Kiely,Rolling and spreading fertiliser,1956.68,0.00,1956.68,24/07/2011,EUR,,invoice,,,D04871
+DOC11-0001,25/06/2011,K. Murphy Farms Ltd,Silage harvesting,1664.85,0.00,1664.85,25/07/2011,EUR,,invoice,,,D04873
+MS-201106,30/06/2011,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Jun 2011: 153,470 L @ 33.59 c/L, fat 4.32% protein 3.37% (flat-rate addition 5.2%)",51554.95,2680.86,54235.81,25/07/2011,EUR,,self_billed_statement,,IE9462300P,D00135
+SM-11-9682,07/07/2011,Southern Meats Ltd,Carcase docket: 10 cull cows avg EUR 675.48,6754.83,351.25,7106.08,14/07/2011,EUR,,sales_docket,,IE8651198C,D04542
+MS-201107,31/07/2011,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Jul 2011: 142,690 L @ 33.62 c/L, fat 4.42% protein 3.34% (flat-rate addition 5.2%)",47968.48,2494.36,50462.84,25/08/2011,EUR,,self_billed_statement,,IE9462300P,D00137
+DOC11-0001,16/08/2011,B. Walsh & Sons,Hedge cutting,1878.82,0.00,1878.82,15/09/2011,EUR,,invoice,,,D04869
+SM-11-7972,22/08/2011,Southern Meats Ltd,Carcase docket: 9 cull cows avg EUR 714.18,6427.64,334.24,6761.88,29/08/2011,EUR,,sales_docket,,IE8651198C,D04539
+MS-201108,31/08/2011,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Aug 2011: 120,120 L @ 34.16 c/L, fat 4.49% protein 3.68% (flat-rate addition 5.2%)",41031.47,2133.64,43165.11,25/09/2011,EUR,,self_billed_statement,,IE9462300P,D00139
+SM-11-1453,05/09/2011,Southern Meats Ltd,Carcase docket: 10 cull cows avg EUR 758.79,7587.90,394.57,7982.47,12/09/2011,EUR,,sales_docket,,IE8651198C,D04543
+MS-201109,30/09/2011,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Sep 2011: 98,960 L @ 34.35 c/L, fat 4.12% protein 3.55% (flat-rate addition 5.2%)",33993.44,1767.66,35761.10,25/10/2011,EUR,,self_billed_statement,,IE9462300P,D00141
+MS-201110,31/10/2011,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Oct 2011: 60,940 L @ 34.49 c/L, fat 4.04% protein 3.39% (flat-rate addition 5.2%)",21020.98,1093.09,22114.07,25/11/2011,EUR,,self_billed_statement,,IE9462300P,D00143
+LD-11-5684,22/11/2011,Kilbeg Livestock Mart Ltd,Mart docket: 10 cull cows avg EUR 671.80,6718.01,349.34,7067.35,29/11/2011,EUR,,sales_docket,,IE6958430T,D04540
+MS-201111,30/11/2011,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Nov 2011: 27,180 L @ 34.60 c/L, fat 4.33% protein 3.47% (flat-rate addition 5.2%)",9403.44,488.98,9892.42,25/12/2011,EUR,,self_billed_statement,,IE9462300P,D00145
+MS-201112,31/12/2011,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Dec 2011: 5,680 L @ 35.20 c/L, fat 4.12% protein 3.64% (flat-rate addition 5.2%)",1999.22,103.96,2103.18,25/01/2012,EUR,,self_billed_statement,,IE9462300P,D00147
+MS-201201,31/01/2012,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Jan 2012: 17,940 L @ 31.25 c/L, fat 4.42% protein 3.52% (flat-rate addition 5.2%)",5605.93,291.51,5897.44,25/02/2012,EUR,,self_billed_statement,,IE9462300P,D00149
+MS-201202,29/02/2012,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Feb 2012: 58,150 L @ 31.02 c/L, fat 3.99% protein 3.67% (flat-rate addition 5.2%)",18040.17,938.09,18978.26,25/03/2012,EUR,,self_billed_statement,,IE9462300P,D00151
+LD-12-1734,12/03/2012,Kilbeg Livestock Mart Ltd,"Mart docket: 19 calves (13 bull, 6 heifer) avg EUR 95.28",1810.27,94.13,1904.40,19/03/2012,EUR,,sales_docket,,IE6958430T,D04546
+LD-12-9512,26/03/2012,Kilbeg Livestock Mart Ltd,"Mart docket: 19 calves (13 bull, 6 heifer) avg EUR 93.90",1784.06,92.77,1876.83,02/04/2012,EUR,,sales_docket,,IE6958430T,D04548
+MS-201203,31/03/2012,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Mar 2012: 116,950 L @ 31.02 c/L, fat 4.41% protein 3.68% (flat-rate addition 5.2%)",36272.75,1886.18,38158.93,25/04/2012,EUR,,self_billed_statement,,IE9462300P,D00153
+LD-12-7453,03/04/2012,Kilbeg Livestock Mart Ltd,"Mart docket: 19 calves (13 bull, 6 heifer) avg EUR 87.96",1671.24,86.90,1758.14,10/04/2012,EUR,,sales_docket,,IE6958430T,D04550
+LD-12-5761,11/04/2012,Kilbeg Livestock Mart Ltd,"Mart docket: 18 calves (12 bull, 6 heifer) avg EUR 96.57",1738.29,90.39,1828.68,18/04/2012,EUR,,sales_docket,,IE6958430T,D04552
+LD-12-6661,23/04/2012,Kilbeg Livestock Mart Ltd,"Mart docket: 18 calves (12 bull, 6 heifer) avg EUR 87.31",1571.65,81.73,1653.38,30/04/2012,EUR,,sales_docket,,IE6958430T,D04554
+MS-201204,30/04/2012,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Apr 2012: 163,530 L @ 30.83 c/L, fat 4.06% protein 3.60% (flat-rate addition 5.2%)",50412.67,2621.46,53034.13,25/05/2012,EUR,,self_billed_statement,,IE9462300P,D00155
+LD-12-1369,30/04/2012,Kilbeg Livestock Mart Ltd,"Mart docket: 18 calves (12 bull, 6 heifer) avg EUR 89.99",1619.74,84.23,1703.97,07/05/2012,EUR,,sales_docket,,IE6958430T,D04556
+LD-12-2357,14/05/2012,Kilbeg Livestock Mart Ltd,"Mart docket: 18 calves (12 bull, 6 heifer) avg EUR 100.12",1802.14,93.71,1895.85,21/05/2012,EUR,,sales_docket,,IE6958430T,D04558
+LD-12-5400,23/05/2012,Kilbeg Livestock Mart Ltd,"Mart docket: 18 calves (12 bull, 6 heifer) avg EUR 99.38",1788.75,93.02,1881.77,30/05/2012,EUR,,sales_docket,,IE6958430T,D04560
+MS-201205,31/05/2012,Slieve Dairy Co-Operative Society Ltd,"Milk supplied May 2012: 174,750 L @ 30.78 c/L, fat 4.16% protein 3.43% (flat-rate addition 5.2%)",53783.27,2796.73,56580.00,25/06/2012,EUR,,self_billed_statement,,IE9462300P,D00157
+MS-201206,30/06/2012,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Jun 2012: 162,010 L @ 31.25 c/L, fat 4.04% protein 3.69% (flat-rate addition 5.2%)",50625.60,2632.53,53258.13,25/07/2012,EUR,,self_billed_statement,,IE9462300P,D00159
+LD-12-1792,02/07/2012,Kilbeg Livestock Mart Ltd,Mart docket: 7 cull cows avg EUR 717.08,5019.58,261.02,5280.60,09/07/2012,EUR,,sales_docket,,IE6958430T,D04567
+MS-201207,31/07/2012,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Jul 2012: 146,220 L @ 31.00 c/L, fat 4.60% protein 3.54% (flat-rate addition 5.2%)",45332.02,2357.27,47689.29,25/08/2012,EUR,,self_billed_statement,,IE9462300P,D00161
+DOC12-0001,04/08/2012,Ballynoe Farms Partnership,Rolling and spreading fertiliser,1632.21,0.00,1632.21,03/09/2012,EUR,,invoice,,,D04875
+DOC12-0001,08/08/2012,Coolcaum Dairy Ltd,Reseeding / power harrow,952.90,0.00,952.90,07/09/2012,EUR,,invoice,,,D04879
+DOC12-0001,16/08/2012,Tim Hennessy,Slurry spreading (tanker + operator),1241.65,0.00,1241.65,15/09/2012,EUR,,invoice,,,D04874
+SM-12-7891,20/08/2012,Southern Meats Ltd,Carcase docket: 7 cull cows avg EUR 790.86,5536.02,287.87,5823.89,27/08/2012,EUR,,sales_docket,,IE8651198C,D04564
+DOC12-0002,25/08/2012,Tim Hennessy,Rolling and spreading fertiliser,1998.39,0.00,1998.39,24/09/2012,EUR,,invoice,,,D04877
+MS-201208,31/08/2012,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Aug 2012: 132,100 L @ 31.09 c/L, fat 3.97% protein 3.31% (flat-rate addition 5.2%)",41069.47,2135.61,43205.08,25/09/2012,EUR,,self_billed_statement,,IE9462300P,D00163
+SM-12-6617,17/09/2012,Southern Meats Ltd,Carcase docket: 7 cull cows avg EUR 773.36,5413.49,281.50,5694.99,24/09/2012,EUR,,sales_docket,,IE8651198C,D04565
+LD-12-1630,19/09/2012,Kilbeg Livestock Mart Ltd,Mart docket: 6 cull cows avg EUR 718.93,4313.56,224.31,4537.87,26/09/2012,EUR,,sales_docket,,IE6958430T,D04562
+MS-201209,30/09/2012,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Sep 2012: 98,220 L @ 30.85 c/L, fat 4.37% protein 3.42% (flat-rate addition 5.2%)",30299.36,1575.57,31874.93,25/10/2012,EUR,,self_billed_statement,,IE9462300P,D00165
+DOC12-0001,01/10/2012,K. Murphy Farms Ltd,Reseeding / power harrow,1005.45,0.00,1005.45,31/10/2012,EUR,,invoice,,,D04876
+LD-12-6990,15/10/2012,Kilbeg Livestock Mart Ltd,Mart docket: 12 in-calf heifers,18000.00,936.00,18936.00,22/10/2012,EUR,,sales_docket,,IE6958430T,D04571
+LD-12-1753,22/10/2012,Kilbeg Livestock Mart Ltd,Mart docket: 7 cull cows avg EUR 728.91,5102.39,265.32,5367.71,29/10/2012,EUR,,sales_docket,,IE6958430T,D04569
+SM-12-7112,23/10/2012,Southern Meats Ltd,Carcase docket: 7 cull cows avg EUR 829.58,5807.07,301.97,6109.04,30/10/2012,EUR,,sales_docket,,IE8651198C,D04566
+MS-201210,31/10/2012,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Oct 2012: 64,160 L @ 31.01 c/L, fat 4.54% protein 3.45% (flat-rate addition 5.2%)",19896.23,1034.60,20930.83,25/11/2012,EUR,,self_billed_statement,,IE9462300P,D00167
+DOC12-0001,25/11/2012,E. Foley & Son,Reseeding / power harrow,912.15,0.00,912.15,25/12/2012,EUR,,invoice,,,D04878
+MS-201211,30/11/2012,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Nov 2012: 28,910 L @ 31.09 c/L, fat 4.02% protein 3.67% (flat-rate addition 5.2%)",8989.22,467.44,9456.66,25/12/2012,EUR,,self_billed_statement,,IE9462300P,D00169
+MS-201212,31/12/2012,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Dec 2012: 5,610 L @ 31.25 c/L, fat 4.56% protein 3.37% (flat-rate addition 5.2%)",1752.95,91.15,1844.10,25/01/2013,EUR,,self_billed_statement,,IE9462300P,D00171
+MS-201301,31/01/2013,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Jan 2013: 15,870 L @ 35.12 c/L, fat 4.40% protein 3.64% (flat-rate addition 5.2%)",5573.22,289.81,5863.03,25/02/2013,EUR,,self_billed_statement,,IE9462300P,D00173
+MS-201302,28/02/2013,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Feb 2013: 55,550 L @ 35.48 c/L, fat 4.02% protein 3.70% (flat-rate addition 5.2%)",19708.23,1024.83,20733.06,25/03/2013,EUR,,self_billed_statement,,IE9462300P,D00175
+LD-13-4292,11/03/2013,Kilbeg Livestock Mart Ltd,"Mart docket: 21 calves (17 bull, 4 heifer) avg EUR 101.35",2128.45,110.68,2239.13,18/03/2013,EUR,,sales_docket,,IE6958430T,D04575
+LD-13-1968,26/03/2013,Kilbeg Livestock Mart Ltd,"Mart docket: 21 calves (17 bull, 4 heifer) avg EUR 111.40",2339.44,121.65,2461.09,02/04/2013,EUR,,sales_docket,,IE6958430T,D04577
+MS-201303,31/03/2013,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Mar 2013: 106,450 L @ 35.60 c/L, fat 4.17% protein 3.69% (flat-rate addition 5.2%)",37893.80,1970.48,39864.28,25/04/2013,EUR,,self_billed_statement,,IE9462300P,D00177
+LD-13-3006,03/04/2013,Kilbeg Livestock Mart Ltd,"Mart docket: 21 calves (17 bull, 4 heifer) avg EUR 102.11",2144.24,111.50,2255.74,10/04/2013,EUR,,sales_docket,,IE6958430T,D04579
+LD-13-2901,22/04/2013,Kilbeg Livestock Mart Ltd,"Mart docket: 21 calves (17 bull, 4 heifer) avg EUR 105.57",2216.88,115.28,2332.16,29/04/2013,EUR,,sales_docket,,IE6958430T,D04581
+MS-201304,30/04/2013,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Apr 2013: 150,930 L @ 36.07 c/L, fat 4.53% protein 3.69% (flat-rate addition 5.2%)",54434.17,2830.58,57264.75,25/05/2013,EUR,,self_billed_statement,,IE9462300P,D00179
+LD-13-2320,03/05/2013,Kilbeg Livestock Mart Ltd,"Mart docket: 21 calves (17 bull, 4 heifer) avg EUR 102.45",2151.48,111.88,2263.36,10/05/2013,EUR,,sales_docket,,IE6958430T,D04583
+LD-13-1285,14/05/2013,Kilbeg Livestock Mart Ltd,"Mart docket: 20 calves (16 bull, 4 heifer) avg EUR 94.62",1892.50,98.41,1990.91,21/05/2013,EUR,,sales_docket,,IE6958430T,D04585
+DOC13-0001,23/05/2013,P. Dineen,Slurry spreading (tanker + operator),1847.56,0.00,1847.56,22/06/2013,EUR,,invoice,,,D04880
+MS-201305,31/05/2013,Slieve Dairy Co-Operative Society Ltd,"Milk supplied May 2013: 166,280 L @ 36.54 c/L, fat 4.20% protein 3.47% (flat-rate addition 5.2%)",60755.90,3159.31,63915.21,25/06/2013,EUR,,self_billed_statement,,IE9462300P,D00181
+MS-201306,30/06/2013,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Jun 2013: 148,850 L @ 36.87 c/L, fat 4.37% protein 3.46% (flat-rate addition 5.2%)",54875.85,2853.54,57729.39,25/07/2013,EUR,,self_billed_statement,,IE9462300P,D00183
+DOC13-0002,02/07/2013,P. Dineen,Rolling and spreading fertiliser,1459.60,0.00,1459.60,01/08/2013,EUR,,invoice,,,D04882
+SM-13-4083,15/07/2013,Southern Meats Ltd,Carcase docket: 10 cull cows avg EUR 732.19,7321.89,380.74,7702.63,22/07/2013,EUR,,sales_docket,,IE8651198C,D04591
+MS-201307,31/07/2013,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Jul 2013: 132,050 L @ 37.40 c/L, fat 4.50% protein 3.53% (flat-rate addition 5.2%)",49385.46,2568.04,51953.50,25/08/2013,EUR,,self_billed_statement,,IE9462300P,D00185
+MS-201308,31/08/2013,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Aug 2013: 120,170 L @ 37.68 c/L, fat 3.96% protein 3.36% (flat-rate addition 5.2%)",45278.17,2354.46,47632.63,25/09/2013,EUR,,self_billed_statement,,IE9462300P,D00187
+DOC13-0002,05/09/2013,J. Cronin,Slurry spreading (tanker + operator),1815.55,0.00,1815.55,05/10/2013,EUR,,invoice,,,D04885
+DOC13-0001,08/09/2013,K. Murphy Farms Ltd,Round baling + wrapping,1501.58,0.00,1501.58,08/10/2013,EUR,,invoice,,,D04881
+SM-13-6437,13/09/2013,Southern Meats Ltd,Carcase docket: 10 cull cows avg EUR 756.27,7562.74,393.26,7956.00,20/09/2013,EUR,,sales_docket,,IE8651198C,D04588
+MS-201309,30/09/2013,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Sep 2013: 92,370 L @ 37.86 c/L, fat 4.34% protein 3.68% (flat-rate addition 5.2%)",34971.07,1818.50,36789.57,25/10/2013,EUR,,self_billed_statement,,IE9462300P,D00189
+DOC13-0001,02/10/2013,Coolcaum Dairy Ltd,Hedge cutting,1887.98,0.00,1887.98,01/11/2013,EUR,,invoice,,,D04883
+DOC13-0001,05/10/2013,S. Kiely,Rolling and spreading fertiliser,2068.16,0.00,2068.16,04/11/2013,EUR,,invoice,,,D04886
+DOC13-0001,24/10/2013,J. Cronin,Rolling and spreading fertiliser,1152.21,0.00,1152.21,23/11/2013,EUR,,invoice,,,D04884
+LD-13-9853,25/10/2013,Kilbeg Livestock Mart Ltd,Mart docket: 10 cull cows avg EUR 778.78,7787.79,404.97,8192.76,01/11/2013,EUR,,sales_docket,,IE6958430T,D04589
+MS-201310,31/10/2013,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Oct 2013: 59,530 L @ 38.45 c/L, fat 4.01% protein 3.57% (flat-rate addition 5.2%)",22887.54,1190.15,24077.69,25/11/2013,EUR,,self_billed_statement,,IE9462300P,D00191
+SM-13-5597,04/11/2013,Southern Meats Ltd,Carcase docket: 10 cull cows avg EUR 725.61,7256.12,377.32,7633.44,11/11/2013,EUR,,sales_docket,,IE8651198C,D04592
+SM-13-2591,11/11/2013,Southern Meats Ltd,Carcase docket: 9 cull cows avg EUR 857.81,7720.27,401.45,8121.72,18/11/2013,EUR,,sales_docket,,IE8651198C,D04587
+MS-201311,30/11/2013,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Nov 2013: 26,730 L @ 38.76 c/L, fat 4.49% protein 3.31% (flat-rate addition 5.2%)",10361.57,538.80,10900.37,25/12/2013,EUR,,self_billed_statement,,IE9462300P,D00193
+MS-201312,31/12/2013,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Dec 2013: 5,590 L @ 38.90 c/L, fat 4.36% protein 3.70% (flat-rate addition 5.2%)",2174.32,113.06,2287.38,25/01/2014,EUR,,self_billed_statement,,IE9462300P,D00195
+MS-201401,31/01/2014,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Jan 2014: 19,590 L @ 45.58 c/L, fat 4.11% protein 3.57% (flat-rate addition 5.2%)",8929.88,464.35,9394.23,25/02/2014,EUR,,self_billed_statement,,IE9462300P,D00197
+MS-201402,28/02/2014,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Feb 2014: 63,950 L @ 44.44 c/L, fat 4.59% protein 3.38% (flat-rate addition 5.2%)",28419.63,1477.82,29897.45,25/03/2014,EUR,,self_billed_statement,,IE9462300P,D00199
+LD-14-1462,14/03/2014,Kilbeg Livestock Mart Ltd,"Mart docket: 16 calves (13 bull, 3 heifer) avg EUR 92.23",1475.75,76.74,1552.49,21/03/2014,EUR,,sales_docket,,IE6958430T,D04594
+LD-14-7043,24/03/2014,Kilbeg Livestock Mart Ltd,"Mart docket: 16 calves (13 bull, 3 heifer) avg EUR 86.51",1384.20,71.98,1456.18,31/03/2014,EUR,,sales_docket,,IE6958430T,D04596
+MS-201403,31/03/2014,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Mar 2014: 125,700 L @ 42.90 c/L, fat 4.31% protein 3.39% (flat-rate addition 5.2%)",53924.57,2804.08,56728.65,25/04/2014,EUR,,self_billed_statement,,IE9462300P,D00201
+LD-14-2711,02/04/2014,Kilbeg Livestock Mart Ltd,"Mart docket: 16 calves (13 bull, 3 heifer) avg EUR 90.84",1453.40,75.58,1528.98,09/04/2014,EUR,,sales_docket,,IE6958430T,D04598
+LD-14-9043,08/04/2014,Kilbeg Livestock Mart Ltd,"Mart docket: 16 calves (13 bull, 3 heifer) avg EUR 85.99",1375.85,71.54,1447.39,15/04/2014,EUR,,sales_docket,,IE6958430T,D04600
+DOC14-0001,10/04/2014,K. Murphy Farms Ltd,Slurry spreading (tanker + operator),2140.59,0.00,2140.59,10/05/2014,EUR,,invoice,,,D04890
+LD-14-1881,22/04/2014,Kilbeg Livestock Mart Ltd,"Mart docket: 16 calves (13 bull, 3 heifer) avg EUR 102.77",1644.37,85.51,1729.88,29/04/2014,EUR,,sales_docket,,IE6958430T,D04602
+MS-201404,30/04/2014,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Apr 2014: 179,350 L @ 41.47 c/L, fat 4.08% protein 3.61% (flat-rate addition 5.2%)",74371.71,3867.33,78239.04,25/05/2014,EUR,,self_billed_statement,,IE9462300P,D00203
+DOC14-0001,01/05/2014,P. Dineen,Silage harvesting,1734.91,0.00,1734.91,31/05/2014,EUR,,invoice,,,D04892
+LD-14-6361,02/05/2014,Kilbeg Livestock Mart Ltd,"Mart docket: 16 calves (13 bull, 3 heifer) avg EUR 102.12",1633.92,84.96,1718.88,09/05/2014,EUR,,sales_docket,,IE6958430T,D04604
+LD-14-5083,12/05/2014,Kilbeg Livestock Mart Ltd,"Mart docket: 16 calves (13 bull, 3 heifer) avg EUR 82.56",1320.96,68.69,1389.65,19/05/2014,EUR,,sales_docket,,IE6958430T,D04606
+DOC14-0001,16/05/2014,D. Buckley,Hedge cutting,1188.82,0.00,1188.82,15/06/2014,EUR,,invoice,,,D04889
+LD-14-7615,22/05/2014,Kilbeg Livestock Mart Ltd,"Mart docket: 15 calves (12 bull, 3 heifer) avg EUR 85.98",1289.74,67.07,1356.81,29/05/2014,EUR,,sales_docket,,IE6958430T,D04608
+MS-201405,31/05/2014,Slieve Dairy Co-Operative Society Ltd,"Milk supplied May 2014: 197,390 L @ 40.32 c/L, fat 4.40% protein 3.57% (flat-rate addition 5.2%)",79587.85,4138.57,83726.42,25/06/2014,EUR,,self_billed_statement,,IE9462300P,D00205
+DOC14-0002,27/06/2014,Coolcaum Dairy Ltd,Silage harvesting,2071.42,0.00,2071.42,27/07/2014,EUR,,invoice,,,D04888
+MS-201406,30/06/2014,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Jun 2014: 184,210 L @ 38.66 c/L, fat 4.04% protein 3.43% (flat-rate addition 5.2%)",71224.36,3703.67,74928.03,25/07/2014,EUR,,self_billed_statement,,IE9462300P,D00207
+LD-14-6010,10/07/2014,Kilbeg Livestock Mart Ltd,Mart docket: 11 cull cows avg EUR 914.47,10059.18,523.08,10582.26,17/07/2014,EUR,,sales_docket,,IE6958430T,D04613
+SM-14-2897,18/07/2014,Southern Meats Ltd,Carcase docket: 11 cull cows avg EUR 765.79,8423.74,438.03,8861.77,25/07/2014,EUR,,sales_docket,,IE8651198C,D04615
+SM-14-8683,23/07/2014,Southern Meats Ltd,Carcase docket: 10 cull cows avg EUR 806.52,8065.22,419.39,8484.61,30/07/2014,EUR,,sales_docket,,IE8651198C,D04610
+MS-201407,31/07/2014,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Jul 2014: 165,030 L @ 37.33 c/L, fat 4.35% protein 3.38% (flat-rate addition 5.2%)",61606.54,3203.54,64810.08,25/08/2014,EUR,,self_billed_statement,,IE9462300P,D00209
+DOC14-0001,04/08/2014,Ballynoe Farms Partnership,Rolling and spreading fertiliser,973.43,0.00,973.43,03/09/2014,EUR,,invoice,,,D04891
+DOC14-0001,04/08/2014,J. Cronin,Round baling + wrapping,1477.56,0.00,1477.56,03/09/2014,EUR,,invoice,,,D04894
+MS-201408,31/08/2014,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Aug 2014: 140,500 L @ 35.98 c/L, fat 4.35% protein 3.64% (flat-rate addition 5.2%)",50552.95,2628.75,53181.70,25/09/2014,EUR,,self_billed_statement,,IE9462300P,D00211
+DOC14-0001,10/09/2014,Coolcaum Dairy Ltd,Hedge cutting,1192.36,0.00,1192.36,10/10/2014,EUR,,invoice,,,D04887
+MS-201409,30/09/2014,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Sep 2014: 109,200 L @ 34.45 c/L, fat 4.47% protein 3.69% (flat-rate addition 5.2%)",37620.44,1956.26,39576.70,25/10/2014,EUR,,self_billed_statement,,IE9462300P,D00213
+LD-14-9765,01/10/2014,Kilbeg Livestock Mart Ltd,Mart docket: 10 cull cows avg EUR 773.32,7733.20,402.13,8135.33,08/10/2014,EUR,,sales_docket,,IE6958430T,D04611
+MS-201410,31/10/2014,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Oct 2014: 72,410 L @ 33.23 c/L, fat 4.04% protein 3.31% (flat-rate addition 5.2%)",24061.83,1251.22,25313.05,25/11/2014,EUR,,self_billed_statement,,IE9462300P,D00215
+MS-201411,30/11/2014,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Nov 2014: 32,860 L @ 31.91 c/L, fat 4.01% protein 3.48% (flat-rate addition 5.2%)",10486.72,545.31,11032.03,25/12/2014,EUR,,self_billed_statement,,IE9462300P,D00217
+DOC14-0002,07/12/2014,Ballynoe Farms Partnership,Rolling and spreading fertiliser,1687.58,0.00,1687.58,06/01/2015,EUR,,invoice,,,D04893
+MS-201412,31/12/2014,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Dec 2014: 6,660 L @ 30.46 c/L, fat 4.21% protein 3.63% (flat-rate addition 5.2%)",2028.72,105.49,2134.21,25/01/2015,EUR,,self_billed_statement,,IE9462300P,D00219
+DOC15-0001,04/01/2015,Ballynoe Farms Partnership,"Winter slurry spreading, work done in December",4100.00,553.50,4653.50,03/02/2015,EUR,,invoice,2014-12-16,,D04895
+MS-201501,31/01/2015,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Jan 2015: 21,170 L @ 28.00 c/L, fat 4.06% protein 3.54% (VAT 13.5%)",5928.44,800.34,6728.78,25/02/2015,EUR,,self_billed_statement,,IE9462300P,D00221
+MS-201502,28/02/2015,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Feb 2015: 69,490 L @ 28.21 c/L, fat 3.98% protein 3.50% (VAT 13.5%)",19602.24,2646.30,22248.54,25/03/2015,EUR,,self_billed_statement,,IE9462300P,D00223
+LD-15-4107,09/03/2015,Kilbeg Livestock Mart Ltd,"Mart docket: 29 calves (23 bull, 6 heifer) avg EUR 57.15",1657.40,79.56,1736.96,16/03/2015,EUR,,sales_docket,,IE6958430T,D04618
+LD-15-5487,30/03/2015,Kilbeg Livestock Mart Ltd,"Mart docket: 28 calves (22 bull, 6 heifer) avg EUR 59.43",1664.03,79.87,1743.90,06/04/2015,EUR,,sales_docket,,IE6958430T,D04620
+MS-201503,31/03/2015,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Mar 2015: 133,550 L @ 28.61 c/L, fat 4.24% protein 3.41% (VAT 13.5%)",38207.73,5158.04,43365.77,25/04/2015,EUR,,self_billed_statement,,IE9462300P,D00225
+LD-15-8004,13/04/2015,Kilbeg Livestock Mart Ltd,"Mart docket: 28 calves (22 bull, 6 heifer) avg EUR 51.75",1449.03,69.55,1518.58,20/04/2015,EUR,,sales_docket,,IE6958430T,D04622
+DOC15-0001,17/04/2015,Coolcaum Dairy Ltd,Reseeding / power harrow,2013.43,271.81,2285.24,17/05/2015,EUR,,invoice,,,D04899
+DOC15-0002,21/04/2015,N. Barrett,Rolling and spreading fertiliser,994.27,134.23,1128.50,21/05/2015,EUR,,invoice,,,D04901
+MS-201504,30/04/2015,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Apr 2015: 185,210 L @ 28.61 c/L, fat 4.44% protein 3.43% (VAT 13.5%)",52997.29,7154.63,60151.92,25/05/2015,EUR,,self_billed_statement,,IE9462300P,D00227
+LD-15-2839,30/04/2015,Kilbeg Livestock Mart Ltd,"Mart docket: 28 calves (22 bull, 6 heifer) avg EUR 50.07",1402.03,67.30,1469.33,07/05/2015,EUR,,sales_docket,,IE6958430T,D04624
+LD-15-2116,18/05/2015,Kilbeg Livestock Mart Ltd,"Mart docket: 28 calves (22 bull, 6 heifer) avg EUR 54.13",1515.77,72.76,1588.53,25/05/2015,EUR,,sales_docket,,IE6958430T,D04626
+DOC15-0001,23/05/2015,D. Buckley,Round baling + wrapping,1808.16,244.10,2052.26,22/06/2015,EUR,,invoice,,,D04897
+DOC15-0002,24/05/2015,Coolcaum Dairy Ltd,Reseeding / power harrow,1706.84,230.42,1937.26,23/06/2015,EUR,,invoice,,,D04900
+DOC15-0003,26/05/2015,Coolcaum Dairy Ltd,Round baling + wrapping,1120.98,151.33,1272.31,25/06/2015,EUR,,invoice,,,D04902
+MS-201505,31/05/2015,Slieve Dairy Co-Operative Society Ltd,"Milk supplied May 2015: 200,610 L @ 29.05 c/L, fat 4.52% protein 3.30% (VAT 13.5%)",58272.63,7866.81,66139.44,25/06/2015,EUR,,self_billed_statement,,IE9462300P,D00229
+DOC15-0001,02/06/2015,P. Dineen,Rolling and spreading fertiliser,1866.45,251.97,2118.42,02/07/2015,EUR,,invoice,,,D04896
+MS-201506,30/06/2015,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Jun 2015: 200,250 L @ 29.41 c/L, fat 4.38% protein 3.57% (VAT 13.5%)",58896.68,7951.05,66847.73,25/07/2015,EUR,,self_billed_statement,,IE9462300P,D00231
+DOC15-0002,06/07/2015,P. Dineen,Reseeding / power harrow,844.95,114.07,959.02,05/08/2015,EUR,,invoice,,,D04903
+LD-15-6960,07/07/2015,Kilbeg Livestock Mart Ltd,Mart docket: 9 cull cows avg EUR 716.92,6452.32,309.71,6762.03,14/07/2015,EUR,,sales_docket,,IE6958430T,D04631
+LD-15-4375,20/07/2015,Kilbeg Livestock Mart Ltd,Mart docket: 9 cull cows avg EUR 771.92,6947.30,333.47,7280.77,27/07/2015,EUR,,sales_docket,,IE6958430T,D04633
+MS-201507,31/07/2015,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Jul 2015: 169,380 L @ 29.57 c/L, fat 4.56% protein 3.44% (VAT 13.5%)",50084.14,6761.36,56845.50,25/08/2015,EUR,,self_billed_statement,,IE9462300P,D00233
+SM-15-2500,06/08/2015,Southern Meats Ltd,Carcase docket: 9 cull cows avg EUR 833.07,7497.67,359.89,7857.56,13/08/2015,EUR,,sales_docket,,IE8651198C,D04629
+SM-15-3699,07/08/2015,Southern Meats Ltd,Carcase docket: 9 cull cows avg EUR 787.61,7088.51,340.25,7428.76,14/08/2015,EUR,,sales_docket,,IE8651198C,D04628
+DOC15-0001,13/08/2015,J. Cronin,Round baling + wrapping,1782.54,240.64,2023.18,12/09/2015,EUR,,invoice,,,D04904
+MS-201508,31/08/2015,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Aug 2015: 145,500 L @ 29.93 c/L, fat 4.36% protein 3.60% (VAT 13.5%)",43551.05,5879.39,49430.44,25/09/2015,EUR,,self_billed_statement,,IE9462300P,D00235
+DOC15-0001,26/09/2015,N. Barrett,Silage harvesting,1587.75,214.35,1802.10,26/10/2015,EUR,,invoice,,,D04898
+MS-201509,30/09/2015,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Sep 2015: 113,630 L @ 30.46 c/L, fat 4.06% protein 3.43% (VAT 13.5%)",34612.83,4672.73,39285.56,25/10/2015,EUR,,self_billed_statement,,IE9462300P,D00237
+SM-15-8792,19/10/2015,Southern Meats Ltd,Carcase docket: 9 cull cows avg EUR 771.81,6946.29,333.42,7279.71,26/10/2015,EUR,,sales_docket,,IE8651198C,D04630
+MS-201510,31/10/2015,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Oct 2015: 75,100 L @ 30.39 c/L, fat 4.39% protein 3.42% (VAT 13.5%)",22824.39,3081.29,25905.68,25/11/2015,EUR,,self_billed_statement,,IE9462300P,D00239
+MS-201511,30/11/2015,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Nov 2015: 35,590 L @ 30.64 c/L, fat 4.16% protein 3.58% (VAT 13.5%)",10904.78,1472.15,12376.93,25/12/2015,EUR,,self_billed_statement,,IE9462300P,D00241
+MS-201512,31/12/2015,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Dec 2015: 6,840 L @ 30.93 c/L, fat 4.26% protein 3.59% (VAT 13.5%)",2115.94,285.65,2401.59,25/01/2016,EUR,,self_billed_statement,,IE9462300P,D00243
+MS-201601,31/01/2016,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Jan 2016: 22,450 L @ 22.74 c/L, fat 4.21% protein 3.56% (VAT 13.5%)",5105.64,689.26,5794.90,25/02/2016,EUR,,self_billed_statement,,IE9462300P,D00245
+MS-201602,29/02/2016,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Feb 2016: 76,800 L @ 23.92 c/L, fat 4.19% protein 3.56% (VAT 13.5%)",18369.20,2479.84,20849.04,25/03/2016,EUR,,self_billed_statement,,IE9462300P,D00247
+DOC16-0001,10/03/2016,M. O'Leary,Reseeding / power harrow,1872.00,252.72,2124.72,09/04/2016,EUR,,invoice,,,D04907
+LD-16-7710,11/03/2016,Kilbeg Livestock Mart Ltd,"Mart docket: 27 calves (20 bull, 7 heifer) avg EUR 23.23",627.32,30.11,657.43,18/03/2016,EUR,,sales_docket,,IE6958430T,D04640
+LD-16-8229,23/03/2016,Kilbeg Livestock Mart Ltd,"Mart docket: 27 calves (20 bull, 7 heifer) avg EUR 27.81",750.91,36.04,786.95,30/03/2016,EUR,,sales_docket,,IE6958430T,D04642
+MS-201603,31/03/2016,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Mar 2016: 157,080 L @ 25.08 c/L, fat 4.41% protein 3.62% (VAT 13.5%)",39388.75,5317.48,44706.23,25/04/2016,EUR,,self_billed_statement,,IE9462300P,D00249
+LD-16-4257,04/04/2016,Kilbeg Livestock Mart Ltd,"Mart docket: 27 calves (20 bull, 7 heifer) avg EUR 23.58",636.59,30.56,667.15,11/04/2016,EUR,,sales_docket,,IE6958430T,D04644
+LD-16-2439,18/04/2016,Kilbeg Livestock Mart Ltd,"Mart docket: 27 calves (20 bull, 7 heifer) avg EUR 23.34",630.28,30.25,660.53,25/04/2016,EUR,,sales_docket,,IE6958430T,D04646
+MS-201604,30/04/2016,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Apr 2016: 217,060 L @ 25.88 c/L, fat 4.32% protein 3.53% (VAT 13.5%)",56168.55,7582.75,63751.30,25/05/2016,EUR,,self_billed_statement,,IE9462300P,D00251
+LD-16-7803,04/05/2016,Kilbeg Livestock Mart Ltd,"Mart docket: 27 calves (20 bull, 7 heifer) avg EUR 27.13",732.62,35.17,767.79,11/05/2016,EUR,,sales_docket,,IE6958430T,D04648
+DOC16-0001,04/05/2016,D. Buckley,Round baling + wrapping,1073.45,144.92,1218.37,03/06/2016,EUR,,invoice,,,D04909
+DOC16-0001,10/05/2016,P. Dineen,Silage harvesting,861.17,116.26,977.43,09/06/2016,EUR,,invoice,,,D04906
+LD-16-6100,19/05/2016,Kilbeg Livestock Mart Ltd,"Mart docket: 27 calves (20 bull, 7 heifer) avg EUR 26.61",718.57,34.49,753.06,26/05/2016,EUR,,sales_docket,,IE6958430T,D04650
+MS-201605,31/05/2016,Slieve Dairy Co-Operative Society Ltd,"Milk supplied May 2016: 223,320 L @ 27.13 c/L, fat 4.46% protein 3.68% (VAT 13.5%)",60588.36,8179.43,68767.79,25/06/2016,EUR,,self_billed_statement,,IE9462300P,D00253
+DOC16-0001,08/06/2016,Tim Hennessy,Slurry spreading (tanker + operator),1858.75,250.93,2109.68,08/07/2016,EUR,,invoice,,,D04911
+DOC16-0002,11/06/2016,N. Barrett,Silage harvesting,1210.74,163.45,1374.19,11/07/2016,EUR,,invoice,,,D04913
+MS-201606,30/06/2016,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Jun 2016: 217,680 L @ 28.11 c/L, fat 3.90% protein 3.32% (VAT 13.5%)",61191.83,8260.90,69452.73,25/07/2016,EUR,,self_billed_statement,,IE9462300P,D00255
+DOC16-0002,10/07/2016,M. O'Leary,Reseeding / power harrow,1879.20,253.69,2132.89,09/08/2016,EUR,,invoice,,,D04914
+DOC16-0002,25/07/2016,P. Dineen,Round baling + wrapping,1305.64,176.26,1481.90,24/08/2016,EUR,,invoice,,,D04912
+MS-201607,31/07/2016,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Jul 2016: 181,950 L @ 29.10 c/L, fat 4.03% protein 3.56% (VAT 13.5%)",52942.97,7147.30,60090.27,25/08/2016,EUR,,self_billed_statement,,IE9462300P,D00257
+SM-16-4850,05/08/2016,Southern Meats Ltd,Carcase docket: 12 cull cows avg EUR 706.21,8474.57,406.78,8881.35,12/08/2016,EUR,,sales_docket,,IE8651198C,D04655
+MS-201608,31/08/2016,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Aug 2016: 168,720 L @ 29.89 c/L, fat 4.22% protein 3.61% (VAT 13.5%)",50435.93,6808.85,57244.78,25/09/2016,EUR,,self_billed_statement,,IE9462300P,D00259
+DOC16-0002,07/09/2016,D. Buckley,Round baling + wrapping,943.38,127.36,1070.74,07/10/2016,EUR,,invoice,,,D04910
+LD-16-2795,12/09/2016,Kilbeg Livestock Mart Ltd,Mart docket: 13 cull cows avg EUR 738.10,9595.27,460.57,10055.84,19/09/2016,EUR,,sales_docket,,IE6958430T,D04656
+DOC16-0001,17/09/2016,N. Barrett,Hedge cutting,1395.17,188.35,1583.52,17/10/2016,EUR,,invoice,,,D04908
+MS-201609,30/09/2016,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Sep 2016: 124,720 L @ 31.31 c/L, fat 3.97% protein 3.69% (VAT 13.5%)",39055.85,5272.54,44328.39,25/10/2016,EUR,,self_billed_statement,,IE9462300P,D00261
+SM-16-3761,17/10/2016,Southern Meats Ltd,Carcase docket: 12 cull cows avg EUR 639.24,7670.88,368.20,8039.08,24/10/2016,EUR,,sales_docket,,IE8651198C,D04652
+MS-201610,31/10/2016,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Oct 2016: 82,820 L @ 31.95 c/L, fat 4.25% protein 3.44% (VAT 13.5%)",26461.79,3572.34,30034.13,25/11/2016,EUR,,self_billed_statement,,IE9462300P,D00263
+DOC16-0001,03/11/2016,Ballynoe Farms Partnership,Reseeding / power harrow,1862.57,251.45,2114.02,03/12/2016,EUR,,invoice,,,D04905
+LD-16-3089,15/11/2016,Kilbeg Livestock Mart Ltd,Mart docket: 12 cull cows avg EUR 700.37,8404.42,403.41,8807.83,22/11/2016,EUR,,sales_docket,,IE6958430T,D04653
+MS-201611,30/11/2016,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Nov 2016: 37,700 L @ 33.41 c/L, fat 3.93% protein 3.36% (VAT 13.5%)",12595.93,1700.45,14296.38,25/12/2016,EUR,,self_billed_statement,,IE9462300P,D00265
+MS-201612,31/12/2016,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Dec 2016: 7,840 L @ 34.22 c/L, fat 4.03% protein 3.32% (VAT 13.5%)",2683.17,362.23,3045.40,25/01/2017,EUR,,self_billed_statement,,IE9462300P,D00267
+MS-201701,31/01/2017,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Jan 2017: 23,290 L @ 36.68 c/L, fat 3.91% protein 3.41% (VAT 13.5%)",8543.28,1153.34,9696.62,25/02/2017,EUR,,self_billed_statement,,IE9462300P,D00269
+MS-201702,28/02/2017,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Feb 2017: 78,670 L @ 36.40 c/L, fat 4.01% protein 3.45% (VAT 13.5%)",28633.76,3865.56,32499.32,25/03/2017,EUR,,self_billed_statement,,IE9462300P,D00271
+DOC17-0001,05/03/2017,Coolcaum Dairy Ltd,Silage harvesting,1485.87,200.59,1686.46,04/04/2017,EUR,,invoice,,,D04919
+LD-17-1794,14/03/2017,Kilbeg Livestock Mart Ltd,"Mart docket: 25 calves (17 bull, 8 heifer) avg EUR 42.85",1071.27,51.42,1122.69,21/03/2017,EUR,,sales_docket,,IE6958430T,D04663
+DOC17-0001,17/03/2017,Tim Hennessy,Reseeding / power harrow,1407.22,189.97,1597.19,16/04/2017,EUR,,invoice,,,D04916
+DOC17-0001,18/03/2017,S. Kiely,Hedge cutting,1257.48,169.76,1427.24,17/04/2017,EUR,,invoice,,,D04918
+LD-17-3292,20/03/2017,Kilbeg Livestock Mart Ltd,"Mart docket: 25 calves (17 bull, 8 heifer) avg EUR 47.10",1177.53,56.52,1234.05,27/03/2017,EUR,,sales_docket,,IE6958430T,D04665
+DOC17-0001,20/03/2017,J. Cronin,Hedge cutting,1090.35,147.20,1237.55,19/04/2017,EUR,,invoice,,,D04922
+DOC17-0001,27/03/2017,E. Foley & Son,Reseeding / power harrow,2206.57,297.89,2504.46,26/04/2017,EUR,,invoice,,,D04925
+DOC17-0001,28/03/2017,N. Barrett,Slurry spreading (tanker + operator),1443.06,194.81,1637.87,27/04/2017,EUR,,invoice,,,D04917
+LD-17-5760,30/03/2017,Kilbeg Livestock Mart Ltd,"Mart docket: 24 calves (16 bull, 8 heifer) avg EUR 52.16",1251.82,60.09,1311.91,06/04/2017,EUR,,sales_docket,,IE6958430T,D04667
+MS-201703,31/03/2017,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Mar 2017: 160,290 L @ 36.30 c/L, fat 4.20% protein 3.43% (VAT 13.5%)",58188.05,7855.39,66043.44,25/04/2017,EUR,,self_billed_statement,,IE9462300P,D00273
+LD-17-9587,10/04/2017,Kilbeg Livestock Mart Ltd,"Mart docket: 24 calves (16 bull, 8 heifer) avg EUR 52.12",1250.82,60.04,1310.86,17/04/2017,EUR,,sales_docket,,IE6958430T,D04669
+LD-17-2206,21/04/2017,Kilbeg Livestock Mart Ltd,"Mart docket: 24 calves (16 bull, 8 heifer) avg EUR 47.66",1143.78,54.90,1198.68,28/04/2017,EUR,,sales_docket,,IE6958430T,D04671
+MS-201704,30/04/2017,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Apr 2017: 223,660 L @ 36.33 c/L, fat 4.42% protein 3.44% (VAT 13.5%)",81248.93,10968.61,92217.54,25/05/2017,EUR,,self_billed_statement,,IE9462300P,D00275
+LD-17-8789,01/05/2017,Kilbeg Livestock Mart Ltd,"Mart docket: 24 calves (16 bull, 8 heifer) avg EUR 42.82",1027.61,49.33,1076.94,08/05/2017,EUR,,sales_docket,,IE6958430T,D04673
+LD-17-8636,12/05/2017,Kilbeg Livestock Mart Ltd,"Mart docket: 24 calves (16 bull, 8 heifer) avg EUR 49.36",1184.62,56.86,1241.48,19/05/2017,EUR,,sales_docket,,IE6958430T,D04675
+LD-17-2106,22/05/2017,Kilbeg Livestock Mart Ltd,"Mart docket: 24 calves (16 bull, 8 heifer) avg EUR 43.47",1043.30,50.08,1093.38,29/05/2017,EUR,,sales_docket,,IE6958430T,D04677
+MS-201705,31/05/2017,Slieve Dairy Co-Operative Society Ltd,"Milk supplied May 2017: 244,810 L @ 36.53 c/L, fat 3.99% protein 3.66% (VAT 13.5%)",89417.34,12071.34,101488.68,25/06/2017,EUR,,self_billed_statement,,IE9462300P,D00277
+DOC17-0002,11/06/2017,S. Kiely,Rolling and spreading fertiliser,935.27,126.26,1061.53,11/07/2017,EUR,,invoice,,,D04924
+MS-201706,30/06/2017,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Jun 2017: 227,410 L @ 36.66 c/L, fat 4.01% protein 3.64% (VAT 13.5%)",83357.46,11253.26,94610.72,25/07/2017,EUR,,self_billed_statement,,IE9462300P,D00279
+DOC17-0002,03/07/2017,Tim Hennessy,Rolling and spreading fertiliser,1374.41,185.55,1559.96,02/08/2017,EUR,,invoice,,,D04921
+DOC17-0001,04/07/2017,Ballynoe Farms Partnership,Hedge cutting,1509.56,203.79,1713.35,03/08/2017,EUR,,invoice,,,D04920
+DOC17-0001,06/07/2017,B. Walsh & Sons,Rolling and spreading fertiliser,1481.76,200.04,1681.80,05/08/2017,EUR,,invoice,,,D04915
+MS-201707,31/07/2017,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Jul 2017: 203,380 L @ 36.51 c/L, fat 4.31% protein 3.35% (VAT 13.5%)",74259.52,10025.04,84284.56,25/08/2017,EUR,,self_billed_statement,,IE9462300P,D00281
+MS-201708,31/08/2017,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Aug 2017: 178,600 L @ 36.25 c/L, fat 4.44% protein 3.45% (VAT 13.5%)",64743.30,8740.35,73483.65,25/09/2017,EUR,,self_billed_statement,,IE9462300P,D00283
+DOC17-0003,21/09/2017,Tim Hennessy,Reseeding / power harrow,1515.60,204.61,1720.21,21/10/2017,EUR,,invoice,,,D04923
+LD-17-9283,25/09/2017,Kilbeg Livestock Mart Ltd,Mart docket: 17 cull cows avg EUR 795.72,13527.29,649.31,14176.60,02/10/2017,EUR,,sales_docket,,IE6958430T,D04679
+MS-201709,30/09/2017,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Sep 2017: 134,600 L @ 36.35 c/L, fat 4.28% protein 3.43% (VAT 13.5%)",48923.22,6604.63,55527.85,25/10/2017,EUR,,self_billed_statement,,IE9462300P,D00285
+LD-17-8201,23/10/2017,Kilbeg Livestock Mart Ltd,Mart docket: 17 cull cows avg EUR 881.23,14980.86,719.08,15699.94,30/10/2017,EUR,,sales_docket,,IE6958430T,D04681
+SM-17-8013,24/10/2017,Southern Meats Ltd,Carcase docket: 18 cull cows avg EUR 834.89,15028.07,721.35,15749.42,31/10/2017,EUR,,sales_docket,,IE8651198C,D04683
+MS-201710,31/10/2017,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Oct 2017: 88,340 L @ 36.53 c/L, fat 4.52% protein 3.56% (VAT 13.5%)",32272.28,4356.76,36629.04,25/11/2017,EUR,,self_billed_statement,,IE9462300P,D00287
+MS-201711,30/11/2017,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Nov 2017: 40,470 L @ 36.74 c/L, fat 4.39% protein 3.67% (VAT 13.5%)",14870.28,2007.49,16877.77,25/12/2017,EUR,,self_billed_statement,,IE9462300P,D00289
+MS-201712,31/12/2017,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Dec 2017: 7,700 L @ 36.29 c/L, fat 3.92% protein 3.58% (VAT 13.5%)",2794.04,377.20,3171.24,25/01/2018,EUR,,self_billed_statement,,IE9462300P,D00291
+MS-201801,31/01/2018,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Jan 2018: 23,680 L @ 33.47 c/L, fat 4.40% protein 3.43% (VAT 13.5%)",7925.25,1069.91,8995.16,25/02/2018,EUR,,self_billed_statement,,IE9462300P,D00293
+MS-201802,28/02/2018,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Feb 2018: 76,730 L @ 33.59 c/L, fat 4.16% protein 3.47% (VAT 13.5%)",25769.95,3478.94,29248.89,25/03/2018,EUR,,self_billed_statement,,IE9462300P,D00295
+DOC18-0001,09/03/2018,J. Cronin,Reseeding / power harrow,2023.26,273.14,2296.40,08/04/2018,EUR,,invoice,,,D04933
+LD-18-1733,14/03/2018,Kilbeg Livestock Mart Ltd,"Mart docket: 33 calves (22 bull, 11 heifer) avg EUR 64.53",2129.49,102.22,2231.71,21/03/2018,EUR,,sales_docket,,IE6958430T,D04688
+DOC18-0002,22/03/2018,K. Murphy Farms Ltd,Rolling and spreading fertiliser,1656.18,223.58,1879.76,21/04/2018,EUR,,invoice,,,D04934
+LD-18-7405,26/03/2018,Kilbeg Livestock Mart Ltd,"Mart docket: 32 calves (21 bull, 11 heifer) avg EUR 63.15",2020.84,97.00,2117.84,02/04/2018,EUR,,sales_docket,,IE6958430T,D04690
+DOC18-0001,27/03/2018,K. Murphy Farms Ltd,Silage harvesting,1225.66,165.46,1391.12,26/04/2018,EUR,,invoice,,,D04926
+DOC18-0003,28/03/2018,E. Foley & Son,Rolling and spreading fertiliser,1397.18,188.62,1585.80,27/04/2018,EUR,,invoice,,,D04936
+MS-201803,31/03/2018,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Mar 2018: 154,150 L @ 33.48 c/L, fat 4.47% protein 3.43% (VAT 13.5%)",51602.64,6966.36,58569.00,25/04/2018,EUR,,self_billed_statement,,IE9462300P,D00297
+LD-18-9776,09/04/2018,Kilbeg Livestock Mart Ltd,"Mart docket: 32 calves (21 bull, 11 heifer) avg EUR 66.99",2143.70,102.90,2246.60,16/04/2018,EUR,,sales_docket,,IE6958430T,D04692
+DOC18-0001,09/04/2018,E. Foley & Son,Rolling and spreading fertiliser,2301.86,310.75,2612.61,09/05/2018,EUR,,invoice,,,D04927
+DOC18-0001,11/04/2018,Coolcaum Dairy Ltd,Reseeding / power harrow,1554.27,209.83,1764.10,11/05/2018,EUR,,invoice,,,D04929
+LD-18-9422,18/04/2018,Kilbeg Livestock Mart Ltd,"Mart docket: 32 calves (21 bull, 11 heifer) avg EUR 62.09",1986.81,95.37,2082.18,25/04/2018,EUR,,sales_docket,,IE6958430T,D04694
+MS-201804,30/04/2018,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Apr 2018: 224,460 L @ 33.28 c/L, fat 4.50% protein 3.59% (VAT 13.5%)",74702.10,10084.78,84786.88,25/05/2018,EUR,,self_billed_statement,,IE9462300P,D00299
+LD-18-2971,04/05/2018,Kilbeg Livestock Mart Ltd,"Mart docket: 32 calves (21 bull, 11 heifer) avg EUR 63.42",2029.34,97.41,2126.75,11/05/2018,EUR,,sales_docket,,IE6958430T,D04696
+LD-18-2474,15/05/2018,Kilbeg Livestock Mart Ltd,"Mart docket: 32 calves (21 bull, 11 heifer) avg EUR 65.45",2094.55,100.54,2195.09,22/05/2018,EUR,,sales_docket,,IE6958430T,D04698
+DOC18-0002,20/05/2018,E. Foley & Son,Slurry spreading (tanker + operator),2079.92,280.79,2360.71,19/06/2018,EUR,,invoice,,,D04928
+MS-201805,31/05/2018,Slieve Dairy Co-Operative Society Ltd,"Milk supplied May 2018: 236,540 L @ 33.31 c/L, fat 4.40% protein 3.67% (VAT 13.5%)",78796.18,10637.48,89433.66,25/06/2018,EUR,,self_billed_statement,,IE9462300P,D00301
+MS-201806,30/06/2018,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Jun 2018: 212,310 L @ 33.59 c/L, fat 4.21% protein 3.53% (VAT 13.5%)",71307.44,9626.50,80933.94,25/07/2018,EUR,,self_billed_statement,,IE9462300P,D00303
+DOC18-0002,01/07/2018,J. Cronin,Hedge cutting,1758.25,237.36,1995.61,31/07/2018,EUR,,invoice,,,D04935
+DOC18-0001,17/07/2018,B. Walsh & Sons,Hedge cutting,1301.44,175.69,1477.13,16/08/2018,EUR,,invoice,,,D04930
+MS-201807,31/07/2018,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Jul 2018: 186,460 L @ 33.69 c/L, fat 4.06% protein 3.33% (VAT 13.5%)",62823.64,8481.19,71304.83,25/08/2018,EUR,,self_billed_statement,,IE9462300P,D00305
+DOC18-0001,19/08/2018,N. Barrett,Reseeding / power harrow,1779.86,240.28,2020.14,18/09/2018,EUR,,invoice,,,D04937
+MS-201808,31/08/2018,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Aug 2018: 173,090 L @ 33.55 c/L, fat 4.58% protein 3.33% (VAT 13.5%)",58070.34,7839.50,65909.84,25/09/2018,EUR,,self_billed_statement,,IE9462300P,D00307
+DOC18-0002,02/09/2018,Coolcaum Dairy Ltd,Reseeding / power harrow,1574.82,212.60,1787.42,02/10/2018,EUR,,invoice,,,D04932
+LD-18-8277,17/09/2018,Kilbeg Livestock Mart Ltd,Mart docket: 16 cull cows avg EUR 976.26,15620.19,749.77,16369.96,24/09/2018,EUR,,sales_docket,,IE6958430T,D04700
+MS-201809,30/09/2018,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Sep 2018: 136,440 L @ 33.63 c/L, fat 4.27% protein 3.55% (VAT 13.5%)",45882.23,6194.10,52076.33,25/10/2018,EUR,,self_billed_statement,,IE9462300P,D00309
+SM-18-8146,15/10/2018,Southern Meats Ltd,Carcase docket: 16 cull cows avg EUR 901.97,14431.50,692.71,15124.21,22/10/2018,EUR,,sales_docket,,IE8651198C,D04703
+LD-18-2553,15/10/2018,Kilbeg Livestock Mart Ltd,Mart docket: 15 in-calf heifers,24750.00,1188.00,25938.00,22/10/2018,EUR,,sales_docket,,IE6958430T,D04707
+SM-18-5628,17/10/2018,Southern Meats Ltd,Carcase docket: 17 cull cows avg EUR 888.36,15102.11,724.90,15827.01,24/10/2018,EUR,,sales_docket,,IE8651198C,D04706
+SM-18-8652,22/10/2018,Southern Meats Ltd,Carcase docket: 16 cull cows avg EUR 888.61,14217.81,682.45,14900.26,29/10/2018,EUR,,sales_docket,,IE8651198C,D04702
+DOC18-0001,23/10/2018,S. Kiely,Hedge cutting,1273.24,171.89,1445.13,22/11/2018,EUR,,invoice,,,D04931
+LD-18-5826,25/10/2018,Kilbeg Livestock Mart Ltd,Mart docket: 17 cull cows avg EUR 987.17,16781.93,805.53,17587.46,01/11/2018,EUR,,sales_docket,,IE6958430T,D04704
+MS-201810,31/10/2018,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Oct 2018: 82,940 L @ 33.54 c/L, fat 3.92% protein 3.38% (VAT 13.5%)",27817.98,3755.43,31573.41,25/11/2018,EUR,,self_billed_statement,,IE9462300P,D00311
+MS-201811,30/11/2018,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Nov 2018: 38,850 L @ 33.60 c/L, fat 4.17% protein 3.63% (VAT 13.5%)",13055.50,1762.49,14817.99,25/12/2018,EUR,,self_billed_statement,,IE9462300P,D00313
+MS-201812,31/12/2018,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Dec 2018: 7,830 L @ 33.27 c/L, fat 4.47% protein 3.40% (VAT 13.5%)",2605.10,351.69,2956.79,25/01/2019,EUR,,self_billed_statement,,IE9462300P,D00315
+MS-201901,31/01/2019,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Jan 2019: 23,410 L @ 33.83 c/L, fat 4.27% protein 3.41% (VAT 13.5%)",7920.61,1069.28,8989.89,25/02/2019,EUR,,self_billed_statement,,IE9462300P,D00317
+MS-201902,28/02/2019,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Feb 2019: 82,220 L @ 34.10 c/L, fat 4.56% protein 3.39% (VAT 13.5%)",28036.78,3784.97,31821.75,25/03/2019,EUR,,self_billed_statement,,IE9462300P,D00319
+LD-19-9083,13/03/2019,Kilbeg Livestock Mart Ltd,"Mart docket: 27 calves (18 bull, 9 heifer) avg EUR 59.72",1612.37,77.39,1689.76,20/03/2019,EUR,,sales_docket,,IE6958430T,D04712
+LD-19-9803,22/03/2019,Kilbeg Livestock Mart Ltd,"Mart docket: 27 calves (18 bull, 9 heifer) avg EUR 51.36",1386.80,66.57,1453.37,29/03/2019,EUR,,sales_docket,,IE6958430T,D04714
+MS-201903,31/03/2019,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Mar 2019: 163,710 L @ 34.24 c/L, fat 4.26% protein 3.33% (VAT 13.5%)",56057.64,7567.78,63625.42,25/04/2019,EUR,,self_billed_statement,,IE9462300P,D00321
+LD-19-4931,02/04/2019,Kilbeg Livestock Mart Ltd,"Mart docket: 27 calves (18 bull, 9 heifer) avg EUR 60.39",1630.65,78.27,1708.92,09/04/2019,EUR,,sales_docket,,IE6958430T,D04716
+DOC19-0001,02/04/2019,N. Barrett,Hedge cutting,1305.24,176.21,1481.45,02/05/2019,EUR,,invoice,,,D04943
+LD-19-4810,15/04/2019,Kilbeg Livestock Mart Ltd,"Mart docket: 27 calves (18 bull, 9 heifer) avg EUR 64.02",1728.65,82.98,1811.63,22/04/2019,EUR,,sales_docket,,IE6958430T,D04718
+DOC19-0001,17/04/2019,Coolcaum Dairy Ltd,Silage harvesting,1230.46,166.11,1396.57,17/05/2019,EUR,,invoice,,,D04949
+LD-19-4412,23/04/2019,Kilbeg Livestock Mart Ltd,"Mart docket: 27 calves (18 bull, 9 heifer) avg EUR 52.79",1425.41,68.42,1493.83,30/04/2019,EUR,,sales_docket,,IE6958430T,D04720
+MS-201904,30/04/2019,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Apr 2019: 235,640 L @ 33.80 c/L, fat 4.34% protein 3.45% (VAT 13.5%)",79641.28,10751.57,90392.85,25/05/2019,EUR,,self_billed_statement,,IE9462300P,D00323
+LD-19-4565,10/05/2019,Kilbeg Livestock Mart Ltd,"Mart docket: 26 calves (18 bull, 8 heifer) avg EUR 61.41",1596.54,76.63,1673.17,17/05/2019,EUR,,sales_docket,,IE6958430T,D04722
+DOC19-0002,12/05/2019,K. Murphy Farms Ltd,Reseeding / power harrow,1385.62,187.06,1572.68,11/06/2019,EUR,,invoice,,,D04944
+LD-19-8392,20/05/2019,Kilbeg Livestock Mart Ltd,"Mart docket: 26 calves (18 bull, 8 heifer) avg EUR 52.34",1360.94,65.33,1426.27,27/05/2019,EUR,,sales_docket,,IE6958430T,D04724
+MS-201905,31/05/2019,Slieve Dairy Co-Operative Society Ltd,"Milk supplied May 2019: 240,710 L @ 34.01 c/L, fat 4.52% protein 3.69% (VAT 13.5%)",81864.59,11051.72,92916.31,25/06/2019,EUR,,self_billed_statement,,IE9462300P,D00325
+DOC19-0002,22/06/2019,P. Dineen,Hedge cutting,1490.09,201.16,1691.25,22/07/2019,EUR,,invoice,,,D04945
+MS-201906,30/06/2019,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Jun 2019: 215,840 L @ 33.85 c/L, fat 4.56% protein 3.45% (VAT 13.5%)",73063.55,9863.58,82927.13,25/07/2019,EUR,,self_billed_statement,,IE9462300P,D00327
+DOC19-0001,15/07/2019,Tim Hennessy,Rolling and spreading fertiliser,1189.00,160.52,1349.52,14/08/2019,EUR,,invoice,,,D04939
+DOC19-0001,21/07/2019,B. Walsh & Sons,Hedge cutting,1747.16,235.87,1983.03,20/08/2019,EUR,,invoice,,,D04950
+MS-201907,31/07/2019,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Jul 2019: 199,500 L @ 34.13 c/L, fat 4.14% protein 3.53% (VAT 13.5%)",68085.23,9191.51,77276.74,25/08/2019,EUR,,self_billed_statement,,IE9462300P,D00329
+DOC19-0002,01/08/2019,Tim Hennessy,Hedge cutting,1093.37,147.60,1240.97,31/08/2019,EUR,,invoice,,,D04942
+DOC19-0001,17/08/2019,P. Dineen,Rolling and spreading fertiliser,1305.32,176.22,1481.54,16/09/2019,EUR,,invoice,,,D04940
+DOC19-0001,28/08/2019,K. Murphy Farms Ltd,Slurry spreading (tanker + operator),1282.42,173.13,1455.55,27/09/2019,EUR,,invoice,,,D04938
+MS-201908,31/08/2019,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Aug 2019: 180,360 L @ 33.92 c/L, fat 4.27% protein 3.33% (VAT 13.5%)",61186.14,8260.13,69446.27,25/09/2019,EUR,,self_billed_statement,,IE9462300P,D00331
+DOC19-0003,15/09/2019,K. Murphy Farms Ltd,Rolling and spreading fertiliser,825.94,111.50,937.44,15/10/2019,EUR,,invoice,,,D04947
+SM-19-6880,25/09/2019,Southern Meats Ltd,Carcase docket: 13 cull cows avg EUR 818.10,10635.33,510.50,11145.83,02/10/2019,EUR,,sales_docket,,IE8651198C,D04727
+DOC19-0001,28/09/2019,M. O'Leary,Slurry spreading (tanker + operator),1453.71,196.25,1649.96,28/10/2019,EUR,,invoice,,,D04946
+DOC19-0004,28/09/2019,K. Murphy Farms Ltd,Round baling + wrapping,1893.52,255.63,2149.15,28/10/2019,EUR,,invoice,,,D04951
+MS-201909,30/09/2019,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Sep 2019: 133,520 L @ 34.06 c/L, fat 4.09% protein 3.64% (VAT 13.5%)",45473.96,6138.98,51612.94,25/10/2019,EUR,,self_billed_statement,,IE9462300P,D00333
+SM-19-6204,07/10/2019,Southern Meats Ltd,Carcase docket: 13 cull cows avg EUR 803.89,10450.53,501.63,10952.16,14/10/2019,EUR,,sales_docket,,IE8651198C,D04728
+MS-201910,31/10/2019,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Oct 2019: 90,450 L @ 33.85 c/L, fat 4.32% protein 3.35% (VAT 13.5%)",30613.24,4132.79,34746.03,25/11/2019,EUR,,self_billed_statement,,IE9462300P,D00335
+LD-19-3126,04/11/2019,Kilbeg Livestock Mart Ltd,Mart docket: 14 cull cows avg EUR 864.08,12097.18,580.66,12677.84,11/11/2019,EUR,,sales_docket,,IE6958430T,D04729
+DOC19-0001,08/11/2019,S. Kiely,Reseeding / power harrow,1703.34,229.95,1933.29,08/12/2019,EUR,,invoice,,,D04941
+SM-19-8424,25/11/2019,Southern Meats Ltd,Carcase docket: 13 cull cows avg EUR 917.94,11933.28,572.80,12506.08,02/12/2019,EUR,,sales_docket,,IE8651198C,D04726
+MS-201911,30/11/2019,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Nov 2019: 42,080 L @ 34.24 c/L, fat 3.91% protein 3.62% (VAT 13.5%)",14409.52,1945.29,16354.81,25/12/2019,EUR,,self_billed_statement,,IE9462300P,D00337
+DOC19-0003,06/12/2019,P. Dineen,Slurry spreading (tanker + operator),1442.50,194.74,1637.24,05/01/2020,EUR,,invoice,,,D04948
+MS-201912,31/12/2019,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Dec 2019: 7,890 L @ 34.21 c/L, fat 4.24% protein 3.46% (VAT 13.5%)",2699.06,364.37,3063.43,25/01/2020,EUR,,self_billed_statement,,IE9462300P,D00339
+MS-202001,31/01/2020,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Jan 2020: 26,550 L @ 32.89 c/L, fat 3.95% protein 3.59% (VAT 13.5%)",8733.19,1178.98,9912.17,25/02/2020,EUR,,self_billed_statement,,IE9462300P,D00341
+MS-202002,29/02/2020,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Feb 2020: 86,470 L @ 32.84 c/L, fat 4.21% protein 3.47% (VAT 13.5%)",28401.06,3834.14,32235.20,25/03/2020,EUR,,self_billed_statement,,IE9462300P,D00343
+DOC20-0001,03/03/2020,K. Murphy Farms Ltd,Reseeding / power harrow,1564.44,211.20,1775.64,02/04/2020,EUR,,invoice,,,D04956
+DOC20-0001,07/03/2020,Ballynoe Farms Partnership,Slurry spreading (tanker + operator),961.75,129.84,1091.59,06/04/2020,EUR,,invoice,,,D04960
+LD-20-3262,13/03/2020,Kilbeg Livestock Mart Ltd,"Mart docket: 26 calves (17 bull, 9 heifer) avg EUR 50.54",1313.97,63.07,1377.04,20/03/2020,EUR,,sales_docket,,IE6958430T,D04734
+LD-20-5878,18/03/2020,Kilbeg Livestock Mart Ltd,"Mart docket: 26 calves (17 bull, 9 heifer) avg EUR 49.15",1277.93,61.34,1339.27,25/03/2020,EUR,,sales_docket,,IE6958430T,D04736
+MS-202003,31/03/2020,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Mar 2020: 172,320 L @ 33.18 c/L, fat 4.08% protein 3.37% (VAT 13.5%)",57171.05,7718.09,64889.14,25/04/2020,EUR,,self_billed_statement,,IE9462300P,D00345
+LD-20-4331,31/03/2020,Kilbeg Livestock Mart Ltd,"Mart docket: 26 calves (17 bull, 9 heifer) avg EUR 46.69",1213.87,58.27,1272.14,07/04/2020,EUR,,sales_docket,,IE6958430T,D04738
+DOC20-0001,07/04/2020,P. Dineen,Reseeding / power harrow,854.87,115.41,970.28,07/05/2020,EUR,,invoice,,,D04954
+LD-20-9751,08/04/2020,Kilbeg Livestock Mart Ltd,"Mart docket: 26 calves (17 bull, 9 heifer) avg EUR 50.10",1302.48,62.52,1365.00,15/04/2020,EUR,,sales_docket,,IE6958430T,D04740
+DOC20-0001,12/04/2020,B. Walsh & Sons,Silage harvesting,1638.50,221.20,1859.70,12/05/2020,EUR,,invoice,,,D04952
+LD-20-4185,17/04/2020,Kilbeg Livestock Mart Ltd,"Mart docket: 26 calves (17 bull, 9 heifer) avg EUR 49.59",1289.24,61.88,1351.12,24/04/2020,EUR,,sales_docket,,IE6958430T,D04742
+DOC20-0001,19/04/2020,Coolcaum Dairy Ltd,Rolling and spreading fertiliser,1255.85,169.54,1425.39,19/05/2020,EUR,,invoice,,,D04963
+DOC20-0002,24/04/2020,K. Murphy Farms Ltd,Round baling + wrapping,1966.81,265.52,2232.33,24/05/2020,EUR,,invoice,,,D04964
+DOC20-0002,25/04/2020,Ballynoe Farms Partnership,Slurry spreading (tanker + operator),1200.89,162.12,1363.01,25/05/2020,EUR,,invoice,,,D04968
+LD-20-9127,28/04/2020,Kilbeg Livestock Mart Ltd,"Mart docket: 26 calves (17 bull, 9 heifer) avg EUR 44.16",1148.15,55.11,1203.26,05/05/2020,EUR,,sales_docket,,IE6958430T,D04744
+MS-202004,30/04/2020,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Apr 2020: 233,210 L @ 32.91 c/L, fat 3.90% protein 3.34% (VAT 13.5%)",76744.48,10360.50,87104.98,25/05/2020,EUR,,self_billed_statement,,IE9462300P,D00347
+LD-20-9240,11/05/2020,Kilbeg Livestock Mart Ltd,"Mart docket: 26 calves (17 bull, 9 heifer) avg EUR 51.04",1326.95,63.69,1390.64,18/05/2020,EUR,,sales_docket,,IE6958430T,D04746
+LD-20-9186,25/05/2020,Kilbeg Livestock Mart Ltd,"Mart docket: 25 calves (16 bull, 9 heifer) avg EUR 43.27",1081.69,51.92,1133.61,01/06/2020,EUR,,sales_docket,,IE6958430T,D04748
+DOC20-0001,25/05/2020,Tim Hennessy,Round baling + wrapping,1841.47,248.60,2090.07,24/06/2020,EUR,,invoice,,,D04962
+DOC20-0001,27/05/2020,J. Cronin,Slurry spreading (tanker + operator),1796.85,242.57,2039.42,26/06/2020,EUR,,invoice,,,D04961
+MS-202005,31/05/2020,Slieve Dairy Co-Operative Society Ltd,"Milk supplied May 2020: 257,160 L @ 33.06 c/L, fat 4.42% protein 3.43% (VAT 13.5%)",85021.65,11477.92,96499.57,25/06/2020,EUR,,self_billed_statement,,IE9462300P,D00349
+DOC20-0003,01/06/2020,B. Walsh & Sons,Hedge cutting,893.02,120.56,1013.58,01/07/2020,EUR,,invoice,,,D04957
+DOC20-0002,04/06/2020,B. Walsh & Sons,Slurry spreading (tanker + operator),1421.31,191.88,1613.19,04/07/2020,EUR,,invoice,,,D04953
+DOC20-0002,13/06/2020,M. O'Leary,Hedge cutting,1772.28,239.26,2011.54,13/07/2020,EUR,,invoice,,,D04958
+MS-202006,30/06/2020,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Jun 2020: 247,540 L @ 32.93 c/L, fat 4.35% protein 3.60% (VAT 13.5%)",81510.62,11003.93,92514.55,25/07/2020,EUR,,self_billed_statement,,IE9462300P,D00351
+SM-20-5881,08/07/2020,Southern Meats Ltd,Carcase docket: 9 cull cows avg EUR 862.19,7759.67,372.46,8132.13,15/07/2020,EUR,,sales_docket,,IE8651198C,D04751
+DOC20-0001,14/07/2020,M. O'Leary,Hedge cutting,2030.81,274.16,2304.97,13/08/2020,EUR,,invoice,,,D04955
+SM-20-2873,20/07/2020,Southern Meats Ltd,Carcase docket: 9 cull cows avg EUR 901.63,8114.66,389.50,8504.16,27/07/2020,EUR,,sales_docket,,IE8651198C,D04755
+MS-202007,31/07/2020,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Jul 2020: 209,750 L @ 33.13 c/L, fat 4.18% protein 3.41% (VAT 13.5%)",69483.34,9380.25,78863.59,25/08/2020,EUR,,self_billed_statement,,IE9462300P,D00353
+DOC20-0002,04/08/2020,J. Cronin,Slurry spreading (tanker + operator),1356.55,183.13,1539.68,03/09/2020,EUR,,invoice,,,D04966
+SM-20-1134,05/08/2020,Southern Meats Ltd,Carcase docket: 9 cull cows avg EUR 769.34,6924.02,332.35,7256.37,12/08/2020,EUR,,sales_docket,,IE8651198C,D04750
+DOC20-0003,14/08/2020,M. O'Leary,Silage harvesting,1849.87,249.73,2099.60,13/09/2020,EUR,,invoice,,,D04959
+SM-20-6783,20/08/2020,Southern Meats Ltd,Carcase docket: 9 cull cows avg EUR 822.58,7403.18,355.35,7758.53,27/08/2020,EUR,,sales_docket,,IE8651198C,D04752
+MS-202008,31/08/2020,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Aug 2020: 197,720 L @ 32.86 c/L, fat 4.48% protein 3.68% (VAT 13.5%)",64961.46,8769.80,73731.26,25/09/2020,EUR,,self_billed_statement,,IE9462300P,D00355
+DOC20-0004,22/09/2020,M. O'Leary,Reseeding / power harrow,900.38,121.55,1021.93,22/10/2020,EUR,,invoice,,,D04967
+MS-202009,30/09/2020,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Sep 2020: 145,710 L @ 33.16 c/L, fat 4.01% protein 3.62% (VAT 13.5%)",48322.65,6523.56,54846.21,25/10/2020,EUR,,self_billed_statement,,IE9462300P,D00357
+MS-202010,31/10/2020,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Oct 2020: 95,640 L @ 32.87 c/L, fat 4.17% protein 3.38% (VAT 13.5%)",31432.29,4243.36,35675.65,25/11/2020,EUR,,self_billed_statement,,IE9462300P,D00359
+LD-20-7764,03/11/2020,Kilbeg Livestock Mart Ltd,Mart docket: 9 cull cows avg EUR 776.57,6989.15,335.48,7324.63,10/11/2020,EUR,,sales_docket,,IE6958430T,D04756
+DOC20-0001,10/11/2020,N. Barrett,Hedge cutting,1855.47,250.49,2105.96,10/12/2020,EUR,,invoice,,,D04965
+LD-20-2159,12/11/2020,Kilbeg Livestock Mart Ltd,Mart docket: 9 cull cows avg EUR 791.66,7124.93,342.00,7466.93,19/11/2020,EUR,,sales_docket,,IE6958430T,D04753
+MS-202011,30/11/2020,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Nov 2020: 42,580 L @ 33.05 c/L, fat 4.40% protein 3.33% (VAT 13.5%)",14072.01,1899.72,15971.73,25/12/2020,EUR,,self_billed_statement,,IE9462300P,D00361
+MS-202012,31/12/2020,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Dec 2020: 8,220 L @ 33.06 c/L, fat 4.10% protein 3.55% (VAT 13.5%)",2717.17,366.82,3083.99,25/01/2021,EUR,,self_billed_statement,,IE9462300P,D00363
+MS-202101,31/01/2021,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Jan 2021: 25,270 L @ 31.53 c/L, fat 4.13% protein 3.64% (VAT 13.5%)",7967.23,1075.58,9042.81,25/02/2021,EUR,,self_billed_statement,,IE9462300P,D00365
+MS-202102,28/02/2021,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Feb 2021: 81,120 L @ 33.35 c/L, fat 4.29% protein 3.60% (VAT 13.5%)",27053.29,3652.19,30705.48,25/03/2021,EUR,,self_billed_statement,,IE9462300P,D00367
+LD-21-6396,09/03/2021,Kilbeg Livestock Mart Ltd,"Mart docket: 36 calves (23 bull, 13 heifer) avg EUR 65.96",2374.46,113.97,2488.43,16/03/2021,EUR,,sales_docket,,IE6958430T,D04760
+LD-21-8724,25/03/2021,Kilbeg Livestock Mart Ltd,"Mart docket: 36 calves (23 bull, 13 heifer) avg EUR 68.34",2460.18,118.09,2578.27,01/04/2021,EUR,,sales_docket,,IE6958430T,D04762
+MS-202103,31/03/2021,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Mar 2021: 168,240 L @ 35.10 c/L, fat 4.28% protein 3.65% (VAT 13.5%)",59049.25,7971.65,67020.90,25/04/2021,EUR,,self_billed_statement,,IE9462300P,D00369
+LD-21-1768,09/04/2021,Kilbeg Livestock Mart Ltd,"Mart docket: 36 calves (23 bull, 13 heifer) avg EUR 80.49",2897.80,139.09,3036.89,16/04/2021,EUR,,sales_docket,,IE6958430T,D04764
+LD-21-6110,19/04/2021,Kilbeg Livestock Mart Ltd,"Mart docket: 36 calves (23 bull, 13 heifer) avg EUR 81.12",2920.38,140.18,3060.56,26/04/2021,EUR,,sales_docket,,IE6958430T,D04766
+DOC21-0002,25/04/2021,Tim Hennessy,Slurry spreading (tanker + operator),2238.62,302.21,2540.83,25/05/2021,EUR,,invoice,,,D04972
+MS-202104,30/04/2021,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Apr 2021: 237,090 L @ 36.96 c/L, fat 4.18% protein 3.55% (VAT 13.5%)",87635.25,11830.76,99466.01,25/05/2021,EUR,,self_billed_statement,,IE9462300P,D00371
+DOC21-0001,02/05/2021,S. Kiely,Reseeding / power harrow,2296.36,310.01,2606.37,01/06/2021,EUR,,invoice,,,D04969
+DOC21-0001,03/05/2021,Tim Hennessy,Hedge cutting,1427.58,192.72,1620.30,02/06/2021,EUR,,invoice,,,D04971
+LD-21-1528,06/05/2021,Kilbeg Livestock Mart Ltd,"Mart docket: 35 calves (23 bull, 12 heifer) avg EUR 69.41",2429.34,116.61,2545.95,13/05/2021,EUR,,sales_docket,,IE6958430T,D04768
+DOC21-0002,07/05/2021,J. Cronin,Round baling + wrapping,1260.73,170.20,1430.93,06/06/2021,EUR,,invoice,,,D04974
+DOC21-0001,10/05/2021,D. Buckley,Slurry spreading (tanker + operator),2007.94,271.07,2279.01,09/06/2021,EUR,,invoice,,,D04975
+LD-21-4240,17/05/2021,Kilbeg Livestock Mart Ltd,"Mart docket: 35 calves (23 bull, 12 heifer) avg EUR 64.17",2245.81,107.80,2353.61,24/05/2021,EUR,,sales_docket,,IE6958430T,D04770
+DOC21-0001,22/05/2021,J. Cronin,Reseeding / power harrow,1256.79,169.67,1426.46,21/06/2021,EUR,,invoice,,,D04970
+MS-202105,31/05/2021,Slieve Dairy Co-Operative Society Ltd,"Milk supplied May 2021: 249,350 L @ 38.20 c/L, fat 4.43% protein 3.44% (VAT 13.5%)",95251.34,12858.93,108110.27,25/06/2021,EUR,,self_billed_statement,,IE9462300P,D00373
+DOC21-0002,05/06/2021,D. Buckley,Hedge cutting,1138.15,153.65,1291.80,05/07/2021,EUR,,invoice,,,D04979
+DOC21-0001,10/06/2021,K. Murphy Farms Ltd,Reseeding / power harrow,1071.41,144.64,1216.05,10/07/2021,EUR,,invoice,,,D04976
+DOC21-0001,12/06/2021,E. Foley & Son,Silage harvesting,889.52,120.09,1009.61,12/07/2021,EUR,,invoice,,,D04977
+DOC21-0001,13/06/2021,Ballynoe Farms Partnership,Slurry spreading (tanker + operator),2116.31,285.70,2402.01,13/07/2021,EUR,,invoice,,,D04978
+MS-202106,30/06/2021,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Jun 2021: 240,800 L @ 39.93 c/L, fat 4.15% protein 3.49% (VAT 13.5%)",96157.26,12981.23,109138.49,25/07/2021,EUR,,self_billed_statement,,IE9462300P,D00375
+LD-21-1482,12/07/2021,Kilbeg Livestock Mart Ltd,Mart docket: 9 cull cows avg EUR 1107.46,9967.17,478.42,10445.59,19/07/2021,EUR,,sales_docket,,IE6958430T,D04775
+DOC21-0003,12/07/2021,Tim Hennessy,Hedge cutting,1008.51,136.15,1144.66,11/08/2021,EUR,,invoice,,,D04986
+DOC21-0002,16/07/2021,K. Murphy Farms Ltd,Hedge cutting,857.39,115.75,973.14,15/08/2021,EUR,,invoice,,,D04982
+SM-21-4853,22/07/2021,Southern Meats Ltd,Carcase docket: 9 cull cows avg EUR 960.72,8646.48,415.03,9061.51,29/07/2021,EUR,,sales_docket,,IE8651198C,D04772
+DOC21-0002,26/07/2021,S. Kiely,Slurry spreading (tanker + operator),1840.95,248.53,2089.48,25/08/2021,EUR,,invoice,,,D04985
+MS-202107,31/07/2021,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Jul 2021: 217,490 L @ 42.07 c/L, fat 4.10% protein 3.40% (VAT 13.5%)",91492.31,12351.46,103843.77,25/08/2021,EUR,,self_billed_statement,,IE9462300P,D00377
+DOC21-0002,05/08/2021,M. O'Leary,Round baling + wrapping,2123.43,286.66,2410.09,04/09/2021,EUR,,invoice,,,D04984
+DOC21-0001,15/08/2021,Coolcaum Dairy Ltd,Reseeding / power harrow,1526.85,206.12,1732.97,14/09/2021,EUR,,invoice,,,D04983
+LD-21-7049,23/08/2021,Kilbeg Livestock Mart Ltd,Mart docket: 9 cull cows avg EUR 1023.18,9208.63,442.01,9650.64,30/08/2021,EUR,,sales_docket,,IE6958430T,D04777
+MS-202108,31/08/2021,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Aug 2021: 183,250 L @ 43.36 c/L, fat 4.34% protein 3.69% (VAT 13.5%)",79450.83,10725.86,90176.69,25/09/2021,EUR,,self_billed_statement,,IE9462300P,D00379
+DOC21-0003,08/09/2021,D. Buckley,Hedge cutting,1294.44,174.75,1469.19,08/10/2021,EUR,,invoice,,,D04980
+DOC21-0001,25/09/2021,P. Dineen,Round baling + wrapping,959.56,129.54,1089.10,25/10/2021,EUR,,invoice,,,D04981
+MS-202109,30/09/2021,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Sep 2021: 149,260 L @ 45.08 c/L, fat 4.19% protein 3.64% (VAT 13.5%)",67289.61,9084.10,76373.71,25/10/2021,EUR,,self_billed_statement,,IE9462300P,D00381
+SM-21-5597,04/10/2021,Southern Meats Ltd,Carcase docket: 9 cull cows avg EUR 1148.98,10340.80,496.36,10837.16,11/10/2021,EUR,,sales_docket,,IE8651198C,D04773
+DOC21-0001,10/10/2021,M. O'Leary,Hedge cutting,1003.24,135.44,1138.68,09/11/2021,EUR,,invoice,,,D04973
+MS-202110,31/10/2021,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Oct 2021: 96,260 L @ 47.14 c/L, fat 4.27% protein 3.44% (VAT 13.5%)",45372.82,6125.33,51498.15,25/11/2021,EUR,,self_billed_statement,,IE9462300P,D00383
+SM-21-2460,15/11/2021,Southern Meats Ltd,Carcase docket: 9 cull cows avg EUR 1104.82,9943.39,477.28,10420.67,22/11/2021,EUR,,sales_docket,,IE8651198C,D04779
+SM-21-8621,22/11/2021,Southern Meats Ltd,Carcase docket: 9 cull cows avg EUR 1067.74,9609.66,461.26,10070.92,29/11/2021,EUR,,sales_docket,,IE8651198C,D04774
+MS-202111,30/11/2021,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Nov 2021: 42,530 L @ 48.78 c/L, fat 4.20% protein 3.35% (VAT 13.5%)",20745.28,2800.61,23545.89,25/12/2021,EUR,,self_billed_statement,,IE9462300P,D00385
+MS-202112,31/12/2021,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Dec 2021: 8,880 L @ 50.39 c/L, fat 4.11% protein 3.33% (VAT 13.5%)",4474.49,604.06,5078.55,25/01/2022,EUR,,self_billed_statement,,IE9462300P,D00387
+DOC22-0001,04/01/2022,S. Kiely,"Winter slurry spreading, work done in December",3300.00,445.50,3745.50,03/02/2022,EUR,,invoice,2021-12-13,,D04987
+MS-202201,31/01/2022,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Jan 2022: 24,880 L @ 48.39 c/L, fat 4.48% protein 3.68% (VAT 13.5%)",12039.99,1625.40,13665.39,25/02/2022,EUR,,self_billed_statement,,IE9462300P,D00389
+MS-202202,28/02/2022,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Feb 2022: 81,520 L @ 50.10 c/L, fat 4.46% protein 3.37% (VAT 13.5%)",40842.93,5513.80,46356.73,25/03/2022,EUR,,self_billed_statement,,IE9462300P,D00391
+LD-22-2723,11/03/2022,Kilbeg Livestock Mart Ltd,"Mart docket: 39 calves (26 bull, 13 heifer) avg EUR 131.44",5126.31,246.06,5372.37,18/03/2022,EUR,,sales_docket,,IE6958430T,D04783
+LD-22-8999,30/03/2022,Kilbeg Livestock Mart Ltd,"Mart docket: 38 calves (25 bull, 13 heifer) avg EUR 116.58",4430.19,212.65,4642.84,06/04/2022,EUR,,sales_docket,,IE6958430T,D04785
+MS-202203,31/03/2022,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Mar 2022: 163,420 L @ 52.21 c/L, fat 4.00% protein 3.59% (VAT 13.5%)",85323.46,11518.67,96842.13,25/04/2022,EUR,,self_billed_statement,,IE9462300P,D00393
+DOC22-0002,01/04/2022,S. Kiely,Hedge cutting,1430.79,193.16,1623.95,01/05/2022,EUR,,invoice,,,D04997
+LD-22-4521,11/04/2022,Kilbeg Livestock Mart Ltd,"Mart docket: 38 calves (25 bull, 13 heifer) avg EUR 126.74",4815.98,231.17,5047.15,18/04/2022,EUR,,sales_docket,,IE6958430T,D04787
+DOC22-0005,25/04/2022,S. Kiely,Silage harvesting,1123.12,151.62,1274.74,25/05/2022,EUR,,invoice,,,D05006
+DOC22-0004,25/04/2022,N. Barrett,Round baling + wrapping,889.25,120.05,1009.30,25/05/2022,EUR,,invoice,,,D05008
+LD-22-7001,27/04/2022,Kilbeg Livestock Mart Ltd,"Mart docket: 38 calves (25 bull, 13 heifer) avg EUR 131.09",4981.24,239.10,5220.34,04/05/2022,EUR,,sales_docket,,IE6958430T,D04789
+DOC22-0001,27/04/2022,Tim Hennessy,Silage harvesting,1111.98,150.12,1262.10,27/05/2022,EUR,,invoice,,,D04994
+MS-202204,30/04/2022,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Apr 2022: 225,260 L @ 54.31 c/L, fat 4.35% protein 3.35% (VAT 13.5%)",122344.72,16516.54,138861.26,25/05/2022,EUR,,self_billed_statement,,IE9462300P,D00395
+LD-22-3873,12/05/2022,Kilbeg Livestock Mart Ltd,"Mart docket: 38 calves (25 bull, 13 heifer) avg EUR 119.04",4523.39,217.12,4740.51,19/05/2022,EUR,,sales_docket,,IE6958430T,D04791
+DOC22-0003,18/05/2022,N. Barrett,Slurry spreading (tanker + operator),1573.57,212.43,1786.00,17/06/2022,EUR,,invoice,,,D04998
+DOC22-0001,19/05/2022,E. Foley & Son,Reseeding / power harrow,1063.86,143.62,1207.48,18/06/2022,EUR,,invoice,,,D04990
+DOC22-0002,21/05/2022,E. Foley & Son,Silage harvesting,1867.27,252.08,2119.35,20/06/2022,EUR,,invoice,,,D04992
+DOC22-0002,26/05/2022,N. Barrett,Silage harvesting,1434.01,193.59,1627.60,25/06/2022,EUR,,invoice,,,D04996
+MS-202205,31/05/2022,Slieve Dairy Co-Operative Society Ltd,"Milk supplied May 2022: 247,230 L @ 55.95 c/L, fat 4.20% protein 3.36% (VAT 13.5%)",138329.76,18674.52,157004.28,25/06/2022,EUR,,self_billed_statement,,IE9462300P,D00397
+DOC22-0002,07/06/2022,Coolcaum Dairy Ltd,Round baling + wrapping,2291.12,309.30,2600.42,07/07/2022,EUR,,invoice,,,D04995
+DOC22-0003,08/06/2022,Coolcaum Dairy Ltd,Silage harvesting,1401.42,189.19,1590.61,08/07/2022,EUR,,invoice,,,D05001
+DOC22-0001,09/06/2022,D. Buckley,Round baling + wrapping,930.39,125.60,1055.99,09/07/2022,EUR,,invoice,,,D04999
+DOC22-0002,10/06/2022,Tim Hennessy,Slurry spreading (tanker + operator),1217.51,164.36,1381.87,10/07/2022,EUR,,invoice,,,D05003
+DOC22-0001,20/06/2022,Coolcaum Dairy Ltd,Slurry spreading (tanker + operator),2136.02,288.36,2424.38,20/07/2022,EUR,,invoice,,,D04991
+DOC22-0001,21/06/2022,P. Dineen,Round baling + wrapping,1265.45,170.84,1436.29,21/07/2022,EUR,,invoice,,,D05000
+MS-202206,30/06/2022,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Jun 2022: 231,750 L @ 57.79 c/L, fat 4.38% protein 3.34% (VAT 13.5%)",133926.33,18080.05,152006.38,25/07/2022,EUR,,self_billed_statement,,IE9462300P,D00399
+SM-22-2725,04/07/2022,Southern Meats Ltd,Carcase docket: 15 cull cows avg EUR 1373.29,20599.32,988.77,21588.09,11/07/2022,EUR,,sales_docket,,IE8651198C,D04798
+DOC22-0001,09/07/2022,K. Murphy Farms Ltd,Reseeding / power harrow,2103.84,284.02,2387.86,08/08/2022,EUR,,invoice,,,D05007
+LD-22-4897,15/07/2022,Kilbeg Livestock Mart Ltd,Mart docket: 14 cull cows avg EUR 1349.50,18892.98,906.86,19799.84,22/07/2022,EUR,,sales_docket,,IE6958430T,D04794
+MS-202207,31/07/2022,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Jul 2022: 210,780 L @ 59.84 c/L, fat 4.31% protein 3.67% (VAT 13.5%)",126140.18,17028.92,143169.10,25/08/2022,EUR,,self_billed_statement,,IE9462300P,D00401
+DOC22-0002,16/08/2022,P. Dineen,Rolling and spreading fertiliser,916.94,123.79,1040.73,15/09/2022,EUR,,invoice,,,D05002
+LD-22-8146,23/08/2022,Kilbeg Livestock Mart Ltd,Mart docket: 15 cull cows avg EUR 1402.52,21037.73,1009.81,22047.54,30/08/2022,EUR,,sales_docket,,IE6958430T,D04796
+DOC22-0001,23/08/2022,M. O'Leary,Hedge cutting,2076.28,280.30,2356.58,22/09/2022,EUR,,invoice,,,D04989
+MS-202208,31/08/2022,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Aug 2022: 179,970 L @ 62.00 c/L, fat 4.10% protein 3.65% (VAT 13.5%)",111587.73,15064.34,126652.07,25/09/2022,EUR,,self_billed_statement,,IE9462300P,D00403
+SM-22-3385,12/09/2022,Southern Meats Ltd,Carcase docket: 14 cull cows avg EUR 1482.70,20757.85,996.38,21754.23,19/09/2022,EUR,,sales_docket,,IE8651198C,D04793
+DOC22-0003,26/09/2022,S. Kiely,Reseeding / power harrow,2016.95,272.29,2289.24,26/10/2022,EUR,,invoice,,,D05004
+DOC22-0004,27/09/2022,S. Kiely,Silage harvesting,1827.74,246.74,2074.48,27/10/2022,EUR,,invoice,,,D05005
+MS-202209,30/09/2022,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Sep 2022: 145,710 L @ 63.77 c/L, fat 4.19% protein 3.64% (VAT 13.5%)",92912.13,12543.14,105455.27,25/10/2022,EUR,,self_billed_statement,,IE9462300P,D00405
+DOC22-0001,08/10/2022,N. Barrett,Rolling and spreading fertiliser,901.21,121.66,1022.87,07/11/2022,EUR,,invoice,,,D04988
+LD-22-2922,14/10/2022,Kilbeg Livestock Mart Ltd,Mart docket: 14 in-calf heifers,29400.00,1411.20,30811.20,21/10/2022,EUR,,sales_docket,,IE6958430T,D04799
+MS-202210,31/10/2022,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Oct 2022: 93,860 L @ 65.85 c/L, fat 4.24% protein 3.64% (VAT 13.5%)",61811.18,8344.51,70155.69,25/11/2022,EUR,,self_billed_statement,,IE9462300P,D00407
+DOC22-0001,19/11/2022,B. Walsh & Sons,Reseeding / power harrow,1926.85,260.12,2186.97,19/12/2022,EUR,,invoice,,,D04993
+MS-202211,30/11/2022,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Nov 2022: 41,980 L @ 67.79 c/L, fat 4.35% protein 3.64% (VAT 13.5%)",28457.45,3841.76,32299.21,25/12/2022,EUR,,self_billed_statement,,IE9462300P,D00409
+MS-202212,31/12/2022,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Dec 2022: 8,190 L @ 69.95 c/L, fat 3.94% protein 3.33% (VAT 13.5%)",5729.07,773.42,6502.49,25/01/2023,EUR,,self_billed_statement,,IE9462300P,D00411
+MS-202301,31/01/2023,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Jan 2023: 21,950 L @ 56.56 c/L, fat 3.91% protein 3.62% (VAT 13.5%)",12415.05,1676.03,14091.08,25/02/2023,EUR,,self_billed_statement,,IE9462300P,D00413
+MS-202302,28/02/2023,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Feb 2023: 71,430 L @ 54.79 c/L, fat 4.42% protein 3.39% (VAT 13.5%)",39135.90,5283.35,44419.25,25/03/2023,EUR,,self_billed_statement,,IE9462300P,D00415
+DOC23-0002,06/03/2023,P. Dineen,Rolling and spreading fertiliser,2124.33,286.78,2411.11,05/04/2023,EUR,,invoice,,,D05021
+LD-23-3294,10/03/2023,Kilbeg Livestock Mart Ltd,"Mart docket: 35 calves (23 bull, 12 heifer) avg EUR 170.84",5979.44,287.01,6266.45,17/03/2023,EUR,,sales_docket,,IE6958430T,D04804
+DOC23-0002,19/03/2023,E. Foley & Son,Reseeding / power harrow,970.77,131.05,1101.82,18/04/2023,EUR,,invoice,,,D05013
+DOC23-0002,20/03/2023,D. Buckley,Silage harvesting,1273.31,171.90,1445.21,19/04/2023,EUR,,invoice,,,D05016
+LD-23-9065,27/03/2023,Kilbeg Livestock Mart Ltd,"Mart docket: 35 calves (23 bull, 12 heifer) avg EUR 177.18",6201.37,297.67,6499.04,03/04/2023,EUR,,sales_docket,,IE6958430T,D04806
+MS-202303,31/03/2023,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Mar 2023: 144,670 L @ 52.85 c/L, fat 3.97% protein 3.45% (VAT 13.5%)",76456.11,10321.57,86777.68,25/04/2023,EUR,,self_billed_statement,,IE9462300P,D00417
+DOC23-0001,05/04/2023,E. Foley & Son,Reseeding / power harrow,1755.88,237.04,1992.92,05/05/2023,EUR,,invoice,,,D05009
+LD-23-8893,10/04/2023,Kilbeg Livestock Mart Ltd,"Mart docket: 35 calves (23 bull, 12 heifer) avg EUR 183.95",6438.30,309.04,6747.34,17/04/2023,EUR,,sales_docket,,IE6958430T,D04808
+LD-23-4252,26/04/2023,Kilbeg Livestock Mart Ltd,"Mart docket: 34 calves (23 bull, 11 heifer) avg EUR 176.98",6017.23,288.83,6306.06,03/05/2023,EUR,,sales_docket,,IE6958430T,D04810
+MS-202304,30/04/2023,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Apr 2023: 209,880 L @ 50.76 c/L, fat 4.46% protein 3.63% (VAT 13.5%)",106542.62,14383.25,120925.87,25/05/2023,EUR,,self_billed_statement,,IE9462300P,D00419
+DOC23-0001,06/05/2023,K. Murphy Farms Ltd,Rolling and spreading fertiliser,1509.72,203.81,1713.53,05/06/2023,EUR,,invoice,,,D05015
+LD-23-5586,12/05/2023,Kilbeg Livestock Mart Ltd,"Mart docket: 34 calves (23 bull, 11 heifer) avg EUR 159.82",5433.76,260.82,5694.58,19/05/2023,EUR,,sales_docket,,IE6958430T,D04812
+DOC23-0002,19/05/2023,K. Murphy Farms Ltd,Round baling + wrapping,1199.91,161.99,1361.90,18/06/2023,EUR,,invoice,,,D05028
+DOC23-0001,26/05/2023,S. Kiely,Round baling + wrapping,1734.19,234.12,1968.31,25/06/2023,EUR,,invoice,,,D05011
+MS-202305,31/05/2023,Slieve Dairy Co-Operative Society Ltd,"Milk supplied May 2023: 216,910 L @ 48.71 c/L, fat 4.53% protein 3.50% (VAT 13.5%)",105650.65,14262.84,119913.49,25/06/2023,EUR,,self_billed_statement,,IE9462300P,D00421
+DOC23-0001,10/06/2023,P. Dineen,Slurry spreading (tanker + operator),839.90,113.39,953.29,10/07/2023,EUR,,invoice,,,D05018
+DOC23-0003,12/06/2023,Ballynoe Farms Partnership,Reseeding / power harrow,1224.61,165.32,1389.93,12/07/2023,EUR,,invoice,,,D05031
+DOC23-0003,17/06/2023,Coolcaum Dairy Ltd,Reseeding / power harrow,1870.47,252.51,2122.98,17/07/2023,EUR,,invoice,,,D05023
+DOC23-0003,18/06/2023,K. Murphy Farms Ltd,Rolling and spreading fertiliser,1718.36,231.98,1950.34,18/07/2023,EUR,,invoice,,,D05029
+MS-202306,30/06/2023,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Jun 2023: 200,210 L @ 47.04 c/L, fat 4.53% protein 3.66% (VAT 13.5%)",94174.38,12713.54,106887.92,25/07/2023,EUR,,self_billed_statement,,IE9462300P,D00423
+DOC23-0004,05/07/2023,D. Buckley,Rolling and spreading fertiliser,1763.03,238.01,2001.04,04/08/2023,EUR,,invoice,,,D05026
+DOC23-0003,09/07/2023,E. Foley & Son,Round baling + wrapping,2226.56,300.59,2527.15,08/08/2023,EUR,,invoice,,,D05014
+DOC23-0002,13/07/2023,S. Kiely,Reseeding / power harrow,1234.79,166.70,1401.49,12/08/2023,EUR,,invoice,,,D05019
+LD-23-9195,17/07/2023,Kilbeg Livestock Mart Ltd,Mart docket: 23 cull cows avg EUR 1375.42,31634.62,1518.46,33153.08,24/07/2023,EUR,,sales_docket,,IE6958430T,D04814
+MS-202307,31/07/2023,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Jul 2023: 187,590 L @ 44.83 c/L, fat 3.99% protein 3.64% (VAT 13.5%)",84103.63,11353.99,95457.62,25/08/2023,EUR,,self_billed_statement,,IE9462300P,D00425
+DOC23-0002,02/08/2023,Coolcaum Dairy Ltd,Round baling + wrapping,1392.80,188.03,1580.83,01/09/2023,EUR,,invoice,,,D05017
+DOC23-0002,21/08/2023,B. Walsh & Sons,Reseeding / power harrow,1628.42,219.84,1848.26,20/09/2023,EUR,,invoice,,,D05030
+MS-202308,31/08/2023,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Aug 2023: 158,890 L @ 43.09 c/L, fat 4.23% protein 3.38% (VAT 13.5%)",68470.60,9243.53,77714.13,25/09/2023,EUR,,self_billed_statement,,IE9462300P,D00427
+DOC23-0001,07/09/2023,Ballynoe Farms Partnership,Rolling and spreading fertiliser,1449.37,195.66,1645.03,07/10/2023,EUR,,invoice,,,D05020
+DOC23-0004,08/09/2023,Coolcaum Dairy Ltd,Round baling + wrapping,1348.12,182.00,1530.12,08/10/2023,EUR,,invoice,,,D05032
+LD-23-9491,15/09/2023,Kilbeg Livestock Mart Ltd,Mart docket: 24 cull cows avg EUR 1517.26,36414.15,1747.88,38162.03,22/09/2023,EUR,,sales_docket,,IE6958430T,D04817
+DOC23-0001,17/09/2023,D. Buckley,Slurry spreading (tanker + operator),2057.32,277.74,2335.06,17/10/2023,EUR,,invoice,,,D05010
+DOC23-0001,25/09/2023,J. Cronin,Slurry spreading (tanker + operator),1222.18,164.99,1387.17,25/10/2023,EUR,,invoice,,,D05025
+DOC23-0001,28/09/2023,Coolcaum Dairy Ltd,Rolling and spreading fertiliser,1064.16,143.66,1207.82,28/10/2023,EUR,,invoice,,,D05012
+DOC23-0001,28/09/2023,B. Walsh & Sons,Silage harvesting,1051.81,141.99,1193.80,28/10/2023,EUR,,invoice,,,D05022
+DOC23-0002,28/09/2023,Ballynoe Farms Partnership,Hedge cutting,1739.84,234.88,1974.72,28/10/2023,EUR,,invoice,,,D05027
+MS-202309,30/09/2023,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Sep 2023: 126,930 L @ 41.28 c/L, fat 4.07% protein 3.35% (VAT 13.5%)",52390.89,7072.77,59463.66,25/10/2023,EUR,,self_billed_statement,,IE9462300P,D00429
+SM-23-3659,23/10/2023,Southern Meats Ltd,Carcase docket: 24 cull cows avg EUR 1516.56,36397.56,1747.08,38144.64,30/10/2023,EUR,,sales_docket,,IE8651198C,D04816
+MS-202310,31/10/2023,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Oct 2023: 78,460 L @ 39.26 c/L, fat 4.60% protein 3.41% (VAT 13.5%)",30804.77,4158.64,34963.41,25/11/2023,EUR,,self_billed_statement,,IE9462300P,D00431
+MS-202311,30/11/2023,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Nov 2023: 35,630 L @ 37.22 c/L, fat 4.26% protein 3.68% (VAT 13.5%)",13261.02,1790.24,15051.26,25/12/2023,EUR,,self_billed_statement,,IE9462300P,D00433
+DOC23-0003,05/12/2023,D. Buckley,Silage harvesting,1375.95,185.75,1561.70,04/01/2024,EUR,,invoice,,,D05024
+MS-202312,31/12/2023,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Dec 2023: 7,660 L @ 35.47 c/L, fat 4.55% protein 3.55% (VAT 13.5%)",2716.71,366.76,3083.47,25/01/2024,EUR,,self_billed_statement,,IE9462300P,D00435
+MS-202401,31/01/2024,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Jan 2024: 22,920 L @ 39.00 c/L, fat 3.91% protein 3.63% (VAT 13.5%)",8937.69,1206.59,10144.28,25/02/2024,EUR,,self_billed_statement,,IE9462300P,D00437
+MS-202402,29/02/2024,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Feb 2024: 73,410 L @ 39.62 c/L, fat 4.35% protein 3.61% (VAT 13.5%)",29086.59,3926.69,33013.28,25/03/2024,EUR,,self_billed_statement,,IE9462300P,D00439
+LD-24-8430,08/03/2024,Kilbeg Livestock Mart Ltd,"Mart docket: 22 calves (15 bull, 7 heifer) avg EUR 212.16",4667.49,224.04,4891.53,15/03/2024,EUR,,sales_docket,,IE6958430T,D04822
+DOC24-0003,09/03/2024,B. Walsh & Sons,Rolling and spreading fertiliser,888.22,119.91,1008.13,08/04/2024,EUR,,invoice,,,D05052
+DOC24-0002,11/03/2024,S. Kiely,Slurry spreading (tanker + operator),844.11,113.95,958.06,10/04/2024,EUR,,invoice,,,D05040
+LD-24-4525,19/03/2024,Kilbeg Livestock Mart Ltd,"Mart docket: 22 calves (15 bull, 7 heifer) avg EUR 216.91",4772.01,229.06,5001.07,26/03/2024,EUR,,sales_docket,,IE6958430T,D04824
+MS-202403,31/03/2024,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Mar 2024: 147,230 L @ 40.56 c/L, fat 4.25% protein 3.57% (VAT 13.5%)",59716.18,8061.68,67777.86,25/04/2024,EUR,,self_billed_statement,,IE9462300P,D00441
+LD-24-3824,03/04/2024,Kilbeg Livestock Mart Ltd,"Mart docket: 22 calves (15 bull, 7 heifer) avg EUR 215.93",4750.36,228.02,4978.38,10/04/2024,EUR,,sales_docket,,IE6958430T,D04826
+LD-24-3057,12/04/2024,Kilbeg Livestock Mart Ltd,"Mart docket: 22 calves (15 bull, 7 heifer) avg EUR 243.69",5361.10,257.33,5618.43,19/04/2024,EUR,,sales_docket,,IE6958430T,D04828
+DOC24-0001,14/04/2024,Tim Hennessy,Silage harvesting,1410.56,190.43,1600.99,14/05/2024,EUR,,invoice,,,D05038
+LD-24-8458,19/04/2024,Kilbeg Livestock Mart Ltd,"Mart docket: 21 calves (14 bull, 7 heifer) avg EUR 221.51",4651.73,223.28,4875.01,26/04/2024,EUR,,sales_docket,,IE6958430T,D04830
+LD-24-9099,29/04/2024,Kilbeg Livestock Mart Ltd,"Mart docket: 21 calves (14 bull, 7 heifer) avg EUR 240.20",5044.11,242.12,5286.23,06/05/2024,EUR,,sales_docket,,IE6958430T,D04832
+MS-202404,30/04/2024,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Apr 2024: 220,800 L @ 41.22 c/L, fat 4.25% protein 3.42% (VAT 13.5%)",91003.58,12285.48,103289.06,25/05/2024,EUR,,self_billed_statement,,IE9462300P,D00443
+DOC24-0002,12/05/2024,K. Murphy Farms Ltd,Rolling and spreading fertiliser,1802.97,243.40,2046.37,11/06/2024,EUR,,invoice,,,D05045
+LD-24-2216,13/05/2024,Kilbeg Livestock Mart Ltd,"Mart docket: 21 calves (14 bull, 7 heifer) avg EUR 225.78",4741.35,227.58,4968.93,20/05/2024,EUR,,sales_docket,,IE6958430T,D04834
+LD-24-9592,17/05/2024,Kilbeg Livestock Mart Ltd,"Mart docket: 21 calves (14 bull, 7 heifer) avg EUR 204.34",4291.19,205.98,4497.17,24/05/2024,EUR,,sales_docket,,IE6958430T,D04836
+DOC24-0001,23/05/2024,B. Walsh & Sons,Rolling and spreading fertiliser,845.54,114.15,959.69,22/06/2024,EUR,,invoice,,,D05043
+MS-202405,31/05/2024,Slieve Dairy Co-Operative Society Ltd,"Milk supplied May 2024: 234,980 L @ 41.77 c/L, fat 4.25% protein 3.51% (VAT 13.5%)",98145.39,13249.63,111395.02,25/06/2024,EUR,,self_billed_statement,,IE9462300P,D00445
+DOC24-0003,07/06/2024,S. Kiely,Reseeding / power harrow,2017.81,272.40,2290.21,07/07/2024,EUR,,invoice,,,D05049
+DOC24-0001,11/06/2024,J. Cronin,Round baling + wrapping,1997.22,269.62,2266.84,11/07/2024,EUR,,invoice,,,D05056
+DOC24-0001,15/06/2024,Coolcaum Dairy Ltd,Silage harvesting,1980.71,267.40,2248.11,15/07/2024,EUR,,invoice,,,D05059
+DOC24-0003,17/06/2024,Tim Hennessy,Rolling and spreading fertiliser,2044.90,276.06,2320.96,17/07/2024,EUR,,invoice,,,D05055
+DOC24-0003,20/06/2024,K. Murphy Farms Ltd,Hedge cutting,1818.57,245.51,2064.08,20/07/2024,EUR,,invoice,,,D05046
+DOC24-0001,21/06/2024,K. Murphy Farms Ltd,Round baling + wrapping,2136.44,288.42,2424.86,21/07/2024,EUR,,invoice,,,D05035
+DOC24-0002,21/06/2024,J. Cronin,Slurry spreading (tanker + operator),880.94,118.93,999.87,21/07/2024,EUR,,invoice,,,D05058
+DOC24-0002,25/06/2024,Tim Hennessy,Silage harvesting,1632.35,220.37,1852.72,25/07/2024,EUR,,invoice,,,D05054
+MS-202406,30/06/2024,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Jun 2024: 216,600 L @ 42.50 c/L, fat 4.17% protein 3.60% (VAT 13.5%)",92058.46,12427.89,104486.35,25/07/2024,EUR,,self_billed_statement,,IE9462300P,D00447
+DOC24-0002,04/07/2024,N. Barrett,Slurry spreading (tanker + operator),1144.95,154.57,1299.52,03/08/2024,EUR,,invoice,,,D05051
+DOC24-0002,14/07/2024,Ballynoe Farms Partnership,Rolling and spreading fertiliser,2089.01,282.02,2371.03,13/08/2024,EUR,,invoice,,,D05048
+DOC24-0002,15/07/2024,E. Foley & Son,Round baling + wrapping,938.37,126.68,1065.05,14/08/2024,EUR,,invoice,,,D05053
+DOC24-0001,17/07/2024,M. O'Leary,Reseeding / power harrow,1828.86,246.90,2075.76,16/08/2024,EUR,,invoice,,,D05041
+MS-202407,31/07/2024,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Jul 2024: 188,110 L @ 43.17 c/L, fat 4.59% protein 3.43% (VAT 13.5%)",81200.11,10962.01,92162.12,25/08/2024,EUR,,self_billed_statement,,IE9462300P,D00449
+LD-24-3157,05/08/2024,Kilbeg Livestock Mart Ltd,Mart docket: 12 cull cows avg EUR 1152.61,13831.35,663.90,14495.25,12/08/2024,EUR,,sales_docket,,IE6958430T,D04843
+SM-24-1966,07/08/2024,Southern Meats Ltd,Carcase docket: 11 cull cows avg EUR 1144.84,12593.27,604.48,13197.75,14/08/2024,EUR,,sales_docket,,IE8651198C,D04838
+DOC24-0001,08/08/2024,E. Foley & Son,Round baling + wrapping,1432.23,193.35,1625.58,07/09/2024,EUR,,invoice,,,D05042
+LD-24-6615,09/08/2024,Kilbeg Livestock Mart Ltd,Mart docket: 11 cull cows avg EUR 1250.45,13754.94,660.24,14415.18,16/08/2024,EUR,,sales_docket,,IE6958430T,D04839
+DOC24-0002,11/08/2024,D. Buckley,Silage harvesting,1603.32,216.45,1819.77,10/09/2024,EUR,,invoice,,,D05050
+DOC24-0001,20/08/2024,N. Barrett,Hedge cutting,1388.72,187.48,1576.20,19/09/2024,EUR,,invoice,,,D05037
+DOC24-0001,22/08/2024,D. Buckley,Rolling and spreading fertiliser,1567.88,211.66,1779.54,21/09/2024,EUR,,invoice,,,D05034
+DOC24-0001,27/08/2024,S. Kiely,Hedge cutting,1277.03,172.40,1449.43,26/09/2024,EUR,,invoice,,,D05036
+MS-202408,31/08/2024,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Aug 2024: 159,100 L @ 44.02 c/L, fat 4.60% protein 3.31% (VAT 13.5%)",70039.65,9455.35,79495.00,25/09/2024,EUR,,self_billed_statement,,IE9462300P,D00451
+DOC24-0002,13/09/2024,B. Walsh & Sons,Slurry spreading (tanker + operator),1449.25,195.65,1644.90,13/10/2024,EUR,,invoice,,,D05044
+LD-24-3950,25/09/2024,Kilbeg Livestock Mart Ltd,Mart docket: 11 cull cows avg EUR 1362.44,14986.89,719.37,15706.26,02/10/2024,EUR,,sales_docket,,IE6958430T,D04841
+MS-202409,30/09/2024,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Sep 2024: 123,200 L @ 44.55 c/L, fat 4.00% protein 3.43% (VAT 13.5%)",54883.63,7409.29,62292.92,25/10/2024,EUR,,self_billed_statement,,IE9462300P,D00453
+DOC24-0002,16/10/2024,M. O'Leary,Round baling + wrapping,1696.88,229.08,1925.96,15/11/2024,EUR,,invoice,,,D05057
+SM-24-7203,23/10/2024,Southern Meats Ltd,Carcase docket: 12 cull cows avg EUR 1195.18,14342.20,688.43,15030.63,30/10/2024,EUR,,sales_docket,,IE8651198C,D04845
+MS-202410,31/10/2024,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Oct 2024: 82,570 L @ 45.41 c/L, fat 4.18% protein 3.48% (VAT 13.5%)",37494.37,5061.74,42556.11,25/11/2024,EUR,,self_billed_statement,,IE9462300P,D00455
+DOC24-0001,04/11/2024,Ballynoe Farms Partnership,Rolling and spreading fertiliser,1524.86,205.86,1730.72,04/12/2024,EUR,,invoice,,,D05039
+DOC24-0002,15/11/2024,P. Dineen,Round baling + wrapping,2140.35,288.95,2429.30,15/12/2024,EUR,,invoice,,,D05047
+DOC24-0001,28/11/2024,P. Dineen,Silage harvesting,942.03,127.17,1069.20,28/12/2024,EUR,,invoice,,,D05033
+MS-202411,30/11/2024,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Nov 2024: 38,280 L @ 46.26 c/L, fat 4.08% protein 3.34% (VAT 13.5%)",17709.31,2390.76,20100.07,25/12/2024,EUR,,self_billed_statement,,IE9462300P,D00457
+MS-202412,31/12/2024,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Dec 2024: 7,200 L @ 46.78 c/L, fat 4.52% protein 3.63% (VAT 13.5%)",3368.22,454.71,3822.93,25/01/2025,EUR,,self_billed_statement,,IE9462300P,D00459
+MS-202501,31/01/2025,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Jan 2025: 23,100 L @ 43.49 c/L, fat 3.96% protein 3.51% (VAT 13.5%)",10045.42,1356.13,11401.55,25/02/2025,EUR,,self_billed_statement,,IE9462300P,D00461
+MS-202502,28/02/2025,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Feb 2025: 75,580 L @ 43.82 c/L, fat 4.04% protein 3.65% (VAT 13.5%)",33120.25,4471.23,37591.48,25/03/2025,EUR,,self_billed_statement,,IE9462300P,D00463
+LD-25-6538,14/03/2025,Kilbeg Livestock Mart Ltd,"Mart docket: 31 calves (20 bull, 11 heifer) avg EUR 257.77",7990.90,383.56,8374.46,21/03/2025,EUR,,sales_docket,,IE6958430T,D04849
+DOC25-0003,20/03/2025,B. Walsh & Sons,Round baling + wrapping,1764.84,238.25,2003.09,19/04/2025,EUR,,invoice,,,D05073
+LD-25-5644,26/03/2025,Kilbeg Livestock Mart Ltd,"Mart docket: 31 calves (20 bull, 11 heifer) avg EUR 244.58",7581.91,363.93,7945.84,02/04/2025,EUR,,sales_docket,,IE6958430T,D04851
+MS-202503,31/03/2025,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Mar 2025: 151,060 L @ 44.09 c/L, fat 3.97% protein 3.33% (VAT 13.5%)",66602.62,8991.35,75593.97,25/04/2025,EUR,,self_billed_statement,,IE9462300P,D00465
+DOC25-0002,03/04/2025,D. Buckley,Silage harvesting,1696.53,229.03,1925.56,03/05/2025,EUR,,invoice,,,D05072
+LD-25-2778,07/04/2025,Kilbeg Livestock Mart Ltd,"Mart docket: 31 calves (20 bull, 11 heifer) avg EUR 289.53",8975.30,430.81,9406.11,14/04/2025,EUR,,sales_docket,,IE6958430T,D04853
+DOC25-0002,07/04/2025,K. Murphy Farms Ltd,Silage harvesting,1874.48,253.05,2127.53,07/05/2025,EUR,,invoice,,,D05064
+DOC25-0002,07/04/2025,S. Kiely,Round baling + wrapping,913.70,123.35,1037.05,07/05/2025,EUR,,invoice,,,D05082
+DOC25-0001,14/04/2025,P. Dineen,Slurry spreading (tanker + operator),1254.49,169.36,1423.85,14/05/2025,EUR,,invoice,,,D05070
+DOC25-0002,18/04/2025,J. Cronin,Slurry spreading (tanker + operator),1316.74,177.76,1494.50,18/05/2025,EUR,,invoice,,,D05065
+DOC25-0001,19/04/2025,N. Barrett,Round baling + wrapping,835.62,112.81,948.43,19/05/2025,EUR,,invoice,,,D05069
+LD-25-8257,21/04/2025,Kilbeg Livestock Mart Ltd,"Mart docket: 31 calves (20 bull, 11 heifer) avg EUR 247.07",7659.02,367.63,8026.65,28/04/2025,EUR,,sales_docket,,IE6958430T,D04855
+DOC25-0004,25/04/2025,B. Walsh & Sons,Silage harvesting,1840.76,248.50,2089.26,25/05/2025,EUR,,invoice,,,D05078
+DOC25-0002,26/04/2025,B. Walsh & Sons,Rolling and spreading fertiliser,1698.96,229.36,1928.32,26/05/2025,EUR,,invoice,,,D05071
+MS-202504,30/04/2025,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Apr 2025: 210,380 L @ 44.34 c/L, fat 3.94% protein 3.53% (VAT 13.5%)",93287.76,12593.85,105881.61,25/05/2025,EUR,,self_billed_statement,,IE9462300P,D00467
+DOC25-0003,01/05/2025,K. Murphy Farms Ltd,Silage harvesting,945.82,127.69,1073.51,31/05/2025,EUR,,invoice,,,D05079
+LD-25-3542,05/05/2025,Kilbeg Livestock Mart Ltd,"Mart docket: 30 calves (20 bull, 10 heifer) avg EUR 287.76",8632.69,414.37,9047.06,12/05/2025,EUR,,sales_docket,,IE6958430T,D04857
+DOC25-0001,12/05/2025,Ballynoe Farms Partnership,Round baling + wrapping,2039.76,275.37,2315.13,11/06/2025,EUR,,invoice,,,D05084
+DOC25-0004,14/05/2025,D. Buckley,Hedge cutting,2066.29,278.95,2345.24,13/06/2025,EUR,,invoice,,,D05077
+LD-25-4826,16/05/2025,Kilbeg Livestock Mart Ltd,"Mart docket: 30 calves (20 bull, 10 heifer) avg EUR 251.31",7539.41,361.89,7901.30,23/05/2025,EUR,,sales_docket,,IE6958430T,D04859
+DOC25-0001,19/05/2025,J. Cronin,Round baling + wrapping,944.40,127.49,1071.89,18/06/2025,EUR,,invoice,,,D05060
+DOC25-0002,25/05/2025,M. O'Leary,Slurry spreading (tanker + operator),1737.77,234.60,1972.37,24/06/2025,EUR,,invoice,,,D05081
+DOC25-0001,27/05/2025,B. Walsh & Sons,Silage harvesting,2024.84,273.35,2298.19,26/06/2025,EUR,,invoice,,,D05066
+DOC25-0002,28/05/2025,P. Dineen,Silage harvesting,1039.02,140.27,1179.29,27/06/2025,EUR,,invoice,,,D05083
+MS-202505,31/05/2025,Slieve Dairy Co-Operative Society Ltd,"Milk supplied May 2025: 236,520 L @ 44.70 c/L, fat 4.60% protein 3.38% (VAT 13.5%)",105721.61,14272.42,119994.03,25/06/2025,EUR,,self_billed_statement,,IE9462300P,D00469
+DOC25-0005,24/06/2025,B. Walsh & Sons,Rolling and spreading fertiliser,1406.05,189.82,1595.87,24/07/2025,EUR,,invoice,,,D05088
+MS-202506,30/06/2025,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Jun 2025: 214,670 L @ 44.94 c/L, fat 3.94% protein 3.51% (VAT 13.5%)",96476.34,13024.31,109500.65,25/07/2025,EUR,,self_billed_statement,,IE9462300P,D00471
+DOC25-0003,02/07/2025,D. Buckley,Reseeding / power harrow,846.61,114.29,960.90,01/08/2025,EUR,,invoice,,,D05076
+DOC25-0003,04/07/2025,Tim Hennessy,Reseeding / power harrow,2169.02,292.82,2461.84,03/08/2025,EUR,,invoice,,,D05080
+MS-202507,31/07/2025,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Jul 2025: 188,280 L @ 45.19 c/L, fat 3.99% protein 3.48% (VAT 13.5%)",85089.84,11487.13,96576.97,25/08/2025,EUR,,self_billed_statement,,IE9462300P,D00473
+DOC25-0001,02/08/2025,K. Murphy Farms Ltd,Silage harvesting,1880.23,253.83,2134.06,01/09/2025,EUR,,invoice,,,D05061
+DOC25-0001,04/08/2025,S. Kiely,Silage harvesting,1188.03,160.38,1348.41,03/09/2025,EUR,,invoice,,,D05067
+DOC25-0004,14/08/2025,Tim Hennessy,Slurry spreading (tanker + operator),1916.64,258.75,2175.39,13/09/2025,EUR,,invoice,,,D05086
+DOC25-0002,17/08/2025,E. Foley & Son,Hedge cutting,1331.42,179.74,1511.16,16/09/2025,EUR,,invoice,,,D05087
+LD-25-1008,18/08/2025,Kilbeg Livestock Mart Ltd,Mart docket: 8 cull cows avg EUR 1255.99,10047.92,482.30,10530.22,25/08/2025,EUR,,sales_docket,,IE6958430T,D04861
+SM-25-9049,18/08/2025,Southern Meats Ltd,Carcase docket: 8 cull cows avg EUR 1250.16,10001.30,480.06,10481.36,25/08/2025,EUR,,sales_docket,,IE8651198C,D04868
+DOC25-0002,22/08/2025,N. Barrett,Hedge cutting,966.71,130.51,1097.22,21/09/2025,EUR,,invoice,,,D05085
+MS-202508,31/08/2025,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Aug 2025: 167,330 L @ 45.21 c/L, fat 3.96% protein 3.35% (VAT 13.5%)",75641.65,10211.62,85853.27,25/09/2025,EUR,,self_billed_statement,,IE9462300P,D00475
+SM-25-1304,01/09/2025,Southern Meats Ltd,Carcase docket: 8 cull cows avg EUR 1128.55,9028.36,433.36,9461.72,08/09/2025,EUR,,sales_docket,,IE8651198C,D04864
+SM-25-6126,05/09/2025,Southern Meats Ltd,Carcase docket: 8 cull cows avg EUR 1094.83,8758.63,420.41,9179.04,12/09/2025,EUR,,sales_docket,,IE8651198C,D04865
+SM-25-4103,19/09/2025,Southern Meats Ltd,Carcase docket: 8 cull cows avg EUR 1256.87,10054.97,482.64,10537.61,26/09/2025,EUR,,sales_docket,,IE8651198C,D04863
+DOC25-0001,25/09/2025,Tim Hennessy,Round baling + wrapping,1878.71,253.63,2132.34,25/10/2025,EUR,,invoice,,,D05068
+MS-202509,30/09/2025,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Sep 2025: 135,850 L @ 45.99 c/L, fat 4.11% protein 3.64% (VAT 13.5%)",62482.50,8435.14,70917.64,25/10/2025,EUR,,self_billed_statement,,IE9462300P,D00477
+DOC25-0002,17/10/2025,Tim Hennessy,Round baling + wrapping,1114.97,150.52,1265.49,16/11/2025,EUR,,invoice,,,D05075
+LD-25-7113,20/10/2025,Kilbeg Livestock Mart Ltd,Mart docket: 8 cull cows avg EUR 1247.85,9982.77,479.17,10461.94,27/10/2025,EUR,,sales_docket,,IE6958430T,D04866
+MS-202510,31/10/2025,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Oct 2025: 89,770 L @ 46.05 c/L, fat 4.22% protein 3.57% (VAT 13.5%)",41342.62,5581.25,46923.87,25/11/2025,EUR,,self_billed_statement,,IE9462300P,D00479
+DOC25-0001,13/11/2025,M. O'Leary,Silage harvesting,1598.58,215.81,1814.39,13/12/2025,EUR,,invoice,,,D05063
+DOC25-0001,26/11/2025,E. Foley & Son,Reseeding / power harrow,1237.49,167.06,1404.55,26/12/2025,EUR,,invoice,,,D05074
+MS-202511,30/11/2025,Slieve Dairy Co-Operative Society Ltd,"Milk supplied Nov 2025: 40,260 L @ 46.21 c/L, fat 4.10% protein 3.68% (VAT 13.5%)",18602.30,2511.31,21113.61,25/12/2025,EUR,,self_billed_statement,,IE9462300P,D00481
+DOC25-0001,25/12/2025,D. Buckley,Round baling + wrapping,1308.33,176.62,1484.95,24/01/2026,EUR,,invoice,,,D05062
