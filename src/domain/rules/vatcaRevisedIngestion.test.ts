@@ -1,12 +1,11 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { readFileSync } from 'node:fs';
 import { and, eq } from 'drizzle-orm';
 import { createTestDatabase } from '@/db/testing';
 import { createCompany } from '../config/setup';
 import { ingestVatcaRevisedSection, deriveVatcaRevisedRules, ingestVatcaRevisedS46, statedPeriodProblems } from './vatcaRevisedIngestion';
 import { ingestCatalogueFile } from './catalogue';
 import { ingestVatca2010FromCatalogue } from './vatcaIngestion';
-import { lookupTaxRule, ingestFinanceAct2025, FINANCE_ACT_2025 } from './irishRules';
+import { lookupTaxRule, ingestFinanceAct2025FromCatalogue } from './irishRules';
 import { VATCA_REVISED_CURATED_RULES, S46_FAMILY_SCHEDULE_REF } from './vatcaRevisedCuration';
 import { scheduleThreeRate } from './scheduleRates';
 import { irishTaxRules, irishKnowledgeSources, irishActProvisions, reviewItems } from '@/db/schema';
@@ -15,7 +14,6 @@ import { containsIgnoringLayout } from './lrcAnnotations';
 
 let db: AppDatabase;
 let companyId: string;
-const FA2025_PATH = new URL(`../../../${FINANCE_ACT_2025.localPath}`, import.meta.url).pathname;
 
 beforeEach(() => {
   ({ db } = createTestDatabase());
@@ -52,7 +50,7 @@ describe('ingestVatcaRevisedS46', () => {
 describe('deriveVatcaRevisedRules', () => {
   beforeEach(() => {
     ingestVatcaRevisedS46(db, { companyId });
-    ingestFinanceAct2025(db, { companyId, markdown: readFileSync(FA2025_PATH, 'utf8'), ingestVersion: 'v1' });
+    ingestFinanceAct2025FromCatalogue(db, { companyId });
   });
 
   const rowsFor = (ruleKey: string) => db.select().from(irishTaxRules)
@@ -247,7 +245,7 @@ describe('stated periods (#688)', () => {
     // s.46 and s.39 without the Acts that moved the end date.
     ingestCatalogueFile(other, { companyId: otherCompany, entry: 'finance-act-2020/s39.json' });
     ingestCatalogueFile(other, { companyId: otherCompany, entry: 'vatca-2010-revised/s046.json' });
-    ingestFinanceAct2025(other, { companyId: otherCompany, markdown: readFileSync(FA2025_PATH, 'utf8'), ingestVersion: 'v1' });
+    ingestFinanceAct2025FromCatalogue(other, { companyId: otherCompany });
     const result = deriveVatcaRevisedRules(other, { companyId: otherCompany });
     expect(result.skippedStatedPeriod).toContain('vat.rate_hospitality');
     expect(other.select().from(irishTaxRules).where(eq(irishTaxRules.ruleKey, 'vat.rate_hospitality')).all()).toEqual([]);

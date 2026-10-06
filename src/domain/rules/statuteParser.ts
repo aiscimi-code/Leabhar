@@ -1,5 +1,9 @@
 /**
- * Deterministic parser for the Finance Act 2024 (2024 Act 43) enacted Markdown.
+ * Deterministic parser for the Finance Acts 2024 and 2025 as enacted, read from
+ * the Irish Statute Book PDF as Poppler's `pdftotext -layout` lays it out. The
+ * rules catalogue extraction runs it (`scripts/catalogue/extract.ts`); the
+ * entries (`catalogue/finance-act-2024/`, `catalogue/finance-act-2025/`) keep
+ * the PDF beside them.
  *
  * The parser is deliberately *textual*, not semantic: it never infers what a
  * provision "means", only what it *says* and *where* it lives. Every derived
@@ -10,7 +14,7 @@
  * This keeps the non-negotiable invariant from AGENTS.md: "the system must not
  * silently repair" — and extends it to "the system must not silently invent".
  *
- * Input conventions (verified against docs/statutes/finance-act-2024/2024-act-43-enacted.md):
+ * Input conventions (verified against the Finance Act 2024 PDF's layout text):
  *  - Body sections begin at column 0 with a line matching `^<num>. ` after the
  *    Contents block. The Contents block (headings + "CONTENTS") and the
  *    front matter (`[NO. 43.]`, page-break markers `\f`) are skipped.
@@ -23,8 +27,6 @@
  * Output: a list of `ParsedProvision` records, each with character offsets into
  * the source so the exact slice is always recoverable and re-checkable.
  */
-import { readFileSync } from 'node:fs';
-
 export interface ParsedProvision {
   /** e.g. "3". Leading section number only. */
   sectionNumber: string;
@@ -116,7 +118,7 @@ const PAGE_NOISE_RE = /^(PT\.|S\.\d|\[NO\. 43\.\]|\[2024\.\]|Finance Act 2024\.|
 /**
  * Extract a section's heading, printed as its own line (occasionally wrapped
  * across two) immediately *above* the numbered section in this Act's layout —
- * verified against docs/statutes/finance-act-2024/2024-act-43-enacted.md, e.g.:
+ * verified against the Finance Act 2024 PDF's layout text, e.g.:
  *
  *   Amendment of section 531AN of Principal Act (rate of charge)
  *   2.   (1) Section 531AN of the Principal Act is amended—
@@ -254,17 +256,6 @@ export function parseFinanceAct2024(source: string): ParsedProvision[] {
 
   return provisions;
 }
-
-/** Parse from a filesystem path. */
-export function parseFinanceAct2024File(path: string): ParsedProvision[] {
-  return parseFinanceAct2024(readFileSync(path, 'utf8'));
-}
-
-/** Path to the bundled Finance Act 2024 enacted Markdown extract, resolved relative to this file. */
-export const FINANCE_ACT_2024_MD_PATH = new URL(
-  '../../../docs/statutes/finance-act-2024/2024-act-43-enacted.md',
-  import.meta.url,
-).pathname;
 
 /** Stable slug for a provision, derived purely from section number + heading. */
 export function provisionSlug(sectionNumber: string, heading: string): string {

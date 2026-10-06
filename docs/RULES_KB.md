@@ -105,12 +105,16 @@ re-hashes it (AGENTS.md #5).
 `npm run catalogue:extract -- <entry>` writes one from the official page;
 `catalogue.test.ts` fails the gate when an entry no longer matches what the
 curation derives. All 39 loaded LRC-revised VATCA sections, Schedules
-1-3 and VATCA 2010 as enacted are in it; the other sources wait on #556.
+1-3, VATCA 2010 as enacted and the Finance Acts 2024 and 2025 as enacted
+are in it; the other sources wait on #556.
 An entry can state the source's own publication and commencement dates
 (the enacted Act's 1 November 2010) and a note; a provision can carry the
-sections it cites (`amendsSection`), which the dependency graph reads.
-The enacted Act's excerpts are the parse the statute copy gave, including
-the next section's heading at the end of each (#701). A Schedule entry holds one
+sections it cites (`amendsSection`), which the dependency graph reads, and
+for a Finance Act the Act it amends (`principalAct`), the Acts it names
+(`citedActs`) and the words that say when it takes effect (`effectiveClue`),
+from which `deriveTaxRules` dates a rule.
+The enacted Acts' excerpts are the parse the statute copies gave, including
+the next section's heading at the end of each (#701, #703). A Schedule entry holds one
 provision per paragraph, with its Part, and its paragraph windows are read
 from the LRC page kept beside it. Its page is the one the parser was
 verified against: the LRC's re-rendered pages break lines where the
@@ -308,7 +312,10 @@ the result of the last run (`lastRunAt`/`lastRunPassed`).
 
 ## Ingestion pipeline
 
-`src/domain/rules/statuteParser.ts` parses the Finance Act 2024 Markdown
+`src/domain/rules/statuteParser.ts` parses the Finance Acts 2024 and 2025,
+as `pdftotext -layout` lays out the Irish Statute Book PDF (the catalogue
+extraction runs it; the entries under `catalogue/finance-act-2024/` and
+`catalogue/finance-act-2025/` keep the PDF beside them),
 *textually*, never semantically: it locates each `^<num>. ` section, and the
 heading printed on its own line (occasionally wrapped across two) directly
 *above* the section number in this Act's layout — verified against the actual
@@ -1932,7 +1939,7 @@ This supersedes the rule keys and gaps described in the two sections above.
   - `vat.rate_hospitality` (Sch.3 3(1), 3(3)) and `vat.rate_hairdressing`
     (13(3)): 9% under (cb), November 2020 to August 2023; 13.5% from January
     2025 to June 2026; 9% from 1 July 2026 under Finance Act 2025 s.71, cited
-    from `docs/statutes/finance-act-2025`.
+    from its catalogue entry (`catalogue/finance-act-2025/`).
   - The (ca) categories (periodicals, sporting facilities, heat pumps) start
     on 1 January 2025 (F101), not the retrieval date.
 - **Retired keys** (`RETIRED_S46_RULE_KEYS`):

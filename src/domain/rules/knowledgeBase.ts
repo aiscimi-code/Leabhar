@@ -25,7 +25,7 @@ import { sha256Hex } from '@/lib/hash';
 import { appRoot } from '@/lib/paths';
 import { irishTaxRules } from '@/db/schema';
 import { ensureDefaultVatTreatments } from '../config/setup';
-import { ingestFinanceAct2024, ingestFinanceAct2025, deriveTaxRules } from './irishRules';
+import { deriveTaxRules } from './irishRules';
 import { deriveVatcaRules } from './vatcaIngestion';
 import { deriveVatcaScheduleRules } from './vatcaScheduleIngestion';
 import {
@@ -70,8 +70,6 @@ type IngestFn = (db: AppDatabase, params: IngestParams) => unknown;
  * the provision viewer can resolve it wherever the app runs.
  */
 const SOURCES: Array<{ path: string; ingest: IngestFn }> = [
-  { path: 'docs/statutes/finance-act-2024/2024-act-43-enacted.md', ingest: ingestFinanceAct2024 },
-  { path: 'docs/statutes/finance-act-2025/2025-act-18-enacted.md', ingest: ingestFinanceAct2025 },
   { path: 'docs/statutes/tca-1997/s530.md', ingest: ingestTca1997S530 },
   { path: 'docs/statutes/tca-1997/s530A.md', ingest: ingestTca1997S530A },
   { path: 'docs/statutes/tca-1997/s530E.md', ingest: ingestTca1997S530E },

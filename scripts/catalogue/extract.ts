@@ -7,6 +7,7 @@
  *   npm run catalogue:extract -- vatca-2010-revised/s009 vatca-2010-revised/s010 --html-dir pages/
  *   npm run catalogue:extract -- vatca-2010-revised/schedule-2
  *   npm run catalogue:extract -- vatca-2010/vatca-2010-enacted --html vatca.pdf
+ *   npm run catalogue:extract -- finance-act-2024/2024-act-43-enacted
  *
  * Several entries are extracted together: every entry's source and
  * provisions are written first, then the knowledge base is loaded once and
@@ -18,8 +19,9 @@
  * 1. Fetch the official page (or read `--html`, a copy saved from the same
  *    URL) and keep it beside the entry, byte for byte (`s046.html`): the
  *    entry records its hash, and the gate re-checks it.
- * 2. Convert it to text (lrc_html_to_text.py, or convert-statute-pdf.ts for
- *    a PDF) and parse it with the same parser the rules were curated against.
+ * 2. Convert it to text (lrc_html_to_text.py; convert-statute-pdf.ts for the
+ *    VATCA PDF, `pdftotext -layout` for a Finance Act's) and parse it with
+ *    the same parser the rules were curated against.
  * 3. Write the entry's source and provisions, load the knowledge base into a
  *    throwaway book from it, and write the rules the curation derives, with
  *    their links. An approval in the previous entry is kept only for a version
@@ -49,6 +51,11 @@ import { parseVatcaSchedule } from '@/domain/rules/vatcaScheduleParser';
 import { vatcaScheduleRelevance } from '@/domain/rules/vatcaScheduleIngestion';
 import { parseVatca2010 } from '@/domain/rules/vatcaParser';
 import { VATCA_2010, VATCA_2010_ENACTED_NOTE, vatca2010Relevance } from '@/domain/rules/vatcaIngestion';
+import { parseFinanceAct2024 } from '@/domain/rules/statuteParser';
+import {
+  FINANCE_ACT_2024, FINANCE_ACT_2025, enactedActRelevance, financeAct2024CuratedReason, financeAct2025CuratedReason,
+  type KnowledgeSourceRef,
+} from '@/domain/rules/irishRules';
 import { nowIso } from '@/domain/dates';
 import { lrcAnnotationLayer } from '@/domain/rules/lrcAnnotations';
 
@@ -171,6 +178,38 @@ function extractorFor(entry: string, naming: Naming | null): Extractor {
       },
     };
   }
+  // A Finance Act as enacted, from the Irish Statute Book PDF: one provision
+  // per section, as `pdftotext -layout` lays it out and statuteParser.ts reads it.
+  const financeAct = FINANCE_ACTS[entry];
+  if (financeAct) {
+    const { act, curatedReason } = financeAct;
+    return {
+      url: act.sourceUrl, title: act.title, citation: act.citation, ext: 'pdf',
+      build: (pdf, retrievedOn) => {
+        const sections = parseFinanceAct2024(pdftotextLayout(pdf));
+        if (sections.length === 0) throw new Error(`${act.title}: the parser found no sections.`);
+        return {
+          source: {
+            citation: act.citation, title: act.title, sourceType: act.sourceType, jurisdiction: 'IE', sourceUrl: act.sourceUrl,
+            sha256: createHash('sha256').update(pdf).digest('hex'),
+            conversion: 'pdftotext-layout', retrievedOn,
+            // The Act's own date of passing (its long title), not the day it was fetched.
+            publicationDate: act.enactedDate, effectiveFrom: act.enactedDate,
+          },
+          provisions: sections.map((p) => {
+            const { category, relevant, reason } = enactedActRelevance(p, curatedReason);
+            return {
+              sectionNumber: p.sectionNumber, heading: p.heading, locator: `s.${p.sectionNumber}`,
+              amendsSection: p.amendsSection.length ? p.amendsSection.join('; ') : null,
+              principalAct: p.principalActs.length ? p.principalActs.join('; ') : null,
+              effectiveClue: p.effectiveClue, citedActs: p.citedActs,
+              category, relevant, relevanceReason: reason, excerpt: p.provisionText,
+            };
+          }),
+        };
+      },
+    };
+  }
   // A section of an Act as enacted, on the Irish Statute Book: the source's
   // URL is the one its statute copy, or the entry, already records.
   const isb = isbSectionUrl(entry, naming);
@@ -214,6 +253,24 @@ function parseIsbSection(text: string, section: string): { heading: string; exce
   const heading = body.slice(0, start).trim();
   if (!heading || heading.includes('\n')) throw new Error(`Section ${section}: expected a one-line heading, found "${heading}".`);
   return { heading, excerpt: body.slice(start).trim() };
+}
+
+/** The Finance Acts the script extracts as a whole, by entry name. */
+const FINANCE_ACTS: Record<string, { act: KnowledgeSourceRef; curatedReason: (n: string) => string | undefined }> = {
+  'finance-act-2024/2024-act-43-enacted': { act: FINANCE_ACT_2024, curatedReason: financeAct2024CuratedReason },
+  'finance-act-2025/2025-act-18-enacted': { act: FINANCE_ACT_2025, curatedReason: financeAct2025CuratedReason },
+};
+
+/** A PDF as Poppler's `pdftotext -layout` lays it out. */
+function pdftotextLayout(pdf: Buffer): string {
+  const dir = mkdtempSync(join(tmpdir(), 'leabhar-catalogue-'));
+  try {
+    const input = join(dir, 'act.pdf');
+    writeFileSync(input, pdf);
+    return execFileSync('pdftotext', ['-layout', input, '-'], { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
 }
 
 /** An Irish Statute Book PDF in the marginal-note layout, as text (convert-statute-pdf.ts). */

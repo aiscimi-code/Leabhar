@@ -24,9 +24,10 @@ superseded and what to use instead.
   offset-traceable back to the committed source file. This is the only
   content actually driving the deterministic rule engine — see
   `docs/RULES_KB.md`'s "CLI" section for the full `--source` list. As of
-  this writing that's: `finance-act-2024/2024-act-43-enacted.md` (whole
-  Act) and its s.78 (VAT registration thresholds); in the rules catalogue
-  (#443, #556): VATCA 2010 as enacted (`catalogue/vatca-2010/`, whole Act),
+  this writing that's, in the rules catalogue (#443, #556): the Finance Acts
+  2024 and 2025 as enacted (`catalogue/finance-act-2024/`,
+  `catalogue/finance-act-2025/`, whole Acts; FA 2024 s.78 gives the VAT
+  registration thresholds), VATCA 2010 as enacted (`catalogue/vatca-2010/`, whole Act),
   s.46 (current rates) and 38 other revised sections, and Schedules 1–3
   (`catalogue/vatca-2010-revised/`); `tca-1997/s530.md` and
   `s284.md`; `rct/tdm-18-02-{04,05,11}.md`; `si-639-2010/2010-si-639.md`

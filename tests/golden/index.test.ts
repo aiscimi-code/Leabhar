@@ -13,7 +13,7 @@ import { readFileSync } from 'node:fs';
 import { createTestDatabase } from '@/db/testing';
 import { createCompany } from '@/domain/config/setup';
 import {
-  ingestFinanceAct2024, deriveTaxRules, FINANCE_ACT_2024_MD_PATH,
+  ingestFinanceAct2024FromCatalogue, deriveTaxRules,
 } from '@/domain/rules/irishRules';
 import {
   ingestVatca2010FromCatalogue, deriveVatcaRules,
@@ -83,8 +83,7 @@ beforeEach(() => {
   // This mirrors the setup used by src/domain/rules/transactionLookup.test.ts
   // plus the additional sources (RCT, TCA s.284, TDM 38-01-03b) that some
   // golden cases reference.
-  const faMd = readFileSync(FINANCE_ACT_2024_MD_PATH, 'utf8');
-  ingestFinanceAct2024(db, { companyId, markdown: faMd, ingestVersion: 'v1' });
+  ingestFinanceAct2024FromCatalogue(db, { companyId });
   deriveTaxRules(db, { companyId });
 
   ingestVatca2010FromCatalogue(db, { companyId });

@@ -7,7 +7,7 @@ import { createCompany } from '../config/setup';
 import { irishActProvisions, irishKnowledgeSources, irishTaxRules } from '@/db/schema';
 import type { AppDatabase } from '@/db';
 import {
-  CATALOGUE_ENTRIES, catalogueOfficialFilePath, catalogueRulesFor, ingestCatalogueEntry, readCatalogueEntry, validateCatalogueEntry,
+  CATALOGUE_ENTRIES, catalogueOfficialFilePath, catalogueRulesFor, ingestCatalogueEntry, quotedWords, readCatalogueEntry, validateCatalogueEntry,
   type CatalogueEntry,
 } from './catalogue';
 import { loadStatutoryKnowledgeBase } from './knowledgeBase';
@@ -46,7 +46,7 @@ describe.each(CATALOGUE_ENTRIES)('catalogue entry %s', (name) => {
     for (const rule of e.rules) {
       const excerpt = e.provisions.find((p) => p.sectionNumber === rule.sectionNumber)!.excerpt;
       for (const v of rule.versions) {
-        if (v.quote) expect(containsIgnoringLayout(excerpt, v.quote), `${rule.key}@${v.version}`).toBe(true);
+        if (v.quote) expect(containsIgnoringLayout(excerpt, quotedWords(e, rule, v.quote)), `${rule.key}@${v.version}`).toBe(true);
       }
     }
   });

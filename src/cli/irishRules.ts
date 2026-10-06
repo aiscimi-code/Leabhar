@@ -5,9 +5,8 @@ import { print, type Format } from './format';
 import { getAgentDb, requireCompany } from '@/agent/context';
 import type { AppDatabase } from '@/db';
 import {
-  ingestFinanceAct2024, deriveTaxRules, lookupTaxRule, listTaxRulesByTopic,
-  FINANCE_ACT_2024_MD_PATH,
-  ingestFinanceAct2025, FINANCE_ACT_2025,
+  ingestFinanceAct2024, ingestFinanceAct2024FromCatalogue, deriveTaxRules, lookupTaxRule, listTaxRulesByTopic,
+  ingestFinanceAct2025, ingestFinanceAct2025FromCatalogue,
 } from '@/domain/rules/irishRules';
 import { ingestVatca2010, ingestVatca2010FromCatalogue, deriveVatcaRules } from '@/domain/rules/vatcaIngestion';
 import {
@@ -294,18 +293,19 @@ export async function main(argv: string[], options: CliOptions = {}): Promise<nu
         }
         if (source === 'finance-act-2025') {
           // Its s.71 is cited by the s.46 hospitality and hairdressing rates: ingest before extracting vatca-2010-revised.
-          const file = getFlag(flags, 'file') ?? statuteFilePath(FINANCE_ACT_2025.localPath!);
-          const markdown = readFileSync(file, 'utf8');
-          print(ingestFinanceAct2025(db, { companyId, markdown, ingestVersion: 'v1', localPath: file }), format);
+          // From the rules catalogue (#556), or --file: a Markdown copy.
+          const file = getFlag(flags, 'file');
+          print(file
+            ? ingestFinanceAct2025(db, { companyId, markdown: readFileSync(file, 'utf8'), ingestVersion: 'v1', localPath: file })
+            : ingestFinanceAct2025FromCatalogue(db, { companyId }), format);
           return 0;
         }
         if (source !== 'finance-act-2024') throw new Error(`Unknown --source: ${source}`);
-        const file = getFlag(flags, 'file') ?? FINANCE_ACT_2024_MD_PATH;
-        const markdown = readFileSync(file, 'utf8');
-        const result = ingestFinanceAct2024(db, {
-          companyId, markdown, ingestVersion: 'v1', localPath: file,
-        });
-        print(result, format);
+        // From the rules catalogue (#556), or --file: a Markdown copy.
+        const file = getFlag(flags, 'file');
+        print(file
+          ? ingestFinanceAct2024(db, { companyId, markdown: readFileSync(file, 'utf8'), ingestVersion: 'v1', localPath: file })
+          : ingestFinanceAct2024FromCatalogue(db, { companyId }), format);
         return 0;
       }
 

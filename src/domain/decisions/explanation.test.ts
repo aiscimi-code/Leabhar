@@ -11,13 +11,12 @@ import { journalLines } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { makeDate } from '@/domain/dates';
 import {
-  ingestFinanceAct2024, deriveTaxRules, FINANCE_ACT_2024_MD_PATH,
+  ingestFinanceAct2024FromCatalogue, deriveTaxRules,
 } from '@/domain/rules/irishRules';
 import {
   ingestVatca2010FromCatalogue, deriveVatcaRules,
 } from '@/domain/rules/vatcaIngestion';
 import { ingestVatcaRevisedSection, deriveVatcaRevisedRules, ingestVatcaRevisedS46 } from '@/domain/rules/vatcaRevisedIngestion';
-import { readFileSync } from 'node:fs';
 import type { AppDatabase } from '@/db';
 
 let db: AppDatabase;
@@ -37,8 +36,7 @@ beforeEach(() => {
   byCode = created.accountsByCode;
   byKey = created.accountsByKey;
 
-  const faMd = readFileSync(FINANCE_ACT_2024_MD_PATH, 'utf8');
-  ingestFinanceAct2024(db, { companyId, markdown: faMd, ingestVersion: 'v1' });
+  ingestFinanceAct2024FromCatalogue(db, { companyId });
   deriveTaxRules(db, { companyId });
 
   ingestVatca2010FromCatalogue(db, { companyId });

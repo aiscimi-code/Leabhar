@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { createTestDatabase } from '@/db/testing';
 import { createCompany } from '../config/setup';
-import { ingestFinanceAct2024, ingestFinanceAct2025, deriveTaxRules, FINANCE_ACT_2024_MD_PATH, FINANCE_ACT_2025 } from './irishRules';
+import { ingestFinanceAct2024FromCatalogue, ingestFinanceAct2025FromCatalogue, deriveTaxRules } from './irishRules';
 import { deriveFinanceAct2024VatThresholds } from './financeAct2024VatThresholdsIngestion';
 import { ingestVatca2010FromCatalogue, deriveVatcaRules } from './vatcaIngestion';
 import { ingestVatcaRevised, deriveVatcaRevisedRules, ingestVatcaRevisedS46 } from './vatcaRevisedIngestion';
@@ -21,12 +21,11 @@ import type { AppDatabase } from '@/db';
 
 let db: AppDatabase;
 let companyId: string;
-const financeActMd = readFileSync(FINANCE_ACT_2024_MD_PATH, 'utf8');
 
 beforeEach(() => {
   ({ db } = createTestDatabase());
   ({ companyId } = createCompany(db, { legalName: 'Lookup Ltd', seedYears: [2025] }));
-  ingestFinanceAct2024(db, { companyId, markdown: financeActMd, ingestVersion: 'v1' });
+  ingestFinanceAct2024FromCatalogue(db, { companyId });
   deriveTaxRules(db, { companyId });
   ingestVatca2010FromCatalogue(db, { companyId });
   deriveVatcaRules(db, { companyId });
@@ -388,10 +387,7 @@ describe('lookupTransactionRules — issue #136 bug 4 / issue #138: supplier est
 describe('lookupTransactionRules — issue #136 bugs 1 and 8: VAT rate exclusivity', () => {
   beforeEach(() => {
     ingestVatcaRevisedS46(db, { companyId });
-    ingestFinanceAct2025(db, {
-      companyId, ingestVersion: 'v1',
-      markdown: readFileSync(new URL(`../../../${FINANCE_ACT_2025.localPath}`, import.meta.url).pathname, 'utf8'),
-    });
+    ingestFinanceAct2025FromCatalogue(db, { companyId });
     deriveVatcaRevisedRules(db, { companyId });
     ingestVatcaScheduleFromCatalogue(db, { companyId, scheduleNumber: '2' });
     ingestVatcaScheduleFromCatalogue(db, { companyId, scheduleNumber: '3' });
@@ -778,7 +774,7 @@ describe('lookupTransactionRules — issue #143 findings D, E, F, G', () => {
     const { companyId: tonyId } = createCompany(db, {
       legalName: 'Tony Cash', vatAccountingBasis: 'cash_receipts', seedYears: [2025],
     });
-    ingestFinanceAct2024(db, { companyId: tonyId, markdown: financeActMd, ingestVersion: 'v1' });
+    ingestFinanceAct2024FromCatalogue(db, { companyId: tonyId });
     deriveTaxRules(db, { companyId: tonyId });
     ingestVatca2010FromCatalogue(db, { companyId: tonyId });
     deriveVatcaRules(db, { companyId: tonyId });

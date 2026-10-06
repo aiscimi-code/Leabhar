@@ -20,7 +20,7 @@
 import { createHash } from 'node:crypto';
 import type { AppDatabase } from '@/db';
 import { upsertReviewItem } from '../extraction/service';
-import { CATALOGUE_ENTRIES, readCatalogueEntry, type CatalogueEntry } from './catalogue';
+import { CATALOGUE_ENTRIES, quotedWords, readCatalogueEntry, type CatalogueEntry } from './catalogue';
 import { ruleImpact } from './ruleImpact';
 
 export type SourceDriftStatus = 'unchanged' | 'changed' | 'unreachable';
@@ -81,7 +81,7 @@ export function compareWithCatalogue(name: string, entry: CatalogueEntry, fetche
   for (const rule of entry.rules) {
     for (const v of rule.versions) {
       if (!v.quote) continue;
-      (containsRun(words, sourceWords(v.quote)) ? quotesFound : quotesMissing).push(`${rule.key}@${v.version}`);
+      (containsRun(words, sourceWords(quotedWords(entry, rule, v.quote))) ? quotesFound : quotesMissing).push(`${rule.key}@${v.version}`);
     }
   }
   return { ...base, status: 'changed', quotesMissing, quotesFound };

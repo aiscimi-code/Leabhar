@@ -81,6 +81,12 @@ export interface CatalogueProvision {
   part?: string | null;
   /** The provisions it cites or amends, as the parser read them ("section 46(1); section 3(a)"). */
   amendsSection?: string | null;
+  /** The Act it amends, as the parser read it ("Taxes Consolidation Act 1997"); absent where it amends none. */
+  principalAct?: string | null;
+  /** The words that say when it takes effect ("year of assessment 2025"), verbatim; a rule's start date is read from them. */
+  effectiveClue?: string | null;
+  /** The other Acts it names. */
+  citedActs?: string[];
   category: IrishProvisionCategory;
   relevant: boolean;
   relevanceReason: string | null;
@@ -192,6 +198,9 @@ export const CATALOGUE_ENTRIES = [
   'vatca-2010-revised/schedule-3.json',
   // The Act as enacted, from the Irish Statute Book PDF: one provision per section.
   'vatca-2010/vatca-2010-enacted.json',
+  // The Finance Acts as enacted, from the Irish Statute Book PDFs: one provision per section.
+  'finance-act-2024/2024-act-43-enacted.json',
+  'finance-act-2025/2025-act-18-enacted.json',
 ] as const;
 
 export function catalogueEntryPath(entry: string, root: string = appRoot()): string {
@@ -242,6 +251,12 @@ export function validateCatalogueEntry(entry: unknown, label = 'catalogue entry'
     if (p.part !== undefined && p.part !== null && typeof p.part !== 'string') fail(`provision ${p.sectionNumber}: part must be a string`);
     if (p.amendsSection !== undefined && p.amendsSection !== null && typeof p.amendsSection !== 'string') {
       fail(`provision ${p.sectionNumber}: amendsSection must be a string`);
+    }
+    for (const f of ['principalAct', 'effectiveClue'] as const) {
+      if (p[f] !== undefined && p[f] !== null && typeof p[f] !== 'string') fail(`provision ${p.sectionNumber}: ${f} must be a string`);
+    }
+    if (p.citedActs !== undefined && (!Array.isArray(p.citedActs) || p.citedActs.some((a) => typeof a !== 'string'))) {
+      fail(`provision ${p.sectionNumber}: citedActs must be a list of strings`);
     }
     if (sections.has(p.sectionNumber)) fail(`provision ${p.sectionNumber} is listed twice`);
     sections.add(p.sectionNumber);
@@ -370,7 +385,7 @@ export function ingestCatalogueEntry(
         sectionNumber: p.sectionNumber,
         slug: slug(`${source.citation} ${p.sectionNumber} ${p.heading}`),
         heading: p.heading,
-        principalAct: null,
+        principalAct: p.principalAct ?? null,
         part: p.part ?? null,
         provisionText: p.excerpt,
         // No local file to slice: the locator says where the words are in the source.
@@ -379,8 +394,8 @@ export function ingestCatalogueEntry(
         locator: p.locator,
         category: p.category,
         amendsSection: p.amendsSection ?? null,
-        effectiveClue: null,
-        citedActs: [],
+        effectiveClue: p.effectiveClue ?? null,
+        citedActs: p.citedActs ?? [],
         relevant: p.relevant,
         relevanceReason: p.relevanceReason,
         source: 'import',
@@ -458,6 +473,18 @@ export function catalogueRulesFor(
         .sort((a, b) => a.kind.localeCompare(b.kind) || a.toKey.localeCompare(b.toKey) || a.effectiveFrom.localeCompare(b.effectiveFrom)),
     };
   });
+}
+
+/**
+ * The words a rule version quotes from its provision. A Finance Act rule's
+ * statement labels the quote with where it comes from ("Finance Act 2024
+ * s.2: (1) Section 531AN ..."), and a book compares the statement with the
+ * entry's quote, so the entry keeps the label; the rest is the provision's
+ * own words, checked like any other quote.
+ */
+export function quotedWords(entry: CatalogueEntry, rule: Pick<CatalogueRule, 'sectionNumber'>, quote: string): string {
+  const label = `${entry.source.title} s.${rule.sectionNumber}: `;
+  return quote.startsWith(label) ? quote.slice(label.length) : quote;
 }
 
 /** An entry as committed: stable key order and a trailing newline, so a regeneration diffs cleanly. */

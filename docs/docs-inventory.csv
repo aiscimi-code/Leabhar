@@ -15,8 +15,8 @@ docs/statutes/README.md,11855,cited-docs,docs/RULES_KB.md docs/statutes/SOURCE-R
 docs/statutes/SOURCE-REGISTER.md,13355,cited-code,src/domain/rules/taxRateSync.ts
 docs/statutes/_inbox/A/SOURCES.txt,668,unreferenced,
 docs/statutes/_inbox/A/finance-act-2025-enacted-print.html,847145,cited-docs,docs/statutes/_inbox/A/SOURCES.txt
-docs/statutes/_inbox/A/finance-act-2025-enacted.md,486168,duplicate,docs/statutes/finance-act-2025/2025-act-18-enacted.md
-docs/statutes/_inbox/A/finance-act-2025-enacted.pdf,1008901,duplicate,docs/statutes/finance-act-2025/2025-act-18-enacted.pdf
+docs/statutes/_inbox/A/finance-act-2025-enacted.md,486168,cited-docs,docs/statutes/_inbox/MANIFEST.sha256
+docs/statutes/_inbox/A/finance-act-2025-enacted.pdf,1008901,duplicate,catalogue/finance-act-2025/2025-act-18-enacted.pdf
 docs/statutes/_inbox/A/si-2025-684-print.html,31168,unreferenced,
 docs/statutes/_inbox/A/si-2025-684.md,1467,unreferenced,
 docs/statutes/_inbox/A/si-2025-685-print.html,32405,unreferenced,
@@ -376,13 +376,9 @@ docs/statutes/distance-sales/tdm-intra-community-distance-sales.md,10898,cited-d
 docs/statutes/finance-act-2001/s53.md,1821,cited-code,src/domain/rules/capitalAllowancesCuration.ts src/domain/rules/capitalAllowancesIngestion.ts
 docs/statutes/finance-act-2003/README.md,1076,unreferenced,
 docs/statutes/finance-act-2003/s23.md,3895,runtime,read by the test suite
-docs/statutes/finance-act-2024/2024-act-43-enacted.md,683936,runtime,read by the test suite
-docs/statutes/finance-act-2024/2024-act-43-enacted.pdf,1220021,cited-docs,docs/statutes/finance-act-2024/README.md
 docs/statutes/finance-act-2024/2024-act-43-part3-vat.md,6199,cited-docs,docs/statutes/SOURCE-REGISTER.md docs/statutes/finance-act-2024/README.md
-docs/statutes/finance-act-2024/README.md,1095,unreferenced,
-docs/statutes/finance-act-2025/2025-act-18-enacted.md,486168,runtime,read by the test suite
-docs/statutes/finance-act-2025/2025-act-18-enacted.pdf,1008901,original,docs/statutes/_inbox/A/finance-act-2025-enacted.md docs/statutes/finance-act-2025/2025-act-18-enacted.md
-docs/statutes/finance-act-2025/README.md,1253,unreferenced,
+docs/statutes/finance-act-2024/README.md,1439,unreferenced,
+docs/statutes/finance-act-2025/README.md,1619,unreferenced,
 docs/statutes/frs-102/README.md,457,unreferenced,
 docs/statutes/frs-102/frs-102.md,1345,cited-docs,docs/RULES_KB.md docs/statutes/frs-102/README.md
 docs/statutes/immovable-property/tdm-services-connected-with-immovable-property.md,20583,cited-docs,docs/statutes/SOURCE-REGISTER.md

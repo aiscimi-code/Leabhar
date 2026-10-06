@@ -4,7 +4,7 @@ import { eq } from 'drizzle-orm';
 import { createTestDatabase } from '@/db/testing';
 import { createCompany } from '../config/setup';
 import { ingestVatca2010, ingestVatca2010FromCatalogue, deriveVatcaRules, VATCA_2010 } from './vatcaIngestion';
-import { lookupTaxRule, ingestFinanceAct2024, deriveTaxRules, FINANCE_ACT_2024_MD_PATH } from './irishRules';
+import { lookupTaxRule, ingestFinanceAct2024FromCatalogue, deriveTaxRules } from './irishRules';
 import { VATCA_CURATED_RULES } from './vatcaCuration';
 import { irishKnowledgeSources, irishTaxRules, reviewItems } from '@/db/schema';
 import type { AppDatabase } from '@/db';
@@ -108,8 +108,7 @@ describe('deriveVatcaRules', () => {
     // "section 3", "section 12", etc. Deriving VATCA's rules must resolve
     // against VATCA's own provisions, not whichever source's row for that
     // section number happens to be in the table first.
-    const financeActMd = readFileSync(FINANCE_ACT_2024_MD_PATH, 'utf8');
-    ingestFinanceAct2024(db, { companyId, markdown: financeActMd, ingestVersion: 'v1' });
+    ingestFinanceAct2024FromCatalogue(db, { companyId });
     deriveTaxRules(db, { companyId });
 
     const result = deriveVatcaRules(db, { companyId });
