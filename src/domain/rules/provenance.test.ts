@@ -99,7 +99,7 @@ describe('every derived rule carries its provenance (issue #442)', () => {
       expect(existsSync(path), `${rule.ruleKey}: ${source.localPath}`).toBe(true);
       const text = fileText.get(path) ?? readFileSync(path, 'utf8');
       fileText.set(path, text);
-      const check = verifyStatuteFile(source.localPath, source.sha256, provision.sourceStart, provision.sourceEnd);
+      const check = verifyStatuteFile(source.localPath, source.sha256, provision.sourceStart, provision.sourceEnd, undefined, provision.sectionNumber);
       expect(check.sha256Matches, `${rule.ruleKey}: ${source.citation} file changed since ingest`).toBe(true);
       // The Finance Act 2024 derive step prefixes its statements with the
       // citation ("Finance Act 2024 s.48: "); the verbatim part is what follows.

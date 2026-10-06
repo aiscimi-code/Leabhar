@@ -1,6 +1,6 @@
 /**
  * Curated rules for the CURRENT VAT rates, from VATCA 2010 s.46 in its
- * LRC-revised form (docs/statutes/vatca-2010-revised/s046.md) —
+ * LRC-revised form (the rules catalogue, catalogue/vatca-2010-revised/s046.json) —
  * deliberately never from the as-enacted text `vatcaCuration.ts` reads.
  *
  * `vatcaCuration.ts`'s own header explains why s.46 was left uncurated
@@ -35,8 +35,8 @@
  *
  * Each rate is a family of dated versions under one ruleKey (issue #205),
  * each version's window taken from the statute text or from the LRC's
- * amendment footnotes (docs/statutes/vatca-2010-revised/s046.html, beside the
- * Markdown and with the SHA-256 its front matter records). Deriving chains
+ * amendment footnotes, numbered as on the LRC page fetched 2026-09-29 (the
+ * SHA-256 the catalogue entry records; #443 removed the local copy). Deriving chains
  * the versions by `supersedesRuleId`. The standard rate is 23% from 1 January
  * 2012 (F95), 21% for the s.46(1A) period, then 23% again from 1 March 2021.
  * The 13.5% and 4.8% figures carry no amendment footnote, so they date from
@@ -106,7 +106,7 @@ export const VATCA_REVISED_CURATED_RULES: CuratedVatcaRevisedRule[] = [
     effectiveFrom: '2012-01-01',
     effectiveTo: '2020-09-01',
     interpretationNote: 'Version 1 of 3. The LRC marks "23 per cent" in paragraph (a) as substituted on 1 January '
-      + '2012 by Finance Act 2012 s.87 (footnote F95 in docs/statutes/vatca-2010-revised/s046.html), so 23% is '
+      + '2012 by Finance Act 2012 s.87 (footnote F95 on the LRC page, catalogue/vatca-2010-revised/s046.json), so 23% is '
       + 'supported from that date; what paragraph (a) said before is not in the repository. Ends where s.46(1A) '
       + 'substitutes 21%.',
   },
@@ -174,7 +174,7 @@ export const VATCA_REVISED_CURATED_RULES: CuratedVatcaRevisedRule[] = [
     effectiveFrom: '2010-11-01',
     effectiveTo: null,
     interpretationNote: 'The figure "13.5 per cent" in paragraph (c) carries no LRC amendment footnote '
-      + '(docs/statutes/vatca-2010-revised/s046.html: F96 covers only the "subject to" words before it), so it '
+      + '(the LRC page, catalogue/vatca-2010-revised/s046.json: F96 covers only the "subject to" words before it), so it '
       + 'has stood since the Act commenced on 1 November 2010. Which Schedule 3 paragraphs bear it on a date '
       + 'depends on the 9% clauses: see scheduleRates.ts. This rule has no `conditions`: '
       + '`transactionLookup.ts`\'s exclusivity logic keeps it only when nothing more specific matched (issue #136 bug 1).',

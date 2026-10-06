@@ -2,20 +2,25 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import {
   parseVatcaRevisedSection, parseVatcaRevisedSectionFile, vatcaRevisedSectionPath,
-  VATCA_REVISED_S046_MD_PATH,
 } from './vatcaRevisedSectionParser';
+import { readCatalogueEntry } from './catalogue';
+import { VATCA_REVISED_S046_CATALOGUE_ENTRY } from './vatcaRevisedIngestion';
+
+const S047 = vatcaRevisedSectionPath('47');
 
 describe('parseVatcaRevisedSection', () => {
-  it('parses s.46 (rates), whose operative marker is "46\\n.—(1)"', () => {
-    const p = parseVatcaRevisedSectionFile(VATCA_REVISED_S046_MD_PATH);
-    expect(p.sectionNumber).toBe('46');
-    expect(p.heading).toBe('Rates of tax.');
-    expect(p.provisionText.startsWith('46')).toBe(true);
-    expect(p.provisionText).toContain('23 per');
-    expect(p.provisionText).toContain('13.5 per cent');
-    expect(p.provisionText).toContain('4.8 per cent');
-    expect(p.provisionText).not.toContain('Act as originally enacted');
-    expect(p.provisionText).not.toMatch(/^F\d+$/m);
+  it('s.46 (rates), whose operative marker is "46\\n.—(1)", parsed into the rules catalogue (#443)', () => {
+    // s.46 no longer has a statute copy: its parse is the catalogue excerpt,
+    // written by scripts/catalogue/extract.ts with this parser.
+    const [p] = readCatalogueEntry(VATCA_REVISED_S046_CATALOGUE_ENTRY).provisions;
+    expect(p!.sectionNumber).toBe('46');
+    expect(p!.heading).toBe('Rates of tax.');
+    expect(p!.excerpt.startsWith('46')).toBe(true);
+    expect(p!.excerpt).toContain('23 per');
+    expect(p!.excerpt).toContain('13.5 per cent');
+    expect(p!.excerpt).toContain('4.8 per cent');
+    expect(p!.excerpt).not.toContain('Act as originally enacted');
+    expect(p!.excerpt).not.toMatch(/^F\d+$/m);
   });
 
   it('parses s.2, whose predecessor-citation bracket spans two lines', () => {
@@ -45,7 +50,7 @@ describe('parseVatcaRevisedSection', () => {
   });
 
   it('records stable, in-bounds source offsets that recover the verbatim body', () => {
-    const src = readFileSync(VATCA_REVISED_S046_MD_PATH, 'utf8');
+    const src = readFileSync(S047, 'utf8');
     const p = parseVatcaRevisedSection(src);
     expect(p.sourceStart).toBeGreaterThanOrEqual(0);
     expect(p.sourceEnd).toBeLessThanOrEqual(src.length);
@@ -55,8 +60,8 @@ describe('parseVatcaRevisedSection', () => {
   });
 
   it('is idempotent across two parses', () => {
-    const a = parseVatcaRevisedSectionFile(VATCA_REVISED_S046_MD_PATH);
-    const b = parseVatcaRevisedSectionFile(VATCA_REVISED_S046_MD_PATH);
+    const a = parseVatcaRevisedSectionFile(S047);
+    const b = parseVatcaRevisedSectionFile(S047);
     expect(a).toEqual(b);
   });
 });

@@ -6,7 +6,7 @@
  * Schedule paragraphs `vatcaScheduleParser.ts` reads, though all three come
  * from the same LRC site and share its HTML->text conversion.
  *
- * Layout (verified against s046.md, s002.md, s91A.md, s108A.md — chosen to
+ * Layout (verified against s046.md — now ported to the rules catalogue — s002.md, s91A.md, s108A.md — chosen to
  * cover the observed variation): front matter, a `# VATCA 2010 s.N
  * (revised)` title, then: a bare repeat of the section number as a page
  * heading (sometimes printed twice), the section's marginal heading text,
@@ -117,4 +117,3 @@ export function vatcaRevisedSectionPath(sectionNumber: string): string {
   ).pathname;
 }
 
-export const VATCA_REVISED_S046_MD_PATH = vatcaRevisedSectionPath('46');

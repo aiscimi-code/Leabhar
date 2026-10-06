@@ -1753,7 +1753,7 @@ this KB independently confirmed against the LRC-revised text for "VATCA
 `vatcaRevisedCuration.ts`'s own header deferred curating s.46(1)'s five
 lettered 9% carve-outs — (ca), (caa), (cab), (cac), (cb) — "each needs the
 same care as the headline rates". Both source documents this needed were
-already ingested (`vatca-2010-revised/s046.md` for the carve-outs
+already ingested (s.46, now `catalogue/vatca-2010-revised/s046.json`, for the carve-outs
 themselves, `vatca-2010-revised/schedule-3.md` for what each one's Schedule
 3 references actually cover), so this closes the gap without any new
 ingestion.

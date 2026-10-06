@@ -25,7 +25,7 @@ import { ids } from '@/lib/ids';
 import { nowIso } from '../dates';
 import { sha256Hex } from '@/lib/hash';
 import {
-  parseVatcaRevisedSection, provisionSlug, assessRelevance, VATCA_REVISED_S046_MD_PATH,
+  parseVatcaRevisedSection, provisionSlug, assessRelevance,
 } from './vatcaRevisedSectionParser';
 import { parseScheduleFrontMatter } from './vatcaScheduleParser';
 import { VATCA_REVISED_CURATED_RULES, RETIRED_S46_RULE_KEYS, type CuratedVatcaRevisedRule } from './vatcaRevisedCuration';
@@ -35,7 +35,18 @@ import { upsertReviewItem } from '../extraction/service';
 import { crossReferencesFromProvision, sameCrossReferences } from './dependencies';
 import { taxHeadsFor } from './taxHeads';
 
-export { VATCA_REVISED_S046_MD_PATH };
+import { ingestCatalogueFile, type CatalogueIngestResult } from './catalogue';
+
+/** s.46 is ported to the rules catalogue (#443): its statute copy is gone. */
+export const VATCA_REVISED_S046_CATALOGUE_ENTRY = 'vatca-2010-revised/s046.json';
+
+/** Load s.46 (rates) from the rules catalogue. */
+export function ingestVatcaRevisedS46(
+  db: AppDatabase,
+  params: { companyId?: string | null; ingestVersion?: string; root?: string },
+): CatalogueIngestResult {
+  return ingestCatalogueFile(db, { ...params, entry: VATCA_REVISED_S046_CATALOGUE_ENTRY });
+}
 
 const SOURCE_TYPE: IrishSourceType = 'legislation';
 
@@ -45,6 +56,23 @@ export interface VatcaRevisedIngestResult {
   provisionCount: number;
   relevantCount: number;
   ingested: boolean;
+}
+
+/**
+ * Whether a revised section bears on the rules, and why: its category's
+ * default, unless a curated rule is mapped to it. Shared with the catalogue
+ * extraction (scripts/catalogue/extract.ts), so both judge a section alike.
+ */
+export function vatcaRevisedRelevance(
+  sectionNumber: string, citation: string, category: Parameters<typeof assessRelevance>[0],
+): { relevant: boolean; reason: string } {
+  const { relevant, reason } = assessRelevance(category);
+  const curated = VATCA_REVISED_CURATED_RULES.some((r) => r.sectionNumber === sectionNumber)
+    || [...VAT_SCOPE_CURATED_RULES, ...VAT_PLACE_OF_SUPPLY_CURATED_RULES].some((r) => r.citation === citation);
+  if (!relevant && curated) {
+    return { relevant: true, reason: `Curated: mapped to a rule in vatcaRevisedCuration.ts, overriding the ${category} category default.` };
+  }
+  return { relevant, reason };
 }
 
 /** Ingest one VATCA revised section's Markdown. Idempotent by content. */
@@ -105,13 +133,7 @@ export function ingestVatcaRevisedSection(
       sourceDate: nowIso(),
     }).run();
 
-    let { relevant, reason } = assessRelevance(parsed.category);
-    const curated = VATCA_REVISED_CURATED_RULES.some((r) => r.sectionNumber === parsed.sectionNumber)
-      || [...VAT_SCOPE_CURATED_RULES, ...VAT_PLACE_OF_SUPPLY_CURATED_RULES].some((r) => r.citation === fm.citation);
-    if (!relevant && curated) {
-      relevant = true;
-      reason = `Curated: mapped to a rule in vatcaRevisedCuration.ts, overriding the ${parsed.category} category default.`;
-    }
+    const { relevant, reason } = vatcaRevisedRelevance(parsed.sectionNumber, fm.citation, parsed.category);
 
     tx.insert(irishActProvisions).values({
       id: ids.provision(),

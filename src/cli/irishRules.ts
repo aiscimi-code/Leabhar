@@ -21,7 +21,7 @@ import {
   TCA_1997_S530_MD_PATH,
 } from '@/domain/rules/rctIngestion';
 import {
-  ingestVatcaRevisedSection, deriveVatcaRevisedRules, VATCA_REVISED_S046_MD_PATH,
+  ingestVatcaRevisedSection, deriveVatcaRevisedRules, ingestVatcaRevisedS46,
 } from '@/domain/rules/vatcaRevisedIngestion';
 import {
   ingestTca1997S284, ingestFinanceAct2003S23, deriveCapitalAllowancesRules,
@@ -187,9 +187,11 @@ export async function main(argv: string[], options: CliOptions = {}): Promise<nu
           return 0;
         }
         if (source === 'vatca-2010-revised') {
-          const file = getFlag(flags, 'file') ?? VATCA_REVISED_S046_MD_PATH;
-          const markdown = readFileSync(file, 'utf8');
-          print(ingestVatcaRevisedSection(db, { companyId, markdown, ingestVersion: 'v1', localPath: file }), format);
+          // Without --file: s.46, from the rules catalogue (#443).
+          const file = getFlag(flags, 'file');
+          print(file
+            ? ingestVatcaRevisedSection(db, { companyId, markdown: readFileSync(file, 'utf8'), ingestVersion: 'v1', localPath: file })
+            : ingestVatcaRevisedS46(db, { companyId }), format);
           return 0;
         }
         if (source === 'tca1997-s284') {

@@ -5,7 +5,7 @@ import { createCompany } from '../config/setup';
 import { ingestFinanceAct2024, ingestFinanceAct2025, deriveTaxRules, FINANCE_ACT_2024_MD_PATH, FINANCE_ACT_2025 } from './irishRules';
 import { deriveFinanceAct2024VatThresholds } from './financeAct2024VatThresholdsIngestion';
 import { ingestVatca2010, deriveVatcaRules, VATCA_2010_MD_PATH } from './vatcaIngestion';
-import { ingestVatcaRevisedSection, deriveVatcaRevisedRules, VATCA_REVISED_S046_MD_PATH } from './vatcaRevisedIngestion';
+import { ingestVatcaRevisedSection, deriveVatcaRevisedRules, ingestVatcaRevisedS46 } from './vatcaRevisedIngestion';
 import {
   ingestVatcaSchedule, deriveVatcaScheduleRules, VATCA_SCHEDULE_2_MD_PATH, VATCA_SCHEDULE_3_MD_PATH,
 } from './vatcaScheduleIngestion';
@@ -387,12 +387,11 @@ describe('lookupTransactionRules — issue #136 bug 4 / issue #138: supplier est
 });
 
 describe('lookupTransactionRules — issue #136 bugs 1 and 8: VAT rate exclusivity', () => {
-  const s46Md = readFileSync(VATCA_REVISED_S046_MD_PATH, 'utf8');
   const schedule2Md = readFileSync(VATCA_SCHEDULE_2_MD_PATH, 'utf8');
   const schedule3Md = readFileSync(VATCA_SCHEDULE_3_MD_PATH, 'utf8');
 
   beforeEach(() => {
-    ingestVatcaRevisedSection(db, { companyId, markdown: s46Md, ingestVersion: 'v1' });
+    ingestVatcaRevisedS46(db, { companyId });
     ingestFinanceAct2025(db, {
       companyId, ingestVersion: 'v1',
       markdown: readFileSync(new URL(`../../../${FINANCE_ACT_2025.localPath}`, import.meta.url).pathname, 'utf8'),
@@ -578,10 +577,9 @@ describe('identifyTopics — issue #147 finding 2: a bare card-payment narrative
 });
 
 describe('lookupTransactionRules — issue #145 defect 3: non-trading bank lines never get a VAT rate', () => {
-  const s46Md = readFileSync(VATCA_REVISED_S046_MD_PATH, 'utf8');
 
   beforeEach(() => {
-    ingestVatcaRevisedSection(db, { companyId, markdown: s46Md, ingestVersion: 'v1' });
+    ingestVatcaRevisedS46(db, { companyId });
     deriveVatcaRevisedRules(db, { companyId });
   });
 
@@ -717,7 +715,7 @@ describe('lookupTransactionRules — issue #143 findings D, E, F, G', () => {
   const si69Md = readFileSync(SI_69_2025_MD_PATH, 'utf8');
 
   beforeEach(() => {
-    ingestVatcaRevisedSection(db, { companyId, markdown: readFileSync(VATCA_REVISED_S046_MD_PATH, 'utf8'), ingestVersion: 'v1' });
+    ingestVatcaRevisedS46(db, { companyId });
     deriveVatcaRevisedRules(db, { companyId });
     ingestSi692025Reg5(db, { companyId, markdown: si69Md, ingestVersion: 'v1' });
     ingestSi692025Reg8(db, { companyId, markdown: si69Md, ingestVersion: 'v1' });

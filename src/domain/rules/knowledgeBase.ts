@@ -58,6 +58,7 @@ import { deriveCuratedRuleFamilies } from './incomeTaxIngestion';
 import { CAR_EMISSIONS_SOURCES, CAR_EMISSIONS_CURATED_RULES } from './carEmissionsCuration';
 import { syncRuleLinks } from './ruleLinks';
 import { taxHeadsFor } from './taxHeads';
+import { CATALOGUE_DIR, CATALOGUE_ENTRIES, catalogueEntryPath, ingestCatalogueFile, readCatalogueEntry } from './catalogue';
 
 type IngestParams = { companyId: string; markdown: string; ingestVersion: string; localPath: string };
 type IngestFn = (db: AppDatabase, params: IngestParams) => unknown;
@@ -92,7 +93,6 @@ const SOURCES: Array<{ path: string; ingest: IngestFn }> = [
   { path: 'docs/statutes/rct/tdm-18-02-04.md', ingest: ingestRctTdm18_02_04 },
   { path: 'docs/statutes/rct/tdm-18-02-05.md', ingest: ingestRctTdm18_02_05 },
   { path: 'docs/statutes/rct/tdm-18-02-11.md', ingest: ingestRctTdm18_02_11 },
-  { path: 'docs/statutes/vatca-2010-revised/s046.md', ingest: ingestVatcaRevisedSection },
   { path: 'docs/statutes/vatca-2010-revised/s047.md', ingest: ingestVatcaRevisedSection },
   { path: 'docs/statutes/vatca-2010-revised/s009.md', ingest: ingestVatcaRevisedSection },
   { path: 'docs/statutes/vatca-2010-revised/s010.md', ingest: ingestVatcaRevisedSection },
@@ -242,6 +242,11 @@ export function loadStatutoryKnowledgeBase(
   // it was created (issue #205, the livestock treatment).
   ensureDefaultVatTreatments(db, params.companyId);
   const ingestVersion = params.ingestVersion ?? 'v1';
+  // Sources ported to the rules catalogue (#443, #556) load from it; the rest
+  // still read their statute copy until they are ported.
+  for (const entry of CATALOGUE_ENTRIES) {
+    ingestCatalogueFile(db, { companyId: params.companyId, entry, ingestVersion, root: params.root });
+  }
   for (const source of SOURCES) {
     const markdown = readFileSync(statuteFilePath(source.path, params.root), 'utf8');
     source.ingest(db, { companyId: params.companyId, markdown, ingestVersion, localPath: source.path });
@@ -251,7 +256,7 @@ export function loadStatutoryKnowledgeBase(
   syncRuleLinks(db, { companyId: params.companyId });
   fillTaxHeads(db, { companyId: params.companyId });
   return {
-    sourcesProcessed: SOURCES.length,
+    sourcesProcessed: CATALOGUE_ENTRIES.length + SOURCES.length,
     rulesBefore,
     rulesAfter: countStatutoryRules(db, params.companyId),
   };
@@ -279,8 +284,26 @@ export function verifyStatuteFile(
   sourceStart: number | null,
   sourceEnd: number | null,
   root?: string,
+  sectionNumber?: string,
 ): StatuteFileCheck {
   if (!localPath) return { path: null, exists: false, computedSha256: null, sha256Matches: false, slice: null };
+  // A source ported to the catalogue holds no copy of the statute: check the
+  // entry still records the hash ingested, and slice its excerpt. Whether the
+  // official file still matches is `verify-sources` (online, opt-in).
+  if (localPath.startsWith(`${CATALOGUE_DIR}/`)) {
+    const entryName = localPath.slice(CATALOGUE_DIR.length + 1);
+    const path = catalogueEntryPath(entryName, root);
+    if (!existsSync(path)) return { path, exists: false, computedSha256: null, sha256Matches: false, slice: null };
+    const entry = readCatalogueEntry(entryName, root);
+    const provision = entry.provisions.find((p) => p.sectionNumber === sectionNumber) ?? (entry.provisions.length === 1 ? entry.provisions[0] : undefined);
+    return {
+      path,
+      exists: true,
+      computedSha256: entry.source.sha256,
+      sha256Matches: entry.source.sha256 === expectedSha256,
+      slice: provision?.excerpt ?? null,
+    };
+  }
   const path = statuteFilePath(localPath, root);
   if (!existsSync(path)) return { path, exists: false, computedSha256: null, sha256Matches: false, slice: null };
   const text = readFileSync(path, 'utf8');

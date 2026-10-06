@@ -7,7 +7,7 @@
  * for a Schedule 3 paragraph is a function of the paragraph and the date,
  * read here from the statute text:
  *
- * - LRC revised s.46 (docs/statutes/vatca-2010-revised/s046.md; its footnotes
+ * - LRC revised s.46 (catalogue/vatca-2010-revised/s046.json; its footnotes
  *   F99–F105 date each clause);
  * - Finance Act 2024 s.79(a) (docs/statutes/finance-act-2024), which records
  *   that (ca) read "paragraphs 7(a), 7A and 12" until 31 December 2024;

@@ -1034,7 +1034,7 @@ export function provisionDetail(provisionId: string) {
   const reliedOnBy = Object.fromEntries(keys.map((k) => [k, impacts[k]!.affected]));
   const readBy = Object.fromEntries(keys.map((k) => [k, impacts[k]!.consumers]));
   return { ...row, rulesCiting, dependencies, reliesOn, reliedOnBy, readBy, file: verifyStatuteFile(row.source.localPath, row.source.sha256,
-    row.provision.sourceStart, row.provision.sourceEnd) };
+    row.provision.sourceStart, row.provision.sourceEnd, undefined, row.provision.sectionNumber) };
 }
 
 /** The capital goods record and the purchase invoices a good can be registered from (issue #208). */

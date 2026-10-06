@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import { and, eq } from 'drizzle-orm';
 import { createTestDatabase } from '@/db/testing';
 import { createCompany } from '../config/setup';
-import { ingestVatcaRevisedSection, deriveVatcaRevisedRules, VATCA_REVISED_S046_MD_PATH } from './vatcaRevisedIngestion';
+import { ingestVatcaRevisedSection, deriveVatcaRevisedRules, ingestVatcaRevisedS46 } from './vatcaRevisedIngestion';
 import { ingestVatca2010, VATCA_2010_MD_PATH } from './vatcaIngestion';
 import { lookupTaxRule, ingestFinanceAct2025, FINANCE_ACT_2025 } from './irishRules';
 import { VATCA_REVISED_CURATED_RULES, S46_FAMILY_SCHEDULE_REF } from './vatcaRevisedCuration';
@@ -13,7 +13,6 @@ import type { AppDatabase } from '@/db';
 
 let db: AppDatabase;
 let companyId: string;
-const s46Markdown = readFileSync(VATCA_REVISED_S046_MD_PATH, 'utf8');
 const FA2025_PATH = new URL(`../../../${FINANCE_ACT_2025.localPath}`, import.meta.url).pathname;
 
 beforeEach(() => {
@@ -21,13 +20,13 @@ beforeEach(() => {
   ({ companyId } = createCompany(db, { legalName: 'Rates Ltd', seedYears: [2025] }));
 });
 
-describe('ingestVatcaRevisedSection', () => {
-  it('ingests s.46 under its own citation and is idempotent by content', () => {
-    const first = ingestVatcaRevisedSection(db, { companyId, markdown: s46Markdown, ingestVersion: 'v1' });
+describe('ingestVatcaRevisedS46', () => {
+  it('loads s.46 from the rules catalogue under its own citation and is idempotent', () => {
+    const first = ingestVatcaRevisedS46(db, { companyId });
     expect(first.ingested).toBe(true);
-    expect(first.sectionNumber).toBe('46');
+    expect(first.provisionCount).toBe(1);
 
-    const second = ingestVatcaRevisedSection(db, { companyId, markdown: s46Markdown, ingestVersion: 'v1' });
+    const second = ingestVatcaRevisedS46(db, { companyId });
     expect(second.ingested).toBe(false);
     expect(second.sourceId).toBe(first.sourceId);
 
@@ -38,7 +37,7 @@ describe('ingestVatcaRevisedSection', () => {
 
   it('never collides with the as-enacted whole-Act source, even though both cite "2010 Act 31"-family text', () => {
     ingestVatca2010(db, { companyId, markdown: readFileSync(VATCA_2010_MD_PATH, 'utf8'), ingestVersion: 'v1' });
-    const revised = ingestVatcaRevisedSection(db, { companyId, markdown: s46Markdown, ingestVersion: 'v1' });
+    const revised = ingestVatcaRevisedS46(db, { companyId });
     expect(revised.ingested).toBe(true);
 
     const sources = db.select().from(irishKnowledgeSources).all();
@@ -50,7 +49,7 @@ describe('ingestVatcaRevisedSection', () => {
 
 describe('deriveVatcaRevisedRules', () => {
   beforeEach(() => {
-    ingestVatcaRevisedSection(db, { companyId, markdown: s46Markdown, ingestVersion: 'v1' });
+    ingestVatcaRevisedS46(db, { companyId });
     ingestFinanceAct2025(db, { companyId, markdown: readFileSync(FA2025_PATH, 'utf8'), ingestVersion: 'v1' });
   });
 
@@ -68,7 +67,7 @@ describe('deriveVatcaRevisedRules', () => {
   it('skips a whole family when one version\'s source is not ingested, rather than deriving part of it', () => {
     const { db: other } = createTestDatabase();
     const { companyId: otherCompany } = createCompany(other, { legalName: 'Other Ltd', seedYears: [2025] });
-    ingestVatcaRevisedSection(other, { companyId: otherCompany, markdown: s46Markdown, ingestVersion: 'v1' });
+    ingestVatcaRevisedS46(other, { companyId: otherCompany });
     const result = deriveVatcaRevisedRules(other, { companyId: otherCompany });
     expect(result.skippedNoProvision.sort()).toEqual(['vat.rate_hairdressing', 'vat.rate_hospitality']);
   });

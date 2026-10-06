@@ -50,7 +50,7 @@ docs/statutes/_inbox/B/vatca-s043.html,19207,duplicate,docs/statutes/vatca-2010-
 docs/statutes/_inbox/B/vatca-s043.md,3515,duplicate,docs/statutes/vatca-2010-revised/s043.md
 docs/statutes/_inbox/B/vatca-s045.html,13485,duplicate,docs/statutes/vatca-2010-revised/s045.html
 docs/statutes/_inbox/B/vatca-s045.md,1805,duplicate,docs/statutes/vatca-2010-revised/s045.md
-docs/statutes/_inbox/B/vatca-s046.html,44364,duplicate,docs/statutes/vatca-2010-revised/s046.html
+docs/statutes/_inbox/B/vatca-s046.html,44364,unreferenced,
 docs/statutes/_inbox/B/vatca-s046.md,5989,unreferenced,
 docs/statutes/_inbox/B/vatca-s047.html,14908,duplicate,docs/statutes/vatca-2010-revised/s047.html
 docs/statutes/_inbox/B/vatca-s047.md,2182,duplicate,docs/statutes/vatca-2010-revised/s047.md
@@ -543,8 +543,6 @@ docs/statutes/vatca-2010-revised/s043.md,3515,runtime,read by the test suite
 docs/statutes/vatca-2010-revised/s044.md,1461,runtime,read by the test suite
 docs/statutes/vatca-2010-revised/s045.html,13485,original,docs/statutes/_inbox/B/vatca-s045.md docs/statutes/vatca-2010-revised/s045.md
 docs/statutes/vatca-2010-revised/s045.md,1805,unreferenced,
-docs/statutes/vatca-2010-revised/s046.html,44364,cited-code,src/domain/rules/vatcaRevisedCuration.ts
-docs/statutes/vatca-2010-revised/s046.md,5982,runtime,read by the test suite
 docs/statutes/vatca-2010-revised/s047.html,14908,runtime,read by the test suite
 docs/statutes/vatca-2010-revised/s047.md,2182,runtime,read by the test suite
 docs/statutes/vatca-2010-revised/s059.md,10021,runtime,read by the test suite
