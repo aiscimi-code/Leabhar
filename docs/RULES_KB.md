@@ -105,8 +105,11 @@ re-hashes it (AGENTS.md #5).
 `npm run catalogue:extract -- <entry>` writes one from the official page;
 `catalogue.test.ts` fails the gate when an entry no longer matches what the
 curation derives. All 39 loaded LRC-revised VATCA sections, Schedules
-1-3, VATCA 2010 as enacted and the Finance Acts 2024 and 2025 as enacted
-are in it; the other sources wait on #556.
+1-3, VATCA 2010 as enacted, the Finance Acts 2024 and 2025 as enacted,
+TCA 1997 ss.530, 530A, 530E, 530G, 530H, 530I and 284, and Finance Act
+2003 s.23 are in it; the other sources wait on #556. Each of ss.530A-530I
+is its own source with FA 2011 s.20's page beside it, cut from that page
+at its heading. A provision can carry its Chapter (`chapter`).
 An entry can state the source's own publication and commencement dates
 (the enacted Act's 1 November 2010) and a note; a provision can carry the
 sections it cites (`amendsSection`), which the dependency graph reads, and
@@ -506,7 +509,9 @@ independent tax from every source above (`docs/statutes/rct/README.md`).
   `tca1997SectionParser.ts` doesn't match this source's shape as-is. Only
   the six load-bearing sections are ingested; the other sixteen (530B-D,
   530J-V — registration, returns, assessment, penalties, record-keeping)
-  exist verbatim on disk for a future pass.
+  exist verbatim on disk for a future pass. The six loaded sections are now
+  in the rules catalogue (#556): each entry keeps FA 2011 s.20's page and
+  `catalogue:extract` cuts its section from it.
 - **Revenue TDM Part 18-02-04** (`revenue_guidance`) — "RCT for Principal
   Contractors", still the only verbatim source this KB holds for the
   2011-restructured payment-notification *procedure* (ss.530B/530C are
@@ -974,7 +979,8 @@ generic pipeline rather than a one-off module:
   s53.md` exists verbatim on disk for the trail but is not ingested — no
   rule needs to state a superseded, decades-stale figure. `capitalAllowances
   Ingestion.ts` reuses `parseTca1997Section` directly for the FA 2003 s.23
-  file (same one-section-per-file, bare-`"N."`-opener shape as `s530.md`),
+  file (same one-section-per-file, bare-`"N."`-opener shape as s.530; both
+  are now read from their pages in the rules catalogue, #556),
   since that parser's logic is structural, not TCA-1997-specific — only the
   knowledge-source citation/URL metadata needed a small dedicated ingestion
   function, `ingestFinanceAct2003S23`. A companion Revenue TDM
@@ -1662,8 +1668,8 @@ paraphrase, and flagged rather than guessed past:**
   exemptions for savings bonuses/betting winnings/certain settlements) —
   but **none carries a `source_pdf_sha256`/`source_html_sha256` or a
   `conversion:` marker** the way every other genuinely verbatim source in
-  this KB does (compare `docs/statutes/tca-1997/s530.md` or `s284.md`,
-  which do). This KB's verbatim-only policy is about provable provenance,
+  this KB does (compare s.530 or s.284, whose copies did; both are now
+  read from their pages in the rules catalogue). This KB's verbatim-only policy is about provable provenance,
   not just plausible-looking prose, so these five are **not** ingested
   despite reading like the real thing. s.288 in particular (capital
   allowances balancing mechanics) would be a genuine curation candidate if

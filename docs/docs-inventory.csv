@@ -11,7 +11,7 @@ docs/statutes/282-2011/articles-10-13b-establishment.md,5175,cited-code,src/doma
 docs/statutes/282-2011/consolidated-282-2011.md,123226,cited-docs,docs/statutes/282-2011/articles-10-13b-establishment.md docs/statutes/SOURCE-REGISTER.md
 docs/statutes/CURRENT-REGISTER.md,3782,cited-docs,docs/statutes/README.md
 docs/statutes/CURRENT-REGISTRATION.md,1640,cited-docs,docs/statutes/CURRENT-REGISTER.md docs/statutes/README.md
-docs/statutes/README.md,11855,cited-docs,docs/RULES_KB.md docs/statutes/SOURCE-REGISTER.md docs/statutes/finance-act-2024/README.md …
+docs/statutes/README.md,13847,cited-docs,docs/RULES_KB.md docs/statutes/SOURCE-REGISTER.md docs/statutes/finance-act-2024/README.md …
 docs/statutes/SOURCE-REGISTER.md,13355,cited-code,src/domain/rules/taxRateSync.ts
 docs/statutes/_inbox/A/SOURCES.txt,668,unreferenced,
 docs/statutes/_inbox/A/finance-act-2025-enacted-print.html,847145,cited-docs,docs/statutes/_inbox/A/SOURCES.txt
@@ -374,8 +374,7 @@ docs/statutes/companies-act-2014/s359.md,1414,runtime,read by the test suite
 docs/statutes/companies-act-2014/s360.md,2918,runtime,read by the test suite
 docs/statutes/distance-sales/tdm-intra-community-distance-sales.md,10898,cited-docs,docs/statutes/SOURCE-REGISTER.md
 docs/statutes/finance-act-2001/s53.md,1821,cited-code,src/domain/rules/capitalAllowancesCuration.ts src/domain/rules/capitalAllowancesIngestion.ts
-docs/statutes/finance-act-2003/README.md,1076,unreferenced,
-docs/statutes/finance-act-2003/s23.md,3895,runtime,read by the test suite
+docs/statutes/finance-act-2003/README.md,1449,unreferenced,
 docs/statutes/finance-act-2024/2024-act-43-part3-vat.md,6199,cited-docs,docs/statutes/SOURCE-REGISTER.md docs/statutes/finance-act-2024/README.md
 docs/statutes/finance-act-2024/README.md,1439,unreferenced,
 docs/statutes/finance-act-2025/README.md,1619,unreferenced,
@@ -386,7 +385,7 @@ docs/statutes/import-vat/README.md,1176,cited-docs,docs/statutes/README.md
 docs/statutes/import-vat/customs-manual-import-vat.md,80893,cited-docs,docs/RULES_KB.md docs/statutes/import-vat/README.md
 docs/statutes/pos-of-services/exceptions-to-general-rules.md,4942,cited-docs,docs/statutes/SOURCE-REGISTER.md
 docs/statutes/pos-of-services/general-place-of-supply.md,4540,cited-docs,docs/statutes/SOURCE-REGISTER.md
-docs/statutes/rct/README.md,2161,cited-code,src/domain/rules/rctCuration.ts src/domain/rules/rctIngestion.ts
+docs/statutes/rct/README.md,2299,cited-code,src/domain/rules/rctCuration.ts src/domain/rules/rctIngestion.ts
 docs/statutes/rct/tdm-18-02-01-operations.md,858,cited-docs,docs/statutes/rct/README.md
 docs/statutes/rct/tdm-18-02-02-principal.md,1721,cited-docs,docs/statutes/rct/README.md
 docs/statutes/rct/tdm-18-02-04.md,40493,runtime,read by the test suite
@@ -450,24 +449,17 @@ docs/statutes/tca-1997-nfg/part41a.pdf,526463,original,docs/statutes/_inbox/D/pa
 docs/statutes/tca-1997-nfg/part43.md,53305,runtime,read by the test suite
 docs/statutes/tca-1997-nfg/part43.pdf,319215,original,docs/statutes/_inbox/D/part43.md docs/statutes/tca-1997-nfg/part43.md
 docs/statutes/tca-1997/1997-act-39-ss-885-887.md,1466,cited-docs,docs/RULES_KB.md docs/statutes/tca-1997/README.md
-docs/statutes/tca-1997/README.md,2586,cited-code,src/domain/rules/financeAct2011RctSectionParser.ts src/domain/rules/rctCuration.ts src/domain/rules/rctIngestion.ts src/domain/rules/tca1997Ingestion.ts src/domain/rules/tca1997SectionParser.ts src/domain/rules/tcaNfgParser.ts
+docs/statutes/tca-1997/README.md,3103,cited-code,src/domain/rules/financeAct2011RctSectionParser.ts src/domain/rules/rctCuration.ts src/domain/rules/rctIngestion.ts src/domain/rules/tca1997Ingestion.ts src/domain/rules/tca1997SectionParser.ts src/domain/rules/tcaNfgParser.ts
 docs/statutes/tca-1997/s18.md,838,cited-docs,docs/RULES_KB.md docs/statutes/tca-1997/README.md
 docs/statutes/tca-1997/s235.md,4521,cited-docs,docs/RULES_KB.md docs/statutes/tca-1997/README.md
-docs/statutes/tca-1997/s284.md,4369,runtime,read by the test suite
 docs/statutes/tca-1997/s288.md,7257,cited-docs,docs/statutes/tca-1997/README.md
 docs/statutes/tca-1997/s299.md,1997,cited-docs,docs/statutes/tca-1997/README.md
 docs/statutes/tca-1997/s496.md,15400,cited-docs,docs/statutes/tca-1997/README.md
 docs/statutes/tca-1997/s52.md,474,cited-docs,docs/RULES_KB.md docs/statutes/tca-1997/README.md
-docs/statutes/tca-1997/s530.md,8212,runtime,read by the test suite
-docs/statutes/tca-1997/s530A.md,3544,runtime,read by the test suite
 docs/statutes/tca-1997/s530B.md,2387,runtime,read by the test suite
 docs/statutes/tca-1997/s530C.md,1816,runtime,read by the test suite
 docs/statutes/tca-1997/s530D.md,2113,runtime,read by the test suite
-docs/statutes/tca-1997/s530E.md,1518,runtime,read by the test suite
 docs/statutes/tca-1997/s530F.md,3247,runtime,read by the test suite
-docs/statutes/tca-1997/s530G.md,5240,runtime,read by the test suite
-docs/statutes/tca-1997/s530H.md,3246,runtime,read by the test suite
-docs/statutes/tca-1997/s530I.md,2177,runtime,read by the test suite
 docs/statutes/tca-1997/s530J.md,1485,runtime,read by the test suite
 docs/statutes/tca-1997/s530K.md,3137,runtime,read by the test suite
 docs/statutes/tca-1997/s530L.md,1297,runtime,read by the test suite

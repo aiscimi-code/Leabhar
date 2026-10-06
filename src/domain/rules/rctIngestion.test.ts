@@ -4,10 +4,9 @@ import { eq } from 'drizzle-orm';
 import { createTestDatabase } from '@/db/testing';
 import { createCompany } from '../config/setup';
 import {
-  ingestTca1997S530, ingestTca1997S530A, ingestTca1997S530E, ingestTca1997S530G, ingestTca1997S530H,
-  ingestTca1997S530I, tca1997RctSectionMdPath,
+  ingestTca1997S530, ingestTca1997S530A, ingestTca1997S530FromCatalogue, ingestTca1997RctFa2011SectionFromCatalogue,
   ingestRctTdm18_02_04, ingestRctTdm18_02_05, ingestRctTdm18_02_11, deriveRctRules,
-  TCA_1997_S530_MD_PATH,
+  RCT_FA2011_SECTIONS, type RctFa2011SectionKey,
 } from './rctIngestion';
 import { lookupTaxRule } from './irishRules';
 import { lookupTransactionRules } from './transactionLookup';
@@ -17,12 +16,10 @@ import type { AppDatabase } from '@/db';
 
 let db: AppDatabase;
 let companyId: string;
-const s530Markdown = readFileSync(TCA_1997_S530_MD_PATH, 'utf8');
-const s530AMarkdown = readFileSync(tca1997RctSectionMdPath('530A'), 'utf8');
-const s530EMarkdown = readFileSync(tca1997RctSectionMdPath('530E'), 'utf8');
-const s530GMarkdown = readFileSync(tca1997RctSectionMdPath('530G'), 'utf8');
-const s530HMarkdown = readFileSync(tca1997RctSectionMdPath('530H'), 'utf8');
-const s530IMarkdown = readFileSync(tca1997RctSectionMdPath('530I'), 'utf8');
+/** Markdown copies, as the CLI's --file takes: the openings of s.530 and s.530A. */
+const s530Markdown = readFileSync(new URL('./__fixtures__/tca-1997-s530-excerpt.md', import.meta.url), 'utf8');
+const s530AMarkdown = readFileSync(new URL('./__fixtures__/tca-1997-s530A-excerpt.md', import.meta.url), 'utf8');
+const FA2011_KEYS = Object.keys(RCT_FA2011_SECTIONS) as RctFa2011SectionKey[];
 const tdmMarkdown = readFileSync(
   new URL('../../../docs/statutes/rct/tdm-18-02-04.md', import.meta.url).pathname,
   'utf8',
@@ -37,11 +34,7 @@ const tdm11Markdown = readFileSync(
 );
 
 function ingestFa2011Sections(): void {
-  ingestTca1997S530A(db, { companyId, markdown: s530AMarkdown, ingestVersion: 'v1' });
-  ingestTca1997S530E(db, { companyId, markdown: s530EMarkdown, ingestVersion: 'v1' });
-  ingestTca1997S530G(db, { companyId, markdown: s530GMarkdown, ingestVersion: 'v1' });
-  ingestTca1997S530H(db, { companyId, markdown: s530HMarkdown, ingestVersion: 'v1' });
-  ingestTca1997S530I(db, { companyId, markdown: s530IMarkdown, ingestVersion: 'v1' });
+  for (const key of FA2011_KEYS) ingestTca1997RctFa2011SectionFromCatalogue(db, key, { companyId });
 }
 
 beforeEach(() => {
@@ -49,7 +42,20 @@ beforeEach(() => {
   ({ companyId } = createCompany(db, { legalName: 'RCT Ltd', seedYears: [2025] }));
 });
 
-describe('ingestTca1997S530', () => {
+describe('ingestTca1997S530FromCatalogue', () => {
+  it('loads s.530 under its own citation, dated as enacted, and is idempotent', () => {
+    const first = ingestTca1997S530FromCatalogue(db, { companyId });
+    expect(first.ingested).toBe(true);
+    expect(first.provisionCount).toBe(1);
+    expect(ingestTca1997S530FromCatalogue(db, { companyId })).toMatchObject({ ingested: false, sourceId: first.sourceId });
+    const source = db.select().from(irishKnowledgeSources).where(eq(irishKnowledgeSources.id, first.sourceId)).get()!;
+    expect(source).toMatchObject({
+      citation: '1997 Act 39 s.530', sourceType: 'legislation', effectiveFrom: '1997-01-01', localPath: 'catalogue/tca-1997/s530.json',
+    });
+  });
+});
+
+describe('ingestTca1997S530 (a Markdown copy, the CLI\'s --file)', () => {
   it('ingests s.530 under its own citation and is idempotent by content', () => {
     const first = ingestTca1997S530(db, { companyId, markdown: s530Markdown, ingestVersion: 'v1' });
     expect(first.ingested).toBe(true);
@@ -68,12 +74,8 @@ describe('ingestTca1997S530', () => {
 
 describe('ingestTca1997S530A / S530E / S530G / S530H / S530I (issue #131)', () => {
   it('each gets its own citation and knowledge-source row, even though all six share one physical FA 2011 s.20 page', () => {
-    const a = ingestTca1997S530A(db, { companyId, markdown: s530AMarkdown, ingestVersion: 'v1' });
-    const e = ingestTca1997S530E(db, { companyId, markdown: s530EMarkdown, ingestVersion: 'v1' });
-    const g = ingestTca1997S530G(db, { companyId, markdown: s530GMarkdown, ingestVersion: 'v1' });
-    const h = ingestTca1997S530H(db, { companyId, markdown: s530HMarkdown, ingestVersion: 'v1' });
-    const i = ingestTca1997S530I(db, { companyId, markdown: s530IMarkdown, ingestVersion: 'v1' });
-    for (const r of [a, e, g, h, i]) expect(r.ingested).toBe(true);
+    const results = FA2011_KEYS.map((key) => ingestTca1997RctFa2011SectionFromCatalogue(db, key, { companyId }));
+    for (const r of results) expect(r.ingested).toBe(true);
 
     const sources = db.select().from(irishKnowledgeSources).all();
     const citations = new Set(sources.map((s) => s.citation));
@@ -82,19 +84,29 @@ describe('ingestTca1997S530A / S530E / S530G / S530H / S530I (issue #131)', () =
     expect(citations.has('1997 Act 39 s.530G')).toBe(true);
     expect(citations.has('1997 Act 39 s.530H')).toBe(true);
     expect(citations.has('1997 Act 39 s.530I')).toBe(true);
-    expect(new Set([a.sourceId, e.sourceId, g.sourceId, h.sourceId, i.sourceId]).size).toBe(5);
+    expect(new Set(results.map((r) => r.sourceId)).size).toBe(5);
+    // Each entry keeps the same page, the one the inserting Act was read from.
+    expect(new Set(sources.filter((s) => s.citation.startsWith('1997 Act 39 s.530')).map((s) => s.sha256)).size).toBe(1);
   });
 
-  it('ingesting the same section twice is idempotent by content', () => {
-    const first = ingestTca1997S530E(db, { companyId, markdown: s530EMarkdown, ingestVersion: 'v1' });
-    const second = ingestTca1997S530E(db, { companyId, markdown: s530EMarkdown, ingestVersion: 'v1' });
+  it('loading the same section twice is idempotent', () => {
+    const first = ingestTca1997RctFa2011SectionFromCatalogue(db, 'tca1997_s530e', { companyId });
+    const second = ingestTca1997RctFa2011SectionFromCatalogue(db, 'tca1997_s530e', { companyId });
+    expect(first.ingested).toBe(true);
+    expect(second.ingested).toBe(false);
+    expect(second.sourceId).toBe(first.sourceId);
+  });
+
+  it('a Markdown copy (the CLI\'s --file) is ingested idempotently by content', () => {
+    const first = ingestTca1997S530A(db, { companyId, markdown: s530AMarkdown, ingestVersion: 'v1' });
+    const second = ingestTca1997S530A(db, { companyId, markdown: s530AMarkdown, ingestVersion: 'v1' });
     expect(first.ingested).toBe(true);
     expect(second.ingested).toBe(false);
     expect(second.sourceId).toBe(first.sourceId);
   });
 
   it('every section is tagged legislation, not revenue_guidance', () => {
-    ingestTca1997S530G(db, { companyId, markdown: s530GMarkdown, ingestVersion: 'v1' });
+    ingestTca1997RctFa2011SectionFromCatalogue(db, 'tca1997_s530g', { companyId });
     const source = db.select().from(irishKnowledgeSources)
       .where(eq(irishKnowledgeSources.citation, '1997 Act 39 s.530G')).get()!;
     expect(source.sourceType).toBe('legislation');
@@ -139,7 +151,7 @@ describe('ingestRctTdm18_02_05 / ingestRctTdm18_02_11', () => {
 
 describe('deriveRctRules', () => {
   beforeEach(() => {
-    ingestTca1997S530(db, { companyId, markdown: s530Markdown, ingestVersion: 'v1' });
+    ingestTca1997S530FromCatalogue(db, { companyId });
     ingestFa2011Sections();
     ingestRctTdm18_02_04(db, { companyId, markdown: tdmMarkdown, ingestVersion: 'v1' });
     ingestRctTdm18_02_05(db, { companyId, markdown: tdm05Markdown, ingestVersion: 'v1' });

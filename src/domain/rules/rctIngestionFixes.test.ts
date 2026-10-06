@@ -16,7 +16,7 @@ describe('RCT TDM ingestion (issue #199)', () => {
 
   it('refuses a statute file handed to the TDM path', () => {
     const { db } = createTestDatabase();
-    const markdown = readFileSync('docs/statutes/tca-1997/s530.md', 'utf8');
+    const markdown = readFileSync('src/domain/rules/__fixtures__/tca-1997-s530-excerpt.md', 'utf8');
     expect(() => ingestRctTdm18_02_04(db, { markdown, ingestVersion: 'test' })).toThrow(/not Revenue TDM Part 18-02-04/);
   });
 });

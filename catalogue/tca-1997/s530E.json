@@ -1,0 +1,100 @@
+{
+  "format": 1,
+  "source": {
+    "citation": "1997 Act 39 s.530E",
+    "title": "TCA 1997 s.530E (as inserted by FA 2011 s.20)",
+    "sourceType": "legislation",
+    "jurisdiction": "IE",
+    "sourceUrl": "https://www.irishstatutebook.ie/eli/2011/act/6/section/20/enacted/en/html",
+    "sha256": "ecf8c67b4f6b9e486666b6f048e804edcb013cfdf7811a215fc7c9783dc86d8b",
+    "conversion": "isb-html-plaintext",
+    "retrievedOn": "2026-10-06",
+    "publicationDate": null,
+    "effectiveFrom": "2012-01-01",
+    "note": "Inserted by Finance Act 2011 s.20 — no LRC revised TCA 1997 page exists for ss.530A-530V (every revisedacts.lawreform.ie URL for them 404s, reconfirmed for issue #131), so this was fetched from the eISB as-enacted Finance Act 2011 s.20 page instead, the inserting Act's own text. Later Finance Acts may have amended this section since 2011; not independently checked here."
+  },
+  "provisions": [
+    {
+      "sectionNumber": "530E",
+      "heading": "Rates of tax.",
+      "locator": "s.530E",
+      "principalAct": "Taxes Consolidation Act 1997",
+      "citedActs": [
+        "Taxes Consolidation Act 1997",
+        "Finance Act 2011"
+      ],
+      "category": "other",
+      "relevant": true,
+      "relevanceReason": "Curated: mapped to rule(s) in rctCuration.ts for s.530E.",
+      "excerpt": "530E.— (1)  For the purpose of section 530D(2), the rate of tax—\n\n(\na\n) shall be zero where the Revenue Commissioners have made a determination that the subcontractor is a person to whom section 530G applies,\n\n(\nb\n) shall be the standard rate (within the meaning of section 3) in force at the time of payment where the Revenue Commissioners have made a determination that the subcontractor is a person to whom section 530H applies,\n\n(\nc\n) shall be 35 per cent where the Revenue Commissioners have made a determination that the subcontractor is a person to whom neither section 530G nor section 530H apply.\n\n(2) Any reference to a determination in subsection (1) is to the most recent determination made by the Revenue Commissioners under section 530I or as determined on appeal in accordance with that section, in respect of the subcontractor concerned."
+    }
+  ],
+  "rules": [
+    {
+      "key": "rct.rate_default_35pct",
+      "sectionNumber": "530E",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2012-01-01",
+          "effectiveTo": null,
+          "quote": "shall be 35 per cent where the Revenue Commissioners have made a determination that the subcontractor is a person to whom neither section 530G nor section 530H apply",
+          "value": 35,
+          "unit": "percent",
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    },
+    {
+      "key": "rct.rate_standard_reference",
+      "sectionNumber": "530E",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2012-01-01",
+          "effectiveTo": null,
+          "quote": "shall be the standard rate (within the meaning of section 3) in force at the time of payment where the Revenue Commissioners have made a determination that the subcontractor is a person to whom section 530H applies",
+          "value": null,
+          "unit": null,
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    },
+    {
+      "key": "rct.rate_zero",
+      "sectionNumber": "530E",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2012-01-01",
+          "effectiveTo": null,
+          "quote": "shall be zero where the Revenue Commissioners have made a determination that the subcontractor is a person to whom section 530G applies",
+          "value": 0,
+          "unit": "percent",
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    }
+  ]
+}

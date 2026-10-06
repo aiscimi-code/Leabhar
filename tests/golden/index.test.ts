@@ -39,12 +39,11 @@ import {
   ingestSi156, deriveSi156Rules, SI_156_2012_MD_PATH,
 } from '@/domain/rules/si156Ingestion';
 import {
-  ingestTca1997S284, deriveCapitalAllowancesRules,
-  TCA_1997_S284_MD_PATH,
+  ingestTca1997S284FromCatalogue, deriveCapitalAllowancesRules,
 } from '@/domain/rules/capitalAllowancesIngestion';
 import {
-  ingestTca1997S530, ingestRctTdm18_02_04, ingestRctTdm18_02_05, ingestRctTdm18_02_11,
-  deriveRctRules, TCA_1997_S530_MD_PATH,
+  ingestTca1997S530FromCatalogue, ingestRctTdm18_02_04, ingestRctTdm18_02_05, ingestRctTdm18_02_11,
+  deriveRctRules,
 } from '@/domain/rules/rctIngestion';
 import {
   ingestTdm3801_03bCapacityExclusion,
@@ -118,12 +117,11 @@ beforeEach(() => {
   ingestSi156(db, { companyId, markdown: si156Md, ingestVersion: 'v1' });
   deriveSi156Rules(db, { companyId });
 
-  const tca284Md = readFileSync(TCA_1997_S284_MD_PATH, 'utf8');
-  ingestTca1997S284(db, { companyId, markdown: tca284Md, ingestVersion: 'v1' });
+  ingestTca1997S284FromCatalogue(db, { companyId });
   deriveCapitalAllowancesRules(db, { companyId });
 
   // Each RCT source through its own path (issue #199): s.530 as the statute, each TDM from its own file.
-  ingestTca1997S530(db, { companyId, markdown: readFileSync(TCA_1997_S530_MD_PATH, 'utf8'), ingestVersion: 'v1' });
+  ingestTca1997S530FromCatalogue(db, { companyId });
   ingestRctTdm18_02_04(db, { companyId, markdown: readFileSync('docs/statutes/rct/tdm-18-02-04.md', 'utf8'), ingestVersion: 'v1' });
   ingestRctTdm18_02_05(db, { companyId, markdown: readFileSync('docs/statutes/rct/tdm-18-02-05.md', 'utf8'), ingestVersion: 'v1' });
   ingestRctTdm18_02_11(db, { companyId, markdown: readFileSync('docs/statutes/rct/tdm-18-02-11.md', 'utf8'), ingestVersion: 'v1' });

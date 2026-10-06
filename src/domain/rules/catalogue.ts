@@ -79,6 +79,8 @@ export interface CatalogueProvision {
   locator: string;
   /** The Part of a Schedule the paragraph sits under ("Part 2"); absent where the source has none. */
   part?: string | null;
+  /** The Chapter the section sits in, as the source heads it ("CHAPTER 2: Payments to subcontractors ..."). */
+  chapter?: string | null;
   /** The provisions it cites or amends, as the parser read them ("section 46(1); section 3(a)"). */
   amendsSection?: string | null;
   /** The Act it amends, as the parser read it ("Taxes Consolidation Act 1997"); absent where it amends none. */
@@ -201,6 +203,18 @@ export const CATALOGUE_ENTRIES = [
   // The Finance Acts as enacted, from the Irish Statute Book PDFs: one provision per section.
   'finance-act-2024/2024-act-43-enacted.json',
   'finance-act-2025/2025-act-18-enacted.json',
+  // TCA 1997 sections, one page each: s.530 (RCT) and s.284 as enacted;
+  // ss.530A-530I as Finance Act 2011 s.20 inserted them, each its own source
+  // with that Act's page beside it; and Finance Act 2003 s.23 (the 12.5%
+  // wear-and-tear rate).
+  'tca-1997/s530.json',
+  'tca-1997/s530A.json',
+  'tca-1997/s530E.json',
+  'tca-1997/s530G.json',
+  'tca-1997/s530H.json',
+  'tca-1997/s530I.json',
+  'tca-1997/s284.json',
+  'finance-act-2003/s23.json',
 ] as const;
 
 export function catalogueEntryPath(entry: string, root: string = appRoot()): string {
@@ -252,7 +266,7 @@ export function validateCatalogueEntry(entry: unknown, label = 'catalogue entry'
     if (p.amendsSection !== undefined && p.amendsSection !== null && typeof p.amendsSection !== 'string') {
       fail(`provision ${p.sectionNumber}: amendsSection must be a string`);
     }
-    for (const f of ['principalAct', 'effectiveClue'] as const) {
+    for (const f of ['principalAct', 'effectiveClue', 'chapter'] as const) {
       if (p[f] !== undefined && p[f] !== null && typeof p[f] !== 'string') fail(`provision ${p.sectionNumber}: ${f} must be a string`);
     }
     if (p.citedActs !== undefined && (!Array.isArray(p.citedActs) || p.citedActs.some((a) => typeof a !== 'string'))) {
@@ -387,6 +401,7 @@ export function ingestCatalogueEntry(
         heading: p.heading,
         principalAct: p.principalAct ?? null,
         part: p.part ?? null,
+        chapter: p.chapter ?? null,
         provisionText: p.excerpt,
         // No local file to slice: the locator says where the words are in the source.
         sourceStart: null,

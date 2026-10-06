@@ -52,6 +52,14 @@ import { vatcaScheduleRelevance } from '@/domain/rules/vatcaScheduleIngestion';
 import { parseVatca2010 } from '@/domain/rules/vatcaParser';
 import { VATCA_2010, VATCA_2010_ENACTED_NOTE, vatca2010Relevance } from '@/domain/rules/vatcaIngestion';
 import { parseFinanceAct2024 } from '@/domain/rules/statuteParser';
+import { parseTca1997Section, type ParsedTcaSection } from '@/domain/rules/tca1997SectionParser';
+import { parseFinanceAct2011RctSection } from '@/domain/rules/financeAct2011RctSectionParser';
+import {
+  RCT_FA2011_CITED_ACTS, RCT_FA2011_NOTE, RCT_FA2011_PRINCIPAL_ACT, RCT_FA2011_SECTIONS, TCA_1997_S530,
+  rctFa2011Relevance, rctFa2011Title, tca1997S530Relevance, type RctFa2011SectionKey,
+} from '@/domain/rules/rctIngestion';
+import { TCA_1997_AS_ENACTED_FROM, TCA_1997_AS_ENACTED_NOTE, tca1997SectionRelevance } from '@/domain/rules/tca1997Ingestion';
+import { CAPITAL_ALLOWANCES_CURATED_SECTIONS, FINANCE_ACT_2003 } from '@/domain/rules/capitalAllowancesIngestion';
 import {
   FINANCE_ACT_2024, FINANCE_ACT_2025, enactedActRelevance, financeAct2024CuratedReason, financeAct2025CuratedReason,
   type KnowledgeSourceRef,
@@ -210,6 +218,62 @@ function extractorFor(entry: string, naming: Naming | null): Extractor {
       },
     };
   }
+  // A TCA 1997 section as enacted, one Irish Statute Book page each, or
+  // Finance Act 2003 s.23, which amends s.284: parsed as tca1997SectionParser.ts reads them.
+  const tcaSection = TCA_SECTIONS[entry];
+  if (tcaSection) {
+    const { title, citation, url, compact, source, provision } = tcaSection;
+    return {
+      url, title, citation,
+      build: (html, retrievedOn) => {
+        const text = convertLrc(html, title, citation, url);
+        const parsed = parseTca1997Section(compact ? withoutBlankLines(text) : text);
+        return {
+          source: {
+            citation, title, sourceType: 'legislation', jurisdiction: 'IE', sourceUrl: url,
+            sha256: createHash('sha256').update(html).digest('hex'),
+            conversion: compact ? 'isb-html-plaintext-compact' : 'isb-html-plaintext', retrievedOn,
+            publicationDate: null, ...source,
+          },
+          provisions: [{
+            sectionNumber: parsed.sectionNumber, heading: parsed.heading, locator: `s.${parsed.sectionNumber}`,
+            chapter: parsed.chapter, category: parsed.category, excerpt: parsed.provisionText, ...provision(parsed),
+          }],
+        };
+      },
+    };
+  }
+  // A TCA 1997 section as Finance Act 2011 s.20 inserted it: cut from that
+  // Act's page (from the section's heading to the next section's), then
+  // parsed as financeAct2011RctSectionParser.ts reads it.
+  const rct = /^tca-1997\/s530([AEGHI])$/.exec(entry)?.[1];
+  if (rct) {
+    const key = `tca1997_s530${rct.toLowerCase()}` as RctFa2011SectionKey;
+    const { citation, sourceUrl: url, effectiveFrom, sectionNumber } = RCT_FA2011_SECTIONS[key];
+    const title = rctFa2011Title(sectionNumber);
+    return {
+      url, title, citation,
+      build: (html, retrievedOn) => {
+        const page = convertLrc(html, title, citation, url);
+        const parsed = parseFinanceAct2011RctSection(`# ${title}\n\n${insertedSection(page, sectionNumber)}\n`);
+        if (parsed.sectionNumber !== sectionNumber) throw new Error(`${entry}: cut s.${parsed.sectionNumber}, not s.${sectionNumber}.`);
+        const { relevant, reason } = rctFa2011Relevance(key, sectionNumber);
+        return {
+          source: {
+            citation, title, sourceType: 'legislation', jurisdiction: 'IE', sourceUrl: url,
+            sha256: createHash('sha256').update(html).digest('hex'),
+            conversion: 'isb-html-plaintext', retrievedOn,
+            publicationDate: null, effectiveFrom, note: RCT_FA2011_NOTE,
+          },
+          provisions: [{
+            sectionNumber, heading: parsed.heading, locator: `s.${sectionNumber}`,
+            principalAct: RCT_FA2011_PRINCIPAL_ACT, citedActs: RCT_FA2011_CITED_ACTS,
+            category: parsed.category, relevant, relevanceReason: reason, excerpt: parsed.provisionText,
+          }],
+        };
+      },
+    };
+  }
   // A section of an Act as enacted, on the Irish Statute Book: the source's
   // URL is the one its statute copy, or the entry, already records.
   const isb = isbSectionUrl(entry, naming);
@@ -253,6 +317,65 @@ function parseIsbSection(text: string, section: string): { heading: string; exce
   const heading = body.slice(0, start).trim();
   if (!heading || heading.includes('\n')) throw new Error(`Section ${section}: expected a one-line heading, found "${heading}".`);
   return { heading, excerpt: body.slice(start).trim() };
+}
+
+/**
+ * The single-section pages tca1997SectionParser.ts reads, by entry name. The
+ * 1997 pages' copies were the converted page with its blank lines dropped,
+ * which the parser's layout needs (`compact`); FA 2003 s.23's kept them.
+ */
+const TCA_SECTIONS: Record<string, {
+  title: string; citation: string; url: string; compact: boolean;
+  source: Pick<CatalogueEntry['source'], 'effectiveFrom' | 'note'>;
+  provision: (p: ParsedTcaSection) => Pick<CatalogueEntry['provisions'][number],
+    'relevant' | 'relevanceReason' | 'amendsSection' | 'principalAct' | 'citedActs'>;
+}> = {
+  'tca-1997/s530': {
+    title: TCA_1997_S530.title, citation: TCA_1997_S530.citation, url: TCA_1997_S530.sourceUrl, compact: true,
+    source: { effectiveFrom: TCA_1997_S530.effectiveFrom, note: TCA_1997_S530.note },
+    provision: (p) => {
+      const { relevant, reason } = tca1997S530Relevance(p);
+      return { relevant, relevanceReason: reason };
+    },
+  },
+  'tca-1997/s284': {
+    title: 'TCA 1997 s.284', citation: '1997 Act 39 s.284', compact: true,
+    url: 'https://www.irishstatutebook.ie/eli/1997/act/39/section/284/enacted/en/html',
+    source: { effectiveFrom: TCA_1997_AS_ENACTED_FROM, note: TCA_1997_AS_ENACTED_NOTE },
+    provision: (p) => {
+      const { relevant, reason } = tca1997SectionRelevance(p, CAPITAL_ALLOWANCES_CURATED_SECTIONS);
+      return { relevant, relevanceReason: reason };
+    },
+  },
+  'finance-act-2003/s23': {
+    title: FINANCE_ACT_2003.title, citation: FINANCE_ACT_2003.citation, url: FINANCE_ACT_2003.sourceUrl, compact: false,
+    source: { effectiveFrom: FINANCE_ACT_2003.effectiveFrom, note: FINANCE_ACT_2003.note },
+    provision: () => ({
+      relevant: true, relevanceReason: FINANCE_ACT_2003.relevanceReason, amendsSection: FINANCE_ACT_2003.amendsSection,
+      principalAct: FINANCE_ACT_2003.principalAct, citedActs: FINANCE_ACT_2003.citedActs,
+    }),
+  },
+};
+
+/** A converted page with the blank lines after its title dropped. */
+function withoutBlankLines(text: string): string {
+  const title = text.search(/^# /m);
+  return text.slice(0, title) + text.slice(title).split('\n').filter((l, i) => i === 0 || l.trim() !== '').join('\n');
+}
+
+/**
+ * One section FA 2011 s.20 inserts, from its page as converted: its heading
+ * (the line before "530A.—"), up to the line before the next section's heading.
+ */
+function insertedSection(page: string, sectionNumber: string): string {
+  const lines = page.split('\n');
+  const opens = lines.flatMap((l, i) => (/^\d+[A-Z]?\.—/.test(l) ? [i] : []));
+  const open = opens.find((i) => lines[i]!.startsWith(`${sectionNumber}.—`));
+  if (open === undefined) throw new Error(`The page has no section ${sectionNumber}.`);
+  const headingOf = (i: number) => { let j = i - 1; while (j >= 0 && lines[j]!.trim() === '') j--; return j; };
+  const next = opens.find((i) => i > open);
+  const end = next === undefined ? lines.length : headingOf(next);
+  return lines.slice(headingOf(open), end).join('\n').trim();
 }
 
 /** The Finance Acts the script extracts as a whole, by entry name. */

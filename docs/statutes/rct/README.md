@@ -7,8 +7,8 @@ a separate RCT deduction authorisation; the two are independent regimes.
 
 | Source | File / URL |
 |---|---|
-| TCA 1997 s.530 (relevant contract / relevant operations / construction operations) | [`docs/statutes/tca-1997/s530.md`](../tca-1997/s530.md) |
-| TCA 1997 s.530A (who must operate RCT) | Not a 1997-Act file — inserted by Finance Act 2011 s.20, amended by Finance Act 2025 s.21. `s530.md` notes this; no page to link. |
+| TCA 1997 s.530 (relevant contract / relevant operations / construction operations) | Rules catalogue: `catalogue/tca-1997/s530.json`, with its Irish Statute Book page beside it (#556) |
+| TCA 1997 s.530A (who must operate RCT) | Not a 1997-Act page — inserted by Finance Act 2011 s.20, amended by Finance Act 2025 s.21. Rules catalogue: `catalogue/tca-1997/s530A.json`, read from FA 2011 s.20's page (ss.530E, G, H and I likewise). |
 | TDM Part 18-02-01 Relevant Operations (updated 2025/26) | `tdm-18-02-01-operations.md` |
 | TDM Part 18-02-02 Who is a Principal Contractor (updated Feb 2026) | `tdm-18-02-02-principal.md` |
 | TDM Part 18-02-04 Principals | `tdm-18-02-04.md` |
@@ -19,12 +19,12 @@ a separate RCT deduction authorisation; the two are independent regimes.
 **Citation refined, still not fully verified:** `tdm-18-02-02-principal.md`
 cites "s.639(1)" for the "erection of buildings or development of land"
 construction-operations definition used to decide who is a principal.
-Now that `s530.md` exists, that description is closer to what it calls
+Now that s.530 is in the knowledge base, that description is closer to what it calls
 **construction operations** — but "who is a principal" content specifically
-belongs to **s.530A** (per `s530.md`'s own text: "s.530A (who must operate
-RCT)"), not s.530 or s.639. The most plausible actual citation is
-**s.530A(1)**, but s.530A has no 1997 page to check it against (see above),
-so this stays flagged rather than silently corrected.
+belongs to **s.530A** ("who must operate RCT"), not s.530 or s.639. The
+most plausible actual citation is **s.530A(1)**, which the knowledge base
+now holds (see above), but the TDM's citation has not been checked against
+it, so this stays flagged rather than silently corrected.
 
 ## Registration TDM (finish verbatim extract)
 

@@ -14,15 +14,16 @@ import {
 } from '@/domain/rules/vatcaScheduleIngestion';
 import {
   ingestTca1997S530, ingestTca1997S530A, ingestTca1997S530E, ingestTca1997S530G, ingestTca1997S530H,
-  ingestTca1997S530I, tca1997RctSectionMdPath, ingestRctTdm18_02_04, ingestRctTdm18_02_05, ingestRctTdm18_02_11,
+  ingestTca1997S530I, ingestTca1997S530FromCatalogue, ingestTca1997RctFa2011SectionFromCatalogue,
+  type RctFa2011SectionKey, ingestRctTdm18_02_04, ingestRctTdm18_02_05, ingestRctTdm18_02_11,
   deriveRctRules,
-  TCA_1997_S530_MD_PATH,
 } from '@/domain/rules/rctIngestion';
 import {
   ingestVatcaRevisedSection, deriveVatcaRevisedRules, ingestVatcaRevisedS46, ingestVatcaRevised,
 } from '@/domain/rules/vatcaRevisedIngestion';
 import {
-  ingestTca1997S284, ingestFinanceAct2003S23, deriveCapitalAllowancesRules,
+  ingestTca1997S284, ingestFinanceAct2003S23, ingestTca1997S284FromCatalogue, ingestFinanceAct2003S23FromCatalogue,
+  deriveCapitalAllowancesRules,
 } from '@/domain/rules/capitalAllowancesIngestion';
 import { ingestSi639, deriveSi639Rules, SI_639_2010_MD_PATH } from '@/domain/rules/si639Ingestion';
 import { ingestSi156, deriveSi156Rules, SI_156_2012_MD_PATH } from '@/domain/rules/si156Ingestion';
@@ -161,22 +162,28 @@ export async function main(argv: string[], options: CliOptions = {}): Promise<nu
           return 0;
         }
         if (source === 'rct-tca530') {
-          const file = getFlag(flags, 'file') ?? TCA_1997_S530_MD_PATH;
-          const markdown = readFileSync(file, 'utf8');
-          print(ingestTca1997S530(db, { companyId, markdown, ingestVersion: 'v1', localPath: file }), format);
+          // From the rules catalogue (#556), or --file: a Markdown copy.
+          const file = getFlag(flags, 'file');
+          print(file
+            ? ingestTca1997S530(db, { companyId, markdown: readFileSync(file, 'utf8'), ingestVersion: 'v1', localPath: file })
+            : ingestTca1997S530FromCatalogue(db, { companyId }), format);
           return 0;
         }
         if (source.startsWith('rct-fa2011-')) {
           const letter = source.slice('rct-fa2011-'.length).toUpperCase();
-          const ingestFns: Record<string, typeof ingestTca1997S530A> = {
-            A: ingestTca1997S530A, E: ingestTca1997S530E, G: ingestTca1997S530G,
-            H: ingestTca1997S530H, I: ingestTca1997S530I,
+          const sections: Record<string, [RctFa2011SectionKey, typeof ingestTca1997S530A]> = {
+            A: ['tca1997_s530a', ingestTca1997S530A], E: ['tca1997_s530e', ingestTca1997S530E],
+            G: ['tca1997_s530g', ingestTca1997S530G], H: ['tca1997_s530h', ingestTca1997S530H],
+            I: ['tca1997_s530i', ingestTca1997S530I],
           };
-          const ingestFn = ingestFns[letter];
-          if (!ingestFn) throw new Error(`Unknown --source: ${source} (supported: rct-fa2011-a/e/g/h/i)`);
-          const file = getFlag(flags, 'file') ?? tca1997RctSectionMdPath(`530${letter}`);
-          const markdown = readFileSync(file, 'utf8');
-          print(ingestFn(db, { companyId, markdown, ingestVersion: 'v1', localPath: file }), format);
+          const section = sections[letter];
+          if (!section) throw new Error(`Unknown --source: ${source} (supported: rct-fa2011-a/e/g/h/i)`);
+          // From the rules catalogue (#556), or --file: a Markdown copy.
+          const [key, ingestFn] = section;
+          const file = getFlag(flags, 'file');
+          print(file
+            ? ingestFn(db, { companyId, markdown: readFileSync(file, 'utf8'), ingestVersion: 'v1', localPath: file })
+            : ingestTca1997RctFa2011SectionFromCatalogue(db, key, { companyId }), format);
           return 0;
         }
         if (source === 'rct-tdm' || source === 'rct-tdm-05' || source === 'rct-tdm-11') {
@@ -205,19 +212,19 @@ export async function main(argv: string[], options: CliOptions = {}): Promise<nu
           return 0;
         }
         if (source === 'tca1997-s284') {
+          // From the rules catalogue (#556), or --file: a Markdown copy.
           const file = getFlag(flags, 'file');
-          print(
-            ingestTca1997S284(db, { companyId, markdown: file ? readFileSync(file, 'utf8') : undefined, ingestVersion: 'v1', localPath: file }),
-            format,
-          );
+          print(file
+            ? ingestTca1997S284(db, { companyId, markdown: readFileSync(file, 'utf8'), ingestVersion: 'v1', localPath: file })
+            : ingestTca1997S284FromCatalogue(db, { companyId }), format);
           return 0;
         }
         if (source === 'finance-act-2003-s23') {
+          // From the rules catalogue (#556), or --file: a Markdown copy.
           const file = getFlag(flags, 'file');
-          print(
-            ingestFinanceAct2003S23(db, { companyId, markdown: file ? readFileSync(file, 'utf8') : undefined, ingestVersion: 'v1', localPath: file }),
-            format,
-          );
+          print(file
+            ? ingestFinanceAct2003S23(db, { companyId, markdown: readFileSync(file, 'utf8'), ingestVersion: 'v1', localPath: file })
+            : ingestFinanceAct2003S23FromCatalogue(db, { companyId }), format);
           return 0;
         }
         if (source === 'si639') {
