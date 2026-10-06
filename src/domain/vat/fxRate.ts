@@ -7,7 +7,7 @@
  * time the tax becomes due" (s.37(4)(a)), unless a method has been agreed
  * with the Revenue Commissioners, in which case that method is used for every
  * foreign-currency transaction until Revenue withdraws the agreement
- * (s.37(4)(b)). Source: docs/statutes/vatca-2010-revised/s037.md.
+ * (s.37(4)(b)). Source: catalogue/vatca-2010-revised/s037.json.
  *
  * A rate's `source` is free text across the books (a bank statement's rate,
  * the invoice's booking rate). These are the sources s.37(4) accepts; any

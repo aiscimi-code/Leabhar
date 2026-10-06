@@ -1,0 +1,48 @@
+{
+  "format": 1,
+  "source": {
+    "citation": "2010 Act 31 s.10",
+    "title": "VATCA 2010 s.10 (revised)",
+    "sourceType": "legislation",
+    "jurisdiction": "IE",
+    "sourceUrl": "https://revisedacts.lawreform.ie/eli/2010/act/31/section/10/revised/en/html",
+    "sha256": "d43d8623739ee9100052d1efd12cd2e1b300151f726209c39574453897d614d1",
+    "conversion": "lrc-html-plaintext",
+    "retrievedOn": "2026-10-06"
+  },
+  "provisions": [
+    {
+      "sectionNumber": "10",
+      "heading": "Certain supplies of goods — supplier not established in the State.",
+      "locator": "s.10",
+      "category": "other",
+      "relevant": false,
+      "relevanceReason": "Uncategorised by heading/body keyword match; needs human review to determine relevance.",
+      "excerpt": "10\n.—(1) Where a person not established in\nthe State supplies gas through the natural gas distribution\nsystem,\nor\nheat or cooling energy through heating or cooling\nnetworks,\nor\nelectricity, to a recipient in the State, and where the\nrecipient is—\n\n(\na\n) a taxable person who carries on a business in\nthe State, or\n\n(\nb\n) a public body,\n\nthen\nthat recipient shall, in relation to that supply, be an\naccountable person or be deemed to be an accountable person\nand shall be liable to pay the tax chargeable as if the\nrecipient supplied those goods in the course or furtherance of\nbusiness.\n\n(2)\nWhere a person not established in the State supplies goods in\nthe State which are installed or assembled, with or without a\ntrial run, by or on behalf of the person, and where the\nrecipient of the supply of those goods is—\n\n(\na\n) a taxable person who carries on a business in\nthe State, or\n\n(\nb\n) a public body,\n\nthen\nthat recipient shall, in relation to that supply, be an\naccountable person or be deemed to be an accountable person\nand shall be liable to pay the tax chargeable as if the\nrecipient supplied those goods in the course or furtherance of\nbusiness."
+    }
+  ],
+  "rules": [
+    {
+      "key": "vat.recipient_accountable_goods_installed_or_energy",
+      "sectionNumber": "10",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2010-11-01",
+          "effectiveTo": null,
+          "quote": "supplies goods in the State which are installed or\nassembled, with or without a trial run, by or on behalf of the person",
+          "value": null,
+          "unit": null,
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    }
+  ]
+}

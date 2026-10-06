@@ -1,0 +1,48 @@
+{
+  "format": 1,
+  "source": {
+    "citation": "2010 Act 31 s.35",
+    "title": "VATCA 2010 s.35 (revised)",
+    "sourceType": "legislation",
+    "jurisdiction": "IE",
+    "sourceUrl": "https://revisedacts.lawreform.ie/eli/2010/act/31/section/35/revised/en/html",
+    "sha256": "f0c8f585ab0c25fef02a76b5cef7be535d720369be8397f38a5ec8bbf2c52f15",
+    "conversion": "lrc-html-plaintext",
+    "retrievedOn": "2026-10-06"
+  },
+  "provisions": [
+    {
+      "sectionNumber": "35",
+      "heading": "Use and enjoyment provisions.",
+      "locator": "s.35",
+      "category": "other",
+      "relevant": false,
+      "relevanceReason": "Uncategorised by heading/body keyword match; needs human review to determine relevance.",
+      "excerpt": "35\n.—(1) Where, in the case of a supply of\nservices that consists of hiring out movable goods, the place\nof supply of the services would, apart from this subsection,\nbe a place outside the Community but the services are in\neffect used and enjoyed in the State, the place of supply of\nthose services is nevertheless taken to be the State for the\npurposes of this Act.\n\n(2)\nWhere, in the case of a supply of services that consists of\nhiring out a means of transport, the place of supply of the\nservices would, apart from this subsection, be the State but\nthose services are in effect used and enjoyed outside the\nCommunity, the place of supply of those services is\nnevertheless taken to be outside the Community for the\npurposes of this Act.\n\n(3)\nWhere, in the case of a supply of services that consists of\nthe provision to a non-taxable person of a telecommunications\nservice, a radio or a television broadcasting service or a\ntelephone card, the place of supply of the service or card\nwould, apart from this subsection, be outside the Community\nbut the service is in effect used and enjoyed in the State,\nthe place of supply is nevertheless taken to be the State for\nthe purposes of this Act.\n\n(4)\nWhere, in the case of a supply of services that consists of\nthe provision by a taxable person established in the State of\na telecommunications service or a telephone card to a\nnon-taxable person, the place of supply of the service or card\nwould, apart from this subsection, be outside the Community\nbut the service is in effect used and enjoyed in the State,\nthe place of supply is taken to be the State for the purposes\nof this Act.\n\n(5)\nWhere, in the case of a supply of services that consists of\nthe provision to a non-taxable person of financial services\n(including banking services and financial fund management\nservices but not including the provision of safe deposit\nfacilities) or insurance services (including reinsurance), the\nplace of supply of the services would, apart from this\nsubsection, be a place outside the Community but the services\nare in effect used and enjoyed in the State, the place of\nsupply is nevertheless taken to be the State for the purposes\nof this Act.\n\n(6)\nWhere money transfer services provided to a person in the\nState are in effect used and enjoyed in the State, the place\nof supply of intermediary services that are provided in\nrespect of, or in relation to, those services to a principal\nestablished outside the Community, is taken to be the State\nfor the purposes of this Act."
+    }
+  ],
+  "rules": [
+    {
+      "key": "vat.use_and_enjoyment_hire_of_goods",
+      "sectionNumber": "35",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2010-11-01",
+          "effectiveTo": null,
+          "quote": "Where, in the case of a supply of services that consists of hiring out movable\ngoods, the place of supply of the services would, apart from this subsection, be a\nplace outside the Community but the services are in effect used and enjoyed in the\nState",
+          "value": null,
+          "unit": null,
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    }
+  ]
+}

@@ -25,7 +25,7 @@ export type EuCountryCode = (typeof EU_COUNTRY_CODES)[number];
  * on Services", and its traders in goods hold VAT numbers prefixed `XI`
  * (Revenue, VIES Traders Manual, Appendix 9:
  * docs/statutes/_inbox/C/vies/vies-traders-manual.md; VATCA s.2 as revised,
- * docs/statutes/vatca-2010-revised/s002.md, reads "Member State" as including
+ * catalogue/vatca-2010-revised/s002.json, reads "Member State" as including
  * Northern Ireland, save for the Schedule 9 provisions).
  *
  * So `XI` is a Member State for goods only. It is never in `EU_COUNTRY_CODES`,

@@ -1,0 +1,48 @@
+{
+  "format": 1,
+  "source": {
+    "citation": "2010 Act 31 s.76",
+    "title": "VATCA 2010 s.76 (revised)",
+    "sourceType": "legislation",
+    "jurisdiction": "IE",
+    "sourceUrl": "https://revisedacts.lawreform.ie/eli/2010/act/31/section/76/revised/en/html",
+    "sha256": "cfdea5c04e0aabab3ed58e5a1ddcbdd58cb0868ed31bc3f41ac7eb8088e9a801",
+    "conversion": "lrc-html-plaintext",
+    "retrievedOn": "2026-10-06"
+  },
+  "provisions": [
+    {
+      "sectionNumber": "76",
+      "heading": "Returns and remittances.",
+      "locator": "s.76",
+      "category": "vat",
+      "relevant": true,
+      "relevanceReason": "Substantive vat provision; potentially bears on transaction treatment.",
+      "excerpt": "76\n.—(1) Subject to\nsubsection (2)\n\nand\n\nsections 91C(3)\n,\n91E(3)\nand\n\n91K(3)\n, an\naccountable person shall, within 9 days immediately after the\n10th day of the month immediately following a taxable\nperiod—\n\n(\na\n) furnish to the Collector-General a true and\ncorrect return, prepared in accordance with regulations,\nof—\n\n(i) the amount of tax which became due by the person during\nthat taxable period (other than tax already paid by him or her\nin relation to goods imported by him or her),\n\n(ii) the amount (if any) which may be deducted in accordance\nwith\nChapter\n1\nof\nPart 8\nin\ncomputing the amount of tax payable by the person in respect\nof that taxable period, and\n\n(iii) such other particulars as may be specified in\nregulations,\n\nand\n\n(\nb\n) remit to the Collector-General, at the same\ntime as so furnishing such return, the amount of tax (if any)\npayable by the person in respect of that taxable period.\n\n(2)\n\nA person who\ndisposes of goods or supplies services which pursuant to\n\nsection 22(3)\nor\n28(4)\nor\n\n(5)\nare\ndeemed to be supplied by an accountable person in the course\nor furtherance of his or her business shall—\n\n(\na\n) within 9 days immediately after the 10th day of\nthe month immediately following a taxable period—\n\n(i) furnish to the Collector-General\n—\n\n(I) a true and correct return, prepared in accordance with\nregulations, of the total amount of tax which became due\n\n, and the\namount (if any) which would have been deductible therefrom in\naccordance with\nChapter 1\nof\nPart 8\nbut for the\napplication of\nsection\n59(3)(c)\n,\n\nin that taxable period, by\n—\n\n(A) the accountable person in relation to the disposal of the\ngoods or the supply of the services, and\n\n(B) the receiver, liquidator or other person exercising a\npower, in relation to any adjustment required under\nChapter\n2\nof\nPart 8\nor\nsection 95(4)(c)\n,\n\nand\n\n(II) such other particulars as may be specified in\nregulations,\n\n(ii)\nremit to the Collector-General, at the same time as so\nfurnishing such return, the amount of tax payable in respect\nof that taxable period,\n\n(\nb\n) send to the accountable person deemed to have\ndisposed of the goods or supplied the services a statement\ncontaining such particulars as may be specified in\nregulations, and\n\n(\nc\n) treat the amount of tax referred to in\n\nparagraph (a)\nas a necessary disbursement\n\nout of the\nproceeds of the disposal or the income from the services\ndeemed to be supplied by the accountable\nperson.\n\n(3)\n\nThe owner of the\ngoods or the supplier of the services which pursuant to\n\nsection 22(3)\nor\n28(4)\nor\n\n(5)\nare\ndeemed to be supplied by an accountable person in the course\nor furtherance of the accountable person’s business shall\nexclude from any return which the owner is or, but for this\nsubsection, would be required to furnish under this Act, the\ntax payable in accordance with\nsubsection (2)\n.\n\n(4)(\na\n)(i) A return required to be furnished by an\naccountable person under this section or\nsection 77\n\n, or an\nadjustment to a return as referred to in\nsection\n77A\n,\nmay be\nfurnished by the accountable person or another person acting\nunder the accountable person’s authority for that\npurpose.\n\n(ii) A return purporting to be a return furnished by a person\nacting under an accountable person’s authority shall be\ndeemed to be a return furnished by the accountable person\nunless the contrary is proved.\n\n(\nb\n) Where a return in accordance with\nparagraph\n(a)\nis furnished by a person acting under an\naccountable person’s authority, the provisions of any\nenactment relating to value-added tax shall apply as if that\nreturn had been furnished by the accountable person."
+    }
+  ],
+  "rules": [
+    {
+      "key": "vat.return_due_within_9_days",
+      "sectionNumber": "76",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2010-11-01",
+          "effectiveTo": null,
+          "quote": "an accountable person shall, within 9 days immediately after the 10th day of the\nmonth immediately following a taxable period",
+          "value": null,
+          "unit": null,
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    }
+  ]
+}

@@ -1,0 +1,70 @@
+{
+  "format": 1,
+  "source": {
+    "citation": "2010 Act 31 s.74",
+    "title": "VATCA 2010 s.74 (revised)",
+    "sourceType": "legislation",
+    "jurisdiction": "IE",
+    "sourceUrl": "https://revisedacts.lawreform.ie/eli/2010/act/31/section/74/revised/en/html",
+    "sha256": "2c5017998b575fa8a2afc768ada9d4854a248890bff37e2685b885ac9941d0e4",
+    "conversion": "lrc-html-plaintext",
+    "retrievedOn": "2026-10-06"
+  },
+  "provisions": [
+    {
+      "sectionNumber": "74",
+      "heading": "Tax due on supplies.",
+      "locator": "s.74",
+      "category": "other",
+      "relevant": false,
+      "relevanceReason": "Uncategorised by heading/body keyword match; needs human review to determine relevance.",
+      "excerpt": "74\n.—(1) Tax chargeable under\nsection 3\n(a)\nor\n(c)\n\nshall be due—\n\n(\na\n) in case an invoice is required under\nChapter 2\nto be issued, at\nthe time of issue of the invoice or, if the invoice is not\nissued in due time, upon the expiration of the period within\nwhich the invoice should have been issued,\n\n(\nb\n) in case a person is liable under\nsection 69\n(1)\nor\n(2)\n\nto pay an amount of tax by reference to an invoice, or credit\nnote, issued by him or her, at the time of issue of that\ninvoice or credit note,\n\n(\nc\n) in the case of continuous supplies of\ntelecommunications services or electricity, or of gas which\nhas the meaning assigned to it in\nparagraph 17(3)\nof\n\nSchedule 3\n—\n\n(i) supplied to a person other than a person to whom an\ninvoice is required to be issued under\nChapter 2\n, and\n\n(ii) for which there is a statement of account (being a\nbalancing statement or demand for payment which issues at\nleast once every 3 months),\n\nat\nthe time of issue of the statement of account in respect of\nthose supplies,\n\n…\n\n(\nca\n)\nin the case of a supply of goods in accordance with\nsection\n91G\n, at the time payment for the goods has been\naccepted,\nand\n\n(\nd\n) in any other case, at the time the goods or\nservices are supplied.\n\n(2)\nNotwithstanding anything in this Act but subject to\n\nsubsection (3)\n, the tax chargeable under\nsection 3\n(a)\nor\n(c)\n,\nother than tax chargeable in respect of supplies of the kind\nspecified in\nparagraph 1(1)\nor\n(2)\nof\nSchedule 2\n,\n\n…\nshall be due\nnot later than the time when the amount in respect of which it\nis payable has been received in full or in part, and where the\namount is received in full or in part before the supply of the\ngoods or services to which it relates, a supply for a\nconsideration equal to the amount received of such part of the\ngoods or services as is equal in value to the amount received,\nshall be deemed, for the purposes of this Act, to have taken\nplace at the time of such receipt.\n\n(3)\n\nSubsection (2)\ndoes not apply to the tax chargeable\nin respect of supplies of goods or services where tax is due\nin accordance with\nsubsection (1)(a)\n,\n(b)\nor\n\n(c)\nby an accountable person who is not authorised\nunder\nsection 80\nto account for\ntax due by reference to the amount of the moneys received\nduring a taxable period or part thereof.\n\n(4)\n\n…"
+    }
+  ],
+  "rules": [
+    {
+      "key": "vat.tax_point_cash_receipts",
+      "sectionNumber": "74",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2010-11-01",
+          "effectiveTo": null,
+          "quote": "not later than the time when the amount in respect of which it\nis payable has been received in full or in part,",
+          "value": null,
+          "unit": null,
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    },
+    {
+      "key": "vat.tax_point_supply_invoice",
+      "sectionNumber": "74",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2010-11-01",
+          "effectiveTo": null,
+          "quote": "the time of issue of the invoice or, if the invoice is not\nissued in due time, upon the expiration of the period within\nwhich the invoice should have been issued,",
+          "value": null,
+          "unit": null,
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    }
+  ]
+}

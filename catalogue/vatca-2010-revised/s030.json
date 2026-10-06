@@ -1,0 +1,59 @@
+{
+  "format": 1,
+  "source": {
+    "citation": "VATCA 2010 s.30",
+    "title": "VATCA 2010 s.30 (LRC revised)",
+    "sourceType": "legislation",
+    "jurisdiction": "IE",
+    "sourceUrl": "https://revisedacts.lawreform.ie/eli/2010/act/31/section/30/revised/en/html",
+    "sha256": "1a8c544cdfab797697505dacb94d103ad8e27b62d0bc08a900f42f5b4772bbe7",
+    "conversion": "lrc-html-plaintext",
+    "retrievedOn": "2026-10-06",
+    "lrcAnnotations": {
+      "text": "Value-Added Tax Consolidation Act 2010 | Law Reform Revised Acts Classified List www.lawreform.ie Search Revised Acts Revised Acts Introduction Alphabetical List Chronological List Annotations This Act View Full Act View by Section Download PDFs With annotations Without annotations On the eISB Act as originally enacted ↗ Amendments to this Act ↗ #content a:link, #content a:active, #content a:visited { color: var(--header-background-color); text-decoration: none } Value-Added Tax Consolidation Act 2010 《 Go to Front 〈 Previous Section Next Section 〉 30 Goods supplied to non-registered persons. [VATA s. 3(6)( d )] ⟦F66⟧ [ 30. — Notwithstanding section 29(1)(a) or (2) , for the purposes of this Act, the place where goods are supplied shall be deemed to be— ( a ) subject to section 35A , in the case of an intra-Community distance sale of goods, the place where the goods are located when the dispatch or transport of the goods to the customer ends, ( b ) in the case of distance sales of goods imported from third territories or third countries into a Member State other than that in which the dispatch or transport of the goods to the customer ends, the place where the goods are located when the dispatch or transport of the goods to the customer ends; ( c ) in the case of distance sales of goods imported from third territories or third countries into the Member State in which the dispatch or transport of the goods to the customer ends, that Member State, provided that the value-added tax on those goods is declared under the provisions implementing Section 4 of Chapter 6 of Title XII of the VAT Directive in that Member State. ] Annotations Amendments: Law Reform Ireland Styne House, Upper Hatch Street Dublin 2 D02 DY27 Email: info@lawreform.ie Projects Current Projects Access to Legislation Legislation Directory Revised Acts Classified List of In-force Legislation Statute Law Revision Programme About Us Who We Are FOI Publication Scheme Protected Disclosures Careers Publications Browse all Publications Implementation Table Annual Reports Consultations Other Contact Us Latest News Sitemap All content Copyright 2026 Privacy Policy Data Protection Policy",
+      "footnotes": [
+        {
+          "ref": "F66",
+          "kind": "Substituted",
+          "date": "2021-07-01",
+          "text": "Substituted (1.07.2021) by European Union (Value-Added Tax) Regulations 2021 (S.I. No. 327 of 2021), reg. 7, in effect as per reg. 2."
+        }
+      ]
+    }
+  },
+  "provisions": [
+    {
+      "sectionNumber": "30",
+      "heading": "Goods supplied to non-registered persons.",
+      "locator": "s.30",
+      "category": "vat",
+      "relevant": true,
+      "relevanceReason": "Substantive vat provision; potentially bears on transaction treatment.",
+      "excerpt": "30.\n—\nNotwithstanding\n\nsection 29(1)(a)\nor\n(2)\n, for the purposes of\nthis Act, the place where goods are supplied shall be deemed\nto be—\n\n(\na\n) subject to\nsection 35A\n, in the case of\nan intra-Community distance sale of goods, the place where the\ngoods are located when the dispatch or transport of the goods\nto the customer ends,\n\n(\nb\n) in the case of distance sales of goods imported\nfrom third territories or third countries into a Member State\nother than that in which the dispatch or transport of the\ngoods to the customer ends, the place where the goods are\nlocated when the dispatch or transport of the goods to the\ncustomer ends;\n\n(\nc\n) in the case of distance sales of goods imported\nfrom third territories or third countries into the Member\nState in which the dispatch or transport of the goods to the\ncustomer ends, that Member State, provided that the\nvalue-added tax on those goods is declared under the\nprovisions implementing Section 4 of Chapter 6 of Title XII of\nthe VAT Directive in that Member\nState."
+    }
+  ],
+  "rules": [
+    {
+      "key": "vat.distance_sales_goods_eu_consumers",
+      "sectionNumber": "30",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2021-07-01",
+          "effectiveTo": null,
+          "quote": "in the case of an intra-Community distance sale of goods,\nthe place where the goods are located when the dispatch or transport of the goods\nto the customer ends",
+          "value": null,
+          "unit": null,
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    }
+  ]
+}

@@ -6,7 +6,8 @@ import {
 import { readCatalogueEntry } from './catalogue';
 import { VATCA_REVISED_S046_CATALOGUE_ENTRY } from './vatcaRevisedIngestion';
 
-const S047 = vatcaRevisedSectionPath('47');
+// A section still held as a statute copy (s.47 and s.2 are in the rules catalogue).
+const S019 = vatcaRevisedSectionPath('19');
 
 describe('parseVatcaRevisedSection', () => {
   it('s.46 (rates), whose operative marker is "46\\n.—(1)", parsed into the rules catalogue (#443)', () => {
@@ -23,14 +24,14 @@ describe('parseVatcaRevisedSection', () => {
     expect(p!.excerpt).not.toMatch(/^F\d+$/m);
   });
 
-  it('parses s.2, whose predecessor-citation bracket spans two lines', () => {
-    const p = parseVatcaRevisedSectionFile(vatcaRevisedSectionPath('2'));
-    expect(p.sectionNumber).toBe('2');
-    expect(p.heading).toBe('Interpretation — general.');
-    expect(p.heading).not.toContain('VATA');
-    expect(p.heading).not.toContain('[');
-    expect(p.provisionText.startsWith('2')).toBe(true);
-    expect(p.provisionText).toContain('“accountable person”');
+  it('parses s.2, whose predecessor-citation bracket spans two lines (its parse is in the rules catalogue)', () => {
+    const [p] = readCatalogueEntry('vatca-2010-revised/s002.json').provisions;
+    expect(p!.sectionNumber).toBe('2');
+    expect(p!.heading).toBe('Interpretation — general.');
+    expect(p!.heading).not.toContain('VATA');
+    expect(p!.heading).not.toContain('[');
+    expect(p!.excerpt.startsWith('2')).toBe(true);
+    expect(p!.excerpt).toContain('“accountable person”');
   });
 
   it('parses s.91A, inserted after 2010 so it has no predecessor-citation bracket, ' +
@@ -50,7 +51,7 @@ describe('parseVatcaRevisedSection', () => {
   });
 
   it('records stable, in-bounds source offsets that recover the verbatim body', () => {
-    const src = readFileSync(S047, 'utf8');
+    const src = readFileSync(S019, 'utf8');
     const p = parseVatcaRevisedSection(src);
     expect(p.sourceStart).toBeGreaterThanOrEqual(0);
     expect(p.sourceEnd).toBeLessThanOrEqual(src.length);
@@ -60,8 +61,8 @@ describe('parseVatcaRevisedSection', () => {
   });
 
   it('is idempotent across two parses', () => {
-    const a = parseVatcaRevisedSectionFile(S047);
-    const b = parseVatcaRevisedSectionFile(S047);
+    const a = parseVatcaRevisedSectionFile(S019);
+    const b = parseVatcaRevisedSectionFile(S019);
     expect(a).toEqual(b);
   });
 });

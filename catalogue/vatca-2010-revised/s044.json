@@ -1,0 +1,48 @@
+{
+  "format": 1,
+  "source": {
+    "citation": "2010 Act 31 s.44",
+    "title": "VATCA 2010 s.44 (revised)",
+    "sourceType": "legislation",
+    "jurisdiction": "IE",
+    "sourceUrl": "https://revisedacts.lawreform.ie/eli/2010/act/31/section/44/revised/en/html",
+    "sha256": "a46447944dde883ea0bde2225a02451bcd6f68f32cff5f70504eff4fad5fbad4",
+    "conversion": "lrc-html-plaintext",
+    "retrievedOn": "2026-10-06"
+  },
+  "provisions": [
+    {
+      "sectionNumber": "44",
+      "heading": "Non-business use of immovable goods.",
+      "locator": "s.44",
+      "category": "other",
+      "relevant": false,
+      "relevanceReason": "Uncategorised by heading/body keyword match; needs human review to determine relevance.",
+      "excerpt": "44\n.—(1) The amount on which tax is\nchargeable in relation to a supply of services referred to in\n\nsection 27\n(2)\nin any\ntaxable period shall be an amount equal to one sixth of one\ntwentieth of the cost of the immovable goods used to provide\nthose services, being—\n\n(\na\n) the amount on which tax was chargeable to the\nperson making the supply in respect of that person’s\nacquisition or development of the immovable goods referred to\nin\nsection 27\n(2)\n, and\n\n(\nb\n) in the case where\nsection 20\n(2)(c)\napplied to the acquisition\nof the immovable goods, the amount on which tax would have\nbeen chargeable but for the application of that section,\n\nadjusted to correctly reflect the proportion of the use of the\ngoods in that period.\n\n(2)\nThe Revenue Commissioners may make regulations specifying\nmethods which may be used—\n\n(\na\n) to identify the proportion which correctly\nreflects the extent to which immovable goods are used for the\npurposes referred to in\nsection\n27\n(2)\n, and\n\n(\nb\n) to calculate the relevant taxable amount or\namounts."
+    }
+  ],
+  "rules": [
+    {
+      "key": "vat.non_business_use_immovable_goods_amount",
+      "sectionNumber": "44",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2010-11-01",
+          "effectiveTo": null,
+          "quote": "an amount equal to one sixth of one\ntwentieth of the cost of the immovable goods used to provide\nthose services, being—",
+          "value": null,
+          "unit": null,
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    }
+  ]
+}

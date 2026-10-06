@@ -13,7 +13,7 @@
  * possibly ancillary; `documentLineChoices` then compares it with the other
  * lines on the same invoice, offers the principal supply's treatment, and
  * flags the choice (`consolidation/compositeSupply.ts`). The source is the LRC
- * revised s.47 (docs/statutes/vatca-2010-revised/s047.md), cited as its front
+ * revised s.47 (catalogue/vatca-2010-revised/s047.json), cited as its front
  * matter states.
  */
 import type { CuratedVatScopeRule } from './vatScopeCuration';

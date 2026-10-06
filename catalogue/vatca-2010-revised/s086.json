@@ -1,0 +1,48 @@
+{
+  "format": 1,
+  "source": {
+    "citation": "2010 Act 31 s.86",
+    "title": "VATCA 2010 s.86 (revised)",
+    "sourceType": "legislation",
+    "jurisdiction": "IE",
+    "sourceUrl": "https://revisedacts.lawreform.ie/eli/2010/act/31/section/86/revised/en/html",
+    "sha256": "51f47a04e1ca68d48922c008a30a40b093d36a2fb58333c6326da23125d0d6bd",
+    "conversion": "lrc-html-plaintext",
+    "retrievedOn": "2026-10-06"
+  },
+  "provisions": [
+    {
+      "sectionNumber": "86",
+      "heading": "Special provisions for tax invoiced by flat-rate farmers.",
+      "locator": "s.86",
+      "category": "other",
+      "relevant": false,
+      "relevanceReason": "Uncategorised by heading/body keyword match; needs human review to determine relevance.",
+      "excerpt": "86.\n—\n(1)\nSubject to\nsection 68(1)\nand\n(6)\nand\n\nsubsection (1A)\n, where a flat-rate farmer supplies\nagricultural produce or an agricultural service to a person,\nthe farmer shall issue to the person an invoice indicating the\nconsideration (exclusive of the flat-rate addition) in respect\nof the supply and an amount (in this Act referred to as a\n“flat-rate addition”) equal to\n\n4.5 per\ncent\nof that\nconsideration (exclusive of the flat-rate addition).\n\n(1A)\nWhere\nsection 68(6)\napplies, the issue of an invoice by\na flat-rate farmer shall only apply in respect of agricultural\nproduce or an agricultural service of a kind not specified in\nan order made by the Minister under\nsection 86A\n.\n\n(2)\nWhere, in relation to a supply of agricultural produce or an\nagricultural service by a flat-rate farmer, the farmer issues\nan invoice in which the flat-rate addition is stated\nseparately, that addition is recoverable by the farmer as part\nof the consideration for the\n\ntransaction\nother than where an order has been made by the Minister under\n\nsection 86A\nrelating to such supply of produce or\nservice."
+    }
+  ],
+  "rules": [
+    {
+      "key": "vat.flat_rate_farmer_purchase",
+      "sectionNumber": "86",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2010-11-01",
+          "effectiveTo": null,
+          "quote": "an amount (in this Act referred to as a \"flat-rate addition\") equal to",
+          "value": null,
+          "unit": null,
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    }
+  ]
+}

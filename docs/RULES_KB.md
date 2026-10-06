@@ -92,8 +92,16 @@ the official file's URL and SHA-256, its provisions' verbatim excerpts, and
 the rules derived from them with their quotes, links and expert review.
 `npm run catalogue:extract -- <entry>` writes one from the official page;
 `catalogue.test.ts` fails the gate when an entry no longer matches what the
-curation derives. VATCA 2010 s.46 is the first entry; the other sources wait
-on #556.
+curation derives. All 39 loaded LRC-revised VATCA sections are in it; the
+other sources wait on #556.
+
+A quote matches its provision word for word, ignoring line breaks and
+quote-mark style (`containsIgnoringLayout`): the LRC re-renders its pages
+and has printed both straight and curly quotes, and neither changes the law.
+An LRC entry can carry the page's amendment footnotes (`lrcAnnotations`), so
+a rule's window is still read from the footnotes on the words it quotes;
+a port adds them only where the statute copy had its HTML, so no rule's
+dates move as a side effect (#691 lists the seven that would).
 
 **Source drift.** `npm run cli:rules -- verify-sources [--entry <e>] [--trace]`
 fetches each entry's official file (online, only when asked) and reports it

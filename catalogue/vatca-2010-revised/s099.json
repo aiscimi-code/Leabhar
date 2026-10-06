@@ -1,0 +1,48 @@
+{
+  "format": 1,
+  "source": {
+    "citation": "2010 Act 31 s.99",
+    "title": "VATCA 2010 s.99 (revised)",
+    "sourceType": "legislation",
+    "jurisdiction": "IE",
+    "sourceUrl": "https://revisedacts.lawreform.ie/eli/2010/act/31/section/99/revised/en/html",
+    "sha256": "6e16d40ed5f22dc76d06a6440d9b5b05e5a631129aa75e2d19591709f091d06a",
+    "conversion": "lrc-html-plaintext",
+    "retrievedOn": "2026-10-06"
+  },
+  "provisions": [
+    {
+      "sectionNumber": "99",
+      "heading": "General provisions on refund of tax.",
+      "locator": "s.99",
+      "category": "other",
+      "relevant": false,
+      "relevanceReason": "Uncategorised by heading/body keyword match; needs human review to determine relevance.",
+      "excerpt": "99\n.—(1) Subject to\nsubsections (2)\nand\n\n(3)\n, where in relation to a return lodged under\n\nChapter 3\nof\nPart 9\nor a claim made in\naccordance with regulations, it is shown to the satisfaction of\nthe Revenue Commissioners that, as respects any taxable period,\nthe amount of tax (if any) actually paid to the Collector-General\nin accordance with\nChapter 3\n\nof\nPart 9\ntogether with the\namount of tax (if any) which qualified for deduction under\n\nChapter 1\nof\nPart 8\nexceeds the tax (if\nany) which would properly be payable if no deduction were made\nunder\nChapter 1\nof\nPart 8\n, the Commissioners\nshall refund the amount of the excess less any sums previously\nrefunded under this subsection or repaid under\nChapter 1\nof\nPart 8\nand may include in the\namount refunded any interest which has been paid under\nsection 114\n.\n\n(2)\nWhere the Revenue Commissioners apply\nsection\n15\nto a number of persons, the Commissioners may\ndefer repayment of all or part of any tax refundable under\n\nsubsection (1)\nto any one or more of those persons\nprior to the application of that section if any one or more of\nthose persons have not furnished all returns and remitted all\namounts of tax referred to in\nsection\n76\nor\n77\n, as may\nbe appropriate, at the time of such application.\n\n(3)(\na\n) Subject to\nparagraph (b)\n, the Revenue\nCommissioners may, where it appears requisite to them to do so\nfor the protection of the revenue, require as a condition for\nmaking a refund in accordance with\nsubsection (1)\nthe\ngiving of security of such amount and in such manner and form as\nthey may determine.\n\n(\nb\n) The amount of security referred to in\nparagraph\n(a)\nshall not, in any particular case, exceed the amount\nto be refunded.\n\n(4) A\nclaim for a refund under this Act may be made only within 4 years\nafter the end of the taxable period to which it relates.\n\n(5)\nWhere the Revenue Commissioners refund any amount due under\n\nsubsection (1)\nor\nsection 100\n, they may, if they so determine,\nrefund any such amount directly into an account, specified by the\nperson to whom the amount is due, in a financial institution.\n\n(6) The\nRevenue Commissioners shall not refund any amount of tax except\nas provided for in this Act or any order or regulations made\nunder this Act."
+    }
+  ],
+  "rules": [
+    {
+      "key": "vat.refund_claim_time_limit",
+      "sectionNumber": "99",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2010-11-01",
+          "effectiveTo": null,
+          "quote": "may be made only within 4 years\nafter the end of the taxable period to which it relates.",
+          "value": null,
+          "unit": null,
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    }
+  ]
+}

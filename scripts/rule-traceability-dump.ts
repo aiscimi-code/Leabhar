@@ -49,7 +49,7 @@ async function run(): Promise<void> {
   const runs: string[][] = [
     ...INGEST_SOURCES.map((source) => ['ingest', '--source', source]),
     // Revised s.2/s.3 back the outside-the-scope rules, s.34 the place-of-supply rules.
-    ...['s002', 's003', 's034'].map((f) => ['ingest', '--source', 'vatca-2010-revised', '--file', `docs/statutes/vatca-2010-revised/${f}.md`]),
+    ...['2', '3', '34'].map((n) => ['ingest', '--source', 'vatca-2010-revised', '--section', n]),
     ...EXTRACT_SOURCES.map((source) => ['extract', '--source', source]),
   ];
   {

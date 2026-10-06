@@ -5,7 +5,7 @@ import { createCompany } from '../config/setup';
 import { ingestFinanceAct2024, ingestFinanceAct2025, deriveTaxRules, FINANCE_ACT_2024_MD_PATH, FINANCE_ACT_2025 } from './irishRules';
 import { deriveFinanceAct2024VatThresholds } from './financeAct2024VatThresholdsIngestion';
 import { ingestVatca2010, deriveVatcaRules, VATCA_2010_MD_PATH } from './vatcaIngestion';
-import { ingestVatcaRevisedSection, deriveVatcaRevisedRules, ingestVatcaRevisedS46 } from './vatcaRevisedIngestion';
+import { ingestVatcaRevised, deriveVatcaRevisedRules, ingestVatcaRevisedS46 } from './vatcaRevisedIngestion';
 import {
   ingestVatcaSchedule, deriveVatcaScheduleRules, VATCA_SCHEDULE_2_MD_PATH, VATCA_SCHEDULE_3_MD_PATH,
 } from './vatcaScheduleIngestion';
@@ -33,7 +33,7 @@ beforeEach(() => {
   deriveVatcaRules(db, { companyId });
   // The input-recovery rules come from the revised s.59/s.60 (issue #209).
   for (const n of ['059', '060']) {
-    ingestVatcaRevisedSection(db, { companyId, markdown: readFileSync(`docs/statutes/vatca-2010-revised/s${n}.md`, 'utf8'), ingestVersion: 'v1' });
+    ingestVatcaRevised(db, { companyId, section: n });
   }
   deriveVatScopeRules(db, { companyId });
 });

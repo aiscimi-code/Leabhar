@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeAll } from 'vitest';
+import { containsIgnoringLayout } from './lrcAnnotations';
 import { readFileSync, existsSync } from 'node:fs';
 import { eq } from 'drizzle-orm';
 import { createTestDatabase } from '@/db/testing';
@@ -105,7 +106,7 @@ describe('every derived rule carries its provenance (issue #442)', () => {
       // citation ("Finance Act 2024 s.48: "); the verbatim part is what follows.
       const quote = normaliseSpace(rule.statement.replace(/^Finance Act \d{4} s\.\d+[A-Z]*: /, ''));
       // The quote is verbatim from the stored provision text...
-      expect(normaliseSpace(provision.provisionText ?? '').includes(quote),
+      expect(containsIgnoringLayout(provision.provisionText ?? '', quote),
         `${rule.ruleKey}: quote not in ${source.citation} ${provision.sectionNumber} as ingested`)
         .toBe(true);
       // ...and the provision's offsets still slice the file it was ingested

@@ -1,0 +1,48 @@
+{
+  "format": 1,
+  "source": {
+    "citation": "2010 Act 31 s.21",
+    "title": "VATCA 2010 s.21 (revised)",
+    "sourceType": "legislation",
+    "jurisdiction": "IE",
+    "sourceUrl": "https://revisedacts.lawreform.ie/eli/2010/act/31/section/21/revised/en/html",
+    "sha256": "3a98bd4cf9e66e3ae5600b268c317311cfe93c16f94406540a9652a149e404ed",
+    "conversion": "lrc-html-plaintext",
+    "retrievedOn": "2026-10-06"
+  },
+  "provisions": [
+    {
+      "sectionNumber": "21",
+      "heading": "Supplies made free of charge.",
+      "locator": "s.21",
+      "category": "other",
+      "relevant": false,
+      "relevanceReason": "Uncategorised by heading/body keyword match; needs human review to determine relevance.",
+      "excerpt": "21\n.— Anything which is a supply of goods by\nvirtue of\nsection\n19\n(1)(f), (g)\nor\n(h)\nshall be deemed, for\nthe purposes of this Act, to have been effected for\nconsideration in the course or furtherance of the business\nconcerned except—\n\n(\na\n) a gift of goods made in the course or\nfurtherance of the business (otherwise than as one forming\npart of a series or succession of gifts made to the same\nperson) the cost of which to the donor does not exceed a sum\nspecified for that purpose in regulations, or\n\n(\nb\n) the gift, in reasonable quantity, to the actual\nor potential customer, of industrial samples in a form not\nordinarily available for sale to the public."
+    }
+  ],
+  "rules": [
+    {
+      "key": "vat.deemed_supply_goods_free_of_charge",
+      "sectionNumber": "21",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2010-11-01",
+          "effectiveTo": null,
+          "quote": "shall be deemed, for\nthe purposes of this Act, to have been effected for\nconsideration in the course or furtherance of the business\nconcerned except—",
+          "value": null,
+          "unit": null,
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    }
+  ]
+}

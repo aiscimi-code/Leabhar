@@ -18,7 +18,7 @@ import { ids } from '@/lib/ids';
 import { nowIso } from '../dates';
 import { VAT_SCOPE_CURATED_RULES } from './vatScopeCuration';
 import { VAT_PLACE_OF_SUPPLY_CURATED_RULES } from './vatPlaceOfSupplyCuration';
-import { lrcHtmlForSource } from './vatcaScheduleIngestion';
+import { lrcAnnotationsForSource } from './vatcaScheduleIngestion';
 import { COMPOSITE_SUPPLY_RULES } from './compositeSupplyCuration';
 import { CROSS_BORDER_CURATED_RULES } from './crossBorderCuration';
 import { DOMESTIC_RC_CURATED_RULES } from './domesticReverseChargeCuration';
@@ -31,7 +31,7 @@ import { RETURNS_CURATED_RULES } from './returnsCuration';
 import { TAX_POINT_CURATED_RULES } from './taxPointCuration';
 import { DEEMED_SUPPLY_CURATED_RULES } from './deemedSupplyCuration';
 import { BAD_DEBT_RELIEF_CURATED_RULES } from './badDebtReliefCuration';
-import { quotedTextWindow } from './lrcAnnotations';
+import { containsIgnoringLayout, quotedTextWindow } from './lrcAnnotations';
 
 /** Every rule this module derives: scope/exemption, taxable amount, place of supply of services and returns. */
 export const VAT_SCOPE_DERIVED_RULES = [
@@ -71,15 +71,15 @@ export function deriveVatScopeRules(
         .get()
       : undefined;
     if (!prov) { result.skippedNoProvision.push(rule.ruleKey); continue; }
-    if (!(prov.provisionText ?? '').includes(rule.statementExcerpt)) {
+    if (!containsIgnoringLayout(prov.provisionText ?? '', rule.statementExcerpt)) {
       result.skippedExcerptNotInProvision.push(rule.ruleKey);
       continue;
     }
 
     // A rule is good only from the last change to the words it relies on
     // (issue #206), read from the LRC HTML beside the source when it is there.
-    const html = source ? lrcHtmlForSource(db, source.id) : null;
-    const window = html ? quotedTextWindow(html, [rule.statementExcerpt, ...(rule.windowQuotes ?? [])]) : null;
+    const annotations = source ? lrcAnnotationsForSource(db, source.id) : null;
+    const window = annotations ? quotedTextWindow(annotations, [rule.statementExcerpt, ...(rule.windowQuotes ?? [])]) : null;
     const effectiveFrom = window?.effectiveFrom ?? rule.effectiveFrom;
     const windowNote = window
       ? (window.footnotes.length

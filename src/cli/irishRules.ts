@@ -21,7 +21,7 @@ import {
   TCA_1997_S530_MD_PATH,
 } from '@/domain/rules/rctIngestion';
 import {
-  ingestVatcaRevisedSection, deriveVatcaRevisedRules, ingestVatcaRevisedS46,
+  ingestVatcaRevisedSection, deriveVatcaRevisedRules, ingestVatcaRevisedS46, ingestVatcaRevised,
 } from '@/domain/rules/vatcaRevisedIngestion';
 import {
   ingestTca1997S284, ingestFinanceAct2003S23, deriveCapitalAllowancesRules,
@@ -85,7 +85,7 @@ Commands:
                                        tca1997-s284; also finance-act-2024-vat-thresholds, which requires
                                        finance-act-2024 already ingested (no separate document); and vat-scope,
                                        the exempt/outside-scope rules, which need vatca-2010-sch1 and the revised
-                                       s002.md/s003.md ingested via vatca-2010-revised --file; default
+                                       ss.2 and 3, loaded from the rules catalogue by ingest-all; default
                                        finance-act-2024)
   list-provisions [--category <c>] [--relevant-only]
                                        List ingested provisions
@@ -196,11 +196,13 @@ export async function main(argv: string[], options: CliOptions = {}): Promise<nu
           return 0;
         }
         if (source === 'vatca-2010-revised') {
-          // Without --file: s.46, from the rules catalogue (#443).
+          // --section <n>: from the rules catalogue when ported (#443), else its
+          // statute copy; --file: a Markdown copy; neither: s.46.
           const file = getFlag(flags, 'file');
+          const section = getFlag(flags, 'section');
           print(file
             ? ingestVatcaRevisedSection(db, { companyId, markdown: readFileSync(file, 'utf8'), ingestVersion: 'v1', localPath: file })
-            : ingestVatcaRevisedS46(db, { companyId }), format);
+            : section ? ingestVatcaRevised(db, { companyId, section }) : ingestVatcaRevisedS46(db, { companyId }), format);
           return 0;
         }
         if (source === 'tca1997-s284') {

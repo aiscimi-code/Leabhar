@@ -16,7 +16,10 @@
  * whole family exists to fix (see `vatcaRevisedCuration.ts`'s header for
  * why the as-enacted text could never safely state a current rate).
  */
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { and, eq } from 'drizzle-orm';
+import { appRoot } from '@/lib/paths';
 import type { AppDatabase } from '@/db';
 import {
   irishKnowledgeSources, irishActProvisions, irishTaxRules, type IrishSourceType,
@@ -35,7 +38,7 @@ import { upsertReviewItem } from '../extraction/service';
 import { crossReferencesFromProvision, sameCrossReferences } from './dependencies';
 import { taxHeadsFor } from './taxHeads';
 
-import { ingestCatalogueFile, type CatalogueIngestResult } from './catalogue';
+import { CATALOGUE_ENTRIES, ingestCatalogueFile, type CatalogueIngestResult } from './catalogue';
 
 /** s.46 is ported to the rules catalogue (#443): its statute copy is gone. */
 export const VATCA_REVISED_S046_CATALOGUE_ENTRY = 'vatca-2010-revised/s046.json';
@@ -46,6 +49,27 @@ export function ingestVatcaRevisedS46(
   params: { companyId?: string | null; ingestVersion?: string; root?: string },
 ): CatalogueIngestResult {
   return ingestCatalogueFile(db, { ...params, entry: VATCA_REVISED_S046_CATALOGUE_ENTRY });
+}
+
+/**
+ * Load one revised section, wherever it now lives: its rules catalogue entry
+ * when it has been ported (#556), else its statute copy. `section` is the
+ * file stem's number, e.g. "34", "059" or "92A".
+ */
+export function ingestVatcaRevised(
+  db: AppDatabase,
+  params: { companyId?: string | null; section: string; ingestVersion?: string; root?: string },
+): { sourceId: string; ingested: boolean } {
+  const stem = /^\d+$/.test(params.section) ? params.section.padStart(3, '0') : params.section;
+  const entry = `vatca-2010-revised/s${stem}.json`;
+  if ((CATALOGUE_ENTRIES as readonly string[]).includes(entry)) {
+    return ingestCatalogueFile(db, { companyId: params.companyId, entry, ingestVersion: params.ingestVersion, root: params.root });
+  }
+  const localPath = `docs/statutes/vatca-2010-revised/s${stem}.md`;
+  return ingestVatcaRevisedSection(db, {
+    companyId: params.companyId, ingestVersion: params.ingestVersion ?? 'v1', localPath,
+    markdown: readFileSync(join(params.root ?? appRoot(), localPath), 'utf8'),
+  });
 }
 
 const SOURCE_TYPE: IrishSourceType = 'legislation';

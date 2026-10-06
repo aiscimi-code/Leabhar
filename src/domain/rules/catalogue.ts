@@ -39,6 +39,7 @@ import {
 import { ids } from '@/lib/ids';
 import { appRoot } from '@/lib/paths';
 import { declaredLinksFrom } from './ruleLinks';
+import type { LrcAnnotationLayer } from './lrcAnnotations';
 
 export const CATALOGUE_DIR = 'catalogue';
 export const CATALOGUE_FORMAT = 1;
@@ -55,6 +56,12 @@ export interface CatalogueSource {
   conversion: string;
   /** The day the official file was fetched. Never a provision's or rule's effective date (#216). */
   retrievedOn: string;
+  /**
+   * An LRC page's amendment footnotes and where they fall in its text, kept
+   * so a rule's window can still be read from the footnotes on the words it
+   * quotes (`quotedTextWindow`) without the page. Absent for other sources.
+   */
+  lrcAnnotations?: LrcAnnotationLayer;
 }
 
 export interface CatalogueProvision {
@@ -121,6 +128,46 @@ export const UNREVIEWED: CatalogueReview = { status: 'ai_extracted', by: null, a
 /** Every entry the app loads, as a path relative to `catalogue/`. */
 export const CATALOGUE_ENTRIES = [
   'vatca-2010-revised/s046.json',
+  'vatca-2010-revised/s047.json',
+  'vatca-2010-revised/s009.json',
+  'vatca-2010-revised/s010.json',
+  'vatca-2010-revised/s030.json',
+  'vatca-2010-revised/s035.json',
+  'vatca-2010-revised/s080.json',
+  'vatca-2010-revised/s097.json',
+  'vatca-2010-revised/s043.json',
+  'vatca-2010-revised/s060.json',
+  'vatca-2010-revised/s061.json',
+  'vatca-2010-revised/s062.json',
+  'vatca-2010-revised/s066.json',
+  'vatca-2010-revised/s067.json',
+  'vatca-2010-revised/s069.json',
+  'vatca-2010-revised/s070.json',
+  'vatca-2010-revised/s086.json',
+  'vatca-2010-revised/s087.json',
+  'vatca-2010-revised/s088.json',
+  'vatca-2010-revised/s089.json',
+  'vatca-2010-revised/s002.json',
+  'vatca-2010-revised/s003.json',
+  'vatca-2010-revised/s037.json',
+  'vatca-2010-revised/s045.json',
+  'vatca-2010-revised/s076.json',
+  'vatca-2010-revised/s92A.json',
+  'vatca-2010-revised/s034.json',
+  'vatca-2010-revised/s099.json',
+  'vatca-2010-revised/s074.json',
+  'vatca-2010-revised/s075.json',
+  'vatca-2010-revised/s021.json',
+  'vatca-2010-revised/s027.json',
+  'vatca-2010-revised/s042.json',
+  'vatca-2010-revised/s044.json',
+  'vatca-2010-revised/s039.json',
+  // NTMA (Miscellaneous Provisions) Act 2026 removed the NAMA provisions from
+  // these four on 1 August 2026; no rule's dates move (#689).
+  'vatca-2010-revised/s016.json',
+  'vatca-2010-revised/s059.json',
+  'vatca-2010-revised/s064.json',
+  'vatca-2010-revised/s094.json',
 ] as const;
 
 export function catalogueEntryPath(entry: string, root: string = appRoot()): string {
@@ -139,6 +186,11 @@ export function validateCatalogueEntry(entry: unknown, label = 'catalogue entry'
   if (!IRISH_SOURCE_TYPES.includes(s.sourceType)) fail(`unknown source type ${s.sourceType}`);
   if (!/^[0-9a-f]{64}$/.test(s.sha256)) fail('source sha256 must be 64 hex characters');
   if (!isDate(s.retrievedOn)) fail('source retrievedOn must be an ISO date');
+  if (s.lrcAnnotations !== undefined
+      && (typeof s.lrcAnnotations.text !== 'string' || !Array.isArray(s.lrcAnnotations.footnotes)
+        || s.lrcAnnotations.footnotes.some((f) => !/^F\d+$/.test(f.ref) || typeof f.text !== 'string'))) {
+    fail('source lrcAnnotations needs a text and a list of footnotes');
+  }
   if (!Array.isArray(e.provisions) || e.provisions.length === 0) fail('an entry needs at least one provision');
   const sections = new Set<string>();
   for (const p of e.provisions) {

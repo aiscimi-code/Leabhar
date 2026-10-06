@@ -19,7 +19,7 @@ import {
   ingestVatca2010, deriveVatcaRules, VATCA_2010_MD_PATH,
 } from '@/domain/rules/vatcaIngestion';
 import {
-  ingestVatcaRevisedSection, deriveVatcaRevisedRules,
+  ingestVatcaRevised, deriveVatcaRevisedRules,
   ingestVatcaRevisedS46,
 } from '@/domain/rules/vatcaRevisedIngestion';
 import {
@@ -96,7 +96,7 @@ beforeEach(() => {
   deriveVatcaRevisedRules(db, { companyId });
   // Input VAT recovery comes from the revised s.59/s.60 (issue #209).
   for (const n of ['059', '060']) {
-    ingestVatcaRevisedSection(db, { companyId, markdown: readFileSync(`docs/statutes/vatca-2010-revised/s${n}.md`, 'utf8'), ingestVersion: 'v1' });
+    ingestVatcaRevised(db, { companyId, section: n });
   }
   deriveVatScopeRules(db, { companyId });
 

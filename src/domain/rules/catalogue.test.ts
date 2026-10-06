@@ -10,6 +10,7 @@ import {
   type CatalogueEntry,
 } from './catalogue';
 import { loadStatutoryKnowledgeBase } from './knowledgeBase';
+import { containsIgnoringLayout } from './lrcAnnotations';
 
 /**
  * The rules catalogue (issue #443, #686 step 10): each committed entry is
@@ -24,8 +25,6 @@ beforeAll(() => {
   ({ companyId } = createCompany(db, { legalName: 'Catalogue Ltd', vatRegistrationStatus: 'registered', seedYears: [2025] }));
   loadStatutoryKnowledgeBase(db, { companyId });
 });
-
-const normalise = (s: string) => s.replace(/\s+/g, ' ').trim();
 
 describe.each(CATALOGUE_ENTRIES)('catalogue entry %s', (name) => {
   const entry = () => readCatalogueEntry(name);
@@ -43,9 +42,9 @@ describe.each(CATALOGUE_ENTRIES)('catalogue entry %s', (name) => {
   it('quotes each rule version verbatim from its provision’s excerpt', () => {
     const e = entry();
     for (const rule of e.rules) {
-      const excerpt = normalise(e.provisions.find((p) => p.sectionNumber === rule.sectionNumber)!.excerpt);
+      const excerpt = e.provisions.find((p) => p.sectionNumber === rule.sectionNumber)!.excerpt;
       for (const v of rule.versions) {
-        if (v.quote) expect(excerpt.includes(normalise(v.quote)), `${rule.key}@${v.version}`).toBe(true);
+        if (v.quote) expect(containsIgnoringLayout(excerpt, v.quote), `${rule.key}@${v.version}`).toBe(true);
       }
     }
   });

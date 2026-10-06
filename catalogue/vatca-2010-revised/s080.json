@@ -1,0 +1,48 @@
+{
+  "format": 1,
+  "source": {
+    "citation": "2010 Act 31 s.80",
+    "title": "VATCA 2010 s.80 (revised)",
+    "sourceType": "legislation",
+    "jurisdiction": "IE",
+    "sourceUrl": "https://revisedacts.lawreform.ie/eli/2010/act/31/section/80/revised/en/html",
+    "sha256": "00d1b75c47b05fcf3e48c2e38ae3d969b85e138d7f98dc90e04eccfcc0ee51a3",
+    "conversion": "lrc-html-plaintext",
+    "retrievedOn": "2026-10-06"
+  },
+  "provisions": [
+    {
+      "sectionNumber": "80",
+      "heading": "Tax due on moneys received basis.",
+      "locator": "s.80",
+      "category": "other",
+      "relevant": false,
+      "relevanceReason": "Uncategorised by heading/body keyword match; needs human review to determine relevance.",
+      "excerpt": "80\n.—(1) A person who satisfies the Revenue\nCommissioners that—\n\n(\na\n)\ntaking one period with another, at least 90 per cent of the\nperson’s annual turnover is derived from supplies to persons\nwho are not registered persons,\nor\n\n(\nb\n)\nthe total annual turnover which the person is entitled to\nreceive has not exceeded and is not likely to exceed\n€2,000,000 in any continuous period of 12\nmonths,\n\nmay,\nin accordance with regulations, be authorised to determine the\namount of tax which becomes due by the person during any\ntaxable period (or part thereof) during which the\nauthorisation has effect by reference to the amount of the\nmoneys which the person receives during that taxable period\n(or part thereof) in respect of taxable supplies.\n\n(2)\nWhere an authorisation to which\nsubsection (1)\nrelates\nhas not been cancelled under\nsubsection (4)\n,\nthen—\n\n(\na\n) the rate of tax due by the person concerned in\nrespect of a supply shall be the rate of tax chargeable at the\ntime the goods or services are supplied,\n\n(\nb\n) if tax on a supply has already been due and\npayable under any other provisions of this Act prior to the\nissue of that authorisation, tax shall not be due again in\nrespect of any such supply as a result of the application of\n\nsubsection (1)\n, and\n\n(\nc\n) if no tax is due or payable on a supply made\nprior to the issue of that authorisation, tax shall not be due\nin respect of any such supply as a result of the application\nof\nsubsection (1)\n.\n\n(3)(\na\n) The Minister may, by order—\n\n(i)\nincrease the amount specified in\nsubsection (1)(b)\n, or\n\n(ii)\nwhere an amount stands specified by virtue of an order under\nthis paragraph, including an order relating to this\nsubparagraph, further increase the amount so specified.\n\n(\nb\n) An order under\nparagraph (a)\nshall be\nlaid before Dáil Éireann as soon as may be after\nit is made and, if a resolution annulling the order is passed\nby Dáil Éireann within the next 21 sitting days\non which Dáil Éireann has sat after the order is\nlaid before it, the order shall be annulled accordingly, but\nwithout prejudice to the validity of anything previously done\nthereunder.\n\n(4) The\nRevenue Commissioners—\n\n(\na\n) may, in accordance with regulations, cancel an\nauthorisation under\nsubsection (1)\n, and\n\n(\nb\n) may, by regulations, exclude from the\napplication of\nsubsection (1)\nany tax due in respect of\nspecified descriptions of supplies of goods or services and\nany moneys received in respect of such supplies.\n\n(5)\nWhere an authorisation has issued to any person in accordance\nwith\nsubsection (1)\nand the person fails to issue a\ncredit note in accordance with\nsection 67\n(1)(b)\nin respect of any supply\nwhere the consideration as stated in the invoice issued by\nthat person for that supply is reduced or a discount is\nallowed, then, at the time when a credit note should have\nissued in accordance with\nsection 70\n(1)\n—\n\n(\na\n) such tax as is attributable to the reduction or\ndiscount shall be treated as being excluded from the\napplication of\nsubsection (1)\n, and\n\n(\nb\n) the person shall be liable for that tax as if\nit were tax due in accordance with\nChapter 3\nat that time.\n\n(6)\nThis section does not apply to tax provided for by\nsection 3\n(b)\n,\n(d)\nor\n\n(e)\n."
+    }
+  ],
+  "rules": [
+    {
+      "key": "vat.moneys_received_basis_sales",
+      "sectionNumber": "80",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2010-11-01",
+          "effectiveTo": null,
+          "quote": "by reference to the amount of the moneys which the person receives\nduring that taxable period (or part thereof) in respect of taxable supplies.",
+          "value": null,
+          "unit": null,
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    }
+  ]
+}

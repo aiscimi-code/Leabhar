@@ -1,0 +1,48 @@
+{
+  "format": 1,
+  "source": {
+    "citation": "2010 Act 31 s.75",
+    "title": "VATCA 2010 s.75 (revised)",
+    "sourceType": "legislation",
+    "jurisdiction": "IE",
+    "sourceUrl": "https://revisedacts.lawreform.ie/eli/2010/act/31/section/75/revised/en/html",
+    "sha256": "a11d096ab11c6aec67c2cc1db766aa923188d6c4a8c31ff21c2fc784cb7872fd",
+    "conversion": "lrc-html-plaintext",
+    "retrievedOn": "2026-10-06"
+  },
+  "provisions": [
+    {
+      "sectionNumber": "75",
+      "heading": "Tax due on intra-Community acquisitions.",
+      "locator": "s.75",
+      "category": "other",
+      "relevant": false,
+      "relevanceReason": "Uncategorised by heading/body keyword match; needs human review to determine relevance.",
+      "excerpt": "75\n.— Tax chargeable under\nsection 3\n(d)\nor\n(e)\n\nshall be due—\n\n(\na\n) on the 15th day of the month following that\nduring which the intra-Community acquisition occurs,\n\n(\nb\n) in case an invoice is issued before the date\nspecified in\nparagraph (a)\nby the supplier in another\nMember State to the person acquiring the goods, when that\ninvoice is issued."
+    }
+  ],
+  "rules": [
+    {
+      "key": "vat.tax_point_intra_community_acquisition",
+      "sectionNumber": "75",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2010-11-01",
+          "effectiveTo": null,
+          "quote": "on the 15th day of the month following that\nduring which the intra-Community acquisition occurs,",
+          "value": null,
+          "unit": null,
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    }
+  ]
+}

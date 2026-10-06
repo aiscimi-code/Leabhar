@@ -31,7 +31,8 @@ import { upsertReviewItem } from '../extraction/service';
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { appRoot } from '@/lib/paths';
-import { scheduleParagraphWindows, type ParagraphWindow } from './lrcAnnotations';
+import { lrcAnnotationLayer, scheduleParagraphWindows, type LrcAnnotationLayer, type ParagraphWindow } from './lrcAnnotations';
+import { CATALOGUE_DIR, readCatalogueEntry } from './catalogue';
 import { crossReferencesFromProvision, sameCrossReferences } from './dependencies';
 import { taxHeadsFor } from './taxHeads';
 
@@ -356,4 +357,19 @@ export function lrcHtmlForSource(db: AppDatabase, sourceId: string): string | nu
   const recorded = /source_html_sha256:\s*"([0-9a-f]{64})"/.exec(readFileSync(mdPath, 'utf8'))?.[1];
   if (!recorded || sha256Hex(html) !== recorded) return null;
   return html.toString('utf8');
+}
+
+/**
+ * The LRC amendment footnotes for an ingested source: from its rules
+ * catalogue entry, or from the HTML kept beside its Markdown
+ * (`lrcHtmlForSource`). Null when neither holds them.
+ */
+export function lrcAnnotationsForSource(db: AppDatabase, sourceId: string): LrcAnnotationLayer | null {
+  const source = db.select().from(irishKnowledgeSources).where(eq(irishKnowledgeSources.id, sourceId)).get();
+  if (source?.localPath?.startsWith(`${CATALOGUE_DIR}/`)) {
+    const entry = readCatalogueEntry(source.localPath.slice(CATALOGUE_DIR.length + 1));
+    return entry.source.sha256 === source.sha256 ? entry.source.lrcAnnotations ?? null : null;
+  }
+  const html = lrcHtmlForSource(db, sourceId);
+  return html === null ? null : lrcAnnotationLayer(html);
 }

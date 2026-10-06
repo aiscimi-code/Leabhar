@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeAll } from 'vitest';
-import { mkdtempSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { cpSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { and, eq, like } from 'drizzle-orm';
@@ -105,7 +105,7 @@ describe('checkCatalogueVersions', () => {
     const entry = readCatalogueEntry('vatca-2010-revised/s046.json');
     entry.rules = entry.rules.map((r) => (r.key === 'vat.rate_standard_current'
       ? { ...r, versions: r.versions.filter((v) => v.version !== 2) } : r));
-    mkdirSync(join(root, 'catalogue', 'vatca-2010-revised'), { recursive: true });
+    cpSync('catalogue', join(root, 'catalogue'), { recursive: true });
     writeFileSync(join(root, 'catalogue', 'vatca-2010-revised', 's046.json'), serialiseCatalogueEntry(entry));
 
     expect(checkCatalogueVersions(db, { companyId, root })).toEqual([{ versionId: 'vat.rate_standard_current@2', referencedBy: ['rule'] }]);

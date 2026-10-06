@@ -1,0 +1,48 @@
+{
+  "format": 1,
+  "source": {
+    "citation": "2010 Act 31 s.92A",
+    "title": "VATCA 2010 s.92A (revised)",
+    "sourceType": "legislation",
+    "jurisdiction": "IE",
+    "sourceUrl": "https://revisedacts.lawreform.ie/eli/2010/act/31/section/92A/revised/en/html",
+    "sha256": "a8c09bab79b31c5454fefe505a70f324423aeb4bcb693a21f1f7a7cd81294517",
+    "conversion": "lrc-html-plaintext",
+    "retrievedOn": "2026-10-06"
+  },
+  "provisions": [
+    {
+      "sectionNumber": "92A",
+      "heading": "Deposit Return Scheme",
+      "locator": "s.92A",
+      "category": "vat",
+      "relevant": true,
+      "relevanceReason": "Substantive vat provision; potentially bears on transaction treatment.",
+      "excerpt": "92A\n.\n—\n(1) In this Chapter\n—\n\n“\napproved body\n”\nhas the same meaning as in the\nRegulations of 2021;\n\n“\ndeposit\n”\nshall be construed in accordance with the\nRegulations of 2021;\n\n“\ndeposit return scheme\n”\nmeans a deposit return\nscheme established pursuant to Regulation 4 of the Regulations\nof 2021 and references to “scheme” shall be construed\naccordingly;\n\n“\nin-scope bottle\n”\n,\n“\nin-scope container\n”\n\nand\n“\nin-scope product\n”\nhave the same meaning,\nrespectively, as in the Regulations of 2021;\n\n“\noperator\n”\n, in relation to the deposit return\nscheme, means an approved body that is operating the\nscheme;\n\n“\nRegulations of 2021\n”\nmeans the\nSeparate\nCollection (Deposit Return Scheme) Regulations 2021\n\n(S.I. No. 599 of 2021);\n\n“\ntax due and payable\n”\nmeans the amount of tax,\ncalculated in accordance with regulations made under\n\nsection 120(10)(l)\n, that is due and payable in\nrespect of a deposit.\n\n(2) For\nthe purposes of giving effect to Article 92 of the VAT\nDirective, where\n—\n\n(\na\n) a supply is made of an in-scope product,\nand\n\n(\nb\n) a deposit is chargeable in accordance with the\nRegulations of 2021 in relation to the supply referred to in\n\nparagraph (a)\n,\n\nthen,\nthe taxable amount referable to the deposit shall be deemed to\nbe reduced to nil.\n\n(3)\nNotwithstanding\nsubsection (2)\nand for the purposes of\ngiving effect to Article 92 of the VAT Directive,\nwhere\n—\n\n(\na\n) a supply is made of an in-scope product,\n\n(\nb\n) a deposit is chargeable in accordance with the\nRegulations of 2021 in relation to the supply referred to in\n\nparagraph (a)\n, and\n\n(c)\nthe in-scope bottle or in-scope container\nconcerned has not been returned in accordance with the\nRegulations of 2021,\n\nthen\n—\n\n(i)\nthe taxable amount referable to the deposit shall be the\namount of that deposit, and\n\n(ii)\nthe operator shall be deemed to be the accountable person in\nrespect of the tax due and payable and shall comply with the\nprovisions of\nChapter 3\nof\nPart 9\nin relation to\nthat tax."
+    }
+  ],
+  "rules": [
+    {
+      "key": "vat.deposit_return_scheme_deposit_disregarded",
+      "sectionNumber": "92A",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2010-11-01",
+          "effectiveTo": null,
+          "quote": "the taxable amount\nreferable to the deposit shall be deemed to be reduced to nil",
+          "value": null,
+          "unit": null,
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    }
+  ]
+}
