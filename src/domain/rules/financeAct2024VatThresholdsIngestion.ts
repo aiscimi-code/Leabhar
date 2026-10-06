@@ -16,6 +16,7 @@ import {
   FINANCE_ACT_2024_S78_EFFECTIVE_FROM,
 } from './financeAct2024VatThresholdsCuration';
 import { upsertReviewItem } from '../extraction/service';
+import { taxHeadsFor } from './taxHeads';
 
 export interface FinanceAct2024VatThresholdsDeriveResult {
   created: number;
@@ -90,6 +91,7 @@ export function deriveFinanceAct2024VatThresholds(
       ruleKey: rule.ruleKey,
       ruleType: 'threshold',
       topic: rule.topic,
+      taxHeads: taxHeadsFor(rule.ruleKey, rule.topic),
       name: rule.name,
       statement: rule.statementExcerpt,
       extractedFact: `€${(rule.numericValueMinor / 100).toLocaleString('en-IE')}`,

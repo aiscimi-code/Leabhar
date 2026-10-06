@@ -19,6 +19,7 @@ import { sha256Hex } from '@/lib/hash';
 import { normaliseSpace } from '../vat/boxDefinitions';
 import { upsertReviewItem } from '../extraction/service';
 import { sameCrossReferences } from './dependencies';
+import { taxHeadsFor } from './taxHeads';
 
 export const EBRIEF_168_25_MD_PATH = 'docs/statutes/ebriefs/2025/no-168-25.md';
 
@@ -157,6 +158,7 @@ export function deriveEbriefRules(db: AppDatabase, params: { companyId: string }
     ruleKey: rule.ruleKey,
     ruleType: rule.ruleType,
     topic: 'vat_registration',
+    taxHeads: taxHeadsFor(rule.ruleKey, 'vat_registration'),
     name: rule.name,
     statement: rule.statementExcerpt,
     extractedFact: null,

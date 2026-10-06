@@ -1,0 +1,48 @@
+{
+  "format": 1,
+  "source": {
+    "citation": "2010 Act 31 s.9",
+    "title": "VATCA 2010 s.9 (revised)",
+    "sourceType": "legislation",
+    "jurisdiction": "IE",
+    "sourceUrl": "https://revisedacts.lawreform.ie/eli/2010/act/31/section/9/revised/en/html",
+    "sha256": "77e7e5ed4955f970803c90fcbb54113c30cb89b13b060b2f5b63134fa1daf9d3",
+    "conversion": "lrc-html-plaintext",
+    "retrievedOn": "2026-10-06"
+  },
+  "provisions": [
+    {
+      "sectionNumber": "9",
+      "heading": "Intra-Community acquisitions and accountable persons.",
+      "locator": "s.9",
+      "category": "other",
+      "relevant": false,
+      "relevanceReason": "Uncategorised by heading/body keyword match; needs human review to determine relevance.",
+      "excerpt": "9\n.—(1) Where a person engages in the\nintra-Community acquisition of goods in the State in the\ncourse or furtherance of business, he or she shall be—\n\n(\na\n) an accountable person, and\n\n(\nb\n) accountable for and liable to pay the tax\nchargeable.\n\n(2)\nSubject to\nsubsection (3)\nand\n\nsections\n12(3)\nand\n\n(5)\n,\nand\n\n17\n(1)\n, and notwithstanding\n\nsubsection (1)\n, a person for whose intra-Community\nacquisitions of goods (being goods other than new means of\ntransport or goods subject to a duty of excise) the total\nconsideration for which has not exceeded and is not likely to\nexceed €41,000 in any continuous period of 12 months\nshall not, unless the person otherwise elects and then only\nduring the period for which such election has effect, be an\naccountable person.\n\n(3)\nWhere\nsection 5\n(1)\napplies to a\nperson referred to in\nsubsection (2)\n, then\n\nsubsection (2)\nshall not apply to the person unless\n\nsection 6\n(1)\nalso applies\nto him or her.\n\n(4)\nSubject to\nsubsection (5)\n, a person who is an\naccountable person by virtue of this section or\nsection 10\nand who is a\nperson referred to in\nsection\n6\n(1)(a)\nor\n(b)\nshall be deemed to be an\naccountable person only in respect of—\n\n(\na\n) intra-Community acquisitions of goods which are\nmade by him or her, and\n\n(\nb\n) any services of the kind referred to in\n\nsection\n12\nor\n\n17(1)\nwhich\nare received by him or her.\n\n(5)\nA person may elect that\nsubsection (4)\nshall not apply\nto him or her.\n\n(6)\nSubject to\nsubsection (7)\n, a person who is an\naccountable person by virtue of this section or\nsection 10\nand who is a\nperson referred to in\nsection\n17\n(2)\nshall be deemed to be an accountable\nperson only in respect of—\n\n(\na\n) intra-Community acquisitions of goods which are\nmade by him or her,\n\n(\nb\n) racehorse training services which are supplied\nby him or her, and\n\n(\nc\n) any services of the kind referred to in\n\nsection\n12\nor\n\n17(1)\nwhich\nare received by him or her.\n\n(7)\nA person may elect that\nsubsection (6)\nshall not apply\nto him or her."
+    }
+  ],
+  "rules": [
+    {
+      "key": "vat.intra_community_acquisition_goods",
+      "sectionNumber": "9",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2010-11-01",
+          "effectiveTo": null,
+          "quote": "Where a person engages in the intra-Community acquisition of goods in the State in\nthe course or furtherance of business, he or she shall be",
+          "value": null,
+          "unit": null,
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    }
+  ]
+}

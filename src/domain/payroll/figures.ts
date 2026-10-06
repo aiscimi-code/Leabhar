@@ -3,6 +3,7 @@ import type { PayslipRuleFigure } from '@/db/schema';
 import { INCOME_TAX_CURATED_RULES } from '../rules/incomeTaxCuration';
 import { PAYROLL_CURATED_RULES } from '../rules/payrollCuration';
 import { resolveRuleFigure, type ResolvedRuleFigure } from '../rules/ruleFigures';
+import type { ManifestRuleKey } from '../rules/consumers';
 
 export class PayrollError extends Error {
   constructor(message: string, readonly context: Record<string, unknown> = {}) {
@@ -27,7 +28,7 @@ export class PayrollFigures {
 
   constructor(private readonly db: AppDatabase, private readonly companyId: string, readonly payDate: string) {}
 
-  private resolve(ruleKey: string): ResolvedRuleFigure {
+  private resolve(ruleKey: ManifestRuleKey): ResolvedRuleFigure {
     const memo = this.resolved.get(ruleKey);
     if (memo) return memo;
     const curated = CURATED.filter((r) => r.ruleKey === ruleKey
@@ -41,7 +42,7 @@ export class PayrollFigures {
   }
 
   /** The rule's figure on the pay date; refuses when there is none to use. */
-  value(ruleKey: string): number {
+  value(ruleKey: ManifestRuleKey): number {
     const f = this.resolve(ruleKey);
     if (f.numericValue === null) {
       throw new PayrollError(
@@ -52,7 +53,7 @@ export class PayrollFigures {
   }
 
   /** A band rule's rate on the pay date. */
-  rate(ruleKey: string): number {
+  rate(ruleKey: ManifestRuleKey): number {
     this.value(ruleKey);
     const f = this.resolve(ruleKey);
     if (f.rateBasisPoints === null) throw new PayrollError(`Rule ${ruleKey} states no rate.`, { ruleKey });
@@ -60,14 +61,14 @@ export class PayrollFigures {
   }
 
   /** Name a procedure rule the payslip followed, so it is in the snapshot. */
-  cite(ruleKey: string): void {
+  cite(ruleKey: ManifestRuleKey): void {
     this.resolve(ruleKey);
   }
 
   /** The snapshot a payslip stores (invariant 6). */
   snapshot(): PayslipRuleFigure[] {
     return [...this.resolved.values()].map((f) => ({
-      ruleKey: f.ruleKey, value: f.numericValue, rateBasisPoints: f.rateBasisPoints, status: f.status,
+      ruleKey: f.ruleKey, value: f.numericValue, rateBasisPoints: f.rateBasisPoints, status: f.status, versionId: f.versionId,
     }));
   }
 

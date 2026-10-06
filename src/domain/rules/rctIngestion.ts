@@ -43,6 +43,7 @@ import {
 import { RCT_CURATED_RULES, type RctSourceKind } from './rctCuration';
 import { upsertReviewItem } from '../extraction/service';
 import { crossReferencesFromProvision, sameCrossReferences } from './dependencies';
+import { taxHeadsFor } from './taxHeads';
 
 export { TCA_1997_S530_MD_PATH };
 export { tca1997RctSectionMdPath };
@@ -565,6 +566,7 @@ export function deriveRctRules(
       ruleKey: rule.ruleKey,
       ruleType: rule.ruleType,
       topic: rule.topic,
+      taxHeads: taxHeadsFor(rule.ruleKey, rule.topic),
       name: rule.name,
       statement: rule.statementExcerpt,
       extractedFact: rule.numericValue !== null ? String(rule.numericValue) : null,

@@ -6,7 +6,7 @@ import { taxRates, vatTreatments } from './config';
 /**
  * Irish accounting/tax rules knowledge base (docs/RULES_KB.md).
  *
- * Four tables carry the statute-to-rule pipeline described there:
+ * Five tables carry the statute-to-rule pipeline described there:
  *
  *   irishKnowledgeSources  -- the authoritative document (never modified, see
  *                             `sha256`), tagged with a `sourceType` so a later
@@ -25,6 +25,8 @@ import { taxRates, vatTreatments } from './config';
  *                             are evaluated the same way.
  *   irishTaxRuleTests      -- generated test cases (positive/negative/
  *                             exception/boundary/effective-date) per rule.
+ *   irishRuleLinks         -- how one rule relies on another, by rule key and
+ *                             effective-dated (ADR-0020).
  *
  * Every one of these is additive to the schema already in this repo (reusing
  * `provenance`, `ruleSource`, `effectiveDates` from `_shared.ts`, and pointing
@@ -243,6 +245,13 @@ export const irishTaxRules = sqliteTable('irish_tax_rules', {
   ruleType: text('rule_type', { enum: IRISH_RULE_TYPES }).notNull().default('other'),
   /** Broad subject the rule speaks to, e.g. "business_expense", "usc". Defaults to the provision's category. */
   topic: text('topic').notNull(),
+  /**
+   * The tax heads the rule belongs to (issue #686 step 9): one or more, where
+   * `topic` routes a lookup and names one subject. Import VAT is `vat` and
+   * `customs`; a capital allowance is corporation tax and income tax. Set
+   * from `taxHeadsFor` (src/domain/rules/taxHeads.ts).
+   */
+  taxHeads: text('tax_heads', { mode: 'json' }).$type<string[]>().notNull().default([]),
   /** Human-readable summary, at most a single sentence. */
   name: text('name').notNull(),
   /** The rule's statement, built only from the provision's own wording — never invented. */
@@ -298,6 +307,35 @@ export const irishTaxRules = sqliteTable('irish_tax_rules', {
   index('irish_tax_rules_review_idx').on(t.reviewStatus),
 ]);
 
+/**
+ * A book's own decision about one rule version (ADR-0020 §6, issue #686 step
+ * 11): accept, reject, or move it through review, by whom, when and why.
+ *
+ * Append-only: a later decision is a new row, so the record of what was
+ * decided, and on what reason, is never overwritten. The expert review a
+ * version ships with lives in the rules catalogue (`catalogue/`), not here;
+ * the book's latest decision, when it has one, is what the book follows
+ * (`effectiveRuleReview`).
+ *
+ * Keyed by `ruleKey` and `ruleVersion`, not by the book's rule row, so a
+ * decision survives the rules moving out of the book into the install-level
+ * store. `ruleId` records the row it was taken on while that row exists.
+ */
+export const irishRuleDecisions = sqliteTable('irish_rule_decisions', {
+  id: text('id').primaryKey(),
+  companyId: text('company_id').notNull().references(() => companies.id),
+  ruleKey: text('rule_key').notNull(),
+  ruleVersion: integer('rule_version').notNull(),
+  ruleId: text('rule_id'),
+  status: text('status', { enum: IRISH_RULE_REVIEW_STATUSES }).notNull(),
+  decidedBy: text('decided_by').notNull(),
+  decidedAt: text('decided_at').notNull(),
+  reason: text('reason'),
+  createdAt: timestamps.createdAt,
+}, (t) => [
+  index('irish_rule_decisions_version_idx').on(t.companyId, t.ruleKey, t.ruleVersion, t.decidedAt),
+]);
+
 export const IRISH_TEST_CASE_TYPES = [
   'positive', 'negative', 'exception', 'boundary', 'effective_date',
 ] as const;
@@ -328,4 +366,57 @@ export const irishTaxRuleTests = sqliteTable('irish_tax_rule_tests', {
   ...timestamps,
 }, (t) => [
   index('irish_tax_rule_tests_rule_idx').on(t.ruleId),
+]);
+
+/**
+ * How one rule relies on another (ADR-0020 §3, issue #686).
+ *
+ * The closed list of kinds:
+ *
+ *   uses_value   -- the rule takes a figure stated by `toKey`.
+ *   rate_from    -- the rule's supplies bear the rate `toKey` states.
+ *   silenced_by  -- the rule is advisory, and `toKey` settles its question.
+ *   excludes     -- when both match, the rule drops `toKey`.
+ *   supersedes   -- the rule replaces `toKey`, wholly or in part.
+ *   cites        -- the rule's provision cites `toProvisionId`.
+ *   consumed_by  -- a computation reads the rule; `toKey` is `consumer:<name>`.
+ *
+ * A link names rule KEYS, not row ids, so a new version of either rule keeps
+ * every link that points at it. A link is effective-dated like the rules it
+ * joins: a Finance Act that moves supplies from one rate to another ends one
+ * `rate_from` link and starts another. It is never edited or deleted; a link
+ * the curation no longer states is set `active = false`, so the history of
+ * what a rule relied on stays queryable (AGENTS.md #6).
+ *
+ * Exactly one of `toKey` and `toProvisionId` is set. Neither is a foreign key:
+ * `toKey` names a rule key that may have many versions, and the graph checks
+ * (issue #686 step 3) fail the gate on a link to a key that does not exist.
+ *
+ * Scoped to a company while `irishTaxRules` is; both move to the install-level
+ * rules store together (ADR-0020 §6).
+ */
+export const IRISH_RULE_LINK_KINDS = [
+  'uses_value', 'rate_from', 'silenced_by', 'excludes', 'supersedes', 'cites',
+  // The rule is read by a computation: `to_key` is `consumer:<name>` (src/domain/rules/consumers.ts).
+  'consumed_by',
+] as const;
+export type IrishRuleLinkKind = (typeof IRISH_RULE_LINK_KINDS)[number];
+
+export const irishRuleLinks = sqliteTable('irish_rule_links', {
+  id: text('id').primaryKey(),
+  companyId: text('company_id').notNull().references(() => companies.id),
+  fromKey: text('from_key').notNull(),
+  kind: text('kind', { enum: IRISH_RULE_LINK_KINDS }).notNull(),
+  toKey: text('to_key'),
+  toProvisionId: text('to_provision_id').references(() => irishActProvisions.id),
+  /** Why the link holds, in the curator's words. */
+  note: text('note'),
+  ...effectiveDates,
+  ...provenance,
+  ...ruleSource,
+  ...timestamps,
+}, (t) => [
+  index('irish_rule_links_from_idx').on(t.companyId, t.fromKey, t.kind),
+  index('irish_rule_links_to_idx').on(t.companyId, t.toKey, t.kind),
+  index('irish_rule_links_provision_idx').on(t.toProvisionId),
 ]);

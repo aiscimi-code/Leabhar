@@ -90,6 +90,14 @@ export interface CuratedVatScopeRule {
    * window (issue #206).
    */
   windowQuotes?: string[];
+  /**
+   * The quoted words stand as enacted in 2010, though an LRC footnote on a
+   * substitution enclosing them is later: the substitution changed other words
+   * (#691, s.60(2)(a)(i)). The derive checks the quote is in the Act as enacted
+   * (`2010 Act 31`, same section) and then dates the rule from `effectiveFrom`;
+   * a quote not found there is refused.
+   */
+  wordsAsEnacted?: true;
 }
 
 const EXEMPT_EFFECT_SUFFIX = ' No VAT is charged, and input VAT on costs of making an exempt supply is not deductible '

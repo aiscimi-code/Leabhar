@@ -20,6 +20,7 @@ import { sha256Hex } from '@/lib/hash';
 import { parseVatca2010, provisionSlug, assessRelevance, VATCA_2010_MD_PATH } from './vatcaParser';
 import { VATCA_CURATED_RULES } from './vatcaCuration';
 import { upsertReviewItem } from '../extraction/service';
+import { taxHeadsFor } from './taxHeads';
 
 export interface VatcaSourceRef {
   title: string;
@@ -203,6 +204,7 @@ export function deriveVatcaRules(
       ruleKey: curated.ruleKey,
       ruleType: curated.ruleType,
       topic: curated.topic,
+      taxHeads: taxHeadsFor(curated.ruleKey, curated.topic),
       name: curated.name,
       statement: curated.statementExcerpt,
       extractedFact: null,

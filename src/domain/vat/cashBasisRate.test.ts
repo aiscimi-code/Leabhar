@@ -14,7 +14,7 @@ import type { AppDatabase } from '@/db';
  * Issue #615: on the cash receipts basis the tax point is the receipt, but
  * "the rate of tax due by the person concerned in respect of a supply shall
  * be the rate of tax chargeable at the time the goods or services are
- * supplied" (VATCA s.80(2)(a), docs/statutes/vatca-2010-revised/s080.md). So
+ * supplied" (VATCA s.80(2)(a), catalogue/vatca-2010-revised/s080.json). So
  * the VAT released on payment keeps the invoice's own rate, even when the
  * rate changed in between.
  */

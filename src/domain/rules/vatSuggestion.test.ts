@@ -13,6 +13,8 @@ import { VATCA_SCHEDULE_CURATED_RULES } from './vatcaScheduleCuration';
 import { VAT_SCOPE_CURATED_RULES } from './vatScopeCuration';
 import { VAT_PLACE_OF_SUPPLY_CURATED_RULES } from './vatPlaceOfSupplyCuration';
 import { lookupTransactionRules } from './transactionLookup';
+import { readCatalogueEntry } from './catalogue';
+import { containsIgnoringLayout } from './lrcAnnotations';
 
 let db: AppDatabase;
 let companyId: string;
@@ -272,10 +274,11 @@ describe('services sold abroad — VATCA s.34 (issue #200)', () => {
     expect(s.treatment?.code).toBe('EU_SERVICES_SUPPLY');
     expect(s.decidingRule?.ruleKey).toBe('vat.place_of_supply_services_to_business_abroad');
     expect(s.decidingRule?.citation).toBe('2010 Act 31 s.34');
-    expect(s.decidingRule?.localPath).toBe('docs/statutes/vatca-2010-revised/s034.md');
+    expect(s.decidingRule?.localPath).toBe('catalogue/vatca-2010-revised/s034.json');
     expect(s.factSources['customerIsTaxablePerson']).toContain('282/2011 art.18(1)');
-    const file = readFileSync(statuteFilePath(s.decidingRule!.localPath!), 'utf8');
-    expect(file.slice(s.decidingRule!.sourceStart!, s.decidingRule!.sourceEnd!)).toContain(s.decidingRule!.quote!);
+    // The rules catalogue holds the provision's excerpt, not a file to slice.
+    const excerpt = readCatalogueEntry('vatca-2010-revised/s034.json').provisions[0]!.excerpt;
+    expect(containsIgnoringLayout(excerpt, s.decidingRule!.quote!)).toBe(true);
   });
 
   it('to a US business recorded as a taxable person → services supplied outside the EU', () => {

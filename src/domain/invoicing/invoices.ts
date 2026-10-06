@@ -17,6 +17,7 @@ import { lateClaimLimit, lateClaimOutOfTime } from '../vat/lateClaim';
 import { AccountingError } from '../accounting/errors';
 import { upsertReviewItem } from '../extraction/service';
 import { vatBasisOn } from '../vat/basis';
+import { appliedRuleVersions } from '../rules/irishRules';
 
 export class InvoicingError extends AccountingError {}
 
@@ -828,6 +829,9 @@ function createInvoiceSteps(db: AppDatabase, input: CreateInvoiceInput): Created
         fixedAssetId: line.fixedAssetId ?? null,
         documentLineId: line.documentLineId ?? null,
         vatRuleKeys: line.vatRuleKeys ?? [],
+        vatRuleVersions: appliedRuleVersions(tx as unknown as AppDatabase, {
+          companyId: input.companyId, ruleKeys: line.vatRuleKeys ?? [], asOfDate: input.invoiceDate,
+        }),
         businessUseBasisPoints: businessBp,
         dualUseProportionBasisPoints: dualUseBp,
         dualUseBasis: line.dualUse?.basis ?? null,

@@ -1,0 +1,52 @@
+{
+  "format": 1,
+  "source": {
+    "citation": "VATCA 2010 s.47",
+    "title": "VATCA 2010 s.47 (LRC revised)",
+    "sourceType": "legislation",
+    "jurisdiction": "IE",
+    "sourceUrl": "https://revisedacts.lawreform.ie/eli/2010/act/31/section/47/revised/en/html",
+    "sha256": "257d60c36bec1f280cc806e28cff2a5226b357d26fe7c0073c48beffa4743667",
+    "conversion": "lrc-html-plaintext",
+    "retrievedOn": "2026-10-06",
+    "lrcAnnotations": {
+      "text": "Value-Added Tax Consolidation Act 2010 | Law Reform Revised Acts Classified List www.lawreform.ie Search Revised Acts Revised Acts Introduction Alphabetical List Chronological List Annotations This Act View Full Act View by Section Download PDFs With annotations Without annotations On the eISB Act as originally enacted ↗ Amendments to this Act ↗ #content a:link, #content a:active, #content a:visited { color: var(--header-background-color); text-decoration: none } Value-Added Tax Consolidation Act 2010 《 Go to Front 〈 Previous Section Next Section 〉 47 Composite and multiple supplies. [VATA s. 11(3)] 47 .—(1) Subject to section 41 — ( a ) in the case of a composite supply, the tax chargeable on the total consideration which the accountable person is entitled to receive for that composite supply shall be at the rate specified in section 46 (1) which is appropriate to the principal supply, but if that principal supply is an exempted activity, tax shall not be chargeable in respect of that composite supply, ( b ) in the case of a multiple supply— (i) the tax chargeable on each individual supply in that multiple supply shall be at the rate specified in section 46 (1) appropriate to each such individual supply, and (ii) in order to ascertain the taxable amount referable to each individual supply for the purpose of applying the appropriate rate thereto, the total consideration which the accountable person is entitled to receive in respect of that multiple supply shall be apportioned between those individual supplies in a way that correctly reflects the ratio which the value of each such individual supply bears to the total consideration for that multiple supply. (2) In the case where a person acquires a composite supply or a multiple supply by means of an intra-Community acquisition, this section shall apply to that acquisition. (3) The Revenue Commissioners may make regulations as necessary specifying— ( a ) the circumstances or conditions under which a supply may or may not be treated as an ancillary supply, a composite supply, an individual supply, a multiple supply or a principal supply, ( b ) the methods of apportionment which may be applied for the purposes of subsections (1) and (2) , ( c ) a relatively small amount, or an element of a supply, which may be disregarded for the purposes of applying this section. Law Reform Ireland Styne House, Upper Hatch Street Dublin 2 D02 DY27 Email: info@lawreform.ie Projects Current Projects Access to Legislation Legislation Directory Revised Acts Classified List of In-force Legislation Statute Law Revision Programme About Us Who We Are FOI Publication Scheme Protected Disclosures Careers Publications Browse all Publications Implementation Table Annual Reports Consultations Other Contact Us Latest News Sitemap All content Copyright 2026 Privacy Policy Data Protection Policy",
+      "footnotes": []
+    }
+  },
+  "provisions": [
+    {
+      "sectionNumber": "47",
+      "heading": "Composite and multiple supplies.",
+      "locator": "s.47",
+      "category": "exemption",
+      "relevant": true,
+      "relevanceReason": "Substantive exemption provision; potentially bears on transaction treatment.",
+      "excerpt": "47\n.—(1) Subject to\nsection 41\n—\n\n(\na\n) in the case of a composite supply, the tax\nchargeable on the total consideration which the accountable\nperson is entitled to receive for that composite supply shall\nbe at the rate specified in\nsection 46\n(1)\nwhich is appropriate to the\nprincipal supply, but if that principal supply is an exempted\nactivity, tax shall not be chargeable in respect of that\ncomposite supply,\n\n(\nb\n) in the case of a multiple supply—\n\n(i) the tax chargeable on each individual supply in that\nmultiple supply shall be at the rate specified in\nsection 46\n(1)\nappropriate\nto each such individual supply, and\n\n(ii) in order to ascertain the taxable amount referable to\neach individual supply for the purpose of applying the\nappropriate rate thereto, the total consideration which the\naccountable person is entitled to receive in respect of that\nmultiple supply shall be apportioned between those individual\nsupplies in a way that correctly reflects the ratio which the\nvalue of each such individual supply bears to the total\nconsideration for that multiple supply.\n\n(2)\nIn the case where a person acquires a composite supply or a\nmultiple supply by means of an intra-Community acquisition,\nthis section shall apply to that acquisition.\n\n(3)\nThe Revenue Commissioners may make regulations as necessary\nspecifying—\n\n(\na\n) the circumstances or conditions under which a\nsupply may or may not be treated as an ancillary supply, a\ncomposite supply, an individual supply, a multiple supply or a\nprincipal supply,\n\n(\nb\n) the methods of apportionment which may be\napplied for the purposes of\nsubsections (1)\nand\n\n(2)\n,\n\n(\nc\n) a relatively small amount, or an element of a\nsupply, which may be disregarded for the purposes of applying\nthis section."
+    }
+  ],
+  "rules": [
+    {
+      "key": "vat.composite_supply_follows_principal",
+      "sectionNumber": "47",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2010-11-01",
+          "effectiveTo": null,
+          "quote": "in the case\nof a composite supply, the tax chargeable on the total consideration which the\naccountable person is entitled to receive for that composite supply shall be at\nthe rate specified in",
+          "value": null,
+          "unit": null,
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    }
+  ]
+}

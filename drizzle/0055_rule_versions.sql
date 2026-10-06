@@ -1,0 +1,1 @@
+ALTER TABLE `invoice_lines` ADD `vat_rule_versions` text DEFAULT '[]' NOT NULL;

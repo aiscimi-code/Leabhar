@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { and, eq, lte, gte } from 'drizzle-orm';
-import { readFileSync } from 'node:fs';
+import { readCatalogueEntry } from '../rules/catalogue';
+import { containsIgnoringLayout } from '../rules/lrcAnnotations';
 import { createTestDatabase, insertConfirmedDocument } from '@/db/testing';
 import { createCompany } from '../config/setup';
 import { createInvoice } from '../invoicing/invoices';
@@ -47,8 +48,8 @@ const latePurchase = (declaredOn: string, treatment = 'IE_STD') => createInvoice
 
 describe('the s.99(4) limit', () => {
   it('quotes the statute verbatim', () => {
-    const text = readFileSync('docs/statutes/vatca-2010-revised/s099.md', 'utf8').replace(/\s+/g, ' ');
-    expect(text).toContain(REFUND_CLAIM_LIMIT_TEXT);
+    const excerpt = readCatalogueEntry('vatca-2010-revised/s099.json').provisions[0]!.excerpt;
+    expect(containsIgnoringLayout(excerpt, REFUND_CLAIM_LIMIT_TEXT)).toBe(true);
   });
 
   it('runs 4 years from the end of the period covering the tax point', () => {

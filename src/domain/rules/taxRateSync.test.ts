@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import { and, eq, isNull } from 'drizzle-orm';
 import { createTestDatabase } from '@/db/testing';
 import { createCompany } from '../config/setup';
-import { ingestVatcaRevisedSection, deriveVatcaRevisedRules, VATCA_REVISED_S046_MD_PATH } from './vatcaRevisedIngestion';
+import { ingestVatcaRevisedSection, deriveVatcaRevisedRules, ingestVatcaRevisedS46 } from './vatcaRevisedIngestion';
 import { setRuleReviewStatus } from './review';
 import { syncTaxRatesFromIrishRules, TAX_RATE_SYNC_MAP } from './taxRateSync';
 import { taxRates, irishTaxRules, auditEvents, reviewItems } from '@/db/schema';
@@ -11,7 +11,6 @@ import type { AppDatabase } from '@/db';
 
 let db: AppDatabase;
 let companyId: string;
-const s46Markdown = readFileSync(VATCA_REVISED_S046_MD_PATH, 'utf8');
 
 /** Approve the version in force today (a rate is a family of dated versions, issue #205). */
 function approve(ruleKey: string) {
@@ -41,7 +40,7 @@ describe('syncTaxRatesFromIrishRules', () => {
   });
 
   it('skips an unapproved (ai_extracted) curated rule, never auto-applying it to live config', () => {
-    ingestVatcaRevisedSection(db, { companyId, markdown: s46Markdown, ingestVersion: 'v1' });
+    ingestVatcaRevisedS46(db, { companyId });
     deriveVatcaRevisedRules(db, { companyId });
 
     const results = syncTaxRatesFromIrishRules(db, { companyId });
@@ -54,7 +53,7 @@ describe('syncTaxRatesFromIrishRules', () => {
   });
 
   it('links, without changing the rate, when the approved curated figure already matches the seeded default', () => {
-    ingestVatcaRevisedSection(db, { companyId, markdown: s46Markdown, ingestVersion: 'v1' });
+    ingestVatcaRevisedS46(db, { companyId });
     deriveVatcaRevisedRules(db, { companyId });
     approve('vat.rate_standard_current');
 
@@ -76,7 +75,7 @@ describe('syncTaxRatesFromIrishRules', () => {
   });
 
   it('is idempotent: a second run reports unchanged, not linked again', () => {
-    ingestVatcaRevisedSection(db, { companyId, markdown: s46Markdown, ingestVersion: 'v1' });
+    ingestVatcaRevisedS46(db, { companyId });
     deriveVatcaRevisedRules(db, { companyId });
     approve('vat.rate_standard_current');
 
@@ -87,7 +86,7 @@ describe('syncTaxRatesFromIrishRules', () => {
   });
 
   it('supersedes (never edits in place) when the approved curated figure genuinely differs, with a derived-source audit event', () => {
-    ingestVatcaRevisedSection(db, { companyId, markdown: s46Markdown, ingestVersion: 'v1' });
+    ingestVatcaRevisedS46(db, { companyId });
     deriveVatcaRevisedRules(db, { companyId });
     approve('vat.rate_standard_current');
 

@@ -10,7 +10,7 @@
  * lookup, because no bank line or invoice line is a return.
  *
  * The excerpt is verbatim from the LRC-revised s.76
- * (docs/statutes/vatca-2010-revised/s076.md); `deriveVatScopeRules` refuses
+ * (catalogue/vatca-2010-revised/s076.json); `deriveVatScopeRules` refuses
  * any that is not.
  */
 import type { CuratedVatScopeRule } from './vatScopeCuration';

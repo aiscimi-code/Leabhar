@@ -26,6 +26,8 @@ import { extractFactsFromProvision, SECTION_RULE_KEYS } from './factExtractor';
 import { resolveEffectiveDate } from './effectiveClue';
 import { upsertReviewItem } from '../extraction/service';
 import type { ParsedProvision } from './statuteParser';
+import { retiredBy } from './supersessions';
+import { taxHeadsFor } from './taxHeads';
 
 export interface KnowledgeSourceRef {
   title: string;
@@ -229,8 +231,8 @@ export interface DeriveResult {
  * `supersedesRuleId` — the historical row is never edited in place
  * (AGENTS.md invariant #6).
  */
-/** Replaced by correctly named keys (issue #199): the old names described a different figure. */
-export const RETIRED_FINANCE_ACT_2024_RULE_KEYS = ['usc.first_band_threshold', 'income_tax.standard_rate_threshold'];
+/** Replaced by correctly named keys (issue #199; supersessions.ts): the old names described a different figure. */
+export const RETIRED_FINANCE_ACT_2024_RULE_KEYS = retiredBy(['usc.medical_card_2pct_threshold', 'income_tax.second_earner_band_increase_max']);
 
 export function deriveTaxRules(
   db: AppDatabase,
@@ -331,6 +333,7 @@ export function deriveTaxRules(
       ruleKey: curated.key,
       ruleType: curated.kind === 'threshold' ? 'threshold' : curated.kind === 'rate' ? 'rate' : 'other',
       topic: curated.topic,
+      taxHeads: taxHeadsFor(curated.key, curated.topic),
       name: curated.name,
       statement: `Finance Act 2024 s.${prov.sectionNumber}: ${fact.evidence}`,
       extractedFact: fact.rawValue,
@@ -393,6 +396,8 @@ export interface LookupResult {
   sectionNumber: string;
   heading: string;
   ruleKey: string;
+  /** The version of `ruleKey` this row is; with the key, the version ID (`ruleVersionId`). */
+  ruleVersion: number;
   ruleType: string;
   topic: string;
   name: string;
@@ -427,6 +432,7 @@ const LOOKUP_COLUMNS = {
   id: irishTaxRules.id,
   provisionId: irishTaxRules.provisionId,
   ruleKey: irishTaxRules.ruleKey,
+  ruleVersion: irishTaxRules.ruleVersion,
   ruleType: irishTaxRules.ruleType,
   topic: irishTaxRules.topic,
   name: irishTaxRules.name,
@@ -459,6 +465,26 @@ const LOOKUP_COLUMNS = {
 
 function toLookupResult(row: Record<string, unknown>): LookupResult {
   return row as unknown as LookupResult;
+}
+
+/**
+ * A rule version's ID: the stable key and the version, `key@version` (ADR-0020
+ * §2). What a book records where a rule was applied, so the exact wording
+ * applied can be found again after the key gains a newer version.
+ */
+export function ruleVersionId(ruleKey: string, ruleVersion: number): string {
+  return `${ruleKey}@${ruleVersion}`;
+}
+
+/** The version IDs of the rules in force on a date, for the keys the book holds; a key with none is left out. */
+export function appliedRuleVersions(
+  db: AppDatabase,
+  params: { companyId: string; ruleKeys: readonly string[]; asOfDate: string },
+): string[] {
+  return [...new Set(params.ruleKeys)].flatMap((ruleKey) => {
+    const r = lookupTaxRule(db, { companyId: params.companyId, ruleKey, asOfDate: params.asOfDate });
+    return r ? [ruleVersionId(r.ruleKey, r.ruleVersion)] : [];
+  });
 }
 
 /**
@@ -495,6 +521,28 @@ export function lookupTaxRule(
 
   const inForce = rows.find((r) => r.effectiveFrom <= asOf && (!r.effectiveTo || r.effectiveTo > asOf));
   return inForce ? toLookupResult(inForce) : null;
+}
+
+/**
+ * The rules of one tax head in force on a date (issue #686 step 9), by key.
+ * A rule belongs to every head it names, so a capital allowance rule answers
+ * for income tax and for corporation tax.
+ */
+export function listTaxRulesByHead(
+  db: AppDatabase,
+  params: { companyId: string; head: string; asOfDate?: string },
+): Array<{ ruleKey: string; ruleVersion: number; topic: string; taxHeads: string[] }> {
+  const asOf = params.asOfDate ?? today();
+  if (!isIsoDate(asOf)) return [];
+  return db.select({
+    ruleKey: irishTaxRules.ruleKey, ruleVersion: irishTaxRules.ruleVersion, topic: irishTaxRules.topic,
+    taxHeads: irishTaxRules.taxHeads, effectiveFrom: irishTaxRules.effectiveFrom, effectiveTo: irishTaxRules.effectiveTo,
+  }).from(irishTaxRules)
+    .where(and(eq(irishTaxRules.companyId, params.companyId), eq(irishTaxRules.enabled, true), ne(irishTaxRules.reviewStatus, 'superseded')))
+    .orderBy(irishTaxRules.ruleKey)
+    .all()
+    .filter((r) => r.taxHeads.includes(params.head) && r.effectiveFrom <= asOf && (r.effectiveTo === null || r.effectiveTo > asOf))
+    .map(({ ruleKey, ruleVersion, topic, taxHeads }) => ({ ruleKey, ruleVersion, topic, taxHeads }));
 }
 
 /**

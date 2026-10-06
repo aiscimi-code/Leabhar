@@ -2,8 +2,31 @@ import { notFound } from 'next/navigation';
 import { provisionDetail } from '@/lib/queries';
 import { Page, Panel, Badge, Help } from '@/components/primitives';
 import { provisionCitation } from '@/lib/format';
+import type { ImpactEdge } from '@/domain/rules/ruleImpact';
 
 export const dynamic = 'force-dynamic';
+
+const KIND_TEXT: Record<string, string> = {
+  uses_value: 'uses a value of', rate_from: 'takes its rate from', silenced_by: 'is silenced by',
+  excludes: 'excludes', supersedes: 'supersedes', cites: 'cites', derived_from: 'is derived from',
+};
+
+/** Rule links reached in a walk: the rule, how it was reached, and through which rule. */
+function LinkList({ edges }: { edges: ImpactEdge[] }) {
+  return (
+    <ul className="text-[12px] space-y-0.5">
+      {edges.slice(0, 25).map((e) => (
+        <li key={`${e.ruleKey}-${e.kind}`}>
+          <span className="num">{e.ruleKey}</span>{' '}
+          <span className="text-ink-faint">
+            {e.depth === 1 ? '' : `(${e.depth} steps) `}via {KIND_TEXT[e.kind] ?? e.kind} {e.through}
+          </span>
+        </li>
+      ))}
+      {edges.length > 25 && <li className="text-ink-faint">and {edges.length - 25} more</li>}
+    </ul>
+  );
+}
 
 /**
  * One statutory provision, as the evidence behind a VAT suggestion (issue #200).
@@ -22,7 +45,7 @@ export default async function ProvisionPage({ params, searchParams }: {
   const { rule: highlightRuleId } = await searchParams;
   const detail = provisionDetail(id);
   if (!detail) notFound();
-  const { provision: p, source: s, rulesCiting, dependencies, file } = detail;
+  const { provision: p, source: s, rulesCiting, dependencies, reliesOn, reliedOnBy, readBy, file } = detail;
   const isGuidance = s.sourceType !== 'legislation' && s.sourceType !== 'eu_source';
 
   return (
@@ -90,6 +113,39 @@ export default async function ProvisionPage({ params, searchParams }: {
                                 ? <span>{d.reference} → <Badge tone="positive">{d.provision.citation} s.{d.provision.sectionNumber}</Badge>{d.ruleKeys.length > 0 && <span className="text-ink-faint"> (rules: {d.ruleKeys.join(', ')})</span>}</span>
                                 : <span>{d.reference} → <Badge tone="negative">not ingested</Badge> <span className="text-ink-faint">{d.reason}</span></span>}
                             </li>
+                          ))}
+                        </ul>
+                      </td>
+                    </tr>
+                  )}
+                  {(reliesOn[r.ruleKey] ?? []).length > 0 && (
+                    <tr>
+                      <td className="text-ink-faint align-top">
+                        Relies on
+                        <Help>The rules this rule takes a rate or value from, is silenced or excluded by, or otherwise links to, and theirs in turn. npm run cli:rules -- depends {r.ruleKey}</Help>
+                      </td>
+                      <td><LinkList edges={reliesOn[r.ruleKey] ?? []} /></td>
+                    </tr>
+                  )}
+                  {(reliedOnBy[r.ruleKey] ?? []).length > 0 && (
+                    <tr>
+                      <td className="text-ink-faint align-top">
+                        Relied on by
+                        <Help>The rules to look at again if this rule changes, directly and through other rules. npm run cli:rules -- impact {r.ruleKey}</Help>
+                      </td>
+                      <td><LinkList edges={reliedOnBy[r.ruleKey] ?? []} /></td>
+                    </tr>
+                  )}
+                  {(readBy[r.ruleKey] ?? []).length > 0 && (
+                    <tr>
+                      <td className="text-ink-faint align-top">
+                        Read by
+                        <Help>The computations and returns that read this rule, or a rule relying on it, from their declared manifests.</Help>
+                      </td>
+                      <td>
+                        <ul className="text-[12px] space-y-0.5">
+                          {(readBy[r.ruleKey] ?? []).map((c) => (
+                            <li key={c.consumer}>{c.name}{c.ruleKeys.some((k) => k !== r.ruleKey) && <span className="text-ink-faint"> (through {c.ruleKeys.filter((k) => k !== r.ruleKey).join(', ')})</span>}</li>
                           ))}
                         </ul>
                       </td>

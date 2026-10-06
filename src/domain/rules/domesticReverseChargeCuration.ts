@@ -14,7 +14,10 @@
  * and says why (`DOMESTIC_RC_GAPS`); each has its own treatment, which is
  * offered (`DOMESTIC_RC_OFFERS`, issue #621) or, for a connected builder,
  * chosen by a person. NAMA vesting orders (s.16(1)) are not modelled: this
- * company is neither NAMA nor a NAMA entity.
+ * company is neither NAMA nor a NAMA entity. s.16(1) was repealed from
+ * 1 August 2026 by the National Treasury Management Agency (Miscellaneous
+ * Provisions) Act 2026 s.4(1) and Sch.1 (S.I. 355/2026); the revised text in
+ * the rules catalogue no longer holds it (#689).
  */
 import type { IrishRuleCondition } from '@/db/schema';
 import type { CuratedVatScopeRule } from './vatScopeCuration';

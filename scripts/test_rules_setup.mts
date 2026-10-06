@@ -3,7 +3,7 @@ import { createTestDatabase } from "@/db/testing";
 import { createCompany } from "@/domain/config/setup";
 import { ingestFinanceAct2024, deriveTaxRules } from "@/domain/rules/irishRules";
 import { ingestVatca2010, deriveVatcaRules } from "@/domain/rules/vatcaIngestion";
-import { ingestVatcaRevisedSection, deriveVatcaRevisedRules } from "@/domain/rules/vatcaRevisedIngestion";
+import { ingestVatcaRevisedS46, deriveVatcaRevisedRules } from "@/domain/rules/vatcaRevisedIngestion";
 import { ingestVatcaSchedule, deriveVatcaScheduleRules } from "@/domain/rules/vatcaScheduleIngestion";
 import { ingestSi692025Reg5, ingestSi692025Reg8, ingestSi692025Reg9, deriveSi692025Rules } from "@/domain/rules/si692025Ingestion";
 import { deriveFinanceAct2024VatThresholds } from "@/domain/rules/financeAct2024VatThresholdsIngestion";
@@ -33,8 +33,7 @@ const vatcaMd = readFileSync("docs/statutes/vatca-2010/vatca-2010-enacted.md", "
 ingestVatca2010(db, { companyId, markdown: vatcaMd, ingestVersion: "v1" });
 deriveVatcaRules(db, { companyId });
 
-const s46Md = readFileSync("docs/statutes/vatca-2010-revised/s046.md", "utf8");
-ingestVatcaRevisedSection(db, { companyId, markdown: s46Md, ingestVersion: "v1" });
+ingestVatcaRevisedS46(db, { companyId });
 deriveVatcaRevisedRules(db, { companyId });
 
 ingestVatcaSchedule(db, { companyId, scheduleNumber: "2", markdown: readFileSync("docs/statutes/vatca-2010-revised/schedule-2.md", "utf8"), ingestVersion: "v1" });

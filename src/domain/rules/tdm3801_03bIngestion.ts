@@ -11,6 +11,7 @@ import { sha256Hex } from '@/lib/hash';
 import { extractCapacityExclusionSection, TDM_38_01_03B_MD_PATH } from './tdm3801_03bParser';
 import { TDM_38_01_03B_CAPACITY_EXCLUSION_RULE } from './tdm3801_03bCuration';
 import { upsertReviewItem } from '../extraction/service';
+import { taxHeadsFor } from './taxHeads';
 
 export { TDM_38_01_03B_MD_PATH };
 
@@ -159,6 +160,7 @@ export function deriveTdm3801_03bCapacityExclusionRule(
     ruleKey: rule.ruleKey,
     ruleType: rule.ruleType,
     topic: rule.topic,
+    taxHeads: taxHeadsFor(rule.ruleKey, rule.topic),
     name: rule.name,
     statement: rule.statementExcerpt,
     extractedFact: null,

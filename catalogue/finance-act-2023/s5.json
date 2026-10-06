@@ -1,0 +1,25 @@
+{
+  "format": 1,
+  "source": {
+    "citation": "2023 Act 11 s.5",
+    "title": "Finance Act 2023 s.5",
+    "sourceType": "legislation",
+    "jurisdiction": "IE",
+    "sourceUrl": "https://www.irishstatutebook.ie/eli/2023/act/11/section/5/enacted/en/html",
+    "sha256": "31851cb98b7c35e232547cb8be3b054bfb7a521f914aa7d21b1ee38fd9795ee0",
+    "conversion": "isb-html-plaintext",
+    "retrievedOn": "2026-10-06"
+  },
+  "provisions": [
+    {
+      "sectionNumber": "5",
+      "heading": "Amendment of Value-Added Tax Consolidation Act 2010",
+      "locator": "s.5",
+      "category": "vat",
+      "relevant": true,
+      "relevanceReason": "Amends VATCA 2010 s.46; cited by the s.46 rate rules (vatcaRevisedCuration.ts).",
+      "excerpt": "5.\nThe\n\nValue-Added Tax Consolidation Act 2010\n\nis amended—\n\n(a) with effect as on and from 23 February 2023, in section 46(1)—\n\n(i) in paragraph (caa), by the substitution of “31 October 2023” for “28 February 2023”, and\n\n(ii) in paragraph (cb), by the substitution of “31 August 2023” for “28 February 2023”,\n\n(b) with effect as on and from 1 January 2023, in Part 2 of Schedule 2, in paragraph 11(5), by the substitution of the following clause for clause (a):\n\n“(a) The supply of Covid-19\nin vitro\ndiagnostic medical devices where those devices comply with the requirements of European Union legislation (or the law of a Member State giving effect to such legislation) applicable to such devices, including Directive 98/79/EC of the European Parliament and of the Council of 27 October 1998\n7\n\nand Regulation (EU) 2017/746 of the European Parliament and of the Council of 5 April 2017\n8\n\n.”,\n\nand\n\n(c) with effect as on and from 1 May 2023—\n\n(i) in Part 2 of Schedule 2, by the insertion of the following paragraph after paragraph 13:\n\n“\nSolar panels\n\n14. The supply and installation of solar panels on or adjacent to immovable goods, being private dwellings.”,\n\nand\n\n(ii) in Part 2 of Schedule 3, in paragraph 9(1), by the insertion of “other than the supply and installation of solar panels as specified in paragraph 14 of Schedule 2,” after “fixtures,”.\n\n7\nOJ No. L331, 7.12.1998, p. 1\n\n8\nOJ No. L117, 5.5.2017, p.176"
+    }
+  ],
+  "rules": []
+}

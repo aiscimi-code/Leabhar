@@ -25,7 +25,8 @@ import { and, desc, eq } from 'drizzle-orm';
 import type { AppDatabase } from '@/db';
 import { irishTaxRules } from '@/db/schema';
 import { isIsoDate } from '../dates';
-import { lookupTaxRule } from './irishRules';
+import { lookupTaxRule, ruleVersionId } from './irishRules';
+import type { ManifestRuleKey } from './consumers';
 
 /** A shipped curation constant any figure falls back to. */
 export interface CuratedRuleFigure {
@@ -48,6 +49,8 @@ export type RuleFigureStatus = 'approved' | 'unreviewed' | 'rejected' | 'retired
 
 export interface ResolvedRuleFigure {
   ruleKey: string;
+  /** The stored rule version the figure came from (`key@version`); null when no stored rule was read. */
+  versionId: string | null;
   /**
    * The figure to use from the knowledge base. Null when the rule was
    * rejected (or the as-of date is not a date): the caller then either skips
@@ -120,11 +123,12 @@ function statusOf(reviewStatus: string): RuleFigureStatus {
  */
 export function resolveRuleFigure(
   db: AppDatabase,
-  params: { companyId: string; ruleKey: string; asOfDate: string; curated: CuratedRuleFigure },
+  params: { companyId: string; ruleKey: ManifestRuleKey; asOfDate: string; curated: CuratedRuleFigure },
 ): ResolvedRuleFigure {
   const curatedRateBasisPoints = params.curated.rateBasisPoints ?? null;
   const base = {
     ruleKey: params.ruleKey,
+    versionId: null as string | null,
     curatedValue: params.curated.numericValue,
     rateBasisPoints: curatedRateBasisPoints,
     curatedRateBasisPoints,
@@ -152,6 +156,7 @@ export function resolveRuleFigure(
       : curatedRateBasisPoints;
     return {
       ...base,
+      versionId: ruleVersionId(stored.ruleKey, stored.ruleVersion),
       numericValue: stored.value,
       rateBasisPoints,
       status,
@@ -229,11 +234,13 @@ export function auditRuleFigures(
   db: AppDatabase,
   params: { companyId: string; asOfDate: string; curated: CuratedRuleFigure[] },
 ): {
-  figure: (ruleKey: string) => ResolvedRuleFigure;
+  figure: (ruleKey: ManifestRuleKey) => ResolvedRuleFigure;
   findings: () => string[];
+  /** The version IDs of every stored rule a figure came from so far, sorted. */
+  versions: () => string[];
 } {
   const byKey = new Map<string, ResolvedRuleFigure>();
-  const figure = (ruleKey: string) => {
+  const figure = (ruleKey: ManifestRuleKey) => {
     const memo = byKey.get(ruleKey);
     if (memo) return memo;
     const curated = params.curated.find((r) => r.ruleKey === ruleKey);
@@ -261,5 +268,6 @@ export function auditRuleFigures(
     }
     return out;
   };
-  return { figure, findings };
+  const versions = () => [...new Set([...byKey.values()].flatMap((f) => (f.versionId ? [f.versionId] : [])))].sort();
+  return { figure, findings, versions };
 }

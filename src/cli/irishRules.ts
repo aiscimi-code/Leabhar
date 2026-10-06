@@ -21,7 +21,7 @@ import {
   TCA_1997_S530_MD_PATH,
 } from '@/domain/rules/rctIngestion';
 import {
-  ingestVatcaRevisedSection, deriveVatcaRevisedRules, VATCA_REVISED_S046_MD_PATH,
+  ingestVatcaRevisedSection, deriveVatcaRevisedRules, ingestVatcaRevisedS46, ingestVatcaRevised,
 } from '@/domain/rules/vatcaRevisedIngestion';
 import {
   ingestTca1997S284, ingestFinanceAct2003S23, deriveCapitalAllowancesRules,
@@ -54,6 +54,8 @@ import { setRuleReviewStatus } from '@/domain/rules/review';
 import { generateDefaultTestCases, runTestCases } from '@/domain/rules/testCases';
 import { generateAuditReport } from '@/domain/rules/audit';
 import { resolveRuleDependencies, resolveAllRuleDependencies } from '@/domain/rules/dependencies';
+import { resolveImpactTarget, ruleDepends, ruleImpact } from '@/domain/rules/ruleImpact';
+import { traceSourceChange, verifySources, type SourceFetcher } from '@/domain/rules/sourceDrift';
 import { irishActProvisions, irishTaxRules } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 
@@ -83,7 +85,7 @@ Commands:
                                        tca1997-s284; also finance-act-2024-vat-thresholds, which requires
                                        finance-act-2024 already ingested (no separate document); and vat-scope,
                                        the exempt/outside-scope rules, which need vatca-2010-sch1 and the revised
-                                       s002.md/s003.md ingested via vatca-2010-revised --file; default
+                                       ss.2 and 3, loaded from the rules catalogue by ingest-all; default
                                        finance-act-2024)
   list-provisions [--category <c>] [--relevant-only]
                                        List ingested provisions
@@ -101,6 +103,15 @@ Commands:
   versions --rule-key <k>              Compare every version of a rule: what
                                        changed between each version and the one
                                        it supersedes, oldest first
+  impact <ruleKey|provision>          Everything that relies on a rule, or on a provision (an id or a
+                                       reference such as "VATCA 2010 s.46"), directly and transitively
+  depends <ruleKey>                   Everything a rule relies on: rules, and the provisions behind them
+  verify-sources [--entry <e>] [--trace]
+                                       Fetch each rules catalogue entry's official file (online) and
+                                       report whether it has changed since it was curated, and which
+                                       rule quotes are no longer in it. --trace puts every affected
+                                       rule, and everything relying on it, in front of this book as a
+                                       review item. Exits 1 when a source has changed or is unreachable
   generate-tests                      Write default positive/effective-date test cases
   test                                Run all stored test cases, print pass/fail
   audit                               Print the QC/audit report
@@ -113,10 +124,12 @@ Flags:
 export interface CliOptions {
   db?: AppDatabase;
   companyId?: string;
+  /** verify-sources: fetches the official files (tests pass a fake). */
+  fetchSource?: SourceFetcher;
 }
 
 export async function main(argv: string[], options: CliOptions = {}): Promise<number> {
-  const { command, flags } = parseArgs(argv);
+  const { command, flags, positionals } = parseArgs(argv);
   const format: Format = getFlag(flags, 'format') === 'human' ? 'human' : 'json';
 
   if (command === '' || hasFlag(flags, 'help', 'h')) {
@@ -183,9 +196,13 @@ export async function main(argv: string[], options: CliOptions = {}): Promise<nu
           return 0;
         }
         if (source === 'vatca-2010-revised') {
-          const file = getFlag(flags, 'file') ?? VATCA_REVISED_S046_MD_PATH;
-          const markdown = readFileSync(file, 'utf8');
-          print(ingestVatcaRevisedSection(db, { companyId, markdown, ingestVersion: 'v1', localPath: file }), format);
+          // --section <n>: from the rules catalogue when ported (#443), else its
+          // statute copy; --file: a Markdown copy; neither: s.46.
+          const file = getFlag(flags, 'file');
+          const section = getFlag(flags, 'section');
+          print(file
+            ? ingestVatcaRevisedSection(db, { companyId, markdown: readFileSync(file, 'utf8'), ingestVersion: 'v1', localPath: file })
+            : section ? ingestVatcaRevised(db, { companyId, section }) : ingestVatcaRevisedS46(db, { companyId }), format);
           return 0;
         }
         if (source === 'tca1997-s284') {
@@ -454,6 +471,35 @@ export async function main(argv: string[], options: CliOptions = {}): Promise<nu
         }
         print(comparison, format);
         return 0;
+      }
+
+      case 'impact': {
+        const target = positionals.join(' ') || getFlag(flags, 'rule-key', 'provision');
+        if (!target) throw new Error('Usage: impact <ruleKey|provisionId|reference>');
+        print(ruleImpact(db, { companyId, target: resolveImpactTarget(db, { companyId, target }) }), format);
+        return 0;
+      }
+
+      case 'depends': {
+        const ruleKey = positionals[0] ?? getFlag(flags, 'rule-key');
+        if (!ruleKey) throw new Error('Usage: depends <ruleKey>');
+        const target = resolveImpactTarget(db, { companyId, target: ruleKey });
+        if (target.kind !== 'rule') throw new Error(`"${ruleKey}" is not a rule key in this book.`);
+        print(ruleDepends(db, { companyId, ruleKey }), format);
+        return 0;
+      }
+
+      case 'verify-sources': {
+        const entry = getFlag(flags, 'entry');
+        const reports = await verifySources({
+          entries: entry ? [entry.endsWith('.json') ? entry : `${entry}.json`] : undefined,
+          fetch: options.fetchSource,
+        });
+        const traces = hasFlag(flags, 'trace')
+          ? reports.filter((r) => r.status === 'changed').map((report) => traceSourceChange(db, { companyId, report }))
+          : [];
+        print({ reports, traces }, format);
+        return reports.every((r) => r.status === 'unchanged') ? 0 : 1;
       }
 
       case 'generate-tests': {

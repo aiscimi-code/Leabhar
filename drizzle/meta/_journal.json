@@ -379,6 +379,41 @@
       "when": 1791236528328,
       "tag": "0053_invoice_required",
       "breakpoints": true
+    },
+    {
+      "idx": 54,
+      "version": "6",
+      "when": 1791278823551,
+      "tag": "0054_rule_links",
+      "breakpoints": true
+    },
+    {
+      "idx": 55,
+      "version": "6",
+      "when": 1791282821478,
+      "tag": "0055_rule_versions",
+      "breakpoints": true
+    },
+    {
+      "idx": 56,
+      "version": "6",
+      "when": 1791283796612,
+      "tag": "0056_tax_heads",
+      "breakpoints": true
+    },
+    {
+      "idx": 57,
+      "version": "6",
+      "when": 1791289128328,
+      "tag": "0057_rule_decisions",
+      "breakpoints": true
+    },
+    {
+      "idx": 58,
+      "version": "6",
+      "when": 1791289135287,
+      "tag": "0058_rule_decisions_backfill",
+      "breakpoints": true
     }
   ]
 }

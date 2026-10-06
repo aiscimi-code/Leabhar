@@ -1,0 +1,25 @@
+{
+  "format": 1,
+  "source": {
+    "citation": "2022 Act 9 s.7",
+    "title": "Finance (Covid-19 and Miscellaneous Provisions) Act 2022 s.7",
+    "sourceType": "legislation",
+    "jurisdiction": "IE",
+    "sourceUrl": "https://www.irishstatutebook.ie/eli/2022/act/9/section/7/enacted/en/html",
+    "sha256": "a85aeeb0d42eb9687f42e1b69892e331733521affc041f28da02e412a6c28177",
+    "conversion": "isb-html-plaintext",
+    "retrievedOn": "2026-10-06"
+  },
+  "provisions": [
+    {
+      "sectionNumber": "7",
+      "heading": "Amendment of section 46 of Value-Added Tax Consolidation Act 2010",
+      "locator": "s.7",
+      "category": "vat",
+      "relevant": true,
+      "relevanceReason": "Amends VATCA 2010 s.46; cited by the s.46 rate rules (vatcaRevisedCuration.ts).",
+      "excerpt": "7.\n\nSection 46\n\nof the\n\nValue-Added Tax Consolidation Act 2010\n\nis amended, in subsection (1) by—\n\n(a) the substitution in paragraph (a) of “at any of the rates specified in paragraphs (b), (c), (ca), (caa), (cb) and (d) ” for “at any of the rates specified in paragraphs (b), (c), (ca) and (d) ”,\n\n(b) the substitution in paragraph (c) of “subject to paragraphs (ca), (caa) and (cb) ” for “subject to paragraphs (ca) and (cb) ”,\n\n(c) the insertion of the following paragraph after paragraph (ca):\n\n“(caa) during the period from 1 May 2022 to 31 October 2022, 9 per cent in relation to goods of a kind specified in paragraph 17(2) and (3) of Schedule 3 on which tax would, but for this paragraph, be chargeable in accordance with paragraph (c) ;”,\n\nand\n\n(d) the substitution in paragraph (cb) of “28 February 2023” for “31 August 2022”."
+    }
+  ],
+  "rules": []
+}

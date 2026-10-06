@@ -39,6 +39,7 @@ import { sha256Hex } from '@/lib/hash';
 import { parseSi692025Regulation, provisionSlug, SI_69_2025_MD_PATH } from './si692025Parser';
 import { SI_69_2025_CURATED_RULES } from './si692025Curation';
 import { upsertReviewItem } from '../extraction/service';
+import { taxHeadsFor } from './taxHeads';
 
 export { SI_69_2025_MD_PATH };
 
@@ -297,6 +298,7 @@ export function deriveSi692025Rules(
       ruleKey: rule.ruleKey,
       ruleType: rule.ruleType,
       topic: rule.topic,
+      taxHeads: taxHeadsFor(rule.ruleKey, rule.topic),
       name: rule.name,
       statement: rule.statementExcerpt,
       extractedFact: rule.numericValue !== null ? String(rule.numericValue) : null,

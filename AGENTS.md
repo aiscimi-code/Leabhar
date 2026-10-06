@@ -90,6 +90,12 @@ These are enforced by tests. Breaking one is a bug, not a trade-off.
 - **A revised text does not date its own figures.** The LRC and Revenue
   consolidations state the current wording. Take each figure's start date from
   the Act or footnote that set it, never from the revised file's date.
+- **A rule relationship that exists only in code is a bug.** When one rule
+  silences, excludes, takes a rate or value from, or supersedes another,
+  declare it as a link (`src/domain/rules/ruleLinks.ts`, `supersessions.ts`)
+  and read it from there; a computation reads only the keys its
+  `ruleManifest.ts` declares. The graph checks fail the gate on a dangling
+  link, a dependency gap or a cycle (ADR-0020, `docs/RULES_KB.md`).
 - **An unassessable match factor carries zero weight** and is excluded, rather
   than scoring as half-right or counting against.
 

@@ -18,6 +18,7 @@
  */
 import type { IrishRuleCondition } from '@/db/schema';
 import type { CuratedVatScopeRule } from './vatScopeCuration';
+import { retiredBy } from './supersessions';
 
 const VATCA_COMMENCEMENT = '2010-11-01';
 const desc = (value: string): IrishRuleCondition => ({ field: 'description', operator: 'matches', value });
@@ -38,8 +39,8 @@ export const BLOCKED_DEDUCTION_RULE_KEYS = [
   BLOCKED_FOOD_RULE_KEY, BLOCKED_ENTERTAINMENT_RULE_KEY, BLOCKED_MOTOR_VEHICLE_RULE_KEY, BLOCKED_PETROL_RULE_KEY,
 ];
 
-/** The as-enacted rules these replace; deriving retires their stored rows. */
-export const RETIRED_INPUT_RECOVERY_RULE_KEYS = ['vat.input_deduction_general', 'vat.deduction_exclusions_entertainment'];
+/** The as-enacted rules these replace (supersessions.ts); deriving retires their stored rows. */
+export const RETIRED_INPUT_RECOVERY_RULE_KEYS = retiredBy([INPUT_DEDUCTION_RULE_KEY, ...BLOCKED_DEDUCTION_RULE_KEYS]);
 
 type Rule = Omit<CuratedVatScopeRule, 'ruleType' | 'topic' | 'crossReferences' | 'accountingEffect' | 'reportingEffect' | 'effectiveFrom' | 'treatment' | 'exceptions'>
   & Partial<Pick<CuratedVatScopeRule, 'crossReferences' | 'accountingEffect' | 'reportingEffect' | 'exceptions'>>;
@@ -49,6 +50,9 @@ const rule = (r: Rule): CuratedVatScopeRule => ({
   effectiveFrom: VATCA_COMMENCEMENT, treatment: null, exceptions: [], ...r,
 });
 const S60 = { citation: '2010 Act 31 s.60', sectionNumber: '60' } as const;
+/** The invoice-line words that read as food, drink or accommodation (s.60(2)(a)(i)). */
+const FOOD_DRINK_ACCOMMODATION_WORDS = '\\b(food|drinks?|meals?|lunch|dinner|breakfast|restaurant|cafe|coffee|catering|hotel|'
+  + 'accommodation|b&b|bed and breakfast|subsistence|canteen)\\b';
 const purchase = is('direction', 'purchase');
 
 export const INPUT_RECOVERY_CURATED_RULES: CuratedVatScopeRule[] = [
@@ -71,14 +75,19 @@ export const INPUT_RECOVERY_CURATED_RULES: CuratedVatScopeRule[] = [
     ...S60, ruleKey: BLOCKED_FOOD_RULE_KEY,
     name: 'No deduction: food, drink, accommodation or other personal services (s.60(2)(a)(i))',
     statementExcerpt: 'accountable person on food or drink, or accommodation (other than qualifying',
-    conditions: [purchase, desc('\\b(food|drinks?|meals?|lunch|dinner|breakfast|restaurant|cafe|coffee|catering|hotel|'
-      + 'accommodation|b&b|bed and breakfast|subsistence|canteen)\\b')],
+    conditions: [purchase, desc(FOOD_DRINK_ACCOMMODATION_WORDS)],
     exceptions: [
       { condition: 'qualifying accommodation for attending a qualifying conference (s.60(1))', effect: 'the accommodation is deductible' },
       { condition: 'the company itself supplies food, drink or accommodation and charges VAT on it', effect: 'deductible' },
     ],
     vatEffect: 'The VAT is not deductible; it is part of the cost.',
-    interpretationNote: 'Read from the invoice line wording.',
+    // Finance Act 2024 s.81 substituted the whole subparagraph (LRC F148,
+    // 12 November 2024) but changed only its onward-supply tail; the quoted
+    // words, conference exception included, are the 2010 text (#691).
+    wordsAsEnacted: true,
+    interpretationNote: 'Read from the invoice line wording. In force from 1 November 2010: Finance Act 2024 s.81 '
+      + 'substituted s.60(2)(a)(i) from 12 November 2024 but changed only the onward-supply exception at its end, '
+      + 'which this quote does not contain (#691).',
   }),
   rule({
     ...S60, ruleKey: BLOCKED_ENTERTAINMENT_RULE_KEY,
@@ -131,7 +140,11 @@ export const INPUT_RECOVERY_CURATED_RULES: CuratedVatScopeRule[] = [
     crossReferences: ['S.I. 639/2010 reg.20(2)', 'VATCA 2010 s.59(2)(a)'],
     vatEffect: 'Input VAT is deducted only on an invoice with the prescribed particulars; posting a confirmed purchase '
       + 'invoice checks them (missingInvoiceParticulars) and holds the VAT back when one is missing.',
-    interpretationNote: 'Enforced when a confirmed document is posted, not by matching words.',
+    // S.I. 354/2012 substituted s.66(1) from 1 January 2013 (LRC F169), but the
+    // quoted words are already in the 2010 s.66(1) (#695).
+    wordsAsEnacted: true,
+    interpretationNote: 'Enforced when a confirmed document is posted, not by matching words. In force from '
+      + '1 November 2010: S.I. 354/2012 substituted s.66(1) from 1 January 2013, but the quoted words stand as enacted (#695).',
   }),
   rule({
     citation: '2010 Act 31 s.99', sectionNumber: '99', ruleKey: LATE_CLAIM_LIMIT_RULE_KEY,

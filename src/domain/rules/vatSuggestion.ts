@@ -38,6 +38,7 @@ import { provisionCitation } from './citation';
 import { VATCA_SCHEDULE_CURATED_RULES } from './vatcaScheduleCuration';
 import { SCHEDULE_RULE_PRECEDENCE } from './vatcaScheduleParagraphRules';
 import { scheduleThreeRate } from './scheduleRates';
+import { scheduleRuleRate } from './ruleLinks';
 import { CROSS_BORDER_GAPS, ICA_RULE_KEY, IMPORT_RULE_KEY } from './crossBorderCuration';
 import { DOMESTIC_RC_GAPS, DOMESTIC_RC_OFFERS, RC_CONSTRUCTION_RULE_KEY } from './domesticReverseChargeCuration';
 import {
@@ -109,8 +110,8 @@ export function bindingGap(binding: TreatmentBinding, ctx: SuggestionFacts, rule
 /**
  * Schedule 2 and 3 paragraph rules (issue #205), in precedence order. A
  * Schedule 2 rule is zero-rated (s.46(1)(b)); a Schedule 3 rule bears the
- * rate s.46 gives its sub-paragraphs on the line's date, or none when the
- * sources cannot say (`scheduleThreeRate`).
+ * rate of the s.46 rule it takes its rate from on the line's date (its
+ * `rate_from` link, ruleLinks.ts), or none when the sources cannot say.
  */
 const SCHEDULE_RULES = new Map(VATCA_SCHEDULE_CURATED_RULES.map((r) => [r.ruleKey, r]));
 const SCHEDULE_BINDING_KEYS = SCHEDULE_RULE_PRECEDENCE.filter((k) => SCHEDULE_RULES.has(k));
@@ -120,7 +121,7 @@ function scheduleRate(ctx: SuggestionFacts, ruleKey: string): { code: string | n
   if (!r || r.scheduleNumber === '2') return { code: 'IE_ZERO' as const, provision: 'VATCA 2010 s.46(1)(b)' };
   const refs = r.rateRefs ?? [];
   if (refs.length === 0) return { code: null, provision: 's.46', gap: `Rule ${ruleKey} names no Schedule 3 sub-paragraph.` };
-  return scheduleThreeRate(refs[0]!, ctx.transactionDate);
+  return scheduleRuleRate(ruleKey, refs[0]!, ctx.transactionDate);
 }
 
 const scopeKeys = (treatment: 'IE_EXEMPT' | 'OUT_OF_SCOPE'): string[] =>

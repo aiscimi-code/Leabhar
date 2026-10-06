@@ -18,7 +18,7 @@ import { ids } from '@/lib/ids';
 import { nowIso } from '../dates';
 import { VAT_SCOPE_CURATED_RULES } from './vatScopeCuration';
 import { VAT_PLACE_OF_SUPPLY_CURATED_RULES } from './vatPlaceOfSupplyCuration';
-import { lrcHtmlForSource } from './vatcaScheduleIngestion';
+import { lrcAnnotationsForSource } from './vatcaScheduleIngestion';
 import { COMPOSITE_SUPPLY_RULES } from './compositeSupplyCuration';
 import { CROSS_BORDER_CURATED_RULES } from './crossBorderCuration';
 import { DOMESTIC_RC_CURATED_RULES } from './domesticReverseChargeCuration';
@@ -31,7 +31,7 @@ import { RETURNS_CURATED_RULES } from './returnsCuration';
 import { TAX_POINT_CURATED_RULES } from './taxPointCuration';
 import { DEEMED_SUPPLY_CURATED_RULES } from './deemedSupplyCuration';
 import { BAD_DEBT_RELIEF_CURATED_RULES } from './badDebtReliefCuration';
-import { quotedTextWindow } from './lrcAnnotations';
+import { containsIgnoringLayout, quotedTextWindow } from './lrcAnnotations';
 
 /** Every rule this module derives: scope/exemption, taxable amount, place of supply of services and returns. */
 export const VAT_SCOPE_DERIVED_RULES = [
@@ -40,6 +40,8 @@ export const VAT_SCOPE_DERIVED_RULES = [
   ...DEEMED_SUPPLY_CURATED_RULES, ...BAD_DEBT_RELIEF_CURATED_RULES,
 ];
 import { upsertReviewItem } from '../extraction/service';
+import { taxHeadsFor } from './taxHeads';
+import type { CuratedVatScopeRule } from './vatScopeCuration';
 
 export interface VatScopeDeriveResult {
   created: number;
@@ -48,6 +50,20 @@ export interface VatScopeDeriveResult {
   skippedNoProvision: string[];
   /** Rules refused because their quoted excerpt is not in the provision text. */
   skippedExcerptNotInProvision: string[];
+}
+
+/**
+ * Whether the Act as enacted (`2010 Act 31`) holds the rule's quote in the same
+ * section. The enacted text is a printed Act: a word broken across lines keeps
+ * its hyphen ("quali-\nfying"), which is joined before comparing.
+ */
+export function quotedAsEnacted(db: AppDatabase, rule: Pick<CuratedVatScopeRule, 'sectionNumber' | 'statementExcerpt'>): boolean {
+  const enacted = db.select({ id: irishKnowledgeSources.id }).from(irishKnowledgeSources)
+    .where(eq(irishKnowledgeSources.citation, '2010 Act 31')).orderBy(desc(irishKnowledgeSources.retrievedAt)).get();
+  const prov = enacted && db.select().from(irishActProvisions)
+    .where(and(eq(irishActProvisions.sourceId, enacted.id), eq(irishActProvisions.sectionNumber, rule.sectionNumber))).get();
+  if (!prov) return false;
+  return containsIgnoringLayout((prov.provisionText ?? '').replace(/-[ \t]*\n\s*/g, ''), rule.statementExcerpt);
 }
 
 export function deriveVatScopeRules(
@@ -70,17 +86,26 @@ export function deriveVatScopeRules(
         .get()
       : undefined;
     if (!prov) { result.skippedNoProvision.push(rule.ruleKey); continue; }
-    if (!(prov.provisionText ?? '').includes(rule.statementExcerpt)) {
+    if (!containsIgnoringLayout(prov.provisionText ?? '', rule.statementExcerpt)) {
       result.skippedExcerptNotInProvision.push(rule.ruleKey);
       continue;
     }
 
     // A rule is good only from the last change to the words it relies on
     // (issue #206), read from the LRC HTML beside the source when it is there.
-    const html = source ? lrcHtmlForSource(db, source.id) : null;
-    const window = html ? quotedTextWindow(html, [rule.statementExcerpt, ...(rule.windowQuotes ?? [])]) : null;
+    // A rule whose quoted words stand as enacted is dated from the Act, once
+    // the enacted text is checked to hold them (`wordsAsEnacted`).
+    if (rule.wordsAsEnacted && !quotedAsEnacted(db, rule)) {
+      result.skippedExcerptNotInProvision.push(rule.ruleKey);
+      continue;
+    }
+    const annotations = source && !rule.wordsAsEnacted ? lrcAnnotationsForSource(db, source.id) : null;
+    const window = annotations ? quotedTextWindow(annotations, [rule.statementExcerpt, ...(rule.windowQuotes ?? [])]) : null;
     const effectiveFrom = window?.effectiveFrom ?? rule.effectiveFrom;
-    const windowNote = window
+    const windowNote = rule.wordsAsEnacted
+      ? `Effective from ${effectiveFrom}: the quoted words are in the Act as enacted; a later substitution of the `
+        + 'provision enclosing them changed other words. '
+      : window
       ? (window.footnotes.length
         ? `Effective from ${effectiveFrom}, the latest LRC amendment to the quoted words: `
           + `${window.footnotes.map((f) => `${f.ref} ${f.text}`).join(' ')} `
@@ -118,6 +143,7 @@ export function deriveVatScopeRules(
       ruleKey: rule.ruleKey,
       ruleType: rule.ruleType,
       topic: rule.topic,
+      taxHeads: taxHeadsFor(rule.ruleKey, rule.topic),
       name: rule.name,
       statement: rule.statementExcerpt,
       extractedFact: null,

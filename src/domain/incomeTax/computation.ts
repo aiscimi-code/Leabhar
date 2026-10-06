@@ -12,6 +12,7 @@ import {
 } from '../corporationTax/computation';
 import { INCOME_TAX_CURATED_RULES } from '../rules/incomeTaxCuration';
 import { resolveRuleFigure, type ResolvedRuleFigure } from '../rules/ruleFigures';
+import type { ManifestRuleKey } from '../rules/consumers';
 import { allocateByShares, partnershipFindings } from '../config/partners';
 import { partnerLoanInterestForPeriod } from '../partnerships/interest';
 import { FARM_INCOME_AVERAGING, FARM_STOCK_RELIEF_CLAIMS, type FarmIncomeAveraging, type FarmStockReliefClaim } from '../corporationTax/subjects';
@@ -115,6 +116,8 @@ export interface IncomeTaxComputation {
    */
   farm: FarmReliefs | null;
   decisions: CtPendingDecision[];
+  /** The rule versions the figures came from (`key@version`, issue #686 step 7). */
+  ruleVersions: string[];
   findings: string[];
 }
 
@@ -146,7 +149,7 @@ const apportion = (profitMinor: number, a: string, b: string, from: string, to: 
 const eur = (minor: number) => (minor / 100).toFixed(2);
 
 /** The figure a rule states on a date: the stored rule a person can review, not the shipped constant (issue #282). */
-function ruleOn(db: AppDatabase, companyId: string, ruleKey: string, date: string): ResolvedRuleFigure | null {
+function ruleOn(db: AppDatabase, companyId: string, ruleKey: ManifestRuleKey, date: string): ResolvedRuleFigure | null {
   const curatedVersion = INCOME_TAX_CURATED_RULES.filter((r) => r.ruleKey === ruleKey
     && r.effectiveFrom <= date && (r.effectiveTo === null || r.effectiveTo > date))
     .sort((a, b) => b.effectiveFrom.localeCompare(a.effectiveFrom))[0];
@@ -175,6 +178,8 @@ class IncomeTaxRun {
   private readonly farmProfits = new Map<number, number>();
   private readonly baseFindings: string[] = [];
   private findings: string[] = [];
+  /** The rule versions the year being computed read its figures from (issue #686 step 7). */
+  private versions = new Set<string>();
 
   constructor(private readonly db: AppDatabase, private readonly companyId: string) {
     const company = db.select().from(companies).where(eq(companies.id, companyId)).get();
@@ -190,6 +195,13 @@ class IncomeTaxRun {
       this.baseFindings.push(`The date the trade commenced is not recorded; ${this.commenced} (the first entry) is used. `
         + 'The first three years are taxed on special bases (s.66): record the real date.');
     }
+  }
+
+  /** A rule's figure on a date, recording the version it came from. */
+  private rule(ruleKey: ManifestRuleKey, date: string): ResolvedRuleFigure | null {
+    const r = ruleOn(this.db, this.companyId, ruleKey, date);
+    if (r?.versionId) this.versions.add(r.versionId);
+    return r;
   }
 
   /** The accounting periods: from commencement to the first year end, then yearly. */
@@ -346,8 +358,8 @@ class IncomeTaxRun {
       reason: 'The standard rate band and personal credit depend on it (s.15 Table, s.461). '
         + 'The band and credit in force are shown on the computation lines, from the rules that state them.',
     });
-    const need = (key: string) => {
-      const r = ruleOn(this.db, this.companyId, key, dec31);
+    const need = (key: ManifestRuleKey) => {
+      const r = this.rule(key, dec31);
       if (!r) {
         this.findings.push(`No ${key} rule is in force for ${year}: that part of ${name}'s liability is not computed.`);
         return null;
@@ -414,7 +426,7 @@ class IncomeTaxRun {
     // USC (s.531AN).
     const usc: IncomeTaxLine[] = [];
     const exemption = need('usc.exemption_threshold');
-    const bands = ['usc.band_05pct', 'usc.band_2pct', 'usc.band_3pct'].map(need);
+    const bands = (['usc.band_05pct', 'usc.band_2pct', 'usc.band_3pct'] as const).map((k) => need(k));
     const top = need('usc.rate_top');
     const surcharge = need('usc.surcharge_non_paye');
     const surchargeThreshold = need('usc.surcharge_threshold');
@@ -438,7 +450,7 @@ class IncomeTaxRun {
     // PRSI Class S (SWCA 2005 s.21(1)(a)): the rate and the minimum are rule
     // figures like every other (#487), as is the €5,000 prescribed amount
     // below which no Class S is payable (S.I. 312/1996 art. 92).
-    const prsiRule = ruleOn(this.db, this.companyId, 'prsi.class_s_rate', dec31);
+    const prsiRule = this.rule('prsi.class_s_rate', dec31);
     if (prsiRule?.finding) this.findings.push(prsiRule.finding);
     const prsiRate = prsiRule?.numericValue ?? null;
     const prsiMinimum = need('prsi.class_s_minimum');
@@ -578,7 +590,9 @@ class IncomeTaxRun {
     const cached = this.years.get(year);
     if (cached) return cached;
     const saved = this.findings;
+    const savedVersions = this.versions;
     this.findings = [...this.baseFindings];
+    this.versions = new Set();
     const decisions: CtPendingDecision[] = [];
     const basis = this.assessed(year);
 
@@ -742,8 +756,8 @@ class IncomeTaxRun {
     // every other figure (issue #486): an edited or re-derived rule changes the
     // computation, a rejected one stops the part.
     const dec31 = `${year}-12-31`;
-    const pct = (key: string): number | null => {
-      const r = ruleOn(this.db, this.companyId, key, dec31);
+    const pct = (key: ManifestRuleKey): number | null => {
+      const r = this.rule(key, dec31);
       if (r?.finding) this.findings.push(r.finding);
       if (!r || r.numericValue === null) {
         const why = !r ? 'no rule is in force' : r.status === 'rejected' ? 'the rule was rejected on the review screen'
@@ -796,9 +810,11 @@ class IncomeTaxRun {
       capitalAllowancesMinor: allowances.netMinor, capitalAllowanceLines: allowances.lines,
       assessableProfitMinor, tradingLossMinor, lossBeforeAllowancesMinor, allowanceLossMinor,
       individuals, dates, farm, decisions,
+      ruleVersions: [...this.versions].sort(),
       findings: [...new Set(this.findings)],
     };
     this.findings = saved;
+    this.versions = savedVersions;
     this.years.set(year, result);
     return result;
   }

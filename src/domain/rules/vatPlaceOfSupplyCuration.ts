@@ -2,7 +2,7 @@
  * Curated place-of-supply rules for SALES of services (issue #200 step 5):
  * where a service the company sells is supplied, and so whether Irish VAT is
  * charged on it at all. Sourced from VATCA 2010 s.34 in its LRC-revised form
- * (docs/statutes/vatca-2010-revised/s034.md) — not the 2010 as-enacted s.34
+ * (catalogue/vatca-2010-revised/s034.json) — not the 2010 as-enacted s.34
  * `vatcaCuration.ts` reads, which #199 found differs from the current text.
  *
  * s.34 turns on one fact about the CUSTOMER: whether it receives the service

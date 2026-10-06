@@ -1,0 +1,52 @@
+{
+  "format": 1,
+  "source": {
+    "citation": "VATCA 2010 s.70",
+    "title": "VATCA 2010 s.70 (LRC revised)",
+    "sourceType": "legislation",
+    "jurisdiction": "IE",
+    "sourceUrl": "https://revisedacts.lawreform.ie/eli/2010/act/31/section/70/revised/en/html",
+    "sha256": "d0f4dd333960ae7f81ee0c1e8e2765326435793e3b5f7b5d0edcf3ae646896e3",
+    "conversion": "lrc-html-plaintext",
+    "retrievedOn": "2026-10-06",
+    "lrcAnnotations": {
+      "text": "Value-Added Tax Consolidation Act 2010 | Law Reform Revised Acts Classified List www.lawreform.ie Search Revised Acts Revised Acts Introduction Alphabetical List Chronological List Annotations This Act View Full Act View by Section Download PDFs With annotations Without annotations On the eISB Act as originally enacted ↗ Amendments to this Act ↗ #content a:link, #content a:active, #content a:visited { color: var(--header-background-color); text-decoration: none } Value-Added Tax Consolidation Act 2010 《 Go to Front 〈 Previous Section Next Section 〉 70 Time limits for issuing invoices, etc. [VATA s. 17(7) and (8)] 70 .—(1)( a ) An invoice, credit note or document required to be issued in accordance with this Chapter shall be issued within such time after the date of supplying goods or services as may be specified by regulations. ( b ) An amendment of an invoice pursuant to section 68 (2)(b) shall be effected within such time as may be specified by regulations. (2) Notwithstanding subsection (1) , where payment for the supply of goods or services (other than supplies of the kind specified in paragraph 1(1) or (2) of Schedule 2 ) is made to a person, either in full or by instalments, before the supply is completed, the person shall issue an invoice in accordance with section 66 (1) or 68 (1) , as may be appropriate, within such time after the date of actual receipt of the full payment or the instalment as may be specified by regulations. Annotations Editorial Notes: Law Reform Ireland Styne House, Upper Hatch Street Dublin 2 D02 DY27 Email: info@lawreform.ie Projects Current Projects Access to Legislation Legislation Directory Revised Acts Classified List of In-force Legislation Statute Law Revision Programme About Us Who We Are FOI Publication Scheme Protected Disclosures Careers Publications Browse all Publications Implementation Table Annual Reports Consultations Other Contact Us Latest News Sitemap All content Copyright 2026 Privacy Policy Data Protection Policy",
+      "footnotes": []
+    }
+  },
+  "provisions": [
+    {
+      "sectionNumber": "70",
+      "heading": "Time limits for issuing invoices, etc.",
+      "locator": "s.70",
+      "category": "other",
+      "relevant": false,
+      "relevanceReason": "Uncategorised by heading/body keyword match; needs human review to determine relevance.",
+      "excerpt": "70\n.—(1)(\na\n) An invoice, credit note\nor document required to be issued in accordance with this\nChapter shall be issued within such time after the date of\nsupplying goods or services as may be specified by\nregulations.\n\n(\nb\n) An amendment of an invoice pursuant to\nsection 68\n(2)(b)\nshall be\neffected within such time as may be specified by regulations.\n\n(2)\nNotwithstanding\nsubsection (1)\n, where payment for the\nsupply of goods or services (other than supplies of the kind\nspecified in\nparagraph 1(1)\nor\n(2)\nof\nSchedule 2\n) is made to a\nperson, either in full or by instalments, before the supply is\ncompleted, the person shall issue an invoice in accordance\nwith\nsection 66\n(1)\nor\n68\n(1)\n, as may be\nappropriate, within such time after the date of actual receipt\nof the full payment or the instalment as may be specified by\nregulations."
+    }
+  ],
+  "rules": [
+    {
+      "key": "vat.invoice_time_limit",
+      "sectionNumber": "70",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2010-11-01",
+          "effectiveTo": null,
+          "quote": "to be issued in accordance with this Chapter shall be issued within such time",
+          "value": null,
+          "unit": null,
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    }
+  ]
+}

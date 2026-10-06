@@ -1,0 +1,136 @@
+{
+  "format": 1,
+  "source": {
+    "citation": "2010 Act 31 s.3",
+    "title": "VATCA 2010 s.3 (revised)",
+    "sourceType": "legislation",
+    "jurisdiction": "IE",
+    "sourceUrl": "https://revisedacts.lawreform.ie/eli/2010/act/31/section/3/revised/en/html",
+    "sha256": "87dc3d1a6342fedd11d465ecd549b97efd1720e297f261f2f1e69d0254b76b71",
+    "conversion": "lrc-html-plaintext",
+    "retrievedOn": "2026-10-06"
+  },
+  "provisions": [
+    {
+      "sectionNumber": "3",
+      "heading": "Charge of value-added tax.",
+      "locator": "s.3",
+      "category": "vat",
+      "relevant": true,
+      "relevanceReason": "Substantive vat provision; potentially bears on transaction treatment.",
+      "excerpt": "3\n.— Except as expressly otherwise provided by\nthis Act, a tax called value-added tax is, subject to and in\naccordance with this Act and regulations, chargeable, leviable\nand payable on the following transactions:\n\n(\na\n) the supply for consideration of goods by a taxable\nperson acting in that capacity when the place of supply is the\nState;\n\n(\nb\n) the importation of goods into the State;\n\n(\nc\n) the supply for consideration of services by a\ntaxable person acting in that capacity when the place of supply\nis the State;\n\n(\nd\n) the intra-Community acquisition for consideration\nby an accountable person of goods (other than new means of\ntransport) when the acquisition is made within the State;\n\n(\ne\n) the intra-Community acquisition for consideration\nof new means of transport when the acquisition is made within the\nState."
+    }
+  ],
+  "rules": [
+    {
+      "key": "vat.import_of_goods",
+      "sectionNumber": "3",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2010-11-01",
+          "effectiveTo": null,
+          "quote": "the importation\nof goods",
+          "value": null,
+          "unit": null,
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    },
+    {
+      "key": "vat.outside_scope_capital_loans_dividends",
+      "sectionNumber": "3",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2010-11-01",
+          "effectiveTo": null,
+          "quote": "a tax called value-added tax is, subject\nto and in accordance with this Act and regulations, chargeable, leviable and payable\non the following transactions:",
+          "value": null,
+          "unit": null,
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    },
+    {
+      "key": "vat.outside_scope_grant_subsidy",
+      "sectionNumber": "3",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2010-11-01",
+          "effectiveTo": null,
+          "quote": "a tax called value-added tax is, subject\nto and in accordance with this Act and regulations, chargeable, leviable and payable\non the following transactions:",
+          "value": null,
+          "unit": null,
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    },
+    {
+      "key": "vat.outside_scope_own_account_transfer",
+      "sectionNumber": "3",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2010-11-01",
+          "effectiveTo": null,
+          "quote": "a tax called value-added tax is, subject\nto and in accordance with this Act and regulations, chargeable, leviable and payable\non the following transactions:",
+          "value": null,
+          "unit": null,
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    },
+    {
+      "key": "vat.outside_scope_tax_payment",
+      "sectionNumber": "3",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2010-11-01",
+          "effectiveTo": null,
+          "quote": "a tax called value-added tax is, subject\nto and in accordance with this Act and regulations, chargeable, leviable and payable\non the following transactions:",
+          "value": null,
+          "unit": null,
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    }
+  ]
+}

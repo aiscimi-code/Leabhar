@@ -25,8 +25,7 @@ import { isIsoDate } from '../dates';
 import { sortByAuthority, sourceAuthorityRank } from './sourceHierarchy';
 import { listTaxRulesByTopic, listIngestedCitations, type LookupResult } from './irishRules';
 import { RCT_SCOPE_RE } from './rctCuration';
-import { VAT_STANDARD_RATE_FALLBACK_RULE_KEY } from './vatcaRevisedCuration';
-import { VAT_GENERAL_DEDUCTION_RULE_KEY, VAT_DEDUCTION_EXCLUSION_RULE_KEYS } from './vatcaCuration';
+import { declaredLinksTo } from './ruleLinks';
 
 /**
  * A transaction as presented for classification — the task's example shape,
@@ -511,10 +510,11 @@ export function lookupTransactionRules(
     });
   }
 
-  const rateResolved = resolveVatRateExclusivity(applicableRules, reviewReasons);
+  const linkDate = isIsoDate(asOf) ? asOf : undefined;
+  const rateResolved = resolveVatRateExclusivity(applicableRules, reviewReasons, linkDate);
   // Legislation first, then guidance, standards and Leabhar's own rules; the
   // order within a rank is the priority order the rules were retrieved in.
-  const finalApplicableRules = sortByAuthority(resolveDeductionExclusivity(rateResolved, reviewReasons));
+  const finalApplicableRules = sortByAuthority(resolveDeclaredExclusions(rateResolved, reviewReasons, linkDate));
 
   // Guidance standing in for legislation that is not ingested: a topic whose
   // applicable rules come only from guidance has no statute text behind it here.
@@ -596,14 +596,18 @@ function dedupe(values: Array<string | null>): string[] {
  *    carve-out like the hospitality-gap rule — every empty-condition VAT
  *    rate rule is dropped. A real determination always wins over a bare
  *    "this rate exists" citation fact.
- *  - Otherwise (no rate rule with a real condition matched), only
- *    `VAT_STANDARD_RATE_FALLBACK_RULE_KEY` survives among the
- *    empty-condition rate rules — the statute's own residual case ("the
- *    default rate outside the zero/reduced/livestock cases"). Any other
- *    empty-condition rate rule (today, just `vat.rate_reduced_current`) is
- *    dropped: an unconditioned "the reduced rate is 13.5%" fact is not
- *    itself evidence that THIS transaction is within Schedule 3, so it is
- *    never presented as the answer on its own.
+ *  - Otherwise (no rate rule with a real condition matched), an
+ *    empty-condition rate rule is dropped when another matched rule
+ *    `excludes` it (ruleLinks.ts): the standard-rate fallback, the statute's
+ *    own residual case ("the default rate outside the zero/reduced/livestock
+ *    cases"), excludes `vat.rate_reduced_current`. An unconditioned "the
+ *    reduced rate is 13.5%" fact is not itself evidence that THIS
+ *    transaction is within Schedule 3, so it is never presented as the
+ *    answer on its own.
+ *
+ * The first case turns on the rules' own conditions, so it is not declared
+ * key by key; `bookDerivedLinks` writes it into the book as `excludes` links
+ * from each conditioned rate rule, so the impact query sees it.
  *
  * A rule is "real-condition" here iff its own `conditions` array was
  * non-empty (`conditionResults.length > 0` on the `ApplicableRule` already
@@ -613,15 +617,18 @@ function dedupe(values: Array<string | null>): string[] {
 function resolveVatRateExclusivity(
   applicableRules: ApplicableRule[],
   reviewReasons: Set<string>,
+  asOfDate: string | undefined,
 ): ApplicableRule[] {
   const vatRateRules = applicableRules.filter((r) => r.topic === 'vat' && r.ruleType === 'rate');
   if (vatRateRules.length <= 1) return applicableRules;
 
   const hasRealConditionMatch = vatRateRules.some((r) => r.conditionResults.length > 0);
+  const matchedKeys = new Set(vatRateRules.map((r) => r.ruleKey));
   const excludeRuleKeys = new Set(
     hasRealConditionMatch
       ? vatRateRules.filter((r) => r.conditionResults.length === 0).map((r) => r.ruleKey)
-      : vatRateRules.filter((r) => r.ruleKey !== VAT_STANDARD_RATE_FALLBACK_RULE_KEY).map((r) => r.ruleKey),
+      : vatRateRules.filter((r) => declaredLinksTo(r.ruleKey, { kinds: ['excludes'], asOfDate })
+        .some((l) => matchedKeys.has(l.fromKey))).map((r) => r.ruleKey),
   );
   if (excludeRuleKeys.size === 0) return applicableRules;
 
@@ -638,7 +645,7 @@ function resolveVatRateExclusivity(
 }
 
 /**
- * Deductibility exclusivity (issue #143 finding D).
+ * Declared exclusions (issue #143 finding D).
  *
  * The general s.59 deduction and the s.60(2)(a) blocked-category rules
  * (issue #209: `inputRecoveryCuration.ts`) both carry real conditions and can both genuinely match the
@@ -653,28 +660,30 @@ function resolveVatRateExclusivity(
  * `possibleTreatment.vat`.
  *
  * The fix mirrors `resolveVatRateExclusivity`: it changes no rule's own
- * conditions, only which already-matched rules are kept. If any rule in
- * `VAT_DEDUCTION_EXCLUSION_RULE_KEYS` matched, `VAT_GENERAL_DEDUCTION_RULE_KEY`
- * is dropped — the specific exclusion always wins over the general rule it
- * excepts, never the other way round.
+ * conditions, only which already-matched rules are kept. A matched rule that
+ * another matched rule `excludes` (ruleLinks.ts) is dropped — the specific
+ * exclusion always wins over the general rule it excepts, never the other
+ * way round.
  */
-function resolveDeductionExclusivity(
+function resolveDeclaredExclusions(
   applicableRules: ApplicableRule[],
   reviewReasons: Set<string>,
+  asOfDate: string | undefined,
 ): ApplicableRule[] {
-  const generalRule = applicableRules.find((r) => r.ruleKey === VAT_GENERAL_DEDUCTION_RULE_KEY);
-  if (!generalRule) return applicableRules;
-
-  const matchedExclusions = applicableRules.filter((r) => VAT_DEDUCTION_EXCLUSION_RULE_KEYS.includes(r.ruleKey));
-  if (matchedExclusions.length === 0) return applicableRules;
-
-  const excludedNames = matchedExclusions.map((r) => `"${r.name}"`).join(', ');
-  reviewReasons.add(
-    `Excluded "${generalRule.name}" because ${excludedNames} already matched this transaction — the specific `
-    + 'deduction exclusion overrides the general deduction rule it is an exception to, per its own curated exceptions.',
-  );
-
-  return applicableRules.filter((r) => r.ruleKey !== VAT_GENERAL_DEDUCTION_RULE_KEY);
+  const matchedKeys = new Set(applicableRules.map((r) => r.ruleKey));
+  const dropped = new Set<string>();
+  for (const rule of applicableRules) {
+    const excluders = new Set(declaredLinksTo(rule.ruleKey, { kinds: ['excludes'], asOfDate })
+      .map((l) => l.fromKey).filter((k) => matchedKeys.has(k)));
+    if (excluders.size === 0) continue;
+    dropped.add(rule.ruleKey);
+    const excludedNames = applicableRules.filter((r) => excluders.has(r.ruleKey)).map((r) => `"${r.name}"`).join(', ');
+    reviewReasons.add(
+      `Excluded "${rule.name}" because ${excludedNames} already matched this transaction — the specific `
+      + 'deduction exclusion overrides the general deduction rule it is an exception to, per its own curated exceptions.',
+    );
+  }
+  return dropped.size === 0 ? applicableRules : applicableRules.filter((r) => !dropped.has(r.ruleKey));
 }
 
 function getRuleConditions(db: AppDatabase, ruleId: string) {

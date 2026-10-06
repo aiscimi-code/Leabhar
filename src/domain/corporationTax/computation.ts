@@ -11,6 +11,7 @@ import {
   nfgCitation, carSpecifiedAmountRuleKey,
 } from '../rules/corporationTaxCuration';
 import { auditRuleFigures, RejectedRuleError } from '../rules/ruleFigures';
+import type { ManifestRuleKey } from '../rules/consumers';
 import { CAR_EMISSIONS_CURATED_RULES } from '../rules/carEmissionsCuration';
 import { capitalGrantsReceivedFor } from '../farmTax/grants';
 import { isFarmingTrade, stockRelief, type StockReliefResult } from '../farmTax/reliefs';
@@ -34,7 +35,7 @@ type FigureAudit = ReturnType<typeof auditRuleFigures>;
  * rule this book has never ingested falls back on the shipped curation
  * constant, flagged in the audit's findings.
  */
-function figureWithCurationFallback(audit: FigureAudit, ruleKey: string): number {
+function figureWithCurationFallback(audit: FigureAudit, ruleKey: ManifestRuleKey): number {
   const f = audit.figure(ruleKey);
   // A figure a person rejected or retired on the review screen stops the
   // computation (issues #451, #484): it is never quietly substituted.
@@ -118,6 +119,8 @@ export interface CtComputation {
   surcharge: CtSurcharge;
   dates: CtDates;
   decisions: CtPendingDecision[];
+  /** The rule versions the figures came from (`key@version`, issue #686 step 7). */
+  ruleVersions: string[];
   findings: string[];
 }
 
@@ -772,7 +775,7 @@ export function computeCorporationTax(db: AppDatabase, params: { companyId: stri
   const figures = auditRuleFigures(db, { companyId, asOfDate: to, curated: CORPORATION_TAX_CURATED_RULES });
   const standard = figureWithCurationFallback(figures, CT_RATE_TRADING_RULE_KEY);
   const higher = figureWithCurationFallback(figures, CT_RATE_HIGHER_RULE_KEY);
-  const ruleValue = (key: string) => figureWithCurationFallback(figures, key);
+  const ruleValue = (key: ManifestRuleKey) => figureWithCurationFallback(figures, key);
 
   // ---- The periods loss relief reaches: every earlier year with entries, and the next one ----
   const earliest = db.select({ d: journalEntries.entryDate }).from(journalEntries)
@@ -1003,7 +1006,7 @@ export function computeCorporationTax(db: AppDatabase, params: { companyId: stri
       setBackMinor: run.setBackMinor, valueBasisCreditMinor: run.creditMinor, carriedForwardMinor: run.lossLeftMinor,
       citations: [cite('ct.loss_carry_forward'), cite('ct.relevant_trading_loss_set_off'), cite('ct.loss_value_basis')],
     },
-    surcharge, dates, decisions, findings,
+    surcharge, dates, decisions, ruleVersions: figures.versions(), findings,
   };
 }
 
@@ -1044,7 +1047,7 @@ export function closeCompanySurcharge(db: AppDatabase, params: {
 }, figures?: FigureAudit): CtSurcharge {
   const { status, base } = params;
   const audit = figures ?? auditRuleFigures(db, { companyId: params.companyId, asOfDate: params.to, curated: CORPORATION_TAX_CURATED_RULES });
-  const rule = (key: string) => figureWithCurationFallback(audit, key);
+  const rule = (key: ManifestRuleKey) => figureWithCurationFallback(audit, key);
   const citations = [cite('ct.close_company_definition'), cite('ct.distributable_income'), cite('ct.distributions_for_period')];
   const findings: string[] = [];
   const investment = Math.max(base.nonTradingIncomeMinor, 0);

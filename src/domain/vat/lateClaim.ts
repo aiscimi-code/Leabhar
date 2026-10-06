@@ -25,7 +25,7 @@ const periodCovering = (db: AppDatabase, companyId: string, date: IsoDate) => db
   .where(and(eq(vatPeriods.companyId, companyId), lte(vatPeriods.startDate, date), gte(vatPeriods.endDate, date))).get();
 
 export const REFUND_CLAIM_LIMIT_PROVISION = 'VATCA 2010 s.99(4)';
-/** Verbatim from `docs/statutes/vatca-2010-revised/s099.md`. */
+/** Verbatim from `catalogue/vatca-2010-revised/s099.json`. */
 export const REFUND_CLAIM_LIMIT_TEXT = 'A claim for a refund under this Act may be made only within 4 years after the end of the '
   + 'taxable period to which it relates.';
 export const REFUND_CLAIM_LIMIT_YEARS = 4;

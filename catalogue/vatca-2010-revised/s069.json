@@ -1,0 +1,52 @@
+{
+  "format": 1,
+  "source": {
+    "citation": "VATCA 2010 s.69",
+    "title": "VATCA 2010 s.69 (LRC revised)",
+    "sourceType": "legislation",
+    "jurisdiction": "IE",
+    "sourceUrl": "https://revisedacts.lawreform.ie/eli/2010/act/31/section/69/revised/en/html",
+    "sha256": "0046d025ff917d595de55f387d1db03ac3055d0c0a6d2710497a0f5f4a30d09e",
+    "conversion": "lrc-html-plaintext",
+    "retrievedOn": "2026-10-06",
+    "lrcAnnotations": {
+      "text": "Value-Added Tax Consolidation Act 2010 | Law Reform Revised Acts Classified List www.lawreform.ie Search Revised Acts Revised Acts Introduction Alphabetical List Chronological List Annotations This Act View Full Act View by Section Download PDFs With annotations Without annotations On the eISB Act as originally enacted ↗ Amendments to this Act ↗ #content a:link, #content a:active, #content a:visited { color: var(--header-background-color); text-decoration: none } Value-Added Tax Consolidation Act 2010 《 Go to Front 〈 Previous Section Next Section 〉 69 Invoices or credit notes — errors, etc. [VATA s. 17(5) to (6A)] 69 .—(1) Where an accountable person— ( a ) issues an invoice stating a greater amount of tax than that properly attributable to the consideration stated therein, or ( b ) issues a credit note stating a lesser amount of tax than that properly attributable to the reduction in consideration or the discount stated therein, the accountable person shall be liable to pay to the Revenue Commissioners the excess amount of tax stated in the invoice or the amount of the deficiency of tax stated in the credit note. (2) A person who is not a registered person and who issues an invoice stating an amount of tax shall, in relation to the amount of tax stated, be deemed, for the purposes of this Act, to be an accountable person and shall be liable to pay that amount to the Revenue Commissioners. (3) Where a person (other than a flat-rate farmer) issues an invoice stating an amount of flat-rate addition, he or she shall be liable to pay to the Revenue Commissioners as tax the amount of flat-rate addition stated and shall, in relation to that amount, be deemed, for the purposes of this Act, to be an accountable person. (4) Where a flat-rate farmer issues an invoice stating an amount of flat-rate addition otherwise than in respect of an actual supply of agricultural produce or an agricultural service, or in respect of such a supply but stating a greater amount of flat-rate addition than is appropriate to the supply, the farmer shall be liable to pay to the Revenue Commissioners as tax the amount or the excess amount, as the case may be, of the flat-rate addition stated and shall, in relation to that amount or that excess amount, be deemed, for the purposes of this Act, to be an accountable person. (5) Where a flat-rate farmer, in a case in which he or she is required to issue a farmer credit note under section 68 (2)(b) , fails to issue the credit note within the time allowed by regulations, or issues a credit note stating a lesser amount of flat-rate addition than is appropriate to the reduction in consideration or the discount, the farmer shall be liable to pay to the Revenue Commissioners as tax the amount of flat-rate addition that should have been stated on the credit note or the amount of the deficiency of flat-rate addition, as the case may be, and shall, in relation to that amount or that deficiency, be deemed, for the purposes of this Act, to be an accountable person. Law Reform Ireland Styne House, Upper Hatch Street Dublin 2 D02 DY27 Email: info@lawreform.ie Projects Current Projects Access to Legislation Legislation Directory Revised Acts Classified List of In-force Legislation Statute Law Revision Programme About Us Who We Are FOI Publication Scheme Protected Disclosures Careers Publications Browse all Publications Implementation Table Annual Reports Consultations Other Contact Us Latest News Sitemap All content Copyright 2026 Privacy Policy Data Protection Policy",
+      "footnotes": []
+    }
+  },
+  "provisions": [
+    {
+      "sectionNumber": "69",
+      "heading": "Invoices or credit notes — errors, etc.",
+      "locator": "s.69",
+      "category": "other",
+      "relevant": false,
+      "relevanceReason": "Uncategorised by heading/body keyword match; needs human review to determine relevance.",
+      "excerpt": "69\n.—(1) Where an accountable\nperson—\n\n(\na\n) issues an invoice stating a greater amount of\ntax than that properly attributable to the consideration\nstated therein, or\n\n(\nb\n) issues a credit note stating a lesser amount of\ntax than that properly attributable to the reduction in\nconsideration or the discount stated therein,\n\nthe\naccountable person shall be liable to pay to the Revenue\nCommissioners the excess amount of tax stated in the invoice\nor the amount of the deficiency of tax stated in the credit\nnote.\n\n(2)\nA person who is not a registered person and who issues an\ninvoice stating an amount of tax shall, in relation to the\namount of tax stated, be deemed, for the purposes of this Act,\nto be an accountable person and shall be liable to pay that\namount to the Revenue Commissioners.\n\n(3)\nWhere a person (other than a flat-rate farmer) issues an\ninvoice stating an amount of flat-rate addition, he or she\nshall be liable to pay to the Revenue Commissioners as tax the\namount of flat-rate addition stated and shall, in relation to\nthat amount, be deemed, for the purposes of this Act, to be an\naccountable person.\n\n(4)\nWhere a flat-rate farmer issues an invoice stating an amount\nof flat-rate addition otherwise than in respect of an actual\nsupply of agricultural produce or an agricultural service, or\nin respect of such a supply but stating a greater amount of\nflat-rate addition than is appropriate to the supply, the\nfarmer shall be liable to pay to the Revenue Commissioners as\ntax the amount or the excess amount, as the case may be, of\nthe flat-rate addition stated and shall, in relation to that\namount or that excess amount, be deemed, for the purposes of\nthis Act, to be an accountable person.\n\n(5)\nWhere a flat-rate farmer, in a case in which he or she is\nrequired to issue a farmer credit note under\nsection 68\n(2)(b)\n, fails to\nissue the credit note within the time allowed by regulations,\nor issues a credit note stating a lesser amount of flat-rate\naddition than is appropriate to the reduction in consideration\nor the discount, the farmer shall be liable to pay to the\nRevenue Commissioners as tax the amount of flat-rate addition\nthat should have been stated on the credit note or the amount\nof the deficiency of flat-rate addition, as the case may be,\nand shall, in relation to that amount or that deficiency, be\ndeemed, for the purposes of this Act, to be an accountable\nperson."
+    }
+  ],
+  "rules": [
+    {
+      "key": "vat.invoice_tax_stated_in_error",
+      "sectionNumber": "69",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2010-11-01",
+          "effectiveTo": null,
+          "quote": "invoice stating a greater amount of tax than that properly attributable to the",
+          "value": null,
+          "unit": null,
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    }
+  ]
+}

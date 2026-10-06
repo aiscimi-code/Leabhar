@@ -35,6 +35,23 @@ export interface ParagraphAnnotations {
   lastChanged: string | null;
 }
 
+/**
+ * Whether `text` holds `quote` word for word, however each breaks its lines.
+ * A converted page's line breaks follow the publisher's layout, which changes
+ * when the page is re-rendered; the words a rule quotes do not.
+ */
+export function containsIgnoringLayout(text: string, quote: string): boolean {
+  // Whitespace dropped entirely, as `quotedTextWindow` does: a re-render can
+  // split "(b)" across lines in one copy and not the other.
+  const flat = (s: string) => plainQuotes(s).replace(/\s+/g, '');
+  return flat(text).includes(flat(quote));
+}
+
+/** Straight quote marks for curly ones, character for character: the LRC has printed both. */
+export function plainQuotes(s: string): string {
+  return s.replace(/[“”]/g, '"').replace(/[‘’]/g, "'");
+}
+
 /** VATCA 2010 commenced on 1 November 2010. */
 export const VATCA_2010_COMMENCEMENT = '2010-11-01';
 
@@ -61,6 +78,28 @@ function noteDate(text: string): string | null {
   if (!paren) return null;
   const dates = [...paren.matchAll(/\b(\d{1,2}\.\d{1,2}\.\d{2,4})\b/g)].map((m) => toIso(m[1]!)).filter((d): d is string => !!d);
   return dates.sort().at(-1) ?? null;
+}
+
+/**
+ * An LRC page's amendment markup without the page: its text with each
+ * footnote reference as ⟦F95⟧ before the bracket it annotates, and every
+ * footnote it defines. Enough to date a quote (`quotedTextWindow`), so a
+ * rules catalogue entry carries it in place of the HTML (#443, #556).
+ */
+export interface LrcAnnotationLayer {
+  text: string;
+  footnotes: LrcFootnote[];
+}
+
+export function lrcAnnotationLayer(html: string): LrcAnnotationLayer {
+  const body = html
+    .replace(/<div class="f-note">[\s\S]*?<\/div>/g, '')
+    .replace(/<div class="e-note">[\s\S]*?<\/div>/g, '')
+    .replace(/<span class="commentary-reference">\s*(F\d+)\s*<\/span>/g, '⟦$1⟧');
+  return {
+    text: decode(body.replace(/<[^>]+>/g, ' ')).replace(/\s+/g, ' ').trim(),
+    footnotes: [...parseLrcFootnotes(html).values()],
+  };
 }
 
 /** Every footnote the page defines, by reference. */
@@ -217,19 +256,16 @@ export function scheduleParagraphWindows(
  * This is finer than a paragraph's window, and it is what a rule quoting one
  * limb of a many-limbed paragraph needs: Schedule 1 para 6 was last amended in
  * December 2025, but the words of 6(1)(c) (bank accounts) not since 2010.
- * Matching ignores whitespace, since the Markdown and the HTML break lines
- * differently. Null when a quote is not in the text: the caller falls back to
+ * Matching ignores whitespace and quote-mark style, since the Markdown and
+ * the HTML break lines differently and the LRC has printed both kinds. Null when a quote is not in the text: the caller falls back to
  * the paragraph's window.
  */
 export function quotedTextWindow(
-  html: string, quotes: string[],
+  source: string | LrcAnnotationLayer, quotes: string[],
 ): { effectiveFrom: string; footnotes: LrcFootnote[] } | null {
-  const notes = parseLrcFootnotes(html);
-  const body = html
-    .replace(/<div class="f-note">[\s\S]*?<\/div>/g, '')
-    .replace(/<div class="e-note">[\s\S]*?<\/div>/g, '')
-    .replace(/<span class="commentary-reference">\s*(F\d+)\s*<\/span>/g, '⟦$1⟧');
-  const text = decode(body.replace(/<[^>]+>/g, ' '));
+  const layer = typeof source === 'string' ? lrcAnnotationLayer(source) : source;
+  const notes = new Map(layer.footnotes.map((f) => [f.ref, f]));
+  const text = plainQuotes(layer.text);
 
   // Walk the text: each kept character records the footnotes whose bracket encloses it.
   let flat = '';
@@ -254,7 +290,7 @@ export function quotedTextWindow(
 
   const touched = new Set<string>();
   for (const quote of quotes) {
-    const needle = quote.replace(/\s+/g, '');
+    const needle = plainQuotes(quote).replace(/\s+/g, '');
     let at = flat.indexOf(needle);
     if (at < 0) return null;
     while (at >= 0) {

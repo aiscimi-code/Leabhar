@@ -74,6 +74,10 @@ copy('statute sources', join(ROOT, 'docs', 'statutes'), join(STANDALONE, 'docs',
 // included, so the filter above cannot keep it out: remove it explicitly.
 rmSync(join(STANDALONE, 'docs', 'statutes', '_inbox'), { recursive: true, force: true });
 
+// 3b'. Copy the rules catalogue (issue #443): the sources ported out of
+// docs/statutes load from it, and the provision page reads its excerpts.
+copy('rules catalogue', join(ROOT, 'catalogue'), join(STANDALONE, 'catalogue'));
+
 // 3c. Copy the OCR and PDF-rendering assets the review screen serves to the
 // browser (issue #202). The list mirrors OCR_ASSETS in src/lib/ocrAssets.ts;
 // they are read from disk at run time, so file tracing does not pick them up.

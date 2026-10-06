@@ -1,0 +1,70 @@
+{
+  "format": 1,
+  "source": {
+    "citation": "2010 Act 31 s.37",
+    "title": "VATCA 2010 s.37 (revised)",
+    "sourceType": "legislation",
+    "jurisdiction": "IE",
+    "sourceUrl": "https://revisedacts.lawreform.ie/eli/2010/act/31/section/37/revised/en/html",
+    "sha256": "1bcfbfcbac437862e89318c3a26817262a2c734fcef515b26799c9b025113d15",
+    "conversion": "lrc-html-plaintext",
+    "retrievedOn": "2026-10-06"
+  },
+  "provisions": [
+    {
+      "sectionNumber": "37",
+      "heading": "General rules on taxable amount.",
+      "locator": "s.37",
+      "category": "vat",
+      "relevant": true,
+      "relevanceReason": "Substantive vat provision; potentially bears on transaction treatment.",
+      "excerpt": "37\n.—(1) The amount on which tax is\nchargeable by virtue of\nsection\n3\n(a)\nor\n(c)\nshall, subject to this\nChapter, be the total consideration which the person supplying\ngoods or services becomes entitled to receive in respect of or\nin relation to such supply of goods or services, including all\ntaxes, commissions, costs and charges whatsoever, but not\nincluding value-added tax chargeable in respect of that\nsupply.\n\n(2)\nThe amount on which tax is chargeable on the intra-Community\nacquisition of goods by virtue of\nsection\n3\n(d)\nor\n(e)\nshall, subject to this\nChapter, be the total consideration, including all taxes,\ncommissions, costs and charges whatsoever, but not including\nvalue-added tax chargeable in respect of that acquisition.\n\n(3)\nWhere the consideration referred to in\nsubsection (1)\n\nor\n(2)\ndoes not consist of or does not consist wholly\nof an amount of money, the amount on which tax is chargeable\nshall be the total amount of money which might reasonably be\nexpected to be charged if the consideration consisted entirely\nof an amount of money equal to the open market price.\n\n(4)\n\nSubject to\n\nsections 91C(5)\nand\n91E(5)\n, in relation\nto\nthe tax\nchargeable by virtue of\nsection\n3\n(a)\n,\n(c)\n,\n(d)\nor\n(e)\n,\nwhere an amount is expressed in a currency other than the\ncurrency of the State—\n\n(\na\n) unless\nparagraph (b)\napplies, the\nexchange rate to be used shall be the latest selling rate\nrecorded by the Central Bank of Ireland\n\nor the\nEuropean Central\nBank\nfor the\ncurrency in question at the time the tax becomes due,\n\n(\nb\n) if there is an agreement with the Revenue\nCommissioners for a method to be used in determining the\nexchange rate, then—\n\n(i) the exchange rate to be used shall be the exchange rate\nobtained using that method, and\n\n(ii) the method so agreed shall be applied for all\ntransactions where an amount is expressed in a currency other\nthan that of the State until the agreement to use such method\nis withdrawn by the Revenue Commissioners."
+    }
+  ],
+  "rules": [
+    {
+      "key": "vat.taxable_amount_foreign_currency_rate",
+      "sectionNumber": "37",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2010-11-01",
+          "effectiveTo": null,
+          "quote": "the exchange rate to be used shall be the latest\nselling rate recorded by the Central Bank of Ireland",
+          "value": null,
+          "unit": null,
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    },
+    {
+      "key": "vat.taxable_amount_general",
+      "sectionNumber": "37",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2010-11-01",
+          "effectiveTo": null,
+          "quote": "the total consideration which the\nperson supplying goods or services becomes entitled to receive in respect of or in\nrelation to such supply of goods or services, including all taxes, commissions,\ncosts and charges whatsoever, but not including value-added tax chargeable in\nrespect of that supply",
+          "value": null,
+          "unit": null,
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    }
+  ]
+}

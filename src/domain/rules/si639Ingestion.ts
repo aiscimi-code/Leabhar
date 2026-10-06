@@ -12,6 +12,7 @@ import { parseSi639, provisionSlug, assessRelevance, SI_639_2010_MD_PATH } from 
 import { SI_639_CURATED_RULES } from './si639Curation';
 import { upsertReviewItem } from '../extraction/service';
 import { crossReferencesFromProvision, sameCrossReferences } from './dependencies';
+import { taxHeadsFor } from './taxHeads';
 
 export { SI_639_2010_MD_PATH };
 
@@ -167,6 +168,7 @@ export function deriveSi639Rules(
       ruleKey: rule.ruleKey,
       ruleType: rule.ruleType,
       topic: rule.topic,
+      taxHeads: taxHeadsFor(rule.ruleKey, rule.topic),
       name: rule.name,
       statement: rule.statementExcerpt,
       extractedFact: null,

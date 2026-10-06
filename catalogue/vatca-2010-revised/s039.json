@@ -1,0 +1,48 @@
+{
+  "format": 1,
+  "source": {
+    "citation": "2010 Act 31 s.39",
+    "title": "VATCA 2010 s.39 (revised)",
+    "sourceType": "legislation",
+    "jurisdiction": "IE",
+    "sourceUrl": "https://revisedacts.lawreform.ie/eli/2010/act/31/section/39/revised/en/html",
+    "sha256": "6b335ea24d74def4fe9a4cb2723a4efbe0ef1ec87af009613074608c378f8e5a",
+    "conversion": "lrc-html-plaintext",
+    "retrievedOn": "2026-10-06"
+  },
+  "provisions": [
+    {
+      "sectionNumber": "39",
+      "heading": "General provisions on consideration.",
+      "locator": "s.39",
+      "category": "relief",
+      "relevant": true,
+      "relevanceReason": "Substantive relief provision; potentially bears on transaction treatment.",
+      "excerpt": "39\n.—(1) Where the consideration actually\nreceived in relation to the supply of any goods or services\nexceeds the amount that the person supplying the goods or\nservices was entitled to receive, the amount on which tax is\nchargeable shall be the amount actually received (excluding\ntax chargeable in respect of the supply).\n\n(2)\nSubject to\nsubsection (3)\n, where, in a case not coming\nwithin\nsection\n38\n, the consideration actually received in\nrelation to the supply of any goods or services is less than\nthe amount on which tax is chargeable or no consideration is\nactually received, such relief may be given by repayment or\notherwise in respect of the deficiency as may be provided by\nregulations.\n\n(3)\n\nSubsection (2)\nshall not apply in the case of the\nletting of immovable goods which is a taxable supply of goods\nin accordance with\nsection\n95\n.\n\n(4)\nWhere, following the issue of an invoice by an accountable\nperson in respect of a supply of goods or services, the\naccountable person allows a reduction or discount in the\namount of the consideration due in respect of that supply, the\nrelief referred to in\nsubsection (2)\nshall not be given\nuntil he or she issues the credit note required in accordance\nwith\nsection 67\n(1)(b)\nin respect\nof that reduction or discount."
+    }
+  ],
+  "rules": [
+    {
+      "key": "vat.consideration_not_received_relief",
+      "sectionNumber": "39",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2010-11-01",
+          "effectiveTo": null,
+          "quote": "such relief may be given by repayment or\notherwise in respect of the deficiency as may be provided by\nregulations.",
+          "value": null,
+          "unit": null,
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    }
+  ]
+}

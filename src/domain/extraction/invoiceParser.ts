@@ -18,8 +18,11 @@ import { parseAmount, MoneyError, vatFromNet } from '../money';
 import { parseDateFlexible, DateError } from '../dates';
 import type { ExtractedField, ExtractedLineSnapshot, ExtractedVatTotalSnapshot } from './types';
 
-/** Rates an Irish supplier can charge, and the common EU standard rates, in basis points. */
-const KNOWN_RATES = new Set([0, 480, 900, 1350, 2300, 1900, 2000, 2100, 2200, 2400, 2500, 2700, 700, 500, 1000, 1200]);
+/**
+ * Rates an Irish supplier can charge, and the common EU standard rates, in
+ * basis points. The Irish ones are held to the s.46 rules by figureCopies.test.ts.
+ */
+export const KNOWN_RATES = new Set([0, 480, 900, 1350, 2300, 1900, 2000, 2100, 2200, 2400, 2500, 2700, 700, 500, 1000, 1200]);
 
 const AMOUNT_TOKEN = /^[(-]?[€£$]?\s?-?(?:\d{1,3}(?:[,.\s]\d{3})+|\d+)[.,]\d{2}\)?$/;
 const RATE_TOKEN = /^(\d{1,2}(?:[.,]\d{1,2})?)\s?%$/;

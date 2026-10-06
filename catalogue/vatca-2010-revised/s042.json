@@ -1,0 +1,48 @@
+{
+  "format": 1,
+  "source": {
+    "citation": "2010 Act 31 s.42",
+    "title": "VATCA 2010 s.42 (revised)",
+    "sourceType": "legislation",
+    "jurisdiction": "IE",
+    "sourceUrl": "https://revisedacts.lawreform.ie/eli/2010/act/31/section/42/revised/en/html",
+    "sha256": "16961108dc3f8cfd2ab2577c1edb3be95951cd90072bee8920965b41078927fe",
+    "conversion": "lrc-html-plaintext",
+    "retrievedOn": "2026-10-06"
+  },
+  "provisions": [
+    {
+      "sectionNumber": "42",
+      "heading": "Taxable amount for certain supplies.",
+      "locator": "s.42",
+      "category": "other",
+      "relevant": false,
+      "relevanceReason": "Uncategorised by heading/body keyword match; needs human review to determine relevance.",
+      "excerpt": "42\n.—(1)(\na\n) Subject to\nparagraph\n(c)\n, the amount on which tax is chargeable in relation\nto a supply of goods referred to in\nsection 19\n(1)(e)(ii)\n,\n(f)\nor\n\n(g)\nor a supply of services by virtue of regulations\nmade for the purposes of\nsection\n27\n(1)(a)\nor\n(b)\nshall be the cost\n(excluding tax) of the goods to the person supplying or\nacquiring the goods or the cost (excluding tax) of supplying\nthe services, as the case may be.\n\n(\nb\n) The amount on which tax is chargeable in\nrelation to a supply of services by virtue of regulations made\nfor the purposes of\nsection\n27\n(1)(c)\nshall be the open market price of the\nservices supplied.\n\n(\nc\n) Where the supply referred to in\nparagraph\n(a)\nis a supply of immovable goods (in this paragraph\nreferred to as the “appropriation”), the cost to the\nperson making the appropriation shall include an amount equal\nto the amount on which tax was chargeable on the supply of\nthose goods to that person, being the last supply of those\ngoods to that person which preceded the appropriation.\n\n(2)(\na\n) The amount on which tax is chargeable in\nrelation to the supply of goods referred to in\nsection 19\n(1)(h)\nshall be\nthe cost of the goods to the person making the supply or, in\nthe absence of such a cost, the cost price of similar goods in\nthe State.\n\n(\nb\n) Where an intra-Community acquisition occurs in\nthe State following a supply of goods in another Member State\nwhich, if such supply were carried out in similar\ncircumstances in the State would be a supply of goods in\naccordance with\nsection\n19\n(1)(h)\n, then the amount on which tax is\nchargeable in respect of that intra-Community acquisition\nshall be the cost to the person making the supply in that\nMember State or, in the absence of a cost to that person, the\ncost price of similar goods in that other Member State.\n\n(3)\nThe amount on which tax is chargeable in relation to services\nfor which the recipient is, by virtue of\n\nsection\n12\nor\n\n17(1)\n,\nliable for the tax chargeable, shall be the consideration for\nwhich the services were in fact supplied to him or her.\n\n(4)\nIn the case of a supply of goods of the kind referred to in\n\nsection 19\n(1)(c)\n, where, as\npart of an agreement of the kind referred to in that section,\nthe supplier of the goods is also supplying financial services\nof the kind specified in\nparagraph 6(1)(e)\nof\nSchedule 1\nin respect of\nthose goods, the amount on which tax is chargeable in respect\nof the supply of the goods in question shall be the greater\nof—\n\n(\na\n) the open market price of the goods,\n\n(\nb\n) the amount of the total consideration as\nspecified in\nsection\n37\n(1)\nwhich the person supplying the goods\nbecomes entitled to receive in respect of or in relation to\nsuch supply.\n\n(5)\nWhere goods chargeable with a duty of excise (other than\nalcohol products within the meaning of\nsection 92\n), are supplied while warehoused,\nand before payment of the duty, to an unregistered person, the\namount on which tax is chargeable in respect of the supply\nshall be increased by an amount equal to the amount of duty\nthat would be payable in relation to the goods if the duty had\nbecome due at the time of the supply."
+    }
+  ],
+  "rules": [
+    {
+      "key": "vat.deemed_supply_taxable_amount_cost",
+      "sectionNumber": "42",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2010-11-01",
+          "effectiveTo": null,
+          "quote": "shall be the cost\n(excluding tax) of the goods to the person supplying or\nacquiring the goods or the cost (excluding tax) of supplying\nthe services, as the case may be.",
+          "value": null,
+          "unit": null,
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    }
+  ]
+}

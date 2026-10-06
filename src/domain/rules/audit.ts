@@ -7,13 +7,16 @@
  * knows exactly how much of the source has and has not been turned into a
  * usable rule.
  */
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import type { AppDatabase } from '@/db';
 import {
   irishKnowledgeSources, irishActProvisions, irishTaxRules, irishTaxRuleTests,
 } from '@/db/schema';
 import { SECTION_RULE_KEYS } from './factExtractor';
 import { resolveAllRuleDependencies } from './dependencies';
+import { checkRuleGraph, type RuleGraphFinding } from './ruleGraph';
+import { mostReliedOn } from './ruleImpact';
+import { irishRuleLinks } from '@/db/schema';
 import { VATCA_CURATED_RULES } from './vatcaCuration';
 import { FINANCE_ACT_2024 } from './irishRules';
 import { VATCA_2010 } from './vatcaIngestion';
@@ -41,6 +44,13 @@ export interface AuditReport {
     resolved: number;
     unresolved: Array<{ ruleKey: string; reference: string; reason: string }>;
   };
+  /** The links between rules (ADR-0020): how many of each kind, the graph checks, and what most relies on what. */
+  ruleLinks: {
+    byKind: Record<string, number>;
+    graphFindings: RuleGraphFinding[];
+    /** The rules most others rely on, with how many do (directly and transitively): `npm run cli:rules -- impact <key>`. */
+    mostReliedOn: Array<{ ruleKey: string; affected: number }>;
+  };
   duplicateRuleKeys: string[];
   testSummary: { total: number; passed: number; failed: number; neverRun: number };
 }
@@ -54,6 +64,15 @@ function ruleDependenciesSummary(db: AppDatabase, params: { companyId: string })
     unresolved: all.filter((d) => !d.resolved)
       .map((d) => ({ ruleKey: d.ruleKey, reference: d.reference, reason: d.reason ?? 'not resolved' })),
   };
+}
+
+function ruleLinksSummary(db: AppDatabase, params: { companyId: string }): AuditReport['ruleLinks'] {
+  const byKind: Record<string, number> = {};
+  for (const l of db.select({ kind: irishRuleLinks.kind }).from(irishRuleLinks)
+    .where(and(eq(irishRuleLinks.companyId, params.companyId), eq(irishRuleLinks.active, true))).all()) {
+    byKind[l.kind] = (byKind[l.kind] ?? 0) + 1;
+  }
+  return { byKind, graphFindings: checkRuleGraph(db, params), mostReliedOn: mostReliedOn(db, params) };
 }
 
 export function generateAuditReport(db: AppDatabase, params: { companyId: string }): AuditReport {
@@ -146,6 +165,7 @@ export function generateAuditReport(db: AppDatabase, params: { companyId: string
     ambiguousProvisions,
     unresolvedCrossReferences,
     ruleDependencies: ruleDependenciesSummary(db, params),
+    ruleLinks: ruleLinksSummary(db, params),
     duplicateRuleKeys,
     testSummary: {
       total: tests.length,

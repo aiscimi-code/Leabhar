@@ -22,7 +22,7 @@ import {
 import {
   ingestVatca2010, deriveVatcaRules, VATCA_2010_MD_PATH,
 } from '@/domain/rules/vatcaIngestion';
-import { ingestVatcaRevisedSection, deriveVatcaRevisedRules, VATCA_REVISED_S046_MD_PATH } from '@/domain/rules/vatcaRevisedIngestion';
+import { ingestVatcaRevisedSection, deriveVatcaRevisedRules, ingestVatcaRevisedS46 } from '@/domain/rules/vatcaRevisedIngestion';
 import { readFileSync } from 'node:fs';
 
 let db: AppDatabase;
@@ -49,9 +49,7 @@ beforeEach(() => {
   const vatcaMd = readFileSync(VATCA_2010_MD_PATH, 'utf8');
   ingestVatca2010(db, { companyId, markdown: vatcaMd, ingestVersion: 'v1' });
   deriveVatcaRules(db, { companyId });
-
-  const s46Md = readFileSync(VATCA_REVISED_S046_MD_PATH, 'utf8');
-  ingestVatcaRevisedSection(db, { companyId, markdown: s46Md, ingestVersion: 'v1' });
+  ingestVatcaRevisedS46(db, { companyId });
   deriveVatcaRevisedRules(db, { companyId });
 });
 

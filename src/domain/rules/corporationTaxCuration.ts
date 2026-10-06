@@ -893,7 +893,7 @@ export function corporationTaxRateBasisPoints(ruleKey: typeof CT_RATE_TRADING_RU
  * dated, condition-laden ones of the earlier table (first-registered,
  * second-hand), which the computation does not guess between.
  */
-export function carSpecifiedAmountRuleKey(periodEnd: string): string | null {
+export function carSpecifiedAmountRuleKey(periodEnd: string) {
   const year = Number(periodEnd.slice(0, 4));
   if (Number.isNaN(year) || year <= 2000) return null;
   if (year === 2001) return 'ct.car_specified_amount_2001';

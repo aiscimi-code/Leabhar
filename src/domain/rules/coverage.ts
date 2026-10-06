@@ -2,6 +2,7 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { parseVatca2010 } from './vatcaParser';
 import { parseVatcaSchedule } from './vatcaScheduleParser';
+import { CATALOGUE_DIR } from './catalogue';
 import { RULE_TREATMENT_BINDINGS } from './vatSuggestion';
 
 /**
@@ -111,11 +112,16 @@ export function expectedCoverageRows(params: { root: string; treatmentCodes: str
   for (const s of parseVatca2010(read(VATCA_ENACTED))) {
     rows.push({ id: `vatca:s${s.sectionNumber}`, area: 'vatca_section', title: `s.${s.sectionNumber} ${s.heading}` });
   }
-  // Sections inserted after enactment (91A…, 92A…, 108A…), from the revised files in the repo.
-  for (const file of readdirSync(join(params.root, VATCA_REVISED_DIR))) {
-    const m = /^s0*(\d+[A-Z]+)\.md$/.exec(file);
-    if (m) rows.push({ id: `vatca:s${m[1]}`, area: 'vatca_section', title: `s.${m[1]} (inserted)` });
+  // Sections inserted after enactment (91A…, 92A…, 108A…), from the revised
+  // files in the repo and the revised sections in the rules catalogue.
+  const inserted = new Set<string>();
+  for (const dir of [VATCA_REVISED_DIR, `${CATALOGUE_DIR}/vatca-2010-revised`]) {
+    for (const file of readdirSync(join(params.root, dir))) {
+      const m = /^s0*(\d+[A-Z]+)\.(md|json)$/.exec(file);
+      if (m) inserted.add(m[1]!);
+    }
   }
+  for (const n of [...inserted].sort()) rows.push({ id: `vatca:s${n}`, area: 'vatca_section', title: `s.${n} (inserted)` });
 
   for (const n of PARAGRAPH_SCHEDULES) {
     const text = read(`${VATCA_REVISED_DIR}/schedule-${n}.md`);

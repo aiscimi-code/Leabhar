@@ -3,17 +3,18 @@ import { readFileSync } from 'node:fs';
 import { and, eq } from 'drizzle-orm';
 import { createTestDatabase } from '@/db/testing';
 import { createCompany } from '../config/setup';
-import { ingestVatcaRevisedSection, deriveVatcaRevisedRules, VATCA_REVISED_S046_MD_PATH } from './vatcaRevisedIngestion';
+import { ingestVatcaRevisedSection, deriveVatcaRevisedRules, ingestVatcaRevisedS46, statedPeriodProblems } from './vatcaRevisedIngestion';
+import { ingestCatalogueFile } from './catalogue';
 import { ingestVatca2010, VATCA_2010_MD_PATH } from './vatcaIngestion';
 import { lookupTaxRule, ingestFinanceAct2025, FINANCE_ACT_2025 } from './irishRules';
 import { VATCA_REVISED_CURATED_RULES, S46_FAMILY_SCHEDULE_REF } from './vatcaRevisedCuration';
 import { scheduleThreeRate } from './scheduleRates';
 import { irishTaxRules, irishKnowledgeSources, irishActProvisions, reviewItems } from '@/db/schema';
 import type { AppDatabase } from '@/db';
+import { containsIgnoringLayout } from './lrcAnnotations';
 
 let db: AppDatabase;
 let companyId: string;
-const s46Markdown = readFileSync(VATCA_REVISED_S046_MD_PATH, 'utf8');
 const FA2025_PATH = new URL(`../../../${FINANCE_ACT_2025.localPath}`, import.meta.url).pathname;
 
 beforeEach(() => {
@@ -21,13 +22,13 @@ beforeEach(() => {
   ({ companyId } = createCompany(db, { legalName: 'Rates Ltd', seedYears: [2025] }));
 });
 
-describe('ingestVatcaRevisedSection', () => {
-  it('ingests s.46 under its own citation and is idempotent by content', () => {
-    const first = ingestVatcaRevisedSection(db, { companyId, markdown: s46Markdown, ingestVersion: 'v1' });
+describe('ingestVatcaRevisedS46', () => {
+  it('loads s.46 from the rules catalogue under its own citation and is idempotent', () => {
+    const first = ingestVatcaRevisedS46(db, { companyId });
     expect(first.ingested).toBe(true);
-    expect(first.sectionNumber).toBe('46');
+    expect(first.provisionCount).toBe(1);
 
-    const second = ingestVatcaRevisedSection(db, { companyId, markdown: s46Markdown, ingestVersion: 'v1' });
+    const second = ingestVatcaRevisedS46(db, { companyId });
     expect(second.ingested).toBe(false);
     expect(second.sourceId).toBe(first.sourceId);
 
@@ -38,7 +39,7 @@ describe('ingestVatcaRevisedSection', () => {
 
   it('never collides with the as-enacted whole-Act source, even though both cite "2010 Act 31"-family text', () => {
     ingestVatca2010(db, { companyId, markdown: readFileSync(VATCA_2010_MD_PATH, 'utf8'), ingestVersion: 'v1' });
-    const revised = ingestVatcaRevisedSection(db, { companyId, markdown: s46Markdown, ingestVersion: 'v1' });
+    const revised = ingestVatcaRevisedS46(db, { companyId });
     expect(revised.ingested).toBe(true);
 
     const sources = db.select().from(irishKnowledgeSources).all();
@@ -50,7 +51,7 @@ describe('ingestVatcaRevisedSection', () => {
 
 describe('deriveVatcaRevisedRules', () => {
   beforeEach(() => {
-    ingestVatcaRevisedSection(db, { companyId, markdown: s46Markdown, ingestVersion: 'v1' });
+    ingestVatcaRevisedS46(db, { companyId });
     ingestFinanceAct2025(db, { companyId, markdown: readFileSync(FA2025_PATH, 'utf8'), ingestVersion: 'v1' });
   });
 
@@ -68,7 +69,7 @@ describe('deriveVatcaRevisedRules', () => {
   it('skips a whole family when one version\'s source is not ingested, rather than deriving part of it', () => {
     const { db: other } = createTestDatabase();
     const { companyId: otherCompany } = createCompany(other, { legalName: 'Other Ltd', seedYears: [2025] });
-    ingestVatcaRevisedSection(other, { companyId: otherCompany, markdown: s46Markdown, ingestVersion: 'v1' });
+    ingestVatcaRevisedS46(other, { companyId: otherCompany });
     const result = deriveVatcaRevisedRules(other, { companyId: otherCompany });
     expect(result.skippedNoProvision.sort()).toEqual(['vat.rate_hairdressing', 'vat.rate_hospitality']);
   });
@@ -133,10 +134,10 @@ describe('deriveVatcaRevisedRules', () => {
 
   it('every excerpt is verbatim from the provision it cites', () => {
     deriveVatcaRevisedRules(db, { companyId });
-    const norm = (t: string) => t.replace(/\s+/g, ' ').trim();
+    // Ignoring line breaks and quote-mark style: the LRC now prints curly quotes.
     for (const row of db.select().from(irishTaxRules).where(eq(irishTaxRules.companyId, companyId)).all()) {
       const prov = db.select().from(irishActProvisions).where(eq(irishActProvisions.id, row.provisionId)).get()!;
-      expect(norm(prov.provisionText ?? ''), row.name).toContain(norm(row.statement ?? ''));
+      expect(containsIgnoringLayout(prov.provisionText ?? '', row.statement ?? ''), row.name).toBe(true);
     }
   });
 
@@ -203,5 +204,54 @@ describe('deriveVatcaRevisedRules', () => {
       const curated = VATCA_REVISED_CURATED_RULES.find((r) => r.ruleKey === key)!;
       expect(rateOn(key, curated.effectiveFrom), key).toBe(9);
     }
+  });
+});
+
+describe('stated periods (#688)', () => {
+  const textIn = (d: AppDatabase) => (citation: string, sectionNumber: string): string | null => {
+    const source = d.select().from(irishKnowledgeSources).where(eq(irishKnowledgeSources.citation, citation)).get();
+    const prov = source && d.select().from(irishActProvisions)
+      .where(and(eq(irishActProvisions.sourceId, source.id), eq(irishActProvisions.sectionNumber, sectionNumber))).get();
+    return prov ? prov.provisionText ?? '' : null;
+  };
+  const cbVersions = () => VATCA_REVISED_CURATED_RULES.filter((r) => r.statedPeriod);
+
+  it('the 2020-2023 (cb) versions end on 31 August 2023 because the Acts say so, link by link', () => {
+    ingestVatcaRevisedS46(db, { companyId });
+    expect(cbVersions().map((r) => r.ruleKey).sort()).toEqual([
+      'vat.rate_admission_9pct_2020_2023', 'vat.rate_hairdressing', 'vat.rate_hospitality',
+      'vat.rate_hotel_accommodation_9pct_2020_2023', 'vat.rate_printed_matter_9pct_2020_2023',
+    ]);
+    for (const rule of cbVersions()) {
+      expect(rule.effectiveTo, rule.ruleKey).toBe('2023-09-01');
+      expect(statedPeriodProblems(rule, textIn(db)), rule.ruleKey).toEqual([]);
+    }
+  });
+
+  it('refuses a period the Acts do not state: a wrong end date, a broken link, a quote not in its Act', () => {
+    ingestVatcaRevisedS46(db, { companyId });
+    const [rule] = cbVersions();
+    const period = rule!.statedPeriod!;
+    expect(statedPeriodProblems({ ...rule!, effectiveTo: '2023-10-01' }, textIn(db)).join(' '))
+      .toMatch(/ends 31 August 2023, but effectiveTo is 2023-10-01/);
+    const skipped = { ...period, endDateSubstitutions: period.endDateSubstitutions.slice(1) };
+    expect(statedPeriodProblems({ ...rule!, statedPeriod: skipped }, textIn(db)).join(' '))
+      .toMatch(/replaces "31 August 2022", but the end date then was "31 December 2021"/);
+    const misquoted = { ...period, setBy: { ...period.setBy, quote: 'during the period from 1 November 2020 to 31 August 2023' } };
+    expect(statedPeriodProblems({ ...rule!, statedPeriod: misquoted }, textIn(db)).join(' ')).toMatch(/is not in 2020 Act 26 s\.39/);
+  });
+
+  it('leaves a family underived, with a review item, when its period does not check out', () => {
+    const { db: other } = createTestDatabase();
+    const { companyId: otherCompany } = createCompany(other, { legalName: 'Unamended Ltd', seedYears: [2025] });
+    // s.46 and s.39 without the Acts that moved the end date.
+    ingestCatalogueFile(other, { companyId: otherCompany, entry: 'finance-act-2020/s39.json' });
+    ingestCatalogueFile(other, { companyId: otherCompany, entry: 'vatca-2010-revised/s046.json' });
+    ingestFinanceAct2025(other, { companyId: otherCompany, markdown: readFileSync(FA2025_PATH, 'utf8'), ingestVersion: 'v1' });
+    const result = deriveVatcaRevisedRules(other, { companyId: otherCompany });
+    expect(result.skippedStatedPeriod).toContain('vat.rate_hospitality');
+    expect(other.select().from(irishTaxRules).where(eq(irishTaxRules.ruleKey, 'vat.rate_hospitality')).all()).toEqual([]);
+    const item = other.select().from(reviewItems).where(eq(reviewItems.entityId, 'vat.rate_hospitality')).get()!;
+    expect(item.detail).toMatch(/2021 Act 23 s\.6 is not ingested/);
   });
 });

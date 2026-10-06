@@ -12,8 +12,8 @@
  * (AGENTS.md invariant 7).
  *
  * Sources: ss.37 and 45 in their LRC-revised form
- * (docs/statutes/vatca-2010-revised/s037.md, s045.md — whose front matter
- * cites it "VATCA 2010 s.45"), ss.38 and 41 as enacted (the whole-Act text,
+ * (catalogue/vatca-2010-revised/s037.json, s045.json — whose source is
+ * cited "VATCA 2010 s.45"), ss.38 and 41 as enacted (the whole-Act text,
  * cited "2010 Act 31") — no revised text for those two is in the repository,
  * so the rule cites the 2010 text and the 2010 commencement.
  *
