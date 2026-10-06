@@ -29,6 +29,10 @@ const INSTRUMENT_ALIASES: Array<{ match: RegExp; citation: RegExp }> = [
   { match: /finance act\s*2024/i, citation: /Finance Act 2024|2024 Act 43/i },
   { match: /finance act\s*2025/i, citation: /Finance Act 2025|2025 Act 18/i },
   { match: /finance act\s*2003/i, citation: /Finance Act 2003|2003 Act 3/i },
+  { match: /finance act\s*2020/i, citation: /Finance Act 2020|2020 Act 26/i },
+  { match: /finance act\s*2023/i, citation: /Finance Act 2023|2023 Act 11/i },
+  { match: /miscellaneous provisions\) act\s*2021/i, citation: /2021 Act 23/i },
+  { match: /miscellaneous provisions\) act\s*2022/i, citation: /2022 Act 9\b/i },
   { match: /282\/2011/i, citation: /282\/2011/i },
 ];
 

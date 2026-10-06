@@ -35,7 +35,8 @@ describe.each(CATALOGUE_ENTRIES)('catalogue entry %s', (name) => {
 
   it('holds the rules, links and reviews the curation derives from it (re-run npm run catalogue:extract)', () => {
     const e = entry();
-    expect(e.rules.length).toBeGreaterThan(0);
+    // An amending Act's entry can hold no rule of its own: it is the source a
+    // rule cites for a date (finance-act-2023/s5.json, #688).
     expect(catalogueRulesFor(db, { companyId, entry: e, previous: e })).toEqual(e.rules);
   });
 

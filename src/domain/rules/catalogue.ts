@@ -128,6 +128,12 @@ export const UNREVIEWED: CatalogueReview = { status: 'ai_extracted', by: null, a
 /** Every entry the app loads, as a path relative to `catalogue/`. */
 export const CATALOGUE_ENTRIES = [
   'vatca-2010-revised/s046.json',
+  // The Acts that inserted s.46(1)(cb) for 2020-2023 and moved its end date:
+  // the revised s.46 no longer holds that wording (#688).
+  'finance-act-2020/s39.json',
+  'finance-covid-2021/s6.json',
+  'finance-covid-2022/s7.json',
+  'finance-act-2023/s5.json',
   'vatca-2010-revised/s047.json',
   'vatca-2010-revised/s009.json',
   'vatca-2010-revised/s010.json',

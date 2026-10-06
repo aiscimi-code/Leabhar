@@ -10,6 +10,7 @@ import { VATCA_REVISED_CURATED_RULES, S46_FAMILY_SCHEDULE_REF } from './vatcaRev
 import { scheduleThreeRate } from './scheduleRates';
 import { irishTaxRules, irishKnowledgeSources, irishActProvisions, reviewItems } from '@/db/schema';
 import type { AppDatabase } from '@/db';
+import { containsIgnoringLayout } from './lrcAnnotations';
 
 let db: AppDatabase;
 let companyId: string;
@@ -132,10 +133,10 @@ describe('deriveVatcaRevisedRules', () => {
 
   it('every excerpt is verbatim from the provision it cites', () => {
     deriveVatcaRevisedRules(db, { companyId });
-    const norm = (t: string) => t.replace(/\s+/g, ' ').trim();
+    // Ignoring line breaks and quote-mark style: the LRC now prints curly quotes.
     for (const row of db.select().from(irishTaxRules).where(eq(irishTaxRules.companyId, companyId)).all()) {
       const prov = db.select().from(irishActProvisions).where(eq(irishActProvisions.id, row.provisionId)).get()!;
-      expect(norm(prov.provisionText ?? ''), row.name).toContain(norm(row.statement ?? ''));
+      expect(containsIgnoringLayout(prov.provisionText ?? '', row.statement ?? ''), row.name).toBe(true);
     }
   });
 

@@ -22,4 +22,4 @@ VATCA rows only:
 - Schedule 2 ref. 7, section 64(12A): delete “or under section 147 of the National Asset Management Agency Act 2009” in paragraphs (b)(ii) and (ba)(ii).
 - Schedule 2 ref. 7, section 94: subsection (2) loses “and (9)”; subsection (5) loses “Subject to subsection (9),”; subsection (8) paragraphs (a) and (d) deleted; subsection (9) deleted.
 
-The live LRC pages retrieved the same day are beside the curated copies: `../vatca-2010-revised/s016-2026-10-06.html`, `s059-2026-10-06.html`, `s064-2026-10-06.html`, `s094-2026-10-06.html`. The curated copies are not replaced.
+The live LRC pages retrieved the same day are the rules catalogue entries for these sections (`catalogue/vatca-2010-revised/s016.json`, `s059.json`, `s064.json`, `s094.json`): each records the page's URL and SHA-256 and the section's text. No rule's dates moved (#689).

@@ -1,0 +1,25 @@
+{
+  "format": 1,
+  "source": {
+    "citation": "2021 Act 23 s.6",
+    "title": "Finance (Covid-19 and Miscellaneous Provisions) Act 2021 s.6",
+    "sourceType": "legislation",
+    "jurisdiction": "IE",
+    "sourceUrl": "https://www.irishstatutebook.ie/eli/2021/act/23/section/6/enacted/en/html",
+    "sha256": "cf09b23aca4967eefab700b1784a913f115720aaf67cfc3d1a3d5132a4a05273",
+    "conversion": "isb-html-plaintext",
+    "retrievedOn": "2026-10-06"
+  },
+  "provisions": [
+    {
+      "sectionNumber": "6",
+      "heading": "Amendment of section 46 of Act of 2010",
+      "locator": "s.6",
+      "category": "vat",
+      "relevant": true,
+      "relevanceReason": "Amends VATCA 2010 s.46; cited by the s.46 rate rules (vatcaRevisedCuration.ts).",
+      "excerpt": "6.\nSection 46 of the Act of 2010 is amended in subsection (1)(cb) by the substitution of “31 August 2022” for “31 December 2021”."
+    }
+  ],
+  "rules": []
+}

@@ -48,17 +48,17 @@ const ROOT = join(dirname(new URL(import.meta.url).pathname), '..', '..');
 const CONVERTER = join(ROOT, 'scripts', 'catalogue', 'lrc_html_to_text.py');
 
 /** The title and citation a source already goes by: the entry's, else its statute copy's front matter. */
-interface Naming { title: string; citation: string }
+interface Naming { title: string; citation: string; sourceUrl?: string }
 
 function existingNaming(entry: string, previous: CatalogueEntry | null): Naming | null {
-  if (previous) return { title: previous.source.title, citation: previous.source.citation };
+  if (previous) return { title: previous.source.title, citation: previous.source.citation, sourceUrl: previous.source.sourceUrl };
   const copy = join(ROOT, 'docs', 'statutes', `${entry}.md`);
   if (!existsSync(copy)) return null;
   const front = readFileSync(copy, 'utf8').split('---')[1] ?? '';
   const field = (name: string) => new RegExp(`^${name}: "?(.*?)"?$`, 'm').exec(front)?.[1];
   const title = field('title');
   const citation = field('citation');
-  return title && citation ? { title, citation } : null;
+  return title && citation ? { title, citation, sourceUrl: field('source_url') } : null;
 }
 
 interface Extractor {
@@ -97,7 +97,49 @@ function extractorFor(entry: string, naming: Naming | null): Extractor {
       },
     };
   }
+  // A section of an Act as enacted, on the Irish Statute Book: the source's
+  // URL is the one its statute copy, or the entry, already records.
+  const isb = isbSectionUrl(entry, naming);
+  if (isb && naming) {
+    const { url, section } = isb;
+    return {
+      url, title: naming.title, citation: naming.citation,
+      build: (html, retrievedOn) => {
+        const text = convertLrc(html, naming.title, naming.citation, url);
+        const { heading, excerpt } = parseIsbSection(text, section);
+        return {
+          source: {
+            citation: naming.citation, title: naming.title, sourceType: 'legislation', jurisdiction: 'IE', sourceUrl: url,
+            sha256: createHash('sha256').update(html).digest('hex'),
+            conversion: 'isb-html-plaintext', retrievedOn,
+          },
+          provisions: [{
+            sectionNumber: section, heading, locator: `s.${section}`, category: 'vat', relevant: true,
+            relevanceReason: 'Amends VATCA 2010 s.46; cited by the s.46 rate rules (vatcaRevisedCuration.ts).',
+            excerpt,
+          }],
+        };
+      },
+    };
+  }
   throw new Error(`No extractor for "${entry}". Add one to scripts/catalogue/extract.ts with the port (#556).`);
+}
+
+/** An Irish Statute Book enacted-section URL for the entry, from its statute copy or the entry itself. */
+function isbSectionUrl(entry: string, naming: Naming | null): { url: string; section: string } | null {
+  const url = naming?.sourceUrl;
+  const m = url ? /^https:\/\/www\.irishstatutebook\.ie\/eli\/\d{4}\/act\/\d+\/section\/(\d+[A-Z]*)\/enacted\/en\/html$/.exec(url) : null;
+  return m && url && entry.endsWith(`/s${m[1]}`) ? { url, section: m[1]! } : null;
+}
+
+/** The heading and text of one enacted section, from the converted page ("# title", heading, "39." and its text). */
+function parseIsbSection(text: string, section: string): { heading: string; excerpt: string } {
+  const body = text.split(/^# .*$/m)[1] ?? '';
+  const start = body.search(new RegExp(`^${section}\\.`, 'm'));
+  if (start < 0) throw new Error(`The page has no section ${section}.`);
+  const heading = body.slice(0, start).trim();
+  if (!heading || heading.includes('\n')) throw new Error(`Section ${section}: expected a one-line heading, found "${heading}".`);
+  return { heading, excerpt: body.slice(start).trim() };
 }
 
 function convertLrc(html: Buffer, title: string, citation: string, url: string): string {

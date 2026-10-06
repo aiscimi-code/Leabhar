@@ -1,0 +1,187 @@
+{
+  "format": 1,
+  "source": {
+    "citation": "2020 Act 26 s.39",
+    "title": "Finance Act 2020 s.39",
+    "sourceType": "legislation",
+    "jurisdiction": "IE",
+    "sourceUrl": "https://www.irishstatutebook.ie/eli/2020/act/26/section/39/enacted/en/html",
+    "sha256": "c4169141093738acd5b278ba54a78d39904d21b25a2b18c960b049077c018c1e",
+    "conversion": "isb-html-plaintext",
+    "retrievedOn": "2026-10-06"
+  },
+  "provisions": [
+    {
+      "sectionNumber": "39",
+      "heading": "Amendment of section 46 of Principal Act (rates of tax)",
+      "locator": "s.39",
+      "category": "vat",
+      "relevant": true,
+      "relevanceReason": "Amends VATCA 2010 s.46; cited by the s.46 rate rules (vatcaRevisedCuration.ts).",
+      "excerpt": "39.\nThe Principal Act is amended in section 46(1) with effect from 1 November 2020—\n\n(a) in paragraph (c), by substituting “paragraphs (ca) and (cb)” for “paragraph (ca)”, and\n\n(b) by inserting the following paragraph after paragraph (ca):\n\n“(cb) during the period from 1 November 2020 to 31 December 2021, 9 per cent in relation to goods or services of a kind specified in paragraphs 3(1), 3(3), 7(b) to (e), 8, 11 and 13(3) of Schedule 3 on which tax would, but for this paragraph, be chargeable in accordance with paragraph (c);”."
+    }
+  ],
+  "rules": [
+    {
+      "key": "vat.rate_admission_9pct_2020_2023",
+      "sectionNumber": "39",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2020-11-01",
+          "effectiveTo": "2023-09-01",
+          "quote": "9 per cent in relation to goods or services of a kind specified in paragraphs 3(1), 3(3), 7(b) to (e), 8, 11 and 13(3) of Schedule 3",
+          "value": 9,
+          "unit": "percent",
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    },
+    {
+      "key": "vat.rate_hairdressing",
+      "sectionNumber": "39",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2020-11-01",
+          "effectiveTo": "2023-09-01",
+          "quote": "9 per cent in relation to goods or services of a kind specified in paragraphs 3(1), 3(3), 7(b) to (e), 8, 11 and 13(3) of Schedule 3",
+          "value": 9,
+          "unit": "percent",
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": [
+        {
+          "kind": "supersedes",
+          "toKey": "vat.rate_hairdressing_9pct_2020_2023",
+          "effectiveFrom": "0001-01-01",
+          "effectiveTo": null,
+          "note": "rename: Issue #205: the 2020-2023 9% period is a version of the hairdressing family."
+        },
+        {
+          "kind": "supersedes",
+          "toKey": "vat.rate_reduced_current",
+          "effectiveFrom": "2026-07-01",
+          "effectiveTo": null,
+          "note": "carve-out, in part: Finance Act 2025 s.71 (issue #129): from 1 July 2026 Schedule 3 paragraphs 3(1), 3(3) and 13(3) bear 9% under the substituted s.46(1)(cb); the reduced rate stays in force for the other paragraphs."
+        }
+      ]
+    },
+    {
+      "key": "vat.rate_hospitality",
+      "sectionNumber": "39",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2020-11-01",
+          "effectiveTo": "2023-09-01",
+          "quote": "9 per cent in relation to goods or services of a kind specified in paragraphs 3(1), 3(3), 7(b) to (e), 8, 11 and 13(3) of Schedule 3",
+          "value": 9,
+          "unit": "percent",
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": [
+        {
+          "kind": "supersedes",
+          "toKey": "vat.rate_hospitality_9pct_not_modelled",
+          "effectiveFrom": "0001-01-01",
+          "effectiveTo": null,
+          "note": "merge: Issue #205: the hospitality periods are versions of one family. The 13.5% window from 2010 to 2020 is dropped, since s.46(1)(ca) put hospitality at 9% for part of it; the \"not modelled\" gap is modelled from Finance Act 2025 s.71."
+        },
+        {
+          "kind": "supersedes",
+          "toKey": "vat.rate_reduced_current",
+          "effectiveFrom": "2026-07-01",
+          "effectiveTo": null,
+          "note": "carve-out, in part: Finance Act 2025 s.71 (issue #129): from 1 July 2026 Schedule 3 paragraphs 3(1), 3(3) and 13(3) bear 9% under the substituted s.46(1)(cb); the reduced rate stays in force for the other paragraphs."
+        },
+        {
+          "kind": "supersedes",
+          "toKey": "vat.rate_restaurant_catering_9pct_2020_2023",
+          "effectiveFrom": "0001-01-01",
+          "effectiveTo": null,
+          "note": "merge: Issue #205: the hospitality periods are versions of one family. The 13.5% window from 2010 to 2020 is dropped, since s.46(1)(ca) put hospitality at 9% for part of it; the \"not modelled\" gap is modelled from Finance Act 2025 s.71."
+        },
+        {
+          "kind": "supersedes",
+          "toKey": "vat.rate_restaurant_catering_reduced_current",
+          "effectiveFrom": "0001-01-01",
+          "effectiveTo": null,
+          "note": "merge: Issue #205: the hospitality periods are versions of one family. The 13.5% window from 2010 to 2020 is dropped, since s.46(1)(ca) put hospitality at 9% for part of it; the \"not modelled\" gap is modelled from Finance Act 2025 s.71."
+        },
+        {
+          "kind": "supersedes",
+          "toKey": "vat.rate_restaurant_catering_reduced_pre_9pct_window",
+          "effectiveFrom": "0001-01-01",
+          "effectiveTo": null,
+          "note": "merge: Issue #205: the hospitality periods are versions of one family. The 13.5% window from 2010 to 2020 is dropped, since s.46(1)(ca) put hospitality at 9% for part of it; the \"not modelled\" gap is modelled from Finance Act 2025 s.71."
+        }
+      ]
+    },
+    {
+      "key": "vat.rate_hotel_accommodation_9pct_2020_2023",
+      "sectionNumber": "39",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2020-11-01",
+          "effectiveTo": "2023-09-01",
+          "quote": "9 per cent in relation to goods or services of a kind specified in paragraphs 3(1), 3(3), 7(b) to (e), 8, 11 and 13(3) of Schedule 3",
+          "value": 9,
+          "unit": "percent",
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    },
+    {
+      "key": "vat.rate_printed_matter_9pct_2020_2023",
+      "sectionNumber": "39",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2020-11-01",
+          "effectiveTo": "2023-09-01",
+          "quote": "9 per cent in relation to goods or services of a kind specified in paragraphs 3(1), 3(3), 7(b) to (e), 8, 11 and 13(3) of Schedule 3",
+          "value": 9,
+          "unit": "percent",
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    }
+  ]
+}

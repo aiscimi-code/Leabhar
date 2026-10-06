@@ -8,12 +8,12 @@
  * read here from the statute text:
  *
  * - LRC revised s.46 (catalogue/vatca-2010-revised/s046.json; its footnotes
- *   F99–F105 date each clause);
+ *   F100–F106 date each clause, numbered as on the page of 6 October 2026);
  * - Finance Act 2024 s.79(a) (docs/statutes/finance-act-2024), which records
  *   that (ca) read "paragraphs 7(a), 7A and 12" until 31 December 2024;
  * - Finance Act 2025 s.71 (docs/statutes/_inbox/A), which from 1 July 2026
  *   substitutes a new (cb): 9% for paragraphs 3(1), 3(3) and 13(3), with no
- *   end date. The LRC revised s.46 does not yet show it.
+ *   end date. The LRC revised s.46 shows it from October 2026 (F106, #688).
  *
  * Before 1 January 2025 the list in (ca) is known only as it stood on the
  * last day ("7(a), 7A and 12"); when that list took effect, and what (ca)
@@ -82,7 +82,7 @@ export const SECOND_REDUCED_WINDOWS: SecondReducedWindow[] = [
   },
 ];
 
-/** From this date the (ca) list is known ("paragraphs 7(a), 7A, 12 and 12A", F101). */
+/** From this date the (ca) list is known ("paragraphs 7(a), 7A, 12 and 12A", F102). */
 export const CA_LIST_KNOWN_FROM = '2025-01-01';
 
 /** Does a rule's reference ("8(2)", "17(3)") fall within a listed one ("8", "17(3)")? */

@@ -18,7 +18,7 @@
  */
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { and, eq } from 'drizzle-orm';
+import { and, desc, eq } from 'drizzle-orm';
 import { appRoot } from '@/lib/paths';
 import type { AppDatabase } from '@/db';
 import {
@@ -43,11 +43,24 @@ import { CATALOGUE_ENTRIES, ingestCatalogueFile, type CatalogueIngestResult } fr
 /** s.46 is ported to the rules catalogue (#443): its statute copy is gone. */
 export const VATCA_REVISED_S046_CATALOGUE_ENTRY = 'vatca-2010-revised/s046.json';
 
-/** Load s.46 (rates) from the rules catalogue. */
+/**
+ * The Acts the s.46 rate rules cite for paragraph (cb) from 2020 to 2023,
+ * which the revised s.46 no longer holds: the insertion and each later
+ * end date (#688).
+ */
+export const VATCA_S46_CB_CHAIN_CATALOGUE_ENTRIES = [
+  'finance-act-2020/s39.json',
+  'finance-covid-2021/s6.json',
+  'finance-covid-2022/s7.json',
+  'finance-act-2023/s5.json',
+] as const;
+
+/** Load s.46 (rates) from the rules catalogue, with the Acts its (cb) versions cite. Returns s.46's result. */
 export function ingestVatcaRevisedS46(
   db: AppDatabase,
   params: { companyId?: string | null; ingestVersion?: string; root?: string },
 ): CatalogueIngestResult {
+  for (const entry of VATCA_S46_CB_CHAIN_CATALOGUE_ENTRIES) ingestCatalogueFile(db, { ...params, entry });
   return ingestCatalogueFile(db, { ...params, entry: VATCA_REVISED_S046_CATALOGUE_ENTRY });
 }
 
@@ -202,6 +215,13 @@ export interface VatcaRevisedDeriveResult {
  * retired key) is retired: its window is emptied and it is marked inactive,
  * never deleted. Only a family's latest version is `active`.
  */
+/** What the rule's provision cites, and what the curation adds (the later Acts that moved its dates). */
+function crossReferencesFor(
+  rule: CuratedVatcaRevisedRule, prov: Parameters<typeof crossReferencesFromProvision>[0],
+): string[] {
+  return [...new Set([...crossReferencesFromProvision(prov), ...(rule.crossReferences ?? [])])];
+}
+
 export function deriveVatcaRevisedRules(
   db: AppDatabase,
   params: { companyId: string },
@@ -217,8 +237,11 @@ export function deriveVatcaRevisedRules(
   }
 
   const provisionFor = (rule: CuratedVatcaRevisedRule) => {
+    // The latest source for the citation: a re-fetched page whose words moved
+    // is a new source row beside the old one (#688).
     const sourceId = db.select({ id: irishKnowledgeSources.id }).from(irishKnowledgeSources)
-      .where(eq(irishKnowledgeSources.citation, rule.citation)).get()?.id;
+      .where(eq(irishKnowledgeSources.citation, rule.citation))
+      .orderBy(desc(irishKnowledgeSources.retrievedAt)).get()?.id;
     return sourceId
       ? db.select().from(irishActProvisions)
         .where(and(eq(irishActProvisions.sourceId, sourceId), eq(irishActProvisions.sectionNumber, rule.sectionNumber)))
@@ -250,7 +273,7 @@ export function deriveVatcaRevisedRules(
         && r.provisionId === prov.id && r.effectiveFrom === rule.effectiveFrom
         && (r.effectiveTo ?? null) === rule.effectiveTo
         && r.statement === rule.statementExcerpt && r.numericValue === rule.numericValue
-        && sameCrossReferences(r.crossReferences, crossReferencesFromProvision(prov)));
+        && sameCrossReferences(r.crossReferences, crossReferencesFor(rule, prov)));
       if (match) {
         kept.add(match.id);
         previousId = match.id;
@@ -280,7 +303,7 @@ export function deriveVatcaRevisedRules(
         qualifier: rule.qualifier,
         conditions: rule.conditions,
         exceptions: [],
-        crossReferences: crossReferencesFromProvision(prov),
+        crossReferences: crossReferencesFor(rule, prov),
         accountingEffect: null,
         taxEffect: null,
         vatEffect: rule.vatEffect,

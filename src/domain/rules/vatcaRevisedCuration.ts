@@ -38,7 +38,7 @@
  * amendment footnotes, numbered as on the LRC page fetched 2026-09-29 (the
  * SHA-256 the catalogue entry records; #443 removed the local copy). Deriving chains
  * the versions by `supersedesRuleId`. The standard rate is 23% from 1 January
- * 2012 (F95), 21% for the s.46(1A) period, then 23% again from 1 March 2021.
+ * 2012 (F96), 21% for the s.46(1A) period, then 23% again from 1 March 2021.
  * The 13.5% and 4.8% figures carry no amendment footnote, so they date from
  * the Act's commencement.
  *
@@ -81,12 +81,36 @@ export interface CuratedVatcaRevisedRule {
    *  from this date — never a guess. */
   effectiveTo: string | null;
   interpretationNote: string;
+  /** References beyond those its provision states, e.g. the later Acts that moved its end date. */
+  crossReferences?: readonly string[];
 }
 
 /** The one empty-condition VAT rate rule `transactionLookup.ts`'s exclusivity
  *  logic keeps as the last-resort fallback when no rate rule with real
  *  conditions matched — see this file's own header. */
 export const VAT_STANDARD_RATE_FALLBACK_RULE_KEY = 'vat.rate_standard_current';
+
+/**
+ * Paragraph (cb) from 1 November 2020 to 31 August 2023, which the revised
+ * s.46 no longer holds: the LRC now shows (cb) as substituted from 1 July
+ * 2026 (#688). Its rate and scope are quoted from the Act that inserted it,
+ * Finance Act 2020 s.39(b), which set the period to 31 December 2021; the
+ * end date was moved to 31 August 2022 by the Finance (Covid-19 and
+ * Miscellaneous Provisions) Act 2021 s.6, to 28 February 2023 by the 2022
+ * Act s.7(d), and to 31 August 2023 by Finance Act 2023 s.5(a)(ii), with
+ * effect from 23 February 2023. Each amendment is cited (`crossReferences`).
+ */
+const CB_2020_2023 = {
+  citation: '2020 Act 26 s.39',
+  sectionNumber: '39',
+  statementExcerpt: '9 per cent in relation to goods or services of a kind specified in paragraphs 3(1), 3(3), '
+    + '7(b) to (e), 8, 11 and 13(3) of Schedule 3',
+  crossReferences: [
+    'Finance (Covid-19 and Miscellaneous Provisions) Act 2021 s.6',
+    'Finance (Covid-19 and Miscellaneous Provisions) Act 2022 s.7',
+    'Finance Act 2023 s.5',
+  ],
+} as const;
 
 export const VATCA_REVISED_CURATED_RULES: CuratedVatcaRevisedRule[] = [
   {
@@ -106,7 +130,7 @@ export const VATCA_REVISED_CURATED_RULES: CuratedVatcaRevisedRule[] = [
     effectiveFrom: '2012-01-01',
     effectiveTo: '2020-09-01',
     interpretationNote: 'Version 1 of 3. The LRC marks "23 per cent" in paragraph (a) as substituted on 1 January '
-      + '2012 by Finance Act 2012 s.87 (footnote F95 on the LRC page, catalogue/vatca-2010-revised/s046.json), so 23% is '
+      + '2012 by Finance Act 2012 s.87 (footnote F96 on the LRC page, catalogue/vatca-2010-revised/s046.json), so 23% is '
       + 'supported from that date; what paragraph (a) said before is not in the repository. Ends where s.46(1A) '
       + 'substitutes 21%.',
   },
@@ -127,7 +151,7 @@ export const VATCA_REVISED_CURATED_RULES: CuratedVatcaRevisedRule[] = [
     vatEffect: 'The standard VAT rate was 21% from 1 September 2020 to 28 February 2021.',
     effectiveFrom: '2020-09-01',
     effectiveTo: '2021-03-01',
-    interpretationNote: 'Version 2 of 3, from s.46(1A) (inserted 1 August 2020, footnote F94). The period is '
+    interpretationNote: 'Version 2 of 3, from s.46(1A) (inserted 1 August 2020, footnote F108). The period is '
       + 'stated in the text itself.',
   },
   {
@@ -174,7 +198,7 @@ export const VATCA_REVISED_CURATED_RULES: CuratedVatcaRevisedRule[] = [
     effectiveFrom: '2010-11-01',
     effectiveTo: null,
     interpretationNote: 'The figure "13.5 per cent" in paragraph (c) carries no LRC amendment footnote '
-      + '(the LRC page, catalogue/vatca-2010-revised/s046.json: F96 covers only the "subject to" words before it), so it '
+      + '(the LRC page, catalogue/vatca-2010-revised/s046.json: F97 covers only the "subject to" words before it), so it '
       + 'has stood since the Act commenced on 1 November 2010. Which Schedule 3 paragraphs bear it on a date '
       + 'depends on the 9% clauses: see scheduleRates.ts. This rule has no `conditions`: '
       + '`transactionLookup.ts`\'s exclusivity logic keeps it only when nothing more specific matched (issue #136 bug 1).',
@@ -200,7 +224,7 @@ export const VATCA_REVISED_CURATED_RULES: CuratedVatcaRevisedRule[] = [
     vatEffect: 'A special 4.8% VAT rate applies to the supply of livestock.',
     effectiveFrom: '2010-11-01',
     effectiveTo: null,
-    interpretationNote: 'The figure "4.8 per cent" in paragraph (d) carries no LRC amendment footnote (F106 '
+    interpretationNote: 'The figure "4.8 per cent" in paragraph (d) carries no LRC amendment footnote (F107 '
       + 'deletes only words after "livestock"), so it has stood since 1 November 2010. The condition is a keyword '
       + 'match on VATCA s.2(1)\'s "livestock" definition (cattle, sheep, goats, pigs, deer, and horses normally '
       + 'intended for food or agricultural production); it cannot confirm the "normally intended for" test for '
@@ -208,13 +232,11 @@ export const VATCA_REVISED_CURATED_RULES: CuratedVatcaRevisedRule[] = [
   },
 
   {
-    citation: '2010 Act 31 s.46',
-    sectionNumber: '46',
+    ...CB_2020_2023,
     ruleKey: 'vat.rate_hospitality',
     ruleType: 'rate',
     topic: 'vat',
     name: 'Food and drink, catering and hot food: 9%, 1 November 2020 to 31 August 2023',
-    statementExcerpt: 'during the\nperiod from 1 November 2020 to\n31\nAugust 2023\n, 9 per cent in relation\nto goods or services of a kind specified in\nparagraphs 3(1)\n,\n3(3)\n,\n\n7(b)\nto\n(e)\n,\n8\n,\n11\nand\n13(3)\nof\nSchedule\n3',
     extractedFact: '9 per cent',
     numericValue: 9,
     unit: 'percent',
@@ -223,7 +245,8 @@ export const VATCA_REVISED_CURATED_RULES: CuratedVatcaRevisedRule[] = [
     vatEffect: 'Restaurant and catering services and hot food and drink (Schedule 3 paragraphs 3(1) and 3(3)) were chargeable at 9% from 1 November 2020 to 31 August 2023.',
     effectiveFrom: '2020-11-01',
     effectiveTo: '2023-09-01',
-    interpretationNote: 'Version 1 of 3. The period is stated in (cb) itself. Before it, what s.46(1)(ca) listed '
+    interpretationNote: 'Version 1 of 3. The period is stated in (cb) as inserted by Finance Act 2020 s.39 and '
+      + 'extended to 31 August 2023 by Finance Act 2023 s.5(a)(ii). Before it, what s.46(1)(ca) listed '
       + 'is not in the repository (it put hospitality at 9% for part of 2011-2018), so no earlier version is curated '
       + 'and an earlier line is flagged.',
   },
@@ -244,7 +267,7 @@ export const VATCA_REVISED_CURATED_RULES: CuratedVatcaRevisedRule[] = [
     effectiveFrom: '2025-01-01',
     effectiveTo: '2026-07-01',
     interpretationNote: 'Version 2 of 3. From 1 January 2025 the (ca) list is known ("paragraphs 7(a), 7A, 12 and '
-      + '12A", footnote F101) and does not include this paragraph, so (c) applies. From 1 September 2023 to 31 '
+      + '12A", footnote F102) and does not include this paragraph, so (c) applies. From 1 September 2023 to 31 '
       + 'December 2024 the (ca) list is not in the repository, so that period has no version and a line in it is '
       + 'flagged. Ends where Finance Act 2025 s.71 applies.',
   },
@@ -266,16 +289,15 @@ export const VATCA_REVISED_CURATED_RULES: CuratedVatcaRevisedRule[] = [
     effectiveFrom: '2026-07-01',
     effectiveTo: null,
     interpretationNote: 'Version 3 of 3, from the enacted text of Finance Act 2025 s.71 '
-      + '(docs/statutes/finance-act-2025). The LRC revised s.46 does not yet show this substitution.',
+      + '(docs/statutes/finance-act-2025); effective from 1 July 2026 under s.71, not from the date of any revised '
+      + 'page. The LRC revised s.46 now shows the substitution (footnote F106, #688).',
   },
   {
-    citation: '2010 Act 31 s.46',
-    sectionNumber: '46',
+    ...CB_2020_2023,
     ruleKey: 'vat.rate_hairdressing',
     ruleType: 'rate',
     topic: 'vat',
     name: 'Hairdressing: 9%, 1 November 2020 to 31 August 2023',
-    statementExcerpt: 'during the\nperiod from 1 November 2020 to\n31\nAugust 2023\n, 9 per cent in relation\nto goods or services of a kind specified in\nparagraphs 3(1)\n,\n3(3)\n,\n\n7(b)\nto\n(e)\n,\n8\n,\n11\nand\n13(3)\nof\nSchedule\n3',
     extractedFact: '9 per cent',
     numericValue: 9,
     unit: 'percent',
@@ -284,7 +306,8 @@ export const VATCA_REVISED_CURATED_RULES: CuratedVatcaRevisedRule[] = [
     vatEffect: 'Hairdressing services (Schedule 3 paragraph 13(3)) were chargeable at 9% from 1 November 2020 to 31 August 2023.',
     effectiveFrom: '2020-11-01',
     effectiveTo: '2023-09-01',
-    interpretationNote: 'Version 1 of 3. The period is stated in (cb) itself. Before it, what s.46(1)(ca) listed '
+    interpretationNote: 'Version 1 of 3. The period is stated in (cb) as inserted by Finance Act 2020 s.39 and '
+      + 'extended to 31 August 2023 by Finance Act 2023 s.5(a)(ii). Before it, what s.46(1)(ca) listed '
       + 'is not in the repository (it put hospitality at 9% for part of 2011-2018), so no earlier version is curated '
       + 'and an earlier line is flagged.',
   },
@@ -305,7 +328,7 @@ export const VATCA_REVISED_CURATED_RULES: CuratedVatcaRevisedRule[] = [
     effectiveFrom: '2025-01-01',
     effectiveTo: '2026-07-01',
     interpretationNote: 'Version 2 of 3. From 1 January 2025 the (ca) list is known ("paragraphs 7(a), 7A, 12 and '
-      + '12A", footnote F101) and does not include this paragraph, so (c) applies. From 1 September 2023 to 31 '
+      + '12A", footnote F102) and does not include this paragraph, so (c) applies. From 1 September 2023 to 31 '
       + 'December 2024 the (ca) list is not in the repository, so that period has no version and a line in it is '
       + 'flagged. Ends where Finance Act 2025 s.71 applies.',
   },
@@ -327,7 +350,8 @@ export const VATCA_REVISED_CURATED_RULES: CuratedVatcaRevisedRule[] = [
     effectiveFrom: '2026-07-01',
     effectiveTo: null,
     interpretationNote: 'Version 3 of 3, from the enacted text of Finance Act 2025 s.71 '
-      + '(docs/statutes/finance-act-2025). The LRC revised s.46 does not yet show this substitution.',
+      + '(docs/statutes/finance-act-2025); effective from 1 July 2026 under s.71, not from the date of any revised '
+      + 'page. The LRC revised s.46 now shows the substitution (footnote F106, #688).',
   },
   // --- s.46(1)(ca)-(cb): the five date-boxed 9% second-reduced-rate carve-outs (issue #129) ---
   //
@@ -342,7 +366,7 @@ export const VATCA_REVISED_CURATED_RULES: CuratedVatcaRevisedRule[] = [
   // hairdressing families above share the (cb) and (c) excerpts).
   //
   // (ca) states no period. Its three rules below start on 1 January 2025,
-  // when its list became "paragraphs 7(a), 7A, 12 and 12A" (F101); what it
+  // when its list became "paragraphs 7(a), 7A, 12 and 12A" (F102); what it
   // listed before is not in the repository.
   //
   // `effectiveTo` boundaries below deliberately hold the first day the NEXT
@@ -376,7 +400,7 @@ export const VATCA_REVISED_CURATED_RULES: CuratedVatcaRevisedRule[] = [
       + 'rate Schedule 3 goods/services otherwise carry.',
     effectiveFrom: '2025-01-01',
     effectiveTo: null,
-    interpretationNote: 'From 1 January 2025, when the (ca) list became "paragraphs 7(a), 7A, 12 and 12A" (footnote F101, Finance Act 2024 s.79(a)); what it listed before is not in the repository. '
+    interpretationNote: 'From 1 January 2025, when the (ca) list became "paragraphs 7(a), 7A, 12 and 12A" (footnote F102, Finance Act 2024 s.79(a)); what it listed before is not in the repository. '
       + 'Schedule 3 paragraph 7A actually covers six categories (periodicals, brochures/'
       + 'leaflets/programmes, catalogues, maps/charts, children\'s picture books, printed music) when supplied '
       + 'ELECTRONICALLY, all at 9% — but only the PRINT sub-item 7(a) (periodicals specifically) qualifies at '
@@ -411,7 +435,7 @@ export const VATCA_REVISED_CURATED_RULES: CuratedVatcaRevisedRule[] = [
       + 'chargeable at 9%, not the general 13.5% reduced rate Schedule 3 goods/services otherwise carry.',
     effectiveFrom: '2025-01-01',
     effectiveTo: null,
-    interpretationNote: 'From 1 January 2025, when the (ca) list became "paragraphs 7(a), 7A, 12 and 12A" (footnote F101, Finance Act 2024 s.79(a)); what it listed before is not in the repository. '
+    interpretationNote: 'From 1 January 2025, when the (ca) list became "paragraphs 7(a), 7A, 12 and 12A" (footnote F102, Finance Act 2024 s.79(a)); what it listed before is not in the repository. '
       + 'Schedule 3 paragraph 12(1A) excludes the State or a public body providing these '
       + 'facilities once their total annual turnover for doing so exceeds the VAT services threshold in the '
       + 'current or previous calendar year — a fact this KB has no field to test, so a matching public-body '
@@ -442,7 +466,7 @@ export const VATCA_REVISED_CURATED_RULES: CuratedVatcaRevisedRule[] = [
       + 'not the general 13.5% reduced rate Schedule 3 goods/services otherwise carry.',
     effectiveFrom: '2025-01-01',
     effectiveTo: null,
-    interpretationNote: 'From 1 January 2025, when the (ca) list became "paragraphs 7(a), 7A, 12 and 12A" (footnote F101, Finance Act 2024 s.79(a)); what it listed before is not in the repository. '
+    interpretationNote: 'From 1 January 2025, when the (ca) list became "paragraphs 7(a), 7A, 12 and 12A" (footnote F102, Finance Act 2024 s.79(a)); what it listed before is not in the repository. '
       + 'No `supplyType` condition: paragraph 12A states "supply and installation" as one '
       + 'combined transaction, so restricting this to \'goods\' or \'services\' alone would wrongly exclude '
       + 'half of what the paragraph actually covers. A keyword match on "heat pump" cannot itself confirm the '
@@ -544,13 +568,11 @@ export const VATCA_REVISED_CURATED_RULES: CuratedVatcaRevisedRule[] = [
       + 'above, which this paragraph replaced rather than merely followed.',
   },
   {
-    citation: '2010 Act 31 s.46',
-    sectionNumber: '46',
+    ...CB_2020_2023,
     ruleKey: 'vat.rate_printed_matter_9pct_2020_2023',
     ruleType: 'rate',
     topic: 'vat',
     name: 'Second reduced rate: brochures, catalogues, maps and printed music, 1 Nov 2020 to 31 Aug 2023',
-    statementExcerpt: 'during the\nperiod from 1 November 2020 to\n31\nAugust 2023\n, 9 per cent in relation\nto goods or services of a kind specified in\nparagraphs 3(1)\n,\n3(3)\n,\n\n7(b)\nto\n(e)\n,\n8\n,\n11\nand\n13(3)\nof\nSchedule\n3',
     extractedFact: '9 per cent',
     numericValue: 9,
     unit: 'percent',
@@ -574,13 +596,11 @@ export const VATCA_REVISED_CURATED_RULES: CuratedVatcaRevisedRule[] = [
       + 'transaction description — requiresGuidance is always true regardless.',
   },
   {
-    citation: '2010 Act 31 s.46',
-    sectionNumber: '46',
+    ...CB_2020_2023,
     ruleKey: 'vat.rate_admission_9pct_2020_2023',
     ruleType: 'rate',
     topic: 'vat',
     name: 'Second reduced rate: cinema/theatre/fairground/exhibition admission, 1 Nov 2020 to 31 Aug 2023',
-    statementExcerpt: 'during the\nperiod from 1 November 2020 to\n31\nAugust 2023\n, 9 per cent in relation\nto goods or services of a kind specified in\nparagraphs 3(1)\n,\n3(3)\n,\n\n7(b)\nto\n(e)\n,\n8\n,\n11\nand\n13(3)\nof\nSchedule\n3',
     extractedFact: '9 per cent',
     numericValue: 9,
     unit: 'percent',
@@ -603,13 +623,11 @@ export const VATCA_REVISED_CURATED_RULES: CuratedVatcaRevisedRule[] = [
       + 'scheduleRates.ts, which gives 9% for this same window, so the two agree (issue #205).',
   },
   {
-    citation: '2010 Act 31 s.46',
-    sectionNumber: '46',
+    ...CB_2020_2023,
     ruleKey: 'vat.rate_hotel_accommodation_9pct_2020_2023',
     ruleType: 'rate',
     topic: 'vat',
     name: 'Second reduced rate: hotel/guesthouse/holiday accommodation, 1 Nov 2020 to 31 Aug 2023',
-    statementExcerpt: 'during the\nperiod from 1 November 2020 to\n31\nAugust 2023\n, 9 per cent in relation\nto goods or services of a kind specified in\nparagraphs 3(1)\n,\n3(3)\n,\n\n7(b)\nto\n(e)\n,\n8\n,\n11\nand\n13(3)\nof\nSchedule\n3',
     extractedFact: '9 per cent',
     numericValue: 9,
     unit: 'percent',
