@@ -307,6 +307,35 @@ export const irishTaxRules = sqliteTable('irish_tax_rules', {
   index('irish_tax_rules_review_idx').on(t.reviewStatus),
 ]);
 
+/**
+ * A book's own decision about one rule version (ADR-0020 §6, issue #686 step
+ * 11): accept, reject, or move it through review, by whom, when and why.
+ *
+ * Append-only: a later decision is a new row, so the record of what was
+ * decided, and on what reason, is never overwritten. The expert review a
+ * version ships with lives in the rules catalogue (`catalogue/`), not here;
+ * the book's latest decision, when it has one, is what the book follows
+ * (`effectiveRuleReview`).
+ *
+ * Keyed by `ruleKey` and `ruleVersion`, not by the book's rule row, so a
+ * decision survives the rules moving out of the book into the install-level
+ * store. `ruleId` records the row it was taken on while that row exists.
+ */
+export const irishRuleDecisions = sqliteTable('irish_rule_decisions', {
+  id: text('id').primaryKey(),
+  companyId: text('company_id').notNull().references(() => companies.id),
+  ruleKey: text('rule_key').notNull(),
+  ruleVersion: integer('rule_version').notNull(),
+  ruleId: text('rule_id'),
+  status: text('status', { enum: IRISH_RULE_REVIEW_STATUSES }).notNull(),
+  decidedBy: text('decided_by').notNull(),
+  decidedAt: text('decided_at').notNull(),
+  reason: text('reason'),
+  createdAt: timestamps.createdAt,
+}, (t) => [
+  index('irish_rule_decisions_version_idx').on(t.companyId, t.ruleKey, t.ruleVersion, t.decidedAt),
+]);
+
 export const IRISH_TEST_CASE_TYPES = [
   'positive', 'negative', 'exception', 'boundary', 'effective_date',
 ] as const;

@@ -400,6 +400,20 @@
       "when": 1791283796612,
       "tag": "0056_tax_heads",
       "breakpoints": true
+    },
+    {
+      "idx": 57,
+      "version": "6",
+      "when": 1791289128328,
+      "tag": "0057_rule_decisions",
+      "breakpoints": true
+    },
+    {
+      "idx": 58,
+      "version": "6",
+      "when": 1791289135287,
+      "tag": "0058_rule_decisions_backfill",
+      "breakpoints": true
     }
   ]
 }

@@ -59,6 +59,7 @@ import { CAR_EMISSIONS_SOURCES, CAR_EMISSIONS_CURATED_RULES } from './carEmissio
 import { syncRuleLinks } from './ruleLinks';
 import { taxHeadsFor } from './taxHeads';
 import { CATALOGUE_DIR, CATALOGUE_ENTRIES, catalogueEntryPath, ingestCatalogueFile, readCatalogueEntry } from './catalogue';
+import { checkCatalogueVersions } from './ruleDecisions';
 
 type IngestParams = { companyId: string; markdown: string; ingestVersion: string; localPath: string };
 type IngestFn = (db: AppDatabase, params: IngestParams) => unknown;
@@ -209,6 +210,8 @@ export interface KnowledgeBaseLoadResult {
   sourcesProcessed: number;
   rulesBefore: number;
   rulesAfter: number;
+  /** Rule versions the book references that the installed catalogue does not ship; each raised as a review item. */
+  catalogueVersionsMissing: string[];
 }
 
 export function countStatutoryRules(db: AppDatabase, companyId: string): number {
@@ -255,10 +258,12 @@ export function loadStatutoryKnowledgeBase(
   // The links between rules (ADR-0020), after every rule they name exists.
   syncRuleLinks(db, { companyId: params.companyId });
   fillTaxHeads(db, { companyId: params.companyId });
+  const missing = checkCatalogueVersions(db, { companyId: params.companyId, root: params.root });
   return {
     sourcesProcessed: CATALOGUE_ENTRIES.length + SOURCES.length,
     rulesBefore,
     rulesAfter: countStatutoryRules(db, params.companyId),
+    catalogueVersionsMissing: missing.map((m) => m.versionId),
   };
 }
 

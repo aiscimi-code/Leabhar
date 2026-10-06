@@ -102,8 +102,21 @@ longer in the text. `--trace` raises a review item for every rule taken from
 a changed source and every rule relying on one (`sourceDrift.ts`); nothing is
 edited, and an approval stands only against the hash it was given on.
 
-**Not yet.** Rules are still stored per book. An install-level rules store
-with per-book `rule_decisions` (ADR-0020 §6, issue #686 step 11) follows.
+**Decisions.** A book's own decisions about a rule version are kept in
+`irish_rule_decisions`, append-only: `review` (`setRuleReviewStatus`) adds
+one each time, with who, when and why, and migration 0058 carried across
+every decision taken before. The expert review ships in the catalogue, read
+as an install-level, read-only store (`catalogueRuleStore`).
+`effectiveRuleReview` gives the book's latest decision when it has one, else
+the catalogue's. Loading the knowledge base raises a review item for every
+version the book holds or an invoice line applied, from a catalogued source,
+that the installed catalogue does not ship (`checkCatalogueVersions`);
+nothing is switched to another version.
+
+**Not yet.** The rule rows themselves are still copied into each book: they
+move to the install-level store once every source is in the catalogue
+(#556). Until then a lookup reads the row's review columns, which
+`setRuleReviewStatus` keeps in step with the latest decision.
 
 A relationship between rules that exists only in code is a bug: declare it
 as a link.
