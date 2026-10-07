@@ -787,13 +787,27 @@ const STATUTORY_INSTRUMENTS: Record<string, {
       const regs = parseSi156(withRegulationHeadings(text)).filter((reg) => SI_156.regulations.includes(reg.regulationNumber));
       const found = regs.map((reg) => reg.regulationNumber).join(', ');
       if (found !== SI_156.regulations.join(', ')) throw new Error(`S.I. 156/2012: found regulations ${found}.`);
-      return regs.map((reg) => {
+      const schedules = ['1', '2'].map((n) => {
+        const start = text.indexOf(`SCHEDULE ${n}\n`);
+        if (start < 0) throw new Error(`S.I. 156/2012: Schedule ${n} is not on the page.`);
+        const next = n === '1' ? text.indexOf('SCHEDULE 2\n', start + 1) : text.length;
+        const excerpt = text.slice(start, next < 0 ? text.length : next).trim();
+        return {
+          sectionNumber: `Schedule ${n}`, heading: n === '1'
+            ? 'Provisions of the Principal Act which relate to certain income, profits or gains in a specified return for the purposes of Regulation 3'
+            : 'Certain deductions or reliefs which may be claimed in a specified return for the purposes of Regulation 3',
+          locator: `Schedule ${n}`, category: 'procedure' as const, relevant: false,
+          relevanceReason: `Schedule to Regulation 3. Held so the regulation is complete (#705).`,
+          excerpt,
+        };
+      });
+      return [...regs.map((reg) => {
         const { relevant, reason } = si156Relevance(reg);
         return {
           sectionNumber: reg.regulationNumber, heading: reg.heading, locator: `reg.${reg.regulationNumber}`,
           category: reg.category, relevant, relevanceReason: reason, excerpt: reg.provisionText,
         };
-      });
+      }), ...schedules];
     },
   },
   'si-69-2025/2025-si-69': {

@@ -11,7 +11,7 @@ import { ids } from '@/lib/ids';
 import { nowIso } from '../dates';
 import { sha256Hex } from '@/lib/hash';
 import { parseSi156, provisionSlug, assessRelevance, type ParsedSi156Regulation } from './si156Parser';
-import { SI_156_CURATED_RULES } from './si156Curation';
+import { SI_156_CAPACITY_EXCLUSION, SI_156_CURATED_RULES } from './si156Curation';
 import { upsertReviewItem } from '../extraction/service';
 import { crossReferencesFromProvision, sameCrossReferences } from './dependencies';
 import { taxHeadsFor } from './taxHeads';
@@ -25,20 +25,18 @@ export const SI_156 = {
   // Regulation 1(2) states its own commencement verbatim: "These Regulations
   // come into operation on 1 June 2012."
   effectiveFrom: '2012-06-01',
-  /**
-   * The regulations held as provisions: the ones the statute copy quoted
-   * verbatim, which books already hold. The official page has all nine (#705).
-   */
-  regulations: ['1', '2', '4'],
-  note: 'Only regulations 1, 2 and 4 are held as provisions: the ones the earlier statute copy quoted '
-    + 'verbatim, which books already hold. Regulations 3 and 5-9 are on the official page but are not '
-    + 'ingested or curated into any rule (#705).',
+  /** Regulations 1 to 9. Schedules are held beside them (#705). */
+  regulations: ['1', '2', '3', '4', '5', '6', '7', '8', '9'],
+  note: 'Regulations 1 to 9 and both Schedules are held, from the official page. Regulation 5 is the '
+    + 'capacity exclusion, in force from 1 June 2012 (reg.1(2)). The TDM 38-01-03b passage explains it '
+    + 'and does not originate it (#709, #705).',
 };
 
 /** Whether a regulation bears on the rules: its category's default, or curated into a rule. */
 export function si156Relevance(reg: ParsedSi156Regulation): { relevant: boolean; reason: string } {
   const { relevant, reason } = assessRelevance(reg.category);
-  if (relevant || !SI_156_CURATED_RULES.some((r) => r.regulationNumber === reg.regulationNumber)) return { relevant, reason };
+  const curated = [...SI_156_CURATED_RULES, SI_156_CAPACITY_EXCLUSION];
+  if (relevant || !curated.some((r) => r.regulationNumber === reg.regulationNumber)) return { relevant, reason };
   return {
     relevant: true,
     reason: 'Curated: mapped to a rule in si156Curation.ts, overriding the '
@@ -238,4 +236,82 @@ export function deriveSi156Rules(
   }
 
   return { created, superseded, unchanged, skippedNoProvision };
+}
+
+/**
+ * Regulation 5 as version 2 of the capacity-exclusion rule (#709).
+ *
+ * Version 1 is the released TDM version and is not closed: its dates are part
+ * of the released-version hash. This row starts on 1 June 2012 (reg.1(2)), so
+ * a lookup from that date finds the exclusion. It does not rewrite version 1.
+ */
+export function deriveSi156CapacityExclusionRule(
+  db: AppDatabase,
+  params: { companyId: string },
+): { created: number; unchanged: number; skippedNoProvision: string[] } {
+  const rule = SI_156_CAPACITY_EXCLUSION;
+  const sourceId = preferredSourceId(db, SI_156.citation);
+  const prov = sourceId
+    ? db.select().from(irishActProvisions).where(eq(irishActProvisions.sourceId, sourceId)).all()
+        .find((p) => p.sectionNumber === rule.regulationNumber)
+    : undefined;
+  if (!prov || !prov.relevant) return { created: 0, unchanged: 0, skippedNoProvision: [rule.ruleKey] };
+
+  const rows = db.select().from(irishTaxRules)
+    .where(and(eq(irishTaxRules.companyId, params.companyId), eq(irishTaxRules.ruleKey, rule.ruleKey))).all();
+  if (rows.some((r) => r.statement === rule.statementExcerpt && r.effectiveFrom === SI_156.effectiveFrom)) {
+    return { created: 0, unchanged: 1, skippedNoProvision: [] };
+  }
+
+  const prior = rows.filter((r) => r.active).sort((a, b) => b.ruleVersion - a.ruleVersion)[0];
+  const newRuleId = ids.taxRule();
+  db.insert(irishTaxRules).values({
+    id: newRuleId,
+    companyId: params.companyId,
+    provisionId: prov.id,
+    ruleKey: rule.ruleKey,
+    ruleType: rule.ruleType,
+    topic: rule.topic,
+    taxHeads: taxHeadsFor(rule.ruleKey, rule.topic),
+    name: rule.name,
+    statement: rule.statementExcerpt,
+    extractedFact: null,
+    humanExplanation: rule.interpretationNote,
+    numericValue: null,
+    unit: null,
+    qualifier: null,
+    conditions: rule.conditions,
+    exceptions: rule.exceptions,
+    crossReferences: crossReferencesFromProvision(prov),
+    accountingEffect: null,
+    taxEffect: null,
+    vatEffect: rule.vatEffect,
+    reportingEffect: rule.reportingEffect,
+    requiresGuidance: true,
+    humanReviewRequired: true,
+    reviewStatus: 'ai_extracted',
+    ruleVersion: prior ? prior.ruleVersion + 1 : 1,
+    supersedesRuleId: prior?.id ?? null,
+    priority: 100,
+    effectiveFrom: SI_156.effectiveFrom,
+    source: 'derived',
+    confidence: 70,
+    provenanceStatus: 'ai_suggestion',
+    sourceNote: `Curated from ${SI_156.citation} reg.${rule.regulationNumber}; not yet human-reviewed. ${rule.interpretationNote}`,
+    sourceDate: nowIso(),
+  }).run();
+
+  upsertReviewItem(db, {
+    companyId: params.companyId,
+    kind: 'unresolved_ai_suggestion',
+    severity: 'info',
+    title: `New Irish VAT rule extracted: ${rule.name}`,
+    detail: `${SI_156.citation} reg.${rule.regulationNumber}, in force from ${SI_156.effectiveFrom} (reg.1(2)). ${rule.interpretationNote} `
+      + 'Review against the source text and approve, or reject, before it is treated as authoritative.',
+    entityType: 'irish_tax_rule',
+    entityId: newRuleId,
+    dedupeKey: `irish_tax_rule:${newRuleId}`,
+    context: { ruleKey: rule.ruleKey, regulationNumber: rule.regulationNumber },
+  });
+  return { created: 1, unchanged: 0, skippedNoProvision: [] };
 }

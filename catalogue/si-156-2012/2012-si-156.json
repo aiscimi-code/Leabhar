@@ -11,7 +11,7 @@
     "retrievedOn": "2026-10-06",
     "publicationDate": null,
     "effectiveFrom": "2012-06-01",
-    "note": "Only regulations 1, 2 and 4 are held as provisions: the ones the earlier statute copy quoted verbatim, which books already hold. Regulations 3 and 5-9 are on the official page but are not ingested or curated into any rule (#705)."
+    "note": "Regulations 1 to 9 and both Schedules are held, from the official page. Regulation 5 is the capacity exclusion (in force 1 June 2012, reg.1(2)); the TDM 38-01-03b passage explains it and does not originate it (#709, #705)."
   },
   "provisions": [
     {
@@ -33,6 +33,15 @@
       "excerpt": "2. (1) In these Regulations—\n\n“capacity” means sufficient access to the Internet by which either or both a specified return or the payment of any specified liabilities may be made by electronic means and, in the case of an individual, also means not prevented by reason of age or mental or physical infirmity from either or both making a specified return or paying any specified liabilities by electronic means;\n\n“Commissioners” means the Revenue Commissioners;\n\n“Principal Act” means the Taxes Consolidation Act 1997 (No. 39 of 1997);\n\n“Regulations of 2011” means the Tax Returns and Payments (Mandatory Electronic Filing and Payment of Tax) Regulations 2011 (S.I. No. 223 of 2011);\n\n“return” has the same meaning as it has in section 917D of the Principal Act;\n\n“tax year” means a year of assessment.\n\n(2)(a) Any return which a person is or may be required by the Acts to make to the Commissioners and which is specified for the purposes of Chapter 6 of Part 38 of the Principal Act by order made by the Commissioners under section 917E of that Act is specified as a specified return.\n\n(b) Any liabilities to tax, including interest on unpaid tax, arising under any provision of the Acts, the payment of which is or will be accounted for, directly or indirectly, in a specified return, including any payment which is treated under the Acts as a payment on foot of, or on account of, any liabilities to tax, are specified as specified liabilities.\n\n(c) Each person to whom these Regulations relate, other than the Commissioners, an officer of the Commissioners or the Appeal Commissioners, is specified as a specified person for the purposes of paragraphs (a) and (b) of subsection (3) of section 917EA of the Principal Act and these Regulations."
     },
     {
+      "sectionNumber": "3",
+      "heading": "Persons in receipt of certain income or claiming certain reliefs required to make returns and payments by electronic means",
+      "locator": "reg.3",
+      "category": "procedure",
+      "relevant": false,
+      "relevanceReason": "Interpretation and machinery for a return that is not a VAT return; not curated into a VAT rule.",
+      "excerpt": "3. (1) Where any specified person, other than a specified person to whom the Regulations of 2011 apply, is required to make a specified return in accordance with section 951 of the Principal Act for the tax year 2010 or any subsequent tax year, being a specified return which includes either or both—\n\n(a) income, profits or gains to which any provision of the Principal Act referred to in Schedule 1 applies, and\n\n(b) a claim to any deduction or relief under any provision of the Principal Act referred to in Schedule 2,\n\nthat specified person shall, on and from—\n\n(i)1 June 2012, or\n\n(ii) such later date by which that specified return is required to be made,\n\nmake any specified return that is required to be made by or subsequent to that date, by or on behalf of that specified person, by electronic means and in accordance with Chapter 6 of Part 38 of the Principal Act.\n\n(2) Where, on or after the date from which paragraph (1) applies to a specified person, a payment of any specified liabilities falls due to be made by or on behalf of the specified person, the payment shall be made by such electronic means as are required by the Commissioners."
+    },
+    {
       "sectionNumber": "4",
       "heading": "Persons registered for VAT required to make returns and payments by electronic means",
       "locator": "reg.4",
@@ -40,6 +49,69 @@
       "relevant": true,
       "relevanceReason": "Substantive vat provision; potentially bears on transaction treatment.",
       "excerpt": "4. (1) Where any specified person, other than a specified person to whom the Regulations of 2011 apply—\n\n(a) is an accountable person for the purposes of section 65 of the Value-Added Tax Consolidation Act 2010 (No. 31 of 2010) on 1 June 2012, or\n\n(b) becomes an accountable person for those purposes on any date subsequent to 1 June 2012,\n\nthat specified person shall, on and from—\n\n(i) where subparagraph (a) applies, 1 June 2012, or\n\n(ii) where subparagraph (b) applies, the date the specified person becomes an accountable person,\n\nmake any specified return that is required to be made by or subsequent to that date, by or on behalf of that specified person, by electronic means and in accordance with Chapter 6 of Part 38 of the Principal Act.\n\n(2) Where, on or after the date from which paragraph (1) applies to a specified person, a payment of any specified liabilities falls due to be made by or on behalf of the specified person, the payment shall be made by such electronic means as are required by the Commissioners."
+    },
+    {
+      "sectionNumber": "5",
+      "heading": "Exclusion of certain specified persons",
+      "locator": "reg.5",
+      "category": "vat",
+      "relevant": true,
+      "relevanceReason": "Curated: mapped to vat.mandatory_electronic_filing_capacity_exclusion in si156Curation.ts. Starts 2012-06-01 (reg.1(2)), not the TDM revision date (#709).",
+      "excerpt": "5. (1) A specified person may, by notifying the Commissioners in writing, request to be excluded from the provisions of these Regulations on the grounds that the specified person does not have the capacity to make a specified return or pay the specified tax liabilities by electronic means and the notification shall include all information relevant to the consideration by the Commissioners of the request.\n\n(2) Where the Commissioners receive a notification from a specified person in accordance with paragraph (1) or where the Commissioners otherwise consider it appropriate, they may exclude the specified person from the provisions of these Regulations only if they are satisfied that, in all of the circumstances, the specified person could not reasonably be expected to have the capacity to make a specified return or to make a payment of specified tax liabilities by electronic means.\n\n(3) A decision to exclude a specified person from the provisions of these Regulations by the Commissioners in accordance with paragraph (2) may be made at any time but where a notification has been received from a specified person in accordance with paragraph (1) the decision shall be made within 30 days of receipt of the notification, and the Commissioners shall, in all cases, notify the specified person in writing of the decision."
+    },
+    {
+      "sectionNumber": "6",
+      "heading": "Right of appeal to Appeal Commissioners",
+      "locator": "reg.6",
+      "category": "procedure",
+      "relevant": false,
+      "relevanceReason": "Appeal against a refusal to exclude. Procedure; not a transaction rule.",
+      "excerpt": "6. (1) A specified person aggrieved by a failure of the Commissioners to exclude the specified person from the provisions of these Regulations in accordance with Regulation 5(2) may, by notice in writing to the Commissioners before the end of the period of 30 days beginning with the day on which notice of the decision was given to the specified person, apply to have such specified person’s request to be excluded from the provisions of these Regulations heard and determined by the Appeal Commissioners.\n\n(2) On the hearing of an appeal under this Regulation, the Appeal Commissioners shall have regard only to those matters to which the Commissioners may or are required to have regard under these Regulations."
+    },
+    {
+      "sectionNumber": "7",
+      "heading": "Provision to amend exclusions",
+      "locator": "reg.7",
+      "category": "procedure",
+      "relevant": false,
+      "relevanceReason": "Revoking an exclusion after a material change. Procedure; not a transaction rule.",
+      "excerpt": "7. (1) If, at any time after a decision by the Commissioners in accordance with Regulation 5(2) or a determination by the Appeal Commissioners in accordance with Regulation 6(2) to exclude a specified person from the provisions of these Regulations, the Commissioners decide that, due to a material change in all of the circumstances, the specified person should not be so excluded, they shall notify the specified person in writing of that decision.\n\n(2) The decision referred to in paragraph (1) shall be deemed to be a failure to exclude the specified person from the provisions of these Regulations and Regulation 6 shall apply accordingly."
+    },
+    {
+      "sectionNumber": "8",
+      "heading": "Time at which payments made by electronic means are taken to be made",
+      "locator": "reg.8",
+      "category": "procedure",
+      "relevant": false,
+      "relevanceReason": "When an electronic payment counts as made. Not curated into a rule.",
+      "excerpt": "8. For the purpose of these Regulations, the time at which a payment of any specified liabilities by or on behalf of a specified person shall be taken as having been made shall be the later of the due date for that payment and the time at which the Commissioners receive authorisation to debit the amount of the payment from the account of the specified person in a financial institution."
+    },
+    {
+      "sectionNumber": "9",
+      "heading": "Presumptions",
+      "locator": "reg.9",
+      "category": "procedure",
+      "relevant": false,
+      "relevanceReason": "Certificate presumption. Not curated into a rule.",
+      "excerpt": "9. For the purposes of any dispute arising as to the time at which a payment of any specified liabilities to which these Regulations apply is to be taken as having been made, a certificate signed by an officer of the Commissioners which certifies that he or she has examined the relevant records and that it appears from them that the time at which the payment is to be taken as having been made, is the time so specified in the certificate, shall be evidence until the contrary is proven that the payment was made at the time so certified."
+    },
+    {
+      "sectionNumber": "Schedule 1",
+      "heading": "Provisions of the Principal Act which relate to certain income, profits or gains in a specified return for the purposes of Regulation 3",
+      "locator": "Schedule 1",
+      "category": "procedure",
+      "relevant": false,
+      "relevanceReason": "Schedule to Regulation 3. Held so the regulation is complete (#705).",
+      "excerpt": "SCHEDULE 1\n\nRegulation 3\n\nPROVISIONS OF THE PRINCIPAL ACT WHICH RELATE TO CERTAIN INCOME, PROFITS OR GAINS IN A SPECIFIED RETURN FOR THE PURPOSES OF REGULATION 3\n\nSection 140\n\nSection 141\n\nSection 195\n\nSection 232\n\nSection 234"
+    },
+    {
+      "sectionNumber": "Schedule 2",
+      "heading": "Certain deductions or reliefs which may be claimed in a specified return for the purposes of Regulation 3",
+      "locator": "Schedule 2",
+      "category": "procedure",
+      "relevant": false,
+      "relevanceReason": "Schedule to Regulation 3. Held so the regulation is complete (#705).",
+      "excerpt": "SCHEDULE 2\n\nRegulation 3\n\nCERTAIN DEDUCTIONS OR RELIEFS WHICH MAY BE CLAIMED IN A SPECIFIED RETURN FOR THE PURPOSES OF REGULATION 3\n\n1. Any deduction to which the individual is entitled under the following provisions of the Principal Act:\n\n(a) section 248;\n\n(b) section 250;\n\n(c) section 253;\n\n(d) section 480A;\n\n(e) section 481;\n\n(f) section 489;\n\n(g) section 493;\n\n(h) section 774;\n\n(i) section 776;\n\n(j) section 787;\n\n(k) section 787C;\n\n(l) section 787N.\n\n2. Any relief to which the individual is entitled under the following provisions of the Principal Act:\n\n(a) section 482;\n\n(b) section 825A.\n\nGIVEN under my hand,\n\n18 May 2012.\n\nNIALL CODY,\n\nRevenue Commissioner.\n\nEXPLANATORY NOTE\n\n(This note is not part of the Instrument and does not purport to be a legal interpretation).\n\nTax Returns and Payments (Mandatory Electronic Filing and Payment of Tax) Regulations 2012\n\nThese Regulations are made by the Revenue Commissioners under the provisions of section 917EA of the Taxes Consolidation Act 1997. This section was inserted by section 164 of the Finance Act 2003 and was made subject to a commencement order by the Minister for Finance. This order was signed on 28 July 2008.\n\nThe Regulations underpin Phase 4 of Revenue’s programme to establish the use of electronic channels as the normal way of conducting tax business by providing for the mandatory electronic filing of certain tax returns and payment of tax liabilities by certain categories of taxpayers.\n\nWith effect from 1 June 2012 the following categories of taxpayers are obliged to file their returns electronically (if they are not already obliged to do so):\n\n• Self-assessed individuals claiming certain income exemptions (Artists Exemption, Woodlands Exemption, Patent Income Exemption).\n\n• Self-assessed individuals claiming certain retirement related reliefs: (relief for Retirement Annuity Contract payments, relief for PRSA contributions, relief in relation to Overseas Pension Plans (migrant member relief), Retirement Relief for Sportspersons, relief for Superannuation Contributions/Additional Voluntary Contributions).\n\n• Self-assessed individuals claiming certain other income tax reliefs (BES relief, Employment and Investment Incentive relief, Seed Capital relief, Film relief, Interest relief on loans applied in acquiring an interest or share in certain companies or partnerships, Transborder relief, Significant Buildings/Gardens relief).\n\n• All taxpayers who are registered for VAT.\n\nIn all cases, the payment of any tax and duty liabilities and the filing of any returns, which arise after the obligation to electronically file commences, must be made electronically and must continue for all subsequent returns and payments.\n\nThe Revenue Commissioners may, on application, exclude a taxpayer from the obligation to pay and file electronically if they are satisfied that the taxpayer does not have the capacity to do so and in this context “capacity” is taken to mean sufficient access to the Internet and in the case of an individual is not prevented by reason of age, physical or mental infirmity from filing and paying electronically. A taxpayer aggrieved at a failure by the Revenue Commissioners to exclude them from the requirements may appeal that failure to the Appeal Commissioners. An excluded taxpayer may, if circumstances change, have that exclusion revoked and that decision may also be appealed to the Appeal Commissioners.\n\nProvision is also made to determine the time at which payments made by electronic means are to be taken as having been made."
     }
   ],
   "rules": [
@@ -52,6 +124,28 @@
           "effectiveFrom": "2012-06-01",
           "effectiveTo": null,
           "quote": "that specified person shall, on and from—\n\n(i) where subparagraph (a) applies, 1 June 2012, or\n\n(ii) where subparagraph (b) applies, the date the specified person becomes an accountable person,\n\nmake any specified return that is required to be made by or subsequent to that date, by or on behalf of that specified person, by electronic means and in accordance with Chapter 6 of Part 38 of the Principal Act.",
+          "value": null,
+          "unit": null,
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    },
+    {
+      "key": "vat.mandatory_electronic_filing_capacity_exclusion",
+      "sectionNumber": "5",
+      "versions": [
+        {
+          "version": 2,
+          "effectiveFrom": "2012-06-01",
+          "effectiveTo": null,
+          "quote": "5. (1) A specified person may, by notifying the Commissioners in writing, request to be excluded from the provisions of these Regulations on the grounds that the specified person does not have the capacity to make a specified return or pay the specified tax liabilities by electronic means and the notification shall include all information relevant to the consideration by the Commissioners of the request.\n\n(2) Where the Commissioners receive a notification from a specified person in accordance with paragraph (1) or where the Commissioners otherwise consider it appropriate, they may exclude the specified person from the provisions of these Regulations only if they are satisfied that, in all of the circumstances, the specified person could not reasonably be expected to have the capacity to make a specified return or to make a payment of specified tax liabilities by electronic means.\n\n(3) A decision to exclude a specified person from the provisions of these Regulations by the Commissioners in accordance with paragraph (2) may be made at any time but where a notification has been received from a specified person in accordance with paragraph (1) the decision shall be made within 30 days of receipt of the notification, and the Commissioners shall, in all cases, notify the specified person in writing of the decision.",
           "value": null,
           "unit": null,
           "review": {

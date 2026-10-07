@@ -18,12 +18,14 @@ beforeEach(() => {
 });
 
 describe('ingestSi156FromCatalogue', () => {
-  it('ingests only regs 1, 2 and 4 under its own citation and is idempotent by content', () => {
+  it('ingests regulations 1 to 9 and both Schedules, and is idempotent by content', () => {
     const first = ingestSi156FromCatalogue(db, { companyId });
     expect(first.ingested).toBe(true);
-    expect(first.provisionCount).toBe(3);
+    expect(first.provisionCount).toBe(11);
+    const sections = db.select().from(irishActProvisions).where(eq(irishActProvisions.sourceId, first.sourceId)).all().map((p) => p.sectionNumber);
+    expect(sections).toEqual(['1', '2', '3', '4', '5', '6', '7', '8', '9', 'Schedule 1', 'Schedule 2']);
     const relevant = db.select().from(irishActProvisions).where(eq(irishActProvisions.sourceId, first.sourceId)).all().filter((p) => p.relevant);
-    expect(relevant.length).toBe(1); // curated override for reg.4
+    expect(relevant.map((p) => p.sectionNumber).sort()).toEqual(['4', '5']);
 
     const second = ingestSi156FromCatalogue(db, { companyId });
     expect(second.ingested).toBe(false);
@@ -108,3 +110,21 @@ describe('deriveSi156Rules', () => {
     expect(result.applicableRules.map((r) => r.ruleKey)).not.toContain('vat.mandatory_electronic_filing');
   });
 });
+
+describe('capacity exclusion from Regulation 5 (#709)', () => {
+  it('a lookup from June 2012 finds the exclusion, and the day before does not', () => {
+    const before = lookupTaxRule(db, {
+      companyId, ruleKey: 'vat.mandatory_electronic_filing_capacity_exclusion', asOfDate: '2012-05-31',
+    });
+    expect(before).toBeNull();
+    const on = lookupTaxRule(db, {
+      companyId, ruleKey: 'vat.mandatory_electronic_filing_capacity_exclusion', asOfDate: '2012-06-01',
+    });
+    expect(on).not.toBeNull();
+    expect(on!.citation).toBe('S.I. 156/2012');
+    expect(on!.sectionNumber).toBe('5');
+    expect(on!.effectiveFrom).toBe('2012-06-01');
+    expect(on!.statement).toContain('does not have the capacity');
+  });
+});
+
