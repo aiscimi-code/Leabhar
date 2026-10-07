@@ -32,5 +32,28 @@
       "excerpt": "5. Reporting Requirements\nThe legislation requires an employer to notify Revenue on or before the provision of\nany of the three reportable measures to an employee in real time. As stated in\nparagraph 2, an employer must determine in advance of the payment or benefit\nbeing made, whether the conditions for payment without the deduction of tax have\nbeen satisfied.\nIf the employer is satisfied that the payment or benefit is non-taxable and meets the\ncriteria of one of the items reportable, they must ensure that the details are\nreported to Revenue, on or before the payment/benefit has been provided to the\nemployee.\nAn employer is already required to maintain detailed records of all non-taxable\npayments or benefits provided to employees/directors.\nS.I. No. 1/2024 - Income Tax (Employments) Regulations 2024, available on the Irish\nStatute Book, prescribes the reporting period, the form and other particulars or\ndocuments that will apply in regard to reportable benefits.\nIn accordance with S.I. No. 1/2024 - Income Tax (Employments) Regulations 2024,\nRevenue requires employers to report the following information in respect of each\nitem subject to reporting.\n5.1. Small benefit exemption\nThe reportable details are:\n value of the benefit, and\n date provided to the employee.\n5.2. Remote working daily allowance\nThe reportable details are:\n total number of remote working days,\n amount paid, and\n date paid to the employee/director.\n5.3. Travel and subsistence\nThe reportable details are amount paid and the date paid to the employee/director\nfor each of the following subcategories:\n travel vouched,\n travel unvouched,\n subsistence vouched,\n subsistence unvouched,\n advance payment of travel and subsistence,\n8\n\n\n\n\n<!-- page 9 of 24 -->\n\n\nTax and Duty Manual Part 38-03-33\n site-based employees (including “country money”),\n emergency travel, and\n eating on site."
     }
   ],
-  "rules": []
+  "rules": [
+    {
+      "key": "err.remote_working_daily_allowance",
+      "sectionNumber": "4",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2024-01-01",
+          "effectiveTo": null,
+          "quote": "payments up to €3.20 to employees, for each day worked from home, subject to",
+          "value": 320,
+          "unit": "eur_minor",
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    }
+  ]
 }

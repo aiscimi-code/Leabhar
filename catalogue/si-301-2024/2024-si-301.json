@@ -18,7 +18,7 @@
       "sectionNumber": "2",
       "heading": "Commencement",
       "locator": "reg.2",
-      "category": "company_law",
+      "category": "procedure",
       "relevant": true,
       "relevanceReason": "Company size criteria: the figures S.I. 301/2024 replaces, and the s.280I election (issue #555).",
       "excerpt": "2. These Regulations come into operation on 1 July 2024."
@@ -27,7 +27,7 @@
       "sectionNumber": "4",
       "heading": "Amendment of s.280A",
       "locator": "reg.4",
-      "category": "company_law",
+      "category": "procedure",
       "relevant": true,
       "relevanceReason": "Company size criteria: the figures S.I. 301/2024 replaces, and the s.280I election (issue #555).",
       "excerpt": "4. Section 280A(3) of the Principal Act is amended -\n\n(a) in paragraph (a), by the substitution of “€15 million” for “€12 million”, and\n\n(b) in paragraph (b), by the substitution of “€7.5 million” for “€6 million”."
@@ -36,7 +36,7 @@
       "sectionNumber": "6",
       "heading": "Amendment of s.280D",
       "locator": "reg.6",
-      "category": "company_law",
+      "category": "procedure",
       "relevant": true,
       "relevanceReason": "Company size criteria: the figures S.I. 301/2024 replaces, and the s.280I election (issue #555).",
       "excerpt": "6. Section 280D(3)(b) of the Principal Act is amended -\n\n(a) in subparagraph (i), by the substitution of “€900,000” for “€700,000”, and\n\n(b) in subparagraph (ii), by the substitution of “€450,000” for “€350,000”."
@@ -45,7 +45,7 @@
       "sectionNumber": "7",
       "heading": "Amendment of s.280F",
       "locator": "reg.7",
-      "category": "company_law",
+      "category": "procedure",
       "relevant": true,
       "relevanceReason": "Company size criteria: the figures S.I. 301/2024 replaces, and the s.280I election (issue #555).",
       "excerpt": "7. Section 280F(3) of the Principal Act is amended -\n\n(a) in paragraph (a), by the substitution of “€50 million” for “€40 million”, and\n\n(b) in paragraph (b), by the substitution of “€25 million” for “€20 million”."
@@ -54,11 +54,166 @@
       "sectionNumber": "9",
       "heading": "Amendment of Chapter 1A",
       "locator": "reg.9",
-      "category": "company_law",
+      "category": "procedure",
       "relevant": true,
       "relevanceReason": "Company size criteria: the figures S.I. 301/2024 replaces, and the s.280I election (issue #555).",
       "excerpt": "9. Chapter 1A of Part 6 of the Principal Act is amended by the insertion of the following section after section 280H:\n\n“Treatment of qualifying conditions in respect of certain financial years\n\n280I. (1) Where a monetary amount referred to in a relevant provision, in respect of the turnover or balance sheet total of a company or group, is amended by the adjustment of size regulations, a company or group shall, for the purposes of satisfying qualifying conditions under a relevant provision, treat all the amendments as applying either (as the company elects) to -\n\n(a) each financial year beginning on or after 1 January 2024, or\n\n(b) each financial year beginning on or after 1 January 2023, in accordance with Article 2(1) of the Commission Delegated Directive (EU) 2023/2775 of 17 October 20232.\n\n(2) The relevant provisions shall apply to the financial year of a company or group in accordance with the election of the company or group under subsection (1).\n\n(3) In this section -\n\n‘adjustment of size regulations’ means the European Union (Adjustments of Size Criteria for Certain Companies and Groups) Regulations 2024;\n\n‘relevant provision’ means sections 280A(3), 280B(4), 280D(3)(b), 280F(3) and 280G(4).”."
     }
   ],
-  "rules": []
+  "rules": [
+    {
+      "key": "company.medium_company_balance_sheet_threshold_pre_2024",
+      "sectionNumber": "7",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2017-06-09",
+          "effectiveTo": "2024-07-01",
+          "quote": "by the substitution of “€25 million” for “€20 million”",
+          "value": 2000000000,
+          "unit": "eur_minor",
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    },
+    {
+      "key": "company.medium_company_turnover_threshold_pre_2024",
+      "sectionNumber": "7",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2017-06-09",
+          "effectiveTo": "2024-07-01",
+          "quote": "by the substitution of “€50 million” for “€40 million”",
+          "value": 4000000000,
+          "unit": "eur_minor",
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    },
+    {
+      "key": "company.micro_company_balance_sheet_threshold_pre_2024",
+      "sectionNumber": "6",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2017-06-09",
+          "effectiveTo": "2024-07-01",
+          "quote": "by the substitution of “€450,000” for “€350,000”",
+          "value": 35000000,
+          "unit": "eur_minor",
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    },
+    {
+      "key": "company.micro_company_turnover_threshold_pre_2024",
+      "sectionNumber": "6",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2017-06-09",
+          "effectiveTo": "2024-07-01",
+          "quote": "by the substitution of “€900,000” for “€700,000”",
+          "value": 70000000,
+          "unit": "eur_minor",
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    },
+    {
+      "key": "company.size_criteria_financial_year_election",
+      "sectionNumber": "9",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2024-07-01",
+          "effectiveTo": null,
+          "quote": "treat all the amendments as applying either (as the company elects) to -",
+          "value": null,
+          "unit": null,
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    },
+    {
+      "key": "company.small_company_balance_sheet_threshold_pre_2024",
+      "sectionNumber": "4",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2017-06-09",
+          "effectiveTo": "2024-07-01",
+          "quote": "by the substitution of “€7.5 million” for “€6 million”",
+          "value": 600000000,
+          "unit": "eur_minor",
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    },
+    {
+      "key": "company.small_company_turnover_threshold_pre_2024",
+      "sectionNumber": "4",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2017-06-09",
+          "effectiveTo": "2024-07-01",
+          "quote": "by the substitution of “€15 million” for “€12 million”",
+          "value": 1200000000,
+          "unit": "eur_minor",
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    }
+  ]
 }

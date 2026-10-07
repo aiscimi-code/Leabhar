@@ -60,5 +60,138 @@
       "excerpt": "31. (1) In this Regulations “allowable contribution” means a contribution or a deduction payable by an employee and deductible by an employer from emoluments of the employee and which is—\n\n(a) by virtue of section 471 of the Act, allowable as a deduction from such emoluments for the purposes of assessment under Schedule E,\n\n(b) an ordinary annual contribution, or any other contribution treated by the Revenue Commissioners, as respects the year in which it is paid, as an ordinary annual contribution paid in that year, allowable by virtue of section 774 or 776 of the Act, as a deduction from such emoluments for the purposes of assessment under Schedule E,\n\n(c) by virtue of section 787C of the Act, to be deducted from or set off against the employee’s relevant earnings (within the meaning of section 787B of the Act) for the year of assessment in which it is paid,\n\n(d) by virtue of section 787 of the Act, to be deducted from or set off against the employee’s relevant earnings (within the meaning of section 783 of the Act) for the year of assessment in which it is paid,\n\n(e) an additional superannuation contribution within the meaning of section 32 of the Public Service Pay and Pensions Act 2017 where such contribution is allowed to be deducted as an expense incurred in the year in which the contribution is paid.\n\n(2) When making a deduction or repayment of tax in accordance with these Regulations from or in respect of emoluments to which Chapter 4 of Part 42 of the Act applies, an employer shall make such deduction or repayment as would require to be made if the amount of the emoluments were those emoluments reduced by the amount of the allowable contribution deductible from those emoluments.\n\nRevocation"
     }
   ],
-  "rules": []
+  "rules": [
+    {
+      "key": "paye.cumulative_basis",
+      "sectionNumber": "11",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2019-01-01",
+          "effectiveTo": null,
+          "quote": "(A x standard rate of tax) + (B x higher rate of tax)",
+          "value": null,
+          "unit": null,
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    },
+    {
+      "key": "paye.emergency_no_ppsn",
+      "sectionNumber": "19",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2019-01-01",
+          "effectiveTo": null,
+          "quote": "who has not furnished an employer with his or her personal public service number, the employer shall deduct tax from such payment at the higher rate of tax.",
+          "value": null,
+          "unit": null,
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    },
+    {
+      "key": "paye.emergency_ppsn",
+      "sectionNumber": "19",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2019-01-01",
+          "effectiveTo": null,
+          "quote": "one fifty-second of the amount chargeable to tax at the standard rate specified in Part 1 of the Table to section",
+          "value": null,
+          "unit": null,
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    },
+    {
+      "key": "paye.pension_deduction",
+      "sectionNumber": "31",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2019-01-01",
+          "effectiveTo": null,
+          "quote": "reduced by the amount of the allowable contribution deductible from those emoluments.",
+          "value": null,
+          "unit": null,
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    },
+    {
+      "key": "paye.week1_basis",
+      "sectionNumber": "20",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2019-01-01",
+          "effectiveTo": null,
+          "quote": "shall be calculated by reference to the aggregate of the emoluments paid",
+          "value": null,
+          "unit": null,
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    },
+    {
+      "key": "paye.week53",
+      "sectionNumber": "15",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2019-01-01",
+          "effectiveTo": null,
+          "quote": "the amount of tax which would have been deductible therefrom if the payment had been made on the preceding 1 January.",
+          "value": null,
+          "unit": null,
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    }
+  ]
 }

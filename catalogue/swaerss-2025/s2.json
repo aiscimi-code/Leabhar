@@ -22,5 +22,28 @@
       "excerpt": "2.\n(1) Section 13(2) (amended by section 2 of the Act of 2024) of the Principal Act is amended, in paragraph (d)—\n\n(a) by the substitution, in subparagraph (i), of “€552” for “€527”, and\n\n(b) by the substitution, in subparagraph (ii), of “€552” for “€527”.\n\n(2) This section comes into operation on 1 January 2026."
     }
   ],
-  "rules": []
+  "rules": [
+    {
+      "key": "prsi.class_a_employer_threshold",
+      "sectionNumber": "2",
+      "versions": [
+        {
+          "version": 2,
+          "effectiveFrom": "2026-01-01",
+          "effectiveTo": null,
+          "quote": "of “€552” for “€527”",
+          "value": 55200,
+          "unit": "eur_minor",
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    }
+  ]
 }

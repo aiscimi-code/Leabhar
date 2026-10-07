@@ -22,5 +22,28 @@
       "excerpt": "4.\n—\n(1) Where in any contribution week a payment is made to or for the benefit of an employed\ncontributor in respect of reckonable earnings of that employed contributor, a levy\nshall be payable by the employed contributor\n’\ns employer at the rate of 1.0 per cent of the amount of the reckonable earnings in\nthat week to which that payment relates.\n\n(2) Nothing in\nsubsection (1)\nor any other provision of this Act shall be construed as requiring levy to be paid\nin relation to a payment of the kind referred to in\nsubsection (1)\nthat is made before the commencement of this Act.\n\n(3) An employer shall not deduct from the reckonable earnings of an employed contributor\nor recover from such contributor any sum in respect of levy paid or payable under\nthis Act.\n\n(4) Where, but for this\nsubsection, levy would be payable in respect of an employed contributor under this\nAct,\nthen if no employment contribution is payable during any period of exemption by virtue\nof a scheme provided for under regulations made pursuant to section 13(9) of the\nSocial Welfare\nConsolidation Act 2005\nand known as the Employers\n’\nPay-Related Social\nInsurance Exemption Scheme, in respect of that contributor, levy shall not be payable\nduring that period.\n\n(5)\n…\n\n(6)\n…\n\n(7)\n…\n\n(8) Regulations for the time being in force under section 29A of the Act of 1993 shall\napply in relation to levy as they apply in relation to employment contributions.\n\n(9) Levy shall, for the purposes of the collection and recovery of it under\nsection 5\n, be regarded as an employment contribution.\n\n(10) Section 6(1) of the Act of 1993 is amended by the insertion after “under this Act” of “(other than section 6B)”.\n\n(11) The Minister for Social, Community and Family Affairs shall pay out of the Social\nInsurance Fund to the Minister in the financial year 2000 a sum of £120 million.\n\n(12) Moneys held on the commencement of this Act by Foras Áiseanna Saothair for and on account of the levy imposed pursuant to\nsection 21 of the Industrial Training Act, 1967\n, shall be paid by it, forthwith after such commencement, into the Fund.\n\n(13) For the purposes of this section\n—\n\n\"payment\" includes a notional\npayment;\n\n\"notional payment\" has the\nmeaning assigned to it by section 985A (as inserted by\nsection 6 of\nthe Finance Act 2003\n) of\nthe Taxes Consolidation Act\n1997\n.\n\n…\n\n(14) Where, for a year of assessment (within the meaning of the Tax Acts), the Revenue\nCommissioners and an employer enter into an agreement under a specified provision\nof\nthe Taxes Consolidation Act 1997\nwhereby the employer will account to the Revenue Commissioners, in accordance with\nthat provision, in respect of the income tax due on qualifying emoluments (within\nthe meaning of that provision) and where that agreement is not null and void, then,\nin respect of those qualifying emoluments, the employer as part of that agreement,\nshall make a payment in respect of reckonable earnings equal to 0.7 per cent of the\naggregate of the amount of those qualifying reckonable earnings and the amount of\nincome tax payable under the agreement in respect of them.\n\n(15) In\nsubsection (14)\n\n\"specified provision\" means such provision as may be prescribed by regulations made\nby\nthe Minister for the purposes of that subsection."
     }
   ],
-  "rules": []
+  "rules": [
+    {
+      "key": "prsi.ntf_levy_rate",
+      "sectionNumber": "4",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2020-01-01",
+          "effectiveTo": null,
+          "quote": "at the rate of 1.0 per cent of the amount of the reckonable earnings in\nthat week",
+          "value": 100,
+          "unit": "basis_points",
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    }
+  ]
 }

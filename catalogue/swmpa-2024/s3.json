@@ -22,5 +22,416 @@
       "excerpt": "3.\n(1) Each provision of the Principal Act specified in\ncolumn (2)\nis amended, on and from 1 October 2024, by the substitution of the text referred to in\ncolumn (4)\nopposite the mention of that provision for the text referred to in\ncolumn (3)\nopposite that text.\n\n(2) Each provision amended under\nsubsection (1)\nis amended, on and from 1 October 2025, by the substitution of the text referred to in\ncolumn (5)\nopposite the mention of the provision so amended for the text substituted by the amendment under\nsubsection (1)\n.\n\n(3) Each provision amended under\nsubsection (2)\nis amended, on and from 1 October 2026, by the substitution of the text referred to in\ncolumn (6)\nopposite the mention of the provision so amended for the text substituted by the amendment under\nsubsection (2)\n.\n\n(4) Each provision amended under\nsubsection (3)\nis amended, on and from 1 October 2027, by the substitution of the text referred to in\ncolumn (7)\nopposite the mention of the provision so amended for the text substituted by the amendment under\nsubsection (3)\n.\n\n(5) Each provision amended under\nsubsection (4)\nis amended, on and from 1 October 2028, by the substitution of the text referred to in\ncolumn (8)\nopposite the mention of the provision so amended for the text substituted by the amendment under\nsubsection (4)\n.\n\n(6) In this section, a reference to a column is a reference to a column of the Table to this section.\n\nTABLE\n\nAmendment\n\n(1)\n\nProvision of Principal Act\n\n(2)\n\nText of Provision\n\n(3)\n\nFirst Substitution\n\n(4)\n\nSecond Substitution\n\n(5)\n\nThird Substitution\n\n(6)\n\nFourth Substitution\n\n(7)\n\nFifth Substitution\n\n(8)\n\n1.\n\nSection 13(2)(b)(ii)\n\n“4 per cent”\n\n“4.1 per cent”\n\n“4.2 per cent”\n\n“4.35 per cent”\n\n“4.5 per cent”\n\n“4.7 per cent”\n\n2.\n\nSection 13(2)(d)(i)\n\n“7.8 per cent”\n\n“7.9 per cent”\n\n“8 per cent”\n\n“8.15 per cent”\n\n“8.3 per cent”\n\n“8.5 per cent”\n\n3.\n\nSection 13(2)(d)(ii)\n\n“10.05 per cent”\n\n“10.15 per cent”\n\n“10.25 per cent”\n\n“10.4 per cent”\n\n“10.55 per cent”\n\n“10.75 per cent”\n\n4.\n\nSection 13(2)(db)(ii)\n\n“4 per cent”\n\n“4.1 per cent”\n\n“4.2 per cent”\n\n“4.35 per cent”\n\n“4.5 per cent”\n\n“4.7 per cent”\n\n5.\n\nSection 13(8)\n\n“0.5 per cent”\n\n“0.6 per cent”\n\n“0.7 per cent”\n\n“0.85 per cent”\n\n“1 per cent”\n\n“1.2 per cent”\n\n6.\n\nSection 13(8)\n\n“7.8 per cent”\n\n“7.9 per cent”\n\n“8 per cent”\n\n“8.15 per cent”\n\n“8.3 per cent”\n\n“8.5 per cent”\n\n7.\n\nSection 13(8)\n\n“10.05 per cent”\n\n“10.15 per cent”\n\n“10.25 per cent”\n\n“10.4 per cent”\n\n“10.55 per cent”\n\n“10.75 per cent”\n\n8.\n\nSection 13(10)(a)(i)\n\n“14.05 per cent”\n\n“14.25 per cent”\n\n“14.45 per cent”\n\n“14.75 per cent”\n\n“15.05 per cent”\n\n“15.45 per cent”\n\n9.\n\nSection 21(1)(a)\n\n“4 per cent”\n\n“4.1 per cent”\n\n“4.2 per cent”\n\n“4.35 per cent”\n\n“4.5 per cent”\n\n“4.7 per cent”\n\n10.\n\nSection 21(1)(c)\n\n“4 per cent”\n\n“4.1 per cent”\n\n“4.2 per cent”\n\n“4.35 per cent”\n\n“4.5 per cent”\n\n“4.7 per cent”\n\n11.\n\nSection 21(3)(a)(i)\n\n“4 per cent”\n\n“4.1 per cent”\n\n“4.2 per cent”\n\n“4.35 per cent”\n\n“4.5 per cent”\n\n“4.7 per cent”\n\n12.\n\nSection 29(1)\n\n“4 per cent”\n\n“4.1 per cent”\n\n“4.2 per cent”\n\n“4.35 per cent”\n\n“4.5 per cent”\n\n“4.7 per cent”\n\n13.\n\nSection 30B(2)\n\n“4 per cent”\n\n“4.1 per cent”\n\n“4.2 per cent”\n\n“4.35 per cent”\n\n“4.5 per cent”\n\n“4.7 per cent”\n\n14.\n\nSection 30F(1)\n\n“4 per cent”\n\n“4.1 per cent”\n\n“4.2 per cent”\n\n“4.35 per cent”\n\n“4.5 per cent”\n\n“4.7 per cent”\n\n15.\n\nSection 30F(4)(a)(i)\n\n“4 per cent”\n\n“4.1 per cent”\n\n“4.2 per cent”\n\n“4.35 per cent”\n\n“4.5 per cent”\n\n“4.7 per cent”"
     }
   ],
-  "rules": []
+  "rules": [
+    {
+      "key": "prsi.class_a_employee_rate",
+      "sectionNumber": "3",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2024-10-01",
+          "effectiveTo": "2025-10-01",
+          "quote": "Section 13(2)(db)(ii)\n\n“4 per cent”\n\n“4.1 per cent”\n\n“4.2 per cent”\n\n“4.35 per cent”\n\n“4.5 per cent”\n\n“4.7 per cent”",
+          "value": 410,
+          "unit": "basis_points",
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        },
+        {
+          "version": 2,
+          "effectiveFrom": "2025-10-01",
+          "effectiveTo": "2026-10-01",
+          "quote": "Section 13(2)(db)(ii)\n\n“4 per cent”\n\n“4.1 per cent”\n\n“4.2 per cent”\n\n“4.35 per cent”\n\n“4.5 per cent”\n\n“4.7 per cent”",
+          "value": 420,
+          "unit": "basis_points",
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        },
+        {
+          "version": 3,
+          "effectiveFrom": "2026-10-01",
+          "effectiveTo": "2027-10-01",
+          "quote": "Section 13(2)(db)(ii)\n\n“4 per cent”\n\n“4.1 per cent”\n\n“4.2 per cent”\n\n“4.35 per cent”\n\n“4.5 per cent”\n\n“4.7 per cent”",
+          "value": 435,
+          "unit": "basis_points",
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        },
+        {
+          "version": 4,
+          "effectiveFrom": "2027-10-01",
+          "effectiveTo": "2028-10-01",
+          "quote": "Section 13(2)(db)(ii)\n\n“4 per cent”\n\n“4.1 per cent”\n\n“4.2 per cent”\n\n“4.35 per cent”\n\n“4.5 per cent”\n\n“4.7 per cent”",
+          "value": 450,
+          "unit": "basis_points",
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        },
+        {
+          "version": 5,
+          "effectiveFrom": "2028-10-01",
+          "effectiveTo": null,
+          "quote": "Section 13(2)(db)(ii)\n\n“4 per cent”\n\n“4.1 per cent”\n\n“4.2 per cent”\n\n“4.35 per cent”\n\n“4.5 per cent”\n\n“4.7 per cent”",
+          "value": 470,
+          "unit": "basis_points",
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    },
+    {
+      "key": "prsi.class_a_employer_rate_higher",
+      "sectionNumber": "3",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2024-10-01",
+          "effectiveTo": "2025-10-01",
+          "quote": "Section 13(2)(d)(ii)\n\n“10.05 per cent”\n\n“10.15 per cent”\n\n“10.25 per cent”\n\n“10.4 per cent”\n\n“10.55 per cent”\n\n“10.75 per cent”",
+          "value": 1015,
+          "unit": "basis_points",
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        },
+        {
+          "version": 2,
+          "effectiveFrom": "2025-10-01",
+          "effectiveTo": "2026-10-01",
+          "quote": "Section 13(2)(d)(ii)\n\n“10.05 per cent”\n\n“10.15 per cent”\n\n“10.25 per cent”\n\n“10.4 per cent”\n\n“10.55 per cent”\n\n“10.75 per cent”",
+          "value": 1025,
+          "unit": "basis_points",
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        },
+        {
+          "version": 3,
+          "effectiveFrom": "2026-10-01",
+          "effectiveTo": "2027-10-01",
+          "quote": "Section 13(2)(d)(ii)\n\n“10.05 per cent”\n\n“10.15 per cent”\n\n“10.25 per cent”\n\n“10.4 per cent”\n\n“10.55 per cent”\n\n“10.75 per cent”",
+          "value": 1040,
+          "unit": "basis_points",
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        },
+        {
+          "version": 4,
+          "effectiveFrom": "2027-10-01",
+          "effectiveTo": "2028-10-01",
+          "quote": "Section 13(2)(d)(ii)\n\n“10.05 per cent”\n\n“10.15 per cent”\n\n“10.25 per cent”\n\n“10.4 per cent”\n\n“10.55 per cent”\n\n“10.75 per cent”",
+          "value": 1055,
+          "unit": "basis_points",
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        },
+        {
+          "version": 5,
+          "effectiveFrom": "2028-10-01",
+          "effectiveTo": null,
+          "quote": "Section 13(2)(d)(ii)\n\n“10.05 per cent”\n\n“10.15 per cent”\n\n“10.25 per cent”\n\n“10.4 per cent”\n\n“10.55 per cent”\n\n“10.75 per cent”",
+          "value": 1075,
+          "unit": "basis_points",
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    },
+    {
+      "key": "prsi.class_a_employer_rate_lower",
+      "sectionNumber": "3",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2024-10-01",
+          "effectiveTo": "2025-10-01",
+          "quote": "Section 13(2)(d)(i)\n\n“7.8 per cent”\n\n“7.9 per cent”\n\n“8 per cent”\n\n“8.15 per cent”\n\n“8.3 per cent”\n\n“8.5 per cent”",
+          "value": 790,
+          "unit": "basis_points",
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        },
+        {
+          "version": 2,
+          "effectiveFrom": "2025-10-01",
+          "effectiveTo": "2026-10-01",
+          "quote": "Section 13(2)(d)(i)\n\n“7.8 per cent”\n\n“7.9 per cent”\n\n“8 per cent”\n\n“8.15 per cent”\n\n“8.3 per cent”\n\n“8.5 per cent”",
+          "value": 800,
+          "unit": "basis_points",
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        },
+        {
+          "version": 3,
+          "effectiveFrom": "2026-10-01",
+          "effectiveTo": "2027-10-01",
+          "quote": "Section 13(2)(d)(i)\n\n“7.8 per cent”\n\n“7.9 per cent”\n\n“8 per cent”\n\n“8.15 per cent”\n\n“8.3 per cent”\n\n“8.5 per cent”",
+          "value": 815,
+          "unit": "basis_points",
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        },
+        {
+          "version": 4,
+          "effectiveFrom": "2027-10-01",
+          "effectiveTo": "2028-10-01",
+          "quote": "Section 13(2)(d)(i)\n\n“7.8 per cent”\n\n“7.9 per cent”\n\n“8 per cent”\n\n“8.15 per cent”\n\n“8.3 per cent”\n\n“8.5 per cent”",
+          "value": 830,
+          "unit": "basis_points",
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        },
+        {
+          "version": 5,
+          "effectiveFrom": "2028-10-01",
+          "effectiveTo": null,
+          "quote": "Section 13(2)(d)(i)\n\n“7.8 per cent”\n\n“7.9 per cent”\n\n“8 per cent”\n\n“8.15 per cent”\n\n“8.3 per cent”\n\n“8.5 per cent”",
+          "value": 850,
+          "unit": "basis_points",
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    },
+    {
+      "key": "prsi.class_s_emoluments_rate",
+      "sectionNumber": "3",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2024-10-01",
+          "effectiveTo": "2025-10-01",
+          "quote": "Section 21(1)(c)\n\n“4 per cent”\n\n“4.1 per cent”\n\n“4.2 per cent”\n\n“4.35 per cent”\n\n“4.5 per cent”\n\n“4.7 per cent”",
+          "value": 410,
+          "unit": "basis_points",
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        },
+        {
+          "version": 2,
+          "effectiveFrom": "2025-10-01",
+          "effectiveTo": "2026-10-01",
+          "quote": "Section 21(1)(c)\n\n“4 per cent”\n\n“4.1 per cent”\n\n“4.2 per cent”\n\n“4.35 per cent”\n\n“4.5 per cent”\n\n“4.7 per cent”",
+          "value": 420,
+          "unit": "basis_points",
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        },
+        {
+          "version": 3,
+          "effectiveFrom": "2026-10-01",
+          "effectiveTo": "2027-10-01",
+          "quote": "Section 21(1)(c)\n\n“4 per cent”\n\n“4.1 per cent”\n\n“4.2 per cent”\n\n“4.35 per cent”\n\n“4.5 per cent”\n\n“4.7 per cent”",
+          "value": 435,
+          "unit": "basis_points",
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        },
+        {
+          "version": 4,
+          "effectiveFrom": "2027-10-01",
+          "effectiveTo": "2028-10-01",
+          "quote": "Section 21(1)(c)\n\n“4 per cent”\n\n“4.1 per cent”\n\n“4.2 per cent”\n\n“4.35 per cent”\n\n“4.5 per cent”\n\n“4.7 per cent”",
+          "value": 450,
+          "unit": "basis_points",
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        },
+        {
+          "version": 5,
+          "effectiveFrom": "2028-10-01",
+          "effectiveTo": null,
+          "quote": "Section 21(1)(c)\n\n“4 per cent”\n\n“4.1 per cent”\n\n“4.2 per cent”\n\n“4.35 per cent”\n\n“4.5 per cent”\n\n“4.7 per cent”",
+          "value": 470,
+          "unit": "basis_points",
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    },
+    {
+      "key": "prsi.class_s_rate",
+      "sectionNumber": "3",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2024-10-01",
+          "effectiveTo": "2025-10-01",
+          "quote": "Section 21(1)(a)\n\n“4 per cent”\n\n“4.1 per cent”\n\n“4.2 per cent”\n\n“4.35 per cent”\n\n“4.5 per cent”\n\n“4.7 per cent”",
+          "value": 410,
+          "unit": "basis_points",
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        },
+        {
+          "version": 2,
+          "effectiveFrom": "2025-10-01",
+          "effectiveTo": "2026-10-01",
+          "quote": "Section 21(1)(a)\n\n“4 per cent”\n\n“4.1 per cent”\n\n“4.2 per cent”\n\n“4.35 per cent”\n\n“4.5 per cent”\n\n“4.7 per cent”",
+          "value": 420,
+          "unit": "basis_points",
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        },
+        {
+          "version": 3,
+          "effectiveFrom": "2026-10-01",
+          "effectiveTo": "2027-10-01",
+          "quote": "Section 21(1)(a)\n\n“4 per cent”\n\n“4.1 per cent”\n\n“4.2 per cent”\n\n“4.35 per cent”\n\n“4.5 per cent”\n\n“4.7 per cent”",
+          "value": 435,
+          "unit": "basis_points",
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        },
+        {
+          "version": 4,
+          "effectiveFrom": "2027-10-01",
+          "effectiveTo": "2028-10-01",
+          "quote": "Section 21(1)(a)\n\n“4 per cent”\n\n“4.1 per cent”\n\n“4.2 per cent”\n\n“4.35 per cent”\n\n“4.5 per cent”\n\n“4.7 per cent”",
+          "value": 450,
+          "unit": "basis_points",
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        },
+        {
+          "version": 5,
+          "effectiveFrom": "2028-10-01",
+          "effectiveTo": null,
+          "quote": "Section 21(1)(a)\n\n“4 per cent”\n\n“4.1 per cent”\n\n“4.2 per cent”\n\n“4.35 per cent”\n\n“4.5 per cent”\n\n“4.7 per cent”",
+          "value": 470,
+          "unit": "basis_points",
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    }
+  ]
 }
