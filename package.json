@@ -31,6 +31,7 @@
     "cli": "tsx src/cli/reconcile.ts",
     "cli:rules": "tsx src/cli/irishRules.ts",
     "catalogue:extract": "tsx scripts/catalogue/extract.ts",
+    "rules:build": "tsx scripts/rules-build.ts",
     "build:package": "node scripts/build-package.mjs",
     "build:installer": "makensis scripts/installer.nsi",
     "test:e2e": "playwright test",

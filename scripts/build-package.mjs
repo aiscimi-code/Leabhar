@@ -6,7 +6,8 @@
  * Steps:
  *  1. Run `next build` (produces .next/standalone/).
  *  2. Copy static assets (standalone doesn't include them).
- *  3. Copy drizzle migrations.
+ *  3. Copy drizzle migrations, the statute sources and the rules catalogue,
+ *     and build the rules store (rules/rules.db, ADR-0021).
  *  4. Copy the launcher.
  *  5. Copy the better-sqlite3 native addon (prebuilds/ or build/Release/).
  *  6. Stage everything into dist/leabhar/app/.
@@ -77,6 +78,12 @@ rmSync(join(STANDALONE, 'docs', 'statutes', '_inbox'), { recursive: true, force:
 // 3b'. Copy the rules catalogue (issue #443): the sources ported out of
 // docs/statutes load from it, and the provision page reads its excerpts.
 copy('rules catalogue', join(ROOT, 'catalogue'), join(STANDALONE, 'catalogue'));
+
+// 3b''. Build the install-level rules store (ADR-0021): the derive pipeline,
+// run once here into rules/rules.db, which the installer owns like any other
+// binary. The build fails when a released rule version is missing or says
+// something else (catalogue/released-versions.json), and then nothing ships.
+run('Rules store', `npx tsx scripts/rules-build.ts --out "${join(STANDALONE, 'rules', 'rules.db')}"`);
 
 // 3c. Copy the OCR and PDF-rendering assets the review screen serves to the
 // browser (issue #202). The list mirrors OCR_ASSETS in src/lib/ocrAssets.ts;

@@ -79,3 +79,12 @@ export function logDirectory(): string {
 export function migrationsFolder(): string {
   return resolve(process.env.LEABHAR_MIGRATIONS ?? join(APP_ROOT, 'drizzle'));
 }
+
+/**
+ * The install-level rules store (ADR-0021). Under APP_ROOT, not DATA_ROOT: the
+ * installer owns it like any other binary, replacing it on every upgrade, and
+ * nothing writes it after the build.
+ */
+export function rulesStorePath(): string {
+  return resolve(process.env.LEABHAR_RULES_DB ?? join(APP_ROOT, 'rules', 'rules.db'));
+}
