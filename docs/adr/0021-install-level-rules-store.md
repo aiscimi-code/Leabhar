@@ -1,6 +1,6 @@
 # 0021. Ship the rules as a read-only database beside the app; a book keeps only its decisions
 
-- **Status:** Proposed
+- **Status:** Accepted
 - **Date:** 2026-10-07
 
 ## Context
@@ -91,6 +91,11 @@ Three alternatives were considered:
      `catalogue/released-versions.json`, the committed list of every
      `key@version` and its content hash from the last release. A missing or
      changed version fails the build.
+   - The content hash covers what the rule says: its dates, quote, value and
+     unit, conditions, exceptions and effects. It never covers the review. An
+     approval or rejection changes who has read a version, not what the
+     version says, so it ships in an update under the same version number and
+     does not fail the build.
 4. **A book keeps only what is its own.** That means:
    - its decisions (`irish_rule_decisions`, unchanged);
    - the version IDs its entries applied (already snapshotted on the lines);
@@ -112,7 +117,11 @@ Three alternatives were considered:
    posted.** A code migration (it needs the store, so it cannot be SQL alone)
    runs after a backup (`src/domain/backup/backup.ts`):
    - **Map versions.** For each of the book's rule rows, it finds the store
-     version that says the same thing (`catalogueVersionFor`). It writes the
+     version that says the same thing: the same dates, quote, value and unit.
+     Dates and quote alone (`catalogueVersionFor` today) are not enough. A
+     corrected figure with the same dates and quote would map to the wrong
+     version, and the map is append-only, so the match adds the value before
+     the migration is written. It writes the
      pair to `irish_rule_version_map` (`company_id`, `rule_key`,
      `book_version`, `catalogue_version`), which is append-only. The two
      places that hold old version numbers, decisions and
@@ -196,8 +205,9 @@ for them. When one exists:
 
 So that this stays possible, the reader switch (Delivery step 3) must not
 assume every rule comes from `rules.db`. Readers go through one function that
-returns the rules a book can see. Today that is the store alone; later it
-becomes the store plus the book's own rules. Building that second source waits
+returns the rules a book can see. Today that is the store plus the book's
+frozen versions in `irish_rule_versions_retained` (decision 6); later it
+also includes the book's own rules. Building that second source waits
 until a practice has a rule to put there.
 
 ## Delivery
@@ -215,9 +225,11 @@ Each step passes the gate alone:
    `ruleReviewResolver` already lists: lookups, figures, rate sync, rule page,
    audit, search, version comparison, provision page and `list-rules`. The
    review resolver loses its by-content match, except through the version map.
-   Readers take rules through one function, not from `rules.db` directly, so
-   practice-authored rules can be added beside the store later (see "Out of
-   scope").
+   Readers take rules through one function, not from `rules.db` directly. It
+   returns the store's versions and the book's frozen versions in
+   `irish_rule_versions_retained`, so a posted line that applied an old
+   wording can still be explained. Practice-authored rules can be added to it
+   later (see "Out of scope").
 4. **Loading stops.** The action, the CLI commands and the seed stop writing
    rules into the book, and the update check in decision 5 replaces them.
 5. **One release later,** drop the copied tables, in each book that has opened
