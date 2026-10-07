@@ -4,7 +4,9 @@ import { createTestDatabase } from '@/db/testing';
 import { createCompany } from '../config/setup';
 import { ingestVatca2010FromCatalogue, deriveVatcaRules } from './vatcaIngestion';
 import { explainRule, ruleCitation, describeCondition } from './ruleInfo';
-import { irishTaxRules } from '@/db/schema';
+import { attachRulesStoreFromBook } from './rulesStore';
+import { and, eq } from 'drizzle-orm';
+import { visibleTaxRules } from '@/db/schema';
 import type { AppDatabase } from '@/db';
 
 let db: AppDatabase;
@@ -18,8 +20,9 @@ beforeEach(() => {
   ({ companyId: otherCompanyId } = createCompany(db, { legalName: 'Other Ltd', seedYears: [2025] }));
   ingestVatca2010FromCatalogue(db, { companyId });
   deriveVatcaRules(db, { companyId });
-  ruleId = db.select({ id: irishTaxRules.id }).from(irishTaxRules)
-    .limit(1).all()[0]!.id;
+  attachRulesStoreFromBook(db, { companyId });
+  ruleId = db.select({ id: visibleTaxRules.id }).from(visibleTaxRules)
+    .where(and(eq(visibleTaxRules.companyId, companyId), eq(visibleTaxRules.origin, 'store'))).limit(1).all()[0]!.id;
 });
 
 describe('describeCondition', () => {
@@ -49,9 +52,11 @@ describe('ruleCitation', () => {
     expect(citation!.provisionId).toBeTruthy();
   });
 
-  it('returns null for an unknown rule and never crosses companies', () => {
+  it('returns null for an unknown rule, and cites a store rule the same for every company', () => {
     expect(ruleCitation(db, { companyId, ruleId: 'nope' })).toBeNull();
-    expect(ruleCitation(db, { companyId: otherCompanyId, ruleId })).toBeNull();
+    // The store is the install's (ADR-0021): a rule in it is every company's. A
+    // book's own retained versions stay with that book (visibleRules.test.ts).
+    expect(ruleCitation(db, { companyId: otherCompanyId, ruleId })).toEqual(ruleCitation(db, { companyId, ruleId }));
   });
 });
 
@@ -72,8 +77,8 @@ describe('explainRule', () => {
     expect(explanation!.humanReviewRequired).toBe(true);
   });
 
-  it('returns null for an unknown rule and never crosses companies', () => {
+  it('returns null for an unknown rule, and explains a store rule the same for every company', () => {
     expect(explainRule(db, { companyId, ruleId: 'nope' })).toBeNull();
-    expect(explainRule(db, { companyId: otherCompanyId, ruleId })).toBeNull();
+    expect(explainRule(db, { companyId: otherCompanyId, ruleId })).toEqual(explainRule(db, { companyId, ruleId }));
   });
 });

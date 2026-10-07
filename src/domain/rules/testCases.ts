@@ -20,9 +20,9 @@
  * that is expected until this generator learns to synthesize a satisfying
  * context per condition (see docs/RULES_KB.md "Limitations").
  */
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import type { AppDatabase } from '@/db';
-import { irishTaxRules, irishTaxRuleTests } from '@/db/schema';
+import { irishTaxRules, irishTaxRuleTests, visibleTaxRules, visibleTaxRuleTests } from '@/db/schema';
 import { ids } from '@/lib/ids';
 import { addDays, asIsoDate } from '../dates';
 import { lookupTransactionRules, type TransactionContext } from './transactionLookup';
@@ -88,14 +88,19 @@ export interface RunTestCasesResult {
   failures: Array<{ testId: string; ruleId: string; description: string; expected: boolean; actual: boolean }>;
 }
 
-/** Run every stored test case, comparing expected applicability against a live lookup. */
+/**
+ * Run every test case the store holds for a rule the book can see, comparing
+ * expected applicability against a live lookup. The store is read-only
+ * (ADR-0021), so a run's outcome is returned, not recorded on the test.
+ */
 export function runTestCases(
   db: AppDatabase,
   params: { companyId: string },
 ): RunTestCasesResult {
-  const tests = db.select().from(irishTaxRuleTests).all();
+  const tests = db.select().from(visibleTaxRuleTests).all();
   const rulesById = new Map(
-    db.select().from(irishTaxRules).where(eq(irishTaxRules.companyId, params.companyId)).all()
+    db.select().from(visibleTaxRules)
+      .where(and(eq(visibleTaxRules.companyId, params.companyId), eq(visibleTaxRules.origin, 'store'))).all()
       .map((r) => [r.id, r]),
   );
 
@@ -113,10 +118,6 @@ export function runTestCases(
     });
     const actual = result.applicableRules.some((r) => r.ruleKey === rule.ruleKey);
     const ok = actual === test.expected.matches;
-
-    db.update(irishTaxRuleTests)
-      .set({ lastRunAt: new Date().toISOString(), lastRunPassed: ok })
-      .where(eq(irishTaxRuleTests.id, test.id)).run();
 
     if (ok) {
       passed++;

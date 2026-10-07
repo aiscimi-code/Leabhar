@@ -4,6 +4,8 @@ import { createTestDatabase } from '@/db/testing';
 import { createCompany } from '../config/setup';
 import { irishTaxRules, irishKnowledgeSources, irishActProvisions } from '@/db/schema';
 import { loadStatutoryKnowledgeBase } from './knowledgeBase';
+import { attachRulesStoreFromBook } from './rulesStore';
+import { attachRulesStore } from './visibleRules';
 import { generateAuditReport } from './audit';
 import {
   resolveRuleDependencies, resolveAllRuleDependencies, crossReferencesFromProvision,
@@ -12,10 +14,11 @@ import {
 import type { AppDatabase } from '@/db';
 
 let db: AppDatabase;
+let sqlite: ReturnType<typeof createTestDatabase>['sqlite'];
 let companyId: string;
 
 beforeAll(() => {
-  ({ db } = createTestDatabase());
+  ({ db, sqlite } = createTestDatabase());
   ({ companyId } = createCompany(db, { legalName: 'Deps Ltd', vatRegistrationStatus: 'registered', seedYears: [2025] }));
   loadStatutoryKnowledgeBase(db, { companyId });
 });
@@ -26,6 +29,22 @@ const activeRule = (ruleKey: string) => db.select().from(irishTaxRules)
     eq(irishTaxRules.ruleKey, ruleKey),
     eq(irishTaxRules.active, true),
   )).get()!;
+
+/** The store's id for a version this book derived: the store numbers it `key@version` (ADR-0021). */
+const storeId = (rule: { ruleKey: string; ruleVersion: number }) => `${rule.ruleKey}@${rule.ruleVersion}`;
+
+/** Resolve a rule after a test edited its derived row: against a store built from this book, then back on the installed store. */
+function resolveEdited(rule: typeof irishTaxRules.$inferSelect) {
+  attachRulesStoreFromBook(db, { companyId });
+  try {
+    return resolveRuleDependencies(db, { companyId, ruleId: storeId(rule) });
+  } finally {
+    db.update(irishTaxRules).set({ crossReferences: crossReferencesFromProvision(
+      db.select().from(irishActProvisions).where(eq(irishActProvisions.id, rule.provisionId)).get()!,
+    ) }).where(eq(irishTaxRules.id, rule.id)).run();
+    attachRulesStore(sqlite);
+  }
+}
 
 describe('cross-reference parsing', () => {
   it('extracts the locator a reference carries', () => {
@@ -60,7 +79,7 @@ describe('rule dependency resolution (issue #438)', () => {
       .where(and(eq(irishTaxRules.companyId, companyId), eq(irishTaxRules.ruleKey, 'vat.registration_threshold_goods')))
       .get()!;
     expect(rule.crossReferences).toContain('Value-Added Tax Consolidation Act 2010 s.2');
-    const deps = resolveRuleDependencies(db, { ruleId: rule.id });
+    const deps = resolveRuleDependencies(db, { companyId, ruleId: storeId(rule) });
     const dep = deps.find((d) => d.reference === 'Value-Added Tax Consolidation Act 2010 s.2')!;
     expect(dep.resolved).toBe(true);
     // The current (LRC revised) text of s.2, not a Schedule paragraph that happens to be numbered 2.
@@ -74,7 +93,7 @@ describe('rule dependency resolution (issue #438)', () => {
       .where(and(eq(irishTaxRules.companyId, companyId), eq(irishTaxRules.ruleKey, 'vat.mandatory_electronic_filing_capacity_exclusion')))
       .get()!;
     expect(rule.crossReferences).toContain('S.I. 156/2012 reg.5');
-    const deps = resolveRuleDependencies(db, { ruleId: rule.id });
+    const deps = resolveRuleDependencies(db, { companyId, ruleId: storeId(rule) });
     const dep = deps.find((d) => d.reference === 'S.I. 156/2012 reg.5')!;
     expect(dep.resolved).toBe(false);
     expect(dep.reason).toContain('no ingested provision is section 5');
@@ -85,25 +104,18 @@ describe('rule dependency resolution (issue #438)', () => {
     // Force a cross-reference to a section this book does not hold.
     db.update(irishTaxRules).set({ crossReferences: ['Value-Added Tax Consolidation Act 2010 s.999'] })
       .where(eq(irishTaxRules.id, rule.id)).run();
-    const deps = resolveRuleDependencies(db, { ruleId: rule.id });
+    const deps = resolveEdited(rule);
     expect(deps[0]!.resolved).toBe(false);
     expect(deps[0]!.reason).toContain('no ingested provision is section 999');
-    // restore
-    db.update(irishTaxRules).set({ crossReferences: crossReferencesFromProvision(
-      db.select().from(irishActProvisions).where(eq(irishActProvisions.id, rule.provisionId)).get()!,
-    ) }).where(eq(irishTaxRules.id, rule.id)).run();
   });
 
   it('reports an instrument this book has not ingested at all', () => {
     const rule = activeRule('ct.rate_standard');
     db.update(irishTaxRules).set({ crossReferences: ['Some Unheard Of Act 1900 s.1'] })
       .where(eq(irishTaxRules.id, rule.id)).run();
-    const deps = resolveRuleDependencies(db, { ruleId: rule.id });
+    const deps = resolveEdited(rule);
     expect(deps[0]!.resolved).toBe(false);
     expect(deps[0]!.reason).toContain('ingests no source for the instrument');
-    db.update(irishTaxRules).set({ crossReferences: crossReferencesFromProvision(
-      db.select().from(irishActProvisions).where(eq(irishActProvisions.id, rule.provisionId)).get()!,
-    ) }).where(eq(irishTaxRules.id, rule.id)).run();
   });
 
   it('every active rule with a cross-reference is resolved or explained in the audit', () => {
@@ -125,7 +137,7 @@ describe('rule dependency resolution (issue #438)', () => {
     // A resolved dependency names the provision and the rules derived from it.
     const resolved = all.filter((d) => d.resolved);
     for (const d of resolved.slice(0, 5)) {
-      const dep = resolveRuleDependencies(db, { ruleId: activeRule(d.ruleKey).id })
+      const dep = resolveRuleDependencies(db, { companyId, ruleId: storeId(activeRule(d.ruleKey)) })
         .find((x) => x.reference === d.reference)!;
       expect(dep.provision!.sectionNumber).toBeTruthy();
       expect(typeof dep.provision!.sourceUrl).toBe('string');

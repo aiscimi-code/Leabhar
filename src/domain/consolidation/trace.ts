@@ -2,7 +2,7 @@ import { and, eq, inArray, isNull, isNotNull } from 'drizzle-orm';
 import type { AppDatabase } from '@/db';
 import {
   bankTransactions, payments, paymentAllocations, invoices, invoiceLines, documents, documentLines,
-  vatEntries, vatPeriods, vatTreatments, irishTaxRules, reviewItems,
+  vatEntries, vatPeriods, vatTreatments, visibleTaxRules, reviewItems,
 } from '@/db/schema';
 
 /**
@@ -121,8 +121,8 @@ export function transactionTrace(db: AppDatabase, params: { companyId: string; b
       : []);
     const ruleKeys = [...new Set(lines.flatMap((l) => l.vatRuleKeys))];
     const rules = new Map(ruleKeys.length
-      ? db.select({ ruleKey: irishTaxRules.ruleKey, name: irishTaxRules.name, provisionId: irishTaxRules.provisionId })
-        .from(irishTaxRules).where(and(eq(irishTaxRules.companyId, params.companyId), inArray(irishTaxRules.ruleKey, ruleKeys)))
+      ? db.select({ ruleKey: visibleTaxRules.ruleKey, name: visibleTaxRules.name, provisionId: visibleTaxRules.provisionId })
+        .from(visibleTaxRules).where(and(eq(visibleTaxRules.companyId, params.companyId), eq(visibleTaxRules.origin, 'store'), inArray(visibleTaxRules.ruleKey, ruleKeys)))
         .all().map((r) => [r.ruleKey, r])
       : []);
 

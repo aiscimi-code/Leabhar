@@ -7,8 +7,9 @@ import { ids } from '@/lib/ids';
 import { loadStatutoryKnowledgeBase } from './knowledgeBase';
 import {
   CURATED_RULE_LINKS, HEADLINE_VAT_RATE_RULE_KEYS, LINK_FROM_RULES, bookDerivedLinks, declaredLinksFrom, declaredLinksTo,
-  scheduleRuleRate, syncRuleLinks, ruleLinksFrom, ruleLinksTo, type CuratedRuleLink,
+  scheduleRuleRate, syncRuleLinks, ruleLinksFrom as storedLinksFrom, ruleLinksTo as storedLinksTo, type CuratedRuleLink,
 } from './ruleLinks';
+import { attachRulesStoreFromBook } from './rulesStore';
 import { advisoryReasons } from './advisoryRules';
 import { VAT_GENERAL_DEDUCTION_RULE_KEY, VAT_DEDUCTION_EXCLUSION_RULE_KEYS } from './vatcaCuration';
 import { DOMESTIC_RC_ADVISORY_RULE_KEYS, RC_CONSTRUCTION_RULE_KEY } from './domesticReverseChargeCuration';
@@ -17,6 +18,19 @@ import { CA_LIST_KNOWN_FROM, SECOND_REDUCED_WINDOWS, scheduleThreeRate } from '.
 import { resolveBookDependencies } from './dependencies';
 import { addDays, asIsoDate } from '../dates';
 import type { AppDatabase } from '@/db';
+
+/**
+ * The link queries read the store (ADR-0021). These tests write the book's own
+ * links, so each query reads a store built from them.
+ */
+function ruleLinksFrom(db: AppDatabase, params: Parameters<typeof storedLinksFrom>[1]) {
+  attachRulesStoreFromBook(db, { companyId: params.companyId });
+  return storedLinksFrom(db, params);
+}
+function ruleLinksTo(db: AppDatabase, params: Parameters<typeof storedLinksTo>[1]) {
+  attachRulesStoreFromBook(db, { companyId: params.companyId });
+  return storedLinksTo(db, params);
+}
 
 describe('rule links in a loaded book (ADR-0020, issue #686)', () => {
   let db: AppDatabase;

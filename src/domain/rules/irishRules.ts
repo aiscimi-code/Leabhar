@@ -9,10 +9,10 @@
  * words — per AGENTS.md invariant #8 ("provenance is mandatory") and the
  * task's "extraction must not silently invent statutory rules".
  */
-import { ne, and, eq, desc } from 'drizzle-orm';
+import { ne, and, eq, asc, desc } from 'drizzle-orm';
 import type { AppDatabase } from '@/db';
 import {
-  irishKnowledgeSources, irishActProvisions, irishTaxRules,
+  irishKnowledgeSources, irishActProvisions, irishTaxRules, visibleActProvisions, visibleKnowledgeSources, visibleTaxRules,
   type IrishSourceType, type IrishProvisionCategory,
 } from '@/db/schema';
 import { ids } from '@/lib/ids';
@@ -29,7 +29,7 @@ import type { ParsedProvision } from './statuteParser';
 import { retiredBy } from './supersessions';
 import { taxHeadsFor } from './taxHeads';
 import { preferredSourceId } from './catalogueSupersession';
-import { ruleReviewResolver, withdrawn, type ReviewedRuleRow, type RuleReview } from './effectiveReview';
+import { ruleReviewResolver, withdrawn, type ReviewedRuleRow, type RuleOrigin, type RuleReview } from './effectiveReview';
 
 export interface KnowledgeSourceRef {
   title: string;
@@ -437,6 +437,8 @@ export interface LookupResult {
   ruleKey: string;
   /** The version of `ruleKey` this row is; with the key, the version ID (`ruleVersionId`). */
   ruleVersion: number;
+  /** Always `store`: a lookup applies the store's version in force, never a frozen one. */
+  origin: RuleOrigin;
   ruleType: string;
   topic: string;
   name: string;
@@ -473,39 +475,40 @@ export interface LookupResult {
 }
 
 const LOOKUP_COLUMNS = {
-  id: irishTaxRules.id,
-  provisionId: irishTaxRules.provisionId,
-  ruleKey: irishTaxRules.ruleKey,
-  ruleVersion: irishTaxRules.ruleVersion,
-  ruleType: irishTaxRules.ruleType,
-  topic: irishTaxRules.topic,
-  name: irishTaxRules.name,
-  statement: irishTaxRules.statement,
-  extractedFact: irishTaxRules.extractedFact,
-  value: irishTaxRules.numericValue,
-  unit: irishTaxRules.unit,
-  qualifier: irishTaxRules.qualifier,
-  taxEffect: irishTaxRules.taxEffect,
-  accountingEffect: irishTaxRules.accountingEffect,
-  vatEffect: irishTaxRules.vatEffect,
-  reportingEffect: irishTaxRules.reportingEffect,
-  reviewStatus: irishTaxRules.reviewStatus,
-  humanReviewRequired: irishTaxRules.humanReviewRequired,
-  requiresGuidance: irishTaxRules.requiresGuidance,
-  effectiveFrom: irishTaxRules.effectiveFrom,
-  effectiveTo: irishTaxRules.effectiveTo,
-  crossReferences: irishTaxRules.crossReferences,
-  sourceNote: irishTaxRules.sourceNote,
-  sourceDate: irishTaxRules.sourceDate,
-  sectionNumber: irishActProvisions.sectionNumber,
-  heading: irishActProvisions.heading,
-  provisionText: irishActProvisions.provisionText,
-  sourceStart: irishActProvisions.sourceStart,
-  sourceEnd: irishActProvisions.sourceEnd,
-  sourceUrl: irishKnowledgeSources.sourceUrl,
-  citation: irishKnowledgeSources.citation,
-  sourceType: irishKnowledgeSources.sourceType,
-  sourceSha256: irishKnowledgeSources.sha256,
+  id: visibleTaxRules.id,
+  provisionId: visibleTaxRules.provisionId,
+  ruleKey: visibleTaxRules.ruleKey,
+  ruleVersion: visibleTaxRules.ruleVersion,
+  origin: visibleTaxRules.origin,
+  ruleType: visibleTaxRules.ruleType,
+  topic: visibleTaxRules.topic,
+  name: visibleTaxRules.name,
+  statement: visibleTaxRules.statement,
+  extractedFact: visibleTaxRules.extractedFact,
+  value: visibleTaxRules.numericValue,
+  unit: visibleTaxRules.unit,
+  qualifier: visibleTaxRules.qualifier,
+  taxEffect: visibleTaxRules.taxEffect,
+  accountingEffect: visibleTaxRules.accountingEffect,
+  vatEffect: visibleTaxRules.vatEffect,
+  reportingEffect: visibleTaxRules.reportingEffect,
+  reviewStatus: visibleTaxRules.reviewStatus,
+  humanReviewRequired: visibleTaxRules.humanReviewRequired,
+  requiresGuidance: visibleTaxRules.requiresGuidance,
+  effectiveFrom: visibleTaxRules.effectiveFrom,
+  effectiveTo: visibleTaxRules.effectiveTo,
+  crossReferences: visibleTaxRules.crossReferences,
+  sourceNote: visibleTaxRules.sourceNote,
+  sourceDate: visibleTaxRules.sourceDate,
+  sectionNumber: visibleActProvisions.sectionNumber,
+  heading: visibleActProvisions.heading,
+  provisionText: visibleActProvisions.provisionText,
+  sourceStart: visibleActProvisions.sourceStart,
+  sourceEnd: visibleActProvisions.sourceEnd,
+  sourceUrl: visibleKnowledgeSources.sourceUrl,
+  citation: visibleKnowledgeSources.citation,
+  sourceType: visibleKnowledgeSources.sourceType,
+  sourceSha256: visibleKnowledgeSources.sha256,
 } as const;
 
 /**
@@ -514,12 +517,14 @@ const LOOKUP_COLUMNS = {
  * with. A row whose review withdraws it (rejected, or retired) is left out,
  * as a row the book itself rejected is.
  */
-function withReview<T extends ReviewedRuleRow>(db: AppDatabase, companyId: string, rows: T[]): Array<T & { reviewedIn: RuleReview['from'] }> {
+function withReview<T extends ReviewedRuleRow & { humanReviewRequired?: boolean }>(db: AppDatabase, companyId: string, rows: T[]): Array<T & { reviewedIn: RuleReview['from'] }> {
   if (rows.length === 0) return [];
   const review = ruleReviewResolver(db, { companyId });
   return rows.map((r) => {
     const { status, from } = review(r);
-    return { ...r, reviewStatus: status, reviewedIn: from };
+    // Reaching `active` is what lifts the need for a person to confirm the treatment (review.ts).
+    const humanReviewRequired = r.humanReviewRequired === undefined ? undefined : r.humanReviewRequired && status !== 'active';
+    return { ...r, reviewStatus: status, reviewedIn: from, ...(humanReviewRequired === undefined ? {} : { humanReviewRequired }) };
   }).filter((r) => !withdrawn(r.reviewStatus));
 }
 
@@ -561,22 +566,22 @@ export function lookupTaxRule(
   if (!isIsoDate(asOf)) return null; // an invalid as-of date must fail closed, never open every in-force version
   const rows = db
     .select(LOOKUP_COLUMNS)
-    .from(irishTaxRules)
-    .innerJoin(irishActProvisions, eq(irishTaxRules.provisionId, irishActProvisions.id))
-    .innerJoin(irishKnowledgeSources, eq(irishActProvisions.sourceId, irishKnowledgeSources.id))
+    .from(visibleTaxRules)
+    .innerJoin(visibleActProvisions, eq(visibleTaxRules.provisionId, visibleActProvisions.id))
+    .innerJoin(visibleKnowledgeSources, eq(visibleActProvisions.sourceId, visibleKnowledgeSources.id))
     .where(and(
-      eq(irishTaxRules.companyId, params.companyId),
-      eq(irishTaxRules.ruleKey, params.ruleKey),
-      eq(irishTaxRules.enabled, true),
+      eq(visibleTaxRules.companyId, params.companyId), eq(visibleTaxRules.origin, 'store'),
+      eq(visibleTaxRules.ruleKey, params.ruleKey),
+      eq(visibleTaxRules.enabled, true),
       // A rule retired on the review screen (superseded) supplies no figure
       // (issue #484): retiring a rule is the opposite of letting it still
       // stand behind a computation. This is the REVIEW status, not the
       // `active` column — version-chaining clears `active` on a superseded
       // version that remains in force for its own historical window.
       // Rejected rows are excluded by `enabled` already.
-      ne(irishTaxRules.reviewStatus, 'superseded'),
+      ne(visibleTaxRules.reviewStatus, 'superseded'),
     ))
-    .orderBy(desc(irishTaxRules.ruleVersion))
+    .orderBy(desc(visibleTaxRules.ruleVersion))
     .all();
 
   const inForce = withReview(db, params.companyId, rows).find((r) => r.effectiveFrom <= asOf && (!r.effectiveTo || r.effectiveTo > asOf));
@@ -595,14 +600,14 @@ export function listTaxRulesByHead(
   const asOf = params.asOfDate ?? today();
   if (!isIsoDate(asOf)) return [];
   const rows = db.select({
-    ruleKey: irishTaxRules.ruleKey, ruleVersion: irishTaxRules.ruleVersion, topic: irishTaxRules.topic,
-    taxHeads: irishTaxRules.taxHeads, effectiveFrom: irishTaxRules.effectiveFrom, effectiveTo: irishTaxRules.effectiveTo,
-    statement: irishTaxRules.statement, reviewStatus: irishTaxRules.reviewStatus, sourceSha256: irishKnowledgeSources.sha256,
-  }).from(irishTaxRules)
-    .innerJoin(irishActProvisions, eq(irishTaxRules.provisionId, irishActProvisions.id))
-    .innerJoin(irishKnowledgeSources, eq(irishActProvisions.sourceId, irishKnowledgeSources.id))
-    .where(and(eq(irishTaxRules.companyId, params.companyId), eq(irishTaxRules.enabled, true), ne(irishTaxRules.reviewStatus, 'superseded')))
-    .orderBy(irishTaxRules.ruleKey)
+    ruleKey: visibleTaxRules.ruleKey, ruleVersion: visibleTaxRules.ruleVersion, topic: visibleTaxRules.topic,
+    taxHeads: visibleTaxRules.taxHeads, effectiveFrom: visibleTaxRules.effectiveFrom, effectiveTo: visibleTaxRules.effectiveTo,
+    statement: visibleTaxRules.statement, reviewStatus: visibleTaxRules.reviewStatus, origin: visibleTaxRules.origin, sourceSha256: visibleKnowledgeSources.sha256,
+  }).from(visibleTaxRules)
+    .innerJoin(visibleActProvisions, eq(visibleTaxRules.provisionId, visibleActProvisions.id))
+    .innerJoin(visibleKnowledgeSources, eq(visibleActProvisions.sourceId, visibleKnowledgeSources.id))
+    .where(and(eq(visibleTaxRules.companyId, params.companyId), eq(visibleTaxRules.origin, 'store'), eq(visibleTaxRules.enabled, true), ne(visibleTaxRules.reviewStatus, 'superseded')))
+    .orderBy(visibleTaxRules.ruleKey)
     .all();
   return withReview(db, params.companyId, rows)
     .filter((r) => r.taxHeads.includes(params.head) && r.effectiveFrom <= asOf && (r.effectiveTo === null || r.effectiveTo > asOf))
@@ -621,15 +626,16 @@ export function listTaxRulesByTopic(
   if (!isIsoDate(asOf)) return []; // an invalid as-of date must fail closed, never open every in-force rule
   const rows = db
     .select(LOOKUP_COLUMNS)
-    .from(irishTaxRules)
-    .innerJoin(irishActProvisions, eq(irishTaxRules.provisionId, irishActProvisions.id))
-    .innerJoin(irishKnowledgeSources, eq(irishActProvisions.sourceId, irishKnowledgeSources.id))
+    .from(visibleTaxRules)
+    .innerJoin(visibleActProvisions, eq(visibleTaxRules.provisionId, visibleActProvisions.id))
+    .innerJoin(visibleKnowledgeSources, eq(visibleActProvisions.sourceId, visibleKnowledgeSources.id))
     .where(and(
-      eq(irishTaxRules.companyId, params.companyId),
-      eq(irishTaxRules.enabled, true),
-      eq(irishTaxRules.topic, params.topic),
+      eq(visibleTaxRules.companyId, params.companyId), eq(visibleTaxRules.origin, 'store'),
+      eq(visibleTaxRules.enabled, true),
+      eq(visibleTaxRules.topic, params.topic),
     ))
-    .orderBy(desc(irishTaxRules.priority))
+    // Ties by key, so the answer never depends on how the store laid out its rows.
+    .orderBy(desc(visibleTaxRules.priority), asc(visibleTaxRules.ruleKey))
     .all()
     .filter((r) => r.effectiveFrom <= asOf && (!r.effectiveTo || r.effectiveTo > asOf));
   return withReview(db, params.companyId, rows).map(toLookupResult);
@@ -644,15 +650,16 @@ export function listTaxRulesByCategory(
   if (!isIsoDate(asOf)) return []; // an invalid as-of date must fail closed, never open every in-force rule
   const rows = db
     .select(LOOKUP_COLUMNS)
-    .from(irishTaxRules)
-    .innerJoin(irishActProvisions, eq(irishTaxRules.provisionId, irishActProvisions.id))
-    .innerJoin(irishKnowledgeSources, eq(irishActProvisions.sourceId, irishKnowledgeSources.id))
+    .from(visibleTaxRules)
+    .innerJoin(visibleActProvisions, eq(visibleTaxRules.provisionId, visibleActProvisions.id))
+    .innerJoin(visibleKnowledgeSources, eq(visibleActProvisions.sourceId, visibleKnowledgeSources.id))
     .where(and(
-      eq(irishTaxRules.companyId, params.companyId),
-      eq(irishTaxRules.enabled, true),
-      eq(irishActProvisions.category, params.category),
+      eq(visibleTaxRules.companyId, params.companyId), eq(visibleTaxRules.origin, 'store'),
+      eq(visibleTaxRules.enabled, true),
+      eq(visibleActProvisions.category, params.category),
     ))
-    .orderBy(desc(irishTaxRules.priority))
+    // Ties by key, so the answer never depends on how the store laid out its rows.
+    .orderBy(desc(visibleTaxRules.priority), asc(visibleTaxRules.ruleKey))
     .all()
     .filter((r) => r.effectiveFrom <= asOf && (!r.effectiveTo || r.effectiveTo > asOf));
   return withReview(db, params.companyId, rows).map(toLookupResult);
@@ -666,11 +673,11 @@ export function listTaxRulesByCategory(
  */
 export function listIngestedCitations(db: AppDatabase, companyId: string): string[] {
   const rows = db
-    .select({ citation: irishKnowledgeSources.citation })
-    .from(irishTaxRules)
-    .innerJoin(irishActProvisions, eq(irishTaxRules.provisionId, irishActProvisions.id))
-    .innerJoin(irishKnowledgeSources, eq(irishActProvisions.sourceId, irishKnowledgeSources.id))
-    .where(and(eq(irishTaxRules.companyId, companyId), eq(irishTaxRules.enabled, true)))
+    .select({ citation: visibleKnowledgeSources.citation })
+    .from(visibleTaxRules)
+    .innerJoin(visibleActProvisions, eq(visibleTaxRules.provisionId, visibleActProvisions.id))
+    .innerJoin(visibleKnowledgeSources, eq(visibleActProvisions.sourceId, visibleKnowledgeSources.id))
+    .where(and(eq(visibleTaxRules.companyId, companyId), eq(visibleTaxRules.origin, 'store'), eq(visibleTaxRules.enabled, true)))
     .all();
   return [...new Set(rows.map((r) => r.citation))];
 }

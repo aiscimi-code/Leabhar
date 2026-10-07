@@ -22,7 +22,7 @@
  * - **The store seen.** The store's signature goes to `rules_store_seen`.
  *
  * It needs the store, so it is code rather than SQL, and it runs after a
- * backup (`createBackup`). It is append-only and safe to run again: a book
+ * backup (`createBackupSync`). It is append-only and safe to run again: a book
  * version already mapped or retained is left as it is, and a binding is
  * recorded again only when it changed. The book's copied tables are not
  * touched; they are dropped a release later (ADR-0021 §6).
@@ -36,7 +36,7 @@ import {
 } from '@/db/schema';
 import { ids } from '@/lib/ids';
 import { nowIso } from '../dates';
-import { createBackup, type BackupResult } from '../backup/backup';
+import { createBackupSync, type BackupResult } from '../backup/backup';
 import { upsertReviewItem } from '../extraction/service';
 import { openRulesStore, type RulesStoreMeta } from './rulesStore';
 
@@ -64,18 +64,42 @@ export interface RulesStoreMigrationResult {
  * Back the book up, then move it onto the rules store. A store that cannot be
  * opened fails before the backup and before anything is written.
  */
-export async function migrateBookToRulesStore(
+export function migrateBookToRulesStore(
   db: AppDatabase,
-  params: { storePath?: string; root?: string; backup?: Parameters<typeof createBackup>[1] } = {},
-): Promise<RulesStoreMigrationResult> {
+  params: { storePath?: string; root?: string; backup?: Parameters<typeof createBackupSync>[1] } = {},
+): RulesStoreMigrationResult {
   const store = openRulesStore({ path: params.storePath, root: params.root });
   try {
-    const backup = await createBackup(db, params.backup);
+    const backup = createBackupSync(db, params.backup);
     const companies = applyRulesStoreMigration(db, store.sqlite, store.meta, backup);
     return { backup, store: store.meta, companies };
   } finally {
     store.sqlite.close();
   }
+}
+
+/**
+ * Whether the book holds a copied rule row the move onto the store has not
+ * yet mapped or kept: a book from before the store, or one whose copies were
+ * loaded again since (loading stops in ADR-0021 delivery step 4).
+ */
+export function bookNeedsRulesStoreMigration(db: AppDatabase): boolean {
+  return db.get<{ n: number } | undefined>(sql`SELECT 1 AS n FROM main.irish_tax_rules r
+    WHERE NOT EXISTS (SELECT 1 FROM irish_rule_version_map m
+        WHERE m.company_id = r.company_id AND m.rule_key = r.rule_key AND m.book_version = r.rule_version)
+      AND NOT EXISTS (SELECT 1 FROM irish_rule_versions_retained t
+        WHERE t.company_id = r.company_id AND t.rule_key = r.rule_key AND t.rule_version = r.rule_version)
+    LIMIT 1`) !== undefined;
+}
+
+/**
+ * Move the book onto the rules store when it is opened, if it needs it
+ * (`bookNeedsRulesStoreMigration`): once, after a backup, before anything
+ * reads it (`getDb`, `openBook`). A book with nothing to move is left as it is.
+ */
+export function moveBookOntoRulesStore(db: AppDatabase, params: { dbPath: string }): RulesStoreMigrationResult | null {
+  if (!bookNeedsRulesStoreMigration(db)) return null;
+  return migrateBookToRulesStore(db, { backup: { dbPath: params.dbPath } });
 }
 
 /** One of the book's rule rows, with where its provision sits. */
@@ -94,6 +118,14 @@ interface BookRuleRow {
   citation: string;
   sha256: string;
   sectionNumber: string;
+  sourceTitle: string;
+  sourceType: (typeof irishRuleVersionsRetained.$inferInsert)['sourceType'];
+  sourceUrl: string;
+  sourceLocalPath: string | null;
+  provisionHeading: string;
+  provisionText: string | null;
+  provisionLocator: string | null;
+  provisionCategory: (typeof irishRuleVersionsRetained.$inferInsert)['provisionCategory'];
 }
 
 function applyRulesStoreMigration(
@@ -121,7 +153,9 @@ function applyRulesStoreMigration(
     const rows = tx.all<BookRuleRow>(sql`SELECT r.id, r.company_id AS companyId, r.rule_key AS ruleKey, r.rule_version AS ruleVersion,
         r.effective_from AS effectiveFrom, r.effective_to AS effectiveTo, r.statement, r.numeric_value AS numericValue, r.unit,
         r.tax_rate_id AS taxRateId, r.vat_treatment_id AS vatTreatmentId,
-        s.citation, s.sha256, p.section_number AS sectionNumber
+        s.citation, s.sha256, p.section_number AS sectionNumber,
+        s.title AS sourceTitle, s.source_type AS sourceType, s.source_url AS sourceUrl, s.local_path AS sourceLocalPath,
+        p.heading AS provisionHeading, p.provision_text AS provisionText, p.locator AS provisionLocator, p.category AS provisionCategory
       FROM irish_tax_rules r
       JOIN irish_act_provisions p ON p.id = r.provision_id
       JOIN irish_knowledge_sources s ON s.id = p.source_id
@@ -204,6 +238,9 @@ function retain(tx: Tx, row: BookRuleRow, reason: RetainedReason, matches: numbe
     conditions: full.conditions, exceptions: full.exceptions, accountingEffect: full.accountingEffect, taxEffect: full.taxEffect,
     vatEffect: full.vatEffect, reportingEffect: full.reportingEffect, reviewStatus: full.reviewStatus,
     effectiveFrom: full.effectiveFrom, effectiveTo: full.effectiveTo,
+    sourceTitle: row.sourceTitle, sourceType: row.sourceType, sourceUrl: row.sourceUrl, sourceLocalPath: row.sourceLocalPath,
+    provisionHeading: row.provisionHeading, provisionText: row.provisionText, provisionLocator: row.provisionLocator,
+    provisionCategory: row.provisionCategory,
   }).run();
   const versionId = `${row.ruleKey}@${row.ruleVersion}`;
   const decisions = tx.select({ id: irishRuleDecisions.id }).from(irishRuleDecisions)

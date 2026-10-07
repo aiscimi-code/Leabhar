@@ -25,7 +25,8 @@ import { and, eq } from 'drizzle-orm';
 import type { AppDatabase } from '@/db';
 import {
   bankTransactions, companies, suppliers, customers, documents, documentLines,
-  vatTreatments, irishTaxRules, irishActProvisions, irishKnowledgeSources,
+  vatTreatments, visibleTaxRules, visibleActProvisions, visibleKnowledgeSources,
+  visibleTaxRuleFields, visibleActProvisionFields, visibleKnowledgeSourceFields,
 } from '@/db/schema';
 import { lookupTransactionRules, type ApplicableRule, type TransactionContext } from './transactionLookup';
 import { countStatutoryRules } from './knowledgeBase';
@@ -502,11 +503,11 @@ export function transactionFacts(
 
 function citationFor(db: AppDatabase, rule: ApplicableRule): StatutoryCitation {
   const row = db.select({
-    rule: irishTaxRules, provision: irishActProvisions, source: irishKnowledgeSources,
-  }).from(irishTaxRules)
-    .innerJoin(irishActProvisions, eq(irishTaxRules.provisionId, irishActProvisions.id))
-    .innerJoin(irishKnowledgeSources, eq(irishActProvisions.sourceId, irishKnowledgeSources.id))
-    .where(eq(irishTaxRules.id, rule.ruleId)).get()!;
+    rule: visibleTaxRuleFields, provision: visibleActProvisionFields, source: visibleKnowledgeSourceFields,
+  }).from(visibleTaxRules)
+    .innerJoin(visibleActProvisions, eq(visibleTaxRules.provisionId, visibleActProvisions.id))
+    .innerJoin(visibleKnowledgeSources, eq(visibleActProvisions.sourceId, visibleKnowledgeSources.id))
+    .where(eq(visibleTaxRules.id, rule.ruleId)).get()!;
   return {
     ruleId: row.rule.id,
     ruleKey: row.rule.ruleKey,
@@ -663,8 +664,8 @@ export function suggestFromFacts(
   }
 
   const code = decision.binding.treatmentCode(facts, decision.rule.ruleKey);
-  const ruleRow = db.select({ numericValue: irishTaxRules.numericValue, unit: irishTaxRules.unit })
-    .from(irishTaxRules).where(eq(irishTaxRules.id, decision.rule.ruleId)).get();
+  const ruleRow = db.select({ numericValue: visibleTaxRules.numericValue, unit: visibleTaxRules.unit })
+    .from(visibleTaxRules).where(eq(visibleTaxRules.id, decision.rule.ruleId)).get();
   const ruleRateBasisPoints = ruleRow?.unit === 'percent' && ruleRow.numericValue != null
     ? Math.round(ruleRow.numericValue * 100)
     : (code === 'IE_ZERO' || code === 'EU_GOODS_SUPPLY' || code === 'EXPORT_GOODS' ? 0 : null);

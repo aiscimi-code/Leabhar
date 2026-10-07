@@ -6,11 +6,18 @@ import { irishTaxRules } from '@/db/schema';
 import { loadStatutoryKnowledgeBase } from './knowledgeBase';
 import { SUPERSESSIONS, retiredBy } from './supersessions';
 import { ruleLinksFrom, ruleLinksTo } from './ruleLinks';
-import { checkRuleGraph } from './ruleGraph';
+import { checkRuleGraph as checkStoredRuleGraph } from './ruleGraph';
+import { attachRulesStoreFromBook } from './rulesStore';
 import { RETIRED_S46_RULE_KEYS } from './vatcaRevisedCuration';
 import { RETIRED_INPUT_RECOVERY_RULE_KEYS } from './inputRecoveryCuration';
 import { RETIRED_FINANCE_ACT_2024_RULE_KEYS } from './irishRules';
 import type { AppDatabase } from '@/db';
+
+/** Check the graph of a store built from the book's rows, which this test edits (ADR-0021: the graph reads the store). */
+function checkRuleGraph(db: AppDatabase, params: { companyId: string }) {
+  attachRulesStoreFromBook(db, params);
+  return checkStoredRuleGraph(db, params);
+}
 
 describe('supersession as links (ADR-0020 §3, issue #686 step 8)', () => {
   let db: AppDatabase;

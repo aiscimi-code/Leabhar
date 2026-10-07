@@ -56,7 +56,8 @@ import {
   CATALOGUE_FORMAT, catalogueEntryPath, contentSha256Of, catalogueOfficialFilePath, catalogueRulesFor, serialiseCatalogueEntry, validateCatalogueEntry,
   type CatalogueEntry, type CatalogueOfficialExtension,
 } from '@/domain/rules/catalogue';
-import { loadStatutoryKnowledgeBase } from '@/domain/rules/knowledgeBase';
+import { deriveStatutoryKnowledgeBase } from '@/domain/rules/knowledgeBase';
+import { attachRulesStoreFromBook } from '@/domain/rules/rulesStore';
 import { ruleImpact } from '@/domain/rules/ruleImpact';
 import { parseVatcaRevisedSection } from '@/domain/rules/vatcaRevisedSectionParser';
 import { vatcaRevisedRelevance } from '@/domain/rules/vatcaRevisedIngestion';
@@ -1022,9 +1023,11 @@ async function main(args: string[]): Promise<void> {
   }
 
   // 2. Load the knowledge base once, then write each entry's rules.
-  const { db } = createTestDatabase();
+  // Read from what this catalogue derives, not from an installed store built from the last one.
+  const { db } = createTestDatabase({ rulesStore: false });
   const { companyId } = createCompany(db, { legalName: 'Catalogue extraction', vatRegistrationStatus: 'registered', seedYears: [2025] });
-  loadStatutoryKnowledgeBase(db, { companyId, root: ROOT });
+  deriveStatutoryKnowledgeBase(db, { companyId, root: ROOT });
+  attachRulesStoreFromBook(db, { companyId, root: ROOT });
   for (const { entryFile, path, entry, previous } of written) {
     entry.rules = catalogueRulesFor(db, { companyId, entry, previous });
     writeFileSync(path, serialiseCatalogueEntry(validateCatalogueEntry(entry, entryFile)));

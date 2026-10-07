@@ -4,13 +4,13 @@ import { join } from 'node:path';
 import { and, eq } from 'drizzle-orm';
 import { createTestDatabase } from '@/db/testing';
 import { createCompany } from '../config/setup';
-import { irishTaxRules } from '@/db/schema';
+import { visibleTaxRules } from '@/db/schema';
 import type { AppDatabase } from '@/db';
 
 /**
  * Every reader follows the review a book follows (issue #718): the book's own
- * latest decision, else the catalogue's review of the version that says the
- * same thing, else the status the row was derived with. The installed
+ * latest decision, else the catalogue's review of the store version, by its
+ * number (ADR-0021), else the status the row was derived with. The installed
  * catalogue is a copy here, so a test can ship a review in it.
  */
 const root = await vi.hoisted(async () => {
@@ -45,15 +45,19 @@ beforeAll(() => {
   loadStatutoryKnowledgeBase(db, { companyId });
 });
 
-/** The book's row in force for the key, as derived (whatever its review). */
-const bookRow = () => db.select().from(irishTaxRules)
-  .where(and(eq(irishTaxRules.companyId, companyId), eq(irishTaxRules.ruleKey, KEY))).all()
+/** The store's row in force for the key, as every reader sees it (whatever its review). */
+const storeRow = () => db.select().from(visibleTaxRules)
+  .where(and(eq(visibleTaxRules.companyId, companyId), eq(visibleTaxRules.origin, 'store'), eq(visibleTaxRules.ruleKey, KEY))).all()
   .find((r) => r.effectiveFrom <= ASOF && (r.effectiveTo === null || r.effectiveTo > ASOF))!;
 
-/** Ship a review of the catalogue version that says what the book's row says, renumbering the key's versions by `shift`. */
+/**
+ * Ship a review of the catalogue version that says what the store's row says,
+ * renumbering the key's versions by `shift`. Starts from the repository's
+ * entry each time, so one test's shipping never carries into the next.
+ */
 function shipReview(review: { status: 'approved' | 'rejected' | 'ai_extracted'; sourceSha256?: string }, shift = 0) {
-  const row = bookRow();
-  const entry = readCatalogueEntry(ENTRY);
+  const row = storeRow();
+  const entry = readCatalogueEntry(ENTRY, process.cwd());
   entry.rules = entry.rules.map((r) => (r.key !== KEY ? r : {
     ...r,
     versions: r.versions.map((v) => ({
@@ -81,19 +85,20 @@ describe('a review shipped in the catalogue', () => {
     expect(lookupTaxRule(db, { companyId, ruleKey: KEY, asOfDate: ASOF })).toMatchObject({ reviewStatus: 'approved', reviewedIn: 'catalogue' });
     const figure = resolveRuleFigure(db, { companyId, ruleKey: KEY as never, asOfDate: ASOF, curated });
     expect(figure).toMatchObject({ status: 'approved', reviewStatus: 'approved', finding: null });
-    expect(explainRule(db, { companyId, ruleId: bookRow().id })!.explanation)
+    expect(explainRule(db, { companyId, ruleId: storeRow().id })!.explanation)
       .toContain('its review status is approved in the rules catalogue by Dara (tax adviser)');
     expect(generateAuditReport(db, { companyId }).rulesByReviewStatus.approved).toBe(1);
     expect(syncTaxRatesFromIrishRules(db, { companyId }).find((r) => r.ruleKey === KEY)!.outcome).not.toBe('skipped_not_reviewed');
-    // The book's own row is not written: the review is read, not copied.
-    expect(bookRow().reviewStatus).toBe('ai_extracted');
+    // The store's row is not written: the review is read, not copied.
+    expect(storeRow().reviewStatus).toBe('ai_extracted');
   });
 
-  it('matches the version by what it says, whatever the catalogue numbered it', () => {
+  it('follows the catalogue\'s number, never a version that only says the same thing', () => {
+    // The approval ships under another number: the store's version is not the one approved.
     shipReview({ status: 'approved' }, 1);
-    expect(lookupTaxRule(db, { companyId, ruleKey: KEY, asOfDate: ASOF })).toMatchObject({ reviewStatus: 'approved', reviewedIn: 'catalogue' });
-    const row = bookRow();
-    expect(effectiveRuleReview(db, { companyId, ruleKey: KEY, ruleVersion: row.ruleVersion }))
+    expect(lookupTaxRule(db, { companyId, ruleKey: KEY, asOfDate: ASOF })).toMatchObject({ reviewStatus: 'ai_extracted', reviewedIn: 'derived' });
+    const row = storeRow();
+    expect(effectiveRuleReview(db, { companyId, ruleKey: KEY, ruleVersion: row.ruleVersion + 1 }))
       .toMatchObject({ from: 'catalogue', status: 'approved', by: 'Dara (tax adviser)' });
   });
 
@@ -105,21 +110,21 @@ describe('a review shipped in the catalogue', () => {
   it('withdraws a version the catalogue rejected, and names who rejected it', () => {
     shipReview({ status: 'rejected' });
     expect(lookupTaxRule(db, { companyId, ruleKey: KEY, asOfDate: ASOF })).toBeNull();
-    expect(listTaxRulesByTopic(db, { companyId, topic: bookRow().topic, asOfDate: ASOF }).map((r) => r.ruleKey)).not.toContain(KEY);
+    expect(listTaxRulesByTopic(db, { companyId, topic: storeRow().topic, asOfDate: ASOF }).map((r) => r.ruleKey)).not.toContain(KEY);
     const figure = resolveRuleFigure(db, { companyId, ruleKey: KEY as never, asOfDate: ASOF, curated });
     expect(figure).toMatchObject({ status: 'rejected', numericValue: null });
-    expect(figure.finding).toBe('Rule "' + bookRow().name + '" (' + KEY + ') was rejected in the rules catalogue by Dara (tax adviser) (read against s.46(1)(c)).');
+    expect(figure.finding).toBe('Rule "' + storeRow().name + '" (' + KEY + ') was rejected in the rules catalogue by Dara (tax adviser) (read against s.46(1)(c)).');
   });
 
   it('gives way to the book’s own decision', () => {
     shipReview({ status: 'rejected' });
-    setRuleReviewStatus(db, { ruleId: bookRow().id, status: 'approved', reviewedBy: 'Eimear', notes: 'checked the Schedule myself' });
+    setRuleReviewStatus(db, { companyId, ruleId: storeRow().id, status: 'approved', reviewedBy: 'Eimear', notes: 'checked the Schedule myself' });
     expect(lookupTaxRule(db, { companyId, ruleKey: KEY, asOfDate: ASOF })).toMatchObject({ reviewStatus: 'approved', reviewedIn: 'book' });
 
     shipReview({ status: 'approved' });
-    setRuleReviewStatus(db, { ruleId: bookRow().id, status: 'rejected', reviewedBy: 'Eimear', notes: 'not for this book' });
+    setRuleReviewStatus(db, { companyId, ruleId: storeRow().id, status: 'rejected', reviewedBy: 'Eimear', notes: 'not for this book' });
     expect(lookupTaxRule(db, { companyId, ruleKey: KEY, asOfDate: ASOF })).toBeNull();
-    expect(effectiveRuleReview(db, { companyId, ruleKey: KEY, ruleVersion: bookRow().ruleVersion }))
+    expect(effectiveRuleReview(db, { companyId, ruleKey: KEY, ruleVersion: storeRow().ruleVersion }))
       .toMatchObject({ from: 'book', status: 'rejected', by: 'Eimear' });
     expect(resolveRuleFigure(db, { companyId, ruleKey: KEY as never, asOfDate: ASOF, curated }).finding)
       .toContain('was rejected on the rule review screen by Eimear');

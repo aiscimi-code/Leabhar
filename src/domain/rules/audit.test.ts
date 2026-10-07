@@ -3,6 +3,7 @@ import { createTestDatabase } from '@/db/testing';
 import { createCompany } from '../config/setup';
 import { ingestFinanceAct2024FromCatalogue, deriveTaxRules } from './irishRules';
 import { generateAuditReport } from './audit';
+import { attachRulesStoreFromBook } from './rulesStore';
 import type { AppDatabase } from '@/db';
 
 let db: AppDatabase;
@@ -13,6 +14,8 @@ beforeEach(() => {
   ({ companyId } = createCompany(db, { legalName: 'Audit Ltd', seedYears: [2025] }));
   ingestFinanceAct2024FromCatalogue(db, { companyId });
   deriveTaxRules(db, { companyId });
+  // The report reads the store (ADR-0021): one built from what this book derived.
+  attachRulesStoreFromBook(db, { companyId });
 });
 
 describe('generateAuditReport', () => {
@@ -34,6 +37,7 @@ describe('generateAuditReport', () => {
     const { db: freshDb } = createTestDatabase();
     const { companyId: freshCompanyId } = createCompany(freshDb, { legalName: 'Fresh Ltd', seedYears: [2025] });
     ingestFinanceAct2024FromCatalogue(freshDb, { companyId: freshCompanyId });
+    attachRulesStoreFromBook(freshDb, { companyId: freshCompanyId });
 
     const report = generateAuditReport(freshDb, { companyId: freshCompanyId });
     expect(report.ruleCount).toBe(0);

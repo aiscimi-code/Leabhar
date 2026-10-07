@@ -1,16 +1,19 @@
 import { describe, it, expect, beforeAll } from 'vitest';
-import { cpSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { readFileSync } from 'node:fs';
 import { and, eq, like } from 'drizzle-orm';
 import { createTestDatabase } from '@/db/testing';
 import { createCompany } from '../config/setup';
-import { irishRuleDecisions, irishTaxRules, reviewItems } from '@/db/schema';
+import {
+  invoiceLines, irishRuleDecisions, irishRuleVersionMap, irishTaxRules, reviewItems, suppliers, visibleTaxRules,
+} from '@/db/schema';
+import { ids } from '@/lib/ids';
+import { createInvoice } from '../invoicing/invoices';
+import { makeDate } from '../dates';
 import type { AppDatabase } from '@/db';
-import { readCatalogueEntry, serialiseCatalogueEntry } from './catalogue';
+import { readCatalogueEntry } from './catalogue';
 import { loadStatutoryKnowledgeBase } from './knowledgeBase';
 import { setRuleReviewStatus } from './review';
-import { catalogueRuleStore, checkCatalogueVersions, effectiveRuleReview, ruleDecisionHistory } from './ruleDecisions';
+import { catalogueRuleStore, checkCatalogueVersions, effectiveRuleReview, recordRuleDecision, ruleDecisionHistory } from './ruleDecisions';
 
 /**
  * A book keeps its own decisions about rule versions; the expert review
@@ -19,16 +22,19 @@ import { catalogueRuleStore, checkCatalogueVersions, effectiveRuleReview, ruleDe
 let db: AppDatabase;
 let sqlite: ReturnType<typeof createTestDatabase>['sqlite'];
 let companyId: string;
+let created: ReturnType<typeof createCompany>;
 let loaded: ReturnType<typeof loadStatutoryKnowledgeBase>;
 
 beforeAll(() => {
   ({ db, sqlite } = createTestDatabase());
-  ({ companyId } = createCompany(db, { legalName: 'Decisions Ltd', vatRegistrationStatus: 'registered', seedYears: [2025] }));
+  created = createCompany(db, { legalName: 'Decisions Ltd', vatRegistrationStatus: 'registered', seedYears: [2025] });
+  ({ companyId } = created);
   loaded = loadStatutoryKnowledgeBase(db, { companyId });
 });
 
-const ruleRow = (ruleKey: string, ruleVersion = 1) => db.select().from(irishTaxRules)
-  .where(and(eq(irishTaxRules.companyId, companyId), eq(irishTaxRules.ruleKey, ruleKey), eq(irishTaxRules.ruleVersion, ruleVersion))).get()!;
+const ruleRow = (ruleKey: string, ruleVersion = 1) => db.select().from(visibleTaxRules)
+  .where(and(eq(visibleTaxRules.companyId, companyId), eq(visibleTaxRules.origin, 'store'),
+    eq(visibleTaxRules.ruleKey, ruleKey), eq(visibleTaxRules.ruleVersion, ruleVersion))).get()!;
 
 describe('catalogueRuleStore', () => {
   it('holds every catalogued rule version with the review it ships with', () => {
@@ -55,8 +61,8 @@ describe('effectiveRuleReview', () => {
 
   it('follows the book’s latest decision, keeping every earlier one on record', () => {
     const row = ruleRow('vat.rate_reduced_current');
-    setRuleReviewStatus(db, { ruleId: row.id, status: 'human_review', reviewedBy: 'Aoife', notes: 'checking the Schedule' });
-    setRuleReviewStatus(db, { ruleId: row.id, status: 'approved', reviewedBy: 'Brian', notes: 'matches s.46(1)(c)' });
+    setRuleReviewStatus(db, { companyId, ruleId: row.id, status: 'human_review', reviewedBy: 'Aoife', notes: 'checking the Schedule' });
+    setRuleReviewStatus(db, { companyId, ruleId: row.id, status: 'approved', reviewedBy: 'Brian', notes: 'matches s.46(1)(c)' });
 
     const history = ruleDecisionHistory(db, { companyId, ruleKey: 'vat.rate_reduced_current', ruleVersion: 1 });
     expect(history.map((d) => [d.status, d.decidedBy, d.reason, d.ruleId])).toEqual([
@@ -66,7 +72,17 @@ describe('effectiveRuleReview', () => {
     const review = effectiveRuleReview(db, { companyId, ruleKey: 'vat.rate_reduced_current', ruleVersion: 1 });
     expect(review).toMatchObject({ from: 'book', status: 'approved', by: 'Brian', reason: 'matches s.46(1)(c)' });
     expect(review.catalogue!.review.status).toBe('ai_extracted');
-    expect(ruleRow('vat.rate_reduced_current').reviewStatus).toBe('approved');
+    // The decision is the book's; the store's row is never written.
+    expect(ruleRow('vat.rate_reduced_current').reviewStatus).toBe('ai_extracted');
+  });
+  it('follows the later of two decisions taken in the same millisecond', () => {
+    const at = '2026-02-01T09:00:00.000Z';
+    for (const [status, decidedBy] of [['human_review', 'Aoife'], ['rejected', 'Brian'], ['approved', 'Ciara']] as const) {
+      recordRuleDecision(db, { companyId, ruleKey: 'vat.rate_hospitality', ruleVersion: 1, numbering: 'catalogue', status, decidedBy, decidedAt: at });
+    }
+    const params = { companyId, ruleKey: 'vat.rate_hospitality', ruleVersion: 1 };
+    expect(ruleDecisionHistory(db, params).map((d) => d.decidedBy)).toEqual(['Ciara', 'Brian', 'Aoife']);
+    expect(effectiveRuleReview(db, params)).toMatchObject({ from: 'book', status: 'approved', by: 'Ciara' });
   });
 });
 
@@ -100,32 +116,35 @@ describe('checkCatalogueVersions', () => {
     expect(missingItems()).toEqual([]);
   });
 
-  it('recognises a version the book numbered differently, when the catalogue holds the same dates and quote', () => {
-    // A book that held a version before it was corrected keeps the old one,
-    // closed, and numbers the correction 2; a new book, and the catalogue, 1.
-    const root = mkdtempSync(join(tmpdir(), 'leabhar-catalogue-'));
-    cpSync('catalogue', join(root, 'catalogue'), { recursive: true });
-    const entry = readCatalogueEntry('vatca-2010-revised/s046.json');
-    entry.rules = entry.rules.map((r) => ({ ...r, versions: r.versions.map((v) => ({ ...v, version: v.version + 1 })) }));
-    writeFileSync(join(root, 'catalogue', 'vatca-2010-revised', 's046.json'), serialiseCatalogueEntry(entry));
-    expect(checkCatalogueVersions(db, { companyId, root })).toEqual([]);
+  it('reads a decision in the book\'s numbering through the version map', () => {
+    // The book numbered vat.rate_livestock_current@1 as 2 before it moved onto the store.
+    db.insert(irishRuleVersionMap).values({
+      id: ids.ruleVersionMap(), companyId, ruleKey: 'vat.rate_livestock_current', bookVersion: 2, catalogueVersion: 1, storeSignature: 'test',
+    }).run();
+    recordRuleDecision(db, {
+      companyId, ruleKey: 'vat.rate_livestock_current', ruleVersion: 2, numbering: 'book',
+      status: 'approved', decidedBy: 'Ciara', decidedAt: '2026-01-05T10:00:00.000Z',
+    });
+    expect(checkCatalogueVersions(db, { companyId })).toEqual([]);
   });
 
-  it('raises a review item, once, for a version the book holds that the catalogue no longer ships', () => {
-    const root = mkdtempSync(join(tmpdir(), 'leabhar-catalogue-'));
-    const entry = readCatalogueEntry('vatca-2010-revised/s046.json');
-    entry.rules = entry.rules.map((r) => (r.key === 'vat.rate_standard_current'
-      ? { ...r, versions: r.versions.filter((v) => v.version !== 2) } : r));
-    cpSync('catalogue', join(root, 'catalogue'), { recursive: true });
-    writeFileSync(join(root, 'catalogue', 'vatca-2010-revised', 's046.json'), serialiseCatalogueEntry(entry));
+  it('raises a review item, once, for a version a posted line applied that the store does not hold', () => {
+    const supplierId = ids.supplier();
+    db.insert(suppliers).values({ id: supplierId, companyId, name: 'Byrne', matchKey: 'byrne', countryCode: 'IE' }).run();
+    const { invoiceId } = createInvoice(db, {
+      companyId, direction: 'purchase', invoiceDate: makeDate(2025, 3, 10), invoiceNumber: 'V-9', supplierId,
+      lines: [{ description: 'Stationery', netMinor: 10_000, accountId: created.accountsByCode['6070']!, vatTreatmentId: created.treatmentsByCode['IE_STD']!, vatRuleKeys: ['vat.rate_standard_current'] }],
+    });
+    // A version from a newer install than this one: the store attached here does not hold it.
+    db.update(invoiceLines).set({ vatRuleVersions: ['vat.rate_standard_current@99'] }).where(eq(invoiceLines.invoiceId, invoiceId)).run();
 
-    expect(checkCatalogueVersions(db, { companyId, root })).toEqual([{ versionId: 'vat.rate_standard_current@2', referencedBy: ['rule'] }]);
-    checkCatalogueVersions(db, { companyId, root });
+    expect(checkCatalogueVersions(db, { companyId })).toEqual([
+      { versionId: 'vat.rate_standard_current@99', numbering: 'catalogue', referencedBy: ['invoice_line'] },
+    ]);
+    checkCatalogueVersions(db, { companyId });
     const items = missingItems();
     expect(items).toHaveLength(1);
     expect(items[0]).toMatchObject({ severity: 'warning', entityType: 'irish_rule_key', entityId: 'vat.rate_standard_current' });
     expect(items[0]!.detail).toContain('nothing has been switched to another version');
-    // The book's own rule row is untouched.
-    expect(ruleRow('vat.rate_standard_current', 2).enabled).toBe(true);
   });
 });

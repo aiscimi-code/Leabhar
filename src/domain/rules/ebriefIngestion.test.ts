@@ -107,7 +107,7 @@ describe('the first Revenue notice source (issue #440)', () => {
     deriveEbriefRules(db, { companyId });
     const rule = db.select().from(irishTaxRules)
       .where(and(eq(irishTaxRules.companyId, companyId), eq(irishTaxRules.ruleKey, EBRIEF_168_25_RULE.ruleKey), eq(irishTaxRules.active, true))).get()!;
-    const deps = resolveRuleDependencies(db, { ruleId: rule.id });
+    const deps = resolveRuleDependencies(db, { companyId, ruleId: `${rule.ruleKey}@${rule.ruleVersion}` });
     const reg7 = deps.find((d) => d.reference === 'S.I. 69/2025 reg.7')!;
     expect(reg7.resolved).toBe(true);
     const reg9 = deps.find((d) => d.reference === 'S.I. 69/2025 reg.9')!;

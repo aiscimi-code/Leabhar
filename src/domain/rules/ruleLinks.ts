@@ -38,7 +38,7 @@
  */
 import { and, eq, or, isNull, gt, lte, inArray } from 'drizzle-orm';
 import type { AppDatabase } from '@/db';
-import { irishRuleLinks, irishTaxRules, type IrishRuleLinkKind } from '@/db/schema';
+import { irishRuleLinks, irishTaxRules, visibleRuleLinks, type IrishRuleLinkKind } from '@/db/schema';
 import { ids } from '@/lib/ids';
 import { addDays, asIsoDate, isIsoDate, nowIso } from '../dates';
 import { DOMESTIC_RC_ADVISORY_RULE_KEYS, RC_CONSTRUCTION_RULE_KEY } from './domesticReverseChargeCuration';
@@ -362,7 +362,7 @@ export function syncRuleLinks(
   return result;
 }
 
-export type RuleLink = typeof irishRuleLinks.$inferSelect;
+export type RuleLink = typeof visibleRuleLinks.$inferSelect;
 
 interface LinkQuery {
   companyId: string;
@@ -377,28 +377,28 @@ function linkFilters(q: LinkQuery) {
     throw new Error(`Invalid as-of date "${q.asOfDate}" for rule links.`);
   }
   return [
-    eq(irishRuleLinks.companyId, q.companyId),
-    eq(irishRuleLinks.active, true),
-    ...(q.kinds ? [inArray(irishRuleLinks.kind, q.kinds)] : []),
+    eq(visibleRuleLinks.companyId, q.companyId),
+    eq(visibleRuleLinks.active, true),
+    ...(q.kinds ? [inArray(visibleRuleLinks.kind, q.kinds)] : []),
     ...(q.asOfDate !== undefined ? [
-      lte(irishRuleLinks.effectiveFrom, q.asOfDate),
-      or(isNull(irishRuleLinks.effectiveTo), gt(irishRuleLinks.effectiveTo, q.asOfDate)),
+      lte(visibleRuleLinks.effectiveFrom, q.asOfDate),
+      or(isNull(visibleRuleLinks.effectiveTo), gt(visibleRuleLinks.effectiveTo, q.asOfDate)),
     ] : []),
   ];
 }
 
 /** What `ruleKey` relies on: its outgoing links. */
 export function ruleLinksFrom(db: AppDatabase, q: LinkQuery): RuleLink[] {
-  return db.select().from(irishRuleLinks)
-    .where(and(eq(irishRuleLinks.fromKey, q.ruleKey), ...linkFilters(q)))
-    .orderBy(irishRuleLinks.kind, irishRuleLinks.toKey, irishRuleLinks.effectiveFrom)
+  return db.select().from(visibleRuleLinks)
+    .where(and(eq(visibleRuleLinks.fromKey, q.ruleKey), ...linkFilters(q)))
+    .orderBy(visibleRuleLinks.kind, visibleRuleLinks.toKey, visibleRuleLinks.effectiveFrom)
     .all();
 }
 
 /** What relies on `ruleKey`: the links pointing at it. */
 export function ruleLinksTo(db: AppDatabase, q: LinkQuery): RuleLink[] {
-  return db.select().from(irishRuleLinks)
-    .where(and(eq(irishRuleLinks.toKey, q.ruleKey), ...linkFilters(q)))
-    .orderBy(irishRuleLinks.kind, irishRuleLinks.fromKey, irishRuleLinks.effectiveFrom)
+  return db.select().from(visibleRuleLinks)
+    .where(and(eq(visibleRuleLinks.toKey, q.ruleKey), ...linkFilters(q)))
+    .orderBy(visibleRuleLinks.kind, visibleRuleLinks.fromKey, visibleRuleLinks.effectiveFrom)
     .all();
 }

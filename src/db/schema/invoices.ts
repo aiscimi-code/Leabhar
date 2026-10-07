@@ -214,6 +214,13 @@ export const invoiceLines = sqliteTable('invoice_lines', {
    */
   vatRuleVersions: text('vat_rule_versions', { mode: 'json' }).$type<string[]>().notNull().default([]),
   /**
+   * Whose numbers `vatRuleVersions` holds (ADR-0021 §3, §6). `book` on a line
+   * posted before the book moved onto the rules store, when the book numbered
+   * versions as it derived them: read through `irish_rule_version_map`.
+   * `catalogue` from the switch on.
+   */
+  vatRuleNumbering: text('vat_rule_numbering', { enum: ['book', 'catalogue'] }).notNull().default('book'),
+  /**
    * A purchase line's input VAT deduction share (issue #612), as posted: the
    * business-use share where the cost is also used privately (s.59(2)), and
    * the proportion of tax deductible on a dual-use input with the basis it was

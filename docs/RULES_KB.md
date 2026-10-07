@@ -213,18 +213,22 @@ them the transaction lookup, the VAT suggestion, the rule figures and the
 rate sync; the rule page, the audit, search, version comparison, the
 provision page and `list-rules`) goes through one function,
 `ruleReviewResolver` (`effectiveReview.ts`, #718): the book's latest decision
-when it has one, else the catalogue's review of the version that says the
-same thing (dates and quote, whatever the book numbered it), else the status
-the row was derived with. A catalogue approval or rejection holds only while
-the book's source has the SHA-256 the reviewer read. A version the catalogue
-rejected is left out of every lookup, as one the book rejected is, and a
-figure that needed it names who rejected it. The review is read, never
-copied onto the book's row. `effectiveRuleReview` gives the same answer for
-one version, with the catalogue's review beside a book decision. Loading the
-knowledge base raises a review item for every version the book holds or an
-invoice line applied, from a catalogued source, that the installed catalogue
-does not ship (`checkCatalogueVersions`); nothing is switched to another
-version.
+when it has one, else the catalogue's review of that version, else the status
+the row was derived with. A store version is numbered as the catalogue
+numbers it, so its catalogue review is found by number. A decision records
+whose number it holds (`numbering`): one the book took before it moved onto
+the store holds the book's own number and is read through the version map
+(`irish_rule_version_map`), never matched by content. A catalogue approval or
+rejection holds only while the source the row was read from has the SHA-256
+the reviewer read. A version the catalogue rejected is left out of every
+lookup, as one the book rejected is, and a figure that needed it names who
+rejected it. Every review status comes from a decision or the catalogue;
+nothing writes a rule row. `effectiveRuleReview` gives the same answer for
+one version, with the catalogue's review beside a book decision.
+`checkCatalogueVersions` raises a review item for every version a decision
+or a posted invoice line refers to that the attached store does not hold
+(after the version map, and not counting a version the book keeps frozen);
+nothing is switched to another version.
 
 **The rules store (ADR-0021).** The rule rows move out of the book into
 `rules.db`, a read-only SQLite file beside the app (`rulesStorePath()`:
@@ -268,10 +272,44 @@ tables:
 Running it again maps only versions not yet mapped or kept, and records a
 binding only when it changed. The book's copied rule tables are not touched.
 
-**Not yet.** Books still load and read their own copies, and nothing runs the
-migration yet. The readers' switch to the attached store, the end of
-"load statutory rules", and dropping the copied tables follow in ADR-0021's
-delivery steps 3 to 5.
+**Readers on the store (ADR-0021 step 3).** Every connection to a book
+attaches the store (`attachRulesStore`, `visibleRules.ts`): the server's
+`getDb()`, the CLI's and seed's `openBook()`, and every test database (the
+test run builds one store, `vitest.globalSetup.ts`). This SQLite build takes
+no URI filenames, so `?mode=ro` is not available: temporary triggers refuse
+every row write to a store table, and the build leaves the file read-only.
+The attach creates one temporary view per rule table, `visible_irish_*`
+(`visibleTaxRules` and the others in the schema), and readers query only
+these: the store's rows, a rule and a link once per company in the book,
+sources and provisions jurisdiction-wide (`company_id` null, so
+`visibleToCompany` filters them), then the book's frozen versions, each with
+its provision and source as the book held them. `origin` tells them apart.
+A frozen version explains what an entry applied and is never applied again:
+the lookups, rule figures, graph checks and impact read `origin = 'store'`.
+A practice's own rules would be a third arm of the same views.
+
+- A review decision is appended (`setRuleReviewStatus`, by the visible row's
+  ID and the company) and is what every reader follows; reaching `active`
+  lifts `humanReviewRequired`.
+- The rate sync records the binding of a version to the rate it backs in
+  `irish_rule_bindings`; the view's `tax_rate_id` is the company's latest.
+- A posted invoice line records `vat_rule_numbering = 'catalogue'`; a line
+  posted before the switch keeps `book` and is read through the map.
+- Opening a book that still holds copied rule rows the map has not covered
+  runs the move above, after a backup (`moveBookOntoRulesStore`).
+- The derive pipeline (`deriveStatutoryKnowledgeBase`) writes and reads only
+  the book's own copied tables: it is what the store build runs, where no
+  store is attached. A test that derives its own rules, and
+  `catalogue:extract`, attach a store built from them
+  (`attachRulesStoreFromBook`); the app never does.
+
+**Not yet.** "Load statutory rules" still writes the copied tables, which
+nothing reads; it stops in delivery step 4, with the update check of
+decision 5. Until then, a book that loads them again is moved onto the store
+once more at its next open, after a backup. The copied tables are dropped a
+release later (step 5). `irish-rules generate-tests` also still writes into
+the book, where `irish-rules test` does not read; `test` fails rather than pass
+with no cases until the store build ships them (#723).
 Some curated rules stamp `source_date` with the moment they were derived, so
 in the store it is the build time: a reader must not take it for a date the
 source stated.

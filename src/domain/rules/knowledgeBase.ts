@@ -115,10 +115,15 @@ export function fillTaxHeads(db: AppDatabase, params: { companyId: string }): nu
   return filled;
 }
 
-export function loadStatutoryKnowledgeBase(
+/**
+ * Run the derive pipeline into the book's own rule tables: the copies the
+ * store is built from (`buildRulesStore`). Writes only; it reads no rules
+ * through the store, so it runs where none is attached.
+ */
+export function deriveStatutoryKnowledgeBase(
   db: AppDatabase,
   params: { companyId: string; root?: string; ingestVersion?: string },
-): KnowledgeBaseLoadResult {
+): { sourcesProcessed: number; rulesBefore: number; rulesAfter: number } {
   const rulesBefore = countStatutoryRules(db, params.companyId);
   // A rule can only suggest a treatment the company has: add any seeded since
   // it was created (issue #205, the livestock treatment).
@@ -134,13 +139,22 @@ export function loadStatutoryKnowledgeBase(
   // The links between rules (ADR-0020), after every rule they name exists.
   syncRuleLinks(db, { companyId: params.companyId });
   fillTaxHeads(db, { companyId: params.companyId });
-  const missing = checkCatalogueVersions(db, { companyId: params.companyId, root: params.root });
-  return {
-    sourcesProcessed: CATALOGUE_ENTRIES.length,
-    rulesBefore,
-    rulesAfter: countStatutoryRules(db, params.companyId),
-    catalogueVersionsMissing: missing.map((m) => m.versionId),
-  };
+  return { sourcesProcessed: CATALOGUE_ENTRIES.length, rulesBefore, rulesAfter: countStatutoryRules(db, params.companyId) };
+}
+
+/**
+ * "Load statutory rules", until loading stops (ADR-0021 delivery step 4):
+ * the derive pipeline into the book's copied tables, which no reader reads
+ * any more, then the check of the book's references against the attached
+ * store (`checkCatalogueVersions`).
+ */
+export function loadStatutoryKnowledgeBase(
+  db: AppDatabase,
+  params: { companyId: string; root?: string; ingestVersion?: string },
+): KnowledgeBaseLoadResult {
+  const derived = deriveStatutoryKnowledgeBase(db, params);
+  const missing = checkCatalogueVersions(db, { companyId: params.companyId });
+  return { ...derived, catalogueVersionsMissing: missing.map((m) => m.versionId) };
 }
 
 export interface StatuteFileCheck {

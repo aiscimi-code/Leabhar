@@ -1,4 +1,5 @@
-import { sqliteTable, text, integer, index, unique } from 'drizzle-orm/sqlite-core';
+import { getViewSelectedFields } from 'drizzle-orm';
+import { sqliteTable, sqliteView, text, integer, index, unique } from 'drizzle-orm/sqlite-core';
 import { timestamps, provenance, ruleSource, effectiveDates } from './_shared';
 import { companies } from './company';
 import { taxRates, vatTreatments } from './config';
@@ -61,7 +62,7 @@ export type IrishSourceType = (typeof IRISH_SOURCE_TYPES)[number];
  * `src/domain/rules/sourceHierarchy.ts` derives a precedence order from this
  * column; the column itself is the only thing ever stored.
  */
-export const irishKnowledgeSources = sqliteTable('irish_knowledge_sources', {
+const knowledgeSourceColumns = {
   id: text('id').primaryKey(),
   /** Null for jurisdiction-wide sources (legislation, EU law); set for a
    *  practice's own Leabhar implementation rule sources. */
@@ -84,7 +85,8 @@ export const irishKnowledgeSources = sqliteTable('irish_knowledge_sources', {
   retrievedAt: text('retrieved_at').notNull(),
   ...effectiveDates,
   ...ruleSource,
-}, (t) => [
+};
+export const irishKnowledgeSources = sqliteTable('irish_knowledge_sources', knowledgeSourceColumns, (t) => [
   // A citation may have more than one source row over time (a later Act
   // amending an earlier one, or a corrected re-transcription) — content is
   // what must be unique, so two genuinely different documents can never
@@ -117,7 +119,7 @@ export type IrishProvisionCategory = (typeof IRISH_PROVISION_CATEGORIES)[number]
  * classification (procedural, repeal and pure-definition sections mostly do
  * not) is a first-class, auditable field rather than an implicit filter.
  */
-export const irishActProvisions = sqliteTable('irish_act_provisions', {
+const actProvisionColumns = {
   id: text('id').primaryKey(),
   companyId: text('company_id').references(() => companies.id),
   sourceId: text('source_id').notNull().references(() => irishKnowledgeSources.id),
@@ -169,7 +171,8 @@ export const irishActProvisions = sqliteTable('irish_act_provisions', {
   ...provenance,
   ...ruleSource,
   ...timestamps,
-}, (t) => [
+};
+export const irishActProvisions = sqliteTable('irish_act_provisions', actProvisionColumns, (t) => [
   unique('irish_act_provisions_source_section_unique').on(t.sourceId, t.sectionNumber),
   index('irish_act_provisions_category_idx').on(t.category),
   index('irish_act_provisions_principal_idx').on(t.principalAct),
@@ -228,7 +231,7 @@ export type IrishRuleReviewStatus = (typeof IRISH_RULE_REVIEW_STATUSES)[number];
  * pointing back, so a transaction always resolves the rule that was in force
  * on its own date (AGENTS.md invariant #6, applied to statute-derived rules).
  */
-export const irishTaxRules = sqliteTable('irish_tax_rules', {
+const taxRuleColumns = {
   id: text('id').primaryKey(),
   companyId: text('company_id').notNull().references(() => companies.id),
   provisionId: text('provision_id').notNull().references(() => irishActProvisions.id),
@@ -299,7 +302,8 @@ export const irishTaxRules = sqliteTable('irish_tax_rules', {
   ...provenance,
   ...ruleSource,
   ...timestamps,
-}, (t) => [
+};
+export const irishTaxRules = sqliteTable('irish_tax_rules', taxRuleColumns, (t) => [
   unique('irish_tax_rules_key_version_unique').on(t.companyId, t.ruleKey, t.ruleVersion),
   index('irish_tax_rules_provision_idx').on(t.provisionId),
   index('irish_tax_rules_lookup_idx').on(t.companyId, t.ruleKey, t.effectiveFrom),
@@ -327,6 +331,13 @@ export const irishRuleDecisions = sqliteTable('irish_rule_decisions', {
   ruleKey: text('rule_key').notNull(),
   ruleVersion: integer('rule_version').notNull(),
   ruleId: text('rule_id'),
+  /**
+   * Whose number `ruleVersion` is (ADR-0021 §3, §6). `book` on a decision
+   * taken before the book moved onto the rules store, or on a version the
+   * book keeps frozen (`irish_rule_versions_retained`): read through
+   * `irish_rule_version_map`. `catalogue` on a store version, from the switch on.
+   */
+  numbering: text('numbering', { enum: ['book', 'catalogue'] }).notNull().default('book'),
   status: text('status', { enum: IRISH_RULE_REVIEW_STATUSES }).notNull(),
   decidedBy: text('decided_by').notNull(),
   decidedAt: text('decided_at').notNull(),
@@ -350,7 +361,7 @@ export type IrishTestCaseType = (typeof IRISH_TEST_CASE_TYPES)[number];
  * `npm run cli:rules -- test` can report pass/fail without re-deriving
  * expectations each time.
  */
-export const irishTaxRuleTests = sqliteTable('irish_tax_rule_tests', {
+const taxRuleTestColumns = {
   id: text('id').primaryKey(),
   ruleId: text('rule_id').notNull().references(() => irishTaxRules.id),
   testType: text('test_type', { enum: IRISH_TEST_CASE_TYPES }).notNull(),
@@ -364,7 +375,8 @@ export const irishTaxRuleTests = sqliteTable('irish_tax_rule_tests', {
   lastRunAt: text('last_run_at'),
   lastRunPassed: integer('last_run_passed', { mode: 'boolean' }),
   ...timestamps,
-}, (t) => [
+};
+export const irishTaxRuleTests = sqliteTable('irish_tax_rule_tests', taxRuleTestColumns, (t) => [
   index('irish_tax_rule_tests_rule_idx').on(t.ruleId),
 ]);
 
@@ -402,7 +414,7 @@ export const IRISH_RULE_LINK_KINDS = [
 ] as const;
 export type IrishRuleLinkKind = (typeof IRISH_RULE_LINK_KINDS)[number];
 
-export const irishRuleLinks = sqliteTable('irish_rule_links', {
+const ruleLinkColumns = {
   id: text('id').primaryKey(),
   companyId: text('company_id').notNull().references(() => companies.id),
   fromKey: text('from_key').notNull(),
@@ -415,7 +427,8 @@ export const irishRuleLinks = sqliteTable('irish_rule_links', {
   ...provenance,
   ...ruleSource,
   ...timestamps,
-}, (t) => [
+};
+export const irishRuleLinks = sqliteTable('irish_rule_links', ruleLinkColumns, (t) => [
   index('irish_rule_links_from_idx').on(t.companyId, t.fromKey, t.kind),
   index('irish_rule_links_to_idx').on(t.companyId, t.toKey, t.kind),
   index('irish_rule_links_provision_idx').on(t.toProvisionId),
@@ -513,6 +526,15 @@ export const irishRuleVersionsRetained = sqliteTable('irish_rule_versions_retain
   reviewStatus: text('review_status', { enum: IRISH_RULE_REVIEW_STATUSES }).notNull(),
   effectiveFrom: text('effective_from').notNull(),
   effectiveTo: text('effective_to'),
+  /** The provision and source as the book held them, so the version is explained without the copied tables. */
+  sourceTitle: text('source_title'),
+  sourceType: text('source_type', { enum: IRISH_SOURCE_TYPES }),
+  sourceUrl: text('source_url'),
+  sourceLocalPath: text('source_local_path'),
+  provisionHeading: text('provision_heading'),
+  provisionText: text('provision_text'),
+  provisionLocator: text('provision_locator'),
+  provisionCategory: text('provision_category', { enum: IRISH_PROVISION_CATEGORIES }),
   createdAt: timestamps.createdAt,
 }, (t) => [
   unique('irish_rule_versions_retained_unique').on(t.companyId, t.ruleKey, t.ruleVersion),
@@ -534,3 +556,28 @@ export const rulesStoreSeen = sqliteTable('rules_store_seen', {
 }, (t) => [
   index('rules_store_seen_signature_idx').on(t.signature),
 ]);
+
+/**
+ * The rules a book can see (ADR-0021 §2, delivery step 3). Readers query
+ * these, never the store's tables or the book's copied ones. Each is a
+ * temporary view `attachRulesStore` (src/domain/rules/visibleRules.ts)
+ * creates on the book's connection: the store's rows, attached read-only, for
+ * every company in the book, and the book's own frozen versions
+ * (`irish_rule_versions_retained`), each with its provision and source as the
+ * book held them. A practice's own rules join them here when one exists.
+ *
+ * Same columns as the copied tables, plus `origin`. A retained version
+ * explains what an entry applied; it is never applied again, so a lookup of
+ * the rule in force reads `origin = 'store'` only.
+ */
+const origin = { origin: text('origin', { enum: ['store', 'retained'] }).notNull() };
+export const visibleKnowledgeSources = sqliteView('visible_irish_knowledge_sources', { ...knowledgeSourceColumns, ...origin }).existing();
+export const visibleActProvisions = sqliteView('visible_irish_act_provisions', { ...actProvisionColumns, ...origin }).existing();
+export const visibleTaxRules = sqliteView('visible_irish_tax_rules', { ...taxRuleColumns, ...origin }).existing();
+export const visibleTaxRuleTests = sqliteView('visible_irish_tax_rule_tests', { ...taxRuleTestColumns, ...origin }).existing();
+export const visibleRuleLinks = sqliteView('visible_irish_rule_links', { ...ruleLinkColumns, ...origin }).existing();
+
+/** Every column of a view, to select a whole row beside others (`select({ rule: visibleTaxRuleFields, ... })`). */
+export const visibleKnowledgeSourceFields = getViewSelectedFields(visibleKnowledgeSources);
+export const visibleActProvisionFields = getViewSelectedFields(visibleActProvisions);
+export const visibleTaxRuleFields = getViewSelectedFields(visibleTaxRules);

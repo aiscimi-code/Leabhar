@@ -137,7 +137,7 @@ describe('the first EU source (issue #441)', () => {
       'Value-Added Tax Consolidation Act 2010 s.12',
       'Value-Added Tax Consolidation Act 2010 s.34',
     ]);
-    for (const dep of resolveRuleDependencies(db, { ruleId: rule.id })) {
+    for (const dep of resolveRuleDependencies(db, { companyId, ruleId: `${rule.ruleKey}@${rule.ruleVersion}` })) {
       expect(dep.resolved, dep.reference).toBe(true);
     }
   });

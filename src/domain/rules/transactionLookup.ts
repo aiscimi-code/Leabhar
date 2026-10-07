@@ -18,7 +18,7 @@ import { rctPrincipalOn } from '../config/companyStatus';
 import { eq, and } from 'drizzle-orm';
 import { EU_COUNTRY_CODES, ukWasMemberStateOn } from '../extraction/vatNumbers';
 import type { AppDatabase } from '@/db';
-import { irishTaxRules, irishActProvisions, irishKnowledgeSources, companies } from '@/db/schema';
+import { visibleTaxRules, visibleActProvisions, visibleKnowledgeSources, companies } from '@/db/schema';
 import type { IrishRuleException, IrishSourceType } from '@/db/schema';
 import { evaluateAllConditions, type ConditionResult } from './conditionEval';
 import { isIsoDate } from '../dates';
@@ -690,28 +690,28 @@ function resolveDeclaredExclusions(
 }
 
 function getRuleConditions(db: AppDatabase, ruleId: string) {
-  const row = db.select({ conditions: irishTaxRules.conditions })
-    .from(irishTaxRules).where(eq(irishTaxRules.id, ruleId)).get();
+  const row = db.select({ conditions: visibleTaxRules.conditions })
+    .from(visibleTaxRules).where(eq(visibleTaxRules.id, ruleId)).get();
   return row?.conditions ?? [];
 }
 
 function getRuleExceptions(db: AppDatabase, ruleId: string): IrishRuleException[] {
-  const row = db.select({ exceptions: irishTaxRules.exceptions })
-    .from(irishTaxRules).where(eq(irishTaxRules.id, ruleId)).get();
+  const row = db.select({ exceptions: visibleTaxRules.exceptions })
+    .from(visibleTaxRules).where(eq(visibleTaxRules.id, ruleId)).get();
   return row?.exceptions ?? [];
 }
 
 /** Re-exported for callers that already have a provision id and want its source citation. */
 export function citationForProvision(db: AppDatabase, provisionId: string) {
   return db.select({
-    sectionNumber: irishActProvisions.sectionNumber,
-    heading: irishActProvisions.heading,
-    citation: irishKnowledgeSources.citation,
-    sourceUrl: irishKnowledgeSources.sourceUrl,
+    sectionNumber: visibleActProvisions.sectionNumber,
+    heading: visibleActProvisions.heading,
+    citation: visibleKnowledgeSources.citation,
+    sourceUrl: visibleKnowledgeSources.sourceUrl,
   })
-    .from(irishActProvisions)
-    .innerJoin(irishKnowledgeSources, eq(irishActProvisions.sourceId, irishKnowledgeSources.id))
-    .where(and(eq(irishActProvisions.id, provisionId)))
+    .from(visibleActProvisions)
+    .innerJoin(visibleKnowledgeSources, eq(visibleActProvisions.sourceId, visibleKnowledgeSources.id))
+    .where(and(eq(visibleActProvisions.id, provisionId)))
     .get();
 }
 

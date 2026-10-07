@@ -1,9 +1,11 @@
 import { desc, isNull } from 'drizzle-orm';
-import { createDatabase, type AppDatabase } from '@/db';
+import { openBook, type AppDatabase } from '@/db';
 import { companies } from '@/db/schema';
 
 /**
  * DB and company resolution for the CLI and other non-Next.js callers.
+ * The book opens as the server opens it: migrated, with the rules store
+ * attached (ADR-0021).
  *
  * The web app reaches these through `src/lib/queries.ts`, which uses the
  * process-wide `getDb()` cache. The CLI is short-lived: it opens its own handle,
@@ -11,7 +13,7 @@ import { companies } from '@/db/schema';
  * and `db:seed` — local-only, direct file access, no auth.
  */
 export function getAgentDb(): AppDatabase {
-  return createDatabase();
+  return openBook();
 }
 
 /**

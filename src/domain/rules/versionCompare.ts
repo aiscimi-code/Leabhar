@@ -1,7 +1,9 @@
-import { and, asc, eq } from 'drizzle-orm';
+import { and, asc, desc, eq } from 'drizzle-orm';
 import type { AppDatabase } from '@/db';
-import { irishActProvisions, irishKnowledgeSources, irishTaxRules } from '@/db/schema';
-import { ruleReviewResolver } from './effectiveReview';
+import {
+  visibleActProvisionFields, visibleActProvisions, visibleKnowledgeSourceFields, visibleKnowledgeSources, visibleTaxRuleFields, visibleTaxRules,
+} from '@/db/schema';
+import { ruleReviewResolver, type RuleOrigin } from './effectiveReview';
 
 /**
  * Version comparison for the statutory rules (issue #450).
@@ -39,7 +41,7 @@ const DIFF_FIELDS: Array<{ field: string; pick: (r: VersionRow) => unknown }> = 
   { field: 'requiresGuidance', pick: (r) => r.requiresGuidance },
 ];
 
-type VersionRow = typeof irishTaxRules.$inferSelect;
+type VersionRow = typeof visibleTaxRules.$inferSelect;
 
 export interface RuleVersionChange {
   /** The field that differs between this version and its predecessor. */
@@ -53,6 +55,8 @@ export interface RuleVersionChange {
 export interface RuleVersionEntry {
   ruleId: string;
   ruleVersion: number;
+  /** A store version (the catalogue's number), or one the book keeps frozen (its own number). */
+  origin: RuleOrigin;
   supersedesRuleId: string | null;
   supersededByRuleId: string | null;
   reviewStatus: string;
@@ -88,18 +92,20 @@ export function compareRuleVersions(
 ): RuleVersionComparison | null {
   // Each version with the review the book follows: its own decision, else the catalogue's (issue #718).
   const review = ruleReviewResolver(db, { companyId: params.companyId });
-  const rows = db.select({ rule: irishTaxRules, sourceSha256: irishKnowledgeSources.sha256 }).from(irishTaxRules)
-    .innerJoin(irishActProvisions, eq(irishTaxRules.provisionId, irishActProvisions.id))
-    .innerJoin(irishKnowledgeSources, eq(irishActProvisions.sourceId, irishKnowledgeSources.id))
-    .where(and(eq(irishTaxRules.companyId, params.companyId), eq(irishTaxRules.ruleKey, params.ruleKey)))
-    .orderBy(asc(irishTaxRules.ruleVersion))
+  const rows = db.select({ rule: visibleTaxRuleFields, sourceSha256: visibleKnowledgeSources.sha256 }).from(visibleTaxRules)
+    .innerJoin(visibleActProvisions, eq(visibleTaxRules.provisionId, visibleActProvisions.id))
+    .innerJoin(visibleKnowledgeSources, eq(visibleActProvisions.sourceId, visibleKnowledgeSources.id))
+    .where(and(eq(visibleTaxRules.companyId, params.companyId), eq(visibleTaxRules.ruleKey, params.ruleKey)))
+    // The store's chain first, then the book's frozen versions: a frozen one
+    // is numbered as the book numbered it and sits outside the chain.
+    .orderBy(desc(visibleTaxRules.origin), asc(visibleTaxRules.ruleVersion))
     .all()
     .map(({ rule, sourceSha256 }) => ({ ...rule, reviewStatus: review({ ...rule, sourceSha256 }).status as VersionRow['reviewStatus'] }));
 
   if (rows.length === 0) return null;
 
   const versions: RuleVersionEntry[] = rows.map((row, index) => {
-    const previous = index > 0 ? rows[index - 1] : null;
+    const previous = index > 0 && rows[index - 1]!.origin === row.origin ? rows[index - 1]! : null;
     const changes: RuleVersionChange[] = previous
       ? DIFF_FIELDS
         .map(({ field, pick }) => ({ field, from: pick(previous), to: pick(row) }))
@@ -109,6 +115,7 @@ export function compareRuleVersions(
     return {
       ruleId: row.id,
       ruleVersion: row.ruleVersion,
+      origin: row.origin,
       supersedesRuleId: row.supersedesRuleId,
       supersededByRuleId: rows.find((r) => r.supersedesRuleId === row.id)?.id ?? null,
       reviewStatus: row.reviewStatus,

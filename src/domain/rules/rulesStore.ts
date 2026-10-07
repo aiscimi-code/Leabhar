@@ -3,7 +3,7 @@
  *
  * The store is built once, at package time (`scripts/build-package.mjs`) or by
  * `npm run rules:build` in development: the existing derive pipeline
- * (`loadStatutoryKnowledgeBase`) runs against an empty, in-memory book, and
+ * (`deriveStatutoryKnowledgeBase`) runs against an empty, in-memory book, and
  * the five rule tables are copied out of it into a separate SQLite file. The
  * copy drops what belongs to a book rather than to a rule: `company_id` on
  * every table, and the bindings to the book's own configuration
@@ -17,22 +17,23 @@
  * hash covers what the rule says, never its review: an approval ships under
  * the same version number.
  */
-import { existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
+import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
-import Database from 'better-sqlite3';
+import type Database from 'better-sqlite3';
 import { drizzle } from 'drizzle-orm/better-sqlite3';
 import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
 import { getTableConfig, type SQLiteTable } from 'drizzle-orm/sqlite-core';
-import { openSqlite } from '@/db';
+import { openSqlite, type AppDatabase } from '@/db';
 import * as schema from '@/db/schema';
 import { irishActProvisions, irishKnowledgeSources, irishRuleLinks, irishTaxRules, irishTaxRuleTests } from '@/db/schema';
 import { sha256Hex } from '@/lib/hash';
-import { appRoot, migrationsFolder, rulesStorePath } from '@/lib/paths';
+import { appRoot, migrationsFolder } from '@/lib/paths';
 import { createCompany } from '../config/setup';
-import { CATALOGUE_DIR, CATALOGUE_ENTRIES, catalogueEntryPath } from './catalogue';
-import { loadStatutoryKnowledgeBase } from './knowledgeBase';
+import { CATALOGUE_DIR } from './catalogue';
+import { deriveStatutoryKnowledgeBase } from './knowledgeBase';
+import { RULES_STORE_FORMAT, attachRulesStore, catalogueDigest, detachRulesStore, type RulesStoreMeta } from './visibleRules';
 
-export const RULES_STORE_FORMAT = 1;
 export const RELEASED_VERSIONS_FORMAT = 1;
 
 /** A failed store build: a released version is missing or says something else. */
@@ -59,6 +60,23 @@ const STORE_INDEXES = [
   'CREATE INDEX irish_rule_links_from_idx ON irish_rule_links (from_key, kind)',
   'CREATE INDEX irish_rule_links_to_idx ON irish_rule_links (to_key, kind)',
 ];
+
+/**
+ * The rows of one company's derived rules, and what they refer to, per table.
+ * A source is shared by every company that loaded it (unique by citation and
+ * hash), so sources and provisions are taken by reference as well as by company.
+ */
+const COMPANY_PROVISIONS = `SELECT id FROM main.irish_act_provisions WHERE company_id = @companyId OR company_id IS NULL
+  OR id IN (SELECT provision_id FROM main.irish_tax_rules WHERE company_id = @companyId)
+  OR id IN (SELECT to_provision_id FROM main.irish_rule_links WHERE company_id = @companyId)`;
+const STORE_SCOPE: Record<string, string> = {
+  irish_knowledge_sources: `t.company_id = @companyId OR t.company_id IS NULL
+    OR t.id IN (SELECT source_id FROM main.irish_act_provisions WHERE id IN (${COMPANY_PROVISIONS}))`,
+  irish_act_provisions: `t.id IN (${COMPANY_PROVISIONS})`,
+  irish_tax_rules: 't.company_id = @companyId',
+  irish_tax_rule_tests: 't.rule_id IN (SELECT id FROM main.irish_tax_rules WHERE company_id = @companyId)',
+  irish_rule_links: 't.company_id = @companyId',
+};
 
 const ruleIdOf = (alias: string) => `${alias}.rule_key || '@' || ${alias}.rule_version`;
 
@@ -159,10 +177,6 @@ export function checkReleasedVersions(released: ReleasedVersions, built: Readonl
   return { missing: missing.sort(), changed: changed.sort(), added: added.sort() };
 }
 
-/** The catalogue a store was built from: the SHA-256 of every entry file, so a later catalogue is recognised. */
-export function catalogueDigest(root?: string): string {
-  return sha256Hex(CATALOGUE_ENTRIES.map((name) => `${name}:${sha256Hex(readFileSync(catalogueEntryPath(name, root)))}`).join('\n'));
-}
 
 export interface RulesStoreBuildResult {
   path: string;
@@ -189,24 +203,55 @@ export function buildRulesStore(params: {
 }): RulesStoreBuildResult {
   const released = params.released ?? readReleasedVersions(params.root);
   const sqlite = openSqlite(':memory:');
-  const temp = `${params.outPath}.building`;
   try {
     // The derive pipeline, unchanged, against an empty book.
     const db = drizzle(sqlite, { schema });
     migrate(db, { migrationsFolder: migrationsFolder() });
     const { companyId } = createCompany(db, { legalName: 'Rules store build', vatRegistrationStatus: 'registered', seedYears: [] });
-    loadStatutoryKnowledgeBase(db, { companyId, root: params.root });
+    deriveStatutoryKnowledgeBase(db, { companyId, root: params.root });
+    let added: string[] = [];
+    const written = writeRulesStore(sqlite, {
+      outPath: params.outPath, root: params.root, companyId,
+      check: (versions) => {
+        const check = checkReleasedVersions(released, versions);
+        if (check.missing.length > 0 || check.changed.length > 0) {
+          throw new RulesStoreBuildError([
+            'The rules store was not built: a release never drops or changes a version it shipped (ADR-0021 §3).',
+            ...(check.missing.length > 0 ? [`Released versions no longer derived: ${check.missing.join(', ')}.`] : []),
+            ...(check.changed.length > 0 ? [`Released versions that now say something else: ${check.changed.join(', ')}. Add the change as a new version instead.`] : []),
+          ].join(' '), check);
+        }
+        added = check.added;
+      },
+    });
+    return { path: params.outPath, versions: written.versions, added, signature: written.signature };
+  } finally {
+    if (sqlite.open) sqlite.close();
+  }
+}
 
-    mkdirSync(dirname(params.outPath), { recursive: true });
-    rmSync(temp, { force: true });
+/**
+ * Copy one company's derived rule tables out of a book into a store file at
+ * `outPath`: the copy step of the build. Written to a temporary file and moved
+ * into place only once `check` passes.
+ */
+function writeRulesStore(
+  sqlite: Database.Database,
+  params: { outPath: string; root?: string; companyId: string; check?: (versions: ReadonlyMap<string, string>) => void },
+): { versions: Map<string, string>; signature: string } {
+  const temp = `${params.outPath}.building`;
+  mkdirSync(dirname(params.outPath), { recursive: true });
+  rmSync(temp, { force: true });
+  try {
     sqlite.prepare('ATTACH DATABASE ? AS store').run(temp);
     sqlite.transaction(() => {
       for (const table of STORE_TABLES) {
         const { name } = getTableConfig(table);
         const columns = storeColumns(table);
+        const scoped = `WHERE ${STORE_SCOPE[name]}`;
         sqlite.exec(`CREATE TABLE store.${name} (${columns.map((c) => c.ddl).join(', ')})`);
-        sqlite.exec(`INSERT INTO store.${name} (${columns.map((c) => c.name).join(', ')}) `
-          + `SELECT ${columns.map((c) => c.select).join(', ')} FROM main.${name} t`);
+        sqlite.prepare(`INSERT INTO store.${name} (${columns.map((c) => c.name).join(', ')}) `
+          + `SELECT ${columns.map((c) => c.select).join(', ')} FROM main.${name} t ${scoped}`).run({ companyId: params.companyId });
       }
       for (const index of STORE_INDEXES) sqlite.exec(index.replace(/^CREATE (UNIQUE )?INDEX /, 'CREATE $1INDEX store.'));
     })();
@@ -226,14 +271,7 @@ export function buildRulesStore(params: {
         accountingEffect: r.accounting_effect, taxEffect: r.tax_effect, vatEffect: r.vat_effect, reportingEffect: r.reporting_effect,
       }));
     }
-    const check = checkReleasedVersions(released, versions);
-    if (check.missing.length > 0 || check.changed.length > 0) {
-      throw new RulesStoreBuildError([
-        'The rules store was not built: a release never drops or changes a version it shipped (ADR-0021 §3).',
-        ...(check.missing.length > 0 ? [`Released versions no longer derived: ${check.missing.join(', ')}.`] : []),
-        ...(check.changed.length > 0 ? [`Released versions that now say something else: ${check.changed.join(', ')}. Add the change as a new version instead.`] : []),
-      ].join(' '), check);
-    }
+    params.check?.(versions);
 
     const signature = sha256Hex([...versions].map(([id, hash]) => `${id}:${hash}`).join('\n'));
     sqlite.exec('CREATE TABLE store.rules_store_meta (key TEXT PRIMARY KEY, value TEXT NOT NULL)');
@@ -243,13 +281,39 @@ export function buildRulesStore(params: {
     meta.run('catalogue_digest', catalogueDigest(params.root));
     meta.run('versions', String(versions.size));
     sqlite.exec('DETACH DATABASE store');
-    sqlite.close();
+    // Read-only on disk too: nothing writes the store after the build. A
+    // store being replaced is made writable first, which Windows needs to
+    // rename over it.
+    chmodSync(temp, 0o444);
+    if (existsSync(params.outPath)) chmodSync(params.outPath, 0o644);
     renameSync(temp, params.outPath);
-    return { path: params.outPath, versions, added: check.added, signature };
+    return { versions, signature };
   } finally {
-    if (sqlite.open) sqlite.close();
+    if ((sqlite.prepare('PRAGMA database_list').all() as Array<{ name: string }>).some((d) => d.name === 'store')) sqlite.exec('DETACH DATABASE store');
     rmSync(temp, { force: true });
   }
+}
+
+/** Temporary stores built from a book, removed when the process exits. */
+const bookStoreDirs = new Set<string>();
+
+/**
+ * Attach, in place of the installed store, one built from the rules a book
+ * derived itself, for one company: for a test that derives its own rules or
+ * ships its own catalogue, and for the developer scripts that read a freshly
+ * derived catalogue (`catalogue:extract`). Never used by the app, which reads
+ * only the store the install shipped (ADR-0021, "Forbidden"). The file goes
+ * to a temporary directory and is removed when the process exits.
+ */
+export function attachRulesStoreFromBook(db: AppDatabase, params: { companyId: string; root?: string }): RulesStoreMeta {
+  const sqlite = (db as unknown as { $client: Database.Database }).$client;
+  const dir = mkdtempSync(join(tmpdir(), 'leabhar-book-rules-'));
+  if (bookStoreDirs.size === 0) process.once('exit', () => { for (const d of bookStoreDirs) rmSync(d, { recursive: true, force: true }); });
+  bookStoreDirs.add(dir);
+  const outPath = join(dir, 'rules.db');
+  detachRulesStore(sqlite);
+  writeRulesStore(sqlite, { outPath, root: params.root, companyId: params.companyId });
+  return attachRulesStore(sqlite, { path: outPath, root: params.root });
 }
 
 /**
@@ -266,49 +330,4 @@ export function recordReleasedVersions(build: RulesStoreBuildResult, root?: stri
   return build.added;
 }
 
-/** What a store says about itself (`rules_store_meta`). */
-export interface RulesStoreMeta {
-  format: number;
-  signature: string;
-  catalogueDigest: string;
-  versions: number;
-}
-
-/** A store that cannot be opened: missing, unreadable, of another format, or built from an older catalogue. */
-export class RulesStoreOpenError extends Error {
-  constructor(message: string, readonly reason: 'missing' | 'unreadable' | 'format' | 'stale') {
-    super(message);
-    this.name = new.target.name;
-  }
-}
-
-/**
- * Open the rules store read-only (ADR-0021 §1–2). Fails loudly, naming the
- * command that rebuilds it, when the store is missing, unreadable, of a
- * format this build does not read, or built from a catalogue other than the
- * one installed beside it. There is no fallback to rules copied into a book.
- */
-export function openRulesStore(params: { path?: string; root?: string } = {}): { sqlite: Database.Database; meta: RulesStoreMeta } {
-  const path = params.path ?? rulesStorePath();
-  const rebuild = 'Run `npm run rules:build` to build it (a packaged install ships it).';
-  if (!existsSync(path)) throw new RulesStoreOpenError(`The rules store is missing at ${path}. ${rebuild}`, 'missing');
-  let sqlite: Database.Database;
-  let rows: Array<{ key: string; value: string }>;
-  try {
-    sqlite = new Database(path, { readonly: true, fileMustExist: true });
-    rows = sqlite.prepare('SELECT key, value FROM rules_store_meta').all() as Array<{ key: string; value: string }>;
-  } catch (e) {
-    throw new RulesStoreOpenError(`The rules store at ${path} cannot be read (${(e as Error).message}). ${rebuild}`, 'unreadable');
-  }
-  const values = Object.fromEntries(rows.map((r) => [r.key, r.value]));
-  const meta: RulesStoreMeta = {
-    format: Number(values.format), signature: values.signature ?? '', catalogueDigest: values.catalogue_digest ?? '', versions: Number(values.versions),
-  };
-  const fail = (message: string, reason: RulesStoreOpenError['reason']) => {
-    sqlite.close();
-    return new RulesStoreOpenError(`${message} ${rebuild}`, reason);
-  };
-  if (meta.format !== RULES_STORE_FORMAT) throw fail(`The rules store at ${path} is format ${values.format ?? 'unknown'}; this version of Leabhar reads format ${RULES_STORE_FORMAT}.`, 'format');
-  if (meta.catalogueDigest !== catalogueDigest(params.root)) throw fail(`The rules store at ${path} was built from a catalogue other than the one installed beside it.`, 'stale');
-  return { sqlite, meta };
-}
+export { RULES_STORE_FORMAT, RulesStoreOpenError, catalogueDigest, openRulesStore, type RulesStoreMeta } from './visibleRules';

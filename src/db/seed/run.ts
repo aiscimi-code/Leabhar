@@ -1,5 +1,4 @@
-import { createDatabase } from '../index';
-import { runMigrations } from '../migrate';
+import { openBook } from '../index';
 import { seedDemoCompany, type DemoEntityType } from './demo';
 
 /**
@@ -27,8 +26,7 @@ function entityFromArgv(argv: string[]): DemoEntityType {
 
 async function main(): Promise<void> {
   const entityType = entityFromArgv(process.argv.slice(2));
-  const db = createDatabase();
-  runMigrations(db);
+  const db = openBook();
   const result = await seedDemoCompany(db, { entityType });
   const label = entityType === 'sole_trader' ? 'sole trader'
     : entityType === 'partnership' ? 'partnership'

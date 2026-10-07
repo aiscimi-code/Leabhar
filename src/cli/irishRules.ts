@@ -56,9 +56,10 @@ import { generateAuditReport } from '@/domain/rules/audit';
 import { resolveRuleDependencies, resolveAllRuleDependencies } from '@/domain/rules/dependencies';
 import { resolveImpactTarget, ruleDepends, ruleImpact } from '@/domain/rules/ruleImpact';
 import { traceSourceChange, verifySources, type SourceFetcher } from '@/domain/rules/sourceDrift';
-import { irishActProvisions, irishKnowledgeSources, irishTaxRules } from '@/db/schema';
+import { visibleActProvisions, visibleKnowledgeSources, visibleTaxRuleFields, visibleTaxRules } from '@/db/schema';
+import { visibleToCompany } from '@/domain/rules/visibleRules';
 import { ruleReviewResolver } from '@/domain/rules/effectiveReview';
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 
 const USAGE = `\
 Leabhar Irish rules knowledge base CLI
@@ -395,12 +396,12 @@ export async function main(argv: string[], options: CliOptions = {}): Promise<nu
         const category = getFlag(flags, 'category');
         const relevantOnly = hasFlag(flags, 'relevant-only', 'relevantOnly');
         let rows = db.select({
-          sectionNumber: irishActProvisions.sectionNumber,
-          heading: irishActProvisions.heading,
-          category: irishActProvisions.category,
-          relevant: irishActProvisions.relevant,
-          relevanceReason: irishActProvisions.relevanceReason,
-        }).from(irishActProvisions).all();
+          sectionNumber: visibleActProvisions.sectionNumber,
+          heading: visibleActProvisions.heading,
+          category: visibleActProvisions.category,
+          relevant: visibleActProvisions.relevant,
+          relevanceReason: visibleActProvisions.relevanceReason,
+        }).from(visibleActProvisions).where(visibleToCompany(visibleActProvisions.companyId, companyId)).all();
         if (category) rows = rows.filter((r) => r.category === category);
         if (relevantOnly) rows = rows.filter((r) => r.relevant);
         rows.sort((a, b) => Number(a.sectionNumber) - Number(b.sectionNumber));
@@ -411,8 +412,8 @@ export async function main(argv: string[], options: CliOptions = {}): Promise<nu
       case 'show-provision': {
         const section = getFlag(flags, 'section');
         if (!section) throw new Error('Missing required flag: --section');
-        const row = db.select().from(irishActProvisions)
-          .where(eq(irishActProvisions.sectionNumber, section)).get();
+        const row = db.select().from(visibleActProvisions)
+          .where(and(eq(visibleActProvisions.sectionNumber, section), visibleToCompany(visibleActProvisions.companyId, companyId))).get();
         if (!row) throw new Error(`No ingested provision for section ${section}.`);
         print(row, format);
         return 0;
@@ -425,10 +426,10 @@ export async function main(argv: string[], options: CliOptions = {}): Promise<nu
         const review = ruleReviewResolver(db, { companyId });
         const rows: Array<{ reviewStatus: string }> = topic
           ? listTaxRulesByTopic(db, { companyId, topic })
-          : db.select({ rule: irishTaxRules, sourceSha256: irishKnowledgeSources.sha256 }).from(irishTaxRules)
-            .innerJoin(irishActProvisions, eq(irishTaxRules.provisionId, irishActProvisions.id))
-            .innerJoin(irishKnowledgeSources, eq(irishActProvisions.sourceId, irishKnowledgeSources.id))
-            .where(eq(irishTaxRules.companyId, companyId)).all()
+          : db.select({ rule: visibleTaxRuleFields, sourceSha256: visibleKnowledgeSources.sha256 }).from(visibleTaxRules)
+            .innerJoin(visibleActProvisions, eq(visibleTaxRules.provisionId, visibleActProvisions.id))
+            .innerJoin(visibleKnowledgeSources, eq(visibleActProvisions.sourceId, visibleKnowledgeSources.id))
+            .where(eq(visibleTaxRules.companyId, companyId)).all()
             .map(({ rule, sourceSha256 }) => ({ ...rule, reviewStatus: review({ ...rule, sourceSha256 }).status }));
         print(status ? rows.filter((r) => r.reviewStatus === status) : rows, format);
         return 0;
@@ -442,6 +443,7 @@ export async function main(argv: string[], options: CliOptions = {}): Promise<nu
           throw new Error('Usage: review --rule <id> --status <status> --by <name> [--notes "..."]');
         }
         setRuleReviewStatus(db, {
+          companyId,
           ruleId,
           status: status as Parameters<typeof setRuleReviewStatus>[1]['status'],
           reviewedBy: by,
@@ -468,7 +470,7 @@ export async function main(argv: string[], options: CliOptions = {}): Promise<nu
       case 'dependencies': {
         const ruleId = getFlag(flags, 'rule');
         if (ruleId) {
-          print(resolveRuleDependencies(db, { ruleId }), format);
+          print(resolveRuleDependencies(db, { companyId, ruleId }), format);
           return 0;
         }
         print(resolveAllRuleDependencies(db, { companyId }), format);
@@ -525,6 +527,13 @@ export async function main(argv: string[], options: CliOptions = {}): Promise<nu
       case 'test': {
         const result = runTestCases(db, { companyId });
         print(result, format);
+        if (result.total === 0) {
+          // The cases are read from the rules store (ADR-0021); `generate-tests`
+          // still writes them into the book, where no run reads them. No case
+          // run is not a pass.
+          process.stderr.write('No rule test cases in the rules store, so nothing was tested.\n');
+          return 1;
+        }
         return result.failed > 0 ? 1 : 0;
       }
 

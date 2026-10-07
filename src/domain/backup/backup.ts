@@ -9,9 +9,8 @@ import type { AppDatabase } from '@/db';
 import { backups, auditEvents, companies } from '@/db/schema';
 import { ids } from '@/lib/ids';
 import { nowIso } from '../dates';
-import { databasePath } from '@/db';
 import { storageRoot } from '../documents/storage';
-import { backupRoot as backupRootFromPaths } from '@/lib/paths';
+import { backupRoot as backupRootFromPaths, databasePath } from '@/lib/paths';
 
 /**
  * Backup and restore (README §45).
@@ -53,6 +52,17 @@ export async function createBackup(
   db: AppDatabase,
   params: { companyId?: string; root?: string; dbPath?: string; documentsPath?: string } = {},
 ): Promise<BackupResult> {
+  return createBackupSync(db, params);
+}
+
+/**
+ * `createBackup`, for a caller that must finish before anything else touches
+ * the book: the move onto the rules store when the book is opened (ADR-0021 §6).
+ */
+export function createBackupSync(
+  db: AppDatabase,
+  params: { companyId?: string; root?: string; dbPath?: string; documentsPath?: string } = {},
+): BackupResult {
   const root = params.root ?? backupRoot();
   const sourceDb = params.dbPath ?? databasePath();
   const sourceDocs = params.documentsPath ?? storageRoot();

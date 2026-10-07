@@ -18,7 +18,10 @@
  */
 import { and, eq } from 'drizzle-orm';
 import type { AppDatabase } from '@/db';
-import { irishKnowledgeSources, irishActProvisions, irishTaxRules } from '@/db/schema';
+import {
+  irishKnowledgeSources, irishActProvisions, irishTaxRules, visibleActProvisions, visibleKnowledgeSources, visibleTaxRules,
+} from '@/db/schema';
+import { visibleToCompany } from './visibleRules';
 import { isCatalogueSource } from './catalogueSupersession';
 
 /** What a reference names as the instrument it points into. */
@@ -108,51 +111,69 @@ export function sameCrossReferences(a: string[], b: string[]): boolean {
   return JSON.stringify([...a].sort()) === JSON.stringify([...b].sort());
 }
 
-/** Resolve one rule's cross-references against what this book holds. */
+/** Resolve one rule's cross-references against the rules the book can see. */
 export function resolveRuleDependencies(
   db: AppDatabase,
-  params: { ruleId: string },
+  params: { companyId: string; ruleId: string },
 ): ResolvedDependency[] {
-  const rule = db.select().from(irishTaxRules).where(eq(irishTaxRules.id, params.ruleId)).get();
+  const rule = db.select().from(visibleTaxRules)
+    .where(and(eq(visibleTaxRules.companyId, params.companyId), eq(visibleTaxRules.id, params.ruleId))).get();
   if (!rule) throw new Error(`No rule with id ${params.ruleId}.`);
   if (!rule.crossReferences.length) return [];
-  return resolveReferences(db, rule, bookContext(db, rule.companyId));
+  return resolveReferences(rule, ruleContext(db, params.companyId, 'visible'));
 }
 
 /**
- * Resolve a free-standing reference ("VATCA 2010 s.46") against this book, as
- * a rule's cross-reference would be. Used to name a provision for `impact`.
+ * Resolve a free-standing reference ("VATCA 2010 s.46") against the rules
+ * the book can see, as a rule's cross-reference would be. Used to name a
+ * provision for `impact`.
  */
 export function resolveReference(db: AppDatabase, params: { companyId: string; reference: string }): ResolvedDependency {
   const asRule = { crossReferences: [params.reference], provisionId: '' } as unknown as RuleRow;
-  return resolveReferences(db, asRule, bookContext(db, params.companyId))[0]!;
+  return resolveReferences(asRule, ruleContext(db, params.companyId, 'visible'))[0]!;
 }
 
 type RuleRow = typeof irishTaxRules.$inferSelect;
-interface BookContext {
+type ProvisionRow = typeof irishActProvisions.$inferSelect;
+interface RuleContext {
   sources: Array<typeof irishKnowledgeSources.$inferSelect>;
   provisionRules: RuleRow[];
-  provisions: Map<string, typeof irishActProvisions.$inferSelect>;
+  provisionById: (id: string) => ProvisionRow | undefined;
+  provisionAt: (sourceId: string, section: string) => ProvisionRow | undefined;
 }
 
-function bookContext(db: AppDatabase, companyId: string): BookContext {
+/**
+ * Where references are resolved against: `visible`, the rules the book can
+ * see (`visibleRules.ts`), for a reader; `copies`, the book's own derived
+ * tables, for the derive pipeline that writes the `cites` links into them
+ * (`syncRuleLinks`), which runs where no store is attached (the store build).
+ */
+function ruleContext(db: AppDatabase, companyId: string, from: 'visible' | 'copies'): RuleContext {
+  const provisions = new Map<string, ProvisionRow | undefined>();
+  if (from === 'copies') {
+    return {
+      sources: db.select().from(irishKnowledgeSources).all(),
+      provisionRules: db.select().from(irishTaxRules).where(eq(irishTaxRules.companyId, companyId)).all(),
+      provisionById: (id) => provisions.get(id)
+        ?? provisions.set(id, db.select().from(irishActProvisions).where(eq(irishActProvisions.id, id)).get()).get(id),
+      provisionAt: (sourceId, section) => db.select().from(irishActProvisions)
+        .where(and(eq(irishActProvisions.sourceId, sourceId), eq(irishActProvisions.sectionNumber, section))).get(),
+    };
+  }
   return {
-    sources: db.select().from(irishKnowledgeSources).all(),
-    provisionRules: db.select().from(irishTaxRules).where(eq(irishTaxRules.companyId, companyId)).all(),
-    provisions: new Map(),
+    sources: db.select().from(visibleKnowledgeSources).where(visibleToCompany(visibleKnowledgeSources.companyId, companyId)).all(),
+    provisionRules: db.select().from(visibleTaxRules).where(eq(visibleTaxRules.companyId, companyId)).all(),
+    provisionById: (id) => provisions.get(id)
+      ?? provisions.set(id, db.select().from(visibleActProvisions)
+        .where(and(eq(visibleActProvisions.id, id), visibleToCompany(visibleActProvisions.companyId, companyId))).get()).get(id),
+    provisionAt: (sourceId, section) => db.select().from(visibleActProvisions)
+      .where(and(eq(visibleActProvisions.sourceId, sourceId), eq(visibleActProvisions.sectionNumber, section),
+        visibleToCompany(visibleActProvisions.companyId, companyId))).get(),
   };
 }
 
-function provisionById(db: AppDatabase, ctx: BookContext, id: string) {
-  if (!ctx.provisions.has(id)) {
-    const row = db.select().from(irishActProvisions).where(eq(irishActProvisions.id, id)).get();
-    if (row) ctx.provisions.set(id, row);
-  }
-  return ctx.provisions.get(id);
-}
-
-function resolveReferences(db: AppDatabase, rule: RuleRow, ctx: BookContext): ResolvedDependency[] {
-  const provision = provisionById(db, ctx, rule.provisionId);
+function resolveReferences(rule: RuleRow, ctx: RuleContext): ResolvedDependency[] {
+  const provision = ctx.provisionById(rule.provisionId);
   const references = rule.crossReferences;
   const { sources, provisionRules } = ctx;
 
@@ -193,11 +214,10 @@ function resolveReferences(db: AppDatabase, rule: RuleRow, ctx: BookContext): Re
       return { reference, resolved: false, provision: null, ruleKeys: [],
         reason: 'The instrument this reference names is not ingested in this book.' };
     }
-    let target: typeof irishActProvisions.$inferSelect | undefined;
+    let target: ProvisionRow | undefined;
     let source: typeof irishKnowledgeSources.$inferSelect | undefined;
     for (const candidate of candidates) {
-      const found = db.select().from(irishActProvisions)
-        .where(and(eq(irishActProvisions.sourceId, candidate.id), eq(irishActProvisions.sectionNumber, section))).get();
+      const found = ctx.provisionAt(candidate.id, section);
       if (found) { target = found; source = candidate; break; }
     }
     if (!target || !source) {
@@ -218,23 +238,31 @@ function resolveReferences(db: AppDatabase, rule: RuleRow, ctx: BookContext): Re
   });
 }
 
-/** Every active rule version's dependencies, resolved, with the version's dates (the `cites` links, ruleLinks.ts). */
+/**
+ * Every active rule version's dependencies, resolved, with the version's
+ * dates: the `cites` links the derive pipeline writes (ruleLinks.ts), read
+ * from the book's own derived tables.
+ */
 export function resolveBookDependencies(db: AppDatabase, params: { companyId: string }): Array<ResolvedDependency & {
   ruleKey: string; effectiveFrom: string; effectiveTo: string | null;
 }> {
-  const ctx = bookContext(db, params.companyId);
+  const ctx = ruleContext(db, params.companyId, 'copies');
   return db.select().from(irishTaxRules)
     .where(and(eq(irishTaxRules.companyId, params.companyId), eq(irishTaxRules.active, true))).all()
     .filter((r) => r.crossReferences.length > 0)
-    .flatMap((rule) => resolveReferences(db, rule, ctx).map((dep) => ({
+    .flatMap((rule) => resolveReferences(rule, ctx).map((dep) => ({
       ...dep, ruleKey: rule.ruleKey, effectiveFrom: rule.effectiveFrom, effectiveTo: rule.effectiveTo,
     })));
 }
 
-/** Every active rule's dependencies, resolved, for the audit report. */
+/** Every active rule's dependencies, resolved against the rules the book can see, for the audit report. */
 export function resolveAllRuleDependencies(db: AppDatabase, params: { companyId: string }): Array<{
   ruleKey: string; reference: string; resolved: boolean; reason: string | null;
 }> {
-  return resolveBookDependencies(db, params)
-    .map((d) => ({ ruleKey: d.ruleKey, reference: d.reference, resolved: d.resolved, reason: d.reason }));
+  const ctx = ruleContext(db, params.companyId, 'visible');
+  return db.select().from(visibleTaxRules)
+    .where(and(eq(visibleTaxRules.companyId, params.companyId), eq(visibleTaxRules.active, true))).all()
+    .filter((r) => r.crossReferences.length > 0)
+    .flatMap((rule) => resolveReferences(rule, ctx)
+      .map((d) => ({ ruleKey: rule.ruleKey, reference: d.reference, resolved: d.resolved, reason: d.reason })));
 }

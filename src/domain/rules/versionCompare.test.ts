@@ -3,7 +3,8 @@ import { readFileSync } from 'node:fs';
 import { createTestDatabase } from '@/db/testing';
 import { createCompany } from '../config/setup';
 import { ingestVatca2010FromCatalogue } from './vatcaIngestion';
-import { compareRuleVersions } from './versionCompare';
+import { compareRuleVersions as compareStoredVersions } from './versionCompare';
+import { attachRulesStoreFromBook } from './rulesStore';
 import { irishActProvisions, irishTaxRules } from '@/db/schema';
 import { ids } from '@/lib/ids';
 import type { AppDatabase } from '@/db';
@@ -21,6 +22,12 @@ beforeEach(() => {
   provisionId = db.select({ id: irishActProvisions.id }).from(irishActProvisions)
     .limit(1).all()[0]!.id;
 });
+
+/** Compare the versions after building a store from the rows this book derived (ADR-0021: readers read the store). */
+function compareRuleVersions(database: AppDatabase, params: { companyId: string; ruleKey: string }) {
+  attachRulesStoreFromBook(database, { companyId });
+  return compareStoredVersions(database, params);
+}
 
 /** A rule row, in the shape the ingestion pipeline writes. */
 function insertRule(overrides: Partial<typeof irishTaxRules.$inferInsert> & { ruleVersion: number }) {
@@ -126,9 +133,11 @@ describe('compareRuleVersions', () => {
     expect(conditions.to).toContain('{"field":"description","operator":"contains","value":"hotel"}');
   });
 
-  it('never crosses companies', () => {
+  it('compares a store rule the same for every company', () => {
+    // The store is the install's (ADR-0021): its versions are every company's. A
+    // book's own retained versions stay with that book (visibleRules.test.ts).
     insertRule({ ruleVersion: 1 });
     const otherCompanyId = createCompany(db, { legalName: 'Elsewhere Ltd', seedYears: [2025] }).companyId;
-    expect(compareRuleVersions(db, { companyId: otherCompanyId, ruleKey: RULE_KEY })).toBeNull();
+    expect(compareRuleVersions(db, { companyId: otherCompanyId, ruleKey: RULE_KEY })).toEqual(compareRuleVersions(db, { companyId, ruleKey: RULE_KEY }));
   });
 });
