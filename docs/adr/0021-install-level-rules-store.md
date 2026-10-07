@@ -207,7 +207,7 @@ So that this stays possible, the reader switch (Delivery step 3) must not
 assume every rule comes from `rules.db`. Readers go through one function that
 returns the rules a book can see. Today that is the store plus the book's
 frozen versions in `irish_rule_versions_retained` (decision 6); later it
-also includes the book's own rules. Building that second source waits
+also includes the book's own rules. Building that third source waits
 until a practice has a rule to put there.
 
 ## Delivery
