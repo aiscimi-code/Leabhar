@@ -9,7 +9,9 @@ import { ingestCatalogueEntry, ingestCatalogueFile, readCatalogueEntry, type Cat
 import { preferredSourceId } from './catalogueSupersession';
 import { deriveSi692025Rules } from './si692025Ingestion';
 import { loadStatutoryKnowledgeBase } from './knowledgeBase';
-import { deriveIncomeTaxRules, ingestSwcaSection, SI_312_1996_ART92_CATALOGUE_ENTRY } from './incomeTaxIngestion';
+import { deriveCuratedRuleFamilies, deriveIncomeTaxRules, ingestSwcaSection, SI_312_1996_ART92_CATALOGUE_ENTRY } from './incomeTaxIngestion';
+import { CAR_EMISSIONS_CURATED_RULES, CAR_EMISSIONS_RELEVANCE_REASON, CAR_EMISSIONS_SOURCES, TDM_11_00_01_CATALOGUE_ENTRY } from './carEmissionsCuration';
+import { ingestSlicedSource } from './slicedSourceIngestion';
 
 /**
  * A statute copy a book loaded before its source moved to the rules catalogue,
@@ -169,5 +171,22 @@ describe('S.I. 312/1996 art. 92: a hand-edited copy (#712)', () => {
     expect(db.select().from(irishActProvisions).where(eq(irishActProvisions.id, after[0]!.provisionId)).get()!.sourceId).toBe(loaded.sourceId);
     expect(db.select().from(irishKnowledgeSources).where(eq(irishKnowledgeSources.id, copy.sourceId)).get()).toBeTruthy();
     expect(items()).toEqual([expect.objectContaining({ dedupeKey: 'catalogue-wording:S.I. 312/1996 s.92', severity: 'warning' })]);
+  });
+});
+
+describe('TDM 11-00-01: a copy whose page markers differ from the converter\'s', () => {
+  it('is superseded as punctuation only: the page markers are the converter\'s, not the manual\'s words', () => {
+    const FIXTURE = 'src/domain/rules/__fixtures__/tdm-11-00-01.md';
+    ingestSlicedSource(db, CAR_EMISSIONS_SOURCES.map((s) => ({ ...s, path: FIXTURE })), CAR_EMISSIONS_RELEVANCE_REASON,
+      { companyId, markdown: readFileSync(FIXTURE, 'utf8'), ingestVersion: 'v1', localPath: FIXTURE });
+    // The car rule families also quote the Notes for Guidance on Part 11C.
+    ingestCatalogueFile(db, { companyId, entry: 'tca-1997-nfg/part11c.json' });
+    expect(deriveCuratedRuleFamilies(db, { companyId, rules: CAR_EMISSIONS_CURATED_RULES, label: 'capital allowances' }).skippedNoProvision).toEqual([]);
+    const before = rules().filter((r) => r.key.startsWith('car.')).map((r) => `${r.key}@${r.version}`).sort();
+    ingestCatalogueFile(db, { companyId, entry: TDM_11_00_01_CATALOGUE_ENTRY });
+    expect(items()).toEqual([expect.objectContaining({ dedupeKey: 'catalogue-punctuation:Revenue TDM Part 11-00-01', severity: 'info' })]);
+    expect(items()[0]!.detail).toContain('3 rules now read the catalogue\'s provisions.');
+    expect(deriveCuratedRuleFamilies(db, { companyId, rules: CAR_EMISSIONS_CURATED_RULES, label: 'capital allowances' }).created).toBe(0);
+    expect(rules().filter((r) => r.key.startsWith('car.')).map((r) => `${r.key}@${r.version}`).sort()).toEqual(before);
   });
 });

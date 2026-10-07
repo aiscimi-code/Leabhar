@@ -14,8 +14,8 @@
  *     aside). A rule whose words are gone stays where it is, and its
  *     derivation supersedes it with a new version;
  *   - a review item puts the difference on the record:
- *     `catalogue-punctuation:<citation>` when only punctuation or marks
- *     differ (the letters and digits are the same), and
+ *     `catalogue-punctuation:<citation>` when only punctuation, marks or a
+ *     converter's page markers differ (the letters and digits are the same), and
  *     `catalogue-wording:<citation>` when the words do.
  *
  * Derivations and cross-references then prefer the catalogue source when both
@@ -54,9 +54,13 @@ export function catalogueSourcesFirst() {
   return sql`(${irishKnowledgeSources.localPath} like ${`${CATALOGUE_PREFIX}%`}) desc`;
 }
 
-/** Letters and digits only, lower-cased: what is left when punctuation and marks are set aside. */
+/**
+ * Letters and digits only, lower-cased: what is left when punctuation and
+ * marks are set aside. A converter's own markers (`<!-- page 8 of 13 -->`)
+ * are not the source's words and are left out too.
+ */
 function lettersAndDigits(s: string): string {
-  return (s.toLowerCase().match(/[\p{L}\p{N}]+/gu) ?? []).join(' ');
+  return (s.replace(/<!--[\s\S]*?-->/g, ' ').toLowerCase().match(/[\p{L}\p{N}]+/gu) ?? []).join(' ');
 }
 
 export interface HeldCopySupersession {

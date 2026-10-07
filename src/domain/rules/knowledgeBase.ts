@@ -7,9 +7,9 @@
  * `extract` commands by hand, in the right order, and nothing in the import →
  * match → classify workflow ever did — so the lookup the transaction screen
  * now uses had nothing to look up. This function runs exactly the set of
- * ingest and derive steps the CLI exposes, from the same `docs/statutes`
- * files, so the web app, the agent CLI and the traceability audit
- * (`scripts/rule-traceability-dump.ts`) all see the same 68 rules.
+ * ingest and derive steps the CLI exposes, from the rules catalogue
+ * (`catalogue/`, #556), so the web app, the agent CLI and the traceability
+ * audit (`scripts/rule-traceability-dump.ts`) all see the same rules.
  *
  * Every step is idempotent by content (a source already ingested with the
  * same SHA-256 is a no-op, and an unchanged curated rule is left alone), so
@@ -43,32 +43,14 @@ import { deriveCompaniesAct2014Rules } from './companiesAct2014Ingestion';
 import { deriveVat3RtdRules } from './vat3RtdIngestion';
 import { deriveEbriefRules } from './ebriefIngestion';
 import { deriveEu282Rules } from './eu282Ingestion';
-import { ingestPayrollSource, derivePayrollRules, PAYROLL_SOURCES } from './payrollIngestion';
+import { derivePayrollRules } from './payrollIngestion';
 import { deriveSizeCriteriaRules } from './sizeCriteriaIngestion';
-import { ingestSlicedSource } from './slicedSourceIngestion';
 import { deriveCuratedRuleFamilies } from './incomeTaxIngestion';
-import { CAR_EMISSIONS_SOURCES, CAR_EMISSIONS_CURATED_RULES } from './carEmissionsCuration';
+import { CAR_EMISSIONS_CURATED_RULES } from './carEmissionsCuration';
 import { syncRuleLinks } from './ruleLinks';
 import { taxHeadsFor } from './taxHeads';
 import { CATALOGUE_DIR, CATALOGUE_ENTRIES, catalogueEntryPath, catalogueOfficialFilePath, ingestCatalogueFile, readCatalogueEntry } from './catalogue';
 import { checkCatalogueVersions } from './ruleDecisions';
-
-type IngestParams = { companyId: string; markdown: string; ingestVersion: string; localPath: string };
-type IngestFn = (db: AppDatabase, params: IngestParams) => unknown;
-
-/**
- * Every source file, as a path relative to the repository root. Stored as
- * `localPath` in that relative form (not an absolute build-machine path), so
- * the provision viewer can resolve it wherever the app runs.
- */
-const SOURCES: Array<{ path: string; ingest: IngestFn }> = [
-  ...PAYROLL_SOURCES.map((s) => ({ path: s.path, ingest: ingestPayrollSource as IngestFn })),
-  ...CAR_EMISSIONS_SOURCES.map((s) => ({
-    path: s.path,
-    ingest: ((db, p) => ingestSlicedSource(db, CAR_EMISSIONS_SOURCES,
-      'Emissions-based limits on capital allowances for cars (TCA Part 11C; issue #466).', p)) as IngestFn,
-  })),
-];
 
 /** Derive steps, in the order the CLI documents them (thresholds after FA 2024 is ingested). */
 const DERIVES: Array<(db: AppDatabase, params: { companyId: string }) => unknown> = [
@@ -95,11 +77,6 @@ const DERIVES: Array<(db: AppDatabase, params: { companyId: string }) => unknown
   deriveSizeCriteriaRules,
   (db, p) => deriveCuratedRuleFamilies(db, { companyId: p.companyId, rules: CAR_EMISSIONS_CURATED_RULES, label: 'capital allowances' }),
 ];
-
-/** Every path `loadStatutoryKnowledgeBase` ingests, unique, repo-relative. */
-export function statuteSourcePaths(): string[] {
-  return [...new Set(SOURCES.map((s) => s.path))];
-}
 
 /** Resolve a repo-relative statute path against the running app's root (the install directory when packaged). */
 export function statuteFilePath(localPath: string, root: string = appRoot()): string {
@@ -147,14 +124,11 @@ export function loadStatutoryKnowledgeBase(
   // it was created (issue #205, the livestock treatment).
   ensureDefaultVatTreatments(db, params.companyId);
   const ingestVersion = params.ingestVersion ?? 'v1';
-  // Sources ported to the rules catalogue (#443, #556) load from it; the rest
-  // still read their statute copy until they are ported.
+  // Every source loads from the rules catalogue (#443, #556); none reads a
+  // statute copy. A copy a book loaded before its port stays held, and is
+  // superseded by its entry (catalogueSupersession.ts, #706).
   for (const entry of CATALOGUE_ENTRIES) {
     ingestCatalogueFile(db, { companyId: params.companyId, entry, ingestVersion, root: params.root });
-  }
-  for (const source of SOURCES) {
-    const markdown = readFileSync(statuteFilePath(source.path, params.root), 'utf8');
-    source.ingest(db, { companyId: params.companyId, markdown, ingestVersion, localPath: source.path });
   }
   for (const derive of DERIVES) derive(db, { companyId: params.companyId });
   // The links between rules (ADR-0020), after every rule they name exists.
@@ -162,7 +136,7 @@ export function loadStatutoryKnowledgeBase(
   fillTaxHeads(db, { companyId: params.companyId });
   const missing = checkCatalogueVersions(db, { companyId: params.companyId, root: params.root });
   return {
-    sourcesProcessed: CATALOGUE_ENTRIES.length + SOURCES.length,
+    sourcesProcessed: CATALOGUE_ENTRIES.length,
     rulesBefore,
     rulesAfter: countStatutoryRules(db, params.companyId),
     catalogueVersionsMissing: missing.map((m) => m.versionId),

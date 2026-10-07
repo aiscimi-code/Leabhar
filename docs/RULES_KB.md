@@ -143,6 +143,9 @@ around the quoted words) and `vat.flat_rate_farmer_purchase` (Finance Act
 2016 s.47 changed the s.86(1) percentage, a separate fact) (#695). A quote of
 inserted or replaced words does not take it.
 
+Every source the knowledge base loads is now a catalogue entry (#556); no
+statute copy in `docs/statutes/` is read at run time.
+
 A book that loaded a source from its statute copy before the port keeps
 that source, since its words are the same. Once the copy is gone, its
 footnotes and page are read from the entry with the same citation and words

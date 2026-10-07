@@ -1,0 +1,95 @@
+{
+  "format": 1,
+  "source": {
+    "citation": "Revenue TDM Part 11-00-01",
+    "title": "TDM Part 11-00-01 — Cars: capital allowances and lease/hire payments",
+    "sourceType": "revenue_guidance",
+    "jurisdiction": "IE",
+    "sourceUrl": "https://www.revenue.ie/en/tax-professionals/tdm-wm/income-tax-capital-gains-tax-corporation-tax/part-11/11-00-01.pdf",
+    "sha256": "a2171e99135a3ef84d2f4ac454046c47b18f9dac7f638bcf40ca7cd249c11544",
+    "conversion": "pdfplumber-full",
+    "retrievedOn": "2026-10-07",
+    "publicationDate": null,
+    "effectiveFrom": "2008-07-01",
+    "note": "Revenue Tax and Duty Manual, last reviewed November 2019: the CO2 regime for car expenditure from 1 July 2008 to 31 December 2020. Guidance, not law."
+  },
+  "provisions": [
+    {
+      "sectionNumber": "6",
+      "heading": "New CO2 emissions regime (post 1 July 2008)",
+      "locator": "section 6",
+      "category": "capital_allowances",
+      "relevant": true,
+      "relevanceReason": "Emissions-based limits on capital allowances for cars (TCA Part 11C; issue #466).",
+      "excerpt": "6. New CO2 emissions regime (post 1 July 2008)\nThe new CO2 regime for wear and tear allowances applies where expenditure is\nincurred on or after 1 July 2008. The availability of wear and tear allowances, and the\namount of such allowances, is now linked to the CO2 emissions of a car. Cars, both\nnew and second-hand, are now categorised by reference to the bands of CO2\nemissions that are used to determine Vehicle Registration Tax (VRT). The original CO2\nemissions figure at manufacture determines the band and not the CO2 emissions of\nthe car at the date of registration. For income tax purposes, the 7 VRT categories are\ndivided into 3 different groups as follows:\n Group 1 contains categories A, B and C with CO2 emissions up to and including\n155g/km. The allowable expenditure for these cars is the relevant specified\nlimit (currently €24,000 as set out in section 5 above), regardless of the actual\ncost of the car. Thus, wear and tear allowances are based on deemed\nexpenditure of €24,000 even if the car actually cost less than this amount.\n Group 2 contains categories D and E with CO2 emissions from 156g/km up to\nand including 190g/km. The allowable expenditure for these cars is the lower\nof 50% of the relevant specified limit or 50% of the actual cost of the car. This\nmeans that cars in this group can get wear and tear allowances on a maximum\nof €12,000 no matter how expensive they are.\n Group 3 contains categories F and G with CO2 emissions that exceed 190g/km.\nThese cars get no wear and tear allowances whatsoever.\nThe new regime is summarised in the following table.\nGroup VRT Category CO2 Emissions Allowable Expenditure\n(grams per km) €\nA 0 - 120\n1 B 121 – 140 24,000\nC 141 – 155\nD 156 – 170 50% of 24,000\n2 or, if lower\nE 171 – 190 50% of actual cost\nF 191 – 225\n3 Nil\nG more than 225\n7\n\n\n\n\n<!-- page 8 of 13 -->\n\n\nTax and Duty Manual Part 11-00-01\n6.1 Verification of CO2 emissions\nA car’s CO2 emissions will have been established when it was registered for VRT\npurposes.6 The emissions on which the claim for wear and tear allowances is based\ncan be verified by checking the details on the IBI system7 or by getting a copy of the\nVehicle Registration Certificate from the claimant. Where Revenue is not satisfied\nwith the documentation provided, or where there is no documentation, then the\nvehicle will be deemed to be in Category G with no entitlement to capital\nallowances.8\n7. Restriction of capital allowances (post 1 July 2008\nexpenditure)\nThe various treatments outlined in section 6 also apply to cars whose wear and tear\nallowances are determined by their level of CO2 emissions. In relation to cars in\nGroup 1, “the specified limit” referred to in section 6 is that specified limit regardless\nof the actual cost of the car. In relation to cars in Group 2, references to the\n“specified limit” in section 6 should be substituted by the lower of 50% of the\nspecified limit or 50% of the actual cost of the car. In relation to cars in Group 3,\nsection 6 is not relevant as no capital allowances are due.\nExample\nOn 1 July 2009 an individual purchases 2 cars, one for himself and one for his deputy\nmanager. Car 1 has CO2 emissions of 120g/km and cost €48,000. Car 2 has CO2\nemissions of 140 g/km and cost €16,000. The cars are used exclusively for business\npurposes. Wear and tear allowances are given as follows:\nCar 1 Car 2\nActual cost 2009 €48,000 €16,000\nSpecified limit (group 1) €24,000 €24,000\nWear & tear allowance (12½%) €3,000 €3,000\nTWDV 31/12/2009 €21,000 €21,000\n6 Instruction 1.4.3 of the VRT Manual outlines the processing of declarations for registration and the\ndocumentation acceptable to Revenue for such purposes.\n7 On the IBI system, follow the links – applications/assets/vehicles.\n8 Section 380K(3).\n8\n\n\n\n\n<!-- page 9 of 13 -->\n\n\nTax and Duty Manual Part 11-00-01\nIf, instead, the two cars had CO2 emissions of 160g/km and 180g/km, the position\nwould be as follows:\nCar 1 Car 2\nActual cost 2009 €48,000 €16,000\nSpecified limit (group 2) (50% €24,000)€12,000 (50% €16,000)€8,000\nWear & tear allowance (12½%) €1,500 €1,000\nTWDV 31/12/2009 €10,500 €7,000"
+    }
+  ],
+  "rules": [
+    {
+      "key": "car.co2_group1_max",
+      "sectionNumber": "6",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2008-07-01",
+          "effectiveTo": "2021-01-01",
+          "quote": "Group 1 contains categories A, B and C with CO2 emissions up to and including\n155g/km.",
+          "value": 155,
+          "unit": "count",
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    },
+    {
+      "key": "car.co2_group2_max",
+      "sectionNumber": "6",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2008-07-01",
+          "effectiveTo": "2021-01-01",
+          "quote": "and including 190g/km. The allowable expenditure for these cars is the lower",
+          "value": 190,
+          "unit": "count",
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    },
+    {
+      "key": "car.group2_fraction",
+      "sectionNumber": "6",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2008-07-01",
+          "effectiveTo": "2021-01-01",
+          "quote": "of 50% of the relevant specified limit or 50% of the actual cost of the car.",
+          "value": 5000,
+          "unit": "basis_points",
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    }
+  ]
+}

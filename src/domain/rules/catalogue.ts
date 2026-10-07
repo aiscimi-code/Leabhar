@@ -314,6 +314,8 @@ export const CATALOGUE_ENTRIES = [
   // S.I. 312/1996 art. 92 (the Class S prescribed amount): the article cut
   // from the LRC page of the whole instrument, kept beside it (#712).
   'si-312-1996/art92.json',
+  // Revenue TDM Part 11-00-01 §6 (the 2008 car CO2 groups), its PDF beside it.
+  'tdm-11-00-01/11-00-01.json',
 ] as const;
 
 export function catalogueEntryPath(entry: string, root: string = appRoot()): string {

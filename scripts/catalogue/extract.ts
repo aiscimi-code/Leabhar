@@ -11,6 +11,7 @@
  *   npm run catalogue:extract -- tca-1997-nfg/part02
  *   npm run catalogue:extract -- swca-2005/s21
  *   npm run catalogue:extract -- si-312-1996/art92
+ *   npm run catalogue:extract -- tdm-11-00-01/11-00-01
  *   npm run catalogue:extract -- vat3-rtd/completing-vat3-return vat3-rtd/VAT-RTD-S76
  *   npm run catalogue:extract -- ebriefs/no-168-25
  *   npm run catalogue:extract -- eu-282-2011/consolidated-2025-04-14
@@ -86,6 +87,8 @@ import { extractCapacityExclusionSection } from '@/domain/rules/tdm3801_03bParse
 import { parseCompaniesAct2014Section } from '@/domain/rules/companiesAct2014SectionParser';
 import { COMPANIES_ACT_2014_NOTE, companiesAct2014Relevance } from '@/domain/rules/companiesAct2014Ingestion';
 import { TDM_38_01_03B } from '@/domain/rules/tdm3801_03bIngestion';
+import { CAR_EMISSIONS_RELEVANCE_REASON, CAR_EMISSIONS_SOURCES } from '@/domain/rules/carEmissionsCuration';
+import { sliceProvision } from '@/domain/rules/slicedSourceIngestion';
 import { SWCA_NOTE, SWCA_RELEVANCE_REASON } from '@/domain/rules/incomeTaxIngestion';
 import {
   FORM_GUIDANCE_PRINCIPAL_ACT, FORM_GUIDANCE_RELEVANCE_REASON, RTD_TDM, VAT3_GUIDANCE, rtdTdmPassages, vat3GuidancePassages,
@@ -465,6 +468,31 @@ function extractorFor(entry: string, naming: Naming | null): Extractor {
             locator: 'Appendix 8, page 40 (repeated in Appendices 9, 10 and 11)',
             category: 'procedure', relevant: true, relevanceReason, excerpt: section.provisionText,
           }],
+        };
+      },
+    };
+  }
+  // Revenue's car manual, TDM 11-00-01, from its PDF: §6, the 2008 CO2 groups
+  // (#466), sliced from the page text where the statute copy sliced it.
+  if (entry === 'tdm-11-00-01/11-00-01' && naming) {
+    const url = naming.sourceUrl ?? 'https://www.revenue.ie/en/tax-professionals/tdm-wm/income-tax-capital-gains-tax-corporation-tax/part-11/11-00-01.pdf';
+    const [source] = CAR_EMISSIONS_SOURCES;
+    return {
+      url, title: naming.title, citation: naming.citation, ext: 'pdf',
+      build: (pdf, retrievedOn) => {
+        const text = pdfplumberText(pdf);
+        return {
+          source: {
+            citation: naming.citation, title: naming.title, sourceType: 'revenue_guidance', jurisdiction: 'IE', sourceUrl: url,
+            sha256: createHash('sha256').update(pdf).digest('hex'),
+            conversion: 'pdfplumber-full', retrievedOn,
+            publicationDate: null, effectiveFrom: source!.effectiveFrom, note: source!.sourceNote,
+          },
+          provisions: source!.provisions.map((p) => ({
+            sectionNumber: p.sectionNumber, heading: p.heading, locator: `section ${p.sectionNumber}`,
+            category: p.category, relevant: true, relevanceReason: CAR_EMISSIONS_RELEVANCE_REASON,
+            excerpt: sliceProvision(text, p).text,
+          })),
         };
       },
     };
