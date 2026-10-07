@@ -9,7 +9,6 @@ import { PayrollFigures } from '../payroll/figures';
 import { companies, invoiceLines, suppliers } from '@/db/schema';
 import { ids } from '@/lib/ids';
 import { makeDate } from '../dates';
-import { loadStatutoryKnowledgeBase } from './knowledgeBase';
 import { appliedRuleVersions, ruleVersionId } from './irishRules';
 import type { AppDatabase } from '@/db';
 
@@ -26,9 +25,7 @@ describe('rule versions recorded where a rule is applied (ADR-0020 §2, issue #6
     ({ companyId } = created);
     byCode = created.accountsByCode;
     tr = created.treatmentsByCode;
-    loadStatutoryKnowledgeBase(db, { companyId });
     soleId = createCompany(db, { legalName: 'Sole', entityType: 'sole_trader', vatRegistrationStatus: 'not_registered', seedYears: [2025] }).companyId;
-    loadStatutoryKnowledgeBase(db, { companyId: soleId });
     db.update(companies).set({ tradeCommencedOn: '2024-01-01' }).where(eq(companies.id, soleId)).run();
   });
 

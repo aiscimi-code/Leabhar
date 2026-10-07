@@ -24,6 +24,8 @@ import {
 } from './effectiveReview';
 import { ruleVersionId } from './irishRules';
 
+type Tx = Parameters<Parameters<AppDatabase['transaction']>[0]>[0];
+
 export { catalogueRuleStore, type CatalogueRuleStore, type CatalogueVersionRecord } from './effectiveReview';
 
 export type RuleDecision = typeof irishRuleDecisions.$inferSelect;
@@ -145,7 +147,7 @@ export interface MissingCatalogueVersion {
  * older install than the one that last wrote it.
  */
 export function checkCatalogueVersions(
-  db: AppDatabase,
+  db: AppDatabase | Tx,
   params: { companyId: string },
 ): MissingCatalogueVersion[] {
   const visible = db.select({ ruleKey: visibleTaxRules.ruleKey, ruleVersion: visibleTaxRules.ruleVersion, origin: visibleTaxRules.origin })

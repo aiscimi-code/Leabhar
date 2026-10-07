@@ -4,7 +4,7 @@ import { createTestDatabase } from '@/db/testing';
 import { createCompany } from '../config/setup';
 import {
   ingestFinanceAct2024, ingestFinanceAct2024FromCatalogue, deriveTaxRules, lookupTaxRule, listTaxRulesByTopic,
-  listTaxRulesByCategory, FINANCE_ACT_2024,
+  listTaxRulesByCategory, FINANCE_ACT_2024, ingestFinanceAct2025FromCatalogue,
 } from './irishRules';
 import { irishActProvisions, irishKnowledgeSources, irishTaxRules, reviewItems } from '@/db/schema';
 import { eq } from 'drizzle-orm';
@@ -171,5 +171,19 @@ describe('lookupTaxRule / listTaxRulesByTopic / listTaxRulesByCategory', () => {
     const rows = listTaxRulesByCategory(db, { companyId, category: 'usc', asOfDate: '2025-06-01' });
     expect(rows.length).toBeGreaterThan(0);
     expect(rows.every((r) => r.ruleKey.startsWith('usc.'))).toBe(true);
+  });
+});
+
+describe('ingestFinanceAct2025FromCatalogue (issue #205)', () => {
+  it('loads the enacted Act from the rules catalogue, keeping the s.46 rate sections relevant', () => {
+    const { db } = createTestDatabase();
+    const { companyId } = createCompany(db, { legalName: 'Enacted Ltd', seedYears: [2025] });
+    ingestFinanceAct2025FromCatalogue(db, { companyId });
+    const source = db.select().from(irishKnowledgeSources).where(eq(irishKnowledgeSources.citation, '2025 Act 18')).get()!;
+    expect(source.localPath).toBe('catalogue/finance-act-2025/2025-act-18-enacted.json');
+    const s71 = db.select().from(irishActProvisions).where(eq(irishActProvisions.sourceId, source.id)).all()
+      .find((p) => p.sectionNumber === '71')!;
+    expect(s71.relevant).toBe(true);
+    expect(s71.provisionText).toContain('paragraphs 3(1), 3(3) and 13(3) of Schedule 3');
   });
 });

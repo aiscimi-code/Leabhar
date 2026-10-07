@@ -97,9 +97,9 @@ clone must re-clone. That needs an explicit yes.
 
 1. `NODE_OPTIONS="--require ./scripts/docs-inventory/trace-reads.cjs" npm test`
    logs every path under `docs/` that the suite opens to `docs-reads.log`,
-   which is gitignored. The suite calls `loadStatutoryKnowledgeBase`, which is
-   the same load the app runs from Settings and the CLI, so what the suite
-   reads is the runtime set. That includes the paths built at run time:
+   which is gitignored. The suite builds the rules store with
+   `deriveStatutoryKnowledgeBase` (`vitest.globalSetup.ts`), the same derive
+   the package build runs, so what the suite reads is the runtime set. That includes the paths built at run time:
    Notes for Guidance parts, SWCA sections, Companies Act sections and VATCA
    sections.
 2. `python3 scripts/docs-inventory/inventory.py` classifies each tracked file

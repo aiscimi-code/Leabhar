@@ -4,7 +4,6 @@ import { createTestDatabase, insertTestBankTransaction } from '@/db/testing';
 import { createCompany, addBankAccount } from '../config/setup';
 import { confirmRctPrincipal, rctPrincipalOn } from '../config/companyStatus';
 import { auditEvents, companies } from '@/db/schema';
-import { loadStatutoryKnowledgeBase } from './knowledgeBase';
 import { suggestVatTreatment } from './vatSuggestion';
 import { RC_CONSTRUCTION_RULE_KEY } from './domesticReverseChargeCuration';
 import type { AppDatabase } from '@/db';
@@ -18,7 +17,6 @@ function setup() {
     companyId: created.companyId, bankName: 'AIB', accountName: 'Current', openingDate: '2026-01-01',
     accountId: created.accountsByKey['bank_control']!,
   });
-  loadStatutoryKnowledgeBase(db, { companyId: created.companyId });
   return { db, companyId: created.companyId, bankAccountId };
 }
 const suggest = (ctx: { db: AppDatabase; companyId: string; bankAccountId: string }, description: string, amountMinor: number, date = '2026-03-15') =>

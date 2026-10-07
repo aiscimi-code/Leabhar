@@ -3,7 +3,7 @@ import { and, eq } from 'drizzle-orm';
 import { createTestDatabase } from '@/db/testing';
 import { createCompany } from '../config/setup';
 import { irishTaxRules } from '@/db/schema';
-import { loadStatutoryKnowledgeBase } from './knowledgeBase';
+import { deriveStatutoryKnowledgeBase } from './knowledgeBase';
 import { SUPERSESSIONS, retiredBy } from './supersessions';
 import { ruleLinksFrom, ruleLinksTo } from './ruleLinks';
 import { checkRuleGraph as checkStoredRuleGraph } from './ruleGraph';
@@ -26,7 +26,7 @@ describe('supersession as links (ADR-0020 §3, issue #686 step 8)', () => {
   beforeAll(() => {
     ({ db } = createTestDatabase());
     ({ companyId } = createCompany(db, { legalName: 'Supersede Ltd', vatRegistrationStatus: 'registered', seedYears: [2025] }));
-    loadStatutoryKnowledgeBase(db, { companyId });
+    deriveStatutoryKnowledgeBase(db, { companyId });
   });
 
   const keysInBook = () => new Set(db.select({ k: irishTaxRules.ruleKey }).from(irishTaxRules)
@@ -71,7 +71,7 @@ describe('supersession as links (ADR-0020 §3, issue #686 step 8)', () => {
       supersedesRuleId: null, active: true,
     }).run();
     db.update(irishTaxRules).set({ supersedesRuleId: 'rule_old_hairdressing' }).where(eq(irishTaxRules.id, current.id)).run();
-    loadStatutoryKnowledgeBase(db, { companyId });
+    deriveStatutoryKnowledgeBase(db, { companyId });
 
     const old = db.select().from(irishTaxRules).where(eq(irishTaxRules.id, 'rule_old_hairdressing')).get()!;
     expect([old.active, old.effectiveTo]).toEqual([false, old.effectiveFrom]); // retired, not deleted

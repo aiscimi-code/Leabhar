@@ -8,7 +8,7 @@ import {
   EU_282_2011_RULES, EU_282_2011, EU_282_2011_CATALOGUE_ENTRY,
 } from './eu282Ingestion';
 import { readCatalogueEntry } from './catalogue';
-import { loadStatutoryKnowledgeBase, verifyStatuteFile } from './knowledgeBase';
+import { verifyStatuteFile } from './knowledgeBase';
 import { resolveRuleDependencies } from './dependencies';
 import { sourceAuthorityRank } from './sourceHierarchy';
 import { irishKnowledgeSources, irishActProvisions, irishTaxRules } from '@/db/schema';
@@ -125,7 +125,6 @@ describe('the first EU source (issue #441)', () => {
 
   it('the rules cross-reference the VATCA sections that rely on the tests, and resolve', () => {
     ingestEu282FromCatalogue(db, { companyId });
-    loadStatutoryKnowledgeBase(db, { companyId });
     deriveEu282Rules(db, { companyId });
     const rule = db.select().from(irishTaxRules)
       .where(and(

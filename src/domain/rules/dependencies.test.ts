@@ -3,7 +3,7 @@ import { and, eq } from 'drizzle-orm';
 import { createTestDatabase } from '@/db/testing';
 import { createCompany } from '../config/setup';
 import { irishTaxRules, irishKnowledgeSources, irishActProvisions } from '@/db/schema';
-import { loadStatutoryKnowledgeBase } from './knowledgeBase';
+import { deriveStatutoryKnowledgeBase } from './knowledgeBase';
 import { attachRulesStoreFromBook } from './rulesStore';
 import { attachRulesStore } from './visibleRules';
 import { generateAuditReport } from './audit';
@@ -20,7 +20,7 @@ let companyId: string;
 beforeAll(() => {
   ({ db, sqlite } = createTestDatabase());
   ({ companyId } = createCompany(db, { legalName: 'Deps Ltd', vatRegistrationStatus: 'registered', seedYears: [2025] }));
-  loadStatutoryKnowledgeBase(db, { companyId });
+  deriveStatutoryKnowledgeBase(db, { companyId });
 });
 
 const activeRule = (ruleKey: string) => db.select().from(irishTaxRules)

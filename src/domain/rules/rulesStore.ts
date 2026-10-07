@@ -256,21 +256,7 @@ function writeRulesStore(
       for (const index of STORE_INDEXES) sqlite.exec(index.replace(/^CREATE (UNIQUE )?INDEX /, 'CREATE $1INDEX store.'));
     })();
 
-    const versions = new Map<string, string>();
-    type StoredRule = {
-      id: string; effective_from: string; effective_to: string | null; statement: string | null; numeric_value: number | null;
-      unit: string | null; rule_type: string; qualifier: string | null; conditions: string; exceptions: string;
-      accounting_effect: string | null; tax_effect: string | null; vat_effect: string | null; reporting_effect: string | null;
-    };
-    for (const r of sqlite.prepare(`SELECT id, effective_from, effective_to, statement, numeric_value, unit, rule_type, qualifier, conditions, exceptions,
-        accounting_effect, tax_effect, vat_effect, reporting_effect FROM store.irish_tax_rules ORDER BY id`).all() as StoredRule[]) {
-      versions.set(r.id, ruleVersionContentHash({
-        effectiveFrom: r.effective_from, effectiveTo: r.effective_to, statement: r.statement,
-        numericValue: r.numeric_value, unit: r.unit, ruleType: r.rule_type, qualifier: r.qualifier,
-        conditions: JSON.parse(r.conditions), exceptions: JSON.parse(r.exceptions),
-        accountingEffect: r.accounting_effect, taxEffect: r.tax_effect, vatEffect: r.vat_effect, reportingEffect: r.reporting_effect,
-      }));
-    }
+    const versions = storeVersionHashes(sqlite, 'store');
     params.check?.(versions);
 
     const signature = sha256Hex([...versions].map(([id, hash]) => `${id}:${hash}`).join('\n'));
@@ -292,6 +278,31 @@ function writeRulesStore(
     if ((sqlite.prepare('PRAGMA database_list').all() as Array<{ name: string }>).some((d) => d.name === 'store')) sqlite.exec('DETACH DATABASE store');
     rmSync(temp, { force: true });
   }
+}
+
+/**
+ * The content hash of every version in a store attached under `schema`, by
+ * `key@version` (`ruleVersionContentHash`). The store's signature is the hash
+ * of this list, and a book records it to tell what an update changed
+ * (`checkRulesStoreUpdate`).
+ */
+export function storeVersionHashes(sqlite: Database.Database, schema: string): Map<string, string> {
+  const versions = new Map<string, string>();
+  type StoredRule = {
+    id: string; effective_from: string; effective_to: string | null; statement: string | null; numeric_value: number | null;
+    unit: string | null; rule_type: string; qualifier: string | null; conditions: string; exceptions: string;
+    accounting_effect: string | null; tax_effect: string | null; vat_effect: string | null; reporting_effect: string | null;
+  };
+  for (const r of sqlite.prepare(`SELECT id, effective_from, effective_to, statement, numeric_value, unit, rule_type, qualifier, conditions, exceptions,
+      accounting_effect, tax_effect, vat_effect, reporting_effect FROM ${schema}.irish_tax_rules ORDER BY id`).all() as StoredRule[]) {
+    versions.set(r.id, ruleVersionContentHash({
+      effectiveFrom: r.effective_from, effectiveTo: r.effective_to, statement: r.statement,
+      numericValue: r.numeric_value, unit: r.unit, ruleType: r.rule_type, qualifier: r.qualifier,
+      conditions: JSON.parse(r.conditions), exceptions: JSON.parse(r.exceptions),
+      accountingEffect: r.accounting_effect, taxEffect: r.tax_effect, vatEffect: r.vat_effect, reportingEffect: r.reporting_effect,
+    }));
+  }
+  return versions;
 }
 
 /** Temporary stores built from a book, removed when the process exits. */

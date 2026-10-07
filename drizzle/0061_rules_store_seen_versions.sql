@@ -1,0 +1,1 @@
+ALTER TABLE `rules_store_seen` ADD `version_hashes` text;

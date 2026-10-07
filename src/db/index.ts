@@ -7,6 +7,7 @@ import { databasePath } from '@/lib/paths';
 import { runMigrations } from './migrate';
 import { attachRulesStore } from '@/domain/rules/visibleRules';
 import { moveBookOntoRulesStore } from '@/domain/rules/rulesStoreMigration';
+import { checkRulesStoreUpdate } from '@/domain/rules/rulesStoreUpdate';
 
 export type AppDatabase = ReturnType<typeof createDatabase>;
 
@@ -54,6 +55,7 @@ export function getDb(): AppDatabase {
     ensureMigrations(cached);
     attachRulesStore(cached.$client);
     moveBookOntoRulesStore(cached, { dbPath: databasePath() });
+    checkRulesStoreUpdate(cached);
     migrationsApplied = true;
   }
   return cached;
@@ -61,15 +63,17 @@ export function getDb(): AppDatabase {
 
 /**
  * Open a book for a caller outside the Next.js server (the CLI, the seed):
- * migrations applied, the rules store attached (ADR-0021 §2) and the book
- * moved onto it if it still needs that (§6, after a backup), as `getDb()`
- * does. A missing or unreadable store stops here.
+ * migrations applied, the rules store attached (ADR-0021 §2), the book
+ * moved onto it if it still needs that (§6, after a backup), and checked
+ * against it if the store is new to the book (§5), as `getDb()` does. A
+ * missing or unreadable store stops here.
  */
 export function openBook(path: string = databasePath()): AppDatabase {
   const db = createDatabase(path);
   runMigrations(db);
   attachRulesStore(db.$client);
   moveBookOntoRulesStore(db, { dbPath: path });
+  checkRulesStoreUpdate(db);
   return db;
 }
 

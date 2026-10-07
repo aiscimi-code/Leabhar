@@ -1,7 +1,6 @@
 import { describe, it, expect, beforeAll } from 'vitest';
 import { createTestDatabase } from '@/db/testing';
 import { createCompany } from '../config/setup';
-import { loadStatutoryKnowledgeBase } from './knowledgeBase';
 import { suggestFromFacts, type SuggestionFacts } from './vatSuggestion';
 import type { AppDatabase } from '@/db';
 
@@ -13,7 +12,6 @@ let companyId: string;
 beforeAll(() => {
   ({ db } = createTestDatabase());
   ({ companyId } = createCompany(db, { legalName: 'Tenant Ltd', vatRegistrationStatus: 'registered', vatAccountingBasis: 'invoice', seedYears: [2026] }));
-  loadStatutoryKnowledgeBase(db, { companyId });
 });
 
 const suggest = (description: string, direction: 'purchase' | 'sale', vatChargedMinor?: number) => {

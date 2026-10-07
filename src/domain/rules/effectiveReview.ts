@@ -111,6 +111,8 @@ export function visibleVersionKey(origin: RuleOrigin, ruleKey: string, ruleVersi
   return `${origin}:${ruleKey}@${ruleVersion}`;
 }
 
+type Tx = Parameters<Parameters<AppDatabase['transaction']>[0]>[0];
+
 /**
  * The visible version a decision was taken on (ADR-0021 §6). A decision in
  * the catalogue's numbering names a store version. One in the book's
@@ -119,7 +121,7 @@ export function visibleVersionKey(origin: RuleOrigin, ruleKey: string, ruleVersi
  * (`irish_rule_version_map`), else the book's frozen version. Never matched
  * by content: the migration matched once, and the map is what it found.
  */
-export function bookVersionMap(db: AppDatabase, companyId: string): ReadonlyMap<string, number> {
+export function bookVersionMap(db: AppDatabase | Tx, companyId: string): ReadonlyMap<string, number> {
   return new Map(db.select().from(irishRuleVersionMap).where(eq(irishRuleVersionMap.companyId, companyId)).all()
     .map((m) => [`${m.ruleKey}@${m.bookVersion}`, m.catalogueVersion]));
 }

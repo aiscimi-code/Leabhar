@@ -7,7 +7,7 @@ import {
   ingestEbrief168_25, ingestEbriefFromCatalogue, deriveEbriefRules, ebriefNoticeText,
   EBRIEF_168_25_RULE, EBRIEF_168_25, EBRIEF_168_25_CATALOGUE_ENTRY,
 } from './ebriefIngestion';
-import { loadStatutoryKnowledgeBase, verifyStatuteFile } from './knowledgeBase';
+import { verifyStatuteFile } from './knowledgeBase';
 import { resolveRuleDependencies } from './dependencies';
 import { sourceAuthorityRank } from './sourceHierarchy';
 import { irishKnowledgeSources, irishActProvisions, irishTaxRules } from '@/db/schema';
@@ -103,7 +103,6 @@ describe('the first Revenue notice source (issue #440)', () => {
 
   it('its cross-references resolve to the SME scheme provisions this book already holds', () => {
     ingestEbriefFromCatalogue(db, { companyId });
-    loadStatutoryKnowledgeBase(db, { companyId });
     deriveEbriefRules(db, { companyId });
     const rule = db.select().from(irishTaxRules)
       .where(and(eq(irishTaxRules.companyId, companyId), eq(irishTaxRules.ruleKey, EBRIEF_168_25_RULE.ruleKey), eq(irishTaxRules.active, true))).get()!;

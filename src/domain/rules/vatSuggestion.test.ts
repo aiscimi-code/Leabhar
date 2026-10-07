@@ -3,10 +3,12 @@ import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { createTestDatabase, insertTestBankTransaction } from '@/db/testing';
 import { createCompany, addBankAccount } from '../config/setup';
-import { bankTransactions, suppliers, customers } from '@/db/schema';
+import { and, eq } from 'drizzle-orm';
+import { bankTransactions, suppliers, customers, visibleTaxRules } from '@/db/schema';
 import { ids } from '@/lib/ids';
 import type { AppDatabase } from '@/db';
-import { loadStatutoryKnowledgeBase } from './knowledgeBase';
+import { deriveStatutoryKnowledgeBase } from './knowledgeBase';
+import { attachRulesStoreFromBook } from './rulesStore';
 import { suggestVatTreatment, RULE_TREATMENT_BINDINGS } from './vatSuggestion';
 import { VATCA_REVISED_CURATED_RULES } from './vatcaRevisedCuration';
 import { VATCA_SCHEDULE_CURATED_RULES } from './vatcaScheduleCuration';
@@ -61,20 +63,29 @@ function setup(): void {
   });
 }
 
-describe('before the knowledge base is loaded', () => {
+describe('a rules store that holds no rules', () => {
   it('says so rather than suggesting anything', () => {
-    setup();
+    ({ db } = createTestDatabase({ rulesStore: false }));
+    const created = createCompany(db, { legalName: 'Empty Store Ltd', vatRegistrationStatus: 'registered', seedYears: [2025] });
+    companyId = created.companyId;
+    // Built from a book that derived nothing: an empty store.
+    attachRulesStoreFromBook(db, { companyId });
+    bankAccountId = addBankAccount(db, {
+      companyId, bankName: 'AIB', accountName: 'Current', openingDate: '2025-01-01', accountId: created.accountsByKey['bank_control']!,
+    });
     const s = suggestVatTreatment(db, { companyId, bankTransactionId: tx('Stationery', -5_000) })!;
     expect(s.status).toBe('kb_empty');
     expect(s.treatment).toBeNull();
+    expect(s.explanation).toBe('The rules store installed with Leabhar holds no statutory rules, so no rule can be applied.');
   });
 });
 
 describe('suggestVatTreatment', () => {
   beforeAll(() => {
     setup();
-    const first = loadStatutoryKnowledgeBase(db, { companyId });
-    expect(first.rulesBefore).toBe(0);
+  });
+
+  it('reads every rule the curated sources derive, from the rules store', () => {
     // Every rule the curated sources derive (issue #277: keep this a count the
     // curation arrays explain — vat3-rtd 15, eBrief 1, EU 282/2011 7 were added
     // by #439/#440/#441 on top of the 266 on main, 257 plus #434's 9; issue #313
@@ -93,13 +104,8 @@ describe('suggestVatTreatment', () => {
     // #487 added prsi.class_s_disregard (S.I. 312/1996 art. 92).
     // #559 added 10 (CA 2014 ss.281-285, 290, 291, 293, 343, 347: accounting records, statements, annual return).
     // #711 dated the Class S rate from SWMPA 2024 s.3: one row became five versions (+4).
-    expect(first.rulesAfter).toBe(426);
-  });
-
-  it('loading again is a no-op', () => {
-    const again = loadStatutoryKnowledgeBase(db, { companyId });
-    expect(again.rulesBefore).toBe(426);
-    expect(again.rulesAfter).toBe(426);
+    expect(db.select().from(visibleTaxRules)
+      .where(and(eq(visibleTaxRules.companyId, companyId), eq(visibleTaxRules.origin, 'store'))).all()).toHaveLength(426);
   });
 
   it('US SaaS purchase → non-EU reverse charge, cited to VATCA s.12 with a verifiable slice', () => {
@@ -200,7 +206,6 @@ describe('suggestVatTreatment', () => {
 describe('exempt and outside-the-scope lines (issue #200)', () => {
   beforeAll(() => {
     setup();
-    loadStatutoryKnowledgeBase(db, { companyId });
   });
 
   const suggest = (description: string, amountMinor: number) =>
@@ -264,7 +269,6 @@ describe('exempt and outside-the-scope lines (issue #200)', () => {
 describe('services sold abroad — VATCA s.34 (issue #200)', () => {
   beforeAll(() => {
     setup();
-    loadStatutoryKnowledgeBase(db, { companyId });
   });
 
   it('to an Italian business (EU VAT number) → services supplied to an EU business, cited to revised s.34(a)', () => {
@@ -342,7 +346,6 @@ describe('rules with no conditions stay out of every lookup', () => {
 
   it('a grocery purchase is not given the acquisition tax point or the invoice time limit', () => {
     setup();
-    loadStatutoryKnowledgeBase(db, { companyId });
     const r = lookupTransactionRules(db, { companyId, transaction: {
       transactionDate: '2025-06-15', amountMinor: 5_000, direction: 'purchase', description: 'Tesco groceries',
     } });
@@ -352,7 +355,7 @@ describe('rules with no conditions stay out of every lookup', () => {
 
   it('a book derived with the old topic is re-derived, not left as it was', async () => {
     setup();
-    loadStatutoryKnowledgeBase(db, { companyId });
+    deriveStatutoryKnowledgeBase(db, { companyId });
     const { irishTaxRules } = await import('@/db/schema');
     const { eq, and } = await import('drizzle-orm');
     const { deriveVatScopeRules } = await import('./vatScopeIngestion');
@@ -367,10 +370,10 @@ describe('rules with no conditions stay out of every lookup', () => {
 describe('deriveVatScopeRules verbatim guard', () => {
   it('refuses a rule whose quoted excerpt is not in the provision text', async () => {
     setup();
+    deriveStatutoryKnowledgeBase(db, { companyId });
     const { irishActProvisions, irishKnowledgeSources } = await import('@/db/schema');
     const { eq, and } = await import('drizzle-orm');
     const { deriveVatScopeRules, VAT_SCOPE_DERIVED_RULES } = await import('./vatScopeIngestion');
-    loadStatutoryKnowledgeBase(db, { companyId });
     const sch1 = db.select().from(irishKnowledgeSources).where(eq(irishKnowledgeSources.citation, '2010 Act 31 Sch.1')).get()!;
     // Simulate a provision whose stored text no longer contains the rule's quote.
     db.update(irishActProvisions).set({ provisionText: 'text that says nothing about insurance' })

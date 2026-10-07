@@ -22,7 +22,6 @@ const root = await vi.hoisted(async () => {
 vi.mock('@/lib/paths', async (original) => ({ ...(await original<typeof import('@/lib/paths')>()), appRoot: () => root }));
 
 const { readCatalogueEntry, serialiseCatalogueEntry, UNREVIEWED } = await import('./catalogue');
-const { loadStatutoryKnowledgeBase } = await import('./knowledgeBase');
 const { lookupTaxRule, listTaxRulesByTopic } = await import('./irishRules');
 const { resolveRuleFigure } = await import('./ruleFigures');
 const { explainRule } = await import('./ruleInfo');
@@ -42,7 +41,6 @@ beforeAll(() => {
   cpSync('catalogue', join(root, 'catalogue'), { recursive: true });
   ({ db } = createTestDatabase());
   ({ companyId } = createCompany(db, { legalName: 'Shipped Review Ltd', vatRegistrationStatus: 'registered', seedYears: [2025] }));
-  loadStatutoryKnowledgeBase(db, { companyId });
 });
 
 /** The store's row in force for the key, as every reader sees it (whatever its review). */

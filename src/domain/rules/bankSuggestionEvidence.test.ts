@@ -8,7 +8,6 @@ import { createCompany, addBankAccount } from '../config/setup';
 import { storeDocument } from '../documents/storage';
 import { confirmDocument, type ReviewedDocumentValues } from '../documents/review';
 import { documents } from '@/db/schema';
-import { loadStatutoryKnowledgeBase } from './knowledgeBase';
 import { suggestVatTreatment } from './vatSuggestion';
 import type { AppDatabase } from '@/db';
 
@@ -32,7 +31,6 @@ beforeAll(() => {
     companyId, bankName: 'AIB', accountName: 'Current', openingDate: '2026-01-01',
     accountId: created.accountsByKey['bank_control']!,
   });
-  loadStatutoryKnowledgeBase(db, { companyId });
   root = mkdtempSync(join(tmpdir(), 'bank-evidence-'));
 });
 afterAll(() => rmSync(root, { recursive: true, force: true }));

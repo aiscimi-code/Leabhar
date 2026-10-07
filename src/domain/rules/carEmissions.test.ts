@@ -3,7 +3,7 @@ import { and, eq } from 'drizzle-orm';
 import { createTestDatabase } from '@/db/testing';
 import { createCompany } from '../config/setup';
 import { irishTaxRules } from '@/db/schema';
-import { loadStatutoryKnowledgeBase } from './knowledgeBase';
+import { deriveStatutoryKnowledgeBase } from './knowledgeBase';
 import { deriveCuratedRuleFamilies } from './incomeTaxIngestion';
 import { CAR_EMISSIONS_CURATED_RULES } from './carEmissionsCuration';
 import type { AppDatabase } from '@/db';
@@ -13,7 +13,7 @@ let companyId: string;
 beforeAll(() => {
   ({ db } = createTestDatabase());
   ({ companyId } = createCompany(db, { legalName: 'Cars Ltd', vatRegistrationStatus: 'registered', seedYears: [2026] }));
-  loadStatutoryKnowledgeBase(db, { companyId });
+  deriveStatutoryKnowledgeBase(db, { companyId });
 });
 
 describe('car emissions rules (TCA Part 11C; issue #466)', () => {

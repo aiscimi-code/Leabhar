@@ -171,8 +171,9 @@ describe('moving a book that holds a corrected version under another number', ()
     expect(result.companies[0]!.unmovedBindings).toEqual([{ ruleKey: STANDARD, ruleVersion: 3, taxRateId: corrected.taxRateId, vatTreatmentId: null }]);
   });
 
-  it('records the store it opened, and leaves the copied rule tables as they were', () => {
-    expect(book.db.select().from(rulesStoreSeen).all()).toEqual([expect.objectContaining({ signature: store.signature, versions: store.versions.size })]);
+  it('leaves the copied rule tables as they were, and the store for the check after it to record', () => {
+    expect(result.store).toMatchObject({ signature: store.signature, versions: store.versions.size });
+    expect(book.db.select().from(rulesStoreSeen).all()).toEqual([]);
     expect(versionsOf(book.db, book.companyId)).toEqual(before);
   });
 

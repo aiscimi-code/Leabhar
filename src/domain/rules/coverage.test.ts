@@ -5,7 +5,7 @@ import { createTestDatabase } from '@/db/testing';
 import { createCompany } from '../config/setup';
 import { DEFAULT_VAT_TREATMENTS } from '../config/vatTreatments';
 import { irishTaxRules } from '@/db/schema';
-import { loadStatutoryKnowledgeBase } from './knowledgeBase';
+import { deriveStatutoryKnowledgeBase } from './knowledgeBase';
 import {
   COVERAGE_MATRIX_PATH, expectedCoverageRows, producibleTreatments, validateCoverageMatrix,
   formatCoverageSummary, type CoverageMatrix, type CoverageRow,
@@ -25,7 +25,7 @@ let derivedRuleKeys: string[];
 beforeAll(() => {
   const { db } = createTestDatabase();
   const { companyId } = createCompany(db, { legalName: 'Coverage Ltd', vatRegistrationStatus: 'registered', seedYears: [2025] });
-  loadStatutoryKnowledgeBase(db, { companyId });
+  deriveStatutoryKnowledgeBase(db, { companyId });
   derivedRuleKeys = db.select({ key: irishTaxRules.ruleKey }).from(irishTaxRules)
     .where(eq(irishTaxRules.companyId, companyId)).all().map((r) => r.key);
 });

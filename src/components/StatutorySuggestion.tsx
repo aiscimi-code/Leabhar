@@ -1,7 +1,5 @@
 import Link from 'next/link';
 import { Panel, Badge, Help, Disclosure } from './primitives';
-import { ActionForm } from './ActionForm';
-import { loadStatutoryRulesAction } from '@/app/actions';
 import { rate, provisionCitation } from '@/lib/format';
 import type { VatSuggestion, StatutoryCitation } from '@/domain/rules/vatSuggestion';
 
@@ -17,13 +15,8 @@ export function StatutorySuggestion({ suggestion }: { suggestion: VatSuggestion 
 
   if (s.status === 'kb_empty') {
     return (
-      <Panel
-        title="Statutory VAT suggestion"
-        description="The Irish statutory rules have not been loaded for this company yet."
-      >
-        <div className="px-4 py-3">
-          <ActionForm action={loadStatutoryRulesAction} submit="Load statutory rules" variant="secondary" />
-        </div>
+      <Panel title="Statutory VAT suggestion" tone="warning" description={s.explanation}>
+        {null}
       </Panel>
     );
   }

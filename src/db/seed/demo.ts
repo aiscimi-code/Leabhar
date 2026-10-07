@@ -19,7 +19,6 @@ import { postDocumentAsInvoice, documentEvidenceLines } from '@/domain/consolida
 import { settleBankTransaction, settleInvoiceByDirector } from '@/domain/consolidation/settle';
 import { createExpenseClaim, approveExpenseClaim, reimburseExpenseClaim } from '@/domain/expenses/claims';
 import { createRule } from '@/domain/rules/engine';
-import { loadStatutoryKnowledgeBase } from '@/domain/rules/knowledgeBase';
 import { postJournalEntry } from '@/domain/accounting/journal';
 import { asIsoDate, makeDate } from '@/domain/dates';
 import { normaliseName } from '@/domain/extraction/service';
@@ -50,8 +49,6 @@ export interface SeedDemoOptions {
 export interface SeedResult {
   companyId: string;
   entityType: DemoEntityType;
-  /** The statutes ingested for the demo company (issue #475). */
-  knowledgeBase: { sourcesProcessed: number; rulesBefore: number; rulesAfter: number };
   bankAccountId: string;
   counts: Record<string, number>;
 }
@@ -788,12 +785,9 @@ export async function seedDemoCompany(
     }).run();
   }
 
-  // ---- Statutory knowledge base ----
-  // The demo book ships with the statutes ingested (issue #475): a person
-  // following the setup path — migrate, seed, open /statutes — sees the
-  // provisions and the rules that cite them, rather than an empty screen
-  // that says to run a command the setup never mentioned.
-  const knowledgeBase = loadStatutoryKnowledgeBase(db, { companyId });
+  // The statutes and rules are not loaded into the demo book: every book
+  // reads the rules store installed with Leabhar (ADR-0021 §7), so /statutes
+  // shows them as soon as the book is open (issue #475).
 
   const counts = {
     transactions: db.select().from(bankTransactions)
@@ -803,5 +797,5 @@ export async function seedDemoCompany(
     customers: db.select().from(customers).where(eq(customers.companyId, companyId)).all().length,
   };
 
-  return { companyId, entityType, bankAccountId, counts, knowledgeBase };
+  return { companyId, entityType, bankAccountId, counts };
 }

@@ -9,7 +9,7 @@ import { storeDocument } from '../documents/storage';
 import { confirmDocument, type ReviewedDocumentValues } from '../documents/review';
 import { documentLineChoices } from '../consolidation/suggest';
 import { postDocumentAsInvoice } from '../consolidation/postDocument';
-import { loadStatutoryKnowledgeBase } from './knowledgeBase';
+import { deriveStatutoryKnowledgeBase } from './knowledgeBase';
 import { suppliers, vatTreatments, reviewItems, invoiceLines, taxRates, irishTaxRules, documents } from '@/db/schema';
 import { ids } from '@/lib/ids';
 import type { AppDatabase } from '@/db';
@@ -35,7 +35,7 @@ beforeAll(() => {
   companyId = created.companyId;
   byCode = created.accountsByCode;
   tr = created.treatmentsByCode;
-  loadStatutoryKnowledgeBase(db, { companyId });
+  deriveStatutoryKnowledgeBase(db, { companyId });
   root = mkdtempSync(join(tmpdir(), 'rate-check-'));
   // A supplier of goods: its confirmed default treatment says what kind of supply it makes.
   goodsSupplier = ids.supplier();
@@ -150,7 +150,7 @@ describe('the rule window from the LRC amendment history (issue #205)', () => {
     const rule = db.select().from(irishTaxRules)
       .where(and(eq(irishTaxRules.companyId, companyId), eq(irishTaxRules.ruleKey, 'vat.reduced_rate_solid_fuel'), eq(irishTaxRules.active, true))).get()!;
     db.update(irishTaxRules).set({ effectiveFrom: '2010-11-01' }).where(eq(irishTaxRules.id, rule.id)).run();
-    loadStatutoryKnowledgeBase(db, { companyId });
+    deriveStatutoryKnowledgeBase(db, { companyId });
     const rows = db.select().from(irishTaxRules)
       .where(and(eq(irishTaxRules.companyId, companyId), eq(irishTaxRules.ruleKey, 'vat.reduced_rate_solid_fuel'))).all();
     const active = rows.filter((r) => r.active);

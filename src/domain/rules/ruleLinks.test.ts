@@ -4,7 +4,7 @@ import { createTestDatabase } from '@/db/testing';
 import { createCompany } from '../config/setup';
 import { irishRuleLinks, irishTaxRules } from '@/db/schema';
 import { ids } from '@/lib/ids';
-import { loadStatutoryKnowledgeBase } from './knowledgeBase';
+import { deriveStatutoryKnowledgeBase } from './knowledgeBase';
 import {
   CURATED_RULE_LINKS, HEADLINE_VAT_RATE_RULE_KEYS, LINK_FROM_RULES, bookDerivedLinks, declaredLinksFrom, declaredLinksTo,
   scheduleRuleRate, syncRuleLinks, ruleLinksFrom as storedLinksFrom, ruleLinksTo as storedLinksTo, type CuratedRuleLink,
@@ -39,7 +39,7 @@ describe('rule links in a loaded book (ADR-0020, issue #686)', () => {
   beforeAll(() => {
     ({ db } = createTestDatabase());
     ({ companyId } = createCompany(db, { legalName: 'Links Ltd', vatRegistrationStatus: 'registered', seedYears: [2025] }));
-    loadStatutoryKnowledgeBase(db, { companyId });
+    deriveStatutoryKnowledgeBase(db, { companyId });
   });
 
   const bookLinks = () => db.select().from(irishRuleLinks).where(eq(irishRuleLinks.companyId, companyId)).all();
@@ -104,7 +104,7 @@ describe('rule links in a loaded book (ADR-0020, issue #686)', () => {
   it('is unchanged by loading the knowledge base again', () => {
     const before = bookLinks().length;
     expect(syncRuleLinks(db, { companyId })).toEqual({ inserted: 0, withdrawn: 0, restored: 0 });
-    loadStatutoryKnowledgeBase(db, { companyId });
+    deriveStatutoryKnowledgeBase(db, { companyId });
     expect(bookLinks()).toHaveLength(before);
   });
 });

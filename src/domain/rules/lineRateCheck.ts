@@ -129,7 +129,7 @@ export function checkLineRate(
   }
   const why = statutory.status === 'fallback_only'
     ? 'Only the standard-rate fallback matched; the rules cannot rule out an exemption or a reduced rate for this item.'
-    : statutory.status === 'kb_empty' ? 'The statutory rules are not loaded for this company.'
+    : statutory.status === 'kb_empty' ? 'The rules store installed with Leabhar holds no statutory rules.'
     : statutory.status === 'no_treatment' ? statutory.explanation
     : 'No statutory rule decides the rate for this item.';
   return {

@@ -1,9 +1,9 @@
 /**
  * Rule-traceability inventory dump (docs/trust/rule-traceability-audit.md).
  *
- * Ingests every source into a throwaway in-memory DB through the production
- * CLI entry point (`src/cli/irishRules.ts` `main()`, default `--source`
- * paths), then writes one JSON record per derived `irish_tax_rules` row with
+ * Runs the derive pipeline the rules store is built from
+ * (`deriveStatutoryKnowledgeBase`) into a throwaway in-memory DB, then
+ * writes one JSON record per derived `irish_tax_rules` row with
  * its provision and source, and re-checks each source file's SHA-256 and each
  * provision's offset slice. Read-only with respect to the repo: it approves
  * nothing and changes no reviewStatus.
@@ -14,21 +14,8 @@ import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { createTestDatabase } from '@/db/testing';
 import { createCompany } from '@/domain/config/setup';
-import { main } from '@/cli/irishRules';
+import { deriveStatutoryKnowledgeBase } from '@/domain/rules/knowledgeBase';
 import { irishKnowledgeSources, irishActProvisions, irishTaxRules } from '@/db/schema';
-
-const INGEST_SOURCES = [
-  'finance-act-2024', 'vatca-2010', 'vatca-2010-sch1', 'vatca-2010-sch2', 'vatca-2010-sch3', 'rct-tca530',
-  'rct-fa2011-a', 'rct-fa2011-e', 'rct-fa2011-g', 'rct-fa2011-h', 'rct-fa2011-i',
-  'rct-tdm', 'rct-tdm-05', 'rct-tdm-11', 'vatca-2010-revised', 'tca1997-s284', 'finance-act-2003-s23',
-  'si639', 'si156', 'si69-2025-reg5', 'si69-2025', 'si69-2025-reg7', 'si69-2025-reg9',
-  'tdm-38-01-03b', 'companies-act-2014',
-];
-const EXTRACT_SOURCES = [
-  'finance-act-2024', 'vatca-2010', 'vatca-2010-sch2', 'vatca-2010-sch3', 'rct', 'vatca-2010-revised',
-  'tca1997-s284', 'si639', 'si156', 'si69-2025', 'finance-act-2024-vat-thresholds', 'tdm-38-01-03b',
-  'companies-act-2014', 'vat-scope',
-];
 
 const words = (s: string): string[] => s.replace(/<!--[^>]*-->/g, ' ').split(/\s+/).filter(Boolean);
 
@@ -44,23 +31,7 @@ async function run(): Promise<void> {
   // Reads the derived copies only, so no rules store is attached (ADR-0021).
   const { db } = createTestDatabase({ rulesStore: false });
   const { companyId } = createCompany(db, { legalName: 'Traceability Audit Ltd', seedYears: [2024, 2025, 2026] });
-  const log: Array<{ args: string[]; exit: number }> = [];
-  const write = process.stdout.write.bind(process.stdout);
-  const silence = (): void => { process.stdout.write = (() => true) as typeof process.stdout.write; };
-  const runs: string[][] = [
-    ...INGEST_SOURCES.map((source) => ['ingest', '--source', source]),
-    // Revised s.2/s.3 back the outside-the-scope rules, s.34 the place-of-supply rules.
-    ...['2', '3', '34'].map((n) => ['ingest', '--source', 'vatca-2010-revised', '--section', n]),
-    ...EXTRACT_SOURCES.map((source) => ['extract', '--source', source]),
-  ];
-  {
-    for (const args of runs) {
-      silence();
-      const exit = await main(args, { db, companyId });
-      process.stdout.write = write;
-      log.push({ args, exit });
-    }
-  }
+  const derived = deriveStatutoryKnowledgeBase(db, { companyId });
 
   const sources = db.select().from(irishKnowledgeSources).all();
   const provisions = db.select().from(irishActProvisions).all();
@@ -100,8 +71,8 @@ async function run(): Promise<void> {
   });
 
   const out = process.argv[2] ?? 'rule-traceability-dump.json';
-  writeFileSync(out, JSON.stringify({ log, counts: { sources: sources.length, provisions: provisions.length, rules: rules.length }, rules: records }, null, 2));
-  write(`sources=${sources.length} provisions=${provisions.length} rules=${rules.length} -> ${out}\n`);
+  writeFileSync(out, JSON.stringify({ derived, counts: { sources: sources.length, provisions: provisions.length, rules: rules.length }, rules: records }, null, 2));
+  process.stdout.write(`sources=${sources.length} provisions=${provisions.length} rules=${rules.length} -> ${out}\n`);
 }
 
 void run();

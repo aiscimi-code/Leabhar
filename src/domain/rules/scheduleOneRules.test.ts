@@ -4,7 +4,7 @@ import { and, eq } from 'drizzle-orm';
 import { createTestDatabase } from '@/db/testing';
 import { createCompany } from '../config/setup';
 import { irishTaxRules } from '@/db/schema';
-import { loadStatutoryKnowledgeBase } from './knowledgeBase';
+import { deriveStatutoryKnowledgeBase } from './knowledgeBase';
 import { deriveVatScopeRules } from './vatScopeIngestion';
 import { evaluateAllConditions } from './conditionEval';
 import { quotedTextWindow } from './lrcAnnotations';
@@ -99,7 +99,7 @@ describe('deriving and applying the Schedule 1 rules', () => {
   beforeAll(() => {
     ({ db } = createTestDatabase());
     ({ companyId } = createCompany(db, { legalName: 'Exempt Ltd', vatRegistrationStatus: 'registered', seedYears: [2025] }));
-    loadStatutoryKnowledgeBase(db, { companyId });
+    deriveStatutoryKnowledgeBase(db, { companyId });
   });
   const rule = (ruleKey: string) => db.select().from(irishTaxRules)
     .where(and(eq(irishTaxRules.companyId, companyId), eq(irishTaxRules.ruleKey, ruleKey), eq(irishTaxRules.active, true))).get();

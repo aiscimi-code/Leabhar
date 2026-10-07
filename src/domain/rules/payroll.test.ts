@@ -3,7 +3,7 @@ import { and, eq } from 'drizzle-orm';
 import { createTestDatabase } from '@/db/testing';
 import { createCompany } from '../config/setup';
 import { irishTaxRules, irishActProvisions, irishKnowledgeSources } from '@/db/schema';
-import { loadStatutoryKnowledgeBase, verifyStatuteFile } from './knowledgeBase';
+import { deriveStatutoryKnowledgeBase, verifyStatuteFile } from './knowledgeBase';
 import { derivePayrollRules, PAYROLL_SLICED_SOURCES } from './payrollIngestion';
 import { SIZE_CRITERIA_SLICED_SOURCE } from './sizeCriteriaCuration';
 import { PAYROLL_CURATED_RULES } from './payrollCuration';
@@ -18,7 +18,7 @@ const rows = (ruleKey: string) => db.select().from(irishTaxRules)
 beforeAll(() => {
   ({ db } = createTestDatabase());
   ({ companyId } = createCompany(db, { legalName: 'Payroll Ltd', vatRegistrationStatus: 'registered', seedYears: [2026] }));
-  loadStatutoryKnowledgeBase(db, { companyId });
+  deriveStatutoryKnowledgeBase(db, { companyId });
 });
 
 describe('payroll rules (issue #526)', () => {

@@ -1,24 +1,22 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { eq } from 'drizzle-orm';
 import { createTestDatabase } from '@/db/testing';
 import { createCompany } from '@/domain/config/setup';
-import { irishKnowledgeSources, irishActProvisions } from '@/db/schema';
+import { irishKnowledgeSources, irishActProvisions, irishTaxRules } from '@/db/schema';
 import { main } from './irishRules';
 
 afterEach(() => vi.restoreAllMocks());
 
-describe('rules CLI: ingest --source finance-act-2025 (issue #205)', () => {
-  it('loads the enacted Act from the rules catalogue, keeping the s.46 rate sections relevant', async () => {
-    const { db } = createTestDatabase();
-    const { companyId } = createCompany(db, { legalName: 'Cli Ltd', seedYears: [2025] });
-    vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
+describe('rules CLI: no command loads rules into a book (ADR-0021 §7)', () => {
+  it.each([['ingest', '--source', 'finance-act-2025'], ['ingest-all'], ['extract', '--source', 'vatca-2010']])(
+    '%s is not a command, and writes nothing',
+    async (...args) => {
+      const { db } = createTestDatabase();
+      const { companyId } = createCompany(db, { legalName: 'Cli Ltd', seedYears: [2025] });
+      const stderr = vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
 
-    expect(await main(['ingest', '--source', 'finance-act-2025'], { db, companyId })).toBe(0);
-    const source = db.select().from(irishKnowledgeSources).where(eq(irishKnowledgeSources.citation, '2025 Act 18')).get()!;
-    expect(source.localPath).toBe('catalogue/finance-act-2025/2025-act-18-enacted.json');
-    const s71 = db.select().from(irishActProvisions).where(eq(irishActProvisions.sourceId, source.id)).all()
-      .find((p) => p.sectionNumber === '71')!;
-    expect(s71.relevant).toBe(true);
-    expect(s71.provisionText).toContain('paragraphs 3(1), 3(3) and 13(3) of Schedule 3');
-  });
+      expect(await main(args, { db, companyId })).toBe(2);
+      expect(String(stderr.mock.calls[0]![0])).toContain(`Unknown command: ${args[0]}`);
+      for (const table of [irishKnowledgeSources, irishActProvisions, irishTaxRules]) expect(db.select().from(table).all()).toEqual([]);
+    },
+  );
 });

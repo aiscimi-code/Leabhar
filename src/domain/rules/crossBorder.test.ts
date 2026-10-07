@@ -3,7 +3,6 @@ import { createTestDatabase, insertTestBankTransaction } from '@/db/testing';
 import { createCompany, addBankAccount } from '../config/setup';
 import { suppliers, customers } from '@/db/schema';
 import { ids } from '@/lib/ids';
-import { loadStatutoryKnowledgeBase } from './knowledgeBase';
 import { suggestVatTreatment } from './vatSuggestion';
 import { confirmEstablishment, confirmCustomerTaxableStatus } from '../parties/status';
 import type { AppDatabase } from '@/db';
@@ -27,7 +26,6 @@ beforeAll(() => {
   bankAccountId = addBankAccount(db, {
     companyId, bankName: 'AIB', accountName: 'Current', openingDate: '2026-01-01', accountId: created.accountsByKey['bank_control']!,
   });
-  loadStatutoryKnowledgeBase(db, { companyId });
 });
 
 const supplier = (name: string, countryCode: string, treatment: string, establishment?: 'in_state' | 'outside_state') => {

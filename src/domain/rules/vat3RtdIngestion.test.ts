@@ -148,8 +148,8 @@ describe('deriveVat3RtdRules (issue #439)', () => {
   it('each rule cross-references the statute behind the form, and those references resolve', async () => {
     deriveVat3RtdRules(db, { companyId });
     // The VATCA s.76 and reg.24 provisions must be ingested for resolution; the KB load brings them.
-    const { loadStatutoryKnowledgeBase } = await import('./knowledgeBase');
-    loadStatutoryKnowledgeBase(db, { companyId });
+    const { deriveStatutoryKnowledgeBase } = await import('./knowledgeBase');
+    deriveStatutoryKnowledgeBase(db, { companyId });
     deriveVat3RtdRules(db, { companyId });
     const rule = db.select().from(irishTaxRules)
       .where(and(eq(irishTaxRules.companyId, companyId), eq(irishTaxRules.ruleKey, 'rtd.annual_return_required'), eq(irishTaxRules.active, true))).get()!;

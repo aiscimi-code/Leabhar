@@ -3,7 +3,6 @@ import { createTestDatabase, insertTestBankTransaction } from '@/db/testing';
 import { createCompany, addBankAccount } from '../config/setup';
 import { suppliers, customers } from '@/db/schema';
 import { ids } from '@/lib/ids';
-import { loadStatutoryKnowledgeBase } from './knowledgeBase';
 import { suggestVatTreatment } from './vatSuggestion';
 import { normaliseTransactionContext } from './transactionLookup';
 import { confirmEstablishment } from '../parties/status';
@@ -65,7 +64,6 @@ describe('treatments for UK trade either side of 1 January 2021', () => {
     bankAccountId = addBankAccount(db, {
       companyId, bankName: 'AIB', accountName: 'Current', openingDate: '2020-01-01', accountId: created.accountsByKey['bank_control']!,
     });
-    loadStatutoryKnowledgeBase(db, { companyId });
   });
 
   const party = (kind: 'supplier' | 'customer', name: string, treatment: string) => {

@@ -1,21 +1,16 @@
 /**
- * Load the whole statutory knowledge base for a company in one call
- * (issue #200 step 3).
+ * The statutory knowledge base's derive pipeline (issue #200 step 3), and the
+ * checks on the files it cites.
  *
- * Until this existed, the only way to get `irish_tax_rules` rows into a
- * company's database was to run about forty `npm run cli:rules -- ingest` /
- * `extract` commands by hand, in the right order, and nothing in the import →
- * match → classify workflow ever did — so the lookup the transaction screen
- * now uses had nothing to look up. This function runs exactly the set of
- * ingest and derive steps the CLI exposes, from the rules catalogue
- * (`catalogue/`, #556), so the web app, the agent CLI and the traceability
- * audit (`scripts/rule-traceability-dump.ts`) all see the same rules.
+ * `deriveStatutoryKnowledgeBase` runs every ingest and derive step from the
+ * rules catalogue (`catalogue/`, #556) into a book's own rule tables. That is
+ * how the rules store is built (`buildRulesStore`, ADR-0021 §1): against an
+ * empty book, at package time or by `npm run rules:build`. A book no longer
+ * loads rules (ADR-0021 §7); it reads the store the install shipped.
  *
  * Every step is idempotent by content (a source already ingested with the
- * same SHA-256 is a no-op, and an unchanged curated rule is left alone), so
- * calling this again is safe and is how a company picks up newly curated
- * rules. It never approves a rule: everything it derives starts
- * `ai_extracted`, exactly as the individual CLI steps do.
+ * same SHA-256 is a no-op, and an unchanged curated rule is left alone). It
+ * never approves a rule: everything it derives starts `ai_extracted`.
  */
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -50,7 +45,6 @@ import { CAR_EMISSIONS_CURATED_RULES } from './carEmissionsCuration';
 import { syncRuleLinks } from './ruleLinks';
 import { taxHeadsFor } from './taxHeads';
 import { CATALOGUE_DIR, CATALOGUE_ENTRIES, catalogueEntryPath, catalogueOfficialFilePath, ingestCatalogueFile, readCatalogueEntry } from './catalogue';
-import { checkCatalogueVersions } from './ruleDecisions';
 
 /** Derive steps, in the order the CLI documents them (thresholds after FA 2024 is ingested). */
 const DERIVES: Array<(db: AppDatabase, params: { companyId: string }) => unknown> = [
@@ -85,14 +79,7 @@ export function statuteFilePath(localPath: string, root: string = appRoot()): st
   return join(root, at >= 0 ? localPath.slice(at) : localPath);
 }
 
-export interface KnowledgeBaseLoadResult {
-  sourcesProcessed: number;
-  rulesBefore: number;
-  rulesAfter: number;
-  /** Rule versions the book references that the installed catalogue does not ship; each raised as a review item. */
-  catalogueVersionsMissing: string[];
-}
-
+/** How many rule versions the book's own copied tables hold for a company: what the derive pipeline wrote. */
 export function countStatutoryRules(db: AppDatabase, companyId: string): number {
   return db.select({ n: sql<number>`count(*)` }).from(irishTaxRules)
     .where(eq(irishTaxRules.companyId, companyId)).get()?.n ?? 0;
@@ -118,7 +105,8 @@ export function fillTaxHeads(db: AppDatabase, params: { companyId: string }): nu
 /**
  * Run the derive pipeline into the book's own rule tables: the copies the
  * store is built from (`buildRulesStore`). Writes only; it reads no rules
- * through the store, so it runs where none is attached.
+ * through the store, so it runs where none is attached. The app never runs it
+ * against a book: a book reads the store the install shipped (ADR-0021 §7).
  */
 export function deriveStatutoryKnowledgeBase(
   db: AppDatabase,
@@ -140,21 +128,6 @@ export function deriveStatutoryKnowledgeBase(
   syncRuleLinks(db, { companyId: params.companyId });
   fillTaxHeads(db, { companyId: params.companyId });
   return { sourcesProcessed: CATALOGUE_ENTRIES.length, rulesBefore, rulesAfter: countStatutoryRules(db, params.companyId) };
-}
-
-/**
- * "Load statutory rules", until loading stops (ADR-0021 delivery step 4):
- * the derive pipeline into the book's copied tables, which no reader reads
- * any more, then the check of the book's references against the attached
- * store (`checkCatalogueVersions`).
- */
-export function loadStatutoryKnowledgeBase(
-  db: AppDatabase,
-  params: { companyId: string; root?: string; ingestVersion?: string },
-): KnowledgeBaseLoadResult {
-  const derived = deriveStatutoryKnowledgeBase(db, params);
-  const missing = checkCatalogueVersions(db, { companyId: params.companyId });
-  return { ...derived, catalogueVersionsMissing: missing.map((m) => m.versionId) };
 }
 
 export interface StatuteFileCheck {

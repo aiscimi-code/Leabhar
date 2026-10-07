@@ -7,7 +7,6 @@ import { createTestDatabase } from '@/db/testing';
 import { createCompany } from '../config/setup';
 import { storeDocument } from '../documents/storage';
 import { confirmDocument, type ReviewedDocumentValues } from '../documents/review';
-import { loadStatutoryKnowledgeBase } from '../rules/knowledgeBase';
 import { confirmEstablishment } from '../parties/status';
 import { companies, suppliers, vatTreatments } from '@/db/schema';
 import { ids } from '@/lib/ids';
@@ -85,7 +84,6 @@ beforeAll(() => {
     legalName: 'Conflicts Ltd', vatRegistrationStatus: 'registered', vatAccountingBasis: 'invoice', seedYears: [2026],
   }));
   db.update(companies).set({ vatNumber: 'IE6388047V' }).where(eq(companies.id, companyId)).run();
-  loadStatutoryKnowledgeBase(db, { companyId });
   root = mkdtempSync(join(tmpdir(), 'conflicts-'));
 });
 afterAll(() => rmSync(root, { recursive: true, force: true }));
