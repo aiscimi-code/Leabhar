@@ -56,7 +56,8 @@ import { generateAuditReport } from '@/domain/rules/audit';
 import { resolveRuleDependencies, resolveAllRuleDependencies } from '@/domain/rules/dependencies';
 import { resolveImpactTarget, ruleDepends, ruleImpact } from '@/domain/rules/ruleImpact';
 import { traceSourceChange, verifySources, type SourceFetcher } from '@/domain/rules/sourceDrift';
-import { irishActProvisions, irishTaxRules } from '@/db/schema';
+import { irishActProvisions, irishKnowledgeSources, irishTaxRules } from '@/db/schema';
+import { ruleReviewResolver } from '@/domain/rules/effectiveReview';
 import { eq } from 'drizzle-orm';
 
 const USAGE = `\
@@ -420,9 +421,15 @@ export async function main(argv: string[], options: CliOptions = {}): Promise<nu
       case 'list-rules': {
         const topic = getFlag(flags, 'topic');
         const status = getFlag(flags, 'status');
+        // Each with the review the book follows: its own decision, else the catalogue's (issue #718).
+        const review = ruleReviewResolver(db, { companyId });
         const rows: Array<{ reviewStatus: string }> = topic
           ? listTaxRulesByTopic(db, { companyId, topic })
-          : db.select().from(irishTaxRules).where(eq(irishTaxRules.companyId, companyId)).all();
+          : db.select({ rule: irishTaxRules, sourceSha256: irishKnowledgeSources.sha256 }).from(irishTaxRules)
+            .innerJoin(irishActProvisions, eq(irishTaxRules.provisionId, irishActProvisions.id))
+            .innerJoin(irishKnowledgeSources, eq(irishActProvisions.sourceId, irishKnowledgeSources.id))
+            .where(eq(irishTaxRules.companyId, companyId)).all()
+            .map(({ rule, sourceSha256 }) => ({ ...rule, reviewStatus: review({ ...rule, sourceSha256 }).status }));
         print(status ? rows.filter((r) => r.reviewStatus === status) : rows, format);
         return 0;
       }

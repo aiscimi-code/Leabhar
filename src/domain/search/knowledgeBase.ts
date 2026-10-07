@@ -2,6 +2,7 @@ import { and, asc, eq, or, sql } from 'drizzle-orm';
 import type { AppDatabase } from '@/db';
 import { irishActProvisions, irishKnowledgeSources, irishTaxRules } from '@/db/schema';
 import { provisionCitation } from '../rules/citation';
+import { ruleReviewResolver } from '../rules/effectiveReview';
 
 /**
  * Search over the statutory knowledge base (issue #311: full-text and semantic
@@ -198,6 +199,10 @@ export function searchStatutoryRules(
     sourceUrl: irishKnowledgeSources.sourceUrl,
     sourceType: irishKnowledgeSources.sourceType,
     citation: irishKnowledgeSources.citation,
+    sourceSha256: irishKnowledgeSources.sha256,
+    ruleVersion: irishTaxRules.ruleVersion,
+    effectiveFrom: irishTaxRules.effectiveFrom,
+    effectiveTo: irishTaxRules.effectiveTo,
   })
     .from(irishTaxRules)
     .innerJoin(irishActProvisions, eq(irishTaxRules.provisionId, irishActProvisions.id))
@@ -215,13 +220,15 @@ export function searchStatutoryRules(
     .limit(params.limit ?? 25)
     .all();
 
+  // The review the book follows: its own decision, else the catalogue's (issue #718).
+  const review = ruleReviewResolver(db, { companyId: params.companyId });
   return rows.map((row) => ({
     ...toHit(row, row.ruleName.toLowerCase().includes(lowered) ? 'Rule name' : 'Rule statement', raw),
     ruleId: row.ruleId,
     ruleKey: row.ruleKey,
     ruleName: row.ruleName,
     topic: row.topic,
-    reviewStatus: row.reviewStatus,
+    reviewStatus: review(row).status,
   }));
 }
 

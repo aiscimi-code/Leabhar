@@ -20,6 +20,7 @@ import { irishRuleLinks } from '@/db/schema';
 import { VATCA_CURATED_RULES } from './vatcaCuration';
 import { FINANCE_ACT_2024 } from './irishRules';
 import { VATCA_2010 } from './vatcaIngestion';
+import { ruleReviewResolver } from './effectiveReview';
 
 export interface AuditReport {
   generatedAt: string;
@@ -145,9 +146,14 @@ export function generateAuditReport(db: AppDatabase, params: { companyId: string
   }
   const duplicateRuleKeys = [...ruleKeyCounts.entries()].filter(([, n]) => n > 1).map(([k]) => k);
 
+  // Counted by the review the book follows (issue #718): its own decision, else the catalogue's.
+  const shaOfSource = new Map(sourceRows.map((src) => [src.id, src.sha256]));
+  const shaOfProvision = new Map(provisions.map((p) => [p.id, shaOfSource.get(p.sourceId) ?? '']));
+  const review = ruleReviewResolver(db, { companyId: params.companyId });
   const rulesByReviewStatus: Record<string, number> = {};
   for (const r of rules) {
-    rulesByReviewStatus[r.reviewStatus] = (rulesByReviewStatus[r.reviewStatus] ?? 0) + 1;
+    const { status } = review({ ...r, sourceSha256: shaOfProvision.get(r.provisionId) ?? '' });
+    rulesByReviewStatus[status] = (rulesByReviewStatus[status] ?? 0) + 1;
   }
 
   return {

@@ -17,45 +17,11 @@ import type { AppDatabase } from '@/db';
 import { invoiceLines, irishActProvisions, irishKnowledgeSources, irishRuleDecisions, irishTaxRules, type IrishRuleReviewStatus } from '@/db/schema';
 import { newId } from '@/lib/ids';
 import { upsertReviewItem } from '../extraction/service';
-import { CATALOGUE_DIR, CATALOGUE_ENTRIES, readCatalogueEntry, type CatalogueReview } from './catalogue';
+import { CATALOGUE_DIR, type CatalogueReview } from './catalogue';
+import { catalogueRuleStore, ruleReviewResolver, type CatalogueVersionRecord } from './effectiveReview';
 import { ruleVersionId } from './irishRules';
 
-/** One rule version as the catalogue ships it. */
-export interface CatalogueVersionRecord {
-  entry: string;
-  citation: string;
-  sourceSha256: string;
-  review: CatalogueReview;
-}
-
-/** The install-level, read-only store: every catalogued rule version, by `key@version`, and the keys each entry holds. */
-export interface CatalogueRuleStore {
-  versions: ReadonlyMap<string, CatalogueVersionRecord>;
-  keys: ReadonlySet<string>;
-  /** What each key's versions say (dates and quote), to recognise a book's copy whatever it numbered it. */
-  contents: ReadonlyMap<string, ReadonlyArray<{ effectiveFrom: string; effectiveTo: string | null; quote: string | null }>>;
-}
-
-/** The read-only store, read from the committed catalogue entries (a few small files; not cached, so a rewritten entry is never read stale). */
-export function catalogueRuleStore(root?: string): CatalogueRuleStore {
-  const versions = new Map<string, CatalogueVersionRecord>();
-  const keys = new Set<string>();
-  const contents = new Map<string, Array<{ effectiveFrom: string; effectiveTo: string | null; quote: string | null }>>();
-  for (const name of CATALOGUE_ENTRIES) {
-    const entry = readCatalogueEntry(name, root);
-    for (const rule of entry.rules) {
-      keys.add(rule.key);
-      for (const v of rule.versions) {
-        contents.set(rule.key, [...(contents.get(rule.key) ?? []),
-          { effectiveFrom: v.effectiveFrom, effectiveTo: v.effectiveTo, quote: v.quote }]);
-        versions.set(ruleVersionId(rule.key, v.version), {
-          entry: name, citation: entry.source.citation, sourceSha256: entry.source.sha256, review: v.review,
-        });
-      }
-    }
-  }
-  return { versions, keys, contents };
-}
+export { catalogueRuleStore, type CatalogueRuleStore, type CatalogueVersionRecord } from './effectiveReview';
 
 export type RuleDecision = typeof irishRuleDecisions.$inferSelect;
 
@@ -103,20 +69,46 @@ export interface EffectiveRuleReview {
   catalogue: CatalogueVersionRecord | null;
 }
 
-/** The review a book follows for one rule version: its own latest decision, else the catalogue's. */
+/**
+ * The review a book follows for one rule version: its own latest decision,
+ * else the catalogue's. A version the book holds is matched to the catalogue's
+ * by what it says (`ruleReviewResolver`), since the book may number it
+ * differently; one it does not hold is looked up by its number.
+ */
 export function effectiveRuleReview(
   db: AppDatabase,
   params: { companyId: string; ruleKey: string; ruleVersion: number; root?: string },
 ): EffectiveRuleReview {
   const versionId = ruleVersionId(params.ruleKey, params.ruleVersion);
-  const catalogue = catalogueRuleStore(params.root).versions.get(versionId) ?? null;
+  const row = db.select({
+    ruleKey: irishTaxRules.ruleKey, ruleVersion: irishTaxRules.ruleVersion,
+    effectiveFrom: irishTaxRules.effectiveFrom, effectiveTo: irishTaxRules.effectiveTo,
+    statement: irishTaxRules.statement, reviewStatus: irishTaxRules.reviewStatus, sourceSha256: irishKnowledgeSources.sha256,
+  }).from(irishTaxRules)
+    .innerJoin(irishActProvisions, eq(irishActProvisions.id, irishTaxRules.provisionId))
+    .innerJoin(irishKnowledgeSources, eq(irishKnowledgeSources.id, irishActProvisions.sourceId))
+    .where(and(eq(irishTaxRules.companyId, params.companyId), eq(irishTaxRules.ruleKey, params.ruleKey), eq(irishTaxRules.ruleVersion, params.ruleVersion)))
+    .get();
+  const catalogueByNumber = catalogueRuleStore(params.root).versions.get(versionId) ?? null;
+  if (row) {
+    const review = ruleReviewResolver(db, params)(row);
+    const catalogue: CatalogueVersionRecord | null = review.catalogue
+      ? { entry: review.catalogue.entry, citation: review.catalogue.citation, sourceSha256: review.catalogue.sourceSha256, review: review.catalogue.review }
+      : null;
+    if (review.from !== 'derived') return { versionId, from: review.from, status: review.status as EffectiveRuleReview['status'], by: review.by, at: review.at, reason: review.reason, catalogue };
+    if (catalogue) {
+      const r = catalogue.review;
+      return { versionId, from: 'catalogue', status: r.status, by: r.by, at: r.at, reason: r.note, catalogue };
+    }
+    return { versionId, from: 'none', status: null, by: null, at: null, reason: null, catalogue: null };
+  }
   const [latest] = ruleDecisionHistory(db, params);
   if (latest) {
-    return { versionId, from: 'book', status: latest.status, by: latest.decidedBy, at: latest.decidedAt, reason: latest.reason, catalogue };
+    return { versionId, from: 'book', status: latest.status, by: latest.decidedBy, at: latest.decidedAt, reason: latest.reason, catalogue: catalogueByNumber };
   }
-  if (catalogue) {
-    const r = catalogue.review;
-    return { versionId, from: 'catalogue', status: r.status, by: r.by, at: r.at, reason: r.note, catalogue };
+  if (catalogueByNumber) {
+    const r = catalogueByNumber.review;
+    return { versionId, from: 'catalogue', status: r.status, by: r.by, at: r.at, reason: r.note, catalogue: catalogueByNumber };
   }
   return { versionId, from: 'none', status: null, by: null, at: null, reason: null, catalogue: null };
 }
