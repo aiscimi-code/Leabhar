@@ -125,9 +125,16 @@ Three alternatives were considered:
    - **Move bindings.** It copies `tax_rate_id` and `vat_treatment_id` to
      `irish_rule_bindings`.
    - **Stop writing the old copies.** Readers move to the store, and nothing
-     writes the book's copied tables again. Dropping them is a later
-     migration, one release after, so a book can still be opened by the
-     previous release if the upgrade is rolled back.
+     writes the book's copied tables again.
+   - **Drop them one release later, and only for a book that has opened the
+     new store.** One release is the rollback window: the migration already
+     runs after a backup, and the copied tables are what the previous release
+     still reads. The drop migration refuses to run while `rules_store_seen`
+     is empty, so a book that never opened the new store keeps its copies.
+     The drop does not wait for review items to be cleared. A frozen version
+     with no catalogue match is meant to stay a review item, and waiting for
+     none to be outstanding would either block the drop for good or push
+     someone to clear a real mismatch.
 7. **"Load statutory rules" goes away.** A book no longer loads rules: it has
    the store the install shipped. `loadStatutoryRulesAction`, the CLI
    `load-kb` commands and the demo seed stop writing rules into the book. The
@@ -176,16 +183,22 @@ Three alternatives were considered:
 - Rewriting a posted line's `vat_rule_versions` or an earlier decision to the
   new numbering.
 
-**Open questions for the owner**
+**Out of scope: practice-authored rules**
 
-- **Practice-authored rules.** Sources carry a nullable `company_id` for "a
-  practice's own Leabhar implementation rule sources". None exist today.
-  Should such rules, once they exist, live in the book and be read alongside
-  the store, or be out of scope until a hosted or multi-book install
-  (ADR-0001)?
-- **Timing of the drop.** Decision 6 keeps the copied tables for one release.
-  Is one release long enough, or should the drop wait until a book has opened
-  a store with no review items outstanding?
+Sources carry a nullable `company_id` for "a practice's own Leabhar
+implementation rule sources". None exist today, and this step builds nothing
+for them. When one exists:
+
+- **It belongs in the book**, never in `rules.db`. The installer owns the
+  store and replaces it on every update, so a practice's rule written there
+  would be lost.
+- **It is read beside the store.** Each reader takes rules from both places.
+
+So that this stays possible, the reader switch (Delivery step 3) must not
+assume every rule comes from `rules.db`. Readers go through one function that
+returns the rules a book can see. Today that is the store alone; later it
+becomes the store plus the book's own rules. Building that second source waits
+until a practice has a rule to put there.
 
 ## Delivery
 
@@ -202,6 +215,10 @@ Each step passes the gate alone:
    `ruleReviewResolver` already lists: lookups, figures, rate sync, rule page,
    audit, search, version comparison, provision page and `list-rules`. The
    review resolver loses its by-content match, except through the version map.
+   Readers take rules through one function, not from `rules.db` directly, so
+   practice-authored rules can be added beside the store later (see "Out of
+   scope").
 4. **Loading stops.** The action, the CLI commands and the seed stop writing
    rules into the book, and the update check in decision 5 replaces them.
-5. **One release later,** drop the copied tables.
+5. **One release later,** drop the copied tables, in each book that has opened
+   the new store (`rules_store_seen` is not empty).
