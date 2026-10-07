@@ -140,16 +140,18 @@ export interface ParsedArticle {
 /**
  * The articles, one provision each, with offsets into the text: a Markdown
  * extract (the CLI's --file), or the EUR-Lex page as eurlex_html_to_text.py
- * converts it. Each starts at its "Article N" line.
+ * converts it. Each runs from after its "Article N" line to the next one's,
+ * without it.
  */
 export function parseEuArticles(markdown: string): ParsedArticle[] {
   const frontMatterEnd = markdown.indexOf('---\n', 4) + 4;
   const starts = EU_282_2011_ARTICLES.flatMap((article) => {
     const m = new RegExp(`^Article ${article.replace(/([a-z])$/, '$1')}$`, 'm').exec(markdown);
-    return m ? [{ article, index: m.index + m[0].length }] : [];
+    return m ? [{ article, heading: m.index, index: m.index + m[0].length }] : [];
   }).sort((a, b) => a.index - b.index);
   return starts.map((start, i) => {
-    const next = starts[i + 1]?.index ?? markdown.length;
+    // An article ends where the next one's "Article N" heading begins (#715).
+    const next = starts[i + 1]?.heading ?? markdown.length;
     return {
       sectionNumber: start.article,
       provisionText: normaliseSpace(markdown.slice(start.index, next)),

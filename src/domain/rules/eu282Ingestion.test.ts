@@ -53,6 +53,11 @@ describe('the first EU source (issue #441)', () => {
     expect(check.slice).toContain('any specific part of the earth');
   });
 
+  it('ends each article before the next one\'s heading (#715)', () => {
+    for (const a of parseEuArticles(markdown)) expect(a.provisionText, a.sectionNumber).not.toMatch(/Article \d+[a-z]?$/);
+    for (const p of readCatalogueEntry(EU_282_2011_CATALOGUE_ENTRY).provisions) expect(p.excerpt, p.sectionNumber).not.toMatch(/Article \d+[a-z]?$/);
+  });
+
   it('the EUR-Lex page says the same words the Markdown extract did, article by article', () => {
     const entry = readCatalogueEntry(EU_282_2011_CATALOGUE_ENTRY);
     expect(entry.provisions.map((p) => [p.sectionNumber, p.excerpt]))
