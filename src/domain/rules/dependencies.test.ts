@@ -88,15 +88,15 @@ describe('rule dependency resolution (issue #438)', () => {
     expect(dep.provision!.sourceType).toBe('legislation');
   });
 
-  it('reports a reference to a section this book genuinely does not hold (S.I. 156/2012 reg.5 is not transcribed)', () => {
+  it('resolves the capacity exclusion to S.I. 156/2012 reg.5, now held (#705)', () => {
     const rule = db.select().from(irishTaxRules)
       .where(and(eq(irishTaxRules.companyId, companyId), eq(irishTaxRules.ruleKey, 'vat.mandatory_electronic_filing_capacity_exclusion')))
-      .get()!;
+      .all().find((r) => r.crossReferences.includes('S.I. 156/2012 reg.5'))!;
     expect(rule.crossReferences).toContain('S.I. 156/2012 reg.5');
     const deps = resolveRuleDependencies(db, { companyId, ruleId: storeId(rule) });
     const dep = deps.find((d) => d.reference === 'S.I. 156/2012 reg.5')!;
-    expect(dep.resolved).toBe(false);
-    expect(dep.reason).toContain('no ingested provision is section 5');
+    expect(dep.resolved).toBe(true);
+    expect(dep.provision!.sectionNumber).toBe('5');
   });
 
   it('reports a cross-reference this book cannot resolve, with the reason, never silently', () => {

@@ -8,18 +8,13 @@
  * submit and pay. There is no numeric figure to state and so no stale-figure
  * risk.
  *
- * Regulation 5 (capacity exclusions — the carve-out for a person genuinely
- * unable to file electronically) is **not** curated: `si156Parser.ts`'s
- * header explains that this local file only summarises regs 5-9 in a single
- * editorial sentence rather than quoting their text, so the actual exclusion
- * criteria are not available verbatim here. The curated rule's own
- * `exceptions` records the *fact* that an exclusion regime exists, without
- * asserting what specifically qualifies for it — asserting that would be
- * inventing text this KB does not hold. (Revenue's own current guidance
- * states the same criteria verbatim and independently — see
- * `tdm3801_03bCuration.ts`'s `vat.mandatory_electronic_filing_capacity_exclusion`,
- * a lower-ranked but genuinely citable companion rule, not a substitute for
- * this Regulation's own text.)
+ * Regulation 5 is curated separately as
+ * `vat.mandatory_electronic_filing_capacity_exclusion` (#709). The exclusion
+ * is this regulation, in force from 1 June 2012 (reg.1(2)), not TDM
+ * 38-01-03b's May 2026 revision date. The TDM passage stays guidance.
+ * Version 1 of that key remains the released TDM version; this regulation
+ * is version 2 and does not rewrite version 1. The Regulation 4 exception
+ * text is unchanged: it is part of the released version's content.
  */
 import type { IrishRuleCondition, IrishRuleException, IrishRuleType } from '@/db/schema';
 
@@ -72,3 +67,30 @@ export const SI_156_CURATED_RULES: CuratedSi156Rule[] = [
       + 'obligation unless a human confirms an exclusion is in place.',
   },
 ];
+
+/**
+ * Regulation 5, the capacity exclusion. Kept out of `SI_156_CURATED_RULES`
+ * so the Regulation 4 rule, whose released version must not change, is
+ * derived as before. Derived after the TDM version so this is version 2 (#709).
+ */
+export const SI_156_CAPACITY_EXCLUSION: CuratedSi156Rule = {
+  regulationNumber: '5',
+  ruleKey: 'vat.mandatory_electronic_filing_capacity_exclusion',
+  ruleType: 'procedure',
+  topic: 'vat',
+  name: 'Exclusion from mandatory electronic filing and payment on grounds of capacity',
+  statementExcerpt: "5. (1) A specified person may, by notifying the Commissioners in writing, request to be excluded from the provisions of these Regulations on the grounds that the specified person does not have the capacity to make a specified return or pay the specified tax liabilities by electronic means and the notification shall include all information relevant to the consideration by the Commissioners of the request.\n\n(2) Where the Commissioners receive a notification from a specified person in accordance with paragraph (1) or where the Commissioners otherwise consider it appropriate, they may exclude the specified person from the provisions of these Regulations only if they are satisfied that, in all of the circumstances, the specified person could not reasonably be expected to have the capacity to make a specified return or to make a payment of specified tax liabilities by electronic means.\n\n(3) A decision to exclude a specified person from the provisions of these Regulations by the Commissioners in accordance with paragraph (2) may be made at any time but where a notification has been received from a specified person in accordance with paragraph (1) the decision shall be made within 30 days of receipt of the notification, and the Commissioners shall, in all cases, notify the specified person in writing of the decision.",
+  conditions: [
+    { field: 'vatRegistered', operator: 'equals', value: 'true' },
+  ],
+  exceptions: [],
+  vatEffect: 'S.I. 156/2012 reg.5: the Commissioners may exclude a specified person from these Regulations '
+    + 'only if satisfied that the person could not reasonably be expected to have the capacity to file or pay '
+    + 'by electronic means. Capacity is defined in reg.2(1). The exclusion is applied for in writing; this rule '
+    + 'cannot tell whether one has been granted.',
+  reportingEffect: 'A paper VAT filing from an accountable person is an alternative to electronic filing only '
+    + 'where the Commissioners have excluded that person under Regulation 5.',
+  interpretationNote: 'The start date is 1 June 2012, Regulation 1(2), the same commencement as '
+    + 'vat.mandatory_electronic_filing. The May 2026 date on version 1 is the TDM revision date and is not '
+    + "the exclusion's start (#709). Revenue TDM 38-01-03b explains the test; it does not originate the rule.",
+};

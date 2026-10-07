@@ -57,14 +57,16 @@ describe('deriveTdm3801_03bCapacityExclusionRule', () => {
     expect(result.skippedNoProvision).toEqual([]);
   });
 
-  it('the rule states the real application procedure and capacity definition, no invented criteria', () => {
+  it('the TDM version states the application procedure; the regulation is the rule in force (#709)', () => {
     deriveTdm3801_03bCapacityExclusionRule(db, { companyId });
-    const rule = lookupTaxRule(db, { companyId, ruleKey: 'vat.mandatory_electronic_filing_capacity_exclusion' });
-    expect(rule).not.toBeNull();
-    expect(rule!.citation).toBe('Revenue TDM Part 38-01-03b');
-    expect(rule!.statement).toContain('apply in writing');
-    expect(rule!.statement).toContain('Capacity means sufficient access to the Internet');
-    expect(rule!.value).toBeNull();
+    const row = db.select().from(irishTaxRules)
+      .where(eq(irishTaxRules.ruleKey, 'vat.mandatory_electronic_filing_capacity_exclusion')).get()!;
+    expect(row.statement).toContain('apply in writing');
+    expect(row.statement).toContain('Capacity means sufficient access to the Internet');
+    expect(row.effectiveFrom).toBe('2026-05-01');
+    const inForce = lookupTaxRule(db, { companyId, ruleKey: 'vat.mandatory_electronic_filing_capacity_exclusion', asOfDate: '2015-06-01' });
+    expect(inForce!.citation).toBe('S.I. 156/2012');
+    expect(inForce!.effectiveFrom).toBe('2012-06-01');
   });
 
   it('starts unreviewed with ai_suggestion provenance', () => {

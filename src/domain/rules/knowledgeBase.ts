@@ -27,7 +27,7 @@ import { deriveRctRules } from './rctIngestion';
 import { ingestVatcaRevisedSection, deriveVatcaRevisedRules } from './vatcaRevisedIngestion';
 import { deriveCapitalAllowancesRules } from './capitalAllowancesIngestion';
 import { deriveSi639Rules } from './si639Ingestion';
-import { deriveSi156Rules } from './si156Ingestion';
+import { deriveSi156CapacityExclusionRule, deriveSi156Rules } from './si156Ingestion';
 import { deriveSi692025Rules } from './si692025Ingestion';
 import { deriveFinanceAct2024VatThresholds } from './financeAct2024VatThresholdsIngestion';
 import { deriveTdm3801_03bCapacityExclusionRule } from './tdm3801_03bIngestion';
@@ -60,6 +60,7 @@ const DERIVES: Array<(db: AppDatabase, params: { companyId: string }) => unknown
   deriveSi692025Rules,
   deriveFinanceAct2024VatThresholds,
   deriveTdm3801_03bCapacityExclusionRule,
+  deriveSi156CapacityExclusionRule,
   deriveCompaniesAct2014Rules,
   deriveVatScopeRules,
   deriveCorporationTaxRules,
