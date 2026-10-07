@@ -51,6 +51,7 @@ import { transactionHistory } from '@/domain/consolidation/history';
 import { capitalGoodsOverview } from '@/domain/vat/capitalGoods';
 import { money } from '@/lib/format';
 import { expenseRatesActiveOn } from '@/domain/expenses/rates';
+import { ruleReviewResolver } from '@/domain/rules/effectiveReview';
 
 /**
  * Read-side queries for the UI.
@@ -1020,9 +1021,12 @@ export function provisionDetail(provisionId: string) {
     .innerJoin(irishKnowledgeSources, eq(irishActProvisions.sourceId, irishKnowledgeSources.id))
     .where(and(eq(irishActProvisions.id, provisionId), eq(irishActProvisions.companyId, company.id))).get();
   if (!row) return null;
+  // Each shown with the review the book follows: its own decision, else the catalogue's (issue #718).
+  const review = ruleReviewResolver(db, { companyId: company.id });
   const rulesCiting = db.select().from(irishTaxRules)
     .where(and(eq(irishTaxRules.provisionId, provisionId), eq(irishTaxRules.companyId, company.id)))
-    .all();
+    .all()
+    .map((r) => ({ ...r, reviewStatus: review({ ...r, sourceSha256: row.source.sha256 }).status as typeof r.reviewStatus }));
   // Each citing rule's cross-references, resolved against what this book holds (issue #438).
   const dependencies = Object.fromEntries(rulesCiting.map((r) =>
     [r.id, r.crossReferences.length ? resolveRuleDependencies(db, { ruleId: r.id }) : []]));

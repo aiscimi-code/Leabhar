@@ -524,7 +524,8 @@ function citationFor(db: AppDatabase, rule: ApplicableRule): StatutoryCitation {
     quote: row.rule.statement,
     effectiveFrom: row.rule.effectiveFrom,
     effectiveTo: row.rule.effectiveTo,
-    reviewStatus: row.rule.reviewStatus,
+    // The review the book follows (issue #718), as the lookup resolved it.
+    reviewStatus: rule.reviewStatus,
     requiresGuidance: row.rule.requiresGuidance,
   };
 }

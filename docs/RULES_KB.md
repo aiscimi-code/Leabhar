@@ -208,16 +208,29 @@ the 2021 and 2022 Covid Acts and Finance Act 2023 s.5).
 one each time, with who, when and why, and migration 0058 carried across
 every decision taken before. The expert review ships in the catalogue, read
 as an install-level, read-only store (`catalogueRuleStore`).
-`effectiveRuleReview` gives the book's latest decision when it has one, else
-the catalogue's. Loading the knowledge base raises a review item for every
-version the book holds or an invoice line applied, from a catalogued source,
-that the installed catalogue does not ship (`checkCatalogueVersions`);
-nothing is switched to another version.
+Every reader of a rule's review (the lookups in `irishRules.ts`, and through
+them the transaction lookup, the VAT suggestion, the rule figures and the
+rate sync; the rule page, the audit, search, version comparison, the
+provision page and `list-rules`) goes through one function,
+`ruleReviewResolver` (`effectiveReview.ts`, #718): the book's latest decision
+when it has one, else the catalogue's review of the version that says the
+same thing (dates and quote, whatever the book numbered it), else the status
+the row was derived with. A catalogue approval or rejection holds only while
+the book's source has the SHA-256 the reviewer read. A version the catalogue
+rejected is left out of every lookup, as one the book rejected is, and a
+figure that needed it names who rejected it. The review is read, never
+copied onto the book's row. `effectiveRuleReview` gives the same answer for
+one version, with the catalogue's review beside a book decision. Loading the
+knowledge base raises a review item for every version the book holds or an
+invoice line applied, from a catalogued source, that the installed catalogue
+does not ship (`checkCatalogueVersions`); nothing is switched to another
+version.
 
-**Not yet.** The rule rows themselves are still copied into each book: they
-move to the install-level store once every source is in the catalogue
-(#556). Until then a lookup reads the row's review columns, which
-`setRuleReviewStatus` keeps in step with the latest decision.
+**Not yet.** The rule rows themselves are still copied into each book. Moving
+them to an install-level store, keeping only decisions and applied version
+IDs in the book, needs a design note first (#718): where the store lives in
+the desktop install, how a packaged update replaces it, and how the
+provision viewer reads it.
 
 A relationship between rules that exists only in code is a bug: declare it
 as a link.

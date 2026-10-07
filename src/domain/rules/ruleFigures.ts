@@ -23,9 +23,10 @@
  */
 import { and, desc, eq } from 'drizzle-orm';
 import type { AppDatabase } from '@/db';
-import { irishTaxRules } from '@/db/schema';
+import { irishActProvisions, irishKnowledgeSources, irishTaxRules } from '@/db/schema';
 import { isIsoDate } from '../dates';
 import { lookupTaxRule, ruleVersionId } from './irishRules';
+import { ruleReviewResolver } from './effectiveReview';
 import type { ManifestRuleKey } from './consumers';
 
 /** A shipped curation constant any figure falls back to. */
@@ -106,6 +107,33 @@ function rejectedRule(db: AppDatabase, companyId: string, ruleKey: string) {
       // so a rejected row can never be missed by a later change to either column.
       eq(irishTaxRules.reviewStatus, 'rejected'),
     )).orderBy(desc(irishTaxRules.ruleVersion)).get();
+}
+
+/**
+ * A rule the rules catalogue rejected, for a version the book holds and has
+ * taken no decision on (issue #718): the lookup leaves it out, so the figure
+ * is reported rejected, naming who rejected it in the catalogue.
+ */
+function catalogueRejectedRule(db: AppDatabase, companyId: string, ruleKey: string, asOf: string) {
+  const rows = db.select({
+    name: irishTaxRules.name, ruleKey: irishTaxRules.ruleKey, ruleVersion: irishTaxRules.ruleVersion,
+    effectiveFrom: irishTaxRules.effectiveFrom, effectiveTo: irishTaxRules.effectiveTo,
+    statement: irishTaxRules.statement, reviewStatus: irishTaxRules.reviewStatus, sourceSha256: irishKnowledgeSources.sha256,
+  }).from(irishTaxRules)
+    .innerJoin(irishActProvisions, eq(irishTaxRules.provisionId, irishActProvisions.id))
+    .innerJoin(irishKnowledgeSources, eq(irishActProvisions.sourceId, irishKnowledgeSources.id))
+    .where(and(eq(irishTaxRules.companyId, companyId), eq(irishTaxRules.ruleKey, ruleKey), eq(irishTaxRules.enabled, true)))
+    .orderBy(desc(irishTaxRules.ruleVersion)).all();
+  if (rows.length === 0) return null;
+  const review = ruleReviewResolver(db, { companyId });
+  for (const row of rows) {
+    // Only the version in force on the date. An older rejected version must not
+    // withdraw a later date the catalogue did not reject.
+    if (row.effectiveFrom > asOf || (row.effectiveTo !== null && row.effectiveTo <= asOf)) continue;
+    const r = review(row);
+    if (r.from === 'catalogue' && r.status === 'rejected') return { row, review: r };
+  }
+  return null;
 }
 
 function statusOf(reviewStatus: string): RuleFigureStatus {
@@ -193,6 +221,17 @@ export function resolveRuleFigure(
       curatedInForce, name: rejected.name || base.name,
       finding: `Rule "${rejected.name || base.name}" (${params.ruleKey}) ${REJECTED_FINDING_PREFIX}${who}`
         + `${rejected.reviewNotes ? ` (${rejected.reviewNotes})` : ''}.`,
+    };
+  }
+
+  const catalogueRejected = catalogueRejectedRule(db, params.companyId, params.ruleKey, params.asOfDate);
+  if (catalogueRejected) {
+    const { row, review } = catalogueRejected;
+    return {
+      ...base, numericValue: null, status: 'rejected', reviewStatus: review.status,
+      curatedInForce, name: row.name || base.name,
+      finding: `Rule "${row.name || base.name}" (${params.ruleKey}) was rejected in the rules catalogue`
+        + `${review.by ? ` by ${review.by}` : ''}${review.reason ? ` (${review.reason})` : ''}.`,
     };
   }
 

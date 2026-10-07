@@ -29,6 +29,7 @@ import type { ParsedProvision } from './statuteParser';
 import { retiredBy } from './supersessions';
 import { taxHeadsFor } from './taxHeads';
 import { preferredSourceId } from './catalogueSupersession';
+import { ruleReviewResolver, withdrawn, type ReviewedRuleRow, type RuleReview } from './effectiveReview';
 
 export interface KnowledgeSourceRef {
   title: string;
@@ -448,7 +449,10 @@ export interface LookupResult {
   accountingEffect: string | null;
   vatEffect: string | null;
   reportingEffect: string | null;
+  /** The review the book follows (effectiveReview.ts): its own decision, else the catalogue's, else as derived. */
   reviewStatus: string;
+  /** Where `reviewStatus` comes from. */
+  reviewedIn: RuleReview['from'];
   humanReviewRequired: boolean;
   requiresGuidance: boolean;
   effectiveFrom: string;
@@ -464,6 +468,8 @@ export interface LookupResult {
   citation: string;
   /** What kind of source the rule's provision comes from; ranks it (sourceHierarchy.ts). */
   sourceType: IrishSourceType;
+  /** The SHA-256 of that source: a catalogue review holds only for the source its reviewer read. */
+  sourceSha256: string;
 }
 
 const LOOKUP_COLUMNS = {
@@ -499,7 +505,23 @@ const LOOKUP_COLUMNS = {
   sourceUrl: irishKnowledgeSources.sourceUrl,
   citation: irishKnowledgeSources.citation,
   sourceType: irishKnowledgeSources.sourceType,
+  sourceSha256: irishKnowledgeSources.sha256,
 } as const;
+
+/**
+ * Each row with the review the book follows (issue #718): its own latest
+ * decision, else the catalogue's review, else the status it was derived
+ * with. A row whose review withdraws it (rejected, or retired) is left out,
+ * as a row the book itself rejected is.
+ */
+function withReview<T extends ReviewedRuleRow>(db: AppDatabase, companyId: string, rows: T[]): Array<T & { reviewedIn: RuleReview['from'] }> {
+  if (rows.length === 0) return [];
+  const review = ruleReviewResolver(db, { companyId });
+  return rows.map((r) => {
+    const { status, from } = review(r);
+    return { ...r, reviewStatus: status, reviewedIn: from };
+  }).filter((r) => !withdrawn(r.reviewStatus));
+}
 
 function toLookupResult(row: Record<string, unknown>): LookupResult {
   return row as unknown as LookupResult;
@@ -557,7 +579,7 @@ export function lookupTaxRule(
     .orderBy(desc(irishTaxRules.ruleVersion))
     .all();
 
-  const inForce = rows.find((r) => r.effectiveFrom <= asOf && (!r.effectiveTo || r.effectiveTo > asOf));
+  const inForce = withReview(db, params.companyId, rows).find((r) => r.effectiveFrom <= asOf && (!r.effectiveTo || r.effectiveTo > asOf));
   return inForce ? toLookupResult(inForce) : null;
 }
 
@@ -572,13 +594,17 @@ export function listTaxRulesByHead(
 ): Array<{ ruleKey: string; ruleVersion: number; topic: string; taxHeads: string[] }> {
   const asOf = params.asOfDate ?? today();
   if (!isIsoDate(asOf)) return [];
-  return db.select({
+  const rows = db.select({
     ruleKey: irishTaxRules.ruleKey, ruleVersion: irishTaxRules.ruleVersion, topic: irishTaxRules.topic,
     taxHeads: irishTaxRules.taxHeads, effectiveFrom: irishTaxRules.effectiveFrom, effectiveTo: irishTaxRules.effectiveTo,
+    statement: irishTaxRules.statement, reviewStatus: irishTaxRules.reviewStatus, sourceSha256: irishKnowledgeSources.sha256,
   }).from(irishTaxRules)
+    .innerJoin(irishActProvisions, eq(irishTaxRules.provisionId, irishActProvisions.id))
+    .innerJoin(irishKnowledgeSources, eq(irishActProvisions.sourceId, irishKnowledgeSources.id))
     .where(and(eq(irishTaxRules.companyId, params.companyId), eq(irishTaxRules.enabled, true), ne(irishTaxRules.reviewStatus, 'superseded')))
     .orderBy(irishTaxRules.ruleKey)
-    .all()
+    .all();
+  return withReview(db, params.companyId, rows)
     .filter((r) => r.taxHeads.includes(params.head) && r.effectiveFrom <= asOf && (r.effectiveTo === null || r.effectiveTo > asOf))
     .map(({ ruleKey, ruleVersion, topic, taxHeads }) => ({ ruleKey, ruleVersion, topic, taxHeads }));
 }
@@ -606,7 +632,7 @@ export function listTaxRulesByTopic(
     .orderBy(desc(irishTaxRules.priority))
     .all()
     .filter((r) => r.effectiveFrom <= asOf && (!r.effectiveTo || r.effectiveTo > asOf));
-  return rows.map(toLookupResult);
+  return withReview(db, params.companyId, rows).map(toLookupResult);
 }
 
 /** List rules by provision category, in force on the given date. */
@@ -629,7 +655,7 @@ export function listTaxRulesByCategory(
     .orderBy(desc(irishTaxRules.priority))
     .all()
     .filter((r) => r.effectiveFrom <= asOf && (!r.effectiveTo || r.effectiveTo > asOf));
-  return rows.map(toLookupResult);
+  return withReview(db, params.companyId, rows).map(toLookupResult);
 }
 
 /**

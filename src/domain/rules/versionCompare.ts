@@ -1,6 +1,7 @@
 import { and, asc, eq } from 'drizzle-orm';
 import type { AppDatabase } from '@/db';
-import { irishTaxRules } from '@/db/schema';
+import { irishActProvisions, irishKnowledgeSources, irishTaxRules } from '@/db/schema';
+import { ruleReviewResolver } from './effectiveReview';
 
 /**
  * Version comparison for the statutory rules (issue #450).
@@ -85,10 +86,15 @@ export function compareRuleVersions(
   db: AppDatabase,
   params: { companyId: string; ruleKey: string },
 ): RuleVersionComparison | null {
-  const rows = db.select().from(irishTaxRules)
+  // Each version with the review the book follows: its own decision, else the catalogue's (issue #718).
+  const review = ruleReviewResolver(db, { companyId: params.companyId });
+  const rows = db.select({ rule: irishTaxRules, sourceSha256: irishKnowledgeSources.sha256 }).from(irishTaxRules)
+    .innerJoin(irishActProvisions, eq(irishTaxRules.provisionId, irishActProvisions.id))
+    .innerJoin(irishKnowledgeSources, eq(irishActProvisions.sourceId, irishKnowledgeSources.id))
     .where(and(eq(irishTaxRules.companyId, params.companyId), eq(irishTaxRules.ruleKey, params.ruleKey)))
     .orderBy(asc(irishTaxRules.ruleVersion))
-    .all();
+    .all()
+    .map(({ rule, sourceSha256 }) => ({ ...rule, reviewStatus: review({ ...rule, sourceSha256 }).status as VersionRow['reviewStatus'] }));
 
   if (rows.length === 0) return null;
 

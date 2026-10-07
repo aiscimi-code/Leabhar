@@ -3,6 +3,7 @@ import type { AppDatabase } from '@/db';
 import { irishActProvisions, irishKnowledgeSources, irishTaxRules } from '@/db/schema';
 import type { IrishRuleCondition, IrishRuleException } from '@/db/schema';
 import { provisionCitation } from './citation';
+import { ruleReviewResolver } from './effectiveReview';
 
 /**
  * A single rule, its provision and its source, assembled for a reader
@@ -154,6 +155,9 @@ export function explainRule(
 
   const conditions = rule.conditions.map(describeCondition);
   const inForce = `${rule.effectiveFrom} to ${rule.effectiveTo ?? 'now'}`;
+  // The review the book follows (issue #718): its own decision, else the catalogue's.
+  const review = ruleReviewResolver(db, { companyId: params.companyId })({ ...rule, sourceSha256: source.sha256 });
+  const reviewedIn = review.from === 'catalogue' ? ` in the rules catalogue${review.by ? ` by ${review.by}` : ''}` : '';
 
   const parts: string[] = [];
   parts.push(`Rule "${rule.name}" (${rule.ruleKey}, topic ${rule.topic}) says: ${rule.statement ?? '(no statement recorded)'}.`);
@@ -171,7 +175,7 @@ export function explainRule(
     rule.reportingEffect && `reporting: ${rule.reportingEffect}`,
   ].filter((e): e is string => e !== null);
   if (effects.length > 0) parts.push(`Its effects are — ${effects.join('; ')}.`);
-  parts.push(`It is in force from ${inForce}, and its review status is ${rule.reviewStatus.replace(/_/g, ' ')}`
+  parts.push(`It is in force from ${inForce}, and its review status is ${review.status.replace(/_/g, ' ')}${reviewedIn}`
     + `${rule.humanReviewRequired ? '; a person must confirm any treatment it suggests' : ''}`
     + `${rule.requiresGuidance ? '; it needs Revenue guidance this knowledge base does not yet hold' : ''}.`);
   parts.push(`Source: ${citation.fullCitation} — ${provision.heading} (${source.title}), ${source.sourceUrl}.`);
@@ -191,7 +195,7 @@ export function explainRule(
       vat: rule.vatEffect,
       reporting: rule.reportingEffect,
     },
-    reviewStatus: rule.reviewStatus,
+    reviewStatus: review.status,
     humanReviewRequired: rule.humanReviewRequired,
     requiresGuidance: rule.requiresGuidance,
     effectiveFrom: rule.effectiveFrom,
