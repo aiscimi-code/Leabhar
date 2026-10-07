@@ -25,23 +25,27 @@ function runTestCases(database: AppDatabase, params: { companyId: string }) {
 }
 
 describe('generateDefaultTestCases / runTestCases', () => {
-  it('writes an effective-date case per active rule, and all pass', () => {
+  it('writes a day-before case per active rule, and a positive case where the lookup matches', () => {
     const gen = generateDefaultTestCases(db, { companyId });
-    expect(gen.created).toBe(2); // 2 curated rules x 1 case each
+    const rows = db.select().from(irishTaxRuleTests).all();
+    const dayBefore = rows.filter((t) => t.testType === 'effective_date');
+    const positive = rows.filter((t) => t.testType === 'positive');
+    expect(dayBefore).toHaveLength(2);
+    expect(gen.created).toBe(2 + positive.length);
+    expect(gen.noPositive).toBe(2 - positive.length);
     expect(gen.skipped).toBe(0);
-    expect(db.select().from(irishTaxRuleTests).all().map((t) => t.testType)).toEqual(['effective_date', 'effective_date']);
+    for (const row of positive) expect(row.expected.matches).toBe(true);
 
     const run = runTestCases(db, { companyId });
-    expect(run.total).toBe(2);
     expect(run.failed).toBe(0);
-    expect(run.passed).toBe(2);
+    expect(run.passed).toBe(rows.length);
   });
 
   it('is idempotent: a second generate call skips rules that already have cases', () => {
     generateDefaultTestCases(db, { companyId });
     const second = generateDefaultTestCases(db, { companyId });
     expect(second.created).toBe(0);
-    expect(second.skipped).toBe(2);
+    expect(second.skipped).toBe(db.select().from(irishTaxRuleTests).all().length);
   });
 
   it('a genuinely broken rule shows up as a failing test, not a silent pass', () => {
@@ -53,5 +57,18 @@ describe('generateDefaultTestCases / runTestCases', () => {
 
     const run = runTestCases(db, { companyId });
     expect(run.failures).toEqual([expect.objectContaining({ expected: false, actual: true })]);
+  });
+
+  it('a positive case fails when that version no longer matches on its start date', () => {
+    const gen = generateDefaultTestCases(db, { companyId });
+    const positive = db.select().from(irishTaxRuleTests).all().find((t) => t.testType === 'positive');
+    expect(positive, 'a curated rule with no exception should match').toBeDefined();
+    expect(gen.noPositive).toBeLessThan(2);
+    db.update(irishTaxRules).set({ effectiveFrom: '2025-01-01' })
+      .where(eq(irishTaxRules.id, positive!.ruleId)).run();
+    const run = runTestCases(db, { companyId });
+    expect(run.failures).toEqual(expect.arrayContaining([
+      expect.objectContaining({ testId: positive!.id, expected: true, actual: false }),
+    ]));
   });
 });
