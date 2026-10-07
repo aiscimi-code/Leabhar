@@ -188,6 +188,8 @@ export interface RulesStoreBuildResult {
   added: string[];
   /** The store's signature: the hash of every version it holds and what each says. */
   signature: string;
+  /** Active versions for which no matching transaction could be built (#727). */
+  noPositive: number;
 }
 
 /**
@@ -213,7 +215,7 @@ export function buildRulesStore(params: {
     deriveStatutoryKnowledgeBase(db, { companyId, root: params.root });
     // The cases ship with the versions they test (#723). They are not part of
     // a version's content hash, so adding one changes no signature.
-    generateDefaultTestCases(db, { companyId });
+    const cases = generateDefaultTestCases(db, { companyId });
     let added: string[] = [];
     const written = writeRulesStore(sqlite, {
       outPath: params.outPath, root: params.root, companyId,
@@ -229,7 +231,7 @@ export function buildRulesStore(params: {
         added = check.added;
       },
     });
-    return { path: params.outPath, versions: written.versions, added, signature: written.signature };
+    return { path: params.outPath, versions: written.versions, added, signature: written.signature, noPositive: cases.noPositive };
   } finally {
     if (sqlite.open) sqlite.close();
   }

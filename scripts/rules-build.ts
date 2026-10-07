@@ -28,6 +28,7 @@ try {
   const build = buildRulesStore({ outPath });
   const shown = relative(process.cwd(), build.path);
   console.log(`Rules store built: ${shown.startsWith('..') ? build.path : shown} (${build.versions.size} rule versions, signature ${build.signature.slice(0, 12)}).`);
+  console.log(`${build.noPositive} version(s) have no positive case: no transaction could be built that the lookup matches (#727).`);
   if (args.includes('--record-release')) {
     const added = recordReleasedVersions(build);
     console.log(added.length === 0

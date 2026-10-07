@@ -119,15 +119,19 @@ describe('the rules store', () => {
     expect(sorted(tests(store))).toEqual(sorted(tests(book)));
   });
 
-  it('ships an effective-date case for every active version, keyed `key@version` (#723)', () => {
+  it('ships a day-before case for every active version, and a positive case only where one matched (#727)', () => {
     const active = (store.prepare('SELECT id FROM irish_tax_rules WHERE active = 1 AND enabled = 1').all() as Array<{ id: string }>).map((r) => r.id);
     const cases = store.prepare('SELECT rule_id, test_type, expected FROM irish_tax_rule_tests').all() as Array<{ rule_id: string; test_type: string; expected: string }>;
     expect(active.length).toBeGreaterThan(0);
-    expect(cases.map((c) => c.rule_id).sort()).toEqual([...active].sort());
-    for (const c of cases) {
+    const dayBefore = cases.filter((c) => c.test_type === 'effective_date');
+    const positive = cases.filter((c) => c.test_type === 'positive');
+    expect(dayBefore.map((c) => c.rule_id).sort()).toEqual([...active].sort());
+    expect(positive.length).toBe(active.length - built.noPositive);
+    for (const c of dayBefore) {
       expect(c.rule_id, c.rule_id).toMatch(/^[^@]+@\d+$/);
-      expect({ type: c.test_type, expected: JSON.parse(c.expected) }, c.rule_id).toEqual({ type: 'effective_date', expected: { matches: false } });
+      expect(JSON.parse(c.expected)).toEqual({ matches: false });
     }
+    for (const c of positive) expect(JSON.parse(c.expected)).toEqual({ matches: true });
   });
 
   it('records its format, signature and version count', () => {

@@ -1570,7 +1570,7 @@ stored test case.
 
 `npm test` and `npm run typecheck` both pass as of this change.
 
-`generateDefaultTestCases` writes no positive case — see "Limitations".
+`generateDefaultTestCases` writes a positive case where it can build a matching transaction (#727) — see "Limitations".
 `npm run cli:rules -- test` passes every case on a freshly built store.
 
 ## Audit report
@@ -1623,15 +1623,14 @@ depends <ruleKey>           What a rule relies on: rules, and the provisions beh
 
 ## Limitations (explicit, not hidden)
 
-- **The generated test cases include no positive case** (#723). A lookup
-  works out a transaction's topics from what it says (description, supply
-  type, registration, and so on), not from a topic name, so a synthetic
-  transaction that only names the rule's topic does not bring most rules into
-  the lookup, conditioned or not: of 391 active versions, 300 such cases
-  failed, 203 of them on rules with no conditions. Only the effective-date
-  case ships. Positive coverage lives in the hand-written suites
-  (`transactionLookup.test.ts` and each ingestion test) until the generator
-  can build a transaction that brings a given rule into the lookup.
+- **A generated positive case ships only where a matching transaction can be built** (#727).
+  The generator sets the rule's topic and a value for each condition, then
+  keeps the case only if the live lookup matches that version on its start
+  date. The day-before case uses the same transaction. A version with an
+  exception, or a condition the generator cannot satisfy, keeps the
+  day-before case only; `npm run rules:build` counts those versions. The
+  hand-written suites (`transactionLookup.test.ts` and each ingestion test)
+  remain the coverage for exceptions and boundaries.
 - **The Finance Act 2024 and VATCA 2010's *enacted* text are ingested in
   full; the Taxes Consolidation Act 1997 (which the Finance Act amends, and
   which VATCA cross-refers to constantly) is not**, apart from the single
