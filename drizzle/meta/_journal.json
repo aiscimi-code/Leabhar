@@ -414,6 +414,13 @@
       "when": 1791289135287,
       "tag": "0058_rule_decisions_backfill",
       "breakpoints": true
+    },
+    {
+      "idx": 59,
+      "version": "6",
+      "when": 1791366389779,
+      "tag": "0059_rules_store_book_tables",
+      "breakpoints": true
     }
   ]
 }
