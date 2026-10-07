@@ -114,7 +114,7 @@ function rejectedRule(db: AppDatabase, companyId: string, ruleKey: string) {
  * taken no decision on (issue #718): the lookup leaves it out, so the figure
  * is reported rejected, naming who rejected it in the catalogue.
  */
-function catalogueRejectedRule(db: AppDatabase, companyId: string, ruleKey: string) {
+function catalogueRejectedRule(db: AppDatabase, companyId: string, ruleKey: string, asOf: string) {
   const rows = db.select({
     name: irishTaxRules.name, ruleKey: irishTaxRules.ruleKey, ruleVersion: irishTaxRules.ruleVersion,
     effectiveFrom: irishTaxRules.effectiveFrom, effectiveTo: irishTaxRules.effectiveTo,
@@ -127,6 +127,9 @@ function catalogueRejectedRule(db: AppDatabase, companyId: string, ruleKey: stri
   if (rows.length === 0) return null;
   const review = ruleReviewResolver(db, { companyId });
   for (const row of rows) {
+    // Only the version in force on the date. An older rejected version must not
+    // withdraw a later date the catalogue did not reject.
+    if (row.effectiveFrom > asOf || (row.effectiveTo !== null && row.effectiveTo <= asOf)) continue;
     const r = review(row);
     if (r.from === 'catalogue' && r.status === 'rejected') return { row, review: r };
   }
@@ -221,7 +224,7 @@ export function resolveRuleFigure(
     };
   }
 
-  const catalogueRejected = catalogueRejectedRule(db, params.companyId, params.ruleKey);
+  const catalogueRejected = catalogueRejectedRule(db, params.companyId, params.ruleKey, params.asOfDate);
   if (catalogueRejected) {
     const { row, review } = catalogueRejected;
     return {
