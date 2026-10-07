@@ -44,3 +44,4 @@ date it was written, not the date the decision was first taken.
 | [0018](0018-forecast-dates-from-rules-or-none.md) | Date a forecast payment by a curated rule, or leave it undated | Accepted |
 | [0019](0019-income-tax-basis-profits-by-months-when-whole.md) | Apportion basis-period profits by months when the dates are whole months | Accepted |
 | [0020](0020-rules-registry-stable-keys-typed-links.md) | Keep the statutory rules in one registry, with stable keys, typed links and shipped review | Accepted |
+| [0021](0021-install-level-rules-store.md) | Ship the rules as a read-only database beside the app; a book keeps only its decisions | Proposed |
