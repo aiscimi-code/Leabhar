@@ -42,6 +42,7 @@ export const VAT_SCOPE_DERIVED_RULES = [
 import { upsertReviewItem } from '../extraction/service';
 import { taxHeadsFor } from './taxHeads';
 import type { CuratedVatScopeRule } from './vatScopeCuration';
+import { catalogueSourcesFirst } from './catalogueSupersession';
 
 export interface VatScopeDeriveResult {
   created: number;
@@ -59,7 +60,7 @@ export interface VatScopeDeriveResult {
  */
 export function quotedAsEnacted(db: AppDatabase, rule: Pick<CuratedVatScopeRule, 'sectionNumber' | 'statementExcerpt'>): boolean {
   const enacted = db.select({ id: irishKnowledgeSources.id }).from(irishKnowledgeSources)
-    .where(eq(irishKnowledgeSources.citation, '2010 Act 31')).orderBy(desc(irishKnowledgeSources.retrievedAt)).get();
+    .where(eq(irishKnowledgeSources.citation, '2010 Act 31')).orderBy(catalogueSourcesFirst(), desc(irishKnowledgeSources.retrievedAt)).get();
   const prov = enacted && db.select().from(irishActProvisions)
     .where(and(eq(irishActProvisions.sourceId, enacted.id), eq(irishActProvisions.sectionNumber, rule.sectionNumber))).get();
   if (!prov) return false;
@@ -79,7 +80,7 @@ export function deriveVatScopeRules(
     // with new bytes is a new source row, and the rule should cite the latest.
     const source = db.select({ id: irishKnowledgeSources.id }).from(irishKnowledgeSources)
       .where(eq(irishKnowledgeSources.citation, rule.citation))
-      .orderBy(desc(irishKnowledgeSources.retrievedAt)).get();
+      .orderBy(catalogueSourcesFirst(), desc(irishKnowledgeSources.retrievedAt)).get();
     const prov = source
       ? db.select().from(irishActProvisions)
         .where(and(eq(irishActProvisions.sourceId, source.id), eq(irishActProvisions.sectionNumber, rule.sectionNumber)))

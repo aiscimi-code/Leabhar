@@ -22,6 +22,7 @@ import { VATCA_CURATED_RULES } from './vatcaCuration';
 import { upsertReviewItem } from '../extraction/service';
 import { taxHeadsFor } from './taxHeads';
 import { ingestCatalogueFile, type CatalogueIngestResult } from './catalogue';
+import { preferredSourceId } from './catalogueSupersession';
 
 export interface VatcaSourceRef {
   title: string;
@@ -181,11 +182,7 @@ export function deriveVatcaRules(
   // company's DB — see the identical comment in irishRules.ts's
   // deriveTaxRules for why an un-scoped scan is a correctness bug once more
   // than one source shares a company (a section number collides across Acts).
-  const sourceId = params.sourceId ?? db
-    .select({ id: irishKnowledgeSources.id })
-    .from(irishKnowledgeSources)
-    .where(eq(irishKnowledgeSources.citation, VATCA_2010.citation))
-    .get()?.id;
+  const sourceId = params.sourceId ?? preferredSourceId(db, VATCA_2010.citation);
 
   const provisionsQuery = db.select().from(irishActProvisions);
   const provisions = (sourceId

@@ -15,6 +15,7 @@ import { TDM_38_01_03B_CAPACITY_EXCLUSION_RULE } from './tdm3801_03bCuration';
 import { upsertReviewItem } from '../extraction/service';
 import { taxHeadsFor } from './taxHeads';
 import { ingestCatalogueFile, type CatalogueIngestResult } from './catalogue';
+import { preferredSourceId } from './catalogueSupersession';
 
 export const TDM_38_01_03B = {
   citation: 'Revenue TDM Part 38-01-03b',
@@ -134,8 +135,7 @@ export function deriveTdm3801_03bCapacityExclusionRule(
   db: AppDatabase,
   params: { companyId: string },
 ): TdmCapacityExclusionDeriveResult {
-  const sourceId = db.select({ id: irishKnowledgeSources.id }).from(irishKnowledgeSources)
-    .where(eq(irishKnowledgeSources.citation, TDM_38_01_03B.citation)).get()?.id;
+  const sourceId = preferredSourceId(db, TDM_38_01_03B.citation);
   const prov = sourceId
     ? db.select().from(irishActProvisions)
       .where(and(eq(irishActProvisions.sourceId, sourceId), eq(irishActProvisions.sectionNumber, TDM_38_01_03B.sectionNumber)))

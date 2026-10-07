@@ -148,6 +148,26 @@ that source, since its words are the same. Once the copy is gone, its
 footnotes and page are read from the entry with the same citation and words
 (`catalogueEntryForSource`), so its rules keep their dates (#698).
 
+A copy whose words are not the entry's is superseded explicitly
+(`catalogueSupersession.ts`, #706). The copy lost a quote, kept its
+transcript's Markdown marks, or was edited by hand. Punctuation alone is
+never treated as the same words. The entry loads as a source beside the
+copy, and the copy is kept as it was. Each rule on the copy moves to the
+entry's provision for the same section when that provision still holds the
+rule's words, layout aside. A rule whose words are gone stays on the copy,
+and its derivation then supersedes it with a new version.
+
+A review item records the difference:
+
+- `catalogue-punctuation:<citation>` (info) when the letters and digits are
+  the same;
+- `catalogue-wording:<citation>` (warning) when the words differ.
+
+Derivations read the catalogue source when both are held
+(`preferredSourceId`, `catalogueSourcesFirst`), and so do cross-references
+(`dependencies.ts`). A citation's `cites` links therefore move to the
+entry's provisions, and the copy's links are withdrawn.
+
 A book numbers a rule's versions as it derives them, so a book that held a
 version before it was corrected numbers the correction 2 where a new book
 has it as 1. `checkCatalogueVersions` matches a book's version to the

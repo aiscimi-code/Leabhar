@@ -17,6 +17,7 @@ import {
 } from './financeAct2024VatThresholdsCuration';
 import { upsertReviewItem } from '../extraction/service';
 import { taxHeadsFor } from './taxHeads';
+import { preferredSourceId } from './catalogueSupersession';
 
 export interface FinanceAct2024VatThresholdsDeriveResult {
   created: number;
@@ -29,8 +30,7 @@ export function deriveFinanceAct2024VatThresholds(
   db: AppDatabase,
   params: { companyId: string },
 ): FinanceAct2024VatThresholdsDeriveResult {
-  const sourceId = db.select({ id: irishKnowledgeSources.id }).from(irishKnowledgeSources)
-    .where(eq(irishKnowledgeSources.citation, FINANCE_ACT_2024.citation)).get()?.id;
+  const sourceId = preferredSourceId(db, FINANCE_ACT_2024.citation);
   const prov = sourceId
     ? db.select().from(irishActProvisions)
       .where(and(

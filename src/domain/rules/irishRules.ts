@@ -28,6 +28,7 @@ import { upsertReviewItem } from '../extraction/service';
 import type { ParsedProvision } from './statuteParser';
 import { retiredBy } from './supersessions';
 import { taxHeadsFor } from './taxHeads';
+import { preferredSourceId } from './catalogueSupersession';
 
 export interface KnowledgeSourceRef {
   title: string;
@@ -285,11 +286,7 @@ export function deriveTaxRules(
   // whichever source's row happens to come first — silently deriving a rule
   // from the wrong Act's text. A caller may still pass a specific
   // `sourceId` (e.g. to re-derive against one re-ingested version).
-  const sourceId = params.sourceId ?? db
-    .select({ id: irishKnowledgeSources.id })
-    .from(irishKnowledgeSources)
-    .where(eq(irishKnowledgeSources.citation, FINANCE_ACT_2024.citation))
-    .get()?.id;
+  const sourceId = params.sourceId ?? preferredSourceId(db, FINANCE_ACT_2024.citation);
 
   const provisionsQuery = db
     .select({

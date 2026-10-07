@@ -34,6 +34,7 @@ import { lrcAnnotationLayer, scheduleParagraphWindows, type LrcAnnotationLayer, 
 import { catalogueEntryForSource, catalogueOfficialFilePath, ingestCatalogueFile } from './catalogue';
 import { crossReferencesFromProvision, sameCrossReferences } from './dependencies';
 import { taxHeadsFor } from './taxHeads';
+import { preferredSourceId } from './catalogueSupersession';
 
 /** Schedule 1 (exempt activities) is ingested for the exempt rules in vatScopeCuration.ts (issue #200). */
 export type VatcaScheduleNumber = '1' | '2' | '3';
@@ -220,11 +221,7 @@ export function deriveVatcaScheduleRules(
   params: { companyId: string; scheduleNumber: VatcaScheduleNumber; sourceId?: string },
 ): VatcaScheduleDeriveResult {
   const citation = `2010 Act 31 Sch.${params.scheduleNumber}`;
-  const sourceId = params.sourceId ?? db
-    .select({ id: irishKnowledgeSources.id })
-    .from(irishKnowledgeSources)
-    .where(eq(irishKnowledgeSources.citation, citation))
-    .get()?.id;
+  const sourceId = params.sourceId ?? preferredSourceId(db, citation);
 
   const provisionsQuery = db.select().from(irishActProvisions);
   const provisions = (sourceId

@@ -43,6 +43,7 @@ import { ids } from '@/lib/ids';
 import { appRoot } from '@/lib/paths';
 import { declaredLinksFrom } from './ruleLinks';
 import type { LrcAnnotationLayer } from './lrcAnnotations';
+import { isCatalogueSource, supersedeHeldCopy } from './catalogueSupersession';
 
 export const CATALOGUE_DIR = 'catalogue';
 export const CATALOGUE_FORMAT = 1;
@@ -483,19 +484,26 @@ export interface CatalogueIngestResult {
  * already held under the same citation whose provisions say the same words
  * (a book that read the statute copy before the port), is left as it is, so
  * its rules keep pointing at the provision they were derived from.
+ *
+ * A statute copy held under the citation whose words are not the entry's is
+ * superseded explicitly (#706, catalogueSupersession.ts): it is kept, its
+ * rules move to the entry's provisions where the entry still holds their
+ * words, and a review item records the difference.
  */
 export function ingestCatalogueEntry(
   db: AppDatabase,
   params: { companyId?: string | null; entry: CatalogueEntry; localPath: string; ingestVersion: string },
 ): CatalogueIngestResult {
   const { source, provisions } = params.entry;
-  const held = db.select({ id: irishKnowledgeSources.id, sha256: irishKnowledgeSources.sha256 })
+  const held = db.select({ id: irishKnowledgeSources.id, sha256: irishKnowledgeSources.sha256, localPath: irishKnowledgeSources.localPath })
     .from(irishKnowledgeSources).where(eq(irishKnowledgeSources.citation, source.citation)).all();
+  const copies: typeof held = [];
   for (const h of held) {
     const rows = db.select({ sectionNumber: irishActProvisions.sectionNumber, text: irishActProvisions.provisionText })
       .from(irishActProvisions).where(eq(irishActProvisions.sourceId, h.id)).all();
     const same = h.sha256 === source.sha256 || sameWords(rows, provisions);
     if (same && rows.length > 0) return { sourceId: h.id, provisionCount: rows.length, ingested: false };
+    if (!isCatalogueSource(h.localPath) && rows.length > 0) copies.push(h);
   }
 
   return db.transaction((tx) => {
@@ -519,9 +527,12 @@ export function ingestCatalogueEntry(
         + `fetched ${source.retrievedOn}.${source.note ? ` ${source.note}` : ''}`,
       sourceDate: `${source.retrievedOn}T00:00:00.000Z`,
     }).run();
+    const inserted: Array<{ id: string; sectionNumber: string; text: string }> = [];
     for (const p of provisions) {
+      const provisionId = ids.provision();
+      inserted.push({ id: provisionId, sectionNumber: p.sectionNumber, text: p.excerpt });
       tx.insert(irishActProvisions).values({
-        id: ids.provision(),
+        id: provisionId,
         companyId: params.companyId ?? null,
         sourceId,
         sectionNumber: p.sectionNumber,
@@ -544,6 +555,12 @@ export function ingestCatalogueEntry(
         source: 'import',
         provenanceStatus: 'imported',
       }).run();
+    }
+    for (const copy of copies) {
+      supersedeHeldCopy(tx, {
+        companyId: params.companyId ?? null, citation: source.citation, catalogueLocalPath: params.localPath,
+        copy, catalogueProvisions: inserted,
+      });
     }
     return { sourceId, provisionCount: provisions.length, ingested: true };
   });

@@ -21,6 +21,7 @@ import { parseVat3Boxes, parseRtdManualSections, type ParsedPassage } from './va
 import { VAT3_BOX_RULES, RTD_MANUAL_RULES, VAT3_GUIDANCE_CITATION, RTD_TDM_CITATION, type CuratedFormRule } from './vat3RtdCuration';
 import { taxHeadsFor } from './taxHeads';
 import { ingestCatalogueFile, type CatalogueIngestResult } from './catalogue';
+import { preferredSourceId } from './catalogueSupersession';
 
 /** S.I. 639/2010 came into force on 1 January 2011 (si639Ingestion.ts); the
  * return obligations these boxes report on date from it. */
@@ -177,8 +178,7 @@ export function deriveVat3RtdRules(db: AppDatabase, params: { companyId: string 
   const result: FormRulesDeriveResult = { created: 0, superseded: 0, unchanged: 0, skippedNoProvision: [] };
   const rules: CuratedFormRule[] = [...VAT3_BOX_RULES, ...RTD_MANUAL_RULES];
   for (const rule of rules) {
-    const sourceId = db.select({ id: irishKnowledgeSources.id }).from(irishKnowledgeSources)
-      .where(eq(irishKnowledgeSources.citation, rule.citation)).get()?.id;
+    const sourceId = preferredSourceId(db, rule.citation);
     const prov = sourceId
       ? db.select().from(irishActProvisions)
         .where(and(eq(irishActProvisions.sourceId, sourceId), eq(irishActProvisions.sectionNumber, rule.sectionNumber))).get()

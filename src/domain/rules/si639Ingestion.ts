@@ -15,6 +15,7 @@ import { upsertReviewItem } from '../extraction/service';
 import { crossReferencesFromProvision, sameCrossReferences } from './dependencies';
 import { taxHeadsFor } from './taxHeads';
 import { ingestCatalogueFile, type CatalogueIngestResult } from './catalogue';
+import { preferredSourceId } from './catalogueSupersession';
 
 export const SI_639 = {
   citation: 'S.I. 639/2010',
@@ -148,8 +149,7 @@ export function deriveSi639Rules(
   db: AppDatabase,
   params: { companyId: string },
 ): Si639DeriveResult {
-  const sourceId = db.select({ id: irishKnowledgeSources.id }).from(irishKnowledgeSources)
-    .where(eq(irishKnowledgeSources.citation, SI_639.citation)).get()?.id;
+  const sourceId = preferredSourceId(db, SI_639.citation);
   const provisions = sourceId
     ? db.select().from(irishActProvisions).where(eq(irishActProvisions.sourceId, sourceId)).all()
     : [];

@@ -26,6 +26,7 @@ import { upsertReviewItem } from '../extraction/service';
 import type { IrishRuleType } from '@/db/schema';
 import { taxHeadsFor } from './taxHeads';
 import { ingestCatalogueFile, type CatalogueIngestResult } from './catalogue';
+import { preferredSourceId } from './catalogueSupersession';
 
 /** The articles' catalogue entry: the consolidated text on EUR-Lex, kept beside it. */
 export const EU_282_2011_CATALOGUE_ENTRY = 'eu-282-2011/consolidated-2025-04-14.json';
@@ -226,8 +227,7 @@ export interface EuDeriveResult { created: number; superseded: number; unchanged
 /** Derive the curated definition rules from the ingested articles. */
 export function deriveEu282Rules(db: AppDatabase, params: { companyId: string }): EuDeriveResult {
   const result: EuDeriveResult = { created: 0, superseded: 0, unchanged: 0, skippedNoProvision: [] };
-  const sourceId = db.select({ id: irishKnowledgeSources.id }).from(irishKnowledgeSources)
-    .where(eq(irishKnowledgeSources.citation, EU_282_2011.citation)).get()?.id;
+  const sourceId = preferredSourceId(db, EU_282_2011.citation);
   for (const rule of EU_282_2011_RULES) {
     const prov = sourceId
       ? db.select().from(irishActProvisions)

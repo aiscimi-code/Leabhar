@@ -23,6 +23,7 @@ import { upsertReviewItem } from '../extraction/service';
 import { sameCrossReferences } from './dependencies';
 import { taxHeadsFor } from './taxHeads';
 import { ingestCatalogueFile, type CatalogueIngestResult } from './catalogue';
+import { preferredSourceId } from './catalogueSupersession';
 
 export const EBRIEF_168_25 = {
   citation: 'Revenue eBrief No. 168/25',
@@ -156,8 +157,7 @@ export interface EbriefDeriveResult { created: number; superseded: number; uncha
 export function deriveEbriefRules(db: AppDatabase, params: { companyId: string }): EbriefDeriveResult {
   const result: EbriefDeriveResult = { created: 0, superseded: 0, unchanged: 0, skippedNoProvision: [] };
   const rule = EBRIEF_168_25_RULE;
-  const sourceId = db.select({ id: irishKnowledgeSources.id }).from(irishKnowledgeSources)
-    .where(eq(irishKnowledgeSources.citation, EBRIEF_168_25.citation)).get()?.id;
+  const sourceId = preferredSourceId(db, EBRIEF_168_25.citation);
   const prov = sourceId
     ? db.select().from(irishActProvisions)
       .where(and(eq(irishActProvisions.sourceId, sourceId), eq(irishActProvisions.sectionNumber, EBRIEF_168_25.sectionNumber))).get()

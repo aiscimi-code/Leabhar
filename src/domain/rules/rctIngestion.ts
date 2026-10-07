@@ -42,6 +42,7 @@ import type { ProvisionCategory } from './statuteParser';
 import { upsertReviewItem } from '../extraction/service';
 import { crossReferencesFromProvision, sameCrossReferences } from './dependencies';
 import { taxHeadsFor } from './taxHeads';
+import { preferredSourceId } from './catalogueSupersession';
 
 
 export const TCA_1997_S530 = {
@@ -593,8 +594,7 @@ export function deriveRctRules(
   const usedSources = [...new Set(RCT_CURATED_RULES.map((r) => r.source))];
   const provisionsBySource = new Map<RctSourceKind, (typeof irishActProvisions.$inferSelect)[]>();
   for (const source of usedSources) {
-    const sourceId = db.select({ id: irishKnowledgeSources.id }).from(irishKnowledgeSources)
-      .where(eq(irishKnowledgeSources.citation, citationFor(source))).get()?.id;
+    const sourceId = preferredSourceId(db, citationFor(source));
     provisionsBySource.set(
       source,
       sourceId ? db.select().from(irishActProvisions).where(eq(irishActProvisions.sourceId, sourceId)).all() : [],

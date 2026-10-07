@@ -26,6 +26,7 @@ import { ingestCatalogueFile, type CatalogueIngestResult } from './catalogue';
 import { upsertReviewItem } from '../extraction/service';
 import { crossReferencesFromProvision, sameCrossReferences } from './dependencies';
 import { taxHeadsFor } from './taxHeads';
+import { preferredSourceId } from './catalogueSupersession';
 
 export const FINANCE_ACT_2003 = {
   title: 'Finance Act 2003 s.23',
@@ -176,8 +177,7 @@ export function deriveCapitalAllowancesRules(
   const skippedNoProvision: string[] = [];
 
   for (const rule of CAPITAL_ALLOWANCES_CURATED_RULES) {
-    const sourceId = db.select({ id: irishKnowledgeSources.id }).from(irishKnowledgeSources)
-      .where(eq(irishKnowledgeSources.citation, rule.citation)).get()?.id;
+    const sourceId = preferredSourceId(db, rule.citation);
     const prov = sourceId
       ? db.select().from(irishActProvisions)
         .where(and(eq(irishActProvisions.sourceId, sourceId), eq(irishActProvisions.sectionNumber, rule.sectionNumber)))

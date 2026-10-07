@@ -19,6 +19,7 @@
 import { and, eq } from 'drizzle-orm';
 import type { AppDatabase } from '@/db';
 import { irishKnowledgeSources, irishActProvisions, irishTaxRules } from '@/db/schema';
+import { isCatalogueSource } from './catalogueSupersession';
 
 /** What a reference names as the instrument it points into. */
 const INSTRUMENT_ALIASES: Array<{ match: RegExp; citation: RegExp }> = [
@@ -186,7 +187,8 @@ function resolveReferences(db: AppDatabase, rule: RuleRow, ctx: BookContext): Re
     const rank = (c: string): number => (new RegExp(`s\\.?\\s*${section}\\b`, 'i').test(c) ? 0 : /sch/i.test(c) ? 2 : 1);
     const candidates = sources
       .filter((s) => citationPattern.test(s.citation) || citationPattern.test(s.title))
-      .sort((a, b) => rank(a.citation) - rank(b.citation));
+      // A source loaded from the catalogue before a pre-port copy of it (#706).
+      .sort((a, b) => rank(a.citation) - rank(b.citation) || Number(isCatalogueSource(b.localPath)) - Number(isCatalogueSource(a.localPath)));
     if (candidates.length === 0) {
       return { reference, resolved: false, provision: null, ruleKeys: [],
         reason: 'The instrument this reference names is not ingested in this book.' };

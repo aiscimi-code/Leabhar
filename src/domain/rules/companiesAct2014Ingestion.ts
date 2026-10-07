@@ -27,6 +27,7 @@ import { upsertReviewItem } from '../extraction/service';
 import { crossReferencesFromProvision, sameCrossReferences } from './dependencies';
 import { taxHeadsFor } from './taxHeads';
 import { ingestCatalogueFile, type CatalogueIngestResult } from './catalogue';
+import { preferredSourceId } from './catalogueSupersession';
 
 const SOURCE_TYPE: IrishSourceType = 'legislation';
 
@@ -183,8 +184,7 @@ export function deriveCompaniesAct2014Rules(
   const skippedNoProvision: string[] = [];
 
   for (const rule of COMPANIES_ACT_2014_CURATED_RULES) {
-    const sourceId = db.select({ id: irishKnowledgeSources.id }).from(irishKnowledgeSources)
-      .where(eq(irishKnowledgeSources.citation, rule.citation)).get()?.id;
+    const sourceId = preferredSourceId(db, rule.citation);
     const prov = sourceId
       ? db.select().from(irishActProvisions)
         .where(and(eq(irishActProvisions.sourceId, sourceId), eq(irishActProvisions.sectionNumber, rule.sectionNumber)))

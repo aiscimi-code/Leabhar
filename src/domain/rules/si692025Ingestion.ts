@@ -44,6 +44,7 @@ import { SI_69_2025_CURATED_RULES } from './si692025Curation';
 import { upsertReviewItem } from '../extraction/service';
 import { taxHeadsFor } from './taxHeads';
 import { ingestCatalogueFile, type CatalogueIngestResult } from './catalogue';
+import { preferredSourceId } from './catalogueSupersession';
 
 export const SI_69_2025 = {
   citation: 'S.I. 69/2025',
@@ -281,8 +282,7 @@ export function deriveSi692025Rules(
   db: AppDatabase,
   params: { companyId: string },
 ): Si692025DeriveResult {
-  const sourceId = db.select({ id: irishKnowledgeSources.id }).from(irishKnowledgeSources)
-    .where(eq(irishKnowledgeSources.citation, SI_69_2025.citation)).get()?.id;
+  const sourceId = preferredSourceId(db, SI_69_2025.citation);
 
   let created = 0;
   let superseded = 0;
