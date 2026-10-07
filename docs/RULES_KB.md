@@ -226,11 +226,30 @@ invoice line applied, from a catalogued source, that the installed catalogue
 does not ship (`checkCatalogueVersions`); nothing is switched to another
 version.
 
-**Not yet.** The rule rows themselves are still copied into each book. Moving
-them to an install-level store, keeping only decisions and applied version
-IDs in the book, needs a design note first (#718): where the store lives in
-the desktop install, how a packaged update replaces it, and how the
-provision viewer reads it.
+**The rules store (ADR-0021).** The rule rows move out of the book into
+`rules.db`, a read-only SQLite file beside the app (`rulesStorePath()`:
+`<APP_ROOT>/rules/rules.db`, or `LEABHAR_RULES_DB`). `buildRulesStore`
+(`rulesStore.ts`) runs the derive pipeline once against an empty book and
+copies the five rule tables out of it, without `company_id` or the book's
+bindings (`tax_rate_id`, `vat_treatment_id`). Each rule's ID is `key@version`
+as the catalogue numbers it. The package build makes it; in development,
+`npm run rules:build` writes `rules/rules.db`. The build fails, and writes
+nothing, when a version listed in `catalogue/released-versions.json` is
+missing or its content hash differs. The hash covers dates, quote, value and
+unit, the rule type and qualifier that say what the value means (a band's
+rate is read from its qualifier), conditions, exceptions and effects, never
+the review, so an approval ships under the same number. A change to what a released version says is a
+new version. When a release is cut, `npm run rules:build -- --record-release`
+adds the new versions to the list; it never removes or rehashes one. The
+gate checks the same thing (`rulesStore.test.ts`), along with the store
+holding, by content, what a freshly loaded book holds.
+
+**Not yet.** Books still load and read their own copies. The book tables and
+migration, the readers' switch to the attached store, and the end of
+"load statutory rules" follow in ADR-0021's delivery steps 2 to 5.
+Some curated rules stamp `source_date` with the moment they were derived, so
+in the store it is the build time: a reader must not take it for a date the
+source stated.
 
 A relationship between rules that exists only in code is a bug: declare it
 as a link.
