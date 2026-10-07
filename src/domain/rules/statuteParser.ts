@@ -52,7 +52,7 @@ export interface ParsedProvision {
 
 export type ProvisionCategory =
   | 'income_tax' | 'corporation_tax' | 'vat' | 'usc' | 'capital_allowances'
-  | 'capital_gains_tax' | 'relief' | 'exemption' | 'penalty' | 'procedure'
+  | 'capital_gains_tax' | 'rct' | 'relief' | 'exemption' | 'penalty' | 'procedure'
   | 'definitions' | 'repeal' | 'other';
 
 const SECTION_RE = /^(\d{1,3})\.\s+/;
@@ -136,7 +136,8 @@ function extractHeadingAbove(lines: string[], startLine: number): string {
     const line = (lines[j] ?? '').trim();
     if (line === '') break;
     if (PAGE_NOISE_RE.test(line)) { j--; continue; }
-    if (/^(PART|CHAPTER)\b/i.test(line)) return '';
+    // Titles are upper case. "part of a social policy)" is a wrapped heading, not a Part title (#703).
+    if (/^(PART|CHAPTER)\b/.test(line)) return '';
     if (SECTION_RE.test(line)) return '';
     collected.unshift(line);
     j--;
@@ -191,6 +192,27 @@ function parseCitedActs(text: string): string[] {
  * header line. Everything between the section number line and the next section
  * is captured with source offsets.
  */
+
+/** Last line of a section: before the next section's heading, a Part title, or the Schedules (#703). */
+function sectionEndLine(lines: string[], startLine: number, nextStart: number | undefined): number {
+  if (nextStart === undefined) {
+    for (let i = startLine + 1; i < lines.length; i++) {
+      if (/^SCHEDULE\b/.test((lines[i] ?? '').trim())) return i - 1;
+    }
+    return lines.length - 1;
+  }
+  let end = nextStart - 1;
+  while (end > startLine && (lines[end] ?? '').trim() === '') end--;
+  // The next section's heading, and any Part title, sit in the block above its number.
+  while (end > startLine) {
+    const line = (lines[end] ?? '').trim();
+    if (line === '') break;
+    end--;
+  }
+  while (end > startLine && (lines[end] ?? '').trim() === '') end--;
+  return end;
+}
+
 export function parseFinanceAct2024(source: string): ParsedProvision[] {
   const lines = source.split('\n');
   const offsets = lineOffsets(source);
@@ -211,8 +233,7 @@ export function parseFinanceAct2024(source: string): ParsedProvision[] {
     if (!sectionNumber) continue;
 
     const nextStart = bodyStarts[s + 1];
-    const endLine = nextStart !== undefined ? nextStart - 1 : lines.length - 1;
-    // endLine is the last line *before* the next section header's gap.
+    const endLine = sectionEndLine(lines, startLine, nextStart);
     // Capture from startLine to endLine inclusive.
     const sliceLines = lines.slice(startLine, endLine + 1);
     // Drop trailing empty lines.

@@ -23,7 +23,7 @@
         "Taxes Consolidation Act 1997",
         "Finance Act 2011"
       ],
-      "category": "other",
+      "category": "rct",
       "relevant": true,
       "relevanceReason": "Curated: mapped to rule(s) in rctCuration.ts for s.530E.",
       "excerpt": "530E.— (1)  For the purpose of section 530D(2), the rate of tax—\n\n(\na\n) shall be zero where the Revenue Commissioners have made a determination that the subcontractor is a person to whom section 530G applies,\n\n(\nb\n) shall be the standard rate (within the meaning of section 3) in force at the time of payment where the Revenue Commissioners have made a determination that the subcontractor is a person to whom section 530H applies,\n\n(\nc\n) shall be 35 per cent where the Revenue Commissioners have made a determination that the subcontractor is a person to whom neither section 530G nor section 530H apply.\n\n(2) Any reference to a determination in subsection (1) is to the most recent determination made by the Revenue Commissioners under section 530I or as determined on appeal in accordance with that section, in respect of the subcontractor concerned."

@@ -98,7 +98,7 @@ export const irishKnowledgeSources = sqliteTable('irish_knowledge_sources', know
 /** Broad category for a provision, for lookup and reporting. */
 export const IRISH_PROVISION_CATEGORIES = [
   'income_tax', 'corporation_tax', 'vat', 'usc', 'capital_allowances',
-  'capital_gains_tax', 'relief', 'exemption', 'penalty', 'procedure',
+  'capital_gains_tax', 'rct', 'relief', 'exemption', 'penalty', 'procedure',
   'definitions', 'repeal', 'other',
 ] as const;
 export type IrishProvisionCategory = (typeof IRISH_PROVISION_CATEGORIES)[number];

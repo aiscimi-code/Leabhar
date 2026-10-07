@@ -200,3 +200,14 @@ describe('rules CLI: verify-sources', () => {
     vi.restoreAllMocks();
   });
 });
+
+describe('a changed PDF is not read as text (#702)', () => {
+  it('reports the quotes as not assessed, not missing', () => {
+    const entry = readCatalogueEntry('vatca-2010/vatca-2010-enacted.json');
+    const fetched = Buffer.concat([Buffer.from('%PDF-1.4 changed'), Buffer.from([0])]);
+    const report = compareWithCatalogue('vatca-2010/vatca-2010-enacted.json', entry, fetched);
+    expect(report.status).toBe('changed');
+    expect(report.quotesMissing).toEqual([]);
+    expect(report.quotesNotAssessed.length).toBeGreaterThan(0);
+  });
+});

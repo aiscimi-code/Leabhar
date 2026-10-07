@@ -68,3 +68,22 @@ describe('vatcaParser', () => {
     }
   });
 });
+
+describe('a section ends before the next heading (#701)', () => {
+  it('does not take the next section heading or the Part title', () => {
+    const source = [
+      'Interpretation — general.',
+      '2 .— This section interprets.',
+      '',
+      'PART 2',
+      'Accountable persons',
+      'Chapter 1',
+      'Interpretation',
+      'Definitions — Part 2 .',
+      '3 .— In this Part.',
+    ].join('\n');
+    const sections = parseVatca2010(source);
+    expect(sections[0]!.provisionText).not.toMatch(/PART 2|Definitions/);
+    expect(sections[1]!.heading).toBe('Definitions — Part 2 .');
+  });
+});
