@@ -10,7 +10,8 @@ import {
 } from './vatcaScheduleIngestion';
 import { ingestSi692025FromCatalogue, deriveSi692025Rules } from './si692025Ingestion';
 import { sourceAuthorityRank } from './sourceHierarchy';
-import { lookupTransactionRules, identifyTopics, transactionContextFromQueryParams } from './transactionLookup';
+import { lookupTransactionRules as lookupStoredRules, identifyTopics, transactionContextFromQueryParams } from './transactionLookup';
+import { attachRulesStoreFromBook } from './rulesStore';
 import { deriveVatScopeRules } from './vatScopeIngestion';
 import { irishTaxRules } from '@/db/schema';
 import { eq } from 'drizzle-orm';
@@ -18,6 +19,16 @@ import type { AppDatabase } from '@/db';
 
 let db: AppDatabase;
 let companyId: string;
+
+/**
+ * The lookup reads the store (ADR-0021). Each test derives (and some edit) the
+ * book's own rules, so each lookup reads a store built from what this book
+ * derived by then.
+ */
+function lookupTransactionRules(database: AppDatabase, params: Parameters<typeof lookupStoredRules>[1]) {
+  attachRulesStoreFromBook(database, { companyId: params.companyId });
+  return lookupStoredRules(database, params);
+}
 
 beforeEach(() => {
   ({ db } = createTestDatabase());

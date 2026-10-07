@@ -832,6 +832,8 @@ function createInvoiceSteps(db: AppDatabase, input: CreateInvoiceInput): Created
         vatRuleVersions: appliedRuleVersions(tx as unknown as AppDatabase, {
           companyId: input.companyId, ruleKeys: line.vatRuleKeys ?? [], asOfDate: input.invoiceDate,
         }),
+        // Store versions, numbered as the catalogue numbers them (ADR-0021 §3).
+        vatRuleNumbering: 'catalogue',
         businessUseBasisPoints: businessBp,
         dualUseProportionBasisPoints: dualUseBp,
         dualUseBasis: line.dualUse?.basis ?? null,

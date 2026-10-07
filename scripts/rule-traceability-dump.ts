@@ -41,7 +41,8 @@ function sliceContains(slice: string, text: string): { found: number; total: num
 }
 
 async function run(): Promise<void> {
-  const { db } = createTestDatabase();
+  // Reads the derived copies only, so no rules store is attached (ADR-0021).
+  const { db } = createTestDatabase({ rulesStore: false });
   const { companyId } = createCompany(db, { legalName: 'Traceability Audit Ltd', seedYears: [2024, 2025, 2026] });
   const log: Array<{ args: string[]; exit: number }> = [];
   const write = process.stdout.write.bind(process.stdout);

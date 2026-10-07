@@ -33,7 +33,8 @@
  */
 import { and, eq, isNull } from 'drizzle-orm';
 import type { AppDatabase } from '@/db';
-import { taxRates, irishTaxRules } from '@/db/schema';
+import { irishRuleBindings, taxRates, visibleTaxRules } from '@/db/schema';
+import { ids } from '@/lib/ids';
 import { lookupTaxRule } from './irishRules';
 import { supersedeTaxRate, createTaxRate } from '../config/mutations';
 import { upsertReviewItem } from '../extraction/service';
@@ -63,7 +64,7 @@ export const TAX_RATE_SYNC_MAP: TaxRateSyncMapping[] = [
 
 export type TaxRateSyncOutcome =
   | 'unchanged' // tax_rates already matches the curated figure and date
-  | 'linked' // unchanged, but the irish_tax_rules row's taxRateId back-link was set/corrected
+  | 'linked' // unchanged, but the book's binding of the rule version to the rate was recorded (irish_rule_bindings)
   | 'superseded' // a new effective-dated tax_rates row was created, closing the old one
   | 'created' // no tax_rates row existed for this code yet; one was created
   | 'skipped_no_curated_rule' // the ruleKey has not been derived for this company
@@ -129,14 +130,14 @@ function syncOne(
       actor: actor ?? 'irish-rules-kb-sync',
       source: 'derived',
     });
-    linkAndReview(db, companyId, mapping, curated.id, taxRateId, 'created');
+    linkAndReview(db, companyId, mapping, curated, taxRateId, 'created');
     return { ...base, outcome: 'created', taxRateId };
   }
 
   const alreadyCurrent = current.rateBasisPoints === newRateBasisPoints
     && current.effectiveFrom === curated.effectiveFrom;
   if (alreadyCurrent) {
-    const linked = ensureLinked(db, curated.id, current.id);
+    const linked = ensureLinked(db, companyId, curated, current.id);
     return { ...base, outcome: linked ? 'linked' : 'unchanged', taxRateId: current.id };
   }
 
@@ -157,23 +158,42 @@ function syncOne(
     actor: actor ?? 'irish-rules-kb-sync',
     source: 'derived',
   });
-  linkAndReview(db, companyId, mapping, curated.id, newRateId, 'superseded');
+  linkAndReview(db, companyId, mapping, curated, newRateId, 'superseded');
   return { ...base, outcome: 'superseded', taxRateId: newRateId };
 }
 
-function ensureLinked(db: AppDatabase, curatedRuleId: string, taxRateId: string): boolean {
-  const row = db.select({ taxRateId: irishTaxRules.taxRateId }).from(irishTaxRules)
-    .where(eq(irishTaxRules.id, curatedRuleId)).get();
-  if (row?.taxRateId === taxRateId) return false;
-  db.update(irishTaxRules).set({ taxRateId }).where(eq(irishTaxRules.id, curatedRuleId)).run();
+/** The rule version the sync read, as the book binds it (`irish_rule_bindings`, ADR-0021 §4). */
+interface CuratedVersion {
+  ruleKey: string;
+  ruleVersion: number;
+  effectiveFrom: string;
+  effectiveTo: string | null;
+}
+
+/**
+ * Bind the version to the tax rate it backs, unless the book already does.
+ * A binding is the book's own record, appended to `irish_rule_bindings`; the
+ * store's rule row is never written. The version's VAT treatment binding, if
+ * any, is carried over unchanged.
+ */
+function ensureLinked(db: AppDatabase, companyId: string, curated: CuratedVersion, taxRateId: string): boolean {
+  const held = db.select({ taxRateId: visibleTaxRules.taxRateId, vatTreatmentId: visibleTaxRules.vatTreatmentId }).from(visibleTaxRules)
+    .where(and(eq(visibleTaxRules.companyId, companyId), eq(visibleTaxRules.origin, 'store'),
+      eq(visibleTaxRules.ruleKey, curated.ruleKey), eq(visibleTaxRules.ruleVersion, curated.ruleVersion))).get();
+  if (held?.taxRateId === taxRateId) return false;
+  db.insert(irishRuleBindings).values({
+    id: ids.ruleBinding(), companyId, ruleKey: curated.ruleKey, ruleVersion: curated.ruleVersion,
+    taxRateId, vatTreatmentId: held?.vatTreatmentId ?? null,
+    effectiveFrom: curated.effectiveFrom, effectiveTo: curated.effectiveTo, recordedBy: 'tax_rate_sync',
+  }).run();
   return true;
 }
 
 function linkAndReview(
   db: AppDatabase, companyId: string, mapping: TaxRateSyncMapping,
-  curatedRuleId: string, taxRateId: string, reason: 'created' | 'superseded',
+  curated: CuratedVersion, taxRateId: string, reason: 'created' | 'superseded',
 ): void {
-  db.update(irishTaxRules).set({ taxRateId }).where(eq(irishTaxRules.id, curatedRuleId)).run();
+  ensureLinked(db, companyId, curated, taxRateId);
   upsertReviewItem(db, {
     companyId,
     kind: 'other',

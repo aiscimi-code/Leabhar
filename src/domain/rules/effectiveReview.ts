@@ -5,18 +5,20 @@
  * (`catalogue/`), read-only and the same for every book. A book keeps only its
  * own decisions (`irish_rule_decisions`). Every reader of a rule's review
  * status goes through `ruleReviewResolver`: the book's latest decision on the
- * version, when it has one, else the catalogue's review of the version that
- * says the same thing, else the status the book's row was derived with.
+ * version, when it has one, else the catalogue's review of that version, else
+ * the status the row was derived with.
  *
- * A book numbers its versions as it derives them, so a version is matched to
- * the catalogue's by what it says (dates and quote), never by its number. A
- * catalogue approval or rejection holds only while the source the book read
- * is the one the reviewer read (the same SHA-256).
+ * A store row is numbered as the catalogue numbers it (ADR-0021 §3), so its
+ * catalogue review is found by number. A decision the book took before it
+ * moved onto the store recorded the book's own number, and is read through
+ * the version map the move wrote (`irish_rule_version_map`), never matched
+ * by content. A catalogue approval or rejection holds only while the source
+ * the row was read from is the one the reviewer read (the same SHA-256).
  */
 import { statSync } from 'node:fs';
 import { eq } from 'drizzle-orm';
 import type { AppDatabase } from '@/db';
-import { irishRuleDecisions } from '@/db/schema';
+import { irishRuleDecisions, irishRuleVersionMap } from '@/db/schema';
 import { CATALOGUE_ENTRIES, catalogueEntryPath, readCatalogueEntry, type CatalogueReview } from './catalogue';
 
 /** One rule version as the catalogue ships it. */
@@ -27,7 +29,7 @@ export interface CatalogueVersionRecord {
   review: CatalogueReview;
 }
 
-/** What a catalogued version says, to recognise a book's copy whatever it numbered it. */
+/** A catalogued version: its number, dates and quote, and its review. */
 export interface CatalogueVersionContent extends CatalogueVersionRecord {
   version: number;
   effectiveFrom: string;
@@ -79,53 +81,86 @@ export function catalogueRuleStore(root?: string): CatalogueRuleStore {
   return store;
 }
 
-/** What the resolver needs of a book's rule row. */
+/** Where a visible rule row comes from (`visibleTaxRules.origin`): the store, or the book's frozen versions. */
+export type RuleOrigin = 'store' | 'retained';
+
+/** What the resolver needs of a visible rule row. */
 export interface ReviewedRuleRow {
   ruleKey: string;
+  /** The catalogue's number for a store row; the book's own for a retained one. */
   ruleVersion: number;
-  effectiveFrom: string;
-  effectiveTo: string | null;
-  statement: string | null;
+  origin: RuleOrigin;
   reviewStatus: string;
   /** The SHA-256 of the source the row was read from. */
   sourceSha256: string;
 }
 
 export interface RuleReview {
-  /** `book`: the book's own latest decision; `catalogue`: the review the matching catalogue version ships with; `derived`: neither, so the status the row was derived with. */
+  /** `book`: the book's own latest decision; `catalogue`: the review the catalogue version ships with; `derived`: neither, so the status the row was derived with. */
   from: 'book' | 'catalogue' | 'derived';
   status: string;
   by: string | null;
   at: string | null;
   reason: string | null;
-  /** The catalogue version that says what the row says, shown beside a book decision that overrides it. */
+  /** The catalogue version the row is, shown beside a book decision that overrides it. Null for a retained version. */
   catalogue: CatalogueVersionContent | null;
 }
 
-/** The catalogue version of a key that says what the book's row says (dates and quote), whatever its number. */
-export function catalogueVersionFor(store: CatalogueRuleStore, row: Omit<ReviewedRuleRow, 'reviewStatus' | 'sourceSha256'>): CatalogueVersionContent | null {
-  return (store.contents.get(row.ruleKey) ?? []).find((c) =>
-    c.effectiveFrom === row.effectiveFrom && c.effectiveTo === row.effectiveTo && c.quote === row.statement) ?? null;
+/** A visible version, as decisions are grouped by it: `store:key@n` (catalogue number) or `retained:key@n` (book number). */
+export function visibleVersionKey(origin: RuleOrigin, ruleKey: string, ruleVersion: number): string {
+  return `${origin}:${ruleKey}@${ruleVersion}`;
 }
 
 /**
- * The review each of a book's rule rows follows. Reads the book's decisions
- * and the catalogue once, so a reader resolving many rows pays for both once.
+ * The visible version a decision was taken on (ADR-0021 §6). A decision in
+ * the catalogue's numbering names a store version. One in the book's
+ * numbering was taken before the book moved onto the store, or on a frozen
+ * version: it names the store version the book's version was mapped to
+ * (`irish_rule_version_map`), else the book's frozen version. Never matched
+ * by content: the migration matched once, and the map is what it found.
+ */
+export function bookVersionMap(db: AppDatabase, companyId: string): ReadonlyMap<string, number> {
+  return new Map(db.select().from(irishRuleVersionMap).where(eq(irishRuleVersionMap.companyId, companyId)).all()
+    .map((m) => [`${m.ruleKey}@${m.bookVersion}`, m.catalogueVersion]));
+}
+
+export function decisionVersionKey(
+  decision: Pick<typeof irishRuleDecisions.$inferSelect, 'ruleKey' | 'ruleVersion' | 'numbering'>,
+  map: ReadonlyMap<string, number>,
+): string {
+  if (decision.numbering === 'catalogue') return visibleVersionKey('store', decision.ruleKey, decision.ruleVersion);
+  const mapped = map.get(`${decision.ruleKey}@${decision.ruleVersion}`);
+  return mapped !== undefined
+    ? visibleVersionKey('store', decision.ruleKey, mapped)
+    : visibleVersionKey('retained', decision.ruleKey, decision.ruleVersion);
+}
+
+/** The catalogue's record of a store version, by its number. */
+export function catalogueVersion(store: CatalogueRuleStore, ruleKey: string, ruleVersion: number): CatalogueVersionContent | null {
+  return (store.contents.get(ruleKey) ?? []).find((c) => c.version === ruleVersion) ?? null;
+}
+
+/**
+ * The review each visible rule row follows. Reads the book's decisions, the
+ * version map and the catalogue once, so a reader resolving many rows pays
+ * for them once.
  */
 export function ruleReviewResolver(
   db: AppDatabase,
   params: { companyId: string; root?: string },
 ): (row: ReviewedRuleRow) => RuleReview {
   const store = catalogueRuleStore(params.root);
+  const map = bookVersionMap(db, params.companyId);
   const latest = new Map<string, typeof irishRuleDecisions.$inferSelect>();
   for (const d of db.select().from(irishRuleDecisions).where(eq(irishRuleDecisions.companyId, params.companyId)).all()) {
-    const id = `${d.ruleKey}@${d.ruleVersion}`;
+    const id = decisionVersionKey(d, map);
     const held = latest.get(id);
     if (!held || d.decidedAt > held.decidedAt || (d.decidedAt === held.decidedAt && d.createdAt > held.createdAt)) latest.set(id, d);
   }
   return (row) => {
-    const catalogue = catalogueVersionFor(store, row);
-    const decision = latest.get(`${row.ruleKey}@${row.ruleVersion}`);
+    // A frozen version is the book's own: the catalogue holds nothing saying the same.
+    const catalogue = row.origin === 'store' ? catalogueVersion(store, row.ruleKey, row.ruleVersion) : null;
+    const decision = latest.get(visibleVersionKey(row.origin, row.ruleKey, row.ruleVersion));
     if (decision) {
       return { from: 'book', status: decision.status, by: decision.decidedBy, at: decision.decidedAt, reason: decision.reason, catalogue };
     }

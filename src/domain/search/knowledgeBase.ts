@@ -1,8 +1,9 @@
 import { and, asc, eq, or, sql } from 'drizzle-orm';
 import type { AppDatabase } from '@/db';
-import { irishActProvisions, irishKnowledgeSources, irishTaxRules } from '@/db/schema';
+import { visibleActProvisions, visibleKnowledgeSources, visibleTaxRules } from '@/db/schema';
 import { provisionCitation } from '../rules/citation';
 import { ruleReviewResolver } from '../rules/effectiveReview';
+import { visibleToCompany } from '../rules/visibleRules';
 
 /**
  * Search over the statutory knowledge base (issue #311: full-text and semantic
@@ -59,15 +60,15 @@ export interface SemanticProvisionHit extends ProvisionHit {
 
 /** The provision columns a search reads. Everything else stays in the row it lives in. */
 const PROVISION_SEARCH_COLUMNS = {
-  id: irishActProvisions.id,
-  sectionNumber: irishActProvisions.sectionNumber,
-  heading: irishActProvisions.heading,
-  provisionText: irishActProvisions.provisionText,
-  sourceId: irishKnowledgeSources.id,
-  sourceTitle: irishKnowledgeSources.title,
-  sourceUrl: irishKnowledgeSources.sourceUrl,
-  sourceType: irishKnowledgeSources.sourceType,
-  citation: irishKnowledgeSources.citation,
+  id: visibleActProvisions.id,
+  sectionNumber: visibleActProvisions.sectionNumber,
+  heading: visibleActProvisions.heading,
+  provisionText: visibleActProvisions.provisionText,
+  sourceId: visibleKnowledgeSources.id,
+  sourceTitle: visibleKnowledgeSources.title,
+  sourceUrl: visibleKnowledgeSources.sourceUrl,
+  sourceType: visibleKnowledgeSources.sourceType,
+  citation: visibleKnowledgeSources.citation,
 } as const;
 
 type ProvisionSearchRow = {
@@ -142,17 +143,17 @@ export function searchProvisions(
   const lowered = raw.toLowerCase();
 
   const rows = db.select(PROVISION_SEARCH_COLUMNS)
-    .from(irishActProvisions)
-    .innerJoin(irishKnowledgeSources, eq(irishActProvisions.sourceId, irishKnowledgeSources.id))
+    .from(visibleActProvisions)
+    .innerJoin(visibleKnowledgeSources, eq(visibleActProvisions.sourceId, visibleKnowledgeSources.id))
     .where(and(
-      eq(irishActProvisions.companyId, params.companyId),
+      visibleToCompany(visibleActProvisions.companyId, params.companyId),
       or(
-        sql`LOWER(${irishActProvisions.heading}) LIKE ${needle}`,
-        sql`LOWER(COALESCE(${irishActProvisions.provisionText}, '')) LIKE ${needle}`,
-        sql`LOWER(${irishActProvisions.sectionNumber}) LIKE ${needle}`,
+        sql`LOWER(${visibleActProvisions.heading}) LIKE ${needle}`,
+        sql`LOWER(COALESCE(${visibleActProvisions.provisionText}, '')) LIKE ${needle}`,
+        sql`LOWER(${visibleActProvisions.sectionNumber}) LIKE ${needle}`,
       ),
     ))
-    .orderBy(asc(irishActProvisions.sectionNumber))
+    .orderBy(asc(visibleActProvisions.sectionNumber))
     .limit(params.limit ?? 25)
     .all();
 
@@ -183,40 +184,41 @@ export function searchStatutoryRules(
   const lowered = raw.toLowerCase();
 
   const rows = db.select({
-    ruleId: irishTaxRules.id,
-    ruleKey: irishTaxRules.ruleKey,
-    ruleName: irishTaxRules.name,
-    topic: irishTaxRules.topic,
-    reviewStatus: irishTaxRules.reviewStatus,
-    statement: irishTaxRules.statement,
-    id: irishActProvisions.id,
-    provisionId: irishActProvisions.id,
-    sectionNumber: irishActProvisions.sectionNumber,
-    heading: irishActProvisions.heading,
-    provisionText: irishActProvisions.provisionText,
-    sourceId: irishKnowledgeSources.id,
-    sourceTitle: irishKnowledgeSources.title,
-    sourceUrl: irishKnowledgeSources.sourceUrl,
-    sourceType: irishKnowledgeSources.sourceType,
-    citation: irishKnowledgeSources.citation,
-    sourceSha256: irishKnowledgeSources.sha256,
-    ruleVersion: irishTaxRules.ruleVersion,
-    effectiveFrom: irishTaxRules.effectiveFrom,
-    effectiveTo: irishTaxRules.effectiveTo,
+    ruleId: visibleTaxRules.id,
+    ruleKey: visibleTaxRules.ruleKey,
+    ruleName: visibleTaxRules.name,
+    topic: visibleTaxRules.topic,
+    reviewStatus: visibleTaxRules.reviewStatus,
+    statement: visibleTaxRules.statement,
+    id: visibleActProvisions.id,
+    provisionId: visibleActProvisions.id,
+    sectionNumber: visibleActProvisions.sectionNumber,
+    heading: visibleActProvisions.heading,
+    provisionText: visibleActProvisions.provisionText,
+    sourceId: visibleKnowledgeSources.id,
+    sourceTitle: visibleKnowledgeSources.title,
+    sourceUrl: visibleKnowledgeSources.sourceUrl,
+    sourceType: visibleKnowledgeSources.sourceType,
+    citation: visibleKnowledgeSources.citation,
+    sourceSha256: visibleKnowledgeSources.sha256,
+    ruleVersion: visibleTaxRules.ruleVersion,
+    origin: visibleTaxRules.origin,
+    effectiveFrom: visibleTaxRules.effectiveFrom,
+    effectiveTo: visibleTaxRules.effectiveTo,
   })
-    .from(irishTaxRules)
-    .innerJoin(irishActProvisions, eq(irishTaxRules.provisionId, irishActProvisions.id))
-    .innerJoin(irishKnowledgeSources, eq(irishActProvisions.sourceId, irishKnowledgeSources.id))
+    .from(visibleTaxRules)
+    .innerJoin(visibleActProvisions, eq(visibleTaxRules.provisionId, visibleActProvisions.id))
+    .innerJoin(visibleKnowledgeSources, eq(visibleActProvisions.sourceId, visibleKnowledgeSources.id))
     .where(and(
-      eq(irishTaxRules.companyId, params.companyId),
+      eq(visibleTaxRules.companyId, params.companyId),
       or(
-        sql`LOWER(${irishTaxRules.name}) LIKE ${needle}`,
-        sql`LOWER(COALESCE(${irishTaxRules.statement}, '')) LIKE ${needle}`,
-        sql`LOWER(${irishTaxRules.ruleKey}) LIKE ${needle}`,
-        sql`LOWER(${irishTaxRules.topic}) LIKE ${needle}`,
+        sql`LOWER(${visibleTaxRules.name}) LIKE ${needle}`,
+        sql`LOWER(COALESCE(${visibleTaxRules.statement}, '')) LIKE ${needle}`,
+        sql`LOWER(${visibleTaxRules.ruleKey}) LIKE ${needle}`,
+        sql`LOWER(${visibleTaxRules.topic}) LIKE ${needle}`,
       ),
     ))
-    .orderBy(asc(irishTaxRules.ruleKey))
+    .orderBy(asc(visibleTaxRules.ruleKey))
     .limit(params.limit ?? 25)
     .all();
 
@@ -247,18 +249,18 @@ export function searchKnowledgeSources(
   const lowered = raw.toLowerCase();
 
   const rows = db.select({
-    sourceId: irishKnowledgeSources.id,
-    title: irishKnowledgeSources.title,
-    citation: irishKnowledgeSources.citation,
-    sourceType: irishKnowledgeSources.sourceType,
-    sourceUrl: irishKnowledgeSources.sourceUrl,
+    sourceId: visibleKnowledgeSources.id,
+    title: visibleKnowledgeSources.title,
+    citation: visibleKnowledgeSources.citation,
+    sourceType: visibleKnowledgeSources.sourceType,
+    sourceUrl: visibleKnowledgeSources.sourceUrl,
   })
-    .from(irishKnowledgeSources)
+    .from(visibleKnowledgeSources)
     .where(and(
-      eq(irishKnowledgeSources.companyId, params.companyId),
+      visibleToCompany(visibleKnowledgeSources.companyId, params.companyId),
       or(
-        sql`LOWER(${irishKnowledgeSources.title}) LIKE ${needle}`,
-        sql`LOWER(${irishKnowledgeSources.citation}) LIKE ${needle}`,
+        sql`LOWER(${visibleKnowledgeSources.title}) LIKE ${needle}`,
+        sql`LOWER(${visibleKnowledgeSources.citation}) LIKE ${needle}`,
       ),
     ))
     .limit(params.limit ?? 25)
@@ -334,10 +336,10 @@ export function semanticSearchProvisions(
   if (raw.length < 2 || queryTerms.length === 0) return [];
 
   const rows = db.select(PROVISION_SEARCH_COLUMNS)
-    .from(irishActProvisions)
-    .innerJoin(irishKnowledgeSources, eq(irishActProvisions.sourceId, irishKnowledgeSources.id))
-    .where(eq(irishActProvisions.companyId, params.companyId))
-    .orderBy(asc(irishActProvisions.sectionNumber), asc(irishActProvisions.id))
+    .from(visibleActProvisions)
+    .innerJoin(visibleKnowledgeSources, eq(visibleActProvisions.sourceId, visibleKnowledgeSources.id))
+    .where(visibleToCompany(visibleActProvisions.companyId, params.companyId))
+    .orderBy(asc(visibleActProvisions.sectionNumber), asc(visibleActProvisions.id))
     .all();
 
   if (rows.length === 0) return [];
@@ -431,22 +433,22 @@ export function statuteSourceIndex(
   params: { companyId: string },
 ): Array<{ sourceId: string; title: string; citation: string; sourceType: string; sourceUrl: string; provisionCount: number }> {
   const sources = db.select({
-    sourceId: irishKnowledgeSources.id,
-    title: irishKnowledgeSources.title,
-    citation: irishKnowledgeSources.citation,
-    sourceType: irishKnowledgeSources.sourceType,
-    sourceUrl: irishKnowledgeSources.sourceUrl,
+    sourceId: visibleKnowledgeSources.id,
+    title: visibleKnowledgeSources.title,
+    citation: visibleKnowledgeSources.citation,
+    sourceType: visibleKnowledgeSources.sourceType,
+    sourceUrl: visibleKnowledgeSources.sourceUrl,
   })
-    .from(irishKnowledgeSources)
-    .where(eq(irishKnowledgeSources.companyId, params.companyId))
-    .orderBy(asc(irishKnowledgeSources.title))
+    .from(visibleKnowledgeSources)
+    .where(visibleToCompany(visibleKnowledgeSources.companyId, params.companyId))
+    .orderBy(asc(visibleKnowledgeSources.title))
     .all();
 
   return sources.map((source) => ({
     ...source,
     provisionCount: db.select({ n: sql<number>`count(*)` })
-      .from(irishActProvisions)
-      .where(eq(irishActProvisions.sourceId, source.sourceId))
+      .from(visibleActProvisions)
+      .where(eq(visibleActProvisions.sourceId, source.sourceId))
       .get()?.n ?? 0,
   }));
 }
@@ -457,13 +459,13 @@ export function sourceProvisions(
   params: { companyId: string; sourceId: string },
 ): ProvisionHit[] {
   const rows = db.select(PROVISION_SEARCH_COLUMNS)
-    .from(irishActProvisions)
-    .innerJoin(irishKnowledgeSources, eq(irishActProvisions.sourceId, irishKnowledgeSources.id))
+    .from(visibleActProvisions)
+    .innerJoin(visibleKnowledgeSources, eq(visibleActProvisions.sourceId, visibleKnowledgeSources.id))
     .where(and(
-      eq(irishActProvisions.companyId, params.companyId),
-      eq(irishActProvisions.sourceId, params.sourceId),
+      visibleToCompany(visibleActProvisions.companyId, params.companyId),
+      eq(visibleActProvisions.sourceId, params.sourceId),
     ))
-    .orderBy(asc(irishActProvisions.sectionNumber))
+    .orderBy(asc(visibleActProvisions.sectionNumber))
     .all();
   return rows.map((row) => toHit(row, 'Source index', row.heading));
 }

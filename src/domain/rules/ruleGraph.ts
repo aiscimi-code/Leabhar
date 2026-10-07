@@ -26,7 +26,7 @@
  */
 import { and, eq, ne } from 'drizzle-orm';
 import type { AppDatabase } from '@/db';
-import { irishRuleLinks, irishTaxRules, type IrishRuleLinkKind } from '@/db/schema';
+import { visibleRuleLinks, visibleTaxRules, type IrishRuleLinkKind } from '@/db/schema';
 import { CA_LIST_KNOWN_FROM } from './scheduleRates';
 import { ALL_CONSUMER_IDS } from './consumers';
 
@@ -79,14 +79,14 @@ const showSpan = (s: Span) => `${s.from} to ${s.to === OPEN_END ? 'open' : s.to}
 export function checkRuleGraph(db: AppDatabase, params: { companyId: string }): RuleGraphFinding[] {
   const findings: RuleGraphFinding[] = [];
   const versions = db.select({
-    ruleKey: irishTaxRules.ruleKey, ruleVersion: irishTaxRules.ruleVersion,
-    effectiveFrom: irishTaxRules.effectiveFrom, effectiveTo: irishTaxRules.effectiveTo,
-  }).from(irishTaxRules)
+    ruleKey: visibleTaxRules.ruleKey, ruleVersion: visibleTaxRules.ruleVersion,
+    effectiveFrom: visibleTaxRules.effectiveFrom, effectiveTo: visibleTaxRules.effectiveTo,
+  }).from(visibleTaxRules)
     // In force for its own dates, as `lookupTaxRule` reads it: enabled, not
     // retired on review, and a non-empty window. `active` marks only the
     // latest version; a superseded one still holds for its own window.
-    .where(and(eq(irishTaxRules.companyId, params.companyId), eq(irishTaxRules.enabled, true),
-      ne(irishTaxRules.reviewStatus, 'superseded')))
+    .where(and(eq(visibleTaxRules.companyId, params.companyId), eq(visibleTaxRules.origin, 'store'), eq(visibleTaxRules.enabled, true),
+      ne(visibleTaxRules.reviewStatus, 'superseded')))
     .all()
     .filter((v) => v.effectiveTo === null || v.effectiveTo > v.effectiveFrom);
   const spansByKey = new Map<string, Array<Span & { version: number }>>();
@@ -111,8 +111,8 @@ export function checkRuleGraph(db: AppDatabase, params: { companyId: string }): 
     }
   }
 
-  const links = db.select().from(irishRuleLinks)
-    .where(and(eq(irishRuleLinks.companyId, params.companyId), eq(irishRuleLinks.active, true)))
+  const links = db.select().from(visibleRuleLinks)
+    .where(and(eq(visibleRuleLinks.companyId, params.companyId), eq(visibleRuleLinks.active, true)))
     .all();
 
   const consumers = ALL_CONSUMER_IDS;
@@ -149,8 +149,8 @@ export function checkRuleGraph(db: AppDatabase, params: { companyId: string }): 
   }
 
   // supersedesRuleId across keys must be stated as a supersedes link.
-  const rows = db.select({ id: irishTaxRules.id, ruleKey: irishTaxRules.ruleKey, supersedesRuleId: irishTaxRules.supersedesRuleId })
-    .from(irishTaxRules).where(eq(irishTaxRules.companyId, params.companyId)).all();
+  const rows = db.select({ id: visibleTaxRules.id, ruleKey: visibleTaxRules.ruleKey, supersedesRuleId: visibleTaxRules.supersedesRuleId })
+    .from(visibleTaxRules).where(and(eq(visibleTaxRules.companyId, params.companyId), eq(visibleTaxRules.origin, 'store'))).all();
   const keyOf = new Map(rows.map((r) => [r.id, r.ruleKey]));
   const supersedes = new Set(links.filter((l) => l.kind === 'supersedes').map((l) => `${l.fromKey}|${l.toKey}`));
   for (const r of rows) {

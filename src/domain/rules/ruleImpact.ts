@@ -6,8 +6,8 @@
  * to the target, then every rule linking to those, and so on, each with the
  * link it was reached through. For a provision the first ring is the rules
  * derived from it and the rules that cite it. `ruleDepends` is the reverse
- * walk. Both read the book's `irish_rule_links`, so they see what the
- * curation declared as of the book's last load.
+ * walk. Both read the links in the rules store (ADR-0021), so they see what
+ * the curation declared as of the store's build.
  *
  * The computations reading the target or anything reached (`consumed_by`,
  * from their manifests) are listed beside the rules, so the answer includes
@@ -19,8 +19,9 @@
  */
 import { and, eq } from 'drizzle-orm';
 import type { AppDatabase } from '@/db';
-import { irishActProvisions, irishKnowledgeSources, irishRuleLinks, irishTaxRules } from '@/db/schema';
+import { visibleActProvisions, visibleKnowledgeSources, visibleRuleLinks, visibleTaxRules } from '@/db/schema';
 import { resolveReference } from './dependencies';
+import { visibleToCompany } from './visibleRules';
 import { consumerName } from './consumers';
 
 export interface ImpactEdge {
@@ -48,16 +49,16 @@ export interface ImpactResult {
 }
 
 function activeLinks(db: AppDatabase, companyId: string) {
-  return db.select().from(irishRuleLinks)
-    .where(and(eq(irishRuleLinks.companyId, companyId), eq(irishRuleLinks.active, true)))
+  return db.select().from(visibleRuleLinks)
+    .where(and(eq(visibleRuleLinks.companyId, companyId), eq(visibleRuleLinks.active, true)))
     .all();
 }
 
 function provisionLabel(db: AppDatabase, provisionId: string): string {
-  const row = db.select({ citation: irishKnowledgeSources.citation, section: irishActProvisions.sectionNumber })
-    .from(irishActProvisions)
-    .innerJoin(irishKnowledgeSources, eq(irishActProvisions.sourceId, irishKnowledgeSources.id))
-    .where(eq(irishActProvisions.id, provisionId)).get();
+  const row = db.select({ citation: visibleKnowledgeSources.citation, section: visibleActProvisions.sectionNumber })
+    .from(visibleActProvisions)
+    .innerJoin(visibleKnowledgeSources, eq(visibleActProvisions.sourceId, visibleKnowledgeSources.id))
+    .where(eq(visibleActProvisions.id, provisionId)).get();
   return row ? `${row.citation} s.${row.section}` : provisionId;
 }
 
@@ -68,11 +69,11 @@ function provisionLabel(db: AppDatabase, provisionId: string): string {
  */
 export function resolveImpactTarget(db: AppDatabase, params: { companyId: string; target: string }): ImpactTarget {
   const { companyId, target } = params;
-  const rule = db.select({ id: irishTaxRules.id }).from(irishTaxRules)
-    .where(and(eq(irishTaxRules.companyId, companyId), eq(irishTaxRules.ruleKey, target))).get();
+  const rule = db.select({ id: visibleTaxRules.id }).from(visibleTaxRules)
+    .where(and(eq(visibleTaxRules.companyId, companyId), eq(visibleTaxRules.origin, 'store'), eq(visibleTaxRules.ruleKey, target))).get();
   if (rule) return { kind: 'rule', ruleKey: target };
-  const provision = db.select({ id: irishActProvisions.id }).from(irishActProvisions)
-    .where(eq(irishActProvisions.id, target)).get();
+  const provision = db.select({ id: visibleActProvisions.id }).from(visibleActProvisions)
+    .where(and(eq(visibleActProvisions.id, target), visibleToCompany(visibleActProvisions.companyId, companyId))).get();
   if (provision) return { kind: 'provision', provisionId: provision.id, citation: provisionLabel(db, provision.id) };
   const resolved = resolveReference(db, { companyId, reference: target });
   if (resolved.resolved && resolved.provision) {
@@ -104,8 +105,8 @@ export function ruleImpact(db: AppDatabase, params: { companyId: string; target:
     seen.add(t.ruleKey);
     ring = (byTo.get(t.ruleKey) ?? []).map((l) => ({ ruleKey: l.fromKey, depth: 1, kind: l.kind, through: t.ruleKey, note: l.note }));
   } else {
-    const derived = db.select({ ruleKey: irishTaxRules.ruleKey }).from(irishTaxRules)
-      .where(and(eq(irishTaxRules.companyId, params.companyId), eq(irishTaxRules.provisionId, t.provisionId))).all();
+    const derived = db.select({ ruleKey: visibleTaxRules.ruleKey }).from(visibleTaxRules)
+      .where(and(eq(visibleTaxRules.companyId, params.companyId), eq(visibleTaxRules.origin, 'store'), eq(visibleTaxRules.provisionId, t.provisionId))).all();
     ring = [
       ...derived.map((r) => ({ ruleKey: r.ruleKey, depth: 1, kind: 'derived_from', through: t.citation, note: null })),
       ...links.filter((l) => l.toProvisionId === t.provisionId)
@@ -153,8 +154,8 @@ export function ruleDepends(db: AppDatabase, params: { companyId: string; ruleKe
   const seen = new Set([params.ruleKey]);
   const rules: ImpactEdge[] = [];
   const provisions = new Map<string, DependsResult['provisions'][number]>();
-  const ownProvisions = (key: string) => db.select({ provisionId: irishTaxRules.provisionId }).from(irishTaxRules)
-    .where(and(eq(irishTaxRules.companyId, params.companyId), eq(irishTaxRules.ruleKey, key))).all();
+  const ownProvisions = (key: string) => db.select({ provisionId: visibleTaxRules.provisionId }).from(visibleTaxRules)
+    .where(and(eq(visibleTaxRules.companyId, params.companyId), eq(visibleTaxRules.origin, 'store'), eq(visibleTaxRules.ruleKey, key))).all();
 
   let ring: Array<{ key: string; depth: number }> = [{ key: params.ruleKey, depth: 0 }];
   while (ring.length > 0) {

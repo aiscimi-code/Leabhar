@@ -23,7 +23,7 @@
  */
 import { and, desc, eq } from 'drizzle-orm';
 import type { AppDatabase } from '@/db';
-import { irishActProvisions, irishKnowledgeSources, irishTaxRules } from '@/db/schema';
+import { visibleActProvisions, visibleKnowledgeSources, visibleTaxRules } from '@/db/schema';
 import { isIsoDate } from '../dates';
 import { lookupTaxRule, ruleVersionId } from './irishRules';
 import { ruleReviewResolver } from './effectiveReview';
@@ -87,26 +87,33 @@ export class RejectedRuleError extends Error {
 
 const REJECTED_FINDING_PREFIX = 'was rejected on the rule review screen';
 
-/** A retired rule's latest row (superseded on the review screen), told apart from a rejection (issue #484). */
-function retiredRule(db: AppDatabase, companyId: string, ruleKey: string) {
-  return db.select().from(irishTaxRules)
-    .where(and(
-      eq(irishTaxRules.companyId, companyId),
-      eq(irishTaxRules.ruleKey, ruleKey),
-      eq(irishTaxRules.reviewStatus, 'superseded'),
-    )).orderBy(desc(irishTaxRules.ruleVersion)).get();
+/**
+ * The latest store version of a key the book itself withdrew on the review
+ * screen: retired (superseded) or rejected (issue #484), told apart so the
+ * finding can say which happened. The decision is the book's
+ * (`irish_rule_decisions`), read through the review resolver.
+ */
+function bookWithdrawnRule(db: AppDatabase, companyId: string, ruleKey: string, status: 'superseded' | 'rejected') {
+  const rows = storeVersions(db, companyId, ruleKey);
+  if (rows.length === 0) return null;
+  const review = ruleReviewResolver(db, { companyId });
+  for (const row of rows) {
+    const r = review(row);
+    if (r.from === 'book' && r.status === status) return { row, review: r };
+  }
+  return null;
 }
 
-/** A rejected rule's latest row, so a missing lookup can be told apart from a rejection. */
-function rejectedRule(db: AppDatabase, companyId: string, ruleKey: string) {
-  return db.select().from(irishTaxRules)
-    .where(and(
-      eq(irishTaxRules.companyId, companyId),
-      eq(irishTaxRules.ruleKey, ruleKey),
-      // setRuleReviewStatus('rejected') disables the row; keep both conditions
-      // so a rejected row can never be missed by a later change to either column.
-      eq(irishTaxRules.reviewStatus, 'rejected'),
-    )).orderBy(desc(irishTaxRules.ruleVersion)).get();
+function storeVersions(db: AppDatabase, companyId: string, ruleKey: string) {
+  return db.select({
+    name: visibleTaxRules.name, ruleKey: visibleTaxRules.ruleKey, ruleVersion: visibleTaxRules.ruleVersion,
+    effectiveFrom: visibleTaxRules.effectiveFrom, effectiveTo: visibleTaxRules.effectiveTo,
+    statement: visibleTaxRules.statement, reviewStatus: visibleTaxRules.reviewStatus, origin: visibleTaxRules.origin, sourceSha256: visibleKnowledgeSources.sha256,
+  }).from(visibleTaxRules)
+    .innerJoin(visibleActProvisions, eq(visibleTaxRules.provisionId, visibleActProvisions.id))
+    .innerJoin(visibleKnowledgeSources, eq(visibleActProvisions.sourceId, visibleKnowledgeSources.id))
+    .where(and(eq(visibleTaxRules.companyId, companyId), eq(visibleTaxRules.origin, 'store'), eq(visibleTaxRules.ruleKey, ruleKey), eq(visibleTaxRules.enabled, true)))
+    .orderBy(desc(visibleTaxRules.ruleVersion)).all();
 }
 
 /**
@@ -115,15 +122,7 @@ function rejectedRule(db: AppDatabase, companyId: string, ruleKey: string) {
  * is reported rejected, naming who rejected it in the catalogue.
  */
 function catalogueRejectedRule(db: AppDatabase, companyId: string, ruleKey: string, asOf: string) {
-  const rows = db.select({
-    name: irishTaxRules.name, ruleKey: irishTaxRules.ruleKey, ruleVersion: irishTaxRules.ruleVersion,
-    effectiveFrom: irishTaxRules.effectiveFrom, effectiveTo: irishTaxRules.effectiveTo,
-    statement: irishTaxRules.statement, reviewStatus: irishTaxRules.reviewStatus, sourceSha256: irishKnowledgeSources.sha256,
-  }).from(irishTaxRules)
-    .innerJoin(irishActProvisions, eq(irishTaxRules.provisionId, irishActProvisions.id))
-    .innerJoin(irishKnowledgeSources, eq(irishActProvisions.sourceId, irishKnowledgeSources.id))
-    .where(and(eq(irishTaxRules.companyId, companyId), eq(irishTaxRules.ruleKey, ruleKey), eq(irishTaxRules.enabled, true)))
-    .orderBy(desc(irishTaxRules.ruleVersion)).all();
+  const rows = storeVersions(db, companyId, ruleKey);
   if (rows.length === 0) return null;
   const review = ruleReviewResolver(db, { companyId });
   for (const row of rows) {
@@ -201,26 +200,26 @@ export function resolveRuleFigure(
   // figure either (issue #484): retiring it is the opposite of letting it
   // still stand behind a computation. Distinct from a rejection, so the
   // finding can say which happened.
-  const retired = retiredRule(db, params.companyId, params.ruleKey);
+  const retired = bookWithdrawnRule(db, params.companyId, params.ruleKey, 'superseded');
   if (retired) {
-    const who = retired.reviewedBy ? ` by ${retired.reviewedBy}` : '';
+    const { row, review } = retired;
     return {
-      ...base, numericValue: null, status: 'retired', reviewStatus: retired.reviewStatus,
-      curatedInForce, name: retired.name || base.name,
-      finding: `Rule "${retired.name || base.name}" (${params.ruleKey}) was retired on the rule review screen`
-        + `${who}${retired.reviewNotes ? ` (${retired.reviewNotes})` : ''}: it supplies no figure. `
+      ...base, numericValue: null, status: 'retired', reviewStatus: review.status,
+      curatedInForce, name: row.name || base.name,
+      finding: `Rule "${row.name || base.name}" (${params.ruleKey}) was retired on the rule review screen`
+        + `${review.by ? ` by ${review.by}` : ''}${review.reason ? ` (${review.reason})` : ''}: it supplies no figure. `
         + 'Restore it on the review screen, or wait for the corrected rule to be derived.',
     };
   }
 
-  const rejected = rejectedRule(db, params.companyId, params.ruleKey);
+  const rejected = bookWithdrawnRule(db, params.companyId, params.ruleKey, 'rejected');
   if (rejected) {
-    const who = rejected.reviewedBy ? ` by ${rejected.reviewedBy}` : '';
+    const { row, review } = rejected;
     return {
-      ...base, numericValue: null, status: 'rejected', reviewStatus: rejected.reviewStatus,
-      curatedInForce, name: rejected.name || base.name,
-      finding: `Rule "${rejected.name || base.name}" (${params.ruleKey}) ${REJECTED_FINDING_PREFIX}${who}`
-        + `${rejected.reviewNotes ? ` (${rejected.reviewNotes})` : ''}.`,
+      ...base, numericValue: null, status: 'rejected', reviewStatus: review.status,
+      curatedInForce, name: row.name || base.name,
+      finding: `Rule "${row.name || base.name}" (${params.ruleKey}) ${REJECTED_FINDING_PREFIX}`
+        + `${review.by ? ` by ${review.by}` : ''}${review.reason ? ` (${review.reason})` : ''}.`,
     };
   }
 

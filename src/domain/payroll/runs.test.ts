@@ -277,7 +277,7 @@ describe('what the engine refuses to guess', () => {
     loadStatutoryKnowledgeBase(db, { companyId });
     const rule = db.select().from(irishTaxRules)
       .where(and(eq(irishTaxRules.companyId, companyId), eq(irishTaxRules.ruleKey, 'prsi.class_a_employee_rate'), eq(irishTaxRules.effectiveFrom, '2025-10-01'))).get()!;
-    setRuleReviewStatus(db, { ruleId: rule.id, status: 'rejected', reviewedBy: 'accountant' });
+    setRuleReviewStatus(db, { companyId, ruleId: `${rule.ruleKey}@${rule.ruleVersion}`, status: 'rejected', reviewedBy: 'accountant' });
     expect(() => month('2026-01-30')).toThrow(/rejected on the rule review screen/);
   });
 

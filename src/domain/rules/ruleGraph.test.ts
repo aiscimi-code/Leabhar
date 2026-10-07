@@ -6,8 +6,15 @@ import { irishRuleLinks, irishTaxRules } from '@/db/schema';
 import { ids } from '@/lib/ids';
 import { loadStatutoryKnowledgeBase } from './knowledgeBase';
 import { LINK_FROM_RULES } from './ruleLinks';
-import { DECLARED_VERSION_GAPS, checkRuleGraph, uncoveredSpans } from './ruleGraph';
+import { DECLARED_VERSION_GAPS, checkRuleGraph as checkStoredRuleGraph, uncoveredSpans } from './ruleGraph';
+import { attachRulesStoreFromBook } from './rulesStore';
 import type { AppDatabase } from '@/db';
+
+/** Check the graph of a store built from the book's rows, which these tests edit (ADR-0021: the graph reads the store). */
+function checkRuleGraph(db: AppDatabase, params: { companyId: string }) {
+  attachRulesStoreFromBook(db, params);
+  return checkStoredRuleGraph(db, params);
+}
 
 describe('the rule graph of a loaded book (ADR-0020 §5, issue #686 step 3)', () => {
   let db: AppDatabase;

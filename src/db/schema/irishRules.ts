@@ -1,3 +1,4 @@
+import { getViewSelectedFields } from 'drizzle-orm';
 import { sqliteTable, sqliteView, text, integer, index, unique } from 'drizzle-orm/sqlite-core';
 import { timestamps, provenance, ruleSource, effectiveDates } from './_shared';
 import { companies } from './company';
@@ -575,3 +576,8 @@ export const visibleActProvisions = sqliteView('visible_irish_act_provisions', {
 export const visibleTaxRules = sqliteView('visible_irish_tax_rules', { ...taxRuleColumns, ...origin }).existing();
 export const visibleTaxRuleTests = sqliteView('visible_irish_tax_rule_tests', { ...taxRuleTestColumns, ...origin }).existing();
 export const visibleRuleLinks = sqliteView('visible_irish_rule_links', { ...ruleLinkColumns, ...origin }).existing();
+
+/** Every column of a view, to select a whole row beside others (`select({ rule: visibleTaxRuleFields, ... })`). */
+export const visibleKnowledgeSourceFields = getViewSelectedFields(visibleKnowledgeSources);
+export const visibleActProvisionFields = getViewSelectedFields(visibleActProvisions);
+export const visibleTaxRuleFields = getViewSelectedFields(visibleTaxRules);

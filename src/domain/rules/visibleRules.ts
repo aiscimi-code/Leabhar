@@ -9,10 +9,12 @@
  * book's rules come from. Every reader queries the views, never `rules.*` and
  * never the book's copied tables. A view holds:
  *
- * - **The store's rows**, for every company in the book. A store row has no
- *   company; it is the same for all of them. A rule row's `tax_rate_id` and
- *   `vat_treatment_id` are the company's latest binding
- *   (`irish_rule_bindings`), since a binding belongs to the book.
+ * - **The store's rows.** A rule and a link appear once for every company in
+ *   the book: a store row has no company, it is the same for all of them. A
+ *   rule row's `tax_rate_id` and `vat_treatment_id` are the company's latest
+ *   binding (`irish_rule_bindings`), since a binding belongs to the book. A
+ *   source and a provision are jurisdiction-wide (`company_id` null), so a
+ *   rule joins its provision by ID once.
  * - **The book's frozen versions** (`irish_rule_versions_retained`), each
  *   with its provision and source as the book held them. A posted line that
  *   applied an old wording can still be explained. `origin` says which a row
@@ -30,7 +32,8 @@
  */
 import { existsSync, readFileSync } from 'node:fs';
 import Database from 'better-sqlite3';
-import { getTableConfig, type SQLiteTable } from 'drizzle-orm/sqlite-core';
+import { eq, isNull, or, type SQL } from 'drizzle-orm';
+import { getTableConfig, type SQLiteColumn, type SQLiteTable } from 'drizzle-orm/sqlite-core';
 import { irishActProvisions, irishKnowledgeSources, irishRuleLinks, irishTaxRules, irishTaxRuleTests } from '@/db/schema';
 import { sha256Hex } from '@/lib/hash';
 import { rulesStorePath } from '@/lib/paths';
@@ -126,8 +129,10 @@ const binding = (column: string) => `(SELECT b.${column} FROM main.irish_rule_bi
 
 /** How a store row's book columns are read; every other column is the store's own. */
 const STORE_ARM: Record<string, Record<string, string>> = {
-  irish_knowledge_sources: { company_id: 'c.id' },
-  irish_act_provisions: { company_id: 'c.id' },
+  // A source and its provisions are jurisdiction-wide, as `company_id` null
+  // says; a rule joins its provision by ID alone, once per company.
+  irish_knowledge_sources: { company_id: 'NULL' },
+  irish_act_provisions: { company_id: 'NULL' },
   irish_tax_rules: { company_id: 'c.id', tax_rate_id: binding('tax_rate_id'), vat_treatment_id: binding('vat_treatment_id') },
   irish_rule_links: { company_id: 'c.id' },
 };
@@ -182,7 +187,7 @@ function columnsOf(table: SQLiteTable): string[] {
 export function visibleViewSql(entry: (typeof VIEWED)[number]): string {
   const columns = columnsOf(entry.table);
   const storeArm = STORE_ARM[entry.store] ?? {};
-  const companies = 'company_id' in storeArm;
+  const companies = storeArm.company_id === 'c.id';
   const arms = [`SELECT ${[...columns.map((c) => `${storeArm[c] ?? `s.${c}`} AS ${c}`), `'store' AS origin`].join(', ')}
     FROM ${RULES_STORE_SCHEMA}.${entry.store} s${companies ? ' CROSS JOIN main.companies c' : ''}`];
   const retained = RETAINED_ARM[entry.store];
@@ -247,4 +252,12 @@ export function attachedRulesStoreMeta(sqlite: Database.Database): RulesStoreMet
   const values = Object.fromEntries((sqlite.prepare(`SELECT key, value FROM ${RULES_STORE_SCHEMA}.rules_store_meta`).all() as Array<{ key: string; value: string }>)
     .map((r) => [r.key, r.value]));
   return { format: Number(values.format), signature: values.signature ?? '', catalogueDigest: values.catalogue_digest ?? '', versions: Number(values.versions) };
+}
+
+/**
+ * A source or provision a company can see: a jurisdiction-wide one from the
+ * store (`company_id` null), or one of its own frozen versions'.
+ */
+export function visibleToCompany(column: SQLiteColumn, companyId: string): SQL {
+  return or(isNull(column), eq(column, companyId))!;
 }

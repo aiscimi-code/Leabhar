@@ -1,10 +1,11 @@
 import { createTestDatabase } from "@/db/testing";
 import { createCompany } from "@/domain/config/setup";
-import { loadStatutoryKnowledgeBase } from "@/domain/rules/knowledgeBase";
+import { deriveStatutoryKnowledgeBase } from "@/domain/rules/knowledgeBase";
 import { irishTaxRules } from "@/db/schema";
 import { eq } from "drizzle-orm";
 
-const { db } = createTestDatabase();
+// Reads the derived copies only, so no rules store is attached (ADR-0021).
+const { db } = createTestDatabase({ rulesStore: false });
 const { companyId } = createCompany(db, {
   legalName: "Verification Ltd",
   vatNumber: "IE1234567T",
@@ -14,7 +15,7 @@ const { companyId } = createCompany(db, {
 
 // Ingest every source and derive every rule, as the app does: the sources
 // ported to the rules catalogue (#556) load from it, the rest from their copies.
-loadStatutoryKnowledgeBase(db, { companyId });
+deriveStatutoryKnowledgeBase(db, { companyId });
 
 // List all rules
 const allRules = db.select({

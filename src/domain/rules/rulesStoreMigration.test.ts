@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll } from 'vitest';
+import { describe, it, expect, beforeAll, vi } from 'vitest';
 import { appendFileSync, copyFileSync, cpSync, existsSync, mkdtempSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
@@ -6,7 +6,7 @@ import Database from 'better-sqlite3';
 import { and, eq } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/better-sqlite3';
 import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
-import { openSqlite, type AppDatabase } from '@/db';
+import { openBook as openAppBook, openSqlite, type AppDatabase } from '@/db';
 import * as schema from '@/db/schema';
 import {
   irishRuleBindings, irishRuleDecisions, irishRuleVersionMap, irishRuleVersionsRetained, irishTaxRules,
@@ -16,7 +16,8 @@ import { ids } from '@/lib/ids';
 import { createCompany } from '../config/setup';
 import { createInvoice } from '../invoicing/invoices';
 import { makeDate } from '../dates';
-import { loadStatutoryKnowledgeBase } from './knowledgeBase';
+import { deriveStatutoryKnowledgeBase } from './knowledgeBase';
+import { attachRulesStore, detachRulesStore } from './visibleRules';
 import { buildRulesStore, RulesStoreOpenError, type RulesStoreBuildResult } from './rulesStore';
 import { migrateBookToRulesStore, type RulesStoreMigrationResult } from './rulesStoreMigration';
 
@@ -34,14 +35,14 @@ const REDUCED = 'vat.rate_reduced_current';
 const dir = mkdtempSync(join(tmpdir(), 'leabhar-store-migration-'));
 let store: RulesStoreBuildResult;
 
-/** A book in a file, as the app keeps it, so a backup copies it. */
+/** A book in a file, as the app kept it before it read the store, so a backup copies it. */
 function openBook(name: string) {
   const path = join(dir, `${name}.db`);
   const sqlite = openSqlite(path);
   const db = drizzle(sqlite, { schema }) as unknown as AppDatabase;
   migrate(db, { migrationsFolder: './drizzle' });
   const created = createCompany(db, { legalName: `${name} Ltd`, vatRegistrationStatus: 'registered', seedYears: [2025] });
-  loadStatutoryKnowledgeBase(db, { companyId: created.companyId });
+  deriveStatutoryKnowledgeBase(db, { companyId: created.companyId });
   return { path, sqlite, db, ...created };
 }
 
@@ -74,10 +75,14 @@ describe('moving a book that holds a corrected version under another number', ()
     // The book applied the standard rate's version 3 on a purchase in March 2025.
     const supplierId = ids.supplier();
     db.insert(suppliers).values({ id: supplierId, companyId, name: 'Byrne', matchKey: 'byrne', countryCode: 'IE' }).run();
+    attachRulesStore(book.sqlite, { path: store.path });
     const { invoiceId } = createInvoice(db, {
       companyId, direction: 'purchase', invoiceDate: makeDate(2025, 3, 10), invoiceNumber: 'V-1', supplierId,
       lines: [{ description: 'Stationery', netMinor: 10_000, accountId: book.accountsByCode['6070']!, vatTreatmentId: book.treatmentsByCode['IE_STD']!, vatRuleKeys: [STANDARD] }],
     });
+    detachRulesStore(book.sqlite);
+    // Posted before the book read the store, so numbered as the book numbered it.
+    db.update(invoiceLines).set({ vatRuleNumbering: 'book' }).where(eq(invoiceLines.invoiceId, invoiceId)).run();
     const line = db.select().from(invoiceLines).where(eq(invoiceLines.invoiceId, invoiceId)).get()!;
     lineId = line.id;
     expect(line.vatRuleVersions).toEqual([`${STANDARD}@3`]);
@@ -198,6 +203,14 @@ describe('a store the migration cannot use', () => {
     book = openBook('refused');
   });
 
+  const thrown = (run: () => unknown): RulesStoreOpenError => {
+    try {
+      run();
+    } catch (e) {
+      return e as RulesStoreOpenError;
+    }
+    throw new Error('expected the migration to fail');
+  };
   const nothingWritten = (backups: string) => {
     expect(existsSync(backups) ? readdirSync(backups) : []).toEqual([]);
     for (const t of [irishRuleVersionMap, irishRuleVersionsRetained, irishRuleBindings, rulesStoreSeen]) expect(book.db.select().from(t).all()).toEqual([]);
@@ -205,7 +218,7 @@ describe('a store the migration cannot use', () => {
 
   it('fails on a missing store before the backup, writing nothing', async () => {
     const backups = join(dir, 'refused-missing');
-    const error = await migrateBookToRulesStore(book.db, { storePath: join(dir, 'nowhere', 'rules.db'), backup: { root: backups, dbPath: book.path } }).catch((e) => e);
+    const error = thrown(() => migrateBookToRulesStore(book.db, { storePath: join(dir, 'nowhere', 'rules.db'), backup: { root: backups, dbPath: book.path } }));
     expect(error).toBeInstanceOf(RulesStoreOpenError);
     expect(error).toMatchObject({ reason: 'missing' });
     expect(error.message).toContain('npm run rules:build');
@@ -217,7 +230,7 @@ describe('a store the migration cannot use', () => {
     cpSync('catalogue', join(root, 'catalogue'), { recursive: true });
     appendFileSync(join(root, 'catalogue', 'vatca-2010-revised', 's046.json'), '\n');
     const backups = join(dir, 'refused-stale');
-    const error = await migrateBookToRulesStore(book.db, { storePath: store.path, root, backup: { root: backups, dbPath: book.path } }).catch((e) => e);
+    const error = thrown(() => migrateBookToRulesStore(book.db, { storePath: store.path, root, backup: { root: backups, dbPath: book.path } }));
     expect(error).toMatchObject({ name: 'RulesStoreOpenError', reason: 'stale' });
     nothingWritten(backups);
   });
@@ -242,5 +255,28 @@ describe('a book version more than one store version says the same as', () => {
     const item = book.db.select().from(reviewItems).where(eq(reviewItems.dedupeKey, `rule_version_retained:${REDUCED}@1`)).get()!;
     expect(item.title).toBe(`Rule version ${REDUCED}@1 matches more than one version in the rules store`);
     expect(item.detail).toContain(`${REDUCED}@1, ${REDUCED}@99`);
+  });
+});
+
+describe('opening a book that has not moved onto the store', () => {
+  it('moves it once, after a backup, and not again on the next open', () => {
+    const backups = join(dir, 'open-backups');
+    vi.stubEnv('BACKUP_PATH', backups);
+    vi.stubEnv('DOCUMENT_STORAGE_PATH', join(dir, 'no-documents'));
+    try {
+      const old = openBook('opened');
+      old.sqlite.close();
+
+      const db = openAppBook(old.path);
+      expect(readdirSync(backups)).toEqual(['v1']);
+      expect(db.select().from(rulesStoreSeen).all()).toHaveLength(1);
+      expect(db.select().from(irishRuleVersionMap).where(eq(irishRuleVersionMap.companyId, old.companyId)).all().length).toBeGreaterThan(0);
+      db.$client.close();
+
+      openAppBook(old.path).$client.close();
+      expect(readdirSync(backups)).toEqual(['v1']);
+    } finally {
+      vi.unstubAllEnvs();
+    }
   });
 });

@@ -1,9 +1,11 @@
-import { describe, it, expect, beforeAll } from 'vitest';
+import { describe, it, expect, beforeAll, onTestFinished } from 'vitest';
 import { and, eq } from 'drizzle-orm';
 import { createTestDatabase } from '@/db/testing';
 import { createCompany } from '../config/setup';
 import { postJournalEntry } from '../accounting/journal';
-import { irishTaxRules } from '@/db/schema';
+import { irishTaxRules, visibleTaxRules } from '@/db/schema';
+import { attachRulesStoreFromBook } from './rulesStore';
+import { attachRulesStore } from './visibleRules';
 import { asIsoDate } from '../dates';
 import { loadStatutoryKnowledgeBase } from './knowledgeBase';
 import { setRuleReviewStatus } from './review';
@@ -18,29 +20,55 @@ import { yearEndPack } from '../reports/yearEnd';
 import type { AppDatabase } from '@/db';
 
 let db: AppDatabase;
+let sqlite: ReturnType<typeof createTestDatabase>['sqlite'];
 let companyId: string;
 
 beforeAll(() => {
-  ({ db } = createTestDatabase());
+  ({ db, sqlite } = createTestDatabase());
   ({ companyId } = createCompany(db, {
     legalName: 'Figures Ltd', entityType: 'company', vatRegistrationStatus: 'registered', seedYears: [2025, 2026],
   }));
   loadStatutoryKnowledgeBase(db, { companyId });
 });
 
-const inForce = (id: string, ruleKey: string, asOfDate: string) => db.select().from(irishTaxRules)
+const inForce = (id: string, ruleKey: string, asOfDate: string) => db.select().from(visibleTaxRules)
   .where(and(
-    eq(irishTaxRules.companyId, id),
-    eq(irishTaxRules.ruleKey, ruleKey),
-    eq(irishTaxRules.enabled, true),
+    eq(visibleTaxRules.companyId, id),
+    eq(visibleTaxRules.origin, 'store'),
+    eq(visibleTaxRules.ruleKey, ruleKey),
+    eq(visibleTaxRules.enabled, true),
   )).all()
   .filter((r) => r.effectiveFrom <= asOfDate && (!r.effectiveTo || r.effectiveTo > asOfDate))
   .sort((a, b) => b.ruleVersion - a.ruleVersion)[0];
 
+/**
+ * A book whose store holds no rules: the figures fall back to the shipped
+ * curation constants. Every company in a book sees the installed store, so
+ * this is a book of its own, reading a store built from no rules.
+ */
+function bookWithoutRules(input: Parameters<typeof createCompany>[1]) {
+  const { db } = createTestDatabase({ rulesStore: false });
+  const other = createCompany(db, input);
+  attachRulesStoreFromBook(db, { companyId: other.companyId });
+  return { db, other };
+}
+
+/**
+ * Change what a stored rule says, as a later catalogue would: the store is
+ * rebuilt from the book's own derived rules with the change, and the
+ * installed one is put back when the test ends.
+ */
+function editStoredRule(bookCompanyId: string, rule: { ruleKey: string; ruleVersion: number }, patch: Partial<typeof irishTaxRules.$inferInsert>) {
+  db.update(irishTaxRules).set(patch).where(and(eq(irishTaxRules.companyId, bookCompanyId),
+    eq(irishTaxRules.ruleKey, rule.ruleKey), eq(irishTaxRules.ruleVersion, rule.ruleVersion))).run();
+  attachRulesStoreFromBook(db, { companyId: bookCompanyId });
+  onTestFinished(() => { attachRulesStore(sqlite); });
+}
+
 describe('figure resolution (issue #282 / #437)', () => {
   it('reads an approved rule from the knowledge base with no finding', () => {
     const rule = inForce(companyId, 'ct.rate_standard', '2025-12-31')!;
-    setRuleReviewStatus(db, { ruleId: rule.id, status: 'active', reviewedBy: 'Accountant' });
+    setRuleReviewStatus(db, { companyId, ruleId: rule.id, status: 'active', reviewedBy: 'Accountant' });
     const resolved = resolveRuleFigure(db, {
       companyId, ruleKey: 'ct.rate_standard', asOfDate: '2025-12-31',
       curated: CORPORATION_TAX_CURATED_RULES.find((r) => r.ruleKey === 'ct.rate_standard')!,
@@ -62,7 +90,7 @@ describe('figure resolution (issue #282 / #437)', () => {
 
   it('gives no figure for a rejected rule, and a finding that says who rejected it', () => {
     const rule = inForce(companyId, 'usc.band_2pct', '2025-12-31')!;
-    setRuleReviewStatus(db, { ruleId: rule.id, status: 'rejected', reviewedBy: 'Accountant', notes: 'wrong figure' });
+    setRuleReviewStatus(db, { companyId, ruleId: rule.id, status: 'rejected', reviewedBy: 'Accountant', notes: 'wrong figure' });
     const curated = INCOME_TAX_CURATED_RULES
       .find((r) => r.ruleKey === 'usc.band_2pct' && r.effectiveFrom <= '2025-12-31')!;
     const resolved = resolveRuleFigure(db, { companyId, ruleKey: 'usc.band_2pct', asOfDate: '2025-12-31', curated });
@@ -74,7 +102,7 @@ describe('figure resolution (issue #282 / #437)', () => {
   });
 
   it('falls back to the shipped curation constant, flagged, when the book holds no rule', () => {
-    const other = createCompany(db, { legalName: 'Other Ltd', vatRegistrationStatus: 'registered', seedYears: [2025] });
+    const { db, other } = bookWithoutRules({ legalName: 'Other Ltd', vatRegistrationStatus: 'registered', seedYears: [2025] });
     const fresh = resolveRuleFigure(db, {
       companyId: other.companyId, ruleKey: 'vat.cash_accounting_turnover_threshold', asOfDate: '2025-01-01',
       curated: SI_69_2025_CURATED_RULES.find((r) => r.ruleKey === 'vat.cash_accounting_turnover_threshold')!,
@@ -97,7 +125,7 @@ describe('figure resolution (issue #282 / #437)', () => {
     const fresh = createCompany(db, { legalName: 'Retired Ltd', entityType: 'company', vatRegistrationStatus: 'registered', seedYears: [2025] });
     loadStatutoryKnowledgeBase(db, { companyId: fresh.companyId });
     const rule = inForce(fresh.companyId, 'ct.rate_standard', '2025-12-31')!;
-    setRuleReviewStatus(db, { ruleId: rule.id, status: 'superseded', reviewedBy: 'Accountant', notes: 'corrected version being drafted' });
+    setRuleReviewStatus(db, { companyId: fresh.companyId, ruleId: rule.id, status: 'superseded', reviewedBy: 'Accountant', notes: 'corrected version being drafted' });
     const resolved = resolveRuleFigure(db, {
       companyId: fresh.companyId, ruleKey: 'ct.rate_standard', asOfDate: '2025-12-31',
       curated: CORPORATION_TAX_CURATED_RULES.find((r) => r.ruleKey === 'ct.rate_standard')!,
@@ -117,7 +145,7 @@ describe('figure resolution (issue #282 / #437)', () => {
   it('honours the shipped curation constant\u2019s own effective window: a 2002 period gets no 12.5% (issue #492)', () => {
     // A book with no stored rules at all: the fallback is the shipped constant,
     // and ct.rate_standard is curated from 2003-01-01.
-    const old = createCompany(db, { legalName: 'Old Books Ltd', entityType: 'company', vatRegistrationStatus: 'registered', seedYears: [2002, 2003] });
+    const { db, other: old } = bookWithoutRules({ legalName: 'Old Books Ltd', entityType: 'company', vatRegistrationStatus: 'registered', seedYears: [2002, 2003] });
     const resolved = resolveRuleFigure(db, {
       companyId: old.companyId, ruleKey: 'ct.rate_standard', asOfDate: '2002-12-31',
       curated: CORPORATION_TAX_CURATED_RULES.find((r) => r.ruleKey === 'ct.rate_standard')!,
@@ -160,7 +188,7 @@ describe('the computations respect a rule\u2019s review status (issue #282 accep
 
   it('a rejected capital-allowance rate stops the CT computation: a rejected figure is never used (#451)', () => {
     const rule = inForce(companyId, 'ct.wear_and_tear_rate', '2025-12-31')!;
-    setRuleReviewStatus(db, { ruleId: rule.id, status: 'rejected', reviewedBy: 'Accountant' });
+    setRuleReviewStatus(db, { companyId, ruleId: rule.id, status: 'rejected', reviewedBy: 'Accountant' });
     expect(() => computeCorporationTax(db, { companyId, from: asIsoDate('2025-01-01'), to: asIsoDate('2025-12-31') }))
       .toThrow(RejectedRuleError);
     expect(() => computeCorporationTax(db, { companyId, from: asIsoDate('2025-01-01'), to: asIsoDate('2025-12-31') }))
@@ -197,14 +225,14 @@ describe('the computations respect a rule\u2019s review status (issue #282 accep
     // A person edits the stored rule on the review screen: the computation
     // follows the stored value, not the hard-coded percentage.
     const rule = inForce(book.companyId, 'income_tax.preliminary_tax_current_year', '2025-12-31')!;
-    db.update(irishTaxRules).set({ numericValue: 5000 }).where(eq(irishTaxRules.id, rule.id)).run();
+    editStoredRule(book.companyId, rule, { numericValue: 5000 });
     const edited = run();
     expect(edited.dates.preliminaryTaxMinor).toBe(Math.min(Math.round(edited.individuals[0]!.totalMinor * 0.5), prior()));
     expect(edited.dates.basis).toContain('50%');
     expect(edited.dates.basis).not.toContain('90%');
 
     // A rejected rule stops that test entirely: only the prior-year one applies.
-    setRuleReviewStatus(db, { ruleId: rule.id, status: 'rejected', reviewedBy: 'Accountant' });
+    setRuleReviewStatus(db, { companyId: book.companyId, ruleId: rule.id, status: 'rejected', reviewedBy: 'Accountant' });
     const rejected = run();
     expect(rejected.dates.preliminaryTaxMinor).toBe(prior());
     expect(rejected.findings.some((f) => f.includes('income_tax.preliminary_tax_current_year') && f.includes('rejected'))).toBe(true);
@@ -230,7 +258,7 @@ describe('the computations respect a rule\u2019s review status (issue #282 accep
     // A person edits the stored rule on the review screen: the surcharge and
     // its label follow the stored value, not the hard-coded percentage.
     const rule = inForce(book.companyId, 'ct.close_company_surcharge', '2025-12-31')!;
-    db.update(irishTaxRules).set({ numericValue: 2500 }).where(eq(irishTaxRules.id, rule.id)).run();
+    editStoredRule(book.companyId, rule, { numericValue: 2500 });
     const edited = compute('close_service');
     expect(edited.surchargeMinor).toBe(187_500);
     expect(edited.working).toContain('at 25%');
@@ -298,7 +326,7 @@ function soleTraderBook() {
     });
     loadStatutoryKnowledgeBase(db, { companyId: soleTrader.companyId });
     const row = inForce(soleTrader.companyId, 'usc.band_2pct', '2025-12-31')!;
-    setRuleReviewStatus(db, { ruleId: row.id, status: 'rejected', reviewedBy: 'Accountant', notes: 'wrong figure' });
+    setRuleReviewStatus(db, { companyId: soleTrader.companyId, ruleId: row.id, status: 'rejected', reviewedBy: 'Accountant', notes: 'wrong figure' });
     postJournalEntry(db, {
       companyId: soleTrader.companyId, entryDate: asIsoDate('2025-06-01'), narrative: 'Fees 2025', sourceType: 'bank_transaction',
       sourceId: 'fees-2025', baseCurrency: 'EUR',

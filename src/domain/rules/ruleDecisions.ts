@@ -14,11 +14,14 @@
  */
 import { and, desc, eq } from 'drizzle-orm';
 import type { AppDatabase } from '@/db';
-import { invoiceLines, irishActProvisions, irishKnowledgeSources, irishRuleDecisions, irishTaxRules, type IrishRuleReviewStatus } from '@/db/schema';
+import { invoiceLines, irishRuleDecisions, visibleActProvisions, visibleKnowledgeSources, visibleTaxRules, type IrishRuleReviewStatus } from '@/db/schema';
 import { newId } from '@/lib/ids';
 import { upsertReviewItem } from '../extraction/service';
-import { CATALOGUE_DIR, type CatalogueReview } from './catalogue';
-import { catalogueRuleStore, ruleReviewResolver, type CatalogueVersionRecord } from './effectiveReview';
+import type { CatalogueReview } from './catalogue';
+import {
+  bookVersionMap, catalogueRuleStore, decisionVersionKey, ruleReviewResolver, visibleVersionKey,
+  type CatalogueVersionRecord, type RuleOrigin,
+} from './effectiveReview';
 import { ruleVersionId } from './irishRules';
 
 export { catalogueRuleStore, type CatalogueRuleStore, type CatalogueVersionRecord } from './effectiveReview';
@@ -30,31 +33,37 @@ export function recordRuleDecision(
   db: Pick<AppDatabase, 'insert'>,
   params: {
     companyId: string; ruleKey: string; ruleVersion: number; ruleId?: string | null;
+    /** Whose number `ruleVersion` is: the catalogue's for a store version, the book's for a frozen one. */
+    numbering: 'book' | 'catalogue';
     status: IrishRuleReviewStatus; decidedBy: string; decidedAt: string; reason?: string | null;
   },
 ): string {
   const id = newId('rd');
   db.insert(irishRuleDecisions).values({
     id, companyId: params.companyId, ruleKey: params.ruleKey, ruleVersion: params.ruleVersion,
-    ruleId: params.ruleId ?? null, status: params.status, decidedBy: params.decidedBy,
+    ruleId: params.ruleId ?? null, numbering: params.numbering, status: params.status, decidedBy: params.decidedBy,
     decidedAt: params.decidedAt, reason: params.reason ?? null,
   }).run();
   return id;
 }
 
-/** Every decision the book has taken on a rule version, latest first. */
+/**
+ * Every decision the book has taken on a visible rule version, latest first:
+ * a store version (`origin: 'store'`, the catalogue's number) or one of the
+ * book's frozen versions (`'retained'`, the book's own number). A decision
+ * taken before the book moved onto the store is read through the version map.
+ */
 export function ruleDecisionHistory(
   db: AppDatabase,
-  params: { companyId: string; ruleKey: string; ruleVersion: number },
+  params: { companyId: string; ruleKey: string; ruleVersion: number; origin?: RuleOrigin },
 ): RuleDecision[] {
+  const map = bookVersionMap(db, params.companyId);
+  const wanted = visibleVersionKey(params.origin ?? 'store', params.ruleKey, params.ruleVersion);
   return db.select().from(irishRuleDecisions)
-    .where(and(
-      eq(irishRuleDecisions.companyId, params.companyId),
-      eq(irishRuleDecisions.ruleKey, params.ruleKey),
-      eq(irishRuleDecisions.ruleVersion, params.ruleVersion),
-    ))
+    .where(and(eq(irishRuleDecisions.companyId, params.companyId), eq(irishRuleDecisions.ruleKey, params.ruleKey)))
     .orderBy(desc(irishRuleDecisions.decidedAt), desc(irishRuleDecisions.createdAt))
-    .all();
+    .all()
+    .filter((d) => decisionVersionKey(d, map) === wanted);
 }
 
 export interface EffectiveRuleReview {
@@ -70,26 +79,27 @@ export interface EffectiveRuleReview {
 }
 
 /**
- * The review a book follows for one rule version: its own latest decision,
- * else the catalogue's. A version the book holds is matched to the catalogue's
- * by what it says (`ruleReviewResolver`), since the book may number it
- * differently; one it does not hold is looked up by its number.
+ * The review a book follows for one visible rule version: its own latest
+ * decision, else the catalogue's (`ruleReviewResolver`). A store version is
+ * named by the catalogue's number, a frozen one (`origin: 'retained'`) by the
+ * book's.
  */
 export function effectiveRuleReview(
   db: AppDatabase,
-  params: { companyId: string; ruleKey: string; ruleVersion: number; root?: string },
+  params: { companyId: string; ruleKey: string; ruleVersion: number; origin?: RuleOrigin; root?: string },
 ): EffectiveRuleReview {
+  const origin = params.origin ?? 'store';
   const versionId = ruleVersionId(params.ruleKey, params.ruleVersion);
   const row = db.select({
-    ruleKey: irishTaxRules.ruleKey, ruleVersion: irishTaxRules.ruleVersion,
-    effectiveFrom: irishTaxRules.effectiveFrom, effectiveTo: irishTaxRules.effectiveTo,
-    statement: irishTaxRules.statement, reviewStatus: irishTaxRules.reviewStatus, sourceSha256: irishKnowledgeSources.sha256,
-  }).from(irishTaxRules)
-    .innerJoin(irishActProvisions, eq(irishActProvisions.id, irishTaxRules.provisionId))
-    .innerJoin(irishKnowledgeSources, eq(irishKnowledgeSources.id, irishActProvisions.sourceId))
-    .where(and(eq(irishTaxRules.companyId, params.companyId), eq(irishTaxRules.ruleKey, params.ruleKey), eq(irishTaxRules.ruleVersion, params.ruleVersion)))
+    ruleKey: visibleTaxRules.ruleKey, ruleVersion: visibleTaxRules.ruleVersion, origin: visibleTaxRules.origin,
+    reviewStatus: visibleTaxRules.reviewStatus, sourceSha256: visibleKnowledgeSources.sha256,
+  }).from(visibleTaxRules)
+    .innerJoin(visibleActProvisions, eq(visibleActProvisions.id, visibleTaxRules.provisionId))
+    .innerJoin(visibleKnowledgeSources, eq(visibleKnowledgeSources.id, visibleActProvisions.sourceId))
+    .where(and(eq(visibleTaxRules.companyId, params.companyId), eq(visibleTaxRules.origin, origin),
+      eq(visibleTaxRules.ruleKey, params.ruleKey), eq(visibleTaxRules.ruleVersion, params.ruleVersion)))
     .get();
-  const catalogueByNumber = catalogueRuleStore(params.root).versions.get(versionId) ?? null;
+  const catalogueByNumber = origin === 'store' ? catalogueRuleStore(params.root).versions.get(versionId) ?? null : null;
   if (row) {
     const review = ruleReviewResolver(db, params)(row);
     const catalogue: CatalogueVersionRecord | null = review.catalogue
@@ -102,7 +112,7 @@ export function effectiveRuleReview(
     }
     return { versionId, from: 'none', status: null, by: null, at: null, reason: null, catalogue: null };
   }
-  const [latest] = ruleDecisionHistory(db, params);
+  const [latest] = ruleDecisionHistory(db, { ...params, origin });
   if (latest) {
     return { versionId, from: 'book', status: latest.status, by: latest.decidedBy, at: latest.decidedAt, reason: latest.reason, catalogue: catalogueByNumber };
   }
@@ -115,78 +125,67 @@ export function effectiveRuleReview(
 
 export interface MissingCatalogueVersion {
   versionId: string;
-  /** Where the book references it: its own rule rows, or an invoice line that applied it. */
-  referencedBy: Array<'rule' | 'invoice_line'>;
+  /** Whose number the reference records: the catalogue's, or the book's from before it moved onto the store. */
+  numbering: 'book' | 'catalogue';
+  /** Where the book references it: a decision it took on it, or an invoice line that applied it. */
+  referencedBy: Array<'decision' | 'invoice_line'>;
 }
 
 /**
- * The rule versions a book references, for a key the catalogue holds, that
- * the catalogue does not ship. Each is raised as a review item: an entry
- * that dropped a version leaves the book unable to explain the figures it
- * took from it, and the book must not quietly read another version instead.
+ * The rule versions a book references that the rules store attached to it
+ * does not hold (ADR-0021 §5). A reference in the catalogue's numbering names
+ * a store version. One in the book's numbering (from before the book moved
+ * onto the store) is read through the version map, and is accounted for when
+ * the book keeps the version frozen. Each one left is raised as a review
+ * item: the book cannot explain the figures it took from a version the store
+ * lacks, and it must not quietly read another version instead. A newer store
+ * never drops a version (ADR-0021 §3), so this finds a book opened by an
+ * older install than the one that last wrote it.
  */
 export function checkCatalogueVersions(
   db: AppDatabase,
-  params: { companyId: string; root?: string },
+  params: { companyId: string },
 ): MissingCatalogueVersion[] {
-  const store = catalogueRuleStore(params.root);
-  // A key can take versions from more than one source (a later Act amends a
-  // rate s.46 set), and only the sources ported to the catalogue ship theirs.
-  // So a version is the catalogue's to ship when the book's row for it was
-  // read from a catalogue entry, or when the book holds no row for it at all
-  // (then only its key and number can be checked).
-  const rows = db.select({
-    ruleKey: irishTaxRules.ruleKey, ruleVersion: irishTaxRules.ruleVersion,
-    effectiveFrom: irishTaxRules.effectiveFrom, effectiveTo: irishTaxRules.effectiveTo,
-    statement: irishTaxRules.statement, localPath: irishKnowledgeSources.localPath,
-  }).from(irishTaxRules)
-    .innerJoin(irishActProvisions, eq(irishActProvisions.id, irishTaxRules.provisionId))
-    .innerJoin(irishKnowledgeSources, eq(irishKnowledgeSources.id, irishActProvisions.sourceId))
-    .where(eq(irishTaxRules.companyId, params.companyId)).all();
-  const rowFor = new Map(rows.map((r) => [ruleVersionId(r.ruleKey, r.ruleVersion), r]));
-  // A book numbers its versions as it derives them: a book that held a
-  // version before it was corrected keeps the old one (closed) and numbers
-  // the correction 2, where a new book has it as 1. So a book's version is
-  // the catalogue's when the catalogue holds a version of that key saying the
-  // same thing (dates and quote), whatever its number.
-  const shipped = (r: (typeof rows)[number]) => (store.contents.get(r.ruleKey) ?? []).some((c) =>
-    c.effectiveFrom === r.effectiveFrom && c.effectiveTo === r.effectiveTo && c.quote === r.statement);
-  const referenced = new Map<string, Set<'rule' | 'invoice_line'>>();
-  const note = (versionId: string, by: 'rule' | 'invoice_line') => {
-    const row = rowFor.get(versionId);
-    if (row) {
-      if (!row.localPath?.startsWith(`${CATALOGUE_DIR}/`) || shipped(row)) return;
-    } else if (store.versions.has(versionId) || !store.keys.has(versionId.replace(/@\d+$/, ''))) {
-      return;
-    }
-    referenced.set(versionId, (referenced.get(versionId) ?? new Set()).add(by));
+  const visible = db.select({ ruleKey: visibleTaxRules.ruleKey, ruleVersion: visibleTaxRules.ruleVersion, origin: visibleTaxRules.origin })
+    .from(visibleTaxRules).where(eq(visibleTaxRules.companyId, params.companyId)).all();
+  const held = new Set(visible.map((r) => visibleVersionKey(r.origin, r.ruleKey, r.ruleVersion)));
+  const map = bookVersionMap(db, params.companyId);
+  const referenced = new Map<string, { versionId: string; numbering: 'book' | 'catalogue'; by: Set<'decision' | 'invoice_line'> }>();
+  const note = (ref: { ruleKey: string; ruleVersion: number; numbering: 'book' | 'catalogue' }, by: 'decision' | 'invoice_line') => {
+    if (held.has(decisionVersionKey(ref, map))) return;
+    const versionId = ruleVersionId(ref.ruleKey, ref.ruleVersion);
+    const at = `${ref.numbering}:${versionId}`;
+    const entry = referenced.get(at) ?? { versionId, numbering: ref.numbering, by: new Set() };
+    referenced.set(at, { ...entry, by: entry.by.add(by) });
   };
-  for (const r of rows) {
-    // A version closed on the day it opened was never in force; the catalogue does not carry it.
-    if (r.effectiveTo !== null && r.effectiveTo <= r.effectiveFrom) continue;
-    note(ruleVersionId(r.ruleKey, r.ruleVersion), 'rule');
-  }
-  const lines = db.select({ versions: invoiceLines.vatRuleVersions }).from(invoiceLines)
+  for (const d of db.select().from(irishRuleDecisions).where(eq(irishRuleDecisions.companyId, params.companyId)).all()) note(d, 'decision');
+  const lines = db.select({ versions: invoiceLines.vatRuleVersions, numbering: invoiceLines.vatRuleNumbering }).from(invoiceLines)
     .where(eq(invoiceLines.companyId, params.companyId)).all();
-  for (const l of lines) for (const v of l.versions) note(v, 'invoice_line');
+  for (const l of lines) {
+    for (const v of l.versions) {
+      const at = v.lastIndexOf('@');
+      note({ ruleKey: v.slice(0, at), ruleVersion: Number(v.slice(at + 1)), numbering: l.numbering }, 'invoice_line');
+    }
+  }
 
-  const missing = [...referenced].sort(([a], [b]) => a.localeCompare(b))
-    .map(([versionId, by]) => ({ versionId, referencedBy: [...by].sort() }));
+  const missing = [...referenced.values()].sort((a, b) => a.versionId.localeCompare(b.versionId) || a.numbering.localeCompare(b.numbering))
+    .map((m) => ({ versionId: m.versionId, numbering: m.numbering, referencedBy: [...m.by].sort() }));
   for (const m of missing) {
     const ruleKey = m.versionId.replace(/@\d+$/, '');
+    const named = m.numbering === 'book' ? `${m.versionId}, as this book numbered it before it moved onto the rules store,` : m.versionId;
     upsertReviewItem(db, {
       companyId: params.companyId,
       kind: 'other',
       severity: 'warning',
-      title: `Rule version ${m.versionId} is not in the rules catalogue`,
-      detail: `This book references ${m.versionId} (${m.referencedBy.map((b) => (b === 'rule' ? 'its own rules' : 'an invoice line that applied it')).join(' and ')}), `
-        + 'but the rules catalogue installed with this version of Leabhar does not ship it. The book keeps the version '
-        + 'and the figures it recorded; nothing has been switched to another version. Check which catalogue the book was '
+      title: `Rule version ${m.versionId} is not in the rules store`,
+      detail: `This book references ${named} (${m.referencedBy.map((b) => (b === 'decision' ? 'a review decision taken on it' : 'an invoice line that applied it')).join(' and ')}), `
+        + 'but the rules store installed with this version of Leabhar does not hold it. The book keeps the reference '
+        + 'and the figures it recorded; nothing has been switched to another version. Check which version of Leabhar the book was '
         + 'last used with before relying on an explanation of those figures.',
       entityType: 'irish_rule_key',
       entityId: ruleKey,
-      dedupeKey: `rule_version_missing:${m.versionId}`,
-      context: { versionId: m.versionId, referencedBy: m.referencedBy },
+      dedupeKey: `rule_version_missing:${m.numbering}:${m.versionId}`,
+      context: { versionId: m.versionId, numbering: m.numbering, referencedBy: m.referencedBy },
     });
   }
   return missing;

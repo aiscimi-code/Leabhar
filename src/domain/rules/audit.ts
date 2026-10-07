@@ -10,15 +10,16 @@
 import { and, eq } from 'drizzle-orm';
 import type { AppDatabase } from '@/db';
 import {
-  irishKnowledgeSources, irishActProvisions, irishTaxRules, irishTaxRuleTests,
+  visibleKnowledgeSources, visibleActProvisions, visibleTaxRules, visibleTaxRuleTests,
 } from '@/db/schema';
 import { SECTION_RULE_KEYS } from './factExtractor';
 import { resolveAllRuleDependencies } from './dependencies';
 import { checkRuleGraph, type RuleGraphFinding } from './ruleGraph';
 import { mostReliedOn } from './ruleImpact';
-import { irishRuleLinks } from '@/db/schema';
+import { visibleRuleLinks } from '@/db/schema';
 import { VATCA_CURATED_RULES } from './vatcaCuration';
 import { FINANCE_ACT_2024 } from './irishRules';
+import { visibleToCompany } from './visibleRules';
 import { VATCA_2010 } from './vatcaIngestion';
 import { ruleReviewResolver } from './effectiveReview';
 
@@ -69,18 +70,18 @@ function ruleDependenciesSummary(db: AppDatabase, params: { companyId: string })
 
 function ruleLinksSummary(db: AppDatabase, params: { companyId: string }): AuditReport['ruleLinks'] {
   const byKind: Record<string, number> = {};
-  for (const l of db.select({ kind: irishRuleLinks.kind }).from(irishRuleLinks)
-    .where(and(eq(irishRuleLinks.companyId, params.companyId), eq(irishRuleLinks.active, true))).all()) {
+  for (const l of db.select({ kind: visibleRuleLinks.kind }).from(visibleRuleLinks)
+    .where(and(eq(visibleRuleLinks.companyId, params.companyId), eq(visibleRuleLinks.active, true))).all()) {
     byKind[l.kind] = (byKind[l.kind] ?? 0) + 1;
   }
   return { byKind, graphFindings: checkRuleGraph(db, params), mostReliedOn: mostReliedOn(db, params) };
 }
 
 export function generateAuditReport(db: AppDatabase, params: { companyId: string }): AuditReport {
-  const sourceRows = db.select().from(irishKnowledgeSources).all();
-  const provisions = db.select().from(irishActProvisions).all();
-  const rules = db.select().from(irishTaxRules).where(eq(irishTaxRules.companyId, params.companyId)).all();
-  const tests = db.select().from(irishTaxRuleTests).all();
+  const sourceRows = db.select().from(visibleKnowledgeSources).where(visibleToCompany(visibleKnowledgeSources.companyId, params.companyId)).all();
+  const provisions = db.select().from(visibleActProvisions).where(visibleToCompany(visibleActProvisions.companyId, params.companyId)).all();
+  const rules = db.select().from(visibleTaxRules).where(eq(visibleTaxRules.companyId, params.companyId)).all();
+  const tests = db.select().from(visibleTaxRuleTests).all();
 
   const provisionsBySource = new Map<string, typeof provisions>();
   for (const p of provisions) {
@@ -151,9 +152,12 @@ export function generateAuditReport(db: AppDatabase, params: { companyId: string
   const shaOfProvision = new Map(provisions.map((p) => [p.id, shaOfSource.get(p.sourceId) ?? '']));
   const review = ruleReviewResolver(db, { companyId: params.companyId });
   const rulesByReviewStatus: Record<string, number> = {};
+  let rulesRequiringHumanReview = 0;
   for (const r of rules) {
     const { status } = review({ ...r, sourceSha256: shaOfProvision.get(r.provisionId) ?? '' });
     rulesByReviewStatus[status] = (rulesByReviewStatus[status] ?? 0) + 1;
+    // Reaching `active` is what lifts the need for a person to confirm the treatment (review.ts).
+    if (r.humanReviewRequired && status !== 'active') rulesRequiringHumanReview += 1;
   }
 
   return {
@@ -164,7 +168,7 @@ export function generateAuditReport(db: AppDatabase, params: { companyId: string
     notRelevantProvisionCount: provisions.length - relevant.length,
     ruleCount: rules.length,
     rulesByReviewStatus,
-    rulesRequiringHumanReview: rules.filter((r) => r.humanReviewRequired).length,
+    rulesRequiringHumanReview,
     rulesRequiringGuidance: rules.filter((r) => r.requiresGuidance).length,
     rulesWithExceptions: rules.filter((r) => r.exceptions.length > 0).length,
     provisionsWithoutExtractedRule,

@@ -462,7 +462,9 @@ describe('the trace behind a bank line', () => {
         ['Stationery', 'IE_STD', [['T2', 2_300, 'Mar–Apr 2025']]],
         ['Labour', 'IE_RED', [['T2', 2_700, 'Mar–Apr 2025']]],
       ]);
-    expect(invoice!.lines[0]!.rules).toEqual([]); // no knowledge base loaded in this test
+    // The rule the line was coded under, read from the rules store (ADR-0021).
+    expect(invoice!.lines[0]!.rules.map((r) => [r.ruleKey, r.name])).toEqual([['vat.rate_standard_current', 'Current standard VAT rate: 23%']]);
+    expect(invoice!.lines[1]!.rules).toEqual([]);
   });
 
   it('says so when a bank line was classified with no invoice', async () => {

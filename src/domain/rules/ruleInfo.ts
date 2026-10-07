@@ -1,6 +1,8 @@
 import { and, eq } from 'drizzle-orm';
 import type { AppDatabase } from '@/db';
-import { irishActProvisions, irishKnowledgeSources, irishTaxRules } from '@/db/schema';
+import {
+  visibleActProvisionFields, visibleActProvisions, visibleKnowledgeSourceFields, visibleKnowledgeSources, visibleTaxRuleFields, visibleTaxRules,
+} from '@/db/schema';
 import type { IrishRuleCondition, IrishRuleException } from '@/db/schema';
 import { provisionCitation } from './citation';
 import { ruleReviewResolver } from './effectiveReview';
@@ -37,14 +39,14 @@ export function describeCondition(condition: IrishRuleCondition): string {
 /** The row the explanation and the citation are both built from, or null. */
 function loadRuleWithSource(db: AppDatabase, params: { companyId: string; ruleId: string }) {
   return db.select({
-    rule: irishTaxRules,
-    provision: irishActProvisions,
-    source: irishKnowledgeSources,
+    rule: visibleTaxRuleFields,
+    provision: visibleActProvisionFields,
+    source: visibleKnowledgeSourceFields,
   })
-    .from(irishTaxRules)
-    .innerJoin(irishActProvisions, eq(irishTaxRules.provisionId, irishActProvisions.id))
-    .innerJoin(irishKnowledgeSources, eq(irishActProvisions.sourceId, irishKnowledgeSources.id))
-    .where(and(eq(irishTaxRules.id, params.ruleId), eq(irishTaxRules.companyId, params.companyId)))
+    .from(visibleTaxRules)
+    .innerJoin(visibleActProvisions, eq(visibleTaxRules.provisionId, visibleActProvisions.id))
+    .innerJoin(visibleKnowledgeSources, eq(visibleActProvisions.sourceId, visibleKnowledgeSources.id))
+    .where(and(eq(visibleTaxRules.id, params.ruleId), eq(visibleTaxRules.companyId, params.companyId)))
     .get();
 }
 
@@ -158,6 +160,8 @@ export function explainRule(
   // The review the book follows (issue #718): its own decision, else the catalogue's.
   const review = ruleReviewResolver(db, { companyId: params.companyId })({ ...rule, sourceSha256: source.sha256 });
   const reviewedIn = review.from === 'catalogue' ? ` in the rules catalogue${review.by ? ` by ${review.by}` : ''}` : '';
+  // Reaching `active` is what lifts the need for a person to confirm the treatment (review.ts).
+  const humanReviewRequired = rule.humanReviewRequired && review.status !== 'active';
 
   const parts: string[] = [];
   parts.push(`Rule "${rule.name}" (${rule.ruleKey}, topic ${rule.topic}) says: ${rule.statement ?? '(no statement recorded)'}.`);
@@ -176,7 +180,7 @@ export function explainRule(
   ].filter((e): e is string => e !== null);
   if (effects.length > 0) parts.push(`Its effects are — ${effects.join('; ')}.`);
   parts.push(`It is in force from ${inForce}, and its review status is ${review.status.replace(/_/g, ' ')}${reviewedIn}`
-    + `${rule.humanReviewRequired ? '; a person must confirm any treatment it suggests' : ''}`
+    + `${humanReviewRequired ? '; a person must confirm any treatment it suggests' : ''}`
     + `${rule.requiresGuidance ? '; it needs Revenue guidance this knowledge base does not yet hold' : ''}.`);
   parts.push(`Source: ${citation.fullCitation} — ${provision.heading} (${source.title}), ${source.sourceUrl}.`);
 
@@ -196,7 +200,7 @@ export function explainRule(
       reporting: rule.reportingEffect,
     },
     reviewStatus: review.status,
-    humanReviewRequired: rule.humanReviewRequired,
+    humanReviewRequired,
     requiresGuidance: rule.requiresGuidance,
     effectiveFrom: rule.effectiveFrom,
     effectiveTo: rule.effectiveTo,

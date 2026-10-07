@@ -6,17 +6,32 @@ import { createCompany } from '../config/setup';
 import { ingestVatcaRevisedSection, deriveVatcaRevisedRules, ingestVatcaRevisedS46 } from './vatcaRevisedIngestion';
 import { setRuleReviewStatus } from './review';
 import { syncTaxRatesFromIrishRules, TAX_RATE_SYNC_MAP } from './taxRateSync';
-import { taxRates, irishTaxRules, auditEvents, reviewItems } from '@/db/schema';
+import { attachRulesStoreFromBook } from './rulesStore';
+import { taxRates, irishTaxRules, irishRuleBindings, visibleTaxRules, auditEvents, reviewItems } from '@/db/schema';
 import type { AppDatabase } from '@/db';
 
 let db: AppDatabase;
 let companyId: string;
 
-/** Approve the version in force today (a rate is a family of dated versions, issue #205). */
+/** The store row of the version in force today (a rate is a family of dated versions, issue #205). */
+const storeRow = (ruleKey: string) => db.select().from(visibleTaxRules)
+  .where(and(eq(visibleTaxRules.companyId, companyId), eq(visibleTaxRules.origin, 'store'), eq(visibleTaxRules.ruleKey, ruleKey), eq(visibleTaxRules.active, true))).get()!;
+
+/** Approve the version in force today. */
 function approve(ruleKey: string) {
-  const row = db.select({ id: irishTaxRules.id }).from(irishTaxRules)
-    .where(and(eq(irishTaxRules.companyId, companyId), eq(irishTaxRules.ruleKey, ruleKey), eq(irishTaxRules.active, true))).get()!;
-  setRuleReviewStatus(db, { ruleId: row.id, status: 'approved', reviewedBy: 'tester' });
+  setRuleReviewStatus(db, { companyId, ruleId: storeRow(ruleKey).id, status: 'approved', reviewedBy: 'tester' });
+}
+
+/**
+ * Derive the revised s.46 rates, then read them from a store built from what
+ * was derived (ADR-0021: the sync reads the store). `edit` changes the derived
+ * rows first, as a later catalogue would.
+ */
+function deriveS46(edit?: () => void) {
+  ingestVatcaRevisedS46(db, { companyId });
+  deriveVatcaRevisedRules(db, { companyId });
+  edit?.();
+  attachRulesStoreFromBook(db, { companyId });
 }
 
 function currentTaxRate(code: string) {
@@ -28,20 +43,20 @@ function currentTaxRate(code: string) {
 }
 
 beforeEach(() => {
-  ({ db } = createTestDatabase());
+  ({ db } = createTestDatabase({ rulesStore: false }));
   ({ companyId } = createCompany(db, { legalName: 'Rates Sync Ltd', seedYears: [2025] }));
 });
 
 describe('syncTaxRatesFromIrishRules', () => {
-  it('skips every mapping when nothing has been ingested/derived yet', () => {
+  it('skips every mapping when the store holds none of the curated rules', () => {
+    attachRulesStoreFromBook(db, { companyId });
     const results = syncTaxRatesFromIrishRules(db, { companyId });
     expect(results).toHaveLength(TAX_RATE_SYNC_MAP.length);
     expect(results.every((r) => r.outcome === 'skipped_no_curated_rule')).toBe(true);
   });
 
   it('skips an unapproved (ai_extracted) curated rule, never auto-applying it to live config', () => {
-    ingestVatcaRevisedS46(db, { companyId });
-    deriveVatcaRevisedRules(db, { companyId });
+    deriveS46();
 
     const results = syncTaxRatesFromIrishRules(db, { companyId });
     const standard = results.find((r) => r.ruleKey === 'vat.rate_standard_current')!;
@@ -53,8 +68,7 @@ describe('syncTaxRatesFromIrishRules', () => {
   });
 
   it('links, without changing the rate, when the approved curated figure already matches the seeded default', () => {
-    ingestVatcaRevisedS46(db, { companyId });
-    deriveVatcaRevisedRules(db, { companyId });
+    deriveS46();
     approve('vat.rate_standard_current');
 
     const before = currentTaxRate('VAT_STD')!;
@@ -67,16 +81,16 @@ describe('syncTaxRatesFromIrishRules', () => {
     expect(after.id).toBe(before.id);
     expect(after.rateBasisPoints).toBe(2300);
 
-    const curatedRow = db.select({ taxRateId: irishTaxRules.taxRateId }).from(irishTaxRules)
-      .where(and(eq(irishTaxRules.companyId, companyId), eq(irishTaxRules.ruleKey, 'vat.rate_standard_current'),
-        eq(irishTaxRules.active, true)))
-      .get()!;
-    expect(curatedRow.taxRateId).toBe(before.id);
+    // The link is the book's binding of the store version (ADR-0021); the store row is never written.
+    const curated = storeRow('vat.rate_standard_current');
+    expect(curated.taxRateId).toBe(before.id);
+    expect(db.select().from(irishRuleBindings).where(eq(irishRuleBindings.companyId, companyId)).all()
+      .map((b) => [b.ruleKey, b.ruleVersion, b.taxRateId, b.recordedBy]))
+      .toEqual([['vat.rate_standard_current', curated.ruleVersion, before.id, 'tax_rate_sync']]);
   });
 
   it('is idempotent: a second run reports unchanged, not linked again', () => {
-    ingestVatcaRevisedS46(db, { companyId });
-    deriveVatcaRevisedRules(db, { companyId });
+    deriveS46();
     approve('vat.rate_standard_current');
 
     syncTaxRatesFromIrishRules(db, { companyId });
@@ -86,17 +100,14 @@ describe('syncTaxRatesFromIrishRules', () => {
   });
 
   it('supersedes (never edits in place) when the approved curated figure genuinely differs, with a derived-source audit event', () => {
-    ingestVatcaRevisedS46(db, { companyId });
-    deriveVatcaRevisedRules(db, { companyId });
-    approve('vat.rate_standard_current');
-
     // Simulate a rate change the curated source has since picked up: a later
     // (but already-in-force) effective date and a different figure than the
     // seeded default — lookupTaxRule only returns rules in force as of today,
     // so this must be in the past relative to the test run.
-    db.update(irishTaxRules).set({ numericValue: 24, effectiveFrom: '2025-06-01' })
+    deriveS46(() => db.update(irishTaxRules).set({ numericValue: 24, effectiveFrom: '2025-06-01' })
       .where(and(eq(irishTaxRules.companyId, companyId), eq(irishTaxRules.ruleKey, 'vat.rate_standard_current')))
-      .run();
+      .run());
+    approve('vat.rate_standard_current');
 
     const before = currentTaxRate('VAT_STD')!;
     const results = syncTaxRatesFromIrishRules(db, { companyId });

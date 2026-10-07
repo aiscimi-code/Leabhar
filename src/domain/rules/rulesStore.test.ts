@@ -50,8 +50,8 @@ const byKey = (rows: Row[], key: (r: Row) => string) => new Map(rows.map((r) => 
 const sorted = (rows: Row[]) => rows.map((r) => JSON.stringify(r)).sort();
 
 /** Where a provision sits, the same in any database: its source's citation and hash, and its section. */
-const PROVISION_REF = `(SELECT s.citation || '|' || s.sha256 || '|' || p.section_number
-  FROM irish_act_provisions p JOIN irish_knowledge_sources s ON s.id = p.source_id WHERE p.id = %s)`;
+const PROVISION_REF = `(SELECT ref_s.citation || '|' || ref_s.sha256 || '|' || ref_p.section_number
+  FROM irish_act_provisions ref_p JOIN irish_knowledge_sources ref_s ON ref_s.id = ref_p.source_id WHERE ref_p.id = %s)`;
 const provisionRef = (column: string) => PROVISION_REF.replace('%s', column);
 
 describe('the rules store', () => {

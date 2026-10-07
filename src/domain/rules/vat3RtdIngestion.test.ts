@@ -154,7 +154,7 @@ describe('deriveVat3RtdRules (issue #439)', () => {
     const rule = db.select().from(irishTaxRules)
       .where(and(eq(irishTaxRules.companyId, companyId), eq(irishTaxRules.ruleKey, 'rtd.annual_return_required'), eq(irishTaxRules.active, true))).get()!;
     expect(rule.crossReferences).toEqual(['Value-Added Tax Consolidation Act 2010 s.76', 'S.I. 639/2010 reg.24']);
-    const deps = resolveRuleDependencies(db, { ruleId: rule.id });
+    const deps = resolveRuleDependencies(db, { companyId, ruleId: `${rule.ruleKey}@${rule.ruleVersion}` });
     const s76 = deps.find((d) => d.reference === 'Value-Added Tax Consolidation Act 2010 s.76')!;
     expect(s76.resolved).toBe(true);
     expect(s76.provision!.sectionNumber).toBe('76');

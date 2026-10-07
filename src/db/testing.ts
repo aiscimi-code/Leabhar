@@ -12,12 +12,14 @@ import { createCompany, addBankAccount, type CreateCompanyInput } from '@/domain
  * could drift from production. The rules store is attached as the app
  * attaches it (ADR-0021 §2): the one built for the test run.
  */
-export function createTestDatabase() {
+export function createTestDatabase(options: { rulesStore?: boolean } = {}) {
   const sqlite = openSqlite(':memory:');
   const db = drizzle(sqlite, { schema });
   migrate(db, { migrationsFolder: './drizzle' });
-  // The store the test run built once (vitest.globalSetup.ts), as a book sees it.
-  attachRulesStore(sqlite);
+  // The store the test run built once (vitest.globalSetup.ts), as a book sees
+  // it. `rulesStore: false` leaves it out, for a caller that derives its own
+  // rules and attaches a store built from them (`attachRulesStoreFromBook`).
+  if (options.rulesStore !== false) attachRulesStore(sqlite);
   return { db, sqlite };
 }
 

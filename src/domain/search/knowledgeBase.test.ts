@@ -8,7 +8,8 @@ import {
   searchProvisions, searchStatutoryRules, searchKnowledgeSources,
   semanticSearchProvisions, statuteSourceIndex, sourceProvisions, stem, tokenize,
 } from './knowledgeBase';
-import { irishActProvisions, irishKnowledgeSources } from '@/db/schema';
+import { irishActProvisions, irishKnowledgeSources, irishRuleVersionsRetained } from '@/db/schema';
+import { attachRulesStoreFromBook } from '../rules/rulesStore';
 import { ids } from '@/lib/ids';
 import { search } from './search';
 import type { AppDatabase } from '@/db';
@@ -57,8 +58,10 @@ describe('searchProvisions', () => {
     expect(byHeading.some((h) => h.matchedOn === 'Provision heading' || h.matchedOn === 'Provision text')).toBe(true);
   });
 
-  it('scopes to the company and ignores a too-short query', () => {
-    expect(searchProvisions(db, { companyId: otherCompanyId, query: 'reverse charge' })).toEqual([]);
+  it('finds the store\'s law for every company, and ignores a too-short query', () => {
+    // The store is the install's (ADR-0021); what stays with one book is tested below.
+    expect(searchProvisions(db, { companyId: otherCompanyId, query: 'reverse charge' }))
+      .toEqual(searchProvisions(db, { companyId, query: 'reverse charge' }));
     expect(searchProvisions(db, { companyId, query: 'v' })).toEqual([]);
   });
 });
@@ -91,7 +94,6 @@ describe('semanticSearchProvisions', () => {
 
   it('returns nothing for a query with no meaningful terms', () => {
     expect(semanticSearchProvisions(db, { companyId, query: 'the of and' })).toEqual([]);
-    expect(semanticSearchProvisions(db, { companyId: otherCompanyId, query: 'hotel accommodation' })).toEqual([]);
   });
 });
 
@@ -122,6 +124,8 @@ describe('semanticSearchProvisions ranking on a controlled corpus', () => {
       'The rate of value-added tax on supplies of livestock is the livestock rate.');
     insert('3', 'Appeals',
       'A person aggrieved by an assessment may appeal to the Appeal Commissioners within thirty days.');
+    // Search reads the store (ADR-0021): one built from this corpus alone.
+    attachRulesStoreFromBook(db, { companyId: rankingCompanyId });
   });
 
   it('ranks the provision that shares the question\'s subject first', () => {
@@ -159,9 +163,11 @@ describe('searchStatutoryRules and searchKnowledgeSources', () => {
     expect(hits[0]!.matchedOn).toBe('Citation');
   });
 
-  it('scopes both to the company', () => {
-    expect(searchStatutoryRules(db, { companyId: otherCompanyId, query: 'reverse charge' })).toEqual([]);
-    expect(searchKnowledgeSources(db, { companyId: otherCompanyId, query: '2010 Act 31' })).toEqual([]);
+  it('finds the store\'s rules and sources for every company', () => {
+    expect(searchStatutoryRules(db, { companyId: otherCompanyId, query: 'reverse charge' }))
+      .toEqual(searchStatutoryRules(db, { companyId, query: 'reverse charge' }));
+    expect(searchKnowledgeSources(db, { companyId: otherCompanyId, query: '2010 Act 31' }))
+      .toEqual(searchKnowledgeSources(db, { companyId, query: '2010 Act 31' }));
   });
 });
 
@@ -198,8 +204,20 @@ describe('global search integration (issue #445)', () => {
     expect(source!.href).toMatch(/^\/statutes\?source=/);
   });
 
-  it('never leaks another company\'s knowledge base into search', () => {
-    const response = search(db, { companyId: otherCompanyId, query: 'reverse charge' });
-    expect(response.results.filter((r) => r.type.startsWith('statutory') || r.type === 'knowledge_source')).toEqual([]);
+  it('never leaks one book\'s own rule versions into another company\'s search', () => {
+    // A version the move onto the store kept (ADR-0021) is the book's alone.
+    db.insert(irishRuleVersionsRetained).values({
+      id: ids.ruleVersionRetained(), companyId, ruleKey: 'vat.zanzibar_levy', ruleVersion: 1, bookRuleId: 'itr_old', reason: 'no_store_version',
+      sourceCitation: 'Zanzibar Levy Act 1999', sourceSha256: 'f'.repeat(64), sectionNumber: '1',
+      ruleType: 'rate', topic: 'vat', taxHeads: ['vat'], name: 'Zanzibar levy, as the book held it',
+      statement: 'the zanzibar levy', numericValue: null, unit: null, conditions: [], exceptions: [],
+      reviewStatus: 'ai_extracted', effectiveFrom: '2001-01-01', effectiveTo: null,
+      sourceTitle: 'Zanzibar Levy Act 1999', sourceType: 'legislation', sourceUrl: 'https://example.ie/zanzibar',
+      provisionHeading: 'Zanzibar levy', provisionText: 'A zanzibar levy is charged.', provisionCategory: 'vat',
+    }).run();
+    const statutory = (id: string) => search(db, { companyId: id, query: 'zanzibar' }).results
+      .filter((r) => r.type.startsWith('statutory') || r.type === 'knowledge_source');
+    expect(statutory(companyId).length).toBeGreaterThan(0);
+    expect(statutory(otherCompanyId)).toEqual([]);
   });
 });

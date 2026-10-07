@@ -3,7 +3,8 @@ import { eq } from 'drizzle-orm';
 import { createTestDatabase } from '@/db/testing';
 import { createCompany } from '../config/setup';
 import { ingestFinanceAct2024FromCatalogue, deriveTaxRules } from './irishRules';
-import { generateDefaultTestCases, runTestCases } from './testCases';
+import { generateDefaultTestCases, runTestCases as runStoredTestCases } from './testCases';
+import { attachRulesStoreFromBook } from './rulesStore';
 import { irishTaxRules } from '@/db/schema';
 import type { AppDatabase } from '@/db';
 
@@ -16,6 +17,12 @@ beforeEach(() => {
   ingestFinanceAct2024FromCatalogue(db, { companyId });
   deriveTaxRules(db, { companyId });
 });
+
+/** Run the cases against a store built from what this book derived and generated (ADR-0021: readers read the store). */
+function runTestCases(database: AppDatabase, params: { companyId: string }) {
+  attachRulesStoreFromBook(database, params);
+  return runStoredTestCases(database, params);
+}
 
 describe('generateDefaultTestCases / runTestCases', () => {
   it('writes a positive and an effective-date case per active rule, and all pass', () => {

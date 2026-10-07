@@ -18,7 +18,7 @@ import {
   journalEntries, journalLines, auditEvents, rules, fixedAssets, taxRates,
   documentMatches, statementImports, companyOfficers, documentExtractions,
   invoices, invoiceLines, payments, paymentAllocations, reminderLetters,
-  irishActProvisions, irishKnowledgeSources, irishTaxRules,
+  visibleActProvisionFields, visibleActProvisions, visibleKnowledgeSourceFields, visibleKnowledgeSources, visibleTaxRules,
   expenseClaims, expenseClaimLines, expenseRates, users, companyMembers, expectedBills,
 } from '@/db/schema';
 import { trialBalance, balancesBySystemKey, accountBalance } from '@/domain/accounting/ledger';
@@ -52,6 +52,7 @@ import { capitalGoodsOverview } from '@/domain/vat/capitalGoods';
 import { money } from '@/lib/format';
 import { expenseRatesActiveOn } from '@/domain/expenses/rates';
 import { ruleReviewResolver } from '@/domain/rules/effectiveReview';
+import { visibleToCompany } from '@/domain/rules/visibleRules';
 
 /**
  * Read-side queries for the UI.
@@ -1016,20 +1017,20 @@ export function statutoryVatSuggestion(transactionId: string) {
 export function provisionDetail(provisionId: string) {
   const db = getDb();
   const company = requireCompany();
-  const row = db.select({ provision: irishActProvisions, source: irishKnowledgeSources })
-    .from(irishActProvisions)
-    .innerJoin(irishKnowledgeSources, eq(irishActProvisions.sourceId, irishKnowledgeSources.id))
-    .where(and(eq(irishActProvisions.id, provisionId), eq(irishActProvisions.companyId, company.id))).get();
+  const row = db.select({ provision: visibleActProvisionFields, source: visibleKnowledgeSourceFields })
+    .from(visibleActProvisions)
+    .innerJoin(visibleKnowledgeSources, eq(visibleActProvisions.sourceId, visibleKnowledgeSources.id))
+    .where(and(eq(visibleActProvisions.id, provisionId), visibleToCompany(visibleActProvisions.companyId, company.id))).get();
   if (!row) return null;
   // Each shown with the review the book follows: its own decision, else the catalogue's (issue #718).
   const review = ruleReviewResolver(db, { companyId: company.id });
-  const rulesCiting = db.select().from(irishTaxRules)
-    .where(and(eq(irishTaxRules.provisionId, provisionId), eq(irishTaxRules.companyId, company.id)))
+  const rulesCiting = db.select().from(visibleTaxRules)
+    .where(and(eq(visibleTaxRules.provisionId, provisionId), eq(visibleTaxRules.companyId, company.id)))
     .all()
     .map((r) => ({ ...r, reviewStatus: review({ ...r, sourceSha256: row.source.sha256 }).status as typeof r.reviewStatus }));
   // Each citing rule's cross-references, resolved against what this book holds (issue #438).
   const dependencies = Object.fromEntries(rulesCiting.map((r) =>
-    [r.id, r.crossReferences.length ? resolveRuleDependencies(db, { ruleId: r.id }) : []]));
+    [r.id, r.crossReferences.length ? resolveRuleDependencies(db, { companyId: company.id, ruleId: r.id }) : []]));
   // What each rule relies on, and what relies on it, through the rule links (ADR-0020, issue #686).
   const keys = [...new Set(rulesCiting.map((r) => r.ruleKey))];
   const reliesOn = Object.fromEntries(keys.map((ruleKey) => [ruleKey, ruleDepends(db, { companyId: company.id, ruleKey }).rules]));
