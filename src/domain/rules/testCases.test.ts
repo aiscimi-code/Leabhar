@@ -5,7 +5,7 @@ import { createCompany } from '../config/setup';
 import { ingestFinanceAct2024FromCatalogue, deriveTaxRules } from './irishRules';
 import { generateDefaultTestCases, runTestCases as runStoredTestCases } from './testCases';
 import { attachRulesStoreFromBook } from './rulesStore';
-import { irishTaxRules } from '@/db/schema';
+import { irishTaxRules, irishTaxRuleTests } from '@/db/schema';
 import type { AppDatabase } from '@/db';
 
 let db: AppDatabase;
@@ -25,33 +25,33 @@ function runTestCases(database: AppDatabase, params: { companyId: string }) {
 }
 
 describe('generateDefaultTestCases / runTestCases', () => {
-  it('writes a positive and an effective-date case per active rule, and all pass', () => {
+  it('writes an effective-date case per active rule, and all pass', () => {
     const gen = generateDefaultTestCases(db, { companyId });
-    expect(gen.created).toBe(4); // 2 curated rules x 2 cases each
+    expect(gen.created).toBe(2); // 2 curated rules x 1 case each
     expect(gen.skipped).toBe(0);
+    expect(db.select().from(irishTaxRuleTests).all().map((t) => t.testType)).toEqual(['effective_date', 'effective_date']);
 
     const run = runTestCases(db, { companyId });
-    expect(run.total).toBe(4);
+    expect(run.total).toBe(2);
     expect(run.failed).toBe(0);
-    expect(run.passed).toBe(4);
+    expect(run.passed).toBe(2);
   });
 
   it('is idempotent: a second generate call skips rules that already have cases', () => {
     generateDefaultTestCases(db, { companyId });
     const second = generateDefaultTestCases(db, { companyId });
     expect(second.created).toBe(0);
-    expect(second.skipped).toBe(4);
+    expect(second.skipped).toBe(2);
   });
 
   it('a genuinely broken rule shows up as a failing test, not a silent pass', () => {
     generateDefaultTestCases(db, { companyId });
-    // Sabotage: disable a rule after its "positive" test case (expects a
-    // match) was generated, so the lookup can no longer find it as a candidate.
-    db.update(irishTaxRules).set({ enabled: false })
+    // Sabotage: move a rule's start a year earlier after its case was
+    // generated, so it applies on the day its case says it must not.
+    db.update(irishTaxRules).set({ effectiveFrom: '2024-01-01' })
       .where(eq(irishTaxRules.ruleKey, 'usc.medical_card_2pct_threshold')).run();
 
     const run = runTestCases(db, { companyId });
-    expect(run.failed).toBeGreaterThan(0);
-    expect(run.failures.length).toBeGreaterThan(0);
+    expect(run.failures).toEqual([expect.objectContaining({ expected: false, actual: true })]);
   });
 });

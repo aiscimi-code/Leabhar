@@ -1,12 +1,11 @@
 import { describe, it, expect, beforeAll } from 'vitest';
 import { containsIgnoringLayout } from './lrcAnnotations';
 import { readFileSync, existsSync } from 'node:fs';
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { createTestDatabase } from '@/db/testing';
 import { createCompany } from '../config/setup';
 import { statuteFilePath, verifyStatuteFile } from './knowledgeBase';
-import { generateDefaultTestCases } from './testCases';
-import { irishKnowledgeSources, irishActProvisions, irishTaxRules, irishTaxRuleTests } from '@/db/schema';
+import { visibleActProvisions, visibleKnowledgeSources, visibleTaxRules, visibleTaxRuleTests } from '@/db/schema';
 import { normaliseSpace } from '../vat/boxDefinitions';
 import type { AppDatabase } from '@/db';
 
@@ -19,19 +18,24 @@ let companyId: string;
  * date from the source rather than the day it was fetched, quotes text that is
  * verbatim recoverable from the cited file as re-read now (AGENTS.md #5), and
  * — where it takes part in transaction matching — has a stored test case.
+ * It reads the rules store the book attaches (ADR-0021), where the rules and
+ * their cases live; a book holds none of its own.
  */
 beforeAll(() => {
   ({ db } = createTestDatabase());
   ({ companyId } = createCompany(db, { legalName: 'Provenance Ltd', vatRegistrationStatus: 'registered', seedYears: [2025] }));
-  generateDefaultTestCases(db, { companyId });
 });
 
 describe('every derived rule carries its provenance (issue #442)', () => {
   /** Only rules a lookup can return: active and enabled. */
-  const rules = () => db.select().from(irishTaxRules).where(eq(irishTaxRules.companyId, companyId)).all()
-    .filter((r) => r.active && r.enabled);
-  const provisions = () => db.select().from(irishActProvisions).all();
-  const sources = () => db.select().from(irishKnowledgeSources).all();
+  const rules = () => {
+    const all = db.select().from(visibleTaxRules)
+      .where(and(eq(visibleTaxRules.companyId, companyId), eq(visibleTaxRules.origin, 'store'))).all();
+    expect(all.length).toBeGreaterThan(0); // a check over no rules proves nothing
+    return all.filter((r) => r.active && r.enabled);
+  };
+  const provisions = () => db.select().from(visibleActProvisions).where(eq(visibleActProvisions.origin, 'store')).all();
+  const sources = () => db.select().from(visibleKnowledgeSources).where(eq(visibleKnowledgeSources.origin, 'store')).all();
 
   it('every rule resolves to a source with a URL', () => {
     const byId = new Map(provisions().map((p) => [p.id, p]));
@@ -123,7 +127,7 @@ describe('every derived rule carries its provenance (issue #442)', () => {
   });
 
   it('every rule that matches transactions has a stored test case', () => {
-    const cases = db.select().from(irishTaxRuleTests).all();
+    const cases = db.select().from(visibleTaxRuleTests).all();
     const rulesWithCases = new Set(cases.map((c) => c.ruleId));
     for (const rule of rules()) {
       if (!rule.conditions.length) continue; // reporting/definition rules are not transaction-matched

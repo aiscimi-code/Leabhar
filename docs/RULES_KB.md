@@ -321,9 +321,10 @@ gone. In their place, every open checks the book against the store
   one review item saying the changes cannot be listed.
 
 The copied tables are dropped a release later (step 5).
-`irish-rules generate-tests` still writes into the book, where
-`irish-rules test` does not read; `test` fails rather than pass with no cases
-until the store build ships them (#723).
+The store build generates the default test cases and ships them with the
+versions they test (#723); `irish-rules test` runs them, and
+`irish-rules generate-tests` does nothing. A store built before then has no
+cases, and `test` fails rather than pass with none.
 Some curated rules stamp `source_date` with the moment they were derived, so
 in the store it is the build time: a reader must not take it for a date the
 source stated.
@@ -1543,10 +1544,12 @@ rule extracted by this v1 pipeline starts, and today remains, `ai_extracted`
 ## Testing
 
 `generateDefaultTestCases`/`runTestCases`
-(`src/domain/rules/testCases.ts`) write and run a positive case (rule applies
-on its effective-from date) and an effective-date case (the same context, one
-day earlier, where it must not yet apply) per active rule — a floor, not a
-substitute. The hand-written suite in `transactionLookup.test.ts` covers all
+(`src/domain/rules/testCases.ts`) write and run an effective-date case per
+active rule version: a transaction on its topic the day before it takes
+effect, where that version must not yet apply. The store build writes them,
+so they ship in `rules.db` keyed `key@version` (#723), and a case passes only
+when that version, not just its key, is absent: the day before a later
+version starts, the earlier one applies. They are a floor, not a substitute. The hand-written suite in `transactionLookup.test.ts` covers all
 five case types the task asks for against real data:
 
 | Type | Test |
@@ -1567,12 +1570,8 @@ stored test case.
 
 `npm test` and `npm run typecheck` both pass as of this change.
 
-Note: `generateDefaultTestCases`'s synthetic positive case only sets `topic`
-and `transactionDate` — for a VATCA rule whose conditions need other fields
-(`supplyType`, `vatRegistered`, ...) that generic context correctly fails to
-satisfy them, so `npm run cli:rules -- test` shows 3 "failures" for the
-condition-bearing VATCA rules. That is the generator's known limitation, not
-a defect in the rules themselves — see "Limitations".
+`generateDefaultTestCases` writes no positive case — see "Limitations".
+`npm run cli:rules -- test` passes every case on a freshly built store.
 
 ## Audit report
 
@@ -1612,8 +1611,8 @@ show-provision --section <n>
 list-rules [--topic <t>] [--status <s>]
 review --rule <id> --status <s> --by <name> [--notes "..."]
 lookup --json '<transaction context>'
-generate-tests
-test                        Exit code 1 if any test case fails
+generate-tests              Does nothing: the cases ship with the rules store
+test                        Exit code 1 if any test case fails, or there are none
 audit
 impact <ruleKey|provisionId|reference>
                             What relies on a rule or provision, transitively, and the computations reading it
@@ -1624,6 +1623,15 @@ depends <ruleKey>           What a rule relies on: rules, and the provisions beh
 
 ## Limitations (explicit, not hidden)
 
+- **The generated test cases include no positive case** (#723). A lookup
+  works out a transaction's topics from what it says (description, supply
+  type, registration, and so on), not from a topic name, so a synthetic
+  transaction that only names the rule's topic does not bring most rules into
+  the lookup, conditioned or not: of 391 active versions, 300 such cases
+  failed, 203 of them on rules with no conditions. Only the effective-date
+  case ships. Positive coverage lives in the hand-written suites
+  (`transactionLookup.test.ts` and each ingestion test) until the generator
+  can build a transaction that brings a given rule into the lookup.
 - **The Finance Act 2024 and VATCA 2010's *enacted* text are ingested in
   full; the Taxes Consolidation Act 1997 (which the Finance Act amends, and
   which VATCA cross-refers to constantly) is not**, apart from the single

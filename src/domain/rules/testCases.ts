@@ -2,23 +2,20 @@
  * Generated test cases for extracted rules (task Phase 6: "for every
  * extracted rule where practical, generate automated tests").
  *
- * `generateDefaultTestCases` writes a positive case (the rule's topic, dated
- * on its effective-from date) and an effective-date case (the same context,
- * dated one day earlier, where the rule must NOT yet apply) per rule. This is
- * a floor, not a substitute for the hand-written positive/negative/exception/
- * boundary cases in `transactionLookup.test.ts` — those cover conditions and
- * exceptions this generator cannot infer on its own.
+ * `generateDefaultTestCases` writes one effective-date case per active rule:
+ * a transaction on the rule's topic dated the day before the rule takes
+ * effect, where that version must NOT apply. The store build runs it, so the
+ * cases ship in `rules.db` with every version (ADR-0021, #723); a book never
+ * holds cases of its own. This is a floor, not a substitute for the
+ * hand-written positive/negative/exception/boundary cases in
+ * `transactionLookup.test.ts`.
  *
- * Known limitation: the synthetic "positive" context only sets `topic` and
- * `transactionDate` — for a rule whose `conditions` require other fields
- * (e.g. VATCA's reverse-charge rule needs `supplyType`/`supplierCountry`/
- * `vatRegistered`), that context correctly does NOT satisfy them, so the
- * generated positive case fails `runTestCases` by design, not by bug. Real
- * positive coverage for a condition-bearing rule lives in
- * `transactionLookup.test.ts`, which builds a context that actually meets
- * its conditions. `npm run cli:rules -- test` will show these as failures;
- * that is expected until this generator learns to synthesize a satisfying
- * context per condition (see docs/RULES_KB.md "Limitations").
+ * It writes no positive case. A lookup works out a transaction's topics from
+ * what the transaction says (its description, supply type, registration and
+ * so on), not from a topic name, so a context that only names the topic never
+ * brings most rules into the lookup, with or without conditions. A positive
+ * case waits until the generator can build a transaction that does (see
+ * docs/RULES_KB.md "Limitations").
  */
 import { and, eq } from 'drizzle-orm';
 import type { AppDatabase } from '@/db';
@@ -49,30 +46,18 @@ export function generateDefaultTestCases(
       .where(eq(irishTaxRuleTests.ruleId, rule.id)).all();
     if (existing.length > 0) { skipped += existing.length; continue; }
 
-    const baseInput: TransactionContext = {
-      transactionDate: rule.effectiveFrom,
-      amountMinor: 100000,
-      transactionType: rule.topic,
-      description: `Test transaction for ${rule.name}`,
-    };
-
-    db.insert(irishTaxRuleTests).values({
-      id: ids.taxRuleTest(),
-      ruleId: rule.id,
-      testType: 'positive',
-      description: `${rule.name} applies on its effective-from date (${rule.effectiveFrom}).`,
-      input: baseInput,
-      expected: { matches: true },
-    }).run();
-    created++;
-
     const dayBefore = addDays(asIsoDate(rule.effectiveFrom), -1);
     db.insert(irishTaxRuleTests).values({
       id: ids.taxRuleTest(),
       ruleId: rule.id,
       testType: 'effective_date',
       description: `${rule.name} does not yet apply the day before it takes effect (${dayBefore}).`,
-      input: { ...baseInput, transactionDate: dayBefore },
+      input: {
+        transactionDate: dayBefore,
+        amountMinor: 100000,
+        transactionType: rule.topic,
+        description: `Test transaction for ${rule.name}`,
+      } satisfies TransactionContext,
       expected: { matches: false },
     }).run();
     created++;
@@ -116,7 +101,9 @@ export function runTestCases(
       companyId: params.companyId,
       transaction: test.input as TransactionContext,
     });
-    const actual = result.applicableRules.some((r) => r.ruleKey === rule.ruleKey);
+    // The case is about this version. The day before a later version takes
+    // effect, the earlier version of the same key applies, and that is no match.
+    const actual = result.applicableRules.some((r) => r.ruleId === rule.id);
     const ok = actual === test.expected.matches;
 
     if (ok) {
