@@ -196,14 +196,34 @@ export default async function ProvisionPage({ params, searchParams }: {
                   <td>
                     <span className="font-mono break-all text-[11px]">{s.sha256}</span>
                     <div>
-                      {!file.exists
-                        ? <Badge tone="negative">File missing</Badge>
-                        : file.sha256Matches
-                          ? <Badge tone="positive">File unchanged since ingest</Badge>
-                          : <Badge tone="negative">File has changed since ingest</Badge>}
+                      {file.replacedBy
+                        ? <Badge tone="caution">Statute copy replaced by the catalogue</Badge>
+                        : !file.exists
+                          ? <Badge tone="negative">File missing</Badge>
+                          : file.sha256Matches
+                            ? <Badge tone="positive">File unchanged since ingest</Badge>
+                            : <Badge tone="negative">File has changed since ingest</Badge>}
                     </div>
                   </td>
                 </tr>
+                {file.replacedBy && (
+                  <tr>
+                    <td className="text-ink-faint">
+                      Replaced by
+                      <Help>This book read the provision from a statute copy that has since moved to the rules catalogue. The entry named here holds the same section in the same words. The local file and SHA-256 above are what the book recorded, and are kept as they were.</Help>
+                    </td>
+                    <td>
+                      <span className="font-mono text-[11px] break-all">{file.replacedBy.entry}</span>
+                      <div>
+                        {!file.replacedBy.check.exists
+                          ? <Badge tone="negative">Official file missing</Badge>
+                          : file.replacedBy.check.sha256Matches
+                            ? <Badge tone="positive">Official file matches the entry</Badge>
+                            : <Badge tone="negative">Official file has changed</Badge>}
+                      </div>
+                    </td>
+                  </tr>
+                )}
                 <tr>
                   <td className="text-ink-faint">Offsets</td>
                   <td className="num !text-left">{p.sourceStart ?? '—'}–{p.sourceEnd ?? '—'}</td>
@@ -219,14 +239,25 @@ export default async function ProvisionPage({ params, searchParams }: {
             </table>
           </Panel>
 
-          <Panel
-            title="File slice at the stored offsets"
-            description="Read from the file just now, not from the database."
-          >
-            <pre className="px-4 py-3 whitespace-pre-wrap text-[11px] leading-relaxed max-h-[70vh] overflow-auto">
-              {file.slice ?? 'No slice available.'}
-            </pre>
-          </Panel>
+          {file.replacedBy ? (
+            <Panel
+              title="The catalogue entry's excerpt"
+              description="Read from the entry that replaced the statute copy just now, not from the database."
+            >
+              <pre className="px-4 py-3 whitespace-pre-wrap text-[11px] leading-relaxed max-h-[70vh] overflow-auto">
+                {file.replacedBy.check.slice ?? 'No excerpt available.'}
+              </pre>
+            </Panel>
+          ) : (
+            <Panel
+              title="File slice at the stored offsets"
+              description="Read from the file just now, not from the database."
+            >
+              <pre className="px-4 py-3 whitespace-pre-wrap text-[11px] leading-relaxed max-h-[70vh] overflow-auto">
+                {file.slice ?? 'No slice available.'}
+              </pre>
+            </Panel>
+          )}
         </div>
       </div>
     </Page>

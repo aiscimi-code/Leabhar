@@ -44,7 +44,10 @@ import { deriveCuratedRuleFamilies } from './incomeTaxIngestion';
 import { CAR_EMISSIONS_CURATED_RULES } from './carEmissionsCuration';
 import { syncRuleLinks } from './ruleLinks';
 import { taxHeadsFor } from './taxHeads';
-import { CATALOGUE_DIR, CATALOGUE_ENTRIES, catalogueEntryPath, catalogueOfficialFilePath, ingestCatalogueFile, readCatalogueEntry } from './catalogue';
+import {
+  CATALOGUE_DIR, CATALOGUE_ENTRIES, catalogueEntryForProvision, catalogueEntryPath, catalogueOfficialFilePath,
+  ingestCatalogueFile, readCatalogueEntry,
+} from './catalogue';
 
 /** Derive steps, in the order the CLI documents them (thresholds after FA 2024 is ingested). */
 const DERIVES: Array<(db: AppDatabase, params: { companyId: string }) => unknown> = [
@@ -139,6 +142,40 @@ export interface StatuteFileCheck {
   sha256Matches: boolean;
   /** The file's text between the provision's stored offsets. */
   slice: string | null;
+}
+
+/** A provision's file check, and, when its statute copy is gone, the catalogue entry that replaced it (#700). */
+export interface ProvisionEvidenceCheck extends StatuteFileCheck {
+  /**
+   * The entry with the source's citation whose provision says the same
+   * words, and its kept official file checked against the entry's own hash.
+   * Set only when the held copy is missing. The held path and hash are left
+   * as they were (AGENTS.md #7); this explains the difference.
+   */
+  replacedBy: { entry: string; check: StatuteFileCheck } | null;
+}
+
+/**
+ * Re-check the file one provision was read from. A book that read a source
+ * from its statute copy before the copy moved to the catalogue still names
+ * the copy, which is gone. Then the entry that holds the same section in the
+ * same words is checked instead, and named, so the viewer does not report
+ * the evidence as lost.
+ */
+export function checkProvisionEvidence(
+  source: { localPath: string | null; sha256: string; citation: string },
+  provision: { sourceStart: number | null; sourceEnd: number | null; sectionNumber: string; provisionText: string | null },
+  root?: string,
+): ProvisionEvidenceCheck {
+  const check = verifyStatuteFile(source.localPath, source.sha256, provision.sourceStart, provision.sourceEnd, root, provision.sectionNumber);
+  if (check.exists || !source.localPath || source.localPath.startsWith(`${CATALOGUE_DIR}/`)) return { ...check, replacedBy: null };
+  const ported = catalogueEntryForProvision({ citation: source.citation, sectionNumber: provision.sectionNumber, text: provision.provisionText }, root);
+  if (!ported) return { ...check, replacedBy: null };
+  const entryPath = `${CATALOGUE_DIR}/${ported.name}`;
+  return {
+    ...check,
+    replacedBy: { entry: entryPath, check: verifyStatuteFile(entryPath, ported.entry.source.sha256, null, null, root, provision.sectionNumber) },
+  };
 }
 
 /**

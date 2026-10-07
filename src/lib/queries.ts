@@ -37,7 +37,7 @@ import { reconcileBankAccount, reconciliationHistory } from '@/domain/banking/re
 import { search } from '@/domain/search/search';
 import { suggestVatTreatment } from '@/domain/rules/vatSuggestion';
 import { listAccountMappings } from '@/domain/config/accountMappings';
-import { verifyStatuteFile } from '@/domain/rules/knowledgeBase';
+import { checkProvisionEvidence } from '@/domain/rules/knowledgeBase';
 import { resolveRuleDependencies } from '@/domain/rules/dependencies';
 import { ruleDepends, ruleImpact } from '@/domain/rules/ruleImpact';
 import { documentReviewValues } from '@/domain/documents/review';
@@ -1038,8 +1038,7 @@ export function provisionDetail(provisionId: string) {
     [ruleKey, ruleImpact(db, { companyId: company.id, target: { kind: 'rule', ruleKey } })]));
   const reliedOnBy = Object.fromEntries(keys.map((k) => [k, impacts[k]!.affected]));
   const readBy = Object.fromEntries(keys.map((k) => [k, impacts[k]!.consumers]));
-  return { ...row, rulesCiting, dependencies, reliesOn, reliedOnBy, readBy, file: verifyStatuteFile(row.source.localPath, row.source.sha256,
-    row.provision.sourceStart, row.provision.sourceEnd, undefined, row.provision.sectionNumber) };
+  return { ...row, rulesCiting, dependencies, reliesOn, reliedOnBy, readBy, file: checkProvisionEvidence(row.source, row.provision) };
 }
 
 /** The capital goods record and the purchase invoices a good can be registered from (issue #208). */
