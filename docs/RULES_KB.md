@@ -244,9 +244,34 @@ adds the new versions to the list; it never removes or rehashes one. The
 gate checks the same thing (`rulesStore.test.ts`), along with the store
 holding, by content, what a freshly loaded book holds.
 
-**Not yet.** Books still load and read their own copies. The book tables and
-migration, the readers' switch to the attached store, and the end of
-"load statutory rules" follow in ADR-0021's delivery steps 2 to 5.
+**Moving a book onto the store (ADR-0021 §6).** `migrateBookToRulesStore`
+(`rulesStoreMigration.ts`) opens the store read-only (`openRulesStore`, which
+fails, naming `npm run rules:build`, on a store that is missing, unreadable,
+of another format, or built from a catalogue other than the installed one),
+takes a backup, and then, in one transaction, writes four append-only book
+tables:
+
+- `irish_rule_version_map`: each of the book's versions and the catalogue
+  version saying the same thing (dates, quote, value and unit). Decisions and
+  `invoice_lines.vat_rule_versions` keep the book's numbers and are read
+  through the map; neither is rewritten.
+- `irish_rule_versions_retained`: a book version no store version says the
+  same as, or more than one does, copied frozen and raised as a review item.
+  A version closed the day it opened (a correction closes the old wording
+  so) is kept too, and raised only when a decision, a posted line or a
+  binding refers to it.
+- `irish_rule_bindings`: `tax_rate_id` and `vat_treatment_id`, under the
+  catalogue's number. A binding on a retained version is not moved; its
+  review item says so.
+- `rules_store_seen`: the signature of the store the book opened.
+
+Running it again maps only versions not yet mapped or kept, and records a
+binding only when it changed. The book's copied rule tables are not touched.
+
+**Not yet.** Books still load and read their own copies, and nothing runs the
+migration yet. The readers' switch to the attached store, the end of
+"load statutory rules", and dropping the copied tables follow in ADR-0021's
+delivery steps 3 to 5.
 Some curated rules stamp `source_date` with the moment they were derived, so
 in the store it is the build time: a reader must not take it for a date the
 source stated.

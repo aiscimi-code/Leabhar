@@ -420,3 +420,117 @@ export const irishRuleLinks = sqliteTable('irish_rule_links', {
   index('irish_rule_links_to_idx').on(t.companyId, t.toKey, t.kind),
   index('irish_rule_links_provision_idx').on(t.toProvisionId),
 ]);
+
+/**
+ * What a book keeps once the rules live in the install-level store, `rules.db`
+ * (ADR-0021 §4–6). The store holds every rule version, numbered as the
+ * catalogue numbers it; these four tables hold only what is the book's own.
+ * Each is append-only: a later fact is a new row, never an edit.
+ */
+
+/**
+ * A book's binding of a rule version to its own configuration (ADR-0021 §4):
+ * the `tax_rates` or `vat_treatments` row the version backs. These were
+ * columns on the book's copied rule row; the store has no book columns, so
+ * they live here. Keyed by the catalogue's version number. Effective-dated
+ * like the configuration it points at; a changed binding is a new row, and
+ * the binding in force on a date is the last one recorded (insertion order)
+ * whose dates cover it.
+ */
+export const irishRuleBindings = sqliteTable('irish_rule_bindings', {
+  id: text('id').primaryKey(),
+  companyId: text('company_id').notNull().references(() => companies.id),
+  ruleKey: text('rule_key').notNull(),
+  ruleVersion: integer('rule_version').notNull(),
+  taxRateId: text('tax_rate_id').references(() => taxRates.id),
+  vatTreatmentId: text('vat_treatment_id').references(() => vatTreatments.id),
+  effectiveFrom: text('effective_from').notNull(),
+  effectiveTo: text('effective_to'),
+  /** What wrote the binding: the one-time move from the copied rule row, or the rate sync. */
+  recordedBy: text('recorded_by', { enum: ['rules_store_migration', 'tax_rate_sync'] }).notNull(),
+  createdAt: timestamps.createdAt,
+}, (t) => [
+  index('irish_rule_bindings_version_idx').on(t.companyId, t.ruleKey, t.ruleVersion, t.effectiveFrom),
+]);
+
+/**
+ * How a book's own version numbers map to the catalogue's (ADR-0021 §6). A
+ * book numbered versions as it derived them; decisions and posted lines
+ * (`invoice_lines.vat_rule_versions`) recorded those numbers and are never
+ * rewritten, so they are read through this map. Written once per book
+ * version, by content: the store version with the same dates, quote, value
+ * and unit. A book version with no such store version is not mapped; it is
+ * kept in `irish_rule_versions_retained`.
+ */
+export const irishRuleVersionMap = sqliteTable('irish_rule_version_map', {
+  id: text('id').primaryKey(),
+  companyId: text('company_id').notNull().references(() => companies.id),
+  ruleKey: text('rule_key').notNull(),
+  bookVersion: integer('book_version').notNull(),
+  catalogueVersion: integer('catalogue_version').notNull(),
+  /** The signature of the store the version was matched against (`rules_store_meta.signature`). */
+  storeSignature: text('store_signature').notNull(),
+  createdAt: timestamps.createdAt,
+}, (t) => [
+  unique('irish_rule_version_map_book_unique').on(t.companyId, t.ruleKey, t.bookVersion),
+]);
+
+/**
+ * A book's rule version the store does not hold, kept frozen (ADR-0021 §6):
+ * for example a wording a later catalogue corrected. An entry that applied it
+ * can still be explained, and it stays a review item. Copied from the book's
+ * rule row as it stood; the provision is named by its source's citation and
+ * SHA-256 and its section, since the book's copied provisions go too.
+ */
+export const irishRuleVersionsRetained = sqliteTable('irish_rule_versions_retained', {
+  id: text('id').primaryKey(),
+  companyId: text('company_id').notNull().references(() => companies.id),
+  ruleKey: text('rule_key').notNull(),
+  /** The book's own number for the version. */
+  ruleVersion: integer('rule_version').notNull(),
+  /** The book row it was copied from; not a foreign key, since the copied tables are dropped later. */
+  bookRuleId: text('book_rule_id').notNull(),
+  /** Why no store version was taken: none says the same thing, more than one does, or the version closed the day it opened (never in force, so the catalogue does not carry it). */
+  reason: text('reason', { enum: ['no_store_version', 'ambiguous', 'never_in_force'] }).notNull(),
+  sourceCitation: text('source_citation').notNull(),
+  sourceSha256: text('source_sha256').notNull(),
+  sectionNumber: text('section_number').notNull(),
+  ruleType: text('rule_type', { enum: IRISH_RULE_TYPES }).notNull(),
+  topic: text('topic').notNull(),
+  taxHeads: text('tax_heads', { mode: 'json' }).$type<string[]>().notNull(),
+  name: text('name').notNull(),
+  statement: text('statement'),
+  extractedFact: text('extracted_fact'),
+  numericValue: integer('numeric_value'),
+  unit: text('unit'),
+  qualifier: text('qualifier'),
+  conditions: text('conditions', { mode: 'json' }).$type<IrishRuleCondition[]>().notNull(),
+  exceptions: text('exceptions', { mode: 'json' }).$type<IrishRuleException[]>().notNull(),
+  accountingEffect: text('accounting_effect'),
+  taxEffect: text('tax_effect'),
+  vatEffect: text('vat_effect'),
+  reportingEffect: text('reporting_effect'),
+  reviewStatus: text('review_status', { enum: IRISH_RULE_REVIEW_STATUSES }).notNull(),
+  effectiveFrom: text('effective_from').notNull(),
+  effectiveTo: text('effective_to'),
+  createdAt: timestamps.createdAt,
+}, (t) => [
+  unique('irish_rule_versions_retained_unique').on(t.companyId, t.ruleKey, t.ruleVersion),
+]);
+
+/**
+ * Every rules store this book has opened (ADR-0021 §5), by signature. The
+ * last row inserted is the store the book last checked itself against. A book with
+ * no row has never opened a store, and keeps its copied rule tables
+ * (ADR-0021 §6). Belongs to the book file, not to one company in it.
+ */
+export const rulesStoreSeen = sqliteTable('rules_store_seen', {
+  id: text('id').primaryKey(),
+  signature: text('signature').notNull(),
+  format: integer('format').notNull(),
+  catalogueDigest: text('catalogue_digest').notNull(),
+  versions: integer('versions').notNull(),
+  seenAt: text('seen_at').notNull(),
+}, (t) => [
+  index('rules_store_seen_signature_idx').on(t.signature),
+]);

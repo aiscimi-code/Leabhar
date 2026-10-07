@@ -19,6 +19,7 @@
  */
 import { existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
+import Database from 'better-sqlite3';
 import { drizzle } from 'drizzle-orm/better-sqlite3';
 import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
 import { getTableConfig, type SQLiteTable } from 'drizzle-orm/sqlite-core';
@@ -26,7 +27,7 @@ import { openSqlite } from '@/db';
 import * as schema from '@/db/schema';
 import { irishActProvisions, irishKnowledgeSources, irishRuleLinks, irishTaxRules, irishTaxRuleTests } from '@/db/schema';
 import { sha256Hex } from '@/lib/hash';
-import { appRoot, migrationsFolder } from '@/lib/paths';
+import { appRoot, migrationsFolder, rulesStorePath } from '@/lib/paths';
 import { createCompany } from '../config/setup';
 import { CATALOGUE_DIR, CATALOGUE_ENTRIES, catalogueEntryPath } from './catalogue';
 import { loadStatutoryKnowledgeBase } from './knowledgeBase';
@@ -263,4 +264,51 @@ export function recordReleasedVersions(build: RulesStoreBuildResult, root?: stri
   for (const id of build.added) next[id] = build.versions.get(id)!;
   writeFileSync(path, serialiseReleasedVersions(next));
   return build.added;
+}
+
+/** What a store says about itself (`rules_store_meta`). */
+export interface RulesStoreMeta {
+  format: number;
+  signature: string;
+  catalogueDigest: string;
+  versions: number;
+}
+
+/** A store that cannot be opened: missing, unreadable, of another format, or built from an older catalogue. */
+export class RulesStoreOpenError extends Error {
+  constructor(message: string, readonly reason: 'missing' | 'unreadable' | 'format' | 'stale') {
+    super(message);
+    this.name = new.target.name;
+  }
+}
+
+/**
+ * Open the rules store read-only (ADR-0021 §1–2). Fails loudly, naming the
+ * command that rebuilds it, when the store is missing, unreadable, of a
+ * format this build does not read, or built from a catalogue other than the
+ * one installed beside it. There is no fallback to rules copied into a book.
+ */
+export function openRulesStore(params: { path?: string; root?: string } = {}): { sqlite: Database.Database; meta: RulesStoreMeta } {
+  const path = params.path ?? rulesStorePath();
+  const rebuild = 'Run `npm run rules:build` to build it (a packaged install ships it).';
+  if (!existsSync(path)) throw new RulesStoreOpenError(`The rules store is missing at ${path}. ${rebuild}`, 'missing');
+  let sqlite: Database.Database;
+  let rows: Array<{ key: string; value: string }>;
+  try {
+    sqlite = new Database(path, { readonly: true, fileMustExist: true });
+    rows = sqlite.prepare('SELECT key, value FROM rules_store_meta').all() as Array<{ key: string; value: string }>;
+  } catch (e) {
+    throw new RulesStoreOpenError(`The rules store at ${path} cannot be read (${(e as Error).message}). ${rebuild}`, 'unreadable');
+  }
+  const values = Object.fromEntries(rows.map((r) => [r.key, r.value]));
+  const meta: RulesStoreMeta = {
+    format: Number(values.format), signature: values.signature ?? '', catalogueDigest: values.catalogue_digest ?? '', versions: Number(values.versions),
+  };
+  const fail = (message: string, reason: RulesStoreOpenError['reason']) => {
+    sqlite.close();
+    return new RulesStoreOpenError(`${message} ${rebuild}`, reason);
+  };
+  if (meta.format !== RULES_STORE_FORMAT) throw fail(`The rules store at ${path} is format ${values.format ?? 'unknown'}; this version of Leabhar reads format ${RULES_STORE_FORMAT}.`, 'format');
+  if (meta.catalogueDigest !== catalogueDigest(params.root)) throw fail(`The rules store at ${path} was built from a catalogue other than the one installed beside it.`, 'stale');
+  return { sqlite, meta };
 }
