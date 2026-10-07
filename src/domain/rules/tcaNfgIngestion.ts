@@ -19,6 +19,7 @@ import { upsertReviewItem } from '../extraction/service';
 import { crossReferencesFromProvision, sameCrossReferences } from './dependencies';
 import { taxHeadsFor } from './taxHeads';
 import { ingestCatalogueFile, type CatalogueIngestResult } from './catalogue';
+import { isCatalogueSource } from './catalogueSupersession';
 
 const NFG_URL = 'https://www.revenue.ie/en/tax-professionals/documents/notes-for-guidance/tca/';
 
@@ -61,12 +62,16 @@ export interface NfgDeriveResult { created: number; superseded: number; unchange
 export function deriveCorporationTaxRules(db: AppDatabase, params: { companyId: string }): NfgDeriveResult {
   const result: NfgDeriveResult = { created: 0, superseded: 0, unchanged: 0, skippedNoProvision: [] };
   for (const rule of CORPORATION_TAX_CURATED_RULES) {
-    const sourceIds = db.select({ id: irishKnowledgeSources.id }).from(irishKnowledgeSources)
-      .where(eq(irishKnowledgeSources.citation, nfgCitation(rule.part))).all().map((s) => s.id);
-    const prov = sourceIds.length
+    // The catalogue's source before a pre-port copy of it (#706), else the latest held.
+    const rows = db.select({ id: irishKnowledgeSources.id, localPath: irishKnowledgeSources.localPath }).from(irishKnowledgeSources)
+      .where(eq(irishKnowledgeSources.citation, nfgCitation(rule.part))).all();
+    const sourceIds = rows.map((s) => s.id);
+    const catalogued = new Set(rows.filter((s) => isCatalogueSource(s.localPath)).map((s) => s.id));
+    const held = sourceIds.length
       ? db.select().from(irishActProvisions).where(eq(irishActProvisions.sectionNumber, rule.sectionNumber)).all()
-        .filter((p) => sourceIds.includes(p.sourceId)).at(-1)
-      : undefined;
+        .filter((p) => sourceIds.includes(p.sourceId))
+      : [];
+    const prov = held.filter((p) => catalogued.has(p.sourceId)).at(-1) ?? held.at(-1);
     if (!prov || !prov.provisionText?.includes(rule.statementExcerpt)) { result.skippedNoProvision.push(rule.ruleKey); continue; }
 
     const existing = db.select().from(irishTaxRules)

@@ -24,6 +24,7 @@ import { upsertReviewItem } from '../extraction/service';
 import { crossReferencesFromProvision, sameCrossReferences } from './dependencies';
 import { taxHeadsFor } from './taxHeads';
 import { ingestCatalogueFile, type CatalogueIngestResult } from './catalogue';
+import { isCatalogueSource } from './catalogueSupersession';
 
 /** The SWCA 2005 sections the knowledge base holds, each a catalogue entry. */
 export const SWCA_SECTIONS = ['20', '21', '22', '23'] as const;
@@ -100,10 +101,14 @@ export function deriveCuratedRuleFamilies(
   for (const r of params.rules) families.set(r.ruleKey, [...(families.get(r.ruleKey) ?? []), r]);
 
   const provisionFor = (rule: CuratedIncomeTaxRule) => {
-    const sources = db.select({ id: irishKnowledgeSources.id }).from(irishKnowledgeSources)
-      .where(eq(irishKnowledgeSources.citation, rule.citation)).all().map((s) => s.id);
-    return db.select().from(irishActProvisions).where(eq(irishActProvisions.sectionNumber, rule.sectionNumber)).all()
-      .filter((p) => sources.includes(p.sourceId)).at(-1);
+    // The catalogue's source before a pre-port copy of it (#706), else the latest held.
+    const rows = db.select({ id: irishKnowledgeSources.id, localPath: irishKnowledgeSources.localPath }).from(irishKnowledgeSources)
+      .where(eq(irishKnowledgeSources.citation, rule.citation)).all();
+    const sources = rows.map((s) => s.id);
+    const catalogued = new Set(rows.filter((s) => isCatalogueSource(s.localPath)).map((s) => s.id));
+    const held = db.select().from(irishActProvisions).where(eq(irishActProvisions.sectionNumber, rule.sectionNumber)).all()
+      .filter((p) => sources.includes(p.sourceId));
+    return held.filter((p) => catalogued.has(p.sourceId)).at(-1) ?? held.at(-1);
   };
 
   for (const [ruleKey, versions] of families) {
