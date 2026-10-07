@@ -10,7 +10,7 @@ import {
   CATALOGUE_ENTRIES, catalogueOfficialFilePath, contentSha256Of, catalogueRulesFor, ingestCatalogueEntry, quotedWords, readCatalogueEntry, validateCatalogueEntry,
   type CatalogueEntry,
 } from './catalogue';
-import { loadStatutoryKnowledgeBase } from './knowledgeBase';
+import { deriveStatutoryKnowledgeBase } from './knowledgeBase';
 import { containsIgnoringLayout } from './lrcAnnotations';
 
 /**
@@ -24,7 +24,7 @@ let companyId: string;
 beforeAll(() => {
   ({ db } = createTestDatabase());
   ({ companyId } = createCompany(db, { legalName: 'Catalogue Ltd', vatRegistrationStatus: 'registered', seedYears: [2025] }));
-  loadStatutoryKnowledgeBase(db, { companyId });
+  deriveStatutoryKnowledgeBase(db, { companyId });
 });
 
 describe.each(CATALOGUE_ENTRIES)('catalogue entry %s', (name) => {
@@ -142,7 +142,7 @@ describe('a book that read the statute copies before the port (#698)', () => {
         localPath: `docs/statutes/${name.replace(/\.json$/, '.md')}`, ingestVersion: 'v1',
       });
     }
-    loadStatutoryKnowledgeBase(d, { companyId: c });
+    deriveStatutoryKnowledgeBase(d, { companyId: c });
     expect(d.select().from(irishKnowledgeSources).where(eq(irishKnowledgeSources.localPath, 'catalogue/vatca-2010-revised/s030.json')).all()).toHaveLength(0);
     expect(rules(d, c)).toEqual(rules(db, companyId));
   });

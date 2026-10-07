@@ -21,7 +21,7 @@
  * treatment's supply kind, EU status from a VAT-number prefix) and a reviewer
  * must be able to see which.
  */
-import { and, eq } from 'drizzle-orm';
+import { and, eq, sql } from 'drizzle-orm';
 import type { AppDatabase } from '@/db';
 import {
   bankTransactions, companies, suppliers, customers, documents, documentLines,
@@ -29,7 +29,6 @@ import {
   visibleTaxRuleFields, visibleActProvisionFields, visibleKnowledgeSourceFields,
 } from '@/db/schema';
 import { lookupTransactionRules, type ApplicableRule, type TransactionContext } from './transactionLookup';
-import { countStatutoryRules } from './knowledgeBase';
 import { EU_COUNTRY_CODES, parseVatNumber, otherMemberStateForGoods, ukWasMemberStateOn } from '../extraction/vatNumbers';
 import { resolveTreatment } from '../vat/engine';
 import { asIsoDate } from '../dates';
@@ -314,7 +313,7 @@ export type VatSuggestionStatus =
                          // rules, so it cannot rule the rest out (issue #200); never pre-selected
   | 'no_treatment'       // a rule matched but maps to no configured treatment
   | 'no_rule'            // no bound rule matched this transaction
-  | 'kb_empty';          // the statutory knowledge base has not been loaded for this company
+  | 'kb_empty';          // the rules store attached to the book holds no statutory rules
 
 export interface VatSuggestion {
   status: VatSuggestionStatus;
@@ -582,10 +581,14 @@ export function suggestFromFacts(
     deductionBlocked: null as StatutoryCitation | null,
   };
 
-  if (countStatutoryRules(db, params.companyId) === 0) {
+  // The rules the book can see: the attached store's (ADR-0021), never the
+  // book's copied tables, which nothing loads any more.
+  const held = db.select({ n: sql<number>`count(*)` }).from(visibleTaxRules)
+    .where(and(eq(visibleTaxRules.companyId, params.companyId), eq(visibleTaxRules.origin, 'store'))).get()?.n ?? 0;
+  if (held === 0) {
     return {
       ...base, status: 'kb_empty', unresolvedFields: [], reviewReasons: [],
-      explanation: 'The statutory knowledge base has not been loaded for this company, so no rule can be applied.',
+      explanation: 'The rules store installed with Leabhar holds no statutory rules, so no rule can be applied.',
     };
   }
 

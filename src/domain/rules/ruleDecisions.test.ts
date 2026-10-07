@@ -11,9 +11,9 @@ import { createInvoice } from '../invoicing/invoices';
 import { makeDate } from '../dates';
 import type { AppDatabase } from '@/db';
 import { readCatalogueEntry } from './catalogue';
-import { loadStatutoryKnowledgeBase } from './knowledgeBase';
 import { setRuleReviewStatus } from './review';
 import { catalogueRuleStore, checkCatalogueVersions, effectiveRuleReview, recordRuleDecision, ruleDecisionHistory } from './ruleDecisions';
+import { deriveStatutoryKnowledgeBase } from './knowledgeBase';
 
 /**
  * A book keeps its own decisions about rule versions; the expert review
@@ -23,13 +23,11 @@ let db: AppDatabase;
 let sqlite: ReturnType<typeof createTestDatabase>['sqlite'];
 let companyId: string;
 let created: ReturnType<typeof createCompany>;
-let loaded: ReturnType<typeof loadStatutoryKnowledgeBase>;
 
 beforeAll(() => {
   ({ db, sqlite } = createTestDatabase());
   created = createCompany(db, { legalName: 'Decisions Ltd', vatRegistrationStatus: 'registered', seedYears: [2025] });
   ({ companyId } = created);
-  loaded = loadStatutoryKnowledgeBase(db, { companyId });
 });
 
 const ruleRow = (ruleKey: string, ruleVersion = 1) => db.select().from(visibleTaxRules)
@@ -90,7 +88,7 @@ describe('migration 0058: the decisions a book took before step 11', () => {
   it('carries each reviewed rule’s decision into irish_rule_decisions, and no unreviewed one', () => {
     const { db: d, sqlite: s } = createTestDatabase();
     const { companyId: c } = createCompany(d, { legalName: 'Older Ltd', vatRegistrationStatus: 'registered', seedYears: [2025] });
-    loadStatutoryKnowledgeBase(d, { companyId: c });
+    deriveStatutoryKnowledgeBase(d, { companyId: c });
     // A decision taken before the table existed lived only on the rule row.
     const row = d.select().from(irishTaxRules).where(and(eq(irishTaxRules.companyId, c), eq(irishTaxRules.ruleKey, 'vat.rate_standard_current'), eq(irishTaxRules.ruleVersion, 1))).get()!;
     d.update(irishTaxRules).set({ reviewStatus: 'rejected', reviewedBy: 'Ciara', reviewedAt: '2026-01-05T10:00:00.000Z', reviewNotes: 'wrong window' })
@@ -111,8 +109,8 @@ describe('checkCatalogueVersions', () => {
   const missingItems = () => db.select().from(reviewItems)
     .where(and(eq(reviewItems.companyId, companyId), like(reviewItems.dedupeKey, 'rule_version_missing:%'))).all();
 
-  it('finds nothing in a book loaded from the installed catalogue', () => {
-    expect(loaded.catalogueVersionsMissing).toEqual([]);
+  it('finds nothing in a new book', () => {
+    expect(checkCatalogueVersions(db, { companyId })).toEqual([]);
     expect(missingItems()).toEqual([]);
   });
 

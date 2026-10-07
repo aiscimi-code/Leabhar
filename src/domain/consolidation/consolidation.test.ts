@@ -17,7 +17,7 @@ import { trialBalance, accountBalance } from '../accounting/ledger';
 import { makeDate } from '../dates';
 import {
   invoices, invoiceLines, vatEntries, bankTransactions, reviewItems, suppliers, customers, documents,
-  companyOfficers, payments, journalLines,
+  companies, companyOfficers, payments, journalLines,
 } from '@/db/schema';
 import { ids } from '@/lib/ids';
 import type { AppDatabase } from '@/db';
@@ -412,11 +412,31 @@ describe('timing', () => {
 describe('choices for coding each line', () => {
   it('pre-selects a treatment only when every source agrees', async () => {
     const { documentLineChoices } = await import('./suggest');
+    // The rule, the invoice's wording and where the supplier is established all say the reverse charge,
+    // and the invoice shows this company's VAT number, as a reverse-charge invoice must.
+    db.update(companies).set({ vatNumber: 'IE6388047V' }).where(eq(companies.id, companyId)).run();
+    db.update(suppliers).set({
+      countryCode: 'DE', vatNumber: 'DE123456789', establishment: 'outside_state', establishmentBasis: 'test fixture',
+      establishmentConfirmedBy: 'tester', establishmentConfirmedAt: '2025-03-01T00:00:00Z',
+    }).where(eq(suppliers.id, supplierId)).run();
+    const doc = confirmed({
+      supplierCountry: 'DE', supplierVatNumber: 'DE123456789', customerVatNumber: 'IE6388047V',
+      vatLegends: ['Steuerschuldnerschaft des Leistungsempfängers'],
+      lines: [line('Server', 8_900, null, 0)],
+    });
+    const [choice] = documentLineChoices(db, { companyId, documentId: doc }).lines;
+    expect(choice!.options.map((o) => o.code)).toEqual(['EU_SERVICES_RCV']);
+    expect(choice!.preselectedTreatmentId).toBe(tr['EU_SERVICES_RCV']);
+  });
+
+  it('does not pre-select a domestic rate the rules can only fall back to', async () => {
+    const { documentLineChoices } = await import('./suggest');
     const doc = confirmed({ lines: [line('Paper', 2_000, 2300, 460)] });
     const [choice] = documentLineChoices(db, { companyId, documentId: doc }).lines;
     expect(choice!.options.map((o) => o.code)).toEqual(['IE_STD']);
     expect(choice!.options[0]!.reasons.join(' ')).toMatch(/printed at 23%/);
-    expect(choice!.preselectedTreatmentId).toBe(tr['IE_STD']);
+    expect(choice!.preselectedTreatmentId).toBeNull();
+    expect(choice!.flags.join(' ')).toMatch(/could only fall back to the standard rate/);
   });
 
   it('offers every possible treatment with its reason, and pre-selects none, when sources disagree', async () => {

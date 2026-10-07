@@ -179,9 +179,9 @@ export default async function StatutesPage({ searchParams }: {
         <Panel title="Ingested sources">
           {sources.length === 0 ? (
             <Empty
-              title="No statutes ingested yet"
-              detail="The statutory knowledge base loads when the rules are first used, or via
-                npm run cli:rules -- ingest-all."
+              title="No statutes in the rules store"
+              detail="The rules store installed with Leabhar holds no statutes. In development,
+                build it with npm run rules:build."
             />
           ) : (
             <table className="ledger">

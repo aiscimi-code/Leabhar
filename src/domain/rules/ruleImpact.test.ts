@@ -1,7 +1,6 @@
 import { describe, it, expect, beforeAll, vi, afterEach } from 'vitest';
 import { createTestDatabase } from '@/db/testing';
 import { createCompany } from '../config/setup';
-import { loadStatutoryKnowledgeBase } from './knowledgeBase';
 import { mostReliedOn, resolveImpactTarget, ruleDepends, ruleImpact } from './ruleImpact';
 import { generateAuditReport } from './audit';
 import { main } from '@/cli/irishRules';
@@ -16,7 +15,6 @@ describe('impact and depends (ADR-0020 §6, issue #686 step 4)', () => {
   beforeAll(() => {
     ({ db } = createTestDatabase());
     ({ companyId } = createCompany(db, { legalName: 'Impact Ltd', vatRegistrationStatus: 'registered', seedYears: [2025] }));
-    loadStatutoryKnowledgeBase(db, { companyId });
   });
 
   const impactOf = (target: string) => ruleImpact(db, { companyId, target: resolveImpactTarget(db, { companyId, target }) });

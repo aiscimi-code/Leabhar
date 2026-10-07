@@ -7,7 +7,7 @@ import { createTestDatabase } from '@/db/testing';
 import { createCompany } from '../config/setup';
 import { storeDocument } from '../documents/storage';
 import { confirmDocument, type ReviewedDocumentValues } from '../documents/review';
-import { loadStatutoryKnowledgeBase } from '../rules/knowledgeBase';
+import { deriveStatutoryKnowledgeBase } from '../rules/knowledgeBase';
 import { COMPOSITE_SUPPLY_RULE_KEY } from '../rules/compositeSupplyCuration';
 import { suppliers, irishTaxRules } from '@/db/schema';
 import { ids } from '@/lib/ids';
@@ -26,7 +26,7 @@ beforeAll(() => {
   ({ companyId } = createCompany(db, {
     legalName: 'Acme Ltd', vatRegistrationStatus: 'registered', vatAccountingBasis: 'invoice', seedYears: [2026],
   }));
-  loadStatutoryKnowledgeBase(db, { companyId });
+  deriveStatutoryKnowledgeBase(db, { companyId });
   root = mkdtempSync(join(tmpdir(), 'composite-'));
   supplierId = ids.supplier();
   db.insert(suppliers).values({ id: supplierId, companyId, name: 'Books Direct', matchKey: 'books direct', countryCode: 'IE' }).run();

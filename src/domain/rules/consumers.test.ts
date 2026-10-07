@@ -4,7 +4,7 @@ import { eq } from 'drizzle-orm';
 import { createTestDatabase } from '@/db/testing';
 import { createCompany } from '../config/setup';
 import { irishTaxRules } from '@/db/schema';
-import { loadStatutoryKnowledgeBase } from './knowledgeBase';
+import { deriveStatutoryKnowledgeBase } from './knowledgeBase';
 import { RULE_CONSUMERS, consumerId, isManifestRuleKey, type RuleConsumer } from './consumers';
 import { resolveRuleFigure } from './ruleFigures';
 import { ruleImpact } from './ruleImpact';
@@ -22,7 +22,7 @@ describe('consumer manifests (ADR-0020 §4, issue #686 step 5)', () => {
   beforeAll(() => {
     ({ db } = createTestDatabase());
     ({ companyId } = createCompany(db, { legalName: 'Consumers Ltd', vatRegistrationStatus: 'registered', seedYears: [2025] }));
-    loadStatutoryKnowledgeBase(db, { companyId });
+    deriveStatutoryKnowledgeBase(db, { companyId });
     bookKeys = new Set(db.select({ k: irishTaxRules.ruleKey }).from(irishTaxRules)
       .where(eq(irishTaxRules.companyId, companyId)).all().map((r) => r.k));
   });
@@ -75,7 +75,7 @@ describe('readers by topic (#694)', () => {
   beforeAll(() => {
     ({ db } = createTestDatabase());
     ({ companyId } = createCompany(db, { legalName: 'Topic Readers Ltd', vatRegistrationStatus: 'registered', seedYears: [2025] }));
-    loadStatutoryKnowledgeBase(db, { companyId });
+    deriveStatutoryKnowledgeBase(db, { companyId });
     held = db.select({ ruleKey: irishTaxRules.ruleKey, topic: irishTaxRules.topic, from: irishTaxRules.effectiveFrom, to: irishTaxRules.effectiveTo })
       .from(irishTaxRules).where(eq(irishTaxRules.companyId, companyId)).all()
       .filter((r) => r.to === null || r.to > r.from);

@@ -12,7 +12,6 @@ import { postDocumentAsInvoice, ConsolidationError } from './postDocument';
 import { createInvoice, InvoicingError } from '../invoicing/invoices';
 import { buildVat3Return } from '../vat/report';
 import { reconcileVatReturn } from '../vat/reconcile';
-import { loadStatutoryKnowledgeBase } from '../rules/knowledgeBase';
 import { makeDate } from '../dates';
 import { customers, journalLines, suppliers, vatEntries, vatPeriods } from '@/db/schema';
 import { ids } from '@/lib/ids';
@@ -35,7 +34,6 @@ beforeEach(() => {
   ({ db } = createTestDatabase());
   const created = createCompany(db, { legalName: 'Block Ltd', vatRegistrationStatus: 'registered', vatAccountingBasis: 'invoice', seedYears: [2026] });
   ({ companyId, accountsByCode: byCode, treatmentsByCode: tr } = created);
-  loadStatutoryKnowledgeBase(db, { companyId });
   root = mkdtempSync(join(tmpdir(), 'blocked-deduction-'));
   supplierId = ids.supplier();
   db.insert(suppliers).values({ id: supplierId, companyId, name: 'The Winding Stair', matchKey: 'the winding stair', countryCode: 'IE' }).run();

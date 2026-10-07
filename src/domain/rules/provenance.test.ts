@@ -4,7 +4,7 @@ import { readFileSync, existsSync } from 'node:fs';
 import { eq } from 'drizzle-orm';
 import { createTestDatabase } from '@/db/testing';
 import { createCompany } from '../config/setup';
-import { loadStatutoryKnowledgeBase, statuteFilePath, verifyStatuteFile } from './knowledgeBase';
+import { statuteFilePath, verifyStatuteFile } from './knowledgeBase';
 import { generateDefaultTestCases } from './testCases';
 import { irishKnowledgeSources, irishActProvisions, irishTaxRules, irishTaxRuleTests } from '@/db/schema';
 import { normaliseSpace } from '../vat/boxDefinitions';
@@ -23,7 +23,6 @@ let companyId: string;
 beforeAll(() => {
   ({ db } = createTestDatabase());
   ({ companyId } = createCompany(db, { legalName: 'Provenance Ltd', vatRegistrationStatus: 'registered', seedYears: [2025] }));
-  loadStatutoryKnowledgeBase(db, { companyId });
   generateDefaultTestCases(db, { companyId });
 });
 

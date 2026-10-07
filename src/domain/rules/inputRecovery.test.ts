@@ -3,7 +3,7 @@ import { and, eq } from 'drizzle-orm';
 import { createTestDatabase } from '@/db/testing';
 import { createCompany } from '../config/setup';
 import { irishTaxRules } from '@/db/schema';
-import { loadStatutoryKnowledgeBase } from './knowledgeBase';
+import { deriveStatutoryKnowledgeBase } from './knowledgeBase';
 import { deriveVatScopeRules, quotedAsEnacted } from './vatScopeIngestion';
 import { suggestFromFacts, type SuggestionFacts } from './vatSuggestion';
 import { qualifyingVehicleClawback } from './inputRecoveryCuration';
@@ -17,7 +17,7 @@ let companyId: string;
 beforeAll(() => {
   ({ db } = createTestDatabase());
   ({ companyId } = createCompany(db, { legalName: 'Recover Ltd', vatRegistrationStatus: 'registered', vatAccountingBasis: 'invoice', seedYears: [2026] }));
-  loadStatutoryKnowledgeBase(db, { companyId });
+  deriveStatutoryKnowledgeBase(db, { companyId });
 });
 
 const suggest = (description: string) => {

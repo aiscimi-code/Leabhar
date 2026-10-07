@@ -19,7 +19,9 @@
  *   silently (AGENTS.md #7).
  * - **Bindings.** `tax_rate_id` and `vat_treatment_id` move from the rule row
  *   to `irish_rule_bindings`, under the catalogue's version number.
- * - **The store seen.** The store's signature goes to `rules_store_seen`.
+ *
+ * The store is recorded in `rules_store_seen` by the check that follows every
+ * open (`checkRulesStoreUpdate`), not here.
  *
  * It needs the store, so it is code rather than SQL, and it runs after a
  * backup (`createBackupSync`). It is append-only and safe to run again: a book
@@ -32,7 +34,7 @@ import { and, eq, sql } from 'drizzle-orm';
 import type { AppDatabase } from '@/db';
 import {
   auditEvents, invoiceLines, irishRuleBindings, irishRuleDecisions, irishRuleVersionMap,
-  irishRuleVersionsRetained, irishTaxRules, rulesStoreSeen,
+  irishRuleVersionsRetained, irishTaxRules,
 } from '@/db/schema';
 import { ids } from '@/lib/ids';
 import { nowIso } from '../dates';
@@ -80,8 +82,8 @@ export function migrateBookToRulesStore(
 
 /**
  * Whether the book holds a copied rule row the move onto the store has not
- * yet mapped or kept: a book from before the store, or one whose copies were
- * loaded again since (loading stops in ADR-0021 delivery step 4).
+ * yet mapped or kept: a book from before the store, or one whose copies an
+ * earlier release loaded again (none loads them from ADR-0021 delivery step 4).
  */
 export function bookNeedsRulesStoreMigration(db: AppDatabase): boolean {
   return db.get<{ n: number } | undefined>(sql`SELECT 1 AS n FROM main.irish_tax_rules r
@@ -141,14 +143,6 @@ function applyRulesStoreMigration(
 
   return db.transaction((tx) => {
     const now = nowIso();
-    const latestSeen = tx.select({ signature: rulesStoreSeen.signature }).from(rulesStoreSeen)
-      .orderBy(sql`rowid DESC`).get(); // insertion order: append-only, and a timestamp ties within a second
-    if (latestSeen?.signature !== meta.signature) {
-      tx.insert(rulesStoreSeen).values({
-        id: ids.rulesStoreSeen(), signature: meta.signature, format: meta.format,
-        catalogueDigest: meta.catalogueDigest, versions: meta.versions, seenAt: now,
-      }).run();
-    }
 
     const rows = tx.all<BookRuleRow>(sql`SELECT r.id, r.company_id AS companyId, r.rule_key AS ruleKey, r.rule_version AS ruleVersion,
         r.effective_from AS effectiveFrom, r.effective_to AS effectiveTo, r.statement, r.numeric_value AS numericValue, r.unit,

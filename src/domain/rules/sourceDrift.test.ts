@@ -7,7 +7,6 @@ import { reviewItems } from '@/db/schema';
 import type { AppDatabase } from '@/db';
 import { catalogueOfficialFilePath, readCatalogueEntry, withoutPageState, type CatalogueEntry } from './catalogue';
 import { readFileSync } from 'node:fs';
-import { loadStatutoryKnowledgeBase } from './knowledgeBase';
 import { compareWithCatalogue, sourceWords, traceSourceChange, verifySources } from './sourceDrift';
 import { main } from '@/cli/irishRules';
 
@@ -141,7 +140,6 @@ describe('traceSourceChange', () => {
   beforeAll(() => {
     ({ db } = createTestDatabase());
     ({ companyId } = createCompany(db, { legalName: 'Drift Ltd', vatRegistrationStatus: 'registered', seedYears: [2025] }));
-    loadStatutoryKnowledgeBase(db, { companyId });
   });
   const items = () => db.select().from(reviewItems)
     .where(and(eq(reviewItems.companyId, companyId), like(reviewItems.dedupeKey, 'rule_source_change:%'))).all();
@@ -176,7 +174,6 @@ describe('rules CLI: verify-sources', () => {
   it('exits 0 when every source is unchanged, and 1 with --trace raising review items when one has moved', async () => {
     const { db } = createTestDatabase();
     const { companyId } = createCompany(db, { legalName: 'Cli Drift Ltd', vatRegistrationStatus: 'registered', seedYears: [2025] });
-    loadStatutoryKnowledgeBase(db, { companyId });
     const out: string[] = [];
     vi.spyOn(process.stdout, 'write').mockImplementation((s) => { out.push(String(s)); return true; });
 

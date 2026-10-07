@@ -1,8 +1,8 @@
 """Classify every tracked file under docs/ (issue #291).
 
 Run trace-reads.cjs under the test suite first (see its header); the suite
-calls loadStatutoryKnowledgeBase, so what it reads is also what the app reads
-at run time. Writes docs/docs-inventory.csv and prints a per-folder summary.
+builds the rules store with deriveStatutoryKnowledgeBase, as the package build
+does, so what it reads is also what the app reads at run time. Writes docs/docs-inventory.csv and prints a per-folder summary.
 
 Classes, first match wins:
   runtime      read by the test suite / knowledge base load

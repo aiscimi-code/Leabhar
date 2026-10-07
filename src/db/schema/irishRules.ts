@@ -545,6 +545,10 @@ export const irishRuleVersionsRetained = sqliteTable('irish_rule_versions_retain
  * last row inserted is the store the book last checked itself against. A book with
  * no row has never opened a store, and keeps its copied rule tables
  * (ADR-0021 §6). Belongs to the book file, not to one company in it.
+ *
+ * `version_hashes` is what the store held: the content hash of each
+ * `key@version`, so the next store can be compared with it
+ * (`checkRulesStoreUpdate`). Null on a row recorded before delivery step 4.
  */
 export const rulesStoreSeen = sqliteTable('rules_store_seen', {
   id: text('id').primaryKey(),
@@ -552,6 +556,7 @@ export const rulesStoreSeen = sqliteTable('rules_store_seen', {
   format: integer('format').notNull(),
   catalogueDigest: text('catalogue_digest').notNull(),
   versions: integer('versions').notNull(),
+  versionHashes: text('version_hashes', { mode: 'json' }).$type<Record<string, string>>(),
   seenAt: text('seen_at').notNull(),
 }, (t) => [
   index('rules_store_seen_signature_idx').on(t.signature),

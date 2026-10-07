@@ -1,5 +1,6 @@
 import { openBook } from '../index';
 import { seedDemoCompany, type DemoEntityType } from './demo';
+import { attachedRulesStoreMeta } from '@/domain/rules/visibleRules';
 
 /**
  * Seed the local database with a demo book (README §51, issue #283).
@@ -38,8 +39,7 @@ async function main(): Promise<void> {
   console.log(`  Documents:    ${result.counts.documents}`);
   console.log(`  Suppliers:    ${result.counts.suppliers}`);
   console.log(`  Customers:    ${result.counts.customers}`);
-  console.log(`  Statutes:     ${result.knowledgeBase.sourcesProcessed} sources ingested, `
-    + `${result.knowledgeBase.rulesAfter} rules derived (/statutes is populated)`);
+  console.log(`  Rules:        ${attachedRulesStoreMeta(db.$client)?.versions ?? 0} rule versions in the rules store (/statutes reads it)`);
   console.log('');
   console.log('This data is labelled as demo data throughout the application.');
 }

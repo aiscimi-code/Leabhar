@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll } from 'vitest';
 import { eq } from 'drizzle-orm';
 import { createTestDatabase } from '@/db/testing';
 import { createCompany } from '../config/setup';
-import { loadStatutoryKnowledgeBase } from './knowledgeBase';
+import { deriveStatutoryKnowledgeBase } from './knowledgeBase';
 import { deriveVatScopeRules } from './vatScopeIngestion';
 import { lookupTransactionRules } from './transactionLookup';
 import { suggestFromFacts, type SuggestionFacts } from './vatSuggestion';
@@ -28,7 +28,7 @@ let companyId: string;
 beforeAll(() => {
   ({ db } = createTestDatabase());
   ({ companyId } = createCompany(db, { legalName: 'VAT Engine Ltd', vatRegistrationStatus: 'registered', vatAccountingBasis: 'invoice', seedYears: [2026] }));
-  loadStatutoryKnowledgeBase(db, { companyId });
+  deriveStatutoryKnowledgeBase(db, { companyId });
 });
 
 const rule = (ruleKey: string) => db.select().from(irishTaxRules)

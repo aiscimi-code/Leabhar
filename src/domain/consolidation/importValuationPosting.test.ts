@@ -9,7 +9,6 @@ import { storeDocument } from '../documents/storage';
 import { confirmDocument, type ReviewedDocumentValues } from '../documents/review';
 import { postDocumentAsInvoice } from './postDocument';
 import { buildVat3Return } from '../vat/report';
-import { loadStatutoryKnowledgeBase } from '../rules/knowledgeBase';
 import { reviewItems, suppliers, vatPeriods } from '@/db/schema';
 import { ids } from '@/lib/ids';
 import type { AppDatabase } from '@/db';
@@ -31,7 +30,6 @@ beforeEach(() => {
   ({ db } = createTestDatabase());
   const created = createCompany(db, { legalName: 'Importer Ltd', vatRegistrationStatus: 'registered', vatAccountingBasis: 'invoice', seedYears: [2026] });
   ({ companyId, accountsByCode: byCode, treatmentsByCode: tr } = created);
-  loadStatutoryKnowledgeBase(db, { companyId });
   root = mkdtempSync(join(tmpdir(), 'import-valuation-'));
   supplierId = ids.supplier();
   db.insert(suppliers).values({ id: supplierId, companyId, name: 'Shenzhen Parts Co', matchKey: 'shenzhen parts co', countryCode: 'CN' }).run();

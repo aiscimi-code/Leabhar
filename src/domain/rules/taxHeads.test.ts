@@ -3,7 +3,7 @@ import { eq } from 'drizzle-orm';
 import { createTestDatabase } from '@/db/testing';
 import { createCompany } from '../config/setup';
 import { irishTaxRules } from '@/db/schema';
-import { fillTaxHeads, loadStatutoryKnowledgeBase } from './knowledgeBase';
+import { fillTaxHeads, deriveStatutoryKnowledgeBase } from './knowledgeBase';
 import { listTaxRulesByHead } from './irishRules';
 import { TAX_HEADS, taxHeadsFor } from './taxHeads';
 import type { AppDatabase } from '@/db';
@@ -15,7 +15,7 @@ describe('tax heads (issue #686 step 9)', () => {
   beforeAll(() => {
     ({ db } = createTestDatabase());
     ({ companyId } = createCompany(db, { legalName: 'Heads Ltd', vatRegistrationStatus: 'registered', seedYears: [2025] }));
-    loadStatutoryKnowledgeBase(db, { companyId });
+    deriveStatutoryKnowledgeBase(db, { companyId });
   });
 
   const rows = () => db.select().from(irishTaxRules).where(eq(irishTaxRules.companyId, companyId)).all();

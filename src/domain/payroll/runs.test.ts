@@ -5,7 +5,7 @@ import { journalLines, irishTaxRules, reviewItems, bankTransactions } from '@/db
 import type { AppDatabase } from '@/db';
 import { accountBalance } from '../accounting/ledger';
 import { systemAccountId } from '../config/setup';
-import { loadStatutoryKnowledgeBase } from '../rules/knowledgeBase';
+import { deriveStatutoryKnowledgeBase } from '../rules/knowledgeBase';
 import { setRuleReviewStatus } from '../rules/review';
 import { createEmployee, setEmploymentTerms, recordCessation } from './employees';
 import { recordRpn } from './rpn';
@@ -274,7 +274,7 @@ describe('what the engine refuses to guess', () => {
   it('stops a payslip whose PRSI rate a person rejected on the rule review screen', () => {
     const e = salaried();
     rpnFor(e.id);
-    loadStatutoryKnowledgeBase(db, { companyId });
+    deriveStatutoryKnowledgeBase(db, { companyId });
     const rule = db.select().from(irishTaxRules)
       .where(and(eq(irishTaxRules.companyId, companyId), eq(irishTaxRules.ruleKey, 'prsi.class_a_employee_rate'), eq(irishTaxRules.effectiveFrom, '2025-10-01'))).get()!;
     setRuleReviewStatus(db, { companyId, ruleId: `${rule.ruleKey}@${rule.ruleVersion}`, status: 'rejected', reviewedBy: 'accountant' });

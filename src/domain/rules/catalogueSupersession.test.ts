@@ -8,7 +8,7 @@ import type { AppDatabase } from '@/db';
 import { ingestCatalogueEntry, ingestCatalogueFile, readCatalogueEntry, type CatalogueEntry } from './catalogue';
 import { preferredSourceId } from './catalogueSupersession';
 import { deriveSi692025Rules } from './si692025Ingestion';
-import { loadStatutoryKnowledgeBase } from './knowledgeBase';
+import { deriveStatutoryKnowledgeBase } from './knowledgeBase';
 import { deriveCuratedRuleFamilies, deriveIncomeTaxRules, ingestSwcaSection, SI_312_1996_ART92_CATALOGUE_ENTRY } from './incomeTaxIngestion';
 import { CAR_EMISSIONS_CURATED_RULES, CAR_EMISSIONS_RELEVANCE_REASON, CAR_EMISSIONS_SOURCES, TDM_11_00_01_CATALOGUE_ENTRY } from './carEmissionsCuration';
 import { ingestSlicedSource } from './slicedSourceIngestion';
@@ -95,7 +95,7 @@ describe('a pre-port copy that dropped a closing quote (#706)', () => {
 
   it('cites the catalogue provisions in the rule links, withdrawing the copy\'s', () => {
     loadCopyThenCatalogue();
-    loadStatutoryKnowledgeBase(db, { companyId });
+    deriveStatutoryKnowledgeBase(db, { companyId });
     const links = db.select({ active: irishRuleLinks.active, localPath: irishKnowledgeSources.localPath })
       .from(irishRuleLinks).innerJoin(irishActProvisions, eq(irishActProvisions.id, irishRuleLinks.toProvisionId))
       .innerJoin(irishKnowledgeSources, eq(irishKnowledgeSources.id, irishActProvisions.sourceId))

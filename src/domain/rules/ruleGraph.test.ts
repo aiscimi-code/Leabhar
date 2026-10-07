@@ -4,7 +4,7 @@ import { createCompany } from '../config/setup';
 import { and, eq } from 'drizzle-orm';
 import { irishRuleLinks, irishTaxRules } from '@/db/schema';
 import { ids } from '@/lib/ids';
-import { loadStatutoryKnowledgeBase } from './knowledgeBase';
+import { deriveStatutoryKnowledgeBase } from './knowledgeBase';
 import { LINK_FROM_RULES } from './ruleLinks';
 import { DECLARED_VERSION_GAPS, checkRuleGraph as checkStoredRuleGraph, uncoveredSpans } from './ruleGraph';
 import { attachRulesStoreFromBook } from './rulesStore';
@@ -23,7 +23,7 @@ describe('the rule graph of a loaded book (ADR-0020 §5, issue #686 step 3)', ()
   beforeAll(() => {
     ({ db } = createTestDatabase());
     ({ companyId } = createCompany(db, { legalName: 'Graph Ltd', vatRegistrationStatus: 'registered', seedYears: [2025] }));
-    loadStatutoryKnowledgeBase(db, { companyId });
+    deriveStatutoryKnowledgeBase(db, { companyId });
   });
 
   it('has no dangling link, uncovered dependency, version gap or overlap, or cycle', () => {
@@ -48,7 +48,7 @@ describe('checkRuleGraph finds each kind of fault', () => {
   beforeAll(() => {
     ({ db } = createTestDatabase());
     ({ companyId } = createCompany(db, { legalName: 'Faults Ltd', vatRegistrationStatus: 'registered', seedYears: [2025] }));
-    loadStatutoryKnowledgeBase(db, { companyId });
+    deriveStatutoryKnowledgeBase(db, { companyId });
   });
 
   const addLink = (fromKey: string, kind: 'uses_value' | 'excludes', toKey: string, effectiveFrom = LINK_FROM_RULES) => {

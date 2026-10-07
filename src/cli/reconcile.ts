@@ -110,7 +110,6 @@ import { partners, bankAccounts, invoices } from '@/db/schema';
 import { recordManualTransaction, rollbackStatementImport, listStatementImports } from '@/domain/banking/import';
 import { asIsoDate, today } from '@/domain/dates';
 import { companies } from '@/db/schema';
-import { loadStatutoryKnowledgeBase } from '@/domain/rules/knowledgeBase';
 import {
   importInput,
   autoClassifyInput,
@@ -540,8 +539,6 @@ Inspect:
   list-customers                         Every customer (id, name, country, VAT no.)
 ${PAYROLL_USAGE}${ASSET_USAGE}${INVENTORY_USAGE}${FARM_USAGE}${FARM_TAX_USAGE}${CONSTRUCTION_USAGE}${FORECAST_USAGE}${REPORT_USAGE}
 Statutory VAT rules (issue #200):
-  load-statutory-rules                   Ingest every docs/statutes source and derive the
-                                         statutory rules for this company (idempotent)
   suggest-vat --transaction <id>         Suggest a VAT treatment for one bank transaction
       from the statutory rules, with the provision, source file, SHA-256 and
       quoted text that justify it. A suggestion only: nothing is posted.
@@ -1998,11 +1995,6 @@ export async function main(argv: string[], options: CliOptions = {}): Promise<nu
           reason: requireFlag(flags, 'reason'),
         });
         print(reverseJournalCli(db, parsed), format);
-        return 0;
-      }
-
-      case 'load-statutory-rules': {
-        print(loadStatutoryKnowledgeBase(db, { companyId }), format);
         return 0;
       }
 

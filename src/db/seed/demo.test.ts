@@ -7,7 +7,7 @@ import { createTestDatabase } from '@/db/testing';
 import { seedDemoCompany } from './demo';
 import {
   companies, bankTransactions, documents, vatPeriods, reviewItems,
-  suppliers, fixedAssets, rules, taxDeadlines, payments, irishActProvisions,
+  suppliers, fixedAssets, rules, taxDeadlines, payments, irishActProvisions, irishKnowledgeSources, irishTaxRules,
   partners, partnerShares,
 } from '@/db/schema';
 import { statuteSourceIndex } from '@/domain/search/knowledgeBase';
@@ -169,12 +169,15 @@ describe('demo data', () => {
       .toContain('Confirm your own filing deadline');
   });
 
-  it('ingests the statutes, so /statutes is populated after db:seed (issue #475)', () => {
+  it('shows the statutes from the rules store, so /statutes is populated after db:seed (issue #475)', () => {
     const sources = statuteSourceIndex(db, { companyId });
     expect(sources.length).toBeGreaterThan(0);
-    const provisions = db.select().from(irishActProvisions)
-      .where(eq(irishActProvisions.companyId, companyId)).all();
-    expect(provisions.length).toBeGreaterThan(0);
+  });
+
+  it('writes no rules into the book: it reads the store (ADR-0021 §7)', () => {
+    for (const table of [irishKnowledgeSources, irishActProvisions, irishTaxRules]) {
+      expect(db.select().from(table).all()).toEqual([]);
+    }
   });
 
   it('produces a sensible profit and loss', () => {

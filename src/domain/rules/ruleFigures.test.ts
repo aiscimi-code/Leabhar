@@ -7,7 +7,7 @@ import { irishTaxRules, visibleTaxRules } from '@/db/schema';
 import { attachRulesStoreFromBook } from './rulesStore';
 import { attachRulesStore } from './visibleRules';
 import { asIsoDate } from '../dates';
-import { loadStatutoryKnowledgeBase } from './knowledgeBase';
+import { deriveStatutoryKnowledgeBase } from './knowledgeBase';
 import { setRuleReviewStatus } from './review';
 import { auditRuleFigures, resolveRuleFigure, RejectedRuleError } from './ruleFigures';
 import { CORPORATION_TAX_CURATED_RULES } from './corporationTaxCuration';
@@ -28,7 +28,7 @@ beforeAll(() => {
   ({ companyId } = createCompany(db, {
     legalName: 'Figures Ltd', entityType: 'company', vatRegistrationStatus: 'registered', seedYears: [2025, 2026],
   }));
-  loadStatutoryKnowledgeBase(db, { companyId });
+  deriveStatutoryKnowledgeBase(db, { companyId });
 });
 
 const inForce = (id: string, ruleKey: string, asOfDate: string) => db.select().from(visibleTaxRules)
@@ -123,7 +123,7 @@ describe('figure resolution (issue #282 / #437)', () => {
 
   it('gives no figure for a rule retired on the review screen, with a finding that says retired, not rejected (issue #484)', () => {
     const fresh = createCompany(db, { legalName: 'Retired Ltd', entityType: 'company', vatRegistrationStatus: 'registered', seedYears: [2025] });
-    loadStatutoryKnowledgeBase(db, { companyId: fresh.companyId });
+    deriveStatutoryKnowledgeBase(db, { companyId: fresh.companyId });
     const rule = inForce(fresh.companyId, 'ct.rate_standard', '2025-12-31')!;
     setRuleReviewStatus(db, { companyId: fresh.companyId, ruleId: rule.id, status: 'superseded', reviewedBy: 'Accountant', notes: 'corrected version being drafted' });
     const resolved = resolveRuleFigure(db, {
@@ -287,7 +287,7 @@ function preliminaryTaxBook() {
       legalName: 'Preliminary Tax Ltd', entityType: 'sole_trader', tradeCommencedOn: '2023-01-01',
       vatRegistrationStatus: 'registered', seedYears: [2023, 2024, 2025, 2026],
     });
-    loadStatutoryKnowledgeBase(db, { companyId: preliminaryTax.companyId });
+    deriveStatutoryKnowledgeBase(db, { companyId: preliminaryTax.companyId });
     for (const [date, amount] of [['2024-06-01', 4_000_000], ['2025-06-01', 6_000_000]] as const) {
       postJournalEntry(db, {
         companyId: preliminaryTax.companyId, entryDate: asIsoDate(date), narrative: 'Fees', sourceType: 'bank_transaction',
@@ -312,7 +312,7 @@ function surchargeTestBook() {
     surcharge = createCompany(db, {
       legalName: 'Surcharge Ltd', entityType: 'company', vatRegistrationStatus: 'registered', seedYears: [2025],
     });
-    loadStatutoryKnowledgeBase(db, { companyId: surcharge.companyId });
+    deriveStatutoryKnowledgeBase(db, { companyId: surcharge.companyId });
   }
   return surcharge;
 }
@@ -324,7 +324,7 @@ function soleTraderBook() {
       legalName: 'Sinead Fee', entityType: 'sole_trader', tradeCommencedOn: '2023-01-01',
       vatRegistrationStatus: 'registered', seedYears: [2023, 2024, 2025, 2026],
     });
-    loadStatutoryKnowledgeBase(db, { companyId: soleTrader.companyId });
+    deriveStatutoryKnowledgeBase(db, { companyId: soleTrader.companyId });
     const row = inForce(soleTrader.companyId, 'usc.band_2pct', '2025-12-31')!;
     setRuleReviewStatus(db, { companyId: soleTrader.companyId, ruleId: row.id, status: 'rejected', reviewedBy: 'Accountant', notes: 'wrong figure' });
     postJournalEntry(db, {
@@ -347,7 +347,7 @@ function cashBasisBook() {
       vatRegistrationStatus: 'registered', seedYears: [2023, 2024, 2025, 2026],
       vatAccountingBasis: 'cash_receipts',
     });
-    loadStatutoryKnowledgeBase(db, { companyId: cashBasis.companyId });
+    deriveStatutoryKnowledgeBase(db, { companyId: cashBasis.companyId });
   }
   return cashBasis;
 }

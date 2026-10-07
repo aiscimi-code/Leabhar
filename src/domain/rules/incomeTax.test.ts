@@ -3,7 +3,7 @@ import { and, eq } from 'drizzle-orm';
 import { createTestDatabase } from '@/db/testing';
 import { createCompany } from '../config/setup';
 import { irishTaxRules } from '@/db/schema';
-import { loadStatutoryKnowledgeBase } from './knowledgeBase';
+import { deriveStatutoryKnowledgeBase } from './knowledgeBase';
 import { deriveIncomeTaxRules } from './incomeTaxIngestion';
 import { deriveTaxRules, RETIRED_FINANCE_ACT_2024_RULE_KEYS } from './irishRules';
 import { INCOME_TAX_CURATED_RULES } from './incomeTaxCuration';
@@ -18,7 +18,7 @@ const rows = (ruleKey: string) => db.select().from(irishTaxRules)
 beforeAll(() => {
   ({ db } = createTestDatabase());
   ({ companyId } = createCompany(db, { legalName: 'IT Ltd', vatRegistrationStatus: 'registered', seedYears: [2025] }));
-  loadStatutoryKnowledgeBase(db, { companyId });
+  deriveStatutoryKnowledgeBase(db, { companyId });
 });
 
 describe('income tax, USC and PRSI rules (issue #212)', () => {

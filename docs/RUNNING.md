@@ -556,9 +556,9 @@ The intended workflow from there is:
    Matching and settling read confirmed documents only. Matching links
    evidence but does **not** classify or post a transaction.
 3a. **Check the statutory VAT suggestion** (issue #200). Run
-   `load-statutory-rules` once per company (idempotent; it ingests every
-   `docs/statutes` source and derives the statutory rules), then
-   `suggest-vat --transaction <id>` for a line. It returns the suggested
+   `suggest-vat --transaction <id>` for a line. The statutory rules come from
+   the rules store installed with Leabhar (ADR-0021); a book does not load
+   them, and in development `npm run rules:build` builds the store. It returns the suggested
    treatment, the rule that decided it, and the provision, source file,
    SHA-256 and quoted text behind it. The transaction screen shows the same
    thing, links to `/statutes/provision/<id>` (which re-reads the file and

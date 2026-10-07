@@ -4,7 +4,6 @@ import { createTestDatabase, insertTestBankTransaction } from '@/db/testing';
 import { createCompany, addBankAccount } from '../config/setup';
 import { suppliers, customers, auditEvents } from '@/db/schema';
 import { ids } from '@/lib/ids';
-import { loadStatutoryKnowledgeBase } from '../rules/knowledgeBase';
 import { suggestVatTreatment } from '../rules/vatSuggestion';
 import { confirmEstablishment, confirmCustomerTaxableStatus, checkVatNumberWithVies, viesCurrent, VIES_CHECK_URL } from './status';
 import type { AppDatabase } from '@/db';
@@ -24,7 +23,6 @@ beforeAll(() => {
   bankAccountId = addBankAccount(db, {
     companyId, bankName: 'AIB', accountName: 'Current', openingDate: '2026-01-01', accountId: created.accountsByKey['bank_control']!,
   });
-  loadStatutoryKnowledgeBase(db, { companyId });
 });
 
 const supplier = (name: string, over: Partial<typeof suppliers.$inferInsert> = {}) => {

@@ -1,7 +1,6 @@
 import { describe, it, expect, beforeAll } from 'vitest';
 import { createTestDatabase } from '@/db/testing';
 import { createCompany } from '../config/setup';
-import { loadStatutoryKnowledgeBase } from './knowledgeBase';
 import { evaluateAllConditions } from './conditionEval';
 import { VATCA_SCHEDULE_CURATED_RULES } from './vatcaScheduleCuration';
 import { SCHEDULE_RULE_PRECEDENCE } from './vatcaScheduleParagraphRules';
@@ -177,7 +176,6 @@ describe('the rate a Schedule 3 line is checked against depends on its date', ()
   beforeAll(() => {
     ({ db } = createTestDatabase());
     ({ companyId } = createCompany(db, { legalName: 'Rates Ltd', vatRegistrationStatus: 'registered', seedYears: [2025] }));
-    loadStatutoryKnowledgeBase(db, { companyId });
   });
 
   const facts = (description: string, transactionDate: string): SuggestionFacts => ({

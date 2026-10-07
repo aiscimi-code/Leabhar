@@ -428,6 +428,13 @@
       "when": 1791368413165,
       "tag": "0060_rules_store_reader_switch",
       "breakpoints": true
+    },
+    {
+      "idx": 61,
+      "version": "6",
+      "when": 1791381393554,
+      "tag": "0061_rules_store_seen_versions",
+      "breakpoints": true
     }
   ]
 }

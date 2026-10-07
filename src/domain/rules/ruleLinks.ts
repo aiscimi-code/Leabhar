@@ -5,13 +5,13 @@
  * this rule rely on?" and "what relies on this rule?" are queries rather than
  * a search through TypeScript. A relationship between rules is declared here,
  * once, and nowhere else: the code that acts on it reads it from here, and
- * `syncRuleLinks` (run by `loadStatutoryKnowledgeBase`) writes the same links
- * into each book, where the graph checks, the impact query and the rule page
- * read them.
+ * `syncRuleLinks` (run by `deriveStatutoryKnowledgeBase`) writes the same
+ * links into the rules store when it is built, where the graph checks, the
+ * impact query and the rule page read them.
  *
- * The code reads the declared links rather than the book's table, so a book
- * loaded before a link was declared answers the same as one loaded after it;
- * the table is what the curation declared, as of the book's last load.
+ * The code reads the declared links rather than the table, so a store built
+ * before a link was declared answers the same as one built after it; the
+ * table is what the curation declared, as of the store's build.
  *
  * Declared here:
  *

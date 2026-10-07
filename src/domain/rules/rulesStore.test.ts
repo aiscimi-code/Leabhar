@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import Database from 'better-sqlite3';
 import { createTestDatabase } from '@/db/testing';
 import { createCompany } from '../config/setup';
-import { loadStatutoryKnowledgeBase } from './knowledgeBase';
+import { deriveStatutoryKnowledgeBase } from './knowledgeBase';
 import { readCatalogueEntry, serialiseCatalogueEntry } from './catalogue';
 import {
   buildRulesStore, checkReleasedVersions, readReleasedVersions, ruleVersionContentHash,
@@ -32,7 +32,7 @@ beforeAll(() => {
   const test = createTestDatabase();
   book = test.sqlite;
   ({ companyId } = createCompany(test.db, { legalName: 'Fresh Book Ltd', vatRegistrationStatus: 'registered', seedYears: [2025] }));
-  loadStatutoryKnowledgeBase(test.db, { companyId });
+  deriveStatutoryKnowledgeBase(test.db, { companyId });
 });
 
 /** A row with the columns that differ between any two loads (IDs and timestamps) and the book's own columns left out. */
