@@ -316,6 +316,26 @@ export function catalogueEntryForSource(
   return null;
 }
 
+/**
+ * The catalogue entry that replaced the statute copy one held provision was
+ * read from: the entry with the source's citation that holds the same section
+ * in the same words (#700). A frozen version (`irish_rule_versions_retained`)
+ * keeps only its own provision, so this matches that one, not the source's
+ * whole set as `catalogueEntryForSource` does. Null when no entry says it.
+ */
+export function catalogueEntryForProvision(
+  params: { citation: string; sectionNumber: string; text: string | null }, root?: string,
+): { name: string; entry: CatalogueEntry } | null {
+  for (const name of CATALOGUE_ENTRIES) {
+    if (citationOf(name, root) !== params.citation) continue;
+    const entry = readCatalogueEntry(name, root);
+    if (sameWords([{ sectionNumber: params.sectionNumber, text: params.text }], entry.provisions.filter((p) => p.sectionNumber === params.sectionNumber))) {
+      return { name, entry };
+    }
+  }
+  return null;
+}
+
 export interface CatalogueIngestResult {
   sourceId: string;
   provisionCount: number;

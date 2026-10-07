@@ -9,14 +9,16 @@ import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
 import { openBook as openAppBook, openSqlite, type AppDatabase } from '@/db';
 import * as schema from '@/db/schema';
 import {
-  irishRuleBindings, irishRuleDecisions, irishRuleVersionMap, irishRuleVersionsRetained, irishTaxRules,
-  invoiceLines, reviewItems, rulesStoreSeen, suppliers, taxRates,
+  irishActProvisions, irishKnowledgeSources, irishRuleBindings, irishRuleDecisions, irishRuleVersionMap, irishRuleVersionsRetained,
+  irishTaxRules, invoiceLines, reviewItems, rulesStoreSeen, suppliers, taxRates, visibleActProvisionFields, visibleActProvisions,
+  visibleKnowledgeSourceFields, visibleKnowledgeSources, visibleTaxRules,
 } from '@/db/schema';
 import { ids } from '@/lib/ids';
 import { createCompany } from '../config/setup';
 import { createInvoice } from '../invoicing/invoices';
 import { makeDate } from '../dates';
-import { deriveStatutoryKnowledgeBase } from './knowledgeBase';
+import { checkProvisionEvidence, deriveStatutoryKnowledgeBase } from './knowledgeBase';
+import { readCatalogueEntry } from './catalogue';
 import { attachRulesStore, detachRulesStore } from './visibleRules';
 import { buildRulesStore, RulesStoreOpenError, type RulesStoreBuildResult } from './rulesStore';
 import { migrateBookToRulesStore, type RulesStoreMigrationResult } from './rulesStoreMigration';
@@ -256,6 +258,60 @@ describe('a book version more than one store version says the same as', () => {
     const item = book.db.select().from(reviewItems).where(eq(reviewItems.dedupeKey, `rule_version_retained:${REDUCED}@1`)).get()!;
     expect(item.title).toBe(`Rule version ${REDUCED}@1 matches more than one version in the rules store`);
     expect(item.detail).toContain(`${REDUCED}@1, ${REDUCED}@99`);
+  });
+});
+
+describe('a book that read a statute copy before its catalogue port (#698, #700)', () => {
+  const DISTANCE = 'vat.distance_sales_goods_eu_consumers';
+  const ENTRY = 'vatca-2010-revised/s030.json';
+
+  it('reads the footnote date from the store, and the viewer names the entry that replaced the copy', async () => {
+    // As #698 left such a book: s.30 read from its Markdown copy (deleted by
+    // the port), and the footnote date lost, so version 1 closed the day it
+    // opened and version 2 claims the rule from 2010.
+    const book = openBook('pre-port');
+    const { db, companyId } = book;
+    const v1 = db.select().from(irishTaxRules)
+      .where(and(eq(irishTaxRules.companyId, companyId), eq(irishTaxRules.ruleKey, DISTANCE))).get()!;
+    const provision = db.select().from(irishActProvisions).where(eq(irishActProvisions.id, v1.provisionId)).get()!;
+    db.update(irishKnowledgeSources).set({ localPath: 'docs/statutes/vatca-2010-revised/s030.md', sha256: 'f'.repeat(64) })
+      .where(eq(irishKnowledgeSources.id, provision.sourceId)).run();
+    db.update(irishTaxRules).set({ effectiveTo: '2021-07-01' }).where(eq(irishTaxRules.id, v1.id)).run();
+    db.insert(irishTaxRules).values({ ...v1, id: ids.taxRule(), ruleVersion: 2, effectiveFrom: '2010-11-01', effectiveTo: null }).run();
+
+    const result = await migrateBookToRulesStore(db, { storePath: store.path, backup: { root: join(dir, 'pre-port-backups'), dbPath: book.path } });
+    expect(result.companies[0]!.retained.filter((r) => r.ruleKey === DISTANCE)).toEqual([
+      { ruleKey: DISTANCE, ruleVersion: 1, reason: 'never_in_force' },
+      { ruleKey: DISTANCE, ruleVersion: 2, reason: 'no_store_version' },
+    ]);
+
+    // #698: what the book applies is the store's version, dated by the footnote.
+    attachRulesStore(book.sqlite, { path: store.path });
+    const visible = db.select({ version: visibleTaxRules.ruleVersion, from: visibleTaxRules.effectiveFrom, to: visibleTaxRules.effectiveTo, origin: visibleTaxRules.origin })
+      .from(visibleTaxRules).where(and(eq(visibleTaxRules.companyId, companyId), eq(visibleTaxRules.ruleKey, DISTANCE))).all();
+    expect(visible.filter((r) => r.origin === 'store')).toEqual([{ version: 1, from: '2021-07-01', to: null, origin: 'store' }]);
+
+    // #700: a frozen version still names the deleted copy. The viewer keeps
+    // its path and hash, and checks the entry with the same words instead.
+    const retained = db.select({ provision: visibleActProvisionFields, source: visibleKnowledgeSourceFields })
+      .from(visibleActProvisions)
+      .innerJoin(visibleKnowledgeSources, eq(visibleActProvisions.sourceId, visibleKnowledgeSources.id))
+      .where(and(eq(visibleActProvisions.slug, DISTANCE), eq(visibleActProvisions.origin, 'retained'))).all();
+    expect(retained).toHaveLength(2);
+    const entry = readCatalogueEntry(ENTRY);
+    for (const row of retained) {
+      expect(row.source.localPath).toBe('docs/statutes/vatca-2010-revised/s030.md');
+      const file = checkProvisionEvidence(row.source, row.provision);
+      expect(file.exists).toBe(false);
+      expect(file.replacedBy?.entry).toBe(`catalogue/${ENTRY}`);
+      expect(file.replacedBy?.check).toMatchObject({ exists: true, sha256Matches: true });
+      expect(file.replacedBy?.check.slice).toBe(entry.provisions.find((p) => p.sectionNumber === provision.sectionNumber)!.excerpt);
+    }
+
+    // Words the entry does not hold are not vouched for by it.
+    const changed = checkProvisionEvidence(retained[0]!.source, { ...retained[0]!.provision, provisionText: 'Other words.' });
+    expect(changed).toMatchObject({ exists: false, replacedBy: null });
+    detachRulesStore(book.sqlite);
   });
 });
 
