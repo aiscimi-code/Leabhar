@@ -1,8 +1,8 @@
 /**
  * Parsers for the two Revenue form-guidance documents behind the VAT return
  * screens (issue #439): Revenue's "How do you complete a VAT 3 return?" page
- * (docs/statutes/vat3-rtd/completing-vat3-return.md) and TDM VAT-RTD-S76, the
- * Return of Trading Details manual (docs/statutes/vat3-rtd/VAT-RTD-S76.md).
+ * and TDM VAT-RTD-S76, the Return of Trading Details manual. The catalogue
+ * extraction reads each with it (catalogue/vat3-rtd/, #556).
  *
  * Both are already read directly by src/domain/vat (boxDefinitions.ts, rtd.ts)
  * for the figures; this parser turns the same passages into offset-addressable

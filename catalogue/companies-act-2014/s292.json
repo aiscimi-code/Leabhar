@@ -1,0 +1,26 @@
+{
+  "format": 1,
+  "source": {
+    "citation": "2014 Act 38 s.292",
+    "title": "Companies Act 2014 s.292 (revised)",
+    "sourceType": "legislation",
+    "jurisdiction": "IE",
+    "sourceUrl": "https://revisedacts.lawreform.ie/eli/2014/act/38/section/292/revised/en/html",
+    "sha256": "260fdb450524ca1c59ff6520fde4653f74f4155e92847776f25d61fe7853c0df",
+    "conversion": "lrc-html-plaintext",
+    "retrievedOn": "2026-10-06",
+    "note": "LRC-revised text as retrieved — a live, continuously-updated page, not a dated historical snapshot. Distinct source row per section, never merged with any other Companies Act 2014 section."
+  },
+  "provisions": [
+    {
+      "sectionNumber": "292",
+      "heading": "IFRS entity financial statements",
+      "locator": "s.292",
+      "category": "other",
+      "relevant": false,
+      "relevanceReason": "Uncategorised by heading/body keyword match; needs human review to determine relevance.",
+      "excerpt": "292.\n(1) Where the directors of a company prepare IFRS entity financial statements they\nshall comply with all IFRS in that regard and—\n\n(a) shall make an unreserved statement in the notes to those entity financial statements\nthat those financial statements have been prepared in accordance with international\nfinancial reporting standards, and\n\n(b) shall ensure that those financial statements contain the additional information\nrequired by this Act other than that\nrequired by\nSchedules 3, 3A, 3B, 4\nand\n4A\n.\n\n(2) For the avoidance of doubt, the requirement for entity financial statements prepared\nin accordance with IFRS to present fairly the assets, liabilities, financial position,\nfinancial performance and cash flows is deemed to be equivalent to the true and fair\nview required by\nsection 291\n(2)\n.\n\n(2A) IFRS entity financial statements shall state the following:\n\n(a) the name and legal form of the company;\n\n(b) the place of registration of the company and the number under which it is registered;\n\n(c) the address of its registered office;\n\n(d) where the company is being wound up, the information required by\nsection 595\n.\n\n(3) If a company fails to comply with\nsubsection (1)\nor\n(2A)\n, the company and any officer of it who is in default shall be guilty of a category\n2 offence.\n\n(4) In any proceedings against a person in respect of an offence under\nsubsection (3)\n, it shall be a defence to prove that the defendant had reasonable grounds for believing\nand did believe that—\n\n(a) a competent and reliable person was charged with the duty of ensuring that the\nprovisions of the subsection concerned were complied with, and\n\n(b) the latter person was in a position to discharge that duty.\n\n(5) In\nsubsection (3)\n“officer” includes any shadow director and\nde facto\ndirector."
+    }
+  ],
+  "rules": []
+}

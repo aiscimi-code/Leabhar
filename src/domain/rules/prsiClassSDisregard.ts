@@ -1,6 +1,6 @@
 import type { CuratedIncomeTaxRule } from './incomeTaxCuration';
 
-/** Front-matter citation on docs/statutes/si-312-1996/art92.md. */
+/** The citation of S.I. 312/1996 art. 92's source (catalogue/si-312-1996/art92.json). */
 export const SI_312_1996_ART92_CITATION = 'S.I. 312/1996 s.92';
 
 /**

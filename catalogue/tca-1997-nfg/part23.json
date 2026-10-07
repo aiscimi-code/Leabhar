@@ -1,0 +1,484 @@
+{
+  "format": 1,
+  "source": {
+    "citation": "Revenue NfG TCA 1997 (FA 2025 ed.) Part 23",
+    "title": "Notes for Guidance — Taxes Consolidation Act 1997 — Finance Act 2025 edition — part23",
+    "sourceType": "revenue_guidance",
+    "jurisdiction": "IE",
+    "sourceUrl": "https://www.revenue.ie/en/tax-professionals/documents/notes-for-guidance/tca/part23.pdf",
+    "sha256": "de6989588561cd603db11100a4caa7facbfa6ecec5ac5a208c2c45061312e804",
+    "conversion": "pdftotext-layout",
+    "retrievedOn": "2026-10-06",
+    "publicationDate": null,
+    "effectiveFrom": "2025-12-31",
+    "note": "Revenue guidance summarising the TCA 1997 as amended to Finance Act 2025. There is no LRC revised TCA; the Notes are the current consolidated statement of each section, but rank below the Act itself."
+  },
+  "provisions": [
+    {
+      "sectionNumber": "654",
+      "heading": "Interpretation (Part 23)",
+      "locator": "s.654",
+      "principalAct": "1997 Act 39",
+      "category": "corporation_tax",
+      "relevant": true,
+      "relevanceReason": "In scope for the corporation tax computation (issue #211); not yet curated.",
+      "excerpt": "654 Interpretation (Part 23)\nThis section defines a number of terms for Part 23 other than section 664.\n“farming” is defined to mean farming farm land, that is, land in the State which is wholly or mainly\noccupied for husbandry, other than market garden land.\n“market garden land” is land in the State which is occupied as a nursery or garden for the sale of the\nproduce (but excluding land used for growing hops), and “market gardening” is to be construed by\nreference to this meaning.\n“occupation” of land, other than market garden land, is having the use of the land or the right to graze\nlivestock on it.\n"
+    },
+    {
+      "sectionNumber": "657",
+      "heading": "Averaging of farm profits",
+      "locator": "s.657",
+      "principalAct": "1997 Act 39",
+      "category": "corporation_tax",
+      "relevant": true,
+      "relevanceReason": "Curated: mapped to a rule in corporationTaxCuration.ts.",
+      "excerpt": "657 Averaging of farm profits\nSummary\nThis section provides that, instead of being charged to tax on their farming profits in the normal way (that\nis, on the profits of a 12-month period ending in the year of assessment), up to year of assessment 2014,\nindividual farmers may elect to be charged on the basis of the average of the aggregate farming profits\nand losses of the 3 years ending in the year of assessment. In effect, one-third of the profits for the 3 years\n                                                                  7\n\fNotes for Guidance – Taxes Consolidation Act 1997 – Finance Act 2025 Edition - Part 23\n\n\nis charged for a year. Prior to 1 January 2019, farmers could not avail of income averaging where the\nfarmer or their spouse/civil partner, carried on another trade or profession, unless that trade or profession\nrelated to on-farm diversification conducted on the farmland. In addition, a farmer could not elect for\naveraging if the farmer, or the farmer’s spouse/civil partner, was a director of a company carrying on a\ntrade or profession and the farmer, or the farmer’s spouse/civil partner, was the beneficial owner or was\nable to control, either directly or indirectly, more than 25% of the ordinary share capital of the company.\nFinance Act 2018 removed these restrictions with effect from 1 January 2019.\nOnce an election for averaging is made, a farmer must remain on averaging for a minimum of 3 years. If\nthe farmer wishes to revert to the normal basis of assessment, the 2 years of assessment immediately before\nthe final year of averaging are reviewed and, if necessary, additional assessments are made to ensure that\nthe amount charged for each of those 2 years is not less than the amount charged for the final year of\naveraging.\nFor the years of assessment 2015 onwards the period of income averaging is increased from three to five\nyears.\nFor the years of assessment 2015 onwards a farmer must remain on averaging for a minimum of 5 years.\nIf the farmer wishes to revert to the normal basis of assessment, the 4 years of assessment immediately\nbefore the final year of averaging are reviewed. Special transitional measures are provided for those\nfarmers who elect to opt out of averaging in 2015 and 2016.\nFor the years of assessment 2016 onwards, a farmer may elect to step-out of the income averaging regime,\nand revert to the normal basis of assessment, for a single year.\nAn option is given to farmers to step out of income averaging for the year of assessment 2020,\nnotwithstanding that the farmer may also have stepped out of income averaging in one of the four\npreceding tax years.\nIn the case of a farmer entering a Registered Farm Partnership which might otherwise mean the cessation\nof a previous sole trade of farming, the cessation will be ignored solely for the purpose of applying the\nincome averaging rules and averaging can continue to apply.\nDetails\nDefinitions                                                                                     (1)\n“deferred tax” means the amount of income tax determined by the formula -\nA–B\nWhere –\nA is the amount of income tax which would, apart from subsection (6A), be charged on an\nindividual as a result of income averaging in the year of assessment,\nB is the amount of income tax which would, apart from this section, be chargeable in\naccordance with Chapter 3 of Part 4 in respect of a year of assessment in which an election\nis made in accordance with subsection (6A) i.e. based on current year profits.\n“specified return date for the chargeable period” has the same meaning as in section 959A.\nElection for income averaging by full-time farmers\nA farmer may by written notice elect for income averaging within 30 days of the date of an (4)(a)\nassessment to tax in respect of farming profits and the assessment is amended as necessary\nas a result so as to give effect to the election.\nIncome averaging – tax treatment\nThe farmer opting for income averaging is charged to tax for a tax year on the average of (5)(a)\nthe aggregate farming profits and losses (before deduction of capital allowances which are\n\n                                                                  8\n\fNotes for Guidance – Taxes Consolidation Act 1997 – Finance Act 2025 Edition - Part 23\n\n\nnot subject to averaging) over 5 years, that is, of the tax year in question and the 4 tax years\nimmediately preceding that year.\nExample election in 2021\n         1             2                         3                    4\n                                           Aggregate of\n                  Profit/Loss            Profit/ Losses for Average profit for\n      Year of\n                   in year of           year of assessment assessment in year\n   assessment\n                  assessment              and 4 previous     (1/5th. Col. 3)_\n                                                years\n\n         2017       15,000\n\n         2018       18,000\n\n         2019       21,000\n\n         2020       24,000\n\n         2021       21,000                    99,000              19,800\n\n         2022    (18,000)loss                 66,000              13,200\n\n         2023       33,000                    81,000              16,200\n\n\nProvision is made that for the short “year” of assessment 2001, a farmer who is to be (5)(aa)\nassessed to tax on the income averaging basis is assessed on 74% (and not 100%) of the\naverage of the farming profits and losses of the appropriate 3-year period ending in that year\nof assessment.\nA mechanism is provided to deal with the case where a farmer customarily makes up annual (5)(ab)\naccounts to a date in the period from 1 January to 5 April. In such a case there is no account\nperiod ending in the short “year” of assessment 2001 as the period 1 January to 5 April 2002\nfalls in the calendar year of assessment, 2002. To deal with such a case, it is provided that\nannual accounts made up to a date in the period in question are, in addition to being accounts\nmade up to a date in the year of assessment 2002, treated as accounts made up to a date in\nthe short “year” of assessment 2001. The result of this is that the one set of accounts comes\ninto play for the 3-year look back for averaging purposes in the case of both the short “year”\nof assessment 2001 and the year of assessment 2002. This is consistent with the approach\nprovided for in the case of self-employed taxpayers taxed in the normal way on the profits\nof a 12-month period ending in the year of assessment.\nBoth profits and losses of the 5 years concerned in the averaging process are aggregated; (5)(b)\nlosses are, in effect, treated as negative profits.\nOnce an election for averaging is made, the farmer continues to be assessed on that basis (6)\nfor subsequent years unless the farmer ceases to farm.\nA farmer may elect out of the averaging regime for a single year and revert to the normal (6A)\nbasis of assessment for that year. The deferred tax due will be payable in instalments over\nthe subsequent 4-year period. An individual will only be entitled to make such an election\nonce every 5 years. The election is available for the tax year 2016 and subsequent years of\nassessment.\n\nThis paragraph sets out two definitions.                                                 (6B)(a)\nThe “Covid-19 period” is defined as the period beginning on 1 January 2020 and ending on\n31 December 2020.\n                                                                  9\n\fNotes for Guidance – Taxes Consolidation Act 1997 – Finance Act 2025 Edition - Part 23\n\n\nThe term “Covid-19 deferred tax” is defined an amount of tax determined by the formula\n‘A – B’. ‘A’ is the amount of income tax which would, apart from this subsection, be\ncharged on an individual as a result of income averaging in the year of assessment. ‘B’ is\nthe amount of income tax which would, apart from this section, be chargeable in accordance\nwith Chapter 3 of Part 4 in respect of the year of assessment 2020, i.e. if it would chargeable\non current year profits.\nSubsection (6B) applies to an individual who stepped out of averaging regime under (6B)(b)\nsubsection (6A) in the year of assessment 2019 or one of the three years of assessment\nimmediately preceding it and sustains a loss in the Covid-19 period (i.e. 1 January 2020 to\n31 December 2020).\nWhere this subsection applies to an individual and the individual is chargeable to income (6B)(c)\ntax as a result of income averaging in the year of assessment, the individual may elect to\ndefer payment of the Covid-19 deferred tax.\nWhere an election is made under paragraph (c), the Covid-19 deferred tax for that year of (6B)(d)\nassessment may be paid in four equal instalments.\nThe first instalment will be due by the specified return date for the year of assessment (6B)(e)\nfollowing the year of assessment in respect of which the election was made. The remaining\nthree instalments will be due on or before the following three anniversaries of the date on\nwhich the first instalment was due.\nReversion to normal basis of assessment\nA farmer may elect to revert to the normal (current year) basis of assessment for a year of (7)\nassessment provided that averaging has been used for the 5 immediately preceding tax\nyears. A notice to this effect is to be given with the return of income for the year in question.\nPrior to 1 January 2019, a farmer who became a trader/ farmer (and thus no longer qualified\nfor averaging) was deemed to have elected to revert to the normal basis of assessment.\nTransitional measures for farmers who wish to opt out of averaging in 2015 or 2016\nA farmer who wishes to opt out in 2015 can do so if they have been charged on the basis of (7A)(a)\naveraging for each of the 3 years immediately preceding this year. A farmer who wishes to (7A)(b)\nopt out in 2016 can do so if they have been charged on the basis of averaging for each of\nthe 4 years immediately preceding this year.\nWhere a farmer elects to no longer be assessed under averaging, the normal, current year (8)(a)\nbasis of assessment applies for the year in respect of which the election to opt out is made.\nWhere a farmer elected to opt out of averaging permanently or was deemed to have so (8)(b)\nelected in 2015, the years 2012 and 2013 were reviewed to ensure that the amount charged\nfor each of those years was not less than the amount charged on the basis of averaging for\n2014.\nWhere a farmer who first opted to average in 2014 subsequently elects or is deemed to have (8)(c)\nelected to opt out of averaging permanently, the 3 years immediately preceding the year of\nopt out will be reviewed to ensure that the amount charged for each of those 3 years is not\nless than the amount charged on the basis of averaging for the year preceding the year of\nopt out.\nWhere any other farmer elects to opt out of averaging permanently, the 4 years immediately (8)(d)\npreceding the year of opt out will be reviewed to ensure that the amount charged for each\nof those 4 years is not less than the amount charged on the basis of averaging for the year\npreceding the year of opt out.\n\n\n                                                                 10\n\fNotes for Guidance – Taxes Consolidation Act 1997 – Finance Act 2025 Edition - Part 23\n\n\n\nWhere a farmer elects to opt out of averaging permanently, any deferred tax and Covid-19 (8)(e)\ndeferred tax which remains outstanding shall become due and payable.\nFor the purposes of subsection (8), there is a mismatch between the length of the short\n“year” of assessment 2001 (270 days from 6 April to 31 December 2001) and the previous\nand subsequent years of assessment (12 months). As a consequence, in the case of farmers\nopting out of income averaging in the first 3 calendar years of assessment, 2002, 2003 and\n2004, appropriate adjustments are made where the 2 years of assessment immediately\nbefore the final year of averaging are being reviewed. Separate rules are, therefore, provided\nfor each of the 3 years, 2002, 2003 and 2004.\nIn the case of the farmer opting out of income averaging in the year of assessment 2002, the (8A)\nlast year of assessment for which averaging applies is the short “year” of assessment 2001\nfor which only 74% (and not the normal 100%) of the average of 3 years’ profits is\nchargeable to tax. Accordingly, in order to ensure a fair comparison when reviewing the 2\nimmediately preceding years of assessment for which income averaging applied, the years\nof assessment 2000–2001 and 1999–2000 (for which the normal 100% of the 3-year\naveraged profits are charged to tax), it is provided that an assessment may, if necessary, be\nmade to secure that the profits charged to tax for each of those 2 years of assessment are not\nless than 135% (100/74 x 100) of the profits charged under income averaging for the short\n“year” of assessment 2001.\nIn the case of the farmer opting out of income averaging in the year of assessment 2003, the (8B)\nlast year of assessment for which averaging applies in the year of assessment 2002 for which\nthe normal 100% of the average of 3 years’ profits is chargeable to tax. The 2 immediately\npreceding years of assessment for which income averaging applies are the short “year” of\nassessment 2001 (for which only 74% of the 3-year averaged profits are charged to tax) and\nthe year of assessment 2000–2001 (for which the normal 100% of the 3-year averaged\nprofits are charged to tax. Again, to ensure a fair comparison when reviewing those 2 years\nof assessment, it is provided that an assessment may, if necessary be made, to secure that\nthe profits charged to tax for each of those years are —\n•      in the case of the year of assessment 2000–2001, not less than, and\n•      in the case of the short “year” of assessment 2001, not less than 74% of,\nthe profits charged under income averaging for the year of assessment 2002.\nWhere a farmer opts out of income averaging in the year of assessment 2004, the last year (8C)\nfor which averaging applies is the year of assessment 2003 for which the normal 100% of\nthe average of 3 years’ profits is chargeable to tax. The 2 immediately preceding years of\nassessment for which income averaging applies are the year of assessment 2002 (for which\nthe normal 100% of the 3-year averaged profits are charged to tax) and the short “year” of\nassessment 2001 (for which only 74% of the 3-year averaged profits are charged to tax). To\nensure a fair comparison when reviewing those 2 years of assessment, it is provided that an\nassessment may, if necessary, be made to secure that the profits charged to tax for each of\nthose years are —\n•     in the case of the short “year” of assessment 2001, not less than 74% of, and\n•     in the case of the year of assessment 2002, not less than,\nthe profits charged under income averaging for the year of assessment 2003.\nCapital allowances\nWhere a farmer’s profits are charged using income averaging, capital allowances, balancing (9)\nallowances and balancing charges are dealt with as they would have been if the normal,\ncurrent year basis applied, that is, on the basis of expenditure incurred in the particular year.\n                                                                 11\n\fNotes for Guidance – Taxes Consolidation Act 1997 – Finance Act 2025 Edition - Part 23\n\n\n\nPermanent discontinuance of a trade\nThe cessation rules of section 67 – which deal with the assessment of profits where a trade (10)\nis permanently discontinued – operate even where an election has been made for averaging.\nHowever, where the commencement of a Registered Farm Partnership would have meant (10A)\nthe cessation of a previous trade of farming, then the cessation will be ignored solely for the\npurposes of income averaging. The cessation and commencement rules will still apply\nhowever income averaging can continue.\nLosses arising on income averaging\nIn the case of a farmer who first elects to average in 2014, where in any year a loss is (11)\naggregated with profits under subsection 5(b) of section 657 and the amount of the loss is\nin excess of the profits then one quarter of the amount of such excess will be treated as a\nloss sustained in the trade of farming for the final year of the 4 years. This is the amount of\nloss that can be relieved under Chapter 1 of Part 12.\nIn the case of any other farmer, where in any year a loss is aggregated with profits under\nsubsection 5(b) of section 657 and the amount of the loss is in excess of the profits then one\nfifth of the amount of such excess will be treated as a loss sustained in the trade of farming\nfor the final year of the 5 years. This is the amount of loss that can be relieved under Chapter\n1 of Part 12.\nLosses in short tax “year” 2001\nIn order to take account of the short “year” of assessment 2001, provision is made that where (11A)\na loss is determined under income averaging for that “year”, only 74% (and not 100%) of\none-third of that loss is available for set-off against other income of that “year”. The balance\nof 26% of one-third of the loss is, however, available for carry forward against farming\nincome in subsequent years of assessment.\nProfits calculated under income averaging\nThe profits from farming calculated in accordance with the averaging provisions are deemed (12)\nto be the farmer’s profits for tax purposes. In addition, the provisions of the Income Tax\nActs relating to the delivery of returns, accounts, statements, etc. apply as if this averaging\nprovision had not been introduced, thereby preserving the penalty provisions in relation to\nthe submission of such documents on the normal basis to the Revenue Commissioners.\n"
+    },
+    {
+      "sectionNumber": "658",
+      "heading": "Farming: Allowances for capital expenditure on construction of buildings and other works",
+      "locator": "s.658",
+      "principalAct": "1997 Act 39",
+      "category": "corporation_tax",
+      "relevant": true,
+      "relevanceReason": "Curated: mapped to a rule in corporationTaxCuration.ts.",
+      "excerpt": "658 Farming: Allowances for capital expenditure on construction of buildings and other works\nSummary\nPersons chargeable to tax on their farming profits may claim a farm buildings allowance for capital\nexpenditure on the construction of farm buildings (other than buildings used as a dwelling) and certain\nother works. The cost is written off at the rate of 15 per cent of the cost in each of the first 6 years with\nthe remaining 10 per cent in year 7.\n\n\n\n\n                                                                 12\n\fNotes for Guidance – Taxes Consolidation Act 1997 – Finance Act 2025 Edition - Part 23\n\n\nDetails\nApplication\nFarm buildings allowances are available to persons whose farming profits are taxable by (1)\nvirtue of section 655.\nAllowances\nA farm buildings allowance is made, over a 7 year period, to a farmer who incurs capital (2)(a)\nexpenditure on the construction of farm buildings (excluding a building used as a dwelling),\nfences, roadways, holding yards, drains, land reclamation and other works such as walls,\nwater and electrical installation and sewerage.\nThe rate of the farm buildings allowance is 15 per cent of the capital expenditure for each (2)(b)\nof the first 6 years of the 7 year period with the balance, 10 per cent, allowed in year 7.\nCertain transitional rules apply for dealing with expenditure incurred before 27 January, (2)(c)\n1994 (see paragraph 23 of Schedule 32).\nFor the purposes of the allowances under this section, the “basis period” for income tax (3)\npurposes is the period on the profits or gains of which the income tax liability is calculated.\nDeemed allowances\nAn allowance under this section is deemed to have been made for any year of assessment (4)\nfor which an individual is not chargeable to tax on farming profits and in which, if the person\nhad been chargeable, the person could have claimed a farm buildings allowance.\nPre-trading expenditure\nCapital expenditure on farm buildings which was incurred by a person about to start farming (5)\nbut before farming begins is regarded as being incurred when the farming actually begins.\nClaims\nFarm buildings allowance is claimed by being included in the person’s annual tax return. (6)\nThe balance of the allowance not granted in any year of assessment (because there were\ninsufficient profits to absorb it) may be carried forward to later years.\nTransfers of farms\nIf a person who is entitled to a farm buildings allowance transfers the farm to another person, (9)\nthe transferee becomes entitled to whatever allowance is due for chargeable periods after\nthe transfer.\nIf only part of the farm is transferred, the transferee may claim so much of the allowance as (10)\nrelates to that part of the land.\nApportionment of expenditure, prevention of double relief and exclusion of grants\nCapital expenditure that relates only partly to farming purposes is to be apportioned. Farm (11)\nbuildings allowances only apply to the part that relates to the farming trade.\nA farm buildings allowance is not granted if the expenditure qualifies for an industrial (12)\nbuilding initial or writing-down allowance under Chapter 1 of Part 9.\nOnly net expenditure qualifies for farm buildings allowances – any State or other subsidy (13)\nis excluded.\n\n\n\n\n                                                                 13\n\fNotes for Guidance – Taxes Consolidation Act 1997 – Finance Act 2025 Edition - Part 23\n\n\n"
+    },
+    {
+      "sectionNumber": "658A",
+      "heading": "Farming: Accelerated allowances for capital expenditure on slurry storage",
+      "locator": "s.658A",
+      "principalAct": "1997 Act 39",
+      "category": "corporation_tax",
+      "relevant": true,
+      "relevanceReason": "Curated: mapped to a rule in corporationTaxCuration.ts.",
+      "excerpt": "658A Farming: Accelerated allowances for capital expenditure on slurry storage\nSummary\nThis section provides for a scheme of accelerated wear and tear allowances for expenditure incurred by\nfarmers on capital expenditure incurred on the construction of slurry storage facilities and certain\nassociated capital items. The scheme is available to persons carrying on a trade of farming that incur\nqualifying expenditure on certain capital items for the construction of slurry storage facilities between 1\nJanuary 2023 and 31 December 2029 for the purposes of the farming trade. Where expenditure is\nqualifying, the farmer will be entitled to claim wear and tear allowances on the expenditure over a period\nof 2 years, instead of 7 years in the case of farm buildings and 8 years in the case of plant and machinery,\nsubject to a maximum tax benefit of €500,000 per undertaking.\nDetails\nDefinitions                                                                                     (1)\n“qualifying capital items” means the items specified in column (1) of the Table in Part 2 of\nSchedule 35A meeting the description specified in column (2) of that Table opposite the\nreference to those items in column (1);\n“qualifying expenditure” means capital expenditure incurred during the relevant period on\nthe provision or construction, as the case may be, of qualifying capital items;\n“relevant period” means the period commencing on 1 January 2023 and ending on 31\nDecember 2029;\n“relevant regulation” means Article 7 of the European Union (Good Agricultural Practice\nfor Protection of Waters) Regulations 2022 (S.I. No.113 of 2022)1 ;\n“relevant tax”, in relation to a person, means—\n(a)     where the person is a company, any corporation tax, and\n(b)     where the person is not a company, any contributions paid under the Social Welfare\nConsolidation Act 2005, income tax or universal social charge;\n“Rescuing and Restructuring Guidelines” means the Communication from the Commission\non Guidelines on State aid for rescuing and restructuring non-financial undertakings in\ndifficulty2;\n“undertaking in difficulty” is to be interpreted in accordance with section 2.2 of the\nRescuing and Restructuring Guidelines.\nApplication\nAccelerated capital allowances for the construction of slurry storage facilities are available\nto persons who incur qualifying expenditure for the purpose of a trade of farming land\noccupied by that person.\nAllowances\nWhere an eligible person incurs, between 1 January 2023 and 31 December 2029, qualifying (2)(a)\nexpenditure on qualifying capital items for the purposes of building a slurry storage facility\nfor use in their farming trade, then for any chargeable period a wear and tear allowance is\nto be made under section 658 in respect of any qualifying expenditure, section 658(2) will\napply as if the reference in section 658(2)(a) to 7 years were a reference to 2 years, and as\nif the farm buildings allowance to be made under section 658(2)(b) shall be 50 percent and\nsubsection (12) of that section shall apply as if “Chapter 1 or 2 of Part 9” were substituted\nfor “Chapter 1 of Part 9”.\n\n\n   1\n       See: https://www.irishstatutebook.ie/eli/2022/si/113/made/en/print\n   2\n       See: https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=OJ:C:2014:249:FULL&from=EN\n                                                                 14\n\fNotes for Guidance – Taxes Consolidation Act 1997 – Finance Act 2025 Edition - Part 23\n\n\nOr where a wear and tear allowance is to be made under section 284 in respect of any               (2)(b)\nqualifying expenditure incurred on qualifying capital items, section 284(2) will apply as if\nthe reference in section 284(2)(ad) to 12.5% were a reference to 50%.\nOnly expenditure attributable to building work actually carried out in the period 1 January        (3)\n2023 to 31 December 2029 will benefit from the accelerated capital allowances.\nSubsection (2) will not apply where the person concerned—                                          (4)\n• is, or is part of, an undertaking in difficulty,\n• is subject to an outstanding recovery order following a previous decision of the\nCommission of the European Union that declared an aid illegal and incompatible with the\ninternal market, or\n• is, or is part of, an undertaking that not a micro, small or medium-sized enterprise within\nthe meaning of Regulation (EU) 2022/2472.\nThe aggregate amount of relief (see subsection (8) for the calculation of relief) granted to a     (5)\nperson under this section shall not exceed €500,000.\nThis subsection will apply to a person for a chargeable period where the aggregate of the          (6)\namount of the relief (see subsection (8) for the calculation of relief) granted to the person in\nthat chargeable period and in any previous chargeable periods exceeds €10,000.\nWhere subsection (6) applies to a person for a chargeable period, then, notwithstanding            (7)\nsection 851A (which provides for the confidentiality of taxpayer information), the Revenue\nCommissioners may disclose the following information in respect of the year in which the\nchargeable period ends:\n• the name of the person,\n• the sector of activity at NACE group level,\n• the territorial unit, within the meaning of the NUTS Level 2 classification specified in\nAnnex 1 to Regulation (EC) No 1059/2003 (as amended), in which the person is located,\nand\n• the year in which the relief is granted.\nFor the purpose of subsections (5) and (6), the amount of relief granted to a person in a          (8)\nchargeable period will be calculated using the formula:\n\nR=A–B\n\nWhere:\n“R” = the amount of the relief granted to the person in the chargeable period,\n“A” = the amount of relevant tax that would be payable by the eligible person for the\nchargeable period, but for subsection (2), and\n“B” = the amount of relevant tax payable by the person for that chargeable period.\n\n\n"
+    },
+    {
+      "sectionNumber": "665",
+      "heading": "Interpretation (Chapter 2)",
+      "locator": "s.665",
+      "principalAct": "1997 Act 39",
+      "category": "corporation_tax",
+      "relevant": true,
+      "relevanceReason": "In scope for the corporation tax computation (issue #211); not yet curated.",
+      "excerpt": "665 Interpretation (Chapter 2)\nThis section defines a number of words and terms used throughout the Chapter.\n“accounting period”, in the case of a company, is determined having regard to section 27 which contains\nrules for establishing when an accounting period of a company begins and ends. For any other person, it\nmeans a one-year period ending on the date to which the person’s accounts are made up. Where there are\nno accounts or where accounts have been prepared for more or less than one year, the accounting period\nis determined by the Revenue Commissioners.\n“chargeable period” is an accounting period (of a company) or a year of assessment (individuals).\n“company” essentially means any body corporate – with certain exceptions (for example, health boards,\nVECs, etc.).\n“specified return date for the chargeable period” means, in relation to a year of assessment, the date by\nwhich the return must be made.\n“trading income” means —\n•      in the case of a company, its farm trading income, and\n•      in any other case, a person’s farm trading profits.\n“trading stock” is defined by reference to section 89, (that is, property of any description which is sold in\nthe course of a trade or materials used in the trade).\n"
+    },
+    {
+      "sectionNumber": "666",
+      "heading": "Deduction for increase in stock values",
+      "locator": "s.666",
+      "principalAct": "1997 Act 39",
+      "category": "corporation_tax",
+      "relevant": true,
+      "relevanceReason": "Curated: mapped to a rule in corporationTaxCuration.ts.",
+      "excerpt": "666 Deduction for increase in stock values\nSummary\nProvision is made in section 666 for stock relief, that is, for a deduction from farming trading income\nof an accounting period of 25 per cent of the increase in the value of trading stock in that accounting\nperiod. Stock relief may not be used to create or augment a loss.\nThe relief must be claimed in writing on or before the return filing date for the period to which it relates\nand it applies to partnerships as well as to companies and individual farmers. The relief is only available\nin the case of a company for accounting periods ending on or before 31 December 2027 and in any other\ncase for years of assessment up to and including 2027.\nDetails\nThe relief\nIf —\n•    a person is carrying on the trade of farming, and                                          (1)\n•    the person’s closing trading stock value is greater than the opening stock value,\nthe person can claim a deduction of 25 per cent of the increase in computing the taxable\nprofits from the trade of farming.\n                                                                 26\n\fNotes for Guidance – Taxes Consolidation Act 1997 – Finance Act 2025 Edition - Part 23\n\n\nExample\n\n                                                              €\n\n  Opening stock at 1 January 2023                          20,000\n\n  Closing stock at 31 December 2023                        25,000\n\n  Increase in value of trading stock                       5,000\n  Farming profits of year ended 31 December\n  2023                                                     6,000\n  Less stock relief (25% of increase in stock\n  value)                                                   1,250\n\n  Revised farming profits for 2023                         4,750\n\n\nRelief not to create a loss and restriction of other reliefs\nA company’s stock relief deduction cannot create a loss, that is, it cannot exceed the (2)(a)\ncompany’s trading income for the accounting period as reduced by trading losses and excess\ncharges (section 396) and terminal losses (section 397) and after taking into account any\ncapital allowances and balancing charges (sections 307 and 308).\nIn addition, certain capital allowances and loss relief provisions do not operate where stock (2)(b)\nrelief is granted to a company for an accounting period (“the relevant period”). The\ncompany is not entitled to a deduction under section 307 or 308 for any accounting period\nlater than the relevant period in respect of any capital allowance treated as a trading loss of\nthe trade before the commencement of the relevant period, or to a set-off under section 396\nfor any accounting period later than the relevant period in respect of a loss sustained in the\ntrade before the commencement of the relevant period, or to a set-off under section 397\n(terminal losses) for any accounting period earlier than the relevant period in respect of a\nterminal loss sustained in the trade.\nSimilar provisions are provided for in relation to individuals who obtain stock relief for a (3)\nyear of assessment (“the relevant year”). Such individuals are not entitled to relief under\nsection 382 for any year of assessment later than the relevant year in respect of a loss\nsustained in the trade before the commencement of the relevant year, or under section 385\n(terminal losses) for any year of assessment earlier than the relevant year in respect of a\nloss sustained in the trade. Moreover, section 304(4) (carry forward of unused capital\nallowances) does not apply as respects capital allowances which are deemed to be capital\nallowances for the relevant year and to which full effect has not been given in that year, and\nsection 392 (option to treat capital allowances as creating or augmenting a loss) does not\napply to the capital allowances for the relevant year. Finally, stock relief cannot be used to\ncreate a loss for the relevant year.\nEnd dates for relief\nStock relief will not be available, in the case of a company, for accounting periods ending (4)\nafter 31 December 2027 and, in the case of individuals, later than the tax year 2027.\nTime limit for claims\nA written claim for the relief must be made on or before the specified return date for the (5)\nchargeable period.\nPartnerships\nStock relief is also available where the trade of farming is carried on by a partnership.     (6)\n\n                                                                  27\n\fNotes for Guidance – Taxes Consolidation Act 1997 – Finance Act 2025 Edition - Part 23\n\n\n"
+    },
+    {
+      "sectionNumber": "667B",
+      "heading": "New arrangements for qualifying farmers",
+      "locator": "s.667B",
+      "principalAct": "1997 Act 39",
+      "category": "corporation_tax",
+      "relevant": true,
+      "relevanceReason": "Curated: mapped to a rule in corporationTaxCuration.ts.",
+      "excerpt": "667B New arrangements for qualifying farmers\nSummary\nAny individual who achieves a level of academic training set out in the Table to this section and who\ncommences farming in the period beginning on or after 1 January 2007 and ending on or before 31\nDecember 2027 (but refer to notes on subsection (5)(b)) is entitled to the enhanced stock relief of 100%\nfor four years instead of the normal rate of 25%. Any person who achieved the academic and training\nstandards under either section 667 or 667A is deemed to satisfy the requirements of this section.\nThe names of the awarding bodies have been changed arising from the enactment of the Qualifications\nand Quality Assurance (Education and Training) Act 2012. This is effective from 6 November 2012 as\nprovided for by that Act.\nDetails\nThis section comprises 7 subsections as follows:\n“qualifying farmer” is defined as an individual who —                                              (1)\n\n                                                                 30\n\fNotes for Guidance – Taxes Consolidation Act 1997 – Finance Act 2025 Edition - Part 23\n\n\n\n•      in 2007 or a subsequent year of assessment first qualifies for the Scheme           of (1)(a)\n       Installation Aid for Young Farmers operated by the Department of          Agriculture,\n       Food and the Marine under EU Regulations, or\n•      first becomes chargeable to tax under Case I of Schedule D from farming in 2007 or\n       a subsequent year,\n•      is under 35 at the start of that year, and\n•      at any time in that year satisfies the conditions set out in subsection (2) or (3).\nand\n•      submits a business plan to Teagasc for the purposes of section 667B or, to Teagasc (1)(b)\n       or the Minister for Agriculture, Food and the Marine for any other purpose, on or\n       before 31 October of the year of assessment following the year of assessment in which\n       the individual first becomes a qualifying farmer.\nThe individual referred to in the definition of ‘qualifying farmer’ in subsection (1) is (2)\nrequired to be the holder of a trained farmer qualification (within the meaning given by\nsection 654A).\nThe individual is also required to have a letter of confirmation from Teagasc confirming (3)\nsatisfactory completion of a Teagasc approved course of training for persons with a\nphysical, sensory, or intellectual disability, or are restricted in their learning capacity due to\nmental health.\nFor the purposes of subsection (2), where Teagasc certifies that another qualification (4)\ncorresponds to one set out in the Table and where the Qualifications and Quality Assurance\nAuthority of Ireland deems that qualification to be at least at an equivalent standard to the\nqualification set out in the Table then that qualification will be treated as the qualification\nso set out in the Table.\nWhere this section applies, stock relief (section 666) is given at the rate of 100% instead of (5)(a)\nthe normal 25% rate.\nParagraph (a) is applied in computing farming income in the case of an individual who (5)(b)\nbecomes a qualifying farmer on or after 1 January 2007 and on or before 31 December 2027.\nIn such circumstances the 100% stock relief applies in the year of assessment in which the\nindividual qualifies and in each of the succeeding 3 years of assessment.\n\"qualifying period\", in relation to a qualifying farmer, means the year of assessment in (5A)(a)\nwhich an individual becomes a qualifying farmer and each of the 3 immediately succeeding\nyears of assessment;\n\"relevant tax\" means any income tax or universal social charge;\n\"relief\" means an amount equivalent to an amount determined by the formula -\nA-B\nwhere -\nA=the amount of relevant tax that would be payable by a qualifying farmer for a year of\nassessment falling within the qualifying period computed as if subsection (5) had not been\nenacted, and\nB=is the amount of relevant tax payable by the qualifying farmer for that year of assessment.\n\n\n\n\n                                                                 31\n\fNotes for Guidance – Taxes Consolidation Act 1997 – Finance Act 2025 Edition - Part 23\n\n\n\nThe amount of the relief received by a qualifying farmer, who first qualifies in the year 2012 (5A)(b)\nor in a subsequent year, cannot exceed €40,000 in a single tax year or in aggregate €100,000\nover 4 years.\nA lifetime ceiling of €100,000 applies for State Aid purposes to the amount of aid granted (5B)\nto a young trained farmer. This means that the amount of tax relief received by a qualifying\nfarmer must be aggregated across the relevant schemes: i.e. section 667B, section 667D and\nsection 81AA SDCA 1999. The cash equivalent of the tax relief received cannot exceed\n€100,000.\nProvision is made for individuals, who at any time before 31 March 2008 satisfy the (6)\neducational/training requirements referred to in paragraph (b)(iii) of the definition of\n“qualifying farmer” in section 667A(1), to be deemed to have satisfied the corresponding\nconditions of “qualifying farmer” as required by subsection (1).\nThe 100% rate of stock relief applies for the year of assessment 2012 or any subsequent (7)\nyear of assessment only where the qualifying farmer falls within the definition of\nmicroenterprise or small enterprise in Article 2 of Annex I to Commission Regulation (EU)\n2022/2472 for the year of assessment in question.\n"
+    },
+    {
+      "sectionNumber": "667C",
+      "heading": "Special provisions for registered farm partnerships.",
+      "locator": "s.667C",
+      "principalAct": "1997 Act 39",
+      "category": "corporation_tax",
+      "relevant": true,
+      "relevanceReason": "Curated: mapped to a rule in corporationTaxCuration.ts.",
+      "excerpt": "667C Special provisions for registered farm partnerships.\nSummary\nThis section provides stock relief generally at the rate of 50% for farmers who are partners in registered\nfarm partnerships and 100% for certain “qualifying farmers” within the meaning of section 667B (often\nreferred to as young trained farmers), who are partners in such partnerships. It applies to accounting\nperiods which commence on or after 1 January 2012 and which end on or before 31 December 2027.\nThis relief is subject to a maximum limit.\nSections 666 and 667B continue to apply to farmers who are not partners in registered farm partnerships.\nDetails\nDefinitions                                                                                     (1)\n“Commission Regulation (EU) No. 1408/2013” means Commission Regulation (EU) No.\n1408/2013 of 18 December 2013 as amended by Commission Regulation (EU) 2019/316\nof 21 February 2019, Commission Regulation (EU) 2022/2046 of 24 October 2022,\nCommission Regulation (EU) 2023/2391 of 4 October 2023 and Commission Regulation\n(EU) 2024/3118 of 10 December 2024.\n“common agricultural payments” means any payment arising directly to a partner under the\nCommon Agricultural Policy.\n“excluded farm asset” means farm land or livestock or machinery used for a farming activity\nleft out of the partnership by the terms of the partnership agreement, but cannot include\nbeef, dairy or sheep farming.\n“farm asset” means all farm land, entitlement to common agricultural payments and assets\nused for farming, but does not include excluded farm assets or farm land which is to be\ndisposed of to an authority possessing compulsory purchase powers.\n“farm land” means land in the State and includes a building situated on that land, other than\nbuildings or parts of a building used as dwellings, occupied by a partner for the purpose of\nfarming the land.\n“Minister” means Minister for Agriculture, Food and the Marine.\n\n\n                                                                 32\n\fNotes for Guidance – Taxes Consolidation Act 1997 – Finance Act 2025 Edition - Part 23\n\n\n\n“non-active partner” means, in the case of an individual, a person who spends not more than\nan average of at least 10 hours per week engaged in the activities of the several trade of the\npartnership during the accounting period or in the case of a company, a company whose\nofficers and employees between them spend an average of not more than 10 hours per week\nengaged in the activities of the several trade during the accounting period.\n“partner” means a person who is a partner in a registered farm partnership.\n“primary participant” means the precedent partner, within the meaning of section 1007.\n“Qualifying farmer” has the meaning assigned to it by section 667B.\n“register” means the register of farm partnerships established and maintained by the\nMinister under and in accordance with this section and the regulations under subsection\n(4A).\n“register of succession farm partnerships” shall be construed in accordance with section\n667D(1).\n“Registered Farm Partnership,” means a farm partnership entered on the register.\n“several trade” has the meaning given to it by section 1008.\nRegister of farm partnerships\nIn order to be placed on the register, a farm partnership must satisfy the following (1A)(b)\nconditions:\n   (i)      the farm partnership must exist wholly or mainly for the purpose of carrying on\n            a farming trade.\n   (ii)     the farm partnership must operate in accordance with a written partnership\n            agreement which:\n                (I)     complies with the Partnership Act 1890;\n                (II)    includes the identity of the partners and the land, the ratio of the share\n                        in the partnership and the details of the operation of the partnership;\n                (III) is for a minimum of 5 years.\n   (iii)     the farm partnership must have at least 2 members but no more than 10.\n   (iv)      no member of the farm partnership may be a non-active partner.\n   (v)      the members of the partnership must consist of:\n                (I)     at least 1 partner in the farm partnership must be a person who has\n                        been engaged in the trade of farming on land owned or leased by that\n                        person consisting of at least 3 hectares of useable farm land for at\n                        least 2 years immediately preceding the date of formation of the\n                        partnership, and\n                (II)    if there are partners not covered by (I) above, then at least 1 of those\n                        other partners must be an individual who is the holder of a trained\n                        farmer qualification (within the meaning given by section 654A) and\n                        who is entitled to at least 20% of the profits of the partnership.\n   (vi)      the partners cannot hold farm assets, other than excluded assets, outside of the\n            partnership. Where a farmer holds an interest in farm land that land must be\n            either licenced or leased into the farm partnership.\n   (vii) any payments arising to a partner from the trade of farming for the purposes of\n            the farm partnership, shall be paid by the partner to the farm partnership.\n                                                                 33\n\fNotes for Guidance – Taxes Consolidation Act 1997 – Finance Act 2025 Edition - Part 23\n\n\n\nChanges to farm partnership\nThe primary participant must notify the Minister of any change to the partnership within 21 (1B)\ndays of the change. Failure of the primary participant to do so may result in the partnership\nbeing removed from the register from the date of the change, unless:\n    (i)     the partnership remains eligible to be on the register; and\n    (ii)    the failure to notify is neither careless nor deliberate and is rectified as soon as\n            it is realised.\nThe primary participant must notify the Minister prior to a new partner joining or an existing\npartner ceasing to be a partner and shall request the Minister to amend the relevant entry on\nthe register accordingly. The Minister shall not approve such an alteration unless the\nMinister is satisfied that it is for bona fide commercial purposes.\nAnti-avoidance\nA farm partnership which is formed between a farmer and a company of which that farmer (1C)\nis a director or has a shareholding, shall not be eligible to be a registered farm partnership.\nEntry to and removal/suspension of farm partnerships from the register\nThe Minister shall only enter a partnership on the register if he/she is satisfied that the farm (1D)\npartnership has met the conditions set out in subsection (1A). If the Minister is not satisfied\nthat the partnership is continuing to meet those conditions, the partnership shall be removed\nfrom the register with effect from the date it ceased to meet those conditions. A farm\npartnership may be suspended where an order has been made under section 9 of the Animal\nHealth and Welfare Act 2013.\nRelief – where partner is not a “qualifying farmer”\nThis subsection, which is subject to subsection (3), amends a number of the provisions in (2)\nsection 666 for the purpose of this section. Section 666 provides for stock relief at the rate\nof 25% for farmers, other than certain qualifying farmers.\nFirstly, it provides that stock relief at the rate of 50%, rather than 25% as provided for in (2)(a)\nsection 666 (1), applies where a farmer, other than certain qualifying farmers, is a partner\nin a registered farm partnership.\nSecondly, it substitutes a new subsection (4) in section 666 for the purposes of this section.   (2)(b)\nThis provides that the earlier stock relief deadlines in section 666 (4) of 31 December 2012\nfor companies and the year 2012 for individuals are extended to 31 December 2027 and the\nyear 2027 respectively for the purposes of this section.\nRelief – where partner is a “qualifying farmer”\nA qualifying farmer, within the meaning of section 667B, who is a partner in a registered\nfarm partnership, is entitled to the enhanced rate of relief of 100% for a four-year period as\nprovided for in that section.\nWhere appropriate, the qualifying farmer reverts to the 50% rate provided for in this section (3)\nfor registered farm partnerships, rather than to the standard rate of 25%.\nThe cash equivalent of the relief is limited to €7,500 over a three-year period.                 (3A)\nFor a qualifying period commencing on or after 1 January 2014 the maximum amount of\nstock relief that can be claimed is increased to €15,000 in the aggregate in the qualifying\nperiod (3 years). This is increased to €20,000 for qualifying periods commencing on or after\n1 January 2024.\n\n                                                                 34\n\fNotes for Guidance – Taxes Consolidation Act 1997 – Finance Act 2025 Edition - Part 23\n\n\n\nA single undertaking may not receive more than €20,000 in de minimis aid granted under\nCommission Regulation (EU) No. 1408/2013 in any three-year period, and relief provided\nby this section will be available only where such relief does not cause this limit to be\nexceeded.\nTime limits\nThe 50% rate of stock relief applies in respect of accounting periods commencing on or (4)\nafter 1 January 2012 and ending on or before 31 December 2027.\nRegister\nThis subsection allows for the establishment of a register of farm partnerships as part of the (4A)\nprocess of extending the meaning of “registered farm partnership” for the purpose of this\nsection.\nFirstly, it provides that the Minister for Agriculture, Food and the Marine, after consulting\nwith and with the approval of the Minister for Finance, may establish and maintain a\nRegister of farm partnerships by regulations, and that such regulations may provide for a\nnumber of matters including:\n    ➢ different divisions of the register relating to different classes of farm partnerships,\n    ➢ the form and manner of, and information and documentation required for, an\n      application for entry on the register,\n    ➢ the form and manner of registration,\n    ➢ the assignment of unique identifiers to partnerships included on the register and\n      purposes for which and conditions subject to which, the identifier may be used,\n    ➢ procedures where subsection (1B) or subsection (1D)(b) applies,\n    ➢ conditions relating to the distance between farm land to be used by partners, and\n    ➢ such supplemental, transitional and incidental matters that appear necessary and\n      appropriate to the Minister.\nSecondly, it provides that every regulation made under subsection (4A) must be laid before\nthe Dáil and such regulations may be annulled by resolution of the Dáil.\n"
+    },
+    {
+      "sectionNumber": "667D",
+      "heading": "Succession farm partnerships",
+      "locator": "s.667D",
+      "principalAct": "1997 Act 39",
+      "category": "corporation_tax",
+      "relevant": true,
+      "relevanceReason": "Curated: mapped to a rule in corporationTaxCuration.ts.",
+      "excerpt": "667D Succession farm partnerships\nSummary\nThis section provides a “succession tax credit” of €5,000 per annum in respect of succession farm\npartnerships. This is a succession planning initiative to encourage farmers to form partnerships with young\ntrained farmers and to transfer ownership of the farm, within a specified period, to that young trained\nfarmer. This provision applies only to individuals, a company cannot enter a succession partnership.\nDetails\nRegister\nA primary participant may apply to enter a registered farm partnership on the register of (1)\nsuccession farm partnerships and shall comply with all requirements relating to such\napplication.\nConditions\nA registered farm partnership must comply with the following conditions in order to be (2)\nentered on the register:\n\n\n                                                                 35\n\fNotes for Guidance – Taxes Consolidation Act 1997 – Finance Act 2025 Edition - Part 23\n\n\n    ➢ only individuals may be partners, of which there are at least two,\n    ➢ at least one partner is a person who has been farming on at least 3 hectares of farming\n      land owned or leased by that person for at least 2 years immediately preceding the\n      date of formation of the partnership. Each of the other partners must be under 40\n      years of age, a trained farmer and entitled to at least 20% of the profits of the\n      partnership,\n    ➢ a business plan in respect of the farm partnership must have been submitted to, and\n      approved by, the Minister,\n    ➢ the farmer shall agree to sell or transfer at least 80% of the farm assets to one or\n      more of the successors within 3 to 10 years from the date an application is made to\n      enter the partnership on the register,\n    ➢ the terms of the succession agreement, which may or may not be legally binding,\n      shall include:\n             o details of the farm assets of the partnership,\n             o any conditions to which the transfer or sale will be subject,\n             o the year in which the transfer or sale will take place, and\n             o any other terms which the successor and farmer agree to, including any terms\n               in relation to the farm assets, the conduct of the farming trade or the creation\n               of any rights of residence in dwellings on the farm land.\n\nJointly owned or farmed farm assets\nThis subsection sets out certain rules where farm assets are jointly owned or farmed prior (3)\nto the formation of the succession farm partnership. Each person who jointly owns or holds\nan interest in the farm assets must agree to the transfer of those assets in accordance with\nthe agreement under subsection 2(d). Each individual who jointly farms the land which is\nto be transferred may become a partner in the partnership notwithstanding that the\nindividual may be a non-active partner.\n\nJoint transfer to successor and spouse/civil partner\nA farmer may form a succession farm partnership to transfer or sell farm assets jointly to a (4)\nsuccessor and the successor’s spouse/civil partner even if the spouse/civil partner would be\na non-active partner.\n\nRegister\nThe Minister will only register a succession farm partnership where the partnership has (5)\nsatisfied all the qualifying conditions.\n\nSuccession tax credit\nEach partner in the succession farm partnership shall be entitled to a tax credit, referred to (6)\nas a succession tax credit, for the year of assessment in which the registration takes place\nand each of the 4 years immediately following that year, which is the lesser of\n\n\n\n                                                                 36\n\fNotes for Guidance – Taxes Consolidation Act 1997 – Finance Act 2025 Edition - Part 23\n\n\n    (i)      €5,000 per year of assessment divided between the partners in accordance with\n             their profit sharing ratio under their partnership agreement, or\n    (ii)     The assessable profits (after deducting any capital allowances related to that\n             trade) of that partner’s several trade.\n\n\nNo partner in a succession farm partnership can claim the succession tax credit once a\nsuccessor has reached the age of 40.\n\nIf the agreed transfer of the farm assets does not take place the succession tax credit claimed\nby all partners will be clawed back from the farmer. However, where it is shown to the\nsatisfaction of a Revenue officer that the farm assets were not transferred as the successor\nwould not complete the transfer, the succession tax credit will be clawed-back from the\nsuccessor. Where the farm assets were not transferred due to mutual agreement between the\nparties, the succession tax credit may be clawed back from the party who claimed the credit.\n\nPower to make regulations\nThe Minister may make regulations to provide for the establishment and maintenance of a (7)\nregister of succession farm partnerships.\n\nEU requirements\nIn this subsection -                                                                              (8)(a)\n\n“relevant tax” means any income tax or universal social charge;\n\n“relief” means an amount equivalent to an amount determined by the formula -\n\nA-B\n\nwhere -\n\nA=is the amount of relevant tax that would be payable by a partner in a succession farm\npartnership for a year of assessment in which a succession tax credit is claimed by the\npartner, computed as if this section did not apply, and\n\nB=is the amount of relevant tax payable by the partner for that year of assessment.\n\nA lifetime ceiling of €100,000 applies for EU State Aid purposes to the amount of aid (8)(b)\ngranted to a young trained farmer. This means that the amount of tax relief received by a\npartner in a succession farm partnership must be aggregated across the relevant schemes:\ni.e. section 667D, section 667B and section 81AA SDCA 1999. The cash equivalent of the\ntax relief received cannot exceed €100,000.\n\n\n\n\n                                                                 37\n\fNotes for Guidance – Taxes Consolidation Act 1997 – Finance Act 2025 Edition - Part 23\n\n\n"
+    }
+  ],
+  "rules": [
+    {
+      "key": "farm.averaging_step_out_interval",
+      "sectionNumber": "657",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2016-01-01",
+          "effectiveTo": null,
+          "quote": "once every 5 years. The election is available for the tax year 2016 and subsequent years of",
+          "value": 5,
+          "unit": "count",
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    },
+    {
+      "key": "farm.averaging_years",
+      "sectionNumber": "657",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2015-01-01",
+          "effectiveTo": null,
+          "quote": "not subject to averaging) over 5 years, that is, of the tax year in question and the 4 tax years",
+          "value": 5,
+          "unit": "count",
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    },
+    {
+      "key": "farm.buildings_net_of_grants",
+      "sectionNumber": "658",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "1997-04-06",
+          "effectiveTo": null,
+          "quote": "Only net expenditure qualifies for farm buildings allowances",
+          "value": null,
+          "unit": null,
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    },
+    {
+      "key": "farm.buildings_rate",
+      "sectionNumber": "658",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "1997-04-06",
+          "effectiveTo": null,
+          "quote": "The rate of the farm buildings allowance is 15 per cent of the capital expenditure for each",
+          "value": 1500,
+          "unit": "basis_points",
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    },
+    {
+      "key": "farm.buildings_years",
+      "sectionNumber": "658",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "1997-04-06",
+          "effectiveTo": null,
+          "quote": "of the first 6 years of the 7 year period with the balance, 10 per cent, allowed in year 7.",
+          "value": 7,
+          "unit": "count",
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    },
+    {
+      "key": "farm.partnership_relief_cap",
+      "sectionNumber": "667C",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2024-01-01",
+          "effectiveTo": null,
+          "quote": "period (3 years). This is increased to €20,000 for qualifying periods commencing on or after",
+          "value": 2000000,
+          "unit": "eur_minor",
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    },
+    {
+      "key": "farm.slurry_last_year",
+      "sectionNumber": "658A",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2023-01-01",
+          "effectiveTo": null,
+          "quote": "January 2023 and 31 December 2029 for the purposes of the farming trade.",
+          "value": 2029,
+          "unit": "count",
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    },
+    {
+      "key": "farm.slurry_rate",
+      "sectionNumber": "658A",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2023-01-01",
+          "effectiveTo": null,
+          "quote": "if the farm buildings allowance to be made under section 658(2)(b) shall be 50 percent and",
+          "value": 5000,
+          "unit": "basis_points",
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    },
+    {
+      "key": "farm.slurry_relief_cap",
+      "sectionNumber": "658A",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2023-01-01",
+          "effectiveTo": null,
+          "quote": "subject to a maximum tax benefit of €500,000 per undertaking.",
+          "value": 50000000,
+          "unit": "eur_minor",
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    },
+    {
+      "key": "farm.stock_relief_last_year",
+      "sectionNumber": "666",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "1997-04-06",
+          "effectiveTo": null,
+          "quote": "after 31 December 2027 and, in the case of individuals, later than the tax year 2027.",
+          "value": 2027,
+          "unit": "count",
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    },
+    {
+      "key": "farm.stock_relief_no_loss",
+      "sectionNumber": "666",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "1997-04-06",
+          "effectiveTo": null,
+          "quote": "Stock relief may not be used to create or augment a loss.",
+          "value": null,
+          "unit": null,
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    },
+    {
+      "key": "farm.stock_relief_rate",
+      "sectionNumber": "666",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "1997-04-06",
+          "effectiveTo": null,
+          "quote": "the person can claim a deduction of 25 per cent of the increase in computing the taxable",
+          "value": 2500,
+          "unit": "basis_points",
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    },
+    {
+      "key": "farm.stock_relief_rate_partnership",
+      "sectionNumber": "667C",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2012-01-01",
+          "effectiveTo": null,
+          "quote": "Firstly, it provides that stock relief at the rate of 50%, rather than 25% as provided for in",
+          "value": 5000,
+          "unit": "basis_points",
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    },
+    {
+      "key": "farm.stock_relief_rate_young_trained",
+      "sectionNumber": "667B",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2007-01-01",
+          "effectiveTo": null,
+          "quote": "Where this section applies, stock relief (section 666) is given at the rate of 100% instead of",
+          "value": 10000,
+          "unit": "basis_points",
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    },
+    {
+      "key": "farm.succession_credit",
+      "sectionNumber": "667D",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2016-01-01",
+          "effectiveTo": null,
+          "quote": "This section provides a “succession tax credit” of €5,000 per annum in respect of succession farm",
+          "value": 500000,
+          "unit": "eur_minor",
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    },
+    {
+      "key": "farm.young_trained_annual_cap",
+      "sectionNumber": "667B",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2012-01-01",
+          "effectiveTo": null,
+          "quote": "or in a subsequent year, cannot exceed €40,000 in a single tax year or in aggregate €100,000",
+          "value": 4000000,
+          "unit": "eur_minor",
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    },
+    {
+      "key": "farm.young_trained_further_years",
+      "sectionNumber": "667B",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2007-01-01",
+          "effectiveTo": null,
+          "quote": "individual qualifies and in each of the succeeding 3 years of assessment.",
+          "value": 3,
+          "unit": "count",
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    }
+  ]
+}

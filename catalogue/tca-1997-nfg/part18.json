@@ -1,0 +1,602 @@
+{
+  "format": 1,
+  "source": {
+    "citation": "Revenue NfG TCA 1997 (FA 2025 ed.) Part 18",
+    "title": "Notes for Guidance — Taxes Consolidation Act 1997 — Finance Act 2025 edition — part18",
+    "sourceType": "revenue_guidance",
+    "jurisdiction": "IE",
+    "sourceUrl": "https://www.revenue.ie/en/tax-professionals/documents/notes-for-guidance/tca/part18.pdf",
+    "sha256": "25858a53a5b1a5f2eb2c809cac3a6c3c69b980f1eb7baca16a99fd8cece23947",
+    "conversion": "pdftotext-layout",
+    "retrievedOn": "2026-10-06",
+    "publicationDate": null,
+    "effectiveFrom": "2025-12-31",
+    "note": "Revenue guidance summarising the TCA 1997 as amended to Finance Act 2025. There is no LRC revised TCA; the Notes are the current consolidated statement of each section, but rank below the Act itself."
+  },
+  "provisions": [
+    {
+      "sectionNumber": "530",
+      "heading": "Interpretation (Chapter 2)",
+      "locator": "s.530",
+      "principalAct": "1997 Act 39",
+      "category": "corporation_tax",
+      "relevant": true,
+      "relevanceReason": "Curated: mapped to a rule in corporationTaxCuration.ts.",
+      "excerpt": "530 Interpretation (Chapter 2)\nDefinitions\n Some of the definitions in section 530 apply solely to the scheme of RCT which operated\n in respect of payments made to subcontractors prior to 1 January 2012, some other\n definitions apply solely to the new scheme of RCT which was introduced with effect\n from 1 January 2012 while others have common application to both schemes of RCT.\n “certificate of authorisation” is the certificate issued by the Revenue Commissioners to (1)\n a subcontractor and which allows a principal contractor to apply for a relevant payments\n card from Revenue, on receipt of which the principal contractor can make payments to\n the subcontractor in respect of construction, forestry or meat processing contracts\n without deduction of tax. Such a certificate is valid for such period as the Revenue\n Commissioners may, by regulations, provide.\n “certificates of deduction” means a certificate issued under section 531(11).\n “certified subcontractor” is a subcontractor for whom the principal holds, at the time of\n making a payment under a relevant contract to the subcontractor, a relevant payments\n card for the year in which the payment is made and for whom the principal has not\n received a notice from Revenue cancelling the subcontractor’s certificate of\n authorisation issued under subsection (11) of section 531.\n “chargeable period” has the same meaning as in section 321(2).\n “construction operations” are —\n •    the construction, alteration, repair, extension, demolition or dismantling of\n      buildings or structures;\n •    the construction, alteration, repair, extension or demolition of any works forming,\n      or to form, part of the land, including walls, roadworks, power lines,\n      telecommunication apparatus, aircraft runways, docks and harbours, railways,\n      inland waterways, pipelines, reservoirs, water mains, wells, sewers, industrial\n      plant and installations for purposes of land drainage;\n •    the installation, alteration or repair in any building or structure of systems of\n      heating, lighting, air-conditioning, soundproofing, ventilation, power supply,\n      drainage, sanitation, water supply, burglar or fire protection;\n •    the installation, alteration or repair in or on any building or structure of systems of\n      telecommunications;\n •    the external cleaning of buildings (other than cleaning of any part of a building in\n      the course of normal maintenance) or the internal cleaning of buildings and\n                                                                 20\n\fNotes for Guidance – Taxes Consolidation Act 1997 – Finance Act 2025 Edition - Part 18\n\n\n       structures, in so far as carried out in the course of their construction, alteration,\n       extension, repair or restoration;\n •     operations which form an integral part of, or are preparatory to, or are for rendering\n       complete such operations as are described above, including site clearance, earth-\n       moving, excavation, tunnelling and boring, laying of foundations, erection of\n       scaffolding, site restoration, landscaping and the provision of roadways and other\n       access works;\n •     operations which form an integral part of, or are preparatory to, or are for rendering\n       complete, the drilling for or extraction of minerals, oil, natural gas or the\n       exploration or exploitation of natural resources;\n •     the haulage for hire of materials, machinery or plant for use, whether used or not,\n       in any of the preceding operations.\n “the contractor” has the meaning assigned to it by the definition of “relevant contract”.\n “deducted tax” has the meaning given to it in section 530P\n “deduction summary” in relation to a return period, means a statement (adjusted as\n appropriate in accordance with regulations made under this Chapter) which is issued to\n a registered principal setting out, in summary form, details in respect of each relevant\n payment notified by that principal and the aggregate amount of tax payable by a\n principal in respect of those payments.\n “designated area” has the meaning assigned to it by section 13(1), which is an area\n designated by order under section 2 of the Continental Shelf Act 1968.\n “director” means, in relation to a body corporate, where the affairs are managed by a\n board of directors or similar body, a member of that board or body; where the affairs are\n managed by a single director or similar person, that director or person and; where the\n affairs are managed by the members themselves, a member of the body corporate. It also\n includes any person who is or has been a director.\n “due date”, in relation to a return period, means 14 days after the end of that return\n period, or 23 days after the end of that return period where the return for that period is\n made by electronic means and the amount of tax that the person was liable to remit to\n the Collector-General is made by such electronic means as are required.\n “electronic means” has the same meaning as in section 917EA(1).\n “forestry operations” are —\n •     the planting, thinning, lopping or felling of trees in woods, forests or other\n       plantations;\n •     the maintenance of woods, forests and plantations and the preparation of land,\n       including woods or forests which have been harvested, for planting;\n •     the haulage or removal of thinned, lopped or felled trees;\n •     the processing (including cutting or preserving) of wood from thinned, lopped or\n       felled trees in sawmills or other premises;\n •     the haulage for hire of materials, machinery or plant for use, whether used or not,\n       in any of the preceding operations.\n “income tax month” means a calendar month.\n “meat processing operations” are —\n •    the slaughter of cattle, sheep, pigs, domestic fowl, turkeys, guinea-fowl, ducks or\n      geese;\n •    the catching of domestic fowl, turkeys, guinea-fowl, ducks or geese;\n                                                                 21\n\fNotes for Guidance – Taxes Consolidation Act 1997 – Finance Act 2025 Edition - Part 18\n\n\n •     the division (including cutting or boning), sorting, packaging (including vacuum\n       packaging), rewrapping or branding of, or the application of any other similar\n       process to, the carcasses or any part of the carcasses (including meat) of\n       slaughtered cattle, sheep, pigs, domestic fowl, turkeys, guinea-fowl, ducks or\n       geese;\n •     the application of methods of preservation (including cold storage) to the carcasses\n       or any part of the carcasses (including meat) of slaughtered cattle, sheep, pigs,\n       domestic fowl, turkeys, guinea-fowl, ducks or geese;\n •     the loading or unloading of the carcasses or part of the carcasses (including meat)\n       of slaughtered cattle, sheep, pigs, domestic fowl, turkeys, guinea-fowl, ducks or\n       geese at any establishment where the preceding operations are carried on;\n •     the haulage of the carcasses or any part of the carcasses (including meat) of\n       slaughtered cattle, sheep, pigs, domestic fowl, turkeys, guinea-fowl, ducks or\n       geese from any establishment where the preceding operations are carried on;\n •     the rendering of the carcases or any part of the carcasses of slaughtered cattle,\n       sheep, pigs, domestic fowl, turkey, guinea fowl, ducks or geese;\n •     the cleaning down of any establishment where any of the preceding operations are\n       carried on;\n •     the grading, sexing and transport of day-old chick of domestic fowl, turkeys,\n       guinea-fowl, ducks or geese;\n •     the haulage for hire of cattle, sheep, pigs, domestic fowl, turkeys, guinea-fowl,\n       ducks or geese or of any of the materials, machinery or plant for use, whether used\n       or not, in any of the preceding operations.\n “NAMA” and “NAMA group entity” have the same meanings, respectively, as they have\n in the National Asset Management Agency Act 2009.\n “principal” is the person to whom a subcontractor is liable to for —\n •      carrying out relevant operations (that is, construction, forestry or meat processing\n        operations);\n •      answering any questions in relations to the carrying out of such operations by\n        others, whether by contract or other arrangements made with, or to be made with,\n        the contractor;\n •      furnishing his/her own labour or the labour of others in carrying out such\n        operations.\n “proprietary director” is a director of a company who is either the beneficial owner of,\n or is able directly or indirectly to control, more than 15 per cent of the ordinary share\n capital of the company.\n “proprietary employee” is an employee of a company who is either the beneficial owner\n of, or is able directly or indirectly to control, more than 15 per cent of the ordinary share\n capital of the company.\n “qualifying period” is the 3 year period, or such shorter period as the inspector may\n allow, ending on 31 December in the year preceding the year of assessment which is the\n first year of assessment of the period, in respect of which a certificate of authorisation is\n sought together with the period, if any, from the 1 January in the first year of assessment\n to the date on which the application for the certificate is received by the Revenue\n Commissioners.\n “registered principal” means a principal included in a register of principals kept and\n maintained by the Revenue Commissioners for the purposes of this Chapter.\n\n\n                                                                 22\n\fNotes for Guidance – Taxes Consolidation Act 1997 – Finance Act 2025 Edition - Part 18\n\n\n “relevant contract” is a contract, other than a contract of employment, or a contract\n between NAMA and a NAMA group entity or a contract between a NAMA group entity\n and another NAMA group entity, under which a person (“the contractor”) is liable to\n another person (“the principal”) to —\n •     carry out relevant operations (that is, construction, forestry or meat processing\n       operations),\n •     be answerable for the carrying out of such operations by others, or\n •     furnish his/her own labour or the labour of others in carrying out such operations\n       or to arrange for the labour of others to be furnished for the carrying out of such\n       operations.\n Where on or after 15 May, 1996, relevant operations are performed collectively by a\n gang or group of subcontractors, including persons in partnership, a separate relevant\n contract is deemed to exist between each member of the gang or group and the principal,\n despite the fact that any payment in respect of the work done under the contract is made\n to one member of the gang or group or to some other person on behalf of the gang or\n group.\n “relevant operations” are construction operations, forestry operations or meat processing\n operations, as appropriate.\n “relevant payment” means a payment made by a principal to whom section 530A applies\n in respect of a relevant contract.\n “relevant payments card” is a card issued to a principal to enable him/her to keep a record\n of payments made to a subcontractor. The principal is obliged to apply to the Revenue\n Commissioners for a relevant payments card where the subcontractor produces a current\n certificate of authorisation.\n “relevant tax deduction card” is a card on which a record of the tax deducted from\n subcontractors is kept.\n “return period”, in relation to the principal concerned, means the period specified in a\n notice in writing given by the Revenue Commissioners to that principal, being a period\n of one or more income tax months, in respect of which the principal is required under\n section 531(3A) to make a return to the Collector-General.\n “Revenue officer” means any officer of the Revenue Commissioners.\n “subcontractor” means the contractor under a relevant contract where the principal under\n that contract is a person to whom section 530A applies.\n “technology systems failure” means circumstances in which the electronic system put in\n place by the Revenue Commissioners for the operation of RCT is not functioning or is\n not functioning properly at any particular time such that a person is unable to comply\n with an obligation under this Chapter, or regulations made under this Chapter, or\n circumstances where a person is unable to use the electronic system at any particular\n time because of a general or partial systems failure of an internet service provider or of\n an electricity service provider, occurring in the general locality of the person’s place of\n business.\n “uncertified subcontractor” is a subcontractor who is not a certified subcontractor.\n “unreported payment notification” means a notification which has not been made to the\n Revenue Commissioners in accordance with 530C and where a deduction authorisation\n has not been issued in accordance with section 530D.\n\n                                                                 23\n\fNotes for Guidance – Taxes Consolidation Act 1997 – Finance Act 2025 Edition - Part 18\n\n\n\n Corporation tax\n Unless the context otherwise requires references to income tax include references to (2)\n corporation tax, and references to a year of assessment include references to an\n accounting period.\n Proprietary directors and proprietary employees\n For the purpose of determining whether a proprietary director or a proprietary employee (3)\n is the beneficial owner of, or is able to control directly or indirectly, more than 15 per\n cent of the ordinary share capital of the company, any shares so owned or controlled\n by —\n •      a spouse, a civil partner, a minor child or a minor child of the civil partner, of the\n        director or employee, or\n •      a trustee of a trust established for the benefit of the director or employee or their\n        spouses, civil partners, minor children or minor children of their civil partner,\n are deemed to be owned or controlled by the director or employee and not by any other\n person.\n Where relevant operations under a relevant contract are carried out in the State and with (4)\n effect from 1 January 2016 designated areas of the Continental Shelf, then the relevant\n contracts tax (RCT) system applies regardless of whether or not —\n •     either or both the principal and subcontractor who are party to the relevant contract\n       are non-resident in the State,\n •     either or both the principal and the subcontractor are not carrying on a trade or\n       business in the State through a branch, agency etc which would expose them to a\n       charge to Irish tax,\n •     the contract is executed outside the State,\n •     payments under the contract are made outside the State.\n\n"
+    },
+    {
+      "sectionNumber": "530A",
+      "heading": "Principal to whom relevant contracts tax applies",
+      "locator": "s.530A",
+      "principalAct": "1997 Act 39",
+      "category": "corporation_tax",
+      "relevant": true,
+      "relevanceReason": "In scope for the corporation tax computation (issue #211); not yet curated.",
+      "excerpt": "530A Principal to whom relevant contracts tax applies\nSummary\nThis section sets out the range of principals obliged to operate RCT.\nDetails\n Subject to subsections (2) and (3) the following principals are obliged to operate RCT: (1)\n A principal who is a subcontractor in respect of the whole or part of the relevant contract. (1)(a)\n A person carrying on a business that include the erection of buildings, the development (1)(b)\n of land or the manufacture, treatment or extraction of construction materials.\n A person carrying on a meat processing business in an approved premises.\n A person carrying on a business that includes wood processing and forestry operations.\n\n A person connected with a company carrying on a business mentioned in paragraph (b). (1)(c)\n A local authority, a public utility society within the meaning of section 2 of the Housing (1)(d)\n Act 1966 or a body approved under section 45 of that Act or section 7 of the Housing\n (Miscellaneous Provisions) Act 1979.\n\n A Minister of the Government.                                                               (1)(e)\n Any board or body established by or under statute or any board or body established under (1)(f)\n\n                                                                 24\n\fNotes for Guidance – Taxes Consolidation Act 1997 – Finance Act 2025 Edition - Part 18\n\n\n royal charter and funded wholly or mainly by the State.\n\n A person carrying on any gas, water, electricity, hydraulic power, dock, canal or railway (1)(g)\n undertaking.\n\n A person who carries out the installation, alteration or repair in or on any building or      (1)(h)\n structure of systems of telecommunications.\n\n A principal shall not be regarded as a person to whom subsection (1)(b) applies, if during (2)\n the course of their business the only buildings erected, or land developed is for their own\n use or for the use of their employees.\n\n A principal shall not be regarded as a person to whom subsection (1)(c) applies, if a         (3)(a)\n payment to a subcontractor is made solely in connection with construction operations\n carried out in or on buildings or land which is for their own use or for the use of their\n employees, and the person does not carry on a business mentioned in paragraph\n\n (1)(b)(i).\n\n Where a principal comes within subsection (1)(c) by reason of the fact that they are          (3)(b)\n connected with a company carrying on a business specified in paragraph (1)(b)(i),\n paragraph (a) shall only apply where the principal is a company.\n\n\n"
+    },
+    {
+      "sectionNumber": "530B",
+      "heading": "Notification of a contract by a principal",
+      "locator": "s.530B",
+      "principalAct": "1997 Act 39",
+      "category": "corporation_tax",
+      "relevant": true,
+      "relevanceReason": "Curated: mapped to a rule in corporationTaxCuration.ts.",
+      "excerpt": "530B Notification of a contract by a principal\nSummary\nSection 530B sets out the obligations on a principal when notifying the Revenue Commissioners of having\nentered into a relevant contract. Before notifying Revenue, principals must satisfy themselves as to the\nidentity of subcontractors and, for this purpose, principals must require production of documentary\nevidence and retain details of the relevant evidence. It also includes provision for the making of regulations\nin relation to the notification of a contract by a principal.\nDetails\n Upon entering into a relevant contract, a principal obliged to operate RCT shall provide (1)(a)\n to the Revenue Commissioners information in relation to the identity of the\n subcontractor, the estimated value of the contract, the duration of the contract, the\n location(s) where the work will be carried out and whether it is a labour only contract.\n A declaration must be submitted confirming that the principal is satisfied that the (1)(b)\n subcontractor is not an employee of the principal.\n Before submitting the contract notification, the principal must be satisfied as to the (1)(A)\n identity of the subcontractor and in doing so must obtain documentary evidence from\n the subcontractor of their identity and retain such evidence or record relevant details\n from the evidence provided.\n Where a relevant contract was entered into prior to 1 January 2012 a contract notification (2)\n must be submitted by the principal if a payment is outstanding under the contract.\n Contract notifications must be submitted by electronic means and Chapter 6 of Part 38 (3)\n shall apply.\n The Revenue Commissioners shall make regulations in relation to the submission of (4)\n contract notifications by principals.\n\n\n                                                                 25\n\fNotes for Guidance – Taxes Consolidation Act 1997 – Finance Act 2025 Edition - Part 18\n\n\n"
+    },
+    {
+      "sectionNumber": "530C",
+      "heading": "Notification of relevant payment by principal",
+      "locator": "s.530C",
+      "principalAct": "1997 Act 39",
+      "category": "corporation_tax",
+      "relevant": true,
+      "relevanceReason": "Curated: mapped to a rule in corporationTaxCuration.ts.",
+      "excerpt": "530C Notification of relevant payment by principal\nSummary\nSection 530C sets out the obligations on a principal in terms of notifying the Revenue Commissioners of\nhis or her intention to make a payment under a relevant contract. It also includes provision for the making\nof regulations in relation to the notification of a payment by a principal.\nDetails\n Immediately before a principal make a relevant payment to a subcontractor, they must (1)\n notify the Revenue Commissioners of their intention to make the payment and of the\n amount of the payment.\n The payment notification must be made by electronic means and the provisions of (2)\n Chapter 6 of Part 38 shall apply.\n The Revenue Commissioners shall make regulations in relation to the submission of (3)\n payment notifications by principals.\n\n"
+    },
+    {
+      "sectionNumber": "530D",
+      "heading": "Deduction authorisation",
+      "locator": "s.530D",
+      "principalAct": "1997 Act 39",
+      "category": "corporation_tax",
+      "relevant": true,
+      "relevanceReason": "Curated: mapped to a rule in corporationTaxCuration.ts.",
+      "excerpt": "530D Deduction authorisation\nSummary\nSection 530D provides for the issuing of a deduction authorisation by the Revenue Commissioners\nauthorising a principal to deduct tax from a relevant payment. It also provides for the issue by Revenue of\na deduction summary, effectively a summary of deduction authorisations issued during the return period\nto a named principal. In addition, the section provides for the making of regulations by the Revenue\nCommissioners.\nDetails\n Where a payment notification has been submitted in accordance with section 530C, in (1)\n response the Revenue Commissioners shall issue a deduction authorisation in respect of\n the payment notified.\n The deduction authorisation issued shall specify in accordance with section 530E the (2)\n rate of tax to be applied to the payment and shall authorise the principal to deduct a\n specified sum of tax from the payment.\n At the end of each return period the Revenue Commissioners shall issue a deduction     (3)\n summary to each principal in respect of the return period.\n Deduction authorisations and deduction summaries shall be issued by electronic means (4)\n by the Revenue Commissioners.\n The Revenue Commissioners shall make regulations in relation to the issuing of                (5)\n deduction authorisations.\n\n"
+    },
+    {
+      "sectionNumber": "530E",
+      "heading": "Rates of tax",
+      "locator": "s.530E",
+      "principalAct": "1997 Act 39",
+      "category": "corporation_tax",
+      "relevant": true,
+      "relevanceReason": "In scope for the corporation tax computation (issue #211); not yet curated.",
+      "excerpt": "530E Rates of tax\nSummary\nSection 530E sets out the circumstances in which the Revenue Commissioners will authorise a principal\nto deduct tax at the various rates- zero, the standard rate or 35%. It also provides that the rate of deduction\nfor a partnership will be determined on the basis of the highest rate that would apply to any of the\nindividual partners in a partnership.\nDetails\n For the purposes of section 530D(2), the rate of tax shall be -                               (1)\n\n\n\n                                                                 26\n\fNotes for Guidance – Taxes Consolidation Act 1997 – Finance Act 2025 Edition - Part 18\n\n\n\n Zero where the Revenue Commissioners have made a determination that the                     (1)(a)\n subcontractor is a person to whom section 530G applies.\n The standard rate of income tax where the Revenue Commissioners have made a (1)(b)\n determination that the subcontractor is a person to whom section 530H applies.\n 35% where the Revenue Commissioners have determined that the subcontractor is a (1)(c)\n person to whom neither section 530G nor section 530H applies.\n In the case of a partnership the rate shall be the highest rate that would apply to any of (1)(d)\n the individual partners in the partnership.\n The reference to a determination in subsection (1) is the most recent determination made (2)\n by the Revenue Commissioners under section 530I or as determined on appeal.\n\n"
+    },
+    {
+      "sectionNumber": "530F",
+      "heading": "Obligation on principals to deduct tax",
+      "locator": "s.530F",
+      "principalAct": "1997 Act 39",
+      "category": "corporation_tax",
+      "relevant": true,
+      "relevanceReason": "Curated: mapped to a rule in corporationTaxCuration.ts.",
+      "excerpt": "530F Obligation on principals to deduct tax\nSummary\nSection 530F sets out the obligations on principals to deduct tax in accordance with a deduction\nauthorisation. It sets out the penalty that a principal is liable for when they fail to do so. It imposes an\nobligation on principals to submit an unreported payment notification in such circumstances. It also sets\nout information to be provided by the principal to subcontractors regarding relevant payments. The section\nalso sets out the position where a principal is unable to submit a payment notification due to persistent\ntechnology systems failure.\nDetails\n A principal to whom a deduction authorisation has issued must deduct tax from the (1)\n relevant payment in accordance with the terms of that deduction authorisation.\n A principal contractor who is obliged to operate RCT and who makes a relevant payment (2)\n to a subcontractor other than in accordance with the deduction authorisation shall be\n liable to a penalty of -\n 35% of the relevant payment where the subcontractor has not had a determination made (2)(a)\n by the Revenue Commissioners under section 530I.\n 20% of the relevant payment where the subcontractor has had a determination made (2)(b)\n under section 530I and where neither section 530G nor section 530H applies to the\n subcontractor.\n 10% of the relevant payment where the subcontractor is a person to whom section 530H (2)(c)\n applies.\n 3% of the relevant payment where the subcontractor is a person to whom section 530G (2)(d)\n applies.\n Where subsection (2) applies a principal must submit an unreported payment (3)(a)\n notification.\n The Revenue Commissioners shall make regulations in relation to the submission of (3)(b)\n unreported payment notifications.\n A principal making a relevant payment, from which RCT was deducted, to a (4)\n subcontractor must give either a copy of the deduction authorisation or the details\n contained in the deduction authorisation to the subcontractor.\n\n\n\n                                                                 27\n\fNotes for Guidance – Taxes Consolidation Act 1997 – Finance Act 2025 Edition - Part 18\n\n\n The tax which a principal is due to deduct from a relevant payment shall be due and (5)\n payable to the Revenue Commissioners for the return period in which the payment is\n made.\n If due to persistent technology systems failure a principal is unable to submit a payment (7)\n notification and has no option but to make a payment to a subcontractor without\n submitting the notification, then that principal shall not be liable for a penalty under\n subsection (2) if the principal -\n Deducts tax at the rate last notified to the principal for the subcontractor or if there was (7)(a)\n no such notification at a rate of 35%\n Immediately after the resolution of the technology systems failure, submits a payment (7)(b)\n notification.\n Provides all details regarding the payment to the Revenue Commissioners.                    (7)(c)\n Pays the tax deducted by the due date.                                                      (7)(d)\n Where a principal complies with the requirements of subsection (7) the principal shall (8)\n be deemed to have deducted tax in accordance with a deduction authorisation and the\n payment shall be deemed to have been made in the return period in which the principal\n submits the notification under subsection (7)(b).\n Where requested to do so by the Revenue Commissioners a principal must provide full (9)\n details of the persistent technology systems failure.\n\n"
+    },
+    {
+      "sectionNumber": "530G",
+      "heading": "Zero rate subcontractor",
+      "locator": "s.530G",
+      "principalAct": "1997 Act 39",
+      "category": "corporation_tax",
+      "relevant": true,
+      "relevanceReason": "In scope for the corporation tax computation (issue #211); not yet curated.",
+      "excerpt": "530G Zero rate subcontractor\nSummary\nSection 530G sets out the conditions that a subcontractor must satisfy in order to receive a zero rate\ndetermination from the Revenue Commissioners.\nDetails\n This section applies, subject to subsections (2) and (3), to a person who satisfies the (1)\n Revenue Commissioners that the person -\n Is or is about to become a subcontractor carrying out relevant operations.                  (1)(a)\n Carries on a business from a permanent building and has the necessary equipment and (1)(b)\n facilities for the business.\n Keeps or will keep adequate records as required by section 886(2).                          (1)(c)\n Has throughout the previous 3 years complied with all their tax obligations in relation (1)(d)\n to the payment or remittance of taxes, the filing of returns and the supply of accounts or\n other information to a Revenue officer.\n In the case of a subcontractor who was resident outside of the state during the 3 years, (1)(e)\n has complied with obligations comparable to paragraphs (c) and (d) in the country in\n which they were resident.\n This section does not apply to a subcontractor who -                                        (2)\n Is a partner, unless the partnership has complied with and the Revenue Commissioners (2)(a)\n are satisfied they will continue to comply with the obligations in subsection (1).\n Is a company, unless each director and any beneficial owner of more than 15 per cent (2)(b)\n of the ordinary share capital of the company, are persons to which paragraphs (c) and\n (d) of subsection (1) refer.\n                                                                 28\n\fNotes for Guidance – Taxes Consolidation Act 1997 – Finance Act 2025 Edition - Part 18\n\n\n Is a proprietary director of a company engaged in the business of carrying out relevant (2)(c)\n contracts unless the company is a person to whom paragraphs (c) and (d) of subsection\n (1) refer.\n The Revenue Commissioners consider unlikely to comply in the future with the (2)(d)\n obligations referred to in paragraph (c) or (d) of subsection (1).\n Is carrying out similar relevant operations which were previously, or are being, carried (2)(e)\n out by another connected person (a company or partnership), unless the connected\n person satisfies the criteria in relation to record keeping and compliance for the zero rate\n as set out above.\n This section also applies to a subcontractor who satisfies the Revenue Commissioners s (3)\n that the matters referred to in subsection (1) or (2), should be disregarded for the\n purposes of this section.\n\n"
+    },
+    {
+      "sectionNumber": "530H",
+      "heading": "Standard rate subcontractor",
+      "locator": "s.530H",
+      "principalAct": "1997 Act 39",
+      "category": "corporation_tax",
+      "relevant": true,
+      "relevanceReason": "In scope for the corporation tax computation (issue #211); not yet curated.",
+      "excerpt": "530H Standard rate subcontractor\nSummary\nSection 530H sets out the conditions that a subcontractor must satisfy to qualify for the 20% deduction\nrate.\nDetails\n This section applies, subject to subsections (2) and (3), to a person who satisfies the (1)\n Revenue Commissioners that the person -\n Is or is about to become a subcontractor carrying out relevant operations.                (1)(a)\n Carries on a business from a permanent building and has the necessary equipment and (1)(b)\n facilities for the business\n Keeps and will continue to keep adequate records as required by section 886(2).           (1)(c)\n Has throughout the previous 3 years complied substantially with all their tax obligations (1)(d)\n in relation to the payment or remittance of taxes, the filing of returns and the supply of\n accounts or other information to a Revenue officer.\n In the case of a subcontractor who was resident outside of the state during the 3 years, (1)(e)\n has complied with obligations comparable to paragraphs (c) and (d) in the country in\n which they were resident.\n Has provided the Revenue Commissioners with whatever information is needed to (1)(f)\n register the person for tax purposes.\n Is not eligible for the zero per cent rate.                                               (1)(g)\n The Revenue Commissioners may make regulations identifying matters to be taken into (2)\n account for the purposes of subsection (1)(d).\n This section does not apply to a subcontractor -\n Who is a partner, unless the partnership has complied with the obligations in subsection (3)(a)\n (1).\n Where the Revenue Commissioners form an opinion that deductions from relevant (3)(b)\n payments at the standard rate of tax will be insufficient to fully satisfy the income tax\n liability of the subcontractor for that year.\n\n\n\n                                                                 29\n\fNotes for Guidance – Taxes Consolidation Act 1997 – Finance Act 2025 Edition - Part 18\n\n\n This section also applies to a subcontractor who satisfies the Revenue Commissioners s (4)\n that the matters referred to in subsection (1), (2) or (3), should be disregarded for the\n purposes of this section.\n\n"
+    },
+    {
+      "sectionNumber": "530I",
+      "heading": "Determination of rates",
+      "locator": "s.530I",
+      "principalAct": "1997 Act 39",
+      "category": "corporation_tax",
+      "relevant": true,
+      "relevanceReason": "In scope for the corporation tax computation (issue #211); not yet curated.",
+      "excerpt": "530I Determination of rates\nSummary\nSection 530I provides for determination by the Revenue Commissioners as to whether a subcontractor\nsatisfies the ‘zero rate’ criteria of section 530G, the ‘standard rate’ criteria of section 530H or neither.\nThe section provides an appeal mechanism for subcontractors aggrieved by a Revenue determination. It\nalso removes the need for Revenue to make a determination until 30 days after a previous determination,\nwhile an appeal is awaiting determination or until 30 days after an appeal determination.\nDetails\n The Revenue Commissioners shall, from time to time, determine whether a                     (1)\n subcontractor is a person to whom section 530G applies, a person to whom section\n 530H applies or a person to whom neither section applies.\n Following a rate determination, the Revenue Commissioners shall notify the                  (2)\n subcontractor of the determination and the rate of tax resulting from such determination.\n A subcontractor may appeal, in accordance with section 949I, a determination to the         (3)(a)\n Appeal Commissioners within 30 days of the date of the determination.\n Pending the appeal, a deduction authorisation may be issued by the Revenue                  (3)(b)\n Commissioners and the principal shall deduct tax in accordance with the rate of\n deduction on the deduction authorisation.\n The Revenue Commissioners are not obliged to make a determination until 30 days after       (4)\n the previous determination, if an appeal is awaiting determination or until 30 days after\n an appeal determination.\n\n"
+    },
+    {
+      "sectionNumber": "530J",
+      "heading": "Register of principals",
+      "locator": "s.530J",
+      "principalAct": "1997 Act 39",
+      "category": "corporation_tax",
+      "relevant": true,
+      "relevanceReason": "In scope for the corporation tax computation (issue #211); not yet curated.",
+      "excerpt": "530J Register of principals\nSummary\nSection 530J requires the Revenue Commissioners to keep and maintain a register of principals for RCT\npurposes and obliges principals to register. It also includes provision for the making of regulations\ngoverning the registration of principals.\nDetails\n The Revenue Commissioners are required to keep a register of principals who are (1)\n required to operate RCT.\n All principals required to submit a contract notification shall register with the Revenue (2)\n Commissioners unless they are already registered.\n The Revenue Commissioners shall make regulations regarding registration by                  (3)\n principals and other related matters.\n\n"
+    },
+    {
+      "sectionNumber": "530K",
+      "heading": "Return by principal",
+      "locator": "s.530K",
+      "principalAct": "1997 Act 39",
+      "category": "corporation_tax",
+      "relevant": true,
+      "relevanceReason": "Curated: mapped to a rule in corporationTaxCuration.ts.",
+      "excerpt": "530K Return by principal\nSummary\nSection 530K provides that a principal shall make a return by electronic means to the Collector-General\nof all relevant payments made during a return period. A principal to whom a deduction summary has\nissued for the period will be deemed to have made such a return unless they are required to amend the\ndetails on record to properly reflect all payments made by the principal and the amended details on the\n\n                                                                 30\n\fNotes for Guidance – Taxes Consolidation Act 1997 – Finance Act 2025 Edition - Part 18\n\n\nreturn. The section also includes provision for the making of regulations governing the making of a return\nby a principal.\nDetails\n On or before the due date a principal is required to submit a return to the Collector- (1)\n General detailing all relevant payments during the return period and specifying their\n RCT liability.\n Where a deduction summary has been issued by the Revenue Commissioners under (2)(a)\n section 530D(3), the summary shall be deemed to be the return for the period and the\n amount of tax specified on the summary shall be deemed to be the principal’s liability\n for the period.\n Paragraph (a) does not apply where the principal is required to amend the details on (2)(b)\n the deduction summary and submit the amended details as the return required under\n subsection (1).\n The tax liability specified on a return made or deemed to have been made under this (3)\n section is due and payable by the principal to the Revenue Commissioners\n Returns, including late and amended returns shall be made by electronic means and (4)\n Chapter 6 of Part 38 shall apply.\n The Revenue Commissioners shall make regulations for the purposes of this section and (5)\n these regulations may provide for the submission of returns, the amending of returns\n and other related matters.\n\n"
+    },
+    {
+      "sectionNumber": "530L",
+      "heading": "Payment of tax by principal",
+      "locator": "s.530L",
+      "principalAct": "1997 Act 39",
+      "category": "corporation_tax",
+      "relevant": true,
+      "relevanceReason": "Curated: mapped to a rule in corporationTaxCuration.ts.",
+      "excerpt": "530L Payment of tax by principal\nSummary\nSection 530L provides that tax for a return period shall be due on the due date relating to that period.\nDetail\n Tax due and payable shall be paid to the Collector-General not later than the due date (1)\n for the period.\n Tax due and payable on foot of an assessment which is made in respect of more than (2)\n one return period shall be due on the due date for the earliest return period covered by\n the assessment.\n A late filing surcharge as provided for in section 530M is payable on the same date as (3)\n the amount of tax to which it relates is payable.\n\n"
+    },
+    {
+      "sectionNumber": "530M",
+      "heading": "Late Returns and amendments",
+      "locator": "s.530M",
+      "principalAct": "1997 Act 39",
+      "category": "corporation_tax",
+      "relevant": true,
+      "relevanceReason": "In scope for the corporation tax computation (issue #211); not yet curated.",
+      "excerpt": "530M Late Returns and amendments\nSummary\nSection 530M provides for the making of a late monthly or quarterly return or the amending of a return\nand that a principal who makes or amends a return after the due date for the period concerned shall be\nliable to a surcharge of €100. However, no amendment is allowed after the due date to the details of any\npayment for which a deduction authorisation was issued by the Revenue Commissioners (i.e. a principal\nmay only make such amendments before the due date). The section also includes provision for the making\nof regulations governing the making of a late return or the amending of a return.\nDetails\n Notwithstanding the requirement for a principal to submit a return by the due date -        (1)\n A principal may submit a late return.                                                       (1)(a)\n\n                                                                 31\n\fNotes for Guidance – Taxes Consolidation Act 1997 – Finance Act 2025 Edition - Part 18\n\n\n Amend a return after the making of a return or a deemed return. However, no (1)(b)\n amendment may be made to any payment for which a deduction authorisation issued,\n and no amendment may be made to a return where a Revenue audit or investigation has\n commenced for the period covered by the return.\n Where a principal files a late or amended return, the amount of tax specified on the return (2)\n shall be due and payable and the principal shall be liable for a surcharge of €100.\n The Revenue Commissioners shall issue a notice to the principal of the total tax and (3)\n surcharge due for the relevant return period or periods.\n Where enforcement action has been commenced for the recovery of tax specified on a (4)\n return or deemed return made under section 530K, this section shall not apply until that\n action has been completed unless the Revenue Commissioners otherwise direct.\n The Revenue Commissioners may make regulations for the purpose of this section and (5)\n those regulations may include details regarding the submission of returns under this\n section any other related matters.\n\n"
+    },
+    {
+      "sectionNumber": "530N",
+      "heading": "Assessment by Revenue officer",
+      "locator": "s.530N",
+      "principalAct": "1997 Act 39",
+      "category": "corporation_tax",
+      "relevant": true,
+      "relevanceReason": "In scope for the corporation tax computation (issue #211); not yet curated.",
+      "excerpt": "530N Assessment by Revenue officer\nSummary\nSection 530N provides that where a Revenue officer has reason to believe that a principal has not declared\nhis correct liability for a period, the officer may make an assessment on the principal covering one return\nperiod or a number of consecutive periods. A principal aggrieved by an assessment has a right of appeal\nsubject to making a return or returns for the period assessed and paying the tax, interest and any surcharge\ndue.\nDetail\n Where a Revenue officer has reason to believe that a principal has not made a return or (1)\n has understated the tax payable on the return, the officer may make an assessment of the\n total amount of tax due and payable by the principal for the return period.\n Without prejudice to section 530F, the amount specified on the assessment is due and (2)\n payable by the principal.\n A Revenue officer may, if necessary, amend the assessment and the provisions of (3)\n Chapter 5 of Part 41A and section 1048 (including those relating to time limits) shall,\n with any necessary modifications, apply to the making and amending of an assessment\n under this section.\n Where a Revenue office makes or amends an assessment the principal shall be notified (4)(a)\n of the total amount of tax due and payable in accordance with the assessment.\n Where the principal who is being assessed is a registered principal, the notice of (4)(b)\n assessment or the amended assessment shall issue by electronic means.\n A person aggrieved by an assessment or amended assessment may appeal the assessment (5)(a)\n to the Appeal Commissioners, in accordance with section 949I within 30 days.\n A principal shall not be entitled to appeal an assessment until all returns have been filed (5)(b)\n and the tax due and payable together with any surcharges have been paid for the periods\n covered by the assessment.\n Following the determination of the appeal the tax contained in an assessment or amended (5)(d)\n assessment shall be due and payable.\n An assessment for a return period or for any number of consecutive periods and may be (6)\n issued before the end of the period to which it relates.\n                                                                 32\n\fNotes for Guidance – Taxes Consolidation Act 1997 – Finance Act 2025 Edition - Part 18\n\n\n Where an assessment relates to a number of consecutive periods, a principal may not (7)(a)\n appeal until such time as either the return required for each period is submitted or a\n single return for the full period of the assessment is submitted. The provisions of\n subsection (5) with any necessary modifications shall apply.\n Where the assessment is in relation to a number of consecutive periods, the Appeal (7)(b)\n Commissioners shall make their determination in respect of the full period assessed.\n The Revenue Commissioners shall make regulations regarding assessments and such (8)\n regulations may include details regarding the issuing of assessments, appeals any other\n related matters.\n\n"
+    },
+    {
+      "sectionNumber": "530O",
+      "heading": "Computation of subcontractor’s profits",
+      "locator": "s.530O",
+      "principalAct": "1997 Act 39",
+      "category": "corporation_tax",
+      "relevant": true,
+      "relevanceReason": "In scope for the corporation tax computation (issue #211); not yet curated.",
+      "excerpt": "530O Computation of subcontractor’s profits\nSection 530O provides that, in computing profits or gains for the purposes of Schedule D, a subcontractor\nwho suffers deduction of RCT from a payment, shall treat the payment as the amount actually received\nplus the RCT deduction.\n\n"
+    },
+    {
+      "sectionNumber": "530P",
+      "heading": "Treatment of tax deducted",
+      "locator": "s.530P",
+      "principalAct": "1997 Act 39",
+      "category": "corporation_tax",
+      "relevant": true,
+      "relevanceReason": "Curated: mapped to a rule in corporationTaxCuration.ts.",
+      "excerpt": "530P Treatment of tax deducted\nSummary\nSection 530P provides that RCT deducted shall be treated as a payment on account of income tax or\ncorporation tax; that RCT deductions will be available for offset against other tax liabilities of a\nsubcontractor; that RCT deductions which are not required to meet the income tax or corporation tax\nliability of a subcontractor, or are not required to meet other tax liabilities of a subcontractor will be\navailable for refund, subject to the provisions of section 865 governing the repayment of tax; that no\namount of RCT deductions shall be treated as a payment on account, set off or refunded more than once;\nand that no amount of RCT deductions set off or refunded shall be treated as a payment on account.\nDetail\n Where a principal deducts tax from a payment in accordance with a deduction (1)\n authorisation such tax shall be treated as a payment on account of either income tax\n where the tax was deducted in the basis period for a tax year or corporation tax where\n the tax was deducted in an accounting period of a company.\n For the purposes of the RCT legislation tax treated in accordance with subsection (1) (2)\n shall be known as deducted tax.\n Deducted tax is available for offset against other tax liabilities (within the meaning of (3)\n section 960A) of the subcontractor and the Revenue Commissioners shall notify the\n subcontractor of any offsets made.\n When the income tax or corporation tax liability for a subcontractor for a chargeable (4)\n period has been finalised, any deducted tax that is not required to meet either the income\n tax or corporation tax liability of the subcontractor or which has not been offset against\n other liabilities may, subject to section 865, be repaid to the subcontractor.\n No repayment of tax deducted shall be made except in accordance with section 4.           (5)\n Deducted tax shall not be treated as a payment on account, set off or refunded more than (6)\n once and no amount of deducted tax that is refunded or offset shall be treated as a\n payment on account.\n\n\n\n\n                                                                 33\n\fNotes for Guidance – Taxes Consolidation Act 1997 – Finance Act 2025 Edition - Part 18\n\n\n"
+    },
+    {
+      "sectionNumber": "530Q",
+      "heading": "Interest Payment of tax by principal",
+      "locator": "s.530Q",
+      "principalAct": "1997 Act 39",
+      "category": "corporation_tax",
+      "relevant": true,
+      "relevanceReason": "In scope for the corporation tax computation (issue #211); not yet curated.",
+      "excerpt": "530Q Interest Payment of tax by principal\nSection 530Q provides that interest shall be payable to the Collector-General on overdue RCT. Interest\nshall be calculated at the rate of 0.0274 per cent for any day or part of a day during which the RCT remains\nunpaid.\n\n"
+    },
+    {
+      "sectionNumber": "530R",
+      "heading": "Partnerships",
+      "locator": "s.530R",
+      "principalAct": "1997 Act 39",
+      "category": "corporation_tax",
+      "relevant": true,
+      "relevanceReason": "In scope for the corporation tax computation (issue #211); not yet curated.",
+      "excerpt": "530R Partnerships\nSummary\nSection 530R introduces procedures to ensure that members of a gang, group or partnership are properly\nidentified for the purpose of determining their individual entitlement to a credit for RCT deducted.\nDetail\n Where a relevant payment is made by a principal in respect of work carried out by a (1)\n partnership then for the purposes of allocating the tax deducted, the payment is deemed\n to have been made to the individual partners in the proportions in which the payment is\n divided amongst them and the provisions of section 530P shall apply.\n Except where a principal makes a separate payment to each individual partner, the (2)\n precedent partner shall provide to the Revenue Commissioners details of each individual\n partner and the proportion of tax deducted to which each partner is entitled.\n The Revenue Commissioners shall make regulations regarding the provision of the (3)\n information referred to in subsection (2) and the steps to be taken by the Revenue\n Commissioners on receipt of such information.\n Where the principal is a partnership, all things required to be done by the principal under (4)\n this Chapter shall be done by the precedent partner.\n\n"
+    },
+    {
+      "sectionNumber": "530S",
+      "heading": "Record keeping",
+      "locator": "s.530S",
+      "principalAct": "1997 Act 39",
+      "category": "corporation_tax",
+      "relevant": true,
+      "relevanceReason": "In scope for the corporation tax computation (issue #211); not yet curated.",
+      "excerpt": "530S Record keeping\nSummary\nSection 530S requires a principal, prior to notifying the Revenue Commissioners of a payment, to obtain\nfrom the subcontractor a statement setting out details of the work giving rise to the payment and the cost\nof the work. It requires a subcontractor to keep and maintain records of all relevant payments and to\nsupply a principal with all such information and particulars as are necessary for the principal to comply\nwith the Chapter. The section also includes provision for the making of regulations governing the creation,\nkeeping and retention of records by principals and subcontractors.\nDetail\n Prior to submitting a payment notification, a principal should obtain from the (1)\n subcontractor a statement setting out details of the work giving rise to the payment, the\n cost of the work and the subcontractors details.\n Where the work is being carried out by a partnership the statement shall include details (2)\n of the partnership and details of the individual partners.\n Subcontractors are required to provide the principal with all details required by the (3)\n principal to enable the principal to fulfil their RCT obligations.\n Subcontractors are required to keep and maintain a record of all relevant payments (4)(a)\n received and the record shall contain full details of each payment.\n Subcontractors are required to keep a copy of each deduction authorisation or the details (4)(b)\n of each deduction authorisation supplied by principals under section 530F(4)(a) or\n section 530F(4)(b).\n\n\n                                                                 34\n\fNotes for Guidance – Taxes Consolidation Act 1997 – Finance Act 2025 Edition - Part 18\n\n\n The obligations contained in subsections (3) and (4) of section 886 apply to all records, (5)\n documents or other data created or maintained under this Chapter.\n The Revenue Commissioners shall make regulations in relation to the creation, keeping (6)\n and retention of records by principals and subcontractors\n\n"
+    },
+    {
+      "sectionNumber": "530T",
+      "heading": "Inspection of records",
+      "locator": "s.530T",
+      "principalAct": "1997 Act 39",
+      "category": "corporation_tax",
+      "relevant": true,
+      "relevanceReason": "In scope for the corporation tax computation (issue #211); not yet curated.",
+      "excerpt": "530T Inspection of records\nSection 530T requires principals and subcontractors to produce RCT records relating to relevant payment\nto a Revenue officer for inspection on request.\n\n"
+    },
+    {
+      "sectionNumber": "530U",
+      "heading": "Civil penalties",
+      "locator": "s.530U",
+      "principalAct": "1997 Act 39",
+      "category": "corporation_tax",
+      "relevant": true,
+      "relevanceReason": "In scope for the corporation tax computation (issue #211); not yet curated.",
+      "excerpt": "530U Civil penalties\nSummary\nSection 530U allows a Revenue officer to give certain evidence by certificate in proceedings for the\nrecovery of a penalty in connection with RCT and extends the penalty procedures of Part 47 to a penalty\nunder section 530F.\nDetail\n In proceedings for the recovery of a penalty under section 530F or the recovery of a (1)\n penalty under section 1052, 1054 or, as appropriate, section 1077E or 1077F in relation\n to matters arising under this Chapter—\n A certificate signed by a Revenue officer which certifies that records of the Revenue (1)(a)\n Commissioners indicate that a deduction authorisation, deduction summary or other\n notice, statement or described document, was given to a stated person on a stated day\n shall be evidence until the contrary is proved that that person received that deduction\n authorisation, deduction summary or other notice, statement or described document.\n A certificate signed by a Revenue officer which certifies that records of the Revenue (1)(b)\n Commissioners indicate that a stated person was a registered principal (within the\n meaning of section 530) shall be evidence until the contrary is proved that the stated\n person was a registered principal (within the meaning of section 530).\n A certificate as provided for in paragraph (a) or (b) of this subsection, signed by a (1)(c)\n Revenue officer may be tendered in evidence without proof and shall be deemed until\n the contrary is proved to have been signed by such officer.\n Chapter 3A of Part 47 applies, with any necessary modifications, to a penalty arising (2)\n under section 530F.\n\n"
+    },
+    {
+      "sectionNumber": "530V",
+      "heading": "Miscellaneous",
+      "locator": "s.530V",
+      "principalAct": "1997 Act 39",
+      "category": "corporation_tax",
+      "relevant": true,
+      "relevanceReason": "In scope for the corporation tax computation (issue #211); not yet curated.",
+      "excerpt": "530V Miscellaneous\nSummary\nSection 530V contains miscellaneous provisions in relation to the making of regulations, the authority of\nanother person to act on behalf of a principal, obligations following the death of a principal, the authority\nof Revenue officers to carry out functions under the Chapter and the application of RCT to payments to a\nliquidator or and receiver.\nDetail\n Regulations made under this Chapter may contain such incidental, supplemental or (1)\n consequential provisions to enable persons to fulfil their obligations under this Chapter\n and to give effect to the proper implementation and efficient operation of the provisions\n of this Chapter.\n Regulations made under this Chapter shall be laid before Dáil Éireann as soon as (1)(A)\n possible after they have been made and if a resolution annulling those regulations is\n                                                                 35\n\fNotes for Guidance – Taxes Consolidation Act 1997 – Finance Act 2025 Edition - Part 18\n\n\n made within 21 days, the regulations shall be annulled accordingly but this will not\n invalidate anything done under those regulations.\n Anything required to be done by a principal under this Chapter may be done by another (1)(B)(a)\n person acting under the authority of the principal.\n Where anything is done by another person under the authority of the principal, this (1)(B)(b)\n Chapter shall apply as if it had been done by the principal.\n Anything purporting to have been done by or on behalf of a principal shall be deemed (1)(B)(c)\n to have been done by the principal or under the principal’s authority, unless proven\n otherwise.\n On the death of a principal, anything which the principal would have been liable to do (2)\n under this Chapter shall be done by the personal representative of the principal.\n Anything to be done in this Chapter by the Revenue Commissioners, other than the (3)\n making of regulations, may be done by a Revenue officer or where appropriate by such\n electronic systems put in place by the Revenue Commissioners.\n The provisions of this Chapter shall, subject to paragraphs (b) and (c) apply to a relevant (4)(a)\n payment made to a liquidator or a receiver.\n RCT deducted from a relevant payment to a liquidator or receiver in respect of a relevant (4)(b)\n contract entered into after the appointment of the liquidator or receiver is to be treated\n as a payment on account for the chargeable period concerned after the appointment of\n the liquidator or receiver.\n RCT deducted from a relevant payment to a liquidator or receiver in respect of a relevant (4)(c)\n contract entered into prior to the appointment of the liquidator or receiver is to be treated\n as a payment on account for the chargeable period concerned prior to the appointment\n of the liquidator or receiver.\n\n\n"
+    }
+  ],
+  "rules": [
+    {
+      "key": "rct.contract_notification",
+      "sectionNumber": "530B",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2012-01-01",
+          "effectiveTo": null,
+          "quote": "Upon entering into a relevant contract, a principal obliged to operate RCT shall provide",
+          "value": null,
+          "unit": null,
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    },
+    {
+      "key": "rct.deduct_per_authorisation",
+      "sectionNumber": "530F",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2012-01-01",
+          "effectiveTo": null,
+          "quote": "A principal to whom a deduction authorisation has issued must deduct tax from the",
+          "value": null,
+          "unit": null,
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    },
+    {
+      "key": "rct.deducted_tax_payment_on_account",
+      "sectionNumber": "530P",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2012-01-01",
+          "effectiveTo": null,
+          "quote": "Where a principal deducts tax from a payment in accordance with a deduction",
+          "value": null,
+          "unit": null,
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    },
+    {
+      "key": "rct.deduction_authorisation",
+      "sectionNumber": "530D",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2012-01-01",
+          "effectiveTo": null,
+          "quote": "rate of tax to be applied to the payment and shall authorise the principal to deduct a",
+          "value": null,
+          "unit": null,
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    },
+    {
+      "key": "rct.deduction_summary_deemed_return",
+      "sectionNumber": "530K",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2012-01-01",
+          "effectiveTo": null,
+          "quote": "section 530D(3), the summary shall be deemed to be the return for the period and the",
+          "value": null,
+          "unit": null,
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    },
+    {
+      "key": "rct.payment_by_due_date",
+      "sectionNumber": "530L",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2012-01-01",
+          "effectiveTo": null,
+          "quote": "Tax due and payable shall be paid to the Collector-General not later than the due date",
+          "value": null,
+          "unit": null,
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    },
+    {
+      "key": "rct.payment_notification_before_payment",
+      "sectionNumber": "530C",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2012-01-01",
+          "effectiveTo": null,
+          "quote": "Immediately before a principal make a relevant payment to a subcontractor, they must",
+          "value": null,
+          "unit": null,
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    },
+    {
+      "key": "rct.penalty_higher_rate_sub",
+      "sectionNumber": "530F",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2012-01-01",
+          "effectiveTo": null,
+          "quote": "20% of the relevant payment where the subcontractor has had a determination made",
+          "value": 2000,
+          "unit": "basis_points",
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    },
+    {
+      "key": "rct.penalty_no_determination",
+      "sectionNumber": "530F",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2012-01-01",
+          "effectiveTo": null,
+          "quote": "35% of the relevant payment where the subcontractor has not had a determination made",
+          "value": 3500,
+          "unit": "basis_points",
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    },
+    {
+      "key": "rct.penalty_standard_rate_sub",
+      "sectionNumber": "530F",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2012-01-01",
+          "effectiveTo": null,
+          "quote": "10% of the relevant payment where the subcontractor is a person to whom section 530H",
+          "value": 1000,
+          "unit": "basis_points",
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    },
+    {
+      "key": "rct.penalty_zero_rate_sub",
+      "sectionNumber": "530F",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2012-01-01",
+          "effectiveTo": null,
+          "quote": "3% of the relevant payment where the subcontractor is a person to whom section 530G",
+          "value": 300,
+          "unit": "basis_points",
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    },
+    {
+      "key": "rct.return_by_principal",
+      "sectionNumber": "530K",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2012-01-01",
+          "effectiveTo": null,
+          "quote": "On or before the due date a principal is required to submit a return to the Collector-",
+          "value": null,
+          "unit": null,
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    },
+    {
+      "key": "rct.return_due_date",
+      "sectionNumber": "530",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2012-01-01",
+          "effectiveTo": null,
+          "quote": "“due date”, in relation to a return period, means 14 days after the end of that return",
+          "value": 14,
+          "unit": "count",
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    },
+    {
+      "key": "rct.return_due_date_electronic",
+      "sectionNumber": "530",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2012-01-01",
+          "effectiveTo": null,
+          "quote": "period, or 23 days after the end of that return period where the return for that period is",
+          "value": 23,
+          "unit": "count",
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    },
+    {
+      "key": "rct.subcontractor_identity_evidence",
+      "sectionNumber": "530B",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2012-01-01",
+          "effectiveTo": null,
+          "quote": "identity of the subcontractor and in doing so must obtain documentary evidence from",
+          "value": null,
+          "unit": null,
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    },
+    {
+      "key": "rct.tax_due_for_payment_period",
+      "sectionNumber": "530F",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2012-01-01",
+          "effectiveTo": null,
+          "quote": "The tax which a principal is due to deduct from a relevant payment shall be due and",
+          "value": null,
+          "unit": null,
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    }
+  ]
+}

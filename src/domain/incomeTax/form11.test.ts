@@ -39,21 +39,23 @@ describe('buildForm11 (epic #312)', () => {
     expect(trade.lines.at(-1)).toMatchObject({ label: 'Assessable trading profit', amountMinor: 6_000_000 });
     const mine = f.sections[1]!;
     expect(mine.title).toContain('Aoife Byrne');
-    // Income tax 1,120,000 + USC 133,282 + PRSI 252,000.
-    expect(mine.lines.at(-1)).toMatchObject({ label: 'Liability on the trade\u2019s income', amountMinor: 1_505_282 });
-    // The self-assessment reconciliation: 90% of this year (1,354,754) against
-    // 100% of the last year's (824,600: income tax 720,000 and USC 104,600; no PRSI rate for 2025).
+    // Income tax 1,120,000 + USC 133,282 + PRSI 254,250 (4.2% on 45,000 to
+    // 30 September, 4.35% on 15,000 from 1 October; #711).
+    expect(mine.lines.at(-1)).toMatchObject({ label: 'Liability on the trade\u2019s income', amountMinor: 1_507_532 });
+    // The self-assessment reconciliation: 90% of this year (1,356,778) against
+    // 100% of the last year's (1,030,850: income tax 720,000, USC 104,600 and
+    // PRSI 206,250, 4.1% on 37,500 and 4.2% on 12,500).
     expect(f.selfAssessment).toHaveLength(1);
     const sa = f.selfAssessment[0]!;
     expect(sa).toMatchObject({
-      liabilityMinor: 1_505_282, preliminaryTaxMinor: 824_600, balanceMinor: 680_682, balanceDueDate: '2027-10-31',
+      liabilityMinor: 1_507_532, preliminaryTaxMinor: 1_030_850, balanceMinor: 476_682, balanceDueDate: '2027-10-31',
     });
     expect(sa.working).toContain('s.959AO');
     // The provision: what to set aside, and when, and that it comes from drawings.
     const pr = f.provision[0]!;
     expect(pr.payments).toEqual([
-      { dueDate: '2026-10-31', amountMinor: 824_600, description: 'Preliminary tax (s.959AO)' },
-      { dueDate: '2027-10-31', amountMinor: 680_682, description: 'Balance with the return' },
+      { dueDate: '2026-10-31', amountMinor: 1_030_850, description: 'Preliminary tax (s.959AO)' },
+      { dueDate: '2027-10-31', amountMinor: 476_682, description: 'Balance with the return' },
     ]);
     expect(pr.note).toContain('drawings');
     expect(f.findings.some((x) => x.includes('PPS'))).toBe(true);

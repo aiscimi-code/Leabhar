@@ -1,9 +1,9 @@
 /**
  * Deterministic parser for Revenue TDM Part 38-01-03b (Guidelines for VAT
- * Registration), as-converted PDF text at
- * docs/statutes/tdm-38-01-03b/38-01-03b.md (pdfplumber extraction, real
- * `source_pdf_sha256` in front matter — genuinely verbatim, unlike the short
- * paraphrased reference files this KB has excluded elsewhere).
+ * Registration), as pdfplumber converts Revenue's PDF
+ * (`scripts/catalogue/pdfplumber_to_text.py`). The rules catalogue entry
+ * (`catalogue/tdm-38-01-03b/38-01-03b.json`) holds the passage this parses,
+ * with the PDF beside it.
  *
  * This 40+ page manual repeats its "Exclusion from Mandatory Electronic
  * Filing and Payment of Tax" guidance once per registrant-type scenario
@@ -16,14 +16,13 @@
  *
  * This closes a gap `si156Curation.ts` explicitly flagged: S.I. 156/2012
  * reg.5's "capacity" exclusion criteria are not restated anywhere in this
- * KB because the local si-156-2012 transcript only summarises regs 5-9
- * rather than quoting them. This TDM is Revenue's own guidance on exactly
+ * KB because the statute copy of S.I. 156/2012 only summarised regs 5-9
+ * rather than quoting them, so the KB holds regs 1, 2 and 4 only (#705).
+ * This TDM is Revenue's own guidance on exactly
  * that exclusion — a different source, lower in the source hierarchy than
  * the Regulation itself (`revenue_guidance`, not `legislation`), but
  * genuinely verbatim and citable in its own right.
  */
-import { readFileSync } from 'node:fs';
-
 const HEADING = 'Exclusion from Mandatory Electronic Filing and Payment of Tax';
 const END_ANCHOR = 'of this notification.';
 
@@ -79,12 +78,3 @@ export function extractCapacityExclusionSection(source: string): ParsedTdmCapaci
     occurrences: occurrences.length,
   };
 }
-
-export function extractCapacityExclusionSectionFile(path: string): ParsedTdmCapacityExclusion {
-  return extractCapacityExclusionSection(readFileSync(path, 'utf8'));
-}
-
-export const TDM_38_01_03B_MD_PATH = new URL(
-  '../../../docs/statutes/tdm-38-01-03b/38-01-03b.md',
-  import.meta.url,
-).pathname;

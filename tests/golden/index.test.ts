@@ -9,48 +9,43 @@
  * in the test output. The case id and description appear as the test name.
  */
 import { describe, it, expect, beforeEach } from 'vitest';
-import { readFileSync } from 'node:fs';
 import { createTestDatabase } from '@/db/testing';
 import { createCompany } from '@/domain/config/setup';
 import {
-  ingestFinanceAct2024, deriveTaxRules, FINANCE_ACT_2024_MD_PATH,
+  ingestFinanceAct2024FromCatalogue, deriveTaxRules,
 } from '@/domain/rules/irishRules';
 import {
-  ingestVatca2010, deriveVatcaRules, VATCA_2010_MD_PATH,
+  ingestVatca2010FromCatalogue, deriveVatcaRules,
 } from '@/domain/rules/vatcaIngestion';
 import {
   ingestVatcaRevised, deriveVatcaRevisedRules,
   ingestVatcaRevisedS46,
 } from '@/domain/rules/vatcaRevisedIngestion';
 import {
-  ingestVatcaSchedule, deriveVatcaScheduleRules,
-  VATCA_SCHEDULE_2_MD_PATH, VATCA_SCHEDULE_3_MD_PATH,
+  ingestVatcaScheduleFromCatalogue, deriveVatcaScheduleRules,
 } from '@/domain/rules/vatcaScheduleIngestion';
 import {
-  ingestSi692025Reg5, ingestSi692025Reg8, ingestSi692025Reg9,
-  deriveSi692025Rules, SI_69_2025_MD_PATH,
+  ingestSi692025FromCatalogue, deriveSi692025Rules,
 } from '@/domain/rules/si692025Ingestion';
 import {
   deriveFinanceAct2024VatThresholds,
 } from '@/domain/rules/financeAct2024VatThresholdsIngestion';
 import {
-  ingestSi639, deriveSi639Rules, SI_639_2010_MD_PATH,
+  ingestSi639FromCatalogue, deriveSi639Rules,
 } from '@/domain/rules/si639Ingestion';
 import {
-  ingestSi156, deriveSi156Rules, SI_156_2012_MD_PATH,
+  ingestSi156FromCatalogue, deriveSi156Rules,
 } from '@/domain/rules/si156Ingestion';
 import {
-  ingestTca1997S284, deriveCapitalAllowancesRules,
-  TCA_1997_S284_MD_PATH,
+  ingestTca1997S284FromCatalogue, deriveCapitalAllowancesRules,
 } from '@/domain/rules/capitalAllowancesIngestion';
 import {
-  ingestTca1997S530, ingestRctTdm18_02_04, ingestRctTdm18_02_05, ingestRctTdm18_02_11,
-  deriveRctRules, TCA_1997_S530_MD_PATH,
+  ingestTca1997S530FromCatalogue, ingestRctTdmFromCatalogue,
+  deriveRctRules,
 } from '@/domain/rules/rctIngestion';
 import {
-  ingestTdm3801_03bCapacityExclusion,
+  ingestTdm3801_03bFromCatalogue,
   deriveTdm3801_03bCapacityExclusionRule,
-  TDM_38_01_03B_MD_PATH,
 } from '@/domain/rules/tdm3801_03bIngestion';
 import { deriveVatScopeRules } from '@/domain/rules/vatScopeIngestion';
 import { runGoldenCase } from './runner';
@@ -84,12 +79,10 @@ beforeEach(() => {
   // This mirrors the setup used by src/domain/rules/transactionLookup.test.ts
   // plus the additional sources (RCT, TCA s.284, TDM 38-01-03b) that some
   // golden cases reference.
-  const faMd = readFileSync(FINANCE_ACT_2024_MD_PATH, 'utf8');
-  ingestFinanceAct2024(db, { companyId, markdown: faMd, ingestVersion: 'v1' });
+  ingestFinanceAct2024FromCatalogue(db, { companyId });
   deriveTaxRules(db, { companyId });
 
-  const vatcaMd = readFileSync(VATCA_2010_MD_PATH, 'utf8');
-  ingestVatca2010(db, { companyId, markdown: vatcaMd, ingestVersion: 'v1' });
+  ingestVatca2010FromCatalogue(db, { companyId });
   deriveVatcaRules(db, { companyId });
 
   ingestVatcaRevisedS46(db, { companyId });
@@ -100,42 +93,33 @@ beforeEach(() => {
   }
   deriveVatScopeRules(db, { companyId });
 
-  const sch2Md = readFileSync(VATCA_SCHEDULE_2_MD_PATH, 'utf8');
-  const sch3Md = readFileSync(VATCA_SCHEDULE_3_MD_PATH, 'utf8');
-  ingestVatcaSchedule(db, { companyId, scheduleNumber: '2', markdown: sch2Md, ingestVersion: 'v1' });
+  ingestVatcaScheduleFromCatalogue(db, { companyId, scheduleNumber: '2' });
   deriveVatcaScheduleRules(db, { companyId, scheduleNumber: '2' });
-  ingestVatcaSchedule(db, { companyId, scheduleNumber: '3', markdown: sch3Md, ingestVersion: 'v1' });
+  ingestVatcaScheduleFromCatalogue(db, { companyId, scheduleNumber: '3' });
   deriveVatcaScheduleRules(db, { companyId, scheduleNumber: '3' });
 
-  const si69Md = readFileSync(SI_69_2025_MD_PATH, 'utf8');
-  ingestSi692025Reg5(db, { companyId, markdown: si69Md, ingestVersion: 'v1' });
-  ingestSi692025Reg8(db, { companyId, markdown: si69Md, ingestVersion: 'v1' });
-  ingestSi692025Reg9(db, { companyId, markdown: si69Md, ingestVersion: 'v1' });
+  ingestSi692025FromCatalogue(db, { companyId });
   deriveSi692025Rules(db, { companyId });
 
   deriveFinanceAct2024VatThresholds(db, { companyId });
 
-  const si639Md = readFileSync(SI_639_2010_MD_PATH, 'utf8');
-  ingestSi639(db, { companyId, markdown: si639Md, ingestVersion: 'v1' });
+  ingestSi639FromCatalogue(db, { companyId });
   deriveSi639Rules(db, { companyId });
 
-  const si156Md = readFileSync(SI_156_2012_MD_PATH, 'utf8');
-  ingestSi156(db, { companyId, markdown: si156Md, ingestVersion: 'v1' });
+  ingestSi156FromCatalogue(db, { companyId });
   deriveSi156Rules(db, { companyId });
 
-  const tca284Md = readFileSync(TCA_1997_S284_MD_PATH, 'utf8');
-  ingestTca1997S284(db, { companyId, markdown: tca284Md, ingestVersion: 'v1' });
+  ingestTca1997S284FromCatalogue(db, { companyId });
   deriveCapitalAllowancesRules(db, { companyId });
 
   // Each RCT source through its own path (issue #199): s.530 as the statute, each TDM from its own file.
-  ingestTca1997S530(db, { companyId, markdown: readFileSync(TCA_1997_S530_MD_PATH, 'utf8'), ingestVersion: 'v1' });
-  ingestRctTdm18_02_04(db, { companyId, markdown: readFileSync('docs/statutes/rct/tdm-18-02-04.md', 'utf8'), ingestVersion: 'v1' });
-  ingestRctTdm18_02_05(db, { companyId, markdown: readFileSync('docs/statutes/rct/tdm-18-02-05.md', 'utf8'), ingestVersion: 'v1' });
-  ingestRctTdm18_02_11(db, { companyId, markdown: readFileSync('docs/statutes/rct/tdm-18-02-11.md', 'utf8'), ingestVersion: 'v1' });
+  ingestTca1997S530FromCatalogue(db, { companyId });
+  ingestRctTdmFromCatalogue(db, 'tdm_18_02_04', { companyId });
+  ingestRctTdmFromCatalogue(db, 'tdm_18_02_05', { companyId });
+  ingestRctTdmFromCatalogue(db, 'tdm_18_02_11', { companyId });
   deriveRctRules(db, { companyId });
 
-  const tdmMd = readFileSync(TDM_38_01_03B_MD_PATH, 'utf8');
-  ingestTdm3801_03bCapacityExclusion(db, { companyId, markdown: tdmMd, ingestVersion: 'v1' });
+  ingestTdm3801_03bFromCatalogue(db, { companyId });
   deriveTdm3801_03bCapacityExclusionRule(db, { companyId });
 });
 

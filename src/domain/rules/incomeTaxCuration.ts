@@ -12,6 +12,7 @@
  */
 import type { IrishRuleType } from '@/db/schema';
 import { PRSI_CLASS_S_DISREGARD_RULE } from './prsiClassSDisregard';
+import { scheduled } from './payrollCuration';
 
 type IrishRuleUnit = 'eur_minor' | 'usd_minor' | 'basis_points' | 'percent' | 'count' | 'text';
 
@@ -170,26 +171,27 @@ export const INCOME_TAX_CURATED_RULES: CuratedIncomeTaxRule[] = [
       + 'The threshold is the Notes for Guidance’s own figure, dated from the edition it was quoted in.',
   },
 
-  // ---- PRSI Class S (SWCA 2005 s.21) ----
-  {
-    citation: SWCA_S21_CITATION, sectionNumber: '21', ruleKey: 'prsi.class_s_rate', ruleType: 'rate',
-    name: 'PRSI Class S: 4.2% of reckonable income, at least €650',
-    statementExcerpt: 'greater of an amount equal to\n4.2\nper cent\nof the reckonable income or\nthe amount of\n\n€\n650',
-    numericValue: 420, unit: 'basis_points',
-    effectiveFrom: '2026-09-25', effectiveTo: null,
-    interpretationNote: 'SWCA 2005 s.21(1)(a) as revised on the date it was retrieved (2026-09-25), which is all the '
-      + 'window rests on: the revised text does not say when 4.2% took effect, and no earlier rate is recorded. '
-      + 'The computation flags any year the rate may have differed in.',
-  },
+  // ---- PRSI Class S (SWCA 2005 s.21(1)(a)) ----
+  // The rate is dated from the Act that substitutes it on each 1 October, not
+  // from the revised s.21 the LRC consolidates it into (#711).
+  ...scheduled({
+    ruleKey: 'prsi.class_s_rate', provision: '21(1)(a)',
+    texts: ['4', '4.1', '4.2', '4.35', '4.5', '4.7'], basisPoints: [410, 420, 435, 450, 470],
+    name: (pct) => `PRSI Class S: ${pct}% of reckonable income, at least €650`,
+    note: 'SWCA 2005 s.21(1)(a), as substituted by SWMPA 2024 s.3 (Table, amendment 9): the self-employment '
+      + 'contribution is the greater of this percentage of reckonable income or €650. A contribution year the rate '
+      + 'changes in is split at the change, each rate charged on the income of its own part of the year.',
+  }),
   {
     citation: SWCA_S21_CITATION, sectionNumber: '21', ruleKey: 'prsi.class_s_minimum', ruleType: 'threshold',
     name: 'PRSI Class S: the contribution is at least €650',
     statementExcerpt: 'the amount of\n\n€\n650',
     numericValue: 65_000, unit: 'eur_minor',
-    effectiveFrom: '2026-09-25', effectiveTo: null,
-    interpretationNote: 'SWCA 2005 s.21(1)(a): the self-employment contribution is the greater of 4.2% of '
-      + 'reckonable income or €650. The €5,000 prescribed amount below which no Class S is payable is not in '
-      + 's.21; it is the separate rule prsi.class_s_disregard (S.I. 312/1996 art. 92).',
+    effectiveFrom: '2024-10-01', effectiveTo: null,
+    interpretationNote: 'SWCA 2005 s.21(1)(a): the self-employment contribution is the greater of the Class S rate '
+      + '(prsi.class_s_rate) on reckonable income or €650, for the whole contribution year. €650 was substituted from '
+      + '1 October 2024 by SWMPA 2024 s.5(b) (LRC note F188). The €5,000 prescribed amount below which no Class S is '
+      + 'payable is not in s.21; it is the separate rule prsi.class_s_disregard (S.I. 312/1996 art. 92).',
   },
   PRSI_CLASS_S_DISREGARD_RULE,
   // ---- Basis of assessment, credits, partnerships, payment (Revenue NfG, FA 2025 edition) ----

@@ -4,6 +4,12 @@
  * step for every curated income tax, USC and PRSI rule, whichever source it
  * quotes. A rule family (one ruleKey) is chained by date: each version
  * supersedes the one before it and only the latest is active.
+ *
+ * The knowledge base loads ss.20-23 from their rules catalogue entries
+ * (`catalogue/swca-2005/s<N>.json`, with the LRC page beside it;
+ * `ingestSwcaFromCatalogue`, #556), and S.I. 312/1996 art. 92 from its entry
+ * (`catalogue/si-312-1996/art92.json`, the article cut from the LRC page of the
+ * whole instrument, #712).
  */
 import { and, eq } from 'drizzle-orm';
 import type { AppDatabase } from '@/db';
@@ -18,12 +24,38 @@ import { INCOME_TAX_CURATED_RULES, type CuratedIncomeTaxRule } from './incomeTax
 import { upsertReviewItem } from '../extraction/service';
 import { crossReferencesFromProvision, sameCrossReferences } from './dependencies';
 import { taxHeadsFor } from './taxHeads';
+import { ingestCatalogueFile, type CatalogueIngestResult } from './catalogue';
+import { isCatalogueSource } from './catalogueSupersession';
+import { containsIgnoringLayout } from './lrcAnnotations';
 
-export const SWCA_SECTIONS = ['20', '21', '22', '23', 'si312-art92'];
-export const SI_312_1996_ART92_PATH = 'docs/statutes/si-312-1996/art92.md';
-export const swcaPath = (n: string) => (n === 'si312-art92' ? SI_312_1996_ART92_PATH : `docs/statutes/swca-2005/swca-2005-s${n}.md`);
+/** The SWCA 2005 sections the knowledge base holds, each a catalogue entry. */
+export const SWCA_SECTIONS = ['20', '21', '22', '23'] as const;
+export type SwcaSectionNumber = typeof SWCA_SECTIONS[number];
+/** S.I. 312/1996 art. 92's catalogue entry. */
+export const SI_312_1996_ART92_CATALOGUE_ENTRY = 'si-312-1996/art92.json';
 
-/** Ingest one revised SWCA 2005 section. Idempotent by content. */
+/** What each section's source says of itself: the revised text on the day it was fetched. */
+export const SWCA_NOTE = 'LRC revised text as retrieved: current law on that date, not a dated history.';
+export const SWCA_RELEVANCE_REASON = 'Self-employment (Class S) contributions for sole traders and partners (issue #212).';
+
+/** A section's catalogue entry. */
+export const swcaCatalogueEntry = (n: SwcaSectionNumber) => `swca-2005/s${n}.json`;
+
+/** Load every SWCA section from its catalogue entry. */
+export function ingestSwcaFromCatalogue(
+  db: AppDatabase,
+  params: { companyId?: string | null; ingestVersion?: string; root?: string },
+): Array<CatalogueIngestResult & { sectionNumber: SwcaSectionNumber }> {
+  return SWCA_SECTIONS.map((sectionNumber) => ({
+    sectionNumber, ...ingestCatalogueFile(db, { ...params, entry: swcaCatalogueEntry(sectionNumber) }),
+  }));
+}
+
+/**
+ * Ingest one revised section from a Markdown copy, as a book loaded S.I. 312/1996
+ * art. 92 before the port (#712; the knowledge base reads its catalogue entry).
+ * Idempotent by content.
+ */
 export function ingestSwcaSection(
   db: AppDatabase,
   params: { companyId?: string | null; markdown: string; ingestVersion: string; localPath?: string },
@@ -49,7 +81,7 @@ export function ingestSwcaSection(
       slug: provisionSlug(`swca-${parsed.sectionNumber}`, parsed.heading), heading: parsed.heading, principalAct: null,
       provisionText: parsed.provisionText, sourceStart: parsed.sourceStart, sourceEnd: parsed.sourceEnd,
       category: 'income_tax', amendsSection: null, effectiveClue: null, citedActs: [], relevant: true,
-      relevanceReason: 'Self-employment (Class S) contributions for sole traders and partners (issue #212).',
+      relevanceReason: SWCA_RELEVANCE_REASON,
       source: 'import', provenanceStatus: 'imported',
     }).run();
     return { sourceId, ingested: true };
@@ -76,16 +108,22 @@ export function deriveCuratedRuleFamilies(
   for (const r of params.rules) families.set(r.ruleKey, [...(families.get(r.ruleKey) ?? []), r]);
 
   const provisionFor = (rule: CuratedIncomeTaxRule) => {
-    const sources = db.select({ id: irishKnowledgeSources.id }).from(irishKnowledgeSources)
-      .where(eq(irishKnowledgeSources.citation, rule.citation)).all().map((s) => s.id);
-    return db.select().from(irishActProvisions).where(eq(irishActProvisions.sectionNumber, rule.sectionNumber)).all()
-      .filter((p) => sources.includes(p.sourceId)).at(-1);
+    // The catalogue's source before a pre-port copy of it (#706), else the latest held.
+    const rows = db.select({ id: irishKnowledgeSources.id, localPath: irishKnowledgeSources.localPath }).from(irishKnowledgeSources)
+      .where(eq(irishKnowledgeSources.citation, rule.citation)).all();
+    const sources = rows.map((s) => s.id);
+    const catalogued = new Set(rows.filter((s) => isCatalogueSource(s.localPath)).map((s) => s.id));
+    const held = db.select().from(irishActProvisions).where(eq(irishActProvisions.sectionNumber, rule.sectionNumber)).all()
+      .filter((p) => sources.includes(p.sourceId));
+    return held.filter((p) => catalogued.has(p.sourceId)).at(-1) ?? held.at(-1);
   };
 
   for (const [ruleKey, versions] of families) {
     const ordered = [...versions].sort((a, b) => a.effectiveFrom.localeCompare(b.effectiveFrom));
     const provisions = ordered.map(provisionFor);
-    if (provisions.some((p, i) => !p || !p.provisionText?.includes(ordered[i]!.statementExcerpt))) {
+    // Word for word, however the source breaks its lines (#712: the LRC page
+    // sets "€5,000" on a line of its own).
+    if (provisions.some((p, i) => !p || !containsIgnoringLayout(p.provisionText ?? '', ordered[i]!.statementExcerpt))) {
       result.skippedNoProvision.push(ruleKey);
       continue;
     }

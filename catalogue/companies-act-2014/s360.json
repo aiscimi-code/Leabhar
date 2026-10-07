@@ -1,0 +1,49 @@
+{
+  "format": 1,
+  "source": {
+    "citation": "2014 Act 38 s.360",
+    "title": "Companies Act 2014 s.360 (revised)",
+    "sourceType": "legislation",
+    "jurisdiction": "IE",
+    "sourceUrl": "https://revisedacts.lawreform.ie/eli/2014/act/38/section/360/revised/en/html",
+    "sha256": "be85d017aab3735228573ae1dd76b2333a2507a9b525a402d7f3398a3d19e2c8",
+    "conversion": "lrc-html-plaintext",
+    "retrievedOn": "2026-10-06",
+    "note": "LRC-revised text as retrieved — a live, continuously-updated page, not a dated historical snapshot. Distinct source row per section, never merged with any other Companies Act 2014 section."
+  },
+  "provisions": [
+    {
+      "sectionNumber": "360",
+      "heading": "Audit exemption",
+      "locator": "s.360",
+      "category": "exemption",
+      "relevant": true,
+      "relevanceReason": "Substantive exemption provision; potentially bears on transaction treatment.",
+      "excerpt": "360.\n(1) The following provisions (the “audit exemption”) have effect where, by virtue of\nsection 358\nor\n359\n, as appropriate, this section applies in respect of the statutory financial statements\nof\na company or a group company\nfor a particular financial year—\n\n(a) without prejudice to\nsection 384\n(2)\n,\nsection 333\n(obligation to have statutory financial statements audited) shall not apply\nto the entity financial statements of the company or the group company or the group\nfinancial statements of the holding company\nin respect of that financial year, and\n\n(b) unless and until circumstances (if any) arise by reason of which\nthe company or group company\nis not entitled to the audit exemption in respect of that financial year, the provisions\nspecified in\nsubsection (2)\nshall not apply to\nthe company or group company\nin respect of that year.\n\n(2) The provisions mentioned in\nsubsection (1)\nare those provisions of this Act, being provisions that—\n\n(a) confer any powers on statutory auditors or require anything to be done by or to\nor as respects statutory auditors, or\n\n(b) make provision on the basis of a report of statutory auditors having been prepared\nin relation to the statutory financial statements of a company in a financial year,\n\nand, without prejudice to the generality of the foregoing, include the provisions\nspecified in the Table to this section in so far, and only in so far, as they make\nprovision of the foregoing kind.\n\nTable\n\nSection 121\n(3)\nand\n(4)\n(report of statutory auditors on statutory financial statements for purposes of distribution);\n\nSection 306\n(4)\n(statement of particulars of non-compliance with\nsection 305\nor\n306\n);\n\nSection 322\n(disclosure of remuneration for audit, audit-related work and non-audit work);\n\nSection 330\n(statement on relevant audit information);\n\nSection 336\n(form of statutory auditors’ report);\n\nSection 337\n(signature of statutory auditor’s report);\n\nSection 338\n(circulation of statutory financial statements);\n\nSection 339\n(right of members to demand copies of financial statements and reports);\n\nSection 340\n(requirements in relation to publication of financial statements);\n\nSection 341\n(financial statements and reports to be laid before company in general meeting);\n\nSection 347\n(documents to be annexed to annual return);\n\nSection 356\n(special report on abridged financial statements);\n\nSection 380\nand\nsections 382\nto\n385\n(dealing with appointment of statutory auditors);\n\nSections 390\nto\n393\n(obligations of statutory auditors)."
+    }
+  ],
+  "rules": [
+    {
+      "key": "company.audit_exemption",
+      "sectionNumber": "360",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2026-09-20",
+          "effectiveTo": null,
+          "quote": "section 333\n(obligation to have statutory financial statements audited) shall not apply",
+          "value": null,
+          "unit": null,
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    }
+  ]
+}

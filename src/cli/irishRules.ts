@@ -5,48 +5,48 @@ import { print, type Format } from './format';
 import { getAgentDb, requireCompany } from '@/agent/context';
 import type { AppDatabase } from '@/db';
 import {
-  ingestFinanceAct2024, deriveTaxRules, lookupTaxRule, listTaxRulesByTopic,
-  FINANCE_ACT_2024_MD_PATH,
-  ingestFinanceAct2025, FINANCE_ACT_2025,
+  ingestFinanceAct2024, ingestFinanceAct2024FromCatalogue, deriveTaxRules, lookupTaxRule, listTaxRulesByTopic,
+  ingestFinanceAct2025, ingestFinanceAct2025FromCatalogue,
 } from '@/domain/rules/irishRules';
-import { ingestVatca2010, deriveVatcaRules, VATCA_2010_MD_PATH } from '@/domain/rules/vatcaIngestion';
+import { ingestVatca2010, ingestVatca2010FromCatalogue, deriveVatcaRules } from '@/domain/rules/vatcaIngestion';
 import {
-  ingestVatcaSchedule, deriveVatcaScheduleRules,
-  VATCA_SCHEDULE_1_MD_PATH, VATCA_SCHEDULE_2_MD_PATH, VATCA_SCHEDULE_3_MD_PATH, type VatcaScheduleNumber,
+  ingestVatcaSchedule, ingestVatcaScheduleFromCatalogue, deriveVatcaScheduleRules, type VatcaScheduleNumber,
 } from '@/domain/rules/vatcaScheduleIngestion';
 import {
   ingestTca1997S530, ingestTca1997S530A, ingestTca1997S530E, ingestTca1997S530G, ingestTca1997S530H,
-  ingestTca1997S530I, tca1997RctSectionMdPath, ingestRctTdm18_02_04, ingestRctTdm18_02_05, ingestRctTdm18_02_11,
+  ingestTca1997S530I, ingestTca1997S530FromCatalogue, ingestTca1997RctFa2011SectionFromCatalogue,
+  type RctFa2011SectionKey, type RctTdmKey, ingestRctTdmFromCatalogue, ingestRctTdm18_02_04, ingestRctTdm18_02_05, ingestRctTdm18_02_11,
   deriveRctRules,
-  TCA_1997_S530_MD_PATH,
 } from '@/domain/rules/rctIngestion';
 import {
   ingestVatcaRevisedSection, deriveVatcaRevisedRules, ingestVatcaRevisedS46, ingestVatcaRevised,
 } from '@/domain/rules/vatcaRevisedIngestion';
 import {
-  ingestTca1997S284, ingestFinanceAct2003S23, deriveCapitalAllowancesRules,
+  ingestTca1997S284, ingestFinanceAct2003S23, ingestTca1997S284FromCatalogue, ingestFinanceAct2003S23FromCatalogue,
+  deriveCapitalAllowancesRules,
 } from '@/domain/rules/capitalAllowancesIngestion';
-import { ingestSi639, deriveSi639Rules, SI_639_2010_MD_PATH } from '@/domain/rules/si639Ingestion';
-import { ingestSi156, deriveSi156Rules, SI_156_2012_MD_PATH } from '@/domain/rules/si156Ingestion';
+import { ingestSi639, ingestSi639FromCatalogue, deriveSi639Rules } from '@/domain/rules/si639Ingestion';
+import { ingestSi156, ingestSi156FromCatalogue, deriveSi156Rules } from '@/domain/rules/si156Ingestion';
 import {
   ingestSi692025Reg5, ingestSi692025Reg7, ingestSi692025Reg8, ingestSi692025Reg9, deriveSi692025Rules,
-  SI_69_2025_MD_PATH,
+  ingestSi692025FromCatalogue,
 } from '@/domain/rules/si692025Ingestion';
 import { deriveFinanceAct2024VatThresholds } from '@/domain/rules/financeAct2024VatThresholdsIngestion';
 import {
-  ingestTdm3801_03bCapacityExclusion, deriveTdm3801_03bCapacityExclusionRule, TDM_38_01_03B_MD_PATH,
+  ingestTdm3801_03bCapacityExclusion, ingestTdm3801_03bFromCatalogue, deriveTdm3801_03bCapacityExclusionRule,
 } from '@/domain/rules/tdm3801_03bIngestion';
 import {
-  ingestAllCompaniesAct2014Sections, deriveCompaniesAct2014Rules,
+  ingestCompaniesAct2014Section, ingestCompaniesAct2014FromCatalogue, deriveCompaniesAct2014Rules,
 } from '@/domain/rules/companiesAct2014Ingestion';
 import {
   ingestVat3ReturnGuidance, ingestRtdTdm, deriveVat3RtdRules,
-  VAT3_RETURN_GUIDANCE_MD_PATH, RTD_TDM_MD_PATH,
+  VAT3_GUIDANCE_CATALOGUE_ENTRY, RTD_TDM_CATALOGUE_ENTRY,
 } from '@/domain/rules/vat3RtdIngestion';
-import { ingestEbrief168_25, deriveEbriefRules, EBRIEF_168_25_MD_PATH } from '@/domain/rules/ebriefIngestion';
-import { ingestEu282Articles, deriveEu282Rules, EU_282_2011_MD_PATH } from '@/domain/rules/eu282Ingestion';
+import { ingestEbrief168_25, ingestEbriefFromCatalogue, deriveEbriefRules } from '@/domain/rules/ebriefIngestion';
+import { ingestEu282Articles, ingestEu282FromCatalogue, deriveEu282Rules } from '@/domain/rules/eu282Ingestion';
 import { syncTaxRatesFromIrishRules } from '@/domain/rules/taxRateSync';
-import { loadStatutoryKnowledgeBase, statuteFilePath } from '@/domain/rules/knowledgeBase';
+import { loadStatutoryKnowledgeBase } from '@/domain/rules/knowledgeBase';
+import { ingestCatalogueFile } from '@/domain/rules/catalogue';
 import { deriveVatScopeRules } from '@/domain/rules/vatScopeIngestion';
 import { lookupTransactionRules, type TransactionContext } from '@/domain/rules/transactionLookup';
 import { compareRuleVersions } from '@/domain/rules/versionCompare';
@@ -71,12 +71,13 @@ Commands:
                                        rct-tca530 | rct-fa2011-a | rct-fa2011-e | rct-fa2011-g |
                                        rct-fa2011-h | rct-fa2011-i | rct-tdm | rct-tdm-05 | rct-tdm-11 |
                                        vatca-2010-revised | tca1997-s284 | finance-act-2003-s23 | si639 | si156 |
-                                       si69-2025 (alias si69-2025-reg8) | si69-2025-reg5 | si69-2025-reg7 |
+                                       si69-2025 (regs 5, 7, 8, 9; with --file, reg 8) | si69-2025-reg5 | si69-2025-reg7 |
                                        si69-2025-reg9 | tdm-38-01-03b |
-                                       companies-act-2014 (ingests all eight fetched sections; no --file) |
+                                       companies-act-2014 (every section; with --file, one) |
                                        vat3-return-guidance | rtd-tdm-s76 | ebrief-168-25 | eu-282-2011 |
                                        --file overrides
-                                       its default path, e.g. to ingest a different revised section)
+                                       its default path, e.g. to ingest a different revised section;
+                                       a source in the rules catalogue loads from it without --file)
   ingest-all                          Ingest every source and derive every rule in one step
                                        (same as the ingest/extract sequence below; idempotent)
   extract [--source <s>]              Derive irish_tax_rules from ingested provisions
@@ -145,54 +146,59 @@ export async function main(argv: string[], options: CliOptions = {}): Promise<nu
       case 'ingest': {
         const source = getFlag(flags, 'source') ?? 'finance-act-2024';
         if (source === 'vatca-2010') {
-          const file = getFlag(flags, 'file') ?? VATCA_2010_MD_PATH;
-          const markdown = readFileSync(file, 'utf8');
-          print(ingestVatca2010(db, { companyId, markdown, ingestVersion: 'v1', localPath: file }), format);
+          // From the rules catalogue (#556), or --file: a Markdown copy.
+          const file = getFlag(flags, 'file');
+          print(file
+            ? ingestVatca2010(db, { companyId, markdown: readFileSync(file, 'utf8'), ingestVersion: 'v1', localPath: file })
+            : ingestVatca2010FromCatalogue(db, { companyId }), format);
           return 0;
         }
         if (source === 'vatca-2010-sch1' || source === 'vatca-2010-sch2' || source === 'vatca-2010-sch3') {
+          // From the rules catalogue (#556), or --file: a Markdown copy.
           const scheduleNumber = source.slice(-1) as VatcaScheduleNumber;
-          const defaultFile = { '1': VATCA_SCHEDULE_1_MD_PATH, '2': VATCA_SCHEDULE_2_MD_PATH, '3': VATCA_SCHEDULE_3_MD_PATH }[scheduleNumber];
-          const file = getFlag(flags, 'file') ?? defaultFile;
-          const markdown = readFileSync(file, 'utf8');
-          print(
-            ingestVatcaSchedule(db, { companyId, scheduleNumber, markdown, ingestVersion: 'v1', localPath: file }),
-            format,
-          );
+          const file = getFlag(flags, 'file');
+          print(file
+            ? ingestVatcaSchedule(db, { companyId, scheduleNumber, markdown: readFileSync(file, 'utf8'), ingestVersion: 'v1', localPath: file })
+            : ingestVatcaScheduleFromCatalogue(db, { companyId, scheduleNumber }), format);
           return 0;
         }
         if (source === 'rct-tca530') {
-          const file = getFlag(flags, 'file') ?? TCA_1997_S530_MD_PATH;
-          const markdown = readFileSync(file, 'utf8');
-          print(ingestTca1997S530(db, { companyId, markdown, ingestVersion: 'v1', localPath: file }), format);
+          // From the rules catalogue (#556), or --file: a Markdown copy.
+          const file = getFlag(flags, 'file');
+          print(file
+            ? ingestTca1997S530(db, { companyId, markdown: readFileSync(file, 'utf8'), ingestVersion: 'v1', localPath: file })
+            : ingestTca1997S530FromCatalogue(db, { companyId }), format);
           return 0;
         }
         if (source.startsWith('rct-fa2011-')) {
           const letter = source.slice('rct-fa2011-'.length).toUpperCase();
-          const ingestFns: Record<string, typeof ingestTca1997S530A> = {
-            A: ingestTca1997S530A, E: ingestTca1997S530E, G: ingestTca1997S530G,
-            H: ingestTca1997S530H, I: ingestTca1997S530I,
+          const sections: Record<string, [RctFa2011SectionKey, typeof ingestTca1997S530A]> = {
+            A: ['tca1997_s530a', ingestTca1997S530A], E: ['tca1997_s530e', ingestTca1997S530E],
+            G: ['tca1997_s530g', ingestTca1997S530G], H: ['tca1997_s530h', ingestTca1997S530H],
+            I: ['tca1997_s530i', ingestTca1997S530I],
           };
-          const ingestFn = ingestFns[letter];
-          if (!ingestFn) throw new Error(`Unknown --source: ${source} (supported: rct-fa2011-a/e/g/h/i)`);
-          const file = getFlag(flags, 'file') ?? tca1997RctSectionMdPath(`530${letter}`);
-          const markdown = readFileSync(file, 'utf8');
-          print(ingestFn(db, { companyId, markdown, ingestVersion: 'v1', localPath: file }), format);
+          const section = sections[letter];
+          if (!section) throw new Error(`Unknown --source: ${source} (supported: rct-fa2011-a/e/g/h/i)`);
+          // From the rules catalogue (#556), or --file: a Markdown copy.
+          const [key, ingestFn] = section;
+          const file = getFlag(flags, 'file');
+          print(file
+            ? ingestFn(db, { companyId, markdown: readFileSync(file, 'utf8'), ingestVersion: 'v1', localPath: file })
+            : ingestTca1997RctFa2011SectionFromCatalogue(db, key, { companyId }), format);
           return 0;
         }
         if (source === 'rct-tdm' || source === 'rct-tdm-05' || source === 'rct-tdm-11') {
-          const rctTdmFiles: Record<string, string> = {
-            'rct-tdm': 'tdm-18-02-04.md',
-            'rct-tdm-05': 'tdm-18-02-05.md',
-            'rct-tdm-11': 'tdm-18-02-11.md',
+          const manuals: Record<string, [RctTdmKey, typeof ingestRctTdm18_02_04]> = {
+            'rct-tdm': ['tdm_18_02_04', ingestRctTdm18_02_04],
+            'rct-tdm-05': ['tdm_18_02_05', ingestRctTdm18_02_05],
+            'rct-tdm-11': ['tdm_18_02_11', ingestRctTdm18_02_11],
           };
-          const defaultFile = new URL(`../../docs/statutes/rct/${rctTdmFiles[source]}`, import.meta.url).pathname;
-          const file = getFlag(flags, 'file') ?? defaultFile;
-          const markdown = readFileSync(file, 'utf8');
-          const ingestFn = source === 'rct-tdm'
-            ? ingestRctTdm18_02_04
-            : source === 'rct-tdm-05' ? ingestRctTdm18_02_05 : ingestRctTdm18_02_11;
-          print(ingestFn(db, { companyId, markdown, ingestVersion: 'v1', localPath: file }), format);
+          // From the rules catalogue (#556), or --file: a Markdown copy.
+          const [key, ingestFn] = manuals[source]!;
+          const file = getFlag(flags, 'file');
+          print(file
+            ? ingestFn(db, { companyId, markdown: readFileSync(file, 'utf8'), ingestVersion: 'v1', localPath: file })
+            : ingestRctTdmFromCatalogue(db, key, { companyId }), format);
           return 0;
         }
         if (source === 'vatca-2010-revised') {
@@ -206,106 +212,107 @@ export async function main(argv: string[], options: CliOptions = {}): Promise<nu
           return 0;
         }
         if (source === 'tca1997-s284') {
+          // From the rules catalogue (#556), or --file: a Markdown copy.
           const file = getFlag(flags, 'file');
-          print(
-            ingestTca1997S284(db, { companyId, markdown: file ? readFileSync(file, 'utf8') : undefined, ingestVersion: 'v1', localPath: file }),
-            format,
-          );
+          print(file
+            ? ingestTca1997S284(db, { companyId, markdown: readFileSync(file, 'utf8'), ingestVersion: 'v1', localPath: file })
+            : ingestTca1997S284FromCatalogue(db, { companyId }), format);
           return 0;
         }
         if (source === 'finance-act-2003-s23') {
+          // From the rules catalogue (#556), or --file: a Markdown copy.
           const file = getFlag(flags, 'file');
-          print(
-            ingestFinanceAct2003S23(db, { companyId, markdown: file ? readFileSync(file, 'utf8') : undefined, ingestVersion: 'v1', localPath: file }),
-            format,
-          );
+          print(file
+            ? ingestFinanceAct2003S23(db, { companyId, markdown: readFileSync(file, 'utf8'), ingestVersion: 'v1', localPath: file })
+            : ingestFinanceAct2003S23FromCatalogue(db, { companyId }), format);
           return 0;
         }
         if (source === 'si639') {
-          const file = getFlag(flags, 'file') ?? SI_639_2010_MD_PATH;
-          const markdown = readFileSync(file, 'utf8');
-          print(ingestSi639(db, { companyId, markdown, ingestVersion: 'v1', localPath: file }), format);
+          // From the rules catalogue (#556), or --file: a Markdown copy.
+          const file = getFlag(flags, 'file');
+          print(file
+            ? ingestSi639(db, { companyId, markdown: readFileSync(file, 'utf8'), ingestVersion: 'v1', localPath: file })
+            : ingestSi639FromCatalogue(db, { companyId }), format);
           return 0;
         }
         if (source === 'si156') {
-          const file = getFlag(flags, 'file') ?? SI_156_2012_MD_PATH;
-          const markdown = readFileSync(file, 'utf8');
-          print(ingestSi156(db, { companyId, markdown, ingestVersion: 'v1', localPath: file }), format);
+          const file = getFlag(flags, 'file');
+          print(file
+            ? ingestSi156(db, { companyId, markdown: readFileSync(file, 'utf8'), ingestVersion: 'v1', localPath: file })
+            : ingestSi156FromCatalogue(db, { companyId }), format);
           return 0;
         }
-        if (source === 'si69-2025' || source === 'si69-2025-reg8') {
-          const file = getFlag(flags, 'file') ?? SI_69_2025_MD_PATH;
-          const markdown = readFileSync(file, 'utf8');
-          print(ingestSi692025Reg8(db, { companyId, markdown, ingestVersion: 'v1', localPath: file }), format);
-          return 0;
-        }
-        if (source === 'si69-2025-reg5') {
-          const file = getFlag(flags, 'file') ?? SI_69_2025_MD_PATH;
-          const markdown = readFileSync(file, 'utf8');
-          print(ingestSi692025Reg5(db, { companyId, markdown, ingestVersion: 'v1', localPath: file }), format);
-          return 0;
-        }
-        if (source === 'si69-2025-reg7') {
-          const file = getFlag(flags, 'file') ?? SI_69_2025_MD_PATH;
-          const markdown = readFileSync(file, 'utf8');
-          print(ingestSi692025Reg7(db, { companyId, markdown, ingestVersion: 'v1', localPath: file }), format);
-          return 0;
-        }
-        if (source === 'si69-2025-reg9') {
-          const file = getFlag(flags, 'file') ?? SI_69_2025_MD_PATH;
-          const markdown = readFileSync(file, 'utf8');
-          print(ingestSi692025Reg9(db, { companyId, markdown, ingestVersion: 'v1', localPath: file }), format);
+        if (source === 'si69-2025' || /^si69-2025-reg[5789]$/.test(source)) {
+          // The catalogue entry holds regs 5, 7, 8 and 9 together; --file
+          // reads one regulation (reg 8 for plain si69-2025) from a Markdown copy.
+          const file = getFlag(flags, 'file');
+          const byRegulation: Record<string, typeof ingestSi692025Reg8> = {
+            'si69-2025': ingestSi692025Reg8, 'si69-2025-reg8': ingestSi692025Reg8, 'si69-2025-reg5': ingestSi692025Reg5,
+            'si69-2025-reg7': ingestSi692025Reg7, 'si69-2025-reg9': ingestSi692025Reg9,
+          };
+          print(file
+            ? byRegulation[source]!(db, { companyId, markdown: readFileSync(file, 'utf8'), ingestVersion: 'v1', localPath: file })
+            : ingestSi692025FromCatalogue(db, { companyId }), format);
           return 0;
         }
         if (source === 'tdm-38-01-03b') {
-          const file = getFlag(flags, 'file') ?? TDM_38_01_03B_MD_PATH;
-          const markdown = readFileSync(file, 'utf8');
-          print(ingestTdm3801_03bCapacityExclusion(db, { companyId, markdown, ingestVersion: 'v1', localPath: file }), format);
+          const file = getFlag(flags, 'file');
+          print(file
+            ? ingestTdm3801_03bCapacityExclusion(db, { companyId, markdown: readFileSync(file, 'utf8'), ingestVersion: 'v1', localPath: file })
+            : ingestTdm3801_03bFromCatalogue(db, { companyId }), format);
           return 0;
         }
         if (source === 'companies-act-2014') {
-          // No single default file (eight sections, each its own source) — --file is not supported here.
-          print(ingestAllCompaniesAct2014Sections(db, { companyId, ingestVersion: 'v1' }), format);
+          // Every section from the catalogue; --file reads one section from a Markdown copy.
+          const file = getFlag(flags, 'file');
+          print(file
+            ? ingestCompaniesAct2014Section(db, { companyId, markdown: readFileSync(file, 'utf8'), ingestVersion: 'v1', localPath: file })
+            : ingestCompaniesAct2014FromCatalogue(db, { companyId }), format);
           return 0;
         }
         if (source === 'vat3-return-guidance') {
-          const file = getFlag(flags, 'file') ?? statuteFilePath(VAT3_RETURN_GUIDANCE_MD_PATH);
-          const markdown = readFileSync(file, 'utf8');
-          print(ingestVat3ReturnGuidance(db, { companyId, markdown, ingestVersion: 'v1', localPath: VAT3_RETURN_GUIDANCE_MD_PATH }), format);
+          const file = getFlag(flags, 'file');
+          print(file
+            ? ingestVat3ReturnGuidance(db, { companyId, markdown: readFileSync(file, 'utf8'), ingestVersion: 'v1', localPath: file })
+            : ingestCatalogueFile(db, { companyId, entry: VAT3_GUIDANCE_CATALOGUE_ENTRY }), format);
           return 0;
         }
         if (source === 'eu-282-2011') {
-          const file = getFlag(flags, 'file') ?? statuteFilePath(EU_282_2011_MD_PATH);
-          const markdown = readFileSync(file, 'utf8');
-          print(ingestEu282Articles(db, { companyId, markdown, ingestVersion: 'v1', localPath: EU_282_2011_MD_PATH }), format);
+          const file = getFlag(flags, 'file');
+          print(file
+            ? ingestEu282Articles(db, { companyId, markdown: readFileSync(file, 'utf8'), ingestVersion: 'v1', localPath: file })
+            : ingestEu282FromCatalogue(db, { companyId }), format);
           return 0;
         }
         if (source === 'ebrief-168-25') {
-          const file = getFlag(flags, 'file') ?? statuteFilePath(EBRIEF_168_25_MD_PATH);
-          const markdown = readFileSync(file, 'utf8');
-          print(ingestEbrief168_25(db, { companyId, markdown, ingestVersion: 'v1' }), format);
+          const file = getFlag(flags, 'file');
+          print(file
+            ? ingestEbrief168_25(db, { companyId, markdown: readFileSync(file, 'utf8'), ingestVersion: 'v1', localPath: file })
+            : ingestEbriefFromCatalogue(db, { companyId }), format);
           return 0;
         }
         if (source === 'rtd-tdm-s76') {
-          const file = getFlag(flags, 'file') ?? statuteFilePath(RTD_TDM_MD_PATH);
-          const markdown = readFileSync(file, 'utf8');
-          print(ingestRtdTdm(db, { companyId, markdown, ingestVersion: 'v1', localPath: RTD_TDM_MD_PATH }), format);
+          const file = getFlag(flags, 'file');
+          print(file
+            ? ingestRtdTdm(db, { companyId, markdown: readFileSync(file, 'utf8'), ingestVersion: 'v1', localPath: file })
+            : ingestCatalogueFile(db, { companyId, entry: RTD_TDM_CATALOGUE_ENTRY }), format);
           return 0;
         }
         if (source === 'finance-act-2025') {
           // Its s.71 is cited by the s.46 hospitality and hairdressing rates: ingest before extracting vatca-2010-revised.
-          const file = getFlag(flags, 'file') ?? statuteFilePath(FINANCE_ACT_2025.localPath!);
-          const markdown = readFileSync(file, 'utf8');
-          print(ingestFinanceAct2025(db, { companyId, markdown, ingestVersion: 'v1', localPath: file }), format);
+          // From the rules catalogue (#556), or --file: a Markdown copy.
+          const file = getFlag(flags, 'file');
+          print(file
+            ? ingestFinanceAct2025(db, { companyId, markdown: readFileSync(file, 'utf8'), ingestVersion: 'v1', localPath: file })
+            : ingestFinanceAct2025FromCatalogue(db, { companyId }), format);
           return 0;
         }
         if (source !== 'finance-act-2024') throw new Error(`Unknown --source: ${source}`);
-        const file = getFlag(flags, 'file') ?? FINANCE_ACT_2024_MD_PATH;
-        const markdown = readFileSync(file, 'utf8');
-        const result = ingestFinanceAct2024(db, {
-          companyId, markdown, ingestVersion: 'v1', localPath: file,
-        });
-        print(result, format);
+        // From the rules catalogue (#556), or --file: a Markdown copy.
+        const file = getFlag(flags, 'file');
+        print(file
+          ? ingestFinanceAct2024(db, { companyId, markdown: readFileSync(file, 'utf8'), ingestVersion: 'v1', localPath: file })
+          : ingestFinanceAct2024FromCatalogue(db, { companyId }), format);
         return 0;
       }
 
@@ -499,7 +506,7 @@ export async function main(argv: string[], options: CliOptions = {}): Promise<nu
           ? reports.filter((r) => r.status === 'changed').map((report) => traceSourceChange(db, { companyId, report }))
           : [];
         print({ reports, traces }, format);
-        return reports.every((r) => r.status === 'unchanged') ? 0 : 1;
+        return reports.every((r) => r.status === 'unchanged' || r.status === 'page_state_only') ? 0 : 1;
       }
 
       case 'generate-tests': {

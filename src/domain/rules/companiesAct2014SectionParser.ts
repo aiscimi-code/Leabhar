@@ -1,10 +1,10 @@
 /**
  * Deterministic parser for an individual Companies Act 2014 section, LRC-
- * revised text, one file per section under docs/statutes/companies-act-2014/
- * (s282.md, s280A.md, ...) — fetched by extract_vat_sources.py's
- * extract_companies_act_2014(), the same per-section LRC fetch shape VATCA's
- * revised sections use (vatcaRevisedSectionParser.ts) and the same front
- * matter/HTML->text conversion, but a different operative-text marker
+ * revised text, one page per section, as `scripts/catalogue/lrc_html_to_text.py`
+ * converts it (the rules catalogue entries `catalogue/companies-act-2014/s<N>.json`
+ * hold the result, with the page beside each) — the same per-section LRC
+ * shape VATCA's revised sections use (vatcaRevisedSectionParser.ts) and the
+ * same front matter/HTML->text conversion, but a different operative-text marker
  * convention: this Act prints the section number, then a bare "." with
  * nothing else, alone on its own line — never VATCA's "N\n.—(1)" run-on
  * convention. Verified against all eight fetched sections (s282, s280A,
@@ -14,7 +14,6 @@
  * parser matches that literal line rather than reusing VATCA's em-dash
  * search, which would never match here at all.
  */
-import { readFileSync } from 'node:fs';
 import { categoriseProvision, provisionSlug, type ProvisionCategory } from './statuteParser';
 import { parseScheduleFrontMatter } from './vatcaScheduleParser';
 
@@ -86,15 +85,4 @@ export function parseCompaniesAct2014Section(source: string): ParsedCompaniesAct
     sourceEnd,
     category: categoriseProvision(heading, provisionText),
   };
-}
-
-export function parseCompaniesAct2014SectionFile(path: string): ParsedCompaniesAct2014Section {
-  return parseCompaniesAct2014Section(readFileSync(path, 'utf8'));
-}
-
-export function companiesAct2014SectionPath(sectionNumber: string): string {
-  return new URL(
-    `../../../docs/statutes/companies-act-2014/s${sectionNumber}.md`,
-    import.meta.url,
-  ).pathname;
 }

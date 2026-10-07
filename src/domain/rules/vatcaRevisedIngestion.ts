@@ -40,6 +40,7 @@ import { taxHeadsFor } from './taxHeads';
 
 import { containsIgnoringLayout, plainQuotes } from './lrcAnnotations';
 import { CATALOGUE_ENTRIES, ingestCatalogueFile, type CatalogueIngestResult } from './catalogue';
+import { catalogueSourcesFirst } from './catalogueSupersession';
 
 /** s.46 is ported to the rules catalogue (#443): its statute copy is gone. */
 export const VATCA_REVISED_S046_CATALOGUE_ENTRY = 'vatca-2010-revised/s046.json';
@@ -293,7 +294,7 @@ export function deriveVatcaRevisedRules(
     // is a new source row beside the old one (#688).
     const sourceId = db.select({ id: irishKnowledgeSources.id }).from(irishKnowledgeSources)
       .where(eq(irishKnowledgeSources.citation, rule.citation))
-      .orderBy(desc(irishKnowledgeSources.retrievedAt)).get()?.id;
+      .orderBy(catalogueSourcesFirst(), desc(irishKnowledgeSources.retrievedAt)).get()?.id;
     return sourceId
       ? db.select().from(irishActProvisions)
         .where(and(eq(irishActProvisions.sourceId, sourceId), eq(irishActProvisions.sectionNumber, rule.sectionNumber)))

@@ -6,7 +6,11 @@ so a ported excerpt says exactly what the copy said.
 
 Called by scripts/catalogue/extract.ts, never at run time:
 
-  python3 scripts/catalogue/lrc_html_to_text.py <page.html> <title> <citation> <url>
+  python3 scripts/catalogue/lrc_html_to_text.py <page.html> <title> <citation> <url> [--paragraphs] [--section <id>]
+
+--section converts only the provision with that id (an article of a revised
+instrument whose whole text is one page, e.g. Part04_Chap03_Art092 of S.I.
+312/1996; #712), where the page's first section would otherwise be taken.
 
 Writes the converted Markdown to standard output.
 """
@@ -22,7 +26,7 @@ except ImportError as e:
     raise SystemExit("pip install beautifulsoup4") from e
 
 
-def html_to_md(html: str, title: str, citation: str, url: str) -> str:
+def html_to_md(html: str, title: str, citation: str, url: str, paragraphs: bool = False, section: str | None = None) -> str:
     soup = BeautifulSoup(html, "html.parser")
     for tag in soup.select("script, style, nav, header, footer, noscript, form"):
         tag.decompose()
@@ -43,7 +47,13 @@ def html_to_md(html: str, title: str, citation: str, url: str) -> str:
     # eISB as-enacted section pages put the provision in #act
     # (class="act-content"), not #content. Without this selector the
     # <main> fallback pulls in View-by-Section / Bill History chrome.
-    root = (
+    if section is not None:
+        root = soup.find("section", id=section)
+        if root is None:
+            raise SystemExit(f"no section#{section} on this page")
+    else:
+        root = None
+    root = root or (
         soup.select_one("#content") or soup.select_one("#act, div.act-content")
         or soup.select_one("section.sect, section.schedule")
         or soup.select_one("main") or soup.body
@@ -65,6 +75,14 @@ def html_to_md(html: str, title: str, citation: str, url: str) -> str:
         # itself is in the accompanying class="change" span, which is kept.
         for tag in root.select(".markup"):
             tag.decompose()
+        # An Irish Statute Book instrument page breaks its paragraphs' source
+        # lines around every link and italic letter ("the \n<a>Taxes
+        # Consolidation Act 1997</a>\n (No. 39", "(<i>a</i>)"); with
+        # --paragraphs each <p> becomes one line, those line breaks dropped,
+        # as the S.I. 156/2012 copy was written (#556).
+        if paragraphs:
+            for p in root.select("p"):
+                p.string = re.sub(r" {2,}", " ", p.get_text("").replace("\n", "")).strip()
     skip = {
         "Home", "Baile", "Acts", "Achtanna", "Introduction", "Alphabetical List",
         "Chronological List", "Annotations", "This Act", "View Full Act",
@@ -94,8 +112,17 @@ def html_to_md(html: str, title: str, citation: str, url: str) -> str:
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 5:
+    argv = sys.argv[1:]
+    section = None
+    if "--section" in argv:
+        i = argv.index("--section")
+        if i + 1 >= len(argv):
+            raise SystemExit(__doc__)
+        section = argv[i + 1]
+        argv = argv[:i] + argv[i + 2:]
+    args = [a for a in argv if a != "--paragraphs"]
+    if len(args) != 4:
         raise SystemExit(__doc__)
-    path, title, citation, url = sys.argv[1:]
+    path, title, citation, url = args
     with open(path, encoding="utf-8", errors="replace") as f:
-        sys.stdout.write(html_to_md(f.read(), title, citation, url))
+        sys.stdout.write(html_to_md(f.read(), title, citation, url, "--paragraphs" in argv, section))

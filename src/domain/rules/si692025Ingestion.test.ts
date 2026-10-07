@@ -1,13 +1,13 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { readFileSync } from 'node:fs';
 import { eq } from 'drizzle-orm';
 import { createTestDatabase } from '@/db/testing';
 import { createCompany } from '../config/setup';
 import { updateCompany } from '../config/mutations';
 import {
   ingestSi692025Reg5, ingestSi692025Reg7, ingestSi692025Reg8, ingestSi692025Reg9, deriveSi692025Rules,
-  SI_69_2025_MD_PATH,
+  ingestSi692025FromCatalogue, SI_69_2025_CATALOGUE_ENTRY,
 } from './si692025Ingestion';
+import { readCatalogueEntry } from './catalogue';
 import { lookupTaxRule } from './irishRules';
 import { lookupTransactionRules } from './transactionLookup';
 import { SI_69_2025_CURATED_RULES } from './si692025Curation';
@@ -16,12 +16,36 @@ import type { AppDatabase } from '@/db';
 
 let db: AppDatabase;
 let companyId: string;
-let markdown: string;
+
+/**
+ * A Markdown copy for the per-regulation ingests (the CLI's `--file`): the
+ * four held regulations from the catalogue entry, with stand-ins for regs 6
+ * and 10 where the parser ends regs 5 and 9.
+ */
+const regulation = (n: string) => readCatalogueEntry(SI_69_2025_CATALOGUE_ENTRY).provisions.find((p) => p.sectionNumber === n)!.excerpt;
+const markdown = ['# European Union (Value-Added Tax) Regulations 2025', regulation('5'), '6. Not held.',
+  regulation('7'), regulation('8'), regulation('9'), '10. Not held.'].join('\n\n');
 
 beforeEach(() => {
   ({ db } = createTestDatabase());
   ({ companyId } = createCompany(db, { legalName: 'SI 69 Ltd', seedYears: [2025] }));
-  markdown = readFileSync(SI_69_2025_MD_PATH, 'utf8');
+});
+
+describe('ingestSi692025FromCatalogue', () => {
+  it('ingests regulations 5, 7, 8 and 9 under one source, each its own provision, idempotently', () => {
+    const first = ingestSi692025FromCatalogue(db, { companyId });
+    expect(first.ingested).toBe(true);
+    const provisions = db.select().from(irishActProvisions).where(eq(irishActProvisions.sourceId, first.sourceId)).all();
+    expect(provisions.map((p) => p.sectionNumber).sort()).toEqual(['5', '7', '8', '9']);
+    expect(provisions.every((p) => p.relevant && p.amendsSection && p.category === 'vat')).toBe(true);
+    expect(ingestSi692025FromCatalogue(db, { companyId }).ingested).toBe(false);
+  });
+
+  it('a per-regulation ingest reads the same words as the catalogue', () => {
+    ingestSi692025Reg9(db, { companyId, markdown, ingestVersion: 'v1' });
+    const reg9 = db.select().from(irishActProvisions).where(eq(irishActProvisions.sectionNumber, '9')).get()!;
+    expect(reg9.provisionText).toBe(regulation('9'));
+  });
 });
 
 describe('ingestSi692025Reg8', () => {
@@ -81,10 +105,7 @@ describe('ingestSi692025Reg5 / ingestSi692025Reg7 / ingestSi692025Reg9 (share on
 
 describe('deriveSi692025Rules', () => {
   beforeEach(() => {
-    ingestSi692025Reg5(db, { companyId, markdown, ingestVersion: 'v1' });
-    ingestSi692025Reg7(db, { companyId, markdown, ingestVersion: 'v1' });
-    ingestSi692025Reg8(db, { companyId, markdown, ingestVersion: 'v1' });
-    ingestSi692025Reg9(db, { companyId, markdown, ingestVersion: 'v1' });
+    ingestSi692025FromCatalogue(db, { companyId });
   });
 
   it('creates every curated rule once all four regulations are ingested', () => {

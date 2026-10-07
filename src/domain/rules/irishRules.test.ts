@@ -3,29 +3,58 @@ import { readFileSync } from 'node:fs';
 import { createTestDatabase } from '@/db/testing';
 import { createCompany } from '../config/setup';
 import {
-  ingestFinanceAct2024, deriveTaxRules, lookupTaxRule, listTaxRulesByTopic,
-  listTaxRulesByCategory, FINANCE_ACT_2024_MD_PATH, FINANCE_ACT_2024,
+  ingestFinanceAct2024, ingestFinanceAct2024FromCatalogue, deriveTaxRules, lookupTaxRule, listTaxRulesByTopic,
+  listTaxRulesByCategory, FINANCE_ACT_2024,
 } from './irishRules';
-import { irishTaxRules, reviewItems } from '@/db/schema';
+import { irishActProvisions, irishKnowledgeSources, irishTaxRules, reviewItems } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import type { AppDatabase } from '@/db';
 
 let db: AppDatabase;
 let companyId: string;
-const markdown = readFileSync(FINANCE_ACT_2024_MD_PATH, 'utf8');
+/** The Act's front matter and ss.1-4 as `pdftotext -layout` lays them out: the Markdown ingest (`--file`). */
+const markdown = readFileSync(new URL('./__fixtures__/finance-act-2024-excerpt.md', import.meta.url), 'utf8');
 
 beforeEach(() => {
   ({ db } = createTestDatabase());
   ({ companyId } = createCompany(db, { legalName: 'Rules KB Ltd', seedYears: [2025] }));
 });
 
-describe('ingestFinanceAct2024', () => {
-  it('ingests all 118 sections and judges a majority relevant', () => {
-    const result = ingestFinanceAct2024(db, { companyId, markdown, ingestVersion: 'v1' });
+describe('ingestFinanceAct2024FromCatalogue', () => {
+  it('loads all 118 sections and judges a majority relevant', () => {
+    const result = ingestFinanceAct2024FromCatalogue(db, { companyId });
     expect(result.ingested).toBe(true);
     expect(result.provisionCount).toBe(118);
-    expect(result.relevantCount).toBeGreaterThan(0);
-    expect(result.relevantCount).toBeLessThan(result.provisionCount);
+    const rows = db.select().from(irishActProvisions).where(eq(irishActProvisions.sourceId, result.sourceId)).all();
+    const relevant = rows.filter((r) => r.relevant).length;
+    expect(relevant).toBeGreaterThan(0);
+    expect(relevant).toBeLessThan(rows.length);
+  });
+
+  it('is idempotent: loading the entry again is a no-op', () => {
+    const first = ingestFinanceAct2024FromCatalogue(db, { companyId });
+    const second = ingestFinanceAct2024FromCatalogue(db, { companyId });
+    expect(second.ingested).toBe(false);
+    expect(second.sourceId).toBe(first.sourceId);
+    expect(second.provisionCount).toBe(first.provisionCount);
+  });
+
+  it('dates the source from the Act, as legislation, and points at the entry', () => {
+    const { sourceId } = ingestFinanceAct2024FromCatalogue(db, { companyId });
+    const source = db.select().from(irishKnowledgeSources).where(eq(irishKnowledgeSources.id, sourceId)).get()!;
+    expect(source.citation).toBe(FINANCE_ACT_2024.citation);
+    expect(source.sourceType).toBe('legislation');
+    expect(source.publicationDate).toBe('2024-11-12');
+    expect(source.effectiveFrom).toBe('2024-11-12');
+    expect(source.localPath).toBe('catalogue/finance-act-2024/2024-act-43-enacted.json');
+  });
+});
+
+describe('ingestFinanceAct2024 (a Markdown copy, the CLI\'s --file)', () => {
+  it('ingests the sections it holds', () => {
+    const result = ingestFinanceAct2024(db, { companyId, markdown, ingestVersion: 'v1' });
+    expect(result.ingested).toBe(true);
+    expect(result.provisionCount).toBe(4);
   });
 
   it('is idempotent by content: re-ingesting identical bytes is a no-op', () => {
@@ -35,18 +64,11 @@ describe('ingestFinanceAct2024', () => {
     expect(second.sourceId).toBe(first.sourceId);
     expect(second.provisionCount).toBe(first.provisionCount);
   });
-
-  it('tags the source as legislation, never merged with a guidance source type', () => {
-    ingestFinanceAct2024(db, { companyId, markdown, ingestVersion: 'v1' });
-    // FINANCE_ACT_2024 constant carries the citation the ingest writes.
-    expect(FINANCE_ACT_2024.sourceType).toBe('legislation');
-    expect(FINANCE_ACT_2024.citation).toBe('2024 Act 43');
-  });
 });
 
 describe('deriveTaxRules', () => {
   beforeEach(() => {
-    ingestFinanceAct2024(db, { companyId, markdown, ingestVersion: 'v1' });
+    ingestFinanceAct2024FromCatalogue(db, { companyId });
   });
 
   it('creates one rule per curated, relevant section', () => {
@@ -116,7 +138,7 @@ describe('deriveTaxRules', () => {
 
 describe('lookupTaxRule / listTaxRulesByTopic / listTaxRulesByCategory', () => {
   beforeEach(() => {
-    ingestFinanceAct2024(db, { companyId, markdown, ingestVersion: 'v1' });
+    ingestFinanceAct2024FromCatalogue(db, { companyId });
     deriveTaxRules(db, { companyId });
   });
 
@@ -127,7 +149,7 @@ describe('lookupTaxRule / listTaxRulesByTopic / listTaxRulesByCategory', () => {
     expect(result!.citation).toBe('2024 Act 43');
     expect(result!.sectionNumber).toBe('2');
     expect(result!.provisionText).toContain('531AN');
-    expect(result!.sourceStart).toBeGreaterThanOrEqual(0);
+    expect(result!.sourceUrl).toBe(FINANCE_ACT_2024.sourceUrl);
   });
 
   it('returns null for a key with no rule, never a guessed answer', () => {

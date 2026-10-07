@@ -46,7 +46,7 @@ const tableRow = (provision: string, texts: string[]) =>
 const OCTOBERS = ['2024-10-01', '2025-10-01', '2026-10-01', '2027-10-01', '2028-10-01'];
 
 /** One rule version per column of a Table row, chained by date. */
-function scheduled(params: {
+export function scheduled(params: {
   ruleKey: string;
   provision: string;
   texts: string[];

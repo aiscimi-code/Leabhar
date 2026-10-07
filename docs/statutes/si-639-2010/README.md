@@ -2,7 +2,7 @@
 
 | File | Regulation | Note |
 |---|---|---|
-| `2010-si-639.md` | regs 20, 27 | Invoice contents, accounts |
+| `catalogue/si-639-2010/2010-si-639.json` | all 47 regs | The as-made text, verbatim, with the official page beside it — the knowledge base's source (#556) |
 | `reg-14.md` | reg 14 | Tax at importation / customs arrangements |
 | `reg-14A-si-734-2020.md` | reg 14A | Postponed accounting — inserted by S.I. 734/2020, not part of the original 2010 instrument |
 | `reg-19.md` | reg 19 | Registration |
@@ -14,7 +14,8 @@
 | `reg-25.md` | reg 25 | Moneys-received basis |
 | `reg-26.md` | reg 26 | VIES statements |
 
-Covered: regs 14, 14A, 19, 20, 21, 22, 23, 24, 25, 26, 27, 29. Regs 15-18
-and 28 are not confirmed present or absent — not claimed either way.
-Reference only — not wired into the deterministic KB (see
+The `reg-*.md` files are summaries, not verbatim text. They cover regs 14,
+14A, 19, 21, 22, 23, 24, 25, 26 and 29; regs 15-18 and 28 are not confirmed
+present or absent — not claimed either way. They are reference only — not
+wired into the deterministic KB, which reads the catalogue entry (see
 [`docs/statutes/README.md`](../README.md)).

@@ -26,13 +26,23 @@ import type { SlicedSource } from './slicedSourceIngestion';
 const NFG_11C = nfgCitation('part11c');
 export const TDM_11_00_01_CITATION = 'Revenue TDM Part 11-00-01';
 
+/** Why the manual's §6 is held. */
+export const CAR_EMISSIONS_RELEVANCE_REASON = 'Emissions-based limits on capital allowances for cars (TCA Part 11C; issue #466).';
+
+/** TDM 11-00-01's catalogue entry, the PDF beside it (#556). */
+export const TDM_11_00_01_CATALOGUE_ENTRY = 'tdm-11-00-01/11-00-01.json';
+
+/**
+ * The manual's §6 as the statute copy sliced it. The catalogue extraction
+ * slices the PDF's text with the same markers (`scripts/catalogue/extract.ts`);
+ * `path` is the copy a book loaded before the port.
+ */
 export const CAR_EMISSIONS_SOURCES: SlicedSource[] = [{
   path: 'docs/statutes/tdm-11-00-01/11-00-01.md',
   sourceType: 'revenue_guidance',
   effectiveFrom: '2008-07-01',
-  sourceNote: 'Revenue Tax and Duty Manual, last reviewed November 2019, as retrieved on 2026-09-27: the CO2 regime for '
-    + 'car expenditure from 1 July 2008 to 31 December 2020. Guidance, not law. Converted from the PDF whose SHA-256 is in '
-    + 'the front matter.',
+  sourceNote: 'Revenue Tax and Duty Manual, last reviewed November 2019: the CO2 regime for car expenditure from '
+    + '1 July 2008 to 31 December 2020. Guidance, not law.',
   provisions: [{
     sectionNumber: '6', heading: 'New CO2 emissions regime (post 1 July 2008)', category: 'capital_allowances',
     start: '6. New CO2 emissions regime (post 1 July 2008)\nThe new CO2', end: '8. Renewals/Replacement Allowance\nWhere',

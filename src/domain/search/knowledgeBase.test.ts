@@ -2,8 +2,8 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { createTestDatabase } from '@/db/testing';
 import { createCompany } from '../config/setup';
-import { ingestVatca2010, deriveVatcaRules, VATCA_2010_MD_PATH } from '../rules/vatcaIngestion';
-import { ingestVatcaSchedule, VATCA_SCHEDULE_2_MD_PATH } from '../rules/vatcaScheduleIngestion';
+import { ingestVatca2010FromCatalogue, deriveVatcaRules } from '../rules/vatcaIngestion';
+import { ingestVatcaScheduleFromCatalogue } from '../rules/vatcaScheduleIngestion';
 import {
   searchProvisions, searchStatutoryRules, searchKnowledgeSources,
   semanticSearchProvisions, statuteSourceIndex, sourceProvisions, stem, tokenize,
@@ -21,12 +21,9 @@ beforeEach(() => {
   ({ db } = createTestDatabase());
   ({ companyId } = createCompany(db, { legalName: 'KB Search Ltd', seedYears: [2025] }));
   ({ companyId: otherCompanyId } = createCompany(db, { legalName: 'Other Ltd', seedYears: [2025] }));
-  ingestVatca2010(db, { companyId, markdown: readFileSync(VATCA_2010_MD_PATH, 'utf8'), ingestVersion: 'v1' });
+  ingestVatca2010FromCatalogue(db, { companyId });
   deriveVatcaRules(db, { companyId });
-  ingestVatcaSchedule(db, {
-    companyId, scheduleNumber: '2',
-    markdown: readFileSync(VATCA_SCHEDULE_2_MD_PATH, 'utf8'), ingestVersion: 'v1',
-  });
+  ingestVatcaScheduleFromCatalogue(db, { companyId, scheduleNumber: '2' });
 });
 
 describe('tokenize/stem', () => {

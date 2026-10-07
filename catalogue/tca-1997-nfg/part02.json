@@ -1,0 +1,116 @@
+{
+  "format": 1,
+  "source": {
+    "citation": "Revenue NfG TCA 1997 (FA 2025 ed.) Part 2",
+    "title": "Notes for Guidance — Taxes Consolidation Act 1997 — Finance Act 2025 edition — part02",
+    "sourceType": "revenue_guidance",
+    "jurisdiction": "IE",
+    "sourceUrl": "https://www.revenue.ie/en/tax-professionals/documents/notes-for-guidance/tca/part02.pdf",
+    "sha256": "ce4dd2719237d2af1923e33d48788f09bb436bbfc7aa924ca1edc784b8ec89aa",
+    "conversion": "pdftotext-layout",
+    "retrievedOn": "2026-10-06",
+    "publicationDate": null,
+    "effectiveFrom": "2025-12-31",
+    "note": "Revenue guidance summarising the TCA 1997 as amended to Finance Act 2025. There is no LRC revised TCA; the Notes are the current consolidated statement of each section, but rank below the Act itself."
+  },
+  "provisions": [
+    {
+      "sectionNumber": "18",
+      "heading": "Schedule D",
+      "locator": "s.18",
+      "principalAct": "1997 Act 39",
+      "category": "corporation_tax",
+      "relevant": true,
+      "relevanceReason": "In scope for the corporation tax computation (issue #211); not yet curated.",
+      "excerpt": "  18 Schedule D\n\n  Summary\n  Income tax is charged under Schedule D in respect of a number of sources of income\n  which are classified into 5 separate Cases. A charge to tax under Schedule D or one of its\n  constituent Cases may also be imposed by a provision of the Income Tax Acts other than\n  this section.\n\n  Details\n  The Schedule D charge\n  Tax under Schedule D is charged on the annual profits/gains arising or accruing —             (1)1\n  •     to any person residing in the State from any kind of property whatever, whether the     (1)1(a)(i)\n        property is situated in the State or elsewhere;\n  •     to any person residing in the State from any trade, profession or employment,           (1)1(a)(ii)\n        whether carried on in the State or elsewhere;\n  •     to any non-resident person, whether a citizen of Ireland or not, from any property      (1)1(a)(iii)\n        whatever in the State or from any trade, profession or employment exercised in the\n        State; and\n  •     to any non-resident person, whether a citizen of Ireland or not, from the sale of any   (1)1(a)(iv)\n        goods, wares or merchandise manufactured or partly manufactured by such person\n        in the State.\n  Tax under Schedule D is also charged on all interest of money, annuities and other annual     (1)1(b)\n  profits/gains not charged under Schedule C or E and not specially exempt from tax.\n  The tax in each case is to be charged for every one euro of the annual amount of the (1)1\n  profits/gains.\n  Profits/gains arising from an office, employment or pension, however, are not to be (1)2\n  charged to tax under Schedule D unless they are chargeable to tax under Case III of that\n  Schedule.\n  The 5 Cases\n  The income sources chargeable to tax under Schedule D are classified into 5 cases.            (2)\n  Case I charges tax in respect of any trade and in respect of profits/gains arising out of\n  lands, etc used for quarrying, mining, waterworks, docks, fishing, tolls, ferries, fairs,\n  markets, etc.\n  Case II charges tax in respect of any profession not contained in any other Schedule.\n\n\n\n\n                                                                  6\n\fNotes for Guidance – Taxes Consolidation Act 1997 – Finance Act 2025 Edition - Part 2\n\n  Case III charges tax on —\n  •     interest, annuities and other annual payments, excluding any payment chargeable\n        under Case V (in effect the Case III charge only arises where the interest, annuity or\n        other annual payment is not liable to Irish tax at source);\n  •     profits from discount transactions (a discount arises on the purchase/sale of\n        Government stock, promissory notes, bills of exchange, and the Case III charge\n        arises on the difference between the cost of the instrument and the amount realised\n        on sale or maturity. Certain discounts are exempt from tax – see sections 45, 46 and\n        48. Discounts received or given in the ordinary course of trade are not included in\n        the Case III charge);\n  •     interest on Government stocks, excluding interest on such stocks charged under\n        Schedule C;\n  •     interest on any securities issued, or deemed within the meaning of section 36 to be\n        issued, under the authority of the Minister for Finance, in cases where such interest\n        is paid without deduction of tax (for example, Irish Government stocks issued under\n        the authority of the Minister for Finance and stocks of semi-State companies);\n  •     interest from foreign securities, excluding interest on such securities charged under\n        Schedule C; and\n  •     income from foreign possessions (for example, income from a foreign employment\n        and profits from businesses carried on wholly abroad. In the case of a foreign\n        employment, the Case III charge does not include earnings (including any amount\n        in the form of expenses payments received or benefits-in-kind derived) from the\n        employment to the extent that those earnings are attributable to the performance in\n        the State of the duties of the employment. Such earnings are, by virtue of paragraph\n        2 of Schedule D and paragraph 3 of Schedule E, chargeable to tax under Schedule\n        E.\n  The Case III charge on interest from foreign securities and income from foreign\n  possessions is modified in the case of non-domiciled persons and Irish citizens not\n  ordinarily resident in the State so that the charge is confined to the sums actually remitted\n  to the State (see section 71). It should also be noted that certain foreign pensions are\n  exempt from the Case III charge where the pension would have been exempt from tax in\n  the country of origin had the person receiving it continued to reside in that country (section\n  200). The Case III charge is extended by section 55 to gains on strips of securities where\n  a Case I charge does not arise and by section 57 to benefits in kind received in respect of\n  foreign employments\n  Case IV charges tax in respect of any annual profits or gains not within any other Case of\n  Schedule D and not charged by virtue of any other Schedule.\n  Income, etc within the Case IV charge may be divided into 2 categories, namely, the\n  miscellaneous income not within any other Case or Schedule and the income statutorily\n  directed to be charged under Case IV.\n  Income within the first category has been decided by case law. Examples include profits\n  of a casual nature, profits from hire of moveable assets (for example, farmer hiring\n  machinery for isolated jobs), letting of premises where landlord/tenant relationship does\n  not exist (for example, halls for dances, meetings, etc), shipping fees, green fees, casual\n  literary fees, certain copyright royalties.\n  Instances where a Case IV charge has been imposed by statute include profits from\n  unlawful activities (section 58), income from which tax is deducted at source (section 59),\n  post-cessation receipts of a trade/profession (section 91), mining rents and gains from\n  dealings in leases and conveyances (Chapter 8 of Part 4), DIRT interest (Chapter 3 of\n  Part 8), certain balancing charges (Part 9), refunds of pension contributions and excessive\n                                                                  7\n\fNotes for Guidance – Taxes Consolidation Act 1997 – Finance Act 2025 Edition - Part 2\n\n  commutation payments under pension schemes (Chapter 1 of Part 30), withdrawal of\n  various tax reliefs (for example, BES/film relief, etc), various anti-avoidance provisions\n  countering the transfer of assets abroad, conversion of income into capital and schemes\n  connected with the payment of interest on loans (Part 33), maintenance payments (section\n  1025).\n  Case V charges tax on rent in respect of land or premises in the State and on receipts for\n  easements (that is, any right, privilege or benefit in, over or derived from any land or\n  premises in the State such as the right to erect advertising boards).\n\n  Schedule D charge may also be imposed by other provisions\n  This section is without prejudice to any other provision of the Income Tax Acts directing (3)\n  tax to be charged under Schedule D or under one or other of the Cases mentioned in\n  subsection (2). This allows a Schedule D charge or a charge under one of its constituent\n  Cases to be imposed by way of a provision other than the actual Schedule or Case.\n  Examples of such charges are to be found in Chapter 1 of Part 4 (Schedule D –\n  supplementary charging provisions).\n\n"
+    },
+    {
+      "sectionNumber": "21",
+      "heading": "The charge to corporation tax and exclusion of income tax and capital gains tax",
+      "locator": "s.21",
+      "principalAct": "1997 Act 39",
+      "category": "corporation_tax",
+      "relevant": true,
+      "relevanceReason": "Curated: mapped to a rule in corporationTaxCuration.ts.",
+      "excerpt": "  21 The charge to corporation tax and exclusion of income tax and capital gains tax\n\n  Summary\n  Corporation tax is charged on the profits of companies for a financial year.\n  The standard rate of corporation tax is —\n  •     20 per cent for the financial year 2001,\n  •     16 per cent for the financial year 2002,\n  •     12½ per cent for the financial year 2003 onwards.\n\n                                                                  9\n\fNotes for Guidance – Taxes Consolidation Act 1997 – Finance Act 2025 Edition - Part 2\n\n  However, it is to be noted that section 21A provides that a 25 per cent rate of corporation\n  tax is charged for the financial year 2000 onwards on certain profits of companies. Under\n  Part 14, before 1 January 2011, certain income of companies consisting of income from\n  the sale of goods (manufacturing income) was charged at an effective rate of 10 per cent.\n  Also, section 644B provides for an effective 20 per cent rate of corporation tax on income\n  from dealing in residential development land.\n  In general, a company within the charge to corporation tax in respect of a given source of\n  income is not within the charge to income tax in respect of that same income. Also, where\n  a company is within the charge to corporation tax in respect of a gain on a disposal there\n  will not be a charge to capital gains tax in respect of that gain.\n\n  Details\n  Charge to corporation tax\n  Corporation tax is charged on the profits of companies for a financial year.                  (1)\n  The rate of tax is —\n  •     32 per cent for the financial year 1998,\n  •     28 per cent for the financial year 1999,\n  •     24 per cent for the financial year 2000,\n  •     20 per cent for the financial year 2001,\n  •     16 per cent for the financial year 2002, and\n  •     12½ per cent for the financial year 2003 and each subsequent year.\n  Shipping activities\n  Profits from qualifying shipping activities arising to a company carrying on a qualifying (1A)\n  shipping trade (see notes to section 407 for explanations of these terms) are taxable at the\n  rate of 12.5 per cent in the financial years 2001 and 2002. Likewise, tonnage tax profits\n  are taxable in 2002 at the rate of 12.5 per cent (see notes to Part 24A).\n  Exclusion of income tax\n  Income tax is not chargeable on the income of a company (apart from income arising to it (2)\n  in a fiduciary or representative capacity) if —\n  •      the company is resident in the State, or\n  •      the income is, where it arises to a non-resident company, chargeable to corporation\n         tax.\n  A company’s obligation under section 24 to deduct income tax from charges and to\n  account for that tax to the Revenue is not affected by this provision.\n  [In the case of a non-resident company, corporation tax is charged by virtue of section 25\n  on the income and chargeable gains of the company where the income or gains are\n  attributable to a branch or agency in the State. Any other income arising in the State and\n  any other chargeable gains accruing to a non-resident company are chargeable to income\n  tax or capital gains tax, as the case may be, instead of corporation tax.]\n  Exclusion of capital gains tax\n  A company is not chargeable to capital gains tax on any gains accruing to it but is instead (3)\n  chargeable to corporation tax in respect of such gains. However, by virtue of section 649,\n  development land gains accruing to a company are chargeable to capital gains tax and not\n  corporation tax.\n\n                                                                 10\n\fNotes for Guidance – Taxes Consolidation Act 1997 – Finance Act 2025 Edition - Part 2\n\n\n"
+    },
+    {
+      "sectionNumber": "21A",
+      "heading": "Higher rate of corporation tax",
+      "locator": "s.21A",
+      "principalAct": "1997 Act 39",
+      "category": "corporation_tax",
+      "relevant": true,
+      "relevanceReason": "Curated: mapped to a rule in corporationTaxCuration.ts.",
+      "excerpt": "  21A Higher rate of corporation tax\n\n  Summary\n  This section provides that a higher rate of corporation tax, namely, 25 per cent, is to be\n  charged for the financial year 2000 and subsequent financial years on certain profits of\n  companies. The profits in question are income chargeable under the following Cases of\n  Schedule D —\n  •     Case III (for example, interest not taxed at source, interest on Government securities,\n        foreign income),\n  •     Case IV (for example, royalties, miscellaneous income), and\n  •     Case V (that is, rental income from land and buildings in the State).\n  Also included are profits from working scheduled minerals, mineral compounds or\n  mineral substances, working minerals, petroleum activities, and dealing in or developing\n  land other than profits from construction operations (which is taxable at the standard\n  corporation tax rate) and the disposal of “residential development land” (which under\n  section 644B is taxable at an effective rate of 20 per cent). However, the higher rate of\n  corporation tax does not apply to any part of a company’s income which previously\n  qualified for “manufacturing relief” (that is, income qualifying for taxation at an effective\n  rate of 10 per cent).\n\n  Details\n  Definitions\n  “construction operations” are any of the operations referred to in the definition of that term (1)\n  in section 530(1) (which provides definitions for the scheme of tax deduction from\n  payments made to subcontractors in the construction, forestry and meat processing\n  industries), other than operations which are part of, or related to —\n  •     the drilling for or extraction of minerals, oil, natural gas, or\n  •     the exploration for, or exploitation of, natural resources.\n  “dealing in or developing land” is to be construed in accordance with Chapter 1 of Part\n  22 which contains special provisions relating to the taxation of profits and gains from\n  dealing in or developing land. In particular refer to the guidance notes on section 640 for\n  elaboration on the construction of this term.\n  “excepted operations” is as any one or more of the following activities, namely, dealing\n  in or developing land, excluding construction operations; working scheduled minerals,\n  mineral compounds or mineral substances; working minerals; and petroleum activities.\n  “excepted trade” is a trade which consists only of trading operations or activities which\n  are excepted operations. In the case of a trade consisting partly of excepted operations and\n  partly of other operations or activities, the part of the trade consisting of excepted\n  operations, which is treated as a separate trade under subsection (2), is also an excepted\n  trade.\n  “exempt development” is a development within Class 1 of Part 1 of the Second Schedule\n  to the Local Government Planning and Development Regulations, 1994 which complies\n  with the conditions and limitations related to that class and which are set out in the\n  Regulations. This consists of the extension of a dwelling house by the construction or\n  erection of an extension to the rear of the dwelling house or by the conversion for use as\n  part of the dwelling house of any garage, store, shed or other similar structure attached to\n\n                                                                 11\n\fNotes for Guidance – Taxes Consolidation Act 1997 – Finance Act 2025 Edition - Part 2\n\n  the rear or side of the dwelling house. The conditions are that the total floor area of any\n  such extension cannot exceed 23 square metres.\n  “land” includes the foreshore and land covered by water, while “dry land” is land not\n  permanently covered by water.\n  “minerals” is based on the definition of that term in section 3 of the Minerals Development\n  Act, 1940, while “petroleum” has the same meaning as in section 2(1) of the Petroleum\n  and Other Minerals Development Act, 1960.\n  “petroleum activities”, “petroleum exploration activities”, “petroleum extraction\n  activities” and “petroleum rights” are based on definitions of similar terms in section\n  684(1) which defines terms for the purposes of the special taxation regime for Irish oil and\n  gas exploration and production set out in Chapter 2 of Part 24.\n  “qualifying land” means land—\n  •     on which a building or structure has been constructed by or for the company, and\n  •     which has been fully developed by the company.\n  Land is regarded as fully developed by a company at the time of the disposal if, on the\n  basis of a snapshot of the position at that time, it is reasonable to expect that there will be\n  no further development of the land over the next 20 years except for any non-material\n  development which the purchaser of the building might carry out for that person’s use or\n  enjoyment of the building concerned.\n  Such a development would not be regarded as material if the development is—\n  •     exempt from the requirement to seek planning permission (see definition of “exempt\n        development”), or\n  •     a development which results in an increase in floor area of the building of no more\n        than 20 per cent.\n  “working”, in relation to minerals, is based on the definition of that term in section 2(1)\n  of the Minerals Development Act, 1979.\n  Deemed separate trades\n  If a trade consists partly of excepted operations and partly of other activities, each part is (2)\n  treated as a separate trade for the purposes of the section, and a just and reasonable\n  apportionment of receipts and expenses is to be made between the two parts.\n  Charge to the higher rate\n  Corporation tax is charged at the rate of 25 per cent for the financial year 2000 and (3)(a)\n  subsequent financial years on the profits of companies which consist of income chargeable\n  under Case III, IV or V of Schedule D or of income of an excepted trade.\n  However, the 25 per cent rate does not apply to foreign dividends chargeable under Case\n  III which by virtue of section 21B are chargeable to tax at the 12½ per cent rate.\n  As a general rule charges on income are not allowed in calculating income from a (3)(b)\n  particular source, but are deducted from the profits of a company. If this rule were to be\n  applied in the case of a company with an excepted trade, the amount charged to tax at the\n  higher rate would be excessive. Accordingly, the general rule is modified so that charges\n  on income paid wholly and exclusively for the purposes of an excepted trade which is\n  taxed at the higher rate are to be deducted in calculating the income from that trade.\n\n\n\n\n                                                                 12\n\fNotes for Guidance – Taxes Consolidation Act 1997 – Finance Act 2025 Edition - Part 2\n\n\n  Exclusion of income from “manufacturing activities” and certain “insurance\n  business” from higher rate charge\n  The 25 per cent rate does not apply to the profits of a company for any accounting period (4)\n  to the extent that those profits consist of income of trades of non-life insurance,\n  reinsurance and life business (in so far as it is attributable to shareholders of the company).\n  Exception for work carried out in financial year 2000\n  For the financial year 2000 construction operations do not include demolition, service (5)\n  installation and other preparatory work (other than laying foundations) to residential\n  development. The effect of this is that income from such activities does come within the\n  scope of the 25 per cent rate for the year 2000, but the tax concerned may then be reduced\n  to a 20 per cent effective rate.\n\n"
+    }
+  ],
+  "rules": [
+    {
+      "key": "ct.rate_higher_passive",
+      "sectionNumber": "21A",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2000-01-01",
+          "effectiveTo": null,
+          "quote": "Corporation tax is charged at the rate of 25 per cent for the financial year 2000 and",
+          "value": 2500,
+          "unit": "basis_points",
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    },
+    {
+      "key": "ct.rate_standard",
+      "sectionNumber": "21",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2003-01-01",
+          "effectiveTo": null,
+          "quote": "12½ per cent for the financial year 2003 and each subsequent year.",
+          "value": 1250,
+          "unit": "basis_points",
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    },
+    {
+      "key": "income_tax.schedule_d_trade",
+      "sectionNumber": "18",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "1997-04-06",
+          "effectiveTo": null,
+          "quote": "to any person residing in the State from any trade, profession or employment,",
+          "value": null,
+          "unit": null,
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    }
+  ]
+}

@@ -5,12 +5,14 @@
  * Finance Act 2003 s.23 (issue #132) is a different Act from TCA 1997
  * itself, so it can't use `ingestTca1997Section` as-is (that function
  * hardcodes the "1997 Act 39" citation and irishstatutebook.ie TCA-1997 URL
- * pattern) — but its source file has the exact same one-section-per-file,
+ * pattern) — but its page has the exact same one-section,
  * bare-`"N."`-opener shape `parseTca1997Section` already parses (verified
- * against s23.md directly), so the parser itself is reused; only the
+ * against the page directly), so the parser itself is reused; only the
  * knowledge-source metadata (citation, URL) is Finance-Act-2003-specific.
+ * Both load from the rules catalogue (`catalogue/tca-1997/s284.json`,
+ * `catalogue/finance-act-2003/s23.json`); the Markdown ingests read a copy
+ * given to the CLI with `--file`.
  */
-import { readFileSync } from 'node:fs';
 import { and, eq } from 'drizzle-orm';
 import type { AppDatabase } from '@/db';
 import { irishKnowledgeSources, irishActProvisions, irishTaxRules } from '@/db/schema';
@@ -20,49 +22,77 @@ import { sha256Hex } from '@/lib/hash';
 import { ingestTca1997Section, type Tca1997IngestResult } from './tca1997Ingestion';
 import { parseTca1997Section, provisionSlug } from './tca1997SectionParser';
 import { CAPITAL_ALLOWANCES_CURATED_RULES } from './capitalAllowancesCuration';
+import { ingestCatalogueFile, type CatalogueIngestResult } from './catalogue';
 import { upsertReviewItem } from '../extraction/service';
 import { crossReferencesFromProvision, sameCrossReferences } from './dependencies';
 import { taxHeadsFor } from './taxHeads';
+import { preferredSourceId } from './catalogueSupersession';
 
-export const TCA_1997_S284_MD_PATH = new URL(
-  '../../../docs/statutes/tca-1997/s284.md',
-  import.meta.url,
-).pathname;
-
-export const FINANCE_ACT_2003_S23_MD_PATH = new URL(
-  '../../../docs/statutes/finance-act-2003/s23.md',
-  import.meta.url,
-).pathname;
-
-const FINANCE_ACT_2003 = {
+export const FINANCE_ACT_2003 = {
+  title: 'Finance Act 2003 s.23',
   citation: '2003 Act 3 s.23',
   sourceUrl: 'https://www.irishstatutebook.ie/eli/2003/act/3/section/23/enacted/en/html',
   // s.23(2): "This section applies as on and from 4 December 2002."
   effectiveFrom: '2002-12-04',
+  note: 'As-enacted 2003 text — the amending Act that inserted TCA 1997 s.284(2)(ad), the current '
+    + '12.5% wear-and-tear rate, for capital expenditure incurred on or after 4 December 2002. Finance Act '
+    + '2001 s.53 inserted an earlier 20% rate from 1 January 2001, itself superseded by this section for '
+    + 'expenditure from 4 December 2002 onward; not independently ingested as no rule needs the superseded '
+    + 'figure (docs/statutes/finance-act-2001/s53.md exists verbatim on disk for the trail).',
+  /** The section it amends and the Act that holds it, as the knowledge base records them. */
+  amendsSection: '284',
+  principalAct: 'Taxes Consolidation Act 1997',
+  citedActs: ['Taxes Consolidation Act 1997'],
+  relevanceReason: 'Curated: mapped to income_tax.wear_and_tear_rate_current in capitalAllowancesCuration.ts.',
 };
 
-const CURATED_SECTION_NUMBERS = new Set(CAPITAL_ALLOWANCES_CURATED_RULES.map((r) => r.sectionNumber));
+/** The sections a capital-allowance rule cites; kept relevant whatever their category. */
+export const CAPITAL_ALLOWANCES_CURATED_SECTIONS = new Set(CAPITAL_ALLOWANCES_CURATED_RULES.map((r) => r.sectionNumber));
 
+/** Where s.284 and FA 2003 s.23 are in the rules catalogue. */
+export const TCA_1997_S284_CATALOGUE_ENTRY = 'tca-1997/s284.json';
+export const FINANCE_ACT_2003_S23_CATALOGUE_ENTRY = 'finance-act-2003/s23.json';
+
+/** Load TCA 1997 s.284 from its catalogue entry. */
+export function ingestTca1997S284FromCatalogue(
+  db: AppDatabase,
+  params: { companyId?: string | null; ingestVersion?: string; root?: string },
+): CatalogueIngestResult {
+  return ingestCatalogueFile(db, { ...params, entry: TCA_1997_S284_CATALOGUE_ENTRY });
+}
+
+/** Load Finance Act 2003 s.23 from its catalogue entry. */
+export function ingestFinanceAct2003S23FromCatalogue(
+  db: AppDatabase,
+  params: { companyId?: string | null; ingestVersion?: string; root?: string },
+): CatalogueIngestResult {
+  return ingestCatalogueFile(db, { ...params, entry: FINANCE_ACT_2003_S23_CATALOGUE_ENTRY });
+}
+
+/** Ingest a Markdown copy of s.284 (the CLI's `--file`); the knowledge base loads the catalogue entry. */
 export function ingestTca1997S284(
   db: AppDatabase,
-  params: { companyId?: string | null; markdown?: string; ingestVersion: string; localPath?: string },
+  params: { companyId?: string | null; markdown: string; ingestVersion: string; localPath?: string },
 ): Tca1997IngestResult {
-  const markdown = params.markdown ?? readFileSync(TCA_1997_S284_MD_PATH, 'utf8');
   return ingestTca1997Section(db, {
     companyId: params.companyId,
-    markdown,
+    markdown: params.markdown,
     ingestVersion: params.ingestVersion,
-    localPath: params.localPath ?? TCA_1997_S284_MD_PATH,
-    curatedSectionNumbers: CURATED_SECTION_NUMBERS,
+    localPath: params.localPath,
+    curatedSectionNumbers: CAPITAL_ALLOWANCES_CURATED_SECTIONS,
   });
 }
 
-/** Ingest Finance Act 2003 s.23 (issue #132: current 12.5% wear-and-tear rate). Idempotent by content. */
+/**
+ * Ingest a Markdown copy of Finance Act 2003 s.23 (issue #132: current 12.5%
+ * wear-and-tear rate; the CLI's `--file`). Idempotent by content. The
+ * knowledge base loads the catalogue entry.
+ */
 export function ingestFinanceAct2003S23(
   db: AppDatabase,
-  params: { companyId?: string | null; markdown?: string; ingestVersion: string; localPath?: string },
+  params: { companyId?: string | null; markdown: string; ingestVersion: string; localPath?: string },
 ): Tca1997IngestResult {
-  const markdown = params.markdown ?? readFileSync(FINANCE_ACT_2003_S23_MD_PATH, 'utf8');
+  const { markdown } = params;
   const digest = sha256Hex(markdown);
 
   const existing = db.select({ id: irishKnowledgeSources.id }).from(irishKnowledgeSources)
@@ -89,21 +119,17 @@ export function ingestFinanceAct2003S23(
       id: sourceId,
       companyId: params.companyId ?? null,
       sourceType: 'legislation',
-      title: `Finance Act 2003 s.${parsed.sectionNumber}`,
+      title: FINANCE_ACT_2003.title,
       citation: FINANCE_ACT_2003.citation,
       jurisdiction: 'IE',
       sourceUrl: FINANCE_ACT_2003.sourceUrl,
-      localPath: params.localPath ?? FINANCE_ACT_2003_S23_MD_PATH,
+      localPath: params.localPath ?? null,
       sha256: digest,
       ingestVersion: params.ingestVersion,
       publicationDate: null,
       retrievedAt: nowIso(),
       effectiveFrom: FINANCE_ACT_2003.effectiveFrom,
-      sourceNote: 'As-enacted 2003 text — the amending Act that inserted TCA 1997 s.284(2)(ad), the current '
-        + '12.5% wear-and-tear rate, for capital expenditure incurred on or after 4 December 2002. Finance Act '
-        + '2001 s.53 inserted an earlier 20% rate from 1 January 2001, itself superseded by this section for '
-        + 'expenditure from 4 December 2002 onward; not independently ingested as no rule needs the superseded '
-        + 'figure (docs/statutes/finance-act-2001/s53.md exists verbatim on disk for the trail).',
+      sourceNote: FINANCE_ACT_2003.note,
       sourceDate: nowIso(),
     }).run();
 
@@ -116,16 +142,16 @@ export function ingestFinanceAct2003S23(
       chapter: parsed.chapter,
       slug: provisionSlug(parsed.sectionNumber, parsed.heading),
       heading: parsed.heading,
-      principalAct: 'Taxes Consolidation Act 1997',
+      principalAct: FINANCE_ACT_2003.principalAct,
       provisionText: parsed.provisionText,
       sourceStart: parsed.sourceStart,
       sourceEnd: parsed.sourceEnd,
       category: parsed.category,
-      amendsSection: '284',
+      amendsSection: FINANCE_ACT_2003.amendsSection,
       effectiveClue: null,
-      citedActs: ['Taxes Consolidation Act 1997'],
+      citedActs: FINANCE_ACT_2003.citedActs,
       relevant,
-      relevanceReason: 'Curated: mapped to income_tax.wear_and_tear_rate_current in capitalAllowancesCuration.ts.',
+      relevanceReason: FINANCE_ACT_2003.relevanceReason,
       source: 'import',
       provenanceStatus: 'imported',
     }).run();
@@ -151,8 +177,7 @@ export function deriveCapitalAllowancesRules(
   const skippedNoProvision: string[] = [];
 
   for (const rule of CAPITAL_ALLOWANCES_CURATED_RULES) {
-    const sourceId = db.select({ id: irishKnowledgeSources.id }).from(irishKnowledgeSources)
-      .where(eq(irishKnowledgeSources.citation, rule.citation)).get()?.id;
+    const sourceId = preferredSourceId(db, rule.citation);
     const prov = sourceId
       ? db.select().from(irishActProvisions)
         .where(and(eq(irishActProvisions.sourceId, sourceId), eq(irishActProvisions.sectionNumber, rule.sectionNumber)))

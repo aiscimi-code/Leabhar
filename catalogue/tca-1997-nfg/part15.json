@@ -1,0 +1,52 @@
+{
+  "format": 1,
+  "source": {
+    "citation": "Revenue NfG TCA 1997 (FA 2025 ed.) Part 15",
+    "title": "Notes for Guidance — Taxes Consolidation Act 1997 — Finance Act 2025 edition — part15",
+    "sourceType": "revenue_guidance",
+    "jurisdiction": "IE",
+    "sourceUrl": "https://www.revenue.ie/en/tax-professionals/documents/notes-for-guidance/tca/part15.pdf",
+    "sha256": "d72de50beaa99dc58664ecaacb010ab3fd5f8c58238abdb7842b74894cc2b45f",
+    "conversion": "pdftotext-layout",
+    "retrievedOn": "2026-10-06",
+    "publicationDate": null,
+    "effectiveFrom": "2025-12-31",
+    "note": "Revenue guidance summarising the TCA 1997 as amended to Finance Act 2025. There is no LRC revised TCA; the Notes are the current consolidated statement of each section, but rank below the Act itself."
+  },
+  "provisions": [
+    {
+      "sectionNumber": "472AB",
+      "heading": "Earned Income Tax Credit",
+      "locator": "s.472AB",
+      "principalAct": "1997 Act 39",
+      "category": "corporation_tax",
+      "relevant": true,
+      "relevanceReason": "In scope for the corporation tax computation (issue #211); not yet curated.",
+      "excerpt": "472AB Earned Income Tax Credit\nSummary\nAn Earned Income tax credit is available to individuals in receipt of earned income (other than income\nthat qualifies for the Employee (PAYE) tax credit). The amount of the tax credit is €2,000 or 20 per cent\nof the qualifying earned income, whichever is the lesser. However, the combined Earned Income tax\ncredit and Employee (PAYE) tax credit (s.472), in relation to an individual, cannot exceed €2,000.\nIn the case of a married couple or civil partners, both of whom have income, each spouse or civil partner\nis entitled to a separate tax credit.\nDetails\nDefinitions\n“appropriate percentage” is a percentage equal to the standard rate of income tax for a year (1)\nof assessment.\n“qualifying earned income” means earned income (as defined in s3) but does not include\nincome that is used in determining the Employee (PAYE) tax credit (s472).\nRelief                                                                                          (2)\nThis subsection deals with the determination of the tax credit due.\nParagraph (a) provides that the credit due to an individual in respect of his or her own\nincome is the lower of €2,000 and the appropriate percentage (currently 20%) of the\nqualifying earned income, and\nParagraph (b) provides that, where the individual is assessed under joint assessment in\nrespect of his or her spouse’s or civil partners income, the credit due to the assessable\nspouse is computed on the income of his or her spouse or civil partner and is the lower of\n€2,000 and the appropriate percentage (currently 20%) of the qualifying earned income of\nhis or her spouse or civil partner.\nInteraction with Employee (PAYE)Tax Credit                                                      (3)\nParagraph (a) provides, in relation to an individual’s own income, that the aggregate of the\ntax credit under this section and any Employee (PAYE) tax credit is not to exceed €2,000,\nand\nParagraph (b) provides, in relation to the income of the individual’s spouse or civil partner\non which the individual is assessable under joint assessment, that the aggregate of the tax\ncredit under this section and any Employee (PAYE) tax credit due in respect of the income\nof the individual’s spouse or civil partner is not to exceed €2,000.\n"
+    }
+  ],
+  "rules": [
+    {
+      "key": "income_tax.earned_income_credit_percentage",
+      "sectionNumber": "472AB",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2025-01-01",
+          "effectiveTo": null,
+          "quote": "The amount of the tax credit is €2,000 or 20 per cent",
+          "value": 2000,
+          "unit": "basis_points",
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    }
+  ]
+}

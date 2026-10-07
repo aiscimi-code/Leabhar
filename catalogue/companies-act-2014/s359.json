@@ -1,0 +1,49 @@
+{
+  "format": 1,
+  "source": {
+    "citation": "2014 Act 38 s.359",
+    "title": "Companies Act 2014 s.359 (revised)",
+    "sourceType": "legislation",
+    "jurisdiction": "IE",
+    "sourceUrl": "https://revisedacts.lawreform.ie/eli/2014/act/38/section/359/revised/en/html",
+    "sha256": "201848b95319269e14e434ab6c160bcbac6eed6e69dd3cabbb45fe34ae8e9ec9",
+    "conversion": "lrc-html-plaintext",
+    "retrievedOn": "2026-10-06",
+    "note": "LRC-revised text as retrieved — a live, continuously-updated page, not a dated historical snapshot. Distinct source row per section, never merged with any other Companies Act 2014 section."
+  },
+  "provisions": [
+    {
+      "sectionNumber": "359",
+      "heading": "Main conditions for audit exemption — group situation",
+      "locator": "s.359",
+      "category": "exemption",
+      "relevant": true,
+      "relevanceReason": "Substantive exemption provision; potentially bears on transaction treatment.",
+      "excerpt": "359.\n(1) In this section—\n\n(a) “group company” means a company that is a holding company or a subsidiary undertaking; and\n\n(b) references to the group, in relation to a group company, are references to that\ncompany, together with all its associated undertakings, and for the purposes of this\nparagraph undertakings are associated if one is the subsidiary undertaking of the\nother or both are subsidiary undertakings of a third undertaking.\n\n(2) Subject to this Chapter,\nsection 360\n(audit exemption) applies to any group company in respect of its statutory financial\nstatements for a particular financial year if the\ngroup, would qualify under\nsection 280B\nas a small group\nin relation to that financial year.\n\n(3)\n…\n\n(4)\n…\n\n(5)\n…\n\n(6)\n…\n\n(7)\n…\n\n(8)\n…\n\n(9)\n…\n\n(10)\n…\n\n(11)\n…\n\n(12)\n…\n\n(13) Nothing in this section nor in any subsequent provision of this Chapter prejudices\nthe operation of\nChapter 16\n(special audit exemption for dormant companies)."
+    }
+  ],
+  "rules": [
+    {
+      "key": "company.audit_exemption_group_gate",
+      "sectionNumber": "359",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2026-09-20",
+          "effectiveTo": null,
+          "quote": "section 360\n(audit exemption) applies to any group company in respect of its statutory financial\nstatements for a particular financial year if the\ngroup, would qualify under\nsection 280B\nas a small group\nin relation to that financial year",
+          "value": null,
+          "unit": null,
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    }
+  ]
+}

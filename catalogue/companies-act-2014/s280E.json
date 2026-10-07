@@ -1,0 +1,26 @@
+{
+  "format": 1,
+  "source": {
+    "citation": "2014 Act 38 s.280E",
+    "title": "Companies Act 2014 s.280E (revised)",
+    "sourceType": "legislation",
+    "jurisdiction": "IE",
+    "sourceUrl": "https://revisedacts.lawreform.ie/eli/2014/act/38/section/280E/revised/en/html",
+    "sha256": "d25412f2772d4b760eaf3328493667d223e18cc8c345fc9469b747d760460b69",
+    "conversion": "lrc-html-plaintext",
+    "retrievedOn": "2026-10-06",
+    "note": "LRC-revised text as retrieved — a live, continuously-updated page, not a dated historical snapshot. Distinct source row per section, never merged with any other Companies Act 2014 section."
+  },
+  "provisions": [
+    {
+      "sectionNumber": "280E",
+      "heading": "Micro companies regime",
+      "locator": "s.280E",
+      "category": "other",
+      "relevant": false,
+      "relevanceReason": "Uncategorised by heading/body keyword match; needs human review to determine relevance.",
+      "excerpt": "280E.\nWhere a company qualifies as a micro company in accordance with\nsection 280D\n, then, as provided in this Part, different rules may be applied (in this Act referred\nto as the \"micro companies regime\") to the company in respect of financial statements\nand reports for a financial year in relation to which that company so qualifies as\na micro company."
+    }
+  ],
+  "rules": []
+}

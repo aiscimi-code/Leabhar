@@ -1,0 +1,106 @@
+{
+  "format": 1,
+  "source": {
+    "citation": "Revenue NfG TCA 1997 (FA 2025 ed.) Part 43",
+    "title": "Notes for Guidance — Taxes Consolidation Act 1997 — Finance Act 2025 edition — part43",
+    "sourceType": "revenue_guidance",
+    "jurisdiction": "IE",
+    "sourceUrl": "https://www.revenue.ie/en/tax-professionals/documents/notes-for-guidance/tca/part43.pdf",
+    "sha256": "e0892c368f34ac259b80fc3b28c15b4bee6ac35988742f56487f104e1583c367",
+    "conversion": "pdftotext-layout",
+    "retrievedOn": "2026-10-06",
+    "publicationDate": null,
+    "effectiveFrom": "2025-12-31",
+    "note": "Revenue guidance summarising the TCA 1997 as amended to Finance Act 2025. There is no LRC revised TCA; the Notes are the current consolidated statement of each section, but rank below the Act itself."
+  },
+  "provisions": [
+    {
+      "sectionNumber": "1007",
+      "heading": "Interpretation (Part 43)",
+      "locator": "s.1007",
+      "principalAct": "1997 Act 39",
+      "category": "corporation_tax",
+      "relevant": true,
+      "relevanceReason": "In scope for the corporation tax computation (issue #211); not yet curated.",
+      "excerpt": "1007 Interpretation (Part 43)\nDefinitions\nThe definitions of “annual payment”, “balancing charge”, “basis period”, and (1)\n“partnership trade” are self-explanatory.\nThe definition of “precedent partner” is framed to secure that, in relation to a case in\nwhich all the partners are non-resident, any reference to the precedent partner is to be\nconstrued as a reference to the resident agent, manager or factor of the firm.\nThe definition of “relevant period” is of fundamental importance and broadly means a\ncontinuous period, the whole or a part of which is subsequent to 5 April 1965, during\nwhich a trade is carried on by two or more persons in partnership and during which a\ncomplete change of proprietorship did not occur at any one time.\nA relevant period in relation to a given partnership trade begins —\n•      where the trade is in fact set up or commenced by two or more persons in\n       partnership, at the time when the trade is commenced;\n•      where the trade having previously been carried on by a sole trader becomes carried\n       on by a partnership (including a partnership of which the former sole trader is a\n       member), at the time of the succession;\n•      where the trade having previously been carried on by a partnership becomes\n       carried on by another partnership none of whose members was a member of the\n       previous partnership, at the time of the succession.\nA relevant period in relation to a partnership trade ends on the happening of whichever\nof the following events first occurs —\n•      the trade is in fact discontinued;\n•      the partnership is succeeded by a sole trader (including a sole trader who had been\n       a member of the partnership);\n•      the partnership is succeeded by another partnership and no member of the old\n       partnership becomes a member of the new one.\nIf, before 6 April 1965 (but within the relevant period), a partial change of proprietorship\noccurred in consequence of which the trade was treated as having been set up or\ncommenced at the time of the change under the rules then in force (that is, Rule 11(2) of\nthe Rules applicable to Cases I and II of Schedule D, Income Tax Act, 1918), the relevant\nperiod is to be taken as having begun at the time of the change or at the time of the last\nsuch change, where there was more than one change.\n\n\n                                                                  2\n\fNotes for Guidance – Taxes Consolidation Act 1997 – Finance Act 2025 Edition - Part 43\n\n\nConstruction\nReferences in the Part to a given partnership are to include, where appropriate, references (2)\nto any partnership by which the trade concerned is carried on during a relevant period\nand “partner” is to be construed correspondingly. For any relevant period “the\npartnership” is, in effect, regarded as an entity having a continuing existence despite any\nchanges in its constitution.\nThe provisions of the Part are to apply to professions as they apply to trades.               (3)\n\n"
+    },
+    {
+      "sectionNumber": "1008",
+      "heading": "Separate assessment of partners",
+      "locator": "s.1008",
+      "principalAct": "1997 Act 39",
+      "category": "corporation_tax",
+      "relevant": true,
+      "relevanceReason": "In scope for the corporation tax computation (issue #211); not yet curated.",
+      "excerpt": "1008 Separate assessment of partners\nSummary\nThis section provides that, in the case of a trade (or profession) carried on by a partnership, profits arising\nto a partner are charged, and losses sustained by a partner in the trade are relieved, as if they were,\nrespectively, profits and losses of a separate trade carried on by him/her on his/her own account.\nThe amount of any profits or losses arising to a partner is determined by apportioning, in full, the tax-\nadjusted profits or losses of the partnership trade in accordance with the apportionment rules in the section.\nCharges arising in an accounting period are apportioned to each partner by reference to the amount the\npartner was liable to bear.\nDetails\nSeveral trade of partners\nThe profits arising to any partner in a relevant period from a partnership trade are to be (1)\ncharged, and losses sustained by the partner in the trade are to be relieved, as if they were\nrespectively profits and losses of a separate trade carried on by him/her on his/her own\naccount. The notional separate trade of any partner (referred to as “a several trade”) is to\nbe regarded as having been commenced at the beginning of the relevant period or at such\nlater time as the partner became engaged in carrying on the partnership trade. The\ncommencement provisions apply accordingly. The cessation provisions are to operate,\nin relation to the several trade of a partner, on the footing that the ending of the relevant\nperiod, or the partner’s ceasing to be engaged in carrying on the partnership trade\n(whichever occurs first), constitutes permanent discontinuance. Annual payments made\nby the partnership are apportioned as appropriate among the partners.\nApportionment of tax-adjusted profits and losses\nThe amount of the profits (or loss) which is to be taken as arising to (or suffered by) each (2)(a)(i)\npartner in a year or period is the part of the full tax-adjusted profits (or loss) of the\npartnership for that year or period which would arise if those profits (or that loss) were\napportioned in accordance with the terms of the partnership agreement relating to the\nsharing of profits and losses.\nWhere the aggregate of the amounts of the profits taken as arising to each partner in a (2)(a)(ii)\nyear or period is less than the full tax-adjusted profits or gains of the partnership for that\nyear or period, then the balance is to be apportioned between the partners for tax purposes\neither:\n•     in the ratio which is expressed between the partners in relation to the\n      apportionment of that amount, or\n•     where no such ratio is expressed, in the same ratio as the ratio which applies\n      between the amounts of profits or gains already apportioned between the partners.\n      In circumstances where no partner had profits or gains taken as arising to him/her,\n      then the apportionment of any tax-adjusted profits or gains that were not\n      apportioned are to be made in equal shares.\n                                                                  3\n\fNotes for Guidance – Taxes Consolidation Act 1997 – Finance Act 2025 Edition - Part 43\n\nSections 65 and 107 are to apply as if a partner’s share of profits or losses brought out (2)(b)\nby any accounts made up for the partnership trade were profits or losses brought out by\naccounts made up for his/her several trade.\nThe inspector is to determine the amount of the partnership profits for any period and (3)\nhe/she is to do so as if the partnership trade had been set up at the beginning, and\npermanently discontinued at the end, of the relevant period and had at all times during\nthat period been carried on by one and the same person. Where a relevant period began\nbefore 6 April 1965 and the trade was not treated, for tax purposes, as having been set\nup or commenced at that time, the latest date before 6 April 1965 on which the trade was\ntreated as having been commenced is, for the purposes only of computing partnership\nprofits, to be taken as the beginning of the relevant period. In such a case, where a person\ncarried on the trade on his/her own account at some stage during the extended relevant\nperiod, his/her profits as a sole trader are treated as being the profits of a partnership\ntrade of which he/she was entitled to the full profits.\nThe section is not to cause income which, apart from the section, is not earned income (5)\nto become earned income (for example, the income of a sleeping partner which by virtue\nof section 3(2)(a)(iii) is not earned income but is deemed by the section to be income\nfrom a trade carried on solely by him/her).\n\n"
+    }
+  ],
+  "rules": [
+    {
+      "key": "income_tax.partner_several_trade",
+      "sectionNumber": "1008",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "1997-04-06",
+          "effectiveTo": null,
+          "quote": "charged, and losses sustained by the partner in the trade are to be relieved, as if they were",
+          "value": null,
+          "unit": null,
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    },
+    {
+      "key": "income_tax.partnership_profit_apportioned",
+      "sectionNumber": "1008",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "1997-04-06",
+          "effectiveTo": null,
+          "quote": "apportioned in accordance with the terms of the partnership agreement relating to the",
+          "value": null,
+          "unit": null,
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    },
+    {
+      "key": "income_tax.precedent_partner",
+      "sectionNumber": "1007",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "1997-04-06",
+          "effectiveTo": null,
+          "quote": "The definition of “precedent partner” is framed to secure that, in relation to a case in",
+          "value": null,
+          "unit": null,
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    }
+  ]
+}

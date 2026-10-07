@@ -20,14 +20,15 @@ import { nowIso, today, isIsoDate } from '../dates';
 import { sha256Hex } from '@/lib/hash';
 import {
   parseFinanceAct2024, provisionSlug, categoriseProvision, assessRelevance,
-  FINANCE_ACT_2024_MD_PATH,
 } from './statuteParser';
+import { ingestCatalogueFile, type CatalogueIngestResult } from './catalogue';
 import { extractFactsFromProvision, SECTION_RULE_KEYS } from './factExtractor';
 import { resolveEffectiveDate } from './effectiveClue';
 import { upsertReviewItem } from '../extraction/service';
 import type { ParsedProvision } from './statuteParser';
 import { retiredBy } from './supersessions';
 import { taxHeadsFor } from './taxHeads';
+import { preferredSourceId } from './catalogueSupersession';
 
 export interface KnowledgeSourceRef {
   title: string;
@@ -41,19 +42,16 @@ export interface KnowledgeSourceRef {
 
 /**
  * The Finance Act 2024 (2024 Act 43) metadata. `enactedDate` is taken from the
- * Act's own long title ("... [12th November, 2024]" in
- * docs/statutes/finance-act-2024/2024-act-43-enacted.md), not inferred.
+ * Act's own long title ("... [12th November, 2024]" in the official PDF,
+ * catalogue/finance-act-2024/2024-act-43-enacted.pdf), not inferred.
  */
 export const FINANCE_ACT_2024: KnowledgeSourceRef = {
   title: 'Finance Act 2024',
   citation: '2024 Act 43',
   sourceType: 'legislation',
   sourceUrl: 'https://www.irishstatutebook.ie/eli/2024/act/43/enacted/en/pdf',
-  localPath: 'docs/statutes/finance-act-2024/2024-act-43-enacted.md',
   enactedDate: '2024-11-12',
 };
-
-export { FINANCE_ACT_2024_MD_PATH };
 
 export interface IngestResult {
   sourceId: string;
@@ -135,17 +133,7 @@ export function ingestEnactedAct(
     const parsed = parseFinanceAct2024(params.markdown);
     let relevantCount = 0;
     for (const p of parsed) {
-      const category = categoriseProvision(p.heading, p.provisionText);
-      let { relevant, reason } = assessRelevance(category);
-      // A curated rule key (factExtractor.ts) is itself an explicit human
-      // editorial judgement that the section is relevant, made when the key
-      // was added — it overrides the mechanical keyword fallback rather than
-      // letting an imperfect category guess silently drop a curated rule.
-      const curated = curatedReason(p.sectionNumber);
-      if (!relevant && curated) {
-        relevant = true;
-        reason = `${curated}, overriding the ${category} category default.`;
-      }
+      const { category, relevant, reason } = enactedActRelevance(p, curatedReason);
       if (relevant) relevantCount++;
 
       tx.insert(irishActProvisions).values({
@@ -174,18 +162,59 @@ export function ingestEnactedAct(
   });
 }
 
+/**
+ * A section's category and whether it bears on the rules: the category
+ * default, unless a curated rule cites it. Shared by the Markdown ingest and
+ * the catalogue extraction, so both judge a section the same way.
+ */
+export function enactedActRelevance(
+  p: Pick<ParsedProvision, 'sectionNumber' | 'heading' | 'provisionText'>,
+  curatedReason: (sectionNumber: string) => string | undefined,
+): { category: IrishProvisionCategory; relevant: boolean; reason: string } {
+  const category = categoriseProvision(p.heading, p.provisionText);
+  let { relevant, reason } = assessRelevance(category);
+  // A curated rule key (factExtractor.ts) is itself an explicit human
+  // editorial judgement that the section is relevant, made when the key
+  // was added — it overrides the mechanical keyword fallback rather than
+  // letting an imperfect category guess silently drop a curated rule.
+  const curated = curatedReason(p.sectionNumber);
+  if (!relevant && curated) {
+    relevant = true;
+    reason = `${curated}, overriding the ${category} category default.`;
+  }
+  return { category, relevant, reason };
+}
+
+/** Why a Finance Act 2024 section is relevant despite its category: a curated rule key cites it. */
+export const financeAct2024CuratedReason = (n: string): string | undefined => (SECTION_RULE_KEYS[n]
+  ? `Curated: mapped to rule key "${SECTION_RULE_KEYS[n]!.key}" by human editorial judgement`
+  : undefined);
+
+/** The Act's catalogue entry (`catalogue/`), which the knowledge base loads. */
+export const FINANCE_ACT_2024_CATALOGUE_ENTRY = 'finance-act-2024/2024-act-43-enacted.json';
+
+/** Load Finance Act 2024 from its catalogue entry. */
+export function ingestFinanceAct2024FromCatalogue(
+  db: AppDatabase,
+  params: { companyId?: string | null; ingestVersion?: string; root?: string },
+): CatalogueIngestResult {
+  return ingestCatalogueFile(db, { ...params, entry: FINANCE_ACT_2024_CATALOGUE_ENTRY });
+}
+
+/**
+ * Ingest a converted Markdown copy of the Act (given to the CLI with
+ * `--file`). The knowledge base loads the catalogue entry instead.
+ */
 export function ingestFinanceAct2024(
   db: AppDatabase,
   params: { companyId?: string | null; markdown: string; ingestVersion: string; localPath?: string },
 ): IngestResult {
-  return ingestEnactedAct(db, FINANCE_ACT_2024, (n) => (SECTION_RULE_KEYS[n]
-    ? `Curated: mapped to rule key "${SECTION_RULE_KEYS[n]!.key}" by human editorial judgement`
-    : undefined), params);
+  return ingestEnactedAct(db, FINANCE_ACT_2024, financeAct2024CuratedReason, params);
 }
 
 /**
  * Finance Act 2025 (2025 Act 18). `enactedDate` is the Act's own long title
- * ("[23rd December, 2025]" in docs/statutes/finance-act-2025/2025-act-18-enacted.md).
+ * ("[23rd December, 2025]" in catalogue/finance-act-2025/2025-act-18-enacted.pdf).
  * Its VAT rate sections (69-71) are cited by the s.46 rate rules (issue #205).
  */
 export const FINANCE_ACT_2025: KnowledgeSourceRef = {
@@ -193,20 +222,33 @@ export const FINANCE_ACT_2025: KnowledgeSourceRef = {
   citation: '2025 Act 18',
   sourceType: 'legislation',
   sourceUrl: 'https://www.irishstatutebook.ie/eli/2025/act/18/enacted/en/pdf',
-  localPath: 'docs/statutes/finance-act-2025/2025-act-18-enacted.md',
   enactedDate: '2025-12-23',
 };
 
 /** Sections of Finance Act 2025 a curated rule cites; kept relevant whatever their category. */
 export const FINANCE_ACT_2025_CURATED_SECTIONS = new Set(['69', '70', '71']);
 
+/** Why a Finance Act 2025 section is relevant despite its category: an s.46 rate rule cites it. */
+export const financeAct2025CuratedReason = (n: string): string | undefined => (FINANCE_ACT_2025_CURATED_SECTIONS.has(n)
+  ? 'Curated: an s.46 rate rule cites this section (issue #205)'
+  : undefined);
+
+export const FINANCE_ACT_2025_CATALOGUE_ENTRY = 'finance-act-2025/2025-act-18-enacted.json';
+
+/** Load Finance Act 2025 from its catalogue entry. */
+export function ingestFinanceAct2025FromCatalogue(
+  db: AppDatabase,
+  params: { companyId?: string | null; ingestVersion?: string; root?: string },
+): CatalogueIngestResult {
+  return ingestCatalogueFile(db, { ...params, entry: FINANCE_ACT_2025_CATALOGUE_ENTRY });
+}
+
+/** Ingest a converted Markdown copy of the Act (the CLI's `--file`); the knowledge base loads the catalogue entry. */
 export function ingestFinanceAct2025(
   db: AppDatabase,
   params: { companyId?: string | null; markdown: string; ingestVersion: string; localPath?: string },
 ): IngestResult {
-  return ingestEnactedAct(db, FINANCE_ACT_2025, (n) => (FINANCE_ACT_2025_CURATED_SECTIONS.has(n)
-    ? 'Curated: an s.46 rate rule cites this section (issue #205)'
-    : undefined), params);
+  return ingestEnactedAct(db, FINANCE_ACT_2025, financeAct2025CuratedReason, params);
 }
 
 export interface DeriveResult {
@@ -244,11 +286,7 @@ export function deriveTaxRules(
   // whichever source's row happens to come first — silently deriving a rule
   // from the wrong Act's text. A caller may still pass a specific
   // `sourceId` (e.g. to re-derive against one re-ingested version).
-  const sourceId = params.sourceId ?? db
-    .select({ id: irishKnowledgeSources.id })
-    .from(irishKnowledgeSources)
-    .where(eq(irishKnowledgeSources.citation, FINANCE_ACT_2024.citation))
-    .get()?.id;
+  const sourceId = params.sourceId ?? preferredSourceId(db, FINANCE_ACT_2024.citation);
 
   const provisionsQuery = db
     .select({

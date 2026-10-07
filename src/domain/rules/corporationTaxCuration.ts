@@ -1,7 +1,7 @@
 /**
  * Corporation tax rules (issue #211), curated from Revenue's Notes for
  * Guidance on the TCA 1997, Finance Act 2025 edition
- * (docs/statutes/tca-1997-nfg/). There is no LRC revised TCA, so the Notes
+ * (catalogue/tca-1997-nfg/). There is no LRC revised TCA, so the Notes
  * are the current consolidated statement of each section; they are Revenue
  * guidance, ranked below the Act, and every rule here says so.
  *

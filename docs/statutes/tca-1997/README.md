@@ -29,11 +29,12 @@ which supply the corporation tax and income tax rules.
 | `s52.md` | Part 4 interpretation (trades) | Present |
 | `s81.md` | General rule as to deductions (wholly and exclusively) | Present |
 | `s235.md` | Athletic/amateur sports bodies exemption | Present |
-| `s284.md` | Wear and tear allowances (rates superseded — see file's own warning) | Present |
+| s.284 | Wear and tear allowances (rates superseded — see the source note) | In the rules catalogue: `catalogue/tca-1997/s284.json` (#556) |
 | `s288.md` | Balancing allowances and charges | Present |
 | `s299.md` | Allowances to lessees | Present |
 | `s496.md` | Heavily amended since enactment — see file's own warning | Present |
-| `s530.md` | RCT — relevant contract / relevant operations / construction operations | Present |
+| s.530 | RCT — relevant contract / relevant operations / construction operations | In the rules catalogue: `catalogue/tca-1997/s530.json` (#556) |
+| `s530B.md`–`s530V.md` | RCT sections as inserted by Finance Act 2011 s.20, not yet loaded (ss.530A, E, G, H and I are in the rules catalogue, `catalogue/tca-1997/s530A.json` ..., each with FA 2011 s.20's page beside it) | Present |
 | `s613.md` | Miscellaneous CGT exemptions | Present |
 
 ## Priority sections not yet added (transaction classification)
@@ -45,9 +46,10 @@ Inserted later — fetch from the inserting Act, not TCA 1997 (see the
 "no LRC revised Act" warning above; also true of s.530A below, not just
 the CGT/transfer-pricing sections):
 
-- **s.530A** (who must operate RCT — read with `s530.md` above) — Finance
+- **s.530A** (who must operate RCT — read with s.530 above) — Finance
   Act 2011 s.20, amended by Finance Act 2025 s.21. No 1997 enacted page
-  exists for it.
+  exists for it; the knowledge base reads it from FA 2011 s.20's page
+  (`catalogue/tca-1997/s530A.json`).
 - s.600F / 600J / 600M / 600P — CGT reliefs (search later Finance Acts)
 - s.835D — FA 2019 transfer-pricing guidelines
 - s.835DA — FA 2024 s.45 (OECD Amount B)

@@ -1,12 +1,20 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
-import {
-  parseCompaniesAct2014Section, parseCompaniesAct2014SectionFile, companiesAct2014SectionPath,
-} from './companiesAct2014SectionParser';
+import { parseCompaniesAct2014Section } from './companiesAct2014SectionParser';
+import { readCatalogueEntry } from './catalogue';
+import { companiesAct2014CatalogueEntry, type CompaniesAct2014SectionNumber } from './companiesAct2014Ingestion';
+
+/** s.285 as converted from its LRC page, a whole section: the parser's mechanics. */
+const S285 = readFileSync(new URL('./__fixtures__/companies-act-2014-s285.md', import.meta.url), 'utf8');
+/** A section as the catalogue extraction parsed it from its page. */
+const section = (n: CompaniesAct2014SectionNumber) => {
+  const p = readCatalogueEntry(companiesAct2014CatalogueEntry(n)).provisions[0]!;
+  return { sectionNumber: p.sectionNumber, heading: p.heading, provisionText: p.excerpt };
+};
 
 describe('parseCompaniesAct2014Section', () => {
   it('parses s.282 (accounting records), whose operative marker is a bare "282." line', () => {
-    const p = parseCompaniesAct2014SectionFile(companiesAct2014SectionPath('282'));
+    const p = section('282');
     expect(p.sectionNumber).toBe('282');
     expect(p.heading).toBe('Basic requirements for accounting records');
     expect(p.provisionText.startsWith('282.')).toBe(true);
@@ -15,7 +23,7 @@ describe('parseCompaniesAct2014Section', () => {
   });
 
   it('parses s.280A (small company), a lettered section number', () => {
-    const p = parseCompaniesAct2014SectionFile(companiesAct2014SectionPath('280A'));
+    const p = section('280A');
     expect(p.sectionNumber).toBe('280A');
     expect(p.heading).toBe('Qualification of company as small company: general');
     expect(p.provisionText.startsWith('280A.')).toBe(true);
@@ -25,7 +33,7 @@ describe('parseCompaniesAct2014Section', () => {
   });
 
   it('parses s.280D (micro company)', () => {
-    const p = parseCompaniesAct2014SectionFile(companiesAct2014SectionPath('280D'));
+    const p = section('280D');
     expect(p.sectionNumber).toBe('280D');
     expect(p.heading).toBe('Qualification of company as micro company');
     expect(p.provisionText).toContain('€900,000');
@@ -34,7 +42,7 @@ describe('parseCompaniesAct2014Section', () => {
   });
 
   it('parses s.281, a one-sentence duty with no numbered subsections', () => {
-    const p = parseCompaniesAct2014SectionFile(companiesAct2014SectionPath('281'));
+    const p = section('281');
     expect(p.sectionNumber).toBe('281');
     expect(p.heading).toBe('Obligation to keep adequate accounting records');
     expect(p.provisionText.startsWith('281.')).toBe(true);
@@ -42,7 +50,7 @@ describe('parseCompaniesAct2014Section', () => {
   });
 
   it('parses s.343 and keeps the substituted 56-day period', () => {
-    const p = parseCompaniesAct2014SectionFile(companiesAct2014SectionPath('343'));
+    const p = section('343');
     expect(p.sectionNumber).toBe('343');
     expect(p.heading).toBe('Obligation to make annual return');
     expect(p.provisionText).toContain('56 days');
@@ -50,7 +58,7 @@ describe('parseCompaniesAct2014Section', () => {
   });
 
   it('parses s.280E, the shortest section (no subsections at all)', () => {
-    const p = parseCompaniesAct2014SectionFile(companiesAct2014SectionPath('280E'));
+    const p = section('280E');
     expect(p.sectionNumber).toBe('280E');
     expect(p.heading).toBe('Micro companies regime');
     expect(p.provisionText.startsWith('280E.')).toBe(true);
@@ -58,16 +66,22 @@ describe('parseCompaniesAct2014Section', () => {
   });
 
   it('parses s.359, whose subsections (3)-(12) are genuine LRC deletions rendered as "…"', () => {
-    const p = parseCompaniesAct2014SectionFile(companiesAct2014SectionPath('359'));
+    const p = section('359');
     expect(p.sectionNumber).toBe('359');
     expect(p.provisionText).toContain('group company');
     expect(p.provisionText).toContain('…');
     expect(p.provisionText).toContain('Chapter 16');
   });
 
+  it('parses a converted page: s.285, its heading and its body', () => {
+    const p = parseCompaniesAct2014Section(S285);
+    expect(p.sectionNumber).toBe('285');
+    expect(p.provisionText.startsWith('285.')).toBe(true);
+    expect(p).toMatchObject(section('285'));
+  });
+
   it('records stable, in-bounds source offsets that recover the verbatim body', () => {
-    const path = companiesAct2014SectionPath('352');
-    const src = readFileSync(path, 'utf8');
+    const src = S285;
     const p = parseCompaniesAct2014Section(src);
     expect(p.sourceStart).toBeGreaterThanOrEqual(0);
     expect(p.sourceEnd).toBeLessThanOrEqual(src.length);
@@ -77,8 +91,8 @@ describe('parseCompaniesAct2014Section', () => {
   });
 
   it('is idempotent across two parses', () => {
-    const a = parseCompaniesAct2014SectionFile(companiesAct2014SectionPath('360'));
-    const b = parseCompaniesAct2014SectionFile(companiesAct2014SectionPath('360'));
+    const a = parseCompaniesAct2014Section(S285);
+    const b = parseCompaniesAct2014Section(S285);
     expect(a).toEqual(b);
   });
 });

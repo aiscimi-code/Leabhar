@@ -17,9 +17,31 @@ import { irishKnowledgeSources, irishActProvisions, type IrishSourceType } from 
 import { ids } from '@/lib/ids';
 import { nowIso } from '../dates';
 import { sha256Hex } from '@/lib/hash';
-import { parseTca1997Section, provisionSlug, assessRelevance } from './tca1997SectionParser';
+import { parseTca1997Section, provisionSlug, assessRelevance, type ProvisionCategory } from './tca1997SectionParser';
 
 const SOURCE_TYPE: IrishSourceType = 'legislation';
+
+/** What the knowledge base says of a TCA 1997 section loaded as enacted. */
+export const TCA_1997_AS_ENACTED_NOTE = 'As-enacted 1997 text — no LRC revised TCA exists (docs/statutes/tca-1997/README.md). Any '
+  + 'numeric figure (rate, threshold) this section states may have been superseded by a later Finance '
+  + 'Act not yet ingested; see the curating rule\'s own interpretationNote for what was, and was not, '
+  + 'safe to curate from this text.';
+
+/** TCA 1997's commencement, used year-level for a section loaded as enacted (see rctIngestion.ts's s.530). */
+export const TCA_1997_AS_ENACTED_FROM = '1997-01-01';
+
+/** Whether a section bears on the rules: the category default, unless a curated rule cites it. */
+export function tca1997SectionRelevance(
+  parsed: { sectionNumber: string; category: ProvisionCategory },
+  curatedSectionNumbers?: Set<string>,
+): { relevant: boolean; reason: string } {
+  let { relevant, reason } = assessRelevance(parsed.category);
+  if (!relevant && curatedSectionNumbers?.has(parsed.sectionNumber)) {
+    relevant = true;
+    reason = `Curated: mapped to a rule, overriding the ${parsed.category} category default.`;
+  }
+  return { relevant, reason };
+}
 
 export interface Tca1997IngestResult {
   sourceId: string;
@@ -83,19 +105,12 @@ export function ingestTca1997Section(
       ingestVersion: params.ingestVersion,
       publicationDate: null,
       retrievedAt: nowIso(),
-      effectiveFrom: '1997-01-01',
-      sourceNote: 'As-enacted 1997 text — no LRC revised TCA exists (docs/statutes/tca-1997/README.md). Any '
-        + 'numeric figure (rate, threshold) this section states may have been superseded by a later Finance '
-        + 'Act not yet ingested; see the curating rule\'s own interpretationNote for what was, and was not, '
-        + 'safe to curate from this text.',
+      effectiveFrom: TCA_1997_AS_ENACTED_FROM,
+      sourceNote: TCA_1997_AS_ENACTED_NOTE,
       sourceDate: nowIso(),
     }).run();
 
-    let { relevant, reason } = assessRelevance(parsed.category);
-    if (!relevant && params.curatedSectionNumbers?.has(parsed.sectionNumber)) {
-      relevant = true;
-      reason = `Curated: mapped to a rule, overriding the ${parsed.category} category default.`;
-    }
+    const { relevant, reason } = tca1997SectionRelevance(parsed, params.curatedSectionNumbers);
 
     tx.insert(irishActProvisions).values({
       id: ids.provision(),

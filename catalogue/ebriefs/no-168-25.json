@@ -1,0 +1,56 @@
+{
+  "format": 1,
+  "source": {
+    "citation": "Revenue eBrief No. 168/25",
+    "title": "Revenue eBrief No. 168/25 — Part 38-01-03b: Guidelines for VAT Registration updated",
+    "sourceType": "revenue_ebrief",
+    "jurisdiction": "IE",
+    "sourceUrl": "https://www.revenue.ie/en/tax-professionals/ebrief/2025/no-1682025.aspx",
+    "sha256": "c59b2ace7755db18e62ee59758a0a27d3af2d50ccd7dcacde214566b739c434b",
+    "contentSha256": "c5b46c946d5a01fe7d3ffbb5cb754864bc3a046443779e01129419019b392438",
+    "conversion": "revenue-html-plaintext",
+    "retrievedOn": "2026-10-06",
+    "publicationDate": "2025-09-03",
+    "effectiveFrom": "2025-09-03",
+    "note": "A Revenue notice: it records that TDM Part 38-01-03b was updated on 3 September 2025 (sections 3.4, 3.4.4 and 10). It ranks below legislation (sourceHierarchy.ts) and never supersedes the Act or the Regulations; it tells a reader the guidance this KB cites has moved."
+  },
+  "provisions": [
+    {
+      "sectionNumber": "168/25",
+      "heading": "Part 38-01-03b - Guidelines for VAT Registration",
+      "locator": "notice 168/25",
+      "effectiveClue": "Published: 03 September 2025",
+      "citedActs": [
+        "S.I. 69/2025"
+      ],
+      "category": "procedure",
+      "relevant": true,
+      "relevanceReason": "Curated: a procedure rule cites this notice (ebriefIngestion.ts).",
+      "excerpt": "Revenue eBrief No. 168/25 03 September 2025 Part 38-01-03b - Guidelines for VAT Registration Tax and Duty Manual Part 38-01-03b - Guidelines for VAT Registration - has been updated as follows: Section 3.4 - VAT registration application details Section 3.4.4 - Turnover and registration thresholds Section 10 - EU VAT SME scheme Published: 03 September 2025"
+    }
+  ],
+  "rules": [
+    {
+      "key": "vat.registration_guidelines_updated_2025_09",
+      "sectionNumber": "168/25",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2025-09-03",
+          "effectiveTo": null,
+          "quote": "Tax and Duty Manual Part 38-01-03b - Guidelines for VAT Registration - has been updated as follows:",
+          "value": null,
+          "unit": null,
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    }
+  ]
+}

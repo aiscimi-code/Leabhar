@@ -24,18 +24,22 @@ superseded and what to use instead.
   offset-traceable back to the committed source file. This is the only
   content actually driving the deterministic rule engine — see
   `docs/RULES_KB.md`'s "CLI" section for the full `--source` list. As of
-  this writing that's: `finance-act-2024/2024-act-43-enacted.md` (whole
-  Act) and its s.78 (VAT registration thresholds); `vatca-2010/
-  vatca-2010-enacted.md` (whole Act, as-enacted); s.46 (current rates) and
-  38 other revised sections, now in the rules catalogue
-  (`catalogue/vatca-2010-revised/`, #443, #556), and `vatca-2010-revised/schedule-{2,3}.md`; `tca-1997/s530.md` and
-  `s284.md`; `rct/tdm-18-02-{04,05,11}.md`; `si-639-2010/2010-si-639.md`
-  (all 47 regs parsed, reg.25 curated); `si-156-2012/2012-si-156.md` (regs
-  1/2/4 only, reg.4 curated); `si-69-2025/2025-si-69.md` (regs.5, 8 and 9 —
-  reg.5 curated for issue #136 bug 2/#137's turnover-test fix, reg.9 for
-  the s.92B "annual turnover" definition it depends on); and
-  one passage of `tdm-38-01-03b/38-01-03b.md` (the e-filing capacity
-  exclusion).
+  this writing that's, in the rules catalogue (#443, #556): the Finance Acts
+  2024 and 2025 as enacted (`catalogue/finance-act-2024/`,
+  `catalogue/finance-act-2025/`, whole Acts; FA 2024 s.78 gives the VAT
+  registration thresholds), VATCA 2010 as enacted (`catalogue/vatca-2010/`, whole Act),
+  s.46 (current rates) and 38 other revised sections, and Schedules 1–3
+  (`catalogue/vatca-2010-revised/`), TCA 1997 ss.530, 530A, 530E, 530G,
+  530H, 530I and 284 (`catalogue/tca-1997/`) and Finance Act 2003 s.23
+  (`catalogue/finance-act-2003/`), and Revenue's RCT manuals TDM
+  18-02-04, -05 and -11 (`catalogue/rct/`), S.I. 639/2010 (all 47 regs,
+  reg.25 curated; `catalogue/si-639-2010/`), S.I. 156/2012 (regs 1/2/4 only,
+  reg.4 curated; `catalogue/si-156-2012/`) and S.I. 69/2025 (regs 5, 7, 8
+  and 9 — reg.5 curated for issue #136 bug 2/#137's turnover-test fix, reg.9
+  for the s.92B "annual turnover" definition it depends on;
+  `catalogue/si-69-2025/`); and
+  one passage of Revenue's TDM Part 38-01-03b (the e-filing capacity
+  exclusion; `catalogue/tdm-38-01-03b/`).
 - **Reference material** (everything else below): curated pointers,
   summaries, or partial extracts sourced from official HTML/PDF. Useful for
   a human or an LLM-assisted lookup to know where to look and what changed,
@@ -55,16 +59,16 @@ superseded and what to use instead.
 | `vatca-2010/` | VATCA 2010 (No. 31 of 2010) | Deterministic (full Act, as-enacted) + 4 reference pointers to current/revised text | Complete (deterministic, all 125 sections); ingested. Revised pointers cover ss. 5, 46, 65, 84 only |
 | `vatca-2010-revised/` | VATCA 2010, full LRC-revised corpus (separate from the 4 pointers above) | Deterministic (s.46, Schedules 2/3) + reference (Schedules 4, 5, 6, 9 and other individual sections) | s.46 ingested for current rates (23%/13.5%/4.8%); Schedules 2/3 ingested (8 curated paragraphs). Schedules 4, 5, 6, 9 and the ~50 other individual sections committed as text but not ingested; Schedules 1, 7, 8 not committed at all |
 | `tca-1997/` | Taxes Consolidation Act 1997 (No. 39 of 1997) | Deterministic (s.530, s.284) + reference (the other 9 sections) | s.530 (RCT definitions) and s.284 (wear-and-tear qualification, no rate) ingested. s18, s52, ss.885-887 are paraphrase; s235, s288, s299, s496, s613 read as verbatim but carry no source hash — see `docs/RULES_KB.md` "Documents reviewed, not curated" |
-| `si-639-2010/` | VAT Regulations 2010 (S.I. 639/2010) | Deterministic (whole document, reg.25 curated) | All 47 regulations parsed and ingested; only reg.25 (cash-accounting authorisation) has a curated rule. Reg 14A (postponed accounting, via S.I. 734/2020) and most others are ingested text without a rule |
-| `si-156-2012/` | Mandatory e-filing Regulations 2012 (S.I. 156/2012) | Deterministic (regs 1/2/4 only, reg.4 curated) | The local transcript only quotes regs 1, 2 and 4 verbatim (regs 5-9 are an editorial summary, not ingested); reg.4 (mandatory e-filing) is curated |
-| `si-69-2025/` | European Union (VAT) Regulations 2025 (S.I. 69/2025) | Deterministic (regs.5, 8 and 9) | Reg.8 (current s.80(1) cash-accounting eligibility thresholds: 90% test / €2,000,000) ingested and curated as 2 rules. Reg.5 (current VATCA s.6(1)(c)/(d) "current or previous calendar year" turnover test) and reg.9 (s.92B "annual turnover" definition) ingested and curated as part of the issue #136 bug 2/#137 fix. Regs 1-4, 6, 7, 10 (the rest of the cross-border SME scheme) not ingested |
+| `si-639-2010/` | VAT Regulations 2010 (S.I. 639/2010) | Deterministic (whole document, reg.25 curated; from `catalogue/si-639-2010/`) | All 47 regulations parsed and ingested; only reg.25 (cash-accounting authorisation) has a curated rule. Reg 14A (postponed accounting, via S.I. 734/2020) and most others are ingested text without a rule |
+| `si-156-2012/` | Mandatory e-filing Regulations 2012 (S.I. 156/2012) | Deterministic (regs 1/2/4 only, reg.4 curated; from `catalogue/si-156-2012/`) | Regs 1, 2 and 4 are held, the ones the earlier statute copy quoted verbatim; the official page beside the entry has all nine (#705). Reg.4 (mandatory e-filing) is curated |
+| `si-69-2025/` | European Union (VAT) Regulations 2025 (S.I. 69/2025) | Deterministic (regs 5, 7, 8 and 9; from `catalogue/si-69-2025/`) | Reg.8 (current s.80(1) cash-accounting eligibility thresholds: 90% test / €2,000,000) curated as 2 rules. Reg.5 (current VATCA s.6(1)(c)/(d) "current or previous calendar year" turnover test) and reg.9 (s.92B "annual turnover" definition) curated as part of the issue #136 bug 2/#137 fix; reg.7 (s.60(4) deductibility restriction) and reg.9's Union threshold for issue #130. Regs 1-4, 6 and 10 not ingested |
 | `si-651-2011/` | Income Tax and Corporation Tax (RCT) Regulations 2011 (S.I. 651/2011) | Reference only | eRCT administration mechanics; superseded by SI 576/2012 — see the folder's own README |
 | `vat-rates/` | Revenue current VAT rates table (Markdown + machine-readable JSON) + category-move notes | Reference only, not a source (no hash) | Rate history complete (2020-2026, retrieved 2026-09-18); `schedule-moves-2025-2026.md` tracks category reclassifications (e.g. restaurant/hairdressing to 9% from 1 Jul 2026) the headline table alone doesn't show |
-| `ebriefs/` | Revenue eBriefs — notices announcing guidance changes | Deterministic (eBrief No. 168/25, 03 September 2025) | First `revenue_ebrief` source (issue #440): records that TDM Part 38-01-03b's registration-application, threshold and EU VAT SME scheme sections were updated |
+| `ebriefs/` (now `catalogue/ebriefs/`) | Revenue eBriefs — notices announcing guidance changes | Deterministic (eBrief No. 168/25, 03 September 2025) | First `revenue_ebrief` source (issue #440): records that TDM Part 38-01-03b's registration-application, threshold and EU VAT SME scheme sections were updated. Loads from the rules catalogue, `catalogue/ebriefs/no-168-25.json` with the page beside it (#556) |
 | `tdm-38-01-03b/` | Revenue TDM Part 38-01-03b (VAT registration guidelines) | Deterministic (one passage only) | Only the "Exclusion from Mandatory Electronic Filing and Payment of Tax" passage is ingested and curated (closes an S.I. 156/2012 reg.5 gap); the rest of the 40+ page manual is reference-only |
 | `import-vat/` | Customs Manual on Import VAT (guidance) + VATCA s.3(b)/s.53A pointers | Reference only | Genuinely verbatim (real source hash), reviewed — confirms Postponed Accounting mechanics already covered elsewhere, no new rule-worthy content found; see `import-vat/README.md` on a dropped duplicate |
 | `rct/` | Relevant Contracts Tax (TCA 1997 s.530, SI 651/2011) — a withholding regime, not VAT | Deterministic (TDMs 18-02-04/05/11) | 4 curated rules (relevant-operations scope, payment notification, deduction rate not determinable, subcontractor compliance criteria); TDMs 18-02-01/02 remain reference-only (paraphrase) — see `rct/README.md` |
-| `vat3-rtd/` | VAT3 and annual RTD form guidance (Revenue page + TDM VAT-RTD-S76) | Deterministic (9 VAT3 box passages, 6 RTD sections curated as reporting rules) | `completing-vat3-return.md` and `VAT-RTD-S76.md` ingested as `revenue_guidance` sources (issue #439); `vat3-rtd-boxes.md` is this repo's own mapping summary and stays reference-only |
+| `vat3-rtd/` | VAT3 and annual RTD form guidance (Revenue page + TDM VAT-RTD-S76) | Deterministic (9 VAT3 box passages, 6 RTD sections curated as reporting rules) | Both documents load from the rules catalogue as `revenue_guidance` sources (`catalogue/vat3-rtd/`, issues #439 and #556); `vat3-rtd-boxes.md` is this repo's own mapping summary and stays reference-only |
 | `swmpa-2024/` | Social Welfare (Miscellaneous Provisions) Act 2024 s.3 | Deterministic (as enacted) | PRSI Class A rates, 1 October 2024 to 1 October 2028; ingested for payroll (#526) |
 | `swa-2024/`, `swaerss-2025/` | Social Welfare Act 2024 s.2; Social Welfare and Automatic Enrolment Retirement Savings System (Amendment) Act 2025 s.2 | Deterministic (as enacted) | Employer PRSI threshold €527 (2025) and €552 (2026); ingested for payroll (#526) |
 | `ntf-2000/` | National Training Fund Act 2000 s.4 | Deterministic (LRC revised) | The 1% levy; ingested for payroll (#526) |
@@ -72,10 +76,10 @@ superseded and what to use instead.
 | `si-1-2024/` | Income Tax (Employments) Regulations 2024 (S.I. 1/2024) | Deterministic (reg.3) | Inserts reg.10A (ERR particulars); ingested for reportable benefits (#532) |
 | `tdm-38-03-33/` | Revenue TDM Part 38-03-33 — Enhanced Reporting Requirements | Deterministic (§4, §5; `revenue_guidance`) | The €3.20 remote working allowance and the ERR subcategories (#532) |
 | `frs-102/` | FRS 102 pointer (not the standard text — FRC copyright) | Reference only (`accounting_standard` rank) | Pointer only, by design |
-| `companies-act-2014/` | Companies Act 2014 — records, size thresholds, filing | Reference only, not a source (no hash) | ss. 282, 280A, 280D/280E, 352, 358-360 |
+| `companies-act-2014/` | Companies Act 2014 — records, size thresholds, filing | Reference only (paraphrase, Schedule 3A); the sections are in `catalogue/companies-act-2014/` | ss. 280A-F, 281-286, 290-293, 343, 347, 352, 358-360 |
 | `vat-thresholds/` | Revenue: What are the VAT thresholds? | Reference only, not a source (no hash) | Added for issue #137; cross-check for the turnover-test conditions curated from S.I. 69/2025 reg.5 |
 | `sme-scheme/` | Revenue TDM: EU VAT SME Scheme — Domestic Layer | Reference only, not a source (no hash) | Added for issue #137; worked turnover-threshold examples (Table 1) cross-checked against the curated rule's own test cases |
-| `282-2011/` | Council Implementing Regulation (EU) No 282/2011 | Deterministic (Articles 10-13b ingested as the first `eu_source`, seven definition rules curated) | Added for issue #138, ingested for #441. Full consolidated text plus a verbatim Articles 10-13b extract (the "established"/"fixed establishment"/"permanent address"/"usually resides"/"immovable property" tests). The rules carry no transaction conditions: the test is inherently multi-factor and a person's confirmed determination (`supplierEstablishedOutsideState`) applies it — see `eu282Ingestion.ts` |
+| `282-2011/` (now `catalogue/eu-282-2011/`) | Council Implementing Regulation (EU) No 282/2011 | Deterministic (Articles 10-13b ingested as the first `eu_source`, seven definition rules curated) | Added for issue #138, ingested for #441. Loads from the rules catalogue, `catalogue/eu-282-2011/consolidated-2025-04-14.json` with the EUR-Lex consolidated page beside it (#556): Articles 10-13b (the "established"/"fixed establishment"/"permanent address"/"usually resides"/"immovable property" tests). The rules carry no transaction conditions: the test is inherently multi-factor and a person's confirmed determination (`supplierEstablishedOutsideState`) applies it — see `eu282Ingestion.ts` |
 | `pos-of-services/` | Revenue: General/exceptions place of supply of services pages | Reference only, not a source (no hash) | Added for issue #138; cross-check for VATCA s.34's already-curated B2B general rule and its documented exceptions |
 | `tbe-services/` | Revenue TDM: Telecommunications, broadcasting and electronic (TBE) services | Reference only, not a source (no hash) | Added for issue #138; documents the s.34(kc) exception this KB does not yet curate |
 | `immovable-property/` | Revenue TDM: Services connected with immovable property | Reference only, not a source (no hash) | Added for issue #138; documents the s.33(2)/s.34(c) exception this KB does not yet curate |

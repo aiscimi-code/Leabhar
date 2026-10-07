@@ -1,0 +1,280 @@
+{
+  "format": 1,
+  "source": {
+    "citation": "Revenue NfG TCA 1997 (FA 2025 ed.) Part 13",
+    "title": "Notes for Guidance — Taxes Consolidation Act 1997 — Finance Act 2025 edition — part13",
+    "sourceType": "revenue_guidance",
+    "jurisdiction": "IE",
+    "sourceUrl": "https://www.revenue.ie/en/tax-professionals/documents/notes-for-guidance/tca/part13.pdf",
+    "sha256": "55569f46c7ac9f62df99b8c87a79fe7fcd2a9c2649ec17d3cb0819d9572031f1",
+    "conversion": "pdftotext-layout",
+    "retrievedOn": "2026-10-06",
+    "publicationDate": null,
+    "effectiveFrom": "2025-12-31",
+    "note": "Revenue guidance summarising the TCA 1997 as amended to Finance Act 2025. There is no LRC revised TCA; the Notes are the current consolidated statement of each section, but rank below the Act itself."
+  },
+  "provisions": [
+    {
+      "sectionNumber": "430",
+      "heading": "Meaning of “close company”",
+      "locator": "s.430",
+      "principalAct": "1997 Act 39",
+      "category": "corporation_tax",
+      "relevant": true,
+      "relevanceReason": "Curated: mapped to a rule in corporationTaxCuration.ts.",
+      "excerpt": "430 Meaning of “close company”\nSummary\nThis section gives the definition of a “close company”. Broadly speaking, a close company is a company\nwhich is under the control of 5 or fewer participators or under the control of its participators who are\ndirectors (however many such directors there may be). A non-resident company, an industrial and\nprovident society, most building societies, a company controlled by the State, by another EU Member\nState or by the Government of a territory with which the State has a tax treaty and a company controlled\nby a non-close company are not regarded as close companies. Definitions of terms used in this section are\nto be found in section 432 (meaning of “associated company” and “control”) and section 433 (meaning of\n“participator”, “associate”, “director” and “loan creditor”).\nDetails\nA “close company” is a company under the control of 5 or fewer participators or under the (1)\ncontrol of participators who are directors (however many such directors there may be).\nExcluded from the definition are —\n•     a non-resident company,\n•      a registered industrial and provident society,\n•      a building society within the meaning of the Building Societies Acts, 1874 to 1989,\n•      a company controlled by or on behalf of the State,\n•      a company controlled by or on behalf of a Member State of the European\n       Communities (other than the State) or the government of a territory with which\n       Ireland has a tax treaty, and\n•      a company to which subsection (4) applies or which comes under section 431 which\n       excludes certain companies with quoted shares.\nA company is to be regarded as controlled by the State if it is controlled by persons acting (2) & (2A)\non behalf of the State. Where a company is so controlled but would otherwise be a close\ncompany (for example, by reason of being controlled by 5 or fewer persons), it will not be\nregarded as a close company unless the persons in control are acting independently of the\nState. This rule also applies to those companies controlled by or on behalf of a Member\nState of the European Communities or by the government of a territory with which Ireland\nhas a tax treaty.\n                                                                  2\n\fNotes for Guidance – Taxes Consolidation Act 1997 – Finance Act 2025 Edition - Part 13\n\nThe definition of close company is extended to include the case of a resident company (3)\nwhere, on a full distribution, more than 50 per cent of the distributable income would be\npaid to 5 or fewer participators or to participators who are directors.\nA company is not to be regarded as a close company where control is in the hands of a (4)(a)             &\ncompany or companies which are not themselves closely held and the company could not (5)\nbe regarded as being under the control of 5 or fewer participators without including as one\nof the participators at least one company which is not a close company. References here to\na close company are to apply also to a non-resident company which, if resident, would be\na close company.\nExcluded from the definition of a close company is a company which comes within that (4)(b)\ndescription only by reason of the extended “control” provision of section 432(2)(c) and the\nparticipator is regarded as such only because the participator is a loan creditor of the\ncompany and is not a close company. (The effect of section 432(2)(c) is that a person is\ntaken to have control of a company if, in the event of the winding up of the company, the\nperson would be entitled to receive the greater part of the distributable assets of the\ncompany).\nShares held by trustees are regarded as being in the beneficial ownership of a company (6)\nwhich is not a close company where —\n•    the shares are held in trust for an exempt approved scheme (within the meaning of\n     Chapter 1 of Part 30, relating to occupational pension schemes), and\n•      the scheme is not established wholly or mainly for the benefit of persons who are, or\n       who are dependants of, employees or directors or former employees or directors of —\n       -       the company,\n       -       any company associated with it,\n       -       a company controlled by directors and/or associates of directors of the\n               company, or\n       -       a close company.\nThe effect of this is that the scheme must be one established for the benefit of employees,\netc of an unrelated company which is not a close company.\n\n"
+    },
+    {
+      "sectionNumber": "434",
+      "heading": "Distributions to be taken into account and meaning of “distributable income”, “investment income”, “estate income”, etc.",
+      "locator": "s.434",
+      "principalAct": "1997 Act 39",
+      "category": "corporation_tax",
+      "relevant": true,
+      "relevanceReason": "Curated: mapped to a rule in corporationTaxCuration.ts.",
+      "excerpt": "434 Distributions to be taken into account and meaning of “distributable income”, “investment\nincome”, “estate income”, etc.\nSummary\nThis section defines certain terms which are used in Part 13 for the purpose of identifying income liable\nto the surcharge under section 440 on the undistributed investment and estate income of close companies\nand under section 441 on the undistributed investment and estate income and undistributed trading\n(professional) income of service companies.\nDetails\nThe term “estate income” means income in the nature of rent from land or buildings which (1)\nis chargeable to tax under Case III, IV or V of Schedule D.\nFor the purposes of calculating surcharges “franked investment income” excludes\ndistributions made out of exempt income (e.g. distributions out of profits or gains from\nstallion fees, stud greyhound service fees and occupation of certain woodlands).\nThe term “investment income” of a company is income other than estate income which\nwould not, in the hands of an individual, be earned income within the meaning of section\n3 but does not include such income received in the course of trading. However, without\naffecting the meaning of “franked investment income”, a dividend or other distribution by\na company will not be regarded as “investment income” for the purposes of the close\ncompany surcharge if the close company to which it is paid would be exempt from tax on\nany gains on the disposal of those shares under section 626B at the time the dividend or\ndistribution is being made.\n“Relevant charges” are charges on income allowed under section 243 (i.e. charges allowed\nagainst non-trading income), other than charges of an excepted trade within the meaning\nof section 21A. These are deductible in calculating estate and investment income of a\ncompany for surcharge purposes.\n\n\n                                                                  7\n\fNotes for Guidance – Taxes Consolidation Act 1997 – Finance Act 2025 Edition - Part 13\n\nThe term “trading company” means any company which exists wholly or mainly for the\npurpose of carrying on a trade, and any other company whose income does not consist\nwholly or mainly of investment or estate income.\nSubject to subsection (3A), the distributions of a company for an accounting period are the (2)\nsum of the dividends declared for the accounting period and paid or payable not later than\n18 months after the end of the accounting period and any other distributions made during\nthe accounting period.\nApportionments of distributions on a time basis are to be made where the period for which (3)\na company makes up accounts and makes distributions is not an accounting period for\ncorporation tax purposes.\nWhere a close company pays a dividend or makes a distribution to another close company, (3A)(a)\nthe companies may jointly elect that the dividend or distribution is not to be treated as a\ndistribution for the purposes of section 440 (which imposes a surcharge on the\nundistributed investment and estate income of close companies). A notice to elect must be\ngiven to the Collector General of Revenue in such manner as the Revenue Commissioners\nmay require.\nWhere an election is made under paragraph (a), the dividend or distribution is treated for (3A)(b)\nthe purposes of section 440 as not being a distribution. This means that it is not to be taken\ninto account as a distribution in determining the extent to which the dividend-paying\ncompany has distributed its profits.\nThe dividend or distribution is treated as not being franked investment income of the\nreceiving company. This means that, in determining whether the receiving company is\nliable to a surcharge, the dividend or distribution will not be counted as income of that\ncompany.\nA joint election made under paragraph (a) is to be included by both companies in their (3A)(c)\nrespective annual corporation tax returns for the accounting period concerned.\nFor the purpose of the surcharge, the “income” of a company for an accounting period is (4)\nto be computed-\n     • exclusive of franked investment income,\n     • without regard to any losses, deficiencies, expenses of management or charges on\n        income carried forward from an earlier accounting period,\n     • without regard to any losses or deficiencies carried back from a later accounting\n        period, and\n     • after deducting any losses, deficiencies or relevant trading charges on income\n        (under section 243A) of the current accounting period.\nThe “estate and investment income” of a company is the amount by which —                    (5)(a)\n•    the sum of the franked investment income and the part of the company’s total income\n     which is attributed to estate income and investment income (that part is calculated by\n     way of the following formula-\n                                           Income x A/B\n        where:\n            o “A” is the total estate income and investment income, and\n            o “B” is the income of the company before deduction of any current year\n               losses, deficiencies or relevant trading charges on income (under section\n               243A)),\n•    exceeds the total amount of relevant charges (i.e. non-trade charges) and expenses of\n     management.\n\n                                                                  8\n\fNotes for Guidance – Taxes Consolidation Act 1997 – Finance Act 2025 Edition - Part 13\n\nThe “trading income” of a company is the company’s total income (as calculated by section (5)(b)\n434(4)) less—\n•      the part of the company’s total income which is attributed to estate income and\n       investment income (the part calculated by way of the formula Income x A/B),\n•      charges of an excepted trade within the meaning of section 21A,\n•      non-trade charges and management expenses which could not be taken into account\n       in computing the estate and investment income of the company (as calculated by this\n       subsection).\n“Distributable estate and investment income” is the estate and investment income less the (5A)(a)\ncorporation tax which would be payable on the income. The “distributable trading income”\nis the trading income less the corporation tax which would be payable on that income.\nIn the case of a trading company the distributable estate and investment income is reduced (5A)(b)\nby 7.5 per cent.\nIncome is to be time apportioned to parts of accounting periods. Such an apportionment (6)\nwould be required where, for example, the company concerned was a close company for\nonly part of an accounting period.\nThe surcharge is not to apply to any income which a company is by law precluded from (7)\ndistributing.\n\n  Example (Figures (in euro) used in this example are for indicative purposes only)\n                                        Investment income 100\n                                         Case I (standard) 100\n                                 Excepted trading income 100\n                                Relevant trading charges      60        (S.243A)\n                            25% charges (excepted trade)      20         (S.21A)\n                                        Non-trade charges     50            (S.243)\n        (It is assumed the company is a service company)\n\n    •       Calculation of distributable estate and investment (E&I) income\n\n            (1) Income of the Co. for the accounting period\n\n               Case I income (standard rate)                       100\n               Less charges (S.243A)                               (60)                40\n               Case I excepted income                                                 100\n               Investment income                                                      100\n               Income                                                                 240\n\n            (2) E & I income for the accounting period\n\n                                            240 x 100/300              80\n               Less non-trade charges (S.243)                      (50)\n               E & I income                                            30\n               Less tax @ 25%                                   (7.50)\n                                                                22.50\n               Less 7.5% trading company reduction              (1.69)         (Subsection (5A)(b))\n               Distributable E & I income                       20.81\n\n        •   Calculation of distributable trading income\n\n                                                                   9\n\fNotes for Guidance – Taxes Consolidation Act 1997 – Finance Act 2025 Edition - Part 13\n\n\n\n\n             Trading income is\n                Income                                            240\n                Less E & I income (before non-trade\n                                                                  (80)\n                charges)\n                                                                  160\n             Less excepted charges                                (20)\n             Trading income                                       140\n             Less CT 40 @ 12½% }\n                     100 @ 25% }                                  (30)\n             Distributable trading income                         110\n\nSummary\n\n                                    Case I       Case I\n                                                               Investment\n                                  standard     excepted\n             Income                    100          100                  100\n             Charges                   (60)         (20)                 (50)\n                                        40            80                  50\n             Tax                        (5)         (20)              (12.5)\n             Distributable              35            60                 37.5\n\n• Calculation of surcharge under section 441\n\n          Distributable E & I income                         20.81\n          50% of distributable trading income                55.00\n                                                             75.81\n          Less Distributions (say)                          (30.00)\n          Surcharge on                                       45.81\n\n\n                                                     45.81 @ 15%         6.87 (S.441(4A)(a))\n          Surcharge                                                      6.87\n\n\n\n"
+    },
+    {
+      "sectionNumber": "440",
+      "heading": "Surcharge on undistributed investment and estate income",
+      "locator": "s.440",
+      "principalAct": "1997 Act 39",
+      "category": "corporation_tax",
+      "relevant": true,
+      "relevanceReason": "Curated: mapped to a rule in corporationTaxCuration.ts.",
+      "excerpt": "440 Surcharge on undistributed investment and estate income\nSummary\nThis section provides for an additional charge of corporation tax (referred to as a “surcharge”) on close\ncompanies at the rate of 20 per cent of the excess of the distributable estate and investment income over\nthe distributions made for an accounting period. There is no surcharge where the excess is €2,000 or less\nand marginal relief is provided where the excess is slightly more. There are provisions to prevent the relief\nbeing abused by the setting up of a number of associated companies.\nThe amount on which the surcharge is made is not to exceed the accumulated undistributed income at the\nend of the accounting period with the addition of any transfers to capital reserves, bonus issues or other\ntransactions on or after 27 November 1975 which would reduce the accumulated income available for\ndistribution.\nSection 434 provides for the definition of terms used in this section and for the calculation of the various\namounts referred to (and should be referred to in calculating any surcharge).\nDetails\nAn additional charge of corporation tax at the rate of 20 per cent is imposed on the excess (1)(a)\nof the distributable estate and investment income over the distributions for the accounting\nperiod.\nThere is no surcharge where the excess, in the case of a single company, does not exceed (1)(b)\n€2,000. In the case of a group of associated companies, the €2,000 threshold is divided by\none plus the number of associated companies. The threshold is time apportioned where\nthe accounting period is less than 12 months. Marginal relief is provided where the excess\nis somewhat more than €2,000.\n\n  Example\n  If the company shown in the example below does not make any distribution in the accounting period to 31.12.20X1 and\n  before 1.7.20X3 does not pay a dividend for that accounting period, it will be surcharged as follows —\n        Distributable estate and investment income                 €30,000\n\n        Distributions                                                   NIL\n\n        Excess                                                     €30,000\n\n        Surcharge 20%                                                 €6,000\n  If the company makes a distribution of €28,500 for the accounting period, the position will be —\n          Distributable estate and investment income               €30,000\n\n          Distribution                                           (€28,500)\n\n          Excess                                                      €1,500\n    As this is less than €2,000 there is no surcharge.\n  If on the other hand, the company distributes €27,600 the surcharge will be —\n\n                                                                 18\n\fNotes for Guidance – Taxes Consolidation Act 1997 – Finance Act 2025 Edition - Part 13\n\n     Distributable estate and investment income                    €30,000\n\n     Distribution                                                (€27,600)\n\n     Excess                                                           €2,400\n\n     Surcharge 20%                                                     €480\n  but the liability is restricted to 80% of the excess over €2,000, that is 80% of (€2,400 – €2,000) = 80% of €400 = €320 and\n  this is the amount which will be payable by the company. (It should be noted that marginal relief runs out where the excess\n  exceeds €2,666).\n\nThe amount on which the surcharge is made cannot exceed the accumulated undistributed (2)\nincome at the end of the accounting period after taking account of any transfer to capital\nreserves or bonus issues or any other transaction occurring on or after 27 November 1975\nwhich would have the effect of artificially reducing such accumulated income.\nIn applying subsection (1) to an accounting period, a dormant associated company is to (3)\nbe disregarded if it was dormant throughout the accounting period (or dormant throughout\nthe entire part of the accounting period for which it was associated).\nAn associated company must be counted for the purposes of the surcharge even if it was (4)\nan associated company for only part of the accounting period concerned. Two or more\nassociated companies of another company are to be counted even if they were associated\nwith that other company for different parts of the period.\nThe surcharge is to be charged for the earliest accounting period which ends at a time (6)\nwhich is 12 months or more after the end of the accounting period in which the surcharge\narose. The surcharge is treated as corporation tax of that period. If, however, there is no\nsuch later accounting period, the surcharge is to be charged for the accounting period in\nwhich it arises.\nThe corporation tax provisions regarding assessment and collection apply to the surcharge. (7)\n\n"
+    },
+    {
+      "sectionNumber": "441",
+      "heading": "Surcharge on undistributed income of service companies",
+      "locator": "s.441",
+      "principalAct": "1997 Act 39",
+      "category": "corporation_tax",
+      "relevant": true,
+      "relevanceReason": "Curated: mapped to a rule in corporationTaxCuration.ts.",
+      "excerpt": "441 Surcharge on undistributed income of service companies\nSummary\nThis section is designed to counter avoidance of tax arising from the diversion into close companies of\nincome (usually arising from professional activities) which would otherwise attract income tax at the\nhigher rate. The device consists of the setting up of a company for the purpose of carrying on a profession,\nproviding professional services or holding an office or employment. It may also take the form of the setting\nup of a company controlled by persons engaged in a profession, etc for the purpose of carrying on a\nbusiness of providing services or facilities for those persons. The profits of the company are withheld from\ndistribution and therefore bear tax at the company tax rate rather than at the personal tax rates to which\nthe profits, if distributed, would be liable in the hands of the shareholders. As these shareholders usually\nare liable at rates of personal tax which exceed the company tax rate the non-distribution results in loss of\ntax revenue. The section counters this method of tax avoidance by imposing a surcharge of 15 per cent on\n50 per cent of the company’s undistributed professional and service income and a surcharge of 20 per cent\non the company’s undistributed estate and investment income.\nDetails\nA “service company” is —                                                                (1)\n•    a close company which carries on directly a profession or the provision of\n     professional services or which has or exercises an office or employment,\n•    a close company which provides services or facilities of any nature to such a\n     company, to an individual carrying on a profession, to a partnership carrying on a\n     profession, to a person who holds or exercises an office or employment, or to a\n     person or partnership connected with any such person or partnership.\n                                                                 19\n\fNotes for Guidance – Taxes Consolidation Act 1997 – Finance Act 2025 Edition - Part 13\n\nExcluded are genuine cases where the services or facilities are provided for persons not\nconnected with the company.\nA company is not a service company unless the principal part of its income chargeable (2)\nunder Cases I and II of Schedule D and Schedule E is derived from specified activities,\nthat is —\n•      carrying on a profession,\n•      providing professional services,\n•      having or exercising an office or employment,\n•      providing services or facilities (other than the excluded services referred to above)\n       to such person or partnership as is referred to above, or\n•      any 2 or more of the activities so specified.\nA partnership is to be treated as connected with a company or individual (and vice versa) (3)\nif any one of the partners is connected with the company or individual, and a partnership\nis to be treated as connected with another partnership if any one of the partners in it is\nconnected with any one of the partners in the other.\nA 15 per cent surcharge is imposed on the undistributed income of a service company. (4)(a)\nThe total amount subject to a surcharge is the amount by which:\n    • the aggregate of the distributable estate and investment income and 50 per cent of\n        the distributable trading income of the company\n    • exceeds the distributions made.\nAn increased surcharge of 20 per cent applies to an amount of the excess, to the extent that (4)(b)(iii)\nthe distributable estate and investment income exceeds the distributions of the company\nfor the accounting period. The balance of the excess remains subject to a surcharge of 15\nper cent.\n\n\n   Example 1\nThe accounting period of a company is the 12-month period ending on 31 December 20X1. The company does not distribute\nall its distributable income. Its respective income and distribution position is —\n     Distributable Trading income (DTI)                                   €10,000\n     Distributable Estate and Investment Income (DEII)                     €7,000\n     Distribution for year                                                          €6,000\n1. Calculate the aggregate of 50 per cent of the DTI plus 100 per cent of the DEII.\n          (€10,000 x 50%) + €7,000 = €12,000\n2. The total amount subject to a surcharge is the amount by which €12,000 exceeds the distribution (€6,000) of the company.\nThis excess amount is €6,000.\n3. To establish how the €6,000 excess amount is apportioned between the surcharges at the different rates, calculate the\nexcess of the DEII over the distributions.\n     DEII                                                                     €7,000\n     less distribution                                                       (€6,000)\n                                                                              €1,000\n     The €1,000 amount is subject to a surcharge of 20%. The balance of\n     €5,000 (i.e. €6,000 – €1,000) is subject to a surcharge of 15%.\n4. The surcharges are —\n     €1,000 @ 20%                                                     =             €200\n\n     €5,000 @ 15%                                                     =             €750\n\n     Total surcharge imposed                                          =             €950\n\n                                                                 20\n\fNotes for Guidance – Taxes Consolidation Act 1997 – Finance Act 2025 Edition - Part 13\n\n\n\n\n   Example 2\nA service company has Distributable Trading Income (DTI) of €12,000 and Distributable Estate and Investment Income (DEII)\nof €3,000 for a 12-month accounting period. The company pays a dividend of €4,000 in respect of the accounting period.\n1. Calculate the aggregate of 50% of the DTI plus 100% of the DEII.\n          ( €12,000 x 50% ) + €3,000 = €9,000\n2. The total amount subject to the surcharge is €5,000, being the amount by which €9,000 (from Step 1) exceeds the distributions\n(€4,000) of the company.\n3. As the DEII is less than the distributions for the period, no amount is subject to the surcharge at 20%.\nThe full amount of €5,000 is subject to the surcharge at 15%.\n4. The surcharge imposed is €750 (i.e. €5,000 @ 15% = €750).\nThere is no surcharge where the excess of the distributable income over the distributions, (4)(b)(i)&\nin the case of a single company, does not exceed €2,000. In the case of a group of (ii)\nassociated companies, the €2,000 threshold is divided by one plus the number of\nassociated companies. The threshold is time apportioned where the accounting period is\nless than 12 months. Marginal relief is provided where the excess is somewhat more than\n€2,000.\n\n  Example 3\n     Excess distributable income as computed under this subsection                €2,200\n     Surcharge @ 15%                                                             €330\nHowever, the liability is restricted to 80% of the excess over €2,000, that is 80% of (€2,200 - €2,000) = 80% of €200 = €160\nand this is the amount which will be payable by the company. (It should be noted that Marginal relief runs out where the excess\nexceeds €2,461).\n\n\nThe provisions of subsections (2) to (7) of section 440 are applied to the surcharge under (5)\nthis section.\nThe provisions of section 434(2), (3), (3A), (6) and (7) regarding the distributions to be (6)\ntaken into account for the purpose of computing a surcharge are applied for the purposes\nof the section. The provisions of section 434(4), which defines the income of a company\nfor an accounting period, and section 434(1) and (5A), which define the distributable estate\nand investment income and the distributable trading income of a company for an\naccounting period, are also applied for the purposes of this section.\n\n\n\n\n                                                                 21\n\f"
+    }
+  ],
+  "rules": [
+    {
+      "key": "ct.close_company_definition",
+      "sectionNumber": "430",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "1997-04-06",
+          "effectiveTo": null,
+          "quote": "control of participators who are directors (however many such directors there may be).",
+          "value": null,
+          "unit": null,
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    },
+    {
+      "key": "ct.close_company_surcharge",
+      "sectionNumber": "440",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "1997-04-06",
+          "effectiveTo": null,
+          "quote": "An additional charge of corporation tax at the rate of 20 per cent is imposed on the excess",
+          "value": 2000,
+          "unit": "basis_points",
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    },
+    {
+      "key": "ct.close_company_surcharge_de_minimis",
+      "sectionNumber": "440",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "1997-04-06",
+          "effectiveTo": null,
+          "quote": "There is no surcharge where the excess, in the case of a single company, does not exceed",
+          "value": 200000,
+          "unit": "eur_minor",
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    },
+    {
+      "key": "ct.distributable_income",
+      "sectionNumber": "434",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "1997-04-06",
+          "effectiveTo": null,
+          "quote": "“Distributable estate and investment income” is the estate and investment income less the",
+          "value": null,
+          "unit": null,
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    },
+    {
+      "key": "ct.distributions_for_period",
+      "sectionNumber": "434",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "1997-04-06",
+          "effectiveTo": null,
+          "quote": "sum of the dividends declared for the accounting period and paid or payable not later than",
+          "value": 18,
+          "unit": "count",
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    },
+    {
+      "key": "ct.service_company_definition",
+      "sectionNumber": "441",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "1997-04-06",
+          "effectiveTo": null,
+          "quote": "a close company which carries on directly a profession or the provision of",
+          "value": null,
+          "unit": null,
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    },
+    {
+      "key": "ct.service_company_surcharge",
+      "sectionNumber": "441",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "1997-04-06",
+          "effectiveTo": null,
+          "quote": "A 15 per cent surcharge is imposed on the undistributed income of a service company.",
+          "value": 1500,
+          "unit": "basis_points",
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    },
+    {
+      "key": "ct.surcharge_later_period",
+      "sectionNumber": "440",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "1997-04-06",
+          "effectiveTo": null,
+          "quote": "The surcharge is to be charged for the earliest accounting period which ends at a time",
+          "value": null,
+          "unit": null,
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    },
+    {
+      "key": "ct.surcharge_marginal_relief_cap",
+      "sectionNumber": "440",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "1997-04-06",
+          "effectiveTo": null,
+          "quote": "the liability is restricted to 80% of the excess over €2,000",
+          "value": 8000,
+          "unit": "basis_points",
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    },
+    {
+      "key": "ct.trading_company_reduction",
+      "sectionNumber": "434",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "1997-04-06",
+          "effectiveTo": null,
+          "quote": "In the case of a trading company the distributable estate and investment income is reduced",
+          "value": 750,
+          "unit": "basis_points",
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    }
+  ]
+}

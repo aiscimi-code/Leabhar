@@ -100,12 +100,30 @@ tax, import VAT is VAT and customs. `listTaxRulesByHead` reads them.
 the official file's URL and SHA-256, its provisions' verbatim excerpts, and
 the rules derived from them with their quotes, links and expert review. The
 official file is kept beside the entry byte for byte (`s046.json`,
-`s046.html`); the gate re-checks its hash, and a provision's provenance
+`s046.html`; `vatca-2010-enacted.json`, `vatca-2010-enacted.pdf`); the gate re-checks its hash, and a provision's provenance
 re-hashes it (AGENTS.md #5).
 `npm run catalogue:extract -- <entry>` writes one from the official page;
 `catalogue.test.ts` fails the gate when an entry no longer matches what the
-curation derives. All 39 loaded LRC-revised VATCA sections are in it; the
-other sources wait on #556.
+curation derives. All 39 loaded LRC-revised VATCA sections, Schedules
+1-3, VATCA 2010 as enacted, the Finance Acts 2024 and 2025 as enacted,
+TCA 1997 ss.530, 530A, 530E, 530G, 530H, 530I and 284, Finance Act
+2003 s.23, and Revenue's RCT manuals (TDM 18-02-04, -05, -11; each one
+whole-document provision, from its PDF by `pdfplumber_to_text.py`) are in
+it; the other sources wait on #556. Each of ss.530A-530I
+is its own source with FA 2011 s.20's page beside it, cut from that page
+at its heading. A provision can carry its Chapter (`chapter`).
+An entry can state the source's own publication and commencement dates
+(the enacted Act's 1 November 2010) and a note; a provision can carry the
+sections it cites (`amendsSection`), which the dependency graph reads, and
+for a Finance Act the Act it amends (`principalAct`), the Acts it names
+(`citedActs`) and the words that say when it takes effect (`effectiveClue`),
+from which `deriveTaxRules` dates a rule.
+The enacted Acts' excerpts are the parse the statute copies gave, including
+the next section's heading at the end of each (#701, #703). A Schedule entry holds one
+provision per paragraph, with its Part, and its paragraph windows are read
+from the LRC page kept beside it. Its page is the one the parser was
+verified against: the LRC's re-rendered pages break lines where the
+line-based schedule parser misreads them (#699).
 
 A quote matches its provision word for word, ignoring line breaks and
 quote-mark style (`containsIgnoringLayout`): the LRC re-renders its pages
@@ -125,6 +143,34 @@ around the quoted words) and `vat.flat_rate_farmer_purchase` (Finance Act
 2016 s.47 changed the s.86(1) percentage, a separate fact) (#695). A quote of
 inserted or replaced words does not take it.
 
+Every source the knowledge base loads is now a catalogue entry (#556); no
+statute copy in `docs/statutes/` is read at run time.
+
+A book that loaded a source from its statute copy before the port keeps
+that source, since its words are the same. Once the copy is gone, its
+footnotes and page are read from the entry with the same citation and words
+(`catalogueEntryForSource`), so its rules keep their dates (#698).
+
+A copy whose words are not the entry's is superseded explicitly
+(`catalogueSupersession.ts`, #706). The copy lost a quote, kept its
+transcript's Markdown marks, or was edited by hand. Punctuation alone is
+never treated as the same words. The entry loads as a source beside the
+copy, and the copy is kept as it was. Each rule on the copy moves to the
+entry's provision for the same section when that provision still holds the
+rule's words, layout aside. A rule whose words are gone stays on the copy,
+and its derivation then supersedes it with a new version.
+
+A review item records the difference:
+
+- `catalogue-punctuation:<citation>` (info) when the letters and digits are
+  the same;
+- `catalogue-wording:<citation>` (warning) when the words differ.
+
+Derivations read the catalogue source when both are held
+(`preferredSourceId`, `catalogueSourcesFirst`), and so do cross-references
+(`dependencies.ts`). A citation's `cites` links therefore move to the
+entry's provisions, and the copy's links are withdrawn.
+
 A book numbers a rule's versions as it derives them, so a book that held a
 version before it was corrected numbers the correction 2 where a new book
 has it as 1. `checkCatalogueVersions` matches a book's version to the
@@ -132,10 +178,21 @@ catalogue by what it says (dates and quote), not by its number.
 
 **Source drift.** `npm run cli:rules -- verify-sources [--entry <e>] [--trace]`
 fetches each entry's official file (online, only when asked) and reports it
-unchanged, changed or unreachable, naming each rule version whose quote is no
+unchanged, changed (or, for a page with page state, `page_state_only`) or unreachable, naming each rule version whose quote is no
 longer in the text. `--trace` raises a review item for every rule taken from
 a changed source and every rule relying on one (`sourceDrift.ts`); nothing is
 edited, and an approval stands only against the hash it was given on.
+
+An entry's `source.sha256` is always the hash of the bytes fetched. A page
+that carries page state also records `contentSha256`: the hash of the same
+bytes with only the values of that state emptied (`withoutPageState`,
+`catalogue.ts`). The state is ASP.NET's `__VIEWSTATE`,
+`__VIEWSTATEGENERATOR` and `__EVENTVALIDATION` fields (revenue.ie, #713),
+and the Dynatrace `data-dtconfig` attribute, whose agent and page ids change
+with every request (EUR-Lex, #714). Those values rotate while the page stays
+the same, so when the bytes differ but the content hash still matches, the
+report is `page_state_only` and nothing is traced. When the content hash
+differs too, the source is `changed` and its quotes are checked as above.
 
 **Stated periods.** A version whose dates its own quote does not state
 names the words that do (`statedPeriod`, `vatcaRevisedCuration.ts`): the
@@ -294,7 +351,10 @@ the result of the last run (`lastRunAt`/`lastRunPassed`).
 
 ## Ingestion pipeline
 
-`src/domain/rules/statuteParser.ts` parses the Finance Act 2024 Markdown
+`src/domain/rules/statuteParser.ts` parses the Finance Acts 2024 and 2025,
+as `pdftotext -layout` lays out the Irish Statute Book PDF (the catalogue
+extraction runs it; the entries under `catalogue/finance-act-2024/` and
+`catalogue/finance-act-2025/` keep the PDF beside them),
 *textually*, never semantically: it locates each `^<num>. ` section, and the
 heading printed on its own line (occasionally wrapped across two) directly
 *above* the section number in this Act's layout — verified against the actual
@@ -363,7 +423,10 @@ to parseable text needed its own, reusable step:
   different dash glyph — a font detail, not a content error), and the
   verbatim-excerpt test below has never needed a `provisionText` workaround
   since. Schedules remain out of scope.
-- `src/domain/rules/vatcaParser.ts` — parses the converted Markdown, reusing
+- `src/domain/rules/vatcaParser.ts` — parses the converted text into the
+  catalogue entry `catalogue/vatca-2010/vatca-2010-enacted.json` (written by
+  `npm run catalogue:extract -- vatca-2010/vatca-2010-enacted`, which runs
+  the converter on the PDF; #556), reusing
   `statuteParser.ts`'s generic (source-independent) `categoriseProvision`,
   `assessRelevance` and `provisionSlug` rather than re-implementing them.
 - `src/domain/rules/vatcaCuration.ts` — hand-authored rules for 5 sections
@@ -382,11 +445,13 @@ to parseable text needed its own, reusable step:
   the caller supplies no direct establishment determination — "established
   outside the State" is a multi-factor legal test (EU Reg 282/2011
   arts.10-11), not a country-code test; see issue #136 bug 4 / issue #138
-  and docs/statutes/282-2011/articles-10-13b-establishment.md).
+  and catalogue/eu-282-2011/consolidated-2025-04-14.json).
   Every `statementExcerpt` is verified (`vatcaParser.test.ts`) to be a
-  verbatim substring of the parsed provision text.
-- `src/domain/rules/vatcaIngestion.ts` — `ingestVatca2010`/`deriveVatcaRules`,
-  mirroring the Finance Act functions' idempotency and versioning.
+  verbatim substring of its section's excerpt in the catalogue entry.
+- `src/domain/rules/vatcaIngestion.ts` — `ingestVatca2010FromCatalogue`
+  (what the knowledge base loads), `ingestVatca2010` (a Markdown copy given
+  to the CLI with `--file`) and `deriveVatcaRules`, mirroring the Finance Act
+  functions' idempotency and versioning.
 
 A real bug surfaced by adding this second source, fixed before it shipped:
 `deriveTaxRules`/`deriveVatcaRules` originally looked up "the provision for
@@ -426,9 +491,10 @@ never conflated with it:
   mid-sentence too — so, exactly like `vatcaParser.ts`, a paragraph's extent
   is found by locating every paragraph-opening *line* and slicing to just
   before the next one, never by grouping blank-line-delimited blocks.
-- `src/domain/rules/vatcaScheduleIngestion.ts` — `ingestVatcaSchedule`/
+- `src/domain/rules/vatcaScheduleIngestion.ts` — `ingestVatcaScheduleFromCatalogue`
+  (or `ingestVatcaSchedule` for a Markdown copy) and
   `deriveVatcaScheduleRules`, ingesting each Schedule under its own citation
-  (`2010 Act 31 Sch.2` / `Sch.3`, read from the file's own front matter) as
+  (`2010 Act 31 Sch.2` / `Sch.3`) as
   its own `irish_knowledge_sources` row — never merged into `2010 Act 31`
   (the principal Act's citation), and scoped so that Schedule 2's paragraph 9
   (printed matter) is never confused with Schedule 3's own, unrelated
@@ -479,7 +545,9 @@ independent tax from every source above (`docs/statutes/rct/README.md`).
   `tca1997SectionParser.ts` doesn't match this source's shape as-is. Only
   the six load-bearing sections are ingested; the other sixteen (530B-D,
   530J-V — registration, returns, assessment, penalties, record-keeping)
-  exist verbatim on disk for a future pass.
+  exist verbatim on disk for a future pass. The six loaded sections are now
+  in the rules catalogue (#556): each entry keeps FA 2011 s.20's page and
+  `catalogue:extract` cuts its section from it.
 - **Revenue TDM Part 18-02-04** (`revenue_guidance`) — "RCT for Principal
   Contractors", still the only verbatim source this KB holds for the
   2011-restructured payment-notification *procedure* (ss.530B/530C are
@@ -947,7 +1015,8 @@ generic pipeline rather than a one-off module:
   s53.md` exists verbatim on disk for the trail but is not ingested — no
   rule needs to state a superseded, decades-stale figure. `capitalAllowances
   Ingestion.ts` reuses `parseTca1997Section` directly for the FA 2003 s.23
-  file (same one-section-per-file, bare-`"N."`-opener shape as `s530.md`),
+  file (same one-section-per-file, bare-`"N."`-opener shape as s.530; both
+  are now read from their pages in the rules catalogue, #556),
   since that parser's logic is structural, not TCA-1997-specific — only the
   knowledge-source citation/URL metadata needed a small dedicated ingestion
   function, `ingestFinanceAct2003S23`. A companion Revenue TDM
@@ -963,7 +1032,8 @@ The first statutory instrument (secondary legislation, not an Act) ingested
 into the KB, and a new whole-document parser shape:
 
 - `src/domain/rules/si639Parser.ts` — parses the entire 47-regulation as-made
-  document at `docs/statutes/si-639-2010/2010-si-639.md` in one pass, the
+  document (the Irish Statute Book page as converted; the knowledge base reads
+  the result from `catalogue/si-639-2010/2010-si-639.json`, #556) in one pass, the
   same "many provisions, one file" shape as the VATCA Schedules parser
   (`vatcaScheduleParser.ts`), reusing its line-based extent-finding for a
   bare `"N."` regulation opener. Unlike the Schedules, this document also has
@@ -1005,12 +1075,15 @@ The first source where the local Markdown transcript is only **partly**
 verbatim, and the KB's handling of that is deliberate rather than an
 oversight:
 
-- `docs/statutes/si-156-2012/2012-si-156.md` quotes Regulations 1, 2 and 4 of
-  the instrument in full, official-text form, but Regulation 3 has no body at
-  all in the file and Regulations 5-9 are replaced with a single editorial
-  summary sentence ("5–9. Capacity exclusions, Appeal Commissioners review,
+- The statute copy (`docs/statutes/si-156-2012/2012-si-156.md`, since
+  replaced by `catalogue/si-156-2012/2012-si-156.json`, #556) quoted
+  Regulations 1, 2 and 4 of the instrument in full, official-text form, but
+  Regulation 3 had no body at all in the file and Regulations 5-9 were
+  replaced with a single editorial summary sentence ("5–9. Capacity exclusions, Appeal Commissioners review,
   revocation of exclusion, and electronic payment timing rules as in the
-  official instrument."). That sentence is a paraphrase, not a source.
+  official instrument."). That sentence is a paraphrase, not a source. The
+  catalogue entry holds the same three regulations, which books already
+  hold, from the official page; that page has all nine (#705).
 - `src/domain/rules/si156Parser.ts` never emits a provision for the
   placeholder section — its numbered-opener regex requires a period after
   the leading digits ("N. "), which "5–9." (an en-dash, not a period) does
@@ -1025,7 +1098,7 @@ oversight:
   that a Regulation 5 "capacity" exclusion exists (insufficient internet
   access, or an individual prevented by age/infirmity), **without** stating
   what specifically qualifies for it, because that text is exactly the part
-  this local file only summarises rather than quotes — asserting the actual
+  the statute copy only summarised rather than quoted — asserting the actual
   criteria would mean inventing text this KB does not hold. (A companion
   rule sourced from Revenue's own guidance now states those criteria in
   full — see "Revenue TDM 38-01-03b (Mandatory E-Filing Exclusion)" below.)
@@ -1050,7 +1123,9 @@ issue #130:
   document) as its boundary — the same targeted approach
   `vatcaRevisedSectionParser.ts` uses for a single VATCA section. It is
   generic over the regulation number, so `si692025Ingestion.ts` calls it
-  for Regulations 5, 7, 8 and 9 from the same already-fetched file, each
+  for Regulations 5, 7, 8 and 9 from the same already-fetched file (the
+  knowledge base now reads all four from one rules catalogue entry,
+  `catalogue/si-69-2025/2025-si-69.json`, #556), each
   becoming its own `irish_act_provisions` row under one shared
   `irish_knowledge_sources` row (same citation, same content hash — it is
   one physical instrument; the ingestion's idempotency check is scoped to
@@ -1170,9 +1245,9 @@ right:
 - `src/domain/rules/tdm3801_03bParser.ts` extracts one named passage —
   "Exclusion from Mandatory Electronic Filing and Payment of Tax" — from
   Revenue's 40+ page "Guidelines for VAT Registration" TDM
-  (`docs/statutes/tdm-38-01-03b/38-01-03b.md`, genuinely verbatim: a real
-  `source_pdf_sha256` from a `pdfplumber`-extracted PDF, not a hand-written
-  summary). The passage repeats byte-identically four times in the source
+  (the rules catalogue entry `catalogue/tdm-38-01-03b/38-01-03b.json`, with
+  Revenue's PDF beside it, converted by `pdfplumber`, not a hand-written
+  summary; #556). The passage repeats byte-identically four times in the source
   document (once per registrant-type scenario — resident/non-resident
   individual/company); the parser verifies all four match before extracting
   the first, and throws rather than silently picking one if they ever
@@ -1185,8 +1260,8 @@ right:
   reg.4's mandatory-electronic-filing obligation.
 - This is exactly the gap "S.I. 156/2012 (Mandatory Electronic Filing)"
   above explicitly left open: reg.5's own "capacity" exclusion criteria are
-  not restated in this KB because the local si-156-2012 transcript only
-  summarises regs 5-9 rather than quoting them. Revenue's own current
+  not restated in this KB because the statute copy of S.I. 156/2012 only
+  summarised regs 5-9 rather than quoting them (#705). Revenue's own current
   guidance states the same criteria and the application procedure, verbatim
   and independently — a different, lower-ranked source (`revenue_guidance`,
   not `legislation` — see "Source hierarchy" below) than the Regulation
@@ -1519,8 +1594,8 @@ depends <ruleKey>           What a rule relies on: rules, and the provisions beh
   curated. Regulation 5's actual "capacity" exclusion criteria are not
   restated anywhere in this KB: the curated rule's `exceptions` records that
   an exclusion regime exists without asserting what qualifies for it, since
-  that text is exactly the part this local file only summarises rather than
-  quotes verbatim.
+  that text is exactly the part the statute copy only summarised rather than
+  quoted verbatim (#705).
 - **VATCA's conditions are curated, not mechanically extracted — and this is
   recorded, not glossed over.** Mapping "a supplier established outside the
   State" onto `supplierEstablishedOutsideStateResolved` (itself a caller's
@@ -1635,8 +1710,8 @@ paraphrase, and flagged rather than guessed past:**
   exemptions for savings bonuses/betting winnings/certain settlements) —
   but **none carries a `source_pdf_sha256`/`source_html_sha256` or a
   `conversion:` marker** the way every other genuinely verbatim source in
-  this KB does (compare `docs/statutes/tca-1997/s530.md` or `s284.md`,
-  which do). This KB's verbatim-only policy is about provable provenance,
+  this KB does (compare s.530 or s.284, whose copies did; both are now
+  read from their pages in the rules catalogue). This KB's verbatim-only policy is about provable provenance,
   not just plausible-looking prose, so these five are **not** ingested
   despite reading like the real thing. s.288 in particular (capital
   allowances balancing mechanics) would be a genuine curation candidate if
@@ -1671,11 +1746,10 @@ which carries no source hash and cannot back a curated rule under this KB's
 verbatim-only policy.
 
 - Eight sections fetched verbatim from the LRC-revised Companies Act 2014
-  (`docs/statutes/companies-act-2014/s282.md`, `s280A.md`, `s280D.md`,
-  `s280E.md`, `s352.md`, `s358.md`, `s359.md`, `s360.md`), each with a real
-  `source_html_sha256`, via a new `extract_companies_act_2014()` in
-  `docs/statutes/scripts/extract_vat_sources.py` — the same per-section LRC
-  fetch shape `vatca-2010-revised/` already uses. s.359(3)-(12) are genuine
+  (ss.282, 280A, 280D, 280E, 352, 358, 359 and 360; later fourteen more), the
+  same per-section LRC shape `vatca-2010-revised/` uses. Each is now a rules
+  catalogue entry, `catalogue/companies-act-2014/s<N>.json`, with its LRC page
+  beside it (#556). s.359(3)-(12) are genuine
   LRC deletions (superseded by the 2016/2017 statutory-audit restructuring),
   rendered as bare "…" in the fetched text; nothing is curated from them.
 - `src/domain/rules/companiesAct2014SectionParser.ts` — a new parser shape:
@@ -1683,11 +1757,11 @@ verbatim-only policy.
   with no em-dash at all (unlike VATCA's `"46\n.—(1)"` convention, which
   never matches here), verified against all eight fetched files.
 - `src/domain/rules/companiesAct2014Ingestion.ts` —
-  `ingestCompaniesAct2014Section`/`ingestAllCompaniesAct2014Sections`/
-  `deriveCompaniesAct2014Rules`, mirroring `vatcaRevisedIngestion.ts`'s
-  idempotency and per-section-as-its-own-source discipline; wired into the
-  CLI as `--source companies-act-2014` (ingests all eight; no single
-  default file to point `--file` at).
+  `ingestCompaniesAct2014FromCatalogue`/`ingestCompaniesAct2014Section` (one
+  section from a Markdown copy)/`deriveCompaniesAct2014Rules`, mirroring
+  `vatcaRevisedIngestion.ts`'s per-section-as-its-own-source discipline;
+  wired into the CLI as `--source companies-act-2014` (every section from the
+  catalogue; `--file` ingests one).
 - `src/domain/rules/companiesAct2014Curation.ts` — ten rules from six of the
   eight sections: the s.280A small-company 2-of-3 test's three independent
   limbs (turnover €15m, balance sheet €7.5m, employees 50) as three separate
@@ -1823,7 +1897,7 @@ this KB independently confirmed against the LRC-revised text for "VATCA
 lettered 9% carve-outs — (ca), (caa), (cab), (cac), (cb) — "each needs the
 same care as the headline rates". Both source documents this needed were
 already ingested (s.46, now `catalogue/vatca-2010-revised/s046.json`, for the carve-outs
-themselves, `vatca-2010-revised/schedule-3.md` for what each one's Schedule
+themselves, `catalogue/vatca-2010-revised/schedule-3.json` for what each one's Schedule
 3 references actually cover), so this closes the gap without any new
 ingestion.
 
@@ -1912,7 +1986,7 @@ This supersedes the rule keys and gaps described in the two sections above.
   - `vat.rate_hospitality` (Sch.3 3(1), 3(3)) and `vat.rate_hairdressing`
     (13(3)): 9% under (cb), November 2020 to August 2023; 13.5% from January
     2025 to June 2026; 9% from 1 July 2026 under Finance Act 2025 s.71, cited
-    from `docs/statutes/finance-act-2025`.
+    from its catalogue entry (`catalogue/finance-act-2025/`).
   - The (ca) categories (periodicals, sporting facilities, heat pumps) start
     on 1 January 2025 (F101), not the retrieval date.
 - **Retired keys** (`RETIRED_S46_RULE_KEYS`):
@@ -1935,24 +2009,34 @@ There is no LRC revised TCA 1997, so Revenue's Notes for Guidance (NfG) on the
 TCA 1997, Finance Act 2025 edition, are the current statement of each section.
 They are a source family of their own:
 
-- Each part is one `revenue_guidance` knowledge source, kept as a pdftotext
-  conversion in `docs/statutes/tca-1997-nfg/partNN.md`. Guidance ranks below
-  the Act (see "Source hierarchy"), and every rule quoting it says so.
+- Each part is one `revenue_guidance` knowledge source, a rules catalogue
+  entry (`catalogue/tca-1997-nfg/partNN.json`, with Revenue's PDF beside it;
+  the excerpts are its `pdftotext -layout` conversion, #556). Guidance ranks
+  below the Act (see "Source hierarchy"), and every rule quoting it says so.
 - `tcaNfgParser.ts` cuts one provision per section note. It reads a left-margin
   heading followed by "Summary", "Details" or "Definitions" as a note; the
   indented contents list is skipped. A section the contents list names is a
   note even without those words (a repealed section's note is a sentence or
-  two). A test requires every part's parsed sections to equal its contents list,
-  so a note can no longer be merged into the one before it (issue #287).
-- `tcaNfgIngestion.ts` ingests the sections `NFG_SECTIONS` lists, and
+  two). The catalogue extraction refuses a part whose parsed sections differ
+  from its contents list, so a note can no longer be merged into the one
+  before it (issue #287); a test checks the same on two converted parts.
+- Each part's entry holds the sections `NFG_SECTIONS` lists (`tcaNfgIngestion.ts`), and
   `corporationTaxCuration.ts` curates rules from them. Each `statementExcerpt`
   is verbatim from the note (a test checks it). These rules carry no transaction
   conditions: the corporation tax computation cites them and reads its rates
   from them.
 - `incomeTaxCuration.ts` holds the income tax, USC and PRSI Class S rules for
   sole traders and partners. They quote the Finance Acts, the LRC revised Social
-  Welfare Consolidation Act 2005 and NfG Part 18D. `incomeTaxIngestion.ts`
-  ingests the SWCA sections and derives every curated rule. PAYE is out of scope.
+  Welfare Consolidation Act 2005 and NfG Part 18D. The SWCA sections (ss.20-23)
+  are rules catalogue entries, `catalogue/swca-2005/s<N>.json`, each with its
+  LRC page beside it (#556). S.I. 312/1996 art. 92 is
+  `catalogue/si-312-1996/art92.json` (#712). It is cut from the LRC page of the
+  whole instrument before conversion (`lrc_html_to_text.py --section`), and the
+  F292 note that dates the €5,000 from 1 January 2011 is its effective clue,
+  not part of its words. A curated quote is matched word for word, layout
+  aside (`containsIgnoringLayout`). The Class S rate is quoted and dated from SWMPA 2024 s.3, not the
+  revised s.21, and a contribution year the rate changes in is charged at
+  each rate on its own part of the year's income (#711). `incomeTaxIngestion.ts` derives every curated rule. PAYE is out of scope.
 - A figure that changes is a **version-chained** rule family outside VAT too:
   one `ruleKey`, each version dated from the year its Act says, each
   superseding the one before it, only the latest `active`. A later Act's

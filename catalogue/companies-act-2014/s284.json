@@ -1,0 +1,49 @@
+{
+  "format": 1,
+  "source": {
+    "citation": "2014 Act 38 s.284",
+    "title": "Companies Act 2014 s.284 (revised)",
+    "sourceType": "legislation",
+    "jurisdiction": "IE",
+    "sourceUrl": "https://revisedacts.lawreform.ie/eli/2014/act/38/section/284/revised/en/html",
+    "sha256": "b80307c9c7524f6598051ee9cc038ad3998e086c09b6cb59cda11614b81a4011",
+    "conversion": "lrc-html-plaintext",
+    "retrievedOn": "2026-10-06",
+    "note": "LRC-revised text as retrieved — a live, continuously-updated page, not a dated historical snapshot. Distinct source row per section, never merged with any other Companies Act 2014 section."
+  },
+  "provisions": [
+    {
+      "sectionNumber": "284",
+      "heading": "Access to accounting records",
+      "locator": "s.284",
+      "category": "other",
+      "relevant": true,
+      "relevanceReason": "Curated: mapped to a rule in companiesAct2014Curation.ts, overriding the other category default.",
+      "excerpt": "284.\n(1) A company shall make its accounting records, and any information and returns\nreferred to in\nsection 283\n(2)\n, available in an official language of the State at all reasonable times for inspection\nwithout charge by the officers of the company and by other persons entitled pursuant\nto this Act to inspect the accounting records of the company.\n\n(2) Where accounting records or any information and returns referred to in section\n\n283\n(2)\nare kept in the manner referred to in\nsection 282\n(5)(b)\nthe obligation under\nsubsection (1)\nshall be read as including a requirement the company secure that the records or information\nare converted, without charge, into written form in an official language of the State\nif the person making the request so requests.\n\n(3) No member (not being a director) shall have any right of inspecting any financial\nstatement or accounting record of the company except—\n\n(a) as conferred by statute or by the company’s constitution, or\n\n(b) authorised by the directors under\nsubsection (4)\nor by the company in general meeting.\n\n(4) The directors of a company shall from time to time determine whether and to what\nextent and at what times and places and under what conditions or regulations the financial\nstatements and accounting records of the company or any of them shall be open to the\ninspection of its members, not being directors of the company."
+    }
+  ],
+  "rules": [
+    {
+      "key": "company.accounting_records_access",
+      "sectionNumber": "284",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2015-06-01",
+          "effectiveTo": null,
+          "quote": "shall make its accounting records, and any information and returns\nreferred to in\nsection 283\n(2)\n, available",
+          "value": null,
+          "unit": null,
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    }
+  ]
+}

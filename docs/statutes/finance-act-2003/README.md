@@ -8,6 +8,13 @@ jurisdiction: IE
 
 Binding source for the current TCA 1997 s.284 wear-and-tear *rate* (issue #132).
 
+The knowledge base loads it from the rules catalogue (#556):
+`catalogue/finance-act-2003/s23.json`, with the Irish Statute Book page
+(https://www.irishstatutebook.ie/eli/2003/act/3/section/23/enacted/en/html)
+kept beside it, hash-checked by the gate. The Markdown copy that was here
+is removed. The entry is written by
+`npm run catalogue:extract -- finance-act-2003/s23`.
+
 - **s.23(1)(a)(ii)** inserts TCA s.284(2)(ad): **12.5 per cent** of actual cost, expenditure on or after **4 December 2002**, straight-line (8 years).
 - **s.23(2)** applies the section as on and from 4 December 2002.
 - Carve-outs in (ad): fishing vessels in s.284(3A); taxis / short-term hire cars in s.286; binding written contracts before 4 December 2002 with expenditure by 31 January 2003.

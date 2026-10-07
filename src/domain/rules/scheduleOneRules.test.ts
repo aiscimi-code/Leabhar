@@ -19,7 +19,7 @@ import type { AppDatabase } from '@/db';
  * flagged, not rated.
  */
 
-const html = readFileSync(new URL('../../../docs/statutes/vatca-2010-revised/schedule-1.html', import.meta.url), 'utf8');
+const html = readFileSync(new URL('../../../catalogue/vatca-2010-revised/schedule-1.html', import.meta.url), 'utf8');
 
 describe('quotedTextWindow: the window of the words a rule quotes', () => {
   it('dates unamended words from the Act\'s commencement, even in a paragraph amended in 2025', () => {

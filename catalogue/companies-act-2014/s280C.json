@@ -1,0 +1,26 @@
+{
+  "format": 1,
+  "source": {
+    "citation": "2014 Act 38 s.280C",
+    "title": "Companies Act 2014 s.280C (revised)",
+    "sourceType": "legislation",
+    "jurisdiction": "IE",
+    "sourceUrl": "https://revisedacts.lawreform.ie/eli/2014/act/38/section/280C/revised/en/html",
+    "sha256": "30c79155e7b0dd192ee56a7cd541450cf8e56081cdc706b5c83e63be58f98634",
+    "conversion": "lrc-html-plaintext",
+    "retrievedOn": "2026-10-06",
+    "note": "LRC-revised text as retrieved — a live, continuously-updated page, not a dated historical snapshot. Distinct source row per section, never merged with any other Companies Act 2014 section."
+  },
+  "provisions": [
+    {
+      "sectionNumber": "280C",
+      "heading": "Small companies regime",
+      "locator": "s.280C",
+      "category": "other",
+      "relevant": false,
+      "relevanceReason": "Uncategorised by heading/body keyword match; needs human review to determine relevance.",
+      "excerpt": "280C.\nWhere a company qualifies as a small company in accordance with\nsection 280A\nor\n280B\n, as may be appropriate, then, as provided in this Part, different rules may be applied\n(in this Act referred to as the \"small companies regime\") to the company in respect\nof financial statements and reports for a financial year in relation to which that\ncompany so qualifies as a small company."
+    }
+  ],
+  "rules": []
+}

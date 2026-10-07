@@ -1,0 +1,49 @@
+{
+  "format": 1,
+  "source": {
+    "citation": "2014 Act 38 s.352",
+    "title": "Companies Act 2014 s.352 (revised)",
+    "sourceType": "legislation",
+    "jurisdiction": "IE",
+    "sourceUrl": "https://revisedacts.lawreform.ie/eli/2014/act/38/section/352/revised/en/html",
+    "sha256": "1d6b9605f77a155572ad21eb0bcf9d6a1ad1cb43481a991833f2ec6e22b4b470",
+    "conversion": "lrc-html-plaintext",
+    "retrievedOn": "2026-10-06",
+    "note": "LRC-revised text as retrieved — a live, continuously-updated page, not a dated historical snapshot. Distinct source row per section, never merged with any other Companies Act 2014 section."
+  },
+  "provisions": [
+    {
+      "sectionNumber": "352",
+      "heading": "Exemption from filing certain information for small and medium companies",
+      "locator": "s.352",
+      "category": "exemption",
+      "relevant": true,
+      "relevanceReason": "Substantive exemption provision; potentially bears on transaction treatment.",
+      "excerpt": "352.\n(1) The exemption in\nsubsection (2)\nis available for a company that\n—\n\n(a) qualifies for the small companies regime (or the micro companies regime), and\n\n(b) has not elected to prepare group financial statements in accordance with\nsection 293\n.\n\n(2) That exemption is an exemption from the requirement in\nsection 347\nto annex to the company\n’\ns annual return the following documents:\n\n(a) the statutory financial statements of the company;\n\n(b) the directors\n’\nreport (except where that company qualifies for the micro companies regime and has\nnot elected to prepare the directors\n’\nreport);\n\n(c) the statutory auditors\n’\nreport on those financial statements and that directors\n’\nreport.\n\n(3) If a company that qualifies for the small companies regime or the micro companies\nregime avails itself of the exemption provided by this section, it shall instead annex\nto its annual return a copy of each of the following documents:\n\n(a) abridged financial statements prepared in accordance with\nsection 353\nand which have been approved and signed in accordance with\nsection 355\n;\n\n(b) a special statutory auditors\n’\nreport prepared in accordance with\nsection 356\n.\n\n(4) A reference in\nsubsection (3)\nto a copy of a document is a reference to a copy that satisfies the following conditions:\n\n(a) it is a true copy of the original save for the difference that the signature or\nsignatures on the original, and any date or dates thereon, shall appear in typeset\nform on the copy;\n\n(b) it is accompanied by a certificate of a director and the secretary of the company,\nthat bears the signature of the director and the secretary in electronic or written\nform, stating that the copy is a true copy of the original (and one such certificate\nrelating to all of the documents mentioned in\nsubsection (3)\nsuffices and the foregoing statement need not be qualified on account of the difference\npermitted by\nparagraph (a)\nas to the form of a signature or of a date)."
+    }
+  ],
+  "rules": [
+    {
+      "key": "company.abridged_filing_exemption",
+      "sectionNumber": "352",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2026-09-20",
+          "effectiveTo": null,
+          "quote": "That exemption is an exemption from the requirement in\nsection 347\nto annex to the company",
+          "value": null,
+          "unit": null,
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    }
+  ]
+}

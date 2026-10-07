@@ -5,19 +5,36 @@
  *   npm run catalogue:extract -- vatca-2010-revised/s046
  *   npm run catalogue:extract -- vatca-2010-revised/s046 --html saved.html --retrieved-on 2026-09-29
  *   npm run catalogue:extract -- vatca-2010-revised/s009 vatca-2010-revised/s010 --html-dir pages/
+ *   npm run catalogue:extract -- vatca-2010-revised/schedule-2
+ *   npm run catalogue:extract -- vatca-2010/vatca-2010-enacted --html vatca.pdf
+ *   npm run catalogue:extract -- finance-act-2024/2024-act-43-enacted
+ *   npm run catalogue:extract -- tca-1997-nfg/part02
+ *   npm run catalogue:extract -- swca-2005/s21
+ *   npm run catalogue:extract -- si-312-1996/art92
+ *   npm run catalogue:extract -- tdm-11-00-01/11-00-01
+ *   npm run catalogue:extract -- si-345-2018/2018-si-345 si-510-2018/2018-si-510 --html-dir files/
+ *   npm run catalogue:extract -- vat3-rtd/completing-vat3-return vat3-rtd/VAT-RTD-S76
+ *   npm run catalogue:extract -- ebriefs/no-168-25
+ *   npm run catalogue:extract -- eu-282-2011/consolidated-2025-04-14
  *
  * Several entries are extracted together: every entry's source and
  * provisions are written first, then the knowledge base is loaded once and
  * each entry's rules are written (a rule can rely on another entry's).
  * `--html-dir` holds a saved copy of each page, named after the entry's last
- * part (`s009.html`). `--lrc-annotations` keeps the page's amendment
+ * part (`s009.html`; `vatca-2010-enacted.pdf` for a PDF source). `--lrc-annotations` keeps the page's amendment
  * footnotes in the entry (see `annotates`).
  *
  * 1. Fetch the official page (or read `--html`, a copy saved from the same
  *    URL) and keep it beside the entry, byte for byte (`s046.html`): the
  *    entry records its hash, and the gate re-checks it.
- * 2. Convert it to text (lrc_html_to_text.py) and parse it with the same
- *    parser the rules were curated against.
+ * 2. Convert it to text (lrc_html_to_text.py, with --paragraphs for S.I.
+ *    156/2012; revenue_html_to_text.py for a revenue.ie page;
+ *    eurlex_html_to_text.py for a EUR-Lex consolidated text;
+ *    convert-statute-pdf.ts for the
+ *    VATCA PDF, `pdftotext -layout` for a Finance Act's or a Notes for
+ *    Guidance part's, pdfplumber_to_text.py
+ *    for a Revenue manual's) and parse it with
+ *    the same parser the rules were curated against.
  * 3. Write the entry's source and provisions, load the knowledge base into a
  *    throwaway book from it, and write the rules the curation derives, with
  *    their links. An approval in the previous entry is kept only for a version
@@ -36,18 +53,63 @@ import { dirname, join } from 'node:path';
 import { createTestDatabase } from '@/db/testing';
 import { createCompany } from '@/domain/config/setup';
 import {
-  CATALOGUE_FORMAT, catalogueEntryPath, catalogueOfficialFilePath, catalogueRulesFor, serialiseCatalogueEntry, validateCatalogueEntry,
-  type CatalogueEntry,
+  CATALOGUE_FORMAT, catalogueEntryPath, contentSha256Of, catalogueOfficialFilePath, catalogueRulesFor, serialiseCatalogueEntry, validateCatalogueEntry,
+  type CatalogueEntry, type CatalogueOfficialExtension,
 } from '@/domain/rules/catalogue';
 import { loadStatutoryKnowledgeBase } from '@/domain/rules/knowledgeBase';
 import { ruleImpact } from '@/domain/rules/ruleImpact';
 import { parseVatcaRevisedSection } from '@/domain/rules/vatcaRevisedSectionParser';
 import { vatcaRevisedRelevance } from '@/domain/rules/vatcaRevisedIngestion';
+import { parseVatcaSchedule } from '@/domain/rules/vatcaScheduleParser';
+import { vatcaScheduleRelevance } from '@/domain/rules/vatcaScheduleIngestion';
+import { parseVatca2010 } from '@/domain/rules/vatcaParser';
+import { VATCA_2010, VATCA_2010_ENACTED_NOTE, vatca2010Relevance } from '@/domain/rules/vatcaIngestion';
+import { parseFinanceAct2024 } from '@/domain/rules/statuteParser';
+import { parseTca1997Section, type ParsedTcaSection } from '@/domain/rules/tca1997SectionParser';
+import { parseFinanceAct2011RctSection } from '@/domain/rules/financeAct2011RctSectionParser';
+import {
+  RCT_FA2011_CITED_ACTS, RCT_FA2011_NOTE, RCT_FA2011_PRINCIPAL_ACT, RCT_FA2011_SECTIONS, RCT_TDM_NOTE, RCT_TDM_SOURCES,
+  TCA_1997_S530, rctFa2011Relevance, rctFa2011Title, rctTdmRelevance, tca1997S530Relevance,
+  type RctFa2011SectionKey, type RctTdmKey,
+} from '@/domain/rules/rctIngestion';
+import { TCA_1997_AS_ENACTED_FROM, TCA_1997_AS_ENACTED_NOTE, tca1997SectionRelevance } from '@/domain/rules/tca1997Ingestion';
+import { CAPITAL_ALLOWANCES_CURATED_SECTIONS, FINANCE_ACT_2003 } from '@/domain/rules/capitalAllowancesIngestion';
+import {
+  FINANCE_ACT_2024, FINANCE_ACT_2025, enactedActRelevance, financeAct2024CuratedReason, financeAct2025CuratedReason,
+  type KnowledgeSourceRef,
+} from '@/domain/rules/irishRules';
+import { parseSi639 } from '@/domain/rules/si639Parser';
+import { SI_639, si639Relevance } from '@/domain/rules/si639Ingestion';
+import { parseSi156 } from '@/domain/rules/si156Parser';
+import { SI_156, si156Relevance } from '@/domain/rules/si156Ingestion';
+import { parseSi692025Regulation } from '@/domain/rules/si692025Parser';
+import { SI_69_2025, SI_69_2025_REGULATIONS, si692025RelevanceReason } from '@/domain/rules/si692025Ingestion';
+import { extractCapacityExclusionSection } from '@/domain/rules/tdm3801_03bParser';
+import { parseCompaniesAct2014Section } from '@/domain/rules/companiesAct2014SectionParser';
+import { COMPANIES_ACT_2014_NOTE, companiesAct2014Relevance } from '@/domain/rules/companiesAct2014Ingestion';
+import { TDM_38_01_03B } from '@/domain/rules/tdm3801_03bIngestion';
+import { CAR_EMISSIONS_RELEVANCE_REASON, CAR_EMISSIONS_SOURCES } from '@/domain/rules/carEmissionsCuration';
+import { sliceProvision } from '@/domain/rules/slicedSourceIngestion';
+import { PAYROLL_SLICED_SOURCES } from '@/domain/rules/payrollIngestion';
+import { SIZE_CRITERIA_SLICED_SOURCE } from '@/domain/rules/sizeCriteriaCuration';
+import { SWCA_NOTE, SWCA_RELEVANCE_REASON } from '@/domain/rules/incomeTaxIngestion';
+import {
+  FORM_GUIDANCE_PRINCIPAL_ACT, FORM_GUIDANCE_RELEVANCE_REASON, RTD_TDM, VAT3_GUIDANCE, rtdTdmPassages, vat3GuidancePassages,
+} from '@/domain/rules/vat3RtdIngestion';
+import { EBRIEF_168_25, ebriefNoticeText } from '@/domain/rules/ebriefIngestion';
+import { EU_282_2011, EU_282_2011_ARTICLES, parseEuArticles } from '@/domain/rules/eu282Ingestion';
+import { compareNfgContents, extractNfgSection } from '@/domain/rules/tcaNfgParser';
+import { NFG_EFFECTIVE_FROM, NFG_NOTE, nfgRelevanceReason, nfgSourceUrl, nfgTitle } from '@/domain/rules/tcaNfgIngestion';
+import { NFG_SECTIONS, nfgCitation } from '@/domain/rules/corporationTaxCuration';
 import { nowIso } from '@/domain/dates';
-import { lrcAnnotationLayer } from '@/domain/rules/lrcAnnotations';
+import { lrcAnnotationLayer, parseLrcFootnotes } from '@/domain/rules/lrcAnnotations';
 
 const ROOT = join(dirname(new URL(import.meta.url).pathname), '..', '..');
 const CONVERTER = join(ROOT, 'scripts', 'catalogue', 'lrc_html_to_text.py');
+const PDF_CONVERTER = join(ROOT, 'scripts', 'convert-statute-pdf.ts');
+const PDFPLUMBER_CONVERTER = join(ROOT, 'scripts', 'catalogue', 'pdfplumber_to_text.py');
+const REVENUE_CONVERTER = join(ROOT, 'scripts', 'catalogue', 'revenue_html_to_text.py');
+const EURLEX_CONVERTER = join(ROOT, 'scripts', 'catalogue', 'eurlex_html_to_text.py');
 
 /** The title and citation a source already goes by: the entry's, else its statute copy's front matter. */
 interface Naming { title: string; citation: string; sourceUrl?: string }
@@ -67,6 +129,8 @@ interface Extractor {
   url: string;
   title: string;
   citation: string;
+  /** The official file's kind; an HTML page unless stated. */
+  ext?: CatalogueOfficialExtension;
   /** The entry's source and provisions, from the official file's bytes. */
   build: (html: Buffer, retrievedOn: string, annotate: boolean) => Pick<CatalogueEntry, 'source' | 'provisions'>;
 }
@@ -95,6 +159,498 @@ function extractorFor(entry: string, naming: Naming | null): Extractor {
             sectionNumber: parsed.sectionNumber, heading: parsed.heading, locator: `s.${parsed.sectionNumber}`,
             category: parsed.category, relevant, relevanceReason: reason, excerpt: parsed.provisionText,
           }],
+        };
+      },
+    };
+  }
+  // A Companies Act 2014 section, revised, from its LRC page: one provision.
+  const ca2014 = /^companies-act-2014\/s(\d+[A-Z]*)$/.exec(entry)?.[1];
+  if (ca2014) {
+    const url = `https://revisedacts.lawreform.ie/eli/2014/act/38/section/${ca2014}/revised/en/html`;
+    const title = naming?.title ?? `Companies Act 2014 s.${ca2014} (revised)`;
+    const citation = naming?.citation ?? `2014 Act 38 s.${ca2014}`;
+    return {
+      url, title, citation,
+      build: (html, retrievedOn, annotate) => {
+        const parsed = parseCompaniesAct2014Section(convertLrc(html, title, citation, url));
+        const { relevant, reason } = companiesAct2014Relevance(parsed);
+        return {
+          source: {
+            citation, title, sourceType: 'legislation', jurisdiction: 'IE', sourceUrl: url,
+            sha256: createHash('sha256').update(html).digest('hex'),
+            conversion: 'lrc-html-plaintext', retrievedOn, note: COMPANIES_ACT_2014_NOTE,
+            ...(annotate ? { lrcAnnotations: lrcAnnotationLayer(html.toString('utf8')) } : {}),
+          },
+          provisions: [{
+            sectionNumber: parsed.sectionNumber, heading: parsed.heading, locator: `s.${parsed.sectionNumber}`,
+            category: parsed.category, relevant, relevanceReason: reason, excerpt: parsed.provisionText,
+          }],
+        };
+      },
+    };
+  }
+  // A Social Welfare Consolidation Act 2005 section, revised, from its LRC page: one provision.
+  const swca = /^swca-2005\/s(\d+[A-Z]*)$/.exec(entry)?.[1];
+  if (swca) {
+    const url = `https://revisedacts.lawreform.ie/eli/2005/act/26/section/${swca}/revised/en/html`;
+    const title = naming?.title ?? `SWCA 2005 s.${swca} (LRC revised)`;
+    const citation = naming?.citation ?? `SWCA 2005 s.${swca}`;
+    return {
+      url, title, citation,
+      build: (html, retrievedOn) => {
+        const parsed = parseVatcaRevisedSection(convertLrc(html, title, citation, url));
+        return {
+          source: {
+            citation, title, sourceType: 'legislation', jurisdiction: 'IE', sourceUrl: url,
+            sha256: createHash('sha256').update(html).digest('hex'),
+            conversion: 'lrc-html-plaintext', retrievedOn, note: SWCA_NOTE,
+          },
+          provisions: [{
+            sectionNumber: parsed.sectionNumber, heading: parsed.heading, locator: `s.${parsed.sectionNumber}`,
+            category: 'income_tax', relevant: true, relevanceReason: SWCA_RELEVANCE_REASON, excerpt: parsed.provisionText,
+          }],
+        };
+      },
+    };
+  }
+  // S.I. 312/1996 art. 92, revised, from the LRC page of the whole instrument
+  // (#712): the article cut out first, then converted. Its words only; the
+  // F292 note that dates the €5,000 is the effective clue, not the excerpt.
+  if (entry === 'si-312-1996/art92') {
+    const url = 'https://revisedacts.lawreform.ie/eli/1996/si/312/revised/en/html';
+    const title = naming?.title ?? 'S.I. 312/1996 art. 92 (LRC revised)';
+    const citation = naming?.citation ?? 'S.I. 312/1996 s.92';
+    return {
+      url, title, citation,
+      build: (html, retrievedOn) => {
+        const SECTION = 'Part04_Chap03_Art092';
+        const body = convertLrc(html, title, citation, url, false, SECTION).split('---').slice(2).join('---');
+        const lines = body.split('\n');
+        const number = lines.findIndex((l) => l.trim() === '92');
+        const opening = lines.findIndex((l) => l.trim() === '92.');
+        if (number < 0 || opening < number) throw new Error(`${entry}: no "92" number and "92." opening on the page.`);
+        const heading = lines.slice(0, number).filter((l) => l.trim() && !l.startsWith('# ')).join(' ').replace(/\s+/g, ' ').trim();
+        const section = html.toString('utf8').match(new RegExp(`<section[^>]*id="${SECTION}"[\\s\\S]*?</section>`))?.[0] ?? '';
+        const f292 = parseLrcFootnotes(section).get('F292');
+        if (!f292) throw new Error(`${entry}: the F292 amendment note is not on the page.`);
+        return {
+          source: {
+            citation, title, sourceType: 'legislation', jurisdiction: 'IE', sourceUrl: url,
+            sha256: createHash('sha256').update(html).digest('hex'),
+            conversion: 'lrc-html-plaintext', retrievedOn, note: SWCA_NOTE,
+          },
+          provisions: [{
+            sectionNumber: '92', heading, locator: 'art. 92', effectiveClue: f292.text,
+            category: 'income_tax', relevant: true, relevanceReason: SWCA_RELEVANCE_REASON,
+            excerpt: lines.slice(opening).join('\n').trim(),
+          }],
+        };
+      },
+    };
+  }
+  // Payroll acts ported with the Class A rules (#556). One provision, the words the copy sliced.
+  const payrollAct = PAYROLL_ACTS[entry];
+  if (payrollAct) {
+    return {
+      url: payrollAct.url, title: payrollAct.title, citation: payrollAct.citation,
+      build: (html, retrievedOn) => {
+        const markdown = convertLrc(html, payrollAct.title, payrollAct.citation, payrollAct.url);
+        const body = markdown.split('---').slice(2).join('---');
+        const at = body.indexOf(payrollAct.start);
+        if (at < 0) throw new Error(`${entry}: the opening "${payrollAct.start}" is not in the page.`);
+        return {
+          source: {
+            citation: payrollAct.citation, title: payrollAct.title, sourceType: 'legislation', jurisdiction: 'IE',
+            sourceUrl: payrollAct.url, sha256: createHash('sha256').update(html).digest('hex'),
+            conversion: 'lrc-html-plaintext', retrievedOn, note: payrollAct.note,
+          },
+          provisions: [{
+            sectionNumber: payrollAct.section, heading: payrollAct.heading, locator: payrollAct.locator,
+            category: 'income_tax', relevant: true, relevanceReason: payrollAct.reason, excerpt: body.slice(at).trim(),
+          }],
+        };
+      },
+    };
+  }
+  // A Schedule: one provision per paragraph, as the schedule parser reads it.
+  const schedule = /^vatca-2010-revised\/schedule-(\d+)$/.exec(entry)?.[1];
+  if (schedule) {
+    const url = `https://revisedacts.lawreform.ie/eli/2010/act/31/schedule/${schedule}/revised/en/html`;
+    const title = naming?.title ?? `VATCA 2010 Schedule ${schedule} (revised)`;
+    const citation = naming?.citation ?? `2010 Act 31 Sch.${schedule}`;
+    return {
+      url, title, citation,
+      build: (html, retrievedOn, annotate) => {
+        const paragraphs = parseVatcaSchedule(convertLrc(html, title, citation, url));
+        if (paragraphs.length === 0) throw new Error(`Schedule ${schedule}: the parser found no paragraphs.`);
+        return {
+          source: {
+            citation, title, sourceType: 'legislation', jurisdiction: 'IE', sourceUrl: url,
+            sha256: createHash('sha256').update(html).digest('hex'),
+            conversion: 'lrc-html-plaintext', retrievedOn,
+            ...(annotate ? { lrcAnnotations: lrcAnnotationLayer(html.toString('utf8')) } : {}),
+          },
+          provisions: paragraphs.map((p) => {
+            const { relevant, reason } = vatcaScheduleRelevance(schedule, citation, p);
+            return {
+              sectionNumber: p.paragraphNumber,
+              heading: p.heading || `Schedule ${schedule} paragraph ${p.paragraphNumber}`,
+              locator: `Sch.${schedule} para ${p.paragraphNumber}`, part: p.part,
+              category: p.category, relevant, relevanceReason: reason, excerpt: p.provisionText,
+            };
+          }),
+        };
+      },
+    };
+  }
+  // The Act as enacted, from the Irish Statute Book PDF: one provision per
+  // section, with the sections each cites.
+  if (entry === 'vatca-2010/vatca-2010-enacted') {
+    const { sourceUrl: url, title, citation } = VATCA_2010;
+    return {
+      url, title, citation, ext: 'pdf',
+      build: (pdf, retrievedOn) => {
+        const sections = parseVatca2010(convertStatutePdf(pdf, [
+          '--section-re', String.raw`^(\d+[A-Z]?)\s*\.—`, '--start-after', 'BE IT ENACTED', '--stop-at', 'SCHEDULE',
+        ]));
+        if (sections.length === 0) throw new Error('VATCA 2010: the parser found no sections.');
+        return {
+          source: {
+            citation, title, sourceType: 'legislation', jurisdiction: 'IE', sourceUrl: url,
+            sha256: createHash('sha256').update(pdf).digest('hex'),
+            conversion: 'isb-pdf-marginal-notes', retrievedOn,
+            // The Act's own commencement (s.125), not the day it was fetched.
+            publicationDate: VATCA_2010.enactedDate, effectiveFrom: VATCA_2010.enactedDate,
+            note: VATCA_2010_ENACTED_NOTE,
+          },
+          provisions: sections.map((p) => {
+            const { relevant, reason } = vatca2010Relevance(p);
+            return {
+              sectionNumber: p.sectionNumber, heading: p.heading, locator: `s.${p.sectionNumber}`,
+              amendsSection: p.amendsSection.length ? p.amendsSection.join('; ') : null,
+              category: p.category, relevant, relevanceReason: reason, excerpt: p.provisionText,
+            };
+          }),
+        };
+      },
+    };
+  }
+  // A Finance Act as enacted, from the Irish Statute Book PDF: one provision
+  // per section, as `pdftotext -layout` lays it out and statuteParser.ts reads it.
+  const financeAct = FINANCE_ACTS[entry];
+  if (financeAct) {
+    const { act, curatedReason } = financeAct;
+    return {
+      url: act.sourceUrl, title: act.title, citation: act.citation, ext: 'pdf',
+      build: (pdf, retrievedOn) => {
+        const sections = parseFinanceAct2024(pdftotextLayout(pdf));
+        if (sections.length === 0) throw new Error(`${act.title}: the parser found no sections.`);
+        return {
+          source: {
+            citation: act.citation, title: act.title, sourceType: act.sourceType, jurisdiction: 'IE', sourceUrl: act.sourceUrl,
+            sha256: createHash('sha256').update(pdf).digest('hex'),
+            conversion: 'pdftotext-layout', retrievedOn,
+            // The Act's own date of passing (its long title), not the day it was fetched.
+            publicationDate: act.enactedDate, effectiveFrom: act.enactedDate,
+          },
+          provisions: sections.map((p) => {
+            const { category, relevant, reason } = enactedActRelevance(p, curatedReason);
+            return {
+              sectionNumber: p.sectionNumber, heading: p.heading, locator: `s.${p.sectionNumber}`,
+              amendsSection: p.amendsSection.length ? p.amendsSection.join('; ') : null,
+              principalAct: p.principalActs.length ? p.principalActs.join('; ') : null,
+              effectiveClue: p.effectiveClue, citedActs: p.citedActs,
+              category, relevant, relevanceReason: reason, excerpt: p.provisionText,
+            };
+          }),
+        };
+      },
+    };
+  }
+  // A TCA 1997 section as enacted, one Irish Statute Book page each, or
+  // Finance Act 2003 s.23, which amends s.284: parsed as tca1997SectionParser.ts reads them.
+  const tcaSection = TCA_SECTIONS[entry];
+  if (tcaSection) {
+    const { title, citation, url, compact, source, provision } = tcaSection;
+    return {
+      url, title, citation,
+      build: (html, retrievedOn) => {
+        const text = convertLrc(html, title, citation, url);
+        const parsed = parseTca1997Section(compact ? withoutBlankLines(text) : text);
+        return {
+          source: {
+            citation, title, sourceType: 'legislation', jurisdiction: 'IE', sourceUrl: url,
+            sha256: createHash('sha256').update(html).digest('hex'),
+            conversion: compact ? 'isb-html-plaintext-compact' : 'isb-html-plaintext', retrievedOn,
+            publicationDate: null, ...source,
+          },
+          provisions: [{
+            sectionNumber: parsed.sectionNumber, heading: parsed.heading, locator: `s.${parsed.sectionNumber}`,
+            chapter: parsed.chapter, category: parsed.category, excerpt: parsed.provisionText, ...provision(parsed),
+          }],
+        };
+      },
+    };
+  }
+  // A TCA 1997 section as Finance Act 2011 s.20 inserted it: cut from that
+  // Act's page (from the section's heading to the next section's), then
+  // parsed as financeAct2011RctSectionParser.ts reads it.
+  const rct = /^tca-1997\/s530([AEGHI])$/.exec(entry)?.[1];
+  if (rct) {
+    const key = `tca1997_s530${rct.toLowerCase()}` as RctFa2011SectionKey;
+    const { citation, sourceUrl: url, effectiveFrom, sectionNumber } = RCT_FA2011_SECTIONS[key];
+    const title = rctFa2011Title(sectionNumber);
+    return {
+      url, title, citation,
+      build: (html, retrievedOn) => {
+        const page = convertLrc(html, title, citation, url);
+        const parsed = parseFinanceAct2011RctSection(`# ${title}\n\n${insertedSection(page, sectionNumber)}\n`);
+        if (parsed.sectionNumber !== sectionNumber) throw new Error(`${entry}: cut s.${parsed.sectionNumber}, not s.${sectionNumber}.`);
+        const { relevant, reason } = rctFa2011Relevance(key, sectionNumber);
+        return {
+          source: {
+            citation, title, sourceType: 'legislation', jurisdiction: 'IE', sourceUrl: url,
+            sha256: createHash('sha256').update(html).digest('hex'),
+            conversion: 'isb-html-plaintext', retrievedOn,
+            publicationDate: null, effectiveFrom, note: RCT_FA2011_NOTE,
+          },
+          provisions: [{
+            sectionNumber, heading: parsed.heading, locator: `s.${sectionNumber}`,
+            principalAct: RCT_FA2011_PRINCIPAL_ACT, citedActs: RCT_FA2011_CITED_ACTS,
+            category: parsed.category, relevant, relevanceReason: reason, excerpt: parsed.provisionText,
+          }],
+        };
+      },
+    };
+  }
+  // A Revenue Tax and Duty Manual on RCT, from its PDF: the whole text, page
+  // by page as pdfplumber extracts it, is one provision.
+  const tdm = /^rct\/tdm-18-02-(04|05|11)$/.exec(entry)?.[1];
+  if (tdm) {
+    const key = `tdm_18_02_${tdm}` as RctTdmKey;
+    const { title, citation, sourceType, sourceUrl: url, effectiveFrom } = RCT_TDM_SOURCES[key];
+    return {
+      url, title, citation, ext: 'pdf',
+      build: (pdf, retrievedOn) => {
+        const excerpt = pdfplumberText(pdf).trim();
+        if (!excerpt.startsWith('<!-- page 1 of')) throw new Error(`${entry}: the PDF gave no text.`);
+        const { relevant, reason } = rctTdmRelevance(key);
+        return {
+          source: {
+            citation, title, sourceType, jurisdiction: 'IE', sourceUrl: url,
+            sha256: createHash('sha256').update(pdf).digest('hex'),
+            conversion: 'pdfplumber-full', retrievedOn,
+            publicationDate: null, effectiveFrom, note: RCT_TDM_NOTE,
+          },
+          provisions: [{
+            sectionNumber: 'full', heading: title, locator: 'whole document',
+            category: 'procedure', relevant, relevanceReason: reason, excerpt,
+          }],
+        };
+      },
+    };
+  }
+  // Revenue's VAT registration manual, from its PDF: only the capacity
+  // exclusion passage, which every Advice of Registration letter repeats.
+  if (entry === 'tdm-38-01-03b/38-01-03b') {
+    const { title, citation, sourceUrl: url, effectiveFrom, sectionNumber, note, relevanceReason } = TDM_38_01_03B;
+    return {
+      url, title, citation, ext: 'pdf',
+      build: (pdf, retrievedOn) => {
+        const section = extractCapacityExclusionSection(pdfplumberText(pdf));
+        if (section.occurrences !== 4) throw new Error(`${entry}: expected the passage four times, found ${section.occurrences}.`);
+        return {
+          source: {
+            citation, title, sourceType: 'revenue_guidance', jurisdiction: 'IE', sourceUrl: url,
+            sha256: createHash('sha256').update(pdf).digest('hex'),
+            conversion: 'pdfplumber-full', retrievedOn,
+            publicationDate: null, effectiveFrom, note,
+          },
+          provisions: [{
+            sectionNumber, heading: section.heading,
+            locator: 'Appendix 8, page 40 (repeated in Appendices 9, 10 and 11)',
+            category: 'procedure', relevant: true, relevanceReason, excerpt: section.provisionText,
+          }],
+        };
+      },
+    };
+  }
+  // Revenue's car manual, TDM 11-00-01, from its PDF: §6, the 2008 CO2 groups
+  // (#466), sliced from the page text where the statute copy sliced it.
+  if (entry === 'tdm-11-00-01/11-00-01' && naming) {
+    const url = naming.sourceUrl ?? 'https://www.revenue.ie/en/tax-professionals/tdm-wm/income-tax-capital-gains-tax-corporation-tax/part-11/11-00-01.pdf';
+    const [source] = CAR_EMISSIONS_SOURCES;
+    return {
+      url, title: naming.title, citation: naming.citation, ext: 'pdf',
+      build: (pdf, retrievedOn) => {
+        const text = pdfplumberText(pdf);
+        return {
+          source: {
+            citation: naming.citation, title: naming.title, sourceType: 'revenue_guidance', jurisdiction: 'IE', sourceUrl: url,
+            sha256: createHash('sha256').update(pdf).digest('hex'),
+            conversion: 'pdfplumber-full', retrievedOn,
+            publicationDate: null, effectiveFrom: source!.effectiveFrom, note: source!.sourceNote,
+          },
+          provisions: source!.provisions.map((p) => ({
+            sectionNumber: p.sectionNumber, heading: p.heading, locator: `section ${p.sectionNumber}`,
+            category: p.category, relevant: true, relevanceReason: CAR_EMISSIONS_RELEVANCE_REASON,
+            excerpt: sliceProvision(text, p).text,
+          })),
+        };
+      },
+    };
+  }
+  // The payroll regulations, Revenue's ERR manual and S.I. 301/2024 (#717):
+  // the official file's text, each provision sliced where its statute copy was.
+  const sliced = [...PAYROLL_SLICED_SOURCES, SIZE_CRITERIA_SLICED_SOURCE].find((s) => s.entry === entry);
+  if (sliced) {
+    const { title, citation, sourceUrl: url, sourceType, publicationDate, effectiveFrom, note, ext } = sliced;
+    return {
+      url, title, citation, ext,
+      build: (file, retrievedOn) => {
+        // An irishstatutebook.ie page as the copies were converted (no --paragraphs); a manual's PDF by pdfplumber.
+        const text = ext === 'pdf' ? pdfplumberText(file) : convertLrc(file, title, citation, url);
+        return {
+          source: {
+            citation, title, sourceType, jurisdiction: 'IE', sourceUrl: url,
+            sha256: createHash('sha256').update(file).digest('hex'),
+            conversion: ext === 'pdf' ? 'pdfplumber-full' : 'isb-html-plaintext', retrievedOn,
+            publicationDate, effectiveFrom, note,
+          },
+          provisions: sliced.provisions.map((p) => ({
+            sectionNumber: p.sectionNumber, heading: p.heading, locator: p.locator,
+            category: p.category, relevant: true, relevanceReason: p.relevanceReason,
+            excerpt: sliceProvision(text, p).text,
+          })),
+        };
+      },
+    };
+  }
+  // Revenue's VAT3 and RTD form guidance (#439): the passages a reporting
+  // rule quotes, as the curation's parser reads them from each document.
+  if (entry === 'vat3-rtd/completing-vat3-return' || entry === 'vat3-rtd/VAT-RTD-S76') {
+    const vat3 = entry === 'vat3-rtd/completing-vat3-return';
+    const { title, citation, sourceUrl: url, effectiveFrom, publicationDate, note } = vat3 ? VAT3_GUIDANCE : RTD_TDM;
+    return {
+      url, title, citation, ext: vat3 ? 'html' : 'pdf',
+      build: (file, retrievedOn) => {
+        const passages = vat3 ? vat3GuidancePassages(revenueHtmlText(file)) : rtdTdmPassages(pdftotextLayout(file));
+        return {
+          source: {
+            citation, title, sourceType: 'revenue_guidance', jurisdiction: 'IE', sourceUrl: url,
+            sha256: createHash('sha256').update(file).digest('hex'),
+            conversion: vat3 ? 'revenue-html-plaintext' : 'pdftotext-layout', retrievedOn,
+            publicationDate, effectiveFrom, note,
+          },
+          provisions: passages.map((p) => ({
+            sectionNumber: p.sectionNumber, heading: p.heading, locator: p.locator,
+            principalAct: FORM_GUIDANCE_PRINCIPAL_ACT,
+            category: 'procedure', relevant: true, relevanceReason: FORM_GUIDANCE_RELEVANCE_REASON, excerpt: p.provisionText,
+          })),
+        };
+      },
+    };
+  }
+  // Revenue eBrief No. 168/25 (#440), from its page: the notice, one provision.
+  if (entry === 'ebriefs/no-168-25') {
+    const e = EBRIEF_168_25;
+    return {
+      url: e.sourceUrl, title: e.title, citation: e.citation,
+      build: (html, retrievedOn) => ({
+        source: {
+          citation: e.citation, title: e.title, sourceType: 'revenue_ebrief', jurisdiction: 'IE', sourceUrl: e.sourceUrl,
+          sha256: createHash('sha256').update(html).digest('hex'),
+          conversion: 'revenue-html-plaintext', retrievedOn,
+          publicationDate: e.effectiveFrom, effectiveFrom: e.effectiveFrom, note: e.note,
+        },
+        provisions: [{
+          sectionNumber: e.sectionNumber, heading: e.heading, locator: e.locator,
+          effectiveClue: e.effectiveClue, citedActs: e.citedActs,
+          category: 'procedure', relevant: true, relevanceReason: e.relevanceReason,
+          excerpt: ebriefNoticeText(revenueHtmlText(html)),
+        }],
+      }),
+    };
+  }
+  // Council Implementing Regulation (EU) No 282/2011 arts. 10-13b (#441), from
+  // the EUR-Lex consolidated text: one provision per article.
+  if (entry === 'eu-282-2011/consolidated-2025-04-14') {
+    const e = EU_282_2011;
+    return {
+      url: e.sourceUrl, title: e.title, citation: e.citation,
+      build: (html, retrievedOn) => {
+        const articles = parseEuArticles(eurlexArticlesText(html, [...EU_282_2011_ARTICLES]));
+        const found = articles.map((a) => a.sectionNumber).join(', ');
+        if (found !== EU_282_2011_ARTICLES.join(', ')) throw new Error(`${entry}: found articles ${found || 'none'}.`);
+        return {
+          source: {
+            citation: e.citation, title: e.title, sourceType: 'eu_source', jurisdiction: 'EU', sourceUrl: e.sourceUrl,
+            sha256: createHash('sha256').update(html).digest('hex'),
+            conversion: 'eurlex-html-plaintext', retrievedOn,
+            publicationDate: null, effectiveFrom: e.effectiveFrom, note: e.note,
+          },
+          provisions: articles.map((a) => ({
+            sectionNumber: a.sectionNumber, heading: `Article ${a.sectionNumber}`, locator: `art. ${a.sectionNumber}`,
+            effectiveClue: e.effectiveClue, citedActs: e.citedActs,
+            category: 'vat', relevant: true, relevanceReason: e.relevanceReason, excerpt: a.provisionText,
+          })),
+        };
+      },
+    };
+  }
+  // A part of Revenue's Notes for Guidance on the TCA 1997, from its PDF as
+  // `pdftotext -layout` lays it out: the section notes the curation reads.
+  const nfgPart = /^tca-1997-nfg\/(part\w+)$/.exec(entry)?.[1];
+  if (nfgPart && NFG_SECTIONS[nfgPart]) {
+    const url = nfgSourceUrl(nfgPart);
+    const title = naming?.title ?? nfgTitle(nfgPart);
+    const citation = naming?.citation ?? nfgCitation(nfgPart);
+    return {
+      url, title, citation, ext: 'pdf',
+      build: (pdf, retrievedOn) => {
+        const text = pdftotextLayout(pdf);
+        // Every section the part's contents list names has its own note, and
+        // no other (issue #287): otherwise a note runs into the next.
+        const { missing, unlisted } = compareNfgContents(text);
+        if (missing.length || unlisted.length) {
+          throw new Error(`${entry}: notes missing for ${missing.join(', ') || 'none'}; unlisted ${unlisted.join(', ') || 'none'}.`);
+        }
+        return {
+          source: {
+            citation, title, sourceType: 'revenue_guidance', jurisdiction: 'IE', sourceUrl: url,
+            sha256: createHash('sha256').update(pdf).digest('hex'),
+            conversion: 'pdftotext-layout', retrievedOn,
+            publicationDate: null, effectiveFrom: NFG_EFFECTIVE_FROM, note: NFG_NOTE,
+          },
+          provisions: NFG_SECTIONS[nfgPart]!.map((n) => {
+            const section = extractNfgSection(text, n);
+            return {
+              sectionNumber: section.sectionNumber, heading: section.heading, locator: `s.${section.sectionNumber}`,
+              principalAct: '1997 Act 39', category: 'corporation_tax', relevant: true,
+              relevanceReason: nfgRelevanceReason(nfgPart, n), excerpt: section.provisionText,
+            };
+          }),
+        };
+      },
+    };
+  }
+  // A statutory instrument as made, from its Irish Statute Book page: the
+  // regulations the knowledge base holds, parsed as the curation read them.
+  const instrument = STATUTORY_INSTRUMENTS[entry];
+  if (instrument) {
+    const { title, citation, url, paragraphs, source, provisions } = instrument;
+    return {
+      url, title, citation,
+      build: (html, retrievedOn) => {
+        const text = convertLrc(html, title, citation, url, paragraphs);
+        return {
+          source: {
+            citation, title, sourceType: 'legislation', jurisdiction: 'IE', sourceUrl: url,
+            sha256: createHash('sha256').update(html).digest('hex'),
+            conversion: paragraphs ? 'isb-html-plaintext-paragraphs' : 'isb-html-plaintext', retrievedOn,
+            ...source,
+          },
+          provisions: provisions(text),
         };
       },
     };
@@ -144,12 +700,247 @@ function parseIsbSection(text: string, section: string): { heading: string; exce
   return { heading, excerpt: body.slice(start).trim() };
 }
 
-function convertLrc(html: Buffer, title: string, citation: string, url: string): string {
+/**
+ * The single-section pages tca1997SectionParser.ts reads, by entry name. The
+ * 1997 pages' copies were the converted page with its blank lines dropped,
+ * which the parser's layout needs (`compact`); FA 2003 s.23's kept them.
+ */
+const TCA_SECTIONS: Record<string, {
+  title: string; citation: string; url: string; compact: boolean;
+  source: Pick<CatalogueEntry['source'], 'effectiveFrom' | 'note'>;
+  provision: (p: ParsedTcaSection) => Pick<CatalogueEntry['provisions'][number],
+    'relevant' | 'relevanceReason' | 'amendsSection' | 'principalAct' | 'citedActs'>;
+}> = {
+  'tca-1997/s530': {
+    title: TCA_1997_S530.title, citation: TCA_1997_S530.citation, url: TCA_1997_S530.sourceUrl, compact: true,
+    source: { effectiveFrom: TCA_1997_S530.effectiveFrom, note: TCA_1997_S530.note },
+    provision: (p) => {
+      const { relevant, reason } = tca1997S530Relevance(p);
+      return { relevant, relevanceReason: reason };
+    },
+  },
+  'tca-1997/s284': {
+    title: 'TCA 1997 s.284', citation: '1997 Act 39 s.284', compact: true,
+    url: 'https://www.irishstatutebook.ie/eli/1997/act/39/section/284/enacted/en/html',
+    source: { effectiveFrom: TCA_1997_AS_ENACTED_FROM, note: TCA_1997_AS_ENACTED_NOTE },
+    provision: (p) => {
+      const { relevant, reason } = tca1997SectionRelevance(p, CAPITAL_ALLOWANCES_CURATED_SECTIONS);
+      return { relevant, relevanceReason: reason };
+    },
+  },
+  'finance-act-2003/s23': {
+    title: FINANCE_ACT_2003.title, citation: FINANCE_ACT_2003.citation, url: FINANCE_ACT_2003.sourceUrl, compact: false,
+    source: { effectiveFrom: FINANCE_ACT_2003.effectiveFrom, note: FINANCE_ACT_2003.note },
+    provision: () => ({
+      relevant: true, relevanceReason: FINANCE_ACT_2003.relevanceReason, amendsSection: FINANCE_ACT_2003.amendsSection,
+      principalAct: FINANCE_ACT_2003.principalAct, citedActs: FINANCE_ACT_2003.citedActs,
+    }),
+  },
+};
+
+/** A converted page with the blank lines after its title dropped. */
+function withoutBlankLines(text: string): string {
+  const title = text.search(/^# /m);
+  return text.slice(0, title) + text.slice(title).split('\n').filter((l, i) => i === 0 || l.trim() !== '').join('\n');
+}
+
+/**
+ * One section FA 2011 s.20 inserts, from its page as converted: its heading
+ * (the line before "530A.—"), up to the line before the next section's heading.
+ */
+function insertedSection(page: string, sectionNumber: string): string {
+  const lines = page.split('\n');
+  const opens = lines.flatMap((l, i) => (/^\d+[A-Z]?\.—/.test(l) ? [i] : []));
+  const open = opens.find((i) => lines[i]!.startsWith(`${sectionNumber}.—`));
+  if (open === undefined) throw new Error(`The page has no section ${sectionNumber}.`);
+  const headingOf = (i: number) => { let j = i - 1; while (j >= 0 && lines[j]!.trim() === '') j--; return j; };
+  const next = opens.find((i) => i > open);
+  const end = next === undefined ? lines.length : headingOf(next);
+  return lines.slice(headingOf(open), end).join('\n').trim();
+}
+
+/**
+ * The statutory instruments, by entry name. S.I. 156/2012's copy joined each
+ * paragraph's lines, which the page breaks around every link (`paragraphs`).
+ */
+const STATUTORY_INSTRUMENTS: Record<string, {
+  title: string; citation: string; url: string; paragraphs: boolean;
+  source: Pick<CatalogueEntry['source'], 'publicationDate' | 'effectiveFrom' | 'note'>;
+  provisions: (text: string) => CatalogueEntry['provisions'];
+}> = {
+  'si-639-2010/2010-si-639': {
+    title: SI_639.title, citation: SI_639.citation, url: SI_639.sourceUrl, paragraphs: false,
+    source: { publicationDate: null, effectiveFrom: SI_639.effectiveFrom, note: SI_639.note },
+    provisions: (text) => parseSi639(text).map((reg) => {
+      const { relevant, reason } = si639Relevance(reg);
+      return {
+        sectionNumber: reg.regulationNumber, heading: reg.heading, locator: `reg.${reg.regulationNumber}`,
+        category: reg.category, relevant, relevanceReason: reason, excerpt: reg.provisionText,
+      };
+    }),
+  },
+  'si-156-2012/2012-si-156': {
+    title: SI_156.title, citation: SI_156.citation, url: SI_156.sourceUrl, paragraphs: true,
+    source: { publicationDate: null, effectiveFrom: SI_156.effectiveFrom, note: SI_156.note },
+    provisions: (text) => {
+      const regs = parseSi156(withRegulationHeadings(text)).filter((reg) => SI_156.regulations.includes(reg.regulationNumber));
+      const found = regs.map((reg) => reg.regulationNumber).join(', ');
+      if (found !== SI_156.regulations.join(', ')) throw new Error(`S.I. 156/2012: found regulations ${found}.`);
+      return regs.map((reg) => {
+        const { relevant, reason } = si156Relevance(reg);
+        return {
+          sectionNumber: reg.regulationNumber, heading: reg.heading, locator: `reg.${reg.regulationNumber}`,
+          category: reg.category, relevant, relevanceReason: reason, excerpt: reg.provisionText,
+        };
+      });
+    },
+  },
+  'si-69-2025/2025-si-69': {
+    title: SI_69_2025.title, citation: SI_69_2025.citation, url: SI_69_2025.sourceUrl, paragraphs: false,
+    source: { publicationDate: SI_69_2025.effectiveFrom, effectiveFrom: SI_69_2025.effectiveFrom, note: SI_69_2025.note },
+    provisions: (text) => SI_69_2025_REGULATIONS.map((reg) => ({
+      sectionNumber: reg.regulationNumber, heading: reg.heading, locator: `reg.${reg.regulationNumber}`,
+      principalAct: SI_69_2025.principalAct, amendsSection: reg.amendsSection, citedActs: [SI_69_2025.principalAct],
+      category: 'vat', relevant: true, relevanceReason: si692025RelevanceReason(reg.regulationNumber),
+      excerpt: parseSi692025Regulation(text, reg.regulationNumber).provisionText,
+    })),
+  },
+};
+
+/**
+ * An instrument's regulations under "## " headings, as si156Parser.ts reads
+ * them: between the enacting clause and the Schedules, the line above each
+ * "N. " opener is its heading.
+ */
+function withRegulationHeadings(text: string): string {
+  const start = text.indexOf('make the following regulations:');
+  if (start < 0) throw new Error('The page has no enacting clause.');
+  const lines = text.slice(start).split('\n');
+  const end = lines.findIndex((l) => /^SCHEDULE 1$/.test(l));
+  const body = lines.slice(1, end < 0 ? lines.length : end);
+  body.forEach((line, i) => {
+    if (!/^\d+\. /.test(line)) return;
+    let j = i - 1;
+    while (j >= 0 && body[j]!.trim() === '') j--;
+    if (j >= 0 && !/^\d+\. /.test(body[j]!)) body[j] = `## ${body[j]}`;
+  });
+  return body.join('\n');
+}
+
+
+/** Payroll acts extracted as one provision from the page the copy recorded. */
+const PAYROLL_ACTS: Record<string, { url: string; title: string; citation: string; section: string; heading: string; locator: string; start: string; note: string; reason: string }> = {
+  'swca-2005/s13': {
+    url: 'https://revisedacts.lawreform.ie/eli/2005/act/26/section/13/revised/en/html',
+    title: 'SWCA 2005 s.13 (LRC revised)', citation: 'SWCA 2005 s.13', section: '13',
+    heading: 'Employment contributions', locator: 's.13', start: '13.\n—(1)',
+    note: 'LRC revised text as retrieved: current law on that date. The amendment notes that date each figure are in the page beside it.',
+    reason: 'Payroll: the Class A thresholds and the PRSI credit (SWCA 2005 s.13).',
+  },
+  'ntf-2000/s4': {
+    url: 'https://revisedacts.lawreform.ie/eli/2000/act/41/section/4/revised/en/html',
+    title: 'National Training Fund Act 2000 s.4 (LRC revised)', citation: 'NTF Act 2000 s.4', section: '4',
+    heading: 'Rate of levy and supplemental provisions', locator: 's.4', start: '4.\n—\n(1)',
+    note: 'LRC revised text as retrieved: current law on that date. The 1.0% rate is dated by amendment note F3 (1 January 2020).',
+    reason: 'Payroll: the National Training Fund levy (NTF Act 2000 s.4).',
+  },
+  'swmpa-2024/s3': {
+    url: 'https://www.irishstatutebook.ie/eli/2024/act/24/section/3/enacted/en/html',
+    title: 'Social Welfare (Miscellaneous Provisions) Act 2024 s.3 (as enacted)', citation: '2024 Act 24 s.3', section: '3',
+    heading: 'Amendment of certain provisions of Principal Act relevant to employment contributions', locator: 's.3', start: '3.\n(1) Each provision',
+    note: 'As enacted. The Table fixes the Class A and Class S rates on 1 October in each of 2024 to 2028 (s.3(1)-(5)).',
+    reason: 'Payroll: the Class A and Class S rate substitutions (SWMPA 2024 s.3).',
+  },
+  'swa-2024/s2': {
+    url: 'https://www.irishstatutebook.ie/eli/2024/act/36/section/2/enacted/en/html',
+    title: 'Social Welfare Act 2024 s.2 (as enacted)', citation: '2024 Act 36 s.2', section: '2',
+    heading: 'Employment contributions', locator: 's.2', start: '2.\n(1)',
+    note: 'As enacted; in operation from 1 January 2025 (s.2(2)).',
+    reason: "Payroll: the employer's weekly threshold from 1 January 2025 (Social Welfare Act 2024 s.2).",
+  },
+  'swaerss-2025/s2': {
+    url: 'https://www.irishstatutebook.ie/eli/2025/act/19/section/2/enacted/en/html',
+    title: 'Social Welfare and Automatic Enrolment Retirement Savings System (Amendment) Act 2025 s.2 (as enacted)', citation: '2025 Act 19 s.2', section: '2',
+    heading: 'Employment contributions', locator: 's.2', start: '2.\n(1)',
+    note: 'As enacted; in operation from 1 January 2026 (s.2(2)).',
+    reason: "Payroll: the employer's weekly threshold from 1 January 2026 (2025 Act 19 s.2).",
+  },
+};
+
+/** The Finance Acts the script extracts as a whole, by entry name. */
+const FINANCE_ACTS: Record<string, { act: KnowledgeSourceRef; curatedReason: (n: string) => string | undefined }> = {
+  'finance-act-2024/2024-act-43-enacted': { act: FINANCE_ACT_2024, curatedReason: financeAct2024CuratedReason },
+  'finance-act-2025/2025-act-18-enacted': { act: FINANCE_ACT_2025, curatedReason: financeAct2025CuratedReason },
+};
+
+/** A Revenue PDF as text, page by page (pdfplumber_to_text.py). */
+function pdfplumberText(pdf: Buffer): string {
+  const dir = mkdtempSync(join(tmpdir(), 'leabhar-catalogue-'));
+  try {
+    const input = join(dir, 'manual.pdf');
+    writeFileSync(input, pdf);
+    return execFileSync('python3', [PDFPLUMBER_CONVERTER, input], { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+}
+
+/** A revenue.ie page as text (revenue_html_to_text.py). */
+function revenueHtmlText(html: Buffer): string {
   const dir = mkdtempSync(join(tmpdir(), 'leabhar-catalogue-'));
   try {
     const page = join(dir, 'page.html');
     writeFileSync(page, html);
-    return execFileSync('python3', [CONVERTER, page, title, citation, url], { encoding: 'utf8' });
+    return execFileSync('python3', [REVENUE_CONVERTER, page], { encoding: 'utf8' });
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+}
+
+/** The named articles of a EUR-Lex consolidated text, as text (eurlex_html_to_text.py). */
+function eurlexArticlesText(html: Buffer, articles: string[]): string {
+  const dir = mkdtempSync(join(tmpdir(), 'leabhar-catalogue-'));
+  try {
+    const page = join(dir, 'page.html');
+    writeFileSync(page, html);
+    return execFileSync('python3', [EURLEX_CONVERTER, page, ...articles], { encoding: 'utf8' });
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+}
+
+/** A PDF as Poppler's `pdftotext -layout` lays it out. */
+function pdftotextLayout(pdf: Buffer): string {
+  const dir = mkdtempSync(join(tmpdir(), 'leabhar-catalogue-'));
+  try {
+    const input = join(dir, 'act.pdf');
+    writeFileSync(input, pdf);
+    return execFileSync('pdftotext', ['-layout', input, '-'], { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+}
+
+/** An Irish Statute Book PDF in the marginal-note layout, as text (convert-statute-pdf.ts). */
+function convertStatutePdf(pdf: Buffer, options: string[]): string {
+  const dir = mkdtempSync(join(tmpdir(), 'leabhar-catalogue-'));
+  try {
+    const input = join(dir, 'act.pdf');
+    const output = join(dir, 'act.md');
+    writeFileSync(input, pdf);
+    execFileSync('npx', ['tsx', PDF_CONVERTER, input, output, ...options], { cwd: ROOT, stdio: ['ignore', 'ignore', 'inherit'] });
+    return readFileSync(output, 'utf8');
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+}
+
+function convertLrc(html: Buffer, title: string, citation: string, url: string, paragraphs = false, section?: string): string {
+  const dir = mkdtempSync(join(tmpdir(), 'leabhar-catalogue-'));
+  try {
+    const page = join(dir, 'page.html');
+    writeFileSync(page, html);
+    return execFileSync('python3', [CONVERTER, page, title, citation, url, ...(paragraphs ? ['--paragraphs'] : []), ...(section ? ['--section', section] : [])], { encoding: 'utf8' });
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
@@ -212,14 +1003,20 @@ async function main(args: string[]): Promise<void> {
     const path = catalogueEntryPath(entryFile, ROOT);
     const previous = existsSync(path) ? validateCatalogueEntry(JSON.parse(readFileSync(path, 'utf8')), entryFile) : null;
     const extractor = extractorFor(name, existingNaming(name, previous));
-    const saved = htmlFile ?? (htmlDir ? join(htmlDir, `${name.split('/').pop()}.html`) : undefined);
+    const saved = htmlFile ?? (htmlDir ? join(htmlDir, `${name.split('/').pop()}.${extractor.ext ?? 'html'}`) : undefined);
     const html = saved ? readFileSync(saved) : await fetchOfficial(extractor.url);
     const retrievedOn = flag(args, 'retrieved-on') ?? (saved ? previous?.source.retrievedOn : undefined) ?? nowIso().slice(0, 10);
     const built = extractor.build(html, retrievedOn, annotates(name, previous, args));
     if (previous && previous.source.sha256 === built.source.sha256) built.source.retrievedOn = previous.source.retrievedOn;
+    // A page with page state also records its hash without it (#713, #714).
+    const contentSha256 = extractor.ext === 'pdf' ? null : contentSha256Of(html);
+    if (contentSha256) {
+      built.source = Object.fromEntries(Object.entries(built.source)
+        .flatMap(([k, v]) => (k === 'sha256' ? [[k, v], ['contentSha256', contentSha256]] : [[k, v]]))) as typeof built.source;
+    }
     const entry: CatalogueEntry = { format: CATALOGUE_FORMAT, ...built, rules: [] };
     mkdirSync(dirname(path), { recursive: true });
-    writeFileSync(catalogueOfficialFilePath(entryFile, ROOT), html);
+    writeFileSync(catalogueOfficialFilePath(entryFile, ROOT, extractor.ext ?? 'html'), html);
     writeFileSync(path, serialiseCatalogueEntry(entry));
     written.push({ name, entryFile, path, entry, previous });
   }

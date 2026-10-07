@@ -1,6 +1,7 @@
 /**
  * Ingestion and rule derivation for S.I. 639/2010 (Value-Added Tax
- * Regulations 2010), built on `si639Parser.ts`.
+ * Regulations 2010), built on `si639Parser.ts`. The knowledge base loads the
+ * instrument from its rules catalogue entry (`ingestSi639FromCatalogue`, #556).
  */
 import { and, eq } from 'drizzle-orm';
 import type { AppDatabase } from '@/db';
@@ -8,21 +9,48 @@ import { irishKnowledgeSources, irishActProvisions, irishTaxRules } from '@/db/s
 import { ids } from '@/lib/ids';
 import { nowIso } from '../dates';
 import { sha256Hex } from '@/lib/hash';
-import { parseSi639, provisionSlug, assessRelevance, SI_639_2010_MD_PATH } from './si639Parser';
+import { parseSi639, provisionSlug, assessRelevance, type ParsedSi639Regulation } from './si639Parser';
 import { SI_639_CURATED_RULES } from './si639Curation';
 import { upsertReviewItem } from '../extraction/service';
 import { crossReferencesFromProvision, sameCrossReferences } from './dependencies';
 import { taxHeadsFor } from './taxHeads';
+import { ingestCatalogueFile, type CatalogueIngestResult } from './catalogue';
+import { preferredSourceId } from './catalogueSupersession';
 
-export { SI_639_2010_MD_PATH };
-
-const SI_639 = {
+export const SI_639 = {
   citation: 'S.I. 639/2010',
+  title: 'Value-Added Tax Regulations 2010 (S.I. No. 639 of 2010)',
   sourceUrl: 'https://www.irishstatutebook.ie/eli/2010/si/639/made/en/print',
   // Regulation 1(2) of this very document states its own commencement
   // verbatim: "These Regulations come into operation on 1 January 2011."
   effectiveFrom: '2011-01-01',
+  note: 'As-made 2010 text (the "print" consolidation at time of making) — not an LRC-revised '
+    + 'text; later amending instruments (e.g. S.I. 734/2020, inserting reg.14A postponed accounting) are '
+    + 'not reflected. The short per-regulation files already in docs/statutes/si-639-2010/ (reg-14.md '
+    + 'etc.) are paraphrased summaries, not verbatim, and are not used as sources — this whole-document '
+    + 'parse is the only verbatim source for these regulations.',
 };
+
+/** Whether a regulation bears on the rules: its category's default, or curated into a rule. */
+export function si639Relevance(reg: ParsedSi639Regulation): { relevant: boolean; reason: string } {
+  const { relevant, reason } = assessRelevance(reg.category);
+  if (relevant || !SI_639_CURATED_RULES.some((r) => r.regulationNumber === reg.regulationNumber)) return { relevant, reason };
+  return {
+    relevant: true,
+    reason: 'Curated: mapped to a rule in si639Curation.ts, overriding the '
+      + `${reg.category} category default.`,
+  };
+}
+
+export const SI_639_CATALOGUE_ENTRY = 'si-639-2010/2010-si-639.json';
+
+/** Load the instrument from its catalogue entry. */
+export function ingestSi639FromCatalogue(
+  db: AppDatabase,
+  params: { companyId?: string | null; ingestVersion?: string; root?: string },
+): CatalogueIngestResult {
+  return ingestCatalogueFile(db, { ...params, entry: SI_639_CATALOGUE_ENTRY });
+}
 
 export interface Si639IngestResult {
   sourceId: string;
@@ -31,7 +59,10 @@ export interface Si639IngestResult {
   ingested: boolean;
 }
 
-/** Ingest the whole S.I. 639/2010 as-made document. Idempotent by content. */
+/**
+ * Ingest a Markdown copy of the whole as-made instrument (the CLI's
+ * `--file`). Idempotent by content.
+ */
 export function ingestSi639(
   db: AppDatabase,
   params: { companyId?: string | null; markdown: string; ingestVersion: string; localPath?: string },
@@ -61,34 +92,24 @@ export function ingestSi639(
       id: sourceId,
       companyId: params.companyId ?? null,
       sourceType: 'legislation',
-      title: 'Value-Added Tax Regulations 2010 (S.I. No. 639 of 2010)',
+      title: SI_639.title,
       citation: SI_639.citation,
       jurisdiction: 'IE',
       sourceUrl: SI_639.sourceUrl,
-      localPath: params.localPath ?? SI_639_2010_MD_PATH,
+      localPath: params.localPath ?? null,
       sha256: digest,
       ingestVersion: params.ingestVersion,
       publicationDate: null,
       retrievedAt: nowIso(),
       effectiveFrom: SI_639.effectiveFrom,
-      sourceNote: 'As-made 2010 text (the "print" consolidation at time of making) — not an LRC-revised '
-        + 'text; later amending instruments (e.g. S.I. 734/2020, inserting reg.14A postponed accounting) are '
-        + 'not reflected. The short per-regulation files already in docs/statutes/si-639-2010/ (reg-14.md '
-        + 'etc.) are paraphrased summaries, not verbatim, and are not used as sources — this whole-document '
-        + 'parse is the only verbatim source for these regulations.',
+      sourceNote: SI_639.note,
       sourceDate: nowIso(),
     }).run();
 
     const parsed = parseSi639(params.markdown);
-    const curatedRegs = new Set(SI_639_CURATED_RULES.map((r) => r.regulationNumber));
     let relevantCount = 0;
     for (const reg of parsed) {
-      let { relevant, reason } = assessRelevance(reg.category);
-      if (!relevant && curatedRegs.has(reg.regulationNumber)) {
-        relevant = true;
-        reason = 'Curated: mapped to a rule in si639Curation.ts, overriding the '
-          + `${reg.category} category default.`;
-      }
+      const { relevant, reason } = si639Relevance(reg);
       if (relevant) relevantCount++;
 
       tx.insert(irishActProvisions).values({
@@ -128,8 +149,7 @@ export function deriveSi639Rules(
   db: AppDatabase,
   params: { companyId: string },
 ): Si639DeriveResult {
-  const sourceId = db.select({ id: irishKnowledgeSources.id }).from(irishKnowledgeSources)
-    .where(eq(irishKnowledgeSources.citation, SI_639.citation)).get()?.id;
+  const sourceId = preferredSourceId(db, SI_639.citation);
   const provisions = sourceId
     ? db.select().from(irishActProvisions).where(eq(irishActProvisions.sourceId, sourceId)).all()
     : [];

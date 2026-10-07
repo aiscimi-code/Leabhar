@@ -29,7 +29,8 @@
  * A computation's `consumed_by` links are not here: they describe the code
  * that reads a rule, not the law, and load from the manifests (consumers.ts).
  */
-import { readFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import { existsSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { and, eq, inArray } from 'drizzle-orm';
 import type { AppDatabase } from '@/db';
@@ -42,6 +43,7 @@ import { ids } from '@/lib/ids';
 import { appRoot } from '@/lib/paths';
 import { declaredLinksFrom } from './ruleLinks';
 import type { LrcAnnotationLayer } from './lrcAnnotations';
+import { isCatalogueSource, supersedeHeldCopy } from './catalogueSupersession';
 
 export const CATALOGUE_DIR = 'catalogue';
 export const CATALOGUE_FORMAT = 1;
@@ -54,6 +56,17 @@ export interface CatalogueSource {
   sourceUrl: string;
   /** SHA-256 of the official file's bytes as fetched. `verify-sources` compares the file online with it. */
   sha256: string;
+  /**
+   * SHA-256 of the same bytes with the values of ASP.NET's hidden
+   * `__VIEWSTATE`, `__VIEWSTATEGENERATOR` and `__EVENTVALIDATION` fields, and
+   * of a Dynatrace `data-dtconfig` attribute, emptied (`withoutPageState`);
+   * nothing else is removed. Present only for a page that carries them
+   * (revenue.ie's, EUR-Lex's), whose bytes change when that state rotates
+   * though the page does not: `verify-sources` reads a page whose bytes
+   * differ but whose content hash matches as unchanged but for page state
+   * (#713, #714). `sha256` stays the record of the file as fetched.
+   */
+  contentSha256?: string;
   /** How the official file became the excerpts, e.g. `lrc-html-plaintext`. */
   conversion: string;
   /** The day the official file was fetched. Never a provision's or rule's effective date (#216). */
@@ -64,6 +77,12 @@ export interface CatalogueSource {
    * quotes (`quotedTextWindow`) without the page. Absent for other sources.
    */
   lrcAnnotations?: LrcAnnotationLayer;
+  /** The day the source itself was published or enacted, where it states one. */
+  publicationDate?: string | null;
+  /** The day the source came into force, where it states one; otherwise the day it was fetched. */
+  effectiveFrom?: string | null;
+  /** What a reader of the source should know, e.g. that an Act's text is as enacted. */
+  note?: string | null;
 }
 
 export interface CatalogueProvision {
@@ -71,6 +90,18 @@ export interface CatalogueProvision {
   heading: string;
   /** How the source points a reader here: `s.46`, `page 12`, `box T1`. */
   locator: string;
+  /** The Part of a Schedule the paragraph sits under ("Part 2"); absent where the source has none. */
+  part?: string | null;
+  /** The Chapter the section sits in, as the source heads it ("CHAPTER 2: Payments to subcontractors ..."). */
+  chapter?: string | null;
+  /** The provisions it cites or amends, as the parser read them ("section 46(1); section 3(a)"). */
+  amendsSection?: string | null;
+  /** The Act it amends, as the parser read it ("Taxes Consolidation Act 1997"); absent where it amends none. */
+  principalAct?: string | null;
+  /** The words that say when it takes effect ("year of assessment 2025"), verbatim; a rule's start date is read from them. */
+  effectiveClue?: string | null;
+  /** The other Acts it names. */
+  citedActs?: string[];
   category: IrishProvisionCategory;
   relevant: boolean;
   relevanceReason: string | null;
@@ -176,15 +207,166 @@ export const CATALOGUE_ENTRIES = [
   'vatca-2010-revised/s059.json',
   'vatca-2010-revised/s064.json',
   'vatca-2010-revised/s094.json',
+  // Schedules 1-3: one provision per paragraph, under its Part.
+  'vatca-2010-revised/schedule-1.json',
+  'vatca-2010-revised/schedule-2.json',
+  'vatca-2010-revised/schedule-3.json',
+  // The Act as enacted, from the Irish Statute Book PDF: one provision per section.
+  'vatca-2010/vatca-2010-enacted.json',
+  // The Finance Acts as enacted, from the Irish Statute Book PDFs: one provision per section.
+  'finance-act-2024/2024-act-43-enacted.json',
+  'finance-act-2025/2025-act-18-enacted.json',
+  // TCA 1997 sections, one page each: s.530 (RCT) and s.284 as enacted;
+  // ss.530A-530I as Finance Act 2011 s.20 inserted them, each its own source
+  // with that Act's page beside it; and Finance Act 2003 s.23 (the 12.5%
+  // wear-and-tear rate).
+  'tca-1997/s530.json',
+  'tca-1997/s530A.json',
+  'tca-1997/s530E.json',
+  'tca-1997/s530G.json',
+  'tca-1997/s530H.json',
+  'tca-1997/s530I.json',
+  'tca-1997/s284.json',
+  'finance-act-2003/s23.json',
+  // Revenue's RCT manuals (Tax and Duty Manual Part 18-02-04, -05, -11),
+  // each one whole-document provision, with the PDF beside it.
+  'rct/tdm-18-02-04.json',
+  'rct/tdm-18-02-05.json',
+  'rct/tdm-18-02-11.json',
+  // Statutory instruments as made, from their Irish Statute Book pages: the
+  // regulations books already hold (S.I. 156/2012's 1, 2 and 4, #705; S.I.
+  // 69/2025's 5, 7, 8 and 9), each one provision.
+  'si-639-2010/2010-si-639.json',
+  'si-156-2012/2012-si-156.json',
+  'si-69-2025/2025-si-69.json',
+  // Revenue's VAT registration manual (Tax and Duty Manual Part 38-01-03b):
+  // only its capacity exclusion passage, one provision, with the PDF beside it.
+  'tdm-38-01-03b/38-01-03b.json',
+  // Companies Act 2014 sections, revised, each one provision from its LRC page.
+  'companies-act-2014/s282.json',
+  'companies-act-2014/s280A.json',
+  'companies-act-2014/s280B.json',
+  'companies-act-2014/s280C.json',
+  'companies-act-2014/s280D.json',
+  'companies-act-2014/s280E.json',
+  'companies-act-2014/s280F.json',
+  'companies-act-2014/s352.json',
+  'companies-act-2014/s358.json',
+  'companies-act-2014/s359.json',
+  'companies-act-2014/s360.json',
+  'companies-act-2014/s281.json',
+  'companies-act-2014/s283.json',
+  'companies-act-2014/s284.json',
+  'companies-act-2014/s285.json',
+  'companies-act-2014/s286.json',
+  'companies-act-2014/s290.json',
+  'companies-act-2014/s291.json',
+  'companies-act-2014/s292.json',
+  'companies-act-2014/s293.json',
+  'companies-act-2014/s343.json',
+  'companies-act-2014/s347.json',
+  // Revenue's Notes for Guidance on the TCA 1997, one entry per part with its
+  // PDF beside it: the section notes the corporation tax rules quote.
+  'tca-1997-nfg/part01.json',
+  'tca-1997-nfg/part02.json',
+  'tca-1997-nfg/part04.json',
+  'tca-1997-nfg/part09.json',
+  'tca-1997-nfg/part11.json',
+  'tca-1997-nfg/part11c.json',
+  'tca-1997-nfg/part12.json',
+  'tca-1997-nfg/part13.json',
+  'tca-1997-nfg/part15.json',
+  'tca-1997-nfg/part18.json',
+  'tca-1997-nfg/part18d.json',
+  'tca-1997-nfg/part23.json',
+  'tca-1997-nfg/part36.json',
+  'tca-1997-nfg/part41a.json',
+  'tca-1997-nfg/part43.json',
+  // Social Welfare Consolidation Act 2005 ss.20-23 (PRSI Class S), revised,
+  // each one provision from its LRC page.
+  'swca-2005/s20.json',
+  'swca-2005/s21.json',
+  'swca-2005/s22.json',
+  'swca-2005/s23.json',
+  // Payroll acts whose figures the Class A rules quote: SWCA s.13, SWMPA 2024 s.3,
+  // Social Welfare Act 2024 s.2, the 2025 threshold Act s.2, and NTF Act 2000 s.4.
+  'swca-2005/s13.json',
+  'swmpa-2024/s3.json',
+  'swa-2024/s2.json',
+  'swaerss-2025/s2.json',
+  'ntf-2000/s4.json',
+  // Employment regulations and the ERR manual the payroll rules quote.
+  'si-345-2018/2018-si-345.json',
+  'si-1-2024/2024-si-1.json',
+  'si-510-2018/2018-si-510.json',
+  'tdm-38-03-33/38-03-33.json',
+  // Company size criteria (issue #555).
+  'si-301-2024/2024-si-301.json',
+  // Revenue's VAT3 and RTD form guidance: the VAT3 page's box passages (its
+  // HTML beside it) and the RTD manual's curated sections (its PDF).
+  'vat3-rtd/completing-vat3-return.json',
+  'vat3-rtd/VAT-RTD-S76.json',
+  // Revenue eBrief No. 168/25: the notice, one provision, its page beside it.
+  'ebriefs/no-168-25.json',
+  // Council Implementing Regulation (EU) No 282/2011 arts. 10-13b: the
+  // establishment tests, from the EUR-Lex consolidated text kept beside it.
+  'eu-282-2011/consolidated-2025-04-14.json',
+  // S.I. 312/1996 art. 92 (the Class S prescribed amount): the article cut
+  // from the LRC page of the whole instrument, kept beside it (#712).
+  'si-312-1996/art92.json',
+  // Revenue TDM Part 11-00-01 §6 (the 2008 car CO2 groups), its PDF beside it.
+  'tdm-11-00-01/11-00-01.json',
 ] as const;
 
 export function catalogueEntryPath(entry: string, root: string = appRoot()): string {
   return join(root, CATALOGUE_DIR, entry);
 }
 
-/** The official file an entry was extracted from, kept beside it byte for byte (`s046.json` → `s046.html`). */
-export function catalogueOfficialFilePath(entry: string, root: string = appRoot()): string {
-  return catalogueEntryPath(entry.replace(/\.json$/, '.html'), root);
+/** The kinds of official file an entry can be extracted from. */
+export const CATALOGUE_OFFICIAL_EXTENSIONS = ['html', 'pdf'] as const;
+export type CatalogueOfficialExtension = (typeof CATALOGUE_OFFICIAL_EXTENSIONS)[number];
+
+/**
+ * The official file an entry was extracted from, kept beside it byte for byte
+ * (`s046.json` → `s046.html`, `vatca-2010-enacted.json` → `vatca-2010-enacted.pdf`):
+ * the one with `ext`, or else whichever is there (an HTML page when neither is).
+ */
+export function catalogueOfficialFilePath(entry: string, root: string = appRoot(), ext?: CatalogueOfficialExtension): string {
+  const at = (e: CatalogueOfficialExtension) => catalogueEntryPath(entry.replace(/\.json$/, `.${e}`), root);
+  if (ext) return at(ext);
+  return at(CATALOGUE_OFFICIAL_EXTENSIONS.find((e) => existsSync(at(e))) ?? 'html');
+}
+
+/** The ASP.NET fields whose values change with server state, not with the page (#713). */
+const PAGE_STATE_FIELDS = /\bname\s*=\s*"(?:__VIEWSTATE|__VIEWSTATEGENERATOR|__EVENTVALIDATION)"/i;
+/** Dynatrace's monitoring config, whose agent and page ids change with every request (EUR-Lex's; #714). */
+const DYNATRACE_CONFIG = /(\sdata-dtconfig\s*=\s*")[^"]*"/gi;
+
+/**
+ * An HTML file's bytes with the values of its page state emptied: ASP.NET's
+ * state fields and Dynatrace's per-request config. Every other byte is as it
+ * was; null when it has none of them.
+ */
+export function withoutPageState(file: Buffer): Buffer | null {
+  let found = false;
+  // latin1 maps each byte to one character and back, so untouched bytes survive.
+  const text = file.toString('latin1')
+    .replace(/<input\b[^>]*>/gi, (tag) => {
+      if (!PAGE_STATE_FIELDS.test(tag)) return tag;
+      found = true;
+      return tag.replace(/\bvalue\s*=\s*"[^"]*"/i, 'value=""');
+    })
+    .replace(DYNATRACE_CONFIG, (_, opening: string) => {
+      found = true;
+      return `${opening}"`;
+    });
+  return found ? Buffer.from(text, 'latin1') : null;
+}
+
+/** The content hash `CatalogueSource.contentSha256` records; null for a file with no page state. */
+export function contentSha256Of(file: Buffer): string | null {
+  const stripped = withoutPageState(file);
+  return stripped ? createHash('sha256').update(stripped).digest('hex') : null;
 }
 
 const isDate = (s: unknown) => typeof s === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(s);
@@ -198,17 +380,32 @@ export function validateCatalogueEntry(entry: unknown, label = 'catalogue entry'
   if (!s || !s.citation || !s.title || !s.sourceUrl?.startsWith('https://')) fail('source needs a citation, a title and an https URL');
   if (!IRISH_SOURCE_TYPES.includes(s.sourceType)) fail(`unknown source type ${s.sourceType}`);
   if (!/^[0-9a-f]{64}$/.test(s.sha256)) fail('source sha256 must be 64 hex characters');
+  if (s.contentSha256 !== undefined && !/^[0-9a-f]{64}$/.test(s.contentSha256)) fail('source contentSha256 must be 64 hex characters');
   if (!isDate(s.retrievedOn)) fail('source retrievedOn must be an ISO date');
   if (s.lrcAnnotations !== undefined
       && (typeof s.lrcAnnotations.text !== 'string' || !Array.isArray(s.lrcAnnotations.footnotes)
         || s.lrcAnnotations.footnotes.some((f) => !/^F\d+$/.test(f.ref) || typeof f.text !== 'string'))) {
     fail('source lrcAnnotations needs a text and a list of footnotes');
   }
+  for (const d of ['publicationDate', 'effectiveFrom'] as const) {
+    if (s[d] !== undefined && s[d] !== null && !isDate(s[d])) fail(`source ${d} must be an ISO date`);
+  }
+  if (s.note !== undefined && s.note !== null && typeof s.note !== 'string') fail('source note must be a string');
   if (!Array.isArray(e.provisions) || e.provisions.length === 0) fail('an entry needs at least one provision');
   const sections = new Set<string>();
   for (const p of e.provisions) {
     if (!p.sectionNumber || !p.locator || !p.excerpt) fail(`provision ${p.sectionNumber} needs a section, a locator and an excerpt`);
     if (!IRISH_PROVISION_CATEGORIES.includes(p.category)) fail(`provision ${p.sectionNumber}: unknown category ${p.category}`);
+    if (p.part !== undefined && p.part !== null && typeof p.part !== 'string') fail(`provision ${p.sectionNumber}: part must be a string`);
+    if (p.amendsSection !== undefined && p.amendsSection !== null && typeof p.amendsSection !== 'string') {
+      fail(`provision ${p.sectionNumber}: amendsSection must be a string`);
+    }
+    for (const f of ['principalAct', 'effectiveClue', 'chapter'] as const) {
+      if (p[f] !== undefined && p[f] !== null && typeof p[f] !== 'string') fail(`provision ${p.sectionNumber}: ${f} must be a string`);
+    }
+    if (p.citedActs !== undefined && (!Array.isArray(p.citedActs) || p.citedActs.some((a) => typeof a !== 'string'))) {
+      fail(`provision ${p.sectionNumber}: citedActs must be a list of strings`);
+    }
     if (sections.has(p.sectionNumber)) fail(`provision ${p.sectionNumber} is listed twice`);
     sections.add(p.sectionNumber);
   }
@@ -230,7 +427,55 @@ export function readCatalogueEntry(entry: string, root?: string): CatalogueEntry
   return validateCatalogueEntry(JSON.parse(readFileSync(catalogueEntryPath(entry, root), 'utf8')), entry);
 }
 
+/** Each entry's citation, by file version: the lookup below reads only the entries that share one. */
+const citations = new Map<string, { stamp: string; citation: string }>();
+
+function citationOf(entry: string, root?: string): string {
+  const path = catalogueEntryPath(entry, root);
+  const { mtimeMs, size } = statSync(path);
+  const stamp = `${mtimeMs}:${size}`;
+  const cached = citations.get(path);
+  if (cached?.stamp === stamp) return cached.citation;
+  const citation = readCatalogueEntry(entry, root).source.citation;
+  citations.set(path, { stamp, citation });
+  return citation;
+}
+
 const normaliseSpace = (s: string) => s.replace(/\s+/g, ' ').trim();
+
+/** Whether a held source's provisions say the same words as an entry's. */
+function sameWords(rows: Array<{ sectionNumber: string; text: string | null }>, provisions: CatalogueProvision[]): boolean {
+  return rows.length === provisions.length && provisions.every((p) =>
+    rows.some((r) => r.sectionNumber === p.sectionNumber && normaliseSpace(r.text ?? '') === normaliseSpace(p.excerpt)));
+}
+
+/**
+ * The catalogue entry a held source's words come from: the entry it was
+ * loaded from, or, for a source a book read from a statute copy before the
+ * port, the entry with its citation whose provisions say the same words
+ * (`ingestCatalogueEntry` keeps such a source). Its footnotes and kept page
+ * stand in for the deleted copy's (#698). Null for a source not ported.
+ */
+export function catalogueEntryForSource(
+  db: AppDatabase, sourceId: string, root?: string,
+): { name: string; entry: CatalogueEntry } | null {
+  const source = db.select({ citation: irishKnowledgeSources.citation, sha256: irishKnowledgeSources.sha256, localPath: irishKnowledgeSources.localPath })
+    .from(irishKnowledgeSources).where(eq(irishKnowledgeSources.id, sourceId)).get();
+  if (!source) return null;
+  if (source.localPath?.startsWith(`${CATALOGUE_DIR}/`)) {
+    const name = source.localPath.slice(CATALOGUE_DIR.length + 1);
+    const entry = readCatalogueEntry(name, root);
+    return entry.source.sha256 === source.sha256 ? { name, entry } : null;
+  }
+  const rows = db.select({ sectionNumber: irishActProvisions.sectionNumber, text: irishActProvisions.provisionText })
+    .from(irishActProvisions).where(eq(irishActProvisions.sourceId, sourceId)).all();
+  for (const name of CATALOGUE_ENTRIES) {
+    if (citationOf(name, root) !== source.citation) continue;
+    const entry = readCatalogueEntry(name, root);
+    if (sameWords(rows, entry.provisions)) return { name, entry };
+  }
+  return null;
+}
 
 export interface CatalogueIngestResult {
   sourceId: string;
@@ -244,20 +489,26 @@ export interface CatalogueIngestResult {
  * already held under the same citation whose provisions say the same words
  * (a book that read the statute copy before the port), is left as it is, so
  * its rules keep pointing at the provision they were derived from.
+ *
+ * A statute copy held under the citation whose words are not the entry's is
+ * superseded explicitly (#706, catalogueSupersession.ts): it is kept, its
+ * rules move to the entry's provisions where the entry still holds their
+ * words, and a review item records the difference.
  */
 export function ingestCatalogueEntry(
   db: AppDatabase,
   params: { companyId?: string | null; entry: CatalogueEntry; localPath: string; ingestVersion: string },
 ): CatalogueIngestResult {
   const { source, provisions } = params.entry;
-  const held = db.select({ id: irishKnowledgeSources.id, sha256: irishKnowledgeSources.sha256 })
+  const held = db.select({ id: irishKnowledgeSources.id, sha256: irishKnowledgeSources.sha256, localPath: irishKnowledgeSources.localPath })
     .from(irishKnowledgeSources).where(eq(irishKnowledgeSources.citation, source.citation)).all();
+  const copies: typeof held = [];
   for (const h of held) {
     const rows = db.select({ sectionNumber: irishActProvisions.sectionNumber, text: irishActProvisions.provisionText })
       .from(irishActProvisions).where(eq(irishActProvisions.sourceId, h.id)).all();
-    const same = h.sha256 === source.sha256 || (rows.length === provisions.length && provisions.every((p) =>
-      rows.some((r) => r.sectionNumber === p.sectionNumber && normaliseSpace(r.text ?? '') === normaliseSpace(p.excerpt))));
+    const same = h.sha256 === source.sha256 || sameWords(rows, provisions);
     if (same && rows.length > 0) return { sourceId: h.id, provisionCount: rows.length, ingested: false };
+    if (!isCatalogueSource(h.localPath) && rows.length > 0) copies.push(h);
   }
 
   return db.transaction((tx) => {
@@ -273,37 +524,48 @@ export function ingestCatalogueEntry(
       localPath: params.localPath,
       sha256: source.sha256,
       ingestVersion: params.ingestVersion,
-      publicationDate: null,
+      publicationDate: source.publicationDate ?? null,
       retrievedAt: `${source.retrievedOn}T00:00:00.000Z`,
-      effectiveFrom: source.retrievedOn,
+      effectiveFrom: source.effectiveFrom ?? source.retrievedOn,
       sourceNote: `Ingest ${params.ingestVersion} of ${source.citation} from the rules catalogue (${params.localPath}); `
         + `${source.conversion} of the official file at ${source.sourceUrl}, SHA-256 ${source.sha256}, `
-        + `fetched ${source.retrievedOn}.`,
+        + `fetched ${source.retrievedOn}.${source.note ? ` ${source.note}` : ''}`,
       sourceDate: `${source.retrievedOn}T00:00:00.000Z`,
     }).run();
+    const inserted: Array<{ id: string; sectionNumber: string; text: string }> = [];
     for (const p of provisions) {
+      const provisionId = ids.provision();
+      inserted.push({ id: provisionId, sectionNumber: p.sectionNumber, text: p.excerpt });
       tx.insert(irishActProvisions).values({
-        id: ids.provision(),
+        id: provisionId,
         companyId: params.companyId ?? null,
         sourceId,
         sectionNumber: p.sectionNumber,
         slug: slug(`${source.citation} ${p.sectionNumber} ${p.heading}`),
         heading: p.heading,
-        principalAct: null,
+        principalAct: p.principalAct ?? null,
+        part: p.part ?? null,
+        chapter: p.chapter ?? null,
         provisionText: p.excerpt,
         // No local file to slice: the locator says where the words are in the source.
         sourceStart: null,
         sourceEnd: null,
         locator: p.locator,
         category: p.category,
-        amendsSection: null,
-        effectiveClue: null,
-        citedActs: [],
+        amendsSection: p.amendsSection ?? null,
+        effectiveClue: p.effectiveClue ?? null,
+        citedActs: p.citedActs ?? [],
         relevant: p.relevant,
         relevanceReason: p.relevanceReason,
         source: 'import',
         provenanceStatus: 'imported',
       }).run();
+    }
+    for (const copy of copies) {
+      supersedeHeldCopy(tx, {
+        companyId: params.companyId ?? null, citation: source.citation, catalogueLocalPath: params.localPath,
+        copy, catalogueProvisions: inserted,
+      });
     }
     return { sourceId, provisionCount: provisions.length, ingested: true };
   });
@@ -376,6 +638,18 @@ export function catalogueRulesFor(
         .sort((a, b) => a.kind.localeCompare(b.kind) || a.toKey.localeCompare(b.toKey) || a.effectiveFrom.localeCompare(b.effectiveFrom)),
     };
   });
+}
+
+/**
+ * The words a rule version quotes from its provision. A Finance Act rule's
+ * statement labels the quote with where it comes from ("Finance Act 2024
+ * s.2: (1) Section 531AN ..."), and a book compares the statement with the
+ * entry's quote, so the entry keeps the label; the rest is the provision's
+ * own words, checked like any other quote.
+ */
+export function quotedWords(entry: CatalogueEntry, rule: Pick<CatalogueRule, 'sectionNumber'>, quote: string): string {
+  const label = `${entry.source.title} s.${rule.sectionNumber}: `;
+  return quote.startsWith(label) ? quote.slice(label.length) : quote;
 }
 
 /** An entry as committed: stable key order and a trailing newline, so a regeneration diffs cleanly. */

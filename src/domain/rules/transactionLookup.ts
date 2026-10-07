@@ -72,7 +72,7 @@ export interface TransactionContext {
    * A direct, human-made determination of whether the supplier is
    * "established outside the State" per VATCA s.12/s.34's actual legal test
    * (EU Reg 282/2011 arts.10-11: seat of economic activity / fixed
-   * establishment — see docs/statutes/282-2011/articles-10-13b-establishment.md),
+   * establishment — see catalogue/eu-282-2011/consolidated-2025-04-14.json),
    * recorded and confirmed on the supplier (issue #207). It is the only
    * source: a country code is never taken as establishment, so without it a
    * rule that needs it is unresolved and the line is flagged.
@@ -138,7 +138,7 @@ export function isValidIsoCountryCode(code: string): boolean {
  *  - `supplierEstablishedOutsideStateResolved` is the caller's own
  *    `supplierEstablishedOutsideState` determination (the actual VATCA
  *    s.12/s.34 legal test, EU Reg 282/2011 arts.10-11 — see
- *    docs/statutes/282-2011/articles-10-13b-establishment.md), and `null`
+ *    catalogue/eu-282-2011/consolidated-2025-04-14.json), and `null`
  *    (unresolved) when none was supplied. The country code is no longer a
  *    fallback (issue #207): a foreign address does not show where a business
  *    is established.

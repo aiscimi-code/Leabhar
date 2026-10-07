@@ -1,9 +1,8 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { readFileSync } from 'node:fs';
 import { eq, and } from 'drizzle-orm';
 import { createTestDatabase } from '@/db/testing';
 import { createCompany } from '../config/setup';
-import { ingestFinanceAct2024, FINANCE_ACT_2024_MD_PATH } from './irishRules';
+import { ingestFinanceAct2024FromCatalogue } from './irishRules';
 import { deriveFinanceAct2024VatThresholds } from './financeAct2024VatThresholdsIngestion';
 import { FINANCE_ACT_2024_VAT_THRESHOLD_RULES } from './financeAct2024VatThresholdsCuration';
 import { lookupTaxRule } from './irishRules';
@@ -17,8 +16,7 @@ let companyId: string;
 beforeEach(() => {
   ({ db } = createTestDatabase());
   ({ companyId } = createCompany(db, { legalName: 'VAT Thresholds Ltd', seedYears: [2025] }));
-  const markdown = readFileSync(FINANCE_ACT_2024_MD_PATH, 'utf8');
-  ingestFinanceAct2024(db, { companyId, markdown, ingestVersion: 'v1' });
+  ingestFinanceAct2024FromCatalogue(db, { companyId });
 });
 
 describe('deriveFinanceAct2024VatThresholds', () => {

@@ -1,0 +1,49 @@
+{
+  "format": 1,
+  "source": {
+    "citation": "2014 Act 38 s.343",
+    "title": "Companies Act 2014 s.343 (revised)",
+    "sourceType": "legislation",
+    "jurisdiction": "IE",
+    "sourceUrl": "https://revisedacts.lawreform.ie/eli/2014/act/38/section/343/revised/en/html",
+    "sha256": "88780a90d2de924fe9a88a706112bf6170b5dd5bf2bde111c1277b305bd16bf2",
+    "conversion": "lrc-html-plaintext",
+    "retrievedOn": "2026-10-06",
+    "note": "LRC-revised text as retrieved — a live, continuously-updated page, not a dated historical snapshot. Distinct source row per section, never merged with any other Companies Act 2014 section."
+  },
+  "provisions": [
+    {
+      "sectionNumber": "343",
+      "heading": "Obligation to make annual return",
+      "locator": "s.343",
+      "category": "exemption",
+      "relevant": true,
+      "relevanceReason": "Substantive exemption provision; potentially bears on transaction treatment.",
+      "excerpt": "343.\n(1) In this section “annual return date”, in relation to a company, means the date in relation to that company as provided\nunder\nsection 345\nand “first annual return date”, in relation to a company, shall be read accordingly.\n\n(2) Subject to the provisions of this section, a company shall deliver to the Registrar\nan annual return in accordance with\nsubsection (4)\nnot later than\n56 days\nafter the annual return date of the company.\n\n(3) However, if the annual return is made up to an earlier date than the company’s annual return date, it shall be so delivered not later than\n56 days\nafter that earlier date.\n\n(4) An annual return of a company shall—\n\n(a) be in the prescribed form and contain the prescribed information, and\n\n(b) be made up to a date that is not later than its annual return date,\n\nexcept that the first annual return falling to be made by a company after it is incorporated\nshall be made up to the date that is its first annual return date.\n\n(5) The court, on an application made (on notice to the Registrar) by a company, may,\nif it is satisfied that it would be just to do so, make an order extending the time\nfor the purposes of\nsubsection (2)\nor\n(3)\nin which the annual return of the company in relation to a particular period may\nbe delivered to the Registrar; only one such order may be made as respects the particular\nperiod to which the return concerned of the company relates.\n\n(6) Within 28 days after the date on which an order under\nsubsection (5)\nis made, or such longer period as the court may allow on the making of the order,\nthe company to which the order relates shall deliver a certified copy of the order\nto the Registrar; if the order is not received by the Registrar within whichever foregoing\nperiod is applicable it shall not be valid for the purposes of\nsubsection (5).\n\n(7) In respect of an annual return that is to be delivered on or after the commencement\nof this section, the court for the purposes of\nsubsection (5)\nshall be the District Court for the District Court district where the registered\noffice of the company is located or the High Court.\n\n(8)\nSubsection (2)\nshall not apply in respect of any annual return date that falls during a period when\nthe company is in the course of being wound up and a liquidator stands appointed to\nit.\n\n(9)\nSubsection (2)\nshall not apply in respect of any annual return date that falls during a period when\nthe company is in the course of being voluntarily struck off the register by the Registrar\npursuant to\nsections 731\nto\n733\nbut—\n\n(a)\nsubsection (10)\nhas effect as regards the interpretation of this subsection, and\n\n(b) in addition to the foregoing, the exemption conferred by this subsection shall\ncease to apply where the company is not ultimately dissolved on foot of that procedure\nor, if it is dissolved on foot thereof, where it is subsequently restored to the register.\n\n(10) For the purposes of\nsubsection (9)\n, the period when the company is in the course of being voluntarily struck off the\nregister by the Registrar pursuant to\nsections 731\nto\n733\nshall only be regarded as having commenced on the publication by the Registrar of\na notice under\nsection 732\nin relation to that application.\n\n(11) If a company fails to comply with the requirements of this section, the company\nand any officer of it who is in default shall be guilty of a category 3 offence.\n\n(11A) Section 1(1) of the Probation of Offenders Act 1907 shall not apply to an offence\nunder this section.\n\n(12) In\nsubsection (11)\n“officer” includes any shadow director and\nde facto\ndirector."
+    }
+  ],
+  "rules": [
+    {
+      "key": "company.annual_return_delivery",
+      "sectionNumber": "343",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2020-12-16",
+          "effectiveTo": null,
+          "quote": "a company shall deliver to the Registrar\nan annual return in accordance with\nsubsection (4)\nnot later than\n56 days\nafter the annual return date of the company.",
+          "value": 56,
+          "unit": "count",
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    }
+  ]
+}

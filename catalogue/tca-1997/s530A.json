@@ -1,0 +1,56 @@
+{
+  "format": 1,
+  "source": {
+    "citation": "1997 Act 39 s.530A",
+    "title": "TCA 1997 s.530A (as inserted by FA 2011 s.20)",
+    "sourceType": "legislation",
+    "jurisdiction": "IE",
+    "sourceUrl": "https://www.irishstatutebook.ie/eli/2011/act/6/section/20/enacted/en/html",
+    "sha256": "ecf8c67b4f6b9e486666b6f048e804edcb013cfdf7811a215fc7c9783dc86d8b",
+    "conversion": "isb-html-plaintext",
+    "retrievedOn": "2026-10-06",
+    "publicationDate": null,
+    "effectiveFrom": "2012-01-01",
+    "note": "Inserted by Finance Act 2011 s.20 — no LRC revised TCA 1997 page exists for ss.530A-530V (every revisedacts.lawreform.ie URL for them 404s, reconfirmed for issue #131), so this was fetched from the eISB as-enacted Finance Act 2011 s.20 page instead, the inserting Act's own text. Later Finance Acts may have amended this section since 2011; not independently checked here."
+  },
+  "provisions": [
+    {
+      "sectionNumber": "530A",
+      "heading": "Principal to whom relevant contracts tax applies.",
+      "locator": "s.530A",
+      "principalAct": "Taxes Consolidation Act 1997",
+      "citedActs": [
+        "Taxes Consolidation Act 1997",
+        "Finance Act 2011"
+      ],
+      "category": "other",
+      "relevant": true,
+      "relevanceReason": "Curated: mapped to rule(s) in rctCuration.ts for s.530A.",
+      "excerpt": "530A.— (1)  Subject to subsections (2) and (3), this section applies to a principal who is—\n\n(\na\n) in respect of the whole or any part of a relevant contract, the contractor under another relevant contract,\n\n(\nb\n) a person—\n\n(i) carrying on a business that includes the erection of buildings or the development of land (within the meaning of section 639(1)) or the manufacture, treatment or extraction of materials for use, whether used or not, in construction operations,\n\n(ii) carrying on a business of meat processing operations in an establishment approved and inspected in accordance with the European Communities (Fresh Meat) Regulations, 1997 (\n\nS.I. No. 434 of 1997\n\n) or, as the case may be, the European Communities (Fresh Poultry-meat) Regulations, 1996 (\n\nS.I. No. 3 of 1996\n\n), or\n\n(iii) carrying on a business that includes the processing (including cutting and preserving) of wood from thinned or felled trees in sawmills or other like premises or the supply of thinned or felled trees for such processing,\n\n(\nc\n) a person connected with a company carrying on a business mentioned in paragraph (\nb\n),\n\n(\nd\n) a local authority, a public utility society (within the meaning of\n\nsection 2\n\nof the\n\nHousing Act 1966\n\n) or a body referred to in subparagraph (i) or (ii) of section 12(2)(\na\n) of that Act or section 19 or 45 of that Act,\n\n(\ne\n) a Minister of the Government,\n\n(\nf\n) any board or body established by or under statute or any board or body established by or under royal charter and funded wholly or mainly out of moneys provided by the Oireachtas, or\n\n(\ng\n) a person who carries on any gas, water, electricity, hydraulic power, dock, canal or railway undertaking.\n\n(2) A person carrying on a business shall not be deemed to be a person of a kind specified in subsection (1)(\nb\n) by reason only of the fact that in the course of that business such person erects buildings or develops land for the use or occupation of such person or employees of such person.\n\n(3) (\na\n)  Subject to paragraph (\nb\n), a person shall be deemed not to be a principal of a kind specified in subsection (1)(\nc\n) where the following conditions are met—\n\n(i) in the performance of a relevant contract, the person makes a payment to a subcontractor solely in connection with construction operations carried out in or on buildings or land to be used or occupied by such person or the employees of such person, and\n\n(ii) the person does not carry on a business of the type mentioned in subsection (1)(\nb\n)(i).\n\n(\nb\n) Where a person is a principal of a kind specified in subsection (1)(\nc\n) by reason of the fact that such person is connected with a company carrying on a business of the type mentioned in subsection (1)(\nb\n)(i), paragraph (\na\n) shall apply only where in addition to the conditions specified in that paragraph such person is a company."
+    }
+  ],
+  "rules": [
+    {
+      "key": "rct.principal_obligation_scope",
+      "sectionNumber": "530A",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2012-01-01",
+          "effectiveTo": null,
+          "quote": "carrying on a business that includes the erection of buildings or the development of land (within the meaning of section 639(1)) or the manufacture, treatment or extraction of materials for use, whether used or not, in construction operations",
+          "value": null,
+          "unit": null,
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    }
+  ]
+}

@@ -1,0 +1,51 @@
+{
+  "format": 1,
+  "source": {
+    "citation": "Revenue TDM Part 38-01-03b",
+    "title": "TDM Part 38-01-03b — Guidelines for VAT Registration (capacity exclusion from mandatory e-filing)",
+    "sourceType": "revenue_guidance",
+    "jurisdiction": "IE",
+    "sourceUrl": "https://www.revenue.ie/en/tax-professionals/tdm/income-tax-capital-gains-tax-corporation-tax/part-38/38-01-03b.pdf",
+    "sha256": "e08f5c8cc6037b77cd6b298134777d2005613c27609bef042cd1af0bccefe3e7",
+    "conversion": "pdfplumber-full",
+    "retrievedOn": "2026-10-06",
+    "publicationDate": null,
+    "effectiveFrom": "2026-05-01",
+    "note": "Only the \"Exclusion from Mandatory Electronic Filing and Payment of Tax\" passage is ingested from this 40+ page manual — it repeats byte-identically four times (once per registrant-type scenario), verified by tdm3801_03bParser.ts. This is Revenue guidance, not legislation: it ranks below S.I. 156/2012 itself in the source hierarchy, and closes a gap that Regulation left open here (its own exclusion criteria are not restated in this KB — see si156Curation.ts)."
+  },
+  "provisions": [
+    {
+      "sectionNumber": "capacity-exclusion",
+      "heading": "Exclusion from Mandatory Electronic Filing and Payment of Tax",
+      "locator": "Appendix 8, page 40 (repeated in Appendices 9, 10 and 11)",
+      "category": "procedure",
+      "relevant": true,
+      "relevanceReason": "Curated: mapped to vat.mandatory_electronic_filing_capacity_exclusion in tdm3801_03bCuration.ts.",
+      "excerpt": "If you do not have the capacity to make returns and payments electronically, you can apply to be\nexcluded from the obligation to do so. Revenue may exclude a taxpayer from their obligation to\npay and file electronically, if Revenue is satisfied that the taxpayer does not have the capacity* to\ndo so. If you consider that you qualify for an exclusion you can apply in writing stating your\nreason(s) to your local tax office.\n* Capacity means sufficient access to the Internet, by which either or both a specified return or\nthe payment of any specified liabilities may be made by electronic means and, in the case of an\nindividual, also means not prevented by reason of age, or mental or physical infirmity from either\nor both making a specified return or paying any specified liabilities by electronic means.\nIf Revenue has a record of a tax agent acting on your behalf, your tax agent will also receive a copy\nof this notification."
+    }
+  ],
+  "rules": [
+    {
+      "key": "vat.mandatory_electronic_filing_capacity_exclusion",
+      "sectionNumber": "capacity-exclusion",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2026-05-01",
+          "effectiveTo": null,
+          "quote": "If you do not have the capacity to make returns and payments electronically, you can apply to be\nexcluded from the obligation to do so. Revenue may exclude a taxpayer from their obligation to\npay and file electronically, if Revenue is satisfied that the taxpayer does not have the capacity* to\ndo so. If you consider that you qualify for an exclusion you can apply in writing stating your\nreason(s) to your local tax office.\n* Capacity means sufficient access to the Internet, by which either or both a specified return or\nthe payment of any specified liabilities may be made by electronic means and, in the case of an\nindividual, also means not prevented by reason of age, or mental or physical infirmity from either\nor both making a specified return or paying any specified liabilities by electronic means.",
+          "value": null,
+          "unit": null,
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    }
+  ]
+}

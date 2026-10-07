@@ -1,0 +1,138 @@
+{
+  "format": 1,
+  "source": {
+    "citation": "Revenue NfG TCA 1997 (FA 2025 ed.) Part 12",
+    "title": "Notes for Guidance — Taxes Consolidation Act 1997 — Finance Act 2025 edition — part12",
+    "sourceType": "revenue_guidance",
+    "jurisdiction": "IE",
+    "sourceUrl": "https://www.revenue.ie/en/tax-professionals/documents/notes-for-guidance/tca/part12.pdf",
+    "sha256": "6ee6b483a66b011044f4563a7e5acbd80995728dc5d6cf4ae6892f4955023094",
+    "conversion": "pdftotext-layout",
+    "retrievedOn": "2026-10-06",
+    "publicationDate": null,
+    "effectiveFrom": "2025-12-31",
+    "note": "Revenue guidance summarising the TCA 1997 as amended to Finance Act 2025. There is no LRC revised TCA; the Notes are the current consolidated statement of each section, but rank below the Act itself."
+  },
+  "provisions": [
+    {
+      "sectionNumber": "396",
+      "heading": "Relief for trading losses other than terminal losses",
+      "locator": "s.396",
+      "principalAct": "1997 Act 39",
+      "category": "corporation_tax",
+      "relevant": true,
+      "relevanceReason": "Curated: mapped to a rule in corporationTaxCuration.ts.",
+      "excerpt": "396 Relief for trading losses other than terminal losses\n\nSummary\nThis section provides for a trading loss to be carried forward from an accounting period\nand set off against income of the same trade for succeeding accounting periods.\nAlternatively, a company may claim to have the loss set off against profits of any\ndescription for the same accounting period in which the loss was incurred or of an\nimmediately preceding accounting period of the same length. It is also provided that\ncharges on income laid out wholly and exclusively for trade purposes, to the extent that\nthey exceed the total profits of the accounting period from which they are deductible, are\ntreated as trading expenses for the purposes of computing a loss and may be carried\nforward for set-off against income of the same trade for a subsequent accounting period.\n\nDetails\nCarry-forward of losses\nSubject to section 396C, the carry-forward and set-off of a loss incurred in a trade against (1)\nincome from the same trade for a subsequent accounting period is to be allowed on the\nmaking of a claim for such relief. A loss carried forward must be set off against the income\nof the trade for an earlier in priority to a later accounting period. A loss or a part of a loss\ncannot be relieved by way of carry-forward if it is relieved against profits of the same\naccounting period or of the immediately preceding accounting period under subsection\n(2) or if it is relieved under section 396A or 396B.\nCarry-back of losses and same period set-off\nAs an alternative to the carry-forward of relief under subsection (1), a company is entitled (2)\nto claim that a trading loss incurred in an accounting period may be set —\n•      against profits of any kind (that is, trading income, other income and chargeable\n       gains) of the same accounting period, and\n•      against profits of any kind of all the accounting periods ending in the period (which\n       is the same length as the length of the accounting period in which the loss was\n       incurred) which immediately precedes the accounting period in which the loss was\n       incurred. This only applies where the trade was carried on by the company during\n       that immediately preceding period. Any balance may be carried forward against\n       trading income of the same trade.\nThe profits of an accounting period against which a loss is to be set are the profits as\nreduced by an earlier loss brought forward under subsection (1) to that accounting period.\nWhere relief is to be given against the profits for an immediately preceding period of the\nsame length as the accounting period in which the loss was incurred and that preceding\nperiod comprises more than one accounting period the loss is to be set against the profits\nfor a later accounting period in priority to those for an earlier accounting period or part of\nan accounting period comprised in that preceding period.\nProfits against which losses may be carried back\nThe profits against which a loss may be carried back are limited to those arising in (3)\naccounting periods or parts of accounting periods falling within a period of time equal in\n\n                                                                 22\n\fNotes for Guidance – Taxes Consolidation Act 1997 – Finance Act 2025 Edition - Part 12\n\nlength to, and immediately preceding, the accounting period in which the loss was\nincurred.\n\n   Example 1\n   Company A’s accounts disclose results —\n\n      12 months to 30/9/2001 Profits                                   €60,000\n\n     9 months to 30/6/2002 Loss                                        (€90,000)\n   The loss for set-off against the profits of the accounting\n\n      period to 30/9/2001 is limited to 9/12 x €60,000 =               (€45,000)\n\n      The balance of loss available for carry-forward and\n      set-off against profits of the trade arising subsequent\n      to 30/6/2002 is (€90,000)–(€45,000) =                            (€45,000)\n\n   Example 2\n   Company B’s accounts disclose results —\n\n      12 months to 31/12/2000                           Profits        €20,000\n\n      9 months to 30/9/2001                             Profits        €60,000\n\n      12 months to 30/9/2002                            Loss       (€80,000)\n\n      The loss for set-off against the profits of the\n      accounting period to 30/9/2001 is\n      9/12 x €80,000.                                              (€60,000)\n      The set-off against the profits of the\n      accounting period of 12 months to\n      31/12/2000 is however limited to the\n      amount of those profits apportioned to the\n      period from 1/10/2000 to\n      31/12/2000, namely 3/12 x €20,000 =                              (€5,000)\n      The balance of loss available for carry-\n      forward and set-off against the profits of the\n      trade arising subsequent to 30/9/2002 is\n      €80,000 – (€60,000 + €5,000) =                               (€15,000)\n\n“Case III” trades\nRelief for losses by way of carry-back and same period set-off against other income is not (4)\navailable where a trade is carried on wholly abroad. Such losses may only be relieved by\nway of carry-forward for set-off against future profits of the same trade. Such a trade is\nentitled to terminal loss relief under section 300.\nComputation of losses\nA trading loss is to be computed in the same manner as trading income.                     (5)(a)\nIn computing the loss incurred in a trade of a life assurance company, management (5)(b)\nexpenses which are deductible under section 83 are not to be deducted in computing a loss\nsustained in the trade. This ensures that such management expenses cannot be taken into\naccount twice and, effectively, relieved twice.\nTreatment of interest and certain dividends\nWhile in strictness interest and dividends (other than dividends paid by an Irish company) (6)\nare in the nature of trading receipts in the hands of a company such as a financial concern,\nsuch receipts may in practice have borne corporation tax under provisions other than those\n\n                                                                  23\n\fNotes for Guidance – Taxes Consolidation Act 1997 – Finance Act 2025 Edition - Part 12\n\napplicable to trading income (for example, untaxed interest from Irish Government\nsecurities or dividends from British companies may have been charged under Case III of\nSchedule D). In such circumstances the loss in the trade is to be set off not only against\nthe trading profits charged under Case I but also against such investment income charged\nunder Case III.\nDividends received by an Irish resident company from another Irish resident company are\nnot within the charge to corporation tax in the hands of the receiving company (section\n129) and the loss, therefore, is not available for carry forward against such dividends.\nRelief in such circumstances may, however, be available under section 158.\nCharges on income\nWhere charges on income (net of any part of those charges relieved under section 243B) (7)\nexceed the profits against which they are deductible, any part of those charges which are\npaid wholly and exclusively for the purposes of the company’s trade may, up to the amount\nof the excess, be treated as a deductible trade expense and, thus, may be used to create a\nloss which can then be carried forward for relief against the future profits of the same\ntrade.\nApplication\nLoss relief under this section is only available to companies carrying on a trade which is (8)\nwithin the charge to corporation tax at all material times.\nTime limits for claims\nA claim to set off a trading loss against profits of any kind for the current or preceding (9)\naccounting period may be made within 2 years from the end of the accounting period in\nwhich the loss was incurred.\n\n   Example\n      Accounting period                   12 months     9 months 12 months\n\n                                         to 31/12/00 to 30/9/01 to 30/9/02\n\n      Trading income                         €10,000           Nil      €40,000\n\n      Other income chargeable to\n\n      corporation tax                       €110,000     €160,000      €170,000\n\n      Total profits                        €120,000     €160,000       €210,000\n   In the 9 months to 30/9/01 the company incurred a trading loss of (€20,000).\n   Carry forward of loss (subsection (1))\n   The loss can be carried forward against income of the trade —\n\n      Accounting period 12 months to 30/9/02\n\n      Income from trade                                     €40,000\n\n      less loss carried forward                            (€20,000)\n\n                                                           €20,000\n\n      Other income                                          €170,00\n\n     Total profits for assessment                           €190,00\n   Same period set-off (subsection (2))\n   The loss may be set off against other profits of the accounting period in which the loss was incurred —\n\n                                                                 24\n\fNotes for Guidance – Taxes Consolidation Act 1997 – Finance Act 2025 Edition - Part 12\n\n\n      9 months to 30/9/01\n\n      Total profits                                €160,000\n\n      less trading loss set off                     (€20,000)\n\n       Net profits                                €140,000\n   If the trading loss for the 9 months to 30/9/01 was (€180,000) a sum of (€160,000) could be set against\n   the other profits of that accounting period and the balance (€20,000) carried back and set against the\n   apportioned profits of €90,000 for 9 months to 31/12/00.\n\n"
+    },
+    {
+      "sectionNumber": "396A",
+      "heading": "Relief for relevant trading losses",
+      "locator": "s.396A",
+      "principalAct": "1997 Act 39",
+      "category": "corporation_tax",
+      "relevant": true,
+      "relevanceReason": "Curated: mapped to a rule in corporationTaxCuration.ts.",
+      "excerpt": "396A Relief for relevant trading losses\n\nSummary\nThis section places a ring-fence on the offset of certain trading losses incurred in an\naccounting period of a company against profits of the company in that accounting period\nand in the previous accounting period.\n\nDetails\nDefinitions\nThe section identifies “relevant trading losses” as trading losses incurred by a company in\nan accounting period other than so much of the loss as is incurred in an excepted trade (i.e.\na trade the income from which is taxable at the 25 per cent rate).\n“Relevant trading income” has the same meaning as in section 243A, i.e. trading income\nother than so much of that income as is taxable at the 25 per cent rate.\nRing-fencing of losses\nThe sideways or backwards set-off of a loss under section 396 does not apply to relevant\ntrading losses. For the purposes of section 396 losses of an accounting period are to be\nreduced by so much of those losses as are a relevant trading loss.\nSet off of losses\nInstead, the losses may be set off sideways or backwards against:\n•     relevant trading income of the accounting period or of certain previous accounting\n      periods,\n•     income of a trade of non-life insurance, reinsurance and against the investment\n      income of a life assurance company that is attributable to its shareholders, and\n•     foreign dividend income which is chargeable at the 12½ rate of tax under section\n      21B.\n[Losses which are not subject to a claim for sideways or backwards set off or are not used\nunder a claim under this section, section 396B, 420 or 420B may be carried forward under\nsection 396(1) and set against income of future years from the trade in which they were\nincurred.]\nWhere trading losses are to be set backwards under this section the losses of an accounting\nperiod can be offset against profits of a period equal in length to the accounting period and\nwhich ends immediately before the accounting period. If necessary parts of accounting\nperiods can be taken into account for this purpose.\nA claim for relief must be made within 2 years after the end of the accounting period in\nwhich the loss was incurred.\n\n\n\n                                                                 25\n\fNotes for Guidance – Taxes Consolidation Act 1997 – Finance Act 2025 Edition - Part 12\n\n\n   Example:\n     Accounting period 12 months to 31/12/03                               €\n\n       Relevant trading loss                                          (1,000)\n\n       Other trading loss                                              (500)\n\n       Other income                                                    1,200\n\n       Accounting period 12 months to 31/12/02\n\n       Relevant trading income                                         1,600\n\n       Other income                                                      200\n\n       Computation\n\n       AP 31/12/03 Other income                                        1,200\n\n       Less Other trading loss                                         (500)\n\n       Taxable                                                           700\n\n       AP 31/12/02 Relevant trading income                             1,600\n\n       Less Relevant trading loss (from 31/12/03)                     (1,000)\n\n                                                                         600\n\n       Other income                                                      200\n\n       Taxable                                                           800\n\n\n"
+    },
+    {
+      "sectionNumber": "396B",
+      "heading": "Relief for certain trading losses on a value basis",
+      "locator": "s.396B",
+      "principalAct": "1997 Act 39",
+      "category": "corporation_tax",
+      "relevant": true,
+      "relevanceReason": "Curated: mapped to a rule in corporationTaxCuration.ts.",
+      "excerpt": "396B Relief for certain trading losses on a value basis\n\nSummary\nThis section provides relief for relevant trading losses (i.e. losses arising in a trade the\nincome from which is taxable at the standard corporation tax rate in an accounting period\nwhich cannot otherwise be relieved. This is done by reducing the corporation tax payable\nfor the accounting period by an amount determined by applying the standard rate of\ncorporation tax to the amount of the unrelieved loss. Corporation tax which is referable\nto profits of policyholders is excluded from relief under this section.\n\nDetails\nDefinitions\n“relevant corporation tax” is the corporation tax which can be reduced by the relief. It is (1)\nthe corporation tax which would be chargeable for the accounting period apart from:\n•     payments of tax withheld by the company from certain payments (sections 239 and\n      241),\n•     group relief for losses under section 420B, and\n•     surcharges on undistributed income (sections 440 and 441).\n•     any corporation tax attributable to a life business company (within the meaning of\n      section 706) where that corporation tax is referable to profits of policyholders.\n\n                                                                 26\n\fNotes for Guidance – Taxes Consolidation Act 1997 – Finance Act 2025 Edition - Part 12\n\n“relevant trading loss” has the same meaning as in section 396A (i.e. a trading loss\nincurred by a company in an accounting period other than so much of the loss as is incurred\nin an excepted trade – i.e. a trade the income from which is taxable at the 25 per cent rate).\nThe relief\nWhere the amount of a relevant trading loss incurred by a company in an accounting period (2)\nexceeds the amounts that could, if a claim had been made, have been set off in respect of\nthat loss against income of the company (under section 396A) then the company can claim\nrelief in respect of the excess.\nWhere a company claims relief under this section in respect of the excess, the relevant (3)\ncorporation tax for the accounting period is to be reduced by an amount determined by\napplying the standard rate to those “relevant trading losses”.\nUtilisation of relief\nLosses can be relieved in this way against corporation tax of the accounting period in (4)\nwhich they were incurred and of previous accounting periods ending within a specified\ntime.\nThe previous accounting periods in which relief can be given for a loss incurred in an\naccounting period are those ending in the time immediately preceding the accounting\nperiod in which the loss was incurred and which is equal in length to that accounting\nperiod. However, the reduction which can be made in the relevant corporation tax for an\naccounting period falling partly before that time is to be proportionately reduced on a time\nbasis.\nCarry forward of unused amounts\nSpecial rules apply to determine the amount of the losses which are to be regarded as (5)\nhaving been used. The amount of losses which are to be regarded as used is determined\nby regrossing the loss relief given at the standard corporation tax rate.\nIn loss relief generally, losses are offset against profits before deducting charges.\nConsistency with that approach is achieved by providing that the amount of losses treated\nas used is the amount which would have been treated as used if there were no non-trade\ncharges on income, expenses of management or other similar amounts deductible from\nprofits of more than one description. This ensures that only the appropriate amount of\nlosses is brought forward. However, the definition ensures that there is nothing to prevent\nthe carry forward of excess capital allowances under section 308.\nA claim for relief must be made within 2 years after the end of the accounting period in (6)\nwhich the loss was incurred.\n\n"
+    }
+  ],
+  "rules": [
+    {
+      "key": "ct.loss_carry_forward",
+      "sectionNumber": "396",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "1997-04-06",
+          "effectiveTo": null,
+          "quote": "income from the same trade for a subsequent accounting period is to be allowed on the",
+          "value": null,
+          "unit": null,
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    },
+    {
+      "key": "ct.loss_claim_time_limit",
+      "sectionNumber": "396A",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "1997-04-06",
+          "effectiveTo": null,
+          "quote": "A claim for relief must be made within 2 years after the end of the accounting period in",
+          "value": 24,
+          "unit": "count",
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    },
+    {
+      "key": "ct.loss_value_basis",
+      "sectionNumber": "396B",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "1997-04-06",
+          "effectiveTo": null,
+          "quote": "corporation tax for the accounting period is to be reduced by an amount determined by",
+          "value": 1250,
+          "unit": "basis_points",
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    },
+    {
+      "key": "ct.relevant_trading_loss_set_off",
+      "sectionNumber": "396A",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "1997-04-06",
+          "effectiveTo": null,
+          "quote": "relevant trading income of the accounting period or of certain previous accounting",
+          "value": null,
+          "unit": null,
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    }
+  ]
+}

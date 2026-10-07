@@ -82,7 +82,7 @@ export function generateVatPeriods(
 
 function computeFilingDeadline(endDate: IsoDate, options: VatPeriodOptions): IsoDate {
   // Default: the 19th day of the following month, the date VATCA s.76(1)
-  // states as enacted (docs/statutes/vatca-2010/vatca-2010-enacted.md).
+  // states as enacted (catalogue/vatca-2010/vatca-2010-enacted.json).
   // Editable per company: a later date for electronic filers is not stated in
   // any source in the repository, so none is assumed (issue #623, #624).
   const day = options.filingDeadlineDayOfFollowingMonth ?? options.filingDeadlineDays ?? 19;

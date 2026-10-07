@@ -7,9 +7,9 @@
  * `extract` commands by hand, in the right order, and nothing in the import →
  * match → classify workflow ever did — so the lookup the transaction screen
  * now uses had nothing to look up. This function runs exactly the set of
- * ingest and derive steps the CLI exposes, from the same `docs/statutes`
- * files, so the web app, the agent CLI and the traceability audit
- * (`scripts/rule-traceability-dump.ts`) all see the same 68 rules.
+ * ingest and derive steps the CLI exposes, from the rules catalogue
+ * (`catalogue/`, #556), so the web app, the agent CLI and the traceability
+ * audit (`scripts/rule-traceability-dump.ts`) all see the same rules.
  *
  * Every step is idempotent by content (a source already ingested with the
  * same SHA-256 is a no-op, and an unchanged curated rule is left alone), so
@@ -25,105 +25,32 @@ import { sha256Hex } from '@/lib/hash';
 import { appRoot } from '@/lib/paths';
 import { irishTaxRules } from '@/db/schema';
 import { ensureDefaultVatTreatments } from '../config/setup';
-import { ingestFinanceAct2024, ingestFinanceAct2025, deriveTaxRules } from './irishRules';
-import { ingestVatca2010, deriveVatcaRules } from './vatcaIngestion';
-import { ingestVatcaSchedule, deriveVatcaScheduleRules } from './vatcaScheduleIngestion';
-import {
-  ingestTca1997S530, ingestTca1997S530A, ingestTca1997S530E, ingestTca1997S530G, ingestTca1997S530H,
-  ingestTca1997S530I, ingestRctTdm18_02_04, ingestRctTdm18_02_05, ingestRctTdm18_02_11, deriveRctRules,
-} from './rctIngestion';
+import { deriveTaxRules } from './irishRules';
+import { deriveVatcaRules } from './vatcaIngestion';
+import { deriveVatcaScheduleRules } from './vatcaScheduleIngestion';
+import { deriveRctRules } from './rctIngestion';
 import { ingestVatcaRevisedSection, deriveVatcaRevisedRules } from './vatcaRevisedIngestion';
-import { ingestTca1997S284, ingestFinanceAct2003S23, deriveCapitalAllowancesRules } from './capitalAllowancesIngestion';
-import { ingestSi639, deriveSi639Rules } from './si639Ingestion';
-import { ingestSi156, deriveSi156Rules } from './si156Ingestion';
-import {
-  ingestSi692025Reg5, ingestSi692025Reg7, ingestSi692025Reg8, ingestSi692025Reg9, deriveSi692025Rules,
-} from './si692025Ingestion';
+import { deriveCapitalAllowancesRules } from './capitalAllowancesIngestion';
+import { deriveSi639Rules } from './si639Ingestion';
+import { deriveSi156Rules } from './si156Ingestion';
+import { deriveSi692025Rules } from './si692025Ingestion';
 import { deriveFinanceAct2024VatThresholds } from './financeAct2024VatThresholdsIngestion';
-import { ingestTdm3801_03bCapacityExclusion, deriveTdm3801_03bCapacityExclusionRule } from './tdm3801_03bIngestion';
+import { deriveTdm3801_03bCapacityExclusionRule } from './tdm3801_03bIngestion';
 import { deriveVatScopeRules } from './vatScopeIngestion';
-import { ingestTcaNfgPart, deriveCorporationTaxRules, nfgPath } from './tcaNfgIngestion';
-import { NFG_SECTIONS } from './corporationTaxCuration';
-import { ingestSwcaSection, deriveIncomeTaxRules, SWCA_SECTIONS, swcaPath } from './incomeTaxIngestion';
-import {
-  ingestCompaniesAct2014Section, deriveCompaniesAct2014Rules, COMPANIES_ACT_2014_SECTION_NUMBERS,
-} from './companiesAct2014Ingestion';
-import { ingestVat3ReturnGuidance, ingestRtdTdm, deriveVat3RtdRules } from './vat3RtdIngestion';
-import { ingestEbrief168_25, deriveEbriefRules } from './ebriefIngestion';
-import { ingestEu282Articles, deriveEu282Rules, EU_282_2011_MD_PATH } from './eu282Ingestion';
-import { ingestPayrollSource, derivePayrollRules, PAYROLL_SOURCES } from './payrollIngestion';
-import { ingestSizeCriteriaSource, deriveSizeCriteriaRules, SIZE_CRITERIA_SOURCES } from './sizeCriteriaIngestion';
-import { ingestSlicedSource } from './slicedSourceIngestion';
+import { deriveCorporationTaxRules } from './tcaNfgIngestion';
+import { deriveIncomeTaxRules } from './incomeTaxIngestion';
+import { deriveCompaniesAct2014Rules } from './companiesAct2014Ingestion';
+import { deriveVat3RtdRules } from './vat3RtdIngestion';
+import { deriveEbriefRules } from './ebriefIngestion';
+import { deriveEu282Rules } from './eu282Ingestion';
+import { derivePayrollRules } from './payrollIngestion';
+import { deriveSizeCriteriaRules } from './sizeCriteriaIngestion';
 import { deriveCuratedRuleFamilies } from './incomeTaxIngestion';
-import { CAR_EMISSIONS_SOURCES, CAR_EMISSIONS_CURATED_RULES } from './carEmissionsCuration';
+import { CAR_EMISSIONS_CURATED_RULES } from './carEmissionsCuration';
 import { syncRuleLinks } from './ruleLinks';
 import { taxHeadsFor } from './taxHeads';
 import { CATALOGUE_DIR, CATALOGUE_ENTRIES, catalogueEntryPath, catalogueOfficialFilePath, ingestCatalogueFile, readCatalogueEntry } from './catalogue';
 import { checkCatalogueVersions } from './ruleDecisions';
-
-type IngestParams = { companyId: string; markdown: string; ingestVersion: string; localPath: string };
-type IngestFn = (db: AppDatabase, params: IngestParams) => unknown;
-
-/**
- * Every source file, as a path relative to the repository root. Stored as
- * `localPath` in that relative form (not an absolute build-machine path), so
- * the provision viewer can resolve it wherever the app runs.
- */
-const SOURCES: Array<{ path: string; ingest: IngestFn }> = [
-  { path: 'docs/statutes/finance-act-2024/2024-act-43-enacted.md', ingest: ingestFinanceAct2024 },
-  { path: 'docs/statutes/finance-act-2025/2025-act-18-enacted.md', ingest: ingestFinanceAct2025 },
-  { path: 'docs/statutes/vatca-2010/vatca-2010-enacted.md', ingest: ingestVatca2010 },
-  {
-    path: 'docs/statutes/vatca-2010-revised/schedule-1.md',
-    ingest: (db, p) => ingestVatcaSchedule(db, { ...p, scheduleNumber: '1' }),
-  },
-  {
-    path: 'docs/statutes/vatca-2010-revised/schedule-2.md',
-    ingest: (db, p) => ingestVatcaSchedule(db, { ...p, scheduleNumber: '2' }),
-  },
-  {
-    path: 'docs/statutes/vatca-2010-revised/schedule-3.md',
-    ingest: (db, p) => ingestVatcaSchedule(db, { ...p, scheduleNumber: '3' }),
-  },
-  { path: 'docs/statutes/tca-1997/s530.md', ingest: ingestTca1997S530 },
-  { path: 'docs/statutes/tca-1997/s530A.md', ingest: ingestTca1997S530A },
-  { path: 'docs/statutes/tca-1997/s530E.md', ingest: ingestTca1997S530E },
-  { path: 'docs/statutes/tca-1997/s530G.md', ingest: ingestTca1997S530G },
-  { path: 'docs/statutes/tca-1997/s530H.md', ingest: ingestTca1997S530H },
-  { path: 'docs/statutes/tca-1997/s530I.md', ingest: ingestTca1997S530I },
-  { path: 'docs/statutes/rct/tdm-18-02-04.md', ingest: ingestRctTdm18_02_04 },
-  { path: 'docs/statutes/rct/tdm-18-02-05.md', ingest: ingestRctTdm18_02_05 },
-  { path: 'docs/statutes/rct/tdm-18-02-11.md', ingest: ingestRctTdm18_02_11 },
-  { path: 'docs/statutes/tca-1997/s284.md', ingest: ingestTca1997S284 },
-  { path: 'docs/statutes/finance-act-2003/s23.md', ingest: ingestFinanceAct2003S23 },
-  { path: 'docs/statutes/si-639-2010/2010-si-639.md', ingest: ingestSi639 },
-  { path: 'docs/statutes/si-156-2012/2012-si-156.md', ingest: ingestSi156 },
-  { path: 'docs/statutes/si-69-2025/2025-si-69.md', ingest: ingestSi692025Reg5 },
-  { path: 'docs/statutes/si-69-2025/2025-si-69.md', ingest: ingestSi692025Reg7 },
-  { path: 'docs/statutes/si-69-2025/2025-si-69.md', ingest: ingestSi692025Reg8 },
-  { path: 'docs/statutes/si-69-2025/2025-si-69.md', ingest: ingestSi692025Reg9 },
-  { path: 'docs/statutes/tdm-38-01-03b/38-01-03b.md', ingest: ingestTdm3801_03bCapacityExclusion },
-  ...COMPANIES_ACT_2014_SECTION_NUMBERS.map((n) => ({
-    path: `docs/statutes/companies-act-2014/s${n}.md`,
-    ingest: ingestCompaniesAct2014Section as IngestFn,
-  })),
-  ...Object.keys(NFG_SECTIONS).map((part) => ({
-    path: nfgPath(part),
-    ingest: ((db, p) => ingestTcaNfgPart(db, { ...p, part })) as IngestFn,
-  })),
-  ...SWCA_SECTIONS.map((n) => ({ path: swcaPath(n), ingest: ingestSwcaSection as IngestFn })),
-  { path: 'docs/statutes/vat3-rtd/completing-vat3-return.md', ingest: ingestVat3ReturnGuidance },
-  { path: 'docs/statutes/vat3-rtd/VAT-RTD-S76.md', ingest: ingestRtdTdm },
-  { path: 'docs/statutes/ebriefs/2025/no-168-25.md', ingest: ingestEbrief168_25 },
-  { path: EU_282_2011_MD_PATH, ingest: ingestEu282Articles },
-  ...PAYROLL_SOURCES.map((s) => ({ path: s.path, ingest: ingestPayrollSource as IngestFn })),
-  ...SIZE_CRITERIA_SOURCES.map((s) => ({ path: s.path, ingest: ingestSizeCriteriaSource as IngestFn })),
-  ...CAR_EMISSIONS_SOURCES.map((s) => ({
-    path: s.path,
-    ingest: ((db, p) => ingestSlicedSource(db, CAR_EMISSIONS_SOURCES,
-      'Emissions-based limits on capital allowances for cars (TCA Part 11C; issue #466).', p)) as IngestFn,
-  })),
-];
 
 /** Derive steps, in the order the CLI documents them (thresholds after FA 2024 is ingested). */
 const DERIVES: Array<(db: AppDatabase, params: { companyId: string }) => unknown> = [
@@ -150,11 +77,6 @@ const DERIVES: Array<(db: AppDatabase, params: { companyId: string }) => unknown
   deriveSizeCriteriaRules,
   (db, p) => deriveCuratedRuleFamilies(db, { companyId: p.companyId, rules: CAR_EMISSIONS_CURATED_RULES, label: 'capital allowances' }),
 ];
-
-/** Every path `loadStatutoryKnowledgeBase` ingests, unique, repo-relative. */
-export function statuteSourcePaths(): string[] {
-  return [...new Set(SOURCES.map((s) => s.path))];
-}
 
 /** Resolve a repo-relative statute path against the running app's root (the install directory when packaged). */
 export function statuteFilePath(localPath: string, root: string = appRoot()): string {
@@ -202,14 +124,11 @@ export function loadStatutoryKnowledgeBase(
   // it was created (issue #205, the livestock treatment).
   ensureDefaultVatTreatments(db, params.companyId);
   const ingestVersion = params.ingestVersion ?? 'v1';
-  // Sources ported to the rules catalogue (#443, #556) load from it; the rest
-  // still read their statute copy until they are ported.
+  // Every source loads from the rules catalogue (#443, #556); none reads a
+  // statute copy. A copy a book loaded before its port stays held, and is
+  // superseded by its entry (catalogueSupersession.ts, #706).
   for (const entry of CATALOGUE_ENTRIES) {
     ingestCatalogueFile(db, { companyId: params.companyId, entry, ingestVersion, root: params.root });
-  }
-  for (const source of SOURCES) {
-    const markdown = readFileSync(statuteFilePath(source.path, params.root), 'utf8');
-    source.ingest(db, { companyId: params.companyId, markdown, ingestVersion, localPath: source.path });
   }
   for (const derive of DERIVES) derive(db, { companyId: params.companyId });
   // The links between rules (ADR-0020), after every rule they name exists.
@@ -217,7 +136,7 @@ export function loadStatutoryKnowledgeBase(
   fillTaxHeads(db, { companyId: params.companyId });
   const missing = checkCatalogueVersions(db, { companyId: params.companyId, root: params.root });
   return {
-    sourcesProcessed: CATALOGUE_ENTRIES.length + SOURCES.length,
+    sourcesProcessed: CATALOGUE_ENTRIES.length,
     rulesBefore,
     rulesAfter: countStatutoryRules(db, params.companyId),
     catalogueVersionsMissing: missing.map((m) => m.versionId),

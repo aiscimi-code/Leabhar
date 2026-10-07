@@ -1,33 +1,31 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { readFileSync } from 'node:fs';
 import { eq } from 'drizzle-orm';
 import { createTestDatabase } from '@/db/testing';
 import { createCompany } from '../config/setup';
-import { ingestSi639, deriveSi639Rules, SI_639_2010_MD_PATH } from './si639Ingestion';
+import { ingestSi639FromCatalogue, deriveSi639Rules } from './si639Ingestion';
 import { lookupTaxRule } from './irishRules';
 import { lookupTransactionRules } from './transactionLookup';
 import { SI_639_CURATED_RULES } from './si639Curation';
-import { irishTaxRules, irishKnowledgeSources, reviewItems } from '@/db/schema';
+import { irishTaxRules, irishActProvisions, irishKnowledgeSources, reviewItems } from '@/db/schema';
 import type { AppDatabase } from '@/db';
 
 let db: AppDatabase;
 let companyId: string;
-let markdown: string;
 
 beforeEach(() => {
   ({ db } = createTestDatabase());
   ({ companyId } = createCompany(db, { legalName: 'SI 639 Ltd', seedYears: [2025] }));
-  markdown = readFileSync(SI_639_2010_MD_PATH, 'utf8');
 });
 
-describe('ingestSi639', () => {
+describe('ingestSi639FromCatalogue', () => {
   it('ingests all 47 regulations under its own citation and is idempotent by content', () => {
-    const first = ingestSi639(db, { companyId, markdown, ingestVersion: 'v1' });
+    const first = ingestSi639FromCatalogue(db, { companyId });
     expect(first.ingested).toBe(true);
-    expect(first.regulationCount).toBe(47);
-    expect(first.relevantCount).toBeGreaterThanOrEqual(1); // curated override for reg.25
+    expect(first.provisionCount).toBe(47);
+    const relevant = db.select().from(irishActProvisions).where(eq(irishActProvisions.sourceId, first.sourceId)).all().filter((p) => p.relevant);
+    expect(relevant.length).toBeGreaterThanOrEqual(1); // curated override for reg.25
 
-    const second = ingestSi639(db, { companyId, markdown, ingestVersion: 'v1' });
+    const second = ingestSi639FromCatalogue(db, { companyId });
     expect(second.ingested).toBe(false);
     expect(second.sourceId).toBe(first.sourceId);
 
@@ -39,7 +37,7 @@ describe('ingestSi639', () => {
 
 describe('deriveSi639Rules', () => {
   beforeEach(() => {
-    ingestSi639(db, { companyId, markdown, ingestVersion: 'v1' });
+    ingestSi639FromCatalogue(db, { companyId });
   });
 
   it('creates one rule per curated regulation', () => {

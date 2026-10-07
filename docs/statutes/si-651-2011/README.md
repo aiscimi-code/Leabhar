@@ -1,7 +1,7 @@
 # Income Tax and Corporation Tax (Relevant Contracts Tax) Regulations 2011 (S.I. 651/2011)
 
 **SUPERSEDED — do not treat as current regulations.** Per
-[`docs/statutes/rct/tdm-18-02-04.md`](../rct/tdm-18-02-04.md) §14 (RCT
+TDM Part 18-02-04 (`catalogue/rct/tdm-18-02-04.json`) §14 (RCT
 Regulations, itself verbatim Revenue guidance): S.I. 651/2011 "were
 subsequently revoked and replaced by Income Tax and Corporation Tax
 (Relevant Contracts Tax) Regulations 2012 (S.I. No. 576 of 2012)... These

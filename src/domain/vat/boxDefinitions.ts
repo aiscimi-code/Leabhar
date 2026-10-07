@@ -1,13 +1,13 @@
 /**
  * The VAT3 boxes as Revenue defines them (issue #210), each quoting Revenue's
- * "How do you complete a VAT 3 return?" page, kept at
- * docs/statutes/vat3-rtd/completing-vat3-return.md. A test checks every quote
- * is in that file, and that every box a treatment reports into is defined
- * here, so a treatment's box mapping always cites the definition it
- * implements.
+ * "How do you complete a VAT 3 return?" page, kept in the rules catalogue
+ * (catalogue/vat3-rtd/completing-vat3-return.json, the page beside it). A
+ * test checks every quote is in its box's passage there, and that every box a
+ * treatment reports into is defined here, so a treatment's box mapping always
+ * cites the definition it implements.
  */
 
-export const VAT3_GUIDANCE_PATH = 'docs/statutes/vat3-rtd/completing-vat3-return.md';
+export const VAT3_GUIDANCE_PATH = 'catalogue/vat3-rtd/completing-vat3-return.html';
 export const VAT3_GUIDANCE_URL = 'https://www.revenue.ie/en/vat/accounting-for-vat/how-to-account-for-value-added-tax/completing-vat3-return.aspx';
 
 export interface BoxDefinition {

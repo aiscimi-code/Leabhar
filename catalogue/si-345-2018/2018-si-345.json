@@ -1,0 +1,197 @@
+{
+  "format": 1,
+  "source": {
+    "citation": "S.I. 345/2018",
+    "title": "Income Tax (Employments) Regulations 2018 (S.I. No. 345 of 2018)",
+    "sourceType": "legislation",
+    "jurisdiction": "IE",
+    "sourceUrl": "https://www.irishstatutebook.ie/eli/2018/si/345/made/en/print",
+    "sha256": "2a68b34ee5cda5b3d3394a0ed778742d50a133ec9cbe8ce89c27e92741964da8",
+    "conversion": "isb-html-plaintext",
+    "retrievedOn": "2026-10-06",
+    "publicationDate": "2018-09-11",
+    "effectiveFrom": "2019-01-01",
+    "note": "As made; in operation from 1 January 2019 for payments made on or after that date (reg.1(2))."
+  },
+  "provisions": [
+    {
+      "sectionNumber": "11",
+      "heading": "Calculation and making of deduction or repayment",
+      "locator": "reg.11",
+      "category": "procedure",
+      "relevant": true,
+      "relevanceReason": "Payroll: the PAYE deduction procedure (S.I. 345/2018).",
+      "excerpt": "11. (1) On any payment of emoluments to or on behalf of an employee in respect of whom a revenue payroll notification has been sent or made available to an employer, the employer, except where these Regulations otherwise provide, shall ascertain—\n\n(\na\n) the cumulative emoluments of that employee in respect of the employment at the date of the payment,\n\n(\nb\n) the cumulative gross tax for the pay period in respect of the cumulative emoluments, and\n\n(\nc\n) the cumulative tax for the pay period.\n\n(2)(\na\n) The cumulative gross tax for the pay period is calculated as follows–\n\n(A x standard rate of tax) + (B x higher rate of tax)\n\nwhere–\n\nA   is the amount of the cumulative emoluments up to and including the cumulative standard rate cut off point for the pay period (which may be nil), and\n\nB  is the amount of the cumulative emoluments that exceeds the cumulative standard rate cut off point for the pay period (which may be nil).\n\n(\nb\n) The cumulative standard rate cut-off point for the pay period is calculated as follows–\n\nStandard rate cut-off point x C\n\n—\n\nD\n\nwhere–\n\nC  represents the number of pay periods, including the current pay period, since the start of the year, and\n\nD  represents the total number of pay periods for the year.\n\n(\nc\n) The cumulative tax for the pay period is calculated as follows–\n\nE — F\n\nwhere-\n\nE  is the cumulative gross tax for the pay period, and\n\nF  is the cumulative tax credits for the pay period.\n\n(\nd\n) The cumulative tax credits for the pay period is calculated as follows–\n\nTax credits x G\n\n—\n\nH\n\nwhere  –\n\nG  represents the number of pay periods, including the current pay period, since the start of the year, and\n\nH  represents the total number of pay periods for the year.\n\n(3) In this section, a pay period is the normal payment period in respect of which emoluments are paid to an employee and the total number of pay periods for the year is–\n\n(\na\n)52 where the employee is paid weekly,\n\n(\nb\n)26 where the employee is paid fortnightly, and\n\n(\nc\n)12 where the employee is paid monthly.\n\n(4) If the cumulative tax ascertained in accordance with paragraph (1) of this Regulation exceeds the cumulative tax corresponding to the employee’s cumulative emoluments at the date of the last payment of emoluments (hereafter in this paragraph referred to as the “previous cumulative tax”), if any, the employer shall deduct the excess from the emoluments on making the payment in question and if the cumulative tax as so ascertained is less than the previous cumulative tax, if any, the employer shall repay the difference to the employee on making the payment in question. If the cumulative tax is equal to the previous cumulative tax, no tax shall be either deducted or repaid on the making of the payment in question."
+    },
+    {
+      "sectionNumber": "15",
+      "heading": "Deduction in special cases",
+      "locator": "reg.15",
+      "category": "procedure",
+      "relevant": true,
+      "relevanceReason": "Payroll: the PAYE deduction procedure (S.I. 345/2018).",
+      "excerpt": "15. (1) This Regulation applies to—\n\n(\na\n) payments of emoluments made on 31 December in any year or, if that year is a leap year, on 30 or 31 December in that year, to an employee who is paid weekly, and\n\n(\nb\n) any other payments of emoluments made to or on behalf of an employee to which an inspector directs that this Regulation shall apply.\n\n(2) Regulation 11(1) shall not apply to payments of emoluments to which this Regulation applies, and on making any such payment an employer shall deduct therefrom, by reference to the amount of an employee’s tax credits and standard rate cut-off point, the amount of tax which would have been deductible therefrom if the payment had been made on the preceding 1 January."
+    },
+    {
+      "sectionNumber": "19",
+      "heading": "Emergency basis of deduction",
+      "locator": "reg.19",
+      "category": "procedure",
+      "relevant": true,
+      "relevanceReason": "Payroll: the PAYE deduction procedure (S.I. 345/2018).",
+      "excerpt": "19. (1) This Regulation applies where an employer makes payments of emoluments to or on behalf of an employee in respect of whom a revenue payroll notification has not been received by or made available to the employer.\n\n(2) Where paragraph (1) applies, on making any payment of emoluments to or on behalf of an employee referred to in that paragraph who has not furnished an employer with his or her personal public service number, the employer shall deduct tax from such payment at the higher rate of tax.\n\n(3) Where paragraph (1) applies, on making any payment of emoluments to or on behalf of an employee referred to in that paragraph who has furnished an employer with his or her personal public service number, the employer shall deduct tax from such payment in accordance with the following provisions–\n\n(\na\n) during the period of 4 weeks, or in the case of an employee paid monthly, 1 month, from the day on which the employee first receives any payment of emoluments from the employer, the employer shall deduct tax at the standard rate of tax and, where appropriate, the higher rate of tax on the basis that the amount of the standard rate cut-off point is an amount per week equal to one fifty-second of the amount chargeable to tax at the standard rate specified in Part 1 of the Table to section 15 of the Act, as it applies for that year, or if the employee is paid monthly, one-twelfth of that amount, and\n\n(\nb\n) during any subsequent period, the employer shall deduct tax at the higher rate of tax.\n\n(4) On making payments of emoluments to or on behalf of an employee after a revenue payroll notification has been received by or made available to an employer, the following provisions shall have effect for the purposes of Regulation 11—\n\n(\na\n) any cumulative emoluments notified to the employer by the inspector shall be recorded by the employer and shall be treated as if they represented emoluments paid by the employer, and\n\n(\nb\n) the cumulative tax before the first of the said payments shall be taken to be the sum of any cumulative tax notified to the employer by the inspector (and recorded as such by the employer) and any tax which the employer was liable to deduct from the employees emoluments under paragraph (2).\n\n(5) This Regulation shall not apply where—\n\n(\na\n) the employee performs the duties of his or her employment wholly outside the State, or\n\n(\nb\n) the employee is outside the State and the emoluments are paid outside the State."
+    },
+    {
+      "sectionNumber": "20",
+      "heading": "Aggregation of emoluments in non-cumulative cases",
+      "locator": "reg.20",
+      "category": "procedure",
+      "relevant": true,
+      "relevanceReason": "Payroll: the PAYE deduction procedure (S.I. 345/2018).",
+      "excerpt": "20. Where under these Regulations tax is deductible otherwise than by reference to cumulative emoluments and cumulative tax, the amount of tax to be deducted in any week or income tax month shall be calculated by reference to the aggregate of the emoluments paid to or on behalf of an employee in that week or month."
+    },
+    {
+      "sectionNumber": "31",
+      "heading": "Deduction or repayment by reference to superannuation contribution",
+      "locator": "reg.31",
+      "category": "procedure",
+      "relevant": true,
+      "relevanceReason": "Payroll: the PAYE deduction procedure (S.I. 345/2018).",
+      "excerpt": "31. (1) In this Regulations “allowable contribution” means a contribution or a deduction payable by an employee and deductible by an employer from emoluments of the employee and which is—\n\n(\na\n) by virtue of section 471 of the Act, allowable as a deduction from such emoluments for the purposes of assessment under Schedule E,\n\n(\nb\n) an ordinary annual contribution, or any other contribution treated by the Revenue Commissioners, as respects the year in which it is paid, as an ordinary annual contribution paid in that year, allowable by virtue of section 774 or 776 of the Act, as a deduction from such emoluments for the purposes of assessment under Schedule E,\n\n(\nc\n) by virtue of section 787C of the Act, to be deducted from or set off against the employee’s relevant earnings (within the meaning of section 787B of the Act) for the year of assessment in which it is paid,\n\n(\nd\n) by virtue of section 787 of the Act, to be deducted from or set off against the employee’s relevant earnings (within the meaning of section 783 of the Act) for the year of assessment in which it is paid,\n\n(\ne\n) an additional superannuation contribution within the meaning of\n\nsection 32\n\nof the\n\nPublic Service Pay and Pensions Act 2017\n\nwhere such contribution is allowed to be deducted as an expense incurred in the year in which the contribution is paid.\n\n(2) When making a deduction or repayment of tax in accordance with these Regulations from or in respect of emoluments to which Chapter 4 of Part 42 of the Act applies, an employer shall make such deduction or repayment as would require to be made if the amount of the emoluments were those emoluments reduced by the amount of the allowable contribution deductible from those emoluments."
+    }
+  ],
+  "rules": [
+    {
+      "key": "paye.cumulative_basis",
+      "sectionNumber": "11",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2019-01-01",
+          "effectiveTo": null,
+          "quote": "(A x standard rate of tax) + (B x higher rate of tax)",
+          "value": null,
+          "unit": null,
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    },
+    {
+      "key": "paye.emergency_no_ppsn",
+      "sectionNumber": "19",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2019-01-01",
+          "effectiveTo": null,
+          "quote": "who has not furnished an employer with his or her personal public service number, the employer shall deduct tax from such payment at the higher rate of tax.",
+          "value": null,
+          "unit": null,
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    },
+    {
+      "key": "paye.emergency_ppsn",
+      "sectionNumber": "19",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2019-01-01",
+          "effectiveTo": null,
+          "quote": "one fifty-second of the amount chargeable to tax at the standard rate specified in Part 1 of the Table to section",
+          "value": null,
+          "unit": null,
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    },
+    {
+      "key": "paye.pension_deduction",
+      "sectionNumber": "31",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2019-01-01",
+          "effectiveTo": null,
+          "quote": "reduced by the amount of the allowable contribution deductible from those emoluments.",
+          "value": null,
+          "unit": null,
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    },
+    {
+      "key": "paye.week1_basis",
+      "sectionNumber": "20",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2019-01-01",
+          "effectiveTo": null,
+          "quote": "shall be calculated by reference to the aggregate of the emoluments paid",
+          "value": null,
+          "unit": null,
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    },
+    {
+      "key": "paye.week53",
+      "sectionNumber": "15",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2019-01-01",
+          "effectiveTo": null,
+          "quote": "the amount of tax which would have been deductible therefrom if the payment had been made on the preceding 1 January.",
+          "value": null,
+          "unit": null,
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    }
+  ]
+}

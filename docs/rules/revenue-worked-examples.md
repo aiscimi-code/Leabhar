@@ -45,7 +45,7 @@ months are apportioned as months, as the Notes do, and other dates in days
 
 ## VAT RTD
 
-Appendix 3 of `docs/statutes/vat3-rtd/VAT-RTD-S76.md` is a ROS acknowledgement (boxes and totals), not the invoices and rates that produced them. The inputs are not reconstructible. Not reproducible.
+Appendix 3 of TDM VAT-RTD-S76 (`catalogue/vat3-rtd/VAT-RTD-S76.pdf`) is a ROS acknowledgement (boxes and totals), not the invoices and rates that produced them. The inputs are not reconstructible. Not reproducible.
 
 ## CT1 and Form 11 TDMs
 

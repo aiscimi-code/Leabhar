@@ -1,8 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { readFileSync } from 'node:fs';
 import { createTestDatabase } from '@/db/testing';
 import { createCompany } from '../config/setup';
-import { ingestFinanceAct2024, deriveTaxRules, FINANCE_ACT_2024_MD_PATH } from './irishRules';
+import { ingestFinanceAct2024FromCatalogue, deriveTaxRules } from './irishRules';
 import { generateAuditReport } from './audit';
 import type { AppDatabase } from '@/db';
 
@@ -12,8 +11,7 @@ let companyId: string;
 beforeEach(() => {
   ({ db } = createTestDatabase());
   ({ companyId } = createCompany(db, { legalName: 'Audit Ltd', seedYears: [2025] }));
-  const markdown = readFileSync(FINANCE_ACT_2024_MD_PATH, 'utf8');
-  ingestFinanceAct2024(db, { companyId, markdown, ingestVersion: 'v1' });
+  ingestFinanceAct2024FromCatalogue(db, { companyId });
   deriveTaxRules(db, { companyId });
 });
 
@@ -35,8 +33,7 @@ describe('generateAuditReport', () => {
     // Ingest only, no extraction — every curated section is outstanding.
     const { db: freshDb } = createTestDatabase();
     const { companyId: freshCompanyId } = createCompany(freshDb, { legalName: 'Fresh Ltd', seedYears: [2025] });
-    const markdown = readFileSync(FINANCE_ACT_2024_MD_PATH, 'utf8');
-    ingestFinanceAct2024(freshDb, { companyId: freshCompanyId, markdown, ingestVersion: 'v1' });
+    ingestFinanceAct2024FromCatalogue(freshDb, { companyId: freshCompanyId });
 
     const report = generateAuditReport(freshDb, { companyId: freshCompanyId });
     expect(report.ruleCount).toBe(0);

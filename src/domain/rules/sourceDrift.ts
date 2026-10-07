@@ -7,7 +7,12 @@
  * records:
  *
  *   - `unchanged`: the file's SHA-256 is the one recorded;
- *   - `changed`: it is not. Each rule version's quote is then looked for in
+ *   - `page_state_only`: unchanged but for page state. The bytes differ, but
+ *     the entry records a content hash (a revenue.ie or EUR-Lex page's,
+ *     #713, #714) and the file still has it once its page-state values
+ *     (ASP.NET's fields, Dynatrace's config) are emptied, so
+ *     nothing a person reads has moved and nothing is traced;
+ *   - `changed`: it is not (nor, where one is recorded, the content hash). Each rule version's quote is then looked for in
  *     the file's words, so the report says which quotes still stand and which
  *     are gone. A changed hash with every quote found is usually a
  *     consolidation that re-wrapped or re-numbered its footnotes, but only a
@@ -20,10 +25,10 @@
 import { createHash } from 'node:crypto';
 import type { AppDatabase } from '@/db';
 import { upsertReviewItem } from '../extraction/service';
-import { CATALOGUE_ENTRIES, readCatalogueEntry, type CatalogueEntry } from './catalogue';
+import { CATALOGUE_ENTRIES, contentSha256Of, quotedWords, readCatalogueEntry, type CatalogueEntry } from './catalogue';
 import { ruleImpact } from './ruleImpact';
 
-export type SourceDriftStatus = 'unchanged' | 'changed' | 'unreachable';
+export type SourceDriftStatus = 'unchanged' | 'page_state_only' | 'changed' | 'unreachable';
 
 export interface SourceDriftReport {
   entry: string;
@@ -75,13 +80,16 @@ export function compareWithCatalogue(name: string, entry: CatalogueEntry, fetche
   if (currentSha256 === entry.source.sha256) {
     return { ...base, status: 'unchanged', quotesMissing: [], quotesFound: [] };
   }
+  if (entry.source.contentSha256 && contentSha256Of(fetched) === entry.source.contentSha256) {
+    return { ...base, status: 'page_state_only', quotesMissing: [], quotesFound: [] };
+  }
   const words = sourceWords(fetched.toString('utf8'));
   const quotesMissing: string[] = [];
   const quotesFound: string[] = [];
   for (const rule of entry.rules) {
     for (const v of rule.versions) {
       if (!v.quote) continue;
-      (containsRun(words, sourceWords(v.quote)) ? quotesFound : quotesMissing).push(`${rule.key}@${v.version}`);
+      (containsRun(words, sourceWords(quotedWords(entry, rule, v.quote))) ? quotesFound : quotesMissing).push(`${rule.key}@${v.version}`);
     }
   }
   return { ...base, status: 'changed', quotesMissing, quotesFound };

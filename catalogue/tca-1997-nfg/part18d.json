@@ -1,0 +1,106 @@
+{
+  "format": 1,
+  "source": {
+    "citation": "Revenue NfG TCA 1997 (FA 2025 ed.) Part 18D",
+    "title": "Notes for Guidance — Taxes Consolidation Act 1997 — Finance Act 2025 edition — part18d",
+    "sourceType": "revenue_guidance",
+    "jurisdiction": "IE",
+    "sourceUrl": "https://www.revenue.ie/en/tax-professionals/documents/notes-for-guidance/tca/part18d.pdf",
+    "sha256": "04feb61eed1699904e0c6a599a8d7baa46febfb8ffd77e4fbc498e75e5a472cf",
+    "conversion": "pdftotext-layout",
+    "retrievedOn": "2026-10-06",
+    "publicationDate": null,
+    "effectiveFrom": "2025-12-31",
+    "note": "Revenue guidance summarising the TCA 1997 as amended to Finance Act 2025. There is no LRC revised TCA; the Notes are the current consolidated statement of each section, but rank below the Act itself."
+  },
+  "provisions": [
+    {
+      "sectionNumber": "531AM",
+      "heading": "Charge to universal social charge",
+      "locator": "s.531AM",
+      "principalAct": "1997 Act 39",
+      "category": "corporation_tax",
+      "relevant": true,
+      "relevanceReason": "In scope for the corporation tax computation (issue #211); not yet curated.",
+      "excerpt": "531AM Charge to universal social charge\n\n   Summary\n   This section contains the main charging provisions for USC. It sets out the types of income that are\n   chargeable and any exemptions and reliefs that apply. To be chargeable to USC, a person’s chargeable\n   income must exceed a threshold of €13,000.\n\n   Details\n   Subsection (1) contains the main charging provision and describes USC as a tax. The                     (1)\n   income specified in paragraphs (a) and (b) of the Table to this subsection is chargeable\n   to USC.\n   Paragraph (a) of the Table to subsection (1) describes “relevant emoluments” as all               (1)(a)\n   income that is subject to the PAYE system (i.e. to the provisions of Chapter 4 of Part\n   42). Such income is chargeable without allowing certain deductions that are allowed\n   for income tax purposes or where it is exempted from income tax. Thus-\n                                                                 3\n\fNotes for Guidance – Taxes Consolidation Act 1997 – Finance Act 2024 Edition - Part 18D\n\n   •   any permanent health insurance and pension contributions that are deductible under          (1)(a)(i)\n       Regulation 31 of the Income Tax Regulations,\n   •   the initial market value (within the meaning of section 510(2)) of any shares that          (1)(a)(ii)\n       are appropriated to the participants of an approved profit sharing scheme, except, in\n       the case of shares that are appropriated to an approved profit sharing scheme from\n       an employee share ownership trust (ESOT), where those shares were held in the\n       ESOT before 1 January 2011,\n   •   the market value (determined in accordance with section 548) of the right to acquire       (1)(a)(iii)\n       shares in an approved savings-related share option scheme (section 519A(1)) or\n       share option scheme (519D(1)), and\n   •   any gain exempted from income tax in respect of an approved savings-related share          (1)(a)(iv)\n       option scheme (section 519A(3)) or share option scheme (519D(3)), after deducting\n       the chargeable value of the right that has already been charged to USC by\n       subparagraph (a)(iii) from the chargeable value of the gain, and\n   •   the income exempted from income tax (the “specified amount” in section 825C)                (1)(a)(v)\n       under the ‘special assignee relief programme’ (SARP),\n   are included in the amount of the relevant emoluments to be charged to USC.\n   Other types of income are excluded from relevant emoluments and are thus not chargeable to USC.\n   These are-\n   •     payments made under the Social Welfare Acts and similar type payments made           (1)(a)(I)\n         by other government bodies (definition of “similar type payments), both Irish and\n         foreign,\n   •      income that has been gifted to the Minister for Finance under section 483               (1)(a)(II)\n          (definition of “excluded emoluments”),\n   •      emoluments that an employer has been authorised to disregard following receipt         (1)(a)(III)\n          of a notification issued by an inspector under section 984(1) (this notification is\n          commonly referred to as a PAYE exclusion order),\n   •      payments made on termination of an office or employment to the extent that they        (1)(a)(IV)\n          are covered by the basic and increased exemptions and relieving provisions of the\n          Standard Capital Superannuation Relief as set out in section 201(5)(a), and\n          paragraphs 6 and 8 of Schedule 3,\n   •      payments of an amount paid under the pre-retirement access to Additional                (1)(a)(V)\n          Voluntary Contributions (AVCs) arrangements, as provided by section 782A(3),\n   •      emoluments in the nature of a contribution by an employer to a PRSA (within the        (1)(a)(VI)\n          meaning of Chapter 2A of Part 30), or\n\n   •      emoluments in the nature of a contribution by an employer to a PEPP (within the       (1)(a)(VII)\n          meaning of Chapter 2D of Part 30).\n\n   •      emoluments in the nature of a contribution by an employer to an Auto Enrolment        (1)(a)(VIII)\n          Retirement Savings System (within the meaning of Chapter 2E of Part 30)\n\n   Paragraph (b) of the Table to subsection (1) describes “relevant income” as income                 (1)(b)\n   from all sources as estimated in accordance with the Tax Acts before deductions that\n   are usually allowed when calculating either total income or taxable income for income\n\n                                                                 4\n\fNotes for Guidance – Taxes Consolidation Act 1997 – Finance Act 2024 Edition - Part 18D\n\n    tax purposes. From this broad starting point, paragraph (b) then goes on to exclude\n    certain types of income and to allow certain deductions. Excluded are-\n  •      income referred to in paragraph (a). Thus “relevant emoluments” are not charged          (1)(b)(i) &\n         to USC twice,                                                                                    (ii)\n  •       the emoluments and reliefs that are specified in subparagraphs (I) to (V) of\n          paragraph (a) in relation to describing what constitutes “relevant emoluments”,\n  •       certain types of investment income listed in clauses (I) to (VII). These are-            (1)(b)(iii)\n          —     deposit interest subject to DIRT (Chapter 4 of Part 8),\n          —      dividend payments by Credit Unions (Chapter 5 of Part 8),\n          —      deposit interest from EU and non-EU sources (Chapter 7 of Part 8),\n          —      income from certain foreign life assurance policies (Chapter 5 of Part 26),\n          —      income from certain investment vehicles (Chapter 1A of Part 27),\n          —      income from certain offshore funds (Chapter 4 of Part 27),\n  •       the amount by which a person’s total income is reduced where section 825A                (1)(b)(iv)\n          applies and a relief known as ‘transborder relief’ is given for a year of assessment,\n  •       the amount of a legally enforceable maintenance payment made under section (1)(b)(v), (va)\n          1025 to a separated spouse, under section 1031J to a separated civil partner or    & (vb)\n          under section 1031Q to a qualifying cohabitant provided there has been no claim\n          for joint assessment under section 1026 or section 1031K.\n  •       the amount of an unrelieved loss from a trade or profession that is carried forward      (1)(b)(vi)\n          to a later year of assessment under section 382 that is actually used in that later\n          year against the profits from that trade or profession. This subparagraph allows\n          the loss and section 531AU(1) quantifies the allowable loss,\n  •       the amount of certain capital allowances that are actually used in a year of            (1)(b)(vii)\n          assessment by a person carrying on a trade or profession. The allowances actually\n          used in a year of assessment can include both current year and carried forward\n          allowances. No deductions are allowed in the case of capital allowances given for\n          leased plant and machinery or buildings or to an individual who is not an active\n          partner in a trade (as defined in section 409A). This subparagraph allows the\n          deduction and section 531AU(2) quantifies the allowable deduction. The capital\n          allowances referred to are-\n          —     wear and tear allowances for plant and machinery (section 284),\n          —     annual writing-down allowances for industrial buildings and structures\n                (section 272),\n        —       farm buildings and structures allowances (section 658),\n        —       farm buildings and pollution control allowances (section 659).\n   the rental income deemed to be received under section 372AP(7) (i.e. the ‘clawback‘            (1)(b)(viii)\n   mechanism for section 23 relief) where section 23 relief is claimed after the\n   introduction of USC on 1 January 2011. Such relief would not have been deductible\n   when charging USC. However, USC is charged on deemed rental income received by\n   an individual who claimed section 23 relief before the introduction of USC.\n  Included are -                                                                                    (1)(b)(I)\n  •       the income from certain sources that are exempt from income tax. This is done by\n          treating the relieving sections as if they didn’t exist. These sections are-\n          —       section 140 – distributions out of profits or gains from stallion fees, stud\n                  greyhound services fees and occupation of certain woodlands,\n                                                                 5\n\fNotes for Guidance – Taxes Consolidation Act 1997 – Finance Act 2024 Edition - Part 18D\n\n          —      section 141 – distributions out of income from patent royalties,\n          —      section 142 – distributions out of profits of certain mines,\n          —      section 143 – distributions out of profits from coal, gypsum and anhydrite\n                 mining operations,\n          —      section 195 – exemptions of certain earnings of writers, composers and\n                 artists,\n          —      section 232 – profits from occupation of certain woodlands,\n          —      section 234 – certain income derived from patent royalties, and\n          —      section 664 – relief for certain income from leasing of farm land.\n  •       the amount of the deduction allowed for income tax purposes, but not for USC,          (1)(b)(II)\n          in respect of -\n\n          —      the double rent allowance deduction in section 324(2), 333(2), 345(3) or     (1)(b)(II)(A)\n                 354(3),\n          —      the deduction for lessors under section 372AP,                               (1)(b)(II)(B)\n          —      the deduction for lessors under section 372AU,                               (1)(b)(II)(C)\n          —      a donation to a sports body under section 847A, or                           (1)(b)(II)(D)\n          —      a donation to a national governing body under section 847AA                  (1)(b)(II)(DA)\n          —     a donation to an approved body under section 848A.                            (1)(b)(II)(E)\n  •       the amount of any balancing charge on an asset where capital allowances would         (1)(b)(III)\n          have been treated as a deductible amount for USC purposes.\n\n  USC is not payable for a year of assessment where the individual proves to the Revenue                 (2)\n  Commissioners that his or her aggregate income for that year does not exceed €13,000.\n  Where this amount is exceeded, the full amount, and not just the excess, is chargeable\n  to USC.\n\n\n"
+    },
+    {
+      "sectionNumber": "531AN",
+      "heading": "Rate of charge",
+      "locator": "s.531AN",
+      "principalAct": "1997 Act 39",
+      "category": "corporation_tax",
+      "relevant": true,
+      "relevanceReason": "In scope for the corporation tax computation (issue #211); not yet curated.",
+      "excerpt": "531AN Rate of charge\n\n   Summary\n   This section describes the rates at which an individual’s aggregate income is to be charged to USC.\n   The standard rates and bands are set out in a Table. These standard rates and bands are modified in\n   certain circumstances.\n\n   Details\n\n  Subject to subsections (2), (3) and (4), an individual is charged to USC on his or her                 (1)\n  aggregate income for a year of assessment at the rates set out in the Table to this section.\n  The standard rates, that apply to most individuals, are set out in Part 1 of the Table to\n  this section. These are–\n          2026 and subsequent years\n          The first €12,012 – 0.5%\n          The next €16,688 – 2%\n          The next €41,344 – 3%\n          The excess          – 8%\n   Reduced rates apply to individuals aged 70 and over whose aggregate income does not exceed\n   €60,000 as set out in Part 2 of the Table to this section. These are¬\n\n                                                                 6\n\fNotes for Guidance – Taxes Consolidation Act 1997 – Finance Act 2024 Edition - Part 18D\n\n             The first €12,012 – 0.5%\n             The excess        – 2%.\n\n   However, subsections (2) and (3) modify these rates in certain circumstances.\n  A 3% surcharge applies where an individual has relevant income (i.e. essentially non-        (2)\n  PAYE income) that exceeds €100,000 in a year of assessment. The excess is charged at\n  the rate of 11%.\n  Gains made on the exercise of share options (although chargeable to Schedule E under        (2A)\n  section 128(2)) are excluded from “relevant income” and are thus not chargeable to the\n  3% surcharge imposed by subsection (2).\n  An individual who is aged under 70 with aggregate income not exceeding €60,000 and           (3)\n  who is eligible for a full medical card (whether under the specified Irish law or EU law)\n  is charged to USC at a maximum rate of 2% on the amount of his or her aggregate\n  income that exceeds €28,700 for the 2026 years of assessment.\n  Where an individual encashes his or her private pension rights, the “encashment             (3A)\n  amount” that is ring-fenced under Schedule D Case IV by section 787TA is charged in\n  full at a rate of 2% and is not regarded as “relevant income” for the purposes of the 3%\n  surcharge imposed by subsection (2).\n  The reduced rate of USC for those full medical card holders aged under 70 and whose          (4)\n  income does not exceed €60,000 shall cease to have effect from the year of assessment\n  2028 onwards.\n  In the case of relevant emoluments that are paid on 31 December (or 30/31 December           (5)\n  in a leap year), commonly known as a week 53 payment, the rate bands set out in the\n  Table to this section are to be increased by 1/52 where relevant emoluments consist of\n  weekly pay and 1/26 where the relevant emoluments consist of fortnightly pay.\n  However, where the actual payments of relevant emoluments on those days are less\n  than the increases provided above, the increase in the rates bands is restricted to the\n  actual amount of the relevant emoluments.\n  In the exceptional circumstance where an individual is in receipt of income from 2\n  separate employers which both give rise to week 53 payments, only one increase (i.e.\n  1/52 or 1/26) applies.\n  Following on from subsection (5), the income figures in subsection (1) and (3) are also      (6)\n  expanded by 1/52 or 1/26, as appropriate. In addition, the exemption threshold in\n  section 531AM(2) is also expanded by 1/52 or 1/26, as appropriate.\n  However, where the actual payments of relevant emoluments on those days are less\n  than the expansion provided above, the expansion is restricted to the actual amount of\n  the relevant emoluments.\n  This is an anti-avoidance provision to prevent pay dates being changed or manipulated        (7)\n  with a view to benefiting from the widened rate bands. Subsections (5) and (6) do not\n  apply where the normal pay date in the year, or the previous year, has changed, or,\n  where the pay date occurs on 31 December (or 30/31 December in a leap year) and that\n  date is not the normal pay date.\n  The normal pay date is the day during the weekly or fortnightly pay cycle, as the case       (8)\n  may be, on which relevant emoluments are usually paid to the individual.\n\n\n"
+    }
+  ],
+  "rules": [
+    {
+      "key": "usc.exemption_threshold",
+      "sectionNumber": "531AM",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2025-01-01",
+          "effectiveTo": null,
+          "quote": "income must exceed a threshold of €13,000.",
+          "value": 1300000,
+          "unit": "eur_minor",
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    },
+    {
+      "key": "usc.surcharge_non_paye",
+      "sectionNumber": "531AN",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2025-01-01",
+          "effectiveTo": null,
+          "quote": "A 3% surcharge applies where an individual has relevant income (i.e. essentially non-",
+          "value": 300,
+          "unit": "basis_points",
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    },
+    {
+      "key": "usc.surcharge_threshold",
+      "sectionNumber": "531AN",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2025-01-01",
+          "effectiveTo": null,
+          "quote": "PAYE income) that exceeds €100,000 in a year of assessment.",
+          "value": 10000000,
+          "unit": "eur_minor",
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    }
+  ]
+}

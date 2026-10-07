@@ -1,0 +1,78 @@
+{
+  "format": 1,
+  "source": {
+    "citation": "1997 Act 39 s.530I",
+    "title": "TCA 1997 s.530I (as inserted by FA 2011 s.20)",
+    "sourceType": "legislation",
+    "jurisdiction": "IE",
+    "sourceUrl": "https://www.irishstatutebook.ie/eli/2011/act/6/section/20/enacted/en/html",
+    "sha256": "ecf8c67b4f6b9e486666b6f048e804edcb013cfdf7811a215fc7c9783dc86d8b",
+    "conversion": "isb-html-plaintext",
+    "retrievedOn": "2026-10-06",
+    "publicationDate": null,
+    "effectiveFrom": "2012-01-01",
+    "note": "Inserted by Finance Act 2011 s.20 — no LRC revised TCA 1997 page exists for ss.530A-530V (every revisedacts.lawreform.ie URL for them 404s, reconfirmed for issue #131), so this was fetched from the eISB as-enacted Finance Act 2011 s.20 page instead, the inserting Act's own text. Later Finance Acts may have amended this section since 2011; not independently checked here."
+  },
+  "provisions": [
+    {
+      "sectionNumber": "530I",
+      "heading": "Determination of rates.",
+      "locator": "s.530I",
+      "principalAct": "Taxes Consolidation Act 1997",
+      "citedActs": [
+        "Taxes Consolidation Act 1997",
+        "Finance Act 2011"
+      ],
+      "category": "income_tax",
+      "relevant": true,
+      "relevanceReason": "Curated: mapped to rule(s) in rctCuration.ts for s.530I.",
+      "excerpt": "530I.— (1)  For the purpose of establishing the rate of tax referred to in section 530E(1), the Revenue Commissioners shall, from time to time, determine whether a subcontractor is a person to whom section 530G applies, a person to whom section 530H applies or a person to whom neither section 530G nor 530H applies.\n\n(2) Following a determination under subsection (1), the Revenue Commissioners shall notify the subcontractor of their determination.\n\n(3) (\na\n)  On receipt of a notification under subsection (2), a subcontractor who is aggrieved by the determination of the Revenue Commissioners may, by notice in writing given to the Revenue Commissioners within 30 days of the date of the determination, appeal to the Appeal Commissioners.\n\n(\nb\n) The Appeal Commissioners shall hear and determine an appeal made to them under this subsection as if it were an appeal against an assessment to income tax and the provisions of the Income Tax Acts relating to such appeals and to the rehearing of an appeal and to the statement of a case for the opinion of the High Court on a point of law shall apply accordingly with any necessary modifications.\n\n(\nc\n) Pending the determination of an appeal under this section, the Revenue Commissioners may issue a deduction authorisation under this Chapter and—\n\n(i) nothing in this subsection shall prejudice the validity of any such deduction authorisation issued, and\n\n(ii) the principal concerned shall comply with the terms of any such deduction authorisation."
+    }
+  ],
+  "rules": [
+    {
+      "key": "rct.deduction_rate_not_determinable",
+      "sectionNumber": "530I",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2012-01-01",
+          "effectiveTo": null,
+          "quote": "the Revenue Commissioners shall, from time to time, determine whether a subcontractor is a person to whom section 530G applies, a person to whom section 530H applies or a person to whom neither section 530G nor 530H applies",
+          "value": null,
+          "unit": null,
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    },
+    {
+      "key": "rct.rate_determination_and_appeal_procedure",
+      "sectionNumber": "530I",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2012-01-01",
+          "effectiveTo": null,
+          "quote": "a subcontractor who is aggrieved by the determination of the Revenue Commissioners may, by notice in writing given to the Revenue Commissioners within 30 days of the date of the determination, appeal to the Appeal Commissioners",
+          "value": null,
+          "unit": null,
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    }
+  ]
+}

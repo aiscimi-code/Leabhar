@@ -1,9 +1,8 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { readFileSync } from 'node:fs';
 import { eq } from 'drizzle-orm';
 import { createTestDatabase } from '@/db/testing';
 import { createCompany } from '../config/setup';
-import { ingestFinanceAct2024, deriveTaxRules, FINANCE_ACT_2024_MD_PATH } from './irishRules';
+import { ingestFinanceAct2024FromCatalogue, deriveTaxRules } from './irishRules';
 import { setRuleReviewStatus } from './review';
 import { irishTaxRules } from '@/db/schema';
 import type { AppDatabase } from '@/db';
@@ -15,8 +14,7 @@ let ruleId: string;
 beforeEach(() => {
   ({ db } = createTestDatabase());
   ({ companyId } = createCompany(db, { legalName: 'Review Ltd', seedYears: [2025] }));
-  const markdown = readFileSync(FINANCE_ACT_2024_MD_PATH, 'utf8');
-  ingestFinanceAct2024(db, { companyId, markdown, ingestVersion: 'v1' });
+  ingestFinanceAct2024FromCatalogue(db, { companyId });
   deriveTaxRules(db, { companyId });
   ruleId = db.select({ id: irishTaxRules.id }).from(irishTaxRules)
     .where(eq(irishTaxRules.ruleKey, 'usc.medical_card_2pct_threshold')).get()!.id;

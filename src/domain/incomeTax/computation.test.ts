@@ -52,8 +52,10 @@ describe('sole trader', () => {
     expect(me.incomeTaxMinor).toBe(1_120_000);
     // 12,012 at 0.5% + 15,370 at 2% + 32,618 at 3%.
     expect(me.uscMinor).toBe(134_600);
-    expect(me.prsiMinor).toBeNull();
-    expect(c.findings.some((f) => f.includes('No PRSI Class S rate'))).toBe(true);
+    // PRSI Class S: 4.1% on 45,000 to 30 September, 4.2% on 15,000 from 1 October (#711).
+    expect(me.prsiMinor).toBe(184_500 + 63_000);
+    expect(c.findings.some((f) => f.endsWith('PRSI Class S at 4.1% on 45000.00 (2025-01-01 to 2025-09-30) and '
+      + '4.2% on 15000.00 (2025-10-01 to 2025-12-31), the year\'s income apportioned by time, with the 650.00 minimum.'))).toBe(true);
     expect(c.dates).toMatchObject({ preliminaryTaxDue: '2025-10-31', returnDue: '2026-10-31' });
     expect(c.decisions[0]).toMatchObject({ subjectType: 'personal_status', suggested: 'single' });
   });
@@ -72,7 +74,16 @@ describe('sole trader', () => {
     const me = computeIncomeTax(db, { companyId, year: 2026 }).individuals[0]!;
     // 12,012 at 0.5% + 16,688 at 2% + 31,300 at 3%.
     expect(me.uscMinor).toBe(6006 + 33_376 + 93_900);
-    expect(me.prsiMinor).toBe(252_000);
+    // 4.2% on 45,000 to 30 September, 4.35% on 15,000 from 1 October (SWMPA 2024 s.3(3); #711).
+    expect(me.prsiMinor).toBe(189_000 + 65_250);
+  });
+
+  it('computes no PRSI for 2024: no Class S rate is curated before 1 October 2024 (#711)', () => {
+    const { db, companyId, income } = setup('sole_trader', '2023-01-01');
+    income(6_000_000, '2024-06-01');
+    const c = computeIncomeTax(db, { companyId, year: 2024 });
+    expect(c.individuals[0]!.prsiMinor).toBeNull();
+    expect(c.findings.some((f) => f.startsWith('No PRSI Class S rate is available for 2024-01-01 to 2024-09-30'))).toBe(true);
   });
 
   it('taxes the first year from commencement and the second on the 12-month account (s.66)', () => {

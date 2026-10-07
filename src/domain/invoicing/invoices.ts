@@ -87,7 +87,7 @@ export interface InvoiceLineInput {
    * of entry into the EU to Ireland (Revenue Customs Manual on Import VAT
    * §2.3, docs/statutes/import-vat) — and box PA1 reports the customs value
    * plus customs duty (Revenue, "How do you complete a VAT 3 return?",
-   * docs/statutes/vat3-rtd/completing-vat3-return.md). Without it the
+   * catalogue/vat3-rtd/completing-vat3-return.json). Without it the
    * supplier's invoice is used and the line is flagged.
    */
   importValuation?: ImportValuation;

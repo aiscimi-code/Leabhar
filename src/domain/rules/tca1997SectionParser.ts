@@ -1,12 +1,13 @@
 /**
  * Deterministic parser for a single Taxes Consolidation Act 1997 section, as
- * extracted verbatim (as-enacted 1997 text) into its own file under
- * docs/statutes/tca-1997/ — one file per section, unlike VATCA 2010 or the
- * Finance Act 2024's single converted Markdown covering every section (there
- * is no LRC-revised TCA 1997 to fetch as one document; see
- * docs/statutes/tca-1997/README.md).
+ * enacted, read from its Irish Statute Book page — one page per section,
+ * unlike VATCA 2010 or the Finance Act 2024 read as a whole Act (there is no
+ * LRC-revised TCA 1997 to fetch as one document; see
+ * docs/statutes/tca-1997/README.md). The rules catalogue extraction runs it
+ * (`scripts/catalogue/extract.ts`) on the page as converted, with blank lines
+ * dropped; the entries (`catalogue/tca-1997/`) keep the page beside them.
  *
- * Layout (verified against docs/statutes/tca-1997/s530.md): front matter, a
+ * Layout (verified against s.530's page): front matter, a
  * `# TCA 1997 s.NNN` title, then a marginal Chapter marker + Chapter title
  * (e.g. "CHAPTER 2" / "Payments to subcontractors in certain industries"),
  * then the section's own marginal heading (e.g. "Interpretation (Chapter
@@ -17,10 +18,9 @@
  * line and running to the end of the file (each file holds exactly one
  * section, so there is no "next section" to slice up to).
  *
- * Verified against s530.md only; reuse for a sibling tca-1997/*.md file
- * needs the same check before trusting it — see the parser test.
+ * Verified against s.530's page; s.284 and Finance Act 2003 s.23 read the
+ * same way. Reuse for another page needs the same check — see the parser test.
  */
-import { readFileSync } from 'node:fs';
 import { categoriseProvision, provisionSlug, type ProvisionCategory } from './statuteParser';
 
 export { categoriseProvision, provisionSlug, assessRelevance } from './statuteParser';
@@ -116,12 +116,3 @@ export function parseTca1997Section(source: string): ParsedTcaSection {
     category: categoriseProvision(heading, provisionText),
   };
 }
-
-export function parseTca1997SectionFile(path: string): ParsedTcaSection {
-  return parseTca1997Section(readFileSync(path, 'utf8'));
-}
-
-export const TCA_1997_S530_MD_PATH = new URL(
-  '../../../docs/statutes/tca-1997/s530.md',
-  import.meta.url,
-).pathname;

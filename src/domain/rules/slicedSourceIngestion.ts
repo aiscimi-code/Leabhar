@@ -35,6 +35,27 @@ export interface SlicedSource {
   provisions: ProvisionSlice[];
 }
 
+/**
+ * A sliced source ported to the rules catalogue (#556, #717): the entry is the
+ * official file's text, sliced where the statute copy was sliced, so its
+ * excerpts say the copy's words in the page's layout.
+ * `scripts/catalogue/extract.ts` builds the entry from it.
+ */
+export interface CatalogueSlicedSource {
+  /** The entry's name, e.g. `si-345-2018/2018-si-345`. */
+  entry: string;
+  /** The official file: an irishstatutebook.ie page, or a Revenue manual's PDF. */
+  ext: 'html' | 'pdf';
+  title: string;
+  citation: string;
+  sourceUrl: string;
+  sourceType: 'legislation' | 'revenue_guidance';
+  publicationDate: string | null;
+  effectiveFrom: string;
+  note: string;
+  provisions: Array<ProvisionSlice & { locator: string; relevanceReason: string }>;
+}
+
 /** The exact slice of a source file a provision occupies. Throws if a marker is missing: never a guess. */
 export function sliceProvision(markdown: string, p: ProvisionSlice): { text: string; start: number; end: number } {
   const start = markdown.indexOf(p.start);

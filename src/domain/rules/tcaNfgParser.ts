@@ -1,7 +1,7 @@
 /**
  * Sections of Revenue's "Notes for Guidance — Taxes Consolidation Act 1997"
- * (Finance Act 2025 edition; issue #211), kept as pdftotext conversions in
- * docs/statutes/tca-1997-nfg/partNN.md.
+ * (Finance Act 2025 edition; issue #211), as `pdftotext -layout` converts each
+ * part's PDF (the catalogue extraction, scripts/catalogue/extract.ts).
  *
  * There is no LRC revised TCA 1997 (docs/statutes/tca-1997/README.md), so the
  * Notes are the current consolidated statement of each section's effect. Each

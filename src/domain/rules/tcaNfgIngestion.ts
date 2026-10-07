@@ -1,8 +1,11 @@
 /**
  * Ingestion for Revenue's Notes for Guidance on the TCA 1997 (FA 2025
- * edition; issue #211). Each part file is its own knowledge source
+ * edition; issue #211). Each part is its own knowledge source
  * (`revenue_guidance`: the Notes rank below the Act) and each section issue
- * #211 needs is a provision, cut out by `tcaNfgParser.ts`. Rules derive from
+ * #211 needs is a provision, cut out by `tcaNfgParser.ts`. The knowledge base
+ * loads every part from its rules catalogue entry
+ * (`catalogue/tca-1997-nfg/<part>.json`, with Revenue's PDF beside it;
+ * `ingestTcaNfgFromCatalogue`, #556). Rules derive from
  * `corporationTaxCuration.ts`; like every derived rule they start
  * `ai_extracted` and are never approved here.
  */
@@ -11,84 +14,46 @@ import type { AppDatabase } from '@/db';
 import { irishKnowledgeSources, irishActProvisions, irishTaxRules } from '@/db/schema';
 import { ids } from '@/lib/ids';
 import { nowIso } from '../dates';
-import { sha256Hex } from '@/lib/hash';
-import { extractNfgSection } from './tcaNfgParser';
 import { CORPORATION_TAX_CURATED_RULES, NFG_SECTIONS, nfgCitation } from './corporationTaxCuration';
-import { provisionSlug } from './statuteParser';
 import { upsertReviewItem } from '../extraction/service';
 import { crossReferencesFromProvision, sameCrossReferences } from './dependencies';
 import { taxHeadsFor } from './taxHeads';
+import { ingestCatalogueFile, type CatalogueIngestResult } from './catalogue';
+import { isCatalogueSource } from './catalogueSupersession';
 
 const NFG_URL = 'https://www.revenue.ie/en/tax-professionals/documents/notes-for-guidance/tca/';
 
-export const nfgPath = (part: string) => `docs/statutes/tca-1997-nfg/${part}.md`;
+/** The parts the knowledge base holds, each a catalogue entry. */
+export const NFG_PARTS = Object.keys(NFG_SECTIONS);
 
-export interface NfgIngestResult { sourceId: string; provisionCount: number; ingested: boolean }
+export const nfgTitle = (part: string) => `Notes for Guidance — Taxes Consolidation Act 1997 — Finance Act 2025 edition — ${part}`;
+export const nfgSourceUrl = (part: string) => `${NFG_URL}${part}.pdf`;
 
-/** Ingest the listed sections of one part. Idempotent by content. */
-export function ingestTcaNfgPart(
+/** The edition's date: the Notes state the Act as amended to Finance Act 2025. */
+export const NFG_EFFECTIVE_FROM = '2025-12-31';
+
+/** What every part's source says of itself. */
+export const NFG_NOTE = 'Revenue guidance summarising the TCA 1997 as amended to Finance Act 2025. There is no LRC revised '
+  + 'TCA; the Notes are the current consolidated statement of each section, but rank below the Act itself.';
+
+/** Why a section's note is held: curated into a rule, or in scope and waiting. */
+export function nfgRelevanceReason(part: string, sectionNumber: string): string {
+  return CORPORATION_TAX_CURATED_RULES.some((r) => r.part === part && r.sectionNumber === sectionNumber)
+    ? 'Curated: mapped to a rule in corporationTaxCuration.ts.'
+    : 'In scope for the corporation tax computation (issue #211); not yet curated.';
+}
+
+/** A part's catalogue entry. */
+export const nfgCatalogueEntry = (part: string) => `tca-1997-nfg/${part}.json`;
+
+export interface NfgCatalogueIngestResult { parts: Array<CatalogueIngestResult & { part: string }> }
+
+/** Load every part from its catalogue entry. */
+export function ingestTcaNfgFromCatalogue(
   db: AppDatabase,
-  params: { companyId?: string | null; part: string; markdown: string; ingestVersion: string; localPath?: string },
-): NfgIngestResult {
-  const citation = nfgCitation(params.part);
-  const digest = sha256Hex(params.markdown);
-  const sections = NFG_SECTIONS[params.part] ?? [];
-  const existing = db.select({ id: irishKnowledgeSources.id }).from(irishKnowledgeSources)
-    .where(and(eq(irishKnowledgeSources.citation, citation), eq(irishKnowledgeSources.sha256, digest))).get();
-  if (existing) {
-    const count = db.select({ id: irishActProvisions.id }).from(irishActProvisions)
-      .where(eq(irishActProvisions.sourceId, existing.id)).all().length;
-    if (count === sections.length) return { sourceId: existing.id, provisionCount: count, ingested: false };
-  }
-
-  const parsed = sections.map((n) => extractNfgSection(params.markdown, n));
-  return db.transaction((tx) => {
-    const sourceId = ids.knowledgeSource();
-    tx.insert(irishKnowledgeSources).values({
-      id: sourceId,
-      companyId: params.companyId ?? null,
-      sourceType: 'revenue_guidance',
-      title: `Notes for Guidance — Taxes Consolidation Act 1997 — Finance Act 2025 edition — ${params.part}`,
-      citation,
-      jurisdiction: 'IE',
-      sourceUrl: `${NFG_URL}${params.part}.pdf`,
-      localPath: params.localPath ?? nfgPath(params.part),
-      sha256: digest,
-      ingestVersion: params.ingestVersion,
-      publicationDate: null,
-      retrievedAt: nowIso(),
-      effectiveFrom: '2025-12-31',
-      sourceNote: 'Revenue guidance summarising the TCA 1997 as amended to Finance Act 2025. There is no LRC revised '
-        + 'TCA; the Notes are the current consolidated statement of each section, but rank below the Act itself.',
-      sourceDate: nowIso(),
-    }).run();
-    for (const section of parsed) {
-      const curated = CORPORATION_TAX_CURATED_RULES.some((r) => r.part === params.part && r.sectionNumber === section.sectionNumber);
-      tx.insert(irishActProvisions).values({
-        id: ids.provision(),
-        companyId: params.companyId ?? null,
-        sourceId,
-        sectionNumber: section.sectionNumber,
-        slug: provisionSlug(`nfg-${section.sectionNumber}`, section.heading),
-        heading: section.heading,
-        principalAct: '1997 Act 39',
-        provisionText: section.provisionText,
-        sourceStart: section.sourceStart,
-        sourceEnd: section.sourceEnd,
-        category: 'corporation_tax',
-        amendsSection: null,
-        effectiveClue: null,
-        citedActs: [],
-        relevant: true,
-        relevanceReason: curated
-          ? 'Curated: mapped to a rule in corporationTaxCuration.ts.'
-          : 'In scope for the corporation tax computation (issue #211); not yet curated.',
-        source: 'import',
-        provenanceStatus: 'imported',
-      }).run();
-    }
-    return { sourceId, provisionCount: parsed.length, ingested: true };
-  });
+  params: { companyId?: string | null; ingestVersion?: string; root?: string },
+): NfgCatalogueIngestResult {
+  return { parts: NFG_PARTS.map((part) => ({ part, ...ingestCatalogueFile(db, { ...params, entry: nfgCatalogueEntry(part) }) })) };
 }
 
 export interface NfgDeriveResult { created: number; superseded: number; unchanged: number; skippedNoProvision: string[] }
@@ -97,12 +62,16 @@ export interface NfgDeriveResult { created: number; superseded: number; unchange
 export function deriveCorporationTaxRules(db: AppDatabase, params: { companyId: string }): NfgDeriveResult {
   const result: NfgDeriveResult = { created: 0, superseded: 0, unchanged: 0, skippedNoProvision: [] };
   for (const rule of CORPORATION_TAX_CURATED_RULES) {
-    const sourceIds = db.select({ id: irishKnowledgeSources.id }).from(irishKnowledgeSources)
-      .where(eq(irishKnowledgeSources.citation, nfgCitation(rule.part))).all().map((s) => s.id);
-    const prov = sourceIds.length
+    // The catalogue's source before a pre-port copy of it (#706), else the latest held.
+    const rows = db.select({ id: irishKnowledgeSources.id, localPath: irishKnowledgeSources.localPath }).from(irishKnowledgeSources)
+      .where(eq(irishKnowledgeSources.citation, nfgCitation(rule.part))).all();
+    const sourceIds = rows.map((s) => s.id);
+    const catalogued = new Set(rows.filter((s) => isCatalogueSource(s.localPath)).map((s) => s.id));
+    const held = sourceIds.length
       ? db.select().from(irishActProvisions).where(eq(irishActProvisions.sectionNumber, rule.sectionNumber)).all()
-        .filter((p) => sourceIds.includes(p.sourceId)).at(-1)
-      : undefined;
+        .filter((p) => sourceIds.includes(p.sourceId))
+      : [];
+    const prov = held.filter((p) => catalogued.has(p.sourceId)).at(-1) ?? held.at(-1);
     if (!prov || !prov.provisionText?.includes(rule.statementExcerpt)) { result.skippedNoProvision.push(rule.ruleKey); continue; }
 
     const existing = db.select().from(irishTaxRules)

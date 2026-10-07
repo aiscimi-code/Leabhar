@@ -1,0 +1,49 @@
+{
+  "format": 1,
+  "source": {
+    "citation": "SWCA 2005 s.21",
+    "title": "SWCA 2005 s.21 (LRC revised)",
+    "sourceType": "legislation",
+    "jurisdiction": "IE",
+    "sourceUrl": "https://revisedacts.lawreform.ie/eli/2005/act/26/section/21/revised/en/html",
+    "sha256": "857dbb6325823f5ac60a5daf591f48da1e380e3cea6ac90d5d2fd1cf7255c2fd",
+    "conversion": "lrc-html-plaintext",
+    "retrievedOn": "2026-09-25",
+    "note": "LRC revised text as retrieved: current law on that date, not a dated history."
+  },
+  "provisions": [
+    {
+      "sectionNumber": "21",
+      "heading": "Rates of self-employment contributions and related matters.",
+      "locator": "s.21",
+      "category": "income_tax",
+      "relevant": true,
+      "relevanceReason": "Self-employment (Class S) contributions for sole traders and partners (issue #212).",
+      "excerpt": "21.\n—(1)\n\nSubject to\nsection 38BA\n,\nself-employment contributions shall be paid by self-employed contributors in\naccordance with the following\nprovisions\n:\n\n(\na\n) subject to\n\nparagraphs (b)\n,\n\n(ea)\nand\n(f)\n, where\nin any contribution year a self-employed contributor has reckonable income there\nshall be payable by him or her a self-employment contribution which shall be the\ngreater of an amount equal to\n4.2\nper cent\nof the reckonable income or\nthe amount of\n\n€\n650\n;\n\n(\nb\n) where for any contribution year a self-employed contributor is\ninformed by the Revenue Commissioners that he or she is not required to make a\nreturn of income within the meaning of section 1084 of the Act of 1997,\nself-employment contributions shall be paid by the self-employed contributor\n(whether by instalments or otherwise as may be prescribed) amounting to\n\n€\n310\n\nin respect of that contribution year;\n\n(\nc\n) subject to\n\nparagraphs (ea)\nand\n\n(f)\n, where in any\ncontribution year a payment is made to a self-employed contributor in respect of\nreckonable emoluments of that self-employed contributor, there shall be payable by\nhim or her a self-employment contribution which shall be the greater of an amount\nequal to\n4.2 per\ncent\nof the reckonable emoluments or\nthe amount of\n\n€\n650\n;\n\n(\nd\n) subject to\nregulations under\nsection 22\n, where a self-employment\ncontribution has been paid by a self-employed contributor of not less than the\namount that he or she is liable to pay under\nparagraph (a)\nor the amount\nspecified in\nparagraph (b)\n, whichever is appropriate, the self-employed\ncontributor shall be regarded as having paid contributions for each contribution\nweek in that contribution year and, where the contribution paid is less than that\nappropriate amount, no contribution shall be regarded as having been paid by the\nself-employed contributor in respect of any week of that contribution year;\n\n[1999 s19(2)]\n\n(\ne\n) subject to\n\nsection 26\n(3)\n, self-employment contributions shall be\ndisregarded in determining whether the contribution conditions for any benefit\nother than\njobseeker\n’\ns\nbenefit granted by virtue of self-employment contributions specified in\nsection\n64(1)(a)(ii)\n, jobseeker\n’\ns benefit (self-employed),\n\nCovid-19 pandemic unemployment payment,\n\nState pension\n(contributory)\n,\n\nbereaved partner’s (contributory)\npension\n,\n\nguardian\n’\ns payment\n(contributory)\n, maternity benefit,\nadoptive benefit\n,\n\npaternity benefit, parent\n’\ns benefit\n\n,\n\ncarer’s\nbenefit,\ntreatment benefit\n\n,\n\ninvalidity\npension\nor bereavement grant are\nsatisfied;\n\n(\nea\n) where in any\ncontribution year a self-employed contributor avails of childcare services relief\nwithin the meaning of section 216C of the\nTaxes Consolidation Act 1997\n,\nhe or she shall be liable for a contribution of\n\n€\n650\n\nin respect of that amount for which childcare services relief is claimed under\nthat section;\n\n(\nf\n) a person who,\nbut for this paragraph, would be liable for contributions of\n\n€\n650\n\nunder\nparagraphs (a)\nand\n(c)\nshall be liable only for a single\ncontribution of\n\n€\n650\n.\n\n[1993 s18(2); 2001 s37 & Sch F]\n\n(2) Regulations may provide\nfor adjustments in the calculation of amounts payable in respect of\nself-employment contributions to facilitate computation and for the elimination\nfrom self-employment contributions of amounts of not more than 5 cent and for the\nrounding up of amounts of more than 5 cent but less than 10 cent to 10 cent.\n\n[2004 (MP) s15]\n\n(3) Where, for a year of\nassessment (within the meaning of the Tax Acts), the Revenue Commissioners and an\nemployer enter into an agreement under a specified provision of the Act of 1997\nwhereby the employer will account to the Revenue Commissioners, in accordance with\nthat provision, in respect of the income tax due on qualifying emoluments (within\nthe meaning of that provision) and where that agreement is not null and void, then\nin respect of those qualifying emoluments—\n\n(\na\n) the\nemployer—\n\n(i) as part of that\nagreement and in so far as the qualifying emoluments are comprised of reckonable\nemoluments of a self-employed contributor to which the\n\nagreement applies, shall pay a contribution at a rate of\n\n4.2 per\ncent\nin respect of the aggregate of\nthe amount of those reckonable emoluments and the amount of income tax payable\nunder the agreement in respect of them, and\n\n(ii) notwithstanding\nArticle 7 of the Regulations of 1996, shall not be entitled to recover from an\nemployed contributor any part of a contribution paid in accordance with\n\nsubparagraph (i)\n,\n\nand\n\n(\nb\n) a contribution\npaid in accordance with\nparagraph (a)(i)\nshall not be regarded as a\nself-employment contribution for the purposes of determining entitlement to any\nbenefit specified in\nsection 39\n(1)\n.\n\n[2004 (MP) s15]\n\n(4) In\nsubsection\n(3)\n\n“specified provision” means such provision as may be prescribed for the\npurposes of that subsection."
+    }
+  ],
+  "rules": [
+    {
+      "key": "prsi.class_s_minimum",
+      "sectionNumber": "21",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2024-10-01",
+          "effectiveTo": null,
+          "quote": "the amount of\n\n€\n650",
+          "value": 65000,
+          "unit": "eur_minor",
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    }
+  ]
+}

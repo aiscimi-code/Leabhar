@@ -6,14 +6,14 @@ import { createCompany, addBankAccount } from '../config/setup';
 import { bankTransactions, suppliers, customers } from '@/db/schema';
 import { ids } from '@/lib/ids';
 import type { AppDatabase } from '@/db';
-import { loadStatutoryKnowledgeBase, statuteFilePath } from './knowledgeBase';
+import { loadStatutoryKnowledgeBase } from './knowledgeBase';
 import { suggestVatTreatment, RULE_TREATMENT_BINDINGS } from './vatSuggestion';
 import { VATCA_REVISED_CURATED_RULES } from './vatcaRevisedCuration';
 import { VATCA_SCHEDULE_CURATED_RULES } from './vatcaScheduleCuration';
 import { VAT_SCOPE_CURATED_RULES } from './vatScopeCuration';
 import { VAT_PLACE_OF_SUPPLY_CURATED_RULES } from './vatPlaceOfSupplyCuration';
 import { lookupTransactionRules } from './transactionLookup';
-import { readCatalogueEntry } from './catalogue';
+import { catalogueOfficialFilePath, readCatalogueEntry } from './catalogue';
 import { containsIgnoringLayout } from './lrcAnnotations';
 
 let db: AppDatabase;
@@ -92,13 +92,14 @@ describe('suggestVatTreatment', () => {
     // #277 retired 2 (Finance Act 2024 s.13 and s.48, out of scope).
     // #487 added prsi.class_s_disregard (S.I. 312/1996 art. 92).
     // #559 added 10 (CA 2014 ss.281-285, 290, 291, 293, 343, 347: accounting records, statements, annual return).
-    expect(first.rulesAfter).toBe(422);
+    // #711 dated the Class S rate from SWMPA 2024 s.3: one row became five versions (+4).
+    expect(first.rulesAfter).toBe(426);
   });
 
   it('loading again is a no-op', () => {
     const again = loadStatutoryKnowledgeBase(db, { companyId });
-    expect(again.rulesBefore).toBe(422);
-    expect(again.rulesAfter).toBe(422);
+    expect(again.rulesBefore).toBe(426);
+    expect(again.rulesAfter).toBe(426);
   });
 
   it('US SaaS purchase → non-EU reverse charge, cited to VATCA s.12 with a verifiable slice', () => {
@@ -113,14 +114,15 @@ describe('suggestVatTreatment', () => {
     expect(s.reviewRequired).toBe(true);
     expect(s.factSources['supplierEstablishedOutsideState']).toContain('confirmed by tester');
 
-    // The citation is checkable: the file exists, its hash matches, and the
-    // offsets slice a region containing the quoted words.
+    // The citation is checkable: the official PDF kept beside the catalogue
+    // entry has the cited hash, and the section's excerpt holds the quoted words.
     const c = s.decidingRule!;
-    expect(c.localPath).toBe('docs/statutes/vatca-2010/vatca-2010-enacted.md');
-    const file = readFileSync(statuteFilePath(c.localPath!), 'utf8');
-    expect(createHash('sha256').update(file).digest('hex')).toBe(c.sha256);
-    const slice = file.slice(c.sourceStart!, c.sourceEnd!).replace(/\s+/g, ' ');
-    expect(slice).toContain('receives a service from a supplier established');
+    expect(c.localPath).toBe('catalogue/vatca-2010/vatca-2010-enacted.json');
+    const entry = readCatalogueEntry('vatca-2010/vatca-2010-enacted.json');
+    expect(entry.source.sha256).toBe(c.sha256);
+    expect(createHash('sha256').update(readFileSync(catalogueOfficialFilePath('vatca-2010/vatca-2010-enacted.json'))).digest('hex')).toBe(c.sha256);
+    const excerpt = entry.provisions.find((p) => p.sectionNumber === '12')!.excerpt.replace(/\s+/g, ' ');
+    expect(excerpt).toContain('receives a service from a supplier established');
   });
 
   it('a US supplier whose establishment nobody has confirmed: no reverse charge from its country alone, flagged', () => {
@@ -204,7 +206,7 @@ describe('exempt and outside-the-scope lines (issue #200)', () => {
   const suggest = (description: string, amountMinor: number) =>
     suggestVatTreatment(db, { companyId, bankTransactionId: tx(description, amountMinor) })!;
 
-  it('bank charges → exempt under Schedule 1 para 6(1)(c), with a verifiable slice of schedule-1.md', () => {
+  it('bank charges → exempt under Schedule 1 para 6(1)(c), quoting the rules catalogue\'s excerpt', () => {
     const s = suggest('BANK CHARGES Q1', -1_250);
     expect(s.status).toBe('suggested');
     expect(s.treatment?.code).toBe('IE_EXEMPT');
@@ -212,10 +214,10 @@ describe('exempt and outside-the-scope lines (issue #200)', () => {
     expect(s.decidingRule?.citation).toBe('2010 Act 31 Sch.1');
     expect(s.decidingRule?.sectionNumber).toBe('6');
     const c = s.decidingRule!;
-    expect(c.localPath).toBe('docs/statutes/vatca-2010-revised/schedule-1.md');
-    const file = readFileSync(statuteFilePath(c.localPath!), 'utf8');
-    expect(createHash('sha256').update(file).digest('hex')).toBe(c.sha256);
-    expect(file.slice(c.sourceStart!, c.sourceEnd!)).toContain(c.quote!);
+    expect(c.localPath).toBe('catalogue/vatca-2010-revised/schedule-1.json');
+    const entry = readCatalogueEntry('vatca-2010-revised/schedule-1.json');
+    expect(entry.source.sha256).toBe(c.sha256);
+    expect(containsIgnoringLayout(entry.provisions.find((p) => p.sectionNumber === '6')!.excerpt, c.quote!)).toBe(true);
   });
 
   it.each([

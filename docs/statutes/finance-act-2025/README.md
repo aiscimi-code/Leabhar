@@ -3,17 +3,21 @@
 - Official PDF: https://www.irishstatutebook.ie/eli/2025/act/18/enacted/en/pdf
 - Official HTML (print): https://www.irishstatutebook.ie/eli/2025/act/18/enacted/en/print
 
-## Files
+The enacted text the knowledge base loads is now in the rules catalogue
+(#556): `catalogue/finance-act-2025/2025-act-18-enacted.json`, one provision
+per section (all 107), with the Irish Statute Book PDF kept beside it
+(`2025-act-18-enacted.pdf`, hash-checked by the gate). The `pdftotext -layout`
+extract and the PDF that were here are removed; the copies collected for
+issue #218 remain in `docs/statutes/_inbox/A/` (SHA-256s in
+`docs/statutes/_inbox/MANIFEST.sha256`). The entry is written by
 
-| File | What |
-|---|---|
-| `2025-act-18-enacted.pdf` | Official enacted PDF |
-| `2025-act-18-enacted.md` | Poppler `pdftotext -layout` extract of that PDF (its front matter records the PDF's SHA-256), the Irish rules KB's parser input |
+```
+npm run catalogue:extract -- finance-act-2025/2025-act-18-enacted
+```
 
-Both are byte-for-byte copies of `docs/statutes/_inbox/A/finance-act-2025-enacted.{pdf,md}`, collected
-for issue #218 (SHA-256s in `docs/statutes/_inbox/MANIFEST.sha256`). They are kept here because the
-installer ships `docs/statutes` without `_inbox`, and the knowledge base must be able to re-read and
-re-hash what it cites.
+which fetches the PDF, lays it out with Poppler's `pdftotext -layout` and
+parses it with `statuteParser.ts`. The excerpts keep that parser's known
+defects, among them s.70's missing heading (#703).
 
 The rules KB cites Part 3's VAT rate sections (issue #205):
 

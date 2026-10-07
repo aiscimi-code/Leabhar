@@ -1,8 +1,7 @@
-import { readFileSync, readdirSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
-import { parseVatca2010 } from './vatcaParser';
 import { parseVatcaSchedule } from './vatcaScheduleParser';
-import { CATALOGUE_DIR } from './catalogue';
+import { CATALOGUE_DIR, readCatalogueEntry } from './catalogue';
 import { RULE_TREATMENT_BINDINGS } from './vatSuggestion';
 
 /**
@@ -53,7 +52,7 @@ export const COVERAGE_MATRIX_PATH = 'docs/rules/coverage-matrix.json';
 
 // ---- Rows the sources define ----
 
-const VATCA_ENACTED = 'docs/statutes/vatca-2010/vatca-2010-enacted.md';
+const VATCA_ENACTED = 'vatca-2010/vatca-2010-enacted.json';
 const VATCA_REVISED_DIR = 'docs/statutes/vatca-2010-revised';
 
 /** Schedules whose paragraphs are rows. Schedule 9 is a list of sections by Part, so its Parts are the rows. */
@@ -109,7 +108,8 @@ export function expectedCoverageRows(params: { root: string; treatmentCodes: str
   const rows: ExpectedRow[] = [];
   const read = (p: string) => readFileSync(join(params.root, p), 'utf8');
 
-  for (const s of parseVatca2010(read(VATCA_ENACTED))) {
+  // The sections as enacted, from the rules catalogue (#556).
+  for (const s of readCatalogueEntry(VATCA_ENACTED, params.root).provisions) {
     rows.push({ id: `vatca:s${s.sectionNumber}`, area: 'vatca_section', title: `s.${s.sectionNumber} ${s.heading}` });
   }
   // Sections inserted after enactment (91A…, 92A…, 108A…), from the revised
@@ -124,10 +124,19 @@ export function expectedCoverageRows(params: { root: string; treatmentCodes: str
   for (const n of [...inserted].sort()) rows.push({ id: `vatca:s${n}`, area: 'vatca_section', title: `s.${n} (inserted)` });
 
   for (const n of PARAGRAPH_SCHEDULES) {
-    const text = read(`${VATCA_REVISED_DIR}/schedule-${n}.md`);
-    let paragraphs = parseVatcaSchedule(text).map((p) => ({
-      part: p.part ? p.part.replace(/^Part\s+/i, 'p') : null, number: p.paragraphNumber, heading: p.heading,
-    }));
+    // A Schedule in the rules catalogue (#556) is read from its entry: the
+    // parse the extraction committed. A heading the page lacks is a default.
+    const entryName = `vatca-2010-revised/schedule-${n}.json`;
+    const ported = existsSync(join(params.root, CATALOGUE_DIR, entryName));
+    const text = ported ? '' : read(`${VATCA_REVISED_DIR}/schedule-${n}.md`);
+    let paragraphs = ported
+      ? readCatalogueEntry(entryName, params.root).provisions.map((p) => ({
+        part: p.part ? p.part.replace(/^Part\s+/i, 'p') : null, number: p.sectionNumber,
+        heading: p.heading === `Schedule ${n} paragraph ${p.sectionNumber}` ? '' : p.heading,
+      }))
+      : parseVatcaSchedule(text).map((p) => ({
+        part: p.part ? p.part.replace(/^Part\s+/i, 'p') : null, number: p.paragraphNumber, heading: p.heading,
+      }));
     // Schedule 5 marks its paragraphs as Markdown headings ("## 1. Works of art").
     if (paragraphs.length === 0) {
       paragraphs = [...text.matchAll(/^##\s+(\d+[A-Z]?)\.\s+(.+)$/gm)]

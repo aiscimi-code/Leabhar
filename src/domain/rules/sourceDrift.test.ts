@@ -5,7 +5,8 @@ import { createTestDatabase } from '@/db/testing';
 import { createCompany } from '../config/setup';
 import { reviewItems } from '@/db/schema';
 import type { AppDatabase } from '@/db';
-import { readCatalogueEntry, type CatalogueEntry } from './catalogue';
+import { catalogueOfficialFilePath, readCatalogueEntry, withoutPageState, type CatalogueEntry } from './catalogue';
+import { readFileSync } from 'node:fs';
 import { loadStatutoryKnowledgeBase } from './knowledgeBase';
 import { compareWithCatalogue, sourceWords, traceSourceChange, verifySources } from './sourceDrift';
 import { main } from '@/cli/irishRules';
@@ -57,6 +58,67 @@ describe('compareWithCatalogue', () => {
   it('names the rule versions whose quote is gone', () => {
     const report = compareWithCatalogue(NAME, s46(), page((x) => x.replace(/4\.8 per cent/g, '5.0 per cent')));
     expect(report.quotesMissing).toEqual(['vat.rate_livestock_current@1']);
+  });
+});
+
+describe('a page with ASP.NET state (#713)', () => {
+  const VAT3 = 'vat3-rtd/completing-vat3-return.json';
+  const vat3 = () => readCatalogueEntry(VAT3);
+  const kept = () => readFileSync(catalogueOfficialFilePath(VAT3)).toString('latin1');
+  /** The kept page as Revenue serves it once its view state has rotated. */
+  const rotated = (edit: (html: string) => string = (x) => x) => Buffer.from(edit(kept()
+    .replace(/(name="__VIEWSTATE" id="__VIEWSTATE" value=")[^"]*/, '$1c29tZXRoaW5nIGVsc2U=')), 'latin1');
+
+  it('empties only the state fields\' values', () => {
+    const page = Buffer.from('<form><input type="hidden" name="__VIEWSTATE" value="abc" /><input name="q" value="keep" /></form>');
+    expect(withoutPageState(page)!.toString()).toBe('<form><input type="hidden" name="__VIEWSTATE" value="" /><input name="q" value="keep" /></form>');
+    expect(withoutPageState(Buffer.from('<p>no state</p>'))).toBeNull();
+  });
+
+  it('reports a page whose bytes moved only with its state as page_state_only, and traces nothing', () => {
+    const report = compareWithCatalogue(VAT3, vat3(), rotated());
+    expect(report.status).toBe('page_state_only');
+    expect(report.currentSha256).not.toBe(report.recordedSha256);
+    const { db } = createTestDatabase();
+    const { companyId } = createCompany(db, { legalName: 'State Ltd', vatRegistrationStatus: 'registered', seedYears: [2025] });
+    expect(traceSourceChange(db, { companyId, report }).reviewItemsRaised).toBe(0);
+  });
+
+  it('still reports a page whose words moved as changed, quote by quote', () => {
+    const report = compareWithCatalogue(VAT3, vat3(), rotated((html) => html.replace('sent to customers in other EU countries', 'sent to customers abroad')));
+    expect(report.status).toBe('changed');
+    expect(report.quotesMissing).toEqual(['vat3.box_e1@1']);
+  });
+
+  it('a change outside the words, in the markup, is still a change', () => {
+    const report = compareWithCatalogue(VAT3, vat3(), rotated((html) => html.replace('<h3>T1', '<h3 class="moved">T1')));
+    expect(report.status).toBe('changed');
+    expect(report.quotesMissing).toEqual([]);
+  });
+});
+
+describe('a EUR-Lex page with Dynatrace config (#714)', () => {
+  const EU = 'eu-282-2011/consolidated-2025-04-14.json';
+  const eu = () => readCatalogueEntry(EU);
+  const kept = () => readFileSync(catalogueOfficialFilePath(EU)).toString('latin1');
+  /** The kept page as EUR-Lex serves it on another request: new agent and page ids. */
+  const refetched = (edit: (html: string) => string = (x) => x) => Buffer.from(edit(kept()
+    .replace(/(data-dtconfig="[^"]*?agentId=)[0-9a-f]+/, '$10123456789abcdef')), 'latin1');
+
+  it('empties only the config attribute\'s value', () => {
+    const page = Buffer.from('<script src="a.js" data-dtconfig="app=1|agentId=2" async></script><p data-x="keep">');
+    expect(withoutPageState(page)!.toString()).toBe('<script src="a.js" data-dtconfig="" async></script><p data-x="keep">');
+  });
+
+  it('reports a page whose bytes moved only with its config as page_state_only', () => {
+    expect(refetched().equals(readFileSync(catalogueOfficialFilePath(EU)))).toBe(false);
+    expect(compareWithCatalogue(EU, eu(), refetched()).status).toBe('page_state_only');
+  });
+
+  it('still reports a page whose words moved as changed, quote by quote', () => {
+    const report = compareWithCatalogue(EU, eu(), refetched((html) => html.replace('a VAT identification number shall not', 'a VAT identification number may not')));
+    expect(report.status).toBe('changed');
+    expect(report.quotesMissing).toEqual(['eu.fixed_establishment_vat_number_not_sufficient@1']);
   });
 });
 
@@ -128,6 +190,16 @@ describe('rules CLI: verify-sources', () => {
     const noTrace = await main(['verify-sources'], { db, companyId, fetchSource: () => Promise.reject(new Error('offline')) });
     expect(noTrace).toBe(1);
     expect(JSON.parse(out.join('')).traces).toEqual([]);
+
+    // A page that moved only with its ASP.NET state passes, and --trace raises nothing (#713).
+    out.length = 0;
+    const kept = readFileSync(catalogueOfficialFilePath('vat3-rtd/completing-vat3-return.json')).toString('latin1');
+    const rotated = Buffer.from(kept.replace(/(name="__VIEWSTATE" id="__VIEWSTATE" value=")[^"]*/, '$1cm90YXRlZA=='), 'latin1');
+    const stateOnly = await main(['verify-sources', '--entry', 'vat3-rtd/completing-vat3-return', '--trace'], { db, companyId, fetchSource: async () => rotated });
+    expect(stateOnly).toBe(0);
+    const quiet = JSON.parse(out.join('')) as { reports: Array<{ status: string }>; traces: unknown[] };
+    expect(quiet.reports[0]!.status).toBe('page_state_only');
+    expect(quiet.traces).toEqual([]);
     vi.restoreAllMocks();
   });
 });

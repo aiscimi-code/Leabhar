@@ -1,17 +1,16 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { readFileSync } from 'node:fs';
 import { eq } from 'drizzle-orm';
 import { createTestDatabase } from '@/db/testing';
 import { createCompany } from '../config/setup';
 import {
-  ingestTca1997S284, ingestFinanceAct2003S23, deriveCapitalAllowancesRules, TCA_1997_S284_MD_PATH,
-  FINANCE_ACT_2003_S23_MD_PATH,
+  ingestTca1997S284FromCatalogue, ingestFinanceAct2003S23FromCatalogue, deriveCapitalAllowancesRules,
+  TCA_1997_S284_CATALOGUE_ENTRY, FINANCE_ACT_2003_S23_CATALOGUE_ENTRY,
 } from './capitalAllowancesIngestion';
-import { parseTca1997Section } from './tca1997SectionParser';
+import { readCatalogueEntry } from './catalogue';
 import { lookupTaxRule } from './irishRules';
 import { lookupTransactionRules } from './transactionLookup';
 import { CAPITAL_ALLOWANCES_CURATED_RULES } from './capitalAllowancesCuration';
-import { irishTaxRules, irishKnowledgeSources, reviewItems } from '@/db/schema';
+import { irishTaxRules, irishKnowledgeSources, irishActProvisions, reviewItems } from '@/db/schema';
 import type { AppDatabase } from '@/db';
 
 let db: AppDatabase;
@@ -22,14 +21,15 @@ beforeEach(() => {
   ({ companyId } = createCompany(db, { legalName: 'Capital Allowances Ltd', seedYears: [2025] }));
 });
 
-describe('ingestTca1997S284', () => {
-  it('ingests s.284 under its own citation and is idempotent by content', () => {
-    const first = ingestTca1997S284(db, { companyId, ingestVersion: 'v1' });
-    expect(first.ingested).toBe(true);
-    expect(first.sectionNumber).toBe('284');
-    expect(first.relevantCount).toBe(1); // curated override
+const provisionOf = (sourceId: string) => db.select().from(irishActProvisions).where(eq(irishActProvisions.sourceId, sourceId)).get()!;
 
-    const second = ingestTca1997S284(db, { companyId, ingestVersion: 'v1' });
+describe('ingestTca1997S284FromCatalogue', () => {
+  it('loads s.284 under its own citation and is idempotent', () => {
+    const first = ingestTca1997S284FromCatalogue(db, { companyId });
+    expect(first.ingested).toBe(true);
+    expect(provisionOf(first.sourceId)).toMatchObject({ sectionNumber: '284', relevant: true }); // curated override
+
+    const second = ingestTca1997S284FromCatalogue(db, { companyId });
     expect(second.ingested).toBe(false);
     expect(second.sourceId).toBe(first.sourceId);
 
@@ -39,14 +39,13 @@ describe('ingestTca1997S284', () => {
   });
 });
 
-describe('ingestFinanceAct2003S23 (issue #132)', () => {
-  it('ingests s.23 under its own citation, distinct from TCA 1997 s.284, and is idempotent by content', () => {
-    const first = ingestFinanceAct2003S23(db, { companyId, ingestVersion: 'v1' });
+describe('ingestFinanceAct2003S23FromCatalogue (issue #132)', () => {
+  it('loads s.23 under its own citation, distinct from TCA 1997 s.284, and is idempotent', () => {
+    const first = ingestFinanceAct2003S23FromCatalogue(db, { companyId });
     expect(first.ingested).toBe(true);
-    expect(first.sectionNumber).toBe('23');
-    expect(first.relevantCount).toBe(1); // curated
+    expect(provisionOf(first.sourceId)).toMatchObject({ sectionNumber: '23', relevant: true, amendsSection: '284' }); // curated
 
-    const second = ingestFinanceAct2003S23(db, { companyId, ingestVersion: 'v1' });
+    const second = ingestFinanceAct2003S23FromCatalogue(db, { companyId });
     expect(second.ingested).toBe(false);
     expect(second.sourceId).toBe(first.sourceId);
 
@@ -59,8 +58,8 @@ describe('ingestFinanceAct2003S23 (issue #132)', () => {
 
 describe('deriveCapitalAllowancesRules', () => {
   beforeEach(() => {
-    ingestTca1997S284(db, { companyId, ingestVersion: 'v1' });
-    ingestFinanceAct2003S23(db, { companyId, ingestVersion: 'v1' });
+    ingestTca1997S284FromCatalogue(db, { companyId });
+    ingestFinanceAct2003S23FromCatalogue(db, { companyId });
   });
 
   it('creates one rule per curated capital allowance', () => {
@@ -146,16 +145,16 @@ describe('deriveCapitalAllowancesRules', () => {
 });
 
 describe('issue #132: statementExcerpt verbatim check', () => {
-  it('every curated rule\'s statement excerpt is a verbatim substring of its own source file\'s parsed text', () => {
+  it('every curated rule\'s statement excerpt is a verbatim substring of its own source\'s parsed text', () => {
     const norm = (s: string) => s.replace(/\s+/g, ' ').trim();
-    const pathsBySection: Record<string, string> = {
-      '284': TCA_1997_S284_MD_PATH,
-      '23': FINANCE_ACT_2003_S23_MD_PATH,
+    const entriesBySection: Record<string, string> = {
+      '284': TCA_1997_S284_CATALOGUE_ENTRY,
+      '23': FINANCE_ACT_2003_S23_CATALOGUE_ENTRY,
     };
     for (const rule of CAPITAL_ALLOWANCES_CURATED_RULES) {
-      const path = pathsBySection[rule.sectionNumber];
-      expect(path, `${rule.ruleKey}: no source file mapped for section ${rule.sectionNumber}`).toBeDefined();
-      const text = norm(parseTca1997Section(readFileSync(path!, 'utf8')).provisionText);
+      const entry = entriesBySection[rule.sectionNumber];
+      expect(entry, `${rule.ruleKey}: no source mapped for section ${rule.sectionNumber}`).toBeDefined();
+      const text = norm(readCatalogueEntry(entry!).provisions[0]!.excerpt);
       expect(text, `${rule.ruleKey}: statementExcerpt must be verbatim against s.${rule.sectionNumber}`)
         .toContain(norm(rule.statementExcerpt));
     }

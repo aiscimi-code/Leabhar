@@ -1,0 +1,93 @@
+{
+  "format": 1,
+  "source": {
+    "citation": "2014 Act 38 s.280F",
+    "title": "Companies Act 2014 s.280F (revised)",
+    "sourceType": "legislation",
+    "jurisdiction": "IE",
+    "sourceUrl": "https://revisedacts.lawreform.ie/eli/2014/act/38/section/280F/revised/en/html",
+    "sha256": "1b54b132432ed0bd10f0521600ebea22e428f7b79b90e3f05acb7c960d0a6a76",
+    "conversion": "lrc-html-plaintext",
+    "retrievedOn": "2026-10-06",
+    "note": "LRC-revised text as retrieved — a live, continuously-updated page, not a dated historical snapshot. Distinct source row per section, never merged with any other Companies Act 2014 section."
+  },
+  "provisions": [
+    {
+      "sectionNumber": "280F",
+      "heading": "Qualification of company as medium company: general",
+      "locator": "s.280F",
+      "category": "other",
+      "relevant": true,
+      "relevanceReason": "Curated: mapped to a rule in companiesAct2014Curation.ts, overriding the other category default.",
+      "excerpt": "280F.\n(1) A company that is not excluded by\nsubsection (4)\nqualifies as a medium company in relation to its first financial year if the qualifying\nconditions are satisfied in respect of that year.\n\n(2) A company that is not excluded by\nsubsection (4)\nqualifies as a medium company in relation to a subsequent financial year (in this\nsubsection referred to as \"relevant year\") if the qualifying conditions\n—\n\n(a) are satisfied in respect of the relevant year and the financial year immediately\npreceding the relevant year,\n\n(b) are satisfied in respect of the relevant year and the company qualified as a medium\ncompany in relation to the financial year immediately preceding the relevant year,\nor\n\n(c) were satisfied in the financial year immediately preceding the relevant year and\nthe company qualified as a medium company in relation to that preceding financial\nyear.\n\n(3) The qualifying conditions for a medium company are satisfied by a company if,\nin relation to a financial year, it fulfils 2 or more of the following requirements:\n\n(a) the amount of turnover of the company does not exceed\n€50 million\n;\n\n(b) the balance sheet total of the company does not exceed\n€25 million\n;\n\n(c) the average number of employees does not exceed 250.\n\n(4) This section shall not apply to a company if it is\n—\n\n(a) a holding company,\n\n(b) an ineligible company,\n\n(c) a company that qualifies for the small companies regime, or\n\n(d) a company that qualifies for the micro companies regime.\n\n(5) In the application of this section to any period which is a financial year but\nis not in fact a year, the amount specified in\nsubsection (3)(a)\nshall be proportionately adjusted.\n\n(6) For the purposes of\nsubsection (3)(c)\n, the average number of employees of a company shall be determined by applying the\nmethods specified in\nsection 317\nfor determining the number required by\nsubsection (1)(a)\nof that section to be stated in a note to the financial statements of a company.\n\n(7) In this section, \"qualifying conditions\" mean the conditions referred to in\nsubsection (3)\n."
+    }
+  ],
+  "rules": [
+    {
+      "key": "company.medium_company_balance_sheet_threshold",
+      "sectionNumber": "280F",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2024-07-01",
+          "effectiveTo": null,
+          "quote": "the balance sheet total of the company does not exceed\n€25 million",
+          "value": 2500000000,
+          "unit": "eur_minor",
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    },
+    {
+      "key": "company.medium_company_employee_threshold",
+      "sectionNumber": "280F",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2017-06-09",
+          "effectiveTo": null,
+          "quote": "the average number of employees does not exceed 250",
+          "value": 250,
+          "unit": "count",
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    },
+    {
+      "key": "company.medium_company_turnover_threshold",
+      "sectionNumber": "280F",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2024-07-01",
+          "effectiveTo": null,
+          "quote": "the amount of turnover of the company does not exceed\n€50 million",
+          "value": 5000000000,
+          "unit": "eur_minor",
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    }
+  ]
+}

@@ -1,0 +1,73 @@
+{
+  "format": 1,
+  "source": {
+    "citation": "S.I. 1/2024",
+    "title": "Income Tax (Employments) Regulations 2024 (S.I. No. 1 of 2024)",
+    "sourceType": "legislation",
+    "jurisdiction": "IE",
+    "sourceUrl": "https://www.irishstatutebook.ie/eli/2024/si/1/made/en/print",
+    "sha256": "930f5a005ed65c32b03b09a01bc5e8ab7e44dda5f3a4018d184ea3ddf03a5a76",
+    "conversion": "isb-html-plaintext",
+    "retrievedOn": "2026-10-06",
+    "publicationDate": "2024-01-04",
+    "effectiveFrom": "2024-01-04",
+    "note": "As made; in operation on the date of making, 4 January 2024 (reg.1(2)). Inserts reg.10A (ERR) into S.I. 345/2018."
+  },
+  "provisions": [
+    {
+      "sectionNumber": "3",
+      "heading": "Amendment of the Income Tax (Employments) Regulations 2018 (reportable benefits)",
+      "locator": "reg.3",
+      "category": "procedure",
+      "relevant": true,
+      "relevanceReason": "Payroll: the enhanced reporting particulars (S.I. 1/2024 reg.3).",
+      "excerpt": "3. The Principal Regulations are amended –\n\n(a) in Regulation 2(1), by the insertion of the following definitions:\n\n“ ‘relevant particulars’ means-\n\n(a) in the case of a remote working daily allowance, the total number of remote working days (including part of a day) for which the payment refers, or\n\n(b) in the case of a travel and subsistence payment, the amount of payment in respect of-\n\n(i) travel vouched,\n\n(ii) travel unvouched,\n\n(iii) subsistence vouched,\n\n(iv) subsistence unvouched,\n\n(v) site-based employees (including country money),\n\n(vi) emergency travel, and\n\n(vii) eating on site;\n\n‘remote working daily allowance’ has the meaning assigned to it in section 897C of the Act;\n\n‘reportable benefit’ has the meaning assigned to it in section 897C of the Act;\n\n‘small benefit’ has the meaning assigned to it in section 897C of the Act;\n\n‘travel and subsistence payment’ has the meaning assigned to it in section 897C of the Act;”,\n\n(b) in Regulation 10(1), by the substitution of the following subparagraph for subparagraph (k):\n\n“(k) (i) where the employer has sent a prior notification pursuant to Regulation 10A, the employment identifier referred to in Regulation 10A(1)(e)(ii), or\n\n(ii) where the employer has not sent a prior notification pursuant to Regulation 10A, the employment identifier being a unique identifier assigned to the employment of an employee by an employer where the particulars being sent include the employee’s personal public service number,”,\n\n(c) by the insertion of the following Regulation after Regulation 10:\n\n“\nNotification of provision of reportable benefits\n\n10A. (1) On or before the provision of any reportable benefit to an employee, an employer shall send a notification containing the following particulars relating to the provision of such a benefit to the Revenue Commissioners-\n\n(a) the date of provision of the reportable benefit,\n\n(b) the employee’s full name,\n\n(c) the personal public service number of the employee, or in the absence of such number-\n\n(i) the employee’s address, and\n\n(ii) the employee’s date of birth,\n\n(d) the employer reference being a unique staff identifier assigned to the employee by the employer which may not be changed where the employer has not already included the employee’s personal public service number in a prior notification,\n\n(e) (i) where the employer has sent a prior notification pursuant to Regulation 10, the employment identifier referred to in Regulation 10(1)(k)(ii), or\n\n(ii) where the employer has not sent a prior notification pursuant to Regulation 10, the employment identifier being a unique identifier assigned to the employment of an employee by an employer where the particulars being sent include the employee’s personal public service number,\n\n(f) the amount or value of the reportable benefit,\n\n(g) the category in which the reportable benefit falls, which is either a-\n\n(i) small benefit,\n\n(ii) remote working daily allowance, or\n\n(iii) travel and subsistence payment,\n\nand\n\n(h) the relevant particulars.”,\n\nand\n\n(d) in Regulation 23, by the substitution of the following paragraph for paragraph (1):\n\n“(1) Upon request made to him or her at any premises of an employer by an authorised officer, the employer, his or her representative or a person employed by the employer at the premises, shall produce to the authorised officer for inspection-\n\n(a) all wages sheets, revenue payroll notifications, other documents and records whatsoever relating to the calculation or payment of the emoluments, including notional payments, of employees of the employer or the deduction of tax from, or the remittance of tax under section 985A(4) of the Act in respect of, such emoluments, and\n\n(b) all documents and records whatsoever relating to the provision of a reportable benefit to an employee,\n\nas may be in that person’s powers, possession or procurement.”."
+    }
+  ],
+  "rules": [
+    {
+      "key": "err.notification_particulars",
+      "sectionNumber": "3",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2024-01-04",
+          "effectiveTo": null,
+          "quote": "On or before the provision of any reportable benefit to an employee, an employer shall send a notification containing the following particulars",
+          "value": null,
+          "unit": null,
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    },
+    {
+      "key": "err.travel_subsistence_subcategories",
+      "sectionNumber": "3",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2024-01-04",
+          "effectiveTo": null,
+          "quote": "(b) in the case of a travel and subsistence payment, the amount of payment in respect of-",
+          "value": null,
+          "unit": null,
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    }
+  ]
+}

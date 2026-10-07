@@ -1,6 +1,9 @@
 /**
  * Ingestion and rule derivation for S.I. 69/2025 (European Union
- * (Value-Added Tax) Regulations 2025), built on `si692025Parser.ts`.
+ * (Value-Added Tax) Regulations 2025), built on `si692025Parser.ts`. The
+ * knowledge base loads the four regulations below from the instrument's rules
+ * catalogue entry (`ingestSi692025FromCatalogue`, #556); the per-regulation
+ * ingests read a Markdown copy (the CLI's `--file`).
  *
  * Four named regulations are ingested from this single document, each as
  * its own `irish_act_provisions` row under one shared `irish_knowledge_sources`
@@ -36,23 +39,32 @@ import { irishKnowledgeSources, irishActProvisions, irishTaxRules } from '@/db/s
 import { ids } from '@/lib/ids';
 import { nowIso } from '../dates';
 import { sha256Hex } from '@/lib/hash';
-import { parseSi692025Regulation, provisionSlug, SI_69_2025_MD_PATH } from './si692025Parser';
+import { parseSi692025Regulation, provisionSlug } from './si692025Parser';
 import { SI_69_2025_CURATED_RULES } from './si692025Curation';
 import { upsertReviewItem } from '../extraction/service';
 import { taxHeadsFor } from './taxHeads';
-
-export { SI_69_2025_MD_PATH };
+import { ingestCatalogueFile, type CatalogueIngestResult } from './catalogue';
+import { preferredSourceId } from './catalogueSupersession';
 
 export const SI_69_2025 = {
   citation: 'S.I. 69/2025',
+  title: 'European Union (Value-Added Tax) Regulations 2025',
   sourceUrl: 'https://www.irishstatutebook.ie/eli/2025/si/69/made/en/print',
   // No separate commencement clause in this instrument; it took effect when
-  // made (front matter: "in_force_from: 2025-03-06", matching "GIVEN under
-  // my Official Seal, 6 March, 2025.").
+  // made ("GIVEN under my Official Seal, 6 March, 2025.").
   effectiveFrom: '2025-03-06',
+  principalAct: 'Value-Added Tax Consolidation Act 2010',
+  note: 'Only Regulations 5, 7, 8 and 9 are held as provisions, each the amending text it substitutes or '
+    + 'inserts into VATCA 2010 (ss.6(1), 60(4), 80(1) and 92B-92D); the rest of the instrument is not '
+    + 'ingested — see si692025Parser.ts.',
 };
 
-interface NamedRegulation {
+/** Why each held regulation bears on the rules: the amending text has no VAT keyword of its own. */
+export const si692025RelevanceReason = (regulationNumber: string) =>
+  `Curated: mapped to rule(s) in si692025Curation.ts for regulation ${regulationNumber}, `
+  + 'overriding the mechanical "other" category default for amending text with no VAT keyword of its own.';
+
+export interface NamedRegulation {
   regulationNumber: string;
   heading: string;
   amendsSection: string;
@@ -100,6 +112,19 @@ const REG_9: NamedRegulation = {
     + '(and this same provision row) but remain not separately curated (issue #130).',
 };
 
+/** The regulations held as provisions, in the order books first read them. */
+export const SI_69_2025_REGULATIONS: NamedRegulation[] = [REG_5, REG_7, REG_8, REG_9];
+
+export const SI_69_2025_CATALOGUE_ENTRY = 'si-69-2025/2025-si-69.json';
+
+/** Load the instrument's four held regulations from its catalogue entry. */
+export function ingestSi692025FromCatalogue(
+  db: AppDatabase,
+  params: { companyId?: string | null; ingestVersion?: string; root?: string },
+): CatalogueIngestResult {
+  return ingestCatalogueFile(db, { ...params, entry: SI_69_2025_CATALOGUE_ENTRY });
+}
+
 export interface Si692025IngestResult {
   sourceId: string;
   regulationCount: number;
@@ -139,8 +164,7 @@ function ingestSi692025NamedRegulation(
     // whole document (and every regulation in it) were already covered.
     const parsed = parseSi692025Regulation(params.markdown, reg.regulationNumber);
     const relevant = true;
-    const reason = `Curated: mapped to rule(s) in si692025Curation.ts for regulation ${reg.regulationNumber}, `
-      + 'overriding the mechanical "other" category default for amending text with no VAT keyword of its own.';
+    const reason = si692025RelevanceReason(reg.regulationNumber);
 
     db.insert(irishActProvisions).values({
       id: ids.provision(),
@@ -149,14 +173,14 @@ function ingestSi692025NamedRegulation(
       sectionNumber: reg.regulationNumber,
       slug: provisionSlug(reg.regulationNumber, reg.heading),
       heading: reg.heading,
-      principalAct: 'Value-Added Tax Consolidation Act 2010',
+      principalAct: SI_69_2025.principalAct,
       provisionText: parsed.provisionText,
       sourceStart: parsed.sourceStart,
       sourceEnd: parsed.sourceEnd,
       category: 'vat',
       amendsSection: reg.amendsSection,
       effectiveClue: null,
-      citedActs: ['Value-Added Tax Consolidation Act 2010'],
+      citedActs: [SI_69_2025.principalAct],
       relevant,
       relevanceReason: reason,
       source: 'import',
@@ -172,11 +196,11 @@ function ingestSi692025NamedRegulation(
       id: sourceId,
       companyId: params.companyId ?? null,
       sourceType: 'legislation',
-      title: 'European Union (Value-Added Tax) Regulations 2025',
+      title: SI_69_2025.title,
       citation: SI_69_2025.citation,
       jurisdiction: 'IE',
       sourceUrl: SI_69_2025.sourceUrl,
-      localPath: params.localPath ?? SI_69_2025_MD_PATH,
+      localPath: params.localPath ?? null,
       sha256: digest,
       ingestVersion: params.ingestVersion,
       publicationDate: SI_69_2025.effectiveFrom,
@@ -188,8 +212,7 @@ function ingestSi692025NamedRegulation(
 
     const parsed = parseSi692025Regulation(params.markdown, reg.regulationNumber);
     const relevant = true;
-    const reason = `Curated: mapped to rule(s) in si692025Curation.ts for regulation ${reg.regulationNumber}, `
-      + 'overriding the mechanical "other" category default for amending text with no VAT keyword of its own.';
+    const reason = si692025RelevanceReason(reg.regulationNumber);
 
     tx.insert(irishActProvisions).values({
       id: ids.provision(),
@@ -198,14 +221,14 @@ function ingestSi692025NamedRegulation(
       sectionNumber: reg.regulationNumber,
       slug: provisionSlug(reg.regulationNumber, reg.heading),
       heading: reg.heading,
-      principalAct: 'Value-Added Tax Consolidation Act 2010',
+      principalAct: SI_69_2025.principalAct,
       provisionText: parsed.provisionText,
       sourceStart: parsed.sourceStart,
       sourceEnd: parsed.sourceEnd,
       category: 'vat',
       amendsSection: reg.amendsSection,
       effectiveClue: null,
-      citedActs: ['Value-Added Tax Consolidation Act 2010'],
+      citedActs: [SI_69_2025.principalAct],
       relevant,
       relevanceReason: reason,
       source: 'import',
@@ -259,8 +282,7 @@ export function deriveSi692025Rules(
   db: AppDatabase,
   params: { companyId: string },
 ): Si692025DeriveResult {
-  const sourceId = db.select({ id: irishKnowledgeSources.id }).from(irishKnowledgeSources)
-    .where(eq(irishKnowledgeSources.citation, SI_69_2025.citation)).get()?.id;
+  const sourceId = preferredSourceId(db, SI_69_2025.citation);
 
   let created = 0;
   let superseded = 0;

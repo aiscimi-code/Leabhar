@@ -4,10 +4,10 @@ import { eq } from 'drizzle-orm';
 import { createTestDatabase } from '@/db/testing';
 import { createCompany } from '../config/setup';
 import {
-  ingestCompaniesAct2014Section, ingestAllCompaniesAct2014Sections, deriveCompaniesAct2014Rules,
-  COMPANIES_ACT_2014_SECTION_NUMBERS,
+  ingestCompaniesAct2014Section, ingestCompaniesAct2014FromCatalogue, deriveCompaniesAct2014Rules,
+  COMPANIES_ACT_2014_SECTION_NUMBERS, companiesAct2014CatalogueEntry,
 } from './companiesAct2014Ingestion';
-import { companiesAct2014SectionPath } from './companiesAct2014SectionParser';
+import { readCatalogueEntry } from './catalogue';
 import { lookupTaxRule } from './irishRules';
 import { COMPANIES_ACT_2014_CURATED_RULES } from './companiesAct2014Curation';
 import { irishTaxRules, irishKnowledgeSources, reviewItems } from '@/db/schema';
@@ -15,32 +15,32 @@ import type { AppDatabase } from '@/db';
 
 let db: AppDatabase;
 let companyId: string;
-const s280aMarkdown = readFileSync(companiesAct2014SectionPath('280A'), 'utf8');
+const s285Markdown = readFileSync(new URL('./__fixtures__/companies-act-2014-s285.md', import.meta.url), 'utf8');
 
 beforeEach(() => {
   ({ db } = createTestDatabase());
   ({ companyId } = createCompany(db, { legalName: 'Filing Ltd', seedYears: [2025] }));
 });
 
-describe('ingestCompaniesAct2014Section', () => {
-  it('ingests s.280A under its own citation and is idempotent by content', () => {
-    const first = ingestCompaniesAct2014Section(db, { companyId, markdown: s280aMarkdown, ingestVersion: 'v1' });
+describe('ingestCompaniesAct2014Section (a Markdown copy, the CLI\'s --file)', () => {
+  it('ingests s.285 under its own citation and is idempotent by content', () => {
+    const first = ingestCompaniesAct2014Section(db, { companyId, markdown: s285Markdown, ingestVersion: 'v1' });
     expect(first.ingested).toBe(true);
-    expect(first.sectionNumber).toBe('280A');
+    expect(first.sectionNumber).toBe('285');
 
-    const second = ingestCompaniesAct2014Section(db, { companyId, markdown: s280aMarkdown, ingestVersion: 'v1' });
+    const second = ingestCompaniesAct2014Section(db, { companyId, markdown: s285Markdown, ingestVersion: 'v1' });
     expect(second.ingested).toBe(false);
     expect(second.sourceId).toBe(first.sourceId);
 
     const source = db.select().from(irishKnowledgeSources).where(eq(irishKnowledgeSources.id, first.sourceId)).get()!;
-    expect(source.citation).toBe('2014 Act 38 s.280A');
+    expect(source.citation).toBe('2014 Act 38 s.285');
     expect(source.sourceType).toBe('legislation');
   });
 });
 
-describe('ingestAllCompaniesAct2014Sections', () => {
-  it('ingests every fetched section, each under its own citation', () => {
-    const result = ingestAllCompaniesAct2014Sections(db, { companyId, ingestVersion: 'v1' });
+describe('ingestCompaniesAct2014FromCatalogue', () => {
+  it('ingests every section from its catalogue entry, each under its own citation', () => {
+    const result = ingestCompaniesAct2014FromCatalogue(db, { companyId });
     expect(result.sections).toHaveLength(COMPANIES_ACT_2014_SECTION_NUMBERS.length);
     expect(result.sections.every((s) => s.ingested)).toBe(true);
 
@@ -54,7 +54,7 @@ describe('ingestAllCompaniesAct2014Sections', () => {
 
 describe('deriveCompaniesAct2014Rules', () => {
   beforeEach(() => {
-    ingestAllCompaniesAct2014Sections(db, { companyId, ingestVersion: 'v1' });
+    ingestCompaniesAct2014FromCatalogue(db, { companyId });
   });
 
   it('creates one rule per curated Companies Act 2014 rule', () => {
@@ -127,9 +127,11 @@ describe('deriveCompaniesAct2014Rules', () => {
     expect(rule!.effectiveFrom).toBe('2020-12-16');
   });
 
-  it('every curated statement excerpt appears verbatim in its ingested section file', () => {
+  it('every curated statement excerpt appears verbatim in its section\'s catalogue entry', () => {
     for (const rule of COMPANIES_ACT_2014_CURATED_RULES) {
-      const src = readFileSync(companiesAct2014SectionPath(rule.sectionNumber), 'utf8');
+      const n = rule.sectionNumber as (typeof COMPANIES_ACT_2014_SECTION_NUMBERS)[number];
+      expect(COMPANIES_ACT_2014_SECTION_NUMBERS, rule.ruleKey).toContain(n);
+      const src = readCatalogueEntry(companiesAct2014CatalogueEntry(n)).provisions[0]!.excerpt;
       expect(src, rule.ruleKey).toContain(rule.statementExcerpt);
     }
   });

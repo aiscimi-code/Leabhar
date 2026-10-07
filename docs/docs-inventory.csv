@@ -11,12 +11,12 @@ docs/statutes/282-2011/articles-10-13b-establishment.md,5175,cited-code,src/doma
 docs/statutes/282-2011/consolidated-282-2011.md,123226,cited-docs,docs/statutes/282-2011/articles-10-13b-establishment.md docs/statutes/SOURCE-REGISTER.md
 docs/statutes/CURRENT-REGISTER.md,3782,cited-docs,docs/statutes/README.md
 docs/statutes/CURRENT-REGISTRATION.md,1640,cited-docs,docs/statutes/CURRENT-REGISTER.md docs/statutes/README.md
-docs/statutes/README.md,11855,cited-docs,docs/RULES_KB.md docs/statutes/SOURCE-REGISTER.md docs/statutes/finance-act-2024/README.md …
+docs/statutes/README.md,13890,cited-docs,docs/RULES_KB.md docs/statutes/SOURCE-REGISTER.md docs/statutes/finance-act-2024/README.md …
 docs/statutes/SOURCE-REGISTER.md,13355,cited-code,src/domain/rules/taxRateSync.ts
 docs/statutes/_inbox/A/SOURCES.txt,668,unreferenced,
 docs/statutes/_inbox/A/finance-act-2025-enacted-print.html,847145,cited-docs,docs/statutes/_inbox/A/SOURCES.txt
-docs/statutes/_inbox/A/finance-act-2025-enacted.md,486168,duplicate,docs/statutes/finance-act-2025/2025-act-18-enacted.md
-docs/statutes/_inbox/A/finance-act-2025-enacted.pdf,1008901,duplicate,docs/statutes/finance-act-2025/2025-act-18-enacted.pdf
+docs/statutes/_inbox/A/finance-act-2025-enacted.md,486168,cited-docs,docs/statutes/_inbox/MANIFEST.sha256
+docs/statutes/_inbox/A/finance-act-2025-enacted.pdf,1008901,duplicate,catalogue/finance-act-2025/2025-act-18-enacted.pdf
 docs/statutes/_inbox/A/si-2025-684-print.html,31168,unreferenced,
 docs/statutes/_inbox/A/si-2025-684.md,1467,unreferenced,
 docs/statutes/_inbox/A/si-2025-685-print.html,32405,unreferenced,
@@ -102,11 +102,11 @@ docs/statutes/_inbox/B/vatca-s097.html,31441,unreferenced,
 docs/statutes/_inbox/B/vatca-s097.md,8931,unreferenced,
 docs/statutes/_inbox/B/vatca-s098.html,12928,duplicate,docs/statutes/vatca-2010-revised/s098.html
 docs/statutes/_inbox/B/vatca-s098.md,1280,duplicate,docs/statutes/vatca-2010-revised/s098.md
-docs/statutes/_inbox/B/vatca-schedule-1.html,84455,duplicate,docs/statutes/vatca-2010-revised/schedule-1.html
+docs/statutes/_inbox/B/vatca-schedule-1.html,84455,unreferenced,
 docs/statutes/_inbox/B/vatca-schedule-1.md,19988,unreferenced,
-docs/statutes/_inbox/B/vatca-schedule-2.html,92965,duplicate,docs/statutes/vatca-2010-revised/schedule-2.html
+docs/statutes/_inbox/B/vatca-schedule-2.html,92965,unreferenced,
 docs/statutes/_inbox/B/vatca-schedule-2.md,21955,unreferenced,
-docs/statutes/_inbox/B/vatca-schedule-3.html,100367,duplicate,docs/statutes/vatca-2010-revised/schedule-3.html
+docs/statutes/_inbox/B/vatca-schedule-3.html,100367,unreferenced,
 docs/statutes/_inbox/B/vatca-schedule-3.md,19366,unreferenced,
 docs/statutes/_inbox/C/COLLECT-LOG.json,45518,unreferenced,
 docs/statutes/_inbox/C/SOURCES.txt,4465,unreferenced,
@@ -232,10 +232,10 @@ docs/statutes/_inbox/C/vat-letting-of-property.md,16975,unreferenced,
 docs/statutes/_inbox/C/vat-letting-of-property.pdf,646913,original,docs/statutes/_inbox/C/vat-letting-of-property.md
 docs/statutes/_inbox/C/vat-supply-of-property.md,33101,unreferenced,
 docs/statutes/_inbox/C/vat-supply-of-property.pdf,576501,original,docs/statutes/_inbox/C/immovable-goods/supply-of-property.md docs/statutes/_inbox/C/vat-supply-of-property.md
-docs/statutes/_inbox/C/vat3-rtd/VAT-RTD-S76.md,73294,duplicate,docs/statutes/vat3-rtd/VAT-RTD-S76.md
-docs/statutes/_inbox/C/vat3-rtd/VAT-RTD-S76.pdf,683786,duplicate,docs/statutes/vat3-rtd/VAT-RTD-S76.pdf
-docs/statutes/_inbox/C/vat3-rtd/completing-vat3-return.html,68792,duplicate,docs/statutes/vat3-rtd/completing-vat3-return.html
-docs/statutes/_inbox/C/vat3-rtd/completing-vat3-return.md,2762,duplicate,docs/statutes/vat3-rtd/completing-vat3-return.md
+docs/statutes/_inbox/C/vat3-rtd/VAT-RTD-S76.md,73294,cited-docs,docs/statutes/_inbox/MANIFEST.sha256
+docs/statutes/_inbox/C/vat3-rtd/VAT-RTD-S76.pdf,683786,duplicate,catalogue/vat3-rtd/VAT-RTD-S76.pdf
+docs/statutes/_inbox/C/vat3-rtd/completing-vat3-return.html,68792,original,docs/statutes/_inbox/C/vat3-rtd/completing-vat3-return.md
+docs/statutes/_inbox/C/vat3-rtd/completing-vat3-return.md,2762,cited-docs,docs/statutes/_inbox/MANIFEST.sha256
 docs/statutes/_inbox/C/vat3-rtd/index.html,63598,original,docs/statutes/_inbox/C/vat3-rtd/index.md
 docs/statutes/_inbox/C/vat3-rtd/index.md,1029,unreferenced,
 docs/statutes/_inbox/C/vies/vies-and-intrastat.html,70131,duplicate,docs/statutes/vies/vies-and-intrastat.html
@@ -251,30 +251,30 @@ docs/statutes/_inbox/CONVERSION.md,742,cited-docs,docs/statutes/_inbox/COLLECTED
 docs/statutes/_inbox/D/SOURCES.txt,898,duplicate,docs/statutes/tca-1997-nfg/SOURCES.txt
 docs/statutes/_inbox/D/introduction.md,2766,duplicate,docs/statutes/tca-1997-nfg/introduction.md
 docs/statutes/_inbox/D/introduction.pdf,64540,duplicate,docs/statutes/tca-1997-nfg/introduction.pdf
-docs/statutes/_inbox/D/part01.md,51355,duplicate,docs/statutes/tca-1997-nfg/part01.md
-docs/statutes/_inbox/D/part01.pdf,344086,duplicate,docs/statutes/tca-1997-nfg/part01.pdf
-docs/statutes/_inbox/D/part02.md,121241,duplicate,docs/statutes/tca-1997-nfg/part02.md
-docs/statutes/_inbox/D/part02.pdf,584621,duplicate,docs/statutes/tca-1997-nfg/part02.pdf
-docs/statutes/_inbox/D/part04.md,436207,duplicate,docs/statutes/tca-1997-nfg/part04.md
-docs/statutes/_inbox/D/part04.pdf,1445800,duplicate,docs/statutes/tca-1997-nfg/part04.pdf
-docs/statutes/_inbox/D/part09.md,463797,duplicate,docs/statutes/tca-1997-nfg/part09.md
-docs/statutes/_inbox/D/part09.pdf,1497236,duplicate,docs/statutes/tca-1997-nfg/part09.pdf
-docs/statutes/_inbox/D/part12.md,358830,duplicate,docs/statutes/tca-1997-nfg/part12.md
-docs/statutes/_inbox/D/part12.pdf,1397792,duplicate,docs/statutes/tca-1997-nfg/part12.pdf
-docs/statutes/_inbox/D/part13.md,69967,duplicate,docs/statutes/tca-1997-nfg/part13.md
-docs/statutes/_inbox/D/part13.pdf,425448,duplicate,docs/statutes/tca-1997-nfg/part13.pdf
-docs/statutes/_inbox/D/part15.md,522024,duplicate,docs/statutes/tca-1997-nfg/part15.md
-docs/statutes/_inbox/D/part15.pdf,1816016,duplicate,docs/statutes/tca-1997-nfg/part15.pdf
-docs/statutes/_inbox/D/part18.md,131641,duplicate,docs/statutes/tca-1997-nfg/part18.md
-docs/statutes/_inbox/D/part18.pdf,581130,duplicate,docs/statutes/tca-1997-nfg/part18.pdf
-docs/statutes/_inbox/D/part18d.md,59033,duplicate,docs/statutes/tca-1997-nfg/part18d.md
-docs/statutes/_inbox/D/part18d.pdf,359926,duplicate,docs/statutes/tca-1997-nfg/part18d.pdf
-docs/statutes/_inbox/D/part36.md,125811,duplicate,docs/statutes/tca-1997-nfg/part36.md
-docs/statutes/_inbox/D/part36.pdf,639392,duplicate,docs/statutes/tca-1997-nfg/part36.pdf
-docs/statutes/_inbox/D/part41a.md,87984,duplicate,docs/statutes/tca-1997-nfg/part41a.md
-docs/statutes/_inbox/D/part41a.pdf,526463,duplicate,docs/statutes/tca-1997-nfg/part41a.pdf
-docs/statutes/_inbox/D/part43.md,53305,duplicate,docs/statutes/tca-1997-nfg/part43.md
-docs/statutes/_inbox/D/part43.pdf,319215,duplicate,docs/statutes/tca-1997-nfg/part43.pdf
+docs/statutes/_inbox/D/part01.md,51355,cited-docs,docs/statutes/_inbox/MANIFEST.sha256
+docs/statutes/_inbox/D/part01.pdf,344086,duplicate,catalogue/tca-1997-nfg/part01.pdf
+docs/statutes/_inbox/D/part02.md,121241,cited-docs,docs/statutes/_inbox/MANIFEST.sha256
+docs/statutes/_inbox/D/part02.pdf,584621,duplicate,catalogue/tca-1997-nfg/part02.pdf
+docs/statutes/_inbox/D/part04.md,436207,cited-docs,docs/statutes/_inbox/MANIFEST.sha256
+docs/statutes/_inbox/D/part04.pdf,1445800,duplicate,catalogue/tca-1997-nfg/part04.pdf
+docs/statutes/_inbox/D/part09.md,463797,cited-docs,docs/statutes/_inbox/MANIFEST.sha256
+docs/statutes/_inbox/D/part09.pdf,1497236,duplicate,catalogue/tca-1997-nfg/part09.pdf
+docs/statutes/_inbox/D/part12.md,358830,cited-docs,docs/statutes/_inbox/MANIFEST.sha256
+docs/statutes/_inbox/D/part12.pdf,1397792,duplicate,catalogue/tca-1997-nfg/part12.pdf
+docs/statutes/_inbox/D/part13.md,69967,cited-docs,docs/statutes/_inbox/MANIFEST.sha256
+docs/statutes/_inbox/D/part13.pdf,425448,duplicate,catalogue/tca-1997-nfg/part13.pdf
+docs/statutes/_inbox/D/part15.md,522024,cited-docs,docs/statutes/_inbox/MANIFEST.sha256
+docs/statutes/_inbox/D/part15.pdf,1816016,duplicate,catalogue/tca-1997-nfg/part15.pdf
+docs/statutes/_inbox/D/part18.md,131641,cited-docs,docs/statutes/_inbox/MANIFEST.sha256
+docs/statutes/_inbox/D/part18.pdf,581130,duplicate,catalogue/tca-1997-nfg/part18.pdf
+docs/statutes/_inbox/D/part18d.md,59033,cited-docs,docs/statutes/_inbox/MANIFEST.sha256
+docs/statutes/_inbox/D/part18d.pdf,359926,duplicate,catalogue/tca-1997-nfg/part18d.pdf
+docs/statutes/_inbox/D/part36.md,125811,cited-docs,docs/statutes/_inbox/MANIFEST.sha256
+docs/statutes/_inbox/D/part36.pdf,639392,duplicate,catalogue/tca-1997-nfg/part36.pdf
+docs/statutes/_inbox/D/part41a.md,87984,cited-docs,docs/statutes/_inbox/MANIFEST.sha256
+docs/statutes/_inbox/D/part41a.pdf,526463,duplicate,catalogue/tca-1997-nfg/part41a.pdf
+docs/statutes/_inbox/D/part43.md,53305,cited-docs,docs/statutes/_inbox/MANIFEST.sha256
+docs/statutes/_inbox/D/part43.pdf,319215,duplicate,catalogue/tca-1997-nfg/part43.pdf
 docs/statutes/_inbox/E/SOURCES.txt,718,unreferenced,
 docs/statutes/_inbox/E/si-2012-576-print.html,66242,cited-docs,docs/statutes/_inbox/E/SOURCES.txt
 docs/statutes/_inbox/E/si-2012-576.md,20757,unreferenced,
@@ -285,14 +285,14 @@ docs/statutes/_inbox/E/tdm-18-02-01.pdf,491481,original,docs/statutes/_inbox/E/t
 docs/statutes/_inbox/E/tdm-18-02-02.md,19220,unreferenced,
 docs/statutes/_inbox/E/tdm-18-02-02.pdf,480120,original,docs/statutes/_inbox/E/tdm-18-02-02.md
 docs/statutes/_inbox/F/SOURCES.txt,313,duplicate,docs/statutes/swca-2005/SOURCES.txt
-docs/statutes/_inbox/F/swca-2005-s20.html,17450,duplicate,docs/statutes/swca-2005/swca-2005-s20.html
-docs/statutes/_inbox/F/swca-2005-s20.md,2116,duplicate,docs/statutes/swca-2005/swca-2005-s20.md
-docs/statutes/_inbox/F/swca-2005-s21.html,63680,duplicate,docs/statutes/swca-2005/swca-2005-s21.html
-docs/statutes/_inbox/F/swca-2005-s21.md,5359,duplicate,docs/statutes/swca-2005/swca-2005-s21.md
-docs/statutes/_inbox/F/swca-2005-s22.html,16680,duplicate,docs/statutes/swca-2005/swca-2005-s22.html
-docs/statutes/_inbox/F/swca-2005-s22.md,1643,duplicate,docs/statutes/swca-2005/swca-2005-s22.md
-docs/statutes/_inbox/F/swca-2005-s23.html,30132,duplicate,docs/statutes/swca-2005/swca-2005-s23.html
-docs/statutes/_inbox/F/swca-2005-s23.md,5436,duplicate,docs/statutes/swca-2005/swca-2005-s23.md
+docs/statutes/_inbox/F/swca-2005-s20.html,17450,duplicate,catalogue/swca-2005/s20.html
+docs/statutes/_inbox/F/swca-2005-s20.md,2116,cited-docs,docs/statutes/_inbox/MANIFEST.sha256
+docs/statutes/_inbox/F/swca-2005-s21.html,63680,duplicate,catalogue/swca-2005/s21.html
+docs/statutes/_inbox/F/swca-2005-s21.md,5359,cited-docs,docs/statutes/_inbox/MANIFEST.sha256
+docs/statutes/_inbox/F/swca-2005-s22.html,16680,duplicate,catalogue/swca-2005/s22.html
+docs/statutes/_inbox/F/swca-2005-s22.md,1643,cited-docs,docs/statutes/_inbox/MANIFEST.sha256
+docs/statutes/_inbox/F/swca-2005-s23.html,30132,duplicate,catalogue/swca-2005/s23.html
+docs/statutes/_inbox/F/swca-2005-s23.md,5436,cited-docs,docs/statutes/_inbox/MANIFEST.sha256
 docs/statutes/_inbox/G/38-01-04J.md,83192,duplicate,docs/statutes/tdm-ct/38-01-04J.md
 docs/statutes/_inbox/G/38-01-04J.pdf,4804398,duplicate,docs/statutes/tdm-ct/38-01-04J.pdf
 docs/statutes/_inbox/G/38-02-01.md,2770,duplicate,docs/statutes/tdm-ct/38-02-01.md
@@ -305,21 +305,21 @@ docs/statutes/_inbox/G/47-06-01.md,6922,duplicate,docs/statutes/tdm-ct/47-06-01.
 docs/statutes/_inbox/G/47-06-01.pdf,158375,duplicate,docs/statutes/tdm-ct/47-06-01.pdf
 docs/statutes/_inbox/G/SOURCES.txt,1366,duplicate,docs/statutes/tdm-ct/SOURCES.txt
 docs/statutes/_inbox/H/SOURCES.txt,1110,unreferenced,
-docs/statutes/_inbox/H/ca2014-s280A.html,17500,original,docs/statutes/_inbox/H/ca2014-s280A.md docs/statutes/companies-act-2014/s280A.md
+docs/statutes/_inbox/H/ca2014-s280A.html,17500,original,docs/statutes/_inbox/H/ca2014-s280A.md
 docs/statutes/_inbox/H/ca2014-s280A.md,2382,unreferenced,
 docs/statutes/_inbox/H/ca2014-s280B.html,21088,original,docs/statutes/_inbox/H/ca2014-s280B.md
 docs/statutes/_inbox/H/ca2014-s280B.md,3922,unreferenced,
 docs/statutes/_inbox/H/ca2014-s280C.html,12345,original,docs/statutes/_inbox/H/ca2014-s280C.md
 docs/statutes/_inbox/H/ca2014-s280C.md,802,unreferenced,
-docs/statutes/_inbox/H/ca2014-s280D.html,18440,original,docs/statutes/_inbox/H/ca2014-s280D.md docs/statutes/companies-act-2014/s280D.md
+docs/statutes/_inbox/H/ca2014-s280D.html,18440,original,docs/statutes/_inbox/H/ca2014-s280D.md
 docs/statutes/_inbox/H/ca2014-s280D.md,2631,unreferenced,
-docs/statutes/_inbox/H/ca2014-s280E.html,12251,original,docs/statutes/_inbox/H/ca2014-s280E.md docs/statutes/companies-act-2014/s280E.md
+docs/statutes/_inbox/H/ca2014-s280E.html,12251,original,docs/statutes/_inbox/H/ca2014-s280E.md
 docs/statutes/_inbox/H/ca2014-s280E.md,771,unreferenced,
 docs/statutes/_inbox/H/ca2014-s280F.html,17974,original,docs/statutes/_inbox/H/ca2014-s280F.md
 docs/statutes/_inbox/H/ca2014-s280F.md,2512,unreferenced,
 docs/statutes/_inbox/H/ca2014-s281.html,10949,original,docs/statutes/_inbox/H/ca2014-s281.md
 docs/statutes/_inbox/H/ca2014-s281.md,509,unreferenced,
-docs/statutes/_inbox/H/ca2014-s282.html,19981,original,docs/statutes/_inbox/H/ca2014-s282.md docs/statutes/companies-act-2014/s282.md
+docs/statutes/_inbox/H/ca2014-s282.html,19981,original,docs/statutes/_inbox/H/ca2014-s282.md
 docs/statutes/_inbox/H/ca2014-s282.md,5222,unreferenced,
 docs/statutes/_inbox/H/ca2014-s283.html,12367,original,docs/statutes/_inbox/H/ca2014-s283.md
 docs/statutes/_inbox/H/ca2014-s283.md,1224,unreferenced,
@@ -341,13 +341,13 @@ docs/statutes/_inbox/H/ca2014-s343.html,25603,original,docs/statutes/_inbox/H/ca
 docs/statutes/_inbox/H/ca2014-s343.md,4004,unreferenced,
 docs/statutes/_inbox/H/ca2014-s347.html,23406,original,docs/statutes/_inbox/H/ca2014-s347.md
 docs/statutes/_inbox/H/ca2014-s347.md,3466,unreferenced,
-docs/statutes/_inbox/H/ca2014-s352.html,19120,original,docs/statutes/_inbox/H/ca2014-s352.md docs/statutes/companies-act-2014/s352.md
+docs/statutes/_inbox/H/ca2014-s352.html,19120,original,docs/statutes/_inbox/H/ca2014-s352.md
 docs/statutes/_inbox/H/ca2014-s352.md,2427,unreferenced,
-docs/statutes/_inbox/H/ca2014-s358.html,13938,original,docs/statutes/_inbox/H/ca2014-s358.md docs/statutes/companies-act-2014/s358.md
+docs/statutes/_inbox/H/ca2014-s358.html,13938,original,docs/statutes/_inbox/H/ca2014-s358.md
 docs/statutes/_inbox/H/ca2014-s358.md,1516,unreferenced,
-docs/statutes/_inbox/H/ca2014-s359.html,16652,original,docs/statutes/_inbox/H/ca2014-s359.md docs/statutes/companies-act-2014/s359.md
+docs/statutes/_inbox/H/ca2014-s359.html,16652,original,docs/statutes/_inbox/H/ca2014-s359.md
 docs/statutes/_inbox/H/ca2014-s359.md,1418,unreferenced,
-docs/statutes/_inbox/H/ca2014-s360.html,22281,original,docs/statutes/_inbox/H/ca2014-s360.md docs/statutes/companies-act-2014/s360.md
+docs/statutes/_inbox/H/ca2014-s360.html,22281,original,docs/statutes/_inbox/H/ca2014-s360.md
 docs/statutes/_inbox/H/ca2014-s360.md,2922,unreferenced,
 docs/statutes/_inbox/H/ca2014-schedule-3A.html,180605,original,docs/statutes/_inbox/H/ca2014-schedule-3A.md
 docs/statutes/_inbox/H/ca2014-schedule-3A.md,55975,unreferenced,
@@ -364,25 +364,12 @@ docs/statutes/_inbox/README.md,407,unreferenced,
 docs/statutes/audit-report.json,38658,cited-docs,docs/RULES_KB.md docs/statutes/README.md docs/statutes/finance-act-2024/README.md …
 docs/statutes/companies-act-2014/README.md,1129,unreferenced,
 docs/statutes/companies-act-2014/companies-act-2014.md,1616,cited-code,src/domain/rules/companiesAct2014Curation.ts
-docs/statutes/companies-act-2014/s280A.md,2378,runtime,read by the test suite
-docs/statutes/companies-act-2014/s280D.md,2627,runtime,read by the test suite
-docs/statutes/companies-act-2014/s280E.md,767,runtime,read by the test suite
-docs/statutes/companies-act-2014/s282.md,5218,runtime,read by the test suite
-docs/statutes/companies-act-2014/s352.md,2423,runtime,read by the test suite
-docs/statutes/companies-act-2014/s358.md,1512,runtime,read by the test suite
-docs/statutes/companies-act-2014/s359.md,1414,runtime,read by the test suite
-docs/statutes/companies-act-2014/s360.md,2918,runtime,read by the test suite
 docs/statutes/distance-sales/tdm-intra-community-distance-sales.md,10898,cited-docs,docs/statutes/SOURCE-REGISTER.md
 docs/statutes/finance-act-2001/s53.md,1821,cited-code,src/domain/rules/capitalAllowancesCuration.ts src/domain/rules/capitalAllowancesIngestion.ts
-docs/statutes/finance-act-2003/README.md,1076,unreferenced,
-docs/statutes/finance-act-2003/s23.md,3895,runtime,read by the test suite
-docs/statutes/finance-act-2024/2024-act-43-enacted.md,683936,runtime,read by the test suite
-docs/statutes/finance-act-2024/2024-act-43-enacted.pdf,1220021,cited-docs,docs/statutes/finance-act-2024/README.md
+docs/statutes/finance-act-2003/README.md,1449,unreferenced,
 docs/statutes/finance-act-2024/2024-act-43-part3-vat.md,6199,cited-docs,docs/statutes/SOURCE-REGISTER.md docs/statutes/finance-act-2024/README.md
-docs/statutes/finance-act-2024/README.md,1095,unreferenced,
-docs/statutes/finance-act-2025/2025-act-18-enacted.md,486168,runtime,read by the test suite
-docs/statutes/finance-act-2025/2025-act-18-enacted.pdf,1008901,original,docs/statutes/_inbox/A/finance-act-2025-enacted.md docs/statutes/finance-act-2025/2025-act-18-enacted.md
-docs/statutes/finance-act-2025/README.md,1253,unreferenced,
+docs/statutes/finance-act-2024/README.md,1439,unreferenced,
+docs/statutes/finance-act-2025/README.md,1619,unreferenced,
 docs/statutes/frs-102/README.md,457,unreferenced,
 docs/statutes/frs-102/frs-102.md,1345,cited-docs,docs/RULES_KB.md docs/statutes/frs-102/README.md
 docs/statutes/immovable-property/tdm-services-connected-with-immovable-property.md,20583,cited-docs,docs/statutes/SOURCE-REGISTER.md
@@ -390,15 +377,10 @@ docs/statutes/import-vat/README.md,1176,cited-docs,docs/statutes/README.md
 docs/statutes/import-vat/customs-manual-import-vat.md,80893,cited-docs,docs/RULES_KB.md docs/statutes/import-vat/README.md
 docs/statutes/pos-of-services/exceptions-to-general-rules.md,4942,cited-docs,docs/statutes/SOURCE-REGISTER.md
 docs/statutes/pos-of-services/general-place-of-supply.md,4540,cited-docs,docs/statutes/SOURCE-REGISTER.md
-docs/statutes/rct/README.md,2161,cited-code,src/domain/rules/rctCuration.ts src/domain/rules/rctIngestion.ts
+docs/statutes/rct/README.md,2718,cited-code,src/domain/rules/rctCuration.ts src/domain/rules/rctIngestion.ts
 docs/statutes/rct/tdm-18-02-01-operations.md,858,cited-docs,docs/statutes/rct/README.md
 docs/statutes/rct/tdm-18-02-02-principal.md,1721,cited-docs,docs/statutes/rct/README.md
-docs/statutes/rct/tdm-18-02-04.md,40493,runtime,read by the test suite
-docs/statutes/rct/tdm-18-02-05.md,38444,runtime,read by the test suite
-docs/statutes/rct/tdm-18-02-11.md,7265,runtime,read by the test suite
 docs/statutes/scripts/extract_vat_sources.py,10340,cited-code,src/domain/rules/companiesAct2014Ingestion.ts src/domain/rules/vatcaScheduleParser.ts
-docs/statutes/si-156-2012/2012-si-156.md,4696,runtime,read by the test suite
-docs/statutes/si-639-2010/2010-si-639.md,159413,runtime,read by the test suite
 docs/statutes/si-639-2010/README.md,1013,unreferenced,
 docs/statutes/si-639-2010/reg-14.md,1896,cited-docs,docs/statutes/si-639-2010/README.md
 docs/statutes/si-639-2010/reg-14A-si-734-2020.md,1942,cited-code,src/domain/rules/si639Curation.ts
@@ -411,67 +393,27 @@ docs/statutes/si-639-2010/reg-25.md,598,cited-docs,docs/statutes/si-639-2010/REA
 docs/statutes/si-639-2010/reg-26.md,590,cited-docs,docs/statutes/si-639-2010/README.md
 docs/statutes/si-639-2010/reg-29.md,2323,cited-docs,docs/statutes/si-639-2010/README.md
 docs/statutes/si-651-2011/2011-si-651.md,22628,cited-docs,docs/statutes/SOURCE-REGISTER.md
-docs/statutes/si-651-2011/README.md,1338,cited-docs,docs/RULES_KB.md
-docs/statutes/si-69-2025/2025-si-69.md,22926,runtime,read by the test suite
+docs/statutes/si-651-2011/README.md,1330,cited-docs,docs/RULES_KB.md
 docs/statutes/sme-scheme/tdm-sme-domestic-layer.md,12249,cited-docs,docs/statutes/SOURCE-REGISTER.md
 docs/statutes/swca-2005/README.md,535,unreferenced,
 docs/statutes/swca-2005/SOURCES.txt,313,cited-docs,docs/statutes/swca-2005/README.md
-docs/statutes/swca-2005/swca-2005-s20.html,17450,original,docs/statutes/_inbox/F/swca-2005-s20.md docs/statutes/swca-2005/swca-2005-s20.md
-docs/statutes/swca-2005/swca-2005-s20.md,2116,runtime,read by the test suite
-docs/statutes/swca-2005/swca-2005-s21.html,63680,original,docs/statutes/_inbox/F/swca-2005-s21.md docs/statutes/swca-2005/swca-2005-s21.md
-docs/statutes/swca-2005/swca-2005-s21.md,5359,runtime,read by the test suite
-docs/statutes/swca-2005/swca-2005-s22.html,16680,original,docs/statutes/_inbox/F/swca-2005-s22.md docs/statutes/swca-2005/swca-2005-s22.md
-docs/statutes/swca-2005/swca-2005-s22.md,1643,runtime,read by the test suite
-docs/statutes/swca-2005/swca-2005-s23.html,30132,original,docs/statutes/_inbox/F/swca-2005-s23.md docs/statutes/swca-2005/swca-2005-s23.md
-docs/statutes/swca-2005/swca-2005-s23.md,5436,runtime,read by the test suite
 docs/statutes/tbe-services/tdm-tbe-services.md,24082,cited-docs,docs/statutes/SOURCE-REGISTER.md
-docs/statutes/tca-1997-nfg/README.md,921,unreferenced,
+docs/statutes/tca-1997-nfg/README.md,1844,unreferenced,
 docs/statutes/tca-1997-nfg/SOURCES.txt,898,cited-docs,docs/statutes/tca-1997-nfg/README.md
 docs/statutes/tca-1997-nfg/introduction.md,2766,unreferenced,
 docs/statutes/tca-1997-nfg/introduction.pdf,64540,original,docs/statutes/_inbox/D/introduction.md docs/statutes/tca-1997-nfg/introduction.md
-docs/statutes/tca-1997-nfg/part01.md,51355,runtime,read by the test suite
-docs/statutes/tca-1997-nfg/part01.pdf,344086,original,docs/statutes/_inbox/D/part01.md docs/statutes/tca-1997-nfg/part01.md
-docs/statutes/tca-1997-nfg/part02.md,121241,runtime,read by the test suite
-docs/statutes/tca-1997-nfg/part02.pdf,584621,original,docs/statutes/_inbox/D/part02.md docs/statutes/tca-1997-nfg/part02.md
-docs/statutes/tca-1997-nfg/part04.md,436207,runtime,read by the test suite
-docs/statutes/tca-1997-nfg/part04.pdf,1445800,original,docs/statutes/_inbox/D/part04.md docs/statutes/tca-1997-nfg/part04.md
-docs/statutes/tca-1997-nfg/part09.md,463797,runtime,read by the test suite
-docs/statutes/tca-1997-nfg/part09.pdf,1497236,original,docs/statutes/_inbox/D/part09.md docs/statutes/tca-1997-nfg/part09.md
-docs/statutes/tca-1997-nfg/part12.md,358830,runtime,read by the test suite
-docs/statutes/tca-1997-nfg/part12.pdf,1397792,original,docs/statutes/_inbox/D/part12.md docs/statutes/tca-1997-nfg/part12.md
-docs/statutes/tca-1997-nfg/part13.md,69967,runtime,read by the test suite
-docs/statutes/tca-1997-nfg/part13.pdf,425448,original,docs/statutes/_inbox/D/part13.md docs/statutes/tca-1997-nfg/part13.md
-docs/statutes/tca-1997-nfg/part15.md,522024,runtime,read by the test suite
-docs/statutes/tca-1997-nfg/part15.pdf,1816016,original,docs/statutes/_inbox/D/part15.md docs/statutes/tca-1997-nfg/part15.md
-docs/statutes/tca-1997-nfg/part18.md,131641,unreferenced,
-docs/statutes/tca-1997-nfg/part18.pdf,581130,original,docs/statutes/_inbox/D/part18.md docs/statutes/tca-1997-nfg/part18.md
-docs/statutes/tca-1997-nfg/part18d.md,59033,runtime,read by the test suite
-docs/statutes/tca-1997-nfg/part18d.pdf,359926,original,docs/statutes/_inbox/D/part18d.md docs/statutes/tca-1997-nfg/part18d.md
-docs/statutes/tca-1997-nfg/part36.md,125811,runtime,read by the test suite
-docs/statutes/tca-1997-nfg/part36.pdf,639392,original,docs/statutes/_inbox/D/part36.md docs/statutes/tca-1997-nfg/part36.md
-docs/statutes/tca-1997-nfg/part41a.md,87984,runtime,read by the test suite
-docs/statutes/tca-1997-nfg/part41a.pdf,526463,original,docs/statutes/_inbox/D/part41a.md docs/statutes/tca-1997-nfg/part41a.md
-docs/statutes/tca-1997-nfg/part43.md,53305,runtime,read by the test suite
-docs/statutes/tca-1997-nfg/part43.pdf,319215,original,docs/statutes/_inbox/D/part43.md docs/statutes/tca-1997-nfg/part43.md
 docs/statutes/tca-1997/1997-act-39-ss-885-887.md,1466,cited-docs,docs/RULES_KB.md docs/statutes/tca-1997/README.md
-docs/statutes/tca-1997/README.md,2586,cited-code,src/domain/rules/financeAct2011RctSectionParser.ts src/domain/rules/rctCuration.ts src/domain/rules/rctIngestion.ts src/domain/rules/tca1997Ingestion.ts src/domain/rules/tca1997SectionParser.ts src/domain/rules/tcaNfgParser.ts
+docs/statutes/tca-1997/README.md,3103,cited-code,src/domain/rules/financeAct2011RctSectionParser.ts src/domain/rules/rctCuration.ts src/domain/rules/rctIngestion.ts src/domain/rules/tca1997Ingestion.ts src/domain/rules/tca1997SectionParser.ts src/domain/rules/tcaNfgParser.ts
 docs/statutes/tca-1997/s18.md,838,cited-docs,docs/RULES_KB.md docs/statutes/tca-1997/README.md
 docs/statutes/tca-1997/s235.md,4521,cited-docs,docs/RULES_KB.md docs/statutes/tca-1997/README.md
-docs/statutes/tca-1997/s284.md,4369,runtime,read by the test suite
 docs/statutes/tca-1997/s288.md,7257,cited-docs,docs/statutes/tca-1997/README.md
 docs/statutes/tca-1997/s299.md,1997,cited-docs,docs/statutes/tca-1997/README.md
 docs/statutes/tca-1997/s496.md,15400,cited-docs,docs/statutes/tca-1997/README.md
 docs/statutes/tca-1997/s52.md,474,cited-docs,docs/RULES_KB.md docs/statutes/tca-1997/README.md
-docs/statutes/tca-1997/s530.md,8212,runtime,read by the test suite
-docs/statutes/tca-1997/s530A.md,3544,runtime,read by the test suite
 docs/statutes/tca-1997/s530B.md,2387,runtime,read by the test suite
 docs/statutes/tca-1997/s530C.md,1816,runtime,read by the test suite
 docs/statutes/tca-1997/s530D.md,2113,runtime,read by the test suite
-docs/statutes/tca-1997/s530E.md,1518,runtime,read by the test suite
 docs/statutes/tca-1997/s530F.md,3247,runtime,read by the test suite
-docs/statutes/tca-1997/s530G.md,5240,runtime,read by the test suite
-docs/statutes/tca-1997/s530H.md,3246,runtime,read by the test suite
-docs/statutes/tca-1997/s530I.md,2177,runtime,read by the test suite
 docs/statutes/tca-1997/s530J.md,1485,runtime,read by the test suite
 docs/statutes/tca-1997/s530K.md,3137,runtime,read by the test suite
 docs/statutes/tca-1997/s530L.md,1297,runtime,read by the test suite
@@ -488,7 +430,6 @@ docs/statutes/tca-1997/s530V.md,2318,runtime,read by the test suite
 docs/statutes/tca-1997/s613.md,2989,cited-docs,docs/statutes/tca-1997/README.md
 docs/statutes/tca-1997/s81.md,797,cited-docs,docs/statutes/tca-1997/README.md
 docs/statutes/tdm-04-08-12/04-08-12.md,2567,cited-docs,docs/RULES_KB.md docs/statutes/finance-act-2003/README.md
-docs/statutes/tdm-38-01-03b/38-01-03b.md,68957,runtime,read by the test suite
 docs/statutes/tdm-38-01-03b/p01-18.md,923,cited-docs,docs/statutes/SOURCE-REGISTER.md
 docs/statutes/tdm-38-01-03b/p19-36.md,5005,unreferenced,
 docs/statutes/tdm-38-01-03b/p37-54.md,647,unreferenced,
@@ -508,10 +449,6 @@ docs/statutes/vat-rates/rates.json,1657,cited-code,src/domain/rules/taxRateSync.
 docs/statutes/vat-rates/schedule-moves-2025-2026.md,1304,cited-docs,docs/RULES_KB.md docs/trust/rule-traceability-audit.md
 docs/statutes/vat-thresholds/revenue-vat-thresholds.md,3506,cited-code,src/domain/rules/si692025Curation.ts
 docs/statutes/vat3-rtd/README.md,1003,unreferenced,
-docs/statutes/vat3-rtd/VAT-RTD-S76.md,73294,cited-code,src/domain/vat/rtd.ts
-docs/statutes/vat3-rtd/VAT-RTD-S76.pdf,683786,original,docs/statutes/_inbox/C/vat3-rtd/VAT-RTD-S76.md docs/statutes/vat3-rtd/VAT-RTD-S76.md
-docs/statutes/vat3-rtd/completing-vat3-return.html,68792,original,docs/statutes/_inbox/C/vat3-rtd/completing-vat3-return.md docs/statutes/vat3-rtd/completing-vat3-return.md
-docs/statutes/vat3-rtd/completing-vat3-return.md,2762,runtime,read by the test suite
 docs/statutes/vat3-rtd/vat3-rtd-boxes.md,2266,cited-docs,docs/RULES_KB.md docs/statutes/vat3-rtd/README.md
 docs/statutes/vatca-2010-revised/README.md,1596,unreferenced,
 docs/statutes/vatca-2010-revised/s005.md,1136,unreferenced,
@@ -560,23 +497,15 @@ docs/statutes/vatca-2010-revised/s91J.md,13032,unreferenced,
 docs/statutes/vatca-2010-revised/s92B.md,2155,unreferenced,
 docs/statutes/vatca-2010-revised/s92C.md,9762,unreferenced,
 docs/statutes/vatca-2010-revised/s92D.md,1753,unreferenced,
-docs/statutes/vatca-2010-revised/schedule-1.html,84455,runtime,read by the test suite
-docs/statutes/vatca-2010-revised/schedule-1.md,19981,runtime,read by the test suite
-docs/statutes/vatca-2010-revised/schedule-2.html,92965,runtime,read by the test suite
-docs/statutes/vatca-2010-revised/schedule-2.md,21948,runtime,read by the test suite
-docs/statutes/vatca-2010-revised/schedule-3.html,100367,runtime,read by the test suite
-docs/statutes/vatca-2010-revised/schedule-3.md,19359,runtime,read by the test suite
 docs/statutes/vatca-2010-revised/schedule-4.md,2181,runtime,read by the test suite
 docs/statutes/vatca-2010-revised/schedule-5.md,2725,runtime,read by the test suite
 docs/statutes/vatca-2010-revised/schedule-6.md,1182,runtime,read by the test suite
 docs/statutes/vatca-2010-revised/schedule-9.md,844,runtime,read by the test suite
-docs/statutes/vatca-2010/README.md,3087,cited-code,src/domain/rules/vatcaParser.ts
+docs/statutes/vatca-2010/README.md,1729,unreferenced,
 docs/statutes/vatca-2010/s46-revised.md,939,cited-docs,docs/statutes/vatca-2010/README.md
 docs/statutes/vatca-2010/s5-revised.md,1144,cited-docs,docs/statutes/SOURCE-REGISTER.md docs/statutes/vatca-2010/README.md
 docs/statutes/vatca-2010/s65-revised.md,2835,cited-docs,docs/statutes/vatca-2010/README.md
 docs/statutes/vatca-2010/s84-revised.md,1488,cited-docs,docs/statutes/vatca-2010/README.md
-docs/statutes/vatca-2010/vatca-2010-enacted.md,447045,runtime,read by the test suite
-docs/statutes/vatca-2010/vatca-2010-enacted.pdf,770300,cited-docs,docs/statutes/vatca-2010/README.md
 docs/statutes/vies/vies-and-intrastat.html,70131,original,docs/statutes/_inbox/C/vies/vies-and-intrastat.md docs/statutes/vies/vies-and-intrastat.md
 docs/statutes/vies/vies-and-intrastat.md,1969,unreferenced,
 docs/statutes/vies/vies-traders-manual.md,68212,cited-code,src/domain/vat/vies.ts

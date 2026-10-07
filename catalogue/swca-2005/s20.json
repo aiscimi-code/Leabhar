@@ -1,0 +1,26 @@
+{
+  "format": 1,
+  "source": {
+    "citation": "SWCA 2005 s.20",
+    "title": "SWCA 2005 s.20 (LRC revised)",
+    "sourceType": "legislation",
+    "jurisdiction": "IE",
+    "sourceUrl": "https://revisedacts.lawreform.ie/eli/2005/act/26/section/20/revised/en/html",
+    "sha256": "8fc40e256cbcf1928dc510f9d852a8dd36bc1d3e9d4d86569892053151adb1d7",
+    "conversion": "lrc-html-plaintext",
+    "retrievedOn": "2026-09-25",
+    "note": "LRC revised text as retrieved: current law on that date, not a dated history."
+  },
+  "provisions": [
+    {
+      "sectionNumber": "20",
+      "heading": "Self-employed contributors and insured persons.",
+      "locator": "s.20",
+      "category": "income_tax",
+      "relevant": true,
+      "relevanceReason": "Self-employment (Class S) contributions for sole traders and partners (issue #212).",
+      "excerpt": "20.\n—(1)\nSubject to this Act—\n\n(\na\n) every\nperson\n—\n\n(i) over the age of 16\nyears and under pensionable age, or\n\n(ii) born on or after 1\nJanuary 1958, who has attained pensionable age but has neither attained the age of\n70 years nor been awarded a State pension (contributory),\n\n(not being a person\nincluded in any of the classes of person specified in\nPart 3\nof\nSchedule\n1\n) who has reckonable income or reckonable emoluments, shall be a\nself-employed contributor for the purposes of this Act regardless of whether the\nperson is also an employed\ncontributor,\n\n(\nb\n) every person\nbecoming for the first time a self-employed contributor shall become insured under\nthis Act and shall thereafter continue throughout his or her life to be so\ninsured, and\n\n(\nc\n) in the case of\na person who, not having been an employed contributor at any time, becomes for the\nfirst time a self-employed contributor, the first day of the contribution year in\nwhich the person becomes a self-employed contributor shall be regarded as the date\nof entry into insurance.\n\n[1993 s17(2)]\n\n(2) Regulations may provide\nfor—\n\n(\na\n) including among\nself-employed contributors classes of person or part of any class of person\nspecified in or included in\nPart 3\nof\nSchedule 1\n,\n\n(\nb\n) adding to the\nclasses of person specified in\nPart 3\nof\nSchedule 1\n,\n\n(\nc\n) the\nmodification of any of the provisions of this Act relating to self-employed\ncontributors,\n\n(\nd\n) the application\n(with or without modification) to self-employed contributors or self-employment\ncontributions payable under\nsection 21\n(1)(a), (b)\n\nor\n(c)\nof any provisions of this Act which apply to employed contributors\nor employment contributions."
+    }
+  ],
+  "rules": []
+}

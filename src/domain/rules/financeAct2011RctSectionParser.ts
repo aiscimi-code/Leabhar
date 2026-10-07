@@ -1,31 +1,31 @@
 /**
  * Deterministic parser for a single TCA 1997 section as inserted by Finance
- * Act 2011 s.20 (the 2011 electronic-RCT restructuring: ss.530A-530V), each
- * extracted verbatim into its own file under docs/statutes/tca-1997/ —
- * `s530A.md` through `s530V.md`.
+ * Act 2011 s.20 (the 2011 electronic-RCT restructuring: ss.530A-530V). The
+ * rules catalogue extraction (`scripts/catalogue/extract.ts`) cuts each
+ * section from that Act's page, as converted, and runs this parser on it;
+ * each entry (`catalogue/tca-1997/s530A.json` ...) keeps the page beside it.
  *
  * A different source-page structure from `tca1997SectionParser.ts`'s
- * `s530.md` (the pre-2011, as-enacted-1997 section): there is no LRC-revised
+ * s.530 (the pre-2011, as-enacted-1997 section): there is no LRC-revised
  * TCA 1997 for ss.530A-530V (every revisedacts.lawreform.ie URL for them
  * 404s — see docs/statutes/tca-1997/README.md and issue #131's own
  * comment thread), so these were fetched from the eISB *as-enacted Finance
  * Act 2011 s.20* page instead — the inserting Act's own text, which quotes
  * each new section in full. That source has no Chapter marker or leading
- * amendment-citation bracket (`s530.md`'s own "[FA70 s17(1)...]" convention)
+ * amendment-citation bracket (s.530's own "[FA70 s17(1)...]" convention)
  * to strip, and its section-opening line is NOT alone on its own line the
- * way `s530.md`'s bare "530." is — it reads "530A.— (1) ..." with the first
+ * way s.530's bare "530." is — it reads "530A.— (1) ..." with the first
  * subsection inline on the same line as the section number.
  *
- * Layout (verified against s530A.md, s530E.md, s530G.md, s530I.md): front
- * matter, a `# TCA 1997 s.530X (as inserted by FA 2011 s.20)` title, the
+ * Layout (verified against ss.530A, 530E, 530G and 530I as cut from the
+ * page): a `# TCA 1997 s.530X (as inserted by FA 2011 s.20)` title, the
  * section's own marginal heading on the next non-blank line (sometimes
  * prefixed with FA 2011 s.20's own opening left-quotation-mark character,
  * only on the very first inserted section, 530A, since it marks the start
  * of the whole quoted insertion — stripped here, not treated as wording),
  * then the section itself opening as `"530X.— (1) ..."` and running to the
- * end of the file (each file holds exactly one section).
+ * end of the text (each cut holds exactly one section).
  */
-import { readFileSync } from 'node:fs';
 import { categoriseProvision, provisionSlug, type ProvisionCategory } from './statuteParser';
 
 export { categoriseProvision, provisionSlug, assessRelevance } from './statuteParser';
@@ -45,7 +45,7 @@ export interface ParsedFinanceAct2011RctSection {
 const FRONT_MATTER_RE = /^---\n[\s\S]*?\n---\n/;
 const TITLE_LINE_RE = /^#\s+.*$/m;
 /** The section-opening line, e.g. "530A.— (1)  Subject to..." — the section
- *  number and first subsection share one line, unlike s530.md's bare "530." */
+ *  number and first subsection share one line, unlike s.530's bare "530." */
 const SECTION_OPEN_RE = /^(\d{1,3}[A-Z])\.—/;
 /** FA 2011 s.20's own opening quotation mark for the whole quoted insertion
  *  (appears only on s.530A's heading) — punctuation from the amending Act's
@@ -106,13 +106,4 @@ export function parseFinanceAct2011RctSection(source: string): ParsedFinanceAct2
     sourceEnd,
     category: categoriseProvision(heading, provisionText),
   };
-}
-
-export function parseFinanceAct2011RctSectionFile(path: string): ParsedFinanceAct2011RctSection {
-  return parseFinanceAct2011RctSection(readFileSync(path, 'utf8'));
-}
-
-/** e.g. tca1997RctSectionMdPath('530A') -> .../docs/statutes/tca-1997/s530A.md */
-export function tca1997RctSectionMdPath(sectionNumber: string): string {
-  return new URL(`../../../docs/statutes/tca-1997/s${sectionNumber}.md`, import.meta.url).pathname;
 }
