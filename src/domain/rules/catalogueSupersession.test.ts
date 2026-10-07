@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
+import { readFileSync } from 'node:fs';
 import { and, eq, like } from 'drizzle-orm';
 import { createTestDatabase } from '@/db/testing';
 import { createCompany } from '../config/setup';
@@ -8,6 +9,7 @@ import { ingestCatalogueEntry, ingestCatalogueFile, readCatalogueEntry, type Cat
 import { preferredSourceId } from './catalogueSupersession';
 import { deriveSi692025Rules } from './si692025Ingestion';
 import { loadStatutoryKnowledgeBase } from './knowledgeBase';
+import { deriveIncomeTaxRules, ingestSwcaSection, SI_312_1996_ART92_CATALOGUE_ENTRY } from './incomeTaxIngestion';
 
 /**
  * A statute copy a book loaded before its source moved to the rules catalogue,
@@ -132,5 +134,40 @@ describe('a book whose copy says the official words', () => {
     expect(ingestCatalogueFile(db, { companyId, entry: ENTRY })).toMatchObject({ sourceId: copy.sourceId, ingested: false });
     expect(sources()).toHaveLength(1);
     expect(items()).toEqual([]);
+  });
+});
+
+describe('S.I. 312/1996 art. 92: a hand-edited copy (#712)', () => {
+  const FIXTURE = 'src/domain/rules/__fixtures__/si-312-1996-art92.md';
+  const ruleRows = () => db.select({ id: irishTaxRules.id, version: irishTaxRules.ruleVersion, active: irishTaxRules.active, provisionId: irishTaxRules.provisionId })
+    .from(irishTaxRules).where(and(eq(irishTaxRules.companyId, companyId), eq(irishTaxRules.ruleKey, 'prsi.class_s_disregard'))).all();
+
+  it('a new book quotes the official article, layout aside, from 1 January 2011', () => {
+    const { sourceId } = ingestCatalogueFile(db, { companyId, entry: SI_312_1996_ART92_CATALOGUE_ENTRY });
+    deriveIncomeTaxRules(db, { companyId });
+    const [rule] = ruleRows();
+    const provision = db.select().from(irishActProvisions).where(eq(irishActProvisions.id, rule!.provisionId)).get()!;
+    expect(provision.sourceId).toBe(sourceId);
+    expect(provision.provisionText).not.toContain('shall be €5,000 in a contribution year.'); // the page breaks the line
+    expect(provision.provisionText).not.toContain('Substituted'); // the F292 note is not the article
+    expect(provision.effectiveClue).toContain('S.I. No. 684 of 2010), art. 6, in effect as per art. 2.');
+    expect(db.select().from(irishTaxRules).where(eq(irishTaxRules.id, rule!.id)).get()).toMatchObject({
+      effectiveFrom: '2011-01-01', numericValue: 500_000, statement: 'shall be €5,000 in a contribution year.',
+    });
+  });
+
+  it('a book that loaded the copy keeps it, its rule moves to the article without a new version, and the hand-edit is on the record', () => {
+    const copy = ingestSwcaSection(db, { companyId, markdown: readFileSync(FIXTURE, 'utf8'), ingestVersion: 'v1', localPath: FIXTURE });
+    deriveIncomeTaxRules(db, { companyId });
+    const before = ruleRows();
+    expect(before).toHaveLength(1);
+
+    const loaded = ingestCatalogueFile(db, { companyId, entry: SI_312_1996_ART92_CATALOGUE_ENTRY });
+    expect(deriveIncomeTaxRules(db, { companyId }).created).toBe(0);
+    const after = ruleRows();
+    expect(after).toEqual([expect.objectContaining({ id: before[0]!.id, version: 1, active: true })]);
+    expect(db.select().from(irishActProvisions).where(eq(irishActProvisions.id, after[0]!.provisionId)).get()!.sourceId).toBe(loaded.sourceId);
+    expect(db.select().from(irishKnowledgeSources).where(eq(irishKnowledgeSources.id, copy.sourceId)).get()).toBeTruthy();
+    expect(items()).toEqual([expect.objectContaining({ dedupeKey: 'catalogue-wording:S.I. 312/1996 s.92', severity: 'warning' })]);
   });
 });

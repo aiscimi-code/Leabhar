@@ -2026,8 +2026,12 @@ They are a source family of their own:
   sole traders and partners. They quote the Finance Acts, the LRC revised Social
   Welfare Consolidation Act 2005 and NfG Part 18D. The SWCA sections (ss.20-23)
   are rules catalogue entries, `catalogue/swca-2005/s<N>.json`, each with its
-  LRC page beside it (#556); S.I. 312/1996 art. 92 is still a statute copy
-  (#712). The Class S rate is quoted and dated from SWMPA 2024 s.3, not the
+  LRC page beside it (#556). S.I. 312/1996 art. 92 is
+  `catalogue/si-312-1996/art92.json` (#712). It is cut from the LRC page of the
+  whole instrument before conversion (`lrc_html_to_text.py --section`), and the
+  F292 note that dates the €5,000 from 1 January 2011 is its effective clue,
+  not part of its words. A curated quote is matched word for word, layout
+  aside (`containsIgnoringLayout`). The Class S rate is quoted and dated from SWMPA 2024 s.3, not the
   revised s.21, and a contribution year the rate changes in is charged at
   each rate on its own part of the year's income (#711). `incomeTaxIngestion.ts` derives every curated rule. PAYE is out of scope.
 - A figure that changes is a **version-chained** rule family outside VAT too:

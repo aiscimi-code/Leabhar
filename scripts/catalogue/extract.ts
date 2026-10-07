@@ -10,6 +10,7 @@
  *   npm run catalogue:extract -- finance-act-2024/2024-act-43-enacted
  *   npm run catalogue:extract -- tca-1997-nfg/part02
  *   npm run catalogue:extract -- swca-2005/s21
+ *   npm run catalogue:extract -- si-312-1996/art92
  *   npm run catalogue:extract -- vat3-rtd/completing-vat3-return vat3-rtd/VAT-RTD-S76
  *   npm run catalogue:extract -- ebriefs/no-168-25
  *   npm run catalogue:extract -- eu-282-2011/consolidated-2025-04-14
@@ -95,7 +96,7 @@ import { compareNfgContents, extractNfgSection } from '@/domain/rules/tcaNfgPars
 import { NFG_EFFECTIVE_FROM, NFG_NOTE, nfgRelevanceReason, nfgSourceUrl, nfgTitle } from '@/domain/rules/tcaNfgIngestion';
 import { NFG_SECTIONS, nfgCitation } from '@/domain/rules/corporationTaxCuration';
 import { nowIso } from '@/domain/dates';
-import { lrcAnnotationLayer } from '@/domain/rules/lrcAnnotations';
+import { lrcAnnotationLayer, parseLrcFootnotes } from '@/domain/rules/lrcAnnotations';
 
 const ROOT = join(dirname(new URL(import.meta.url).pathname), '..', '..');
 const CONVERTER = join(ROOT, 'scripts', 'catalogue', 'lrc_html_to_text.py');
@@ -201,6 +202,41 @@ function extractorFor(entry: string, naming: Naming | null): Extractor {
           provisions: [{
             sectionNumber: parsed.sectionNumber, heading: parsed.heading, locator: `s.${parsed.sectionNumber}`,
             category: 'income_tax', relevant: true, relevanceReason: SWCA_RELEVANCE_REASON, excerpt: parsed.provisionText,
+          }],
+        };
+      },
+    };
+  }
+  // S.I. 312/1996 art. 92, revised, from the LRC page of the whole instrument
+  // (#712): the article cut out first, then converted. Its words only; the
+  // F292 note that dates the €5,000 is the effective clue, not the excerpt.
+  if (entry === 'si-312-1996/art92') {
+    const url = 'https://revisedacts.lawreform.ie/eli/1996/si/312/revised/en/html';
+    const title = naming?.title ?? 'S.I. 312/1996 art. 92 (LRC revised)';
+    const citation = naming?.citation ?? 'S.I. 312/1996 s.92';
+    return {
+      url, title, citation,
+      build: (html, retrievedOn) => {
+        const SECTION = 'Part04_Chap03_Art092';
+        const body = convertLrc(html, title, citation, url, false, SECTION).split('---').slice(2).join('---');
+        const lines = body.split('\n');
+        const number = lines.findIndex((l) => l.trim() === '92');
+        const opening = lines.findIndex((l) => l.trim() === '92.');
+        if (number < 0 || opening < number) throw new Error(`${entry}: no "92" number and "92." opening on the page.`);
+        const heading = lines.slice(0, number).filter((l) => l.trim() && !l.startsWith('# ')).join(' ').replace(/\s+/g, ' ').trim();
+        const section = html.toString('utf8').match(new RegExp(`<section[^>]*id="${SECTION}"[\\s\\S]*?</section>`))?.[0] ?? '';
+        const f292 = parseLrcFootnotes(section).get('F292');
+        if (!f292) throw new Error(`${entry}: the F292 amendment note is not on the page.`);
+        return {
+          source: {
+            citation, title, sourceType: 'legislation', jurisdiction: 'IE', sourceUrl: url,
+            sha256: createHash('sha256').update(html).digest('hex'),
+            conversion: 'lrc-html-plaintext', retrievedOn, note: SWCA_NOTE,
+          },
+          provisions: [{
+            sectionNumber: '92', heading, locator: 'art. 92', effectiveClue: f292.text,
+            category: 'income_tax', relevant: true, relevanceReason: SWCA_RELEVANCE_REASON,
+            excerpt: lines.slice(opening).join('\n').trim(),
           }],
         };
       },
@@ -842,12 +878,12 @@ function convertStatutePdf(pdf: Buffer, options: string[]): string {
   }
 }
 
-function convertLrc(html: Buffer, title: string, citation: string, url: string, paragraphs = false): string {
+function convertLrc(html: Buffer, title: string, citation: string, url: string, paragraphs = false, section?: string): string {
   const dir = mkdtempSync(join(tmpdir(), 'leabhar-catalogue-'));
   try {
     const page = join(dir, 'page.html');
     writeFileSync(page, html);
-    return execFileSync('python3', [CONVERTER, page, title, citation, url, ...(paragraphs ? ['--paragraphs'] : [])], { encoding: 'utf8' });
+    return execFileSync('python3', [CONVERTER, page, title, citation, url, ...(paragraphs ? ['--paragraphs'] : []), ...(section ? ['--section', section] : [])], { encoding: 'utf8' });
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }

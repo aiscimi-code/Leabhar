@@ -7,8 +7,9 @@
  *
  * The knowledge base loads ss.20-23 from their rules catalogue entries
  * (`catalogue/swca-2005/s<N>.json`, with the LRC page beside it;
- * `ingestSwcaFromCatalogue`, #556). S.I. 312/1996 art. 92 still reads its
- * statute copy, which cannot be ported with the same words (#712).
+ * `ingestSwcaFromCatalogue`, #556), and S.I. 312/1996 art. 92 from its entry
+ * (`catalogue/si-312-1996/art92.json`, the article cut from the LRC page of the
+ * whole instrument, #712).
  */
 import { and, eq } from 'drizzle-orm';
 import type { AppDatabase } from '@/db';
@@ -25,11 +26,13 @@ import { crossReferencesFromProvision, sameCrossReferences } from './dependencie
 import { taxHeadsFor } from './taxHeads';
 import { ingestCatalogueFile, type CatalogueIngestResult } from './catalogue';
 import { isCatalogueSource } from './catalogueSupersession';
+import { containsIgnoringLayout } from './lrcAnnotations';
 
 /** The SWCA 2005 sections the knowledge base holds, each a catalogue entry. */
 export const SWCA_SECTIONS = ['20', '21', '22', '23'] as const;
 export type SwcaSectionNumber = typeof SWCA_SECTIONS[number];
-export const SI_312_1996_ART92_PATH = 'docs/statutes/si-312-1996/art92.md';
+/** S.I. 312/1996 art. 92's catalogue entry. */
+export const SI_312_1996_ART92_CATALOGUE_ENTRY = 'si-312-1996/art92.json';
 
 /** What each section's source says of itself: the revised text on the day it was fetched. */
 export const SWCA_NOTE = 'LRC revised text as retrieved: current law on that date, not a dated history.';
@@ -48,7 +51,11 @@ export function ingestSwcaFromCatalogue(
   }));
 }
 
-/** Ingest one revised section from a Markdown copy: S.I. 312/1996 art. 92 (#712). Idempotent by content. */
+/**
+ * Ingest one revised section from a Markdown copy, as a book loaded S.I. 312/1996
+ * art. 92 before the port (#712; the knowledge base reads its catalogue entry).
+ * Idempotent by content.
+ */
 export function ingestSwcaSection(
   db: AppDatabase,
   params: { companyId?: string | null; markdown: string; ingestVersion: string; localPath?: string },
@@ -114,7 +121,9 @@ export function deriveCuratedRuleFamilies(
   for (const [ruleKey, versions] of families) {
     const ordered = [...versions].sort((a, b) => a.effectiveFrom.localeCompare(b.effectiveFrom));
     const provisions = ordered.map(provisionFor);
-    if (provisions.some((p, i) => !p || !p.provisionText?.includes(ordered[i]!.statementExcerpt))) {
+    // Word for word, however the source breaks its lines (#712: the LRC page
+    // sets "€5,000" on a line of its own).
+    if (provisions.some((p, i) => !p || !containsIgnoringLayout(p.provisionText ?? '', ordered[i]!.statementExcerpt))) {
       result.skippedNoProvision.push(ruleKey);
       continue;
     }

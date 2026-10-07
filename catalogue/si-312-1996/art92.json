@@ -1,0 +1,50 @@
+{
+  "format": 1,
+  "source": {
+    "citation": "S.I. 312/1996 s.92",
+    "title": "S.I. 312/1996 art. 92 (LRC revised)",
+    "sourceType": "legislation",
+    "jurisdiction": "IE",
+    "sourceUrl": "https://revisedacts.lawreform.ie/eli/1996/si/312/revised/en/html",
+    "sha256": "e3eeea0d5010fa2163c79b0e0be898bf5a1bca92fbc7c69e2e7b390f052f9022",
+    "conversion": "lrc-html-plaintext",
+    "retrievedOn": "2026-10-07",
+    "note": "LRC revised text as retrieved: current law on that date, not a dated history."
+  },
+  "provisions": [
+    {
+      "sectionNumber": "92",
+      "heading": "Prescribed level of income for excepted self-employed contributor.",
+      "locator": "art. 92",
+      "effectiveClue": "Substituted (1.01.2011) by Social Welfare (Consolidated Contributions and Insurability) (Amendment) Regulations 2010 (S.I. No. 684 of 2010), art. 6, in effect as per art. 2.",
+      "category": "income_tax",
+      "relevant": true,
+      "relevanceReason": "Self-employment (Class S) contributions for sole traders and partners (issue #212).",
+      "excerpt": "92.\nThe prescribed\namount for the purposes of paragraph 3 of Part III of the First Schedule to the\nPrincipal Act shall be\n\n€5,000\n\nin a contribution year."
+    }
+  ],
+  "rules": [
+    {
+      "key": "prsi.class_s_disregard",
+      "sectionNumber": "92",
+      "versions": [
+        {
+          "version": 1,
+          "effectiveFrom": "2011-01-01",
+          "effectiveTo": null,
+          "quote": "shall be €5,000 in a contribution year.",
+          "value": 500000,
+          "unit": "eur_minor",
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": []
+    }
+  ]
+}

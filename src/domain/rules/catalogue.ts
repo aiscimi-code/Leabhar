@@ -311,6 +311,9 @@ export const CATALOGUE_ENTRIES = [
   // Council Implementing Regulation (EU) No 282/2011 arts. 10-13b: the
   // establishment tests, from the EUR-Lex consolidated text kept beside it.
   'eu-282-2011/consolidated-2025-04-14.json',
+  // S.I. 312/1996 art. 92 (the Class S prescribed amount): the article cut
+  // from the LRC page of the whole instrument, kept beside it (#712).
+  'si-312-1996/art92.json',
 ] as const;
 
 export function catalogueEntryPath(entry: string, root: string = appRoot()): string {

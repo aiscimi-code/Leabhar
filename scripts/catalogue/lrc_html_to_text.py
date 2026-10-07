@@ -6,7 +6,11 @@ so a ported excerpt says exactly what the copy said.
 
 Called by scripts/catalogue/extract.ts, never at run time:
 
-  python3 scripts/catalogue/lrc_html_to_text.py <page.html> <title> <citation> <url> [--paragraphs]
+  python3 scripts/catalogue/lrc_html_to_text.py <page.html> <title> <citation> <url> [--paragraphs] [--section <id>]
+
+--section converts only the provision with that id (an article of a revised
+instrument whose whole text is one page, e.g. Part04_Chap03_Art092 of S.I.
+312/1996; #712), where the page's first section would otherwise be taken.
 
 Writes the converted Markdown to standard output.
 """
@@ -22,7 +26,7 @@ except ImportError as e:
     raise SystemExit("pip install beautifulsoup4") from e
 
 
-def html_to_md(html: str, title: str, citation: str, url: str, paragraphs: bool = False) -> str:
+def html_to_md(html: str, title: str, citation: str, url: str, paragraphs: bool = False, section: str | None = None) -> str:
     soup = BeautifulSoup(html, "html.parser")
     for tag in soup.select("script, style, nav, header, footer, noscript, form"):
         tag.decompose()
@@ -43,7 +47,13 @@ def html_to_md(html: str, title: str, citation: str, url: str, paragraphs: bool 
     # eISB as-enacted section pages put the provision in #act
     # (class="act-content"), not #content. Without this selector the
     # <main> fallback pulls in View-by-Section / Bill History chrome.
-    root = (
+    if section is not None:
+        root = soup.find("section", id=section)
+        if root is None:
+            raise SystemExit(f"no section#{section} on this page")
+    else:
+        root = None
+    root = root or (
         soup.select_one("#content") or soup.select_one("#act, div.act-content")
         or soup.select_one("section.sect, section.schedule")
         or soup.select_one("main") or soup.body
@@ -102,9 +112,17 @@ def html_to_md(html: str, title: str, citation: str, url: str, paragraphs: bool 
 
 
 if __name__ == "__main__":
-    args = [a for a in sys.argv[1:] if a != "--paragraphs"]
+    argv = sys.argv[1:]
+    section = None
+    if "--section" in argv:
+        i = argv.index("--section")
+        if i + 1 >= len(argv):
+            raise SystemExit(__doc__)
+        section = argv[i + 1]
+        argv = argv[:i] + argv[i + 2:]
+    args = [a for a in argv if a != "--paragraphs"]
     if len(args) != 4:
         raise SystemExit(__doc__)
     path, title, citation, url = args
     with open(path, encoding="utf-8", errors="replace") as f:
-        sys.stdout.write(html_to_md(f.read(), title, citation, url, "--paragraphs" in sys.argv[1:]))
+        sys.stdout.write(html_to_md(f.read(), title, citation, url, "--paragraphs" in argv, section))
