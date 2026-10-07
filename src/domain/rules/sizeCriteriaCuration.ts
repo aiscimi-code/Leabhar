@@ -18,7 +18,7 @@
  * were not amended by S.I. 301/2024 and keep their 2017 date.
  */
 import type { CuratedIncomeTaxRule } from './incomeTaxCuration';
-import type { SlicedSource } from './slicedSourceIngestion';
+import type { CatalogueSlicedSource } from './slicedSourceIngestion';
 
 export const SI_301_2024_CITATION = 'S.I. 301/2024';
 /** Chapter 1A of Part 6 (ss.280A–280H) inserted by the Companies (Accounting) Act 2017, in operation 9 June 2017. */
@@ -26,25 +26,29 @@ export const CAA_2017_INSERTION = '2017-06-09';
 /** S.I. 301/2024 reg. 2: "These Regulations come into operation on 1 July 2024." */
 export const SI_301_2024_IN_OPERATION = '2024-07-01';
 
-export const SIZE_CRITERIA_SOURCES: SlicedSource[] = [{
-  path: 'docs/statutes/si-301-2024/2024-si-301.md',
-  effectiveFrom: SI_301_2024_IN_OPERATION,
-  sourceNote: 'As made; in operation on 1 July 2024 (reg. 2). Plain text of the irishstatutebook.ie print page; the '
-    + 'official PDF is beside it, with its hash in the front matter.',
-  provisions: [
-    { sectionNumber: '2', heading: 'Commencement', category: 'procedure',
-      start: '2. These Regulations come into operation', end: '3. In these Regulations' },
-    { sectionNumber: '4', heading: 'Amendment of section 280A(3) of the Principal Act', category: 'procedure',
-      start: '4. Section 280A(3) of the Principal Act is amended', end: '5. Section 280B(4)' },
-    { sectionNumber: '6', heading: 'Amendment of section 280D(3)(b) of the Principal Act', category: 'procedure',
-      start: '6. Section 280D(3)(b) of the Principal Act is amended', end: '7. Section 280F(3)' },
-    { sectionNumber: '7', heading: 'Amendment of section 280F(3) of the Principal Act', category: 'procedure',
-      start: '7. Section 280F(3) of the Principal Act is amended', end: '8. Section 280G(4)' },
-    { sectionNumber: '9', heading: 'Insertion of section 280I (treatment of qualifying conditions in respect of certain financial years)',
-      category: 'procedure', start: '9. Chapter 1A of Part 6 of the Principal Act is amended', end: 'GIVEN under my Official Seal' },
-  ],
-}];
+const SIZE_REASON = 'Company size criteria: the figures S.I. 301/2024 replaces, and the s.280I election (issue #555).';
 
+/** S.I. 301/2024, sliced from its print page where the statute copy was (#717). */
+export const SIZE_CRITERIA_SLICED_SOURCE: CatalogueSlicedSource = {
+  entry: 'si-301-2024/2024-si-301', ext: 'html',
+  title: 'European Union (Adjustments of Size Criteria for Certain Companies and Groups) Regulations 2024 (S.I. No. 301 of 2024)',
+  citation: SI_301_2024_CITATION, sourceUrl: 'https://www.irishstatutebook.ie/eli/2024/si/301/made/en/print',
+  sourceType: 'legislation', publicationDate: '2024-06-19', effectiveFrom: SI_301_2024_IN_OPERATION,
+  note: 'As made; in operation on 1 July 2024 (reg. 2).',
+  provisions: [
+    { sectionNumber: '2', heading: 'Commencement', category: 'procedure', locator: 'reg.2', relevanceReason: SIZE_REASON,
+      start: '2. These Regulations come into operation', end: '3. In these Regulations' },
+    { sectionNumber: '4', heading: 'Amendment of section 280A(3) of the Principal Act', category: 'procedure', locator: 'reg.4',
+      relevanceReason: SIZE_REASON, start: '4. Section 280A(3) of the Principal Act is amended', end: '5. Section 280B(4)' },
+    { sectionNumber: '6', heading: 'Amendment of section 280D(3)(b) of the Principal Act', category: 'procedure', locator: 'reg.6',
+      relevanceReason: SIZE_REASON, start: '6. Section 280D(3)(b) of the Principal Act is amended', end: '7. Section 280F(3)' },
+    { sectionNumber: '7', heading: 'Amendment of section 280F(3) of the Principal Act', category: 'procedure', locator: 'reg.7',
+      relevanceReason: SIZE_REASON, start: '7. Section 280F(3) of the Principal Act is amended', end: '8. Section 280G(4)' },
+    { sectionNumber: '9', heading: 'Insertion of section 280I (treatment of qualifying conditions in respect of certain financial years)',
+      category: 'procedure', locator: 'reg.9', relevanceReason: SIZE_REASON,
+      start: '9. Chapter 1A of Part 6 of the Principal Act is amended', end: 'GIVEN under my Official Seal' },
+  ],
+};
 const PRIOR_NOTE = 'The figure before S.I. No. 301 of 2024 substituted it, quoted from the substitution. It applies to a '
   + 'financial year the substituted figure does not: under s.280I (inserted by reg. 9) the company elects whether the new '
   + 'figures apply to each financial year beginning on or after 1 January 2024, or on or after 1 January 2023. Dated from '

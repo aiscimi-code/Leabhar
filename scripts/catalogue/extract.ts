@@ -12,6 +12,7 @@
  *   npm run catalogue:extract -- swca-2005/s21
  *   npm run catalogue:extract -- si-312-1996/art92
  *   npm run catalogue:extract -- tdm-11-00-01/11-00-01
+ *   npm run catalogue:extract -- si-345-2018/2018-si-345 si-510-2018/2018-si-510 --html-dir files/
  *   npm run catalogue:extract -- vat3-rtd/completing-vat3-return vat3-rtd/VAT-RTD-S76
  *   npm run catalogue:extract -- ebriefs/no-168-25
  *   npm run catalogue:extract -- eu-282-2011/consolidated-2025-04-14
@@ -89,6 +90,8 @@ import { COMPANIES_ACT_2014_NOTE, companiesAct2014Relevance } from '@/domain/rul
 import { TDM_38_01_03B } from '@/domain/rules/tdm3801_03bIngestion';
 import { CAR_EMISSIONS_RELEVANCE_REASON, CAR_EMISSIONS_SOURCES } from '@/domain/rules/carEmissionsCuration';
 import { sliceProvision } from '@/domain/rules/slicedSourceIngestion';
+import { PAYROLL_SLICED_SOURCES } from '@/domain/rules/payrollIngestion';
+import { SIZE_CRITERIA_SLICED_SOURCE } from '@/domain/rules/sizeCriteriaCuration';
 import { SWCA_NOTE, SWCA_RELEVANCE_REASON } from '@/domain/rules/incomeTaxIngestion';
 import {
   FORM_GUIDANCE_PRINCIPAL_ACT, FORM_GUIDANCE_RELEVANCE_REASON, RTD_TDM, VAT3_GUIDANCE, rtdTdmPassages, vat3GuidancePassages,
@@ -491,6 +494,32 @@ function extractorFor(entry: string, naming: Naming | null): Extractor {
           provisions: source!.provisions.map((p) => ({
             sectionNumber: p.sectionNumber, heading: p.heading, locator: `section ${p.sectionNumber}`,
             category: p.category, relevant: true, relevanceReason: CAR_EMISSIONS_RELEVANCE_REASON,
+            excerpt: sliceProvision(text, p).text,
+          })),
+        };
+      },
+    };
+  }
+  // The payroll regulations, Revenue's ERR manual and S.I. 301/2024 (#717):
+  // the official file's text, each provision sliced where its statute copy was.
+  const sliced = [...PAYROLL_SLICED_SOURCES, SIZE_CRITERIA_SLICED_SOURCE].find((s) => s.entry === entry);
+  if (sliced) {
+    const { title, citation, sourceUrl: url, sourceType, publicationDate, effectiveFrom, note, ext } = sliced;
+    return {
+      url, title, citation, ext,
+      build: (file, retrievedOn) => {
+        // An irishstatutebook.ie page as the copies were converted (no --paragraphs); a manual's PDF by pdfplumber.
+        const text = ext === 'pdf' ? pdfplumberText(file) : convertLrc(file, title, citation, url);
+        return {
+          source: {
+            citation, title, sourceType, jurisdiction: 'IE', sourceUrl: url,
+            sha256: createHash('sha256').update(file).digest('hex'),
+            conversion: ext === 'pdf' ? 'pdfplumber-full' : 'isb-html-plaintext', retrievedOn,
+            publicationDate, effectiveFrom, note,
+          },
+          provisions: sliced.provisions.map((p) => ({
+            sectionNumber: p.sectionNumber, heading: p.heading, locator: p.locator,
+            category: p.category, relevant: true, relevanceReason: p.relevanceReason,
             excerpt: sliceProvision(text, p).text,
           })),
         };

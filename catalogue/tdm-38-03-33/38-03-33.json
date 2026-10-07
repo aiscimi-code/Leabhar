@@ -6,11 +6,12 @@
     "sourceType": "revenue_guidance",
     "jurisdiction": "IE",
     "sourceUrl": "https://www.revenue.ie/en/tax-professionals/tdm/income-tax-capital-gains-tax-corporation-tax/part-38/38-03-33.pdf",
+    "sha256": "c866317472b54bb1710bf3c2c8cbd48a5d3929327b424cfbc3c35130c181a9b5",
     "conversion": "pdfplumber-full",
     "retrievedOn": "2026-10-06",
+    "publicationDate": null,
     "effectiveFrom": "2024-01-01",
-    "note": "Revenue Tax and Duty Manual, as retrieved. The PDF is the bytes the copy recorded. Page markers in the conversion now say the page count; the quoted words are unchanged.",
-    "sha256": "c866317472b54bb1710bf3c2c8cbd48a5d3929327b424cfbc3c35130c181a9b5"
+    "note": "Revenue Tax and Duty Manual, reviewed September 2026: guidance on TCA s.897C, not law."
   },
   "provisions": [
     {

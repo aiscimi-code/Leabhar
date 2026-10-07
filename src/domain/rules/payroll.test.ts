@@ -1,11 +1,11 @@
 import { describe, it, expect, beforeAll } from 'vitest';
-import { readFileSync } from 'node:fs';
 import { and, eq } from 'drizzle-orm';
 import { createTestDatabase } from '@/db/testing';
 import { createCompany } from '../config/setup';
 import { irishTaxRules, irishActProvisions, irishKnowledgeSources } from '@/db/schema';
 import { loadStatutoryKnowledgeBase, verifyStatuteFile } from './knowledgeBase';
-import { derivePayrollRules, PAYROLL_SOURCES } from './payrollIngestion';
+import { derivePayrollRules, PAYROLL_SLICED_SOURCES } from './payrollIngestion';
+import { SIZE_CRITERIA_SLICED_SOURCE } from './sizeCriteriaCuration';
 import { PAYROLL_CURATED_RULES } from './payrollCuration';
 import type { AppDatabase } from '@/db';
 
@@ -47,17 +47,20 @@ describe('payroll rules (issue #526)', () => {
     ]);
   });
 
-  it('stores each provision as an exact, re-checkable slice of its committed file', () => {
-    for (const source of PAYROLL_SOURCES) {
-      const text = readFileSync(source.path, 'utf8');
-      const src = db.select().from(irishKnowledgeSources).where(eq(irishKnowledgeSources.localPath, source.path)).get()!;
+  it('holds each sliced source from its catalogue entry, cut where the statute copy was cut (#717)', () => {
+    for (const source of [...PAYROLL_SLICED_SOURCES, SIZE_CRITERIA_SLICED_SOURCE]) {
+      const src = db.select().from(irishKnowledgeSources)
+        .where(eq(irishKnowledgeSources.localPath, `catalogue/${source.entry}.json`)).get()!;
       const provisions = db.select().from(irishActProvisions).where(eq(irishActProvisions.sourceId, src.id)).all();
-      expect(provisions).toHaveLength(source.provisions.length);
+      expect(provisions.map((p) => p.sectionNumber).sort(), source.entry).toEqual(source.provisions.map((p) => p.sectionNumber).sort());
       for (const p of provisions) {
-        const check = verifyStatuteFile(source.path, src.sha256, p.sourceStart, p.sourceEnd);
-        expect(check.sha256Matches).toBe(true);
-        expect(check.slice).toBe(p.provisionText);
-        expect(text.includes(p.provisionText!)).toBe(true);
+        const slice = source.provisions.find((s) => s.sectionNumber === p.sectionNumber)!;
+        const flat = (t: string) => t.replace(/\s+/g, ' ');
+        expect(flat(p.provisionText!).startsWith(flat(slice.start)), `${source.entry} ${p.sectionNumber}`).toBe(true);
+        // The next provision's heading is where the slice stops, not part of it.
+        if (slice.end) expect(flat(p.provisionText!).includes(flat(slice.end)), `${source.entry} ${p.sectionNumber}`).toBe(false);
+        const check = verifyStatuteFile(src.localPath, src.sha256, null, null, undefined, p.sectionNumber);
+        expect(check.sha256Matches && check.slice === p.provisionText, `${source.entry} ${p.sectionNumber}`).toBe(true);
       }
     }
   });
