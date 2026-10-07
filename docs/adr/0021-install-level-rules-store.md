@@ -89,8 +89,9 @@ Three alternatives were considered:
    - Releases never drop or change a shipped version (ADR-0020). The build
      enforces this: it compares the new store with
      `catalogue/released-versions.json`, the committed list of every
-     `key@version` and its content hash from the last release. A missing or
-     changed version fails the build.
+     `key@version` and its content hash from the last release. A missing
+     version, or one whose content hash differs, fails the build. A changed
+     review does not.
    - The content hash covers what the rule says: its dates, quote, value and
      unit, conditions, exceptions and effects. It never covers the review. An
      approval or rejection changes who has read a version, not what the
