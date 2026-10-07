@@ -421,6 +421,13 @@
       "when": 1791366389779,
       "tag": "0059_rules_store_book_tables",
       "breakpoints": true
+    },
+    {
+      "idx": 60,
+      "version": "6",
+      "when": 1791368413165,
+      "tag": "0060_rules_store_reader_switch",
+      "breakpoints": true
     }
   ]
 }

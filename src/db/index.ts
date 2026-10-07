@@ -5,6 +5,7 @@ import { dirname } from 'node:path';
 import * as schema from './schema';
 import { databasePath } from '@/lib/paths';
 import { runMigrations } from './migrate';
+import { attachRulesStore } from '@/domain/rules/visibleRules';
 
 export type AppDatabase = ReturnType<typeof createDatabase>;
 
@@ -50,9 +51,22 @@ export function getDb(): AppDatabase {
   }
   if (!migrationsApplied) {
     ensureMigrations(cached);
+    attachRulesStore(cached.$client);
     migrationsApplied = true;
   }
   return cached;
+}
+
+/**
+ * Open a book for a caller outside the Next.js server (the CLI, the seed):
+ * migrations applied and the rules store attached (ADR-0021 §2), as
+ * `getDb()` does. A missing or unreadable store stops here.
+ */
+export function openBook(path: string = databasePath()): AppDatabase {
+  const db = createDatabase(path);
+  runMigrations(db);
+  attachRulesStore(db.$client);
+  return db;
 }
 
 /**
