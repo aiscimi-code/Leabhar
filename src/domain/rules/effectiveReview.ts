@@ -16,7 +16,7 @@
  * the row was read from is the one the reviewer read (the same SHA-256).
  */
 import { statSync } from 'node:fs';
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import type { AppDatabase } from '@/db';
 import { irishRuleDecisions, irishRuleVersionMap } from '@/db/schema';
 import { CATALOGUE_ENTRIES, catalogueEntryPath, readCatalogueEntry, type CatalogueReview } from './catalogue';
@@ -152,10 +152,12 @@ export function ruleReviewResolver(
   const store = catalogueRuleStore(params.root);
   const map = bookVersionMap(db, params.companyId);
   const latest = new Map<string, typeof irishRuleDecisions.$inferSelect>();
-  for (const d of db.select().from(irishRuleDecisions).where(eq(irishRuleDecisions.companyId, params.companyId)).all()) {
+  // Read in insertion order, so of two decisions taken in the same millisecond
+  // the later insert is the latest (the table is append-only).
+  for (const d of db.select().from(irishRuleDecisions).where(eq(irishRuleDecisions.companyId, params.companyId)).orderBy(sql`rowid`).all()) {
     const id = decisionVersionKey(d, map);
     const held = latest.get(id);
-    if (!held || d.decidedAt > held.decidedAt || (d.decidedAt === held.decidedAt && d.createdAt > held.createdAt)) latest.set(id, d);
+    if (!held || d.decidedAt > held.decidedAt || (d.decidedAt === held.decidedAt && d.createdAt >= held.createdAt)) latest.set(id, d);
   }
   return (row) => {
     // A frozen version is the book's own: the catalogue holds nothing saying the same.

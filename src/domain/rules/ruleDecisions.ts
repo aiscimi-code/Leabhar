@@ -12,7 +12,7 @@
  * A book that references a version the catalogue lacks is told so as a
  * review item; it never resolves a different version silently (AGENTS.md #7).
  */
-import { and, desc, eq } from 'drizzle-orm';
+import { and, desc, eq, sql } from 'drizzle-orm';
 import type { AppDatabase } from '@/db';
 import { invoiceLines, irishRuleDecisions, visibleActProvisions, visibleKnowledgeSources, visibleTaxRules, type IrishRuleReviewStatus } from '@/db/schema';
 import { newId } from '@/lib/ids';
@@ -61,7 +61,9 @@ export function ruleDecisionHistory(
   const wanted = visibleVersionKey(params.origin ?? 'store', params.ruleKey, params.ruleVersion);
   return db.select().from(irishRuleDecisions)
     .where(and(eq(irishRuleDecisions.companyId, params.companyId), eq(irishRuleDecisions.ruleKey, params.ruleKey)))
-    .orderBy(desc(irishRuleDecisions.decidedAt), desc(irishRuleDecisions.createdAt))
+    // Two decisions can share a millisecond; the table is append-only, so the
+    // later insert is the later decision.
+    .orderBy(desc(irishRuleDecisions.decidedAt), desc(irishRuleDecisions.createdAt), desc(sql`rowid`))
     .all()
     .filter((d) => decisionVersionKey(d, map) === wanted);
 }

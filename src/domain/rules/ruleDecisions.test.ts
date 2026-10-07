@@ -75,6 +75,15 @@ describe('effectiveRuleReview', () => {
     // The decision is the book's; the store's row is never written.
     expect(ruleRow('vat.rate_reduced_current').reviewStatus).toBe('ai_extracted');
   });
+  it('follows the later of two decisions taken in the same millisecond', () => {
+    const at = '2026-02-01T09:00:00.000Z';
+    for (const [status, decidedBy] of [['human_review', 'Aoife'], ['rejected', 'Brian'], ['approved', 'Ciara']] as const) {
+      recordRuleDecision(db, { companyId, ruleKey: 'vat.rate_hospitality', ruleVersion: 1, numbering: 'catalogue', status, decidedBy, decidedAt: at });
+    }
+    const params = { companyId, ruleKey: 'vat.rate_hospitality', ruleVersion: 1 };
+    expect(ruleDecisionHistory(db, params).map((d) => d.decidedBy)).toEqual(['Ciara', 'Brian', 'Aoife']);
+    expect(effectiveRuleReview(db, params)).toMatchObject({ from: 'book', status: 'approved', by: 'Ciara' });
+  });
 });
 
 describe('migration 0058: the decisions a book took before step 11', () => {
