@@ -6,6 +6,7 @@ import Database from 'better-sqlite3';
 import { createTestDatabase } from '@/db/testing';
 import { createCompany } from '../config/setup';
 import { deriveStatutoryKnowledgeBase } from './knowledgeBase';
+import { generateDefaultTestCases } from './testCases';
 import { readCatalogueEntry, serialiseCatalogueEntry } from './catalogue';
 import {
   buildRulesStore, checkReleasedVersions, readReleasedVersions, ruleVersionContentHash,
@@ -33,6 +34,7 @@ beforeAll(() => {
   book = test.sqlite;
   ({ companyId } = createCompany(test.db, { legalName: 'Fresh Book Ltd', vatRegistrationStatus: 'registered', seedYears: [2025] }));
   deriveStatutoryKnowledgeBase(test.db, { companyId });
+  generateDefaultTestCases(test.db, { companyId });
 });
 
 /** A row with the columns that differ between any two loads (IDs and timestamps) and the book's own columns left out. */
@@ -115,6 +117,17 @@ describe('the rules store', () => {
     const tests = (db: Database.Database) => (db.prepare(`SELECT t.*, r.rule_key || '@' || r.rule_version AS rule_ref
       FROM irish_tax_rule_tests t JOIN irish_tax_rules r ON r.id = t.rule_id`).all() as Row[]).map((t) => content(t, ['rule_id']));
     expect(sorted(tests(store))).toEqual(sorted(tests(book)));
+  });
+
+  it('ships an effective-date case for every active version, keyed `key@version` (#723)', () => {
+    const active = (store.prepare('SELECT id FROM irish_tax_rules WHERE active = 1 AND enabled = 1').all() as Array<{ id: string }>).map((r) => r.id);
+    const cases = store.prepare('SELECT rule_id, test_type, expected FROM irish_tax_rule_tests').all() as Array<{ rule_id: string; test_type: string; expected: string }>;
+    expect(active.length).toBeGreaterThan(0);
+    expect(cases.map((c) => c.rule_id).sort()).toEqual([...active].sort());
+    for (const c of cases) {
+      expect(c.rule_id, c.rule_id).toMatch(/^[^@]+@\d+$/);
+      expect({ type: c.test_type, expected: JSON.parse(c.expected) }, c.rule_id).toEqual({ type: 'effective_date', expected: { matches: false } });
+    }
   });
 
   it('records its format, signature and version count', () => {

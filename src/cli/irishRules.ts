@@ -8,7 +8,7 @@ import { syncTaxRatesFromIrishRules } from '@/domain/rules/taxRateSync';
 import { lookupTransactionRules, type TransactionContext } from '@/domain/rules/transactionLookup';
 import { compareRuleVersions } from '@/domain/rules/versionCompare';
 import { setRuleReviewStatus } from '@/domain/rules/review';
-import { generateDefaultTestCases, runTestCases } from '@/domain/rules/testCases';
+import { runTestCases } from '@/domain/rules/testCases';
 import { generateAuditReport } from '@/domain/rules/audit';
 import { resolveRuleDependencies, resolveAllRuleDependencies } from '@/domain/rules/dependencies';
 import { resolveImpactTarget, ruleDepends, ruleImpact } from '@/domain/rules/ruleImpact';
@@ -52,8 +52,8 @@ Commands:
                                        rule quotes are no longer in it. --trace puts every affected
                                        rule, and everything relying on it, in front of this book as a
                                        review item. Exits 1 when a source has changed or is unreachable
-  generate-tests                      Write default positive/effective-date test cases
-  test                                Run all stored test cases, print pass/fail
+  generate-tests                      Does nothing: the test cases ship with the rules store
+  test                                Run the rules store's test cases, print pass/fail
   audit                               Print the QC/audit report
 
 Flags:
@@ -209,8 +209,9 @@ export async function main(argv: string[], options: CliOptions = {}): Promise<nu
       }
 
       case 'generate-tests': {
-        const result = generateDefaultTestCases(db, { companyId });
-        print(result, format);
+        // The store build generates the cases and ships them with the
+        // versions they test (#723); a book holds no cases of its own.
+        process.stderr.write('Nothing to generate: the test cases ship with the rules store. Run `test` to run them.\n');
         return 0;
       }
 
@@ -218,10 +219,10 @@ export async function main(argv: string[], options: CliOptions = {}): Promise<nu
         const result = runTestCases(db, { companyId });
         print(result, format);
         if (result.total === 0) {
-          // The cases are read from the rules store (ADR-0021); `generate-tests`
-          // still writes them into the book, where no run reads them. No case
-          // run is not a pass.
-          process.stderr.write('No rule test cases in the rules store, so nothing was tested.\n');
+          // The cases are read from the rules store (ADR-0021), whose build
+          // writes them. A store without them is an old build: no case run is
+          // not a pass.
+          process.stderr.write('No rule test cases in the rules store, so nothing was tested. A store built before they shipped has none: rebuild it with `npm run rules:build`.\n');
           return 1;
         }
         return result.failed > 0 ? 1 : 0;

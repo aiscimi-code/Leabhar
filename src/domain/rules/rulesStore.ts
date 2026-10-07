@@ -3,8 +3,9 @@
  *
  * The store is built once, at package time (`scripts/build-package.mjs`) or by
  * `npm run rules:build` in development: the existing derive pipeline
- * (`deriveStatutoryKnowledgeBase`) runs against an empty, in-memory book, and
- * the five rule tables are copied out of it into a separate SQLite file. The
+ * (`deriveStatutoryKnowledgeBase`) runs against an empty, in-memory book, the
+ * default test cases are generated for what it derived (`generateDefaultTestCases`),
+ * and the five rule tables are copied out of it into a separate SQLite file. The
  * copy drops what belongs to a book rather than to a rule: `company_id` on
  * every table, and the bindings to the book's own configuration
  * (`tax_rate_id`, `vat_treatment_id`), which move to a book table in step 2.
@@ -32,6 +33,7 @@ import { appRoot, migrationsFolder } from '@/lib/paths';
 import { createCompany } from '../config/setup';
 import { CATALOGUE_DIR } from './catalogue';
 import { deriveStatutoryKnowledgeBase } from './knowledgeBase';
+import { generateDefaultTestCases } from './testCases';
 import { RULES_STORE_FORMAT, attachRulesStore, catalogueDigest, detachRulesStore, type RulesStoreMeta } from './visibleRules';
 
 export const RELEASED_VERSIONS_FORMAT = 1;
@@ -209,6 +211,9 @@ export function buildRulesStore(params: {
     migrate(db, { migrationsFolder: migrationsFolder() });
     const { companyId } = createCompany(db, { legalName: 'Rules store build', vatRegistrationStatus: 'registered', seedYears: [] });
     deriveStatutoryKnowledgeBase(db, { companyId, root: params.root });
+    // The cases ship with the versions they test (#723). They are not part of
+    // a version's content hash, so adding one changes no signature.
+    generateDefaultTestCases(db, { companyId });
     let added: string[] = [];
     const written = writeRulesStore(sqlite, {
       outPath: params.outPath, root: params.root, companyId,
