@@ -86,6 +86,10 @@ export interface RuleVersionContent {
   statement: string | null;
   numericValue: number | null;
   unit: string | null;
+  /** What the number means (a rate, a threshold, ...). */
+  ruleType: string;
+  /** A figure's qualifier as stored; a band's rate is read from it (`rate_bp:N`, `resolveRuleFigure`). */
+  qualifier: string | null;
   conditions: unknown;
   exceptions: unknown;
   accountingEffect: string | null;
@@ -96,12 +100,13 @@ export interface RuleVersionContent {
 
 /**
  * The hash of what a rule version says: its dates, quote, value and unit,
- * conditions, exceptions and effects (ADR-0021 §3). Its review, its name and
- * its gloss are not part of it, so an approval never changes it.
+ * the type and qualifier that say what the value means, conditions,
+ * exceptions and effects (ADR-0021 §3). Its review, its name and its gloss are
+ * not part of it, so an approval never changes it.
  */
 export function ruleVersionContentHash(v: RuleVersionContent): string {
   return sha256Hex(JSON.stringify([
-    v.effectiveFrom, v.effectiveTo, v.statement, v.numericValue, v.unit,
+    v.effectiveFrom, v.effectiveTo, v.statement, v.numericValue, v.unit, v.ruleType, v.qualifier,
     v.conditions, v.exceptions, v.accountingEffect, v.taxEffect, v.vatEffect, v.reportingEffect,
   ]));
 }
@@ -208,14 +213,14 @@ export function buildRulesStore(params: {
     const versions = new Map<string, string>();
     type StoredRule = {
       id: string; effective_from: string; effective_to: string | null; statement: string | null; numeric_value: number | null;
-      unit: string | null; conditions: string; exceptions: string;
+      unit: string | null; rule_type: string; qualifier: string | null; conditions: string; exceptions: string;
       accounting_effect: string | null; tax_effect: string | null; vat_effect: string | null; reporting_effect: string | null;
     };
-    for (const r of sqlite.prepare(`SELECT id, effective_from, effective_to, statement, numeric_value, unit, conditions, exceptions,
+    for (const r of sqlite.prepare(`SELECT id, effective_from, effective_to, statement, numeric_value, unit, rule_type, qualifier, conditions, exceptions,
         accounting_effect, tax_effect, vat_effect, reporting_effect FROM store.irish_tax_rules ORDER BY id`).all() as StoredRule[]) {
       versions.set(r.id, ruleVersionContentHash({
         effectiveFrom: r.effective_from, effectiveTo: r.effective_to, statement: r.statement,
-        numericValue: r.numeric_value, unit: r.unit,
+        numericValue: r.numeric_value, unit: r.unit, ruleType: r.rule_type, qualifier: r.qualifier,
         conditions: JSON.parse(r.conditions), exceptions: JSON.parse(r.exceptions),
         accountingEffect: r.accounting_effect, taxEffect: r.tax_effect, vatEffect: r.vat_effect, reportingEffect: r.reporting_effect,
       }));

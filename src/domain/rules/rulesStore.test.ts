@@ -144,12 +144,12 @@ describe('the released-versions check', () => {
 
   it('hashes what a version says, not its review', () => {
     const v = {
-      effectiveFrom: '2025-01-01', effectiveTo: null, statement: 'the rate is 13.5 per cent', numericValue: 1350, unit: 'basis_points',
+      effectiveFrom: '2025-01-01', effectiveTo: null, statement: 'the rate is 13.5 per cent', numericValue: 1350, unit: 'basis_points', ruleType: 'rate', qualifier: null,
       conditions: [], exceptions: [], accountingEffect: null, taxEffect: null, vatEffect: 'reduced rate', reportingEffect: null,
     };
     const hash = ruleVersionContentHash(v);
     expect(ruleVersionContentHash({ ...v, reviewStatus: 'approved', reviewedBy: 'Dara' } as typeof v)).toBe(hash);
-    for (const change of [{ numericValue: 900 }, { unit: 'percent' }, { effectiveTo: '2026-01-01' }, { statement: 'the rate is 9 per cent' },
+    for (const change of [{ numericValue: 900 }, { unit: 'percent' }, { ruleType: 'threshold' }, { qualifier: 'rate_bp:900' }, { effectiveTo: '2026-01-01' }, { statement: 'the rate is 9 per cent' },
       { conditions: [{ field: 'x', operator: 'equals', value: 1 }] }, { exceptions: [{ condition: 'c', effect: 'e' }] }, { vatEffect: 'standard rate' }]) {
       expect(ruleVersionContentHash({ ...v, ...change }), JSON.stringify(change)).not.toBe(hash);
     }

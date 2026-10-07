@@ -236,8 +236,9 @@ as the catalogue numbers it. The package build makes it; in development,
 `npm run rules:build` writes `rules/rules.db`. The build fails, and writes
 nothing, when a version listed in `catalogue/released-versions.json` is
 missing or its content hash differs. The hash covers dates, quote, value and
-unit, conditions, exceptions and effects, never the review, so an approval
-ships under the same number. A change to what a released version says is a
+unit, the rule type and qualifier that say what the value means (a band's
+rate is read from its qualifier), conditions, exceptions and effects, never
+the review, so an approval ships under the same number. A change to what a released version says is a
 new version. When a release is cut, `npm run rules:build -- --record-release`
 adds the new versions to the list; it never removes or rehashes one. The
 gate checks the same thing (`rulesStore.test.ts`), along with the store
@@ -246,6 +247,9 @@ holding, by content, what a freshly loaded book holds.
 **Not yet.** Books still load and read their own copies. The book tables and
 migration, the readers' switch to the attached store, and the end of
 "load statutory rules" follow in ADR-0021's delivery steps 2 to 5.
+Some curated rules stamp `source_date` with the moment they were derived, so
+in the store it is the build time: a reader must not take it for a date the
+source stated.
 
 A relationship between rules that exists only in code is a bug: declare it
 as a link.
