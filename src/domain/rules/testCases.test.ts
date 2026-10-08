@@ -64,7 +64,7 @@ describe('generateDefaultTestCases / runTestCases', () => {
     const positive = db.select().from(irishTaxRuleTests).all().find((t) => t.testType === 'positive');
     expect(positive, 'a curated rule with no exception should match').toBeDefined();
     expect(gen.noPositive).toBeLessThan(2);
-    db.update(irishTaxRules).set({ effectiveFrom: '2025-01-01' })
+    db.update(irishTaxRules).set({ effectiveFrom: '2025-07-01' })
       .where(eq(irishTaxRules.id, positive!.ruleId)).run();
     const run = runTestCases(db, { companyId });
     expect(run.failures).toEqual(expect.arrayContaining([

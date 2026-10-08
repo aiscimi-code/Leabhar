@@ -35,7 +35,7 @@ beforeAll(() => {
   ({ companyId } = createCompany(test.db, { legalName: 'Fresh Book Ltd', vatRegistrationStatus: 'registered', seedYears: [2025] }));
   deriveStatutoryKnowledgeBase(test.db, { companyId });
   generateDefaultTestCases(test.db, { companyId });
-});
+}, 60_000); // two derives, and one lookup per active version in each (#727)
 
 /** A row with the columns that differ between any two loads (IDs and timestamps) and the book's own columns left out. */
 function content(row: Row, drop: string[] = []): Row {
@@ -189,7 +189,7 @@ describe('the released-versions check', () => {
     expect((error as Error).message).toContain('Add the change as a new version instead');
     expect(readFileSync(path).equals(before)).toBe(true);
     expect(existsSync(`${path}.building`)).toBe(false);
-  });
+  }, 60_000); // a full build, one lookup per active version (#727)
 
   it('passes a catalogue that ships an approval, under the same version number', () => {
     const root = mkdtempSync(join(tmpdir(), 'leabhar-rules-root-'));
@@ -205,5 +205,5 @@ describe('the released-versions check', () => {
     const approved = buildRulesStore({ outPath: join(root, 'rules.db'), root });
     expect(approved.versions.get('vat.rate_reduced_current@1')).toBe(built.versions.get('vat.rate_reduced_current@1'));
     expect(approved.signature).toBe(built.signature);
-  });
+  }, 60_000); // a full build, one lookup per active version (#727)
 });

@@ -214,8 +214,13 @@ export function buildRulesStore(params: {
     const { companyId } = createCompany(db, { legalName: 'Rules store build', vatRegistrationStatus: 'registered', seedYears: [] });
     deriveStatutoryKnowledgeBase(db, { companyId, root: params.root });
     // The cases ship with the versions they test (#723). They are not part of
-    // a version's content hash, so adding one changes no signature.
+    // a version's content hash, so adding one changes no signature. The
+    // generator asks the lookup whether each case matches (#727), and the
+    // lookup reads only the views over an attached store (ADR-0021 step 3):
+    // attach one built from what was just derived, then detach it.
+    attachRulesStoreFromBook(db, { companyId, root: params.root });
     const cases = generateDefaultTestCases(db, { companyId });
+    detachRulesStore(sqlite);
     let added: string[] = [];
     const written = writeRulesStore(sqlite, {
       outPath: params.outPath, root: params.root, companyId,
