@@ -40,7 +40,7 @@
     "db:seed:partnership": "tsx src/db/seed/run.ts --partnership"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.128.0",
+    "@anthropic-ai/sdk": "^0.131.0",
     "@noble/hashes": "^2.4.0",
     "@tesseract.js-data/eng": "^1.0.0",
     "better-sqlite3": "^13.0.3",
