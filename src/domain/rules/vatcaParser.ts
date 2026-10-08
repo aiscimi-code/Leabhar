@@ -73,7 +73,7 @@ function extractHeadingAbove(lines: string[], startLine: number): string {
     const line = (lines[j] ?? '').trim();
     if (line === '') break;
     if (PAGE_NOISE_RE.test(line)) { j--; continue; }
-    if (/^(PART|Chapter)\b/i.test(line)) return '';
+    if (/^(PART|Chapter)\b/.test(line)) return '';
     if (SECTION_RE.test(line)) return '';
     collected.unshift(line);
     j--;
@@ -118,7 +118,17 @@ export function parseVatca2010(source: string): ParsedProvision[] {
     if (!sectionNumber) continue;
 
     const nextStart = bodyStarts[s + 1];
-    const endLine = nextStart !== undefined ? nextStart - 1 : lines.length - 1;
+    let endLine = nextStart !== undefined ? nextStart - 1 : lines.length - 1;
+    if (nextStart !== undefined) {
+      while (endLine > startLine && (lines[endLine] ?? '').trim() === '') endLine--;
+      while (endLine > startLine) {
+        const line = (lines[endLine] ?? '').trim();
+        if (line === '' || PAGE_NOISE_RE.test(line)) break;
+        if (/^(PART|Chapter)\b/.test(line)) { endLine--; continue; }
+        endLine--;
+      }
+      while (endLine > startLine && ((lines[endLine] ?? '').trim() === '' || PAGE_NOISE_RE.test((lines[endLine] ?? '').trim()))) endLine--;
+    }
     const sliceLines = lines.slice(startLine, endLine + 1);
     while (sliceLines.length && sliceLines.at(-1)!.trim() === '') sliceLines.pop();
     while (sliceLines.length && sliceLines[0]!.trim() === '') sliceLines.shift();

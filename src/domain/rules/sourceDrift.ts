@@ -41,6 +41,8 @@ export interface SourceDriftReport {
   /** Rule versions whose quote is no longer in the file, as `key@version`. */
   quotesMissing: string[];
   quotesFound: string[];
+  /** Quotes not searched, because the changed file is a PDF and was not read as words (#702). */
+  quotesNotAssessed: string[];
   error: string | null;
 }
 
@@ -78,10 +80,14 @@ export function compareWithCatalogue(name: string, entry: CatalogueEntry, fetche
     recordedSha256: entry.source.sha256, currentSha256, error: null,
   };
   if (currentSha256 === entry.source.sha256) {
-    return { ...base, status: 'unchanged', quotesMissing: [], quotesFound: [] };
+    return { ...base, status: 'unchanged', quotesMissing: [], quotesFound: [], quotesNotAssessed: [] };
   }
   if (entry.source.contentSha256 && contentSha256Of(fetched) === entry.source.contentSha256) {
-    return { ...base, status: 'page_state_only', quotesMissing: [], quotesFound: [] };
+    return { ...base, status: 'page_state_only', quotesMissing: [], quotesFound: [], quotesNotAssessed: [] };
+  }
+  const quoted = entry.rules.flatMap((rule) => rule.versions.filter((v) => v.quote).map((v) => `${rule.key}@${v.version}`));
+  if (fetched.subarray(0, 5).toString('utf8') === '%PDF-') {
+    return { ...base, status: 'changed', quotesMissing: [], quotesFound: [], quotesNotAssessed: quoted };
   }
   const words = sourceWords(fetched.toString('utf8'));
   const quotesMissing: string[] = [];
@@ -92,7 +98,7 @@ export function compareWithCatalogue(name: string, entry: CatalogueEntry, fetche
       (containsRun(words, sourceWords(quotedWords(entry, rule, v.quote))) ? quotesFound : quotesMissing).push(`${rule.key}@${v.version}`);
     }
   }
-  return { ...base, status: 'changed', quotesMissing, quotesFound };
+  return { ...base, status: 'changed', quotesMissing, quotesFound, quotesNotAssessed: [] };
 }
 
 export type SourceFetcher = (url: string) => Promise<Buffer>;
@@ -118,7 +124,7 @@ export async function verifySources(params: {
     } catch (err) {
       reports.push({
         entry: name, citation: entry.source.citation, sourceUrl: entry.source.sourceUrl, status: 'unreachable',
-        recordedSha256: entry.source.sha256, currentSha256: null, quotesMissing: [], quotesFound: [],
+        recordedSha256: entry.source.sha256, currentSha256: null, quotesMissing: [], quotesFound: [], quotesNotAssessed: [],
         error: err instanceof Error ? err.message : String(err),
       });
     }

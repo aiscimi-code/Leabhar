@@ -131,7 +131,11 @@ export function parseVatcaSchedule(source: string): ParsedScheduleParagraph[] {
   const starts: Array<{ line: number; number: string }> = [];
   for (let i = 0; i < lines.length; i++) {
     const m = (lines[i] ?? '').match(PARA_OPEN_RE);
-    if (m?.[1]) starts.push({ line: i, number: m[1] });
+    if (!m?.[1]) continue;
+    // A real paragraph follows a blank line. A wrapped "Schedule\n3." does not (#699).
+    const prev = i > 0 ? (lines[i - 1] ?? '').trim() : '';
+    if (prev !== '') continue;
+    starts.push({ line: i, number: m[1] });
   }
   // A paragraph the LRC text prints without its number (Schedule 3 para 21)
   // opens at the first line after its heading, which sits before paragraph

@@ -95,3 +95,35 @@ describe('statuteParser', () => {
     expect(parseFinanceAct2024(EXCERPT)).toEqual(parseFinanceAct2024(EXCERPT));
   });
 });
+
+describe('section boundaries (#703, #704)', () => {
+  const source = [
+    '1. Short title.',
+    '',
+    'CHAPTER 2',
+    'Universal Social Charge',
+    'Amendment of section 531AN of Principal Act (rate of charge)',
+    '2. (1) The rate is 0.5 per cent.',
+    '',
+    'Amendment of section 46 of, and Schedule 3 to, Principal Act (reduced rate for housing as',
+    'part of a social policy)',
+    '70. The rate is 9 per cent.',
+    '',
+    'SCHEDULE 1',
+    'A schedule that the last section must not swallow.',
+  ].join('\n');
+
+  it('stops before the next heading and before the Schedules, and keeps a wrapped "part of"', () => {
+    const sections = parseFinanceAct2024(source);
+    expect(sections.map((p) => p.sectionNumber)).toEqual(['1', '2', '70']);
+    expect(sections[0]!.provisionText).not.toMatch(/Universal Social Charge/);
+    expect(sections[1]!.provisionText).not.toMatch(/SCHEDULE/);
+    expect(sections[2]!.heading).toBe('Amendment of section 46 of, and Schedule 3 to, Principal Act (reduced rate for housing as part of a social policy)');
+    expect(sections[2]!.provisionText).not.toMatch(/SCHEDULE/);
+  });
+
+  it('files RCT and wear and tear by what the provision is, not a tax it mentions', () => {
+    expect(categoriseProvision('Zero rate subcontractor.', 'The conditions include capital gains tax.')).toBe('rct');
+    expect(categoriseProvision('Wear and tear allowances.', 'A wear and tear allowance is made.')).toBe('capital_allowances');
+  });
+});

@@ -96,3 +96,22 @@ describe('parseVatcaSchedule', () => {
     }
   });
 });
+
+describe('a wrapped cross-reference is not a paragraph (#699)', () => {
+  it('does not open a paragraph on a bare number that does not follow a blank line', () => {
+    const source = [
+      'Livestock.',
+      '',
+      '9A. A supply described in paragraph 7A',
+      'of',
+      'Schedule',
+      '3. is a zero-rated supply.',
+      '',
+      'Food.',
+      '',
+      '10. Bread.',
+    ].join('\n');
+    expect(parseVatcaSchedule(source).map((p) => p.paragraphNumber)).toEqual(['9A', '10']);
+    expect(parseVatcaSchedule(source)[0]!.provisionText).toMatch(/Schedule/);
+  });
+});
