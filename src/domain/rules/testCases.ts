@@ -22,6 +22,7 @@ import type { IrishRuleCondition, IrishRuleException } from '@/db/schema';
 import { ids } from '@/lib/ids';
 import { addDays, asIsoDate } from '../dates';
 import { lookupTransactionRules, type TransactionContext } from './transactionLookup';
+import { ruleVersionId } from './irishRules';
 
 export interface GenerateTestCasesResult {
   created: number;
@@ -140,7 +141,7 @@ export function generateDefaultTestCases(
     const applies = matched !== null && lookupTransactionRules(db, {
       companyId: params.companyId,
       transaction: matched,
-    }).applicableRules.some((r) => r.ruleId === rule.id);
+    }).applicableRules.some((r) => r.ruleId === ruleVersionId(rule.ruleKey, rule.ruleVersion));
     const base = applies ? matched! : {
       transactionDate: on,
       amountMinor: 100000,

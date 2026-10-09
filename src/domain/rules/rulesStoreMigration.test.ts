@@ -60,7 +60,7 @@ const versionsOf = (db: AppDatabase, companyId: string) => db.select().from(iris
 
 beforeAll(() => {
   store = buildRulesStore({ outPath: join(dir, 'rules.db') });
-});
+}, 60_000); // a full build, one lookup per active version (#727)
 
 describe('moving a book that holds a corrected version under another number', () => {
   let book: ReturnType<typeof openBook>;
