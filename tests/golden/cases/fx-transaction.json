@@ -3,7 +3,7 @@
   "description": "US SaaS subscription paid in USD (reverse charge)",
   "authority": "LEABHAR_RULE",
   "references": ["vat.reverse_charge_services_from_abroad", "vat.rate_standard_current", "AGENTS.md-invariant-1"],
-  "notes": "AGENTS.md invariant #1: money is integer minor units, never a float. A USD invoice of $123 at 23% VAT. Under VATCA s.12, services from a supplier established outside the State are reverse-charged. The journal is posted in the original currency (USD) with the VAT shown as both input and output (netting to zero). The reverse charge and standard rate rules exist in the KB. Review required because rules carry reviewStatus 'ai_extracted'.",
+  "notes": "AGENTS.md invariant #1: money is integer minor units, never a float. A USD invoice of $123 on which the supplier charges no VAT, so $123 is the net (AGENTS.md) and reverse-charge VAT at 23% is $28.29. Under VATCA s.12, services from a supplier established outside the State are reverse-charged. The journal is posted in the original currency (USD) with the VAT shown as both input and output (netting to zero). The reverse charge and standard rate rules exist in the KB. Review required because rules carry reviewStatus 'ai_extracted'.",
   "inputs": {
     "transaction": {
       "direction": "purchase",
@@ -31,10 +31,10 @@
     "posted": true,
     "balanced": true,
     "lines": [
-      { "accountCode": "6120", "debitMinor": 10000, "currency": "USD" },
-      { "accountKey": "vat_on_purchases", "debitMinor": 2300, "currency": "USD" },
-      { "accountKey": "vat_on_purchases", "creditMinor": 2300, "currency": "USD" },
-      { "accountKey": "bank_control", "creditMinor": 10000, "currency": "USD" }
+      { "accountCode": "6120", "debitMinor": 12300, "currency": "USD" },
+      { "accountKey": "vat_on_purchases", "debitMinor": 2829, "currency": "USD" },
+      { "accountKey": "vat_on_purchases", "creditMinor": 2829, "currency": "USD" },
+      { "accountKey": "bank_control", "creditMinor": 12300, "currency": "USD" }
     ]
   },
   "review_required": true

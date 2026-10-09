@@ -3,7 +3,7 @@
   "description": "US SaaS service purchased by Irish VAT-registered Ltd (reverse charge)",
   "authority": "LEABHAR_RULE",
   "references": ["vat.reverse_charge_services_from_abroad", "vat.place_of_supply_b2b_general", "vat.input_deduction_taxable_use"],
-  "notes": "Under VATCA s.12 and s.34, services received from a supplier established outside the State are subject to the reverse charge mechanism. The Irish purchaser accounts for both input and output VAT on the net amount. The reverse-charge rules and the 23% standard rate exist in the KB. Review required because rules carry reviewStatus 'ai_extracted'.",
+  "notes": "Under VATCA s.12 and s.34, services received from a supplier established outside the State are subject to the reverse charge mechanism. The Irish purchaser accounts for both input and output VAT on the net amount. The supplier charges no VAT, so the 12,300 paid is the net (AGENTS.md): reverse-charge VAT at 23% is 2,829. The reverse-charge rules and the 23% standard rate exist in the KB. Review required because rules carry reviewStatus 'ai_extracted'.",
   "inputs": {
     "transaction": {
       "direction": "purchase",
@@ -31,10 +31,10 @@
     "posted": true,
     "balanced": true,
     "lines": [
-      { "accountCode": "6120", "debitMinor": 10000 },
-      { "accountKey": "vat_on_purchases", "debitMinor": 2300 },
-      { "accountKey": "vat_on_purchases", "creditMinor": 2300 },
-      { "accountKey": "bank_control", "creditMinor": 10000 }
+      { "accountCode": "6120", "debitMinor": 12300 },
+      { "accountKey": "vat_on_purchases", "debitMinor": 2829 },
+      { "accountKey": "vat_on_purchases", "creditMinor": 2829 },
+      { "accountKey": "bank_control", "creditMinor": 12300 }
     ]
   },
   "review_required": true
