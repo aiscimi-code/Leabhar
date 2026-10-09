@@ -120,14 +120,20 @@ export function parseVatca2010(source: string): ParsedProvision[] {
     const nextStart = bodyStarts[s + 1];
     let endLine = nextStart !== undefined ? nextStart - 1 : lines.length - 1;
     if (nextStart !== undefined) {
-      while (endLine > startLine && (lines[endLine] ?? '').trim() === '') endLine--;
-      while (endLine > startLine) {
-        const line = (lines[endLine] ?? '').trim();
-        if (line === '' || PAGE_NOISE_RE.test(line)) break;
-        if (/^(PART|Chapter)\b/.test(line)) { endLine--; continue; }
-        endLine--;
+      const furniture = (line: string) => PAGE_NOISE_RE.test(line) || /^\d+$/.test(line)
+        || /Value-Added Tax Consolidation Act/.test(line) || /^\[?2010\b/.test(line);
+      let cut = nextStart;
+      for (let i = nextStart - 1; i > startLine; i--) {
+        const line = (lines[i] ?? '').trim();
+        if (!/^(PART|Chapter)\b/.test(line)) continue;
+        const onlyTitles = lines.slice(i + 1, nextStart).every((raw) => {
+          const mid = raw.trim();
+          return mid === '' || furniture(mid) || /^(PART|Chapter)\b/.test(mid) || mid.length < 80;
+        });
+        if (onlyTitles) cut = i;
       }
-      while (endLine > startLine && ((lines[endLine] ?? '').trim() === '' || PAGE_NOISE_RE.test((lines[endLine] ?? '').trim()))) endLine--;
+      endLine = cut - 1;
+      while (endLine > startLine && ((lines[endLine] ?? '').trim() === '' || furniture((lines[endLine] ?? '').trim()))) endLine--;
     }
     const sliceLines = lines.slice(startLine, endLine + 1);
     while (sliceLines.length && sliceLines.at(-1)!.trim() === '') sliceLines.pop();

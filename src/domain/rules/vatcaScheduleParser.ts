@@ -106,16 +106,22 @@ function extractHeadingAbove(lines: string[], startLine: number): string {
   let j = startLine - 1;
   while (j >= 0 && (lines[j] ?? '').trim() === '') j--;
   const collected: string[] = [];
-  while (j >= 0) {
+  let blanks = 0;
+  while (j >= 0 && blanks < 2) {
     const line = (lines[j] ?? '').trim();
-    if (line === '') break;
+    if (line === '') {
+      if (collected.join(' ').replace(/[^A-Za-z]/g, '').length > 12) break;
+      blanks++; j--; continue;
+    }
     if (PART_RE.test(line) || PARA_OPEN_RE.test(line)) break;
     if (/^SCHEDULE\s+\d/.test(line) || /^\[.*\]$/.test(line) || /^Section\s+\d+$/.test(line)) break;
+    if (line.length > 80) break;
     collected.unshift(line);
+    blanks = 0;
     j--;
     if (collected.join(' ').length > 120) break;
   }
-  return collected.join(' ');
+  return collected.join(' ').replace(/\s+([.—])\s+/g, ' $1 ').replace(/\s+\./g, '.').trim();
 }
 
 /**
@@ -147,9 +153,12 @@ export function parseVatcaSchedule(source: string): ParsedScheduleParagraph[] {
     const beforeIdx = starts.findIndex((s) => s.number === u.before);
     if (beforeIdx <= 0) continue;
     const from = starts[beforeIdx - 1]!.line;
-    const headingLine = lines.findIndex((l, i) => i > from && i < starts[beforeIdx]!.line && l.trim() === u.heading);
+    const span = lines.slice(from + 1, starts[beforeIdx]!.line).map((l) => l.trim());
+    const flat = span.join(' ').replace(/\s+/g, ' ');
+    if (!flat.includes(u.heading)) continue;
+    const headingLine = span.findIndex((_, i) => span.slice(0, i + 1).join(' ').replace(/\s+/g, ' ').includes(u.heading));
     if (headingLine < 0) continue;
-    let open = headingLine + 1;
+    let open = from + 1 + headingLine + 1;
     while (open < lines.length && (lines[open] ?? '').trim() === '') open++;
     starts.splice(beforeIdx, 0, { line: open, number: u.paragraph });
   }
