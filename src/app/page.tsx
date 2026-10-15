@@ -1,10 +1,17 @@
 import Link from 'next/link';
+import { headers } from 'next/headers';
 import { dashboardData, activeCompany } from '@/lib/queries';
 import { Page, Panel, Stat, Badge, Help, LinkButton, Figure, Empty } from '@/components/primitives';
+import { LandingPage } from '@/components/LandingPage';
 import { money, date, plural } from '@/lib/format';
 import { daysBetween, asIsoDate, today } from '@/domain/dates';
 
 export const dynamic = 'force-dynamic';
+
+function isPublicHost(host: string | null): boolean {
+  const h = host?.split(',')[0]?.trim().split(':')[0]?.toLowerCase() ?? '';
+  return h === 'fgi.ie' || h === 'www.fgi.ie';
+}
 
 /**
  * Financial dashboard (README §32).
@@ -12,8 +19,16 @@ export const dynamic = 'force-dynamic';
  * Deliberately not a marketing dashboard: figures, an accounting-health panel
  * that shows problems rather than hiding them, and deadlines. Every number
  * links to what it is made of.
+ *
+ * On the public site (fgi.ie / www.fgi.ie) there is no on-disk database,
+ * so the dashboard cannot render there — serve the marketing landing page
+ * instead, which offers two paths: the portal and the MCP server.
  */
-export default function DashboardPage() {
+export default async function DashboardPage() {
+  const h = await headers();
+  const host = h.get('x-forwarded-host') || h.get('host');
+  if (isPublicHost(host)) return <LandingPage />;
+
   if (!activeCompany()) return <NoCompany />;
 
   const data = dashboardData();

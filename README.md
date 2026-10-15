@@ -323,6 +323,52 @@ npm run cli -- it-computation --year 2025
 The full reference and the agent workflow are in
 [docs/RUNNING.md](docs/RUNNING.md).
 
+### Tax rules MCP server
+
+Leabhar ships a [Model Context Protocol](https://modelcontextprotocol.io)
+server that exposes the Irish tax rules knowledge base to AI agents. It is
+live at **https://mcp.fgi.ie** — free to use, no authentication required.
+
+**8 tools:**
+
+| Tool | What it does |
+|------|-------------|
+| `search_tax_rules` | Full-text search over the rules knowledge base |
+| `get_tax_rule` | Fetch a specific rule with its statutory citations and provenance |
+| `get_tax_source` | Fetch the source legislation/Revenue guidance a rule quotes |
+| `check_reverse_charge` | Determine whether reverse charge applies to a cross-border supply |
+| `get_tax_evidence` | Get the evidence trail behind a tax treatment |
+| `determine_tax_treatment` | Suggest VAT treatment for a set of facts |
+| `validate_tax_facts` | Validate that required facts are present before applying rules |
+| `flag_restricted_counterparty` | Flag sanctioned or restricted counterparties |
+
+**Example — connect from Claude Desktop:**
+
+```json
+{
+  "mcpServers": {
+    "leabhar-tax": {
+      "url": "https://mcp.fgi.ie/mcp",
+      "transport": "streamable-http"
+    }
+  }
+}
+```
+
+**Example — search for VAT registration thresholds:**
+
+```bash
+curl -X POST https://mcp.fgi.ie/mcp \
+  -H 'Content-Type: application/json' \
+  -H 'Accept: application/json, text/event-stream' \
+  -d '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"search_tax_rules","arguments":{"query":"VAT registration threshold"}}}'
+```
+
+The server is stateless and read-only. It serves the same rules knowledge
+base that the desktop app and CLI use — every rule cites the Act, Schedule
+or Revenue guidance it rests on. Source:
+[Leabhar_mcp](https://github.com/aiscimi-code/Leabhar_mcp).
+
 ## Documentation
 
 - [docs/DOMAIN_MODEL.md](docs/DOMAIN_MODEL.md): the design and its

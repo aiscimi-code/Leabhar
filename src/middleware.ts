@@ -54,11 +54,13 @@ export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const onPortal = pathname === '/portal' || pathname.startsWith('/portal/');
 
-  // The public domain only serves the portal. Every other route in this app
-  // reads the on-disk database, which does not exist on Vercel.
+  // The public domain serves the marketing landing page at / and the portal
+  // below it. Every other route in this app reads the on-disk database,
+  // which does not exist on Vercel.
   if (isPublicSite(request)) {
     const allowed =
       onPortal
+      || pathname === '/'
       || pathname.startsWith('/_next')
       || pathname.startsWith('/favicon')
       || pathname === '/api/health';
