@@ -61,6 +61,8 @@ export function middleware(request: NextRequest) {
     const allowed =
       onPortal
       || pathname === '/'
+      || pathname === '/sitemap.xml'
+      || pathname === '/robots.txt'
       || pathname.startsWith('/_next')
       || pathname.startsWith('/favicon')
       || pathname === '/api/health';

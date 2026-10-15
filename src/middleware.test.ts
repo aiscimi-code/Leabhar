@@ -74,6 +74,16 @@ describe('middleware', () => {
     expect(res.headers.get('location')).toBeNull();
   });
 
+  it('serves /sitemap.xml on the public site without redirecting', () => {
+    const res = middleware(request('/sitemap.xml', undefined, 'www.fgi.ie'));
+    expect(res.headers.get('location')).toBeNull();
+  });
+
+  it('serves /robots.txt on the public site without redirecting', () => {
+    const res = middleware(request('/robots.txt', undefined, 'www.fgi.ie'));
+    expect(res.headers.get('location')).toBeNull();
+  });
+
   it('still sends other public-site paths to the portal', () => {
     const res = middleware(request('/reports', undefined, 'www.fgi.ie'));
     expect(res.status).toBe(307);
