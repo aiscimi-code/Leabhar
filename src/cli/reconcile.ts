@@ -491,6 +491,8 @@ Invoice-led workflow (issue #222) — the same domain functions as the web scree
 
 Inspect:
   list-transactions [--account <id>] [--unposted] [--unclassified]
+                    [--limit <n>] [--offset <n>]
+                                          Paginate large result sets (issue #746)
   show-invoice <number>                  Full detail incl. lines and payments
   year-end --from <date> --to <date>     P&L, balance sheet, tax worksheet,
                                           fixed assets, VAT periods, issues
@@ -619,6 +621,7 @@ Flags:
   --unallocated       Leave the payment unallocated, on account (record-payment)
   --narrative, --lines <json>  Journal narrative and lines (journal)
   --unposted, --unclassified   Filter for list-transactions
+  --limit <n>, --offset <n>  Paginate list-transactions (issue #746)
   --sync              Also write scan-anomalies findings to the review queue
   --status, --severity, --kind  Filters for list-review-queue
   --entry <id>         Journal entry id (reverse-journal)
@@ -1820,6 +1823,8 @@ export async function main(argv: string[], options: CliOptions = {}): Promise<nu
           bankAccountId: getFlag(flags, 'account', 'account-id', 'accountId'),
           unposted: hasFlag(flags, 'unposted'),
           unclassified: hasFlag(flags, 'unclassified'),
+          limit: getFlag(flags, 'limit') ? Number(getFlag(flags, 'limit')) : undefined,
+          offset: getFlag(flags, 'offset') ? Number(getFlag(flags, 'offset')) : undefined,
         });
         print(listTransactionsCli(db, parsed), format);
         return 0;
