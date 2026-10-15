@@ -318,6 +318,10 @@ export const listTransactionsInput = z.object({
   bankAccountId: z.string().optional(),
   unposted: z.boolean().default(false),
   unclassified: z.boolean().default(false),
+  /** Maximum number of transactions to return (issue #746). */
+  limit: z.number().int().positive().optional(),
+  /** Number of transactions to skip (issue #746). */
+  offset: z.number().int().nonnegative().optional(),
 });
 
 export const showInvoiceInput = z.object({

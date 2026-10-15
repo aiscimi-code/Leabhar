@@ -588,7 +588,8 @@ export function listTransactionsCli(
     conditions.push(ne(bankTransactions.status, 'rolled_back'));
   }
 
-  return db.select({
+  // Pagination (issue #746): apply limit and offset in the query chain
+  const baseQuery = db.select({
     id: bankTransactions.id,
     transactionDate: bankTransactions.transactionDate,
     description: bankTransactions.description,
@@ -598,8 +599,20 @@ export function listTransactionsCli(
     bankAccountId: bankTransactions.bankAccountId,
   }).from(bankTransactions)
     .where(and(...conditions))
-    .orderBy(bankTransactions.transactionDate)
-    .all();
+    .orderBy(bankTransactions.transactionDate);
+
+  if (input.limit !== undefined && input.offset !== undefined) {
+    return baseQuery.limit(input.limit).offset(input.offset).all();
+  }
+  if (input.limit !== undefined) {
+    return baseQuery.limit(input.limit).all();
+  }
+  if (input.offset !== undefined) {
+    // SQLite requires LIMIT when using OFFSET; use a large limit to get all remaining
+    return baseQuery.limit(1000000).offset(input.offset).all();
+  }
+
+  return baseQuery.all();
 }
 
 // ---- show-invoice ----
