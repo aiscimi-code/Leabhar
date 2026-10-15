@@ -64,8 +64,28 @@ describe('middleware', () => {
     expect(res.headers.get('location')).toBeNull();
   });
 
-  it('sends the public site root to the portal, not the local login', () => {
+  it('serves the public site root as the landing page, not a redirect to the portal', () => {
     const res = middleware(request('/', undefined, 'www.fgi.ie'));
+    expect(res.headers.get('location')).toBeNull();
+  });
+
+  it('serves the apex host root as the landing page too', () => {
+    const res = middleware(request('/', undefined, 'fgi.ie'));
+    expect(res.headers.get('location')).toBeNull();
+  });
+
+  it('serves /sitemap.xml on the public site without redirecting', () => {
+    const res = middleware(request('/sitemap.xml', undefined, 'www.fgi.ie'));
+    expect(res.headers.get('location')).toBeNull();
+  });
+
+  it('serves /robots.txt on the public site without redirecting', () => {
+    const res = middleware(request('/robots.txt', undefined, 'www.fgi.ie'));
+    expect(res.headers.get('location')).toBeNull();
+  });
+
+  it('still sends other public-site paths to the portal', () => {
+    const res = middleware(request('/reports', undefined, 'www.fgi.ie'));
     expect(res.status).toBe(307);
     expect(res.headers.get('location')).toBe('http://www.fgi.ie/portal');
   });

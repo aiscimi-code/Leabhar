@@ -10,8 +10,29 @@ import { getDb } from '@/db';
 import { DemoBanner } from '@/components/primitives';
 
 export const metadata: Metadata = {
-  title: 'Leabhar — Irish accounting',
-  description: 'Local-first accounting and tax preparation for a small Irish company.',
+  metadataBase: new URL('https://www.fgi.ie'),
+  title: {
+    default: 'Leabhar — Local-first Irish accounting',
+    template: '%s | Leabhar',
+  },
+  description: 'Local-first double-entry bookkeeping, VAT and tax preparation for Irish small businesses. Your books stay on your machine. Open source (AGPL-3.0).',
+  openGraph: {
+    type: 'website',
+    locale: 'en_IE',
+    url: 'https://www.fgi.ie',
+    siteName: 'Leabhar',
+    title: 'Leabhar — Local-first Irish accounting',
+    description: 'Double-entry bookkeeping, VAT and tax preparation for Irish SMEs. Local-first, open source, with a tax rules API for AI agents.',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Leabhar — Local-first Irish accounting',
+    description: 'Double-entry bookkeeping, VAT and tax preparation for Irish SMEs.',
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 };
 
 export const dynamic = 'force-dynamic';
