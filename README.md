@@ -7,6 +7,7 @@ and nothing leaves the machine unless you ask it to.
 
 ![License](https://img.shields.io/badge/license-AGPL--3.0--only-blue)
 ![Node](https://img.shields.io/badge/node-%3E%3D22-green)
+[![Sponsors](https://img.shields.io/github/sponsors/aiscimi-code?logo=githubsponsors&label=Sponsors&color=pink&style=flat)](https://github.com/sponsors/aiscimi-code)
 
 Leabhar keeps double-entry books from your bank statements and invoices, and
 prepares the VAT and tax figures that follow from them. Each figure cites
