@@ -100,6 +100,13 @@ export function LandingPage() {
           </a>
           {' · '}
           <a
+            href="/pricing"
+            className="underline hover:text-ink-muted"
+          >
+            Pricing
+          </a>
+          {' · '}
+          <a
             href="https://github.com/aiscimi-code/Leabhar/blob/main/COMMERCIAL.md"
             className="underline hover:text-ink-muted"
           >
