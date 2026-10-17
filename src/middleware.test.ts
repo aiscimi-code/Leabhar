@@ -79,6 +79,11 @@ describe('middleware', () => {
     expect(res.headers.get('location')).toBeNull();
   });
 
+  it('serves /pricing on the public site without redirecting', () => {
+    const res = middleware(request('/pricing', undefined, 'www.fgi.ie'));
+    expect(res.headers.get('location')).toBeNull();
+  });
+
   it('serves /robots.txt on the public site without redirecting', () => {
     const res = middleware(request('/robots.txt', undefined, 'www.fgi.ie'));
     expect(res.headers.get('location')).toBeNull();

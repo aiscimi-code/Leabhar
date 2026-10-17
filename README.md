@@ -7,6 +7,7 @@ and nothing leaves the machine unless you ask it to.
 
 ![License](https://img.shields.io/badge/license-AGPL--3.0--only-blue)
 ![Node](https://img.shields.io/badge/node-%3E%3D22-green)
+[![Sponsors](https://img.shields.io/github/sponsors/aiscimi-code?logo=githubsponsors&label=Sponsors&color=pink&style=flat)](https://github.com/sponsors/aiscimi-code)
 
 Leabhar keeps double-entry books from your bank statements and invoices, and
 prepares the VAT and tax figures that follow from them. Each figure cites
@@ -419,5 +420,20 @@ offer your users the source of your modified version.
 A commercial licence is available for uses that cannot meet the AGPL's
 source-disclosure obligations; see [COMMERCIAL.md](COMMERCIAL.md).
 Contributions are accepted under the terms in [CLA.md](CLA.md).
+
+## Sponsor
+
+Leabhar is developed by [Intleacht Research Limited](https://intleacht.ie) and
+funded by its users. If Leabhar saves you time or money, consider sponsoring
+its development on [GitHub Sponsors](https://github.com/sponsors/aiscimi-code):
+
+| Tier | Price | What you get |
+|------|-------|-------------|
+| Supporter | €5/mo | Name in the sponsors list |
+| Bronze | €25/mo | Name + link in the README |
+| Silver | €100/mo | Logo + link in the README |
+| Gold | €500/mo | Logo + link on www.fgi.ie |
+
+Sponsors help fund rule research, statutory updates, and new features.
 
 Copyright (C) 2026 Intleacht Research Limited.
