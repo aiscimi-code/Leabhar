@@ -199,7 +199,10 @@ file anything, and it does not replace professional advice.
 - **It does not file anything.** Nothing is sent to Revenue (ROS) or the
   CRO. Leabhar produces the figures and evidence; you or your accountant
   file them.
-- **No payroll or PAYE.**
+- **No Revenue e-filing.** Payroll and Employment Expense Reporting (ERR)
+  are being built out under EPIC 20 (#315) — figures and payslips exist,
+  but ROS submissions are not wired yet; when they are, they go straight
+  from the app using the employer's own certificate.
 - **Rules start unapproved.** Every derived rule starts as unreviewed and
   says so. Revenue guidance is marked as ranking below the Act it
   summarises.
