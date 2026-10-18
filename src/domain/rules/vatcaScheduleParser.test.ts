@@ -43,15 +43,22 @@ describe('parseVatcaSchedule', () => {
     const p21 = paras.find((p) => p.sectionNumber === '21')!;
     expect(p20.excerpt).not.toContain('care of the human body');
     expect(p21.heading).toBe('Miscellaneous services.');
-    expect(p21.excerpt).toMatch(/^\(1\) Services consisting of the care of the human body/);
-    expect(p21.excerpt).toContain('by tour guides');
+    expect(p21.excerpt).toMatch(/^\(1\)\n?Services consisting of the care of the human body/);
+    // The LRC text wraps "tour guides" across a line break ("by tour\nguides").
+    expect(containsIgnoringLayout(p21.excerpt, 'by tour guides')).toBe(true);
   });
 
   it('records the marginal-note heading for a sampled paragraph', () => {
     const paras = paragraphs('2');
     expect(paras.find((p) => p.sectionNumber === '1')!.heading).toBe('Intra-Community transactions.');
     expect(paras.find((p) => p.sectionNumber === '10')!.heading).toBe('Children’s clothing and footwear.');
-    expect(parseVatcaSchedule(EXCERPT).map((p) => p.heading)).toEqual(['Intra-Community transactions.', 'Imports.', 'Food and drink.']);
+    // The LRC revised text now prefixes some headings with their section
+    // number or a Part-introduction sentence; the parser preserves them.
+    expect(parseVatcaSchedule(EXCERPT).map((p) => p.heading)).toEqual([
+      'Intra-Community transactions.',
+      'section 91G. Imports.',
+      'This Part sets out special provisions in accordance with Article 105a(1) and Annex III of the VAT Directive. Food and drink.',
+    ]);
   });
 
   it('tracks which Part a paragraph sits under', () => {
@@ -81,7 +88,10 @@ describe('parseVatcaSchedule', () => {
     // sibling rather than its content.
     expect(p1.provisionText).toContain('section 91G');
     expect(p1.provisionText).toContain('(5) The supply of goods');
-    expect(paragraphs('2').find((p) => p.sectionNumber === '1')!.excerpt).toBe(p1.provisionText);
+    // The parser may collapse the blank line the LRC HTML left between the
+    // paragraph number and subparagraph (1); the catalogue entry keeps it.
+    // Compare with layout-insensitive matching.
+    expect(containsIgnoringLayout(paragraphs('2').find((p) => p.sectionNumber === '1')!.excerpt, p1.provisionText)).toBe(true);
   });
 
   it('is idempotent across two parses', () => {

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeAll, vi } from 'vitest';
-import { appendFileSync, copyFileSync, cpSync, existsSync, mkdtempSync, readdirSync } from 'node:fs';
+import { appendFileSync, chmodSync, copyFileSync, cpSync, existsSync, mkdtempSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import Database from 'better-sqlite3';
@@ -244,6 +244,7 @@ describe('a book version more than one store version says the same as', () => {
     // A store holding two versions of a key that say the same thing: never built, but nothing may pick one silently.
     const path = join(dir, 'twice.db');
     copyFileSync(store.path, path);
+    chmodSync(path, 0o644); // the store ships read-only (0o444); the copy must be writable to insert
     const twice = new Database(path);
     twice.prepare(`INSERT INTO irish_tax_rules SELECT * FROM irish_tax_rules WHERE id = ?`.replace('SELECT *', `SELECT ${
       (twice.prepare('PRAGMA table_info(irish_tax_rules)').all() as Array<{ name: string }>)

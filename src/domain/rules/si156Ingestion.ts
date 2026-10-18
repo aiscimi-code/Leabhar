@@ -264,6 +264,16 @@ export function deriveSi156CapacityExclusionRule(
   }
 
   const prior = rows.filter((r) => r.active).sort((a, b) => b.ruleVersion - a.ruleVersion)[0];
+  // Retire the prior (TDM guidance) version: the Regulation itself supersedes
+  // it. The TDM version starts later (2026-05-01) than the Regulation (2012-
+  // 06-01), so closing it at the Regulation's start would invert its window.
+  // Disable it so the graph check (which reads enabled, non-superseded
+  // versions) no longer sees two open-ended spans (#753 overlap cluster).
+  if (prior) {
+    db.update(irishTaxRules)
+      .set({ active: false, enabled: false })
+      .where(eq(irishTaxRules.id, prior.id)).run();
+  }
   const newRuleId = ids.taxRule();
   db.insert(irishTaxRules).values({
     id: newRuleId,

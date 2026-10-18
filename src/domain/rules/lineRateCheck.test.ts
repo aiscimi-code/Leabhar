@@ -143,7 +143,7 @@ describe('the rule window from the LRC amendment history (issue #205)', () => {
     const rule = db.select().from(irishTaxRules)
       .where(and(eq(irishTaxRules.companyId, companyId), eq(irishTaxRules.ruleKey, 'vat.reduced_rate_solid_fuel'), eq(irishTaxRules.active, true))).get()!;
     expect(rule.effectiveFrom).toBe('2017-12-25');
-    expect(rule.sourceNote).toMatch(/F479 Substituted/);
+    expect(rule.sourceNote).toMatch(/F484 Substituted/);
   });
 
   it('retires a rule derived with the wrong window instead of keeping it', () => {

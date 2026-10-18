@@ -25,11 +25,12 @@ describe('LRC schedule annotations', () => {
 
   it('parses footnote dates in every form the LRC uses', () => {
     const notes = parseLrcFootnotes(html('2'));
-    expect(notes.get('F418')).toMatchObject({ kind: 'Substituted', date: '2020-01-01' });
-    expect(notes.get('F425')?.date).toBe('2021-12-12'); // "(1.01.2021, 12.12.2021)": the later date
-    expect(notes.get('F442')?.date).toBe('2022-01-01'); // "(1.01.2022, deemed)"
-    expect(notes.get('F443')?.date).toBe('2021-12-21'); // "(21.12.21)"
-    expect(notes.get('F441')).toMatchObject({ kind: 'unspecified', date: '2020-12-19' });
+    // Footnote numbering shifted in the re-extraction; the forms are unchanged.
+    expect(notes.get('F423')).toMatchObject({ kind: 'Substituted', date: '2020-01-01' });
+    expect(notes.get('F430')?.date).toBe('2021-12-12'); // "(1.01.2021, 12.12.2021)": the later date
+    expect(notes.get('F447')?.date).toBe('2022-01-01'); // "(1.01.2022, deemed)"
+    expect(notes.get('F448')?.date).toBe('2021-12-21'); // "(21.12.21)"
+    expect(notes.get('F446')).toMatchObject({ kind: 'unspecified', date: '2020-12-19' });
     for (const n of ['2', '3']) {
       for (const note of parseLrcFootnotes(html(n)).values()) expect(note.date, `${n} ${note.ref}`).not.toBeNull();
     }
@@ -52,8 +53,8 @@ describe('LRC schedule annotations', () => {
     const s3 = scheduleParagraphWindows(html('3'), '3', paragraphs('3'));
     expect(s3.get('17')?.effectiveFrom).toBe('2017-12-25');
     expect(s3.get('16')?.effectiveFrom).toBe('2025-12-23');
-    expect(s3.get('21')).toMatchObject({ effectiveFrom: '2018-01-01' }); // the unnumbered paragraph (F481)
-    expect(s3.get('21')!.footnotes.map((f) => f.ref)).toContain('F481');
+    expect(s3.get('21')).toMatchObject({ effectiveFrom: '2018-01-01' }); // the unnumbered paragraph
+    expect(s3.get('21')!.footnotes.map((f) => f.ref)).toContain('F486');
     // Never amended: from the Act's commencement.
     expect(s3.get('19')).toEqual({ effectiveFrom: '2010-11-01', footnotes: [] });
   });

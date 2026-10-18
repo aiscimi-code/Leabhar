@@ -31,13 +31,13 @@ describe('quotedTextWindow: the window of the words a rule quotes', () => {
   it('dates words inside an amendment\'s bracket from that amendment', () => {
     const insurance = quotedTextWindow(html, ['Insurance and reinsurance transactions'])!;
     expect(insurance.effectiveFrom).toBe('2012-03-31');
-    expect(insurance.footnotes.map((f) => f.ref)).toEqual(['F407']);
+    expect(insurance.footnotes.map((f) => f.ref)).toEqual(['F412']);
     expect(quotedTextWindow(html, ['transferring or otherwise dealing in stocks'])!.effectiveFrom).toBe('2022-12-15');
   });
 
   it('catches a deletion through the "…" it leaves, and takes the latest of several quotes', () => {
     const deleted = quotedTextWindow(html, ['… transferring or otherwise dealing'])!;
-    expect(deleted.footnotes.map((f) => f.ref).sort()).toEqual(['F391', 'F392']);
+    expect(deleted.footnotes.map((f) => f.ref).sort()).toEqual(['F396', 'F397']);
     expect(deleted.effectiveFrom).toBe('2023-12-18');
     expect(quotedTextWindow(html, ['operating a current', 'Insurance and reinsurance transactions'])!.effectiveFrom)
       .toBe('2012-03-31');
@@ -117,7 +117,7 @@ describe('deriving and applying the Schedule 1 rules', () => {
     }
     expect(rule('vat.exempt_bank_account_and_payment_services')!.effectiveFrom).toBe('2010-11-01');
     expect(rule('vat.exempt_insurance')!.effectiveFrom).toBe('2012-03-31');
-    expect(rule('vat.exempt_insurance')!.sourceNote).toMatch(/F407/);
+    expect(rule('vat.exempt_insurance')!.sourceNote).toMatch(/F412/);
   });
 
   it('re-deriving is a no-op; a row with a wrong window is retired and replaced, not left in force', () => {

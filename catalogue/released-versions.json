@@ -426,6 +426,7 @@
     "vat3.box_t1@1": "fbb16bca8fbaa8b1dd1cf44aec9a36522f6ab4a002c59be7da1af4c9e9c70755",
     "vat3.box_t2@1": "6a1c1f9e5d2da974a631f4df725b20d56ea4cf011c7dfd15d800c9278630d5d0",
     "vat3.box_t3@1": "b31559b75a1c453fcf4048271d681817ee7da48a8db2ce308884d34d583832ea",
-    "vat3.box_t4@1": "c64fe6ef8d435d531db1fe4821e7aad926cc4f9f7e74409d350a87663c2ffd75"
+    "vat3.box_t4@1": "c64fe6ef8d435d531db1fe4821e7aad926cc4f9f7e74409d350a87663c2ffd75",
+    "vat.mandatory_electronic_filing_capacity_exclusion@2": "0ff7527f0a70c7b48bdf1e4092caccad0ad6e0af0fc009f78a42bf215b067e96"
   }
 }

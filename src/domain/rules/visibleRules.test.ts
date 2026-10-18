@@ -47,9 +47,10 @@ function retainVersion(db: ReturnType<typeof book>['db'], companyId: string, rul
 describe('the attached store', () => {
   it('is read-only on the book connection', () => {
     const { sqlite } = book();
-    expect(() => sqlite.exec('DELETE FROM rules.irish_tax_rules')).toThrow(/read-only/);
-    expect(() => sqlite.exec("UPDATE rules.irish_tax_rules SET name = 'x'")).toThrow(/read-only/);
-    expect(() => sqlite.exec('INSERT INTO rules.irish_rule_links (id) VALUES (1)')).toThrow(/read-only/);
+    // SQLite reports "attempt to write a readonly database" (no hyphen).
+    expect(() => sqlite.exec('DELETE FROM rules.irish_tax_rules')).toThrow(/read.?only/);
+    expect(() => sqlite.exec("UPDATE rules.irish_tax_rules SET name = 'x'")).toThrow(/read.?only/);
+    expect(() => sqlite.exec('INSERT INTO rules.irish_rule_links (id) VALUES (1)')).toThrow(/read.?only/);
   });
 
   it('fails loudly when the store is missing, and leaves no fallback attached', () => {
