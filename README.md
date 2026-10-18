@@ -90,6 +90,7 @@ file anything, and it does not replace professional advice.
   - exemptions;
   - place of supply and reverse charges;
   - input VAT restrictions;
+  - the taxable amount rules (VATCA ss.36–45);
   - the property, margin and other schemes.
   Where more than one treatment is possible, Leabhar offers the options
   and waits for you to choose.
@@ -132,10 +133,19 @@ file anything, and it does not replace professional advice.
     s.396B claim if you choose one;
   - **close company surcharge;**
   - **dates:** preliminary tax and the CT1 filing date.
+- **Motor vehicle costs:** the emissions-based limits on capital
+  allowances are applied from the curated rules, and a claim that
+  depends on the SEAI list is flagged for you to check.
 - Expense lines that look like entertainment, fines or private costs get a
   suggested treatment. So do income outside the trading accounts, loss
   claims and close company status. The figures use the suggestion until
   you record a choice.
+
+### Relevant Contracts Tax (principal contractors)
+
+- **RCT for principal contractors.** Payments to subcontractors carry
+  the deduction rate the rules give, and the payment notifications and
+  returns are prepared from the books.
 
 ### Income tax (sole traders and partnerships; not PAYE)
 
@@ -154,7 +164,8 @@ file anything, and it does not replace professional advice.
 - **Each person's liability:**
   - income tax at the bands and credits for their personal status;
   - USC;
-  - PRSI Class S.
+  - PRSI Class S: the rate, the €650 minimum and the €5,000 prescribed
+    amount below which nothing is payable are all read from the rules.
 - **Form 11 preparation:** the computation laid out as the return asks for
   it, per person for a partnership, with the self-assessment reconciliation
   (the tax, the preliminary tax paid, the balance) and the tax provision —
@@ -188,30 +199,25 @@ file anything, and it does not replace professional advice.
 - **It does not file anything.** Nothing is sent to Revenue (ROS) or the
   CRO. Leabhar produces the figures and evidence; you or your accountant
   file them.
-- **No payroll or PAYE.**
+- **No Revenue e-filing.** Payroll and Employment Expense Reporting (ERR)
+  are being built out under EPIC 20 (#315) — figures and payslips exist,
+  but ROS submissions are not wired yet; when they are, they go straight
+  from the app using the employer's own certificate.
 - **Rules start unapproved.** Every derived rule starts as unreviewed and
   says so. Revenue guidance is marked as ranking below the Act it
   summarises.
 - **Flagged, not computed:**
-  - motor vehicle cost and emissions limits on capital allowances (the
-    source is awaited, #211);
   - chargeable gains;
   - charges on income;
   - group relief;
   - associated companies' share of the surcharge threshold;
   - a spouse's second income;
-  - other non-trading income of an individual;
-  - PRSI Class S before 25 September 2026 and the €5,000 Class S
-    threshold (the sources don't give them yet).
+  - other non-trading income of an individual.
 - **Not built yet** (open issues):
-  - RCT for principal contractors, including payment notifications and
-    returns (#213);
   - financial statements in FRS 102 / Section 1A form, and CRO filings
     (#214);
   - an accountant pack of tax-ready documents with every flagged item
-    listed (#215);
-  - the VAT taxable amount rules in VATCA ss.36–45 (#245);
-  - the remaining VAT rate and exemption paragraphs (#205, #206).
+    listed (#215).
 - **Scale:** one business per database, one local user. It is not a
   multi-client practice system.
 
@@ -258,13 +264,14 @@ domain code, so the web app and the CLI cannot disagree about a figure.
 ### Option A: Prebuilt installer (Windows)
 
 Download `Leabhar-Setup-x64.exe` from the
-[releases page](https://github.com/aiscimi-code/Leabhar/releases),
+[v0.1.0 release](https://github.com/aiscimi-code/Leabhar/releases/tag/v0.1.0),
 double-click it, and follow the installer. It creates a desktop shortcut:
 double-click "Leabhar" and your browser opens `localhost:3000`. You don't
 need Node.js, npm or a terminal.
 
-The first run shows an empty database. Click "Try the demo" to load a
-fictional company that includes the awkward cases, or set up your own.
+The first run shows an empty database. Load a fictional demo company
+(limited company, sole trader or partnership) that includes the awkward
+cases, or set up your own.
 
 ### Option B: From source
 
@@ -323,52 +330,6 @@ npm run cli -- it-computation --year 2025
 
 The full reference and the agent workflow are in
 [docs/RUNNING.md](docs/RUNNING.md).
-
-### Tax rules MCP server
-
-Leabhar ships a [Model Context Protocol](https://modelcontextprotocol.io)
-server that exposes the Irish tax rules knowledge base to AI agents. It is
-live at **https://mcp.fgi.ie** — free to use, no authentication required.
-
-**8 tools:**
-
-| Tool | What it does |
-|------|-------------|
-| `search_tax_rules` | Full-text search over the rules knowledge base |
-| `get_tax_rule` | Fetch a specific rule with its statutory citations and provenance |
-| `get_tax_source` | Fetch the source legislation/Revenue guidance a rule quotes |
-| `check_reverse_charge` | Determine whether reverse charge applies to a cross-border supply |
-| `get_tax_evidence` | Get the evidence trail behind a tax treatment |
-| `determine_tax_treatment` | Suggest VAT treatment for a set of facts |
-| `validate_tax_facts` | Validate that required facts are present before applying rules |
-| `flag_restricted_counterparty` | Flag sanctioned or restricted counterparties |
-
-**Example — connect from Claude Desktop:**
-
-```json
-{
-  "mcpServers": {
-    "leabhar-tax": {
-      "url": "https://mcp.fgi.ie/mcp",
-      "transport": "streamable-http"
-    }
-  }
-}
-```
-
-**Example — search for VAT registration thresholds:**
-
-```bash
-curl -X POST https://mcp.fgi.ie/mcp \
-  -H 'Content-Type: application/json' \
-  -H 'Accept: application/json, text/event-stream' \
-  -d '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"search_tax_rules","arguments":{"query":"VAT registration threshold"}}}'
-```
-
-The server is stateless and read-only. It serves the same rules knowledge
-base that the desktop app and CLI use — every rule cites the Act, Schedule
-or Revenue guidance it rests on. Source:
-[Leabhar_mcp](https://github.com/aiscimi-code/Leabhar_mcp).
 
 ## Documentation
 
