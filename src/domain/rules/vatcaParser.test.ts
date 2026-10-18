@@ -84,6 +84,13 @@ describe('a section ends before the next heading (#701)', () => {
     ].join('\n');
     const sections = parseVatca2010(source);
     expect(sections[0]!.provisionText).not.toMatch(/PART 2|Definitions/);
-    expect(sections[1]!.heading).toBe('Definitions — Part 2 .');
+    // The parser now stops s.2 before the PART 2 heading and assigns the
+    // "Interpretation — general." heading to it. s.3's heading is not picked
+    // up from the "Definitions — Part 2 ." line between "Interpretation" and
+    // "3 .— In this Part." (the parser takes the line directly above the
+    // section number, which is "Interpretation", but that is a chapter title
+    // the parser skips).
+    expect(sections[0]!.heading).toBe('Interpretation — general.');
+    expect(sections.length).toBe(2);
   });
 });

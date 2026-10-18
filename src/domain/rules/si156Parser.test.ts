@@ -10,8 +10,8 @@ const EXCERPT = readFileSync(new URL('./__fixtures__/si-156-2012-excerpt.md', im
 const regs = readCatalogueEntry(SI_156_CATALOGUE_ENTRY).provisions;
 
 describe('parseSi156', () => {
-  it('holds the regulations books already hold: 1, 2 and 4 (#705)', () => {
-    expect(regs.map((r) => r.sectionNumber)).toEqual(['1', '2', '4']);
+  it('holds the regulations books already hold: 1–9 and Schedules 1–2 (#705)', () => {
+    expect(regs.map((r) => r.sectionNumber)).toEqual(['1', '2', '3', '4', '5', '6', '7', '8', '9', 'Schedule 1', 'Schedule 2']);
     expect(parseSi156(EXCERPT).map((r) => r.regulationNumber)).toEqual(['1', '2']);
   });
 

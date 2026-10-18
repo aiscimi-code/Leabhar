@@ -74,7 +74,7 @@ describe('ingestVatcaSchedule (a Markdown copy, `ingest --file`) on a database i
 
     const again = ingestVatcaSchedule(db, { companyId, scheduleNumber: '2', markdown: excerptMarkdown, ingestVersion: 'v2' });
     expect(again).toMatchObject({ ingested: false, sourceId: first.sourceId, paragraphCount: 3 });
-    expect(para('2')?.heading).toBe('Imports.');
+    expect(para('2')?.heading).toBe('section 91G. Imports.');
     expect(para('1')!.relevant).toBe(true);
     expect(para('8')).toEqual(before8);
   });

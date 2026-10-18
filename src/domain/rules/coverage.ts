@@ -138,9 +138,19 @@ export function expectedCoverageRows(params: { root: string; treatmentCodes: str
         part: p.part ? p.part.replace(/^Part\s+/i, 'p') : null, number: p.paragraphNumber, heading: p.heading,
       }));
     // Schedule 5 marks its paragraphs as Markdown headings ("## 1. Works of art").
-    if (paragraphs.length === 0) {
-      paragraphs = [...text.matchAll(/^##\s+(\d+[A-Z]?)\.\s+(.+)$/gm)]
-        .map((m) => ({ part: null, number: m[1]!, heading: m[2]!.trim() }));
+    // Schedule 6 lists its paragraphs as bare numbered items without blank lines
+    // ("1. Telecommunication services.\n2. Supply of..."). The parser reads the
+    // whole schedule as one paragraph; fall back to the heading/number regex.
+    if (paragraphs.length <= 1) {
+      const headingParas = [...text.matchAll(/^##\s+(\d+[A-Z]?)\.\s+(.+)$/gm)]
+        .map((m) => ({ part: null as string | null, number: m[1]!, heading: m[2]!.trim() }));
+      if (headingParas.length > 1) {
+        paragraphs = headingParas;
+      } else {
+        const bareParas = [...text.matchAll(/^(\d+[A-Z]?)\.\s+(.+)$/gm)]
+          .map((m) => ({ part: null as string | null, number: m[1]!, heading: m[2]!.trim() }));
+        if (bareParas.length > 1) paragraphs = bareParas;
+      }
     }
     for (const p of paragraphs) {
       rows.push({

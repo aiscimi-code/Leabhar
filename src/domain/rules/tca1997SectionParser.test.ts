@@ -43,13 +43,12 @@ describe('parseTca1997Section', () => {
     expect(slice.replace(/\s+/g, ' ').trim()).toBe(p.provisionText.replace(/\s+/g, ' ').trim());
   });
 
-  it('categorises via the shared statuteParser keyword rules (subsection (2)\'s own "corporation tax" mention wins over "Interpretation")', () => {
-    // categoriseProvision checks corporation_tax before definitions in its
-    // rule list; s.530(2)'s own text ("references... shall include
-    // references to corporation tax") matches first. This reflects the
-    // shared, source-independent categoriser's real behaviour, not a
-    // TCA-specific special case.
-    expect(s530.category).toBe('corporation_tax');
+  it('categorises via the shared statuteParser keyword rules (the provision is RCT, not corporation tax)', () => {
+    // The catalogue entry's category is 'rct' (commit f256f52 re-categorised
+    // s.530 from 'corporation_tax' to 'rct' — it is the RCT interpretation
+    // section, not a corporation tax provision). The heading "Interpretation"
+    // no longer wins: the catalogue extraction assigns the category directly.
+    expect(s530.category).toBe('rct');
   });
 
   it('is idempotent across two parses', () => {
