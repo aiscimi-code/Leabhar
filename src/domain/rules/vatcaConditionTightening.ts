@@ -298,8 +298,159 @@ const S34_PLACE_OF_SUPPLY_B2B: TightenedRule = {
     + 'version records no approval.',
 };
 
+/**
+ * The s.59 input deduction, re-curated from the revised s.59. The quote now
+ * carries the subsection's opening words and the three bases a line evidences
+ * directly - charged by invoice (a), imports (b), intra-Community
+ * acquisitions (c); the remaining bases, the s.60 limits, the s.61
+ * apportionment and the s.62 qualifying-vehicle reduction are named
+ * exceptions, and the use test is read from the line's business-use share,
+ * not from a person's confirmation.
+ */
+const S59_INPUT_DEDUCTION: TightenedRule = {
+  citation: '2010 Act 31 s.59',
+  sectionNumber: '59',
+  ruleKey: 'vat.input_deduction_taxable_use',
+  ruleType: 'other',
+  topic: 'vat_scope',
+  name: 'Input VAT deductible for taxable supplies or qualifying activities, on each basis s.59(2) names (revised s.59)',
+  // Verbatim from the revised s.59 (catalogue/vatca-2010-revised/s059.json):
+  // the opening words of s.59(2) and bases (a), (b) and (c).
+  statementExcerpt: 'Subject to subsection (3) , in computing the amount of tax payable by an '
+    + 'accountable person in respect of a taxable period, that person may, in so far as the '
+    + 'goods and services are used by him or her for the purposes of his or her taxable '
+    + 'supplies or of any of the qualifying activities, deduct— ( a ) the tax charged to him '
+    + 'or her during the period by other accountable persons by means of invoices, prepared '
+    + 'in the manner prescribed by regulations, in respect of supplies of goods or services '
+    + 'to him or her, ( b ) in respect of goods imported by him or her in the period, the '
+    + 'tax paid by him or her or deferred as established from the relevant customs documents '
+    + 'kept by him or her in accordance with section 84 (3) , ( c ) subject to such '
+    + 'conditions (if any) as may be specified in regulations, the tax chargeable during '
+    + 'the period, being tax for which he or she is liable in respect of intra-Community '
+    + 'acquisitions of goods,',
+  conditions: [
+    // s.59(2): "an accountable person" computing the tax payable - the book's
+    // own purchase line.
+    { field: 'direction', operator: 'equals', value: 'purchase' },
+    { field: 'vatRegistered', operator: 'equals', value: 'true' },
+    // s.59(2)(a): "by means of invoices, prepared in the manner prescribed by
+    // regulations" (S.I. 639/2010 reg.20; the particulars are checked when a
+    // confirmed invoice is posted, vat.invoice_prescribed_particulars).
+    { field: 'invoiceAvailable', operator: 'equals', value: 'true' },
+  ],
+  exceptions: [
+    {
+      condition: 'the tax relates to expenditure s.60(2)(a) lists: food, drink or '
+        + 'accommodation or other personal services (i), such expenditure forming the cost of '
+        + 'an advertising service (ii), immovable goods acquired or developed for '
+        + 'non-business use on or after 1 January 2011 (iia), entertainment (iii), motor '
+        + 'vehicles otherwise than as stock-in-trade or for the excluded businesses (iv, '
+        + 'subject to s.59(2)(d)), petrol otherwise than as stock-in-trade (v), or contract '
+        + 'work handing over goods to which s.60(2)(a)(vi) applies (VATCA 2010 s.60(2)(a))',
+      effect: 'no deduction; each blocked category has its own rule '
+        + '(vat.blocked_food_drink_accommodation, vat.blocked_entertainment, '
+        + 'vat.blocked_motor_vehicle, vat.blocked_petrol), and qualifying accommodation at a '
+        + 'qualifying conference is the exception s.60(1) defines (Revenue TDM VAT Part 3, '
+        + 'Conferences — VAT deductibility, March 2025)',
+    },
+    {
+      condition: 'the cost is a dual-use input, used for both deductible supplies or '
+        + 'activities and non-deductible ones (VATCA 2010 s.61(1))',
+      effect: 'only the proportion of tax deductible is deductible (s.61(2)): the turnover '
+        + 'ratio of s.61(4) by default, or the other basis s.61(5) allows where the ratio '
+        + 'does not reflect the use; the ratio is computed at period validation '
+        + '(vat.dual_use_apportionment) and is not on the line - routed to review with that '
+        + 'name, never guessed',
+    },
+    {
+      condition: 'the tax is chargeable under another basis s.59(2) names rather than charged '
+        + 'by invoice: the qualifying-vehicle 20 per cent (d), gas through the natural gas '
+        + 'distribution network, heat or cooling energy or electricity (e), goods installed '
+        + 'or assembled (f), services received under the reverse charge by virtue of s.12 '
+        + 'or s.17(1) (g, as substituted 1 January 2011 by S.I. 612/2010 reg. 3(d), LRC '
+        + 'F136), and the further bases (h) to (q)',
+      effect: 'deductible on the same footing but evidenced differently; an import is '
+        + 'accounted from the customs entry (vat.import_of_goods names it), and the '
+        + 'reverse-charge VAT a recipient self-accounts for under s.12 is deducted as input '
+        + 'VAT in the same period (s.59(2)(g)) - routed to review with the basis named rather '
+        + 'than treated as non-deductible',
+    },
+    {
+      condition: 'the purchase, hiring, intra-Community acquisition or importation is of a '
+        + 'qualifying vehicle: first registered on or after 1 January 2021 with CO2 emissions '
+        + 'under 140g/km, or in 2009-2020 under 156g/km (VATCA 2010 s.59(1)), used at least '
+        + '60 per cent for business',
+      effect: '20 per cent of the tax is deductible (s.59(2)(d), subject to s.61 and '
+        + 'regulations); the registration, emissions and business use are not on the invoice '
+        + '(Revenue TDM VAT Part 3, Recovery of VAT on motor vehicles, April 2026) - routed '
+        + 'to review under that name (vat.blocked_motor_vehicle and '
+        + 'vat.qualifying_vehicle_disposal carry it)',
+    },
+    {
+      condition: 'the cost is used not for taxable supplies but for a qualifying activity: '
+        + 'transport outside the State of passengers and their accompanying baggage (a), '
+        + 'supplies deemed to have taken place in another Member State by s.30 (b), services '
+        + 'specified in Schedule 1 paragraph 6(1), 7(1) or 8 supplied outside the Community '
+        + 'or directly in connection with exports (d), or supplies outside the State that '
+        + 'would be taxable supplies if made in the State (f) (VATCA 2010 s.59(1))',
+      effect: 'deductible although not used for taxable supplies; which lines serve a '
+        + 'qualifying activity is not on the line - routed to review with that name rather '
+        + 'than guessed',
+    },
+    {
+      condition: 'the person is an accountable person referred to in s.9(4) or s.12(3), or in '
+        + 's.9(6) or s.12(5) other than for racehorse training services supplied, or in '
+        + 's.22(3) or s.28(4), or a taxable person deemed to have supplied a letting under '
+        + 's.28(5) (VATCA 2010 s.59(3), as substituted 12 November 2024 by Finance Act 2024 '
+        + 's.80, LRC F144)',
+      effect: 's.59(2) does not apply to them for the supplies those sections cover - routed '
+        + 'to review with that name',
+    },
+  ],
+  crossReferences: [
+    'VATCA 2010 s.59(1)',
+    'VATCA 2010 s.60',
+    'VATCA 2010 s.61',
+    'VATCA 2010 s.62',
+    'VATCA 2010 s.12',
+    'VATCA 2010 s.66',
+    'S.I. 639/2010 reg.20',
+  ],
+  vatEffect: 'The VAT on the line is deductible (T2) in so far as the cost is used for the '
+    + 'person\'s taxable supplies or any of the qualifying activities (s.59(2)): charged by '
+    + 'invoice (s.59(2)(a)), on an import from the customs documents (s.59(2)(b)), on an '
+    + 'intra-Community acquisition (s.59(2)(c)), and on the other bases the subsection names '
+    + '- the 20 per cent qualifying-vehicle limit (d), gas, heat, cooling and electricity '
+    + '(e), installed or assembled goods (f), services received under the reverse charge '
+    + '(g) and the further bases (h) to (q). The s.60(2)(a) blocks deny it, the s.61 '
+    + 'proportion trims it, and the s.62 formula claws back a qualifying vehicle\'s 20 per '
+    + 'cent.',
+  accountingEffect: null,
+  reportingEffect: null,
+  effectiveFrom: VATCA_COMMENCEMENT,
+  interpretationNote: 'Version 2, curated from the revised s.59 '
+    + '(catalogue/vatca-2010-revised/s059.json); the released version 1 is disabled, never '
+    + 'changed. The quoted words are the opening of s.59(2) and the three bases a line '
+    + 'evidences directly - invoice (a), customs documents (b), intra-Community acquisition '
+    + '(c) - all unamended since the Act commenced, so the version starts with the Act; the '
+    + 'remaining bases, including the reverse-charge basis (g) as substituted 1 January 2011 '
+    + 'by S.I. 612/2010 reg. 3(d) (LRC F136), are named exceptions rather than quoted, '
+    + 'because a quote spanning them would date this version from the latest amendment to '
+    + 'any limb (s.59(2)(j) was substituted 1 August 2026 by the National Treasury '
+    + 'Management Agency (Miscellaneous Provisions) Act 2026 s.4(3), LRC F140) and leave the '
+    + 'deduction\'s span before that date uncovered. The use test is read from the line\'s '
+    + 'business-use share, not a person\'s confirmation: a share of 100 is wholly for '
+    + 'taxable supplies; below 100 is dual use, the s.61 proportion with the share flagged; '
+    + 'absent means not yet assessed and the deduction is unresolved. The qualifying '
+    + 'activities of s.59(1)(a)-(f), the s.60(2)(a) blocks, the s.61 apportionment and the '
+    + 's.62 qualifying-vehicle reduction (TDMs: Recovery of VAT on motor vehicles, April '
+    + '2026; Conferences — VAT deductibility, March 2025) are named routes; the blocked '
+    + 'categories override this rule when they match (ruleLinks excludes). requiresGuidance '
+    + 'stays set: this version records no approval.',
+};
+
 /** Every tightened version this module derives, keyed by its section. */
-export const CONDITION_TIGHTENED_RULES: TightenedRule[] = [S12_REVERSE_CHARGE, S34_PLACE_OF_SUPPLY_B2B];
+export const CONDITION_TIGHTENED_RULES: TightenedRule[] = [S12_REVERSE_CHARGE, S34_PLACE_OF_SUPPLY_B2B, S59_INPUT_DEDUCTION];
 
 export interface ConditionTighteningResult {
   created: number;

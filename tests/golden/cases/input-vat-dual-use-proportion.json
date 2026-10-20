@@ -1,0 +1,28 @@
+{
+  "id": "input-vat-dual-use-proportion",
+  "description": "Purchase used 60% for the business: only the s.61 proportion of the VAT is deductible",
+  "authority": "LEABHAR_RULE",
+  "references": ["vat.input_deduction_taxable_use", "vat.dual_use_apportionment"],
+  "notes": "VATCA 2010 s.59(2) allows the deduction in so far as the cost is used for taxable supplies; a cost used for both deductible and non-deductible purposes is a dual-use input (s.61(1)), deductible only in the proportion of tax deductible (s.61(2), the s.61(4) turnover ratio by default). The line carries a 60% business-use share; the share is flagged, never silently assumed to be 100.",
+  "inputs": {
+    "transaction": {
+      "direction": "purchase",
+      "transactionDate": "2025-06-15",
+      "amountMinor": 12300,
+      "currency": "EUR",
+      "entityType": "Irish_LTD",
+      "vatRegistered": true,
+      "supplyType": "services",
+      "transactionType": "purchase_invoice",
+      "description": "Accounting software subscription, mixed business use",
+      "businessUsePercent": 60,
+      "invoiceAvailable": true
+    }
+  },
+  "expected_classification": {
+    "identifiedTopics": ["vat"],
+    "applicableRuleKeys": ["vat.input_deduction_taxable_use", "vat.rate_standard_current"],
+    "reviewRequired": true
+  },
+  "review_required": true
+}

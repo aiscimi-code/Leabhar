@@ -11,6 +11,7 @@ import { createCompany } from '../config/setup';
 import { ingestVatca2010FromCatalogue, deriveVatcaRules } from './vatcaIngestion';
 import { ingestVatcaRevised } from './vatcaRevisedIngestion';
 import { deriveConditionTightenedRules } from './vatcaConditionTightening';
+import { deriveVatScopeRules } from './vatScopeIngestion';
 import { lookupTransactionRules } from './transactionLookup';
 import { attachRulesStoreFromBook } from './rulesStore';
 import { declaredLinksFrom } from './ruleLinks';
@@ -19,6 +20,7 @@ import type { AppDatabase } from '@/db';
 
 const REVERSE_CHARGE_KEY = 'vat.reverse_charge_services_from_abroad';
 const PLACE_OF_SUPPLY_KEY = 'vat.place_of_supply_b2b_general';
+const INPUT_DEDUCTION_KEY = 'vat.input_deduction_taxable_use';
 
 let db: AppDatabase;
 let companyId: string;
@@ -35,16 +37,19 @@ beforeEach(() => {
   // The released version 1 derives from the Act as enacted, as always.
   ingestVatca2010FromCatalogue(db, { companyId });
   deriveVatcaRules(db, { companyId });
-  for (const section of ['012', '034']) {
+  for (const section of ['012', '034', '059']) {
     ingestVatcaRevised(db, { companyId, section });
   }
+  // Version 1 of the input-deduction rule derives from the revised s.59/s.60,
+  // as in the real pipeline, so the tightened s.59 has something to supersede.
+  deriveVatScopeRules(db, { companyId });
 });
 
 describe('deriveConditionTightenedRules — the s.12 reverse charge', () => {
   it('derives version 2 from the revised s.12 and chains it to version 1', () => {
     const result = deriveConditionTightenedRules(db, { companyId });
-    expect(result.created).toBe(2);
-    expect(result.disabled).toBe(2);
+    expect(result.created).toBe(3);
+    expect(result.disabled).toBe(3);
     expect(result.skippedNoProvision).toEqual([]);
     expect(result.skippedExcerptNotInProvision).toEqual([]);
 
@@ -106,9 +111,9 @@ describe('deriveConditionTightenedRules — the s.12 reverse charge', () => {
   it('is idempotent: a second derive changes nothing', () => {
     const first = deriveConditionTightenedRules(db, { companyId });
     const second = deriveConditionTightenedRules(db, { companyId });
-    expect(first.created).toBe(2);
+    expect(first.created).toBe(3);
     expect(second.created).toBe(0);
-    expect(second.unchanged).toBe(2);
+    expect(second.unchanged).toBe(3);
     expect(second.disabled).toBe(0);
     expect(rowsOf(REVERSE_CHARGE_KEY)).toHaveLength(2);
   });
@@ -120,7 +125,7 @@ describe('deriveConditionTightenedRules — the s.12 reverse charge', () => {
     deriveVatcaRules(db, { companyId });
     const result = deriveConditionTightenedRules(db, { companyId });
     expect(result.created).toBe(0);
-    expect(result.skippedNoProvision).toEqual([REVERSE_CHARGE_KEY, PLACE_OF_SUPPLY_KEY]);
+    expect(result.skippedNoProvision).toEqual([REVERSE_CHARGE_KEY, PLACE_OF_SUPPLY_KEY, INPUT_DEDUCTION_KEY]);
     // Version 1 still stands, untouched.
     const [v1] = rowsOf(REVERSE_CHARGE_KEY);
     expect(v1?.active).toBe(true);
@@ -175,8 +180,8 @@ describe('deriveConditionTightenedRules — the s.12 reverse charge', () => {
 describe('deriveConditionTightenedRules — the s.34 general B2B place of supply', () => {
   it('derives version 2 from the revised s.34 and chains it to version 1', () => {
     const result = deriveConditionTightenedRules(db, { companyId });
-    expect(result.created).toBe(2);
-    expect(result.disabled).toBe(2);
+    expect(result.created).toBe(3);
+    expect(result.disabled).toBe(3);
     expect(result.skippedNoProvision).toEqual([]);
     expect(result.skippedExcerptNotInProvision).toEqual([]);
 
@@ -234,7 +239,7 @@ describe('deriveConditionTightenedRules — the s.34 general B2B place of supply
     deriveConditionTightenedRules(db, { companyId });
     const second = deriveConditionTightenedRules(db, { companyId });
     expect(second.created).toBe(0);
-    expect(second.unchanged).toBe(2);
+    expect(second.unchanged).toBe(3);
     expect(second.disabled).toBe(0);
     expect(rowsOf(PLACE_OF_SUPPLY_KEY)).toHaveLength(2);
   });
@@ -256,6 +261,92 @@ describe('deriveConditionTightenedRules — the s.34 general B2B place of supply
     expect(applicable).toBeDefined();
     expect(applicable?.statement).toContain('a fixed establishment of the person');
     expect(applicable?.exceptions.length).toBe(8);
+    expect(result.reviewRequired).toBe(true);
+  });
+});
+
+describe('deriveConditionTightenedRules — the s.59 input deduction', () => {
+  it('derives version 2 from the revised s.59 and chains it to version 1', () => {
+    const result = deriveConditionTightenedRules(db, { companyId });
+    expect(result.skippedNoProvision).toEqual([]);
+    expect(result.skippedExcerptNotInProvision).toEqual([]);
+
+    const [v1, v2] = rowsOf(INPUT_DEDUCTION_KEY);
+    expect(v1?.ruleVersion).toBe(1);
+    expect(v2?.ruleVersion).toBe(2);
+    expect(v2?.supersedesRuleId).toBe(v1?.id);
+    expect(v2?.active).toBe(true);
+    expect(v2?.enabled).toBe(true);
+    // The quote carries the opening words of s.59(2) and bases (a), (b) and
+    // (c) - all unamended, so the version starts with the Act.
+    expect(v2?.statement).toContain('the purposes of his or her taxable supplies or of any of the qualifying activities');
+    expect(v2?.statement).toContain('by means of invoices, prepared in the manner prescribed by regulations');
+    expect(v2?.statement).toContain('intra-Community acquisitions of goods');
+    expect(v2?.effectiveFrom).toBe('2010-11-01');
+    expect(v2?.reviewStatus).toBe('ai_extracted');
+  });
+
+  it('disables the released version 1 without changing a byte the release hashed', () => {
+    deriveConditionTightenedRules(db, { companyId });
+    const [v1] = rowsOf(INPUT_DEDUCTION_KEY);
+    expect(v1?.active).toBe(false);
+    expect(v1?.enabled).toBe(false);
+    expect(v1?.effectiveFrom).toBe('2010-11-01');
+    expect(v1?.effectiveTo).toBeNull();
+    expect(v1?.conditions).toEqual([
+      { field: 'direction', operator: 'equals', value: 'purchase' },
+      { field: 'vatRegistered', operator: 'equals', value: 'true' },
+      { field: 'invoiceAvailable', operator: 'equals', value: 'true' },
+    ]);
+  });
+
+  it('routes the limits, the apportionment and the other bases to named exceptions', () => {
+    deriveConditionTightenedRules(db, { companyId });
+    const v2 = rowsOf(INPUT_DEDUCTION_KEY)[1]!;
+    const conditions = v2.exceptions.map((e) => e.condition).join(' ');
+    // s.60(2)(a)'s list, s.61 dual use, the other s.59(2) bases including the
+    // reverse-charge basis (g), the qualifying-vehicle 20 per cent, the
+    // s.59(1) qualifying activities and the s.59(3) exclusions.
+    expect(v2.exceptions.length).toBe(6);
+    expect(conditions).toContain('s.60(2)(a)');
+    expect(conditions).toContain('s.61(1)');
+    expect(conditions).toContain('s.12 or s.17(1)');
+    expect(conditions).toContain('qualifying vehicle');
+    expect(conditions).toContain('s.59(1)');
+    expect(conditions).toContain('s.59(3)');
+    // The use test is an evaluable fact now: the note reads the line's
+    // business-use share, not a person's confirmation.
+    expect(v2.humanExplanation).toContain('business-use share');
+    // The v1 wording made a person's confirmation the test; v2 reads the share.
+    expect(v2.humanExplanation).not.toContain('is the person\'s confirmation');
+  });
+
+  it('is idempotent: a second derive changes nothing', () => {
+    deriveConditionTightenedRules(db, { companyId });
+    const second = deriveConditionTightenedRules(db, { companyId });
+    expect(second.created).toBe(0);
+    expect(second.unchanged).toBe(3);
+    expect(second.disabled).toBe(0);
+    expect(rowsOf(INPUT_DEDUCTION_KEY)).toHaveLength(2);
+  });
+
+  it('the lookup serves version 2 for a deductible purchase, exceptions named', () => {
+    deriveConditionTightenedRules(db, { companyId });
+    attachRulesStoreFromBook(db, { companyId });
+    const result = lookupTransactionRules(db, {
+      companyId,
+      transaction: {
+        direction: 'purchase',
+        transactionDate: '2026-09-18', amountMinor: 123000, currency: 'EUR',
+        vatRegistered: true, supplyType: 'services', invoiceAvailable: true,
+        supplierCountry: 'IE', description: 'Accounting software subscription',
+        businessUsePercent: 100,
+      },
+    });
+    const applicable = result.applicableRules.find((r) => r.ruleKey === INPUT_DEDUCTION_KEY);
+    expect(applicable).toBeDefined();
+    expect(applicable?.statement).toContain('qualifying activities');
+    expect(applicable?.exceptions.length).toBe(6);
     expect(result.reviewRequired).toBe(true);
   });
 });

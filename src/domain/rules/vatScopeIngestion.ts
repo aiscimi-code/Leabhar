@@ -113,20 +113,25 @@ export function deriveVatScopeRules(
         : `Effective from ${effectiveFrom}: the LRC records no amendment to the quoted words since the Act commenced. `)
       : '';
 
-    const existing = db.select().from(irishTaxRules)
+    const stored = db.select().from(irishTaxRules)
       .where(and(
         eq(irishTaxRules.companyId, params.companyId),
         eq(irishTaxRules.ruleKey, rule.ruleKey),
-        eq(irishTaxRules.active, true),
-      )).get();
+      )).all();
 
+    // Already derived, even when a later version's derive has disabled it (a
+    // version is superseded by being disabled, never closed): the stored row
+    // and its successor stand, and this derive must not fight them.
+    if (stored.some((r) => r.provisionId === prov.id && r.statement === rule.statementExcerpt
+        && JSON.stringify(r.conditions) === JSON.stringify(rule.conditions)
+        && r.topic === rule.topic && r.effectiveFrom === effectiveFrom
+        && (r.effectiveTo === null || r.effectiveTo > r.effectiveFrom))) {
+      result.unchanged++;
+      continue;
+    }
+
+    const existing = stored.find((r) => r.active);
     if (existing) {
-      if (existing.provisionId === prov.id && existing.statement === rule.statementExcerpt
-          && JSON.stringify(existing.conditions) === JSON.stringify(rule.conditions)
-          && existing.topic === rule.topic && existing.effectiveFrom === effectiveFrom) {
-        result.unchanged++;
-        continue;
-      }
       // The replacement describes the same law better (a corrected window or
       // proxy), so the old row is retired outright, its window emptied, rather
       // than left in force until today.
@@ -162,7 +167,7 @@ export function deriveVatScopeRules(
       requiresGuidance: true,
       humanReviewRequired: true,
       reviewStatus: 'ai_extracted',
-      ruleVersion: existing ? existing.ruleVersion + 1 : 1,
+      ruleVersion: stored.reduce((max, r) => Math.max(max, r.ruleVersion), 0) + 1,
       supersedesRuleId: existing?.id ?? null,
       priority: 100,
       effectiveFrom,

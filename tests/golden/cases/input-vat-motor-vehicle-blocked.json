@@ -1,0 +1,38 @@
+{
+  "id": "input-vat-motor-vehicle-blocked",
+  "description": "Car lease: the s.60(2)(a)(iv) block denies the deduction, the qualifying-vehicle 20% named",
+  "authority": "LEABHAR_RULE",
+  "references": [
+    "vat.input_deduction_taxable_use",
+    "vat.blocked_motor_vehicle"
+  ],
+  "notes": "VATCA 2010 s.60(2)(a)(iv) blocks the deduction on the purchase or hire of a motor vehicle, subject to s.59(2)(d): a qualifying vehicle (first registered on or after 1 January 2021 with CO2 under 140g/km, 2009-2020 under 156g/km, used at least 60% for business) gives 20% of the VAT. The car's registration, emissions and business use are not on the invoice (Revenue TDM VAT Part 3, Recovery of VAT on motor vehicles, April 2026), so the line is blocked and flagged rather than guessed. The block overrides the general s.59 rule when it matches (s.60(2)(a): \"Notwithstanding anything in this Chapter\"), so the general rule is dropped from the line.",
+  "inputs": {
+    "transaction": {
+      "direction": "purchase",
+      "transactionDate": "2025-06-15",
+      "amountMinor": 450000,
+      "currency": "EUR",
+      "entityType": "Irish_LTD",
+      "vatRegistered": true,
+      "supplyType": "services",
+      "transactionType": "car_lease",
+      "description": "Car lease, June quarter",
+      "businessUsePercent": 100,
+      "invoiceAvailable": true
+    }
+  },
+  "expected_classification": {
+    "identifiedTopics": [
+      "vat"
+    ],
+    "applicableRuleKeys": [
+      "vat.blocked_motor_vehicle"
+    ],
+    "notApplicableRuleKeys": [
+      "vat.input_deduction_taxable_use"
+    ],
+    "reviewRequired": true
+  },
+  "review_required": true
+}
