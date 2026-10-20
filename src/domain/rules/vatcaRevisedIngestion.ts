@@ -34,6 +34,7 @@ import { parseScheduleFrontMatter } from './vatcaScheduleParser';
 import { VATCA_REVISED_CURATED_RULES, RETIRED_S46_RULE_KEYS, type CuratedVatcaRevisedRule } from './vatcaRevisedCuration';
 import { VAT_SCOPE_CURATED_RULES } from './vatScopeCuration';
 import { VAT_PLACE_OF_SUPPLY_CURATED_RULES } from './vatPlaceOfSupplyCuration';
+import { CONDITION_TIGHTENED_RULES } from './vatcaConditionTightening';
 import { upsertReviewItem } from '../extraction/service';
 import { crossReferencesFromProvision, sameCrossReferences } from './dependencies';
 import { taxHeadsFor } from './taxHeads';
@@ -107,9 +108,9 @@ export function vatcaRevisedRelevance(
 ): { relevant: boolean; reason: string } {
   const { relevant, reason } = assessRelevance(category);
   const curated = VATCA_REVISED_CURATED_RULES.some((r) => r.sectionNumber === sectionNumber)
-    || [...VAT_SCOPE_CURATED_RULES, ...VAT_PLACE_OF_SUPPLY_CURATED_RULES].some((r) => r.citation === citation);
+    || [...VAT_SCOPE_CURATED_RULES, ...VAT_PLACE_OF_SUPPLY_CURATED_RULES, ...CONDITION_TIGHTENED_RULES].some((r) => r.citation === citation);
   if (!relevant && curated) {
-    return { relevant: true, reason: `Curated: mapped to a rule in vatcaRevisedCuration.ts, overriding the ${category} category default.` };
+    return { relevant: true, reason: `Curated: mapped to a rule in the revised-section curation (vatcaRevisedCuration.ts, vatScopeCuration.ts, vatPlaceOfSupplyCuration.ts or vatcaConditionTightening.ts), overriding the ${category} category default.` };
   }
   return { relevant, reason };
 }

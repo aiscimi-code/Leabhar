@@ -200,15 +200,21 @@ export function deriveVatcaRules(
     if (!prov) { skippedNoProvision.push(curated.ruleKey); continue; }
     if (!prov.relevant) { skippedNoProvision.push(curated.ruleKey); continue; }
 
-    const existing = db.select().from(irishTaxRules)
+    const stored = db.select().from(irishTaxRules)
       .where(and(
         eq(irishTaxRules.companyId, params.companyId),
         eq(irishTaxRules.ruleKey, curated.ruleKey),
-        eq(irishTaxRules.active, true),
-      )).get();
+      )).all();
 
+    // Already derived, even when a later version's derive has disabled it: a
+    // released version is superseded by being disabled, never closed, so its
+    // successor stands and this derive must not fight it by re-inserting the
+    // same content as a new version.
+    if (stored.some((r) => r.provisionId === prov.id && r.statement === curated.statementExcerpt
+      && (r.effectiveTo === null || r.effectiveTo > r.effectiveFrom))) { unchanged++; continue; }
+
+    const existing = stored.find((r) => r.active);
     if (existing) {
-      if (existing.statement === curated.statementExcerpt) { unchanged++; continue; }
       db.update(irishTaxRules)
         .set({ effectiveTo: VATCA_2010.enactedDate, active: false })
         .where(eq(irishTaxRules.id, existing.id)).run();
@@ -241,7 +247,7 @@ export function deriveVatcaRules(
       requiresGuidance: curated.requiresGuidance,
       humanReviewRequired: true,
       reviewStatus: 'ai_extracted',
-      ruleVersion: existing ? existing.ruleVersion + 1 : 1,
+      ruleVersion: stored.reduce((max, r) => Math.max(max, r.ruleVersion), 0) + 1,
       supersedesRuleId: existing?.id ?? null,
       priority: 100,
       effectiveFrom: VATCA_2010.enactedDate,

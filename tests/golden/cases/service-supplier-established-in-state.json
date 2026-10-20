@@ -1,0 +1,30 @@
+{
+  "id": "service-supplier-established-in-state",
+  "description": "Service invoiced from abroad but supplied by a supplier established in the State (no reverse charge)",
+  "authority": "LEABHAR_RULE",
+  "references": ["vat.reverse_charge_services_from_abroad"],
+  "notes": "VATCA 2010 s.12(1)(a) turns on the supplier being established outside the State. A person recorded the establishment: this supplier invoices from a US address but is established in the State, so the reverse charge does not apply and the supplier charges Irish VAT itself (EU Reg 282/2011 arts.10-11; the establishment test is multi-factor and stays flagged for guidance).",
+  "inputs": {
+    "transaction": {
+      "direction": "purchase",
+      "transactionDate": "2025-06-15",
+      "amountMinor": 12300,
+      "currency": "EUR",
+      "entityType": "Irish_LTD",
+      "vatRegistered": true,
+      "supplyType": "services",
+      "supplierCountry": "US",
+      "supplierEstablishedOutsideState": false,
+      "supplierType": "software_service",
+      "transactionType": "AI_SaaS",
+      "description": "US-invoiced software subscription from an Irish-established supplier",
+      "businessUsePercent": 100,
+      "invoiceAvailable": true
+    }
+  },
+  "expected_classification": {
+    "identifiedTopics": ["vat"],
+    "notApplicableRuleKeys": ["vat.reverse_charge_services_from_abroad"]
+  },
+  "review_required": true
+}
