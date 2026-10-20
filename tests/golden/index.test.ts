@@ -88,12 +88,13 @@ beforeEach(() => {
 
   ingestVatcaRevisedS46(db, { companyId });
   deriveVatcaRevisedRules(db, { companyId });
-  // Input VAT recovery comes from the revised s.59/s.60 (issue #209).
-  for (const n of ['012', '059', '060']) {
+  // Input VAT recovery comes from the revised s.59/s.60 (issue #209); s.34
+  // feeds the place-of-supply exception rules the golden cases below pin.
+  for (const n of ['012', '034', '059', '060']) {
     ingestVatcaRevised(db, { companyId, section: n });
   }
   deriveVatScopeRules(db, { companyId });
-  // The tightened s.12 reverse charge derives from the revised s.12 as
+  // The tightened s.12 and s.34 rules derive from the revised text as
   // version 2, disabling the released version 1 (never changing it).
   deriveConditionTightenedRules(db, { companyId });
 

@@ -172,8 +172,134 @@ const S12_REVERSE_CHARGE: TightenedRule = {
     + 'version records no approval.',
 };
 
+/**
+ * The s.34 general B2B place-of-supply rule, re-curated from the revised
+ * s.34. The quote now carries all three subparagraphs of s.34(a) — the
+ * business establishment, the fixed-establishment fallback and the
+ * permanent-address/usual-residence fallback — and every excepted paragraph
+ * is a named exception pointing at its own rule (or, for (j), at review),
+ * the same keys the reverse-charge suggestion lets decide before s.12.
+ */
+const S34_PLACE_OF_SUPPLY_B2B: TightenedRule = {
+  citation: '2010 Act 31 s.34',
+  sectionNumber: '34',
+  ruleKey: 'vat.place_of_supply_b2b_general',
+  ruleType: 'other',
+  topic: 'vat',
+  name: 'Place of supply of services to a taxable person (general B2B rule, revised s.34)',
+  // Verbatim from the revised s.34 (catalogue/vatca-2010-revised/s034.json):
+  // the whole of paragraph (a), its fallback subparagraphs included.
+  statementExcerpt: "( a ) except as provided by paragraphs (c) , (d) , (g) , (i) , (j) and "
+    + "(k) , the place of supply of services to a taxable person acting as such is— "
+    + "(i) subject to subparagraph (ii) , the place where the person's business is "
+    + "established, (ii) if the services are supplied to a fixed establishment of the "
+    + "person located in a place other than the place where the business is "
+    + "established, the place where the fixed establishment is located, (iii) if there "
+    + "is no such place of business or fixed establishment, the place where the "
+    + "permanent address or usual place of residence of the taxable person who "
+    + "receives the services is located;",
+  conditions: [
+    // s.34(a): a service supplied to a taxable person acting as such. The
+    // rule is the general rule either side of the transaction reads; the
+    // recipient-side facts that pick between its subparagraphs are the
+    // confirmed-establishment fields the sale-side sibling rules carry
+    // (vatPlaceOfSupplyCuration.ts), and the fallbacks are exceptions below.
+    { field: 'supplyType', operator: 'equals', value: 'services' },
+  ],
+  exceptions: [
+    {
+      condition: 'the supply is connected with immovable goods, or is the grant of a right to '
+        + 'use those goods (VATCA 2010 s.34(c))',
+      effect: 'the place of supply is where those goods are located; the paragraph has its own '
+        + 'rule (vat.place_of_supply_immovable_goods), and s.34(a) does not apply by its own '
+        + 'opening words',
+    },
+    {
+      condition: 'the supply is the provision of passenger transport (VATCA 2010 s.34(d))',
+      effect: 'the place of supply is the place or places where the transport takes place '
+        + '(vat.place_of_supply_passenger_transport)',
+    },
+    {
+      condition: 'the supply, and any ancillary services, is in respect of or related to '
+        + 'admission to a cultural, artistic, sporting, scientific, educational, entertainment '
+        + 'or similar event, such as a fair or exhibition, including the supply of tickets '
+        + 'granting access to such an event (VATCA 2010 s.34(g))',
+      effect: 'the place of supply is where that event actually takes place '
+        + '(vat.place_of_supply_event_admission), except where attendance at the event is '
+        + 'virtual (inserted 1 January 2025 by S.I. 725/2024 reg. 4, LRC F79), which that rule '
+        + 'carries as its own exception',
+    },
+    {
+      condition: 'the supply is the provision of restaurant or catering services other than '
+        + 'those physically carried out on board a ship, aircraft or train (VATCA 2010 '
+        + 's.34(i))',
+      effect: 'the place of supply is where those services are physically carried out '
+        + '(vat.place_of_supply_restaurant_catering)',
+    },
+    {
+      condition: 'the supply is the provision of restaurant or catering services physically '
+        + 'carried out on board a ship, aircraft or train during a section of a passenger '
+        + 'transport operation undertaken within the Community whose first scheduled point '
+        + 'of departure within the Community is in the State (VATCA 2010 s.34(j))',
+      effect: 'the place of supply is the State; no rule models this paragraph — routed to '
+        + 'review under that name rather than guessed',
+    },
+    {
+      condition: 'the supply consists of a short-term hiring out of a means of transport '
+        + '(VATCA 2010 s.34(k))',
+      effect: 'the place of supply is where the means of transport is actually placed at the '
+        + 'disposal of the customer (vat.place_of_supply_short_term_hire)',
+    },
+    {
+      condition: 'the services are supplied to a fixed establishment of the recipient located '
+        + 'in a place other than the place where the business is established (VATCA 2010 '
+        + 's.34(a)(ii))',
+      effect: 'the place of supply is where that fixed establishment is located, not where '
+        + 'the business is established; the fixed-establishment test is multi-factor (EU Reg '
+        + '282/2011 arts.10-11) and no line carries it — routed to review with that name, '
+        + 'never assumed away',
+    },
+    {
+      condition: 'the recipient has no place of business or fixed establishment (VATCA 2010 '
+        + 's.34(a)(iii))',
+      effect: 'the place of supply is where the recipient\'s permanent address or usual place '
+        + 'of residence is located; that address is not on the line — routed to review with '
+        + 'that name',
+    },
+  ],
+  crossReferences: [
+    'VATCA 2010 s.34(c), (d), (g), (i), (j), (k)',
+    'VATCA 2010 s.12(1)(b)',
+    'EU Reg 282/2011 arts.10-11',
+  ],
+  vatEffect: 'Unless one of the excepted paragraphs applies, the place of supply of a service '
+    + 'to a taxable person acting as such is where that person\'s business is established '
+    + '(s.34(a)(i)); supplied to a fixed establishment of the recipient located elsewhere, '
+    + 'where that fixed establishment is (s.34(a)(ii)); with no place of business or fixed '
+    + 'establishment, where the recipient\'s permanent address or usual place of residence '
+    + 'is (s.34(a)(iii)). For a recipient established in the State, the place of supply is '
+    + 'the State — the result s.12(1)(b) needs for the reverse charge.',
+  accountingEffect: null,
+  reportingEffect: null,
+  effectiveFrom: VATCA_COMMENCEMENT,
+  interpretationNote: 'Version 2, curated from the revised s.34 '
+    + '(catalogue/vatca-2010-revised/s034.json); the released version 1, quoted from the Act '
+    + 'as enacted, is disabled, never changed. The condition stays `supplyType = services`: '
+    + 'the rule states the general rule for any service to a taxable person acting as such, '
+    + 'and the recipient-side facts that pick between s.34(a)\'s subparagraphs are the '
+    + 'confirmed-establishment fields the sale-side sibling rules carry '
+    + '(vat.place_of_supply_services_to_business_abroad, vatPlaceOfSupplyCuration.ts); the '
+    + 'fixed-establishment and residence fallbacks ((a)(ii)-(iii)) are named exceptions '
+    + 'because the multi-factor test (EU Reg 282/2011 arts.10-11) is not on a line. Each '
+    + 'excepted paragraph has its own rule — the same keys the reverse-charge suggestion '
+    + 'lets decide before s.12 (crossBorderCuration.ts) — except (j) (restaurant or '
+    + 'catering on board a ship, aircraft or train within the Community), which no rule '
+    + 'models and which is routed to review by name. requiresGuidance stays set: this '
+    + 'version records no approval.',
+};
+
 /** Every tightened version this module derives, keyed by its section. */
-export const CONDITION_TIGHTENED_RULES: TightenedRule[] = [S12_REVERSE_CHARGE];
+export const CONDITION_TIGHTENED_RULES: TightenedRule[] = [S12_REVERSE_CHARGE, S34_PLACE_OF_SUPPLY_B2B];
 
 export interface ConditionTighteningResult {
   created: number;

@@ -1,0 +1,30 @@
+{
+  "id": "b2b-service-connected-with-property-abroad",
+  "description": "Architectural service for property abroad received by an Irish business (s.34(c) exception to the general B2B rule)",
+  "authority": "LEABHAR_RULE",
+  "references": ["vat.place_of_supply_b2b_general", "vat.place_of_supply_immovable_goods"],
+  "notes": "VATCA 2010 s.34(a) excepts supplies connected with immovable goods from the general B2B rule: the place of supply is where the goods are located (s.34(c)). The general rule still names the exception rather than deciding the place itself, and the line stays under review: where the property is, and the establishment tests, are multi-factor questions (EU Reg 282/2011 arts.10-11).",
+  "inputs": {
+    "transaction": {
+      "direction": "purchase",
+      "transactionDate": "2025-06-15",
+      "amountMinor": 450000,
+      "currency": "EUR",
+      "entityType": "Irish_LTD",
+      "vatRegistered": true,
+      "supplyType": "services",
+      "supplierCountry": "DE",
+      "supplierEstablishedOutsideState": true,
+      "supplierType": "professional_services",
+      "transactionType": "architect_fees",
+      "description": "Architect fees for Berlin office building project",
+      "invoiceAvailable": true
+    }
+  },
+  "expected_classification": {
+    "identifiedTopics": ["vat"],
+    "applicableRuleKeys": ["vat.place_of_supply_b2b_general", "vat.place_of_supply_immovable_goods"],
+    "reviewRequired": true
+  },
+  "review_required": true
+}
