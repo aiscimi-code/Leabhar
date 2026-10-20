@@ -105,9 +105,10 @@ describe('suggestVatTreatment', () => {
     // #559 added 10 (CA 2014 ss.281-285, 290, 291, 293, 343, 347: accounting records, statements, annual return).
     // #711 dated the Class S rate from SWMPA 2024 s.3: one row became five versions (+4).
     // #709 added the SI 156 reg.5 capacity exclusion as v2 (the TDM guidance is v1,
-    // now disabled): the store holds both versions (+1).
+    // now disabled): the store holds both versions (+1). The tightened s.12
+    // reverse charge added its revised-text v2 the same way (+1 more).
     expect(db.select().from(visibleTaxRules)
-      .where(and(eq(visibleTaxRules.companyId, companyId), eq(visibleTaxRules.origin, 'store'))).all()).toHaveLength(427);
+      .where(and(eq(visibleTaxRules.companyId, companyId), eq(visibleTaxRules.origin, 'store'))).all()).toHaveLength(428);
   });
 
   it('US SaaS purchase → non-EU reverse charge, cited to VATCA s.12 with a verifiable slice', () => {
@@ -122,15 +123,17 @@ describe('suggestVatTreatment', () => {
     expect(s.reviewRequired).toBe(true);
     expect(s.factSources['supplierEstablishedOutsideState']).toContain('confirmed by tester');
 
-    // The citation is checkable: the official PDF kept beside the catalogue
+    // The citation is checkable: the official page kept beside the catalogue
     // entry has the cited hash, and the section's excerpt holds the quoted words.
+    // The in-force version is the tightened v2, cited to the revised s.12.
     const c = s.decidingRule!;
-    expect(c.localPath).toBe('catalogue/vatca-2010/vatca-2010-enacted.json');
-    const entry = readCatalogueEntry('vatca-2010/vatca-2010-enacted.json');
+    expect(c.localPath).toBe('catalogue/vatca-2010-revised/s012.json');
+    const entry = readCatalogueEntry('vatca-2010-revised/s012.json');
     expect(entry.source.sha256).toBe(c.sha256);
-    expect(createHash('sha256').update(readFileSync(catalogueOfficialFilePath('vatca-2010/vatca-2010-enacted.json'))).digest('hex')).toBe(c.sha256);
+    expect(createHash('sha256').update(readFileSync(catalogueOfficialFilePath('vatca-2010-revised/s012.json'))).digest('hex')).toBe(c.sha256);
     const excerpt = entry.provisions.find((p) => p.sectionNumber === '12')!.excerpt.replace(/\s+/g, ' ');
     expect(excerpt).toContain('receives a service from a supplier established');
+    expect(excerpt).toContain('a person to whom a registration number has been assigned');
   });
 
   it('a US supplier whose establishment nobody has confirmed: no reverse charge from its country alone, flagged', () => {

@@ -42,6 +42,7 @@ import { derivePayrollRules } from './payrollIngestion';
 import { deriveSizeCriteriaRules } from './sizeCriteriaIngestion';
 import { deriveCuratedRuleFamilies } from './incomeTaxIngestion';
 import { CAR_EMISSIONS_CURATED_RULES } from './carEmissionsCuration';
+import { deriveConditionTightenedRules } from './vatcaConditionTightening';
 import { syncRuleLinks } from './ruleLinks';
 import { taxHeadsFor } from './taxHeads';
 import {
@@ -74,6 +75,9 @@ const DERIVES: Array<(db: AppDatabase, params: { companyId: string }) => unknown
   derivePayrollRules,
   deriveSizeCriteriaRules,
   (db, p) => deriveCuratedRuleFamilies(db, { companyId: p.companyId, rules: CAR_EMISSIONS_CURATED_RULES, label: 'capital allowances' }),
+  // Last: tightened versions of released rules read the revised text and
+  // disable the version before them, so every earlier step has derived first.
+  deriveConditionTightenedRules,
 ];
 
 /** Resolve a repo-relative statute path against the running app's root (the install directory when packaged). */

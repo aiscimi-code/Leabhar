@@ -48,6 +48,7 @@ import {
   deriveTdm3801_03bCapacityExclusionRule,
 } from '@/domain/rules/tdm3801_03bIngestion';
 import { deriveVatScopeRules } from '@/domain/rules/vatScopeIngestion';
+import { deriveConditionTightenedRules } from '@/domain/rules/vatcaConditionTightening';
 import { runGoldenCase } from './runner';
 import type { GoldenCase } from './types';
 import type { AppDatabase } from '@/db';
@@ -88,10 +89,13 @@ beforeEach(() => {
   ingestVatcaRevisedS46(db, { companyId });
   deriveVatcaRevisedRules(db, { companyId });
   // Input VAT recovery comes from the revised s.59/s.60 (issue #209).
-  for (const n of ['059', '060']) {
+  for (const n of ['012', '059', '060']) {
     ingestVatcaRevised(db, { companyId, section: n });
   }
   deriveVatScopeRules(db, { companyId });
+  // The tightened s.12 reverse charge derives from the revised s.12 as
+  // version 2, disabling the released version 1 (never changing it).
+  deriveConditionTightenedRules(db, { companyId });
 
   ingestVatcaScheduleFromCatalogue(db, { companyId, scheduleNumber: '2' });
   deriveVatcaScheduleRules(db, { companyId, scheduleNumber: '2' });

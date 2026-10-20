@@ -99,7 +99,9 @@ describe('deriveVatcaRules', () => {
     const rule = lookupTaxRule(db, { companyId, ruleKey: 'vat.reverse_charge_services_from_abroad' });
     expect(rule).not.toBeNull();
     expect(rule!.sectionNumber).toBe('12');
-    expect(rule!.citation).toBe('2010 Act 31');
+    // The lookup reads the store, whose in-force version is the tightened v2,
+    // cited to the revised s.12 (the as-enacted v1 is disabled, never changed).
+    expect(rule!.citation).toBe('2010 Act 31 s.12');
     expect(rule!.provisionText).toContain('supplier established outside the State');
   });
 

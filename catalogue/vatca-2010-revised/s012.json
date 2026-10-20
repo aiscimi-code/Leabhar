@@ -33,10 +33,41 @@
       "heading": "Services received from abroad and accountable persons.",
       "locator": "s.12",
       "category": "other",
-      "relevant": false,
-      "relevanceReason": "Uncategorised by heading/body keyword match; needs human review to determine relevance.",
+      "relevant": true,
+      "relevanceReason": "Curated: mapped to a rule in the revised-section curation (vatcaRevisedCuration.ts, vatScopeCuration.ts, vatPlaceOfSupplyCuration.ts or vatcaConditionTightening.ts), overriding the other category default.",
       "excerpt": "12\n.—(1) Where—\n\n(\na\n) a taxable person who carries on a business in\nthe State, or a person to whom a registration number has been\nassigned in accordance with\nsection 65\n(2)\n, receives a service from a\nsupplier established outside the State, and\n\n(\nb\n) the place of supply of the service (as\ndetermined in accordance with\nsection 34\n(a)\n) is the State,\n\nthen the person is accountable for, and liable to pay, the tax\nchargeable in the State as if he or she had supplied that\nservice for consideration in the course or furtherance of\nbusiness.\n\n(2)\nWhere—\n\n(\na\n) a taxable person who carries on a business in\nthe State, or\n\n(\nb\n) a public body,\n\nreceives a service\n\n(other than a\nservice of a kind referred to in\nsection 33(2)(b)\n,\n\n(ba)\nor\n\n(c)\n)\nfrom\na supplier not established in the State, and the place of\nsupply of the service (as determined in accordance with\n\nsection 34\n(c)\n) is the\nState, then the recipient of the service is accountable for,\nand liable to pay, the tax chargeable in the State as if that\nrecipient had supplied the service for consideration in the\ncourse or furtherance of business.\n\n(3)\nSubject to\nsubsection (4)\n, a person who is an\naccountable person by virtue of this section or\n\nsection\n17(1)\nand\nwho is a person referred to in\nsection\n6\n(1)(a)\nor\n(b)\nshall be deemed to be\nan accountable person only in respect of—\n\n(\na\n) any intra-Community acquisitions of goods which\nare made by him or her, and\n\n(\nb\n) services of the kind referred to in this\nsection or\n\nsection\n17(1)\nwhich\nare received by him or her.\n\n(4)\nA person may elect that\nsubsection (3)\nshall not apply\nto him or her.\n\n(5)\nSubject to\nsubsection (6)\n, a person who is an\naccountable person by virtue of this section or\n\nsection\n17(1)\nand\nwho is a person referred to in\nsection 17\n(2)\nshall be deemed to be an\naccountable person only in respect of—\n\n(\na\n) any intra-Community acquisitions of goods which\nare made by him or her,\n\n(\nb\n) racehorse training services which are supplied\nby him or her, and\n\n(\nc\n) services of the kind referred to in this\nsection or\n\nsection\n17(1)\nwhich\nare received by him or her.\n\n(6)\nA person may elect that\nsubsection (5)\nshall not apply\nto him or her."
     }
   ],
-  "rules": []
+  "rules": [
+    {
+      "key": "vat.reverse_charge_services_from_abroad",
+      "sectionNumber": "12",
+      "versions": [
+        {
+          "version": 2,
+          "effectiveFrom": "2010-11-01",
+          "effectiveTo": null,
+          "quote": "( a ) a taxable person who carries on a business in the State, or a person to whom a registration number has been assigned in accordance with section 65 (2) , receives a service from a supplier established outside the State, and ( b ) the place of supply of the service (as determined in accordance with section 34 (a) ) is the State, then the person is accountable for, and liable to pay, the tax chargeable in the State as if he or she had supplied that service for consideration in the course or furtherance of business.",
+          "value": null,
+          "unit": null,
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
+        }
+      ],
+      "links": [
+        {
+          "kind": "uses_value",
+          "toKey": "vat.place_of_supply_b2b_general",
+          "effectiveFrom": "0001-01-01",
+          "effectiveTo": null,
+          "note": "s.12(1)(b) applies only where s.34(a) determines the place of supply of the service to be the State: the s.12 rule takes that determination from the s.34 general rule (VATCA 2010 s.12(1)(b))."
+        }
+      ]
+    }
+  ]
 }

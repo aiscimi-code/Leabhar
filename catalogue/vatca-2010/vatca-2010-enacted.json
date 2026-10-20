@@ -1396,7 +1396,15 @@
           }
         }
       ],
-      "links": []
+      "links": [
+        {
+          "kind": "uses_value",
+          "toKey": "vat.place_of_supply_b2b_general",
+          "effectiveFrom": "0001-01-01",
+          "effectiveTo": null,
+          "note": "s.12(1)(b) applies only where s.34(a) determines the place of supply of the service to be the State: the s.12 rule takes that determination from the s.34 general rule (VATCA 2010 s.12(1)(b))."
+        }
+      ]
     },
     {
       "key": "vat.two_thirds_rule_goods_with_services",

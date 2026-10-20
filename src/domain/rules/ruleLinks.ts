@@ -137,6 +137,15 @@ function scheduleRateLinks(ruleKey: string, ref: string): CuratedRuleLink[] {
 }
 
 export const CURATED_RULE_LINKS: CuratedRuleLink[] = [
+  {
+    fromKey: 'vat.reverse_charge_services_from_abroad',
+    kind: 'uses_value' as const,
+    toKey: 'vat.place_of_supply_b2b_general',
+    effectiveFrom: LINK_FROM_RULES,
+    effectiveTo: null,
+    note: 's.12(1)(b) applies only where s.34(a) determines the place of supply of the service to be '
+      + 'the State: the s.12 rule takes that determination from the s.34 general rule (VATCA 2010 s.12(1)(b)).',
+  },
   ...DOMESTIC_RC_ADVISORY_RULE_KEYS.map((fromKey) => ({
     fromKey,
     kind: 'silenced_by' as const,
