@@ -40,6 +40,21 @@
             "sourceSha256": null,
             "note": null
           }
+        },
+        {
+          "version": 2,
+          "effectiveFrom": "2010-11-01",
+          "effectiveTo": null,
+          "quote": "Subject to subsection (3) , in computing the amount of tax payable by an accountable person in respect of a taxable period, that person may, in so far as the goods and services are used by him or her for the purposes of his or her taxable supplies or of any of the qualifying activities, deduct— ( a ) the tax charged to him or her during the period by other accountable persons by means of invoices, prepared in the manner prescribed by regulations, in respect of supplies of goods or services to him or her, ( b ) in respect of goods imported by him or her in the period, the tax paid by him or her or deferred as established from the relevant customs documents kept by him or her in accordance with section 84 (3) , ( c ) subject to such conditions (if any) as may be specified in regulations, the tax chargeable during the period, being tax for which he or she is liable in respect of intra-Community acquisitions of goods,",
+          "value": null,
+          "unit": null,
+          "review": {
+            "status": "ai_extracted",
+            "by": null,
+            "at": null,
+            "sourceSha256": null,
+            "note": null
+          }
         }
       ],
       "links": [
