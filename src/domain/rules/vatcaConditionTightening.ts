@@ -401,8 +401,9 @@ const S59_INPUT_DEDUCTION: TightenedRule = {
       condition: 'the person is an accountable person referred to in s.9(4) or s.12(3), or in '
         + 's.9(6) or s.12(5) other than for racehorse training services supplied, or in '
         + 's.22(3) or s.28(4), or a taxable person deemed to have supplied a letting under '
-        + 's.28(5) (VATCA 2010 s.59(3), as substituted 12 November 2024 by Finance Act 2024 '
-        + 's.80, LRC F144)',
+        + 's.28(5) (VATCA 2010 s.59(3): paras (a) and (b) as amended 12 November 2024 by '
+        + 'Finance Act 2024 s.80(a), (b), LRC F144; para (c) inserted 12 November 2024 by '
+        + 'Finance Act 2024 s.80(c), LRC F145)',
       effect: 's.59(2) does not apply to them for the supplies those sections cover - routed '
         + 'to review with that name',
     },
