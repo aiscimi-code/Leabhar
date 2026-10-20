@@ -44,6 +44,9 @@ export const CATALOGUE_ENTRIES = [
   'vatca-2010-revised/s076.json',
   'vatca-2010-revised/s92A.json',
   'vatca-2010-revised/s034.json',
+  // s.12 (services received from abroad) so the reverse-charge rule can read
+  // the revised text, not just the Act as enacted.
+  'vatca-2010-revised/s012.json',
   'vatca-2010-revised/s099.json',
   'vatca-2010-revised/s074.json',
   'vatca-2010-revised/s075.json',
