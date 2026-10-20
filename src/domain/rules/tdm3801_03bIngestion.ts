@@ -148,18 +148,23 @@ export function deriveTdm3801_03bCapacityExclusionRule(
     return { created: 0, superseded: 0, unchanged: 0, skippedNoProvision: [rule.ruleKey] };
   }
 
-  const existing = db.select().from(irishTaxRules)
+  const stored = db.select().from(irishTaxRules)
     .where(and(
       eq(irishTaxRules.companyId, params.companyId),
       eq(irishTaxRules.ruleKey, rule.ruleKey),
-      eq(irishTaxRules.active, true),
-    )).get();
+    )).all();
 
-  if (existing && existing.statement === rule.statementExcerpt) {
+  // Already derived, even when the Regulation's own derive has disabled it
+  // (a version is superseded by being disabled, never closed): the stored
+  // row and its successor stand, and this derive must not re-insert the same
+  // content as a new version.
+  if (stored.some((r) => r.provisionId === prov.id && r.statement === rule.statementExcerpt
+    && (r.effectiveTo === null || r.effectiveTo > r.effectiveFrom))) {
     return { created: 0, superseded: 0, unchanged: 1, skippedNoProvision: [] };
   }
 
   let superseded = 0;
+  const existing = stored.find((r) => r.active);
   if (existing) {
     db.update(irishTaxRules)
       .set({ effectiveTo: TDM_38_01_03B.effectiveFrom, active: false })
@@ -193,7 +198,7 @@ export function deriveTdm3801_03bCapacityExclusionRule(
     requiresGuidance: false,
     humanReviewRequired: true,
     reviewStatus: 'ai_extracted',
-    ruleVersion: existing ? existing.ruleVersion + 1 : 1,
+    ruleVersion: stored.reduce((max, r) => Math.max(max, r.ruleVersion), 0) + 1,
     supersedesRuleId: existing?.id ?? null,
     priority: 90,
     effectiveFrom: TDM_38_01_03B.effectiveFrom,
