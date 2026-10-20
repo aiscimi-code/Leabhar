@@ -114,12 +114,13 @@ const S12_REVERSE_CHARGE: TightenedRule = {
         + 'of scope',
     },
     {
-      condition: 'the recipient is a public body, or the service is one of a kind in s.33(2)(b), (ba) or (c) '
-        + 'received from a supplier not established in the State with the place of supply the State under '
-        + 's.34(c) (s.12(2), as amended by Finance Act 2018 (30/2018) s.62 and sch. 2 para. 2, LRC F31, in '
-        + 'effect 19 December 2018)',
-      effect: 's.12(2), not s.12(1), makes the recipient accountable; neither the s.33(2) category nor '
-        + 'public-body status is on the line — routed to review under that name',
+      condition: 'a taxable person carrying on a business in the State, or a public body, receives a service '
+        + 'other than one of a kind referred to in s.33(2)(b), (ba) or (c) from a supplier not established in '
+        + 'the State, with the place of supply the State under s.34(c) (s.12(2), as amended by Finance Act 2018 '
+        + '(30/2018) s.62 and sch. 2 para. 2, LRC F31, in effect 19 December 2018)',
+      effect: 's.12(2), not s.12(1), makes the recipient accountable; neither the s.34(c) place-of-supply '
+        + 'category, the s.33(2)(b), (ba), (c) exclusion nor public-body status is on the line — routed to '
+        + 'review under that name',
     },
     {
       condition: 'the recipient is an accountable person by virtue of this section only, being a person '
