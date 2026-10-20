@@ -1,0 +1,30 @@
+{
+  "id": "b2b-service-short-term-vehicle-hire-abroad",
+  "description": "Car hired abroad by an Irish business (s.34(k) exception to the general B2B rule)",
+  "authority": "LEABHAR_RULE",
+  "references": ["vat.place_of_supply_b2b_general", "vat.place_of_supply_short_term_hire"],
+  "notes": "VATCA 2010 s.34(a) excepts the short-term hiring out of a means of transport: the place of supply is where the vehicle is actually placed at the customer's disposal (s.34(k)). The general rule defers to that paragraph's own rule and the line stays under review: where the vehicle was handed over is not on the line.",
+  "inputs": {
+    "transaction": {
+      "direction": "purchase",
+      "transactionDate": "2025-06-15",
+      "amountMinor": 85000,
+      "currency": "EUR",
+      "entityType": "Irish_LTD",
+      "vatRegistered": true,
+      "supplyType": "services",
+      "supplierCountry": "FR",
+      "supplierEstablishedOutsideState": true,
+      "supplierType": "car_rental",
+      "transactionType": "car_rental",
+      "description": "Car rental Paris branch, 3 days",
+      "invoiceAvailable": true
+    }
+  },
+  "expected_classification": {
+    "identifiedTopics": ["vat"],
+    "applicableRuleKeys": ["vat.place_of_supply_b2b_general", "vat.place_of_supply_short_term_hire"],
+    "reviewRequired": true
+  },
+  "review_required": true
+}

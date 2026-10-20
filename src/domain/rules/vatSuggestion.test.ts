@@ -105,10 +105,10 @@ describe('suggestVatTreatment', () => {
     // #559 added 10 (CA 2014 ss.281-285, 290, 291, 293, 343, 347: accounting records, statements, annual return).
     // #711 dated the Class S rate from SWMPA 2024 s.3: one row became five versions (+4).
     // #709 added the SI 156 reg.5 capacity exclusion as v2 (the TDM guidance is v1,
-    // now disabled): the store holds both versions (+1). The tightened s.12
-    // reverse charge added its revised-text v2 the same way (+1 more).
+    // now disabled): the store holds both versions (+1). The tightened s.12 and
+    // s.34 rules added their revised-text v2 the same way (+2 more).
     expect(db.select().from(visibleTaxRules)
-      .where(and(eq(visibleTaxRules.companyId, companyId), eq(visibleTaxRules.origin, 'store'))).all()).toHaveLength(428);
+      .where(and(eq(visibleTaxRules.companyId, companyId), eq(visibleTaxRules.origin, 'store'))).all()).toHaveLength(429);
   });
 
   it('US SaaS purchase → non-EU reverse charge, cited to VATCA s.12 with a verifiable slice', () => {
